@@ -1,0 +1,115 @@
+// src/types/fleet.ts
+export type VehicleType = 'tractor' | 'combine' | 'sprayer' | 'spreader' | 'truck' | 'atv' | 'loader';
+export type VehicleStatus = 'working' | 'moving' | 'idling' | 'stopped' | 'offline';
+export type ImplementType = 
+  | 'seeder' 
+  | 'cultivator' 
+  | 'sprayer' 
+  | 'header' 
+  | 'plow' 
+  | 'mower' 
+  | 'fertilizer_spreader' 
+  | 'disc_harrow'
+  | 'trailer'
+  | 'roller'
+  | 'other';
+
+/**
+ * Sõiduki / Masina register
+ */
+export interface Vehicle {
+  id: string;
+  name: string;
+  model: string;
+  type: VehicleType;
+  registrationPlate?: string;
+  driverName?: string;
+  color: string;
+  year?: number;
+  assignedDeviceId?: string;      // Seotud Teltonika seadme ID
+  assignedImplementId?: string;   // Seotud Haakeriista ID
+  notes?: string;
+}
+
+/**
+ * Haakeriistade register
+ */
+export interface Implement {
+  id: string;
+  name: string;
+  manufacturer: string;
+  model: string;
+  type: ImplementType;
+  workingWidthM: number;          // Töölaius meetrites (nt 12m)
+  offsetM?: number;              // Külgnihe
+  year?: number;
+  serialNumber?: string;
+  assignedVehicleId?: string;    // Millise masina küljes (kui on haagitud)
+  isActive?: boolean;            // Kas tööasendis (maas)
+  notes?: string;
+}
+
+/**
+ * Teltonika GPS ja Telemeetria seadmete register
+ */
+export interface TeltonikaDevice {
+  id: string;
+  imei: string;
+  model: string;                 // nt FMB640, FMC650, FMB920, FMM640
+  simNumber: string;
+  firmwareVersion?: string;
+  assignedVehicleId?: string;    // Millisesse masinasse paigaldatud (kui on paigaldatud)
+  
+  // Reaalaja telemeetria
+  batteryVoltage: number;        // V (nt 27.8V)
+  fuelLevelPct: number;          // % (nt 74%)
+  fuelConsumptionLh?: number;    // L/h (nt 23.8 L/h)
+  engineRpm?: number;            // p/min
+  engineTempC?: number;          // °C
+  engineHours?: number;          // töötunnid
+  ignition: boolean;             // Süüde sees
+  hydraulicActive: boolean;      // Hüdraulika / rippsüsteem
+  satelliteCount: number;        // Satelliite
+  hdop: number;                  // Täpsusfaktor
+  
+  // GPS Asukoht
+  position: [number, number];    // [lat, lng]
+  altitude?: number;             // m
+  heading: number;               // 0 - 360 kraadi
+  speedKmH: number;              // km/h
+  status: VehicleStatus;
+  lastUpdate: string;            // ISO timestamp
+}
+
+/**
+ * Liitandmetega sõiduk kaardi ja analüütika jaoks (Vehicle + Device Telemetry + Implement)
+ */
+export interface EnrichedVehicle extends Vehicle {
+  status: VehicleStatus;
+  position: [number, number];
+  heading: number;
+  speedKmH: number;
+  altitude?: number;
+  telemetry: {
+    deviceId: string;
+    batteryVoltage: number;
+    fuelLevelPct: number;
+    fuelConsumptionLh?: number;
+    engineRpm?: number;
+    engineTempC?: number;
+    engineHours?: number;
+    ignition: boolean;
+    hydraulicActive: boolean;
+    satelliteCount: number;
+    hdop: number;
+    lastUpdate: string;
+  };
+  implement?: {
+    id: string;
+    name: string;
+    type: ImplementType;
+    workingWidthM: number;
+    offsetM?: number;
+    isActive: boolean;
+  };
+}

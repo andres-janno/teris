@@ -1,0 +1,479 @@
+// src/components/MapView.tsx
+import React, { useEffect, useRef, useCallback } from 'react';
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
+import proj4 from 'proj4';
+import { Maximize2, Plus, Minus } from 'lucide-react';
+import type { LayerVisibility } from '../types/map';
+import type { FieldCollection, FieldFeature } from '../types/field';
+import type { Vehicle } from '../types/vehicle';
+import type { CultivationPass } from '../types/telemetry';
+import type { PointOfInterest } from '../types/poi';
+import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
+import { createVehicleIcon, createPoiIcon } from './MapMarkers';
+import { getVisibleElementsBounds } from '../services/geometryEngine';
+import { getCropColor } from '../services/shpParser';
+
+interface MapViewProps {
+  visibility: LayerVisibility;
+  fields: FieldCollection;
+  selectedField: FieldFeature | null;
+  onSelectField: (field: FieldFeature | null) => void;
+  vehicles: Vehicle[];
+  selectedVehicle?: Vehicle | null;
+  onSelectVehicle: (vehicle: Vehicle | null) => void;
+  cultivationPass: CultivationPass;
+  pois: PointOfInterest[];
+  selectedPoi?: PointOfInterest | null;
+  onSelectPoi: (poi: PointOfInterest | null) => void;
+  isAddPoiMode: boolean;
+  onMapClickAddPoi: (coords: [number, number]) => void;
+  focusedTarget: { 
+    coords: [number, number]; 
+    bounds?: [[number, number], [number, number]]; 
+    zoom?: number 
+  } | null;
+  fitBoundsTrigger?: number;
+  selectedCropFilter?: string | null;
+}
+
+export const MapView: React.FC<MapViewProps> = ({
+  visibility,
+  fields,
+  selectedField,
+  onSelectField,
+  vehicles,
+  onSelectVehicle,
+  cultivationPass,
+  pois,
+  onSelectPoi,
+  isAddPoiMode,
+  onMapClickAddPoi,
+  focusedTarget,
+  fitBoundsTrigger,
+  selectedCropFilter
+}) => {
+  const mapContainerRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<L.Map | null>(null);
+  
+  // Layer refs
+  const baseMapLayerRef = useRef<L.TileLayer | null>(null);
+  const cadastreLayerRef = useRef<L.TileLayer.WMS | null>(null);
+  const fieldsLayerGroupRef = useRef<L.GeoJSON | null>(null);
+  const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
+
+  // Mouse coords indicator
+  const coordsDisplayRef = useRef<HTMLDivElement>(null);
+
+  // 1. Initialize Map
+  useEffect(() => {
+    if (!mapContainerRef.current || mapInstanceRef.current) return;
+
+    // Center on fields in Viljandimaa / Tarvastu
+    const map = L.map(mapContainerRef.current, {
+      center: [58.138, 25.882],
+      zoom: 13,
+      zoomControl: false,
+      attributionControl: true
+    });
+
+    L.control.zoom({ position: 'bottomright' }).addTo(map);
+    L.control.scale({ imperial: false, metric: true, position: 'bottomleft' }).addTo(map);
+
+    // Mouse coordinates tracker
+    map.on('mousemove', (e) => {
+      if (coordsDisplayRef.current) {
+        const lat = e.latlng.lat.toFixed(5);
+        const lng = e.latlng.lng.toFixed(5);
+        
+        let lestCoords = '';
+        try {
+          const [lestX, lestY] = proj4('EPSG:4326', 'EPSG:3301', [e.latlng.lng, e.latlng.lat]);
+          lestCoords = ` | L-EST97: X ${Math.round(lestX)} Y ${Math.round(lestY)}`;
+        } catch (err) {
+          // ignore
+        }
+
+        coordsDisplayRef.current.innerText = `WGS84: ${lat}, ${lng}${lestCoords}`;
+      }
+    });
+
+    // Create layer groups
+    vehiclesLayerGroupRef.current = L.layerGroup().addTo(map);
+    cultivationLayerGroupRef.current = L.layerGroup().addTo(map);
+    poiLayerGroupRef.current = L.layerGroup().addTo(map);
+
+    // Auto-fit all elements on initial load
+    const initialBounds = getVisibleElementsBounds({
+      visibility,
+      fields,
+      vehicles,
+      cultivationPass,
+      pois
+    });
+
+    if (initialBounds) {
+      map.fitBounds(initialBounds, { padding: [25, 25], maxZoom: 18, animate: false });
+      // Also ensure fitBounds after container layout settles
+      setTimeout(() => {
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.invalidateSize();
+          mapInstanceRef.current.fitBounds(initialBounds, { padding: [25, 25], maxZoom: 18, animate: false });
+        }
+      }, 50);
+    }
+
+    mapInstanceRef.current = map;
+
+    return () => {
+      map.remove();
+      mapInstanceRef.current = null;
+    };
+  }, []);
+
+  // Dedicated click listener for adding POI
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const handleMapClick = (e: L.LeafletMouseEvent) => {
+      if (isAddPoiMode) {
+        onMapClickAddPoi([e.latlng.lat, e.latlng.lng]);
+      }
+    };
+
+    map.on('click', handleMapClick);
+    return () => {
+      map.off('click', handleMapClick);
+    };
+  }, [isAddPoiMode, onMapClickAddPoi]);
+
+  // 2. Handle Base Map & Cadastre WMS
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    // Remove old base layer
+    if (baseMapLayerRef.current) {
+      map.removeLayer(baseMapLayerRef.current);
+    }
+
+    const baseConfig = BASE_MAPS[visibility.baseMap] || BASE_MAPS['maaamet-pohikaart'];
+    
+    const newBaseLayer = L.tileLayer(baseConfig.url, {
+      tms: baseConfig.tms ?? false,
+      attribution: baseConfig.attribution,
+      maxZoom: baseConfig.maxZoom || 19,
+      minZoom: baseConfig.minZoom || 5,
+      subdomains: baseConfig.subdomains || []
+    });
+
+    newBaseLayer.addTo(map);
+    baseMapLayerRef.current = newBaseLayer;
+
+    // Cadastre WMS Layer
+    if (visibility.cadastre) {
+      if (!cadastreLayerRef.current) {
+        cadastreLayerRef.current = L.tileLayer.wms(MAAAMET_CADASTRE_WMS.url, {
+          layers: MAAAMET_CADASTRE_WMS.layers,
+          format: MAAAMET_CADASTRE_WMS.format,
+          transparent: MAAAMET_CADASTRE_WMS.transparent,
+          version: MAAAMET_CADASTRE_WMS.version,
+          attribution: MAAAMET_CADASTRE_WMS.attribution,
+          maxZoom: MAAAMET_CADASTRE_WMS.maxZoom,
+          minZoom: MAAAMET_CADASTRE_WMS.minZoom,
+          zIndex: 300,
+          opacity: 0.95
+        });
+      }
+      if (!map.hasLayer(cadastreLayerRef.current)) {
+        cadastreLayerRef.current.addTo(map);
+      }
+      if (typeof (cadastreLayerRef.current as any).bringToFront === 'function') {
+        (cadastreLayerRef.current as any).bringToFront();
+      }
+    } else {
+      if (cadastreLayerRef.current && map.hasLayer(cadastreLayerRef.current)) {
+        map.removeLayer(cadastreLayerRef.current);
+      }
+    }
+  }, [visibility.baseMap, visibility.cadastre]);
+
+  // 3. Render PRIA Fields Layer
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (fieldsLayerGroupRef.current) {
+      map.removeLayer(fieldsLayerGroupRef.current);
+      fieldsLayerGroupRef.current = null;
+    }
+
+    if (!visibility.fields || !fields || !fields.features.length) return;
+
+    const geoJsonLayer = L.geoJSON(fields as any, {
+      style: (feature: any) => {
+        const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
+        const cropColor = feature.properties.cropColor || getCropColor(feature.properties.crop);
+        const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
+        
+        return {
+          color: isSelected ? '#ffffff' : (matchesFilter ? '#0f172a' : '#64748b'),
+          weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0),
+          opacity: matchesFilter ? 0.95 : 0.35,
+          fillColor: cropColor,
+          fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12)
+        };
+      },
+      onEachFeature: (feature: any, layer: L.Layer) => {
+        const props = feature.properties;
+        const cropColor = props.cropColor || getCropColor(props.crop);
+
+        // Tooltip label on field: permanent only if fieldLabels layer is explicitly turned on
+        layer.bindTooltip(`
+          <div class="field-map-label">
+            <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
+              <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${cropColor}; box-shadow: 0 0 4px ${cropColor};"></span>
+              <strong>${props.name}</strong>
+            </div>
+            <div class="field-sub-label">${props.crop} &bull; ${props.areaHa} ha</div>
+          </div>
+        `, {
+          permanent: !!visibility.fieldLabels,
+          sticky: !visibility.fieldLabels,
+          direction: visibility.fieldLabels ? 'center' : 'auto',
+          className: 'custom-field-tooltip'
+        });
+
+        layer.on({
+          click: (e) => {
+            L.DomEvent.stopPropagation(e);
+            onSelectField(feature);
+          },
+          mouseover: (e) => {
+            const l = e.target;
+            l.setStyle({ fillOpacity: 0.85, weight: 3 });
+          },
+          mouseout: (e) => {
+            const l = e.target;
+            const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
+            const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
+            l.setStyle({ 
+              fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12), 
+              weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0) 
+            });
+          }
+        });
+      }
+    });
+
+    geoJsonLayer.addTo(map);
+    fieldsLayerGroupRef.current = geoJsonLayer;
+  }, [fields, visibility.fields, visibility.fieldLabels, selectedField, selectedCropFilter]);
+
+  // 4. Render Machinery / Vehicles Layer
+  useEffect(() => {
+    const layerGroup = vehiclesLayerGroupRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!visibility.vehicles) return;
+
+    vehicles.forEach((vehicle) => {
+      const icon = createVehicleIcon(vehicle);
+      const marker = L.marker(vehicle.position, { icon, zIndexOffset: 1000 });
+
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        onSelectVehicle(vehicle);
+      });
+
+      marker.bindPopup(`
+        <div class="vehicle-popup-content">
+          <h4>${vehicle.name}</h4>
+          <div class="popup-row"><span>Juht:</span> <strong>${vehicle.driverName || 'Määramata'}</strong></div>
+          <div class="popup-row"><span>Kiirus:</span> <strong>${vehicle.speedKmH.toFixed(1)} km/h</strong></div>
+          <div class="popup-row"><span>Kütusetase:</span> <strong>${vehicle.telemetry.fuelLevelPct}%</strong></div>
+          <div class="popup-row"><span>Haakeriist:</span> <strong>${vehicle.implement ? `${vehicle.implement.name}` : 'Pole'}</strong></div>
+          <div class="popup-row"><span>Mootor:</span> <strong>${vehicle.telemetry.engineRpm || 0} RPM</strong></div>
+        </div>
+      `);
+
+      marker.addTo(layerGroup);
+    });
+  }, [vehicles, visibility.vehicles]);
+
+  // 5. Render Cultivation (Haritud ala & Swaths) Layer
+  useEffect(() => {
+    const layerGroup = cultivationLayerGroupRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!visibility.cultivation) return;
+
+    // Draw swath polygon
+    if (cultivationPass.swathPolygon) {
+      const swathLayer = L.geoJSON(cultivationPass.swathPolygon as any, {
+        style: {
+          color: '#16a34a',
+          weight: 1.5,
+          opacity: 0.85,
+          fillColor: '#22c55e',
+          fillOpacity: 0.55
+        }
+      });
+      swathLayer.addTo(layerGroup);
+    }
+
+    // Draw trajectory trail line
+    if (cultivationPass.trailLine && visibility.swathTrails) {
+      const trailLayer = L.geoJSON(cultivationPass.trailLine as any, {
+        style: {
+          color: '#38bdf8',
+          weight: 2,
+          opacity: 0.7,
+          dashArray: '4, 4'
+        }
+      });
+      trailLayer.addTo(layerGroup);
+    }
+  }, [cultivationPass, visibility.cultivation, visibility.swathTrails]);
+
+  // 6. Render POI / Infrastructure Layer
+  useEffect(() => {
+    const layerGroup = poiLayerGroupRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!visibility.poi) return;
+
+    pois.forEach((poi) => {
+      const icon = createPoiIcon(poi);
+      const marker = L.marker(poi.position, { icon, zIndexOffset: 500 });
+
+      marker.on('click', (e) => {
+        L.DomEvent.stopPropagation(e);
+        onSelectPoi(poi);
+      });
+
+      marker.bindPopup(`
+        <div class="poi-popup-content">
+          <h4>${poi.name}</h4>
+          <p class="poi-desc">${poi.description || ''}</p>
+          ${poi.capacity ? `<div class="popup-row"><span>Mahutavus:</span> <strong>${poi.capacity}</strong></div>` : ''}
+          ${poi.phone ? `<div class="popup-row"><span>Telefon:</span> <strong>${poi.phone}</strong></div>` : ''}
+          ${poi.accessNotes ? `<div class="popup-note">${poi.accessNotes}</div>` : ''}
+        </div>
+      `);
+
+      marker.addTo(layerGroup);
+    });
+  }, [pois, visibility.poi]);
+
+  // 7. Handle Camera Pan/Zoom Focus
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !focusedTarget) return;
+
+    if (focusedTarget.bounds) {
+      map.fitBounds(focusedTarget.bounds, {
+        padding: [35, 35],
+        maxZoom: 18,
+        animate: true,
+        duration: 0.8
+      });
+    } else {
+      map.flyTo(focusedTarget.coords, focusedTarget.zoom || 16, {
+        animate: true,
+        duration: 0.8
+      });
+    }
+  }, [focusedTarget]);
+
+  // 8. Fit all visible elements on screen
+  const handleFitAllBounds = useCallback(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    const bounds = getVisibleElementsBounds({
+      visibility,
+      fields,
+      vehicles,
+      cultivationPass,
+      pois
+    });
+
+    if (bounds) {
+      map.fitBounds(bounds, {
+        padding: [25, 25],
+        maxZoom: 18,
+        animate: true,
+        duration: 0.8
+      });
+    }
+  }, [visibility, fields, vehicles, cultivationPass, pois]);
+
+  useEffect(() => {
+    if (fitBoundsTrigger && fitBoundsTrigger > 0) {
+      handleFitAllBounds();
+    }
+  }, [fitBoundsTrigger, handleFitAllBounds]);
+
+  const handleZoomIn = () => {
+    mapInstanceRef.current?.zoomIn();
+  };
+
+  const handleZoomOut = () => {
+    mapInstanceRef.current?.zoomOut();
+  };
+
+  return (
+    <div className="map-wrapper">
+      <div 
+        ref={mapContainerRef} 
+        className={`leaflet-map-container ${isAddPoiMode ? 'cursor-crosshair' : ''}`} 
+      />
+
+      {/* Floating Map Navigation & Fit-All Tools */}
+      <div className="map-nav-toolbar glass-card">
+        <button 
+          className="map-nav-btn fit-all-btn"
+          onClick={handleFitAllBounds}
+          title="Mahuta kõik valitud kihtide elemendid ekraanile"
+        >
+          <Maximize2 size={16} />
+          <span className="btn-text">Mahuta kõik</span>
+        </button>
+        <div className="toolbar-divider"></div>
+        <button 
+          className="map-nav-btn icon-only"
+          onClick={handleZoomIn}
+          title="Suurenda (+)"
+        >
+          <Plus size={16} />
+        </button>
+        <button 
+          className="map-nav-btn icon-only"
+          onClick={handleZoomOut}
+          title="Vähenda (-)"
+        >
+          <Minus size={16} />
+        </button>
+      </div>
+      
+      {/* Floating coordinates bar */}
+      <div ref={coordsDisplayRef} className="coords-tracker glass-card">
+        WGS84: 58.13800, 25.88200 | L-EST97: X 532800 Y 6531200
+      </div>
+
+      {/* Add POI Banner */}
+      {isAddPoiMode && (
+        <div className="add-poi-banner glass-card animate-pulse">
+          <span>📍 Klõpsa kaardile, et määrata uue kuivati, veepunkti või töökoja asukoht!</span>
+        </div>
+      )}
+    </div>
+  );
+};

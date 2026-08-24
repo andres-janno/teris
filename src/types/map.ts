@@ -1,0 +1,32 @@
+export type BaseMapLayerId = 
+  | 'maaamet-pohikaart' 
+  | 'maaamet-foto' 
+  | 'maaamet-hybriid' 
+  | 'maaamet-hallkaart'
+  | 'osm-standard';
+
+export interface BaseMapConfig {
+  id: BaseMapLayerId;
+  name: string;
+  category: 'maaamet' | 'osm';
+  url: string;
+  attribution: string;
+  maxZoom: number;
+  minZoom: number;
+  tms?: boolean;
+  isWms?: boolean;
+  layers?: string;
+  subdomains?: string[];
+  wmsParams?: Record<string, string | number | boolean>;
+}
+
+export interface LayerVisibility {
+  baseMap: BaseMapLayerId;
+  cadastre: boolean;        // Maa-ameti katastripiirid
+  fields: boolean;          // PRIA põllud
+  vehicles: boolean;        // Masinapark / tehnika
+  cultivation: boolean;     // Haritud ala / Teltonika katvus
+  poi: boolean;             // Olulised asukohad (kuivati, vesi jne)
+  fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
+  swathTrails: boolean;     // Töötrajektoori joonekesed
+}
