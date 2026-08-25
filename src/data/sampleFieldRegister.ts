@@ -106,19 +106,11 @@ export const INITIAL_MASTER_FIELDS: MasterField[] = SAMPLE_FIELDS.features.map((
   const soilTypes = ['Leostunud liivsavi (LP)', 'Näivleetunud liivsavi (LPg)', 'Leostunud saviliiv (Ko)', 'Gleimuld (Gk)'];
   const soil = soilTypes[idx % soilTypes.length];
 
-  // Extract PRIA field number (num) e.g. "4", "4-1", "1"
-  const rawNum = p.rawProperties?.pollunr || (p as any).num || (p.name.match(/Põld nr\s+([0-9a-zA-Z\-_/]+)/i)?.[1]);
-  const num = rawNum ? String(rawNum).trim() : String(idx + 1);
-
-  // Extract PRIA massiiv (fieldCode) e.g. "61144313542"
-  const rawMassiiv = p.rawProperties?.massiiv || (p.fieldCode ? p.fieldCode.replace(/^PRIA-/, '').replace(/-\d+$/, '') : null);
-  const fieldCode = rawMassiiv ? String(rawMassiiv).trim() : `61044${1000 + idx + 1}`;
-
   return {
-    id: idx + 1,
-    num,
-    name: p.name || `Põld ${num}`,
-    fieldCode,
+    id: p.id || (idx + 1),
+    num: p.num ? String(p.num) : String(idx + 1),
+    name: p.name || `Põld ${p.num || idx + 1}`,
+    fieldCode: String(p.fieldCode || `61044${1000 + idx + 1}`),
     cadastralCode: p.cadastralCode || `89201:00${(idx % 9) + 1}:010${idx % 9}`,
     soilType: soil,
     drainageSystem: idx % 2 === 0,
