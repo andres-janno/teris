@@ -2,9 +2,10 @@
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
 
 export interface FieldProperties {
-  id: string;
-  name: string;
-  fieldCode?: string;         // PRIA massiivi / põllu kood
+  id: number | string;        // Unikaalne sisemine ID (autoincrement)
+  num?: string;               // PRIA põllu number impordist (nt '4', '4-1', '1')
+  name: string;               // Põllu nimi (kasutaja määratud)
+  fieldCode: string;          // PRIA massiivi number (nt '61144313542')
   cadastralCode?: string;     // Katastritunnus
   areaHa: number;             // Pindala hektarites
   perimeterM?: number;        // Ümbermõõt meetrites

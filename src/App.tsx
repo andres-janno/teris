@@ -49,11 +49,8 @@ export const App: React.FC = () => {
   // Active Farming Season / Year
   const [selectedYear, setSelectedYear] = useState<number>(2026);
 
-  // 1. Põldude ja külvikorra master-register
-  const [masterFields, setMasterFields] = useState<MasterField[]>(() => {
-    const saved = localStorage.getItem('agrimap_master_fields');
-    return saved ? JSON.parse(saved) : INITIAL_MASTER_FIELDS;
-  });
+  // 1. Põldude ja külvikorra master-register (kasutab alati otse ts failide sisu)
+  const [masterFields, setMasterFields] = useState<MasterField[]>(INITIAL_MASTER_FIELDS);
 
   // Dynamic available years list
   const availableYears = React.useMemo(() => {
@@ -122,9 +119,11 @@ export const App: React.FC = () => {
   const [pois, setPois] = useState<PointOfInterest[]>(SAMPLE_POI_LIST);
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
 
-  // Always keep POIs synced directly from samplePoi.ts
+  // Always keep master fields and POIs synced directly from ts sample files
   useEffect(() => {
+    localStorage.removeItem('agrimap_master_fields');
     localStorage.removeItem('agrimap_pois');
+    setMasterFields(INITIAL_MASTER_FIELDS);
     setPois(SAMPLE_POI_LIST);
   }, []);
 
@@ -498,19 +497,26 @@ export const App: React.FC = () => {
   };
 
   // Field Register Handlers
-  const handleUpdateFieldSeason = (fieldId: string, seasonData: FieldYearlyRecord) => {
+  const handleUpdateMasterField = (
+    fieldId: number | string, 
+    fieldData: Partial<MasterField>, 
+    seasonData?: FieldYearlyRecord
+  ) => {
     setMasterFields((prev) =>
       prev.map((f) => {
-        if (f.id === fieldId) {
-          const existingIdx = f.history.findIndex((h) => h.year === seasonData.year);
+        if (f.id === fieldId || String(f.id) === String(fieldId)) {
           let newHistory = [...f.history];
-          if (existingIdx >= 0) {
-            newHistory[existingIdx] = { ...newHistory[existingIdx], ...seasonData };
-          } else {
-            newHistory = [seasonData, ...newHistory];
+          if (seasonData) {
+            const existingIdx = f.history.findIndex((h) => h.year === seasonData.year);
+            if (existingIdx >= 0) {
+              newHistory[existingIdx] = { ...newHistory[existingIdx], ...seasonData };
+            } else {
+              newHistory = [seasonData, ...newHistory];
+            }
           }
           return {
             ...f,
+            ...fieldData,
             history: newHistory
           };
         }
@@ -549,22 +555,31 @@ export const App: React.FC = () => {
     setSelectedYear(newYear);
   };
 
-  const handleDeleteMasterField = (fieldId: string) => {
-    setMasterFields((prev) => prev.filter((f) => f.id !== fieldId));
-    if (selectedFieldId === fieldId) {
+  const handleDeleteMasterField = (fieldId: number | string) => {
+    setMasterFields((prev) => prev.filter((f) => f.id !== fieldId && String(f.id) !== String(fieldId)));
+    if (selectedFieldId === String(fieldId)) {
       setSelectedFieldId(null);
     }
   };
 
   // PRIA SHP import
   const handleFieldsImported = (importedCollection: FieldCollection, replace: boolean) => {
+    const existingMaxId = replace ? 0 : Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
+    let nextId = existingMaxId + 1;
+
     const newMasterFields: MasterField[] = importedCollection.features.map((feature, idx) => {
       const p = feature.properties;
       const area = p.areaHa || 5.0;
+      const id = typeof p.id === 'number' && !isNaN(p.id) ? p.id : nextId++;
+      const num = p.num ? String(p.num) : String(idx + 1);
+      const fieldCode = p.fieldCode ? String(p.fieldCode) : `61044${1000 + Number(id)}`;
+      const name = p.name || `Põld ${num}`;
+
       return {
-        id: p.id || `imp-field-${Date.now()}-${idx}`,
-        name: p.name || `Imporditud Põld ${idx + 1}`,
-        fieldCode: p.fieldCode || `PRIA-${idx + 1}`,
+        id,
+        num,
+        name,
+        fieldCode,
         cadastralCode: p.cadastralCode || undefined,
         soilType: 'Määramata',
         geometry: feature.geometry,
@@ -629,8 +644,6 @@ export const App: React.FC = () => {
         workedAreaHa={workedAreaHa}
         activeVehiclesCount={activeVehiclesCount}
         poiCount={pois.length}
-        selectedYear={selectedYear}
-        onSelectYear={setSelectedYear}
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
@@ -638,7 +651,6 @@ export const App: React.FC = () => {
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         isAddPoiMode={isAddPoiMode}
         onToggleAddPoiMode={() => setIsAddPoiMode(!isAddPoiMode)}
-        onFitAll={handleFitAll}
         theme={theme}
         onToggleTheme={handleToggleTheme}
       />
@@ -693,9 +705,6 @@ export const App: React.FC = () => {
           onToggleLayer={handleToggleLayer}
           onSelectBaseMap={handleSelectBaseMap}
           onFitAll={handleFitAll}
-          selectedYear={selectedYear}
-          onSelectYear={setSelectedYear}
-          availableYears={availableYears}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
@@ -725,7 +734,7 @@ export const App: React.FC = () => {
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
         onFocusField={handleFocusField}
-        onUpdateFieldSeason={handleUpdateFieldSeason}
+        onUpdateField={handleUpdateMasterField}
         onAddNewSeasonToAll={handleAddNewSeasonToAll}
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}

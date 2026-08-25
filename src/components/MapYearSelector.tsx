@@ -80,7 +80,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       <div className="year-widget-header">
         <div className="year-widget-title">
           <Calendar size={15} className="text-emerald" />
-          <span>Põldude hooaeg:</span>
+          <span>Hooaeg:</span>
         </div>
         <span className="year-widget-stat">
           {fields.features.length} tk &bull; {totalAreaHa.toFixed(1)} ha
@@ -107,14 +107,14 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
 
       {/* Integrated Crop Legend Section */}
       <div className="widget-crop-legend-section">
-        <div 
+        <div
           className="widget-legend-header"
           onClick={() => setIsLegendOpen(!isLegendOpen)}
           title={isLegendOpen ? 'Ahenda kultuuride legend' : 'Ava kultuuride legend'}
         >
           <div className="widget-legend-title">
             <Sprout size={13} className="text-emerald" />
-            <span>Kultuuride jaotus ({selectedYear})</span>
+            <span>Kultuuride jaotus</span>
           </div>
           <button className="icon-btn-ghost-sm" type="button">
             {isLegendOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -154,9 +154,9 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     title={onSelectCropFilter ? `Klõpsa, et filtreerida ${item.name} põlde kaardil` : undefined}
                   >
                     <div className="crop-left-info">
-                      <span 
-                        className="crop-legend-color-dot" 
-                        style={{ backgroundColor: item.color }} 
+                      <span
+                        className="crop-legend-color-dot"
+                        style={{ backgroundColor: item.color }}
                       />
                       <div className="crop-text-block">
                         <span className="crop-name-label">{item.name}</span>
@@ -174,7 +174,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
 
             {selectedCropFilter && onSelectCropFilter && (
               <div className="legend-filter-reset">
-                <button 
+                <button
                   className="btn btn-secondary btn-xs btn-full"
                   onClick={() => onSelectCropFilter(null)}
                 >
@@ -189,7 +189,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
 
       {/* Footer: Link to Full Register */}
       <div className="year-widget-footer">
-        <button 
+        <button
           className="year-register-link-btn"
           onClick={onOpenFieldsRegister}
           title="Ava põldude ja maakasutuse täielik register"

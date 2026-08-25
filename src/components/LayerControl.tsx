@@ -1,4 +1,3 @@
-// src/components/LayerControl.tsx
 import React, { useState } from 'react';
 import {
   Layers,
@@ -8,8 +7,7 @@ import {
   Grid,
   ChevronDown,
   ChevronUp,
-  Maximize2,
-  Calendar
+  Maximize2
 } from 'lucide-react';
 import type { BaseMapLayerId, LayerVisibility } from '../types/map';
 import { BASE_MAPS } from '../services/maaAmetLayers';
@@ -19,19 +17,13 @@ interface LayerControlProps {
   onToggleLayer: (key: keyof LayerVisibility) => void;
   onSelectBaseMap: (id: BaseMapLayerId) => void;
   onFitAll?: () => void;
-  selectedYear?: number;
-  onSelectYear?: (year: number) => void;
-  availableYears?: number[];
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
   visibility,
   onToggleLayer,
   onSelectBaseMap,
-  onFitAll,
-  selectedYear,
-  onSelectYear,
-  availableYears = [2026, 2025, 2024, 2023]
+  onFitAll
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -40,7 +32,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
       <div className="layer-control-header" onClick={() => setIsOpen(!isOpen)}>
         <div className="layer-header-title">
           <Layers size={18} className="text-emerald" />
-          <span>Kaardikihid & Aluskaart</span>
+          <span>Kaardikihid</span>
         </div>
         <button className="icon-btn-ghost" title={isOpen ? 'Ahenda' : 'Laienda'}>
           {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
@@ -53,7 +45,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
           <div className="layer-section">
             <div className="section-title">
               <MapIcon size={14} />
-              <span>Maa-ameti aluskaart</span>
+              <span>Aluskaart</span>
             </div>
             <div className="basemap-grid">
               {(Object.keys(BASE_MAPS) as BaseMapLayerId[]).map((id) => {
@@ -100,28 +92,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     {visibility.fields ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
-
-                {/* Year Selector Under PRIA Fields */}
-                {visibility.fields && selectedYear && onSelectYear && (
-                  <div className="layer-year-selector">
-                    <div className="year-selector-title">
-                      <Calendar size={11} className="text-emerald" />
-                      <span>Hooaeg / Aasta:</span>
-                    </div>
-                    <div className="layer-year-pills">
-                      {availableYears.map((yr) => (
-                        <button
-                          key={yr}
-                          className={`layer-year-pill ${selectedYear === yr ? 'active' : ''}`}
-                          onClick={() => onSelectYear(yr)}
-                          title={`Kuva põldude andmed ja külvikord ${yr}. aasta seisuga`}
-                        >
-                          {yr}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Cultivation / Teltonika Swaths */}
@@ -133,7 +103,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     onChange={() => onToggleLayer('cultivation')}
                   />
                   <span className="layer-color-indicator cultivation-color"></span>
-                  <span className="layer-text">Haritud ala (Teltonika)</span>
+                  <span className="layer-text">Haritud ala</span>
                 </label>
                 <button
                   className="icon-toggle"
@@ -153,7 +123,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     onChange={() => onToggleLayer('vehicles')}
                   />
                   <span className="layer-color-indicator tech-color"></span>
-                  <span className="layer-text">Masinapark (GPS)</span>
+                  <span className="layer-text">Masinapark</span>
                 </label>
                 <button
                   className="icon-toggle"
@@ -173,7 +143,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     onChange={() => onToggleLayer('poi')}
                   />
                   <span className="layer-color-indicator poi-color"></span>
-                  <span className="layer-text">Olulised asukohad (POI)</span>
+                  <span className="layer-text">Olulised asukohad</span>
                 </label>
                 <button
                   className="icon-toggle"
@@ -193,7 +163,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     onChange={() => onToggleLayer('cadastre')}
                   />
                   <span className="layer-color-indicator cadastre-color"></span>
-                  <span className="layer-text">Maa-amet Katastripiirid</span>
+                  <span className="layer-text">Katastripiirid</span>
                 </label>
                 <button
                   className="icon-toggle"

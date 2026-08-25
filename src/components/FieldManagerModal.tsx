@@ -25,9 +25,9 @@ interface FieldManagerModalProps {
   selectedYear: number;
   onSelectYear: (year: number) => void;
   onFocusField: (fieldFeature: FieldFeature) => void;
-  onUpdateFieldSeason: (fieldId: string, seasonData: FieldYearlyRecord) => void;
+  onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onAddNewSeasonToAll: (newYear: number) => void;
-  onDeleteField: (fieldId: string) => void;
+  onDeleteField: (fieldId: number | string) => void;
   onOpenUpload: () => void;
 }
 
@@ -52,16 +52,24 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   selectedYear,
   onSelectYear,
   onFocusField,
-  onUpdateFieldSeason,
+  onUpdateField,
   onAddNewSeasonToAll,
   onDeleteField,
   onOpenUpload
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
-  const [editingFieldId, setEditingFieldId] = useState<string | null>(null);
+  const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
 
-  // Edit form state
+  // Edit form state: Master Field details
+  const [editName, setEditName] = useState('');
+  const [editNum, setEditNum] = useState('');
+  const [editFieldCode, setEditFieldCode] = useState('');
+  const [editCadastralCode, setEditCadastralCode] = useState('');
+  const [editLandowner, setEditLandowner] = useState('');
+  const [editSoilType, setEditSoilType] = useState('');
+
+  // Edit form state: Yearly details
   const [editYear, setEditYear] = useState(selectedYear);
   const [editAreaHa, setEditAreaHa] = useState<number>(0);
   const [editCrop, setEditCrop] = useState('');
@@ -80,12 +88,15 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return masterFields.filter((f) => {
       const yearRecord = f.history.find(h => h.year === selectedYear) || f.history[0];
       const cropName = yearRecord ? yearRecord.crop : '';
+      const q = searchQuery.toLowerCase();
       
       const matchesSearch = 
-        f.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        f.fieldCode.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        (f.cadastralCode && f.cadastralCode.includes(searchQuery)) ||
-        cropName.toLowerCase().includes(searchQuery.toLowerCase());
+        f.name.toLowerCase().includes(q) ||
+        String(f.id).includes(q) ||
+        (f.num && f.num.toLowerCase().includes(q)) ||
+        f.fieldCode.toLowerCase().includes(q) ||
+        (f.cadastralCode && f.cadastralCode.toLowerCase().includes(q)) ||
+        cropName.toLowerCase().includes(q);
 
       const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
 
@@ -122,6 +133,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     };
 
     setEditingFieldId(field.id);
+    setEditName(field.name);
+    setEditNum(field.num || '');
+    setEditFieldCode(field.fieldCode);
+    setEditCadastralCode(field.cadastralCode || '');
+    setEditLandowner(field.landowner || '');
+    setEditSoilType(field.soilType || '');
+
     setEditYear(selectedYear);
     setEditAreaHa(currentRec.areaHa);
     setEditCrop(currentRec.crop);
@@ -134,32 +152,45 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editingFieldId) return;
+    if (editingFieldId === null || editingFieldId === undefined) return;
 
-    onUpdateFieldSeason(editingFieldId, {
-      year: editYear,
-      areaHa: Number(editAreaHa),
-      crop: editCrop.trim() || 'Talinisu',
-      cropVariety: editVariety.trim() || undefined,
-      cropColor: editCropColor,
-      targetYieldTonsHa: editTargetYield ? Number(editTargetYield) : undefined,
-      actualYieldTonsHa: editActualYield ? Number(editActualYield) : undefined,
-      notes: editNotes.trim() || undefined
-    });
+    onUpdateField(
+      editingFieldId,
+      {
+        name: editName.trim() || `Põld ${editNum || editingFieldId}`,
+        num: editNum.trim() || undefined,
+        fieldCode: editFieldCode.trim(),
+        cadastralCode: editCadastralCode.trim() || undefined,
+        landowner: editLandowner.trim() || undefined,
+        soilType: editSoilType.trim() || undefined
+      },
+      {
+        year: editYear,
+        areaHa: Number(editAreaHa),
+        crop: editCrop.trim() || 'Talinisu',
+        cropVariety: editVariety.trim() || undefined,
+        cropColor: editCropColor,
+        targetYieldTonsHa: editTargetYield ? Number(editTargetYield) : undefined,
+        actualYieldTonsHa: editActualYield ? Number(editActualYield) : undefined,
+        notes: editNotes.trim() || undefined
+      }
+    );
 
     setEditingFieldId(null);
   };
 
   const handleExportCsv = () => {
-    const headers = ['Põllu ID', 'Põllu Nimi', 'PRIA Kood', 'Kataster', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
+    const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Maaomanik', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
     const rows = masterFields.map((f) => {
       const yearRec = f.history.find(h => h.year === selectedYear) || f.history[0];
       const historyStr = f.history.map(h => `${h.year}: ${h.areaHa}ha (${h.crop})`).join('; ');
       return [
         `"${f.id}"`,
         `"${f.name}"`,
+        `"${f.num || ''}"`,
         `"${f.fieldCode}"`,
         `"${f.cadastralCode || ''}"`,
+        `"${f.landowner || ''}"`,
         yearRec ? yearRec.areaHa : 0,
         `"${yearRec ? yearRec.crop : ''}"`,
         `"${historyStr}"`
@@ -332,14 +363,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             </div>
           )}
 
-          {/* Edit Year Record Drawer / Form */}
-          {editingFieldId && (
+          {/* Edit Master Field & Season Drawer / Form */}
+          {editingFieldId !== null && (
             <form onSubmit={handleSaveEdit} className="field-edit-season-card glass-card animate-slide-in">
               <div className="edit-card-header">
                 <div className="edit-title">
                   <Edit2 size={16} className="text-emerald" />
                   <strong>
-                    Muuda põllu andmeid hooajal {editYear}: {masterFields.find(f => f.id === editingFieldId)?.name}
+                    Muuda põllu andmeid: {editName || `Põld ${editNum || editingFieldId}`} (ID #{editingFieldId})
                   </strong>
                 </div>
                 <button className="icon-btn-ghost" type="button" onClick={() => setEditingFieldId(null)}>
@@ -347,6 +378,73 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 </button>
               </div>
 
+              {/* General Master Field Data */}
+              <div className="form-sub-header">
+                <span>1. Põllu põhiandmed</span>
+              </div>
+              <div className="form-grid">
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Põllu nimi (kasutaja määratud) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="nt Loisu tagune, Kodu põld, Suur põld..."
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Põllu number (PRIA impordist nt 4, 4-1, 1A)</label>
+                  <input
+                    type="text"
+                    placeholder="nt 4, 4-1, 1"
+                    value={editNum}
+                    onChange={(e) => setEditNum(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>PRIA massiivi number (fieldCode) *</label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="nt 61144313542"
+                    value={editFieldCode}
+                    onChange={(e) => setEditFieldCode(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Katastritunnus</label>
+                  <input
+                    type="text"
+                    placeholder="nt 89201:004:0140"
+                    value={editCadastralCode}
+                    onChange={(e) => setEditCadastralCode(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Maaomanik / Rentnik</label>
+                  <input
+                    type="text"
+                    placeholder="nt Oma maa, Rent (OÜ Loisu)"
+                    value={editLandowner}
+                    onChange={(e) => setEditLandowner(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+              </div>
+
+              {/* Seasonal Yearly Data */}
+              <div className="form-sub-header" style={{ marginTop: '14px' }}>
+                <span>2. Hooaja andmed ({editYear}. aasta külvikord ja saak)</span>
+              </div>
               <div className="form-grid">
                 <div className="form-group">
                   <label>Hooaja aasta</label>
@@ -361,6 +459,10 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         setEditAreaHa(yrRec.areaHa);
                         setEditCrop(yrRec.crop);
                         setEditCropColor(yrRec.cropColor);
+                        setEditVariety(yrRec.cropVariety || '');
+                        setEditTargetYield(yrRec.targetYieldTonsHa);
+                        setEditActualYield(yrRec.actualYieldTonsHa);
+                        setEditNotes(yrRec.notes || '');
                       }
                     }}
                     className="form-input"
@@ -448,7 +550,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
               <div className="form-actions">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingFieldId(null)}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">Salvesta hooaja andmed</button>
+                <button type="submit" className="btn btn-primary btn-sm">Salvesta muudatused</button>
               </div>
             </form>
           )}
@@ -467,10 +569,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     {/* Left: Info */}
                     <div className="field-info-col">
                       <div className="field-title-line">
+                        <span className="field-id-badge" title="Sisemine unikaalne ID (autoincrement)">#{field.id}</span>
                         <h4 className="field-name">{field.name}</h4>
-                        <span className="field-code-badge">{field.fieldCode}</span>
+                        {field.num && (
+                          <span className="field-num-badge" title="PRIA põllu number">Põld nr {field.num}</span>
+                        )}
+                        <span className="field-code-badge" title="PRIA massiivi number">Massiiv: {field.fieldCode}</span>
                         {field.cadastralCode && (
-                          <span className="cadastre-code">{field.cadastralCode}</span>
+                          <span className="cadastre-code" title="Katastritunnus">{field.cadastralCode}</span>
                         )}
                       </div>
 
@@ -506,7 +612,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => startEdit(field)}
-                        title="Muuda selle aasta pindala või kultuuri"
+                        title="Muuda põllu nime, koodi või hooaja andmeid"
                       >
                         <Edit2 size={13} />
                         <span>Muuda</span>
@@ -521,6 +627,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                             geometry: field.geometry,
                             properties: {
                               id: field.id,
+                              num: field.num,
                               name: field.name,
                               fieldCode: field.fieldCode,
                               areaHa: area,

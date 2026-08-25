@@ -4,7 +4,7 @@ import type { BaseMapConfig, BaseMapLayerId } from '../types/map';
 export const BASE_MAPS: Record<BaseMapLayerId, BaseMapConfig> = {
   'maaamet-pohikaart': {
     id: 'maaamet-pohikaart',
-    name: 'Maa-amet Põhikaart',
+    name: 'Põhikaart',
     category: 'maaamet',
     url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/kaart@GMC/{z}/{x}/{y}.png',
     tms: true,
@@ -14,7 +14,7 @@ export const BASE_MAPS: Record<BaseMapLayerId, BaseMapConfig> = {
   },
   'maaamet-foto': {
     id: 'maaamet-foto',
-    name: 'Maa-amet Ortofoto',
+    name: 'Ortofoto',
     category: 'maaamet',
     url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/foto@GMC/{z}/{x}/{y}.jpg',
     tms: true,
@@ -24,7 +24,7 @@ export const BASE_MAPS: Record<BaseMapLayerId, BaseMapConfig> = {
   },
   'maaamet-hybriid': {
     id: 'maaamet-hybriid',
-    name: 'Maa-amet Hübriid',
+    name: 'Hübriid',
     category: 'maaamet',
     url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/hybriid@GMC/{z}/{x}/{y}.png',
     tms: true,
@@ -34,7 +34,7 @@ export const BASE_MAPS: Record<BaseMapLayerId, BaseMapConfig> = {
   },
   'maaamet-hallkaart': {
     id: 'maaamet-hallkaart',
-    name: 'Maa-amet Hallkaart',
+    name: 'Hallkaart',
     category: 'maaamet',
     url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/hallkaart@GMC/{z}/{x}/{y}.png',
     tms: true,

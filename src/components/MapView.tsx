@@ -3,7 +3,6 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import proj4 from 'proj4';
-import { Maximize2, Plus, Minus } from 'lucide-react';
 import type { LayerVisibility } from '../types/map';
 import type { FieldCollection, FieldFeature } from '../types/field';
 import type { Vehicle } from '../types/vehicle';
@@ -28,10 +27,10 @@ interface MapViewProps {
   onSelectPoi: (poi: PointOfInterest | null) => void;
   isAddPoiMode: boolean;
   onMapClickAddPoi: (coords: [number, number]) => void;
-  focusedTarget: { 
-    coords: [number, number]; 
-    bounds?: [[number, number], [number, number]]; 
-    zoom?: number 
+  focusedTarget: {
+    coords: [number, number];
+    bounds?: [[number, number], [number, number]];
+    zoom?: number
   } | null;
   fitBoundsTrigger?: number;
   selectedCropFilter?: string | null;
@@ -55,7 +54,7 @@ export const MapView: React.FC<MapViewProps> = ({
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
-  
+
   // Layer refs
   const baseMapLayerRef = useRef<L.TileLayer | null>(null);
   const cadastreLayerRef = useRef<L.TileLayer.WMS | null>(null);
@@ -87,7 +86,7 @@ export const MapView: React.FC<MapViewProps> = ({
       if (coordsDisplayRef.current) {
         const lat = e.latlng.lat.toFixed(5);
         const lng = e.latlng.lng.toFixed(5);
-        
+
         let lestCoords = '';
         try {
           const [lestX, lestY] = proj4('EPSG:4326', 'EPSG:3301', [e.latlng.lng, e.latlng.lat]);
@@ -161,7 +160,7 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     const baseConfig = BASE_MAPS[visibility.baseMap] || BASE_MAPS['maaamet-pohikaart'];
-    
+
     const newBaseLayer = L.tileLayer(baseConfig.url, {
       tms: baseConfig.tms ?? false,
       attribution: baseConfig.attribution,
@@ -218,7 +217,7 @@ export const MapView: React.FC<MapViewProps> = ({
         const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
         const cropColor = feature.properties.cropColor || getCropColor(feature.properties.crop);
         const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
-        
+
         return {
           color: isSelected ? '#ffffff' : (matchesFilter ? '#0f172a' : '#64748b'),
           weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0),
@@ -238,7 +237,7 @@ export const MapView: React.FC<MapViewProps> = ({
               <span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background-color: ${cropColor}; box-shadow: 0 0 4px ${cropColor};"></span>
               <strong>${props.name}</strong>
             </div>
-            <div class="field-sub-label">${props.crop} &bull; ${props.areaHa} ha</div>
+            <div class="field-sub-label">${props.num ? `Nr ${props.num} &bull; ` : ''}${props.crop} &bull; ${props.areaHa} ha</div>
           </div>
         `, {
           permanent: !!visibility.fieldLabels,
@@ -260,9 +259,9 @@ export const MapView: React.FC<MapViewProps> = ({
             const l = e.target;
             const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
             const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
-            l.setStyle({ 
-              fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12), 
-              weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0) 
+            l.setStyle({
+              fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12),
+              weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0)
             });
           }
         });
@@ -421,48 +420,13 @@ export const MapView: React.FC<MapViewProps> = ({
     }
   }, [fitBoundsTrigger, handleFitAllBounds]);
 
-  const handleZoomIn = () => {
-    mapInstanceRef.current?.zoomIn();
-  };
-
-  const handleZoomOut = () => {
-    mapInstanceRef.current?.zoomOut();
-  };
-
   return (
     <div className="map-wrapper">
-      <div 
-        ref={mapContainerRef} 
-        className={`leaflet-map-container ${isAddPoiMode ? 'cursor-crosshair' : ''}`} 
+      <div
+        ref={mapContainerRef}
+        className={`leaflet-map-container ${isAddPoiMode ? 'cursor-crosshair' : ''}`}
       />
 
-      {/* Floating Map Navigation & Fit-All Tools */}
-      <div className="map-nav-toolbar glass-card">
-        <button 
-          className="map-nav-btn fit-all-btn"
-          onClick={handleFitAllBounds}
-          title="Mahuta kõik valitud kihtide elemendid ekraanile"
-        >
-          <Maximize2 size={16} />
-          <span className="btn-text">Mahuta kõik</span>
-        </button>
-        <div className="toolbar-divider"></div>
-        <button 
-          className="map-nav-btn icon-only"
-          onClick={handleZoomIn}
-          title="Suurenda (+)"
-        >
-          <Plus size={16} />
-        </button>
-        <button 
-          className="map-nav-btn icon-only"
-          onClick={handleZoomOut}
-          title="Vähenda (-)"
-        >
-          <Minus size={16} />
-        </button>
-      </div>
-      
       {/* Floating coordinates bar */}
       <div ref={coordsDisplayRef} className="coords-tracker glass-card">
         WGS84: 58.13800, 25.88200 | L-EST97: X 532800 Y 6531200

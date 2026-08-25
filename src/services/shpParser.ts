@@ -99,9 +99,12 @@ export async function parseShapefileZip(buffer: ArrayBuffer, fileName: string = 
       
       const props = feat.properties || {};
 
-      // Detect typical PRIA field names
-      const name = props.NIMI || props.NAME || props.POL_NIMI || props.MASSIIV_NR || `Põld ${fieldIndex}`;
-      const fieldCode = props.MASSIIV_NR || props.MASSIIV || props.POL_NR || props.POLLU_KOOD || props.ID || `PRIA-${fieldIndex}`;
+      // Detect PRIA field number ("num"), massiiv ("fieldCode"), cadastral code and name
+      const rawNum = props.POLLUNR || props.POL_NR || props.POLLU_NR || props.POL_JARJE_NR || props.JARJE_NR || props.NR || props.POLLU_NUMBER || props.POLNR || props.FIELD_NR;
+      const num = rawNum !== undefined && rawNum !== null && String(rawNum).trim() !== '' ? String(rawNum).trim() : String(fieldIndex);
+      const rawMassiiv = props.MASSIIV || props.MASSIIV_NR || props.MASS_NR || props.MASSIIVI_NR || props.MASSIIVIK || props.MASSIIV_KOOD;
+      const fieldCode = rawMassiiv ? String(rawMassiiv).trim() : `61044${1000 + fieldIndex}`;
+      const name = props.NIMI || props.NAME || props.POL_NIMI || `Põld ${num}`;
       const cadastralCode = props.KAT_TUNNUS || props.KATASTER || props.KAT_NR || undefined;
       const crop = props.KULTUUR || props.KULT_NIMI || props.CROP || props.MAAKASUTUS || 'Talinisu';
       
@@ -128,10 +131,11 @@ export async function parseShapefileZip(buffer: ArrayBuffer, fileName: string = 
 
       const fieldFeature: FieldFeature = {
         type: 'Feature',
-        id: `field-${fieldIndex}-${Date.now()}`,
+        id: fieldIndex,
         geometry: transformedGeom,
         properties: {
-          id: `field-${fieldIndex}-${Date.now()}`,
+          id: fieldIndex,
+          num: String(num),
           name: String(name),
           fieldCode: String(fieldCode),
           cadastralCode: cadastralCode ? String(cadastralCode) : undefined,

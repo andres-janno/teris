@@ -25,9 +25,10 @@ export interface FieldYearlyRecord {
  * Põllu püsiv master-kirje registris
  */
 export interface MasterField {
-  id: string;                   // Püsiv kordumatu ID (nt 'field-pria-2')
-  name: string;                 // Põllu nimi (nt 'Põld nr 2 (Loisu)')
-  fieldCode: string;            // PRIA põllu / massiivi number
+  id: number | string;          // Unikaalne sisemine number / ID (autoincrement andmebaasis)
+  num?: string;                 // Põllu number PRIA impordist (nt '4', '4-1', '1', '2A')
+  name: string;                 // Põllu nimi (kasutaja poolt määratud/muudetav)
+  fieldCode: string;            // PRIA massiivi number (nt '61144313542')
   cadastralCode?: string;       // Katastritunnus (nt '89201:001:0100')
   soilType?: string;            // Mullastik (nt 'Leostunud liivsavi / LP')
   drainageSystem?: boolean;     // Drenaaž / maaparandussüsteem olemas
@@ -59,6 +60,7 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
     geometry: field.geometry,
     properties: {
       id: field.id,
+      num: field.num,
       name: field.name,
       fieldCode: field.fieldCode,
       cadastralCode: field.cadastralCode,

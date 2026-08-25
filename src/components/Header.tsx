@@ -1,12 +1,11 @@
 import React from 'react';
-import { 
-  Layers, 
-  Tractor, 
-  Upload, 
-  MapPin, 
-  Activity, 
+import {
+  Layers,
+  Tractor,
+  Upload,
+  MapPin,
+  Activity,
   BarChart3,
-  Maximize2,
   Sun,
   Moon
 } from 'lucide-react';
@@ -17,8 +16,6 @@ interface HeaderProps {
   workedAreaHa: number;
   activeVehiclesCount: number;
   poiCount: number;
-  selectedYear: number;
-  onSelectYear: (year: number) => void;
   onOpenFieldsRegister: () => void;
   onOpenUpload: () => void;
   onOpenVehicles: () => void;
@@ -26,7 +23,6 @@ interface HeaderProps {
   onOpenAnalytics: () => void;
   isAddPoiMode: boolean;
   onToggleAddPoiMode: () => void;
-  onFitAll: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
 }
@@ -37,8 +33,6 @@ export const Header: React.FC<HeaderProps> = ({
   workedAreaHa,
   activeVehiclesCount,
   poiCount,
-  selectedYear,
-  onSelectYear,
   onOpenFieldsRegister,
   onOpenUpload,
   onOpenVehicles,
@@ -46,7 +40,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenAnalytics,
   isAddPoiMode,
   onToggleAddPoiMode,
-  onFitAll,
   theme,
   onToggleTheme
 }) => {
@@ -74,18 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
           <div>
             <div className="stat-label-with-year">
               <span>Põllud ({fieldsCount})</span>
-              <select
-                className="header-season-select"
-                value={selectedYear}
-                onClick={(e) => e.stopPropagation()}
-                onChange={(e) => onSelectYear(Number(e.target.value))}
-                title="Vali aktiivne hooaeg / aasta"
-              >
-                <option value={2026}>2026</option>
-                <option value={2025}>2025</option>
-                <option value={2024}>2024</option>
-                <option value={2023}>2023</option>
-              </select>
             </div>
             <div className="stat-value">{totalAreaHa.toFixed(1)} <span className="unit">ha</span></div>
           </div>
@@ -120,26 +101,7 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions">
-        {/* Theme Toggle Button */}
-        <button 
-          className="btn btn-secondary theme-toggle-btn"
-          onClick={onToggleTheme}
-          title={theme === 'light' ? 'Lülita tumedale režiimile (Dark Mode)' : 'Lülita heledale režiimile (Light Mode)'}
-        >
-          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} className="text-amber-400" />}
-          <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>
-        </button>
-
-        <button 
-          className="btn btn-secondary"
-          onClick={onFitAll}
-          title="Mahuta kõik valitud kihtide elemendid ekraanile (Fit All)"
-        >
-          <Maximize2 size={16} className="text-emerald" />
-          <span>Mahuta kõik</span>
-        </button>
-
-        <button 
+        <button
           className={`btn btn-secondary ${isAddPoiMode ? 'btn-active-poi' : ''}`}
           onClick={onToggleAddPoiMode}
           title="Klõpsa kaardile, et lisada kuivati, veepunkt või töökoda"
@@ -148,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
           <span>{isAddPoiMode ? 'Lõpeta lisamine' : 'Lisa marker (POI)'}</span>
         </button>
 
-        <button 
+        <button
           className="btn btn-secondary"
           onClick={onOpenAnalytics}
           title="Vaata tootlikkuse ja kütuse kokkuvõtet"
@@ -157,13 +119,23 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Analüütika</span>
         </button>
 
-        <button 
+        <button
           className="btn btn-primary"
           onClick={onOpenUpload}
           title="Laadi üles PRIA põldude SHP ZIP fail"
         >
           <Upload size={16} />
           <span>Impordi PRIA SHP</span>
+        </button>
+
+        {/* Theme Toggle Button */}
+        <button
+          className="btn btn-secondary theme-toggle-btn"
+          onClick={onToggleTheme}
+          title={theme === 'light' ? 'Lülita tumedale režiimile (Dark Mode)' : 'Lülita heledale režiimile (Light Mode)'}
+        >
+          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} className="text-amber-400" />}
+          <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>
         </button>
       </div>
     </header>

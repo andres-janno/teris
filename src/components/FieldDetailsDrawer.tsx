@@ -1,9 +1,9 @@
 // src/components/FieldDetailsDrawer.tsx
 import React from 'react';
-import { 
-  X, 
-  FileText, 
-  ExternalLink, 
+import {
+  X,
+  FileText,
+  ExternalLink,
   Activity,
   Crosshair
 } from 'lucide-react';
@@ -33,14 +33,17 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
           <div>
             <h3 className="field-title">{props.name}</h3>
             <div className="field-code-row">
-              <span className="field-code">{props.fieldCode || 'PRIA kood puudub'}</span>
-              {props.year && <span className="field-season-badge">{props.year} hooaeg</span>}
+              <span className="field-id-badge" title="Sisemine ID">#{props.id}</span>
+              {props.num && (
+                <span className="field-num-badge" title="PRIA põllu number">Põld nr {props.num}</span>
+              )}
+              <span className="field-code" title="PRIA massiivi number">Massiiv: {props.fieldCode || 'puudub'}</span>
             </div>
           </div>
         </div>
         <div className="header-button-group">
-          <button 
-            className="icon-btn-ghost" 
+          <button
+            className="icon-btn-ghost"
             onClick={() => onFocusField(field)}
             title="Keskenda kaardil"
           >
@@ -56,15 +59,15 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
         {/* Main stats card */}
         <div className="field-stats-grid">
           <div className="field-stat-item">
-            <span className="stat-label">Põllu pindala</span>
+            <span className="stat-label">Pindala</span><br></br>
             <strong className="stat-value">{props.areaHa} ha</strong>
           </div>
           <div className="field-stat-item">
-            <span className="stat-label">Kultuur</span>
+            <span className="stat-label">Kultuur</span><br></br>
             <strong className="stat-value">{props.crop || 'Määramata'}</strong>
           </div>
           <div className="field-stat-item">
-            <span className="stat-label">Haritud pindala</span>
+            <span className="stat-label">Haritud</span><br></br>
             <strong className="stat-value text-emerald">{(props.workedAreaHa || 0).toFixed(2)} ha</strong>
           </div>
           <div className="field-stat-item">
@@ -82,8 +85,8 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
             <strong>{progress}%</strong>
           </div>
           <div className="drawer-progress-track">
-            <div 
-              className="drawer-progress-fill" 
+            <div
+              className="drawer-progress-fill"
               style={{ width: `${progress}%` }}
             ></div>
           </div>
@@ -101,9 +104,9 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
                 <span>Katastritunnus:</span>
                 <code>{props.cadastralCode}</code>
               </div>
-              <a 
-                href={`https://xgis.maaamet.ee/ky/FindKYByT法nnus.aspx?ky=${props.cadastralCode}`} 
-                target="_blank" 
+              <a
+                href={`https://xgis.maaamet.ee/ky/FindKYByTunnus.aspx?ky=${props.cadastralCode}`}
+                target="_blank"
                 rel="noreferrer"
                 className="cadastre-link"
               >
