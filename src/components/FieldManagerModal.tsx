@@ -1,17 +1,17 @@
 // src/components/FieldManagerModal.tsx
 import React, { useState, useMemo } from 'react';
-import { 
-  X, 
-  Layers, 
-  Calendar, 
-  Search, 
-  Plus, 
-  Edit2, 
-  Trash2, 
-  Crosshair, 
-  Download, 
-  Check, 
-  Sprout, 
+import {
+  X,
+  Layers,
+  Calendar,
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  Crosshair,
+  Download,
+  Check,
+  Sprout,
   History,
   AlertCircle
 } from 'lucide-react';
@@ -89,8 +89,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       const yearRecord = f.history.find(h => h.year === selectedYear) || f.history[0];
       const cropName = yearRecord ? yearRecord.crop : '';
       const q = searchQuery.toLowerCase();
-      
-      const matchesSearch = 
+
+      const matchesSearch =
         f.name.toLowerCase().includes(q) ||
         String(f.id).includes(q) ||
         (f.num && f.num.toLowerCase().includes(q)) ||
@@ -246,7 +246,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     {yr === 2026 && <span className="current-badge">Aktiivne</span>}
                   </button>
                 ))}
-                <button 
+                <button
                   className="btn btn-ghost btn-xs add-year-btn"
                   onClick={() => setIsAddYearOpen(true)}
                   title="Lisa uus põllumajandusaasta"
@@ -305,7 +305,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             </select>
 
             <div className="actions-right">
-              <button 
+              <button
                 className="btn btn-secondary btn-sm"
                 onClick={handleExportCsv}
                 title="Ekspordi tabel CSV failina"
@@ -314,7 +314,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 <span>CSV Eksport</span>
               </button>
 
-              <button 
+              <button
                 className="btn btn-primary btn-sm"
                 onClick={() => {
                   onClose();
@@ -347,7 +347,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   className="form-input"
                   style={{ width: '100px' }}
                 />
-                <button 
+                <button
                   className="btn btn-primary btn-sm"
                   onClick={() => {
                     onAddNewSeasonToAll(newYearInput);
@@ -448,8 +448,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               <div className="form-grid">
                 <div className="form-group">
                   <label>Hooaja aasta</label>
-                  <select 
-                    value={editYear} 
+                  <select
+                    value={editYear}
                     onChange={(e) => {
                       const yr = Number(e.target.value);
                       setEditYear(yr);
@@ -572,9 +572,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         <span className="field-id-badge" title="Sisemine unikaalne ID (autoincrement)">#{field.id}</span>
                         <h4 className="field-name">{field.name}</h4>
                         {field.num && (
-                          <span className="field-num-badge" title="PRIA põllu number">Põld nr {field.num}</span>
+                          <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>
                         )}
-                        <span className="field-code-badge" title="PRIA massiivi number">Massiiv: {field.fieldCode}</span>
+                        <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
                         {field.cadastralCode && (
                           <span className="cadastre-code" title="Katastritunnus">{field.cadastralCode}</span>
                         )}
@@ -667,8 +667,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       {field.history
                         .sort((a, b) => b.year - a.year)
                         .map((hist) => (
-                          <div 
-                            key={hist.year} 
+                          <div
+                            key={hist.year}
                             className={`history-pill ${hist.year === selectedYear ? 'current' : ''}`}
                             onClick={() => onSelectYear(hist.year)}
                             title={`Klõpsa, et aktiveerida hooaeg ${hist.year}`}

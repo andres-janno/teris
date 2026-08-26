@@ -1,6 +1,6 @@
 // src/components/MapYearSelector.tsx
 import React, { useState, useMemo } from 'react';
-import { Calendar, Sprout, ChevronRight, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Calendar, Sprout, ChevronDown, ChevronUp, Filter } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import { getCropColor } from '../services/shpParser';
 
@@ -12,7 +12,6 @@ interface MapYearSelectorProps {
   totalAreaHa: number;
   selectedCropFilter?: string | null;
   onSelectCropFilter?: (cropName: string | null) => void;
-  onOpenFieldsRegister: () => void;
 }
 
 interface CropSummary {
@@ -30,8 +29,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   fields,
   totalAreaHa,
   selectedCropFilter = null,
-  onSelectCropFilter,
-  onOpenFieldsRegister
+  onSelectCropFilter
 }) => {
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
@@ -99,7 +97,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
               title={`Vaheta vaade ${year}. aasta põllumassiividele ja kultuuridele`}
             >
               <span className="year-num">{year}</span>
-              {isActive && <span className="year-active-tag">Aktiivne</span>}
             </button>
           );
         })}
@@ -185,19 +182,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
             )}
           </div>
         )}
-      </div>
-
-      {/* Footer: Link to Full Register */}
-      <div className="year-widget-footer">
-        <button
-          className="year-register-link-btn"
-          onClick={onOpenFieldsRegister}
-          title="Ava põldude ja maakasutuse täielik register"
-        >
-          <Sprout size={13} className="text-emerald" />
-          <span>Põlluraamat & Register</span>
-          <ChevronRight size={13} />
-        </button>
       </div>
     </div>
   );

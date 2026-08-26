@@ -19,6 +19,7 @@ export interface FieldYearlyRecord {
   seedingDate?: string;         // Külvikuupäev (ISO / string)
   harvestDate?: string;         // Koristuskuupäev
   notes?: string;               // Hooaja märkmed (väetised, taimekaitse, PRIA toetuskood)
+  geometry?: Polygon | MultiPolygon; // Selle konkreetse hooaja/aasta põllupiirid
 }
 
 /**
@@ -34,8 +35,8 @@ export interface MasterField {
   drainageSystem?: boolean;     // Drenaaž / maaparandussüsteem olemas
   landowner?: string;           // Maaomanik / rentnik
   notes?: string;               // Üldised püsivad märkmed
-  geometry: Polygon | MultiPolygon; // Põllu piirid (GeoJSON)
-  history: FieldYearlyRecord[]; // Aastate ajalugu (aasta kaupa pindalad ja kultuurid)
+  geometry?: Polygon | MultiPolygon; // Baaspiirid (kui aasta oma puudub)
+  history: FieldYearlyRecord[]; // Aastate ajalugu (aasta kaupa pindalad, piirid ja kultuurid)
 }
 
 /**
@@ -54,10 +55,15 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
       status: 'not_started'
     };
 
+  const geometry = (yearRecord.geometry || field.geometry || {
+    type: 'Polygon',
+    coordinates: []
+  }) as Polygon | MultiPolygon;
+
   return {
     type: 'Feature',
     id: field.id,
-    geometry: field.geometry,
+    geometry,
     properties: {
       id: field.id,
       num: field.num,

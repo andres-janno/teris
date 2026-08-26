@@ -1,12 +1,12 @@
 // src/components/PoiManagerModal.tsx
 import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  MapPin, 
-  Plus, 
-  Trash2, 
-  Crosshair, 
-  Download, 
+import {
+  X,
+  MapPin,
+  Plus,
+  Trash2,
+  Crosshair,
+  Download,
   Info,
   Check,
   Edit2
@@ -71,7 +71,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAdding, setIsAdding] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
-  
+
   // Form fields
   const [name, setName] = useState('');
   const [category, setCategory] = useState<PoiCategory>('dryer');
@@ -108,8 +108,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const filteredPois = selectedCategory === 'all' 
-    ? pois 
+  const filteredPois = selectedCategory === 'all'
+    ? pois
     : pois.filter(p => p.category === selectedCategory);
 
   const handleStartAdd = () => {
@@ -218,7 +218,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           <div className="poi-top-bar">
             {/* Category tabs */}
             <div className="category-filter-tabs">
-              <button 
+              <button
                 className={`filter-tab ${selectedCategory === 'all' ? 'active' : ''}`}
                 onClick={() => setSelectedCategory('all')}
               >
@@ -227,7 +227,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               {(Object.keys(CATEGORY_META) as PoiCategory[]).map((cat) => {
                 const count = pois.filter(p => p.category === cat).length;
                 return (
-                  <button 
+                  <button
                     key={cat}
                     className={`filter-tab ${selectedCategory === cat ? 'active' : ''}`}
                     onClick={() => setSelectedCategory(cat)}
@@ -240,7 +240,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
             </div>
 
             <div className="poi-top-actions">
-              <button 
+              <button
                 className="btn btn-secondary btn-sm"
                 onClick={handleExportJson}
                 title="Ekspordi JSON failina"
@@ -248,7 +248,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 <Download size={14} />
                 <span>Ekspordi</span>
               </button>
-              <button 
+              <button
                 className="btn btn-primary btn-sm"
                 onClick={() => {
                   if (isAdding) {
@@ -287,20 +287,20 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               <div className="form-grid">
                 <div className="form-group">
                   <label>Nimi *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="nt Loisu vesi või Riidaja kuivati" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
+                  <input
+                    type="text"
+                    required
+                    placeholder="nt Loisu vesi või Riidaja kuivati"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Kategooria</label>
-                  <select 
-                    value={category} 
+                  <select
+                    value={category}
                     onChange={(e) => setCategory(e.target.value as PoiCategory)}
                     className="form-input"
                   >
@@ -314,33 +314,33 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
                 <div className="form-group">
                   <label>Laiuskraad (Lat WGS84)</label>
-                  <input 
-                    type="number" 
-                    step="0.000001" 
-                    value={lat} 
-                    onChange={(e) => setLat(Number(e.target.value))} 
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lat}
+                    onChange={(e) => setLat(Number(e.target.value))}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Pikkuskraad (Lng WGS84)</label>
-                  <input 
-                    type="number" 
-                    step="0.000001" 
-                    value={lng} 
-                    onChange={(e) => setLng(Number(e.target.value))} 
+                  <input
+                    type="number"
+                    step="0.000001"
+                    value={lng}
+                    onChange={(e) => setLng(Number(e.target.value))}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Mahutavus / Jõudlus</label>
-                  <input 
-                    type="text" 
-                    placeholder="nt 40 m³ mahuti / 1000 L/min" 
-                    value={capacity} 
-                    onChange={(e) => setCapacity(e.target.value)} 
+                  <input
+                    type="text"
+                    placeholder="nt 40 m³ mahuti / 1000 L/min"
+                    value={capacity}
+                    onChange={(e) => setCapacity(e.target.value)}
                     className="form-input"
                   />
                 </div>
@@ -348,18 +348,18 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 <div className="form-group">
                   <label>Kontaktisik & Telefon</label>
                   <div className="input-split">
-                    <input 
-                      type="text" 
-                      placeholder="Nimi" 
-                      value={contactPerson} 
-                      onChange={(e) => setContactPerson(e.target.value)} 
+                    <input
+                      type="text"
+                      placeholder="Nimi"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
                       className="form-input"
                     />
-                    <input 
-                      type="text" 
-                      placeholder="+372 555..." 
-                      value={phone} 
-                      onChange={(e) => setPhone(e.target.value)} 
+                    <input
+                      type="text"
+                      placeholder="+372 555..."
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
                       className="form-input"
                     />
                   </div>
@@ -367,20 +367,20 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
                 <div className="form-group full-width">
                   <label>Kirjeldus & Ligipääsujuhis (suurtele pritsidele/veokitele)</label>
-                  <textarea 
-                    rows={2} 
-                    placeholder="Ligipääs maanteelt 24198, kõvakattega ringtee..." 
-                    value={accessNotes} 
-                    onChange={(e) => setAccessNotes(e.target.value)} 
+                  <textarea
+                    rows={2}
+                    placeholder="Ligipääs maanteelt 24198, kõvakattega ringtee..."
+                    value={accessNotes}
+                    onChange={(e) => setAccessNotes(e.target.value)}
                     className="form-input"
                   />
                 </div>
               </div>
 
               <div className="form-actions">
-                <button 
-                  type="button" 
-                  className="btn btn-ghost btn-sm" 
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-sm"
                   onClick={() => {
                     setIsAdding(false);
                     setEditingId(null);
@@ -418,26 +418,20 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                           <span className="poi-category-badge">{meta.label}</span>
                         </div>
                         {p.description && <p className="poi-desc-line">{p.description}</p>}
-                        <div className="poi-meta-line">
-                          {p.capacity && <span className="meta-tag">📦 {p.capacity}</span>}
-                          {p.phone && <span className="meta-tag">📞 {p.phone}</span>}
-                          {p.accessNotes && <span className="meta-tag note">ℹ️ {p.accessNotes}</span>}
-                          <span className="meta-tag coords">📍 {p.position[0].toFixed(4)}, {p.position[1].toFixed(4)}</span>
-                        </div>
                       </div>
                     </div>
 
                     <div className="poi-item-actions">
-                      <button 
-                        className="btn btn-secondary btn-sm" 
+                      <button
+                        className="btn btn-secondary btn-sm"
                         onClick={() => handleStartEdit(p)}
                         title="Muuda andmeid või asukohta"
                       >
                         <Edit2 size={13} />
                         <span>Muuda</span>
                       </button>
-                      <button 
-                        className="btn btn-secondary btn-sm" 
+                      <button
+                        className="btn btn-secondary btn-sm"
                         onClick={() => {
                           onFocusPoi(p);
                           onClose();
@@ -447,8 +441,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                         <Crosshair size={13} />
                         <span>Kaardile</span>
                       </button>
-                      <button 
-                        className="icon-btn-danger" 
+                      <button
+                        className="icon-btn-danger"
                         onClick={() => onDeletePoi(p.id)}
                         title="Kustuta"
                       >

@@ -35,9 +35,9 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
             <div className="field-code-row">
               <span className="field-id-badge" title="Sisemine ID">#{props.id}</span>
               {props.num && (
-                <span className="field-num-badge" title="PRIA põllu number">Põld nr {props.num}</span>
+                <span className="field-num-badge" title="Põllu number">Nr {props.num}</span>
               )}
-              <span className="field-code" title="PRIA massiivi number">Massiiv: {props.fieldCode || 'puudub'}</span>
+              <span className="field-code" title="PRIA massiivi number">{props.fieldCode || 'puudub'}</span>
             </div>
           </div>
         </div>
