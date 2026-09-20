@@ -37,6 +37,7 @@ interface HeaderProps {
   onToggleAddPoiMode: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
+  dbConnected?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -61,7 +62,8 @@ export const Header: React.FC<HeaderProps> = ({
   isAddPoiMode,
   onToggleAddPoiMode,
   theme,
-  onToggleTheme
+  onToggleTheme,
+  dbConnected = false
 }) => {
   const overallProgress = totalAreaHa > 0 ? Math.round((workedAreaHa / totalAreaHa) * 100) : 0;
   const isLocked = activeSeason?.isLocked ?? false;
@@ -76,6 +78,11 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="brand-text">
           <div className="brand-title">
             <span>AGRI</span>MAP <span className="brand-badge">PRO</span>
+            {dbConnected && (
+              <span className="db-connected-badge" title="Ühendatud PostgreSQL andmebaasiga agro_db">
+                <span className="db-dot"></span> agro_db
+              </span>
+            )}
           </div>
           <div className="brand-subtitle">Maa-amet &bull; PRIA SHP &bull; Teltonika GPS</div>
         </div>

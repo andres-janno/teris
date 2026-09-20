@@ -207,6 +207,36 @@ body {
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
+.db-connected-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  background: rgba(16, 185, 129, 0.12);
+  color: #10b981;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  margin-left: 6px;
+  vertical-align: middle;
+  letter-spacing: 0.02em;
+}
+
+.db-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #10b981;
+  box-shadow: 0 0 8px #10b981;
+  animation: pulse-dot 2s infinite ease-in-out;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.85); }
+}
+
 .brand-subtitle {
   font-size: 0.72rem;
   color: var(--text-secondary);
@@ -388,6 +418,12 @@ body {
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.78rem;
+}
+
+.btn-xs {
+  padding: 4px 10px;
+  font-size: 0.72rem;
+  border-radius: 5px;
 }
 
 .btn-full {
@@ -1211,6 +1247,7 @@ body {
   width: 100%;
   height: 6px;
   -webkit-appearance: none;
+  appearance: none;
   background: rgba(255, 255, 255, 0.1);
   border-radius: 3px;
   outline: none;
@@ -1585,6 +1622,21 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
+}
+
+.card-header-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.card-header-actions {
+  display: flex;
+  gap: 2px;
+  margin-left: auto;
+  flex-shrink: 0;
 }
 
 .v-avatar {
@@ -2032,6 +2084,50 @@ body {
   color: var(--text-secondary);
 }
 
+.connectivity-type-picker {
+  margin-bottom: 2px;
+}
+
+.segmented-control {
+  display: flex;
+  gap: 4px;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+}
+
+.segmented-option {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 7px 10px;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.segmented-option:hover {
+  color: var(--text-primary);
+}
+
+.segmented-option.active {
+  background: #0f172a;
+  color: #ffffff;
+}
+
+:root[data-theme="dark"] .segmented-option.active {
+  background: #1e293b;
+  border: 1px solid #38bdf8;
+}
+
 .form-input {
   background: var(--input-bg);
   border: 1px solid var(--input-border);
@@ -2045,6 +2141,21 @@ body {
 
 .form-input:focus {
   border-color: var(--emerald-500);
+}
+
+/* Native <select> chrome adds its own height/padding on top of ours unless
+   appearance is reset — without this, selects render taller than text
+   inputs sharing the same .form-input class. */
+select.form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
 }
 
 input[type="number"],
@@ -3638,15 +3749,6 @@ input[type="number"],
   background: rgba(239, 68, 68, 0.08);
   border: 1px solid rgba(239, 68, 68, 0.3);
   color: #ef4444;
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 3px 8px;
-  border-radius: 5px;
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  cursor: pointer;
-  transition: all 0.15s;
 }
 
 .btn-danger-outline:hover {

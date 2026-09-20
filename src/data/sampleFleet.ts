@@ -200,6 +200,7 @@ export const INITIAL_IMPLEMENTS: Implement[] = [
 export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   {
     id: 'tel-01',
+    connectivityType: 'cellular',
     imei: '861234058812001',
     model: 'FMB640 PRO',
     simNumber: '+372 5311 8812',
@@ -224,6 +225,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-02',
+    connectivityType: 'cellular',
     imei: '864552043341002',
     model: 'FMC650 4G LTE',
     simNumber: '+372 5322 3341',
@@ -248,6 +250,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-03',
+    connectivityType: 'cellular',
     imei: '861234055590003',
     model: 'FMB640 PRO',
     simNumber: '+372 5333 5590',
@@ -272,6 +275,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-04',
+    connectivityType: 'cellular',
     imei: '864552049901004',
     model: 'FMC650 4G LTE',
     simNumber: '+372 5344 9901',
@@ -296,6 +300,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-05',
+    connectivityType: 'cellular',
     imei: '869920011102005',
     model: 'FMB920 Compact',
     simNumber: '+372 5355 1102',
@@ -320,6 +325,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-06',
+    connectivityType: 'cellular',
     imei: '867740027740006',
     model: 'FMM640 CAT-M1',
     simNumber: '+372 5366 7740',
@@ -344,6 +350,7 @@ export const INITIAL_TELTONIKA_DEVICES: TeltonikaDevice[] = [
   },
   {
     id: 'tel-07',
+    connectivityType: 'cellular',
     imei: '861400014419007',
     model: 'FMB140 CAN/BLE',
     simNumber: '+372 5377 4419',
@@ -383,11 +390,16 @@ export function enrichVehicles(
     // Leia haagitud tööriist
     const implement = implementsList.find((imp) => imp.id === v.assignedImplementId || imp.assignedVehicleId === v.id);
 
-    const position = device ? device.position : [58.1385, 25.8835] as [number, number];
-    const heading = device ? device.heading : 0;
-    const speedKmH = device ? device.speedKmH : 0;
-    const status = device ? device.status : 'offline';
-    const altitude = device ? device.altitude : 68;
+    // `??` (mitte `device ? device.X : ...`), sest seade võib eksisteerida, aga
+    // mõni telemeetriaväli olla puudu (nt vanast localStorage'ist pärit või
+    // registrist laaditud seade, millel pole veel elavat GPS-voogu) —
+    // sel juhul annab ternary otse `device.X` ehk undefined, mis lõhub UI-s
+    // `.toFixed()` jms kutsed.
+    const position = device?.position ?? ([58.1385, 25.8835] as [number, number]);
+    const heading = device?.heading ?? 0;
+    const speedKmH = device?.speedKmH ?? 0;
+    const status = device?.status ?? 'offline';
+    const altitude = device?.altitude ?? 68;
 
     return {
       ...v,
@@ -397,18 +409,20 @@ export function enrichVehicles(
       speedKmH,
       altitude,
       telemetry: {
-        deviceId: device ? `${device.model} (${device.imei.slice(-4)})` : 'PAIGALDAMATA',
-        batteryVoltage: device ? device.batteryVoltage : 0,
-        fuelLevelPct: device ? device.fuelLevelPct : 0,
-        fuelConsumptionLh: device ? device.fuelConsumptionLh : 0,
-        engineRpm: device ? device.engineRpm : 0,
-        engineTempC: device ? device.engineTempC : 0,
-        engineHours: device ? device.engineHours : 0,
-        ignition: device ? device.ignition : false,
-        hydraulicActive: device ? device.hydraulicActive : false,
-        satelliteCount: device ? device.satelliteCount : 0,
-        hdop: device ? device.hdop : 9.9,
-        lastUpdate: device ? device.lastUpdate : new Date().toISOString()
+        deviceId: device
+          ? `${device.model} (${device.connectivityType === 'eye_sensor' ? device.macAddress : device.imei?.slice(-4)})`
+          : 'PAIGALDAMATA',
+        batteryVoltage: device?.batteryVoltage ?? 0,
+        fuelLevelPct: device?.fuelLevelPct ?? 0,
+        fuelConsumptionLh: device?.fuelConsumptionLh ?? 0,
+        engineRpm: device?.engineRpm ?? 0,
+        engineTempC: device?.engineTempC ?? 0,
+        engineHours: device?.engineHours ?? 0,
+        ignition: device?.ignition ?? false,
+        hydraulicActive: device?.hydraulicActive ?? false,
+        satelliteCount: device?.satelliteCount ?? 0,
+        hdop: device?.hdop ?? 9.9,
+        lastUpdate: device?.lastUpdate ?? new Date().toISOString()
       },
       implement: implement ? {
         id: implement.id,

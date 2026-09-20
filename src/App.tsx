@@ -42,8 +42,12 @@ import { INITIAL_CROPS } from './data/sampleCrops';
 import { TelemetrySimulator } from './services/telemetrySimulator';
 import { calculateFieldWorkProgress, getBoundingBox } from './services/geometryEngine';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
+import { api } from './services/api';
 
 export const App: React.FC = () => {
+  // Database connection status
+  const [dbConnected, setDbConnected] = useState<boolean>(false);
+
   // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation
   const [visibility, setVisibility] = useState<LayerVisibility>({
     baseMap: 'maaamet-pohikaart',
@@ -180,12 +184,45 @@ export const App: React.FC = () => {
   const [pois, setPois] = useState<PointOfInterest[]>(SAMPLE_POI_LIST);
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
 
-  // Always keep master fields and POIs synced directly from ts sample files
+  // Laadi andmed otse PostgreSQL agro_db andmebaasist
   useEffect(() => {
-    localStorage.removeItem('agrimap_master_fields');
-    localStorage.removeItem('agrimap_pois');
-    setMasterFields(INITIAL_MASTER_FIELDS);
-    setPois(SAMPLE_POI_LIST);
+    let isMounted = true;
+    api.getStatus()
+      .then(async (status) => {
+        if (!isMounted) return;
+        if (status.status === 'connected') {
+          setDbConnected(true);
+          console.log('✅ Connected to PostgreSQL agro_db:', status.counts);
+
+          const [dbFields, dbSeasons, dbFleet, dbPois, dbParties, dbCrops] = await Promise.all([
+            api.getMasterFields().catch(() => null),
+            api.getSeasons().catch(() => null),
+            api.getFleet().catch(() => null),
+            api.getPois().catch(() => null),
+            api.getParties().catch(() => null),
+            api.getCrops().catch(() => null)
+          ]);
+
+          if (!isMounted) return;
+          if (dbFields && dbFields.length > 0) setMasterFields(dbFields);
+          if (dbSeasons && dbSeasons.length > 0) setSeasons(dbSeasons);
+          if (dbFleet) {
+            if (dbFleet.vehicles?.length) setRawVehicles(dbFleet.vehicles);
+            if (dbFleet.implements?.length) setImplementsList(dbFleet.implements);
+            if (dbFleet.devices?.length) setDevices(dbFleet.devices);
+          }
+          if (dbPois && dbPois.length > 0) setPois(dbPois);
+          if (dbParties && dbParties.length > 0) setParties(dbParties);
+          if (dbCrops && dbCrops.length > 0) setCrops(dbCrops);
+        }
+      })
+      .catch((err) => {
+        console.warn('⚠️ agro_db API unavailable, using offline fallback:', err);
+      });
+
+    return () => {
+      isMounted = false;
+    };
   }, []);
 
   // Modals state
@@ -231,10 +268,12 @@ export const App: React.FC = () => {
       }
       return [partyToSave, ...prev];
     });
+    api.saveParty(partyToSave).catch((err) => console.error('Error saving party to DB:', err));
   };
 
   const handleDeleteParty = (partyId: string) => {
     setParties((prev) => prev.filter((p) => p.id !== partyId));
+    api.deleteParty(partyId).catch((err) => console.error('Error deleting party from DB:', err));
   };
 
   // Crops & Varieties Register state
@@ -258,10 +297,12 @@ export const App: React.FC = () => {
       }
       return [...prev, cropToSave];
     });
+    api.saveCrop(cropToSave).catch((err) => console.error('Error saving crop to DB:', err));
   };
 
   const handleDeleteCrop = (cropId: string) => {
     setCrops((prev) => prev.filter((c) => c.id !== cropId));
+    api.deleteCrop(cropId).catch((err) => console.error('Error deleting crop from DB:', err));
   };
 
   // Theme state: light by default
@@ -426,15 +467,20 @@ export const App: React.FC = () => {
   };
 
   // Reassignment handlers (Swapping devices and implements between machines)
-  const handleAssignDevice = (deviceId: string, vehicleId?: string) => {
+  // A device attaches to at most one target at a time: either a vehicle
+  // (cellular trackers) or an implement (eye sensors on attachments).
+  const handleAssignDevice = (deviceId: string, vehicleId?: string, implementId?: string) => {
     setDevices((prevDevs) => {
       return prevDevs.map((d) => {
         if (d.id === deviceId) {
-          return { ...d, assignedVehicleId: vehicleId };
+          return { ...d, assignedVehicleId: vehicleId, assignedImplementId: implementId };
         }
-        // If this other device was assigned to the target vehicle, unassign it
+        // If this other device was assigned to the target vehicle/implement, unassign it
         if (vehicleId && d.assignedVehicleId === vehicleId) {
           return { ...d, assignedVehicleId: undefined };
+        }
+        if (implementId && d.assignedImplementId === implementId) {
+          return { ...d, assignedImplementId: undefined };
         }
         return d;
       });
@@ -451,6 +497,20 @@ export const App: React.FC = () => {
         return v;
       });
     });
+
+    setImplementsList((prevImps) => {
+      return prevImps.map((imp) => {
+        if (imp.id === implementId) {
+          return { ...imp, assignedDeviceId: deviceId };
+        }
+        if (imp.assignedDeviceId === deviceId) {
+          return { ...imp, assignedDeviceId: undefined };
+        }
+        return imp;
+      });
+    });
+
+    api.assignDevice(deviceId, vehicleId, implementId).catch((err) => console.error('Error assigning device in DB:', err));
   };
 
   const handleAssignImplement = (implementId: string, vehicleId?: string) => {
@@ -477,6 +537,8 @@ export const App: React.FC = () => {
         return v;
       });
     });
+
+    api.assignImplement(implementId, vehicleId).catch((err) => console.error('Error assigning implement in DB:', err));
   };
 
   // CRUD handlers
@@ -489,6 +551,27 @@ export const App: React.FC = () => {
     if (newV.assignedImplementId) {
       handleAssignImplement(newV.assignedImplementId, v.id);
     }
+    api.saveVehicle(v).catch((err) => console.error('Error saving vehicle to DB:', err));
+  };
+
+  const handleUpdateVehicle = (id: string, updates: Omit<Vehicle, 'id'>) => {
+    setRawVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...updates } : v)));
+
+    if (updates.assignedDeviceId) {
+      handleAssignDevice(updates.assignedDeviceId, id);
+    } else {
+      const currentDeviceId = devices.find((d) => d.assignedVehicleId === id)?.id;
+      if (currentDeviceId) handleAssignDevice(currentDeviceId, undefined);
+    }
+
+    if (updates.assignedImplementId) {
+      handleAssignImplement(updates.assignedImplementId, id);
+    } else {
+      const currentImplementId = implementsList.find((i) => i.assignedVehicleId === id)?.id;
+      if (currentImplementId) handleAssignImplement(currentImplementId, undefined);
+    }
+
+    api.saveVehicle({ ...updates, id }).catch((err) => console.error('Error updating vehicle in DB:', err));
   };
 
   const handleDeleteVehicle = (id: string) => {
@@ -496,6 +579,7 @@ export const App: React.FC = () => {
     setDevices((prev) => prev.map((d) => d.assignedVehicleId === id ? { ...d, assignedVehicleId: undefined } : d));
     setImplementsList((prev) => prev.map((i) => i.assignedVehicleId === id ? { ...i, assignedVehicleId: undefined } : i));
     if (selectedVehicle && selectedVehicle.id === id) setSelectedVehicle(null);
+    api.deleteVehicle(id).catch((err) => console.error('Error deleting vehicle from DB:', err));
   };
 
   const handleAddImplement = (newImp: Omit<Implement, 'id'>) => {
@@ -504,11 +588,20 @@ export const App: React.FC = () => {
     if (newImp.assignedVehicleId) {
       handleAssignImplement(imp.id, newImp.assignedVehicleId);
     }
+    api.saveImplement(imp).catch((err) => console.error('Error saving implement to DB:', err));
+  };
+
+  const handleUpdateImplement = (id: string, updates: Omit<Implement, 'id'>) => {
+    setImplementsList((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
+    handleAssignImplement(id, updates.assignedVehicleId || undefined);
+    api.saveImplement({ ...updates, id }).catch((err) => console.error('Error updating implement in DB:', err));
   };
 
   const handleDeleteImplement = (id: string) => {
     setImplementsList((prev) => prev.filter((i) => i.id !== id));
     setRawVehicles((prev) => prev.map((v) => v.assignedImplementId === id ? { ...v, assignedImplementId: undefined } : v));
+    setDevices((prev) => prev.map((d) => d.assignedImplementId === id ? { ...d, assignedImplementId: undefined } : d));
+    api.deleteImplement(id).catch((err) => console.error('Error deleting implement from DB:', err));
   };
 
   const handleAddDevice = (newDev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
@@ -524,12 +617,26 @@ export const App: React.FC = () => {
     setDevices((prev) => [...prev, dev]);
     if (newDev.assignedVehicleId) {
       handleAssignDevice(dev.id, newDev.assignedVehicleId);
+    } else if (newDev.assignedImplementId) {
+      handleAssignDevice(dev.id, undefined, newDev.assignedImplementId);
+    }
+    api.saveDevice(dev).catch((err) => console.error('Error saving device to DB:', err));
+  };
+
+  const handleUpdateDevice = (id: string, updates: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
+    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, ...updates } : d)));
+    handleAssignDevice(id, updates.assignedVehicleId || undefined, updates.assignedImplementId || undefined);
+    const current = devices.find((d) => d.id === id);
+    if (current) {
+      api.saveDevice({ ...current, ...updates }).catch((err) => console.error('Error updating device in DB:', err));
     }
   };
 
   const handleDeleteDevice = (id: string) => {
     setDevices((prev) => prev.filter((d) => d.id !== id));
     setRawVehicles((prev) => prev.map((v) => v.assignedDeviceId === id ? { ...v, assignedDeviceId: undefined } : v));
+    setImplementsList((prev) => prev.map((i) => i.assignedDeviceId === id ? { ...i, assignedDeviceId: undefined } : i));
+    api.deleteDevice(id).catch((err) => console.error('Error deleting device from DB:', err));
   };
 
   // POI actions
@@ -549,6 +656,7 @@ export const App: React.FC = () => {
     setPoiDraft(null);
     setVisibility((prev) => ({ ...prev, poi: true }));
     setFocusedTarget({ coords: newPoi.position, zoom: 15 });
+    api.savePoi(newPoi).catch((err) => console.error('Error saving POI to DB:', err));
   };
 
   const handleUpdatePoi = (id: string, updatedData: Partial<PointOfInterest>) => {
@@ -563,6 +671,7 @@ export const App: React.FC = () => {
     if (updatedData.position) {
       setFocusedTarget({ coords: updatedData.position as [number, number], zoom: 15 });
     }
+    api.savePoi({ id, ...updatedData }).catch((err) => console.error('Error updating POI in DB:', err));
   };
 
   const handleDeletePoi = (id: string) => {
@@ -574,6 +683,7 @@ export const App: React.FC = () => {
     if (selectedPoi && selectedPoi.id === id) {
       setSelectedPoi(null);
     }
+    api.deletePoi(id).catch((err) => console.error('Error deleting POI from DB:', err));
   };
 
   const handleFocusPoi = (poi: PointOfInterest) => {
@@ -617,8 +727,8 @@ export const App: React.FC = () => {
     fieldData: Partial<MasterField>, 
     seasonData?: FieldYearlyRecord
   ) => {
-    setMasterFields((prev) =>
-      prev.map((f) => {
+    setMasterFields((prev) => {
+      const next = prev.map((f) => {
         if (f.id === fieldId || String(f.id) === String(fieldId)) {
           let newHistory = [...f.history];
           if (seasonData) {
@@ -629,15 +739,18 @@ export const App: React.FC = () => {
               newHistory = [seasonData, ...newHistory];
             }
           }
-          return {
+          const updated: MasterField = {
             ...f,
             ...fieldData,
             history: newHistory
           };
+          api.saveMasterFields(updated).catch((err) => console.error('Error saving master field to DB:', err));
+          return updated;
         }
         return f;
-      })
-    );
+      });
+      return next;
+    });
   };
 
   const handleAddNewSeasonToAll = (newYear: number) => {
@@ -680,11 +793,13 @@ export const App: React.FC = () => {
     if (selectedFieldId === String(fieldId)) {
       setSelectedFieldId(null);
     }
+    api.deleteMasterField(fieldId).catch((err) => console.error('Error deleting field from DB:', err));
   };
 
   // Season Management Handlers
   const handleUpdateSeason = (updated: FarmingSeason) => {
     setSeasons((prev) => prev.map((s) => s.year === updated.year ? updated : s));
+    api.saveSeason(updated).catch((err) => console.error('Error updating season in DB:', err));
   };
 
   const handleCloseSeason = (year: number) => {
@@ -692,7 +807,7 @@ export const App: React.FC = () => {
     setSeasons((prev) =>
       prev.map((s) => {
         if (s.year === year) {
-          return {
+          const updated: FarmingSeason = {
             ...s,
             status: 'closed',
             isLocked: true,
@@ -700,6 +815,8 @@ export const App: React.FC = () => {
             closedAt: today,
             closedBy: 'Rein Janno'
           };
+          api.saveSeason(updated).catch((err) => console.error('Error closing season in DB:', err));
+          return updated;
         }
         return s;
       })
@@ -710,11 +827,13 @@ export const App: React.FC = () => {
     setSeasons((prev) =>
       prev.map((s) => {
         if (s.year === year) {
-          return {
+          const updated: FarmingSeason = {
             ...s,
             status: 'active',
             isLocked: false
           };
+          api.saveSeason(updated).catch((err) => console.error('Error reopening season in DB:', err));
+          return updated;
         }
         return s;
       })
@@ -727,6 +846,7 @@ export const App: React.FC = () => {
       return [newSeason, ...filtered].sort((a, b) => b.year - a.year);
     });
     handleAddNewSeasonToAll(newSeason.year);
+    api.saveSeason(newSeason).catch((err) => console.error('Error creating season in DB:', err));
   };
 
   // PRIA SHP import
@@ -775,6 +895,7 @@ export const App: React.FC = () => {
     } else {
       setMasterFields((prev) => [...prev, ...newMasterFields]);
     }
+    api.saveMasterFields(newMasterFields).catch((err) => console.error('Error saving imported fields to DB:', err));
 
     setIsUploadOpen(false);
 
@@ -825,6 +946,7 @@ export const App: React.FC = () => {
         onToggleAddPoiMode={() => setIsAddPoiMode(!isAddPoiMode)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
+        dbConnected={dbConnected}
       />
 
       {/* Main Map View */}
@@ -965,10 +1087,13 @@ export const App: React.FC = () => {
         onAssignDevice={handleAssignDevice}
         onAssignImplement={handleAssignImplement}
         onAddVehicle={handleAddVehicle}
+        onUpdateVehicle={handleUpdateVehicle}
         onDeleteVehicle={handleDeleteVehicle}
         onAddImplement={handleAddImplement}
+        onUpdateImplement={handleUpdateImplement}
         onDeleteImplement={handleDeleteImplement}
         onAddDevice={handleAddDevice}
+        onUpdateDevice={handleUpdateDevice}
         onDeleteDevice={handleDeleteDevice}
       />
 

@@ -45,21 +45,29 @@ export interface Implement {
   year?: number;
   serialNumber?: string;
   assignedVehicleId?: string;    // Millise masina küljes (kui on haagitud)
+  assignedDeviceId?: string;     // Külge paigaldatud seade (nt Eye sensor otsikul)
   isActive?: boolean;            // Kas tööasendis (maas)
   notes?: string;
 }
 
+export type DeviceConnectivity = 'cellular' | 'eye_sensor';
+
 /**
- * Teltonika GPS ja Telemeetria seadmete register
+ * Teltonika GPS ja Telemeetria seadmete register.
+ * Kaks sidususe tüüpi: 'cellular' (IMEI + SIM, paigaldatakse masinasse)
+ * ja 'eye_sensor' (MAC-aadress, BLE-andur haakeriista küljes).
  */
 export interface TeltonikaDevice {
   id: string;
-  imei: string;
-  model: string;                 // nt FMB640, FMC650, FMB920, FMM640
-  simNumber: string;
+  connectivityType: DeviceConnectivity;
+  imei?: string;                 // Kohustuslik ainult 'cellular' tüübil
+  simNumber?: string;             // Ainult 'cellular' tüübil
+  macAddress?: string;            // Kohustuslik ainult 'eye_sensor' tüübil
+  model: string;                 // nt FMB640, FMC650 või vabatekst Eye sensori mudel
   firmwareVersion?: string;
   assignedVehicleId?: string;    // Millisesse masinasse paigaldatud (kui on paigaldatud)
-  
+  assignedImplementId?: string;  // Millise haakeriista külge paigaldatud (kui on paigaldatud)
+
   // Reaalaja telemeetria
   batteryVoltage: number;        // V (nt 27.8V)
   fuelLevelPct: number;          // % (nt 74%)

@@ -1,30 +1,32 @@
 // src/components/VehicleTracker.tsx
 import React, { useState } from 'react';
-import { 
-  X, 
-  Tractor, 
-  Fuel, 
-  Battery, 
-  Gauge, 
-  User, 
-  Wrench, 
-  Crosshair, 
-  Radio, 
-  Plus, 
-  Trash2, 
-  RotateCcw, 
-  Link, 
-  Unlink, 
+import {
+  X,
+  Tractor,
+  Fuel,
+  Battery,
+  Gauge,
+  User,
+  Wrench,
+  Crosshair,
+  Radio,
+  Plus,
+  Trash2,
+  RotateCcw,
+  Link,
+  Unlink,
   Info,
-  Activity
+  Activity,
+  Pencil
 } from 'lucide-react';
-import type { 
-  Vehicle, 
-  Implement, 
-  TeltonikaDevice, 
-  EnrichedVehicle, 
-  VehicleType, 
-  ImplementType 
+import type {
+  Vehicle,
+  Implement,
+  TeltonikaDevice,
+  EnrichedVehicle,
+  VehicleType,
+  ImplementType,
+  DeviceConnectivity
 } from '../types/fleet';
 
 interface VehicleTrackerProps {
@@ -39,15 +41,18 @@ interface VehicleTrackerProps {
   onFocusVehicle: (vehicle: EnrichedVehicle) => void;
   
   // Reassignment / Movement handlers
-  onAssignDevice: (deviceId: string, vehicleId?: string) => void;
+  onAssignDevice: (deviceId: string, vehicleId?: string, implementId?: string) => void;
   onAssignImplement: (implementId: string, vehicleId?: string) => void;
   
   // CRUD
   onAddVehicle: (v: Omit<Vehicle, 'id'>) => void;
+  onUpdateVehicle: (id: string, v: Omit<Vehicle, 'id'>) => void;
   onDeleteVehicle: (id: string) => void;
   onAddImplement: (imp: Omit<Implement, 'id'>) => void;
+  onUpdateImplement: (id: string, imp: Omit<Implement, 'id'>) => void;
   onDeleteImplement: (id: string) => void;
   onAddDevice: (dev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
+  onUpdateDevice: (id: string, dev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
   onDeleteDevice: (id: string) => void;
 }
 
@@ -90,14 +95,23 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onAssignDevice,
   onAssignImplement,
   onAddVehicle,
+  onUpdateVehicle,
   onDeleteVehicle,
   onAddImplement,
+  onUpdateImplement,
   onDeleteImplement,
   onAddDevice,
+  onUpdateDevice,
   onDeleteDevice
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('vehicles');
   const [isAddingNew, setIsAddingNew] = useState(false);
+
+  // Kui mõni neist on seatud, käitub aktiivse vahekaardi vorm muutmisrežiimis
+  // (eeltäidetud väljad, "Salvesta muudatused") lisamise asemel.
+  const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
+  const [editingImplementId, setEditingImplementId] = useState<string | null>(null);
+  const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
 
   // Forms states
   // 1. Vehicle Form
@@ -120,10 +134,22 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impAssignedVehId, setImpAssignedVehId] = useState('');
 
   // 3. Teltonika Form
+  const [devConnectivity, setDevConnectivity] = useState<DeviceConnectivity>('cellular');
   const [devModel, setDevModel] = useState('FMC650 4G LTE');
   const [devImei, setDevImei] = useState('');
   const [devSim, setDevSim] = useState('');
-  const [devAssignedVehId, setDevAssignedVehId] = useState('');
+  const [devMac, setDevMac] = useState('');
+  // Kombineeritud sihtmärgi valik: '' | `veh:<id>` | `imp:<id>` — mõlemat
+  // tüüpi seadet saab paigaldada kas masinasse või haakeriista külge.
+  const [devAssignedTarget, setDevAssignedTarget] = useState('');
+
+  const handleConnectivityChange = (next: DeviceConnectivity) => {
+    setDevConnectivity(next);
+    setDevModel(next === 'eye_sensor' ? 'Teltonika EYE Sensor' : 'FMC650 4G LTE');
+    setDevImei('');
+    setDevSim('');
+    setDevMac('');
+  };
 
   // Quick swap modals state
   const [swapModal, setSwapModal] = useState<{
@@ -134,11 +160,57 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
   if (!isOpen) return null;
 
+  const closeForm = () => {
+    setIsAddingNew(false);
+    setEditingVehicleId(null);
+    setEditingImplementId(null);
+    setEditingDeviceId(null);
+  };
+
+  // Tühjendab vormi väljad, et üleminek muutmisrežiimist uue kirje
+  // lisamisele (või vastupidi) ei jätaks eelmise kirje väärtusi alles.
+  const resetVehicleForm = () => {
+    setVName('');
+    setVModel('');
+    setVType('tractor');
+    setVPlate('');
+    setVDriver('');
+    setVColor('#22c55e');
+    setVSelectedDevId('');
+    setVSelectedImpId('');
+  };
+
+  const resetImplementForm = () => {
+    setImpName('');
+    setImpManufacturer('');
+    setImpModel('');
+    setImpType('cultivator');
+    setImpWidth(8.0);
+    setImpSerial('');
+    setImpAssignedVehId('');
+  };
+
+  const resetDeviceForm = () => {
+    setDevConnectivity('cellular');
+    setDevModel('FMC650 4G LTE');
+    setDevImei('');
+    setDevSim('');
+    setDevMac('');
+    setDevAssignedTarget('');
+  };
+
+  const openAddForm = () => {
+    if (activeTab === 'vehicles') resetVehicleForm();
+    else if (activeTab === 'implements') resetImplementForm();
+    else resetDeviceForm();
+    setIsAddingNew(true);
+  };
+
   // Handle forms submits
   const handleCreateVehicle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!vName.trim()) return;
-    onAddVehicle({
+    const payload = {
       name: vName.trim(),
       model: vModel.trim() || 'Teadmata mudel',
       type: vType,
@@ -147,8 +219,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       color: vColor,
       assignedDeviceId: vSelectedDevId || undefined,
       assignedImplementId: vSelectedImpId || undefined
-    });
-    setIsAddingNew(false);
+    };
+    if (editingVehicleId) {
+      onUpdateVehicle(editingVehicleId, payload);
+    } else {
+      onAddVehicle(payload);
+    }
+    closeForm();
     setVName('');
     setVModel('');
     setVPlate('');
@@ -157,7 +234,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const handleCreateImplement = (e: React.FormEvent) => {
     e.preventDefault();
     if (!impName.trim()) return;
-    onAddImplement({
+    const payload = {
       name: impName.trim(),
       manufacturer: impManufacturer.trim() || 'Tootja',
       model: impModel.trim() || impName.trim(),
@@ -166,8 +243,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       serialNumber: impSerial.trim() || undefined,
       assignedVehicleId: impAssignedVehId || undefined,
       isActive: false
-    });
-    setIsAddingNew(false);
+    };
+    if (editingImplementId) {
+      onUpdateImplement(editingImplementId, payload);
+    } else {
+      onAddImplement(payload);
+    }
+    closeForm();
     setImpName('');
     setImpManufacturer('');
     setImpModel('');
@@ -175,22 +257,72 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
   const handleCreateDevice = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!devImei.trim()) return;
-    onAddDevice({
-      model: devModel,
-      imei: devImei.trim(),
-      simNumber: devSim.trim() || '+372 5...',
-      assignedVehicleId: devAssignedVehId || undefined,
-      batteryVoltage: 27.5,
+    if (devConnectivity === 'cellular' && !devImei.trim()) return;
+    if (devConnectivity === 'eye_sensor' && !devMac.trim()) return;
+
+    const [targetKind, targetId] = devAssignedTarget ? devAssignedTarget.split(':') : [undefined, undefined];
+
+    const payload = {
+      connectivityType: devConnectivity,
+      model: devModel.trim() || (devConnectivity === 'eye_sensor' ? 'Teltonika EYE Sensor' : 'FMC650 4G LTE'),
+      imei: devConnectivity === 'cellular' ? devImei.trim() : undefined,
+      simNumber: devConnectivity === 'cellular' ? (devSim.trim() || '+372 5...') : undefined,
+      macAddress: devConnectivity === 'eye_sensor' ? devMac.trim().toUpperCase() : undefined,
+      assignedVehicleId: targetKind === 'veh' ? targetId : undefined,
+      assignedImplementId: targetKind === 'imp' ? targetId : undefined,
+      batteryVoltage: devConnectivity === 'eye_sensor' ? 3.0 : 27.5,
       fuelLevelPct: 100,
       ignition: false,
       hydraulicActive: false,
-      satelliteCount: 16,
-      hdop: 0.8
-    });
-    setIsAddingNew(false);
+      satelliteCount: devConnectivity === 'eye_sensor' ? 0 : 16,
+      hdop: devConnectivity === 'eye_sensor' ? 0 : 0.8
+    };
+    if (editingDeviceId) {
+      onUpdateDevice(editingDeviceId, payload);
+    } else {
+      onAddDevice(payload);
+    }
+    closeForm();
     setDevImei('');
     setDevSim('');
+    setDevMac('');
+    setDevAssignedTarget('');
+  };
+
+  const startEditVehicle = (v: Vehicle) => {
+    setVName(v.name);
+    setVModel(v.model);
+    setVType(v.type);
+    setVPlate(v.registrationPlate || '');
+    setVDriver(v.driverName || '');
+    setVColor(v.color);
+    setVSelectedDevId(v.assignedDeviceId || '');
+    setVSelectedImpId(v.assignedImplementId || '');
+    setEditingVehicleId(v.id);
+    setIsAddingNew(true);
+  };
+
+  const startEditImplement = (imp: Implement) => {
+    setImpName(imp.name);
+    setImpManufacturer(imp.manufacturer);
+    setImpModel(imp.model);
+    setImpType(imp.type);
+    setImpWidth(imp.workingWidthM);
+    setImpSerial(imp.serialNumber || '');
+    setImpAssignedVehId(imp.assignedVehicleId || '');
+    setEditingImplementId(imp.id);
+    setIsAddingNew(true);
+  };
+
+  const startEditDevice = (dev: TeltonikaDevice) => {
+    setDevConnectivity(dev.connectivityType);
+    setDevModel(dev.model);
+    setDevImei(dev.imei || '');
+    setDevSim(dev.simNumber || '');
+    setDevMac(dev.macAddress || '');
+    setDevAssignedTarget(dev.assignedVehicleId ? `veh:${dev.assignedVehicleId}` : (dev.assignedImplementId ? `imp:${dev.assignedImplementId}` : ''));
+    setEditingDeviceId(dev.id);
+    setIsAddingNew(true);
   };
 
   return (
@@ -214,44 +346,44 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           {/* Main Navigation Tabs */}
           <div className="fleet-top-bar">
             <div className="category-filter-tabs">
-              <button 
+              <button
                 className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('vehicles'); setIsAddingNew(false); }}
+                onClick={() => { setActiveTab('vehicles'); closeForm(); }}
               >
                 <span>🚜 Sõidukid / Masinad</span>
                 <span className="count-pill">{vehicles.length}</span>
               </button>
 
-              <button 
+              <button
                 className={`filter-tab ${activeTab === 'implements' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('implements'); setIsAddingNew(false); }}
+                onClick={() => { setActiveTab('implements'); closeForm(); }}
               >
                 <span>🔧 Haakeriistad</span>
                 <span className="count-pill">{implementsList.length}</span>
               </button>
 
-              <button 
+              <button
                 className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('devices'); setIsAddingNew(false); }}
+                onClick={() => { setActiveTab('devices'); closeForm(); }}
               >
                 <span>📡 Teltonika GPS Seadmed</span>
                 <span className="count-pill">{devices.length}</span>
               </button>
             </div>
 
-            <button 
-              className="btn btn-primary btn-sm"
-              onClick={() => setIsAddingNew(!isAddingNew)}
-            >
-              {isAddingNew ? <X size={14} /> : <Plus size={14} />}
-              <span>
-                {isAddingNew ? 'Sulge ankeet' : (
-                  activeTab === 'vehicles' ? 'Lisa uus masin' : (
+            {!isAddingNew && (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={openAddForm}
+              >
+                <Plus size={14} />
+                <span>
+                  {activeTab === 'vehicles' ? 'Lisa uus masin' : (
                     activeTab === 'implements' ? 'Lisa uus haakeriist' : 'Registreeri Teltonika seade'
-                  )
-                )}
-              </span>
-            </button>
+                  )}
+                </span>
+              </button>
+            )}
           </div>
 
           {/* ADD FORMS */}
@@ -259,7 +391,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <form onSubmit={handleCreateVehicle} className="poi-add-form glass-card animate-slide-in">
               <h4 className="form-title">
                 <Tractor size={16} className="text-emerald" />
-                <span>Uue sõiduki registreerimine</span>
+                <span>{editingVehicleId ? 'Sõiduki andmete muutmine' : 'Uue sõiduki registreerimine'}</span>
               </h4>
               <div className="form-grid">
                 <div className="form-group">
@@ -334,7 +466,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <option value="">-- Ilma seadmeta / Paigalda hiljem --</option>
                     {devices.map((d) => (
                       <option key={d.id} value={d.id}>
-                        {d.model} (IMEI: {d.imei}) {d.assignedVehicleId ? `[Hetkel masinas]` : `[Vaba laos]`}
+                        {d.model} ({d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}) {d.assignedVehicleId ? `[Hetkel masinas]` : `[Vaba laos]`}
                       </option>
                     ))}
                   </select>
@@ -356,8 +488,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsAddingNew(false)}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">Salvesta masin</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary btn-sm">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
               </div>
             </form>
           )}
@@ -366,7 +498,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <form onSubmit={handleCreateImplement} className="poi-add-form glass-card animate-slide-in">
               <h4 className="form-title">
                 <Wrench size={16} className="text-emerald" />
-                <span>Uue haakeriista registreerimine</span>
+                <span>{editingImplementId ? 'Haakeriista andmete muutmine' : 'Uue haakeriista registreerimine'}</span>
               </h4>
               <div className="form-grid">
                 <div className="form-group">
@@ -447,8 +579,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsAddingNew(false)}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">Salvesta haakeriist</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary btn-sm">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
               </div>
             </form>
           )}
@@ -457,61 +589,113 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <form onSubmit={handleCreateDevice} className="poi-add-form glass-card animate-slide-in">
               <h4 className="form-title">
                 <Radio size={16} className="text-emerald" />
-                <span>Uue Teltonika GPS seadme registreerimine</span>
+                <span>{editingDeviceId ? 'Seadme andmete muutmine' : 'Uue Teltonika GPS seadme registreerimine'}</span>
               </h4>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Seadme mudel</label>
-                  <select 
-                    value={devModel} 
-                    onChange={(e) => setDevModel(e.target.value)}
-                    className="form-input"
+              <div className="form-group connectivity-type-picker">
+                <label>Seadme tüüp</label>
+                <div className="segmented-control">
+                  <button
+                    type="button"
+                    className={`segmented-option ${devConnectivity === 'cellular' ? 'active' : ''}`}
+                    onClick={() => handleConnectivityChange('cellular')}
                   >
-                    <option value="FMB640 PRO">Teltonika FMB640 PRO (Heavy CAN)</option>
-                    <option value="FMC650 4G LTE">Teltonika FMC650 4G LTE (Agri CAN)</option>
-                    <option value="FMB920 Compact">Teltonika FMB920 Compact (Basic GPS)</option>
-                    <option value="FMM640 CAT-M1">Teltonika FMM640 CAT-M1 (Telemetry)</option>
-                    <option value="FMB140 CAN/BLE">Teltonika FMB140 CAN/BLE</option>
-                  </select>
+                    <Radio size={14} />
+                    <span>Mobiilne GPS (IMEI/SIM)</span>
+                  </button>
+                  <button
+                    type="button"
+                    className={`segmented-option ${devConnectivity === 'eye_sensor' ? 'active' : ''}`}
+                    onClick={() => handleConnectivityChange('eye_sensor')}
+                  >
+                    <Activity size={14} />
+                    <span>Eye Sensor (MAC)</span>
+                  </button>
                 </div>
+              </div>
+              <div className="form-grid">
+                {devConnectivity === 'cellular' ? (
+                  <>
+                    <div className="form-group">
+                      <label>Seadme mudel</label>
+                      <input
+                        type="text"
+                        placeholder="nt Teltonika FMC650 4G LTE"
+                        value={devModel}
+                        onChange={(e) => setDevModel(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>IMEI kood (15 numbrit) *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="861234058812001"
+                        value={devImei}
+                        onChange={(e) => setDevImei(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>SIM kaardi number</label>
+                      <input
+                        type="text"
+                        placeholder="+372 5311 8812"
+                        value={devSim}
+                        onChange={(e) => setDevSim(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="form-group">
+                      <label>Seadme mudel</label>
+                      <input
+                        type="text"
+                        placeholder="Teltonika EYE Sensor"
+                        value={devModel}
+                        onChange={(e) => setDevModel(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                    <div className="form-group">
+                      <label>MAC aadress *</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="AA:BB:CC:DD:EE:FF"
+                        value={devMac}
+                        onChange={(e) => setDevMac(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </>
+                )}
                 <div className="form-group">
-                  <label>IMEI kood (15 numbrit) *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="861234058812001" 
-                    value={devImei} 
-                    onChange={(e) => setDevImei(e.target.value)} 
-                    className="form-input" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>SIM kaardi number</label>
-                  <input 
-                    type="text" 
-                    placeholder="+372 5311 8812" 
-                    value={devSim} 
-                    onChange={(e) => setDevSim(e.target.value)} 
-                    className="form-input" 
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Paigalda kohe masinasse</label>
-                  <select 
-                    value={devAssignedVehId} 
-                    onChange={(e) => setDevAssignedVehId(e.target.value)}
+                  <label>Paigalda kohe</label>
+                  <select
+                    value={devAssignedTarget}
+                    onChange={(e) => setDevAssignedTarget(e.target.value)}
                     className="form-input"
                   >
                     <option value="">-- Jäta riiulisse / Vabaks --</option>
-                    {vehicles.map((v) => (
-                      <option key={v.id} value={v.id}>{v.name} ({v.registrationPlate || 'nr puudub'})</option>
-                    ))}
+                    <optgroup label="🚜 Masinad">
+                      {vehicles.map((v) => (
+                        <option key={`veh:${v.id}`} value={`veh:${v.id}`}>{v.name} ({v.registrationPlate || 'nr puudub'})</option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="🔧 Haakeriistad">
+                      {implementsList.map((imp) => (
+                        <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>{imp.name}</option>
+                      ))}
+                    </optgroup>
                   </select>
                 </div>
               </div>
               <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsAddingNew(false)}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">Registreeri seade</button>
+                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary btn-sm">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
               </div>
             </form>
           )}
@@ -540,10 +724,36 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           <span className="v-model">{v.model} &bull; {v.registrationPlate || 'Reg. nr puudub'}</span>
                         </div>
                       </div>
-                      
-                      <span className={`status-badge status-${v.status}`}>
-                        {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
-                      </span>
+
+                      <div className="card-header-right">
+                        <span className={`status-badge status-${v.status}`}>
+                          {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
+                        </span>
+                        <div className="card-header-actions">
+                          <button
+                            className="icon-btn-ghost"
+                            title="Muuda masina andmeid"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              startEditVehicle(v);
+                            }}
+                          >
+                            <Pencil size={14} />
+                          </button>
+                          <button
+                            className="icon-btn-danger"
+                            title="Kustuta masin"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (confirm(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
+                                onDeleteVehicle(v.id);
+                              }
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </div>
                     </div>
 
                     {/* Driver */}
@@ -559,7 +769,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <div className="equipment-tag device-tag">
                           <Radio size={12} className="text-blue" />
                           <span className="tag-text">
-                            {installedDevice ? `${installedDevice.model} (${installedDevice.imei.slice(-4)})` : 'GPS puudub'}
+                            {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
                           </span>
                           <button 
                             className="mini-swap-btn"
@@ -639,11 +849,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                     <div className="v-card-footer">
                       <div className="teltonika-id">
-                        <span>🛰️ {installedDevice ? installedDevice.simNumber : 'SIM puudub'}</span>
+                        <span>🛰️ {installedDevice ? (installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.simNumber) : 'SIM puudub'}</span>
                       </div>
 
                       <div className="card-actions-group">
-                        <button 
+                        <button
                           className="btn btn-secondary btn-sm"
                           onClick={(e) => {
                             e.stopPropagation();
@@ -653,16 +863,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         >
                           <Crosshair size={13} />
                           <span>Kaardile</span>
-                        </button>
-                        <button 
-                          className="icon-btn-danger"
-                          title="Kustuta masin"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onDeleteVehicle(v.id);
-                          }}
-                        >
-                          <Trash2 size={14} />
                         </button>
                       </div>
                     </div>
@@ -677,6 +877,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <div className="implements-grid">
               {implementsList.map((imp) => {
                 const assignedVehicle = vehicles.find((v) => v.assignedImplementId === imp.id || imp.assignedVehicleId === v.id);
+                const attachedDevice = devices.find((d) => d.assignedImplementId === imp.id || imp.assignedDeviceId === d.id);
 
                 return (
                   <div key={imp.id} className="implement-card glass-card">
@@ -687,6 +888,26 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <div className="imp-title-wrap">
                         <h4 className="imp-name">{imp.name}</h4>
                         <span className="imp-meta">{imp.manufacturer} &bull; {IMPLEMENT_TYPE_LABELS[imp.type]} &bull; {imp.workingWidthM}m</span>
+                      </div>
+                      <div className="card-header-actions">
+                        <button
+                          className="icon-btn-ghost"
+                          title="Muuda haakeriista andmeid"
+                          onClick={() => startEditImplement(imp)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          className="icon-btn-danger"
+                          title="Kustuta haakeriist"
+                          onClick={() => {
+                            if (confirm(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
+                              onDeleteImplement(imp.id);
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
 
@@ -711,9 +932,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       </div>
                     )}
 
+                    <div className="imp-serial-row">
+                      <span className="text-muted">Andur:</span>
+                      {attachedDevice ? (
+                        <span className="text-emerald" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <Activity size={12} />
+                          {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
+                        </span>
+                      ) : (
+                        <span className="text-muted">Andur puudub</span>
+                      )}
+                    </div>
+
                     <div className="imp-card-footer">
                       <div className="imp-actions">
-                        <select 
+                        <select
                           className="form-input imp-assign-select"
                           value={assignedVehicle ? assignedVehicle.id : ''}
                           onChange={(e) => {
@@ -728,14 +961,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             </option>
                           ))}
                         </select>
-
-                        <button 
-                          className="icon-btn-danger"
-                          title="Kustuta haakeriist"
-                          onClick={() => onDeleteImplement(imp.id)}
-                        >
-                          <Trash2 size={14} />
-                        </button>
                       </div>
                     </div>
                   </div>
@@ -749,73 +974,112 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <div className="devices-grid">
               {devices.map((dev) => {
                 const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
+                const assignedImplement = implementsList.find((imp) => imp.assignedDeviceId === dev.id || dev.assignedImplementId === imp.id);
+                const isEyeSensor = dev.connectivityType === 'eye_sensor';
+                const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
 
                 return (
                   <div key={dev.id} className="device-card glass-card">
                     <div className="dev-card-header">
                       <div className="dev-icon-wrap">
-                        <Radio size={20} className="text-blue" />
+                        {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
                       </div>
                       <div className="dev-title-wrap">
                         <div className="dev-header-line">
                           <h4 className="dev-model">{dev.model}</h4>
                           <span className={`status-badge status-${dev.status}`}>
-                            {assignedVehicle ? 'Paigaldatud' : 'Riiulis'}
+                            {(assignedVehicle || assignedImplement) ? 'Paigaldatud' : 'Riiulis'}
                           </span>
                         </div>
-                        <span className="dev-imei">IMEI: {dev.imei} &bull; SIM: {dev.simNumber}</span>
+                        <span className="dev-imei">
+                          {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
+                        </span>
+                      </div>
+                      <div className="card-header-actions">
+                        <button
+                          className="icon-btn-ghost"
+                          title="Muuda seadme andmeid"
+                          onClick={() => startEditDevice(dev)}
+                        >
+                          <Pencil size={14} />
+                        </button>
+                        <button
+                          className="icon-btn-danger"
+                          title="Kustuta seade"
+                          onClick={() => {
+                            if (confirm(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
+                              onDeleteDevice(dev.id);
+                            }
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="dev-telemetry-summary">
-                      <div className="dev-telemetry-item">
-                        <span className="lbl">Aku pinge:</span>
-                        <strong>{dev.batteryVoltage} V</strong>
+                    {isEyeSensor ? (
+                      <div className="dev-telemetry-summary">
+                        <div className="dev-telemetry-item">
+                          <span className="lbl">Aku pinge:</span>
+                          <strong>{dev.batteryVoltage} V</strong>
+                        </div>
                       </div>
-                      <div className="dev-telemetry-item">
-                        <span className="lbl">Satelliite:</span>
-                        <strong>{dev.satelliteCount} SAT</strong>
+                    ) : (
+                      <div className="dev-telemetry-summary">
+                        <div className="dev-telemetry-item">
+                          <span className="lbl">Aku pinge:</span>
+                          <strong>{dev.batteryVoltage} V</strong>
+                        </div>
+                        <div className="dev-telemetry-item">
+                          <span className="lbl">Satelliite:</span>
+                          <strong>{dev.satelliteCount} SAT</strong>
+                        </div>
+                        <div className="dev-telemetry-item">
+                          <span className="lbl">Süüde:</span>
+                          <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
+                            {dev.ignition ? 'SEES' : 'VÄLJAS'}
+                          </strong>
+                        </div>
                       </div>
-                      <div className="dev-telemetry-item">
-                        <span className="lbl">Süüde:</span>
-                        <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
-                          {dev.ignition ? 'SEES' : 'VÄLJAS'}
-                        </strong>
-                      </div>
-                    </div>
+                    )}
 
                     <div className="dev-assignment-box">
                       <label className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-                        Paigaldatud masinasse:
+                        Paigaldatud:
                       </label>
-                      <select 
+                      <select
                         className="form-input dev-assign-select"
-                        value={assignedVehicle ? assignedVehicle.id : ''}
+                        value={targetValue}
                         onChange={(e) => {
-                          const newVehId = e.target.value || undefined;
-                          onAssignDevice(dev.id, newVehId);
+                          const val = e.target.value;
+                          if (!val) { onAssignDevice(dev.id, undefined, undefined); return; }
+                          const [kind, targetId] = val.split(':');
+                          if (kind === 'veh') onAssignDevice(dev.id, targetId, undefined);
+                          else onAssignDevice(dev.id, undefined, targetId);
                         }}
                       >
                         <option value="">-- Riiulis / Paigaldamata --</option>
-                        {vehicles.map((v) => (
-                          <option key={v.id} value={v.id}>
-                            🚜 {v.name} ({v.registrationPlate || 'nr puudub'})
-                          </option>
-                        ))}
+                        <optgroup label="🚜 Masinad">
+                          {vehicles.map((v) => (
+                            <option key={`veh:${v.id}`} value={`veh:${v.id}`}>
+                              {v.name} ({v.registrationPlate || 'nr puudub'})
+                            </option>
+                          ))}
+                        </optgroup>
+                        <optgroup label="🔧 Haakeriistad">
+                          {implementsList.map((imp) => (
+                            <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>
+                              {imp.name}
+                            </option>
+                          ))}
+                        </optgroup>
                       </select>
                     </div>
 
                     <div className="dev-card-footer">
                       <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                        Firmware: {dev.firmwareVersion || 'v03.28'}
+                        {isEyeSensor ? 'Eye Sensor (BLE)' : `Firmware: ${dev.firmwareVersion || 'v03.28'}`}
                       </span>
-                      <button 
-                        className="icon-btn-danger"
-                        title="Kustuta seade"
-                        onClick={() => onDeleteDevice(dev.id)}
-                      >
-                        <Trash2 size={14} />
-                      </button>
                     </div>
                   </div>
                 );
@@ -873,9 +1137,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             setSwapModal(null);
                           }}
                         >
-                          <Radio size={16} className="text-blue" />
+                          {d.connectivityType === 'eye_sensor' ? <Activity size={16} className="text-emerald" /> : <Radio size={16} className="text-blue" />}
                           <div className="option-info">
-                            <strong>{d.model} &bull; IMEI: {d.imei}</strong>
+                            <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
                             <p>
                               {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
                                 otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'

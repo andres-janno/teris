@@ -41,17 +41,24 @@ enum VehicleType {
   TRACTOR
   COMBINE
   SPRAYER
+  SPREADER
   TRUCK
+  ATV
+  LOADER
 }
 
 enum ImplementType {
   CULTIVATOR
   SEEDER
   SPRAYER
+  HEADER
   DISC_HARROW
   PLOW
   MOWER
   TRAILER
+  FERTILIZER_SPREADER
+  ROLLER
+  OTHER
 }
 
 enum DeviceStatus {
@@ -296,6 +303,7 @@ model Vehicle {
   assignedDriverId    String?          // Seotud isiku ID (töötaja / masinajuht)
   assignedImplementId String?          @unique
   assignedDeviceId    String?          @unique
+  notes               String?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
@@ -308,33 +316,43 @@ model Vehicle {
 }
 
 model Implement {
-  id            String        @id @default(cuid())
-  name          String
-  type          ImplementType
-  workingWidthM Float
-  manufacturer  String?
-  model         String?
-  year          Int?
-  notes         String?
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  id               String           @id @default(cuid())
+  name             String
+  type             ImplementType
+  workingWidthM    Float
+  manufacturer     String?
+  model            String?
+  year             Int?
+  assignedDeviceId String?          @unique
+  notes            String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
 
-  vehicle       Vehicle?
+  vehicle          Vehicle?
+  assignedDevice   TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
 
   @@map("implements")
 }
 
-model TeltonikaDevice {
-  id          String       @id @default(cuid())
-  imei        String       @unique
-  model       String
-  simNumber   String?
-  firmware    String?
-  status      DeviceStatus @default(OFFLINE)
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
+enum DeviceConnectivity {
+  CELLULAR
+  EYE_SENSOR
+}
 
-  vehicle     Vehicle?
+model TeltonikaDevice {
+  id               String             @id @default(cuid())
+  connectivityType DeviceConnectivity @default(CELLULAR)
+  imei             String?            @unique  // Kohustuslik ainult CELLULAR seadmetel
+  macAddress       String?            @unique  // Kohustuslik ainult EYE_SENSOR seadmetel
+  model            String
+  simNumber        String?
+  firmware         String?
+  status           DeviceStatus       @default(OFFLINE)
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+
+  vehicle          Vehicle?
+  implement        Implement?
 
   @@map("teltonika_devices")
 }
