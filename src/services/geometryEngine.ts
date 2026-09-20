@@ -220,3 +220,63 @@ export function getVisibleElementsBounds(params: BoundsParams): [[number, number
   ];
 }
 
+/**
+ * Calculates perimeter in meters for a GeoJSON Polygon or MultiPolygon
+ */
+export function getGeometryPerimeterMeters(geometry?: Polygon | MultiPolygon | null): number {
+  if (!geometry || !geometry.coordinates) return 0;
+  try {
+    const line = turf.polygonToLine(geometry as any);
+    if (!line) return 0;
+    if (Array.isArray(line)) {
+      const totalKm = line.reduce((sum, l) => sum + turf.length(l, { units: 'kilometers' }), 0);
+      return Math.round(totalKm * 1000);
+    }
+    const km = turf.length(line as any, { units: 'kilometers' });
+    return Math.round(km * 1000);
+  } catch (err) {
+    return 0;
+  }
+}
+
+/**
+ * Extracts a list of GPS vertex coordinates [lat, lng] for inspector/table display
+ */
+export function getGeometryCoordinatesList(geometry?: Polygon | MultiPolygon | null): { index: number; lat: number; lng: number }[] {
+  if (!geometry || !geometry.coordinates) return [];
+  const coords: { index: number; lat: number; lng: number }[] = [];
+  let idx = 1;
+
+  if (geometry.type === 'Polygon') {
+    geometry.coordinates.forEach((ring) => {
+      ring.forEach(([lng, lat]) => {
+        coords.push({ index: idx++, lat, lng });
+      });
+    });
+  } else if (geometry.type === 'MultiPolygon') {
+    geometry.coordinates.forEach((poly) => {
+      poly.forEach((ring) => {
+        ring.forEach(([lng, lat]) => {
+          coords.push({ index: idx++, lat, lng });
+        });
+      });
+    });
+  }
+
+  return coords;
+}
+
+/**
+ * Calculates accurate polygon area in hectares (ha)
+ */
+export function getGeometryAreaHa(geometry?: Polygon | MultiPolygon | null): number {
+  if (!geometry || !geometry.coordinates) return 0;
+  try {
+    const sqMeters = turf.area(geometry as any);
+    return Math.round((sqMeters / 10000) * 100) / 100;
+  } catch {
+    return 0;
+  }
+}
+
+

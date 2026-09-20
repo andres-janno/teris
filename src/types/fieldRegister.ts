@@ -1,6 +1,6 @@
-// src/types/fieldRegister.ts
 import type { Polygon, MultiPolygon } from 'geojson';
 import type { FieldFeature, FieldCollection } from './field';
+import type { FieldCadastralLink } from './cadastre';
 
 /**
  * Ühe konkreetse põllumajandusaasta / hooaja kirje (suurus ja kultuur võivad igal aastal erineda)
@@ -8,17 +8,22 @@ import type { FieldFeature, FieldCollection } from './field';
 export interface FieldYearlyRecord {
   year: number;                 // Hooaja aasta (nt 2026, 2025, 2024, 2027)
   areaHa: number;               // Põllu pindala sellel aastal (hektarites)
+  eligibleAreaHa?: number | null; // PRIA toetusõiguslik pindala ha
+  areaChangeReason?: string | null; // Pindala muutuse põhjus (nt võsa pealekasv, kraavihooldus)
   crop: string;                 // Põllukultuur (nt Talinisu, Suvioder, Taliraps)
-  cropVariety?: string;         // Sordinimi (nt 'Skagen', 'Planet', 'Mercedes')
+  cropVariety?: string | null;  // Sordinimi (nt 'Skagen', 'Planet', 'Mercedes')
   cropColor: string;            // Värvikood kaardil (nt #eab308)
-  targetYieldTonsHa?: number;   // Plaaniline saagikus (t/ha)
-  actualYieldTonsHa?: number;   // Tegelik koristatud saagikus (t/ha)
+  targetYieldTonsHa?: number | null; // Plaaniline saagikus (t/ha)
+  actualYieldTonsHa?: number | null; // Tegelik koristatud saagikus (t/ha)
   workedAreaHa?: number;        // Haritud pindala sellel aastal
   workProgress?: number;        // Töö edenemine (0 - 100%)
   status?: 'not_started' | 'in_progress' | 'completed';
-  seedingDate?: string;         // Külvikuupäev (ISO / string)
-  harvestDate?: string;         // Koristuskuupäev
-  notes?: string;               // Hooaja märkmed (väetised, taimekaitse, PRIA toetuskood)
+  seedingDate?: string | null;  // Külvikuupäev (ISO / string)
+  harvestDate?: string | null;  // Koristuskuupäev
+  boundaryPointsCount?: number | null; // Tippude arv
+  perimeterM?: number | null;   // Ümbermõõt meetrites
+  notes?: string | null;        // Hooaja märkmed (väetised, taimekaitse, PRIA toetuskood)
+  cadastralParcels?: FieldCadastralLink[]; // Selle konkreetse hooaja koosseisu kuuluvad katastriüksused
   geometry?: Polygon | MultiPolygon; // Selle konkreetse hooaja/aasta põllupiirid
 }
 
@@ -30,13 +35,29 @@ export interface MasterField {
   num?: string;                 // Põllu number PRIA impordist (nt '4', '4-1', '1', '2A')
   name: string;                 // Põllu nimi (kasutaja poolt määratud/muudetav)
   fieldCode: string;            // PRIA massiivi number (nt '61144313542')
-  cadastralCode?: string;       // Katastritunnus (nt '89201:001:0100')
+  cadastralCode?: string;       // Peamine katastritunnus (tagasiühilduvuse jaoks)
+  cadastralParcels?: FieldCadastralLink[]; // Baas/vaikimisi katastriüksused
   soilType?: string;            // Mullastik (nt 'Leostunud liivsavi / LP')
   drainageSystem?: boolean;     // Drenaaž / maaparandussüsteem olemas
   landowner?: string;           // Maaomanik / rentnik
   notes?: string;               // Üldised püsivad märkmed
   geometry?: Polygon | MultiPolygon; // Baaspiirid (kui aasta oma puudub)
-  history: FieldYearlyRecord[]; // Aastate ajalugu (aasta kaupa pindalad, piirid ja kultuurid)
+  history: FieldYearlyRecord[]; // Aastate ajalugu (aasta kaupa pindalad, piirid, katastrid ja kultuurid)
+}
+
+/**
+ * Loendab GeoJSON geomeetria tippude (punktide) arvu
+ */
+export function countGeometryVertices(geometry?: Polygon | MultiPolygon): number {
+  if (!geometry || !geometry.coordinates) return 0;
+  if (geometry.type === 'Polygon') {
+    return geometry.coordinates.reduce((sum, ring) => sum + ring.length, 0);
+  }
+  if (geometry.type === 'MultiPolygon') {
+    return geometry.coordinates.reduce((sum, poly) => 
+      sum + poly.reduce((pSum, ring) => pSum + ring.length, 0), 0);
+  }
+  return 0;
 }
 
 /**
@@ -60,6 +81,9 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
     coordinates: []
   }) as Polygon | MultiPolygon;
 
+  const pointsCount = yearRecord.boundaryPointsCount || countGeometryVertices(geometry);
+  const activeCadastralParcels = yearRecord.cadastralParcels || field.cadastralParcels || [];
+
   return {
     type: 'Feature',
     id: field.id,
@@ -71,19 +95,25 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
       fieldCode: field.fieldCode,
       cadastralCode: field.cadastralCode,
       areaHa: yearRecord.areaHa,
+      eligibleAreaHa: yearRecord.eligibleAreaHa,
+      areaChangeReason: yearRecord.areaChangeReason,
+      perimeterM: yearRecord.perimeterM,
       crop: yearRecord.crop,
       cropColor: yearRecord.cropColor,
       year: yearRecord.year,
       workedAreaHa: yearRecord.workedAreaHa || 0,
       workProgress: yearRecord.workProgress || 0,
-      status: yearRecord.status || 'not_started',
+      status: (yearRecord.status as any) || 'not_started',
       notes: yearRecord.notes || field.notes,
       rawProperties: {
         soilType: field.soilType,
         landowner: field.landowner,
         drainageSystem: field.drainageSystem,
+        cadastralParcels: activeCadastralParcels,
         variety: yearRecord.cropVariety,
         targetYield: yearRecord.targetYieldTonsHa,
+        actualYield: yearRecord.actualYieldTonsHa,
+        pointsCount,
         historyCount: field.history.length
       }
     }
@@ -99,3 +129,4 @@ export function generateFieldCollectionForYear(masterFields: MasterField[], sele
     features: masterFields.map((f) => getFieldFeatureForYear(f, selectedYear))
   };
 }
+

@@ -2013,6 +2013,19 @@ body {
   grid-column: span 2;
 }
 
+.form-row-3 {
+  grid-column: span 2;
+  display: grid;
+  grid-template-columns: 2fr 1fr 1.5fr;
+  gap: 10px;
+}
+
+@media (max-width: 640px) {
+  .form-row-3 {
+    grid-template-columns: 1fr;
+  }
+}
+
 .form-group label {
   font-size: 0.72rem;
   font-weight: 600;
@@ -2032,6 +2045,13 @@ body {
 
 .form-input:focus {
   border-color: var(--emerald-500);
+}
+
+input[type="number"],
+.form-input[type="number"],
+.text-right {
+  text-align: right !important;
+  font-variant-numeric: tabular-nums;
 }
 
 .input-split {
@@ -3861,6 +3881,468 @@ body {
 [data-theme='dark'] .v-filter-pill.active .dot-live {
   background: #0f172a;
 }
+
+/* ==========================================================================
+   CADASTRAL PARCELS, TENURE & GEOMETRY INSPECTOR STYLES
+   ========================================================================== */
+
+/* Tenure Pill Badges */
+.tenure-pill {
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.tenure-pill.owned {
+  background: rgba(16, 185, 129, 0.14);
+  color: var(--emerald-600);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+}
+
+[data-theme='dark'] .tenure-pill.owned {
+  color: #34d399;
+}
+
+.tenure-pill.rented {
+  background: rgba(59, 130, 246, 0.14);
+  color: var(--blue-600);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+[data-theme='dark'] .tenure-pill.rented {
+  color: #60a5fa;
+}
+
+/* Drawer Cadastral Parcels List */
+.cadastre-parcels-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cadastre-parcel-item {
+  background: var(--stat-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 9px 11px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.76rem;
+}
+
+.cad-parcel-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cad-code-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cad-code-group code {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.cad-name {
+  color: var(--text-muted);
+  font-size: 0.72rem;
+}
+
+.cad-parcel-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  padding-left: 2px;
+}
+
+.cad-detail-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.73rem;
+}
+
+.cad-detail-row .lbl {
+  color: var(--text-secondary);
+}
+
+.cad-note-line {
+  font-size: 0.7rem;
+  font-style: italic;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.cadastre-financial-summary {
+  margin-top: 4px;
+  padding: 7px 10px;
+  background: rgba(234, 179, 8, 0.08);
+  border: 1px solid rgba(234, 179, 8, 0.25);
+  border-radius: var(--radius-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 0.72rem;
+}
+
+.cadastre-financial-summary .fin-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Geometry Inspector Box in Drawer */
+.geometry-info-box {
+  background: var(--stat-bg);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.geom-stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.74rem;
+}
+
+.geom-stat-row span {
+  color: var(--text-secondary);
+}
+
+.btn-coords-toggle {
+  margin-top: 4px;
+  justify-content: center;
+  width: 100%;
+  font-size: 0.72rem;
+  padding: 5px 8px;
+}
+
+.coords-table-wrap {
+  margin-top: 6px;
+  max-height: 180px;
+  overflow-y: auto;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-xs);
+  background: var(--bg-card);
+}
+
+.coords-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.7rem;
+  text-align: left;
+}
+
+.coords-table th {
+  position: sticky;
+  top: 0;
+  background: var(--bg-modal-header);
+  color: var(--text-muted);
+  font-weight: 600;
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.coords-table td {
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border-subtle);
+}
+
+.coords-table td code {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
+
+.coords-more-note {
+  text-align: center;
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  padding: 4px;
+  font-style: italic;
+}
+
+.drawer-note-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  font-size: 0.72rem;
+  color: var(--text-primary);
+  margin-bottom: 10px;
+}
+
+/* Field Manager Modal Stats Pills (Tenure) */
+.reg-stat-pill.tenure-owned {
+  border-left: 3px solid var(--emerald-500);
+}
+
+.reg-stat-pill.tenure-rented {
+  border-left: 3px solid var(--blue-500);
+}
+
+.reg-stat-pill .sub-val {
+  font-size: 0.68rem;
+  margin-left: 4px;
+}
+
+/* Edit Cadastral Parcels in Modal */
+.add-cad-btn {
+  margin-left: auto;
+}
+
+.edit-cadastral-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.edit-cad-item {
+  padding: 8px 10px;
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.edit-cad-grid {
+  display: grid;
+  grid-template-columns: 1.15fr 0.75fr 0.95fr 1.1fr 0.8fr 0.85fr 34px;
+  gap: 8px;
+  align-items: flex-end;
+}
+
+.edit-cad-action {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 2px;
+}
+
+.btn-disabled {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+}
+
+.rent-tag {
+  background: rgba(59, 130, 246, 0.12);
+  color: var(--blue-500);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.field-change-reason-line {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.7rem;
+  color: var(--amber-500);
+  margin-top: 4px;
+  font-style: italic;
+}
+
+.eligible-ha-sub {
+  font-size: 0.68rem;
+  color: var(--text-muted);
+  font-weight: 500;
+  display: block;
+}
+
+/* ==========================================================================
+   Seotud Isikute Register (Harmonized with Field Register design)
+   ========================================================================== */
+
+a.history-pill {
+  text-decoration: none;
+  color: var(--text-primary);
+}
+
+a.history-pill:hover {
+  border-color: var(--color-primary, #10b981);
+  color: var(--color-primary, #10b981);
+}
+
+.party-roles-checkbox-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 8px;
+  padding: 10px;
+  background: var(--bg-input);
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-color);
+}
+
+.party-role-checkbox {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background: var(--bg-card);
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.party-role-checkbox:hover {
+  border-color: var(--emerald-500);
+}
+
+.party-role-checkbox input[type="checkbox"] {
+  accent-color: var(--emerald-500);
+  width: 15px;
+  height: 15px;
+  cursor: pointer;
+}
+
+/* ==========================================================================
+   Sortide Alamregister Tabel (Varieties Sub-Register Table)
+   ========================================================================== */
+
+.varieties-table-wrap {
+  width: 100%;
+  overflow-x: auto;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--bg-modal); /* Pure #ffffff in light mode, #0f172a in dark mode */
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+  margin-top: 6px;
+}
+
+.varieties-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.76rem;
+  text-align: left;
+  background: var(--bg-modal);
+}
+
+.varieties-table th {
+  background: var(--stat-bg);
+  color: var(--text-primary);
+  font-weight: 700;
+  padding: 9px 12px;
+  border-bottom: 2px solid var(--border-card);
+  white-space: nowrap;
+  letter-spacing: 0.02em;
+  font-size: 0.73rem;
+}
+
+.varieties-table td {
+  padding: 8px 12px;
+  border-bottom: 1px solid var(--border-card);
+  color: var(--text-primary);
+  vertical-align: middle;
+  background: var(--bg-modal);
+  transition: background 0.15s ease;
+}
+
+.varieties-table tbody tr:last-child td {
+  border-bottom: none;
+}
+
+.varieties-table tbody tr:hover td {
+  background: var(--bg-card-hover);
+}
+
+.variety-name-cell {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+
+.variety-breeder-cell {
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.variety-winter-text {
+  color: var(--text-primary);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.variety-seed-rate {
+  color: var(--text-primary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.variety-notes-cell {
+  max-width: 280px;
+  font-size: 0.74rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+
+.variety-empty-cell {
+  color: var(--text-muted);
+}
+
+.variety-badge-sm {
+  font-size: 0.70rem;
+  padding: 3px 8px;
+  border-radius: 4px;
+  display: inline-block;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+.variety-badge-yield {
+  background: rgba(16, 185, 129, 0.14);
+  color: #15803d; /* dark green for strong contrast on light bg */
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  font-weight: 700;
+}
+
+:root[data-theme="dark"] .variety-badge-yield {
+  background: rgba(16, 185, 129, 0.18);
+  color: var(--emerald-400);
+}
+
+.variety-badge-quality {
+  background: rgba(37, 99, 235, 0.12);
+  color: #1d4ed8; /* dark blue for strong contrast on light bg */
+  border: 1px solid rgba(37, 99, 235, 0.3);
+}
+
+:root[data-theme="dark"] .variety-badge-quality {
+  background: rgba(59, 130, 246, 0.18);
+  color: var(--blue-400);
+}
+
+.variety-badge-maturity {
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.variety-table-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  justify-content: flex-end;
+}
+
+
+
+
 
 
 

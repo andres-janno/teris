@@ -62,6 +62,26 @@ enum DeviceStatus {
   OFFLINE
 }
 
+enum OwnershipType {
+  OWNED
+  RENTED
+}
+
+enum PartyType {
+  PERSON
+  LEGAL_ENTITY
+}
+
+enum PartyRole {
+  LANDOWNER
+  TENANT
+  DRIVER
+  CONTACT_PERSON
+  SUPPLIER
+  BUYER
+  OTHER
+}
+
 // ============================================================================
 // 1. HOOAJAD (SEASONS)
 // ============================================================================
@@ -92,21 +112,37 @@ model Season {
 }
 
 // ============================================================================
-// 2. PÕLLUD / MASSIIVID (MASTER FIELDS)
+// 2. KATASTRIÜKSUSED (CADASTRAL PARCELS)
+// ============================================================================
+
+model CadastralParcel {
+  id             Int                  @id @default(autoincrement())
+  cadastralCode  String               @unique // Katastritunnus (nt "89201:001:0100")
+  name           String?              // Katastriüksuse nimi / lähiaadress
+  notes          String?
+  createdAt      DateTime             @default(now())
+  updatedAt      DateTime             @updatedAt
+
+  seasonLinks    FieldCadastralParcel[]
+
+  @@map("cadastral_parcels")
+}
+
+// ============================================================================
+// 3. PÕLLUD / MASSIIVID (MASTER FIELDS)
 // ============================================================================
 
 model Field {
-  id             Int           @id @default(autoincrement())
-  num            String        // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x")
-  name           String        // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
-  fieldCode      String        @unique // PRIA massiivi unikaalne number (nt "60844249726")
-  cadastralCode  String?       // Katastritunnus (nt "89201:001:0100")
-  soilType       String?       // Mullastik (nt "Leostunud liivsavi (LP)")
-  drainageSystem Boolean       @default(false)
-  landowner      String?       // Maaomanik / rentnik
+  id             Int                    @id @default(autoincrement())
+  num            String                 // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x")
+  name           String                 // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
+  fieldCode      String                 @unique // PRIA massiivi unikaalne number (nt "60844249726")
+  cadastralCode  String?                // Peamine katastritunnus (tagasiühilduvuse jaoks)
+  soilType       String?                // Mullastik (nt "Leostunud liivsavi (LP)")
+  drainageSystem Boolean                @default(false)
   notes          String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 
   fieldSeasons   FieldSeason[]
 
@@ -114,63 +150,138 @@ model Field {
 }
 
 // ============================================================================
-// 3. PÕLLU HOOAJA KIRJED (FIELD SEASONS - SEOS PÕLLU JA HOOAJA VAHEL)
+// 4. PÕLLU HOOAJA KIRJED (FIELD SEASONS - SEOS PÕLLU JA HOOAJA VAHEL)
 // ============================================================================
 
 model FieldSeason {
-  id                Int          @id @default(autoincrement())
-  fieldId           Int
-  seasonId          Int?
-  year              Int
-  areaHa            Float
-  crop              String
-  cropVariety       String?
-  cropColor         String       @default("#eab308")
-  targetYieldTonsHa Float?
-  actualYieldTonsHa Float?
-  workedAreaHa      Float        @default(0)
-  workProgress      Float        @default(0)
-  status            FieldStatus  @default(NOT_STARTED)
-  seedingDate       DateTime?
-  harvestDate       DateTime?
-  notes             String?
-  geometry          Json         // GeoJSON Polygon | MultiPolygon
-  createdAt         DateTime     @default(now())
-  updatedAt         DateTime     @updatedAt
+  id                  Int          @id @default(autoincrement())
+  fieldId             Int
+  seasonId            Int?
+  year                Int
+  areaHa              Float        // Selle hooaja haritav pindala
+  eligibleAreaHa      Float?       // PRIA toetusõiguslik pindala
+  areaChangeReason    String?      // Pindala muutuse põhjus (nt võsastumine, kraavihooldus)
+  crop                String
+  cropVariety         String?
+  cropColor           String       @default("#eab308")
+  cropId              String?
+  varietyId           String?
+  targetYieldTonsHa   Float?
+  actualYieldTonsHa   Float?
+  workedAreaHa        Float        @default(0)
+  workProgress        Float        @default(0)
+  status              FieldStatus  @default(NOT_STARTED)
+  seedingDate         DateTime?
+  harvestDate         DateTime?
+  boundaryPointsCount Int?         // Geomeetria tippude/punktide arv
+  perimeterM          Float?       // Ümbermõõt meetrites
+  notes               String?
+  geometry            Json         // GeoJSON Polygon | MultiPolygon
+  createdAt           DateTime     @default(now())
+  updatedAt           DateTime     @updatedAt
 
-  field             Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  season            Season?      @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+  field               Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  season              Season?      @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+  cadastralParcels    FieldCadastralParcel[]
+  cropEntity          Crop?        @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  varietyEntity       CropVariety? @relation(fields: [varietyId], references: [id], onDelete: SetNull)
 
   @@unique([fieldId, year])
   @@index([fieldId])
   @@index([seasonId])
   @@index([year])
+  @@index([cropId])
+  @@index([varietyId])
   @@map("field_seasons")
 }
 
 // ============================================================================
-// 4. TARISTU / HUVI- JA TÖÖPUNKTID (POI)
+// 5. HOOAJAPÕHINE PÕLLU JA KATASTRIÜKSUSE SEOS (FIELD SEASON CADASTRAL PARCEL)
+// Salvestab, mitu hektarit, millise omandivormi ja kuludega kataster sellel hooajal põllus on
+// ============================================================================
+
+// ============================================================================
+// 4. SEOTUD ISIKUD JA PARTNERID (RELATED PARTIES / ENTITIES)
+// Füüsilised ja juriidilised isikud: maaomanikud, rentnikud, juhid, kontaktid
+// ============================================================================
+
+model RelatedParty {
+  id              String                  @id @default(cuid())
+  name            String                  // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
+  type            PartyType               @default(PERSON)
+  code            String?                 // Isikukood või registrikood
+  vatNumber       String?                 // KMKR number
+  roles           PartyRole[]             // Rollid süsteemis
+  phone           String?                 // Telefon
+  email           String?                 // E-post
+  address         String?                 // Postiaadress / asukoht
+  bankAccount     String?                 // IBAN arveldusarve (rendimakseteks / maamaksuks)
+  notes           String?                 // Märkused
+  isOwnCompany    Boolean                 @default(false) // Kas on meie oma ettevõte
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  cadastralParcels FieldCadastralParcel[]
+  vehicles         Vehicle[]
+  poiContacts      PointOfInterest[]
+
+  @@map("related_parties")
+}
+
+model FieldCadastralParcel {
+  id                Int             @id @default(autoincrement())
+  fieldSeasonId     Int
+  cadastralParcelId Int
+  fieldAreaHa       Float           // Hektarid sellest katastriüksusest sellel hooajal
+  ownershipType     OwnershipType   @default(OWNED) // Oma maa vs Rent sellel hooajal
+  ownerName         String?         // Omaniku nimi sellel hooajal
+  ownerPartyId      String?         // Seos seotud isikute registriga
+  landTaxEurHa      Float?          // Selle hooaja maamaks hektari kohta (€/ha)
+  landTaxEurYear    Float?          // Selle hooaja maamaks kokku (€/a)
+  rentFeeEurHa      Float?          // Selle hooaja renditasu hektari kohta (€/ha)
+  rentFeeEurYear    Float?          // Selle hooaja renditasu kokku (€/a)
+  notes             String?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  fieldSeason       FieldSeason     @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  cadastralParcel   CadastralParcel @relation(fields: [cadastralParcelId], references: [id], onDelete: Cascade)
+  ownerParty        RelatedParty?   @relation(fields: [ownerPartyId], references: [id], onDelete: SetNull)
+
+  @@unique([fieldSeasonId, cadastralParcelId])
+  @@index([fieldSeasonId])
+  @@index([cadastralParcelId])
+  @@index([ownerPartyId])
+  @@map("field_cadastral_parcels")
+}
+
+// ============================================================================
+// 5. TARISTU / HUVI- JA TÖÖPUNKTID (POI)
 // ============================================================================
 
 model PointOfInterest {
-  id            String      @id @default(cuid())
-  name          String
-  category      PoiCategory
-  latitude      Float
-  longitude     Float
-  description   String?
-  capacity      String?
-  contactPerson String?
-  phone         String?
-  accessNotes   String?
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  id             String        @id @default(cuid())
+  name           String
+  category       PoiCategory
+  latitude       Float
+  longitude      Float
+  description    String?
+  capacity       String?
+  contactPerson  String?
+  contactPartyId String?
+  phone          String?
+  accessNotes    String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
 
+  contactParty   RelatedParty? @relation(fields: [contactPartyId], references: [id], onDelete: SetNull)
+
+  @@index([contactPartyId])
   @@map("points_of_interest")
 }
 
 // ============================================================================
-// 5. MASINAPARK JA GPS SEADMED (FLEET & TELEMETRY)
+// 6. MASINAPARK JA GPS SEADMED (FLEET & TELEMETRY)
 // ============================================================================
 
 model Vehicle {
@@ -182,14 +293,17 @@ model Vehicle {
   workingWidthM       Float            @default(6.0)
   color               String           @default("#10b981")
   fuelCapacityL       Float?
+  assignedDriverId    String?          // Seotud isiku ID (töötaja / masinajuht)
   assignedImplementId String?          @unique
   assignedDeviceId    String?          @unique
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
 
+  assignedDriver      RelatedParty?    @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
   assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
 
+  @@index([assignedDriverId])
   @@map("vehicles")
 }
 
@@ -224,3 +338,60 @@ model TeltonikaDevice {
 
   @@map("teltonika_devices")
 }
+
+// ============================================================================
+// 7. KULTUURID JA SORDID (CROPS & VARIETIES REGISTER)
+// ============================================================================
+
+enum CropGroup {
+  CEREAL          // Teravili (nisu, oder, kaer, rukis)
+  OILSEED         // Õlikultuur (raps, rüps)
+  LEGUME          // Kaunvili / Liblikõieline (hernes, uba)
+  FORAGE_GRASS    // Söödakultuur / Rohumaa (ristik, timut, karjamaa)
+  FALLOW          // Kesa (mustkesa, rohekesa)
+  OTHER           // Muu kultuur
+}
+
+model Crop {
+  id                    String        @id
+  name                  String        @unique
+  scientificName        String?
+  group                 CropGroup     @default(CEREAL)
+  color                 String        @default("#eab308")
+  icon                  String?
+  priaCode              String?
+  defaultSeedRateKgHa   Float?
+  defaultYieldTonsHa    Float?
+  description           String?
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  varieties             CropVariety[]
+  fieldSeasons          FieldSeason[]
+
+  @@map("crops")
+}
+
+model CropVariety {
+  id                      String        @id
+  cropId                  String
+  name                    String
+  breeder                 String?       // Aretaja / esindaja (nt Saaten-Union, KWS)
+  maturityDays            String?       // Valmimisaeg / kasvuaeg
+  winterHardiness         String?       // Talvekindlus
+  recommendedSeedRateKgHa Float?        // Soovituslik külvinorm kg/ha
+  potentialYieldTonsHa    Float?        // Saagipotentsiaal t/ha
+  qualityClass            String?       // Kvaliteediklass (nt Toiduvili E, I, söödavili)
+  notes                   String?
+  isActive                Boolean       @default(true)
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+
+  crop                    Crop          @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  fieldSeasons            FieldSeason[]
+
+  @@unique([cropId, name])
+  @@index([cropId])
+  @@map("crop_varieties")
+}
+

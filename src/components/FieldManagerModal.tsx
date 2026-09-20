@@ -1,4 +1,5 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import type { Polygon, MultiPolygon } from 'geojson';
 import {
   X,
   Layers,
@@ -14,11 +15,19 @@ import {
   History,
   AlertCircle,
   Lock,
-  CalendarDays
+  CalendarDays,
+  Landmark,
+  Compass,
+  ExternalLink
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FieldFeature } from '../types/field';
 import type { FarmingSeason } from '../types/season';
+import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
+import type { RelatedParty } from '../types/party';
+import type { Crop } from '../types/crop';
+import { INITIAL_CROPS, extractCropAndVariety } from '../data/sampleCrops';
+import { SAMPLE_CADASTRAL_PARCELS } from '../data/sampleCadastre';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -33,21 +42,11 @@ interface FieldManagerModalProps {
   onOpenUpload: () => void;
   seasons?: FarmingSeason[];
   onOpenSeasonManager?: () => void;
+  parties?: RelatedParty[];
+  onOpenParties?: () => void;
+  crops?: Crop[];
+  onOpenCrops?: () => void;
 }
-
-const AVAILABLE_YEARS = [2026, 2025, 2024, 2023];
-
-const POPULAR_CROPS = [
-  { name: 'Talinisu (Skagen)', color: '#eab308' },
-  { name: 'Suvioder (Planet)', color: '#d97706' },
-  { name: 'Taliraps (Mercedes)', color: '#10b981' },
-  { name: 'Põldhernes (Astronaute)', color: '#84cc16' },
-  { name: 'Põlduba (Tiffany)', color: '#06b6d4' },
-  { name: 'Kaer (Symphony)', color: '#f59e0b' },
-  { name: 'Rukis (KWS Bono)', color: '#a16207' },
-  { name: 'Punane ristik / Rohumaa', color: '#22c55e' },
-  { name: 'Mustkesa', color: '#64748b' }
-];
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   isOpen,
@@ -61,10 +60,15 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onDeleteField,
   onOpenUpload,
   seasons = [],
-  onOpenSeasonManager
+  onOpenSeasonManager,
+  parties = [],
+  onOpenParties,
+  crops = [],
+  onOpenCrops
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
+  const [tenureFilter, setTenureFilter] = useState<'all' | 'OWNED' | 'RENTED'>('all');
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
 
   // Current season & locked status
@@ -78,10 +82,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [editCadastralCode, setEditCadastralCode] = useState('');
   const [editLandowner, setEditLandowner] = useState('');
   const [editSoilType, setEditSoilType] = useState('');
+  const [editCadastralParcels, setEditCadastralParcels] = useState<FieldCadastralLink[]>([]);
 
   // Edit form state: Yearly details
-  const [editYear, setEditYear] = useState(selectedYear);
+  const editYear = selectedYear;
   const [editAreaHa, setEditAreaHa] = useState<number>(0);
+  const [editEligibleAreaHa, setEditEligibleAreaHa] = useState<number | undefined>(undefined);
+  const [editAreaChangeReason, setEditAreaChangeReason] = useState('');
   const [editCrop, setEditCrop] = useState('');
   const [editCropColor, setEditCropColor] = useState('#eab308');
   const [editVariety, setEditVariety] = useState('');
@@ -89,38 +96,41 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [editActualYield, setEditActualYield] = useState<number | undefined>(undefined);
   const [editNotes, setEditNotes] = useState('');
 
+  // Edit season & locked status
+  const editSeason = seasons.find((s) => s.year === selectedYear);
+  const isEditSeasonLocked = editSeason?.isLocked ?? false;
+
+  // Active crops and variety lookup
+  const activeCrops = useMemo(() => {
+    return crops.length > 0 ? crops : INITIAL_CROPS;
+  }, [crops]);
+
+  const selectedCropObj = useMemo(() => {
+    const q = editCrop.toLowerCase().trim();
+    return activeCrops.find(
+      (c) => c.name.toLowerCase() === q || q.startsWith(c.name.toLowerCase()) || c.name.toLowerCase().startsWith(q)
+    );
+  }, [activeCrops, editCrop]);
+
+  const availableVarieties = useMemo(() => {
+    return selectedCropObj?.varieties || [];
+  }, [selectedCropObj]);
+
   // Add new year season modal
   const [isAddYearOpen, setIsAddYearOpen] = useState(false);
   const [newYearInput, setNewYearInput] = useState(2027);
 
-  // Dynamic available years
+  // Dynamic available years (+3 forward and -3 history around active season)
   const availableYearsList = useMemo(() => {
-    const set = new Set<number>([2026, 2025, 2024, 2023]);
+    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
+    const set = new Set<number>();
+    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+      set.add(y);
+    }
     seasons.forEach((s) => set.add(s.year));
     masterFields.forEach((mf) => mf.history.forEach((h) => set.add(h.year)));
     return Array.from(set).sort((a, b) => b - a);
   }, [seasons, masterFields]);
-
-  // Filtered master fields
-  const filteredFields = useMemo(() => {
-    return masterFields.filter((f) => {
-      const yearRecord = f.history.find(h => h.year === selectedYear) || f.history[0];
-      const cropName = yearRecord ? yearRecord.crop : '';
-      const q = searchQuery.toLowerCase();
-
-      const matchesSearch =
-        f.name.toLowerCase().includes(q) ||
-        String(f.id).includes(q) ||
-        (f.num && f.num.toLowerCase().includes(q)) ||
-        f.fieldCode.toLowerCase().includes(q) ||
-        (f.cadastralCode && f.cadastralCode.toLowerCase().includes(q)) ||
-        cropName.toLowerCase().includes(q);
-
-      const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
-
-      return matchesSearch && matchesCrop;
-    });
-  }, [masterFields, selectedYear, searchQuery, cropFilter]);
 
   // Statistics for selected year
   const totalAreaHa = useMemo(() => {
@@ -129,6 +139,79 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       return sum + (rec ? rec.areaHa : 0);
     }, 0);
   }, [masterFields, selectedYear]);
+
+  // Financial summary (Oma maa vs Rent) based on active season
+  const financialSummary = useMemo(() => {
+    let ownedHa = 0;
+    let rentedHa = 0;
+    let totalTax = 0;
+    let totalRent = 0;
+
+    masterFields.forEach((f) => {
+      const rec = f.history.find(h => h.year === selectedYear) || f.history[0];
+      const fieldArea = rec ? rec.areaHa : 0;
+      const parcels = rec?.cadastralParcels || f.cadastralParcels || [];
+
+      if (parcels.length > 0) {
+        parcels.forEach((p) => {
+          if (p.ownershipType === 'OWNED') {
+            ownedHa += p.fieldAreaHa;
+            totalTax += p.landTaxEurYear !== undefined ? p.landTaxEurYear : (p.landTaxEurHa ? p.landTaxEurHa * p.fieldAreaHa : 0);
+          } else {
+            rentedHa += p.fieldAreaHa;
+            totalRent += p.rentFeeEurYear !== undefined ? p.rentFeeEurYear : (p.rentFeeEurHa ? p.rentFeeEurHa * p.fieldAreaHa : 0);
+          }
+        });
+      } else {
+        const isRent = f.landowner && f.landowner.toLowerCase().includes('rent');
+        if (isRent) {
+          rentedHa += fieldArea;
+          totalRent += fieldArea * 120;
+        } else {
+          ownedHa += fieldArea;
+          totalTax += fieldArea * 15;
+        }
+      }
+    });
+
+    return {
+      ownedHa: Math.round(ownedHa * 100) / 100,
+      rentedHa: Math.round(rentedHa * 100) / 100,
+      totalTax: Math.round(totalTax),
+      totalRent: Math.round(totalRent)
+    };
+  }, [masterFields, selectedYear]);
+
+  // Filtered master fields
+  const filteredFields = useMemo(() => {
+    return masterFields.filter((f) => {
+      const yearRecord = f.history.find(h => h.year === selectedYear) || f.history[0];
+      const cropName = yearRecord ? yearRecord.crop : '';
+      const q = searchQuery.toLowerCase();
+
+      const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
+      const hasOwned = parcels.some(p => p.ownershipType === 'OWNED') || (f.landowner && !f.landowner.toLowerCase().includes('rent'));
+      const hasRented = parcels.some(p => p.ownershipType === 'RENTED') || (f.landowner && f.landowner.toLowerCase().includes('rent'));
+
+      const matchesSearch =
+        f.name.toLowerCase().includes(q) ||
+        String(f.id).includes(q) ||
+        (f.num && f.num.toLowerCase().includes(q)) ||
+        f.fieldCode.toLowerCase().includes(q) ||
+        (f.cadastralCode && f.cadastralCode.toLowerCase().includes(q)) ||
+        parcels.some(p => p.cadastralCode.toLowerCase().includes(q) || p.ownerName.toLowerCase().includes(q)) ||
+        cropName.toLowerCase().includes(q);
+
+      const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
+
+      const matchesTenure =
+        tenureFilter === 'all' ||
+        (tenureFilter === 'OWNED' && hasOwned) ||
+        (tenureFilter === 'RENTED' && hasRented);
+
+      return matchesSearch && matchesCrop && matchesTenure;
+    });
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter]);
 
   // Crops breakdown for selected year
   const cropsList = useMemo(() => {
@@ -140,31 +223,89 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return Array.from(cropsSet);
   }, [masterFields, selectedYear]);
 
+  // Sync edit form with selectedYear whenever selectedYear changes
+  useEffect(() => {
+    if (editingFieldId !== null) {
+      const field = masterFields.find((m) => m.id === editingFieldId);
+      if (field) {
+        const currentRec = field.history.find((h) => h.year === selectedYear) || {
+          year: selectedYear,
+          areaHa: field.history[0]?.areaHa || 5.0,
+          crop: field.history[0]?.crop || 'Talinisu (Skagen)',
+          cropColor: field.history[0]?.cropColor || '#eab308'
+        };
+
+        const rawParcels = currentRec.cadastralParcels
+          ? [...currentRec.cadastralParcels]
+          : (field.cadastralParcels ? [...field.cadastralParcels] : []);
+
+        const initialParcels = rawParcels.map((p) => ({
+          ...p,
+          rentFeeEurHa: p.rentFeeEurHa ?? (p.rentFeeEurYear && p.fieldAreaHa > 0 ? Math.round((p.rentFeeEurYear / p.fieldAreaHa) * 10) / 10 : undefined),
+          landTaxEurHa: p.landTaxEurHa ?? (p.landTaxEurYear && p.fieldAreaHa > 0 ? Math.round((p.landTaxEurYear / p.fieldAreaHa) * 10) / 10 : undefined)
+        }));
+
+        const parsedCrop = extractCropAndVariety(currentRec.crop);
+        const matchedCrop = activeCrops.find(
+          (c) => c.name.toLowerCase() === parsedCrop.crop.toLowerCase() ||
+            parsedCrop.crop.toLowerCase().startsWith(c.name.toLowerCase())
+        );
+        setEditAreaHa(currentRec.areaHa);
+        setEditEligibleAreaHa(currentRec.eligibleAreaHa || undefined);
+        setEditAreaChangeReason(currentRec.areaChangeReason || '');
+        setEditCrop(parsedCrop.crop);
+        setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
+        setEditVariety(currentRec.cropVariety || parsedCrop.variety || '');
+        setEditTargetYield(currentRec.targetYieldTonsHa || undefined);
+        setEditActualYield(currentRec.actualYieldTonsHa || undefined);
+        setEditNotes(currentRec.notes || '');
+        setEditCadastralParcels(initialParcels);
+      }
+    }
+  }, [selectedYear]);
+
   if (!isOpen) return null;
 
   const startEdit = (field: MasterField) => {
-    const currentRec = field.history.find(h => h.year === selectedYear) || field.history[0] || {
+    const currentRec = field.history.find(h => h.year === selectedYear) || {
       year: selectedYear,
-      areaHa: 5.0,
-      crop: 'Talinisu (Skagen)',
-      cropColor: '#eab308'
+      areaHa: field.history[0]?.areaHa || 5.0,
+      crop: field.history[0]?.crop || 'Talinisu',
+      cropColor: field.history[0]?.cropColor || '#eab308'
     };
+
+    const rawParcels = currentRec.cadastralParcels
+      ? [...currentRec.cadastralParcels]
+      : (field.cadastralParcels ? [...field.cadastralParcels] : []);
+
+    const initialParcels = rawParcels.map(p => ({
+      ...p,
+      rentFeeEurHa: p.rentFeeEurHa ?? (p.rentFeeEurYear && p.fieldAreaHa > 0 ? Math.round((p.rentFeeEurYear / p.fieldAreaHa) * 10) / 10 : undefined),
+      landTaxEurHa: p.landTaxEurHa ?? (p.landTaxEurYear && p.fieldAreaHa > 0 ? Math.round((p.landTaxEurYear / p.fieldAreaHa) * 10) / 10 : undefined)
+    }));
 
     setEditingFieldId(field.id);
     setEditName(field.name);
     setEditNum(field.num || '');
     setEditFieldCode(field.fieldCode);
-    setEditCadastralCode(field.cadastralCode || '');
+    setEditCadastralCode(field.cadastralCode || (initialParcels[0]?.cadastralCode) || '');
     setEditLandowner(field.landowner || '');
     setEditSoilType(field.soilType || '');
+    setEditCadastralParcels(initialParcels);
 
-    setEditYear(selectedYear);
+    const parsedCrop = extractCropAndVariety(currentRec.crop);
+    const matchedCrop = activeCrops.find(
+      (c) => c.name.toLowerCase() === parsedCrop.crop.toLowerCase() ||
+        parsedCrop.crop.toLowerCase().startsWith(c.name.toLowerCase())
+    );
     setEditAreaHa(currentRec.areaHa);
-    setEditCrop(currentRec.crop);
-    setEditCropColor(currentRec.cropColor || '#eab308');
-    setEditVariety(currentRec.cropVariety || '');
-    setEditTargetYield(currentRec.targetYieldTonsHa);
-    setEditActualYield(currentRec.actualYieldTonsHa);
+    setEditEligibleAreaHa(currentRec.eligibleAreaHa || undefined);
+    setEditAreaChangeReason(currentRec.areaChangeReason || '');
+    setEditCrop(parsedCrop.crop);
+    setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
+    setEditVariety(currentRec.cropVariety || parsedCrop.variety || '');
+    setEditTargetYield(currentRec.targetYieldTonsHa || undefined);
+    setEditActualYield(currentRec.actualYieldTonsHa || undefined);
     setEditNotes(currentRec.notes || '');
   };
 
@@ -172,30 +313,139 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     e.preventDefault();
     if (editingFieldId === null || editingFieldId === undefined) return;
 
+    if (isEditSeasonLocked) {
+      alert(`Hooaeg ${editYear} on suletud ja arhiveeritud. Hooaja andmeid ega katastriüksuseid ei saa muuta.`);
+      return;
+    }
+
+    const matchedCrop = activeCrops.find(
+      (c) => c.name.toLowerCase() === editCrop.trim().toLowerCase() ||
+        editCrop.trim().toLowerCase().startsWith(c.name.toLowerCase())
+    );
+    const finalCropColor = matchedCrop?.color || selectedCropObj?.color || editCropColor || '#22c55e';
+
     onUpdateField(
       editingFieldId,
       {
         name: editName.trim() || `Põld ${editNum || editingFieldId}`,
         num: editNum.trim() || undefined,
         fieldCode: editFieldCode.trim(),
-        cadastralCode: editCadastralCode.trim() || undefined,
+        cadastralCode: editCadastralCode.trim() || (editCadastralParcels[0]?.cadastralCode) || undefined,
         landowner: editLandowner.trim() || undefined,
         soilType: editSoilType.trim() || undefined
       },
       {
         year: editYear,
         areaHa: Number(editAreaHa),
+        eligibleAreaHa: editEligibleAreaHa ? Number(editEligibleAreaHa) : undefined,
+        areaChangeReason: editAreaChangeReason.trim() || undefined,
         crop: editCrop.trim() || 'Talinisu',
         cropVariety: editVariety.trim() || undefined,
-        cropColor: editCropColor,
+        cropColor: finalCropColor,
         targetYieldTonsHa: editTargetYield ? Number(editTargetYield) : undefined,
         actualYieldTonsHa: editActualYield ? Number(editActualYield) : undefined,
-        notes: editNotes.trim() || undefined
+        notes: editNotes.trim() || undefined,
+        cadastralParcels: editCadastralParcels
       }
     );
 
     setEditingFieldId(null);
   };
+
+  const handleAddCadastralParcelToEdit = () => {
+    if (isEditSeasonLocked) {
+      alert(`Hooaeg ${editYear} on suletud/lukustatud. Uute katastriüksuste lisamine on keelatud.`);
+      return;
+    }
+
+    const defaultCad = SAMPLE_CADASTRAL_PARCELS[editCadastralParcels.length % SAMPLE_CADASTRAL_PARCELS.length];
+    const defaultHa = Math.round((editAreaHa / (editCadastralParcels.length + 1)) * 100) / 100;
+    const defaultRateHa = defaultCad.ownershipType === 'OWNED' ? 18 : 140;
+    const defaultTotal = Math.round(defaultRateHa * defaultHa * 100) / 100;
+
+    setEditCadastralParcels([
+      ...editCadastralParcels,
+      {
+        cadastralCode: defaultCad.cadastralCode,
+        parcelName: defaultCad.name || 'Katastriüksus',
+        ownershipType: defaultCad.ownershipType,
+        ownerName: defaultCad.ownerName,
+        fieldAreaHa: defaultHa,
+        landTaxEurHa: defaultCad.ownershipType === 'OWNED' ? defaultRateHa : undefined,
+        landTaxEurYear: defaultCad.ownershipType === 'OWNED' ? defaultTotal : undefined,
+        rentFeeEurHa: defaultCad.ownershipType === 'RENTED' ? defaultRateHa : undefined,
+        rentFeeEurYear: defaultCad.ownershipType === 'RENTED' ? defaultTotal : undefined
+      }
+    ]);
+  };
+
+  const handleRemoveCadastralParcelFromEdit = (index: number) => {
+    if (isEditSeasonLocked) {
+      alert(`Hooaeg ${editYear} on suletud/lukustatud. Katastriüksuste kustutamine on keelatud!`);
+      return;
+    }
+    setEditCadastralParcels(editCadastralParcels.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateCadastralParcel = (
+    index: number,
+    updates: Partial<FieldCadastralLink>
+  ) => {
+    if (isEditSeasonLocked) return;
+
+    setEditCadastralParcels(prev => {
+      const copy = [...prev];
+      const current = { ...copy[index], ...updates };
+
+      // Kui muutus fieldAreaHa, uuendame kogusummat vastavalt olemasolevale €/ha määrale
+      if ('fieldAreaHa' in updates) {
+        const area = Number(updates.fieldAreaHa) || 0;
+        if (current.ownershipType === 'RENTED' && current.rentFeeEurHa !== undefined) {
+          current.rentFeeEurYear = Math.round(current.rentFeeEurHa * area * 100) / 100;
+        } else if (current.ownershipType === 'OWNED' && current.landTaxEurHa !== undefined) {
+          current.landTaxEurYear = Math.round(current.landTaxEurHa * area * 100) / 100;
+        }
+      }
+
+      // Kui kasutaja sisestas või muutis €/ha määra
+      if ('rentFeeEurHa' in updates) {
+        const rate = updates.rentFeeEurHa !== undefined ? Number(updates.rentFeeEurHa) : undefined;
+        current.rentFeeEurHa = rate;
+        if (rate !== undefined) {
+          current.rentFeeEurYear = Math.round(rate * (current.fieldAreaHa || 0) * 100) / 100;
+        }
+      }
+
+      if ('landTaxEurHa' in updates) {
+        const rate = updates.landTaxEurHa !== undefined ? Number(updates.landTaxEurHa) : undefined;
+        current.landTaxEurHa = rate;
+        if (rate !== undefined) {
+          current.landTaxEurYear = Math.round(rate * (current.fieldAreaHa || 0) * 100) / 100;
+        }
+      }
+
+      // Kui kasutaja sisestas või muutis otse kogusummat (€/a)
+      if ('rentFeeEurYear' in updates) {
+        const total = updates.rentFeeEurYear !== undefined ? Number(updates.rentFeeEurYear) : undefined;
+        current.rentFeeEurYear = total;
+        if (total !== undefined && current.fieldAreaHa > 0) {
+          current.rentFeeEurHa = Math.round((total / current.fieldAreaHa) * 10) / 10;
+        }
+      }
+
+      if ('landTaxEurYear' in updates) {
+        const total = updates.landTaxEurYear !== undefined ? Number(updates.landTaxEurYear) : undefined;
+        current.landTaxEurYear = total;
+        if (total !== undefined && current.fieldAreaHa > 0) {
+          current.landTaxEurHa = Math.round((total / current.fieldAreaHa) * 10) / 10;
+        }
+      }
+
+      copy[index] = current;
+      return copy;
+    });
+  };
+
 
   const handleExportCsv = () => {
     const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Maaomanik', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
@@ -295,19 +545,25 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               </div>
             </div>
 
-            {/* Quick Stats Bar */}
+            {/* Quick Stats & Financial Bar */}
             <div className="register-stats-pills">
               <div className="reg-stat-pill">
                 <span className="lbl">Põlde:</span>
                 <strong>{masterFields.length} tk</strong>
               </div>
               <div className="reg-stat-pill highlight">
-                <span className="lbl">{selectedYear}. a kogupind:</span>
+                <span className="lbl">Kogupind:</span>
                 <strong>{totalAreaHa.toFixed(2)} ha</strong>
               </div>
-              <div className="reg-stat-pill">
-                <span className="lbl">Keskmine suurus:</span>
-                <strong>{(totalAreaHa / (masterFields.length || 1)).toFixed(2)} ha</strong>
+              <div className="reg-stat-pill tenure-owned">
+                <span className="lbl">🏛️ Oma maa:</span>
+                <strong>{financialSummary.ownedHa} ha</strong>
+                <span className="sub-val text-emerald">({financialSummary.totalTax} €/a maamaks)</span>
+              </div>
+              <div className="reg-stat-pill tenure-rented">
+                <span className="lbl">🤝 Rendimaa:</span>
+                <strong>{financialSummary.rentedHa} ha</strong>
+                <span className="sub-val text-blue">({financialSummary.totalRent} €/a rent)</span>
               </div>
             </div>
           </div>
@@ -338,7 +594,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               <Search size={16} className="search-icon" />
               <input
                 type="text"
-                placeholder="Otsi põllu nime, koodi, katastrit või kultuuri..."
+                placeholder="Otsi põllu nime, koodi, katastrit või omanikku..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="form-input search-input"
@@ -349,6 +605,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 </button>
               )}
             </div>
+
+            {/* Tenure filter */}
+            <select
+              className="form-input filter-select"
+              value={tenureFilter}
+              onChange={(e) => setTenureFilter(e.target.value as any)}
+            >
+              <option value="all">Kõik omandivormid</option>
+              <option value="OWNED">🏛️ Ainult Oma maa ({financialSummary.ownedHa} ha)</option>
+              <option value="RENTED">🤝 Ainult Rendimaa ({financialSummary.rentedHa} ha)</option>
+            </select>
 
             {/* Crop filter */}
             <select
@@ -438,57 +705,60 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
               {/* General Master Field Data */}
               <div className="form-sub-header">
-                <span>1. Põllu põhiandmed</span>
+                <Landmark size={14} />
+                <span>1. Põllu põhiandmed ja massiiv</span>
               </div>
               <div className="form-grid">
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Põllu nimi (kasutaja määratud) *</label>
+                <div className="form-row-3">
+                  <div className="form-group">
+                    <label>Põllu nimi (kasutaja määratud) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="nt Loisu tagune, Kodu põld, Suur põld..."
+                      value={editName}
+                      onChange={(e) => setEditName(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>Põllu number (PRIA impordist)</label>
+                    <input
+                      type="text"
+                      placeholder="nt 4, 4-1, 1"
+                      value={editNum}
+                      onChange={(e) => setEditNum(e.target.value)}
+                      className="form-input text-right"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label>PRIA massiivi number (fieldCode) *</label>
+                    <input
+                      type="text"
+                      required
+                      placeholder="nt 61144313542"
+                      value={editFieldCode}
+                      onChange={(e) => setEditFieldCode(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label>Mullastiku tüüp</label>
                   <input
                     type="text"
-                    required
-                    placeholder="nt Loisu tagune, Kodu põld, Suur põld..."
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
+                    placeholder="nt Leostunud liivsavi (LP)"
+                    value={editSoilType}
+                    onChange={(e) => setEditSoilType(e.target.value)}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
-                  <label>Põllu number (PRIA impordist nt 4, 4-1, 1A)</label>
-                  <input
-                    type="text"
-                    placeholder="nt 4, 4-1, 1"
-                    value={editNum}
-                    onChange={(e) => setEditNum(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>PRIA massiivi number (fieldCode) *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="nt 61144313542"
-                    value={editFieldCode}
-                    onChange={(e) => setEditFieldCode(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Katastritunnus</label>
-                  <input
-                    type="text"
-                    placeholder="nt 89201:004:0140"
-                    value={editCadastralCode}
-                    onChange={(e) => setEditCadastralCode(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Maaomanik / Rentnik</label>
+                  <label>Üldine maaomaniku / rentniku märge</label>
                   <input
                     type="text"
                     placeholder="nt Oma maa, Rent (OÜ Loisu)"
@@ -499,77 +769,141 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 </div>
               </div>
 
-              {/* Seasonal Yearly Data */}
-              <div className="form-sub-header" style={{ marginTop: '14px' }}>
-                <span>2. Hooaja andmed ({editYear}. aasta külvikord ja saak)</span>
+              {/* Seasonal Yearly Data & Cadastral Parcels */}
+              <div className="form-sub-header" style={{ marginTop: '16px' }}>
+                <Compass size={14} />
+                <span>2. Hooaja külvikord, pindala ja piirid</span>
               </div>
+
               <div className="form-grid">
                 <div className="form-group">
-                  <label>Hooaja aasta</label>
+                  <label>Põllu haritav pindala (ha) *</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    disabled={isEditSeasonLocked}
+                    value={editAreaHa}
+                    onChange={(e) => setEditAreaHa(Number(e.target.value))}
+                    className="form-input"
+                    title="Põllu haritav suurus hooajal"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>PRIA toetusõiguslik pindala (ha)</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    disabled={isEditSeasonLocked}
+                    value={editEligibleAreaHa || ''}
+                    onChange={(e) => setEditEligibleAreaHa(e.target.value ? Number(e.target.value) : undefined)}
+                    className="form-input"
+                    placeholder="nt 4.85"
+                  />
+                </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label>Pindala muutuse põhjus (nt võsa pealekasv, kraavipuhastus, puhverribad)</label>
+                  <input
+                    type="text"
+                    disabled={isEditSeasonLocked}
+                    placeholder="nt Võsa pealekasv idaosas -0.2 ha või Kraaviäärde rajatud puhverriba"
+                    value={editAreaChangeReason}
+                    onChange={(e) => setEditAreaChangeReason(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      Kultuur
+                      {selectedCropObj?.color && (
+                        <span
+                          style={{
+                            display: 'inline-block',
+                            width: '10px',
+                            height: '10px',
+                            borderRadius: '50%',
+                            backgroundColor: selectedCropObj.color,
+                            border: '1px solid rgba(0, 0, 0, 0.2)'
+                          }}
+                          title={`Kultuuri värv: ${selectedCropObj.color}`}
+                        />
+                      )}
+                    </label>
+                    {onOpenCrops && (
+                      <button
+                        type="button"
+                        onClick={onOpenCrops}
+                        title="Ava kultuuride register"
+                        className="icon-btn-ghost"
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: 'var(--emerald-500, #10b981)',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          display: 'inline-flex',
+                          alignItems: 'center'
+                        }}
+                      >
+                        <ExternalLink size={14} />
+                      </button>
+                    )}
+                  </div>
                   <select
-                    value={editYear}
+                    disabled={isEditSeasonLocked}
+                    value={editCrop}
                     onChange={(e) => {
-                      const yr = Number(e.target.value);
-                      setEditYear(yr);
-                      const f = masterFields.find(m => m.id === editingFieldId);
-                      const yrRec = f?.history.find(h => h.year === yr);
-                      if (yrRec) {
-                        setEditAreaHa(yrRec.areaHa);
-                        setEditCrop(yrRec.crop);
-                        setEditCropColor(yrRec.cropColor);
-                        setEditVariety(yrRec.cropVariety || '');
-                        setEditTargetYield(yrRec.targetYieldTonsHa);
-                        setEditActualYield(yrRec.actualYieldTonsHa);
-                        setEditNotes(yrRec.notes || '');
+                      const selectedName = e.target.value;
+                      setEditCrop(selectedName);
+                      const match = activeCrops.find(c => c.name === selectedName);
+                      if (match) {
+                        setEditCropColor(match.color);
+                        if (match.varieties && match.varieties.length > 0) {
+                          setEditVariety(match.varieties[0].name);
+                        } else {
+                          setEditVariety('');
+                        }
                       }
                     }}
                     className="form-input"
                   >
-                    {AVAILABLE_YEARS.map(yr => (
-                      <option key={yr} value={yr}>{yr}. aasta</option>
+                    {activeCrops.map(c => (
+                      <option key={c.id} value={c.name}>
+                        {c.icon || '🌾'} {c.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div className="form-group">
-                  <label>Põllu pindala {editYear}. aastal (ha) *</label>
-                  <input
-                    type="number"
-                    step="0.01"
-                    required
-                    value={editAreaHa}
-                    onChange={(e) => setEditAreaHa(Number(e.target.value))}
-                    className="form-input"
-                    title="Põllu suurus võib igal aastal erineda kraaviäärte, puhverribade või külvipinna järgi"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Kultuur ja värv kaardil</label>
-                  <div className="input-split">
-                    <select
-                      value={editCrop}
-                      onChange={(e) => {
-                        const selected = e.target.value;
-                        setEditCrop(selected);
-                        const match = POPULAR_CROPS.find(c => c.name === selected);
-                        if (match) setEditCropColor(match.color);
-                      }}
-                      className="form-input"
-                    >
-                      {POPULAR_CROPS.map(c => (
-                        <option key={c.name} value={c.name}>{c.name}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="color"
-                      value={editCropColor}
-                      onChange={(e) => setEditCropColor(e.target.value)}
-                      className="form-input"
-                      style={{ padding: '2px', height: '36px' }}
-                      title="Kultuuri värv kaardil"
-                    />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                    <label style={{ margin: 0 }}>Sordi valik ({editCrop || 'Kultuur'})</label>
+                    {availableVarieties.length > 0 && (
+                      <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                        {availableVarieties.length} sorti registris
+                      </span>
+                    )}
                   </div>
+                  <input
+                    type="text"
+                    list="field-available-varieties-list"
+                    disabled={isEditSeasonLocked}
+                    placeholder={availableVarieties.length > 0 ? `nt ${availableVarieties[0].name}` : 'nt Skagen'}
+                    value={editVariety}
+                    onChange={(e) => setEditVariety(e.target.value)}
+                    className="form-input"
+                  />
+                  <datalist id="field-available-varieties-list">
+                    {availableVarieties.map((v) => (
+                      <option key={v.id} value={v.name}>
+                        {v.name} {v.breeder ? `(${v.breeder})` : ''} {v.qualityClass ? `· ${v.qualityClass}` : ''}
+                      </option>
+                    ))}
+                  </datalist>
                 </div>
 
                 <div className="form-group">
@@ -578,6 +912,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     <input
                       type="number"
                       step="0.1"
+                      disabled={isEditSeasonLocked}
                       placeholder="Plaan t/ha"
                       value={editTargetYield || ''}
                       onChange={(e) => setEditTargetYield(e.target.value ? Number(e.target.value) : undefined)}
@@ -586,6 +921,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     <input
                       type="number"
                       step="0.1"
+                      disabled={isEditSeasonLocked}
                       placeholder="Tegelik t/ha"
                       value={editActualYield || ''}
                       onChange={(e) => setEditActualYield(e.target.value ? Number(e.target.value) : undefined)}
@@ -594,11 +930,12 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   </div>
                 </div>
 
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Hooaja märkmed (väetamine, taimekaitse, PRIA toetused)</label>
+                <div className="form-group">
+                  <label>Hooaja märkmed (väetamine, taimekaitse, PRIA)</label>
                   <input
                     type="text"
-                    placeholder="nt NPK 8-20-30 250kg/ha sügisel, umbrohutõrje tehtud"
+                    disabled={isEditSeasonLocked}
+                    placeholder="nt NPK 8-20-30 250kg/ha sügisel"
                     value={editNotes}
                     onChange={(e) => setEditNotes(e.target.value)}
                     className="form-input"
@@ -606,9 +943,179 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 </div>
               </div>
 
+              {/* Cadastral Parcels Management for Selected Year */}
+              <div className="form-sub-header" style={{ marginTop: '16px' }}>
+                <Landmark size={14} />
+                <span>3. Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs add-cad-btn"
+                  disabled={isEditSeasonLocked}
+                  onClick={handleAddCadastralParcelToEdit}
+                >
+                  <Plus size={12} />
+                  <span>Lisa katastriüksus</span>
+                </button>
+              </div>
+
+              <div className="edit-cadastral-list">
+                {editCadastralParcels.map((parcel, pIdx) => (
+                  <div key={pIdx} className="edit-cad-item glass-card">
+                    <div className="edit-cad-grid">
+                      <div className="form-group">
+                        <label>Katastritunnus *</label>
+                        <input
+                          type="text"
+                          required
+                          disabled={isEditSeasonLocked}
+                          value={parcel.cadastralCode}
+                          onChange={(e) => handleUpdateCadastralParcel(pIdx, { cadastralCode: e.target.value })}
+                          className="form-input"
+                          placeholder="nt 89201:001:0100"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Põllu osa (ha) *</label>
+                        <input
+                          type="number"
+                          step="0.01"
+                          required
+                          disabled={isEditSeasonLocked}
+                          value={parcel.fieldAreaHa}
+                          onChange={(e) => handleUpdateCadastralParcel(pIdx, { fieldAreaHa: Number(e.target.value) })}
+                          className="form-input"
+                          title="Hektarite arv sellest katastriüksusest sellel hooajal"
+                        />
+                      </div>
+
+                      <div className="form-group">
+                        <label>Omandivorm</label>
+                        <select
+                          disabled={isEditSeasonLocked}
+                          value={parcel.ownershipType}
+                          onChange={(e) => handleUpdateCadastralParcel(pIdx, { ownershipType: e.target.value as LandTenureType })}
+                          className="form-input"
+                        >
+                          <option value="OWNED">🏛️ Oma maa</option>
+                          <option value="RENTED">🤝 Renditud</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <label style={{ margin: 0 }}>Maaomanik</label>
+                          {onOpenParties && (
+                            <button
+                              type="button"
+                              onClick={onOpenParties}
+                              title="Ava seotud isikute register"
+                              className="icon-btn-ghost"
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: 'var(--emerald-500, #10b981)',
+                                cursor: 'pointer',
+                                padding: '2px',
+                                display: 'inline-flex',
+                                alignItems: 'center'
+                              }}
+                            >
+                              <ExternalLink size={14} />
+                            </button>
+                          )}
+                        </div>
+                        <input
+                          type="text"
+                          list="parties-landowners-list"
+                          disabled={isEditSeasonLocked}
+                          value={parcel.ownerName}
+                          onChange={(e) => handleUpdateCadastralParcel(pIdx, { ownerName: e.target.value })}
+                          className="form-input"
+                          placeholder="nt Loisu Agro OÜ / Jaan Tamm"
+                        />
+                        <datalist id="parties-landowners-list">
+                          {parties.map((p) => (
+                            <option key={p.id} value={p.name}>
+                              {p.name} {p.roles.includes('LANDOWNER') ? '(Maaomanik)' : `(${p.roles.join(', ')})`}
+                            </option>
+                          ))}
+                        </datalist>
+                      </div>
+
+                      {/* €/ha väli ENNE kogusummat */}
+                      <div className="form-group">
+                        <label>
+                          {parcel.ownershipType === 'OWNED' ? `Maamaks (€/ha)` : `Renditasu (€/ha)`}
+                        </label>
+                        <input
+                          type="number"
+                          step="0.5"
+                          disabled={isEditSeasonLocked}
+                          value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurHa ?? '') : (parcel.rentFeeEurHa ?? '')}
+                          onChange={(e) => {
+                            const val = e.target.value ? Number(e.target.value) : undefined;
+                            if (parcel.ownershipType === 'OWNED') {
+                              handleUpdateCadastralParcel(pIdx, { landTaxEurHa: val });
+                            } else {
+                              handleUpdateCadastralParcel(pIdx, { rentFeeEurHa: val });
+                            }
+                          }}
+                          className="form-input"
+                          placeholder="nt 140"
+                          title="Tasu hektari kohta aastas (€/ha)"
+                        />
+                      </div>
+
+                      {/* Kogu summa aastas */}
+                      <div className="form-group">
+                        <label>
+                          {parcel.ownershipType === 'OWNED' ? `Maamaks kokku (€/a)` : `Renditasu kokku (€/a)`}
+                        </label>
+                        <input
+                          type="number"
+                          step="1"
+                          disabled={isEditSeasonLocked}
+                          value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurYear ?? '') : (parcel.rentFeeEurYear ?? '')}
+                          onChange={(e) => {
+                            const val = e.target.value ? Number(e.target.value) : undefined;
+                            if (parcel.ownershipType === 'OWNED') {
+                              handleUpdateCadastralParcel(pIdx, { landTaxEurYear: val });
+                            } else {
+                              handleUpdateCadastralParcel(pIdx, { rentFeeEurYear: val });
+                            }
+                          }}
+                          className="form-input"
+                          placeholder="nt 630"
+                          title="Kogusumma aastas (€/a)"
+                        />
+                      </div>
+
+                      <div className="form-group edit-cad-action">
+                        <button
+                          type="button"
+                          className="icon-btn-danger"
+                          disabled={isEditSeasonLocked}
+                          onClick={() => handleRemoveCadastralParcelFromEdit(pIdx)}
+                          title={isEditSeasonLocked ? "Hooaeg on muudatusteks suletud" : "Eemalda see katastriüksus"}
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
               <div className="form-actions">
                 <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingFieldId(null)}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">Salvesta muudatused</button>
+                <button
+                  type="submit"
+                  disabled={isEditSeasonLocked}
+                  className={`btn btn-primary btn-sm ${isEditSeasonLocked ? 'btn-disabled' : ''}`}
+                >
+                  Salvesta muudatused
+                </button>
               </div>
             </form>
           )}
@@ -620,6 +1127,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               const area = currentYearRecord ? currentYearRecord.areaHa : 0;
               const crop = currentYearRecord ? currentYearRecord.crop : 'Määramata';
               const cropColor = currentYearRecord ? currentYearRecord.cropColor : '#94a3b8';
+              const parcels = field.cadastralParcels || [];
 
               return (
                 <div key={field.id} className="master-field-card glass-card">
@@ -638,30 +1146,56 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         )}
                       </div>
 
-                      {/* Soil & Landowner tags */}
+                      {/* Cadastral Parcels & Ownership tags */}
                       <div className="field-sub-tags">
+                        {parcels.length > 0 ? (
+                          parcels.map((p, pI) => (
+                            <span
+                              key={pI}
+                              className={`sub-tag ${p.ownershipType === 'OWNED' ? 'owner-tag' : 'rent-tag'}`}
+                              title={`${p.cadastralCode}: ${p.ownerName} (${p.fieldAreaHa} ha) - ${p.ownershipType === 'OWNED' ? `Maamaks ${p.landTaxEurYear || 0}€` : `Rent ${p.rentFeeEurYear || 0}€`}`}
+                            >
+                              {p.ownershipType === 'OWNED' ? '🏛️ Oma' : '🤝 Rent'}: {p.cadastralCode} ({p.fieldAreaHa} ha)
+                            </span>
+                          ))
+                        ) : (
+                          field.landowner && (
+                            <span className="sub-tag owner-tag">👤 {field.landowner}</span>
+                          )
+                        )}
+
                         {field.soilType && (
                           <span className="sub-tag soil-tag">🌱 {field.soilType}</span>
-                        )}
-                        {field.landowner && (
-                          <span className="sub-tag owner-tag">👤 {field.landowner}</span>
                         )}
                         {field.drainageSystem && (
                           <span className="sub-tag drainage-tag">💧 Drenaaž</span>
                         )}
                       </div>
+
+                      {/* Seasonal Area change note */}
+                      {currentYearRecord?.areaChangeReason && (
+                        <div className="field-change-reason-line">
+                          <Compass size={11} className="text-amber" />
+                          <span>{currentYearRecord.areaChangeReason}</span>
+                        </div>
+                      )}
                     </div>
 
                     {/* Middle: Active Year Area & Crop */}
                     <div className="field-active-season-col">
                       <div className="season-area-box">
-                        <span className="season-year-label">{selectedYear}. a suurus:</span>
+                        <span className="season-year-label">Põllu suurus:</span>
                         <strong className="season-ha-val">{area.toFixed(2)} ha</strong>
+                        {currentYearRecord?.eligibleAreaHa && (
+                          <span className="eligible-ha-sub">PRIA: {currentYearRecord.eligibleAreaHa} ha</span>
+                        )}
                       </div>
 
                       <div className="season-crop-badge" style={{ borderColor: cropColor, backgroundColor: `${cropColor}18` }}>
                         <span className="crop-dot" style={{ backgroundColor: cropColor }}></span>
-                        <span className="crop-name" style={{ color: 'var(--text-primary)' }}>{crop}</span>
+                        <span className="crop-name" style={{ color: 'var(--text-primary)' }}>
+                          {crop} {currentYearRecord?.cropVariety ? `(${currentYearRecord.cropVariety})` : ''}
+                        </span>
                       </div>
                     </div>
 
@@ -670,7 +1204,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       <button
                         className="btn btn-secondary btn-sm"
                         onClick={() => startEdit(field)}
-                        title="Muuda põllu nime, koodi või hooaja andmeid"
+                        title="Muuda põllu nime, katastriüksusi või hooaja andmeid"
                       >
                         <Edit2 size={13} />
                         <span>Muuda</span>
@@ -682,17 +1216,23 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           const feature: FieldFeature = {
                             type: 'Feature',
                             id: field.id,
-                            geometry: field.geometry,
+                            geometry: (currentYearRecord?.geometry || field.geometry || { type: 'Polygon', coordinates: [] }) as Polygon | MultiPolygon,
                             properties: {
                               id: field.id,
                               num: field.num,
                               name: field.name,
                               fieldCode: field.fieldCode,
                               areaHa: area,
+                              eligibleAreaHa: currentYearRecord?.eligibleAreaHa,
+                              areaChangeReason: currentYearRecord?.areaChangeReason,
                               crop: crop,
+                              cropVariety: currentYearRecord?.cropVariety,
                               cropColor: cropColor,
                               year: selectedYear,
-                              status: currentYearRecord?.status || 'not_started'
+                              status: currentYearRecord?.status || 'not_started',
+                              rawProperties: {
+                                cadastralParcels: field.cadastralParcels || []
+                              }
                             }
                           };
                           onFocusField(feature);
@@ -706,8 +1246,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
                       <button
                         className="icon-btn-danger"
+                        disabled={isCurrentSeasonLocked}
                         onClick={() => onDeleteField(field.id)}
-                        title="Kustuta põld registrist"
+                        title={isCurrentSeasonLocked ? "Hooaeg on muudatusteks suletud" : "Kustuta põld registrist"}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -729,7 +1270,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                             key={hist.year}
                             className={`history-pill ${hist.year === selectedYear ? 'current' : ''}`}
                             onClick={() => onSelectYear(hist.year)}
-                            title={`Klõpsa, et aktiveerida hooaeg ${hist.year}`}
+                            title={`Klõpsa, et aktiveerida hooaeg ${hist.year} (${hist.areaHa} ha, ${hist.crop})`}
                           >
                             <span className="h-year">{hist.year}:</span>
                             <span className="h-ha">{hist.areaHa} ha</span>
@@ -749,7 +1290,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               <div className="empty-register-state glass-card">
                 <AlertCircle size={28} className="text-amber" />
                 <h4>Otsingule vastavaid põlde ei leitud</h4>
-                <p>Proovi muuta otsingusõna või vali teine kultuurifilter.</p>
+                <p>Proovi muuta otsingusõna või vali teine kultuuri-/omandifilter.</p>
               </div>
             )}
           </div>
@@ -765,3 +1306,4 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     </div>
   );
 };
+

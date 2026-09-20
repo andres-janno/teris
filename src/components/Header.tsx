@@ -9,8 +9,8 @@ import {
   Sun,
   Moon,
   CalendarDays,
-  Lock,
-  Unlock
+  Users,
+  Sprout
 } from 'lucide-react';
 import type { FarmingSeason } from '../types/season';
 
@@ -20,10 +20,15 @@ interface HeaderProps {
   workedAreaHa: number;
   activeVehiclesCount: number;
   poiCount: number;
+  partiesCount?: number;
+  cropsCount?: number;
+  varietiesCount?: number;
   selectedYear: number;
   activeSeason?: FarmingSeason;
   onOpenSeasonManager: () => void;
   onOpenFieldsRegister: () => void;
+  onOpenParties?: () => void;
+  onOpenCrops?: () => void;
   onOpenUpload: () => void;
   onOpenVehicles: () => void;
   onOpenPoi: () => void;
@@ -40,10 +45,15 @@ export const Header: React.FC<HeaderProps> = ({
   workedAreaHa,
   activeVehiclesCount,
   poiCount,
+  partiesCount = 0,
+  cropsCount = 0,
+  varietiesCount = 0,
   selectedYear,
   activeSeason,
   onOpenSeasonManager,
   onOpenFieldsRegister,
+  onOpenParties,
+  onOpenCrops,
   onOpenUpload,
   onOpenVehicles,
   onOpenPoi,
@@ -131,6 +141,37 @@ export const Header: React.FC<HeaderProps> = ({
             <div className="stat-value">{poiCount} <span className="unit">punkti</span></div>
           </div>
         </div>
+
+        {onOpenParties && (
+          <div
+            className="stat-pill clickable parties-stat-pill"
+            onClick={onOpenParties}
+            title="Ava seotud isikute register (maaomanikud, masinajuhid, partnerid)"
+          >
+            <Users size={16} className="stat-icon text-emerald" />
+            <div>
+              <div className="stat-label">Seotud isikud</div>
+              <div className="stat-value">{partiesCount ?? 0} <span className="unit">isikut</span></div>
+            </div>
+          </div>
+        )}
+
+        {onOpenCrops && (
+          <div
+            className="stat-pill clickable crops-stat-pill"
+            onClick={onOpenCrops}
+            title="Ava kultuuride ja sortide register"
+          >
+            <Sprout size={16} className="stat-icon text-amber" />
+            <div>
+              <div className="stat-label">Kultuurid & Sordid</div>
+              <div className="stat-value">
+                {cropsCount ?? 0} <span className="unit">kultuuri</span>
+                {varietiesCount ? ` (${varietiesCount} sorti)` : ''}
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="header-actions">

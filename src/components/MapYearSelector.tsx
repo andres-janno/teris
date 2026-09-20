@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock, CalendarDays, Settings2 } from 'lucide-react';
+import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock, Settings2 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/shpParser';

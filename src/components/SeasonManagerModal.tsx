@@ -2,15 +2,10 @@
 import React, { useState } from 'react';
 import {
   X,
-  Calendar,
   Lock,
   Unlock,
-  CheckCircle2,
-  AlertTriangle,
   Plus,
   Edit2,
-  Clock,
-  Sparkles,
   Tractor,
   Sprout,
   Wheat,

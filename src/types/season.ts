@@ -15,19 +15,19 @@ export interface FarmingSeason {
   isLocked: boolean;             // Kui true, on hooaeg muudatusteks suletud (arhiveeritud / read-only)
   
   // Hooaja elutsükli kuupäevad
-  preparationStartDate?: string; // Põldude ettevalmistuse algus (sügiskünd / kevadine mullaharimine)
-  seedingStartDate?: string;     // Külvide algus
-  harvestStartDate?: string;     // Koristuse algus
-  harvestEndDate?: string;       // Koristuse lõpp
-  closedAt?: string;             // Millal hooaeg ametlikult suleti
-  closedBy?: string;             // Kes sulges (nt 'Rein Janno')
+  preparationStartDate?: string | null; // Põldude ettevalmistuse algus (sügiskünd / kevadine mullaharimine)
+  seedingStartDate?: string | null;     // Külvide algus
+  harvestStartDate?: string | null;     // Koristuse algus
+  harvestEndDate?: string | null;       // Koristuse lõpp
+  closedAt?: string | null;             // Millal hooaeg ametlikult suleti
+  closedBy?: string | null;             // Kes sulges (nt 'Rein Janno')
   
   // Hooaja agrotehnilised ja finantsilised koondandmed
-  totalAreaHa?: number;          // Hooaja põllupind kokku
-  fieldsCount?: number;          // Põldude arv
-  targetYieldTons?: number;      // Plaaniline kogusaak (tonnides)
-  actualYieldTons?: number;      // Tegelik koristatud kogusaak (tonnides)
-  notes?: string;                // Hooaja kokkuvõte / märkmed (ilm, kvaliteet, PRIA toetused)
+  totalAreaHa?: number | null;          // Hooaja põllupind kokku
+  fieldsCount?: number | null;          // Põldude arv
+  targetYieldTons?: number | null;      // Plaaniline kogusaak (tonnides)
+  actualYieldTons?: number | null;      // Tegelik koristatud kogusaak (tonnides)
+  notes?: string | null;                // Hooaja kokkuvõte / märkmed (ilm, kvaliteet, PRIA toetused)
 }
 
 export const SEASON_STATUS_META: Record<SeasonStatus, { label: string; color: string; bg: string; icon: string; description: string }> = {

@@ -13,6 +13,8 @@ import { PoiManagerModal } from './components/PoiManagerModal';
 import { AnalyticsModal } from './components/AnalyticsModal';
 import { MapYearSelector } from './components/MapYearSelector';
 import { SeasonManagerModal } from './components/SeasonManagerModal';
+import { RelatedPartiesModal } from './components/RelatedPartiesModal';
+import { CropRegisterModal } from './components/CropRegisterModal';
 
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
 import type { FieldCollection, FieldFeature } from './types/field';
@@ -22,6 +24,8 @@ import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from './typ
 import type { CultivationPass } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
+import type { RelatedParty } from './types/party';
+import type { Crop } from './types/crop';
 
 import { INITIAL_MASTER_FIELDS } from './data/sampleFieldRegister';
 import { INITIAL_SEASONS } from './data/sampleSeasons';
@@ -33,6 +37,8 @@ import {
 } from './data/sampleFleet';
 import { INITIAL_CULTIVATION_PASS } from './data/sampleTelemetry';
 import { SAMPLE_POI_LIST } from './data/samplePoi';
+import { INITIAL_PARTIES } from './data/sampleParties';
+import { INITIAL_CROPS } from './data/sampleCrops';
 import { TelemetrySimulator } from './services/telemetrySimulator';
 import { calculateFieldWorkProgress, getBoundingBox } from './services/geometryEngine';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
@@ -59,7 +65,26 @@ export const App: React.FC = () => {
   // 0. Hooaegade register (elutsükkel: ettevalmistus, külv, koristus, suletud/lukus)
   const [seasons, setSeasons] = useState<FarmingSeason[]>(() => {
     const saved = localStorage.getItem('agrimap_seasons');
-    return saved ? JSON.parse(saved) : INITIAL_SEASONS;
+    let loaded: FarmingSeason[] = saved ? JSON.parse(saved) : INITIAL_SEASONS;
+
+    // Dynamically ensure all seasons exist from activeYear + 3 down to activeYear - 3
+    const activeYear = loaded.find((s) => s.status === 'active')?.year || 2026;
+    const existingYears = new Set(loaded.map((s) => s.year));
+    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+      if (!existingYears.has(y)) {
+        loaded.push({
+          id: `season-${y}`,
+          year: y,
+          name: `Hooaeg ${y}`,
+          status: y < activeYear ? 'closed' : y === activeYear ? 'active' : 'planning',
+          isLocked: y < activeYear,
+          totalAreaHa: 298.5,
+          fieldsCount: 32,
+          notes: y > activeYear ? `${y}. a külvikorra eelplaneerimine` : `${y}. a arhiveeritud hooaeg`
+        } as FarmingSeason);
+      }
+    }
+    return loaded.sort((a, b) => b.year - a.year);
   });
 
   const [isSeasonManagerOpen, setIsSeasonManagerOpen] = useState(false);
@@ -83,9 +108,13 @@ export const App: React.FC = () => {
   // 1. Põldude ja külvikorra master-register (kasutab alati otse ts failide sisu)
   const [masterFields, setMasterFields] = useState<MasterField[]>(INITIAL_MASTER_FIELDS);
 
-  // Dynamic available years list
+  // Dynamic available years list: activeYear + 3 to activeYear - 3
   const availableYears = React.useMemo(() => {
-    const yearSet = new Set<number>([2026, 2025, 2024, 2023]);
+    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
+    const yearSet = new Set<number>();
+    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+      yearSet.add(y);
+    }
     seasons.forEach((s) => yearSet.add(s.year));
     masterFields.forEach((mf) => {
       mf.history.forEach((h) => yearSet.add(h.year));
@@ -180,6 +209,60 @@ export const App: React.FC = () => {
     phone?: string;
     accessNotes?: string;
   } | null>(null);
+
+  // 6. Seotud isikute register (maaomanikud, rentnikud, masinajuhid, partnerid)
+  const [parties, setParties] = useState<RelatedParty[]>(() => {
+    const saved = localStorage.getItem('agrimap_parties');
+    return saved ? JSON.parse(saved) : INITIAL_PARTIES;
+  });
+  const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('agrimap_parties', JSON.stringify(parties));
+  }, [parties]);
+
+  const handleSaveParty = (partyToSave: RelatedParty) => {
+    setParties((prev) => {
+      const idx = prev.findIndex((p) => p.id === partyToSave.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = partyToSave;
+        return copy;
+      }
+      return [partyToSave, ...prev];
+    });
+  };
+
+  const handleDeleteParty = (partyId: string) => {
+    setParties((prev) => prev.filter((p) => p.id !== partyId));
+  };
+
+  // Crops & Varieties Register state
+  const [crops, setCrops] = useState<Crop[]>(() => {
+    const saved = localStorage.getItem('agrimap_crops_register');
+    return saved ? JSON.parse(saved) : INITIAL_CROPS;
+  });
+  const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
+
+  useEffect(() => {
+    localStorage.setItem('agrimap_crops_register', JSON.stringify(crops));
+  }, [crops]);
+
+  const handleSaveCrop = (cropToSave: Crop) => {
+    setCrops((prev) => {
+      const idx = prev.findIndex((c) => c.id === cropToSave.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = cropToSave;
+        return copy;
+      }
+      return [...prev, cropToSave];
+    });
+  };
+
+  const handleDeleteCrop = (cropId: string) => {
+    setCrops((prev) => prev.filter((c) => c.id !== cropId));
+  };
 
   // Theme state: light by default
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -570,13 +653,18 @@ export const App: React.FC = () => {
         const newRec: FieldYearlyRecord = {
           year: newYear,
           areaHa: latestRec.areaHa,
+          eligibleAreaHa: latestRec.eligibleAreaHa,
           crop: latestRec.crop,
           cropVariety: latestRec.cropVariety,
           cropColor: latestRec.cropColor,
           targetYieldTonsHa: latestRec.targetYieldTonsHa,
           workedAreaHa: 0,
           workProgress: 0,
-          status: 'not_started'
+          status: 'not_started',
+          geometry: latestRec.geometry || f.geometry,
+          boundaryPointsCount: latestRec.boundaryPointsCount,
+          perimeterM: latestRec.perimeterM,
+          cadastralParcels: latestRec.cadastralParcels ? [...latestRec.cadastralParcels] : (f.cadastralParcels ? [...f.cadastralParcels] : [])
         };
         return {
           ...f,
@@ -720,10 +808,15 @@ export const App: React.FC = () => {
         workedAreaHa={workedAreaHa}
         activeVehiclesCount={activeVehiclesCount}
         poiCount={pois.length}
+        partiesCount={parties.length}
+        cropsCount={crops.length}
+        varietiesCount={crops.reduce((sum, c) => sum + (c.varieties?.length || 0), 0)}
         selectedYear={selectedYear}
         activeSeason={activeSeason}
         onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
+        onOpenParties={() => setIsPartiesModalOpen(true)}
+        onOpenCrops={() => setIsCropsModalOpen(true)}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
         onOpenPoi={() => setIsPoiModalOpen(true)}
@@ -841,6 +934,15 @@ export const App: React.FC = () => {
           setIsFieldsRegisterOpen(false);
           setIsSeasonManagerOpen(true);
         }}
+        parties={parties}
+        onOpenParties={() => {
+          setIsPartiesModalOpen(true);
+        }}
+        crops={crops}
+        onOpenCrops={() => {
+          setIsFieldsRegisterOpen(false);
+          setIsCropsModalOpen(true);
+        }}
       />
 
       <FieldUploadModal 
@@ -893,6 +995,27 @@ export const App: React.FC = () => {
         fields={fields}
         vehicles={vehicles}
         cultivationPass={cultivationPass}
+      />
+
+      <RelatedPartiesModal
+        isOpen={isPartiesModalOpen}
+        onClose={() => setIsPartiesModalOpen(false)}
+        parties={parties}
+        onSaveParty={handleSaveParty}
+        onDeleteParty={handleDeleteParty}
+        masterFields={masterFields}
+        vehicles={vehicles}
+        selectedYear={selectedYear}
+      />
+
+      <CropRegisterModal
+        isOpen={isCropsModalOpen}
+        onClose={() => setIsCropsModalOpen(false)}
+        crops={crops}
+        onSaveCrop={handleSaveCrop}
+        onDeleteCrop={handleDeleteCrop}
+        masterFields={masterFields}
+        selectedYear={selectedYear}
       />
     </div>
   );

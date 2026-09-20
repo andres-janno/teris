@@ -6,6 +6,42 @@ import type { FarmingSeason } from '../types/season';
  */
 export const INITIAL_SEASONS: FarmingSeason[] = [
   {
+    "id": 10,
+    "year": 2029,
+    "name": "Hooaeg 2029",
+    "status": "planning",
+    "isLocked": false,
+    "preparationStartDate": "2028-08-15",
+    "seedingStartDate": "2028-09-01",
+    "harvestStartDate": "2029-08-01",
+    "harvestEndDate": "2029-09-30",
+    "closedAt": null,
+    "closedBy": null,
+    "totalAreaHa": 298.5,
+    "fieldsCount": 32,
+    "targetYieldTons": 1900,
+    "actualYieldTons": null,
+    "notes": "2029. a külvikorra pikaajaline planeerimine (4. aasta külvikorras)."
+  },
+  {
+    "id": 9,
+    "year": 2028,
+    "name": "Hooaeg 2028",
+    "status": "planning",
+    "isLocked": false,
+    "preparationStartDate": "2027-08-15",
+    "seedingStartDate": "2027-09-01",
+    "harvestStartDate": "2028-08-01",
+    "harvestEndDate": "2028-09-30",
+    "closedAt": null,
+    "closedBy": null,
+    "totalAreaHa": 298.5,
+    "fieldsCount": 32,
+    "targetYieldTons": 1880,
+    "actualYieldTons": null,
+    "notes": "2028. a külvikorra strateegiline planeerimine (3. aasta külvikorras)."
+  },
+  {
     "id": 1,
     "year": 2027,
     "name": "Hooaeg 2027",
