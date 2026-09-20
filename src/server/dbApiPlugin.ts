@@ -5,6 +5,112 @@ import { PrismaClient } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
+// agro_tsdb (TimescaleDB) hoiab Teltonika GPS + Eye sensori telemeetriat ühes
+// laias mõõtmiste tabelis (mitte Prisma mudelina — kasutame $queryRaw'i samale
+// @prisma/client paketile teise ühendusega, et vältida uue npm-sõltuvuse
+// lisamist).
+const tsdb = process.env.TSDB_DATABASE_URL
+  ? new PrismaClient({ datasources: { db: { url: process.env.TSDB_DATABASE_URL } } })
+  : null;
+
+const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
+
+type RawMeasurementRow = {
+  device: string;
+  measurement: string;
+  field: string;
+  value_bool: boolean | null;
+  value_int: number | null;
+  value_bigint: bigint | null;
+  value_double: number | null;
+  value_text: string | null;
+  time: Date;
+};
+
+type LiveFields = Record<string, boolean | number | string> & { lastUpdate: string };
+
+function coalesceValue(row: RawMeasurementRow): boolean | number | string | null {
+  if (row.value_bool !== null) return row.value_bool;
+  if (row.value_int !== null) return row.value_int;
+  if (row.value_bigint !== null) return Number(row.value_bigint);
+  if (row.value_double !== null) return row.value_double;
+  if (row.value_text !== null) return row.value_text;
+  return null;
+}
+
+// Mobiilsed (cellular) Teltonika seadmed raporteerivad otse oma IMEI all,
+// measurement='data' ridadena (üks rida välja kohta).
+async function fetchCellularTelemetry(imeis: string[]): Promise<Map<string, LiveFields>> {
+  const result = new Map<string, LiveFields>();
+  if (!tsdb || imeis.length === 0) return result;
+
+  try {
+    const rows = await tsdb.$queryRaw<RawMeasurementRow[]>`
+      SELECT DISTINCT ON (device, field)
+        device, measurement, field, value_bool, value_int, value_bigint, value_double, value_text, time
+      FROM measurements
+      WHERE measurement = 'data' AND device = ANY(${imeis}::text[])
+      ORDER BY device, field, time DESC
+    `;
+
+    for (const row of rows) {
+      const entry = (result.get(row.device) ?? { lastUpdate: '' }) as LiveFields;
+      const value = coalesceValue(row);
+      if (value !== null) entry[row.field] = value;
+      const t = row.time.toISOString();
+      if (!entry.lastUpdate || t > entry.lastUpdate) entry.lastUpdate = t;
+      result.set(row.device, entry);
+    }
+  } catch (err) {
+    console.error('agro_tsdb: cellular telemetry query failed:', err);
+  }
+
+  return result;
+}
+
+// Eye sensorid ei raporteeri iseseisvalt — nad on nähtavad mõne mobiilse
+// Teltonika seadme (gateway) alt kuni 3 "pesa" kaudu (eye1/eye2/eye3),
+// kus field='mac' ütleb, milline füüsiline sensor hetkel selles pesas on.
+// Kuna me ei tea ette, milline gateway+pesa kombinatsioon millisele MAC-ile
+// vastab, loeme kõik pesad ja otsime vastet meid huvitavate MAC-ide seas.
+async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<string, LiveFields>> {
+  const result = new Map<string, LiveFields>();
+  if (!tsdb || macAddresses.length === 0) return result;
+
+  try {
+    const rows = await tsdb.$queryRaw<RawMeasurementRow[]>`
+      SELECT DISTINCT ON (device, measurement, field)
+        device, measurement, field, value_bool, value_int, value_bigint, value_double, value_text, time
+      FROM measurements
+      WHERE measurement IN ('eye1', 'eye2', 'eye3')
+      ORDER BY device, measurement, field, time DESC
+    `;
+
+    const slots = new Map<string, LiveFields>();
+    for (const row of rows) {
+      const slotKey = `${row.device}:${row.measurement}`;
+      const entry = (slots.get(slotKey) ?? { lastUpdate: '' }) as LiveFields;
+      const value = coalesceValue(row);
+      if (value !== null) entry[row.field] = value;
+      const t = row.time.toISOString();
+      if (!entry.lastUpdate || t > entry.lastUpdate) entry.lastUpdate = t;
+      slots.set(slotKey, entry);
+    }
+
+    const wanted = new Set(macAddresses.map((m) => m.toUpperCase()));
+    for (const entry of slots.values()) {
+      const mac = typeof entry.mac === 'string' ? entry.mac.toUpperCase() : null;
+      if (mac && wanted.has(mac)) {
+        result.set(mac, entry);
+      }
+    }
+  } catch (err) {
+    console.error('agro_tsdb: eye sensor telemetry query failed:', err);
+  }
+
+  return result;
+}
+
 function json(res: ServerResponse, data: any, status = 200) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -374,30 +480,88 @@ export function dbApiPlugin(): Plugin {
               notes: i.notes ?? undefined
             }));
 
-            const devices = rawDevices.map((d) => ({
-              id: d.id,
-              connectivityType: d.connectivityType.toLowerCase(),
-              imei: d.imei ?? undefined,
-              macAddress: d.macAddress ?? undefined,
-              model: d.model,
-              simNumber: d.simNumber ?? '',
-              firmwareVersion: d.firmware ?? undefined,
-              status: d.status.toLowerCase(),
-              // Andmebaas hoiab ainult seadme registrikirjet; reaalajatelemeetria
-              // (asukoht, kiirus jm) tuleb GPS-voost/simulaatorist, mitte DB-st.
-              // Ilma vaikeväärtusteta jääksid need väljad undefined ja
-              // vehicle.speedKmH.toFixed() jms kutsed UI-s viskaksid vea.
-              batteryVoltage: 0,
-              fuelLevelPct: 0,
-              ignition: false,
-              hydraulicActive: false,
-              satelliteCount: 0,
-              hdop: 9.9,
-              position: [58.1385, 25.8835] as [number, number],
-              heading: 0,
-              speedKmH: 0,
-              lastUpdate: new Date().toISOString()
-            }));
+            const cellularImeis = rawDevices
+              .filter((d) => d.connectivityType === 'CELLULAR' && d.imei)
+              .map((d) => d.imei as string);
+            const eyeMacs = rawDevices
+              .filter((d) => d.connectivityType === 'EYE_SENSOR' && d.macAddress)
+              .map((d) => d.macAddress as string);
+
+            const [cellularTelemetry, eyeTelemetry] = await Promise.all([
+              fetchCellularTelemetry(cellularImeis),
+              fetchEyeTelemetry(eyeMacs)
+            ]);
+
+            const now = Date.now();
+
+            const devices = rawDevices.map((d) => {
+              const isEye = d.connectivityType === 'EYE_SENSOR';
+              const live = isEye
+                ? (d.macAddress ? eyeTelemetry.get(d.macAddress.toUpperCase()) : undefined)
+                : (d.imei ? cellularTelemetry.get(d.imei) : undefined);
+
+              const lastUpdate = live?.lastUpdate ?? null;
+              const isStale = !lastUpdate || (now - new Date(lastUpdate).getTime() > TELEMETRY_STALE_MS);
+
+              let status: string;
+              if (!live || isStale) {
+                status = 'offline';
+              } else if (isEye) {
+                status = 'idling';
+              } else {
+                const speed = Number(live.speed ?? live.speed_avl_kmh ?? 0);
+                status = speed > 1 ? 'moving' : (live.ignition ? 'idling' : 'stopped');
+              }
+
+              const base = {
+                id: d.id,
+                connectivityType: d.connectivityType.toLowerCase(),
+                imei: d.imei ?? undefined,
+                macAddress: d.macAddress ?? undefined,
+                model: d.model,
+                simNumber: d.simNumber ?? '',
+                firmwareVersion: d.firmware ?? undefined,
+                status,
+                lastUpdate: lastUpdate ?? new Date().toISOString()
+              };
+
+              if (isEye) {
+                return {
+                  ...base,
+                  // eye_sensor: batteryVoltage hoiab siin aku TASET %-des (mitte V) —
+                  // tsdb annab ainult protsendi, mitte pinget selle seadmetüübi jaoks.
+                  batteryVoltage: Number(live?.eye_battery_percent ?? 0),
+                  eyeTemperatureC: live?.eye_temperature_c != null ? Number(live.eye_temperature_c) : undefined,
+                  eyeHumidityPercent: live?.eye_humidity_percent != null ? Number(live.eye_humidity_percent) : undefined,
+                  eyeMagnetClosed: typeof live?.eye_magnet_closed === 'boolean' ? live.eye_magnet_closed : undefined,
+                  fuelLevelPct: 0,
+                  ignition: false,
+                  hydraulicActive: false,
+                  satelliteCount: 0,
+                  hdop: 9.9,
+                  position: [58.1385, 25.8835] as [number, number],
+                  heading: 0,
+                  speedKmH: 0
+                };
+              }
+
+              return {
+                ...base,
+                batteryVoltage: Number(live?.external_voltage_v ?? 0),
+                fuelLevelPct: 0,
+                // hydraulicActive: agro_tsdb ei anna selle jaoks (io_194) teadaolevat tähendust
+                ignition: Boolean(live?.ignition),
+                hydraulicActive: false,
+                satelliteCount: Number(live?.satellites ?? 0),
+                hdop: Number(live?.gnss_hdop ?? 9.9),
+                altitude: live?.altitude != null ? Number(live.altitude) : undefined,
+                position: (live?.latitude != null && live?.longitude != null)
+                  ? [Number(live.latitude), Number(live.longitude)] as [number, number]
+                  : [58.1385, 25.8835] as [number, number],
+                heading: Number(live?.angle ?? 0),
+                speedKmH: Number(live?.speed ?? live?.speed_avl_kmh ?? 0)
+              };
+            });
 
             return json(res, { vehicles, implements: implementsList, devices });
           }

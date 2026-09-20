@@ -1020,9 +1020,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     {isEyeSensor ? (
                       <div className="dev-telemetry-summary">
                         <div className="dev-telemetry-item">
-                          <span className="lbl">Aku pinge:</span>
-                          <strong>{dev.batteryVoltage} V</strong>
+                          <span className="lbl">Aku tase:</span>
+                          <strong>{dev.batteryVoltage}%</strong>
                         </div>
+                        {dev.eyeTemperatureC != null && (
+                          <div className="dev-telemetry-item">
+                            <span className="lbl">Temperatuur:</span>
+                            <strong>{dev.eyeTemperatureC}°C</strong>
+                          </div>
+                        )}
+                        {dev.eyeHumidityPercent != null && (
+                          <div className="dev-telemetry-item">
+                            <span className="lbl">Niiskus:</span>
+                            <strong>{dev.eyeHumidityPercent}%</strong>
+                          </div>
+                        )}
                       </div>
                     ) : (
                       <div className="dev-telemetry-summary">

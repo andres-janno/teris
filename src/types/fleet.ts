@@ -69,7 +69,13 @@ export interface TeltonikaDevice {
   assignedImplementId?: string;  // Millise haakeriista külge paigaldatud (kui on paigaldatud)
 
   // Reaalaja telemeetria
-  batteryVoltage: number;        // V (nt 27.8V)
+  // 'eye_sensor' seadmetel hoiab batteryVoltage aku TASET %-des (mitte V),
+  // kuna Eye sensor ei raporteeri pinget, vaid protsenti — tsdb ainuke
+  // saadaolev aku-mõõdik selle seadmetüübi jaoks.
+  batteryVoltage: number;        // V (cellular) või % (eye_sensor)
+  eyeTemperatureC?: number;      // °C — ainult 'eye_sensor'
+  eyeHumidityPercent?: number;   // % — ainult 'eye_sensor'
+  eyeMagnetClosed?: boolean;     // Magnetkontakt suletud — ainult 'eye_sensor'
   fuelLevelPct: number;          // % (nt 74%)
   fuelConsumptionLh?: number;    // L/h (nt 23.8 L/h)
   engineRpm?: number;            // p/min
