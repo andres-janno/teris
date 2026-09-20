@@ -12,16 +12,19 @@ import { VehicleTracker } from './components/VehicleTracker';
 import { PoiManagerModal } from './components/PoiManagerModal';
 import { AnalyticsModal } from './components/AnalyticsModal';
 import { MapYearSelector } from './components/MapYearSelector';
+import { SeasonManagerModal } from './components/SeasonManagerModal';
 
-import type { LayerVisibility, BaseMapLayerId } from './types/map';
+import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
 import { generateFieldCollectionForYear, getFieldFeatureForYear } from './types/fieldRegister';
 import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from './types/fleet';
 import type { CultivationPass } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
+import type { FarmingSeason } from './types/season';
 
 import { INITIAL_MASTER_FIELDS } from './data/sampleFieldRegister';
+import { INITIAL_SEASONS } from './data/sampleSeasons';
 import { 
   INITIAL_VEHICLES, 
   INITIAL_IMPLEMENTS, 
@@ -32,22 +35,50 @@ import { INITIAL_CULTIVATION_PASS } from './data/sampleTelemetry';
 import { SAMPLE_POI_LIST } from './data/samplePoi';
 import { TelemetrySimulator } from './services/telemetrySimulator';
 import { calculateFieldWorkProgress, getBoundingBox } from './services/geometryEngine';
+import { isVehicleRecentlyActive } from './components/MapMarkers';
 
 export const App: React.FC = () => {
-  // Layer visibility state
+  // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation
   const [visibility, setVisibility] = useState<LayerVisibility>({
     baseMap: 'maaamet-pohikaart',
     cadastre: false,
     fields: true,
-    vehicles: false,
+    vehicles: true, // Vaikimisi aktiivne: näitab masinaid, mis parasjagu töötavad / liiguvad (< 5 min)
     cultivation: true,
     poi: false,
     fieldLabels: false,
     swathTrails: true
   });
 
+  // Masinapargi kuvamise filter: 'active' (ainult töötavad < 5 min) või 'all' (kõik masinad)
+  const [vehicleFilter, setVehicleFilter] = useState<VehicleDisplayFilter>('active');
+
   // Active Farming Season / Year
   const [selectedYear, setSelectedYear] = useState<number>(2026);
+
+  // 0. Hooaegade register (elutsükkel: ettevalmistus, külv, koristus, suletud/lukus)
+  const [seasons, setSeasons] = useState<FarmingSeason[]>(() => {
+    const saved = localStorage.getItem('agrimap_seasons');
+    return saved ? JSON.parse(saved) : INITIAL_SEASONS;
+  });
+
+  const [isSeasonManagerOpen, setIsSeasonManagerOpen] = useState(false);
+
+  // Active Season metadata
+  const activeSeason = React.useMemo(() => {
+    return seasons.find((s) => s.year === selectedYear) || {
+      id: `season-${selectedYear}`,
+      year: selectedYear,
+      name: `Hooaeg ${selectedYear}`,
+      status: selectedYear < 2026 ? 'closed' : 'active',
+      isLocked: selectedYear < 2026
+    } as FarmingSeason;
+  }, [seasons, selectedYear]);
+
+  // Persist seasons to localStorage
+  useEffect(() => {
+    localStorage.setItem('agrimap_seasons', JSON.stringify(seasons));
+  }, [seasons]);
 
   // 1. Põldude ja külvikorra master-register (kasutab alati otse ts failide sisu)
   const [masterFields, setMasterFields] = useState<MasterField[]>(INITIAL_MASTER_FIELDS);
@@ -55,11 +86,12 @@ export const App: React.FC = () => {
   // Dynamic available years list
   const availableYears = React.useMemo(() => {
     const yearSet = new Set<number>([2026, 2025, 2024, 2023]);
+    seasons.forEach((s) => yearSet.add(s.year));
     masterFields.forEach((mf) => {
       mf.history.forEach((h) => yearSet.add(h.year));
     });
     return Array.from(yearSet).sort((a, b) => b - a);
-  }, [masterFields]);
+  }, [seasons, masterFields]);
 
   // Derive FieldCollection for the active year (with that year's specific area and crop)
   const fields: FieldCollection = React.useMemo(() => {
@@ -562,6 +594,53 @@ export const App: React.FC = () => {
     }
   };
 
+  // Season Management Handlers
+  const handleUpdateSeason = (updated: FarmingSeason) => {
+    setSeasons((prev) => prev.map((s) => s.year === updated.year ? updated : s));
+  };
+
+  const handleCloseSeason = (year: number) => {
+    const today = new Date().toISOString().split('T')[0];
+    setSeasons((prev) =>
+      prev.map((s) => {
+        if (s.year === year) {
+          return {
+            ...s,
+            status: 'closed',
+            isLocked: true,
+            harvestEndDate: s.harvestEndDate || today,
+            closedAt: today,
+            closedBy: 'Rein Janno'
+          };
+        }
+        return s;
+      })
+    );
+  };
+
+  const handleReopenSeason = (year: number) => {
+    setSeasons((prev) =>
+      prev.map((s) => {
+        if (s.year === year) {
+          return {
+            ...s,
+            status: 'active',
+            isLocked: false
+          };
+        }
+        return s;
+      })
+    );
+  };
+
+  const handleCreateSeason = (newSeason: FarmingSeason) => {
+    setSeasons((prev) => {
+      const filtered = prev.filter((s) => s.year !== newSeason.year);
+      return [newSeason, ...filtered].sort((a, b) => b.year - a.year);
+    });
+    handleAddNewSeasonToAll(newSeason.year);
+  };
+
   // PRIA SHP import
   const handleFieldsImported = (importedCollection: FieldCollection, replace: boolean) => {
     const existingMaxId = replace ? 0 : Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
@@ -580,15 +659,20 @@ export const App: React.FC = () => {
         num,
         name,
         fieldCode,
-        cadastralCode: p.cadastralCode || undefined,
-        soilType: 'Määramata',
+        cadastralCode: p.cadastralCode || `89201:00${(idx % 9) + 1}:010${idx % 9}`,
+        soilType: p.rawProperties?.soilType || 'Leostunud liivsavi (LP)',
+        drainageSystem: p.rawProperties?.drainageSystem ?? true,
+        landowner: p.rawProperties?.landowner || 'Oma maa',
+        notes: p.notes || '',
         geometry: feature.geometry,
         history: [
           {
             year: selectedYear,
             areaHa: area,
             crop: p.crop || 'Talinisu (Skagen)',
+            cropVariety: p.crop ? p.crop.split('(')[1]?.replace(')', '') || '' : 'Skagen',
             cropColor: p.cropColor || '#eab308',
+            targetYieldTonsHa: 7.5,
             workedAreaHa: p.workedAreaHa || 0,
             workProgress: p.workProgress || 0,
             status: p.status || 'not_started',
@@ -604,6 +688,8 @@ export const App: React.FC = () => {
       setMasterFields((prev) => [...prev, ...newMasterFields]);
     }
 
+    setIsUploadOpen(false);
+
     if (importedCollection.features.length > 0) {
       const firstField = importedCollection.features[0];
       handleFocusField(firstField);
@@ -617,23 +703,13 @@ export const App: React.FC = () => {
 
   const handleResetToSample = () => {
     setMasterFields(INITIAL_MASTER_FIELDS);
-    setPois(SAMPLE_POI_LIST);
-    setRawVehicles(INITIAL_VEHICLES);
-    setImplementsList(INITIAL_IMPLEMENTS);
-    setDevices(INITIAL_TELTONIKA_DEVICES);
-    setSelectedYear(2026);
-    setFocusedTarget({ coords: [58.138, 25.882], zoom: 14 });
-    localStorage.removeItem('agrimap_master_fields');
-    localStorage.removeItem('agrimap_pois');
-    localStorage.removeItem('agrimap_vehicles');
-    localStorage.removeItem('agrimap_implements');
-    localStorage.removeItem('agrimap_devices');
+    setIsUploadOpen(false);
   };
 
   // Totals for stats bar
   const totalAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.areaHa || 0), 0);
   const workedAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.workedAreaHa || 0), 0);
-  const activeVehiclesCount = vehicles.filter((v) => v.status === 'working' || v.status === 'moving').length;
+  const activeVehiclesCount = vehicles.filter((v) => isVehicleRecentlyActive(v, 5)).length;
 
   return (
     <div className="app-container">
@@ -644,6 +720,9 @@ export const App: React.FC = () => {
         workedAreaHa={workedAreaHa}
         activeVehiclesCount={activeVehiclesCount}
         poiCount={pois.length}
+        selectedYear={selectedYear}
+        activeSeason={activeSeason}
+        onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
@@ -674,6 +753,7 @@ export const App: React.FC = () => {
           focusedTarget={focusedTarget}
           fitBoundsTrigger={fitBoundsTrigger}
           selectedCropFilter={selectedCropFilter}
+          vehicleFilter={vehicleFilter}
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
@@ -686,7 +766,8 @@ export const App: React.FC = () => {
             totalAreaHa={totalAreaHa}
             selectedCropFilter={selectedCropFilter}
             onSelectCropFilter={setSelectedCropFilter}
-            onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
+            seasons={seasons}
+            onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
           />
 
           {/* Selected Field Details Box Directly Under Season Selector */}
@@ -695,6 +776,7 @@ export const App: React.FC = () => {
               field={selectedField}
               onClose={() => setSelectedFieldId(null)}
               onFocusField={handleFocusField}
+              isSeasonLocked={activeSeason?.isLocked ?? false}
             />
           )}
         </div>
@@ -705,6 +787,10 @@ export const App: React.FC = () => {
           onToggleLayer={handleToggleLayer}
           onSelectBaseMap={handleSelectBaseMap}
           onFitAll={handleFitAll}
+          activeVehiclesCount={activeVehiclesCount}
+          totalVehiclesCount={vehicles.length}
+          vehicleFilter={vehicleFilter}
+          onSelectVehicleFilter={setVehicleFilter}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
@@ -727,6 +813,18 @@ export const App: React.FC = () => {
       </div>
 
       {/* Modals */}
+      <SeasonManagerModal 
+        isOpen={isSeasonManagerOpen}
+        onClose={() => setIsSeasonManagerOpen(false)}
+        seasons={seasons}
+        selectedYear={selectedYear}
+        onSelectYear={setSelectedYear}
+        onUpdateSeason={handleUpdateSeason}
+        onCloseSeason={handleCloseSeason}
+        onReopenSeason={handleReopenSeason}
+        onCreateSeason={handleCreateSeason}
+      />
+
       <FieldManagerModal 
         isOpen={isFieldsRegisterOpen}
         onClose={() => setIsFieldsRegisterOpen(false)}
@@ -738,6 +836,11 @@ export const App: React.FC = () => {
         onAddNewSeasonToAll={handleAddNewSeasonToAll}
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}
+        seasons={seasons}
+        onOpenSeasonManager={() => {
+          setIsFieldsRegisterOpen(false);
+          setIsSeasonManagerOpen(true);
+        }}
       />
 
       <FieldUploadModal 

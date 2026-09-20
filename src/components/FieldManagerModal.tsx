@@ -1,4 +1,3 @@
-// src/components/FieldManagerModal.tsx
 import React, { useState, useMemo } from 'react';
 import {
   X,
@@ -13,10 +12,13 @@ import {
   Check,
   Sprout,
   History,
-  AlertCircle
+  AlertCircle,
+  Lock,
+  CalendarDays
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FieldFeature } from '../types/field';
+import type { FarmingSeason } from '../types/season';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -29,6 +31,8 @@ interface FieldManagerModalProps {
   onAddNewSeasonToAll: (newYear: number) => void;
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload: () => void;
+  seasons?: FarmingSeason[];
+  onOpenSeasonManager?: () => void;
 }
 
 const AVAILABLE_YEARS = [2026, 2025, 2024, 2023];
@@ -55,11 +59,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onUpdateField,
   onAddNewSeasonToAll,
   onDeleteField,
-  onOpenUpload
+  onOpenUpload,
+  seasons = [],
+  onOpenSeasonManager
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
+
+  // Current season & locked status
+  const currentSeason = seasons.find((s) => s.year === selectedYear);
+  const isCurrentSeasonLocked = currentSeason?.isLocked ?? false;
 
   // Edit form state: Master Field details
   const [editName, setEditName] = useState('');
@@ -82,6 +92,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   // Add new year season modal
   const [isAddYearOpen, setIsAddYearOpen] = useState(false);
   const [newYearInput, setNewYearInput] = useState(2027);
+
+  // Dynamic available years
+  const availableYearsList = useMemo(() => {
+    const set = new Set<number>([2026, 2025, 2024, 2023]);
+    seasons.forEach((s) => set.add(s.year));
+    masterFields.forEach((mf) => mf.history.forEach((h) => set.add(h.year)));
+    return Array.from(set).sort((a, b) => b - a);
+  }, [seasons, masterFields]);
 
   // Filtered master fields
   const filteredFields = useMemo(() => {
@@ -236,24 +254,44 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 <span>Hooaeg:</span>
               </span>
               <div className="year-tabs">
-                {AVAILABLE_YEARS.map((yr) => (
+                {availableYearsList.map((yr) => {
+                  const sObj = seasons.find((s) => s.year === yr);
+                  const isLocked = sObj?.isLocked ?? false;
+                  return (
+                    <button
+                      key={yr}
+                      className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                      onClick={() => onSelectYear(yr)}
+                      title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
+                    >
+                      <span>{yr}</span>
+                      {isLocked ? (
+                        <Lock size={10} className="tab-lock-icon" />
+                      ) : (
+                        yr === 2026 && <span className="current-badge">Aktiivne</span>
+                      )}
+                    </button>
+                  );
+                })}
+                {onOpenSeasonManager ? (
                   <button
-                    key={yr}
-                    className={`year-tab ${selectedYear === yr ? 'active' : ''}`}
-                    onClick={() => onSelectYear(yr)}
+                    className="btn btn-ghost btn-xs add-year-btn"
+                    onClick={onOpenSeasonManager}
+                    title="Ava hooaja register ja haldus"
                   >
-                    <span>{yr}</span>
-                    {yr === 2026 && <span className="current-badge">Aktiivne</span>}
+                    <CalendarDays size={13} />
+                    <span>Hooajahaldur</span>
                   </button>
-                ))}
-                <button
-                  className="btn btn-ghost btn-xs add-year-btn"
-                  onClick={() => setIsAddYearOpen(true)}
-                  title="Lisa uus põllumajandusaasta"
-                >
-                  <Plus size={13} />
-                  <span>Lisa aasta</span>
-                </button>
+                ) : (
+                  <button
+                    className="btn btn-ghost btn-xs add-year-btn"
+                    onClick={() => setIsAddYearOpen(true)}
+                    title="Lisa uus põllumajandusaasta"
+                  >
+                    <Plus size={13} />
+                    <span>Lisa aasta</span>
+                  </button>
+                )}
               </div>
             </div>
 
@@ -273,6 +311,26 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               </div>
             </div>
           </div>
+
+          {/* Locked Season Alert Banner */}
+          {isCurrentSeasonLocked && (
+            <div className="season-locked-global-alert">
+              <div className="alert-left">
+                <Lock size={16} />
+                <span>
+                  <strong>Hooaeg {selectedYear} on muudatusteks suletud.</strong> Koristus on lõppenud ning põldude ja kultuuride andmed on arhiveeritud.
+                </span>
+              </div>
+              {onOpenSeasonManager && (
+                <button
+                  className="btn btn-ghost btn-xs btn-alert-action"
+                  onClick={onOpenSeasonManager}
+                >
+                  Ava hooajahaldur
+                </button>
+              )}
+            </div>
+          )}
 
           {/* Search, Filter & Actions Row */}
           <div className="register-actions-bar">

@@ -3129,3 +3129,738 @@ body {
   margin-top: 4px;
 }
 
+/* ==========================================================================
+   Season Register & Season Manager Modal Styles
+   ========================================================================== */
+
+/* Header Season Stat Pill */
+.season-stat-pill {
+  border-color: rgba(16, 185, 129, 0.2);
+}
+
+.season-stat-pill:hover {
+  border-color: var(--emerald-500);
+}
+
+.season-locked-pill {
+  border-color: rgba(148, 163, 184, 0.25);
+}
+
+.season-icon {
+  color: var(--emerald-500);
+}
+
+.stat-status-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 5px;
+}
+
+.stat-status-tag.active {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald-600);
+}
+
+.stat-status-tag.locked {
+  background: rgba(148, 163, 184, 0.2);
+  color: var(--text-secondary);
+}
+
+/* Map Year Selector Season Badges & Lock Icons */
+.locked-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  background: rgba(148, 163, 184, 0.18);
+  padding: 1px 5px;
+  border-radius: 4px;
+  margin-left: 4px;
+}
+
+.year-header-right {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.icon-btn-ghost-xs {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 2px 4px;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s;
+}
+
+.icon-btn-ghost-xs:hover {
+  background: var(--stat-bg-hover);
+  color: var(--text-primary);
+}
+
+.pill-lock-icon, .tab-lock-icon {
+  margin-left: 4px;
+  opacity: 0.7;
+}
+
+.year-widget-btn.locked-btn {
+  border-color: rgba(148, 163, 184, 0.2);
+  opacity: 0.9;
+}
+
+.year-tab.locked {
+  border-color: rgba(148, 163, 184, 0.2);
+}
+
+/* Drawer Season Locked Alert */
+.drawer-season-locked-alert {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 6px 10px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+/* Global Locked Alert Banner in Field Manager */
+.season-locked-global-alert {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  background: rgba(148, 163, 184, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  padding: 8px 14px;
+  border-radius: 8px;
+  margin-bottom: 12px;
+}
+
+.season-locked-global-alert .alert-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.btn-alert-action {
+  font-size: 0.75rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+/* Season Manager Modal */
+.season-manager-modal {
+  max-width: 820px;
+  width: 95%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.season-icon-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald-600);
+}
+
+.season-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 18px;
+  border-bottom: 1px solid var(--border-color);
+  background: var(--stat-bg);
+}
+
+.season-stats-pills {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.season-stat-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+}
+
+.stat-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.stat-dot.green {
+  background: var(--emerald-500);
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
+}
+
+.season-stat-pill .stat-title {
+  color: var(--text-secondary);
+}
+
+.season-stat-pill .stat-num {
+  font-weight: 800;
+  color: var(--text-primary);
+}
+
+.season-modal-body {
+  padding: 16px 18px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+/* Form Card */
+.season-form-card {
+  padding: 16px;
+  border: 1px solid var(--emerald-500);
+  background: var(--bg-card);
+  border-radius: 10px;
+  animation: fadeIn 0.2s ease-out;
+}
+
+.form-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.form-card-header h4 {
+  font-size: 0.92rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.season-form-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  gap: 12px;
+}
+
+/* Seasons List & Cards */
+.seasons-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.season-card {
+  padding: 14px 16px;
+  border-radius: 10px;
+  border: 1px solid var(--border-card);
+  background: var(--bg-card);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: all 0.2s;
+}
+
+.season-card:hover {
+  background: var(--bg-card-hover);
+  border-color: var(--border-color);
+}
+
+.season-card.selected-season-card {
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.15);
+}
+
+.season-card.locked-season-card {
+  opacity: 0.92;
+}
+
+.season-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.season-card-title-area {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.season-year-badge {
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: var(--text-primary);
+  background: var(--stat-bg);
+  padding: 3px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+}
+
+.season-name {
+  font-size: 0.98rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.active-view-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--emerald-600);
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 2px 7px;
+  border-radius: 10px;
+}
+
+.season-status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+}
+
+.season-card-top-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Timeline Stages Row */
+.season-timeline-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--stat-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-card);
+  flex-wrap: wrap;
+}
+
+.timeline-stage {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.stage-icon.prep {
+  background: rgba(59, 130, 246, 0.15);
+  color: #3b82f6;
+}
+
+.stage-icon.seed {
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+}
+
+.stage-icon.harvest {
+  background: rgba(245, 158, 11, 0.15);
+  color: #f59e0b;
+}
+
+.stage-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stage-name {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+}
+
+.stage-date {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
+.timeline-arrow {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
+
+/* Metrics & Notes */
+.season-card-meta-row {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.season-metrics {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.metric-tag {
+  font-size: 0.74rem;
+  background: var(--stat-bg);
+  padding: 3px 8px;
+  border-radius: 5px;
+  border: 1px solid var(--border-card);
+  color: var(--text-secondary);
+}
+
+.metric-tag strong {
+  color: var(--text-primary);
+}
+
+.metric-tag.success {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.25);
+  color: var(--emerald-600);
+}
+
+.season-notes-box {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-style: italic;
+  padding: 4px 8px;
+  background: rgba(0, 0, 0, 0.02);
+  border-radius: 4px;
+}
+
+/* Lock Footer */
+.season-lock-footer {
+  padding-top: 6px;
+  border-top: 1px dashed var(--border-color);
+}
+
+.locked-info-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+  background: rgba(148, 163, 184, 0.1);
+  padding: 6px 10px;
+  border-radius: 6px;
+}
+
+.locked-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.active-season-control-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.unlocked-msg {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.season-action-buttons {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-danger-outline {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 5px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.btn-danger-outline:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+}
+
+.btn-reopen {
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+}
+
+/* ==========================================================================
+   Live Working Machinery (< 5 min) Map Marker & Layer Styles
+   ========================================================================== */
+
+/* Active Radar Wave Pulse for Working Machinery */
+.live-active-radar-ring {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  border: 2px solid var(--emerald-500);
+  background: rgba(34, 197, 94, 0.2);
+  pointer-events: none;
+  animation: liveRadarPulse 2s cubic-bezier(0.25, 0.46, 0.45, 0.94) infinite;
+  z-index: 1;
+}
+
+@keyframes liveRadarPulse {
+  0% {
+    width: 36px;
+    height: 36px;
+    opacity: 0.9;
+    border-color: rgba(34, 197, 94, 0.9);
+  }
+  70% {
+    width: 68px;
+    height: 68px;
+    opacity: 0.2;
+    border-color: rgba(34, 197, 94, 0.3);
+  }
+  100% {
+    width: 80px;
+    height: 80px;
+    opacity: 0;
+  }
+}
+
+.vehicle-marker-container.is-recently-active .vehicle-marker-avatar {
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.65);
+}
+
+.live-status-dot {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  background: #22c55e;
+  border: 1.5px solid #ffffff;
+  box-shadow: 0 0 6px #22c55e;
+  animation: liveDotBlink 1.4s infinite alternate;
+}
+
+@keyframes liveDotBlink {
+  0% { opacity: 0.6; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1.15); }
+}
+
+/* Layer Control Live Badge & Subtext */
+.layer-text-wrap {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+  margin-left: 2px;
+}
+
+.layer-subtext {
+  font-size: 0.64rem;
+  color: var(--emerald-500);
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.live-count-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(34, 197, 94, 0.15);
+  border: 1px solid rgba(34, 197, 94, 0.35);
+  color: var(--emerald-600);
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 10px;
+  margin-left: auto;
+  margin-right: 6px;
+}
+
+.live-dot-pulse {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--emerald-500);
+  box-shadow: 0 0 4px var(--emerald-500);
+  animation: liveDotBlink 1.2s infinite alternate;
+}
+
+/* Vehicle Popup enhancements */
+.popup-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  border-bottom: 1px solid var(--border-card);
+  padding-bottom: 4px;
+  margin-bottom: 6px;
+}
+
+.popup-title-row h4 {
+  margin: 0;
+  border: none;
+  padding: 0;
+}
+
+.popup-title-row .status-tag {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 1.5px 6px;
+  border-radius: 4px;
+  text-transform: uppercase;
+}
+
+.popup-title-row .status-tag.working {
+  background: rgba(34, 197, 94, 0.18);
+  color: #16a34a;
+  border: 1px solid rgba(34, 197, 94, 0.35);
+}
+
+.popup-title-row .status-tag.moving {
+  background: rgba(56, 189, 248, 0.18);
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.popup-title-row .status-tag.stopped {
+  background: rgba(148, 163, 184, 0.18);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+/* Vehicle Layer Filter Subgroup */
+.layer-box-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  padding: 6px 8px;
+  transition: all 0.2s ease;
+}
+
+.layer-box-group:hover {
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.vehicle-filter-subgroup {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--bg-card);
+  padding: 3px;
+  border-radius: 6px;
+  border: 1px solid var(--border-card);
+  margin-top: 2px;
+}
+
+.v-filter-pill {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 4px 6px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  border-radius: 4px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.v-filter-pill:hover {
+  color: var(--text-primary);
+  background: var(--stat-bg-hover);
+}
+
+.v-filter-pill.active {
+  background: var(--emerald-500);
+  color: #ffffff;
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme='dark'] .v-filter-pill.active {
+  background: var(--emerald-500);
+  color: #0f172a;
+  font-weight: 800;
+}
+
+.v-filter-pill .dot-live {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #22c55e;
+  box-shadow: 0 0 4px #22c55e;
+}
+
+.v-filter-pill.active .dot-live {
+  background: #ffffff;
+  box-shadow: 0 0 4px #ffffff;
+}
+
+[data-theme='dark'] .v-filter-pill.active .dot-live {
+  background: #0f172a;
+}
+
+
+

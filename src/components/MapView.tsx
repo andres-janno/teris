@@ -3,13 +3,13 @@ import React, { useEffect, useRef, useCallback } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import proj4 from 'proj4';
-import type { LayerVisibility } from '../types/map';
+import type { LayerVisibility, VehicleDisplayFilter } from '../types/map';
 import type { FieldCollection, FieldFeature } from '../types/field';
 import type { Vehicle } from '../types/vehicle';
 import type { CultivationPass } from '../types/telemetry';
 import type { PointOfInterest } from '../types/poi';
 import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
-import { createVehicleIcon, createPoiIcon } from './MapMarkers';
+import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
 import { getVisibleElementsBounds } from '../services/geometryEngine';
 import { getCropColor } from '../services/shpParser';
 
@@ -34,6 +34,7 @@ interface MapViewProps {
   } | null;
   fitBoundsTrigger?: number;
   selectedCropFilter?: string | null;
+  vehicleFilter?: VehicleDisplayFilter;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -50,7 +51,8 @@ export const MapView: React.FC<MapViewProps> = ({
   onMapClickAddPoi,
   focusedTarget,
   fitBoundsTrigger,
-  selectedCropFilter
+  selectedCropFilter,
+  vehicleFilter = 'active'
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -272,7 +274,15 @@ export const MapView: React.FC<MapViewProps> = ({
     fieldsLayerGroupRef.current = geoJsonLayer;
   }, [fields, visibility.fields, visibility.fieldLabels, selectedField, selectedCropFilter]);
 
-  // 4. Render Machinery / Vehicles Layer
+  // 4. Render Machinery / Vehicles Layer (Respects vehicleFilter: active vs all)
+  const displayedVehicles = React.useMemo(() => {
+    if (!visibility.vehicles) return [];
+    if (vehicleFilter === 'active') {
+      return vehicles.filter((v) => isVehicleRecentlyActive(v, 5));
+    }
+    return vehicles;
+  }, [vehicles, visibility.vehicles, vehicleFilter]);
+
   useEffect(() => {
     const layerGroup = vehiclesLayerGroupRef.current;
     if (!layerGroup) return;
@@ -280,9 +290,15 @@ export const MapView: React.FC<MapViewProps> = ({
     layerGroup.clearLayers();
     if (!visibility.vehicles) return;
 
-    vehicles.forEach((vehicle) => {
+    displayedVehicles.forEach((vehicle) => {
+      const isWorking = vehicle.status === 'working';
+      const isMoving = vehicle.status === 'moving';
+      const lastUpdateMs = vehicle.telemetry?.lastUpdate ? Date.now() - new Date(vehicle.telemetry.lastUpdate).getTime() : 0;
+      const minutesAgo = Math.max(0, Math.floor(lastUpdateMs / 60000));
+      const activityLabel = minutesAgo < 1 ? 'Just nüüd (< 1 min)' : `${minutesAgo} min tagasi`;
+
       const icon = createVehicleIcon(vehicle);
-      const marker = L.marker(vehicle.position, { icon, zIndexOffset: 1000 });
+      const marker = L.marker(vehicle.position, { icon, zIndexOffset: (isWorking || isMoving) ? 1200 : 900 });
 
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
@@ -291,9 +307,13 @@ export const MapView: React.FC<MapViewProps> = ({
 
       marker.bindPopup(`
         <div class="vehicle-popup-content">
-          <h4>${vehicle.name}</h4>
+          <div class="popup-title-row">
+            <h4>${vehicle.name}</h4>
+            <span class="status-tag ${vehicle.status}">${isWorking ? 'TÖÖTAB' : (isMoving ? 'LIIKUB' : 'SEISAB')}</span>
+          </div>
           <div class="popup-row"><span>Juht:</span> <strong>${vehicle.driverName || 'Määramata'}</strong></div>
           <div class="popup-row"><span>Kiirus:</span> <strong>${vehicle.speedKmH.toFixed(1)} km/h</strong></div>
+          <div class="popup-row"><span>Viimane liikumine:</span> <strong>${activityLabel}</strong></div>
           <div class="popup-row"><span>Kütusetase:</span> <strong>${vehicle.telemetry.fuelLevelPct}%</strong></div>
           <div class="popup-row"><span>Haakeriist:</span> <strong>${vehicle.implement ? `${vehicle.implement.name}` : 'Pole'}</strong></div>
           <div class="popup-row"><span>Mootor:</span> <strong>${vehicle.telemetry.engineRpm || 0} RPM</strong></div>
@@ -302,7 +322,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       marker.addTo(layerGroup);
     });
-  }, [vehicles, visibility.vehicles]);
+  }, [displayedVehicles, visibility.vehicles]);
 
   // 5. Render Cultivation (Haritud ala & Swaths) Layer
   useEffect(() => {
@@ -399,7 +419,7 @@ export const MapView: React.FC<MapViewProps> = ({
     const bounds = getVisibleElementsBounds({
       visibility,
       fields,
-      vehicles,
+      vehicles: displayedVehicles,
       cultivationPass,
       pois
     });
@@ -412,7 +432,7 @@ export const MapView: React.FC<MapViewProps> = ({
         duration: 0.8
       });
     }
-  }, [visibility, fields, vehicles, cultivationPass, pois]);
+  }, [visibility, fields, displayedVehicles, cultivationPass, pois]);
 
   useEffect(() => {
     if (fitBoundsTrigger && fitBoundsTrigger > 0) {

@@ -1,7 +1,7 @@
-// src/components/MapYearSelector.tsx
 import React, { useState, useMemo } from 'react';
-import { Calendar, Sprout, ChevronDown, ChevronUp, Filter } from 'lucide-react';
+import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock, CalendarDays, Settings2 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
+import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/shpParser';
 
 interface MapYearSelectorProps {
@@ -12,6 +12,8 @@ interface MapYearSelectorProps {
   totalAreaHa: number;
   selectedCropFilter?: string | null;
   onSelectCropFilter?: (cropName: string | null) => void;
+  seasons?: FarmingSeason[];
+  onOpenSeasonManager?: () => void;
 }
 
 interface CropSummary {
@@ -29,9 +31,14 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   fields,
   totalAreaHa,
   selectedCropFilter = null,
-  onSelectCropFilter
+  onSelectCropFilter,
+  seasons = [],
+  onOpenSeasonManager
 }) => {
   const [isLegendOpen, setIsLegendOpen] = useState(true);
+
+  // Find active season info
+  const currentSeason = seasons.find((s) => s.year === selectedYear);
 
   // Calculate crop breakdown with sum ha and counts
   const cropSummaries = useMemo(() => {
@@ -79,24 +86,44 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
         <div className="year-widget-title">
           <Calendar size={15} className="text-emerald" />
           <span>Hooaeg:</span>
+          {currentSeason?.isLocked && (
+            <span className="locked-inline-badge" title="See hooaeg on muudatusteks suletud">
+              <Lock size={11} /> Lukus
+            </span>
+          )}
         </div>
-        <span className="year-widget-stat">
-          {fields.features.length} tk &bull; {totalAreaHa.toFixed(1)} ha
-        </span>
+        <div className="year-header-right">
+          <span className="year-widget-stat">
+            {fields.features.length} tk &bull; {totalAreaHa.toFixed(1)} ha
+          </span>
+          {onOpenSeasonManager && (
+            <button
+              className="icon-btn-ghost-xs"
+              onClick={onOpenSeasonManager}
+              title="Ava hooaja register ja haldus"
+            >
+              <Settings2 size={13} />
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Season Selection Pills */}
       <div className="year-widget-pills">
         {availableYears.map((year) => {
           const isActive = selectedYear === year;
+          const sObj = seasons.find((s) => s.year === year);
+          const isLocked = sObj?.isLocked ?? false;
+
           return (
             <button
               key={year}
-              className={`year-widget-btn ${isActive ? 'active' : ''}`}
+              className={`year-widget-btn ${isActive ? 'active' : ''} ${isLocked ? 'locked-btn' : ''}`}
               onClick={() => onSelectYear(year)}
-              title={`Vaheta vaade ${year}. aasta põllumassiividele ja kultuuridele`}
+              title={`${year}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
             >
               <span className="year-num">{year}</span>
+              {isLocked && <Lock size={10} className="pill-lock-icon" />}
             </button>
           );
         })}

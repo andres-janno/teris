@@ -9,7 +9,7 @@ import {
   ChevronUp,
   Maximize2
 } from 'lucide-react';
-import type { BaseMapLayerId, LayerVisibility } from '../types/map';
+import type { BaseMapLayerId, LayerVisibility, VehicleDisplayFilter } from '../types/map';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 
 interface LayerControlProps {
@@ -17,13 +17,21 @@ interface LayerControlProps {
   onToggleLayer: (key: keyof LayerVisibility) => void;
   onSelectBaseMap: (id: BaseMapLayerId) => void;
   onFitAll?: () => void;
+  activeVehiclesCount?: number;
+  totalVehiclesCount?: number;
+  vehicleFilter?: VehicleDisplayFilter;
+  onSelectVehicleFilter?: (filter: VehicleDisplayFilter) => void;
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
   visibility,
   onToggleLayer,
   onSelectBaseMap,
-  onFitAll
+  onFitAll,
+  activeVehiclesCount = 0,
+  totalVehiclesCount = 0,
+  vehicleFilter = 'active',
+  onSelectVehicleFilter
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -115,23 +123,59 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
 
               {/* Machinery / Vehicles */}
-              <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.vehicles}
-                    onChange={() => onToggleLayer('vehicles')}
-                  />
-                  <span className="layer-color-indicator tech-color"></span>
-                  <span className="layer-text">Masinapark</span>
-                </label>
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('vehicles')}
-                  title={visibility.vehicles ? 'Peida' : 'Näita'}
-                >
-                  {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
+              <div className="layer-box-group">
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.vehicles}
+                      onChange={() => onToggleLayer('vehicles')}
+                    />
+                    <span className="layer-color-indicator tech-color"></span>
+                    <span className="layer-text-wrap">
+                      <span className="layer-text">Masinapark</span>
+                      <span className="layer-subtext">
+                        {vehicleFilter === 'active' ? 'Ainult töötavad (< 5 min)' : 'Kõik masinad'}
+                      </span>
+                    </span>
+                    {activeVehiclesCount > 0 && (
+                      <span className="live-count-badge" title={`${activeVehiclesCount} masinat parasjagu töös või hiljuti liikunud`}>
+                        <span className="live-dot-pulse"></span>
+                        <span>{activeVehiclesCount}</span>
+                      </span>
+                    )}
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('vehicles')}
+                    title={visibility.vehicles ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+
+                {/* Sub-selector for Vehicle Filter: Active vs All */}
+                {visibility.vehicles && onSelectVehicleFilter && (
+                  <div className="vehicle-filter-subgroup">
+                    <button
+                      type="button"
+                      className={`v-filter-pill ${vehicleFilter === 'active' ? 'active' : ''}`}
+                      onClick={() => onSelectVehicleFilter('active')}
+                      title="Kuva ainult masinad, mis töötavad või on liikunud viimase 5 min jooksul"
+                    >
+                      <span className="dot-live"></span>
+                      <span>Ainult töötavad ({activeVehiclesCount})</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`v-filter-pill ${vehicleFilter === 'all' ? 'active' : ''}`}
+                      onClick={() => onSelectVehicleFilter('all')}
+                      title="Kuva kogu masinapark (sh seisvad ja vabad masinad)"
+                    >
+                      <span>Kõik ({totalVehiclesCount || activeVehiclesCount})</span>
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* POI / Infrastructure */}

@@ -30,3 +30,6 @@ export interface LayerVisibility {
   fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
   swathTrails: boolean;     // Töötrajektoori joonekesed
 }
+
+export type VehicleDisplayFilter = 'active' | 'all';
+

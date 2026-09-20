@@ -7,8 +7,12 @@ import {
   Activity,
   BarChart3,
   Sun,
-  Moon
+  Moon,
+  CalendarDays,
+  Lock,
+  Unlock
 } from 'lucide-react';
+import type { FarmingSeason } from '../types/season';
 
 interface HeaderProps {
   fieldsCount: number;
@@ -16,6 +20,9 @@ interface HeaderProps {
   workedAreaHa: number;
   activeVehiclesCount: number;
   poiCount: number;
+  selectedYear: number;
+  activeSeason?: FarmingSeason;
+  onOpenSeasonManager: () => void;
   onOpenFieldsRegister: () => void;
   onOpenUpload: () => void;
   onOpenVehicles: () => void;
@@ -33,6 +40,9 @@ export const Header: React.FC<HeaderProps> = ({
   workedAreaHa,
   activeVehiclesCount,
   poiCount,
+  selectedYear,
+  activeSeason,
+  onOpenSeasonManager,
   onOpenFieldsRegister,
   onOpenUpload,
   onOpenVehicles,
@@ -44,6 +54,7 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleTheme
 }) => {
   const overallProgress = totalAreaHa > 0 ? Math.round((workedAreaHa / totalAreaHa) * 100) : 0;
+  const isLocked = activeSeason?.isLocked ?? false;
 
   return (
     <header className="app-header">
@@ -61,6 +72,28 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-stats">
+        {/* Clickable Season Register Pill */}
+        <div
+          className={`stat-pill clickable season-stat-pill ${isLocked ? 'season-locked-pill' : ''}`}
+          onClick={onOpenSeasonManager}
+          title="Ava hooaja register ja elutsükli haldus"
+        >
+          <CalendarDays size={16} className={`stat-icon ${isLocked ? 'text-slate-400' : 'season-icon'}`} />
+          <div>
+            <div className="stat-label-with-year">
+              <span>Hooaeg {selectedYear}</span>
+              {isLocked ? (
+                <span className="stat-status-tag locked">Lukus</span>
+              ) : (
+                <span className="stat-status-tag active">Aktiivne</span>
+              )}
+            </div>
+            <div className="stat-value">
+              {activeSeason?.name || `Hooaeg ${selectedYear}`}
+            </div>
+          </div>
+        </div>
+
         {/* Clickable Fields Register Pill with Season indicator */}
         <div className="stat-pill clickable field-stat-pill" onClick={onOpenFieldsRegister} title="Ava põldude ja külvikorra register">
           <Layers size={16} className="stat-icon fields-icon" />

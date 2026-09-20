@@ -1,0 +1,226 @@
+// prisma/schema.prisma
+// Loisu / AgriMap Pro - Prisma andmebaasi skeem
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum SeasonStatus {
+  PLANNING
+  ACTIVE
+  HARVESTING
+  CLOSED
+}
+
+enum FieldStatus {
+  NOT_STARTED
+  IN_PROGRESS
+  COMPLETED
+}
+
+enum PoiCategory {
+  DRYER
+  WATER_SOURCE
+  WORKSHOP
+  FUEL_STATION
+  FIELD_ENTRANCE
+  STORAGE
+  OTHER
+}
+
+enum VehicleType {
+  TRACTOR
+  COMBINE
+  SPRAYER
+  TRUCK
+}
+
+enum ImplementType {
+  CULTIVATOR
+  SEEDER
+  SPRAYER
+  DISC_HARROW
+  PLOW
+  MOWER
+  TRAILER
+}
+
+enum DeviceStatus {
+  WORKING
+  MOVING
+  STOPPED
+  IDLING
+  OFFLINE
+}
+
+// ============================================================================
+// 1. HOOAJAD (SEASONS)
+// ============================================================================
+
+model Season {
+  id                   Int           @id @default(autoincrement())
+  year                 Int           @unique
+  name                 String
+  status               SeasonStatus  @default(PLANNING)
+  isLocked             Boolean       @default(false)
+  preparationStartDate DateTime?
+  seedingStartDate     DateTime?
+  harvestStartDate     DateTime?
+  harvestEndDate       DateTime?
+  closedAt             DateTime?
+  closedBy             String?
+  totalAreaHa          Float?
+  fieldsCount          Int?
+  targetYieldTons      Float?
+  actualYieldTons      Float?
+  notes                String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  fieldSeasons         FieldSeason[]
+
+  @@map("seasons")
+}
+
+// ============================================================================
+// 2. PÕLLUD / MASSIIVID (MASTER FIELDS)
+// ============================================================================
+
+model Field {
+  id             Int           @id @default(autoincrement())
+  num            String        // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x")
+  name           String        // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
+  fieldCode      String        @unique // PRIA massiivi unikaalne number (nt "60844249726")
+  cadastralCode  String?       // Katastritunnus (nt "89201:001:0100")
+  soilType       String?       // Mullastik (nt "Leostunud liivsavi (LP)")
+  drainageSystem Boolean       @default(false)
+  landowner      String?       // Maaomanik / rentnik
+  notes          String?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  fieldSeasons   FieldSeason[]
+
+  @@map("fields")
+}
+
+// ============================================================================
+// 3. PÕLLU HOOAJA KIRJED (FIELD SEASONS - SEOS PÕLLU JA HOOAJA VAHEL)
+// ============================================================================
+
+model FieldSeason {
+  id                Int          @id @default(autoincrement())
+  fieldId           Int
+  seasonId          Int?
+  year              Int
+  areaHa            Float
+  crop              String
+  cropVariety       String?
+  cropColor         String       @default("#eab308")
+  targetYieldTonsHa Float?
+  actualYieldTonsHa Float?
+  workedAreaHa      Float        @default(0)
+  workProgress      Float        @default(0)
+  status            FieldStatus  @default(NOT_STARTED)
+  seedingDate       DateTime?
+  harvestDate       DateTime?
+  notes             String?
+  geometry          Json         // GeoJSON Polygon | MultiPolygon
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
+
+  field             Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  season            Season?      @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+
+  @@unique([fieldId, year])
+  @@index([fieldId])
+  @@index([seasonId])
+  @@index([year])
+  @@map("field_seasons")
+}
+
+// ============================================================================
+// 4. TARISTU / HUVI- JA TÖÖPUNKTID (POI)
+// ============================================================================
+
+model PointOfInterest {
+  id            String      @id @default(cuid())
+  name          String
+  category      PoiCategory
+  latitude      Float
+  longitude     Float
+  description   String?
+  capacity      String?
+  contactPerson String?
+  phone         String?
+  accessNotes   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@map("points_of_interest")
+}
+
+// ============================================================================
+// 5. MASINAPARK JA GPS SEADMED (FLEET & TELEMETRY)
+// ============================================================================
+
+model Vehicle {
+  id                  String           @id @default(cuid())
+  name                String
+  type                VehicleType
+  model               String
+  regNumber           String?
+  workingWidthM       Float            @default(6.0)
+  color               String           @default("#10b981")
+  fuelCapacityL       Float?
+  assignedImplementId String?          @unique
+  assignedDeviceId    String?          @unique
+  createdAt           DateTime         @default(now())
+  updatedAt           DateTime         @updatedAt
+
+  assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
+  assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
+
+  @@map("vehicles")
+}
+
+model Implement {
+  id            String        @id @default(cuid())
+  name          String
+  type          ImplementType
+  workingWidthM Float
+  manufacturer  String?
+  model         String?
+  year          Int?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  vehicle       Vehicle?
+
+  @@map("implements")
+}
+
+model TeltonikaDevice {
+  id          String       @id @default(cuid())
+  imei        String       @unique
+  model       String
+  simNumber   String?
+  firmware    String?
+  status      DeviceStatus @default(OFFLINE)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  vehicle     Vehicle?
+
+  @@map("teltonika_devices")
+}

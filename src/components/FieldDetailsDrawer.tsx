@@ -1,11 +1,11 @@
-// src/components/FieldDetailsDrawer.tsx
 import React from 'react';
 import {
   X,
   FileText,
   ExternalLink,
   Activity,
-  Crosshair
+  Crosshair,
+  Lock
 } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
 
@@ -13,12 +13,14 @@ interface FieldDetailsDrawerProps {
   field: FieldFeature | null;
   onClose: () => void;
   onFocusField: (field: FieldFeature) => void;
+  isSeasonLocked?: boolean;
 }
 
 export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
   field,
   onClose,
-  onFocusField
+  onFocusField,
+  isSeasonLocked = false
 }) => {
   if (!field) return null;
 
@@ -56,6 +58,13 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
       </div>
 
       <div className="drawer-body">
+        {isSeasonLocked && (
+          <div className="drawer-season-locked-alert">
+            <Lock size={13} />
+            <span>Hooaeg {props.year || 2026} on muudatusteks suletud (arhiiv).</span>
+          </div>
+        )}
+
         {/* Main stats card */}
         <div className="field-stats-grid">
           <div className="field-stat-item">
