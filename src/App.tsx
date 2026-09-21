@@ -21,7 +21,7 @@ import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
 import { generateFieldCollectionForYear, getFieldFeatureForYear } from './types/fieldRegister';
 import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from './types/fleet';
-import type { CultivationPass } from './types/telemetry';
+import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
 import type { RelatedParty } from './types/party';
@@ -40,9 +40,19 @@ import { SAMPLE_POI_LIST } from './data/samplePoi';
 import { INITIAL_PARTIES } from './data/sampleParties';
 import { INITIAL_CROPS } from './data/sampleCrops';
 import { TelemetrySimulator } from './services/telemetrySimulator';
-import { calculateFieldWorkProgress, getBoundingBox } from './services/geometryEngine';
+import { calculateFieldWorkProgress, getBoundingBox, generateCultivationPolygon } from './services/geometryEngine';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
+
+// Teltonika Harimise Telemeetria paneel jälgib hetkel selle konkreetse
+// mobiilse seadme päris GPS-ajalugu (asendab varasema kõvakoodis
+// mockup-taasesituse) — IMEI on kokku lepitud kasutajaga.
+const TRACKED_DEVICE_IMEI = '860848081816598';
+
+// Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
+// (agro_tsdb-s puudub otsene hüdraulika/rippriist signaal).
+const WORKING_SPEED_MIN_KMH = 0.5;
+const WORKING_SPEED_MAX_KMH = 15;
 
 export const App: React.FC = () => {
   // Database connection status
@@ -340,38 +350,89 @@ export const App: React.FC = () => {
 
   const simulatorRef = useRef<TelemetrySimulator | null>(null);
 
-  // Initialize simulator
+  // Initialize simulator: laeb TRACKED_DEVICE_IMEI päris GPS-ajaloo
+  // agro_tsdb-st ja taasesitab seda (mängi/paus/kiirus/scrubber). Kui see
+  // ebaõnnestub või andmeid pole veel piisavalt, langeb tagasi kohapealsele
+  // mockup-teekonnale, et paneel ei jääks tühjaks.
   useEffect(() => {
-    const sim = new TelemetrySimulator(INITIAL_CULTIVATION_PASS);
-    simulatorRef.current = sim;
+    let isMounted = true;
+    let sim: TelemetrySimulator | null = null;
 
-    sim.setOnUpdate((updatedPass, activePos, heading, speed, isWorking) => {
-      setCultivationPass(updatedPass);
-      setProgressPct(sim.getProgress());
+    const attachSimulator = (pass: CultivationPass) => {
+      if (!isMounted) return;
+      sim = new TelemetrySimulator(pass);
+      simulatorRef.current = sim;
 
-      // Update Teltonika device live position and heading for JD 8R
-      setDevices((prevDevs) => 
-        prevDevs.map((d) => {
-          if (d.id === 'tel-01' || d.assignedVehicleId === 'veh-01') {
-            return {
-              ...d,
-              position: activePos,
-              heading,
-              speedKmH: speed,
-              status: isWorking ? 'working' : (speed > 0 ? 'moving' : 'stopped'),
-              ignition: true,
-              hydraulicActive: isWorking,
-              fuelConsumptionLh: isWorking ? 24.5 : 12.0,
-              lastUpdate: new Date().toISOString()
-            };
-          }
-          return d;
-        })
-      );
-    });
+      sim.setOnUpdate((updatedPass, activePos, heading, speed, isWorking) => {
+        setCultivationPass(updatedPass);
+        setProgressPct(sim!.getProgress());
+
+        // Uuenda jälgitava seadme asukoht/kiirus kaardil taasesituse käigus
+        setDevices((prevDevs) =>
+          prevDevs.map((d) => {
+            if (d.imei === TRACKED_DEVICE_IMEI) {
+              return {
+                ...d,
+                position: activePos,
+                heading,
+                speedKmH: speed,
+                status: isWorking ? 'working' : (speed > 0 ? 'moving' : 'stopped'),
+                lastUpdate: new Date().toISOString()
+              };
+            }
+            return d;
+          })
+        );
+      });
+    };
+
+    api.getTelemetryHistory(TRACKED_DEVICE_IMEI, 6)
+      .then((res) => {
+        if (!isMounted) return;
+        if (res.points.length < 2) {
+          attachSimulator(INITIAL_CULTIVATION_PASS);
+          return;
+        }
+
+        const points: TelemetryPoint[] = res.points.map((p) => ({
+          timestamp: p.timestamp,
+          lat: p.lat,
+          lng: p.lng,
+          altitude: p.altitude,
+          speedKmH: p.speedKmH,
+          heading: p.heading,
+          isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
+          workingWidthM
+        }));
+
+        const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
+
+        const realPass: CultivationPass = {
+          id: `pass-${TRACKED_DEVICE_IMEI}`,
+          vehicleId: '',
+          vehicleName: 'Claas Axion 850',
+          operationType: 'Harimine',
+          startTime: points[0].timestamp,
+          endTime: points[points.length - 1].timestamp,
+          workingWidthM,
+          points,
+          swathPolygon: swathPolygon || undefined,
+          trailLine: trailLine || undefined,
+          workedAreaHa: totalWorkedAreaHa,
+          distanceKm: totalDistanceKm,
+          avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
+        };
+
+        attachSimulator(realPass);
+      })
+      .catch((err) => {
+        console.warn('Ei õnnestunud laadida päris GPS-ajalugu, kasutan mockup-andmeid:', err);
+        attachSimulator(INITIAL_CULTIVATION_PASS);
+      });
 
     return () => {
-      sim.destroy();
+      isMounted = false;
+      sim?.destroy();
     };
   }, []);
 

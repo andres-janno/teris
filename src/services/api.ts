@@ -59,6 +59,14 @@ export const api = {
     return res.json();
   },
 
+  async getTelemetryHistory(imei: string, hours = 6): Promise<{
+    points: { timestamp: string; lat: number; lng: number; altitude?: number; speedKmH: number; heading: number }[]
+  }> {
+    const res = await fetch(`/api/telemetry/history?imei=${encodeURIComponent(imei)}&hours=${hours}`);
+    if (!res.ok) throw new Error('Failed to fetch telemetry history');
+    return res.json();
+  },
+
   async saveVehicle(vehicle: Vehicle): Promise<any> {
     const res = await fetch('/api/fleet/vehicles', {
       method: 'POST',

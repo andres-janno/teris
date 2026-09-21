@@ -111,6 +111,42 @@ async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<string, Li
   return result;
 }
 
+type HistoryRow = {
+  time: Date;
+  fields: Record<string, number>;
+};
+
+// Toore GPS-jälje ajalugu ühe mobiilse seadme kohta (kasutusel harimise
+// taasesituse paneelis) — pivotib measurement='data' read ajatempli järgi
+// üheks JSON-objektiks per pakett, kuna Teltonika saadab kõik väljad
+// (lat/lng/kiirus/suund) sama ajatempliga korraga.
+async function fetchDeviceHistory(imei: string, hours: number): Promise<HistoryRow[]> {
+  if (!tsdb) return [];
+  try {
+    return await tsdb.$queryRaw<HistoryRow[]>`
+      SELECT time, fields FROM (
+        SELECT time,
+          jsonb_object_agg(
+            field,
+            COALESCE(value_double, value_int::double precision, value_bigint::double precision)
+          ) AS fields
+        FROM measurements
+        WHERE device = ${imei}
+          AND measurement = 'data'
+          AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
+          AND time > now() - (${hours} || ' hours')::interval
+        GROUP BY time
+        ORDER BY time DESC
+        LIMIT 3000
+      ) recent
+      ORDER BY time ASC
+    `;
+  } catch (err) {
+    console.error('agro_tsdb: device history query failed:', err);
+    return [];
+  }
+}
+
 function json(res: ServerResponse, data: any, status = 200) {
   res.statusCode = status;
   res.setHeader('Content-Type', 'application/json; charset=utf-8');
@@ -735,6 +771,27 @@ export function dbApiPlugin(): Plugin {
               });
             }
             return json(res, { success: true });
+          }
+
+          // 5b. Telemetry history (real GPS track for a single cellular device, from agro_tsdb)
+          if (pathname === '/api/telemetry/history' && method === 'GET') {
+            const imei = url.searchParams.get('imei');
+            const hours = Number(url.searchParams.get('hours')) || 6;
+            if (!imei) return json(res, { error: 'imei query param required' }, 400);
+
+            const rows = await fetchDeviceHistory(imei, hours);
+            const points = rows
+              .filter((r) => r.fields.latitude != null && r.fields.longitude != null)
+              .map((r) => ({
+                timestamp: r.time.toISOString(),
+                lat: r.fields.latitude,
+                lng: r.fields.longitude,
+                altitude: r.fields.altitude ?? undefined,
+                speedKmH: r.fields.speed ?? r.fields.speed_avl_kmh ?? 0,
+                heading: r.fields.angle ?? 0
+              }));
+
+            return json(res, { points });
           }
 
           // 6. Related Parties
