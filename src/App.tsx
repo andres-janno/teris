@@ -58,8 +58,10 @@ export const App: React.FC = () => {
   // Database connection status
   const [dbConnected, setDbConnected] = useState<boolean>(false);
 
-  // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation
-  const [visibility, setVisibility] = useState<LayerVisibility>({
+  // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation.
+  // Salvestatakse localStorage'i, et valik jääks meelde ka lehe värskendamisel
+  // (kuni kasutaja brauseri andmed käsitsi kustutab / hard reset teeb).
+  const DEFAULT_VISIBILITY: LayerVisibility = {
     baseMap: 'maaamet-pohikaart',
     cadastre: false,
     fields: true,
@@ -68,7 +70,20 @@ export const App: React.FC = () => {
     poi: false,
     fieldLabels: false,
     swathTrails: true
+  };
+  const [visibility, setVisibility] = useState<LayerVisibility>(() => {
+    const saved = localStorage.getItem('agrimap_visibility');
+    if (!saved) return DEFAULT_VISIBILITY;
+    try {
+      return { ...DEFAULT_VISIBILITY, ...JSON.parse(saved) };
+    } catch {
+      return DEFAULT_VISIBILITY;
+    }
   });
+
+  useEffect(() => {
+    localStorage.setItem('agrimap_visibility', JSON.stringify(visibility));
+  }, [visibility]);
 
   // Masinapargi kuvamise filter: 'active' (ainult töötavad < 5 min) või 'all' (kõik masinad)
   const [vehicleFilter, setVehicleFilter] = useState<VehicleDisplayFilter>('active');
@@ -81,10 +96,10 @@ export const App: React.FC = () => {
     const saved = localStorage.getItem('agrimap_seasons');
     let loaded: FarmingSeason[] = saved ? JSON.parse(saved) : INITIAL_SEASONS;
 
-    // Dynamically ensure all seasons exist from activeYear + 3 down to activeYear - 3
+    // Dynamically ensure all seasons exist from activeYear + 3 down to activeYear - 4
     const activeYear = loaded.find((s) => s.status === 'active')?.year || 2026;
     const existingYears = new Set(loaded.map((s) => s.year));
-    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+    for (let y = activeYear + 3; y >= activeYear - 4; y--) {
       if (!existingYears.has(y)) {
         loaded.push({
           id: `season-${y}`,
@@ -122,24 +137,33 @@ export const App: React.FC = () => {
   // 1. Põldude ja külvikorra master-register (kasutab alati otse ts failide sisu)
   const [masterFields, setMasterFields] = useState<MasterField[]>(INITIAL_MASTER_FIELDS);
 
-  // Dynamic available years list: activeYear + 3 to activeYear - 3
+  // Dynamic available years list: activeYear + 3 to activeYear - 4
   const availableYears = React.useMemo(() => {
     const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
+    const maxYear = activeYear + 3;
+    const minYear = activeYear - 4;
     const yearSet = new Set<number>();
-    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+    for (let y = maxYear; y >= minYear; y--) {
       yearSet.add(y);
     }
-    seasons.forEach((s) => yearSet.add(s.year));
+    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) yearSet.add(s.year); });
     masterFields.forEach((mf) => {
-      mf.history.forEach((h) => yearSet.add(h.year));
+      mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) yearSet.add(h.year); });
     });
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [seasons, masterFields]);
 
+  // Operaatori (harija) filter — kui seatud, näidatakse kaardil ja
+  // päisestatistikas ainult selle operaatoriga põlde.
+  const [operatorFilter, setOperatorFilter] = useState<string>('');
+
   // Derive FieldCollection for the active year (with that year's specific area and crop)
   const fields: FieldCollection = React.useMemo(() => {
-    return generateFieldCollectionForYear(masterFields, selectedYear);
-  }, [masterFields, selectedYear]);
+    const source = operatorFilter
+      ? masterFields.filter((f) => f.operatorId === operatorFilter)
+      : masterFields;
+    return generateFieldCollectionForYear(source, selectedYear);
+  }, [masterFields, selectedYear, operatorFilter]);
 
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [selectedCropFilter, setSelectedCropFilter] = useState<string | null>(null);
@@ -910,53 +934,106 @@ export const App: React.FC = () => {
     api.saveSeason(newSeason).catch((err) => console.error('Error creating season in DB:', err));
   };
 
+  // Kultuuri värv peab olema läbiv üle aastate — kasutame alati Kultuuride
+  // Registri värvi (kui kultuur sinna sobitub), mitte shpParser'i enda
+  // registrist lahutatud, PRIA teksti põhjal ära arvatud värvi. Sobitus
+  // sama loogikaga, mis CropRegisterModal'is (nimi teksti seest/algusest).
+  const resolveCropColor = (cropText: string | undefined, fallback?: string): string => {
+    if (cropText) {
+      const cropName = cropText.toLowerCase().trim();
+      const match = crops.find((c) => {
+        const name = c.name.toLowerCase();
+        return name === cropName || cropName.includes(name) || name.startsWith(cropName);
+      });
+      if (match) return match.color;
+    }
+    return fallback || '#eab308';
+  };
+
   // PRIA SHP import
-  const handleFieldsImported = (importedCollection: FieldCollection, replace: boolean) => {
-    const existingMaxId = replace ? 0 : Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
+  const handleFieldsImported = async (importedCollection: FieldCollection, replace: boolean) => {
+    const existingMaxId = Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
     let nextId = existingMaxId + 1;
 
     const newMasterFields: MasterField[] = importedCollection.features.map((feature, idx) => {
       const p = feature.properties;
       const area = p.areaHa || 5.0;
-      const id = typeof p.id === 'number' && !isNaN(p.id) ? p.id : nextId++;
       const num = p.num ? String(p.num) : String(idx + 1);
-      const fieldCode = p.fieldCode ? String(p.fieldCode) : `61044${1000 + Number(id)}`;
-      const name = p.name || `Põld ${num}`;
+      const fieldCode = p.fieldCode ? String(p.fieldCode) : `61044${1000 + existingMaxId + idx + 1}`;
+
+      // Kui see massiiv+põllunumber juba registris on, säilitame olemasoleva
+      // põhiregistri (nimi, mullastik, kataster, operaator, märkused) —
+      // import ei tohi neid PRIA faili üldiste/puuduvate väärtustega üle
+      // kirjutada, vaid ainult värskendab geomeetriat ja valitud aasta kultuuri.
+      const existing = masterFields.find((f) => f.fieldCode === fieldCode && (f.num || '') === num);
+
+      const id = existing ? existing.id : nextId++;
+      const name = existing?.name || p.name || `Põld ${num}`;
+      const cadastralCode = existing?.cadastralCode || p.cadastralCode || undefined;
+      const soilType = existing?.soilType || p.rawProperties?.soilType || undefined;
+      const drainageSystem = existing ? existing.drainageSystem : (p.rawProperties?.drainageSystem ?? true);
+      const notes = existing?.notes || p.notes || '';
+      const operatorId = existing?.operatorId;
+      const otherYearsHistory = existing?.history.filter((h) => h.year !== selectedYear) || [];
 
       return {
         id,
         num,
         name,
         fieldCode,
-        cadastralCode: p.cadastralCode || `89201:00${(idx % 9) + 1}:010${idx % 9}`,
-        soilType: p.rawProperties?.soilType || 'Leostunud liivsavi (LP)',
-        drainageSystem: p.rawProperties?.drainageSystem ?? true,
-        landowner: p.rawProperties?.landowner || 'Oma maa',
-        notes: p.notes || '',
+        cadastralCode,
+        soilType,
+        drainageSystem,
+        operatorId,
+        notes,
         geometry: feature.geometry,
         history: [
           {
             year: selectedYear,
             areaHa: area,
-            crop: p.crop || 'Talinisu (Skagen)',
-            cropVariety: p.crop ? p.crop.split('(')[1]?.replace(')', '') || '' : 'Skagen',
-            cropColor: p.cropColor || '#eab308',
+            crop: p.crop || 'Määramata',
+            cropVariety: p.crop ? p.crop.split('(')[1]?.replace(')', '') || '' : '',
+            cropColor: resolveCropColor(p.crop, p.cropColor),
             targetYieldTonsHa: 7.5,
             workedAreaHa: p.workedAreaHa || 0,
             workProgress: p.workProgress || 0,
             status: p.status || 'not_started',
             notes: p.notes
-          }
+          },
+          ...otherYearsHistory
         ]
       };
     });
 
+    // Serverisse saadame ainult imporditud (valitud) aasta kirje —
+    // teisi aastaid backend ei puuduta, kuna upsert käib history massiivis
+    // toodud aastate kaupa. Kohalikku kuvatavat seisu muudame alles pärast
+    // kinnitust, et ebaõnnestunud/korduvad katsed ei jätaks duplikaate.
+    const importedYearOnly = newMasterFields.map((f) => ({ ...f, history: f.history.slice(0, 1) }));
+    try {
+      await api.saveMasterFields(importedYearOnly);
+    } catch (err) {
+      console.error('Error saving imported fields to DB:', err);
+      return;
+    }
+
     if (replace) {
       setMasterFields(newMasterFields);
     } else {
-      setMasterFields((prev) => [...prev, ...newMasterFields]);
+      setMasterFields((prev) => {
+        const byKey = new Map(newMasterFields.map((f) => [`${f.fieldCode}::${f.num || ''}`, f]));
+        const merged = prev.map((f) => {
+          const key = `${f.fieldCode}::${f.num || ''}`;
+          const updated = byKey.get(key);
+          if (updated) {
+            byKey.delete(key);
+            return updated;
+          }
+          return f;
+        });
+        return [...merged, ...byKey.values()];
+      });
     }
-    api.saveMasterFields(newMasterFields).catch((err) => console.error('Error saving imported fields to DB:', err));
 
     setIsUploadOpen(false);
 
@@ -991,15 +1068,17 @@ export const App: React.FC = () => {
         activeVehiclesCount={activeVehiclesCount}
         poiCount={pois.length}
         partiesCount={parties.length}
+        parties={parties}
         cropsCount={crops.length}
         varietiesCount={crops.reduce((sum, c) => sum + (c.varieties?.length || 0), 0)}
+        operatorFilter={operatorFilter}
+        onOperatorFilterChange={setOperatorFilter}
         selectedYear={selectedYear}
         activeSeason={activeSeason}
         onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
         onOpenParties={() => setIsPartiesModalOpen(true)}
         onOpenCrops={() => setIsCropsModalOpen(true)}
-        onOpenUpload={() => setIsUploadOpen(true)}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
         onOpenPoi={() => setIsPoiModalOpen(true)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}

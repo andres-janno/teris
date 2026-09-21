@@ -80,7 +80,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [editNum, setEditNum] = useState('');
   const [editFieldCode, setEditFieldCode] = useState('');
   const [editCadastralCode, setEditCadastralCode] = useState('');
-  const [editLandowner, setEditLandowner] = useState('');
+  const [editOperatorId, setEditOperatorId] = useState('');
   const [editSoilType, setEditSoilType] = useState('');
   const [editCadastralParcels, setEditCadastralParcels] = useState<FieldCadastralLink[]>([]);
 
@@ -120,25 +120,36 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [isAddYearOpen, setIsAddYearOpen] = useState(false);
   const [newYearInput, setNewYearInput] = useState(2027);
 
-  // Dynamic available years (+3 forward and -3 history around active season)
+  // Dynamic available years (+3 forward and -4 history around active season).
+  // Kaugemaid tühje hooaegu (nt DB-s ette loodud, aga veel deklareerimata
+  // aastad) ei näidata, isegi kui need eksisteerivad.
   const availableYearsList = useMemo(() => {
     const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
+    const maxYear = activeYear + 3;
+    const minYear = activeYear - 4;
     const set = new Set<number>();
-    for (let y = activeYear + 3; y >= activeYear - 3; y--) {
+    for (let y = maxYear; y >= minYear; y--) {
       set.add(y);
     }
-    seasons.forEach((s) => set.add(s.year));
-    masterFields.forEach((mf) => mf.history.forEach((h) => set.add(h.year)));
+    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) set.add(s.year); });
+    masterFields.forEach((mf) => mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) set.add(h.year); }));
     return Array.from(set).sort((a, b) => b - a);
   }, [seasons, masterFields]);
 
+  // Ainult põllud, millel on TÄPSELT valitud aasta kirje — vältimaks, et
+  // registrisse jäänud, aga sel aastal (nt PRIA impordis) mitte
+  // deklareeritud põllud paisutaksid statistikat mõne teise aasta andmega.
+  const fieldsForSelectedYear = useMemo(() => {
+    return masterFields.filter((f) => f.history.some((h) => h.year === selectedYear));
+  }, [masterFields, selectedYear]);
+
   // Statistics for selected year
   const totalAreaHa = useMemo(() => {
-    return masterFields.reduce((sum, f) => {
-      const rec = f.history.find(h => h.year === selectedYear) || f.history[0];
+    return fieldsForSelectedYear.reduce((sum, f) => {
+      const rec = f.history.find(h => h.year === selectedYear);
       return sum + (rec ? rec.areaHa : 0);
     }, 0);
-  }, [masterFields, selectedYear]);
+  }, [fieldsForSelectedYear, selectedYear]);
 
   // Financial summary (Oma maa vs Rent) based on active season
   const financialSummary = useMemo(() => {
@@ -147,8 +158,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     let totalTax = 0;
     let totalRent = 0;
 
-    masterFields.forEach((f) => {
-      const rec = f.history.find(h => h.year === selectedYear) || f.history[0];
+    fieldsForSelectedYear.forEach((f) => {
+      const rec = f.history.find(h => h.year === selectedYear);
       const fieldArea = rec ? rec.areaHa : 0;
       const parcels = rec?.cadastralParcels || f.cadastralParcels || [];
 
@@ -163,14 +174,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           }
         });
       } else {
-        const isRent = f.landowner && f.landowner.toLowerCase().includes('rent');
-        if (isRent) {
-          rentedHa += fieldArea;
-          totalRent += fieldArea * 120;
-        } else {
-          ownedHa += fieldArea;
-          totalTax += fieldArea * 15;
-        }
+        // Kataster-taseme omandi andmed puuduvad — vaikimisi loeme oma maaks
+        ownedHa += fieldArea;
+        totalTax += fieldArea * 15;
       }
     });
 
@@ -180,18 +186,18 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       totalTax: Math.round(totalTax),
       totalRent: Math.round(totalRent)
     };
-  }, [masterFields, selectedYear]);
+  }, [fieldsForSelectedYear, selectedYear]);
 
-  // Filtered master fields
+  // Filtered master fields (ainult valitud aasta kirjega põllud)
   const filteredFields = useMemo(() => {
-    return masterFields.filter((f) => {
-      const yearRecord = f.history.find(h => h.year === selectedYear) || f.history[0];
+    return fieldsForSelectedYear.filter((f) => {
+      const yearRecord = f.history.find(h => h.year === selectedYear);
       const cropName = yearRecord ? yearRecord.crop : '';
       const q = searchQuery.toLowerCase();
 
       const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
-      const hasOwned = parcels.some(p => p.ownershipType === 'OWNED') || (f.landowner && !f.landowner.toLowerCase().includes('rent'));
-      const hasRented = parcels.some(p => p.ownershipType === 'RENTED') || (f.landowner && f.landowner.toLowerCase().includes('rent'));
+      const hasOwned = parcels.some(p => p.ownershipType === 'OWNED');
+      const hasRented = parcels.some(p => p.ownershipType === 'RENTED');
 
       const matchesSearch =
         f.name.toLowerCase().includes(q) ||
@@ -211,17 +217,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
       return matchesSearch && matchesCrop && matchesTenure;
     });
-  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter]);
+  }, [fieldsForSelectedYear, selectedYear, searchQuery, cropFilter, tenureFilter]);
 
   // Crops breakdown for selected year
   const cropsList = useMemo(() => {
     const cropsSet = new Set<string>();
-    masterFields.forEach((f) => {
-      const rec = f.history.find(h => h.year === selectedYear) || f.history[0];
+    fieldsForSelectedYear.forEach((f) => {
+      const rec = f.history.find(h => h.year === selectedYear);
       if (rec && rec.crop) cropsSet.add(rec.crop.split('(')[0].trim());
     });
     return Array.from(cropsSet);
-  }, [masterFields, selectedYear]);
+  }, [fieldsForSelectedYear, selectedYear]);
 
   // Sync edit form with selectedYear whenever selectedYear changes
   useEffect(() => {
@@ -289,7 +295,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     setEditNum(field.num || '');
     setEditFieldCode(field.fieldCode);
     setEditCadastralCode(field.cadastralCode || (initialParcels[0]?.cadastralCode) || '');
-    setEditLandowner(field.landowner || '');
+    setEditOperatorId(field.operatorId || '');
     setEditSoilType(field.soilType || '');
     setEditCadastralParcels(initialParcels);
 
@@ -331,7 +337,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
         num: editNum.trim() || undefined,
         fieldCode: editFieldCode.trim(),
         cadastralCode: editCadastralCode.trim() || (editCadastralParcels[0]?.cadastralCode) || undefined,
-        landowner: editLandowner.trim() || undefined,
+        operatorId: editOperatorId || undefined,
         soilType: editSoilType.trim() || undefined
       },
       {
@@ -448,9 +454,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
 
   const handleExportCsv = () => {
-    const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Maaomanik', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
+    const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Operaator', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
     const rows = masterFields.map((f) => {
-      const yearRec = f.history.find(h => h.year === selectedYear) || f.history[0];
+      const yearRec = f.history.find(h => h.year === selectedYear);
       const historyStr = f.history.map(h => `${h.year}: ${h.areaHa}ha (${h.crop})`).join('; ');
       return [
         `"${f.id}"`,
@@ -458,7 +464,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
         `"${f.num || ''}"`,
         `"${f.fieldCode}"`,
         `"${f.cadastralCode || ''}"`,
-        `"${f.landowner || ''}"`,
+        `"${f.operatorName || ''}"`,
         yearRec ? yearRec.areaHa : 0,
         `"${yearRec ? yearRec.crop : ''}"`,
         `"${historyStr}"`
@@ -549,7 +555,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             <div className="register-stats-pills">
               <div className="reg-stat-pill">
                 <span className="lbl">Põlde:</span>
-                <strong>{masterFields.length} tk</strong>
+                <strong>{fieldsForSelectedYear.length} tk</strong>
               </div>
               <div className="reg-stat-pill highlight">
                 <span className="lbl">Kogupind:</span>
@@ -758,14 +764,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Üldine maaomaniku / rentniku märge</label>
-                  <input
-                    type="text"
-                    placeholder="nt Oma maa, Rent (OÜ Loisu)"
-                    value={editLandowner}
-                    onChange={(e) => setEditLandowner(e.target.value)}
+                  <label>Operaator</label>
+                  <select
+                    value={editOperatorId}
+                    onChange={(e) => setEditOperatorId(e.target.value)}
                     className="form-input"
-                  />
+                  >
+                    <option value="">-- Määramata --</option>
+                    {parties.map((p) => (
+                      <option key={p.id} value={p.id}>{p.name}</option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1159,8 +1168,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                             </span>
                           ))
                         ) : (
-                          field.landowner && (
-                            <span className="sub-tag owner-tag">👤 {field.landowner}</span>
+                          field.operatorName && (
+                            <span className="sub-tag owner-tag">👤 {field.operatorName}</span>
                           )
                         )}
 
@@ -1298,7 +1307,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
         <div className="modal-footer">
           <div className="footer-left-info">
-            <span>Kuvatakse <strong>{filteredFields.length}</strong> põldu <strong>{masterFields.length}</strong>-st &bull; Valitud aasta: <strong>{selectedYear}</strong></span>
+            <span>Kuvatakse <strong>{filteredFields.length}</strong> põldu <strong>{fieldsForSelectedYear.length}</strong>-st &bull; Valitud aasta: <strong>{selectedYear}</strong></span>
           </div>
           <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
         </div>

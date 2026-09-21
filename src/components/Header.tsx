@@ -2,7 +2,6 @@ import React from 'react';
 import {
   Layers,
   Tractor,
-  Upload,
   MapPin,
   Activity,
   BarChart3,
@@ -13,6 +12,7 @@ import {
   Sprout
 } from 'lucide-react';
 import type { FarmingSeason } from '../types/season';
+import type { RelatedParty } from '../types/party';
 
 interface HeaderProps {
   fieldsCount: number;
@@ -21,15 +21,17 @@ interface HeaderProps {
   activeVehiclesCount: number;
   poiCount: number;
   partiesCount?: number;
+  parties?: RelatedParty[];
   cropsCount?: number;
   varietiesCount?: number;
+  operatorFilter?: string;
+  onOperatorFilterChange?: (partyId: string) => void;
   selectedYear: number;
   activeSeason?: FarmingSeason;
   onOpenSeasonManager: () => void;
   onOpenFieldsRegister: () => void;
   onOpenParties?: () => void;
   onOpenCrops?: () => void;
-  onOpenUpload: () => void;
   onOpenVehicles: () => void;
   onOpenPoi: () => void;
   onOpenAnalytics: () => void;
@@ -47,15 +49,17 @@ export const Header: React.FC<HeaderProps> = ({
   activeVehiclesCount,
   poiCount,
   partiesCount = 0,
+  parties = [],
   cropsCount = 0,
   varietiesCount = 0,
+  operatorFilter = '',
+  onOperatorFilterChange,
   selectedYear,
   activeSeason,
   onOpenSeasonManager,
   onOpenFieldsRegister,
   onOpenParties,
   onOpenCrops,
-  onOpenUpload,
   onOpenVehicles,
   onOpenPoi,
   onOpenAnalytics,
@@ -77,14 +81,13 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
         <div className="brand-text">
           <div className="brand-title">
-            <span>AGRI</span>MAP <span className="brand-badge">PRO</span>
+            <span>AGRO</span> kaart
             {dbConnected && (
               <span className="db-connected-badge" title="Ühendatud PostgreSQL andmebaasiga agro_db">
                 <span className="db-dot"></span> agro_db
               </span>
             )}
           </div>
-          <div className="brand-subtitle">Maa-amet &bull; PRIA SHP &bull; Teltonika GPS</div>
         </div>
       </div>
 
@@ -98,7 +101,6 @@ export const Header: React.FC<HeaderProps> = ({
           <CalendarDays size={16} className={`stat-icon ${isLocked ? 'text-slate-400' : 'season-icon'}`} />
           <div>
             <div className="stat-label-with-year">
-              <span>Hooaeg {selectedYear}</span>
               {isLocked ? (
                 <span className="stat-status-tag locked">Lukus</span>
               ) : (
@@ -179,6 +181,25 @@ export const Header: React.FC<HeaderProps> = ({
             </div>
           </div>
         )}
+
+        {onOperatorFilterChange && (
+          <div className="stat-pill operator-filter-pill" title="Filtreeri kaarti ja statistikat operaatori (harija) järgi">
+            <Users size={16} className="stat-icon text-emerald" />
+            <div>
+              <div className="stat-label">Operaator</div>
+              <select
+                className="header-season-select"
+                value={operatorFilter}
+                onChange={(e) => onOperatorFilterChange(e.target.value)}
+              >
+                <option value="">Kõik</option>
+                {parties.map((p) => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="header-actions">
@@ -198,15 +219,6 @@ export const Header: React.FC<HeaderProps> = ({
         >
           <BarChart3 size={16} />
           <span>Analüütika</span>
-        </button>
-
-        <button
-          className="btn btn-primary"
-          onClick={onOpenUpload}
-          title="Laadi üles PRIA põldude SHP ZIP fail"
-        >
-          <Upload size={16} />
-          <span>Impordi PRIA SHP</span>
         </button>
 
         {/* Theme Toggle Button */}

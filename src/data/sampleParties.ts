@@ -13,7 +13,7 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     email: 'info@loisuagro.ee',
     address: 'Loisu talu, Riidaja küla, Tõrva vald, 68716 Valgamaa',
     bankAccount: 'EE452200221054321987',
-    notes: 'Põhiline tootmisettevõte ja maaharija. Omab kinnistuid Toosi, Loisu Kodu, Loo Väiketalu ja Vabarna-Mäe.',
+    notes: 'Põhiline tootmisettevõte ja operaator. Omab kinnistuid Toosi, Loisu Kodu, Loo Väiketalu ja Vabarna-Mäe.',
     isOwnCompany: true,
     createdAt: '2020-01-15'
   },

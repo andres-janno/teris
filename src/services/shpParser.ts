@@ -1,5 +1,6 @@
 // src/services/shpParser.ts
 import shp from 'shpjs';
+import JSZip from 'jszip';
 import proj4 from 'proj4';
 import * as turf from '@turf/turf';
 import type { Feature, Polygon, MultiPolygon } from 'geojson';
@@ -75,10 +76,56 @@ function transformGeometry(geom: Polygon | MultiPolygon): Polygon | MultiPolygon
 }
 
 /**
+ * Loeb DBF atribuudi väärtuse tõstutundetult (PRIA eksportide veerunimede
+ * suur/väiketäht varieerub eri tööriistade/aastate vahel, nt "pollunr" vs
+ * "POLLUNR"), proovides mitut võimalikku nimevarianti järjekorras.
+ */
+function getProp(props: Record<string, unknown>, ...keys: string[]): string | undefined {
+  const lowerMap: Record<string, unknown> = {};
+  for (const k of Object.keys(props)) lowerMap[k.toLowerCase()] = (props as any)[k];
+  for (const key of keys) {
+    const v = lowerMap[key.toLowerCase()];
+    if (v !== undefined && v !== null && String(v).trim() !== '') return String(v).trim();
+  }
+  return undefined;
+}
+
+/**
+ * PRIA .dbf salvestab kümnendarvud koma-eraldajaga (nt "5,54") —
+ * teisendab need JS-i mõistetavaks ("5.54").
+ */
+function parseEstonianNumber(raw?: string): number | undefined {
+  if (!raw) return undefined;
+  const n = Number(raw.replace(',', '.'));
+  return isNaN(n) ? undefined : n;
+}
+
+/**
+ * shpjs loeb .dbf teksti kodeeringu ZIP-i kaasas oleva .cpg failist; kui
+ * see puudub (nagu PRIA enda eksportidel sageli), langeb shpjs tagasi
+ * UTF-8-le ja rikub Eesti täpitähed (ü, õ jne). PRIA .dbf failid on
+ * reaalselt Windows-1257 (Balti) kodeeringus — lisame ZIP-i puuduva
+ * .cpg kirje, et shpjs dekodeeriks õigesti.
+ */
+async function ensureCpgEntry(buffer: ArrayBuffer): Promise<ArrayBuffer> {
+  const zip = await JSZip.loadAsync(buffer);
+  const hasCpg = Object.keys(zip.files).some((name) => name.toLowerCase().endsWith('.cpg'));
+  if (hasCpg) return buffer;
+
+  const dbfEntry = Object.keys(zip.files).find((name) => name.toLowerCase().endsWith('.dbf'));
+  if (!dbfEntry) return buffer;
+
+  const baseName = dbfEntry.slice(0, -4);
+  zip.file(`${baseName}.cpg`, 'windows-1257');
+  return zip.generateAsync({ type: 'arraybuffer' });
+}
+
+/**
  * Parses a PRIA Shapefile ZIP buffer and transforms it into unified FieldCollection
  */
 export async function parseShapefileZip(buffer: ArrayBuffer, fileName: string = 'PRIA_põllud'): Promise<FieldCollection> {
-  const geojsonResult = await shp(buffer);
+  const bufferWithCpg = await ensureCpgEntry(buffer);
+  const geojsonResult = await shp(bufferWithCpg);
   
   // shpjs can return a single GeoJSON FeatureCollection or an array of them
   const featureCollections = Array.isArray(geojsonResult) ? geojsonResult : [geojsonResult];
@@ -99,34 +146,36 @@ export async function parseShapefileZip(buffer: ArrayBuffer, fileName: string = 
       
       const props = feat.properties || {};
 
-      // Detect PRIA field number ("num"), massiiv ("fieldCode"), cadastral code and name
-      const rawNum = props.POLLUNR || props.POL_NR || props.POLLU_NR || props.POL_JARJE_NR || props.JARJE_NR || props.NR || props.POLLU_NUMBER || props.POLNR || props.FIELD_NR;
-      const num = rawNum !== undefined && rawNum !== null && String(rawNum).trim() !== '' ? String(rawNum).trim() : String(fieldIndex);
-      const rawMassiiv = props.MASSIIV || props.MASSIIV_NR || props.MASS_NR || props.MASSIIVI_NR || props.MASSIIVIK || props.MASSIIV_KOOD;
-      const fieldCode = rawMassiiv ? String(rawMassiiv).trim() : `61044${1000 + fieldIndex}`;
-      const name = props.NIMI || props.NAME || props.POL_NIMI || `Põld ${num}`;
-      const cadastralCode = props.KAT_TUNNUS || props.KATASTER || props.KAT_NR || undefined;
-      const crop = props.KULTUUR || props.KULT_NIMI || props.CROP || props.MAAKASUTUS || 'Talinisu';
+      // Detect PRIA field number ("num"), massiiv ("fieldCode"), cadastral code and name.
+      // Tõstutundetu otsing (vt getProp) — reaalsed PRIA eksportijad kasutavad
+      // väiketähtedega eestikeelseid nimesid (pollunr, massiiv, kultuur, ...).
+      const rawNum = getProp(props, 'pollunr', 'pol_nr', 'pollu_nr', 'pol_jarje_nr', 'jarje_nr', 'nr', 'pollu_number', 'polnr', 'field_nr');
+      const num = rawNum || String(fieldIndex);
+      const rawMassiiv = getProp(props, 'massiiv', 'massiiv_nr', 'mass_nr', 'massiivi_nr', 'massiivik', 'massiiv_kood');
+      const fieldCode = rawMassiiv || `61044${1000 + fieldIndex}`;
+      const name = getProp(props, 'nimi', 'name', 'pol_nimi') || `Põld ${num}`;
+      const cadastralCode = getProp(props, 'kataster', 'kat_tunnus', 'kat_nr');
+      const rawCrop = getProp(props, 'kultuur', 'kult_nimi', 'crop', 'maakasutus');
+      const crop = rawCrop ? rawCrop.charAt(0).toUpperCase() + rawCrop.slice(1) : 'Talinisu';
+      const pindalaHa = parseEstonianNumber(getProp(props, 'pindala', 'pindala_ha', 'area_ha'));
+      const muutja = getProp(props, 'muutja');
       
-      // Calculate area in hectares using turf if not given or if given in m2
-      const tempFeature: Feature<Polygon | MultiPolygon> = {
-        type: 'Feature',
-        geometry: transformedGeom,
-        properties: {}
-      };
-      
-      let areaHa = 0;
-      try {
-        const areaSqMeters = turf.area(tempFeature);
-        areaHa = Math.round((areaSqMeters / 10000) * 100) / 100;
-      } catch (err) {
-        if (props.PINDALA) areaHa = Number(props.PINDALA);
-        else if (props.AREA_HA) areaHa = Number(props.AREA_HA);
-      }
-
-      // If PRIA DBF has PINDALA_HA or PINDALA
-      if (props.PINDALA && Number(props.PINDALA) > 0 && areaHa === 0) {
-        areaHa = Math.round(Number(props.PINDALA) * 100) / 100;
+      // PRIA ametlik pindala (dbf "pindala") on eelistatud, kuna see on
+      // toetusõiguslikult siduv väärtus — geomeetriast arvutatud pindala
+      // (turf) on ainult varuväärtus, kui dbf pindala puudub.
+      let areaHa = pindalaHa && pindalaHa > 0 ? Math.round(pindalaHa * 100) / 100 : 0;
+      if (areaHa === 0) {
+        try {
+          const tempFeature: Feature<Polygon | MultiPolygon> = {
+            type: 'Feature',
+            geometry: transformedGeom,
+            properties: {}
+          };
+          const areaSqMeters = turf.area(tempFeature);
+          areaHa = Math.round((areaSqMeters / 10000) * 100) / 100;
+        } catch (err) {
+          // jääb 0, alumine fallback (5.0) rakendub allpool
+        }
       }
 
       const fieldFeature: FieldFeature = {
@@ -146,7 +195,7 @@ export async function parseShapefileZip(buffer: ArrayBuffer, fileName: string = 
           workedAreaHa: 0,
           workProgress: 0,
           status: 'not_started',
-          notes: props.MARKUS || props.KOMMENTAAR || `${fileName} imporditud`,
+          notes: getProp(props, 'markus', 'kommentaar', 'kirjeldus') || (muutja ? `${fileName} imporditud (PRIA muutja: ${muutja})` : `${fileName} imporditud`),
           rawProperties: props
         }
       };

@@ -247,27 +247,30 @@ export async function main() {
   // 5. Fields
   console.log('5/8 Seeding fields...');
   for (const f of SAMPLE_FIELDS) {
-    await prisma.field.upsert({
-      where: { fieldCode: f.fieldCode },
-      update: {
-        num: f.num || 'x',
-        name: f.name,
-        cadastralCode: f.cadastralCode,
-        soilType: f.soilType,
-        drainageSystem: f.drainageSystem ?? false,
-        notes: f.notes
-      },
-      create: {
-        id: f.id,
-        num: f.num || 'x',
-        name: f.name,
-        fieldCode: f.fieldCode,
-        cadastralCode: f.cadastralCode,
-        soilType: f.soilType,
-        drainageSystem: f.drainageSystem ?? false,
-        notes: f.notes
-      }
+    // Prisma compound-unique where ei luba `null` nullable veeru jaoks,
+    // seega leiame kirje käsitsi findFirst'iga upsert'i asemel.
+    const existingField = await prisma.field.findFirst({
+      where: { fieldCode: f.fieldCode, num: f.num || 'x', operatorId: null }
     });
+    const fieldData = {
+      name: f.name,
+      cadastralCode: f.cadastralCode,
+      soilType: f.soilType,
+      drainageSystem: f.drainageSystem ?? false,
+      notes: f.notes
+    };
+    if (existingField) {
+      await prisma.field.update({ where: { id: existingField.id }, data: fieldData });
+    } else {
+      await prisma.field.create({
+        data: {
+          id: f.id,
+          num: f.num || 'x',
+          fieldCode: f.fieldCode,
+          ...fieldData
+        }
+      });
+    }
   }
 
   // 6. Field Seasons

@@ -63,19 +63,25 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editVarietyQualityClass, setEditVarietyQualityClass] = useState('');
   const [editVarietyNotes, setEditVarietyNotes] = useState('');
 
-  // Calculate field acreage per crop for active season
+  // Calculate field acreage per crop for active season.
+  // Ainult põllud, millel on TÄPSELT valitud aasta kirje (vt sama
+  // muster FieldManagerModal/generateFieldCollectionForYear'is) —
+  // muidu paisutaks mõne teise aasta kultuur/pindala vale aasta kokkuvõtet.
   const cropAcreageMap = useMemo(() => {
     const map: Record<string, number> = {};
     masterFields.forEach((field) => {
-      const yearRec = field.history.find((h) => h.year === selectedYear) || field.history[0];
+      const yearRec = field.history.find((h) => h.year === selectedYear);
       if (yearRec && yearRec.crop) {
         const cropName = yearRec.crop.toLowerCase().trim();
-        // match by name
+        // Sobita registri kultuuriga nime algusest, lõpust VÕI seest —
+        // PRIA tekstid on tihti kujul "Muu põlduba" või "Punane ristik
+        // (vähemalt 80%...)", mis ei ALGA baaskultuuri nimega, aga
+        // sisaldavad seda.
         const match = crops.find(
-          (c) =>
-            c.name.toLowerCase() === cropName ||
-            cropName.startsWith(c.name.toLowerCase()) ||
-            c.name.toLowerCase().startsWith(cropName)
+          (c) => {
+            const name = c.name.toLowerCase();
+            return name === cropName || cropName.includes(name) || name.startsWith(cropName);
+          }
         );
         const key = match ? match.id : cropName;
         map[key] = (map[key] || 0) + (yearRec.areaHa || 0);

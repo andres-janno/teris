@@ -288,7 +288,8 @@ export function dbApiPlugin(): Plugin {
               include: {
                 fieldSeasons: {
                   orderBy: { year: 'desc' }
-                }
+                },
+                operator: true
               },
               orderBy: { id: 'asc' }
             });
@@ -301,6 +302,8 @@ export function dbApiPlugin(): Plugin {
               cadastralCode: f.cadastralCode,
               soilType: f.soilType,
               drainageSystem: f.drainageSystem,
+              operatorId: f.operatorId ?? undefined,
+              operatorName: f.operator?.name ?? undefined,
               notes: f.notes,
               history: f.fieldSeasons.map((fs) => ({
                 year: fs.year,
@@ -333,26 +336,45 @@ export function dbApiPlugin(): Plugin {
             const results = [];
 
             for (const item of items) {
-              const upsertedField = await prisma.field.upsert({
-                where: { fieldCode: String(item.fieldCode) },
-                update: {
-                  num: item.num || 'x',
-                  name: item.name,
-                  cadastralCode: item.cadastralCode ?? null,
-                  soilType: item.soilType ?? null,
-                  drainageSystem: Boolean(item.drainageSystem),
-                  notes: item.notes ?? null
-                },
-                create: {
-                  num: item.num || 'x',
-                  name: item.name,
-                  fieldCode: String(item.fieldCode),
-                  cadastralCode: item.cadastralCode ?? null,
-                  soilType: item.soilType ?? null,
-                  drainageSystem: Boolean(item.drainageSystem),
-                  notes: item.notes ?? null
-                }
-              });
+              const num = item.num || 'x';
+              const fieldCode = String(item.fieldCode);
+              const operatorId = item.operatorId || null;
+
+              // Kui klient saadab olemasoleva põllu sisemise ID (redigeerimine
+              // FieldManagerModal'is), sobitame ALATI selle järgi — muidu, kui
+              // kasutaja muudab nt operaatorit, muutuks loomulik võti
+              // (massiiv+number+operaator) ja allolev findFirst ei leiaks vana
+              // rida üles, luues selle asemel DUPLIKAADI (nii juhtuski:
+              // "Murikatsi Mirka" operaatori muutmine tekitas teise Field'i
+              // koos kõigi aastate field_seasons kirjetega).
+              // Ainult siis, kui ID puudub/ei leidu (nt PRIA import, kus id on
+              // kliendi genereeritud järjenumber), sobitame loomuliku võtmega
+              // (massiiv, põllunumber, operaator) — sama massiiv+number võib
+              // korduda eri operaatoritel. Prisma compound-unique `where` ei
+              // luba `null` väärtust nullable veeru jaoks, seega kasutame
+              // findFirst'i, mitte upsert'i.
+              const itemId = Number(item.id);
+              let existingField = !isNaN(itemId)
+                ? await prisma.field.findUnique({ where: { id: itemId } })
+                : null;
+              if (!existingField) {
+                existingField = await prisma.field.findFirst({
+                  where: { fieldCode, num, operatorId }
+                });
+              }
+              const fieldUpdateData = {
+                num,
+                fieldCode,
+                operatorId,
+                name: item.name,
+                cadastralCode: item.cadastralCode ?? null,
+                soilType: item.soilType ?? null,
+                drainageSystem: Boolean(item.drainageSystem),
+                notes: item.notes ?? null
+              };
+              const upsertedField = existingField
+                ? await prisma.field.update({ where: { id: existingField.id }, data: fieldUpdateData })
+                : await prisma.field.create({ data: fieldUpdateData });
 
               if (item.history && Array.isArray(item.history)) {
                 for (const h of item.history) {
@@ -413,11 +435,10 @@ export function dbApiPlugin(): Plugin {
           if (pathname.startsWith('/api/master-fields/') && method === 'DELETE') {
             const idPart = pathname.replace('/api/master-fields/', '');
             const fieldId = Number(idPart);
-            if (!isNaN(fieldId)) {
-              await prisma.field.delete({ where: { id: fieldId } });
-            } else {
-              await prisma.field.delete({ where: { fieldCode: idPart } });
+            if (isNaN(fieldId)) {
+              return json(res, { error: 'master-fields delete requires a numeric field id' }, 400);
             }
+            await prisma.field.delete({ where: { id: fieldId } });
             return json(res, { success: true, id: idPart });
           }
 
@@ -797,9 +818,33 @@ export function dbApiPlugin(): Plugin {
           // 6. Related Parties
           if (pathname === '/api/parties' && method === 'GET') {
             const dbParties = await prisma.relatedParty.findMany({
-              orderBy: { name: 'asc' }
+              orderBy: { name: 'asc' },
+              include: {
+                _count: {
+                  select: {
+                    vehicles: true,
+                    cadastralParcels: true,
+                    poiContacts: true,
+                    fieldsAsOperator: true
+                  }
+                }
+              }
             });
-            return json(res, dbParties);
+
+            // Kustutamise kaitse peab põhinema PÄRIS viidetel (FK kasutusel),
+            // mitte isOwnCompany lipul — frontend kasutab neid loenduid, et
+            // otsustada, kas kustutamine on ohutu, ja kui mitte, näidata
+            // seoste ülevaadet kustutamise nupu asemel.
+            const mapped = dbParties.map(({ _count, ...p }) => ({
+              ...p,
+              assignedVehiclesCount: _count.vehicles,
+              ownedParcelsCount: _count.cadastralParcels,
+              poiContactsCount: _count.poiContacts,
+              operatorFieldsCount: _count.fieldsAsOperator,
+              usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator
+            }));
+
+            return json(res, mapped);
           }
 
           if (pathname === '/api/parties' && method === 'POST') {

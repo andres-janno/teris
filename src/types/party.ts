@@ -4,8 +4,9 @@ export type PartyType = 'PERSON' | 'LEGAL_ENTITY';
 
 export type PartyRole =
   | 'LANDOWNER'      // Maaomanik / Rendileandja
-  | 'TENANT'         // Rentnik / Maaharija (meie ettevõte või partner)
+  | 'TENANT'         // Rentnik / Operaator (meie ettevõte või partner)
   | 'DRIVER'         // Masinajuht / Töötaja
+  | 'OPERATOR'       // Põllu operaator / harija
   | 'CONTACT_PERSON' // Objekti / taristu kontaktisik
   | 'SUPPLIER'       // Tarnija (väetised, seemned, tehnika)
   | 'BUYER'          // Ostja / Viljakaupleja
@@ -27,10 +28,13 @@ export interface RelatedParty {
   createdAt?: string;
   updatedAt?: string;
 
-  // Virtuaalsed seosed statistika jaoks
+  // Virtuaalsed seosed statistika jaoks (serveri poolt arvutatud)
   ownedParcelsCount?: number;     // Mitu katastriüksust temaga seotud
   totalAreaHa?: number;           // Hektareid kokku
   assignedVehiclesCount?: number; // Mitu masinat talle määratud
+  poiContactsCount?: number;      // Mitu POI-punkti kontaktisikuna
+  operatorFieldsCount?: number;   // Mitu põldu operaatorina (harijana)
+  usageCount?: number;            // Kõigi eelnevate loenduste summa — kui > 0, ei tohi kustutada
 }
 
 export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string; color: string; bgColor: string }> = {
@@ -51,6 +55,12 @@ export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string;
     icon: '👤',
     color: '#d97706',
     bgColor: 'rgba(245, 158, 11, 0.12)'
+  },
+  OPERATOR: {
+    label: 'Operaator',
+    icon: '🧑‍🌾',
+    color: '#15803d',
+    bgColor: 'rgba(34, 197, 94, 0.12)'
   },
   CONTACT_PERSON: {
     label: 'Taristu kontakt',

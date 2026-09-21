@@ -39,7 +39,8 @@ export interface MasterField {
   cadastralParcels?: FieldCadastralLink[]; // Baas/vaikimisi katastriüksused
   soilType?: string;            // Mullastik (nt 'Leostunud liivsavi / LP')
   drainageSystem?: boolean;     // Drenaaž / maaparandussüsteem olemas
-  landowner?: string;           // Maaomanik / rentnik
+  operatorId?: string;          // Põllu operaator ID (seotud isikute registrist)
+  operatorName?: string;        // Põllu operaatori nimi (serveri poolt lisatud, kuvamiseks)
   notes?: string;               // Üldised püsivad märkmed
   geometry?: Polygon | MultiPolygon; // Baaspiirid (kui aasta oma puudub)
   history: FieldYearlyRecord[]; // Aastate ajalugu (aasta kaupa pindalad, piirid, katastrid ja kultuurid)
@@ -107,7 +108,6 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
       notes: yearRecord.notes || field.notes,
       rawProperties: {
         soilType: field.soilType,
-        landowner: field.landowner,
         drainageSystem: field.drainageSystem,
         cadastralParcels: activeCadastralParcels,
         variety: yearRecord.cropVariety,
@@ -121,12 +121,20 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
 }
 
 /**
- * Genereerib valitud aasta kohta täieliku FeatureCollection-i
+ * Genereerib valitud aasta kohta täieliku FeatureCollection-i.
+ * Näitab ainult põlde, millel on TÄPSELT selle aasta kirje — muidu näitaks
+ * (getFieldFeatureForYear'i history[0]-fallbacki tõttu) ka põlde, mida
+ * sel aastal üldse deklareeritud pole, nende vana aasta andmetega, mis
+ * paisutab välja nii põldude arvu kui kogupindala (nt PRIA 2026 impordi
+ * järel: reaalselt 31 põldu deklareeritud, aga kuvati kõik 38 registris
+ * olevat põldu).
  */
 export function generateFieldCollectionForYear(masterFields: MasterField[], selectedYear: number): FieldCollection {
   return {
     type: 'FeatureCollection',
-    features: masterFields.map((f) => getFieldFeatureForYear(f, selectedYear))
+    features: masterFields
+      .filter((f) => f.history.some((h) => h.year === selectedYear))
+      .map((f) => getFieldFeatureForYear(f, selectedYear))
   };
 }
 

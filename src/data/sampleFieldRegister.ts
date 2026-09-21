@@ -111,7 +111,6 @@ export const INITIAL_MASTER_FIELDS: MasterField[] = SAMPLE_FIELDS.map((field, id
 
   const latestGeom = history[0]?.geometry;
   const latestParcels = history[0]?.cadastralParcels || [];
-  const ownerLabel = latestParcels.map(c => `${c.ownershipType === 'OWNED' ? 'Oma maa' : 'Rent'}: ${c.ownerName} (${c.fieldAreaHa} ha)`).join('; ');
 
   return {
     id: field.id,
@@ -122,7 +121,6 @@ export const INITIAL_MASTER_FIELDS: MasterField[] = SAMPLE_FIELDS.map((field, id
     cadastralParcels: latestParcels,
     soilType: field.soilType || 'Leostunud liivsavi (LP)',
     drainageSystem: field.drainageSystem ?? (idx % 2 === 0),
-    landowner: ownerLabel || field.landowner || 'Oma maa',
     notes: field.notes || '',
     geometry: latestGeom,
     history

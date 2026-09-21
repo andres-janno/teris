@@ -14,7 +14,8 @@ import {
   CreditCard,
   Copy,
   Check,
-  AlertCircle
+  AlertCircle,
+  Link2
 } from 'lucide-react';
 import type { RelatedParty, PartyType, PartyRole } from '../types/party';
 import { PARTY_ROLE_CONFIG } from '../types/party';
@@ -36,6 +37,7 @@ const ALL_ROLES: PartyRole[] = [
   'LANDOWNER',
   'TENANT',
   'DRIVER',
+  'OPERATOR',
   'CONTACT_PERSON',
   'SUPPLIER',
   'BUYER',
@@ -683,7 +685,23 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                         <span>Muuda</span>
                       </button>
 
-                      {!party.isOwnCompany && (
+                      {party.usageCount ? (
+                        <button
+                          className="icon-btn-ghost"
+                          onClick={() => {
+                            const parts: string[] = [];
+                            if (party.assignedVehiclesCount) parts.push(`${party.assignedVehiclesCount} sõidukiga (juht)`);
+                            if (party.operatorFieldsCount) parts.push(`${party.operatorFieldsCount} põlluga (operaator)`);
+                            if (party.ownedParcelsCount) parts.push(`${party.ownedParcelsCount} katastriüksusega (omanik)`);
+                            if (party.poiContactsCount) parts.push(`${party.poiContactsCount} POI-punktiga (kontakt)`);
+                            alert(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
+                          }}
+                          title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}
+                        >
+                          <Link2 size={14} />
+                          <span className="usage-count-badge">{party.usageCount}</span>
+                        </button>
+                      ) : (
                         <button
                           className="icon-btn-danger"
                           onClick={() => {

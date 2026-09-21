@@ -448,6 +448,17 @@ body {
   background: rgba(255, 255, 255, 0.1);
 }
 
+.usage-count-badge {
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: 999px;
+  padding: 2px 5px;
+  margin-left: 4px;
+}
+
 .icon-btn-danger {
   background: transparent;
   border: none;
@@ -790,7 +801,7 @@ body {
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
-  max-height: calc(100vh - 120px);
+  max-height: calc(100vh - 40px);
   overflow-y: auto;
   padding-right: 4px;
 }
@@ -938,8 +949,10 @@ body {
   gap: 8px;
 }
 
-.widget-crop-list {
-  max-height: 220px;
+.widget-crop-legend-section .widget-crop-list {
+  /* Suurem spetsiifilisus kui hilisemal .crop-list (250px) reeglil,
+     et see viimane ei võidaks CSS-i lähtejärjekorra tõttu. */
+  max-height: 440px;
   overflow-y: auto;
 }
 

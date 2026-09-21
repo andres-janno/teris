@@ -83,6 +83,7 @@ enum PartyRole {
   LANDOWNER
   TENANT
   DRIVER
+  OPERATOR
   CONTACT_PERSON
   SUPPLIER
   BUYER
@@ -141,18 +142,24 @@ model CadastralParcel {
 
 model Field {
   id             Int                    @id @default(autoincrement())
-  num            String                 // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x")
+  num            String                 // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x") — võib massiivi siseselt korduda eri operaatoritel
   name           String                 // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
-  fieldCode      String                 @unique // PRIA massiivi unikaalne number (nt "60844249726")
+  fieldCode      String                 // PRIA massiivi number (nt "60844249726") — võib korduda, kui massiiv on jagatud mitme operaatori vahel
   cadastralCode  String?                // Peamine katastritunnus (tagasiühilduvuse jaoks)
   soilType       String?                // Mullastik (nt "Leostunud liivsavi (LP)")
   drainageSystem Boolean                @default(false)
+  operatorId     String?                // Põllu operaator (seotud isikute registrist)
   notes          String?
   createdAt      DateTime               @default(now())
   updatedAt      DateTime               @updatedAt
 
   fieldSeasons   FieldSeason[]
+  operator       RelatedParty?          @relation(fields: [operatorId], references: [id], onDelete: SetNull)
 
+  // Massiivinumber + põllunumber võivad korduda (nt kui operaator vahetub),
+  // aga sama operaator ei saa sama massiivi+põllu numbrit kaks korda omada.
+  @@unique([fieldCode, num, operatorId])
+  @@index([operatorId])
   @@map("fields")
 }
 
@@ -231,6 +238,7 @@ model RelatedParty {
   cadastralParcels FieldCadastralParcel[]
   vehicles         Vehicle[]
   poiContacts      PointOfInterest[]
+  fieldsAsOperator Field[]
 
   @@map("related_parties")
 }
