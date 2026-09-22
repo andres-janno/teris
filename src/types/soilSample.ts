@@ -120,11 +120,13 @@ export const SOIL_METRIC_CONFIG: Record<SoilSampleMetricKey, SoilMetricConfig> =
 
 /**
  * Tagastab proovi vanuse (viimasest proovivõtust möödunud aastad) sujuva
- * rohelisest punaseks värviskaala: 0 aastat = roheline, >= AGE_MAX_YEARS
+ * rohelisest punaseks värviskaala: 0 aastat = roheline, > AGE_MAX_YEARS
  * aastat = punane, vahepeal lineaarne üleminek (läbi kollase-oranži HSL toonis).
+ * Jagaja on AGE_MAX_YEARS + 1, et täielikult punane toon saabuks alles
+ * järgmisel täisaastal pärast AGE_MAX_YEARS-i, mitte selle punktis endas.
  */
 function ageToColor(age: number): string {
-  const t = Math.max(0, Math.min(1, age / AGE_MAX_YEARS));
+  const t = Math.max(0, Math.min(1, age / (AGE_MAX_YEARS + 1)));
   const hue = 142 - t * 142; // 142° roheline -> 0° punane
   const sat = 65;
   const light = 42;

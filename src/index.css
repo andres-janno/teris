@@ -1051,6 +1051,10 @@ body {
   box-shadow: var(--shadow-modal);
   border: 1px solid var(--border-card);
   animation: fadeIn 0.2s ease-out;
+  /* Selgesõnaliselt sama fondipinu, mis body's - see kaart kuvatakse
+     kaardi kohal ujuva absoluutpositsioneeritud elemendina ja peab
+     kindlalt kasutama rakenduse põhifonti, mitte pärima brauseri vaikefonti. */
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .drawer-header {
@@ -1108,6 +1112,22 @@ body {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
+}
+
+.section-subtitle {
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.detail-section {
+  margin-top: 14px;
 }
 
 .field-stat-item {

@@ -64,7 +64,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
     : [];
 
   const ageGradientCss = `linear-gradient(to right, ${Array.from(
-    { length: AGE_MAX_YEARS + 1 },
+    { length: AGE_MAX_YEARS + 2 },
     (_, i) => getSoilMetricColor('age', i)
   ).join(', ')})`;
 
@@ -182,7 +182,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
                           <div className="soil-legend-gradient-labels">
                             <span>0 a</span>
-                            <span>&ge; {AGE_MAX_YEARS} a</span>
+                            <span>&gt; {AGE_MAX_YEARS} a</span>
                           </div>
                         </div>
                       ) : (
