@@ -29,6 +29,7 @@ export interface LayerVisibility {
   poi: boolean;             // Olulised asukohad (kuivati, vesi jne)
   fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
   swathTrails: boolean;     // Töötrajektoori joonekesed
+  soilSamples: boolean;     // Mullaproovide punktid
 }
 
 export type VehicleDisplayFilter = 'active' | 'all';

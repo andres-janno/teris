@@ -715,6 +715,65 @@ body {
 .cultivation-color { background-color: #38bdf8; }
 .poi-color { background-color: #ec4899; }
 .cadastre-color { background-color: #f97316; }
+.soil-color { background-color: #a16207; }
+
+.soil-metric-radio-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.soil-metric-radio-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.soil-legend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 6px;
+  padding-top: 6px;
+  border-top: 1px solid var(--border-card);
+}
+
+.soil-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.soil-legend-swatch {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+.soil-legend-gradient {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-bottom: 2px;
+}
+
+.soil-legend-gradient-bar {
+  height: 8px;
+  border-radius: 4px;
+}
+
+.soil-legend-gradient-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+}
 
 .icon-toggle {
   background: transparent;
@@ -2591,7 +2650,8 @@ input[type="number"],
 }
 
 .vehicle-popup-content h4,
-.poi-popup-content h4 {
+.poi-popup-content h4,
+.soil-popup-content h4 {
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--popup-text);

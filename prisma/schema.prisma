@@ -421,3 +421,32 @@ model CropVariety {
   @@map("crop_varieties")
 }
 
+// ============================================================================
+// 8. MULLAPROOVID (SOIL SAMPLES)
+// ============================================================================
+
+model SoilSample {
+  id              Int      @id @default(autoincrement())
+  sampleNumber    String   @unique // Labori proovinumber ("proovNr") - kordusimpordil kasutatav võti
+  fieldCode       String   // PRIA massiivi number ("xy_id") - tekstivõrdlusega seotud Field.fieldCode'iga, mitte range FK (massiiv võib kuuluda mitmele Field kirjele)
+  year            Int      // Proovivõtu aasta ("aasta")
+  lat             Float
+  lng             Float
+  ph              Float?
+  phosphorus      Float?   // Fosfor (P)
+  potassium       Float?   // Kaalium (K)
+  calcium         Float?   // Kaltsium (Ca)
+  magnesium       Float?   // Magneesium (Mg)
+  copper          Float?   // Vask (Cu)
+  manganese       Float?   // Mangaan (Mn)
+  boron           Float?   // Boor (B)
+  organicCarbon   Float?   // Orgaanilise süsiniku sisaldus (Corg)
+  limeRequirement Float?   // Lubjatarve t/ha
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([fieldCode])
+  @@index([year])
+  @@map("soil_samples")
+}
+

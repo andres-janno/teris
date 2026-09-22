@@ -8,6 +8,8 @@ import type { FieldCollection, FieldFeature } from '../types/field';
 import type { Vehicle } from '../types/vehicle';
 import type { CultivationPass } from '../types/telemetry';
 import type { PointOfInterest } from '../types/poi';
+import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
+import { getSoilMetricColor, getSoilMetricValue, SOIL_METRIC_CONFIG } from '../types/soilSample';
 import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
 import { getVisibleElementsBounds } from '../services/geometryEngine';
@@ -35,6 +37,8 @@ interface MapViewProps {
   fitBoundsTrigger?: number;
   selectedCropFilter?: string | null;
   vehicleFilter?: VehicleDisplayFilter;
+  soilSamples?: SoilSample[];
+  soilMetric?: SoilSampleMetricKey;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -52,7 +56,9 @@ export const MapView: React.FC<MapViewProps> = ({
   focusedTarget,
   fitBoundsTrigger,
   selectedCropFilter,
-  vehicleFilter = 'active'
+  vehicleFilter = 'active',
+  soilSamples = [],
+  soilMetric = 'ph'
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -64,9 +70,43 @@ export const MapView: React.FC<MapViewProps> = ({
   const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const soilSampleLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
   // Mouse coords indicator
   const coordsDisplayRef = useRef<HTMLDivElement>(null);
+
+  // Kõik mullaproovi punktid massiivi (fieldCode) uusimast proovivõtu aastast -
+  // ühel massiivil võib olla mitu punkti (nt 5-10 GPS-koordinaati ruudustiku
+  // järgi), mistõttu grupeerime massiivi + uusima aasta järgi, mitte üheks
+  // punktiks. Kasutab nii põldude täitevärvi (keskmine) kui proovipunktide kihti.
+  const latestByFieldCode = React.useMemo(() => {
+    const latestYear = new Map<string, number>();
+    for (const s of soilSamples) {
+      const y = latestYear.get(s.fieldCode);
+      if (y === undefined || s.year > y) latestYear.set(s.fieldCode, s.year);
+    }
+    const grouped = new Map<string, SoilSample[]>();
+    for (const s of soilSamples) {
+      if (latestYear.get(s.fieldCode) !== s.year) continue;
+      const arr = grouped.get(s.fieldCode);
+      if (arr) arr.push(s);
+      else grouped.set(s.fieldCode, [s]);
+    }
+    return grouped;
+  }, [soilSamples]);
+
+  const getFieldMetricAverage = React.useCallback(
+    (fieldCode: string, metric: SoilSampleMetricKey): number | null => {
+      const list = latestByFieldCode.get(fieldCode);
+      if (!list || list.length === 0) return null;
+      const values = list
+        .map((s) => getSoilMetricValue(s, metric))
+        .filter((v): v is number => v !== null && v !== undefined && !isNaN(v));
+      if (values.length === 0) return null;
+      return values.reduce((a, b) => a + b, 0) / values.length;
+    },
+    [latestByFieldCode]
+  );
 
   // 1. Initialize Map
   useEffect(() => {
@@ -105,6 +145,7 @@ export const MapView: React.FC<MapViewProps> = ({
     vehiclesLayerGroupRef.current = L.layerGroup().addTo(map);
     cultivationLayerGroupRef.current = L.layerGroup().addTo(map);
     poiLayerGroupRef.current = L.layerGroup().addTo(map);
+    soilSampleLayerGroupRef.current = L.layerGroup().addTo(map);
 
     // Auto-fit all elements on initial load
     const initialBounds = getVisibleElementsBounds({
@@ -214,23 +255,30 @@ export const MapView: React.FC<MapViewProps> = ({
 
     if (!visibility.fields || !fields || !fields.features.length) return;
 
+    const getFillColor = (feature: any): string => {
+      if (visibility.soilSamples) {
+        const avg = getFieldMetricAverage(feature.properties.fieldCode, soilMetric);
+        return avg !== null ? getSoilMetricColor(soilMetric, avg) : '#94a3b8';
+      }
+      return feature.properties.cropColor || getCropColor(feature.properties.crop);
+    };
+
     const geoJsonLayer = L.geoJSON(fields as any, {
       style: (feature: any) => {
         const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
-        const cropColor = feature.properties.cropColor || getCropColor(feature.properties.crop);
         const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
 
         return {
           color: isSelected ? '#ffffff' : (matchesFilter ? '#0f172a' : '#64748b'),
           weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0),
           opacity: matchesFilter ? 0.95 : 0.35,
-          fillColor: cropColor,
+          fillColor: getFillColor(feature),
           fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12)
         };
       },
       onEachFeature: (feature: any, layer: L.Layer) => {
         const props = feature.properties;
-        const cropColor = props.cropColor || getCropColor(props.crop);
+        const cropColor = getFillColor(feature);
 
         // Tooltip label on field: permanent only if fieldLabels layer is explicitly turned on
         layer.bindTooltip(`
@@ -240,6 +288,14 @@ export const MapView: React.FC<MapViewProps> = ({
               <strong>${props.name}</strong>
             </div>
             <div class="field-sub-label">${props.num ? `Nr ${props.num} &bull; ` : ''}${props.crop} &bull; ${props.areaHa} ha</div>
+            ${visibility.soilSamples ? (() => {
+              const list = latestByFieldCode.get(props.fieldCode);
+              const config = SOIL_METRIC_CONFIG[soilMetric];
+              const avg = getFieldMetricAverage(props.fieldCode, soilMetric);
+              const avgLabel = avg !== null ? `${Math.round(avg * 100) / 100} ${config.unit}` : 'andmed puuduvad';
+              const countNote = list && list.length > 1 ? ` (keskmine ${list.length} punktist)` : '';
+              return `<div class="field-sub-label">${config.label}: <strong>${avgLabel}</strong>${countNote}</div>`;
+            })() : ''}
           </div>
         `, {
           permanent: !!visibility.fieldLabels,
@@ -272,7 +328,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     geoJsonLayer.addTo(map);
     fieldsLayerGroupRef.current = geoJsonLayer;
-  }, [fields, visibility.fields, visibility.fieldLabels, selectedField, selectedCropFilter]);
+  }, [fields, visibility.fields, visibility.fieldLabels, visibility.soilSamples, selectedField, selectedCropFilter, latestByFieldCode, getFieldMetricAverage, soilMetric]);
 
   // 4. Render Machinery / Vehicles Layer (Respects vehicleFilter: active vs all)
   const displayedVehicles = React.useMemo(() => {
@@ -390,6 +446,68 @@ export const MapView: React.FC<MapViewProps> = ({
       marker.addTo(layerGroup);
     });
   }, [pois, visibility.poi]);
+
+  // 6b. Render Soil Sample Points Layer - kõik punktid massiivi uusimast
+  // proovivõtu aastast (üks massiiv võib olla proovitud mitmest GPS-kohast).
+  const latestSoilSamples = React.useMemo(
+    () => Array.from(latestByFieldCode.values()).flat(),
+    [latestByFieldCode]
+  );
+
+  useEffect(() => {
+    const layerGroup = soilSampleLayerGroupRef.current;
+    if (!layerGroup) return;
+
+    layerGroup.clearLayers();
+    if (!visibility.soilSamples) return;
+
+    const config = SOIL_METRIC_CONFIG[soilMetric];
+
+    latestSoilSamples.forEach((sample) => {
+      const value = getSoilMetricValue(sample, soilMetric);
+      const color = getSoilMetricColor(soilMetric, value);
+      const fieldMatch = fields.features.find((f) => f.properties.fieldCode === sample.fieldCode);
+      const fieldName = fieldMatch ? fieldMatch.properties.name : `Massiiv ${sample.fieldCode}`;
+
+      const siblingCount = (latestByFieldCode.get(sample.fieldCode)?.length || 1) - 1;
+      const priorYears = Array.from(new Set(
+        soilSamples
+          .filter((s) => s.fieldCode === sample.fieldCode && s.year < sample.year)
+          .map((s) => s.year)
+      )).sort((a, b) => b - a);
+
+      const marker = L.circleMarker([sample.lat, sample.lng], {
+        radius: 8,
+        weight: 2,
+        color: '#ffffff',
+        fillColor: color,
+        fillOpacity: 0.9
+      });
+
+      marker.bindTooltip(`
+        <div class="soil-popup-content">
+          <h4>${fieldName}</h4>
+          <p class="poi-desc">Proov ${sample.sampleNumber} &bull; ${sample.year}</p>
+          <div class="popup-row"><span>${config.label}:</span> <strong>${value ?? '-'} ${config.unit}</strong></div>
+          <div class="popup-row"><span>pH:</span> <strong>${sample.ph ?? '-'}</strong></div>
+          <div class="popup-row"><span>P:</span> <strong>${sample.phosphorus ?? '-'} mg/kg</strong></div>
+          <div class="popup-row"><span>K:</span> <strong>${sample.potassium ?? '-'} mg/kg</strong></div>
+          <div class="popup-row"><span>Ca:</span> <strong>${sample.calcium ?? '-'} mg/kg</strong></div>
+          <div class="popup-row"><span>Mg:</span> <strong>${sample.magnesium ?? '-'} mg/kg</strong></div>
+          <div class="popup-row"><span>Corg:</span> <strong>${sample.organicCarbon ?? '-'} %</strong></div>
+          <div class="popup-row"><span>Lubjatarve:</span> <strong>${sample.limeRequirement ?? '-'} t/ha</strong></div>
+          ${siblingCount > 0 ? `<div class="popup-note">Sellel massiivil veel ${siblingCount} proovipunkti ${sample.year}. aastal</div>` : ''}
+          ${priorYears.length > 0 ? `<div class="popup-note">Varasemad proovivõtu aastad: ${priorYears.join(', ')}</div>` : ''}
+        </div>
+      `, {
+        sticky: true,
+        direction: 'top',
+        className: 'custom-field-tooltip'
+      });
+
+      marker.addTo(layerGroup);
+    });
+  }, [latestSoilSamples, latestByFieldCode, soilSamples, visibility.soilSamples, soilMetric, fields]);
 
   // 7. Handle Camera Pan/Zoom Focus
   useEffect(() => {

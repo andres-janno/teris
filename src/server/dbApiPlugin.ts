@@ -934,6 +934,60 @@ export function dbApiPlugin(): Plugin {
             return json(res, { success: true, id });
           }
 
+          // 8. Soil Samples (mullaproovid)
+          if (pathname === '/api/soil-samples' && method === 'GET') {
+            const dbSamples = await prisma.soilSample.findMany({
+              orderBy: { year: 'desc' }
+            });
+            return json(res, dbSamples);
+          }
+
+          if (pathname === '/api/soil-samples/import' && method === 'POST') {
+            const samples = await parseBody(req);
+            const list = Array.isArray(samples) ? samples : [samples];
+            let count = 0;
+            for (const s of list) {
+              await prisma.soilSample.upsert({
+                where: { sampleNumber: s.sampleNumber },
+                update: {
+                  fieldCode: s.fieldCode,
+                  year: Number(s.year),
+                  lat: Number(s.lat),
+                  lng: Number(s.lng),
+                  ph: s.ph ?? null,
+                  phosphorus: s.phosphorus ?? null,
+                  potassium: s.potassium ?? null,
+                  calcium: s.calcium ?? null,
+                  magnesium: s.magnesium ?? null,
+                  copper: s.copper ?? null,
+                  manganese: s.manganese ?? null,
+                  boron: s.boron ?? null,
+                  organicCarbon: s.organicCarbon ?? null,
+                  limeRequirement: s.limeRequirement ?? null
+                },
+                create: {
+                  sampleNumber: s.sampleNumber,
+                  fieldCode: s.fieldCode,
+                  year: Number(s.year),
+                  lat: Number(s.lat),
+                  lng: Number(s.lng),
+                  ph: s.ph ?? null,
+                  phosphorus: s.phosphorus ?? null,
+                  potassium: s.potassium ?? null,
+                  calcium: s.calcium ?? null,
+                  magnesium: s.magnesium ?? null,
+                  copper: s.copper ?? null,
+                  manganese: s.manganese ?? null,
+                  boron: s.boron ?? null,
+                  organicCarbon: s.organicCarbon ?? null,
+                  limeRequirement: s.limeRequirement ?? null
+                }
+              });
+              count++;
+            }
+            return json(res, { success: true, count });
+          }
+
           return json(res, { error: 'Not found' }, 404);
         } catch (err: any) {
           console.error('[API Error]:', err);

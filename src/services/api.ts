@@ -5,6 +5,7 @@ import type { Vehicle, Implement, TeltonikaDevice } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
+import type { SoilSample } from '../types/soilSample';
 
 export const api = {
   async getStatus(): Promise<{ status: string; database: string; counts: Record<string, number> }> {
@@ -210,6 +211,22 @@ export const api = {
       method: 'DELETE'
     });
     if (!res.ok) throw new Error('Failed to delete crop');
+    return res.json();
+  },
+
+  async getSoilSamples(): Promise<SoilSample[]> {
+    const res = await fetch('/api/soil-samples');
+    if (!res.ok) throw new Error('Failed to fetch soil samples');
+    return res.json();
+  },
+
+  async importSoilSamples(samples: SoilSample[]): Promise<{ success: boolean; count: number }> {
+    const res = await fetch('/api/soil-samples/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(samples)
+    });
+    if (!res.ok) throw new Error('Failed to import soil samples');
     return res.json();
   }
 };

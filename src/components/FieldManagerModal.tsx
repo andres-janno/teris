@@ -40,6 +40,7 @@ interface FieldManagerModalProps {
   onAddNewSeasonToAll: (newYear: number) => void;
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload: () => void;
+  onOpenSoilUpload?: () => void;
   seasons?: FarmingSeason[];
   onOpenSeasonManager?: () => void;
   parties?: RelatedParty[];
@@ -59,6 +60,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onAddNewSeasonToAll,
   onDeleteField,
   onOpenUpload,
+  onOpenSoilUpload,
   seasons = [],
   onOpenSeasonManager,
   parties = [],
@@ -644,6 +646,20 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 <Download size={14} />
                 <span>CSV Eksport</span>
               </button>
+
+              {onOpenSoilUpload && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    onClose();
+                    onOpenSoilUpload();
+                  }}
+                  title="Impordi mullaproovide punktid Shapefile ZIP-ist"
+                >
+                  <Plus size={14} />
+                  <span>Impordi mullaproovid</span>
+                </button>
+              )}
 
               <button
                 className="btn btn-primary btn-sm"

@@ -8,6 +8,7 @@ import { CultivationControl } from './components/CultivationControl';
 import { FieldDetailsDrawer } from './components/FieldDetailsDrawer';
 import { FieldManagerModal } from './components/FieldManagerModal';
 import { FieldUploadModal } from './components/FieldUploadModal';
+import { SoilSampleUploadModal } from './components/SoilSampleUploadModal';
 import { VehicleTracker } from './components/VehicleTracker';
 import { PoiManagerModal } from './components/PoiManagerModal';
 import { AnalyticsModal } from './components/AnalyticsModal';
@@ -26,6 +27,7 @@ import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
 import type { RelatedParty } from './types/party';
 import type { Crop } from './types/crop';
+import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
 import { INITIAL_MASTER_FIELDS } from './data/sampleFieldRegister';
 import { INITIAL_SEASONS } from './data/sampleSeasons';
@@ -69,7 +71,8 @@ export const App: React.FC = () => {
     cultivation: true,
     poi: false,
     fieldLabels: false,
-    swathTrails: true
+    swathTrails: true,
+    soilSamples: false
   };
   const [visibility, setVisibility] = useState<LayerVisibility>(() => {
     const saved = localStorage.getItem('agrimap_visibility');
@@ -218,6 +221,10 @@ export const App: React.FC = () => {
   const [pois, setPois] = useState<PointOfInterest[]>(SAMPLE_POI_LIST);
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
 
+  // Mullaproovid (soil samples)
+  const [soilSamples, setSoilSamples] = useState<SoilSample[]>([]);
+  const [soilMetric, setSoilMetric] = useState<SoilSampleMetricKey>('ph');
+
   // Laadi andmed otse PostgreSQL agro_db andmebaasist
   useEffect(() => {
     let isMounted = true;
@@ -228,13 +235,14 @@ export const App: React.FC = () => {
           setDbConnected(true);
           console.log('✅ Connected to PostgreSQL agro_db:', status.counts);
 
-          const [dbFields, dbSeasons, dbFleet, dbPois, dbParties, dbCrops] = await Promise.all([
+          const [dbFields, dbSeasons, dbFleet, dbPois, dbParties, dbCrops, dbSoilSamples] = await Promise.all([
             api.getMasterFields().catch(() => null),
             api.getSeasons().catch(() => null),
             api.getFleet().catch(() => null),
             api.getPois().catch(() => null),
             api.getParties().catch(() => null),
-            api.getCrops().catch(() => null)
+            api.getCrops().catch(() => null),
+            api.getSoilSamples().catch(() => null)
           ]);
 
           if (!isMounted) return;
@@ -248,6 +256,7 @@ export const App: React.FC = () => {
           if (dbPois && dbPois.length > 0) setPois(dbPois);
           if (dbParties && dbParties.length > 0) setParties(dbParties);
           if (dbCrops && dbCrops.length > 0) setCrops(dbCrops);
+          if (dbSoilSamples) setSoilSamples(dbSoilSamples);
         }
       })
       .catch((err) => {
@@ -262,6 +271,7 @@ export const App: React.FC = () => {
   // Modals state
   const [isFieldsRegisterOpen, setIsFieldsRegisterOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
+  const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);
   const [isVehiclesOpen, setIsVehiclesOpen] = useState(false);
   const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
@@ -1048,6 +1058,25 @@ export const App: React.FC = () => {
     }
   };
 
+  // Mullaproovide SHP import
+  const handleSoilSamplesImported = async (samples: SoilSample[]) => {
+    try {
+      await api.importSoilSamples(samples);
+    } catch (err) {
+      console.error('Error saving imported soil samples to DB:', err);
+      return;
+    }
+
+    setSoilSamples((prev) => {
+      const byKey = new Map(prev.map((s) => [s.sampleNumber, s]));
+      samples.forEach((s) => byKey.set(s.sampleNumber, s));
+      return Array.from(byKey.values());
+    });
+
+    setVisibility((prev) => ({ ...prev, soilSamples: true }));
+    setIsSoilUploadOpen(false);
+  };
+
   const handleResetToSample = () => {
     setMasterFields(INITIAL_MASTER_FIELDS);
     setIsUploadOpen(false);
@@ -1109,6 +1138,8 @@ export const App: React.FC = () => {
           fitBoundsTrigger={fitBoundsTrigger}
           selectedCropFilter={selectedCropFilter}
           vehicleFilter={vehicleFilter}
+          soilSamples={soilSamples}
+          soilMetric={soilMetric}
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
@@ -1146,6 +1177,10 @@ export const App: React.FC = () => {
           totalVehiclesCount={vehicles.length}
           vehicleFilter={vehicleFilter}
           onSelectVehicleFilter={setVehicleFilter}
+          soilSampleCount={soilSamples.length}
+          soilFieldCount={new Set(soilSamples.map((s) => s.fieldCode)).size}
+          soilMetric={soilMetric}
+          onSelectSoilMetric={setSoilMetric}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
@@ -1191,6 +1226,7 @@ export const App: React.FC = () => {
         onAddNewSeasonToAll={handleAddNewSeasonToAll}
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}
+        onOpenSoilUpload={() => setIsSoilUploadOpen(true)}
         seasons={seasons}
         onOpenSeasonManager={() => {
           setIsFieldsRegisterOpen(false);
@@ -1207,11 +1243,17 @@ export const App: React.FC = () => {
         }}
       />
 
-      <FieldUploadModal 
+      <FieldUploadModal
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onFieldsImported={handleFieldsImported}
         onResetToSample={handleResetToSample}
+      />
+
+      <SoilSampleUploadModal
+        isOpen={isSoilUploadOpen}
+        onClose={() => setIsSoilUploadOpen(false)}
+        onSamplesImported={handleSoilSamplesImported}
       />
 
       <VehicleTracker 

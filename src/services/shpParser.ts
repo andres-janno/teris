@@ -80,7 +80,7 @@ function transformGeometry(geom: Polygon | MultiPolygon): Polygon | MultiPolygon
  * suur/väiketäht varieerub eri tööriistade/aastate vahel, nt "pollunr" vs
  * "POLLUNR"), proovides mitut võimalikku nimevarianti järjekorras.
  */
-function getProp(props: Record<string, unknown>, ...keys: string[]): string | undefined {
+export function getProp(props: Record<string, unknown>, ...keys: string[]): string | undefined {
   const lowerMap: Record<string, unknown> = {};
   for (const k of Object.keys(props)) lowerMap[k.toLowerCase()] = (props as any)[k];
   for (const key of keys) {
@@ -94,7 +94,7 @@ function getProp(props: Record<string, unknown>, ...keys: string[]): string | un
  * PRIA .dbf salvestab kümnendarvud koma-eraldajaga (nt "5,54") —
  * teisendab need JS-i mõistetavaks ("5.54").
  */
-function parseEstonianNumber(raw?: string): number | undefined {
+export function parseEstonianNumber(raw?: string): number | undefined {
   if (!raw) return undefined;
   const n = Number(raw.replace(',', '.'));
   return isNaN(n) ? undefined : n;
@@ -107,7 +107,7 @@ function parseEstonianNumber(raw?: string): number | undefined {
  * reaalselt Windows-1257 (Balti) kodeeringus — lisame ZIP-i puuduva
  * .cpg kirje, et shpjs dekodeeriks õigesti.
  */
-async function ensureCpgEntry(buffer: ArrayBuffer): Promise<ArrayBuffer> {
+export async function ensureCpgEntry(buffer: ArrayBuffer): Promise<ArrayBuffer> {
   const zip = await JSZip.loadAsync(buffer);
   const hasCpg = Object.keys(zip.files).some((name) => name.toLowerCase().endsWith('.cpg'));
   if (hasCpg) return buffer;

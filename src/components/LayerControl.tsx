@@ -10,6 +10,8 @@ import {
   Maximize2
 } from 'lucide-react';
 import type { BaseMapLayerId, LayerVisibility, VehicleDisplayFilter } from '../types/map';
+import type { SoilSampleMetricKey } from '../types/soilSample';
+import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 
 interface LayerControlProps {
@@ -21,6 +23,10 @@ interface LayerControlProps {
   totalVehiclesCount?: number;
   vehicleFilter?: VehicleDisplayFilter;
   onSelectVehicleFilter?: (filter: VehicleDisplayFilter) => void;
+  soilSampleCount?: number;
+  soilFieldCount?: number;
+  soilMetric?: SoilSampleMetricKey;
+  onSelectSoilMetric?: (metric: SoilSampleMetricKey) => void;
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
@@ -31,9 +37,36 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   activeVehiclesCount = 0,
   totalVehiclesCount = 0,
   vehicleFilter = 'active',
-  onSelectVehicleFilter
+  onSelectVehicleFilter,
+  soilSampleCount = 0,
+  soilFieldCount = 0,
+  soilMetric = 'ph',
+  onSelectSoilMetric
 }) => {
   const [isOpen, setIsOpen] = useState(true);
+
+  const isAgeMetric = soilMetric === 'age';
+
+  const soilLegendItems = !isAgeMetric
+    ? (SOIL_METRIC_CONFIG[soilMetric].thresholds || []).map((t, idx, arr) => {
+        const prevMax = idx > 0 ? arr[idx - 1].max : null;
+        const unit = SOIL_METRIC_CONFIG[soilMetric].unit;
+        let label: string;
+        if (t.max === Infinity) {
+          label = `> ${prevMax}${unit ? ` ${unit}` : ''}`;
+        } else if (prevMax === null) {
+          label = `≤ ${t.max}${unit ? ` ${unit}` : ''}`;
+        } else {
+          label = `${prevMax} – ${t.max}${unit ? ` ${unit}` : ''}`;
+        }
+        return { color: t.color, label };
+      })
+    : [];
+
+  const ageGradientCss = `linear-gradient(to right, ${Array.from(
+    { length: AGE_MAX_YEARS + 1 },
+    (_, i) => getSoilMetricColor('age', i)
+  ).join(', ')})`;
 
   return (
     <div className={`layer-control-panel glass-card ${isOpen ? 'open' : 'collapsed'}`}>
@@ -100,6 +133,73 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     {visibility.fields ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
+              </div>
+
+              {/* Soil Samples */}
+              <div className="layer-box-group">
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.soilSamples}
+                      onChange={() => onToggleLayer('soilSamples')}
+                    />
+                    <span className="layer-color-indicator soil-color"></span>
+                    <span className="layer-text-wrap">
+                      <span className="layer-text">METK Mullaproovid</span>
+                      <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                    </span>
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('soilSamples')}
+                    title={visibility.soilSamples ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+
+                {visibility.soilSamples && onSelectSoilMetric && (
+                  <div className="vehicle-filter-subgroup">
+                    <div className="soil-metric-radio-list">
+                      {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
+                        <label key={key} className="soil-metric-radio-item">
+                          <input
+                            type="radio"
+                            name="soil-metric"
+                            value={key}
+                            checked={soilMetric === key}
+                            onChange={() => onSelectSoilMetric(key)}
+                          />
+                          <span>{SOIL_METRIC_CONFIG[key].label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="soil-legend-list">
+                      {isAgeMetric ? (
+                        <div className="soil-legend-gradient">
+                          <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
+                          <div className="soil-legend-gradient-labels">
+                            <span>0 a</span>
+                            <span>&ge; {AGE_MAX_YEARS} a</span>
+                          </div>
+                        </div>
+                      ) : (
+                        soilLegendItems.map((item) => (
+                          <div key={item.label} className="soil-legend-item">
+                            <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
+                            <span className="soil-legend-label">{item.label}</span>
+                          </div>
+                        ))
+                      )}
+                      <div className="soil-legend-item">
+                        <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
+                        <span className="soil-legend-label">Andmed puuduvad</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Cultivation / Teltonika Swaths */}
