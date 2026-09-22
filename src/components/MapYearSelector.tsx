@@ -86,15 +86,10 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
         <div className="year-widget-title">
           <Calendar size={15} className="text-emerald" />
           <span>Hooaeg:</span>
-          {currentSeason?.isLocked && (
-            <span className="locked-inline-badge" title="See hooaeg on muudatusteks suletud">
-              <Lock size={11} /> Lukus
-            </span>
-          )}
         </div>
         <div className="year-header-right">
           <span className="year-widget-stat">
-            {fields.features.length} tk &bull; {totalAreaHa.toFixed(1)} ha
+            {fields.features.length} põldu &bull; {totalAreaHa.toFixed(1)} ha
           </span>
           {onOpenSeasonManager && (
             <button
