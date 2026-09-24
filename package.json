@@ -22,7 +22,8 @@
     "proj4leaflet": "^1.0.2",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
-    "shpjs": "^6.2.0"
+    "shpjs": "^6.2.0",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",
