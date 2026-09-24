@@ -120,11 +120,18 @@ export function parseFieldBookSheet(sheetName: string, rows: string[][]): Parsed
 
   const crop = header('Põllumajanduskultuur');
   const cropLower = crop.toLowerCase();
+  // Kultuuri põhinimi (esimene sõna), et seemne liik "Talirukis" sobituks
+  // kultuuriga "Rukis, v.a sangaste rukis, allakülvita".
+  const cropBase = cropLower.split(/[\s,]+/)[0] ?? '';
+  const isMainCropSeed = (kind: string) => {
+    const k = kind.toLowerCase();
+    return cropLower.includes(k) || (cropBase.length >= 4 && k.includes(cropBase));
+  };
   const harvest = operations.find((o) => o.type === 'Saagikoristus' && o.method === 'Põhikultuur');
   const harvestDate = harvest ? harvest.dateTo ?? harvest.dateFrom : null;
   const sowings = operations
     .filter((o) => o.type === 'Külvamine/istutamine')
-    .filter((o) => o.products.some((p) => p.kind && cropLower.includes(p.kind.toLowerCase())))
+    .filter((o) => o.products.some((p) => p.kind && isMainCropSeed(p.kind)))
     .filter((o) => !harvest || o.dateFrom <= harvest.dateFrom)
     .sort((a, b) => a.dateFrom.localeCompare(b.dateFrom));
 

@@ -158,6 +158,20 @@ describe('parseFieldBookSheet', () => {
     expect(s.seedingDate).toBe('2024-09-26');
   });
 
+  it('seemne liik sisaldab kultuuri põhinime (Talirukis ⊃ rukis)', () => {
+    const rows = SHEET_2.map((row) => [...row]);
+    rows[9] = r('Põllumajanduskultuur', 'Rukis, v.a sangaste rukis, allakülvita');
+    rows[16] = r('Külvamine/istutamine', '05.09.2024', '7,67', '', 'EL ühtne sordileht', 'Jethro', 'Talirukis', 'C1', '180 kg/ha');
+    expect(parseFieldBookSheet('2', rows).seedingDate).toBe('2024-09-05');
+  });
+
+  it('teise kultuuri külv ei anna külvikuupäeva (Kaer vs Talioder)', () => {
+    const rows = SHEET_2.map((row) => [...row]);
+    rows[9] = r('Põllumajanduskultuur', 'Kaer allakülvita');
+    rows[16] = r('Külvamine/istutamine', '20.08.2025', '7,67', '', 'EL ühtne sordileht', 'Mieszko', 'Talioder', 'C1', '180 kg/ha');
+    expect(parseFieldBookSheet('2', rows).seedingDate).toBeNull();
+  });
+
   it('viskab lehe vea loetamatu kuupäeva korral', () => {
     const rows = SHEET_2.map((row) => [...row]);
     rows[23] = r('Kündmine', 'eile', '7,67');
