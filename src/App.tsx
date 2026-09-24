@@ -9,6 +9,7 @@ import { FieldDetailsDrawer } from './components/FieldDetailsDrawer';
 import { FieldManagerModal } from './components/FieldManagerModal';
 import { FieldUploadModal } from './components/FieldUploadModal';
 import { SoilSampleUploadModal } from './components/SoilSampleUploadModal';
+import { FieldBookUploadModal } from './components/FieldBookUploadModal';
 import { VehicleTracker } from './components/VehicleTracker';
 import { PoiManagerModal } from './components/PoiManagerModal';
 import { AnalyticsModal } from './components/AnalyticsModal';
@@ -276,6 +277,7 @@ export const App: React.FC = () => {
   const [isFieldsRegisterOpen, setIsFieldsRegisterOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);
+  const [isFieldBookUploadOpen, setIsFieldBookUploadOpen] = useState(false);
   const [isVehiclesOpen, setIsVehiclesOpen] = useState(false);
   const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
@@ -1246,6 +1248,7 @@ export const App: React.FC = () => {
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenSoilUpload={() => setIsSoilUploadOpen(true)}
+        onOpenFieldBookUpload={() => setIsFieldBookUploadOpen(true)}
         seasons={seasons}
         onOpenSeasonManager={() => {
           setIsFieldsRegisterOpen(false);
@@ -1276,6 +1279,17 @@ export const App: React.FC = () => {
         isOpen={isSoilUploadOpen}
         onClose={() => setIsSoilUploadOpen(false)}
         onSamplesImported={handleSoilSamplesImported}
+      />
+
+      <FieldBookUploadModal
+        isOpen={isFieldBookUploadOpen}
+        onClose={() => setIsFieldBookUploadOpen(false)}
+        onImported={() => {
+          api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude uuendamine ebaõnnestus:', err));
+        }}
+        masterFields={masterFields}
+        parties={parties}
+        seasons={seasons}
       />
 
       <VehicleTracker 

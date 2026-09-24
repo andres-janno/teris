@@ -41,6 +41,7 @@ interface FieldManagerModalProps {
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload: () => void;
   onOpenSoilUpload?: () => void;
+  onOpenFieldBookUpload?: () => void;
   seasons?: FarmingSeason[];
   onOpenSeasonManager?: () => void;
   parties?: RelatedParty[];
@@ -61,6 +62,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onDeleteField,
   onOpenUpload,
   onOpenSoilUpload,
+  onOpenFieldBookUpload,
   seasons = [],
   onOpenSeasonManager,
   parties = [],
@@ -654,6 +656,20 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 >
                   <Plus size={14} />
                   <span>Impordi mullaproovid</span>
+                </button>
+              )}
+
+              {onOpenFieldBookUpload && (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    onClose();
+                    onOpenFieldBookUpload();
+                  }}
+                  title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
+                >
+                  <Plus size={14} />
+                  <span>Impordi põlluraamat</span>
                 </button>
               )}
 
