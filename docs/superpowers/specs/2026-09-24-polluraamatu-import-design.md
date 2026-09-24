@@ -230,8 +230,10 @@ Serveri vea korral transaktsioon tühistatakse ja tagastatakse 500 veateatega.
 
 ### `GET /api/field-operations?fieldId=<id>&year=<aasta>`
 
-Tagastab selle põllu ja aasta tegevused koos toodete ja teostaja nimega,
-järjestatud `dateFrom`, siis `sortOrder` järgi.
+Tagastab `{ targetYieldTonsHa, actualYieldTonsHa, operations }` — hooajakirje
+saagid (põllu kaardi kokkuvõtte jaoks) ja selle põllu ja aasta tegevused koos
+toodete ja teostaja nimega, järjestatud `dateFrom`, siis `sortOrder` järgi.
+Hooajakirje puudumisel tühjad väärtused.
 
 ## Kasutajaliides
 
