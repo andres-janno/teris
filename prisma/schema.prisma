@@ -199,6 +199,7 @@ model FieldSeason {
   cadastralParcels    FieldCadastralParcel[]
   cropEntity          Crop?        @relation(fields: [cropId], references: [id], onDelete: SetNull)
   varietyEntity       CropVariety? @relation(fields: [varietyId], references: [id], onDelete: SetNull)
+  operations          FieldOperation[]
 
   @@unique([fieldId, year])
   @@index([fieldId])
@@ -238,6 +239,7 @@ model RelatedParty {
   vehicles         Vehicle[]
   poiContacts      PointOfInterest[]
   fieldsAsOperator Field[]
+  performedOperations FieldOperation[]
 
   @@map("related_parties")
 }
@@ -447,5 +449,52 @@ model SoilSample {
   @@index([fieldCode])
   @@index([year])
   @@map("soil_samples")
+}
+
+// ============================================================================
+// 9. PÕLLURAAMAT (FIELD OPERATIONS) — e-PRIA põlluraamatu väljavõtte import
+// ============================================================================
+
+model FieldOperation {
+  id            Int       @id @default(autoincrement())
+  fieldSeasonId Int
+  type          String    // PRIA "Tegevus": "Väetamine", "Kündmine", ...
+  dateFrom      DateTime
+  dateTo        DateTime? // vahemiku lõpp; tühi, kui üks päev
+  areaHa        Float?
+  method        String?   // "Paisklaotamine", "Pritsimine", "Põhikultuur"
+  performerId   String?   // teostaja seotud isikute registrist
+  notes         String?
+  sortOrder     Int
+  createdAt     DateTime  @default(now())
+
+  fieldSeason   FieldSeason             @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  performer     RelatedParty?           @relation(fields: [performerId], references: [id], onDelete: SetNull)
+  products      FieldOperationProduct[]
+
+  @@index([fieldSeasonId])
+  @@index([performerId])
+  @@map("field_operations")
+}
+
+model FieldOperationProduct {
+  id               Int     @id @default(autoincrement())
+  operationId      Int
+  category         String? // "Register/Materjal"
+  name             String? // toode, sort või umbrohi
+  kind             String? // "Liik/tüüp"
+  spec             String? // "Täpsustus"
+  amount           Float?
+  unit             String?
+  nKgHa            Float?
+  pKgHa            Float?
+  kKgHa            Float?
+  activeIngredient String?
+  sortOrder        Int
+
+  operation        FieldOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+
+  @@index([operationId])
+  @@map("field_operation_products")
 }
 

@@ -829,7 +829,8 @@ export function dbApiPlugin(): Plugin {
                     vehicles: true,
                     cadastralParcels: true,
                     poiContacts: true,
-                    fieldsAsOperator: true
+                    fieldsAsOperator: true,
+                    performedOperations: true
                   }
                 }
               }
@@ -844,7 +845,8 @@ export function dbApiPlugin(): Plugin {
               ownedParcelsCount: _count.cadastralParcels,
               poiContactsCount: _count.poiContacts,
               operatorFieldsCount: _count.fieldsAsOperator,
-              usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator
+              performedOperationsCount: _count.performedOperations,
+              usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator + _count.performedOperations
             }));
 
             return json(res, mapped);
