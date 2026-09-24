@@ -16,6 +16,7 @@ import {
 import type { FieldFeature } from '../types/field';
 import type { FieldCadastralLink } from '../types/cadastre';
 import { getGeometryCoordinatesList, getGeometryPerimeterMeters } from '../services/geometryEngine';
+import { FieldOperationsSection } from './FieldOperationsSection';
 
 interface FieldDetailsDrawerProps {
   field: FieldFeature | null;
@@ -301,6 +302,8 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
             )}
           </div>
         </div>
+
+        {props.year && <FieldOperationsSection fieldId={props.id} year={props.year} />}
 
         {/* Notes */}
         {props.notes && (

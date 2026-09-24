@@ -1130,6 +1130,72 @@ body {
   margin-top: 14px;
 }
 
+.field-op-summary {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  margin-bottom: 6px;
+}
+
+.field-ops-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 320px;
+  overflow-y: auto;
+}
+
+.field-op-item {
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 6px 8px;
+}
+
+.field-op-head {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  font-size: 0.76rem;
+}
+
+.field-op-date {
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+.field-op-type {
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.field-op-meta,
+.field-op-product {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 2px;
+}
+
+.field-op-notes-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  margin-top: 3px;
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.68rem;
+  color: var(--emerald-500);
+  cursor: pointer;
+}
+
+.field-op-notes {
+  font-size: 0.7rem;
+  color: var(--text-primary);
+  margin-top: 3px;
+  font-style: italic;
+}
+
 .field-stat-item {
   background: var(--stat-bg);
   border: 1px solid var(--border-card);
