@@ -72,7 +72,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const [editAddress, setEditAddress] = useState('');
   const [editBankAccount, setEditBankAccount] = useState('');
   const [editNotes, setEditNotes] = useState('');
-  const [editIsOwnCompany, setEditIsOwnCompany] = useState(false);
 
   // Copy IBAN helper
   const handleCopyIban = (iban: string) => {
@@ -94,7 +93,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditAddress(party.address || '');
     setEditBankAccount(party.bankAccount || '');
     setEditNotes(party.notes || '');
-    setEditIsOwnCompany(party.isOwnCompany || false);
     setIsEditing(true);
   };
 
@@ -111,7 +109,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditAddress('');
     setEditBankAccount('');
     setEditNotes('');
-    setEditIsOwnCompany(false);
     setIsEditing(true);
   };
 
@@ -143,7 +140,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       address: editAddress.trim() || undefined,
       bankAccount: editBankAccount.trim().replace(/\s+/g, '') || undefined,
       notes: editNotes.trim() || undefined,
-      isOwnCompany: editIsOwnCompany,
       updatedAt: new Date().toISOString()
     };
 
@@ -249,6 +245,184 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   if (!isOpen) return null;
 
+  const editForm = (
+    <form onSubmit={handleSaveForm} className="field-edit-season-card glass-card animate-slide-in">
+      <div className="edit-card-header">
+        <div className="edit-title">
+          <Edit2 size={16} className="text-emerald" />
+          <strong>
+            {editId ? `Muuda isiku andmeid: ${editName}` : 'Uue seotud isiku lisamine registrisse'}
+          </strong>
+        </div>
+        <button className="icon-btn-ghost" type="button" onClick={() => setIsEditing(false)}>
+          <X size={16} />
+        </button>
+      </div>
+
+      {/* 1. Põhiandmed */}
+      <div className="form-sub-header">
+        <Building2 size={14} />
+        <span>1. Isiku või organisatsiooni põhiandmed</span>
+      </div>
+      <div className="form-grid">
+        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+          <label>Nimi või Ärinimi *</label>
+          <input
+            type="text"
+            required
+            placeholder="nt Loisu Agro OÜ või Jaan Tamm"
+            value={editName}
+            onChange={(e) => setEditName(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Isiku liik *</label>
+          <select
+            value={editType}
+            onChange={(e) => setEditType(e.target.value as PartyType)}
+            className="form-input"
+          >
+            <option value="PERSON">👤 Füüsiline isik (Eraisik)</option>
+            <option value="LEGAL_ENTITY">🏢 Juriidiline isik (Ettevõte / OÜ / AS)</option>
+          </select>
+        </div>
+
+        <div className="form-group">
+          <label>{editType === 'LEGAL_ENTITY' ? 'Registrikood' : 'Isikukood'}</label>
+          <input
+            type="text"
+            placeholder={editType === 'LEGAL_ENTITY' ? 'nt 10874512' : 'nt 38001010000'}
+            value={editCode}
+            onChange={(e) => setEditCode(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        {editType === 'LEGAL_ENTITY' && (
+          <div className="form-group">
+            <label>KMKR number (Käibemaksukohustuslane)</label>
+            <input
+              type="text"
+              placeholder="nt EE100874512"
+              value={editVatNumber}
+              onChange={(e) => setEditVatNumber(e.target.value)}
+              className="form-input"
+            />
+          </div>
+        )}
+      </div>
+
+      {/* 2. Rollid */}
+      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+        <Users size={14} />
+        <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
+      </div>
+      <div className="form-group">
+        <div className="party-roles-checkbox-grid">
+          {ALL_ROLES.map((role) => {
+            const cfg = PARTY_ROLE_CONFIG[role];
+            const isSelected = editRoles.includes(role);
+            return (
+              <div
+                key={role}
+                className={`party-role-checkbox ${isSelected ? 'selected' : ''}`}
+                onClick={() => toggleRole(role)}
+                style={{
+                  background: isSelected ? 'rgba(16, 185, 129, 0.12)' : undefined,
+                  borderColor: isSelected ? 'var(--emerald-500)' : undefined
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isSelected}
+                  onChange={() => {}}
+                />
+                <span>{cfg.icon} {cfg.label}</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* 3. Kontakt- ja finantsandmed */}
+      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+        <CreditCard size={14} />
+        <span>3. Kontakt- ja finantsandmed</span>
+      </div>
+      <div className="form-grid">
+        <div className="form-group">
+          <label>Telefoninumber</label>
+          <input
+            type="tel"
+            placeholder="nt +372 5552 9988"
+            value={editPhone}
+            onChange={(e) => setEditPhone(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>E-posti aadress</label>
+          <input
+            type="email"
+            placeholder="nt info@loisuagro.ee"
+            value={editEmail}
+            onChange={(e) => setEditEmail(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group" style={{ gridColumn: 'span 2' }}>
+          <label>Aadress / Asukoht</label>
+          <input
+            type="text"
+            placeholder="nt Loisu talu, Riidaja küla, Tõrva vald, 68716 Valgamaa"
+            value={editAddress}
+            onChange={(e) => setEditAddress(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>IBAN Pangakonto (arvelduskonto)</label>
+          <input
+            type="text"
+            placeholder="nt EE452200221054321987"
+            value={editBankAccount}
+            onChange={(e) => setEditBankAccount(e.target.value)}
+            className="form-input"
+          />
+        </div>
+
+        <div className="form-group">
+          <label>Märkused ja lepingute info</label>
+          <input
+            type="text"
+            placeholder="nt Rendileping L-2024/02 kehtib kuni 2032..."
+            value={editNotes}
+            onChange={(e) => setEditNotes(e.target.value)}
+            className="form-input"
+          />
+        </div>
+      </div>
+
+      <div className="form-actions">
+        <button
+          type="button"
+          className="btn btn-ghost btn-sm"
+          onClick={() => setIsEditing(false)}
+        >
+          Loobu
+        </button>
+        <button type="submit" className="btn btn-primary btn-sm">
+          Salvesta isik
+        </button>
+      </div>
+    </form>
+  );
+
   return (
     <div className="modal-backdrop">
       <div className="modal-content glass-card field-register-modal animate-scale-up">
@@ -290,11 +464,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                 <span className="lbl">🚜 Masinajuhte / Töötajaid:</span>
                 <strong>{stats.driversCount} tk</strong>
                 <span className="sub-val text-blue">({vehicles.length} tehnikat masinapargis)</span>
-              </div>
-
-              <div className="reg-stat-pill tenure-rented">
-                <span className="lbl">⭐ Meie ettevõte:</span>
-                <strong>Loisu Agro OÜ</strong>
               </div>
             </div>
           </div>
@@ -352,209 +521,21 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           </div>
 
           {/* Edit / Create Form (Matching field-edit-season-card) */}
-          {isEditing && (
-            <form onSubmit={handleSaveForm} className="field-edit-season-card glass-card animate-slide-in">
-              <div className="edit-card-header">
-                <div className="edit-title">
-                  <Edit2 size={16} className="text-emerald" />
-                  <strong>
-                    {editId ? `Muuda isiku andmeid: ${editName}` : 'Uue seotud isiku lisamine registrisse'}
-                  </strong>
-                </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditing(false)}>
-                  <X size={16} />
-                </button>
-              </div>
-
-              {/* 1. Põhiandmed */}
-              <div className="form-sub-header">
-                <Building2 size={14} />
-                <span>1. Isiku või organisatsiooni põhiandmed</span>
-              </div>
-              <div className="form-grid">
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Nimi või Ärinimi *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="nt Loisu Agro OÜ või Jaan Tamm"
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Isiku liik *</label>
-                  <select
-                    value={editType}
-                    onChange={(e) => setEditType(e.target.value as PartyType)}
-                    className="form-input"
-                  >
-                    <option value="PERSON">👤 Füüsiline isik (Eraisik)</option>
-                    <option value="LEGAL_ENTITY">🏢 Juriidiline isik (Ettevõte / OÜ / AS)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>{editType === 'LEGAL_ENTITY' ? 'Registrikood' : 'Isikukood'}</label>
-                  <input
-                    type="text"
-                    placeholder={editType === 'LEGAL_ENTITY' ? 'nt 10874512' : 'nt 38001010000'}
-                    value={editCode}
-                    onChange={(e) => setEditCode(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                {editType === 'LEGAL_ENTITY' && (
-                  <div className="form-group">
-                    <label>KMKR number (Käibemaksukohustuslane)</label>
-                    <input
-                      type="text"
-                      placeholder="nt EE100874512"
-                      value={editVatNumber}
-                      onChange={(e) => setEditVatNumber(e.target.value)}
-                      className="form-input"
-                    />
-                  </div>
-                )}
-              </div>
-
-              {/* 2. Rollid */}
-              <div className="form-sub-header" style={{ marginTop: '16px' }}>
-                <Users size={14} />
-                <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
-              </div>
-              <div className="form-group">
-                <div className="party-roles-checkbox-grid">
-                  {ALL_ROLES.map((role) => {
-                    const cfg = PARTY_ROLE_CONFIG[role];
-                    const isSelected = editRoles.includes(role);
-                    return (
-                      <div
-                        key={role}
-                        className={`party-role-checkbox ${isSelected ? 'selected' : ''}`}
-                        onClick={() => toggleRole(role)}
-                        style={{
-                          background: isSelected ? 'rgba(16, 185, 129, 0.12)' : undefined,
-                          borderColor: isSelected ? 'var(--emerald-500)' : undefined
-                        }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {}}
-                        />
-                        <span>{cfg.icon} {cfg.label}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* 3. Kontakt- ja finantsandmed */}
-              <div className="form-sub-header" style={{ marginTop: '16px' }}>
-                <CreditCard size={14} />
-                <span>3. Kontakt- ja finantsandmed</span>
-              </div>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Telefoninumber</label>
-                  <input
-                    type="tel"
-                    placeholder="nt +372 5552 9988"
-                    value={editPhone}
-                    onChange={(e) => setEditPhone(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>E-posti aadress</label>
-                  <input
-                    type="email"
-                    placeholder="nt info@loisuagro.ee"
-                    value={editEmail}
-                    onChange={(e) => setEditEmail(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Aadress / Asukoht</label>
-                  <input
-                    type="text"
-                    placeholder="nt Loisu talu, Riidaja küla, Tõrva vald, 68716 Valgamaa"
-                    value={editAddress}
-                    onChange={(e) => setEditAddress(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>IBAN Pangakonto (arvelduskonto)</label>
-                  <input
-                    type="text"
-                    placeholder="nt EE452200221054321987"
-                    value={editBankAccount}
-                    onChange={(e) => setEditBankAccount(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>Märkused ja lepingute info</label>
-                  <input
-                    type="text"
-                    placeholder="nt Rendileping L-2024/02 kehtib kuni 2032..."
-                    value={editNotes}
-                    onChange={(e) => setEditNotes(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label className="checkbox-label" style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '4px' }}>
-                    <input
-                      type="checkbox"
-                      checked={editIsOwnCompany}
-                      onChange={(e) => setEditIsOwnCompany(e.target.checked)}
-                    />
-                    <span>⭐ Meie oma põllumajandusettevõte (Loisu Agro)</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="form-actions">
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-sm"
-                  onClick={() => setIsEditing(false)}
-                >
-                  Loobu
-                </button>
-                <button type="submit" className="btn btn-primary btn-sm">
-                  Salvesta isik
-                </button>
-              </div>
-            </form>
-          )}
+          {isEditing && !editId && editForm}
 
           {/* Parties List (Identical horizontal card format to FieldManagerModal) */}
           <div className="register-fields-list">
             {filteredParties.map((party, idx) => {
               const isCompany = party.type === 'LEGAL_ENTITY';
 
+              if (isEditing && editId === party.id) {
+                return <React.Fragment key={party.id}>{editForm}</React.Fragment>;
+              }
+
               return (
                 <div
                   key={party.id}
                   className="master-field-card glass-card"
-                  style={{
-                    borderLeft: party.isOwnCompany
-                      ? '4px solid var(--emerald-500)'
-                      : undefined
-                  }}
                 >
                   <div className="field-card-main-row">
                     {/* Left: Info Column */}
@@ -572,19 +553,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                         )}
                         {party.vatNumber && (
                           <span className="cadastre-code">KMKR: {party.vatNumber}</span>
-                        )}
-                        {party.isOwnCompany && (
-                          <span
-                            className="sub-tag owner-tag"
-                            style={{
-                              background: 'rgba(16, 185, 129, 0.15)',
-                              borderColor: 'rgba(16, 185, 129, 0.4)',
-                              color: 'var(--emerald-400)',
-                              fontWeight: 700
-                            }}
-                          >
-                            ⭐ Oma ettevõte
-                          </span>
                         )}
                       </div>
 

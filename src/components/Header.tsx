@@ -193,9 +193,11 @@ export const Header: React.FC<HeaderProps> = ({
                 onChange={(e) => onOperatorFilterChange(e.target.value)}
               >
                 <option value="">Kõik</option>
-                {parties.map((p) => (
-                  <option key={p.id} value={p.id}>{p.name}</option>
-                ))}
+                {parties
+                  .filter((p) => p.roles?.includes('OPERATOR') || p.id === operatorFilter)
+                  .map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
               </select>
             </div>
           </div>

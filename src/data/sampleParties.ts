@@ -14,7 +14,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Loisu talu, Riidaja küla, Tõrva vald, 68716 Valgamaa',
     bankAccount: 'EE452200221054321987',
     notes: 'Põhiline tootmisettevõte ja operaator. Omab kinnistuid Toosi, Loisu Kodu, Loo Väiketalu ja Vabarna-Mäe.',
-    isOwnCompany: true,
     createdAt: '2020-01-15'
   },
   {
@@ -29,7 +28,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Pargi tee 4, Viljandi, 71004 Viljandimaa',
     bankAccount: 'EE891010220011223344',
     notes: 'Pikaajaline rendipartner (Metsa-Talu, Murikatsi, Vändra-Põllu katastrid). Lepingud 2029-2032.',
-    isOwnCompany: false,
     createdAt: '2021-03-01'
   },
   {
@@ -43,7 +41,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Loo talu, Riidaja küla, Tõrva vald',
     bankAccount: 'EE122200221012345678',
     notes: 'Loo Suurtalu katastri omanik. Rendileping L-2024/02 kehtib kuni 2032.',
-    isOwnCompany: false,
     createdAt: '2024-02-10'
   },
   {
@@ -57,7 +54,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Kasevälja talu, Kärstna küla, Viljandimaa',
     bankAccount: 'EE342200221098765432',
     notes: 'Kasevälja katastriüksuse eraomanik. Viljarent / rahaline ekvivalent makstakse iga aasta oktoobris.',
-    isOwnCompany: false,
     createdAt: '2021-08-15'
   },
   {
@@ -71,7 +67,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Liiva tee 2, Helme, Valgamaa',
     bankAccount: 'EE562200221045612378',
     notes: 'Kuldse-Liiva katastriüksuse omanik. Leping kehtib 2026 lõpuni (pikendamisel).',
-    isOwnCompany: false,
     createdAt: '2021-11-01'
   },
   {
@@ -85,7 +80,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Loisu talu, Riidaja',
     bankAccount: 'EE452200221054321987',
     notes: 'Ettevõtte tegevjuht ja peaagronoom. John Deere 8R traktorist ja Loisu veepunkti vastutaja.',
-    isOwnCompany: true,
     createdAt: '2020-01-15'
   },
   {
@@ -99,7 +93,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Kärstna tee 12, Viljandimaa',
     bankAccount: 'EE982200221087654321',
     notes: 'Põhitraktorist (Fendt 942 Vario). Teostab kündi, sügavkobestust ja randaalimist.',
-    isOwnCompany: true,
     createdAt: '2022-04-01'
   },
   {
@@ -113,7 +106,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Riidaja tee 5, Tõrva vald',
     bankAccount: 'EE672200221034567890',
     notes: 'Taimekaitsetöötaja tunnistusega operaator (Horsch Leeb 8.300 PT prits).',
-    isOwnCompany: true,
     createdAt: '2023-03-15'
   },
   {
@@ -127,7 +119,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Pärna tee 3, Tõrva',
     bankAccount: 'EE432200221056789012',
     notes: 'Kombainer (Claas Lexion 8800 TT) ja kevadeti külvitraktorist.',
-    isOwnCompany: true,
     createdAt: '2021-07-01'
   },
   {
@@ -141,7 +132,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Viljandi mnt 8, Mustla',
     bankAccount: 'EE212200221078901234',
     notes: 'Viljaveo autojuht (Scania R500). Logistika põllult kuivatisse ja sadamasse.',
-    isOwnCompany: true,
     createdAt: '2021-08-01'
   },
   {
@@ -154,7 +144,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     email: 'mati.kask@loisuagro.ee',
     address: 'Kärstna töökoda',
     notes: 'Kärstna tootmisbaasi ja töökoja juhataja / mehaanik.',
-    isOwnCompany: true,
     createdAt: '2020-05-01'
   },
   {
@@ -167,7 +156,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     email: 'laojuhataja@loisuagro.ee',
     address: 'Sigala väetiseladu, Riidaja',
     notes: 'Väetise- ja taimekaitsevahendite lao vastutav isik.',
-    isOwnCompany: true,
     createdAt: '2022-01-10'
   },
   {
@@ -182,7 +170,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Rukki tee 8, Lehmja küla, Rae vald, Harjumaa',
     bankAccount: 'EE902200221000124578',
     notes: 'Peamine sisendite tarnija (väetis, sertifitseeritud seeme, taimekaitse) ja teravilja kokkuostja lepinguga.',
-    isOwnCompany: false,
     createdAt: '2020-02-01'
   },
   {
@@ -197,7 +184,6 @@ export const INITIAL_PARTIES: RelatedParty[] = [
     address: 'Tähe 106, Tartu, 51013 Tartumaa',
     bankAccount: 'EE782200221000987654',
     notes: 'Teine sisendite tarnija ja rapsi/nisu kokkuostu lepingupartner.',
-    isOwnCompany: false,
     createdAt: '2020-02-01'
   }
 ];

@@ -1,5 +1,5 @@
 // src/components/FieldUploadModal.tsx
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   X, 
   UploadCloud, 
@@ -11,27 +11,76 @@ import {
   Info
 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
+import type { RelatedParty } from '../types/party';
 import { parseShapefileZip } from '../services/shpParser';
+
+// PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
+// viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
+// Tagastame kõige sagedasema aasta vihjeks — kasutaja kinnitab.
+function detectSeasonYear(collection: FieldCollection): { year: number; count: number; total: number } | null {
+  const counts = new Map<number, number>();
+  let total = 0;
+  for (const f of collection.features) {
+    const raw = f.properties.rawProperties || {};
+    const key = Object.keys(raw).find((k) => k.toLowerCase() === 'muudetud');
+    const match = key ? String(raw[key] ?? '').match(/(\d{4})\s*$/) : null;
+    if (!match) continue;
+    const y = Number(match[1]);
+    counts.set(y, (counts.get(y) || 0) + 1);
+    total++;
+  }
+  let best: { year: number; count: number } | null = null;
+  counts.forEach((count, year) => {
+    if (!best || count > best.count) best = { year, count };
+  });
+  return best ? { ...(best as { year: number; count: number }), total } : null;
+}
 
 interface FieldUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onFieldsImported: (newFields: FieldCollection, replace: boolean) => void;
+  onFieldsImported: (newFields: FieldCollection, replace: boolean, operatorId: string | undefined, year: number) => void;
   onResetToSample: () => void;
+  parties?: RelatedParty[];
+  availableYears?: number[];
+  defaultYear: number;
 }
 
 export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
   isOpen,
   onClose,
   onFieldsImported,
-  onResetToSample
+  onResetToSample,
+  parties = [],
+  availableYears = [],
+  defaultYear
 }) => {
   const [isDragging, setIsDragging] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [parsedPreview, setParsedPreview] = useState<FieldCollection | null>(null);
   const [replaceExisting, setReplaceExisting] = useState(false);
+  const [operatorId, setOperatorId] = useState<string>('');
+  const [importYear, setImportYear] = useState<number>(defaultYear);
+  const [detectedYear, setDetectedYear] = useState<{ year: number; count: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // PRIA failis aastat pole (failinimi on allalaadimise kuupäev), seega
+  // aasta valitakse igal avamisel uuesti, vaikimisi kaardil valitud aasta.
+  useEffect(() => {
+    if (isOpen) {
+      setImportYear(defaultYear);
+      setDetectedYear(null);
+    }
+  }, [isOpen, defaultYear]);
+
+  const operators = parties.filter((p) => p.roles?.includes('OPERATOR'));
+
+  useEffect(() => {
+    if (isOpen && !operatorId && operators.length === 1) {
+      setOperatorId(operators[0].id);
+    }
+  }, [isOpen, operators.length]);
 
   if (!isOpen) return null;
 
@@ -51,6 +100,10 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
       }
 
       setParsedPreview(collection);
+
+      const detected = detectSeasonYear(collection);
+      setDetectedYear(detected);
+      if (detected) setImportYear(detected.year);
     } catch (err: any) {
       console.error('Shapefile parsing error:', err);
       setError(err.message || 'Viga faili töötlemisel. Kontrolli, et tegemist on korrektse Shapefile ZIP arhiiviga.');
@@ -84,7 +137,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
   const handleConfirmImport = () => {
     if (parsedPreview) {
-      onFieldsImported(parsedPreview, replaceExisting);
+      onFieldsImported(parsedPreview, replaceExisting, operatorId || undefined, importYear);
       onClose();
     }
   };
@@ -167,13 +220,45 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               <div className="preview-header">
                 <strong>Leitud põllud ({parsedPreview.features.length})</strong>
                 <label className="checkbox-label">
-                  <input 
-                    type="checkbox" 
-                    checked={replaceExisting} 
-                    onChange={(e) => setReplaceExisting(e.target.checked)} 
+                  <input
+                    type="checkbox"
+                    checked={replaceExisting}
+                    onChange={(e) => setReplaceExisting(e.target.checked)}
                   />
                   <span>Asenda olemasolevad põllud</span>
                 </label>
+              </div>
+
+              <div className="form-group" style={{ margin: '8px 0' }}>
+                <label>Hooaeg (aasta), millesse põllud imporditakse *</label>
+                <select
+                  className="form-input"
+                  value={importYear}
+                  onChange={(e) => setImportYear(Number(e.target.value))}
+                >
+                  {(availableYears.includes(importYear) ? availableYears : [importYear, ...availableYears]).map((y) => (
+                    <option key={y} value={y}>{y}</option>
+                  ))}
+                </select>
+                {detectedYear && (
+                  <span className="modal-subtitle" style={{ display: 'block', marginTop: '4px' }}>
+                    Failist tuvastatud: {detectedYear.year} ({detectedYear.count}/{detectedYear.total} põllu PRIA muutmiskuupäeva järgi) — kontrolli enne kinnitamist
+                  </span>
+                )}
+              </div>
+
+              <div className="form-group" style={{ margin: '8px 0' }}>
+                <label>Operaator (seotakse kõigi imporditud põldudega)</label>
+                <select
+                  className="form-input"
+                  value={operatorId}
+                  onChange={(e) => setOperatorId(e.target.value)}
+                >
+                  <option value="">-- Määramata --</option>
+                  {operators.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
               </div>
 
               <div className="preview-fields-scroll">
@@ -219,7 +304,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
           {parsedPreview && (
             <button className="btn btn-primary" onClick={handleConfirmImport}>
               <Check size={16} />
-              <span>Lisa {parsedPreview.features.length} põldu kaardile</span>
+              <span>Lisa {parsedPreview.features.length} põldu hooaega {importYear}</span>
             </button>
           )}
         </div>

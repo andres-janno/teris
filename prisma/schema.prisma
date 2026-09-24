@@ -231,7 +231,6 @@ model RelatedParty {
   address         String?                 // Postiaadress / asukoht
   bankAccount     String?                 // IBAN arveldusarve (rendimakseteks / maamaksuks)
   notes           String?                 // Märkused
-  isOwnCompany    Boolean                 @default(false) // Kas on meie oma ettevõte
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
 

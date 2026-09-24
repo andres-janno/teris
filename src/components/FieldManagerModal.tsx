@@ -26,7 +26,7 @@ import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
-import { INITIAL_CROPS, extractCropAndVariety } from '../data/sampleCrops';
+import { INITIAL_CROPS } from '../data/sampleCrops';
 import { SAMPLE_CADASTRAL_PARCELS } from '../data/sampleCadastre';
 
 interface FieldManagerModalProps {
@@ -107,12 +107,19 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return crops.length > 0 ? crops : INITIAL_CROPS;
   }, [crops]);
 
-  const selectedCropObj = useMemo(() => {
-    const q = editCrop.toLowerCase().trim();
-    return activeCrops.find(
-      (c) => c.name.toLowerCase() === q || q.startsWith(c.name.toLowerCase()) || c.name.toLowerCase().startsWith(q)
-    );
-  }, [activeCrops, editCrop]);
+  // Sama sisu-põhine sobitus nagu App.tsx resolveCropColor: PRIA tekst
+  // ("Punane ristik (...)", "Rukis, v.a ..., allakülvita") seotakse
+  // baaskultuuriga, kui see sisaldab registri kultuuri nime.
+  const findRegistryCrop = (cropText: string) => {
+    const q = cropText.toLowerCase().trim();
+    if (!q) return undefined;
+    return activeCrops.find((c) => {
+      const name = c.name.toLowerCase();
+      return name === q || q.includes(name) || name.startsWith(q);
+    });
+  };
+
+  const selectedCropObj = useMemo(() => findRegistryCrop(editCrop), [activeCrops, editCrop]);
 
   const availableVarieties = useMemo(() => {
     return selectedCropObj?.varieties || [];
@@ -253,17 +260,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           landTaxEurHa: p.landTaxEurHa ?? (p.landTaxEurYear && p.fieldAreaHa > 0 ? Math.round((p.landTaxEurYear / p.fieldAreaHa) * 10) / 10 : undefined)
         }));
 
-        const parsedCrop = extractCropAndVariety(currentRec.crop);
-        const matchedCrop = activeCrops.find(
-          (c) => c.name.toLowerCase() === parsedCrop.crop.toLowerCase() ||
-            parsedCrop.crop.toLowerCase().startsWith(c.name.toLowerCase())
-        );
+        const matchedCrop = findRegistryCrop(currentRec.crop);
         setEditAreaHa(currentRec.areaHa);
         setEditEligibleAreaHa(currentRec.eligibleAreaHa || undefined);
         setEditAreaChangeReason(currentRec.areaChangeReason || '');
-        setEditCrop(parsedCrop.crop);
+        setEditCrop(currentRec.crop);
         setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
-        setEditVariety(currentRec.cropVariety || parsedCrop.variety || '');
+        setEditVariety(currentRec.cropVariety || '');
         setEditTargetYield(currentRec.targetYieldTonsHa || undefined);
         setEditActualYield(currentRec.actualYieldTonsHa || undefined);
         setEditNotes(currentRec.notes || '');
@@ -301,17 +304,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     setEditSoilType(field.soilType || '');
     setEditCadastralParcels(initialParcels);
 
-    const parsedCrop = extractCropAndVariety(currentRec.crop);
-    const matchedCrop = activeCrops.find(
-      (c) => c.name.toLowerCase() === parsedCrop.crop.toLowerCase() ||
-        parsedCrop.crop.toLowerCase().startsWith(c.name.toLowerCase())
-    );
+    const matchedCrop = findRegistryCrop(currentRec.crop);
     setEditAreaHa(currentRec.areaHa);
     setEditEligibleAreaHa(currentRec.eligibleAreaHa || undefined);
     setEditAreaChangeReason(currentRec.areaChangeReason || '');
-    setEditCrop(parsedCrop.crop);
+    setEditCrop(currentRec.crop);
     setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
-    setEditVariety(currentRec.cropVariety || parsedCrop.variety || '');
+    setEditVariety(currentRec.cropVariety || '');
     setEditTargetYield(currentRec.targetYieldTonsHa || undefined);
     setEditActualYield(currentRec.actualYieldTonsHa || undefined);
     setEditNotes(currentRec.notes || '');
@@ -326,10 +325,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       return;
     }
 
-    const matchedCrop = activeCrops.find(
-      (c) => c.name.toLowerCase() === editCrop.trim().toLowerCase() ||
-        editCrop.trim().toLowerCase().startsWith(c.name.toLowerCase())
-    );
+    const matchedCrop = findRegistryCrop(editCrop);
     const finalCropColor = matchedCrop?.color || selectedCropObj?.color || editCropColor || '#22c55e';
 
     onUpdateField(
@@ -787,9 +783,11 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     className="form-input"
                   >
                     <option value="">-- Määramata --</option>
-                    {parties.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
+                    {parties
+                      .filter((p) => p.roles?.includes('OPERATOR') || p.id === editOperatorId)
+                      .map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
                   </select>
                 </div>
               </div>
@@ -896,6 +894,11 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     }}
                     className="form-input"
                   >
+                    {editCrop && !activeCrops.some(c => c.name === editCrop) && (
+                      <option value={editCrop}>
+                        {selectedCropObj?.icon || '🌾'} {editCrop}
+                      </option>
+                    )}
                     {activeCrops.map(c => (
                       <option key={c.id} value={c.name}>
                         {c.icon || '🌾'} {c.name}

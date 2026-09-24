@@ -379,6 +379,8 @@ export function dbApiPlugin(): Plugin {
               if (item.history && Array.isArray(item.history)) {
                 for (const h of item.history) {
                   const statusUpper = (h.status || 'not_started').toUpperCase();
+                  const season = await prisma.season.findUnique({ where: { year: Number(h.year) } });
+                  const seasonId = season?.id ?? null;
                   await prisma.fieldSeason.upsert({
                     where: {
                       fieldId_year: {
@@ -387,6 +389,7 @@ export function dbApiPlugin(): Plugin {
                       }
                     },
                     update: {
+                      seasonId,
                       areaHa: Number(h.areaHa) || 0,
                       eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
                       areaChangeReason: h.areaChangeReason ?? null,
@@ -405,6 +408,7 @@ export function dbApiPlugin(): Plugin {
                     },
                     create: {
                       fieldId: upsertedField.id,
+                      seasonId,
                       year: Number(h.year),
                       areaHa: Number(h.areaHa) || 0,
                       eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
@@ -831,10 +835,9 @@ export function dbApiPlugin(): Plugin {
               }
             });
 
-            // Kustutamise kaitse peab põhinema PÄRIS viidetel (FK kasutusel),
-            // mitte isOwnCompany lipul — frontend kasutab neid loenduid, et
-            // otsustada, kas kustutamine on ohutu, ja kui mitte, näidata
-            // seoste ülevaadet kustutamise nupu asemel.
+            // Kustutamise kaitse põhineb päris viidetel (FK kasutusel) —
+            // frontend kasutab neid loenduid, et otsustada, kas kustutamine
+            // on ohutu, ja kui mitte, näidata seoste ülevaadet.
             const mapped = dbParties.map(({ _count, ...p }) => ({
               ...p,
               assignedVehiclesCount: _count.vehicles,
@@ -861,8 +864,7 @@ export function dbApiPlugin(): Plugin {
                 email: p.email ?? null,
                 address: p.address ?? null,
                 bankAccount: p.bankAccount ?? null,
-                notes: p.notes ?? null,
-                isOwnCompany: Boolean(p.isOwnCompany)
+                notes: p.notes ?? null
               },
               create: {
                 id: p.id || `party-${Date.now()}`,
@@ -875,8 +877,7 @@ export function dbApiPlugin(): Plugin {
                 email: p.email ?? null,
                 address: p.address ?? null,
                 bankAccount: p.bankAccount ?? null,
-                notes: p.notes ?? null,
-                isOwnCompany: Boolean(p.isOwnCompany)
+                notes: p.notes ?? null
               }
             });
             return json(res, saved);

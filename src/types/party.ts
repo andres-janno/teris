@@ -24,7 +24,6 @@ export interface RelatedParty {
   address?: string;               // Postiaadress / asukoht
   bankAccount?: string;           // IBAN arveldusarve (nt EE12220000...)
   notes?: string;                 // Märkused / lepingulised eritingimused
-  isOwnCompany?: boolean;         // Kas tegemist on meie oma ettevõttega (nt Loisu Agro OÜ)
   createdAt?: string;
   updatedAt?: string;
 

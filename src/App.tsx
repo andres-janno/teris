@@ -156,17 +156,21 @@ export const App: React.FC = () => {
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [seasons, masterFields]);
 
-  // Operaatori (harija) filter — kui seatud, näidatakse kaardil ja
-  // päisestatistikas ainult selle operaatoriga põlde.
+  // Operaatori (harija) filter — kui seatud, näidatakse kaardil,
+  // päisestatistikas, põldude ja kultuuride registris ainult selle
+  // operaatoriga põlde.
   const [operatorFilter, setOperatorFilter] = useState<string>('');
 
+  const operatorMasterFields = React.useMemo(
+    () => (operatorFilter ? masterFields.filter((f) => f.operatorId === operatorFilter) : masterFields),
+    [masterFields, operatorFilter]
+  );
+
   // Derive FieldCollection for the active year (with that year's specific area and crop)
-  const fields: FieldCollection = React.useMemo(() => {
-    const source = operatorFilter
-      ? masterFields.filter((f) => f.operatorId === operatorFilter)
-      : masterFields;
-    return generateFieldCollectionForYear(source, selectedYear);
-  }, [masterFields, selectedYear, operatorFilter]);
+  const fields: FieldCollection = React.useMemo(
+    () => generateFieldCollectionForYear(operatorMasterFields, selectedYear),
+    [operatorMasterFields, selectedYear]
+  );
 
   const [selectedFieldId, setSelectedFieldId] = useState<string | null>(null);
   const [selectedCropFilter, setSelectedCropFilter] = useState<string | null>(null);
@@ -852,6 +856,7 @@ export const App: React.FC = () => {
     setMasterFields((prev) =>
       prev.map((f) => {
         if (f.history.some((h) => h.year === newYear)) return f;
+        if (operatorFilter && f.operatorId !== operatorFilter) return f;
         const latestRec = f.history[0] || {
           year: 2026,
           areaHa: 5.0,
@@ -961,7 +966,7 @@ export const App: React.FC = () => {
   };
 
   // PRIA SHP import
-  const handleFieldsImported = async (importedCollection: FieldCollection, replace: boolean) => {
+  const handleFieldsImported = async (importedCollection: FieldCollection, replace: boolean, importOperatorId?: string, importYear: number = selectedYear) => {
     const existingMaxId = Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
     let nextId = existingMaxId + 1;
 
@@ -972,10 +977,16 @@ export const App: React.FC = () => {
       const fieldCode = p.fieldCode ? String(p.fieldCode) : `61044${1000 + existingMaxId + idx + 1}`;
 
       // Kui see massiiv+põllunumber juba registris on, säilitame olemasoleva
-      // põhiregistri (nimi, mullastik, kataster, operaator, märkused) —
-      // import ei tohi neid PRIA faili üldiste/puuduvate väärtustega üle
-      // kirjutada, vaid ainult värskendab geomeetriat ja valitud aasta kultuuri.
-      const existing = masterFields.find((f) => f.fieldCode === fieldCode && (f.num || '') === num);
+      // põhiregistri (nimi, mullastik, kataster, märkused) — import ei tohi
+      // neid PRIA faili üldiste/puuduvate väärtustega üle kirjutada, vaid
+      // ainult värskendab geomeetriat ja valitud aasta kultuuri.
+      // Operaatori valimisel on vasteks sama operaatori põld või operaatorita
+      // põld; teise operaatori sama massiivi+numbriga põld on eraldi põld
+      // (jagatud massiiv) ja seda ei puututa.
+      const sameCodeNum = masterFields.filter((f) => f.fieldCode === fieldCode && (f.num || '') === num);
+      const existing = importOperatorId
+        ? sameCodeNum.find((f) => f.operatorId === importOperatorId) || sameCodeNum.find((f) => !f.operatorId)
+        : sameCodeNum[0];
 
       const id = existing ? existing.id : nextId++;
       const name = existing?.name || p.name || `Põld ${num}`;
@@ -983,8 +994,8 @@ export const App: React.FC = () => {
       const soilType = existing?.soilType || p.rawProperties?.soilType || undefined;
       const drainageSystem = existing ? existing.drainageSystem : (p.rawProperties?.drainageSystem ?? true);
       const notes = existing?.notes || p.notes || '';
-      const operatorId = existing?.operatorId;
-      const otherYearsHistory = existing?.history.filter((h) => h.year !== selectedYear) || [];
+      const operatorId = importOperatorId || existing?.operatorId;
+      const otherYearsHistory = existing?.history.filter((h) => h.year !== importYear) || [];
 
       return {
         id,
@@ -999,10 +1010,12 @@ export const App: React.FC = () => {
         geometry: feature.geometry,
         history: [
           {
-            year: selectedYear,
+            year: importYear,
             areaHa: area,
             crop: p.crop || 'Määramata',
-            cropVariety: p.crop ? p.crop.split('(')[1]?.replace(')', '') || '' : '',
+            // PRIA sulgudes täpsustus ("vähemalt 80% ristikut…") on osa kultuuri
+            // nimest, mitte sort — sorti PRIA fail ei sisalda.
+            cropVariety: existing?.history.find((h) => h.year === importYear)?.cropVariety,
             cropColor: resolveCropColor(p.crop, p.cropColor),
             targetYieldTonsHa: 7.5,
             workedAreaHa: p.workedAreaHa || 0,
@@ -1027,25 +1040,31 @@ export const App: React.FC = () => {
       return;
     }
 
+    // Uued põllud said kliendis ajutise ID, andmebaas annab oma ID — laeme
+    // registri uuesti, et järgmised salvestused ei sihiks vale ID-ga rida.
+    const freshFields = replace ? null : await api.getMasterFields().catch(() => null);
+
     if (replace) {
       setMasterFields(newMasterFields);
+    } else if (freshFields) {
+      setMasterFields(freshFields);
     } else {
       setMasterFields((prev) => {
-        const byKey = new Map(newMasterFields.map((f) => [`${f.fieldCode}::${f.num || ''}`, f]));
+        const byId = new Map(newMasterFields.map((f) => [String(f.id), f]));
         const merged = prev.map((f) => {
-          const key = `${f.fieldCode}::${f.num || ''}`;
-          const updated = byKey.get(key);
+          const updated = byId.get(String(f.id));
           if (updated) {
-            byKey.delete(key);
+            byId.delete(String(f.id));
             return updated;
           }
           return f;
         });
-        return [...merged, ...byKey.values()];
+        return [...merged, ...byId.values()];
       });
     }
 
     setIsUploadOpen(false);
+    setSelectedYear(importYear);
 
     if (importedCollection.features.length > 0) {
       const firstField = importedCollection.features[0];
@@ -1218,7 +1237,7 @@ export const App: React.FC = () => {
       <FieldManagerModal 
         isOpen={isFieldsRegisterOpen}
         onClose={() => setIsFieldsRegisterOpen(false)}
-        masterFields={masterFields}
+        masterFields={operatorMasterFields}
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
         onFocusField={handleFocusField}
@@ -1248,6 +1267,9 @@ export const App: React.FC = () => {
         onClose={() => setIsUploadOpen(false)}
         onFieldsImported={handleFieldsImported}
         onResetToSample={handleResetToSample}
+        parties={parties}
+        availableYears={availableYears}
+        defaultYear={selectedYear}
       />
 
       <SoilSampleUploadModal
@@ -1321,7 +1343,7 @@ export const App: React.FC = () => {
         crops={crops}
         onSaveCrop={handleSaveCrop}
         onDeleteCrop={handleDeleteCrop}
-        masterFields={masterFields}
+        masterFields={operatorMasterFields}
         selectedYear={selectedYear}
       />
     </div>

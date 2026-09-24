@@ -161,8 +161,7 @@ export async function main() {
         email: party.email,
         address: party.address,
         bankAccount: party.bankAccount,
-        notes: party.notes,
-        isOwnCompany: party.isOwnCompany ?? false
+        notes: party.notes
       },
       create: {
         id: party.id,
@@ -175,8 +174,7 @@ export async function main() {
         email: party.email,
         address: party.address,
         bankAccount: party.bankAccount,
-        notes: party.notes,
-        isOwnCompany: party.isOwnCompany ?? false
+        notes: party.notes
       }
     });
   }
