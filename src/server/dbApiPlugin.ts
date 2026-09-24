@@ -991,6 +991,130 @@ export function dbApiPlugin(): Plugin {
             return json(res, { success: true, count });
           }
 
+          // 9. Põlluraamat (e-PRIA väljavõtte import)
+          if (pathname === '/api/field-operations/import' && method === 'POST') {
+            const body = await parseBody(req);
+            const operatorId: string | undefined = body?.operatorId;
+            const fieldsIn: any[] = Array.isArray(body?.fields) ? body.fields : [];
+            if (!operatorId) return json(res, { error: 'operatorId on kohustuslik' }, 400);
+
+            const toDate = (d: string | null | undefined) => (d ? new Date(d) : null);
+
+            const result = await prisma.$transaction(
+              async (tx) => {
+                let imported = 0;
+                let operations = 0;
+                let products = 0;
+                const skipped: { fieldCode: string; num: string; season: number }[] = [];
+
+                for (const f of fieldsIn) {
+                  const field = await tx.field.findFirst({
+                    where: { fieldCode: String(f.fieldCode), num: String(f.num), operatorId }
+                  });
+                  const fieldSeason = field
+                    ? await tx.fieldSeason.findUnique({
+                        where: { fieldId_year: { fieldId: field.id, year: Number(f.season) } }
+                      })
+                    : null;
+                  if (!fieldSeason) {
+                    skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season });
+                    continue;
+                  }
+
+                  // Põlluraamatut rakenduses käsitsi ei muudeta — import asendab
+                  // selle hooajakirje tegevused täielikult.
+                  await tx.fieldOperation.deleteMany({ where: { fieldSeasonId: fieldSeason.id } });
+
+                  const ops: any[] = Array.isArray(f.operations) ? f.operations : [];
+                  for (const [i, op] of ops.entries()) {
+                    const prods: any[] = Array.isArray(op.products) ? op.products : [];
+                    await tx.fieldOperation.create({
+                      data: {
+                        fieldSeasonId: fieldSeason.id,
+                        type: String(op.type),
+                        dateFrom: new Date(op.dateFrom),
+                        dateTo: toDate(op.dateTo),
+                        areaHa: op.areaHa ?? null,
+                        method: op.method ?? null,
+                        performerId: op.performerId ?? null,
+                        notes: op.notes ?? null,
+                        sortOrder: i,
+                        products: {
+                          create: prods.map((p, j) => ({
+                            category: p.category ?? null,
+                            name: p.name ?? null,
+                            kind: p.kind ?? null,
+                            spec: p.spec ?? null,
+                            amount: p.amount ?? null,
+                            unit: p.unit ?? null,
+                            nKgHa: p.nKgHa ?? null,
+                            pKgHa: p.pKgHa ?? null,
+                            kKgHa: p.kKgHa ?? null,
+                            activeIngredient: p.activeIngredient ?? null,
+                            sortOrder: j
+                          }))
+                        }
+                      }
+                    });
+                    operations++;
+                    products += prods.length;
+                  }
+
+                  // Tühi väärtus failis ei kustuta olemasolevat.
+                  const seasonUpdate: Record<string, unknown> = {};
+                  if (f.targetYieldTonsHa != null) seasonUpdate.targetYieldTonsHa = Number(f.targetYieldTonsHa);
+                  if (f.actualYieldTonsHa != null) seasonUpdate.actualYieldTonsHa = Number(f.actualYieldTonsHa);
+                  if (f.seedingDate) seasonUpdate.seedingDate = new Date(f.seedingDate);
+                  if (f.harvestDate) seasonUpdate.harvestDate = new Date(f.harvestDate);
+                  if (Object.keys(seasonUpdate).length > 0) {
+                    await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: seasonUpdate });
+                  }
+                  imported++;
+                }
+
+                return { imported, operations, products, skipped };
+              },
+              { timeout: 60000 }
+            );
+
+            return json(res, { success: true, ...result });
+          }
+
+          if (pathname === '/api/field-operations' && method === 'GET') {
+            const fieldId = Number(url.searchParams.get('fieldId'));
+            const year = Number(url.searchParams.get('year'));
+            if (!fieldId || !year) return json(res, { error: 'fieldId ja year on kohustuslikud' }, 400);
+
+            const fieldSeason = await prisma.fieldSeason.findUnique({
+              where: { fieldId_year: { fieldId, year } }
+            });
+            if (!fieldSeason) {
+              return json(res, { targetYieldTonsHa: null, actualYieldTonsHa: null, operations: [] });
+            }
+
+            const ops = await prisma.fieldOperation.findMany({
+              where: { fieldSeasonId: fieldSeason.id },
+              orderBy: [{ dateFrom: 'asc' }, { sortOrder: 'asc' }],
+              include: {
+                products: { orderBy: { sortOrder: 'asc' } },
+                performer: { select: { name: true } }
+              }
+            });
+
+            const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
+            return json(res, {
+              targetYieldTonsHa: fieldSeason.targetYieldTonsHa,
+              actualYieldTonsHa: fieldSeason.actualYieldTonsHa,
+              operations: ops.map(({ performer, fieldSeasonId: _fs, performerId: _p, createdAt: _c, ...o }) => ({
+                ...o,
+                dateFrom: day(o.dateFrom),
+                dateTo: day(o.dateTo),
+                performerName: performer?.name ?? null,
+                products: o.products.map(({ operationId: _op, ...p }) => p)
+              }))
+            });
+          }
+
           return json(res, { error: 'Not found' }, 404);
         } catch (err: any) {
           console.error('[API Error]:', err);

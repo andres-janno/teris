@@ -6,6 +6,7 @@ import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
+import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 
 export const api = {
   async getStatus(): Promise<{ status: string; database: string; counts: Record<string, number> }> {
@@ -227,6 +228,25 @@ export const api = {
       body: JSON.stringify(samples)
     });
     if (!res.ok) throw new Error('Failed to import soil samples');
+    return res.json();
+  },
+
+  async importFieldBook(payload: FieldBookImportPayload): Promise<FieldBookImportResult> {
+    const res = await fetch('/api/field-operations/import', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Põlluraamatu import ebaõnnestus');
+    }
+    return res.json();
+  },
+
+  async getFieldOperations(fieldId: number | string, year: number): Promise<FieldOperationsResponse> {
+    const res = await fetch(`/api/field-operations?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`);
+    if (!res.ok) throw new Error('Põllutööde laadimine ebaõnnestus');
     return res.json();
   }
 };
