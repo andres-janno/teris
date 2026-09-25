@@ -37,9 +37,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
 }) => {
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
-  // Find active season info
-  const currentSeason = seasons.find((s) => s.year === selectedYear);
-
   // Calculate crop breakdown with sum ha and counts
   const cropSummaries = useMemo(() => {
     const map = new Map<string, { color: string; totalHa: number; count: number }>();
