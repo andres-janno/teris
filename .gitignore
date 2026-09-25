@@ -24,3 +24,6 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Ajutised failid (sh isikuandmetega impordifailid) — mitte kunagi git'i
+._scratch/
