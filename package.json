@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "lint": "oxlint",
     "preview": "vite preview",
-    "test": "vitest run"
+    "test": "vitest run",
+    "build:server": "vite build --config vite.server.config.ts",
+    "user": "node dist-server/userCli.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

@@ -31,3 +31,6 @@ dist-ssr
 # macOS kõrvalfailid
 ._*
 .DS_Store
+
+# Serveri ehitus
+dist-server

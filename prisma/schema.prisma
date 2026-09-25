@@ -498,3 +498,37 @@ model FieldOperationProduct {
   @@map("field_operation_products")
 }
 
+// ============================================================================
+// 10. KASUTAJAD JA SESSIOONID (rakenduse sisselogimine)
+// ============================================================================
+
+model User {
+  id           String    @id @default(cuid())
+  username     String    @unique // väiketähtedega
+  passwordHash String
+  displayName  String?
+  isActive     Boolean   @default(true)
+  lastLoginAt  DateTime?
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  sessions     Session[]
+
+  @@map("users")
+}
+
+model Session {
+  id         String   @id @default(cuid())
+  userId     String
+  tokenHash  String   @unique // SHA-256 küpsise tokenist
+  expiresAt  DateTime
+  lastSeenAt DateTime @default(now())
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
