@@ -27,3 +27,7 @@ dist-ssr
 
 # Ajutised failid (sh isikuandmetega impordifailid) — mitte kunagi git'i
 ._scratch/
+
+# macOS kõrvalfailid
+._*
+.DS_Store
