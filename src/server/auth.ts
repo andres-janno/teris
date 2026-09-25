@@ -79,21 +79,37 @@ export function clearSessionCookie(): string {
 export function createLoginLimiter(opts: { max: number; windowMs: number }, now: () => number = () => Date.now()) {
   const failures = new Map<string, number[]>();
   const recent = (key: string) => (failures.get(key) ?? []).filter((t) => now() - t < opts.windowMs);
+  const store = (key: string, list: number[]) => {
+    if (list.length === 0) failures.delete(key);
+    else failures.set(key, list);
+  };
   return {
     isBlocked(key: string): boolean {
       const list = recent(key);
-      failures.set(key, list);
+      store(key, list);
       return list.length >= opts.max;
     },
     registerFailure(key: string): void {
       const list = recent(key);
       list.push(now());
-      failures.set(key, list);
+      store(key, list);
     },
     reset(key: string): void {
       failures.delete(key);
+    },
+    size(): number {
+      return failures.size;
     }
   };
+}
+
+// Apache mod_proxy lisab tegeliku kliendiaadressi X-Forwarded-For loendi LÕPPU
+// (esimene väärtus on kliendi enda pandav ja seega võltsitav).
+export function clientIpFrom(xForwardedFor: string | string[] | undefined, remoteAddress: string | undefined): string {
+  const header = Array.isArray(xForwardedFor) ? xForwardedFor[xForwardedFor.length - 1] : xForwardedFor;
+  const parts = (header ?? '').split(',').map((p) => p.trim()).filter(Boolean);
+  const last = parts[parts.length - 1];
+  return last || remoteAddress || 'tundmatu';
 }
 
 export function checkMutationRequest(

@@ -9,7 +9,8 @@ import {
   sessionCookie,
   clearSessionCookie,
   createLoginLimiter,
-  checkMutationRequest
+  checkMutationRequest,
+  clientIpFrom
 } from './auth';
 
 describe('paroolid', () => {
@@ -69,6 +70,37 @@ describe('sisselogimise piiraja', () => {
     lim.registerFailure('ip:1');
     lim.reset('ip:1');
     expect(lim.isBlocked('ip:1')).toBe(false);
+  });
+  it('ei jäta mällu nähtamata võtit ega aegunud võtit (mälukasvu kaitse)', () => {
+    let t = 0;
+    const lim = createLoginLimiter({ max: 10, windowMs: 1000 }, () => t);
+    // isBlocked nähtamata võtme jaoks ei tohi midagi salvestada
+    expect(lim.isBlocked('u:kunagi-nagitud')).toBe(false);
+    expect(lim.size()).toBe(0);
+    // aknast väljunud rike eemaldatakse Map'ist, mitte ei jäeta tühja loendina
+    lim.registerFailure('u:proovinud');
+    expect(lim.size()).toBe(1);
+    t = 1001;
+    expect(lim.isBlocked('u:proovinud')).toBe(false);
+    expect(lim.size()).toBe(0);
+  });
+});
+
+describe('clientIpFrom', () => {
+  it('üks väärtus', () => {
+    expect(clientIpFrom('1.2.3.4', '5.6.7.8')).toBe('1.2.3.4');
+  });
+  it('mitu väärtust — viimane (mod_proxy lisatud) on tõene kliendiaadress', () => {
+    expect(clientIpFrom('spoofed, real', '5.6.7.8')).toBe('real');
+  });
+  it('massiivina antud päis — kasutatakse viimast päist ja selle viimast väärtust', () => {
+    expect(clientIpFrom(['1.1.1.1', 'spoofed, real'], '5.6.7.8')).toBe('real');
+  });
+  it('päis puudub — kasutatakse remoteAddress', () => {
+    expect(clientIpFrom(undefined, '5.6.7.8')).toBe('5.6.7.8');
+  });
+  it('midagi pole teada — tundmatu', () => {
+    expect(clientIpFrom(undefined, undefined)).toBe('tundmatu');
   });
 });
 

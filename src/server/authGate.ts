@@ -16,11 +16,14 @@ import {
   sessionCookie,
   clearSessionCookie,
   createLoginLimiter,
-  checkMutationRequest
+  checkMutationRequest,
+  clientIpFrom
 } from './auth';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
+const MAX_AUTH_BODY_BYTES = 16 * 1024;
+const MAX_USERNAME_LENGTH = 64;
 const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
 
 type DbUser = { id: string; username: string; displayName: string | null; passwordHash: string; isActive: boolean };
@@ -33,9 +36,7 @@ let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= hashPassword('agro-map-dummy-password'));
 
 function clientIp(req: IncomingMessage): string {
-  const xff = req.headers['x-forwarded-for'];
-  const first = (Array.isArray(xff) ? xff[0] : xff)?.split(',')[0]?.trim();
-  return first || req.socket.remoteAddress || 'tundmatu';
+  return clientIpFrom(req.headers['x-forwarded-for'], req.socket.remoteAddress);
 }
 
 function sessionToken(req: IncomingMessage): string | undefined {
@@ -57,9 +58,17 @@ async function currentSession(req: IncomingMessage): Promise<{ user: DbUser; ses
 }
 
 async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<void> {
-  const body = await parseBody(req);
+  const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
   const username = String(body?.username ?? '').trim().toLowerCase();
   const password = String(body?.password ?? '');
+
+  // Ülipikk kasutajanimi ei saa kunagi kehtida (vt userCli.ts piirangut) — vastame
+  // nagu vale parooli korral, ilma piirajat ega andmebaasi puudutamata.
+  if (username.length > MAX_USERNAME_LENGTH) {
+    json(res, { error: 'Vale kasutajanimi või parool' }, 401);
+    return;
+  }
+
   const keys = [`u:${username}`, `ip:${clientIp(req)}`];
 
   if (keys.some((k) => limiter.isBlocked(k))) {
@@ -138,7 +147,7 @@ export async function authGate(
       json(res, { error: 'Sisselogimine on vajalik' }, 401);
       return true;
     }
-    const body = await parseBody(req);
+    const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
     const currentPassword = String(body?.currentPassword ?? '');
     const newPassword = String(body?.newPassword ?? '');
     if (!(await verifyPassword(currentPassword, current.user.passwordHash))) {
