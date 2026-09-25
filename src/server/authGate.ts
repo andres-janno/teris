@@ -2,9 +2,9 @@
 // Rakenduse sisselogimine: sessioonid andmebaasis, /api/auth/* teekonnad,
 // CSRF-kontroll muutvatele päringutele ja sessiooni nõue ülejäänud API-le.
 import type { IncomingMessage, ServerResponse } from 'http';
-import type { ApiOptions } from './apiHandler';
-import { prisma } from './db';
-import { json, parseBody, hasRequestBody } from './http';
+import type { ApiOptions } from './apiHandler.ts';
+import { prisma } from './db.ts';
+import { json, parseBody, hasRequestBody } from './http.ts';
 import {
   SESSION_COOKIE,
   verifyPassword,
@@ -18,7 +18,7 @@ import {
   createLoginLimiter,
   checkMutationRequest,
   clientIpFrom
-} from './auth';
+} from './auth.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const TOUCH_INTERVAL_MS = 60 * 60 * 1000;

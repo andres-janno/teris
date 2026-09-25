@@ -9,6 +9,7 @@ export default defineConfig({
     target: 'node22',
     rolldownOptions: {
       input: {
+        prod: 'src/server/prod.ts',
         userCli: 'src/server/userCli.ts'
       },
       output: {

@@ -1,8 +1,8 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb } from './db';
-import { json, parseBody } from './http';
-import { authGate } from './authGate';
+import { prisma, tsdb } from './db.ts';
+import { json, parseBody } from './http.ts';
+import { authGate } from './authGate.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 

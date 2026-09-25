@@ -2,7 +2,7 @@
 // Vite'i arendusserveri ümbris: /api päringud → handleApiRequest.
 // Toodangus kasutab sama käsitlejat src/server/prod.ts.
 import type { Plugin } from 'vite';
-import { handleApiRequest } from './apiHandler';
+import { handleApiRequest } from './apiHandler.ts';
 
 const DEV_OPTIONS = {
   allowedOrigins: ['https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],

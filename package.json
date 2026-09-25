@@ -5,12 +5,14 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc -b && vite build && vite build --config vite.server.config.ts",
     "lint": "oxlint",
     "preview": "vite preview",
     "test": "vitest run",
     "build:server": "vite build --config vite.server.config.ts",
-    "user": "node dist-server/userCli.js"
+    "user": "node dist-server/userCli.js",
+    "start": "node dist-server/prod.js",
+    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart agro"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",
