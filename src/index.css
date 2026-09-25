@@ -1839,22 +1839,16 @@ body {
   color: var(--emerald-400);
 }
 
-.sample-loader-box {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(59, 130, 246, 0.06);
-  border: 1px solid rgba(59, 130, 246, 0.15);
-  border-radius: var(--radius-md);
-  padding: 10px 14px;
-  font-size: 0.78rem;
-}
-
-.sample-text {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: #bfdbfe;
+/* Andmebaasi ühenduse viga (kaardi kohal) */
+.db-error-banner {
+  position: absolute;
+  top: 12px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1500;
+  max-width: min(640px, calc(100% - 32px));
+  box-shadow: var(--shadow-modal);
+  background: var(--bg-modal);
 }
 
 /* Fleet & Machinery Tracker */

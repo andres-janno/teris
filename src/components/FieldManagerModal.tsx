@@ -26,7 +26,6 @@ import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
-import { INITIAL_CROPS } from '../data/sampleCrops';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -103,10 +102,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const editSeason = seasons.find((s) => s.year === selectedYear);
   const isEditSeasonLocked = editSeason?.isLocked ?? false;
 
-  // Active crops and variety lookup
-  const activeCrops = useMemo(() => {
-    return crops.length > 0 ? crops : INITIAL_CROPS;
-  }, [crops]);
+  // Kultuuride register (andmebaasist)
+  const activeCrops = crops;
 
   // Sama sisu-põhine sobitus nagu App.tsx resolveCropColor: PRIA tekst
   // ("Punane ristik (...)", "Rukis, v.a ..., allakülvita") seotakse

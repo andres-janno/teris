@@ -6,9 +6,7 @@ import {
   FileArchive, 
   Check, 
   AlertCircle, 
-  Sparkles,
-  RefreshCw,
-  Info
+  RefreshCw
 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { RelatedParty } from '../types/party';
@@ -40,7 +38,6 @@ interface FieldUploadModalProps {
   isOpen: boolean;
   onClose: () => void;
   onFieldsImported: (newFields: FieldCollection, replace: boolean, operatorId: string | undefined, year: number) => void;
-  onResetToSample: () => void;
   parties?: RelatedParty[];
   availableYears?: number[];
   defaultYear: number;
@@ -50,7 +47,6 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
   isOpen,
   onClose,
   onFieldsImported,
-  onResetToSample,
   parties = [],
   availableYears = [],
   defaultYear
@@ -280,23 +276,6 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
             </div>
           )}
 
-          {/* Sample quick loader */}
-          <div className="sample-loader-box">
-            <div className="sample-text">
-              <Info size={16} className="text-blue" />
-              <span>Pole faili käepärast? Saad laadida Eesti näidispõllud:</span>
-            </div>
-            <button 
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                onResetToSample();
-                onClose();
-              }}
-            >
-              <Sparkles size={14} />
-              <span>Laadi näidispõllud (Järvamaa)</span>
-            </button>
-          </div>
         </div>
 
         <div className="modal-footer">

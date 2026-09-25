@@ -30,18 +30,7 @@ import type { RelatedParty } from './types/party';
 import type { Crop } from './types/crop';
 import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
-import { INITIAL_MASTER_FIELDS } from './data/sampleFieldRegister';
-import { INITIAL_SEASONS } from './data/sampleSeasons';
-import { 
-  INITIAL_VEHICLES, 
-  INITIAL_IMPLEMENTS, 
-  INITIAL_TELTONIKA_DEVICES, 
-  enrichVehicles 
-} from './data/sampleFleet';
-import { INITIAL_CULTIVATION_PASS } from './data/sampleTelemetry';
-import { SAMPLE_POI_LIST } from './data/samplePoi';
-import { INITIAL_PARTIES } from './data/sampleParties';
-import { INITIAL_CROPS } from './data/sampleCrops';
+import { enrichVehicles } from './services/fleet';
 import { TelemetrySimulator } from './services/telemetrySimulator';
 import { getBoundingBox, generateCultivationPolygon } from './services/geometryEngine';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
@@ -57,9 +46,45 @@ const TRACKED_DEVICE_IMEI = '860848081816598';
 const WORKING_SPEED_MIN_KMH = 0.5;
 const WORKING_SPEED_MAX_KMH = 15;
 
+// Tühi harimise taasesitus, kui jälgitava seadme GPS-ajalugu puudub.
+const EMPTY_CULTIVATION_PASS: CultivationPass = {
+  id: '',
+  vehicleId: '',
+  vehicleName: '',
+  operationType: '',
+  startTime: '',
+  workingWidthM: 12,
+  points: [],
+  workedAreaHa: 0,
+  distanceKm: 0,
+  avgSpeedKmH: 0
+};
+
+// Varasemad versioonid hoidsid andmebaasi andmeid (sh seotud isikute
+// isikuandmeid) brauseri localStorage'is — need kustutatakse.
+const LEGACY_DATA_CACHE_KEYS = [
+  'agrimap_seasons',
+  'agrimap_master_fields',
+  'agrimap_vehicles',
+  'agrimap_implements',
+  'agrimap_devices',
+  'agrimap_parties',
+  'agrimap_crops_register',
+  'agrimap_pois'
+];
+
 export const App: React.FC = () => {
   // Database connection status
   const [dbConnected, setDbConnected] = useState<boolean>(false);
+  const [dbError, setDbError] = useState<boolean>(false);
+
+  useEffect(() => {
+    try {
+      LEGACY_DATA_CACHE_KEYS.forEach((key) => localStorage.removeItem(key));
+    } catch {
+      // localStorage pole saadaval (nt privaatrežiim) — pole midagi kustutada
+    }
+  }, []);
 
   // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation.
   // Salvestatakse localStorage'i, et valik jääks meelde ka lehe värskendamisel
@@ -96,29 +121,7 @@ export const App: React.FC = () => {
   const [selectedYear, setSelectedYear] = useState<number>(2026);
 
   // 0. Hooaegade register (elutsükkel: ettevalmistus, külv, koristus, suletud/lukus)
-  const [seasons, setSeasons] = useState<FarmingSeason[]>(() => {
-    const saved = localStorage.getItem('agrimap_seasons');
-    let loaded: FarmingSeason[] = saved ? JSON.parse(saved) : INITIAL_SEASONS;
-
-    // Dynamically ensure all seasons exist from activeYear + 3 down to activeYear - 4
-    const activeYear = loaded.find((s) => s.status === 'active')?.year || 2026;
-    const existingYears = new Set(loaded.map((s) => s.year));
-    for (let y = activeYear + 3; y >= activeYear - 4; y--) {
-      if (!existingYears.has(y)) {
-        loaded.push({
-          id: `season-${y}`,
-          year: y,
-          name: `Hooaeg ${y}`,
-          status: y < activeYear ? 'closed' : y === activeYear ? 'active' : 'planning',
-          isLocked: y < activeYear,
-          totalAreaHa: 298.5,
-          fieldsCount: 32,
-          notes: y > activeYear ? `${y}. a külvikorra eelplaneerimine` : `${y}. a arhiveeritud hooaeg`
-        } as FarmingSeason);
-      }
-    }
-    return loaded.sort((a, b) => b.year - a.year);
-  });
+  const [seasons, setSeasons] = useState<FarmingSeason[]>([]);
 
   const [isSeasonManagerOpen, setIsSeasonManagerOpen] = useState(false);
 
@@ -133,13 +136,8 @@ export const App: React.FC = () => {
     } as FarmingSeason;
   }, [seasons, selectedYear]);
 
-  // Persist seasons to localStorage
-  useEffect(() => {
-    localStorage.setItem('agrimap_seasons', JSON.stringify(seasons));
-  }, [seasons]);
-
-  // 1. Põldude ja külvikorra master-register (kasutab alati otse ts failide sisu)
-  const [masterFields, setMasterFields] = useState<MasterField[]>(INITIAL_MASTER_FIELDS);
+  // 1. Põldude ja külvikorra master-register (andmebaasist)
+  const [masterFields, setMasterFields] = useState<MasterField[]>([]);
 
   // Dynamic available years list: activeYear + 3 to activeYear - 4
   const availableYears = React.useMemo(() => {
@@ -182,48 +180,22 @@ export const App: React.FC = () => {
     return fields.features.find((f) => String(f.properties.id) === selectedFieldId || String(f.id) === selectedFieldId) || null;
   }, [fields, selectedFieldId]);
 
-  // Save master fields to localStorage
-  useEffect(() => {
-    localStorage.setItem('agrimap_master_fields', JSON.stringify(masterFields));
-  }, [masterFields]);
   
   // 1. Sõidukite register
-  const [rawVehicles, setRawVehicles] = useState<Vehicle[]>(() => {
-    const saved = localStorage.getItem('agrimap_vehicles');
-    return saved ? JSON.parse(saved) : INITIAL_VEHICLES;
-  });
+  const [rawVehicles, setRawVehicles] = useState<Vehicle[]>([]);
 
   // 2. Haakeriistade register
-  const [implementsList, setImplementsList] = useState<Implement[]>(() => {
-    const saved = localStorage.getItem('agrimap_implements');
-    return saved ? JSON.parse(saved) : INITIAL_IMPLEMENTS;
-  });
+  const [implementsList, setImplementsList] = useState<Implement[]>([]);
 
   // 3. Teltonika GPS seadmete register
-  const [devices, setDevices] = useState<TeltonikaDevice[]>(() => {
-    const saved = localStorage.getItem('agrimap_devices');
-    return saved ? JSON.parse(saved) : INITIAL_TELTONIKA_DEVICES;
-  });
+  const [devices, setDevices] = useState<TeltonikaDevice[]>([]);
 
   // Liitandmetega sõidukid kaardile ja vaadetesse
   const vehicles: EnrichedVehicle[] = enrichVehicles(rawVehicles, implementsList, devices);
   const [selectedVehicle, setSelectedVehicle] = useState<EnrichedVehicle | null>(null);
 
-  // Persistence
-  useEffect(() => {
-    localStorage.setItem('agrimap_vehicles', JSON.stringify(rawVehicles));
-  }, [rawVehicles]);
-
-  useEffect(() => {
-    localStorage.setItem('agrimap_implements', JSON.stringify(implementsList));
-  }, [implementsList]);
-
-  useEffect(() => {
-    localStorage.setItem('agrimap_devices', JSON.stringify(devices));
-  }, [devices]);
-
-  const [cultivationPass, setCultivationPass] = useState<CultivationPass>(INITIAL_CULTIVATION_PASS);
-  const [pois, setPois] = useState<PointOfInterest[]>(SAMPLE_POI_LIST);
+  const [cultivationPass, setCultivationPass] = useState<CultivationPass>(EMPTY_CULTIVATION_PASS);
+  const [pois, setPois] = useState<PointOfInterest[]>([]);
   const [selectedPoi, setSelectedPoi] = useState<PointOfInterest | null>(null);
 
   // Mullaproovid (soil samples)
@@ -238,7 +210,6 @@ export const App: React.FC = () => {
         if (!isMounted) return;
         if (status.status === 'connected') {
           setDbConnected(true);
-          console.log('✅ Connected to PostgreSQL agro_db:', status.counts);
 
           const [dbFields, dbSeasons, dbFleet, dbPois, dbParties, dbCrops, dbSoilSamples] = await Promise.all([
             api.getMasterFields().catch(() => null),
@@ -262,10 +233,15 @@ export const App: React.FC = () => {
           if (dbParties && dbParties.length > 0) setParties(dbParties);
           if (dbCrops && dbCrops.length > 0) setCrops(dbCrops);
           if (dbSoilSamples) setSoilSamples(dbSoilSamples);
+          // Kaart loodi enne andmete saabumist — mahuta laaditud põllud ekraanile.
+          setFitBoundsTrigger((prev) => prev + 1);
+        } else {
+          setDbError(true);
         }
       })
       .catch((err) => {
-        console.warn('⚠️ agro_db API unavailable, using offline fallback:', err);
+        console.warn('agro_db API pole saadaval:', err);
+        setDbError(true);
       });
 
     return () => {
@@ -298,15 +274,8 @@ export const App: React.FC = () => {
   } | null>(null);
 
   // 6. Seotud isikute register (maaomanikud, rentnikud, masinajuhid, partnerid)
-  const [parties, setParties] = useState<RelatedParty[]>(() => {
-    const saved = localStorage.getItem('agrimap_parties');
-    return saved ? JSON.parse(saved) : INITIAL_PARTIES;
-  });
+  const [parties, setParties] = useState<RelatedParty[]>([]);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('agrimap_parties', JSON.stringify(parties));
-  }, [parties]);
 
   const handleSaveParty = (partyToSave: RelatedParty) => {
     setParties((prev) => {
@@ -327,15 +296,8 @@ export const App: React.FC = () => {
   };
 
   // Crops & Varieties Register state
-  const [crops, setCrops] = useState<Crop[]>(() => {
-    const saved = localStorage.getItem('agrimap_crops_register');
-    return saved ? JSON.parse(saved) : INITIAL_CROPS;
-  });
+  const [crops, setCrops] = useState<Crop[]>([]);
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
-
-  useEffect(() => {
-    localStorage.setItem('agrimap_crops_register', JSON.stringify(crops));
-  }, [crops]);
 
   const handleSaveCrop = (cropToSave: Crop) => {
     setCrops((prev) => {
@@ -429,10 +391,7 @@ export const App: React.FC = () => {
     api.getTelemetryHistory(TRACKED_DEVICE_IMEI, 6)
       .then((res) => {
         if (!isMounted) return;
-        if (res.points.length < 2) {
-          attachSimulator(INITIAL_CULTIVATION_PASS);
-          return;
-        }
+        if (res.points.length < 2) return;
 
         const points: TelemetryPoint[] = res.points.map((p) => ({
           timestamp: p.timestamp,
@@ -466,8 +425,7 @@ export const App: React.FC = () => {
         attachSimulator(realPass);
       })
       .catch((err) => {
-        console.warn('Ei õnnestunud laadida päris GPS-ajalugu, kasutan mockup-andmeid:', err);
-        attachSimulator(INITIAL_CULTIVATION_PASS);
+        console.warn('Jälgitava seadme GPS-ajalugu ei õnnestunud laadida:', err);
       });
 
     return () => {
@@ -722,7 +680,6 @@ export const App: React.FC = () => {
     };
     setPois((prev) => {
       const updatedList = [newPoi, ...prev];
-      localStorage.setItem('agrimap_pois', JSON.stringify(updatedList));
       return updatedList;
     });
     setIsAddPoiMode(false);
@@ -736,7 +693,6 @@ export const App: React.FC = () => {
   const handleUpdatePoi = (id: string, updatedData: Partial<PointOfInterest>) => {
     setPois((prev) => {
       const updatedList = prev.map((p) => (p.id === id ? { ...p, ...updatedData } : p));
-      localStorage.setItem('agrimap_pois', JSON.stringify(updatedList));
       return updatedList;
     });
     setPoiDraft(null);
@@ -751,7 +707,6 @@ export const App: React.FC = () => {
   const handleDeletePoi = (id: string) => {
     setPois((prev) => {
       const updatedList = prev.filter((p) => p.id !== id);
-      localStorage.setItem('agrimap_pois', JSON.stringify(updatedList));
       return updatedList;
     });
     if (selectedPoi && selectedPoi.id === id) {
@@ -1071,11 +1026,6 @@ export const App: React.FC = () => {
     setIsSoilUploadOpen(false);
   };
 
-  const handleResetToSample = () => {
-    setMasterFields(INITIAL_MASTER_FIELDS);
-    setIsUploadOpen(false);
-  };
-
   // Totals for stats bar
   const totalAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.areaHa || 0), 0);
   const workedAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.workedAreaHa || 0), 0);
@@ -1114,6 +1064,11 @@ export const App: React.FC = () => {
 
       {/* Main Map View */}
       <div className="main-content">
+        {dbError && (
+          <div className="db-error-banner alert-box error" role="alert">
+            Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.
+          </div>
+        )}
         <MapView 
           visibility={visibility}
           fields={fields}
@@ -1243,7 +1198,6 @@ export const App: React.FC = () => {
         isOpen={isUploadOpen}
         onClose={() => setIsUploadOpen(false)}
         onFieldsImported={handleFieldsImported}
-        onResetToSample={handleResetToSample}
         parties={parties}
         availableYears={availableYears}
         defaultYear={selectedYear}
