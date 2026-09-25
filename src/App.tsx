@@ -36,11 +36,6 @@ import { getBoundingBox, generateCultivationPolygon } from './services/geometryE
 import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
 
-// Teltonika Harimise Telemeetria paneel jälgib hetkel selle konkreetse
-// mobiilse seadme päris GPS-ajalugu (asendab varasema kõvakoodis
-// mockup-taasesituse) — IMEI on kokku lepitud kasutajaga.
-const TRACKED_DEVICE_IMEI = '860848081816598';
-
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
 // (agro_tsdb-s puudub otsene hüdraulika/rippriist signaal).
 const WORKING_SPEED_MIN_KMH = 0.5;
@@ -352,11 +347,25 @@ export const App: React.FC = () => {
 
   const simulatorRef = useRef<TelemetrySimulator | null>(null);
 
-  // Initialize simulator: laeb TRACKED_DEVICE_IMEI päris GPS-ajaloo
-  // agro_tsdb-st ja taasesitab seda (mängi/paus/kiirus/scrubber). Kui see
-  // ebaõnnestub või andmeid pole veel piisavalt, langeb tagasi kohapealsele
-  // mockup-teekonnale, et paneel ei jääks tühjaks.
+  // Harimise taasesitus jälgib masinat, mille küljes on mobiilside
+  // (IMEI-ga) Teltonika seade — masina nimi, ID ja IMEI tulevad registrist.
+  const trackedTarget = React.useMemo(() => {
+    for (const v of rawVehicles) {
+      const device = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
+      if (device?.connectivityType === 'cellular' && device.imei) {
+        return { imei: device.imei, vehicleId: v.id, vehicleName: v.name };
+      }
+    }
+    return null;
+  }, [rawVehicles, devices]);
+  const trackedImei = trackedTarget?.imei ?? null;
+  const trackedVehicleId = trackedTarget?.vehicleId ?? '';
+  const trackedVehicleName = trackedTarget?.vehicleName ?? '';
+
+  // Laeb jälgitava seadme päris GPS-ajaloo agro_tsdb-st ja taasesitab seda
+  // (mängi/paus/kiirus/scrubber). Andmete puudumisel jääb paneel tühjaks.
   useEffect(() => {
+    if (!trackedImei) return;
     let isMounted = true;
     let sim: TelemetrySimulator | null = null;
 
@@ -372,7 +381,7 @@ export const App: React.FC = () => {
         // Uuenda jälgitava seadme asukoht/kiirus kaardil taasesituse käigus
         setDevices((prevDevs) =>
           prevDevs.map((d) => {
-            if (d.imei === TRACKED_DEVICE_IMEI) {
+            if (d.imei === trackedImei) {
               return {
                 ...d,
                 position: activePos,
@@ -388,7 +397,7 @@ export const App: React.FC = () => {
       });
     };
 
-    api.getTelemetryHistory(TRACKED_DEVICE_IMEI, 6)
+    api.getTelemetryHistory(trackedImei, 6)
       .then((res) => {
         if (!isMounted) return;
         if (res.points.length < 2) return;
@@ -407,9 +416,9 @@ export const App: React.FC = () => {
         const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
 
         const realPass: CultivationPass = {
-          id: `pass-${TRACKED_DEVICE_IMEI}`,
-          vehicleId: '',
-          vehicleName: 'Claas Axion 850',
+          id: `pass-${trackedImei}`,
+          vehicleId: trackedVehicleId,
+          vehicleName: trackedVehicleName,
           operationType: 'Harimine',
           startTime: points[0].timestamp,
           endTime: points[points.length - 1].timestamp,
@@ -431,8 +440,11 @@ export const App: React.FC = () => {
     return () => {
       isMounted = false;
       sim?.destroy();
+      simulatorRef.current = null;
     };
-  }, []);
+    // Sõltub ainult jälgitava seadme identiteedist — mitte taasesituse ajal
+    // uuenevast devices-olekust, muidu käivituks simulaator iga sammu järel uuesti.
+  }, [trackedImei, trackedVehicleId, trackedVehicleName]);
 
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
