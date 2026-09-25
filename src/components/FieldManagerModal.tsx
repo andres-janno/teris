@@ -27,7 +27,6 @@ import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import { INITIAL_CROPS } from '../data/sampleCrops';
-import { SAMPLE_CADASTRAL_PARCELS } from '../data/sampleCadastre';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -364,23 +363,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       return;
     }
 
-    const defaultCad = SAMPLE_CADASTRAL_PARCELS[editCadastralParcels.length % SAMPLE_CADASTRAL_PARCELS.length];
     const defaultHa = Math.round((editAreaHa / (editCadastralParcels.length + 1)) * 100) / 100;
-    const defaultRateHa = defaultCad.ownershipType === 'OWNED' ? 18 : 140;
-    const defaultTotal = Math.round(defaultRateHa * defaultHa * 100) / 100;
 
     setEditCadastralParcels([
       ...editCadastralParcels,
       {
-        cadastralCode: defaultCad.cadastralCode,
-        parcelName: defaultCad.name || 'Katastriüksus',
-        ownershipType: defaultCad.ownershipType,
-        ownerName: defaultCad.ownerName,
-        fieldAreaHa: defaultHa,
-        landTaxEurHa: defaultCad.ownershipType === 'OWNED' ? defaultRateHa : undefined,
-        landTaxEurYear: defaultCad.ownershipType === 'OWNED' ? defaultTotal : undefined,
-        rentFeeEurHa: defaultCad.ownershipType === 'RENTED' ? defaultRateHa : undefined,
-        rentFeeEurYear: defaultCad.ownershipType === 'RENTED' ? defaultTotal : undefined
+        cadastralCode: '',
+        parcelName: '',
+        ownershipType: 'OWNED',
+        ownerName: '',
+        fieldAreaHa: defaultHa
       }
     ]);
   };

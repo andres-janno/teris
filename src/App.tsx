@@ -21,7 +21,7 @@ import { CropRegisterModal } from './components/CropRegisterModal';
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
-import { generateFieldCollectionForYear, getFieldFeatureForYear } from './types/fieldRegister';
+import { generateFieldCollectionForYear } from './types/fieldRegister';
 import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from './types/fleet';
 import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
@@ -43,7 +43,7 @@ import { SAMPLE_POI_LIST } from './data/samplePoi';
 import { INITIAL_PARTIES } from './data/sampleParties';
 import { INITIAL_CROPS } from './data/sampleCrops';
 import { TelemetrySimulator } from './services/telemetrySimulator';
-import { calculateFieldWorkProgress, getBoundingBox, generateCultivationPolygon } from './services/geometryEngine';
+import { getBoundingBox, generateCultivationPolygon } from './services/geometryEngine';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
 
@@ -475,35 +475,6 @@ export const App: React.FC = () => {
       sim?.destroy();
     };
   }, []);
-
-  // Recalculate Field-2 progress whenever cultivation pass changes
-  useEffect(() => {
-    if (!cultivationPass.swathPolygon) return;
-
-    setMasterFields((prev) =>
-      prev.map((f) => {
-        if (f.id === 'field-pria-2') {
-          const currentFeature = getFieldFeatureForYear(f, selectedYear);
-          const { workedAreaHa, progressPct: calcProg } = calculateFieldWorkProgress(currentFeature, cultivationPass.swathPolygon || null);
-          return {
-            ...f,
-            history: f.history.map((h) => {
-              if (h.year === selectedYear) {
-                return {
-                  ...h,
-                  workedAreaHa,
-                  workProgress: calcProg,
-                  status: calcProg >= 100 ? 'completed' : (calcProg > 0 ? 'in_progress' : 'not_started')
-                };
-              }
-              return h;
-            })
-          };
-        }
-        return f;
-      })
-    );
-  }, [cultivationPass, selectedYear]);
 
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
@@ -1222,8 +1193,6 @@ export const App: React.FC = () => {
             onSpeedChange={handleSpeedChange}
             workingWidthM={workingWidthM}
             onWidthChange={handleWidthChange}
-            targetFieldName="Põld nr 2 (Talinisu)"
-            fieldAreaHa={2.75}
           />
         )}
       </div>
