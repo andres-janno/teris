@@ -561,6 +561,8 @@ export const App: React.FC = () => {
     });
   };
 
+  const handleCloseFieldDetails = React.useCallback(() => setSelectedFieldId(null), []);
+
   // Vehicle focus
   const handleFocusVehicle = (vehicle: EnrichedVehicle) => {
     setSelectedVehicle(vehicle);
@@ -1177,16 +1179,19 @@ export const App: React.FC = () => {
             onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
           />
 
-          {/* Selected Field Details Box Directly Under Season Selector */}
-          {selectedField && (
-            <FieldDetailsDrawer 
-              field={selectedField}
-              onClose={() => setSelectedFieldId(null)}
-              onFocusField={handleFocusField}
-              isSeasonLocked={activeSeason?.isLocked ?? false}
-            />
-          )}
         </div>
+
+        {/* Valitud põllu info keskmises aknas */}
+        {selectedField && (
+          <FieldDetailsDrawer
+            field={selectedField}
+            masterField={masterFields.find((f) => String(f.id) === String(selectedField.properties.id)) ?? null}
+            seasons={seasons}
+            soilSamples={soilSamples}
+            onClose={handleCloseFieldDetails}
+            onFocusField={handleFocusField}
+          />
+        )}
 
         {/* Floating Layer Controller (Top Right) */}
         <LayerControl 

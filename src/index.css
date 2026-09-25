@@ -1041,22 +1041,7 @@ body {
   color: var(--emerald-500);
 }
 
-/* Selected Field Details Drawer */
-.field-drawer {
-  width: 100%;
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-card);
-  animation: fadeIn 0.2s ease-out;
-  /* Selgesõnaliselt sama fondipinu, mis body's - see kaart kuvatakse
-     kaardi kohal ujuva absoluutpositsioneeritud elemendina ja peab
-     kindlalt kasutama rakenduse põhifonti, mitte pärima brauseri vaikefonti. */
-  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-}
-
+/* Selected Field Details */
 .drawer-header {
   display: flex;
   align-items: center;
@@ -1134,6 +1119,199 @@ body {
   font-size: 0.74rem;
   color: var(--text-secondary);
   margin-bottom: 6px;
+}
+
+/* Põllu info keskmine aken (kaks veergu: põllu andmed | põllutööd) */
+.modal-content.field-detail-modal {
+  width: min(1100px, 92vw);
+  height: min(88vh, 900px);
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.field-detail-header {
+  padding: 16px 22px;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.field-detail-seasons {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 22px;
+  border-bottom: 1px solid var(--border-card);
+  color: var(--text-secondary);
+}
+
+.field-detail-seasons-label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-right: 4px;
+}
+
+.field-season-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border-card);
+  background: var(--stat-bg);
+  color: var(--text-primary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.field-season-chip:hover {
+  background: var(--stat-bg-hover);
+}
+
+.field-season-chip.active {
+  background: var(--basemap-active-bg);
+  border-color: var(--basemap-active-border);
+  color: var(--basemap-active-color);
+}
+
+.field-season-chip-tag {
+  font-size: 0.62rem;
+  font-weight: 700;
+  padding: 0 4px;
+  border-radius: 3px;
+  background: var(--emerald-500);
+  color: #fff;
+}
+
+.soil-table {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+}
+
+.soil-row {
+  display: grid;
+  grid-template-columns: 1.6fr 0.8fr repeat(7, 1fr);
+  gap: 4px;
+  align-items: center;
+  padding: 5px 8px;
+  font-size: 0.74rem;
+  text-align: right;
+}
+
+.soil-row > span:first-child {
+  text-align: left;
+}
+
+.soil-row-head {
+  background: var(--stat-bg);
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--text-secondary);
+}
+
+.soil-row-year {
+  width: 100%;
+  border: none;
+  border-top: 1px solid var(--border-card);
+  background: none;
+  font-family: inherit;
+  color: var(--text-primary);
+  cursor: pointer;
+}
+
+.soil-row-year:hover {
+  background: var(--stat-bg-hover);
+}
+
+.soil-row-point {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  background: var(--stat-bg);
+}
+
+.soil-year-cell {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-weight: 700;
+}
+
+.soil-age {
+  font-size: 0.66rem;
+  font-weight: 700;
+}
+
+.soil-value {
+  font-weight: 700;
+}
+
+.soil-footnote {
+  padding: 5px 8px;
+  font-size: 0.64rem;
+  color: var(--text-secondary);
+  border-top: 1px solid var(--border-card);
+}
+
+.field-detail-columns {
+  flex: 1;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.field-detail-col {
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field-detail-col > .detail-section {
+  margin-top: 0;
+}
+
+.field-detail-col-ops {
+  border-left: 1px solid var(--border-card);
+}
+
+.field-detail-footer {
+  padding: 12px 22px;
+  border-top: 1px solid var(--border-card);
+  display: flex;
+  justify-content: flex-end;
+}
+
+.field-ops-fill {
+  margin-top: 0;
+}
+
+.field-ops-list.field-ops-list-fill {
+  max-height: none;
+  overflow-y: visible;
+}
+
+@media (max-width: 760px) {
+  .field-detail-columns {
+    grid-template-columns: 1fr;
+    overflow-y: auto;
+  }
+  .field-detail-col {
+    overflow-y: visible;
+  }
+  .field-detail-col-ops {
+    border-left: none;
+    border-top: 1px solid var(--border-card);
+  }
 }
 
 .field-ops-list {
@@ -1605,8 +1783,14 @@ body {
 }
 
 .alert-box.error {
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  color: #9f1239;
+}
+
+[data-theme='dark'] .alert-box.error {
   background: rgba(244, 63, 94, 0.15);
-  border: 1px solid rgba(244, 63, 94, 0.3);
+  border-color: rgba(244, 63, 94, 0.3);
   color: #fecdd3;
 }
 

@@ -7,6 +7,7 @@ import { api } from '../services/api';
 interface FieldOperationsSectionProps {
   fieldId: number | string;
   year: number;
+  fill?: boolean; // ajatelg täidab vanema kõrguse (keskmine aken), mitte ei piirdu 320 px-ga
 }
 
 const fmtDate = (iso: string) => {
@@ -27,7 +28,7 @@ const productLine = (p: FieldOperationProductDto) => {
   return parts.join(' · ');
 };
 
-export const FieldOperationsSection: React.FC<FieldOperationsSectionProps> = ({ fieldId, year }) => {
+export const FieldOperationsSection: React.FC<FieldOperationsSectionProps> = ({ fieldId, year, fill = false }) => {
   const [data, setData] = useState<FieldOperationsResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [openNotes, setOpenNotes] = useState<Set<number>>(new Set());
@@ -66,7 +67,7 @@ export const FieldOperationsSection: React.FC<FieldOperationsSectionProps> = ({ 
     .join(' · ');
 
   return (
-    <div className="detail-section">
+    <div className={`detail-section${fill ? ' field-ops-fill' : ''}`}>
       <div className="section-subtitle">
         <ClipboardList size={14} />
         <span>Põllutööd {year}</span>
@@ -79,7 +80,7 @@ export const FieldOperationsSection: React.FC<FieldOperationsSectionProps> = ({ 
       {ops.length > 0 && (
         <>
           <div className="field-op-summary">{summary}</div>
-          <ul className="field-ops-list">
+          <ul className={`field-ops-list${fill ? ' field-ops-list-fill' : ''}`}>
             {ops.map((op) => (
               <li key={op.id} className="field-op-item">
                 <div className="field-op-head">
