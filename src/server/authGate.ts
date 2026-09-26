@@ -198,6 +198,11 @@ export async function authGate(
       json(res, { error: 'Praegune parool on vale' }, 401);
       return true;
     }
+    // Ajutise parooli puhul on see oluline: admin teab ajutist parooli.
+    if (newPassword === currentPassword) {
+      json(res, { error: 'Uus parool peab erinema praegusest' }, 400);
+      return true;
+    }
     const problem = validateNewPassword(newPassword);
     if (problem) {
       json(res, { error: problem }, 400);

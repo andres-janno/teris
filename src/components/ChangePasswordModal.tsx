@@ -36,12 +36,15 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
     setError(null);
     if (next.length < 10) return setError('Parool peab olema vähemalt 10 märki');
     if (next !== repeat) return setError('Uued paroolid ei kattu');
+    if (next === current) return setError('Uus parool peab erinema praegusest');
     setBusy(true);
     try {
       await api.changePassword(current, next);
       if (forced) onDone?.();
       else setDone(true);
     } catch (err) {
+      // Sundvahetuse ajal sessioon kadus (admin lähtestas/keelas) — tagasi sisselogimisele.
+      if (forced && (err as { status?: number }).status === 401) return onLogout?.();
       setError(err instanceof Error ? err.message : 'Parooli muutmine ebaõnnestus');
     } finally {
       setBusy(false);

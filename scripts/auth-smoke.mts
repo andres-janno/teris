@@ -72,6 +72,7 @@ try {
   const fresh = await loginAs(NEWUSER, TEMP_PASS);
   check('uus kasutaja peab parooli vahetama', fresh.status === 200 && fresh.user?.mustChangePassword === true);
   check('sundvahetuse ajal /api/status → 403', (await fetch(BASE + '/api/status', { headers: { Cookie: fresh.cookie } })).status === 403);
+  check('uus parool = ajutine → 400', (await send('POST', '/api/auth/password', fresh.cookie, { currentPassword: TEMP_PASS, newPassword: TEMP_PASS })).status === 400);
   check('parooli vahetus → 200', (await send('POST', '/api/auth/password', fresh.cookie, { currentPassword: TEMP_PASS, newPassword: NEW_PASS })).status === 200);
   check('pärast vahetust /api/status → 200', (await fetch(BASE + '/api/status', { headers: { Cookie: fresh.cookie } })).status === 200);
 

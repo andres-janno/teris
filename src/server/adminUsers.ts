@@ -128,7 +128,7 @@ export async function handleAdminUsers(
   // PATCH
   const body = await parseBody(req, MAX_BODY_BYTES);
   const data: { displayName?: string | null; isActive?: boolean; isAdmin?: boolean } = {};
-  if (body && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
+  if (body && typeof body === 'object' && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
   if (typeof body?.isActive === 'boolean') data.isActive = body.isActive;
   if (typeof body?.isAdmin === 'boolean') data.isAdmin = body.isAdmin;
 

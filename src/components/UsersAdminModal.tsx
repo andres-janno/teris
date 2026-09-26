@@ -60,8 +60,9 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     setBusy(true);
     try {
       await action();
-      await load();
+      // Toiming õnnestus — tagasi nimekirja ka siis, kui järgnev laadimine ebaõnnestub.
       setMode({ kind: 'list' });
+      await load();
     } catch (err) {
       setError(errorText(err));
     } finally {

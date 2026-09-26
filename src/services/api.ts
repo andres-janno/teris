@@ -55,7 +55,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ currentPassword, newPassword })
     });
-    if (!res.ok) throw new Error(await errorMessage(res, 'Parooli muutmine ebaõnnestus'));
+    if (!res.ok) throw Object.assign(new Error(await errorMessage(res, 'Parooli muutmine ebaõnnestus')), { status: res.status });
   },
 
   async listUsers(): Promise<AdminUser[]> {
