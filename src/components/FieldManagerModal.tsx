@@ -1192,8 +1192,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             <table className="register-table">
               <thead>
                 <tr>
-                  <th>Põld</th>
-                  <th>Suurus</th>
+                  <th className="sticky-name">Põld</th>
+                  <th className="sticky-size">Suurus</th>
                   {tableYears.map((yr) => (
                     <th
                       key={yr}
@@ -1215,7 +1215,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
                   return (
                     <tr key={field.id}>
-                      <td className="name-cell">
+                      <td className="name-cell sticky-name">
                         <div className="field-title-line">
                           {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
                           <span className="field-name">{field.name}</span>
@@ -1228,7 +1228,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         </div>
                       </td>
                       <td
-                        className={`size-cell ${selectedRec ? '' : 'muted'}`}
+                        className={`size-cell sticky-size ${selectedRec ? '' : 'muted'}`}
                         title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                       >
                         <div className="season-area-box">

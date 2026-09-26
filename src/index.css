@@ -3080,8 +3080,33 @@ input[type="number"],
 }
 
 .register-table .name-cell {
-  min-width: 280px;
   white-space: normal;
+}
+
+/* Põld ja suurus jäävad paremale kerides vasakule paigale */
+.register-table .sticky-name,
+.register-table .sticky-size {
+  position: sticky;
+  z-index: 1;
+}
+
+.register-table .sticky-name {
+  left: 0;
+  width: 300px;
+  min-width: 300px;
+  max-width: 300px;
+}
+
+.register-table .sticky-size {
+  left: 300px;
+  width: 110px;
+  min-width: 110px;
+  box-shadow: inset -1px 0 0 var(--border-card);
+}
+
+.register-table th.sticky-name,
+.register-table th.sticky-size {
+  z-index: 3;
 }
 
 .register-table .name-cell .field-title-line {
