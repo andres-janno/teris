@@ -507,6 +507,7 @@ model User {
   username     String    @unique // väiketähtedega
   passwordHash String
   displayName  String?
+  email        String?   @unique
   isActive     Boolean   @default(true)
   isAdmin            Boolean   @default(false)
   mustChangePassword Boolean   @default(false)
@@ -515,6 +516,7 @@ model User {
   updatedAt    DateTime  @updatedAt
 
   sessions     Session[]
+  passwordTokens PasswordToken[]
 
   @@map("users")
 }
@@ -532,5 +534,20 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+model PasswordToken {
+  id        Int       @id @default(autoincrement())
+  userId    String
+  purpose   String    // 'INVITE' | 'RESET'
+  tokenHash String    @unique // SHA-256 toortokenist (toortoken ainult e-kirjas)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("password_tokens")
 }
 

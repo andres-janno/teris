@@ -34,6 +34,13 @@ describe('paroolid', () => {
   });
 });
 
+describe('verifyPassword', () => {
+  it('tühi räsi (kutsutud kasutaja, parool määramata) ei kehti kunagi', async () => {
+    expect(await verifyPassword('', '')).toBe(false);
+    expect(await verifyPassword('midagi', '')).toBe(false);
+  });
+});
+
 describe('sessioonitoken ja küpsis', () => {
   it('token on juhuslik ja räsi determineeritud', () => {
     const t = generateSessionToken();

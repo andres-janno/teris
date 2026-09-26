@@ -1,0 +1,61 @@
+// src/server/passwordTokens.ts — ühekordsed parooli määramise lingid (kutse ja lähtestus).
+import { prisma } from './db.ts';
+import { generateSessionToken, hashToken } from './auth.ts';
+import { APP_BASE_URL, MAIL_FROM, buildPasswordLinkMail, sendMail } from './mail.ts';
+
+export type TokenPurpose = 'INVITE' | 'RESET';
+
+const TTL_MS: Record<TokenPurpose, number> = {
+  INVITE: 7 * 24 * 60 * 60 * 1000,
+  RESET: 60 * 60 * 1000
+};
+
+export function tokenExpiry(purpose: TokenPurpose, now: Date = new Date()): Date {
+  return new Date(now.getTime() + TTL_MS[purpose]);
+}
+
+export async function issuePasswordToken(userId: string, purpose: TokenPurpose): Promise<string> {
+  const raw = generateSessionToken();
+  await prisma.passwordToken.deleteMany({ where: { userId, usedAt: null } });
+  await prisma.passwordToken.create({
+    data: { userId, purpose, tokenHash: hashToken(raw), expiresAt: tokenExpiry(purpose) }
+  });
+  return raw;
+}
+
+export async function findValidToken(rawToken: string) {
+  if (!rawToken || rawToken.length > 200) return null;
+  const token = await prisma.passwordToken.findUnique({
+    where: { tokenHash: hashToken(rawToken) },
+    include: { user: { select: { id: true, username: true, isActive: true } } }
+  });
+  if (!token || token.usedAt || token.expiresAt.getTime() < Date.now() || !token.user.isActive) return null;
+  return { id: token.id, purpose: token.purpose as TokenPurpose, user: token.user };
+}
+
+export async function consumeToken(tokenId: number, userId: string): Promise<void> {
+  await prisma.passwordToken.update({ where: { id: tokenId }, data: { usedAt: new Date() } });
+  await prisma.passwordToken.deleteMany({ where: { userId, NOT: { id: tokenId } } });
+}
+
+export async function sendPasswordLink(
+  user: { id: string; username: string; displayName: string | null; email: string },
+  purpose: TokenPurpose
+): Promise<boolean> {
+  const raw = await issuePasswordToken(user.id, purpose);
+  const message = buildPasswordLinkMail({
+    to: user.email,
+    from: MAIL_FROM,
+    purpose,
+    link: `${APP_BASE_URL}/parool#${raw}`,
+    username: user.username,
+    displayName: user.displayName
+  });
+  try {
+    await sendMail(message);
+    return true;
+  } catch (err) {
+    console.error(`[Mail] ${purpose} kirja saatmine ebaõnnestus (kasutaja ${user.username}):`, err instanceof Error ? err.message : err);
+    return false;
+  }
+}
