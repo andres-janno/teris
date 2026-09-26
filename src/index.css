@@ -3033,6 +3033,43 @@ input[type="number"],
   flex-direction: column;
 }
 
+/* Põldude registri jalus: valitud hooaja kultuuride pindalad */
+.modal-footer.register-crop-footer {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.register-crop-footer-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  margin-right: 4px;
+}
+
+.register-crop-footer .muted {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.register-crop-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.register-crop-stat .crop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
 /* Põldude tabel (Exceli-laadne) */
 .register-table-wrap {
   max-height: 62vh;

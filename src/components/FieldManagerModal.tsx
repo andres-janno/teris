@@ -241,6 +241,21 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return Array.from(cropsSet);
   }, [fieldsForSelectedYear, selectedYear]);
 
+  // Valitud hooaja pindalad kultuuride lõikes (jaluses), suurimast väiksemani.
+  const cropAreas = useMemo(() => {
+    const byCrop = new Map<string, { crop: string; color: string; areaHa: number; count: number }>();
+    fieldsForSelectedYear.forEach((f) => {
+      const rec = f.history.find((h) => h.year === selectedYear);
+      if (!rec) return;
+      const crop = (rec.crop || 'Määramata').split('(')[0].trim() || 'Määramata';
+      const entry = byCrop.get(crop) ?? { crop, color: rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
+      entry.areaHa += rec.areaHa || 0;
+      entry.count += 1;
+      byCrop.set(crop, entry);
+    });
+    return Array.from(byCrop.values()).sort((a, b) => b.areaHa - a.areaHa);
+  }, [fieldsForSelectedYear, selectedYear]);
+
   // Sync edit form with selectedYear whenever selectedYear changes
   useEffect(() => {
     if (editingFieldId !== null) {
@@ -1291,11 +1306,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           </div>
         </div>
 
-        <div className="modal-footer">
-          <div className="footer-left-info">
-            <span>Kuvatakse <strong>{filteredFields.length}</strong> põldu <strong>{masterFields.length}</strong>-st &bull; Valitud aasta: <strong>{selectedYear}</strong></span>
-          </div>
-          <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
+        <div className="modal-footer register-crop-footer">
+          <span className="register-crop-footer-title">{selectedYear} kultuurid:</span>
+          {cropAreas.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+          {cropAreas.map((c) => (
+            <span key={c.crop} className="register-crop-stat" title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}>
+              <span className="crop-dot" style={{ backgroundColor: c.color }}></span>
+              <span>{c.crop}</span>
+              <strong>{c.areaHa.toFixed(2)} ha</strong>
+            </span>
+          ))}
         </div>
       </div>
     </div>
