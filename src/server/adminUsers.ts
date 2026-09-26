@@ -211,6 +211,11 @@ export async function handleAdminUsers(
   try {
     const user = await prisma.user.update({ where: { id: target.id }, data, select: USER_FIELDS });
     if (data.isActive === false) await prisma.session.deleteMany({ where: { userId: target.id } });
+    // E-posti muutmisel kaotavad vanad kutse/lähtestuslingid kehtivuse — need viitasid
+    // eelmisele aadressile.
+    if (data.email && data.email !== target.email) {
+      await prisma.passwordToken.deleteMany({ where: { userId: target.id, usedAt: null } });
+    }
     json(res, { user: toPublic(user) });
   } catch (err) {
     if (uniqueTarget(err) === null) throw err;

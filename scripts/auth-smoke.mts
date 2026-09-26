@@ -12,7 +12,7 @@ const NEWUSER = '_smokenew';
 const LINKUSER = '_smokelink';
 const TEMP_PASS = 'Ajutine-parool-123';
 const NEW_PASS = 'Uus-parool-12345';
-const TEST_USERS = [USER, ADMIN, NEWUSER, LINKUSER];
+const TEST_USERS = [USER, ADMIN, NEWUSER, LINKUSER, '_smokemuu'];
 const prisma = new PrismaClient();
 let failures = 0;
 
@@ -98,7 +98,13 @@ try {
   const rawToken = 'smoke-token-' + Date.now();
   await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'INVITE', tokenHash: hashToken(rawToken), expiresAt: new Date(Date.now() + 3600_000) } });
   await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'RESET', tokenHash: hashToken(rawToken + '-old'), expiresAt: new Date(Date.now() - 1000) } });
-  check('kutsutud kasutaja ei saa enne parooli sisse', (await post('/api/auth/login', { username: LINKUSER, password: '' })).status === 401);
+  // Sessioon luuakse otse DB-sse, et kontrollida, et parooli määramine lõpetab
+  // kasutaja olemasolevad sessioonid (loginAs pole enne parooli määramist võimalik).
+  const linkSessionToken = 'smoke-session-' + Date.now();
+  await prisma.session.create({ data: { userId: linkUser.id, tokenHash: hashToken(linkSessionToken), expiresAt: new Date(Date.now() + 3600_000) } });
+  const linkSessionCookie = `agro_session=${linkSessionToken}`;
+  check('linkUseri sessioon kehtib enne parooli määramist', (await fetch(BASE + '/api/auth/me', { headers: { Cookie: linkSessionCookie } })).status === 200);
+  check('kutsutud kasutaja ei saa enne parooli sisse', (await post('/api/auth/login', { username: LINKUSER, password: NEW_PASS })).status === 401);
   check('forgot tundmatu kasutajaga → 200', (await post('/api/auth/forgot', { login: '_olematu_kasutaja' })).status === 200);
   check('vale token → 400', (await post('/api/auth/token', { token: 'vale' })).status === 400);
   check('aegunud token → 400', (await post('/api/auth/token', { token: rawToken + '-old' })).status === 400);
@@ -107,6 +113,7 @@ try {
   check('liiga lühike parool → 400', (await post('/api/auth/set-password', { token: rawToken, password: 'lyhike' })).status === 400);
   check('parooli määramine → 200', (await post('/api/auth/set-password', { token: rawToken, password: NEW_PASS })).status === 200);
   check('sama token uuesti → 400', (await post('/api/auth/set-password', { token: rawToken, password: NEW_PASS })).status === 400);
+  check('parooli määramine lõpetas olemasoleva sessiooni', (await fetch(BASE + '/api/auth/me', { headers: { Cookie: linkSessionCookie } })).status === 401);
   check('uue parooliga sisse → 200', (await loginAs(LINKUSER, NEW_PASS)).status === 200);
 
   let last = 0;

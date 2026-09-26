@@ -33,9 +33,21 @@ export async function findValidToken(rawToken: string) {
   return { id: token.id, purpose: token.purpose as TokenPurpose, user: token.user };
 }
 
-export async function consumeToken(tokenId: number, userId: string): Promise<void> {
-  await prisma.passwordToken.update({ where: { id: tokenId }, data: { usedAt: new Date() } });
-  await prisma.passwordToken.deleteMany({ where: { userId, NOT: { id: tokenId } } });
+// Atomselt: märgi token kasutatuks (üks samaaegne kasutus võidab), määra parool,
+// kustuta kasutaja muud tokenid ja kõik sessioonid. Tagastab false, kui token oli
+// juba kasutusel/kadunud (nt paralleelne päring jõudis ette).
+export async function consumeTokenAndSetPassword(tokenId: number, userId: string, passwordHash: string): Promise<boolean> {
+  return prisma.$transaction(async (tx) => {
+    const { count } = await tx.passwordToken.updateMany({
+      where: { id: tokenId, usedAt: null },
+      data: { usedAt: new Date() }
+    });
+    if (count !== 1) return false;
+    await tx.user.update({ where: { id: userId }, data: { passwordHash, mustChangePassword: false } });
+    await tx.passwordToken.deleteMany({ where: { userId, NOT: { id: tokenId } } });
+    await tx.session.deleteMany({ where: { userId } });
+    return true;
+  });
 }
 
 export async function sendPasswordLink(

@@ -21,7 +21,7 @@ import {
   allowedDuringForcedPasswordChange
 } from './auth.ts';
 import { normalizeEmail } from './mail.ts';
-import { findValidToken, consumeToken, sendPasswordLink } from './passwordTokens.ts';
+import { findValidToken, consumeTokenAndSetPassword, sendPasswordLink } from './passwordTokens.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
@@ -109,8 +109,11 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
   }
 
   const user = username ? await prisma.user.findUnique({ where: { username } }) : null;
-  const passwordOk = await verifyPassword(password, user?.passwordHash ?? (await getDummyHash()));
-  if (!user || !user.isActive || !passwordOk) {
+  // Kutsutud kasutajal (parool veel määramata) on passwordHash tühi — sellega ei
+  // tohi kunagi sisse logida ning ajastus peab olema sama, mis olematu kasutaja korral.
+  const pendingInvite = user?.passwordHash === '';
+  const passwordOk = await verifyPassword(password, !user || pendingInvite ? await getDummyHash() : user.passwordHash);
+  if (!user || !user.isActive || pendingInvite || !passwordOk) {
     keys.forEach((k) => limiter.registerFailure(k));
     json(res, { error: 'Vale kasutajanimi või parool' }, 401);
     return;
@@ -154,7 +157,16 @@ async function handleForgot(req: IncomingMessage, res: ServerResponse): Promise<
     const email = normalizeEmail(login);
     const user = await prisma.user.findFirst({ where: email ? { email } : { username: login } });
     if (user && user.isActive && user.email) {
-      await sendPasswordLink({ id: user.id, username: user.username, displayName: user.displayName, email: user.email }, 'RESET');
+      const targetEmail = user.email;
+      // Vastus ei tohi oodata kirja saatmist — muidu reedaks vastuse ajastus, kas
+      // konto on olemas. Kutsutud (parool määramata) kasutajale saadetakse taas
+      // kutse, mitte lähtestus, et tema kutse tähtaega ei lühendataks.
+      json(res, { success: true });
+      void sendPasswordLink(
+        { id: user.id, username: user.username, displayName: user.displayName, email: targetEmail },
+        user.passwordHash === '' ? 'INVITE' : 'RESET'
+      ).catch((err) => console.error('[Auth] forgot:', err instanceof Error ? err.message : err));
+      return;
     }
   }
   json(res, { success: true });
@@ -183,12 +195,12 @@ async function handleSetPassword(req: IncomingMessage, res: ServerResponse): Pro
     json(res, { error: problem }, 400);
     return;
   }
-  await prisma.user.update({
-    where: { id: token.user.id },
-    data: { passwordHash: await hashPassword(password), mustChangePassword: false }
-  });
-  await consumeToken(token.id, token.user.id);
-  await prisma.session.deleteMany({ where: { userId: token.user.id } });
+  const passwordHash = await hashPassword(password);
+  const consumed = await consumeTokenAndSetPassword(token.id, token.user.id, passwordHash);
+  if (!consumed) {
+    json(res, { error: 'Link on aegunud või juba kasutatud' }, 400);
+    return;
+  }
   json(res, { success: true, username: token.user.username });
 }
 

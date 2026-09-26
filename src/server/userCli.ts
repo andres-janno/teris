@@ -70,7 +70,7 @@ async function main(): Promise<void> {
       if (await prisma.user.findUnique({ where: { username } })) throw new Error(`Kasutaja "${username}" on juba olemas`);
       const email = emailRaw === null ? null : normalizeEmail(emailRaw);
       if (emailRaw !== null && !email) throw new Error('Vigane e-posti aadress');
-      if (email && (await prisma.user.findUnique({ where: { email } }))) throw new Error(`E-post "${email}" on juba kasutusel`);
+      if (email && (await prisma.user.findUnique({ where: { email } }))) throw new Error('E-post on juba kasutusel');
       const passwordHash = await hashPassword(await askNewPassword());
       await prisma.user.create({ data: { username, passwordHash, displayName, email } });
       console.log(`Kasutaja "${username}" loodud.`);
