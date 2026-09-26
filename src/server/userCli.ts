@@ -1,9 +1,10 @@
 // src/server/userCli.ts
-// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|list|logout> [nimi] [--display "Nimi"]
+// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"]
 // Parool küsitakse varjatult (terminalis) või loetakse stdin'i ridadest (toru kaudu).
 import readline from 'node:readline';
 import { prisma } from './db';
 import { hashPassword, validateNewPassword } from './auth';
+import { checkAdminChange } from './adminRules';
 
 const queued: string[] = [];
 let waiting: ((line: string) => void) | null = null;
@@ -85,6 +86,19 @@ async function main(): Promise<void> {
       console.log(`Kasutaja "${user.username}" ${command === 'enable' ? 'lubatud' : 'keelatud'}.`);
       break;
     }
+    case 'admin':
+    case 'unadmin': {
+      const user = await findUser(name);
+      const makeAdmin = command === 'admin';
+      if (!makeAdmin) {
+        const activeAdmins = await prisma.user.count({ where: { isActive: true, isAdmin: true } });
+        const problem = checkAdminChange('', user, { kind: 'update', isAdmin: false }, activeAdmins);
+        if (problem) throw new Error(problem);
+      }
+      await prisma.user.update({ where: { id: user.id }, data: { isAdmin: makeAdmin } });
+      console.log(`Kasutaja "${user.username}" ${makeAdmin ? 'on nüüd admin' : 'ei ole enam admin'}.`);
+      break;
+    }
     case 'logout': {
       const user = await findUser(name);
       const { count } = await prisma.session.deleteMany({ where: { userId: user.id } });
@@ -98,6 +112,8 @@ async function main(): Promise<void> {
           u.username.padEnd(20),
           (u.displayName ?? '').padEnd(24),
           u.isActive ? 'aktiivne' : 'keelatud',
+          u.isAdmin ? 'admin' : 'kasutaja',
+          u.mustChangePassword ? 'parool vahetamata' : '',
           `viimati: ${u.lastLoginAt ? u.lastLoginAt.toISOString().slice(0, 16).replace('T', ' ') : '–'}`,
           `sessioone: ${u._count.sessions}`
         ].join('  '));
@@ -106,7 +122,7 @@ async function main(): Promise<void> {
       break;
     }
     default:
-      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|list|logout> [nimi] [--display "Nimi"]');
+      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"]');
   }
 }
 

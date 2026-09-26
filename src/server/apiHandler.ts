@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tsdb } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate } from './authGate.ts';
+import { handleAdminUsers } from './adminUsers.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -150,6 +151,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
   try {
     if (await authGate(req, res, pathname, method, options)) return;
+    if (await handleAdminUsers(req, res, pathname, method)) return;
 
     // 1. Health check / status
     if (pathname === '/api/status' && method === 'GET') {
