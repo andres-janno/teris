@@ -9,7 +9,7 @@ import {
   Users,
   Sprout
 } from 'lucide-react';
-import { WheatLogo } from './WheatLogo';
+import { AgroLogo } from './AgroLogo';
 import { UserMenu } from './UserMenu';
 import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
@@ -82,15 +82,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="app-header">
       <div className="header-brand">
-        <div className="logo-icon">
-          <WheatLogo className="brand-logo-mark" size={26} />
-          <span className="brand-pulse"></span>
-        </div>
-        <div className="brand-text">
-          <div className="brand-title">
-            <span>AGRO</span>
-          </div>
-        </div>
+        <AgroLogo variant="horizontal" />
       </div>
 
       <div className="header-stats">

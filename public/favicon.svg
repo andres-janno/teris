@@ -1,1 +1,9 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32"><defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#15803d"/><stop offset="1" stop-color="#22c55e"/></linearGradient></defs><rect width="32" height="32" rx="7" fill="url(#g)"/><g transform="translate(5.5 4) scale(0.875)" fill="#fff" stroke="#fff" stroke-linejoin="miter"><path d="M1.15 0V12.95L12 23.8L22.85 12.95V0" fill="none" stroke-width="2.3"/><path d="M3.35 0V12.04L12 20.69L20.65 12.04V0" fill="none" stroke-width="0.9"/><polygon points="4.4,3.4 6.2,3.4 11.45,11.2 11.45,18.65 4.4,11.6" stroke="none"/><polygon points="19.6,3.4 17.8,3.4 12.55,11.2 12.55,18.65 19.6,11.6" stroke="none"/></g></svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%" fill="#16a34a">
+  <!-- AGRO Standalone Emblem Icon -->
+  <g id="agro-emblem">
+    <path d="M 64.1 52.9 L 64.1 326.6 L 196.6 459.1 L 247.9 459.1 L 247.9 391.6 L 132.9 276.6 L 90.4 276.6 L 90.4 52.9 Z" />
+    <path d="M 106.6 52.9 L 106.6 219.1 L 197.9 310.4 L 247.9 310.4 L 247.9 242.9 L 166.6 161.6 L 129.1 161.6 L 129.1 52.9 Z" />
+    <path d="M 405.4 52.9 L 405.4 219.1 L 314.1 310.4 L 264.1 310.4 L 264.1 242.9 L 345.4 161.6 L 382.9 161.6 L 382.9 52.9 Z" />
+    <path d="M 447.9 52.9 L 447.9 326.6 L 315.4 459.1 L 264.1 459.1 L 264.1 391.6 L 379.1 276.6 L 421.6 276.6 L 421.6 52.9 Z" />
+  </g>
+</svg>

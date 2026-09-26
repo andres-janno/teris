@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import React, { useState } from 'react';
 import { LogIn, AlertCircle } from 'lucide-react';
-import { WheatLogo } from './WheatLogo';
+import { AgroLogo } from './AgroLogo';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
 
@@ -34,12 +34,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
     <div className="login-page">
       <form className="login-card glass-card" onSubmit={submit}>
         <div className="login-brand">
-          <div className="logo-icon">
-            <WheatLogo className="brand-logo-mark" size={26} />
-          </div>
-          <div className="brand-title">
-            <span>AGRO</span>
-          </div>
+          <AgroLogo variant="vertical" />
         </div>
 
         {notice && !error && <div className="alert-box">{notice}</div>}
