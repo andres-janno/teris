@@ -10,11 +10,8 @@ import {
   Trash2,
   Crosshair,
   Download,
-  Check,
-  Sprout,
   AlertCircle,
   Lock,
-  CalendarDays,
   Landmark,
   Compass,
   ExternalLink
@@ -34,7 +31,6 @@ interface FieldManagerModalProps {
   onSelectYear: (year: number) => void;
   onFocusField: (fieldFeature: FieldFeature) => void;
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
-  onAddNewSeasonToAll: (newYear: number) => void;
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload: () => void;
   onOpenSoilUpload?: () => void;
@@ -55,7 +51,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onSelectYear,
   onFocusField,
   onUpdateField,
-  onAddNewSeasonToAll,
   onDeleteField,
   onOpenUpload,
   onOpenSoilUpload,
@@ -123,8 +118,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   }, [selectedCropObj]);
 
   // Add new year season modal
-  const [isAddYearOpen, setIsAddYearOpen] = useState(false);
-  const [newYearInput, setNewYearInput] = useState(2027);
 
   // Dynamic available years (+3 forward and -4 history around active season).
   // Kaugemaid tühje hooaegu (nt DB-s ette loodud, aga veel deklareerimata
@@ -559,33 +552,59 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                     >
                       <span>{yr}</span>
-                      {isLocked ? (
-                        <Lock size={10} className="tab-lock-icon" />
-                      ) : (
-                        yr === 2026 && <span className="current-badge">Aktiivne</span>
-                      )}
+                      {isLocked && <Lock size={10} className="tab-lock-icon" />}
                     </button>
                   );
                 })}
-                {onOpenSeasonManager ? (
+              </div>
+              <div className="register-io-buttons">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleExportCsv}
+                  title="Ekspordi tabel CSV failina"
+                >
+                  <Download size={14} />
+                  <span>CSV Eksport</span>
+                </button>
+
+                {onOpenSoilUpload && (
                   <button
-                    className="btn btn-ghost btn-xs add-year-btn"
-                    onClick={onOpenSeasonManager}
-                    title="Ava hooaja register ja haldus"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenSoilUpload();
+                    }}
+                    title="Impordi mullaproovide punktid Shapefile ZIP-ist"
                   >
-                    <CalendarDays size={13} />
-                    <span>Hooajahaldur</span>
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-ghost btn-xs add-year-btn"
-                    onClick={() => setIsAddYearOpen(true)}
-                    title="Lisa uus põllumajandusaasta"
-                  >
-                    <Plus size={13} />
-                    <span>Lisa aasta</span>
+                    <Plus size={14} />
+                    <span>Impordi mullaproovid</span>
                   </button>
                 )}
+
+                {onOpenFieldBookUpload && (
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenFieldBookUpload();
+                    }}
+                    title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
+                  >
+                    <Plus size={14} />
+                    <span>Impordi põlluraamat</span>
+                  </button>
+                )}
+
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    onClose();
+                    onOpenUpload();
+                  }}
+                >
+                  <Plus size={14} />
+                  <span>Impordi PRIA ZIP</span>
+                </button>
               </div>
             </div>
 
@@ -673,92 +692,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               ))}
             </select>
 
-            <div className="actions-right">
-              <button
-                className="btn btn-secondary btn-sm"
-                onClick={handleExportCsv}
-                title="Ekspordi tabel CSV failina"
-              >
-                <Download size={14} />
-                <span>CSV Eksport</span>
-              </button>
-
-              {onOpenSoilUpload && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => {
-                    onClose();
-                    onOpenSoilUpload();
-                  }}
-                  title="Impordi mullaproovide punktid Shapefile ZIP-ist"
-                >
-                  <Plus size={14} />
-                  <span>Impordi mullaproovid</span>
-                </button>
-              )}
-
-              {onOpenFieldBookUpload && (
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => {
-                    onClose();
-                    onOpenFieldBookUpload();
-                  }}
-                  title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
-                >
-                  <Plus size={14} />
-                  <span>Impordi põlluraamat</span>
-                </button>
-              )}
-
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={() => {
-                  onClose();
-                  onOpenUpload();
-                }}
-              >
-                <Plus size={14} />
-                <span>Impordi PRIA ZIP</span>
-              </button>
-            </div>
           </div>
-
-          {/* Add Year Season Sub-Modal */}
-          {isAddYearOpen && (
-            <div className="add-year-banner glass-card animate-slide-in">
-              <div className="banner-content">
-                <Sprout size={18} className="text-emerald" />
-                <div>
-                  <strong>Uue hooaja / aasta loomine</strong>
-                  <p>Kopeerib kõigi {masterFields.length} põllu piirid uude aastasse ja võimaldab määrata uued kultuurid ja pindalad.</p>
-                </div>
-              </div>
-              <div className="banner-inputs">
-                <input
-                  type="number"
-                  min="2020"
-                  max="2035"
-                  value={newYearInput}
-                  onChange={(e) => setNewYearInput(Number(e.target.value))}
-                  className="form-input"
-                  style={{ width: '100px' }}
-                />
-                <button
-                  className="btn btn-primary btn-sm"
-                  onClick={() => {
-                    onAddNewSeasonToAll(newYearInput);
-                    onSelectYear(newYearInput);
-                    setIsAddYearOpen(false);
-                  }}
-                >
-                  <Check size={14} />
-                  <span>Kinnita hooaeg {newYearInput}</span>
-                </button>
-                <button className="btn btn-ghost btn-sm" onClick={() => setIsAddYearOpen(false)}>Loobu</button>
-              </div>
-            </div>
-          )}
 
           {/* Edit Master Field & Season Drawer / Form */}
           {editingFieldId !== null && (

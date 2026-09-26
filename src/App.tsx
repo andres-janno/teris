@@ -1202,7 +1202,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onSelectYear={setSelectedYear}
         onFocusField={handleFocusField}
         onUpdateField={handleUpdateMasterField}
-        onAddNewSeasonToAll={handleAddNewSeasonToAll}
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}
         onOpenSoilUpload={() => setIsSoilUploadOpen(true)}
