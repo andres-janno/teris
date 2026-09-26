@@ -71,6 +71,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
   const [tenureFilter, setTenureFilter] = useState<'all' | 'OWNED' | 'RENTED'>('all');
+  const [operatorFilterLocal, setOperatorFilterLocal] = useState('all');
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
 
   // Current season & locked status
@@ -223,9 +224,20 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
         (tenureFilter === 'OWNED' && hasOwned) ||
         (tenureFilter === 'RENTED' && hasRented);
 
-      return matchesSearch && matchesCrop && matchesTenure;
+      const matchesOperator = operatorFilterLocal === 'all' || f.operatorId === operatorFilterLocal;
+
+      return matchesSearch && matchesCrop && matchesTenure && matchesOperator;
     });
-  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter]);
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, operatorFilterLocal]);
+
+  // Registris olevate põldude operaatorid (operaatori filtri valikud).
+  const operatorsList = useMemo(() => {
+    const byId = new Map<string, string>();
+    masterFields.forEach((f) => {
+      if (f.operatorId) byId.set(f.operatorId, f.operatorName || f.operatorId);
+    });
+    return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, 'et'));
+  }, [masterFields]);
 
   // Crops breakdown for selected year
   const cropsList = useMemo(() => {
@@ -764,15 +776,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               )}
             </div>
 
-            {/* Tenure filter */}
+            {/* Operator filter (registri sees, lisaks päise operaatorivalikule) */}
             <select
               className="form-input filter-select"
-              value={tenureFilter}
-              onChange={(e) => setTenureFilter(e.target.value as any)}
+              value={operatorFilterLocal}
+              onChange={(e) => setOperatorFilterLocal(e.target.value)}
             >
-              <option value="all">Kõik omandivormid</option>
-              <option value="OWNED">🏛️ Ainult Oma maa ({financialSummary.ownedHa} ha)</option>
-              <option value="RENTED">🤝 Ainult Rendimaa ({financialSummary.rentedHa} ha)</option>
+              <option value="all">Kõik operaatorid ({operatorsList.length})</option>
+              {operatorsList.map((o) => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
             </select>
 
             {/* Crop filter */}
@@ -785,6 +798,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               {cropsList.map((c) => (
                 <option key={c} value={c}>{c}</option>
               ))}
+            </select>
+
+            {/* Tenure filter */}
+            <select
+              className="form-input filter-select"
+              value={tenureFilter}
+              onChange={(e) => setTenureFilter(e.target.value as any)}
+            >
+              <option value="all">Kõik omandivormid</option>
+              <option value="OWNED">🏛️ Ainult Oma maa ({financialSummary.ownedHa} ha)</option>
+              <option value="RENTED">🤝 Ainult Rendimaa ({financialSummary.rentedHa} ha)</option>
             </select>
 
           </div>
