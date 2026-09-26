@@ -132,7 +132,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     }
     seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) set.add(s.year); });
     masterFields.forEach((mf) => mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) set.add(h.year); }));
-    return Array.from(set).sort((a, b) => b - a);
+    return Array.from(set).sort((a, b) => a - b);
   }, [seasons, masterFields]);
 
   // Ainult põllud, millel on TÄPSELT valitud aasta kirje — vältimaks, et

@@ -232,7 +232,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                   value={importYear}
                   onChange={(e) => setImportYear(Number(e.target.value))}
                 >
-                  {(availableYears.includes(importYear) ? availableYears : [importYear, ...availableYears]).map((y) => (
+                  {(availableYears.includes(importYear) ? availableYears : [...availableYears, importYear].sort((a, b) => a - b)).map((y) => (
                     <option key={y} value={y}>{y}</option>
                   ))}
                 </select>

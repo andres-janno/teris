@@ -62,7 +62,7 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
   if (!field) return null;
 
   const years = masterField
-    ? [...new Set(masterField.history.map((h) => h.year))].sort((a, b) => b - a)
+    ? [...new Set(masterField.history.map((h) => h.year))].sort((a, b) => a - b)
     : [];
   const shown =
     masterField && viewYear !== undefined && viewYear !== mapYear && years.includes(viewYear)

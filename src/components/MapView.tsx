@@ -474,7 +474,7 @@ export const MapView: React.FC<MapViewProps> = ({
         soilSamples
           .filter((s) => s.fieldCode === sample.fieldCode && s.year < sample.year)
           .map((s) => s.year)
-      )).sort((a, b) => b - a);
+      )).sort((a, b) => a - b);
 
       const marker = L.circleMarker([sample.lat, sample.lng], {
         radius: 8,

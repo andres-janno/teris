@@ -55,7 +55,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
   if (!isOpen) return null;
 
-  const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
+  const sortedSeasons = [...seasons].sort((a, b) => a.year - b.year);
   const activeCount = seasons.filter(s => s.status === 'active' || s.status === 'harvesting').length;
   const closedCount = seasons.filter(s => s.isLocked).length;
 

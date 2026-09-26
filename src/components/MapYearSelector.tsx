@@ -27,7 +27,7 @@ interface CropSummary {
 export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   selectedYear,
   onSelectYear,
-  availableYears = [2026, 2025, 2024, 2023],
+  availableYears = [2023, 2024, 2025, 2026],
   fields,
   totalAreaHa,
   selectedCropFilter = null,

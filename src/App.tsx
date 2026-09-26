@@ -155,7 +155,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     masterFields.forEach((mf) => {
       mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) yearSet.add(h.year); });
     });
-    return Array.from(yearSet).sort((a, b) => b - a);
+    return Array.from(yearSet).sort((a, b) => a - b);
   }, [seasons, masterFields]);
 
   // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
