@@ -3311,6 +3311,14 @@ input[type="number"],
 
 .register-table th.actions-col {
   z-index: 3;
+  font-size: 0.72rem;
+}
+
+.register-table th.actions-col,
+.register-table td.actions-col {
+  width: 1%;
+  padding-left: 6px;
+  padding-right: 6px;
 }
 
 .register-table .row-actions {
