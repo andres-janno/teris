@@ -1193,8 +1193,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               <thead>
                 <tr>
                   <th>Põld</th>
-                  <th>Omand</th>
-                  <th className="num-col">Suurus (ha)</th>
+                  <th>Suurus</th>
                   {tableYears.map((yr) => (
                     <th
                       key={yr}
@@ -1213,20 +1212,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   const selectedRec = field.history.find((h) => h.year === selectedYear);
                   const latestRec = [...field.history].sort((a, b) => b.year - a.year)[0];
                   const sizeRec = selectedRec || latestRec;
-                  const parcels = selectedRec?.cadastralParcels || field.cadastralParcels || [];
-                  const owned = parcels.filter((p) => p.ownershipType === 'OWNED');
-                  const rented = parcels.filter((p) => p.ownershipType === 'RENTED');
-                  const parcelTitle = parcels
-                    .map((p) => `${p.cadastralCode}: ${p.ownerName} (${p.fieldAreaHa} ha, ${p.ownershipType === 'OWNED' ? 'oma' : 'rent'})`)
-                    .join('\n');
 
                   return (
                     <tr key={field.id}>
                       <td className="name-cell">
                         <div className="field-title-line">
-                          <span className="field-id-badge" title="Sisemine unikaalne ID">#{field.id}</span>
-                          <span className="field-name">{field.name}</span>
                           {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                          <span className="field-name">{field.name}</span>
                         </div>
                         <div className="field-sub-tags">
                           <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
@@ -1235,17 +1227,15 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           {field.drainageSystem && <span className="sub-tag drainage-tag">💧 Drenaaž</span>}
                         </div>
                       </td>
-                      <td title={parcelTitle || undefined}>
-                        {owned.length > 0 && <span className="tenure-tag owned">Oma</span>}
-                        {rented.length > 0 && <span className="tenure-tag rented">Rent</span>}
-                        {parcels.length === 0 && <span className="muted">–</span>}
-                      </td>
                       <td
-                        className={`num-col ${selectedRec ? '' : 'muted'}`}
+                        className={`size-cell ${selectedRec ? '' : 'muted'}`}
                         title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                       >
-                        {sizeRec ? sizeRec.areaHa.toFixed(2) : '–'}
-                        {selectedRec?.eligibleAreaHa ? <div className="cell-sub">PRIA {selectedRec.eligibleAreaHa}</div> : null}
+                        <div className="season-area-box">
+                          <span className="season-year-label">Põllu suurus:</span>
+                          <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
+                          {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
+                        </div>
                       </td>
                       {tableYears.map((yr) => {
                         const rec = field.history.find((h) => h.year === yr);

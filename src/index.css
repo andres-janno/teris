@@ -3153,23 +3153,8 @@ input[type="number"],
   flex-shrink: 0;
 }
 
-.register-table .tenure-tag {
-  display: inline-block;
-  margin-right: 4px;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-
-.register-table .tenure-tag.owned {
-  background: rgba(34, 197, 94, 0.14);
-  color: var(--emerald-500);
-}
-
-.register-table .tenure-tag.rented {
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--blue-500);
+.register-table .size-cell.muted .season-ha-val {
+  color: var(--text-muted);
 }
 
 .register-table .actions-col {
