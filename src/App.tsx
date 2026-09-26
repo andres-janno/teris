@@ -158,13 +158,16 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     return Array.from(yearSet).sort((a, b) => b - a);
   }, [seasons, masterFields]);
 
-  // Operaatori (harija) filter — kui seatud, näidatakse kaardil,
-  // päisestatistikas, põldude ja kultuuride registris ainult selle
-  // operaatoriga põlde.
-  const [operatorFilter, setOperatorFilter] = useState<string>('');
+  // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
+  // päisestatistikas, põldude ja kultuuride registris ainult nende
+  // operaatoritega põlde. Tühi = kõik.
+  const [operatorFilter, setOperatorFilter] = useState<string[]>([]);
 
   const operatorMasterFields = React.useMemo(
-    () => (operatorFilter ? masterFields.filter((f) => f.operatorId === operatorFilter) : masterFields),
+    () =>
+      operatorFilter.length
+        ? masterFields.filter((f) => !!f.operatorId && operatorFilter.includes(f.operatorId))
+        : masterFields,
     [masterFields, operatorFilter]
   );
 
@@ -808,7 +811,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setMasterFields((prev) =>
       prev.map((f) => {
         if (f.history.some((h) => h.year === newYear)) return f;
-        if (operatorFilter && f.operatorId !== operatorFilter) return f;
+        if (operatorFilter.length && !(f.operatorId && operatorFilter.includes(f.operatorId))) return f;
         const latestRec = f.history[0] || {
           year: 2026,
           areaHa: 5.0,

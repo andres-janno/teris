@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { AgroLogo } from './AgroLogo';
 import { UserMenu } from './UserMenu';
+import { OperatorSelector } from './OperatorSelector';
 import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
@@ -25,8 +26,8 @@ interface HeaderProps {
   parties?: RelatedParty[];
   cropsCount?: number;
   varietiesCount?: number;
-  operatorFilter?: string;
-  onOperatorFilterChange?: (partyId: string) => void;
+  operatorFilter?: string[]; // tühi = kõik operaatorid
+  onOperatorFilterChange?: (partyIds: string[]) => void;
   selectedYear: number;
   activeSeason?: FarmingSeason;
   onOpenSeasonManager: () => void;
@@ -57,7 +58,7 @@ export const Header: React.FC<HeaderProps> = ({
   parties = [],
   cropsCount = 0,
   varietiesCount = 0,
-  operatorFilter = '',
+  operatorFilter = [],
   onOperatorFilterChange,
   selectedYear,
   activeSeason,
@@ -85,6 +86,9 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <AgroLogo variant="horizontal" />
+        {onOperatorFilterChange && (
+          <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
+        )}
       </div>
 
       <div className="header-stats">
@@ -174,27 +178,6 @@ export const Header: React.FC<HeaderProps> = ({
                 {cropsCount ?? 0} <span className="unit">kultuuri</span>
                 {varietiesCount ? ` (${varietiesCount} sorti)` : ''}
               </div>
-            </div>
-          </div>
-        )}
-
-        {onOperatorFilterChange && (
-          <div className="stat-pill operator-filter-pill" title="Filtreeri kaarti ja statistikat operaatori (harija) järgi">
-            <Users size={16} className="stat-icon text-emerald" />
-            <div>
-              <div className="stat-label">Operaator</div>
-              <select
-                className="header-season-select"
-                value={operatorFilter}
-                onChange={(e) => onOperatorFilterChange(e.target.value)}
-              >
-                <option value="">Kõik</option>
-                {parties
-                  .filter((p) => p.roles?.includes('OPERATOR') || p.id === operatorFilter)
-                  .map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-              </select>
             </div>
           </div>
         )}
