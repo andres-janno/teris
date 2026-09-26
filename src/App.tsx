@@ -1201,6 +1201,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
         onFocusField={handleFocusField}
+        baseMap={visibility.baseMap}
         onUpdateField={handleUpdateMasterField}
         onDeleteField={handleDeleteMasterField}
         onOpenUpload={() => setIsUploadOpen(true)}

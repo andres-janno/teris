@@ -9,7 +9,7 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Crosshair,
+  Map as MapIcon,
   Check,
   Download,
   AlertCircle,
@@ -24,6 +24,8 @@ import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
+import type { BaseMapLayerId } from '../types/map';
+import { FieldShapeModal } from './FieldShapeModal';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -43,6 +45,7 @@ interface FieldManagerModalProps {
   onOpenParties?: () => void;
   crops?: Crop[];
   onOpenCrops?: () => void;
+  baseMap?: BaseMapLayerId;
 }
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
@@ -62,7 +65,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   parties = [],
   onOpenParties,
   crops = [],
-  onOpenCrops
+  onOpenCrops,
+  baseMap = 'maaamet-pohikaart'
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
@@ -272,6 +276,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       document.removeEventListener('keydown', onKeyDown);
     };
   }, [cropEdit]);
+
+  // Põllu ühe aasta kuju eraldi aknas.
+  const [shapeView, setShapeView] = useState<{ fieldId: number | string; year: number } | null>(null);
 
   // Esc sulgeb ainult muutmisakna (register jääb avatuks).
   useEffect(() => {
@@ -541,8 +548,11 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   };
 
   // Näita põldu kaardil (valitud aasta või viimase kirje geomeetriaga).
-  const focusOnMap = (field: MasterField) => {
-    const rec = field.history.find((h) => h.year === selectedYear) || [...field.history].sort((a, b) => b.year - a.year)[0];
+  // Ava põld põhikaardil antud aasta kujuga (lülitab kaardi samale aastale, et põld oleks nähtav).
+  const focusOnMap = (field: MasterField, year: number) => {
+    const rec = field.history.find((h) => h.year === year);
+    if (!rec) return;
+    onSelectYear(year);
     const feature: FieldFeature = {
       type: 'Feature',
       id: field.id,
@@ -558,7 +568,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
         crop: rec ? rec.crop : 'Määramata',
         cropVariety: rec?.cropVariety,
         cropColor: rec ? rec.cropColor : '#94a3b8',
-        year: selectedYear,
+        year,
         status: rec?.status || 'not_started',
         rawProperties: {
           cadastralParcels: field.cadastralParcels || []
@@ -1230,6 +1240,24 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           )}
 
           {/* Põldude tabel: põhiandmed, suurus, aastate kultuurid, tegevused */}
+          {shapeView && (() => {
+            const field = masterFields.find((f) => f.id === shapeView.fieldId);
+            const record = field?.history.find((h) => h.year === shapeView.year);
+            if (!field || !record) return null;
+            return (
+              <FieldShapeModal
+                field={field}
+                record={record}
+                baseMap={baseMap}
+                onClose={() => setShapeView(null)}
+                onOpenOnMap={() => {
+                  setShapeView(null);
+                  focusOnMap(field, record.year);
+                }}
+              />
+            );
+          })()}
+
           <div className="register-table-wrap">
             <table className="register-table">
               <thead>
@@ -1340,6 +1368,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                                   <span className="crop-dot" style={{ backgroundColor: rec.cropColor }}></span>
                                   <span>{rec.crop}</span>
                                   {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                                  <button
+                                    type="button"
+                                    className="year-shape-btn"
+                                    title={`Näita ${yr}. a põllu kuju`}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setShapeView({ fieldId: field.id, year: yr });
+                                    }}
+                                  >
+                                    <MapIcon size={13} />
+                                  </button>
                                 </div>
                                 {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
                               </>
@@ -1356,9 +1395,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         <div className="row-actions">
                           <button className="icon-btn-ghost" onClick={() => startEdit(field)} title="Muuda">
                             <Edit2 size={15} />
-                          </button>
-                          <button className="icon-btn-ghost" onClick={() => focusOnMap(field)} title="Näita kaardil">
-                            <Crosshair size={15} />
                           </button>
                           <button
                             className="icon-btn-danger"

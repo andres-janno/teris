@@ -3200,6 +3200,44 @@ input[type="number"],
   cursor: pointer;
 }
 
+.register-table .year-shape-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+.register-table .year-shape-btn:hover {
+  color: var(--emerald-500);
+  background: var(--btn-sec-hover);
+}
+
+.modal-content.field-shape-modal {
+  width: min(760px, 94vw);
+}
+
+.field-shape-body {
+  padding: 0;
+}
+
+.field-shape-map {
+  height: min(60vh, 520px);
+  width: 100%;
+}
+
+.field-shape-empty {
+  padding: 40px 20px;
+  text-align: center;
+  color: var(--text-secondary);
+}
+
 .register-table .year-crop-edit-icon {
   flex-shrink: 0;
   opacity: 0;
