@@ -12,7 +12,6 @@ import {
   Download,
   Check,
   Sprout,
-  History,
   AlertCircle,
   Lock,
   CalendarDays,
@@ -195,9 +194,15 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     };
   }, [fieldsForSelectedYear, selectedYear]);
 
-  // Filtered master fields (ainult valitud aasta kirjega põllud)
+  // Tabeli aastaveerud: aktiivne hooaeg −4 … +2, vanemad vasakul.
+  const tableYears = useMemo(() => {
+    const activeYear = seasons.find((s) => s.status === 'active')?.year || new Date().getFullYear();
+    return Array.from({ length: 7 }, (_, i) => activeYear - 4 + i);
+  }, [seasons]);
+
+  // Tabelis on kõik (operaatori filtriga) põllud; otsing ja filtrid rakenduvad valitud aasta andmetele.
   const filteredFields = useMemo(() => {
-    return fieldsForSelectedYear.filter((f) => {
+    return masterFields.filter((f) => {
       const yearRecord = f.history.find(h => h.year === selectedYear);
       const cropName = yearRecord ? yearRecord.crop : '';
       const q = searchQuery.toLowerCase();
@@ -224,7 +229,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
       return matchesSearch && matchesCrop && matchesTenure;
     });
-  }, [fieldsForSelectedYear, selectedYear, searchQuery, cropFilter, tenureFilter]);
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter]);
 
   // Crops breakdown for selected year
   const cropsList = useMemo(() => {
@@ -441,6 +446,35 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     });
   };
 
+
+  // Näita põldu kaardil (valitud aasta või viimase kirje geomeetriaga).
+  const focusOnMap = (field: MasterField) => {
+    const rec = field.history.find((h) => h.year === selectedYear) || [...field.history].sort((a, b) => b.year - a.year)[0];
+    const feature: FieldFeature = {
+      type: 'Feature',
+      id: field.id,
+      geometry: (rec?.geometry || field.geometry || { type: 'Polygon', coordinates: [] }) as Polygon | MultiPolygon,
+      properties: {
+        id: field.id,
+        num: field.num,
+        name: field.name,
+        fieldCode: field.fieldCode,
+        areaHa: rec ? rec.areaHa : 0,
+        eligibleAreaHa: rec?.eligibleAreaHa,
+        areaChangeReason: rec?.areaChangeReason,
+        crop: rec ? rec.crop : 'Määramata',
+        cropVariety: rec?.cropVariety,
+        cropColor: rec ? rec.cropColor : '#94a3b8',
+        year: selectedYear,
+        status: rec?.status || 'not_started',
+        rawProperties: {
+          cadastralParcels: field.cadastralParcels || []
+        }
+      }
+    };
+    onFocusField(feature);
+    onClose();
+  };
 
   const handleExportCsv = () => {
     const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Operaator', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
@@ -1153,171 +1187,105 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             </form>
           )}
 
-          {/* Fields List */}
-          <div className="register-fields-list">
-            {filteredFields.map((field) => {
-              const currentYearRecord = field.history.find(h => h.year === selectedYear) || field.history[0];
-              const area = currentYearRecord ? currentYearRecord.areaHa : 0;
-              const crop = currentYearRecord ? currentYearRecord.crop : 'Määramata';
-              const cropColor = currentYearRecord ? currentYearRecord.cropColor : '#94a3b8';
-              const parcels = field.cadastralParcels || [];
+          {/* Põldude tabel: põhiandmed, suurus, aastate kultuurid, tegevused */}
+          <div className="register-table-wrap">
+            <table className="register-table">
+              <thead>
+                <tr>
+                  <th className="num-col">#</th>
+                  <th>Nr</th>
+                  <th>Nimi</th>
+                  <th>Massiiv</th>
+                  <th>Kataster</th>
+                  <th>Operaator</th>
+                  <th>Omand</th>
+                  <th className="num-col">Suurus (ha)</th>
+                  {tableYears.map((yr) => (
+                    <th
+                      key={yr}
+                      className={`year-col ${yr === selectedYear ? 'selected' : ''}`}
+                      onClick={() => onSelectYear(yr)}
+                      title={`Vali hooaeg ${yr}`}
+                    >
+                      {yr}
+                    </th>
+                  ))}
+                  <th className="actions-col">Tegevused</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredFields.map((field) => {
+                  const selectedRec = field.history.find((h) => h.year === selectedYear);
+                  const latestRec = [...field.history].sort((a, b) => b.year - a.year)[0];
+                  const sizeRec = selectedRec || latestRec;
+                  const parcels = selectedRec?.cadastralParcels || field.cadastralParcels || [];
+                  const owned = parcels.filter((p) => p.ownershipType === 'OWNED');
+                  const rented = parcels.filter((p) => p.ownershipType === 'RENTED');
+                  const parcelTitle = parcels
+                    .map((p) => `${p.cadastralCode}: ${p.ownerName} (${p.fieldAreaHa} ha, ${p.ownershipType === 'OWNED' ? 'oma' : 'rent'})`)
+                    .join('\n');
 
-              return (
-                <div key={field.id} className="master-field-card glass-card">
-                  <div className="field-card-main-row">
-                    {/* Left: Info */}
-                    <div className="field-info-col">
-                      <div className="field-title-line">
-                        <span className="field-id-badge" title="Sisemine unikaalne ID (autoincrement)">#{field.id}</span>
-                        <h4 className="field-name">{field.name}</h4>
-                        {field.num && (
-                          <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>
-                        )}
-                        <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
-                        {field.cadastralCode && (
-                          <span className="cadastre-code" title="Katastritunnus">{field.cadastralCode}</span>
-                        )}
-                      </div>
-
-                      {/* Cadastral Parcels & Ownership tags */}
-                      <div className="field-sub-tags">
-                        {parcels.length > 0 ? (
-                          parcels.map((p, pI) => (
-                            <span
-                              key={pI}
-                              className={`sub-tag ${p.ownershipType === 'OWNED' ? 'owner-tag' : 'rent-tag'}`}
-                              title={`${p.cadastralCode}: ${p.ownerName} (${p.fieldAreaHa} ha) - ${p.ownershipType === 'OWNED' ? `Maamaks ${p.landTaxEurYear || 0}€` : `Rent ${p.rentFeeEurYear || 0}€`}`}
-                            >
-                              {p.ownershipType === 'OWNED' ? '🏛️ Oma' : '🤝 Rent'}: {p.cadastralCode} ({p.fieldAreaHa} ha)
-                            </span>
-                          ))
-                        ) : (
-                          field.operatorName && (
-                            <span className="sub-tag owner-tag">👤 {field.operatorName}</span>
-                          )
-                        )}
-
-                        {field.soilType && (
-                          <span className="sub-tag soil-tag">🌱 {field.soilType}</span>
-                        )}
-                        {field.drainageSystem && (
-                          <span className="sub-tag drainage-tag">💧 Drenaaž</span>
-                        )}
-                      </div>
-
-                      {/* Seasonal Area change note */}
-                      {currentYearRecord?.areaChangeReason && (
-                        <div className="field-change-reason-line">
-                          <Compass size={11} className="text-amber" />
-                          <span>{currentYearRecord.areaChangeReason}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Middle: Active Year Area & Crop */}
-                    <div className="field-active-season-col">
-                      <div className="season-area-box">
-                        <span className="season-year-label">Põllu suurus:</span>
-                        <strong className="season-ha-val">{area.toFixed(2)} ha</strong>
-                        {currentYearRecord?.eligibleAreaHa && (
-                          <span className="eligible-ha-sub">PRIA: {currentYearRecord.eligibleAreaHa} ha</span>
-                        )}
-                      </div>
-
-                      <div className="season-crop-badge" style={{ borderColor: cropColor, backgroundColor: `${cropColor}18` }}>
-                        <span className="crop-dot" style={{ backgroundColor: cropColor }}></span>
-                        <span className="crop-name" style={{ color: 'var(--text-primary)' }}>
-                          {crop} {currentYearRecord?.cropVariety ? `(${currentYearRecord.cropVariety})` : ''}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="field-card-actions">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => startEdit(field)}
-                        title="Muuda põllu nime, katastriüksusi või hooaja andmeid"
+                  return (
+                    <tr key={field.id}>
+                      <td className="num-col muted">{field.id}</td>
+                      <td>{field.num || '–'}</td>
+                      <td className="name-cell">{field.name}</td>
+                      <td className="mono">{field.fieldCode}</td>
+                      <td className="mono">{field.cadastralCode || '–'}</td>
+                      <td>{field.operatorName || '–'}</td>
+                      <td title={parcelTitle || undefined}>
+                        {owned.length > 0 && <span className="tenure-tag owned">Oma</span>}
+                        {rented.length > 0 && <span className="tenure-tag rented">Rent</span>}
+                        {parcels.length === 0 && <span className="muted">–</span>}
+                      </td>
+                      <td
+                        className={`num-col ${selectedRec ? '' : 'muted'}`}
+                        title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                       >
-                        <Edit2 size={13} />
-                        <span>Muuda</span>
-                      </button>
-
-                      <button
-                        className="btn btn-ghost btn-sm"
-                        onClick={() => {
-                          const feature: FieldFeature = {
-                            type: 'Feature',
-                            id: field.id,
-                            geometry: (currentYearRecord?.geometry || field.geometry || { type: 'Polygon', coordinates: [] }) as Polygon | MultiPolygon,
-                            properties: {
-                              id: field.id,
-                              num: field.num,
-                              name: field.name,
-                              fieldCode: field.fieldCode,
-                              areaHa: area,
-                              eligibleAreaHa: currentYearRecord?.eligibleAreaHa,
-                              areaChangeReason: currentYearRecord?.areaChangeReason,
-                              crop: crop,
-                              cropVariety: currentYearRecord?.cropVariety,
-                              cropColor: cropColor,
-                              year: selectedYear,
-                              status: currentYearRecord?.status || 'not_started',
-                              rawProperties: {
-                                cadastralParcels: field.cadastralParcels || []
-                              }
-                            }
-                          };
-                          onFocusField(feature);
-                          onClose();
-                        }}
-                        title="Kuva kaardil ja suumi fookusesse"
-                      >
-                        <Crosshair size={13} />
-                        <span>Kaardile</span>
-                      </button>
-
-                      <button
-                        className="icon-btn-danger"
-                        disabled={isCurrentSeasonLocked}
-                        onClick={() => onDeleteField(field.id)}
-                        title={isCurrentSeasonLocked ? "Hooaeg on muudatusteks suletud" : "Kustuta põld registrist"}
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Multi-Year Rotation Timeline */}
-                  <div className="field-history-row">
-                    <div className="history-label">
-                      <History size={12} className="text-secondary" />
-                      <span>Külvikord & Pindala ajalugu:</span>
-                    </div>
-
-                    <div className="history-pills-list">
-                      {field.history
-                        .sort((a, b) => b.year - a.year)
-                        .map((hist) => (
-                          <div
-                            key={hist.year}
-                            className={`history-pill ${hist.year === selectedYear ? 'current' : ''}`}
-                            onClick={() => onSelectYear(hist.year)}
-                            title={`Klõpsa, et aktiveerida hooaeg ${hist.year} (${hist.areaHa} ha, ${hist.crop})`}
-                          >
-                            <span className="h-year">{hist.year}:</span>
-                            <span className="h-ha">{hist.areaHa} ha</span>
-                            <span className="h-crop" style={{ color: hist.cropColor }}>{hist.crop.split('(')[0]}</span>
-                            {hist.actualYieldTonsHa && (
-                              <span className="h-yield">{hist.actualYieldTonsHa} t/ha</span>
+                        {sizeRec ? sizeRec.areaHa.toFixed(2) : '–'}
+                        {selectedRec?.eligibleAreaHa ? <div className="cell-sub">PRIA {selectedRec.eligibleAreaHa}</div> : null}
+                      </td>
+                      {tableYears.map((yr) => {
+                        const rec = field.history.find((h) => h.year === yr);
+                        return (
+                          <td key={yr} className={`year-cell ${yr === selectedYear ? 'selected' : ''}`}>
+                            {rec ? (
+                              <>
+                                <div className="year-crop" title={rec.crop}>
+                                  <span className="crop-dot" style={{ backgroundColor: rec.cropColor }}></span>
+                                  <span>{rec.crop}</span>
+                                </div>
+                                {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                              </>
+                            ) : (
+                              <span className="muted">–</span>
                             )}
-                          </div>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
+                          </td>
+                        );
+                      })}
+                      <td className="actions-col">
+                        <div className="row-actions">
+                          <button className="icon-btn-ghost" onClick={() => startEdit(field)} title="Muuda">
+                            <Edit2 size={15} />
+                          </button>
+                          <button className="icon-btn-ghost" onClick={() => focusOnMap(field)} title="Näita kaardil">
+                            <Crosshair size={15} />
+                          </button>
+                          <button
+                            className="icon-btn-danger"
+                            disabled={isCurrentSeasonLocked}
+                            onClick={() => onDeleteField(field.id)}
+                            title={isCurrentSeasonLocked ? 'Hooaeg on muudatusteks suletud' : 'Kustuta'}
+                          >
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
 
             {filteredFields.length === 0 && (
               <div className="empty-register-state glass-card">
@@ -1331,7 +1299,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
         <div className="modal-footer">
           <div className="footer-left-info">
-            <span>Kuvatakse <strong>{filteredFields.length}</strong> põldu <strong>{fieldsForSelectedYear.length}</strong>-st &bull; Valitud aasta: <strong>{selectedYear}</strong></span>
+            <span>Kuvatakse <strong>{filteredFields.length}</strong> põldu <strong>{masterFields.length}</strong>-st &bull; Valitud aasta: <strong>{selectedYear}</strong></span>
           </div>
           <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
         </div>
