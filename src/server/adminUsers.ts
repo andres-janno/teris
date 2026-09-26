@@ -5,20 +5,42 @@ import { json, parseBody } from './http.ts';
 import { hashPassword, validateNewPassword } from './auth.ts';
 import { sessionUserOf } from './authGate.ts';
 import { normalizeUsername, USERNAME_ERROR, checkAdminChange } from './adminRules.ts';
+import { normalizeEmail } from './mail.ts';
+import { sendPasswordLink } from './passwordTokens.ts';
 
 const PREFIX = '/api/admin/users';
 const MAX_BODY_BYTES = 16 * 1024;
+const EMAIL_ERROR = 'Sisesta korrektne e-posti aadress';
+const EMAIL_TAKEN = 'Selline e-posti aadress on juba kasutusel';
 
-const PUBLIC_FIELDS = {
+const USER_FIELDS = {
   id: true,
   username: true,
   displayName: true,
+  email: true,
+  passwordHash: true,
   isActive: true,
   isAdmin: true,
   mustChangePassword: true,
   lastLoginAt: true,
   createdAt: true
 } as const;
+
+type UserRow = {
+  id: string;
+  username: string;
+  displayName: string | null;
+  email: string | null;
+  passwordHash: string;
+  isActive: boolean;
+  isAdmin: boolean;
+  mustChangePassword: boolean;
+  lastLoginAt: Date | null;
+  createdAt: Date;
+};
+
+// Paroolirässi ei saadeta kunagi välja — ainult teave, kas parool on määratud.
+const toPublic = ({ passwordHash, ...rest }: UserRow) => ({ ...rest, hasPassword: passwordHash !== '' });
 
 const activeAdminCount = () => prisma.user.count({ where: { isActive: true, isAdmin: true } });
 
@@ -27,7 +49,11 @@ function cleanDisplayName(raw: unknown): string | null {
   return name || null;
 }
 
-const isUniqueViolation = (err: unknown) => (err as { code?: string } | null)?.code === 'P2002';
+const uniqueTarget = (err: unknown): string | null => {
+  const e = err as { code?: string; meta?: { target?: string[] | string } } | null;
+  if (e?.code !== 'P2002') return null;
+  return String(e.meta?.target ?? '');
+};
 
 export async function handleAdminUsers(
   req: IncomingMessage,
@@ -45,10 +71,9 @@ export async function handleAdminUsers(
 
   const parts = pathname.slice(PREFIX.length).split('/').filter(Boolean);
 
-  // /api/admin/users
   if (parts.length === 0 && method === 'GET') {
-    const users = await prisma.user.findMany({ select: PUBLIC_FIELDS, orderBy: { username: 'asc' } });
-    json(res, { users });
+    const users = await prisma.user.findMany({ select: USER_FIELDS, orderBy: { username: 'asc' } });
+    json(res, { users: users.map(toPublic) });
     return true;
   }
 
@@ -59,34 +84,48 @@ export async function handleAdminUsers(
       json(res, { error: USERNAME_ERROR }, 400);
       return true;
     }
-    const password = String(body?.password ?? '');
-    const problem = validateNewPassword(password);
-    if (problem) {
-      json(res, { error: problem }, 400);
+    const email = normalizeEmail(body?.email);
+    if (!email) {
+      json(res, { error: EMAIL_ERROR }, 400);
       return true;
     }
+    const password = typeof body?.password === 'string' && body.password !== '' ? body.password : null;
+    if (password !== null) {
+      const problem = validateNewPassword(password);
+      if (problem) {
+        json(res, { error: problem }, 400);
+        return true;
+      }
+    }
     try {
-      const user = await prisma.user.create({
+      const created = await prisma.user.create({
         data: {
           username,
+          email,
           displayName: cleanDisplayName(body?.displayName),
-          passwordHash: await hashPassword(password),
+          passwordHash: password !== null ? await hashPassword(password) : '',
           isAdmin: body?.isAdmin === true,
-          mustChangePassword: true
+          mustChangePassword: password !== null
         },
-        select: PUBLIC_FIELDS
+        select: USER_FIELDS
       });
-      json(res, { user }, 201);
+      const emailSent =
+        password === null
+          ? await sendPasswordLink({ id: created.id, username, displayName: created.displayName, email }, 'INVITE')
+          : false;
+      json(res, { user: toPublic(created), emailSent }, 201);
     } catch (err) {
-      if (!isUniqueViolation(err)) throw err;
-      json(res, { error: 'Selline kasutajanimi on juba olemas' }, 409);
+      const target = uniqueTarget(err);
+      if (target === null) throw err;
+      json(res, { error: target.includes('email') ? EMAIL_TAKEN : 'Selline kasutajanimi on juba olemas' }, 409);
     }
     return true;
   }
 
   const isUserRoute = parts.length === 1 && (method === 'PATCH' || method === 'DELETE');
   const isPasswordRoute = parts.length === 2 && parts[1] === 'password' && method === 'POST';
-  if (!isUserRoute && !isPasswordRoute) {
+  const isSendLinkRoute = parts.length === 2 && parts[1] === 'send-link' && method === 'POST';
+  if (!isUserRoute && !isPasswordRoute && !isSendLinkRoute) {
     json(res, { error: 'Not found' }, 404);
     return true;
   }
@@ -94,6 +133,23 @@ export async function handleAdminUsers(
   const target = await prisma.user.findUnique({ where: { id: parts[0] } });
   if (!target) {
     json(res, { error: 'Kasutajat ei leitud' }, 404);
+    return true;
+  }
+
+  if (isSendLinkRoute) {
+    if (!target.email) {
+      json(res, { error: 'Kasutajal pole e-posti aadressi' }, 400);
+      return true;
+    }
+    if (!target.isActive) {
+      json(res, { error: 'Seda muudatust ei saa teha: kasutaja on keelatud' }, 400);
+      return true;
+    }
+    const emailSent = await sendPasswordLink(
+      { id: target.id, username: target.username, displayName: target.displayName, email: target.email },
+      target.passwordHash === '' ? 'INVITE' : 'RESET'
+    );
+    json(res, { success: true, emailSent });
     return true;
   }
 
@@ -127,8 +183,17 @@ export async function handleAdminUsers(
 
   // PATCH
   const body = await parseBody(req, MAX_BODY_BYTES);
-  const data: { displayName?: string | null; isActive?: boolean; isAdmin?: boolean } = {};
-  if (body && typeof body === 'object' && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
+  const isObject = body !== null && typeof body === 'object';
+  const data: { displayName?: string | null; email?: string; isActive?: boolean; isAdmin?: boolean } = {};
+  if (isObject && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
+  if (isObject && 'email' in body) {
+    const email = normalizeEmail(body.email);
+    if (!email) {
+      json(res, { error: EMAIL_ERROR }, 400);
+      return true;
+    }
+    data.email = email;
+  }
   if (typeof body?.isActive === 'boolean') data.isActive = body.isActive;
   if (typeof body?.isAdmin === 'boolean') data.isAdmin = body.isAdmin;
 
@@ -143,8 +208,13 @@ export async function handleAdminUsers(
     return true;
   }
 
-  const user = await prisma.user.update({ where: { id: target.id }, data, select: PUBLIC_FIELDS });
-  if (data.isActive === false) await prisma.session.deleteMany({ where: { userId: target.id } });
-  json(res, { user });
+  try {
+    const user = await prisma.user.update({ where: { id: target.id }, data, select: USER_FIELDS });
+    if (data.isActive === false) await prisma.session.deleteMany({ where: { userId: target.id } });
+    json(res, { user: toPublic(user) });
+  } catch (err) {
+    if (uniqueTarget(err) === null) throw err;
+    json(res, { error: EMAIL_TAKEN }, 409);
+  }
   return true;
 }

@@ -20,12 +20,15 @@ import {
   clientIpFrom,
   allowedDuringForcedPasswordChange
 } from './auth.ts';
+import { normalizeEmail } from './mail.ts';
+import { findValidToken, consumeToken, sendPasswordLink } from './passwordTokens.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
 const MAX_AUTH_BODY_BYTES = 16 * 1024;
 const MAX_USERNAME_LENGTH = 64;
 const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
+const forgotLimiter = createLoginLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
 
 type DbUser = {
   id: string;
@@ -137,6 +140,58 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
   json(res, { user: toAuthUser(user) });
 }
 
+// "Unustasid parooli": vastus on alati sama, et kontode olemasolu ei saaks välja uurida.
+async function handleForgot(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
+  const login = String(body?.login ?? '').trim().toLowerCase().slice(0, 254);
+  const keys = [`f:${login}`, `fip:${clientIp(req)}`];
+  if (keys.some((k) => forgotLimiter.isBlocked(k))) {
+    json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
+    return;
+  }
+  keys.forEach((k) => forgotLimiter.registerFailure(k));
+  if (login) {
+    const email = normalizeEmail(login);
+    const user = await prisma.user.findFirst({ where: email ? { email } : { username: login } });
+    if (user && user.isActive && user.email) {
+      await sendPasswordLink({ id: user.id, username: user.username, displayName: user.displayName, email: user.email }, 'RESET');
+    }
+  }
+  json(res, { success: true });
+}
+
+async function handleTokenCheck(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
+  const token = await findValidToken(String(body?.token ?? ''));
+  if (!token) {
+    json(res, { error: 'Link on aegunud või juba kasutatud' }, 400);
+    return;
+  }
+  json(res, { valid: true, purpose: token.purpose, username: token.user.username });
+}
+
+async function handleSetPassword(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
+  const password = String(body?.password ?? '');
+  const token = await findValidToken(String(body?.token ?? ''));
+  if (!token) {
+    json(res, { error: 'Link on aegunud või juba kasutatud' }, 400);
+    return;
+  }
+  const problem = validateNewPassword(password);
+  if (problem) {
+    json(res, { error: problem }, 400);
+    return;
+  }
+  await prisma.user.update({
+    where: { id: token.user.id },
+    data: { passwordHash: await hashPassword(password), mustChangePassword: false }
+  });
+  await consumeToken(token.id, token.user.id);
+  await prisma.session.deleteMany({ where: { userId: token.user.id } });
+  json(res, { success: true, username: token.user.username });
+}
+
 export async function authGate(
   req: IncomingMessage,
   res: ServerResponse,
@@ -168,6 +223,19 @@ export async function authGate(
     if (token) await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
     res.setHeader('Set-Cookie', clearSessionCookie());
     json(res, { success: true });
+    return true;
+  }
+
+  if (pathname === '/api/auth/forgot' && method === 'POST') {
+    await handleForgot(req, res);
+    return true;
+  }
+  if (pathname === '/api/auth/token' && method === 'POST') {
+    await handleTokenCheck(req, res);
+    return true;
+  }
+  if (pathname === '/api/auth/set-password' && method === 'POST') {
+    await handleSetPassword(req, res);
     return true;
   }
 

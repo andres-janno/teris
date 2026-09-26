@@ -1,7 +1,7 @@
 // scripts/auth-smoke.mts — integratsioonitest töötava toodanguserveri vastu.
 // Käivita serveris: BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts
 import { PrismaClient } from '@prisma/client';
-import { hashPassword } from '../src/server/auth.ts';
+import { hashPassword, hashToken } from '../src/server/auth.ts';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:8820';
 const ORIGIN = 'https://agro.ventcap.ee';
@@ -9,9 +9,10 @@ const USER = '_smoketest';
 const PASS = 'Smoke-test-12345';
 const ADMIN = '_smokeadmin';
 const NEWUSER = '_smokenew';
+const LINKUSER = '_smokelink';
 const TEMP_PASS = 'Ajutine-parool-123';
 const NEW_PASS = 'Uus-parool-12345';
-const TEST_USERS = [USER, ADMIN, NEWUSER];
+const TEST_USERS = [USER, ADMIN, NEWUSER, LINKUSER];
 const prisma = new PrismaClient();
 let failures = 0;
 
@@ -40,7 +41,7 @@ async function loginAs(username: string, password: string) {
 try {
   await prisma.user.deleteMany({ where: { username: { in: TEST_USERS } } });
   await prisma.user.create({ data: { username: USER, passwordHash: await hashPassword(PASS) } });
-  await prisma.user.create({ data: { username: ADMIN, passwordHash: await hashPassword(PASS), isAdmin: true } });
+  await prisma.user.create({ data: { username: ADMIN, passwordHash: await hashPassword(PASS), isAdmin: true, email: '_smokeadmin@example.invalid' } });
 
   check('status ilma sessioonita → 401', (await fetch(BASE + '/api/status')).status === 401);
   check('vale parool → 401', (await post('/api/auth/login', { username: USER, password: 'vale-parool-1' })).status === 401);
@@ -66,11 +67,15 @@ try {
   check('admin login → isAdmin', admin.status === 200 && admin.user?.isAdmin === true);
   check('admin kasutajate nimekiri → 200', (await send('GET', '/api/admin/users', admin.cookie)).status === 200);
 
-  const created = await send('POST', '/api/admin/users', admin.cookie, { username: NEWUSER, displayName: 'Smoke Uus', password: TEMP_PASS });
+  const created = await send('POST', '/api/admin/users', admin.cookie, { username: NEWUSER, displayName: 'Smoke Uus', email: '_smokenew@example.invalid', password: TEMP_PASS });
   const newId = (await created.json().catch(() => ({})))?.user?.id as string | undefined;
   check('admin loob kasutaja → 201', created.status === 201 && Boolean(newId), `${created.status}`);
-  check('sama kasutajanimi → 409', (await send('POST', '/api/admin/users', admin.cookie, { username: NEWUSER, password: TEMP_PASS })).status === 409);
-  check('vigane kasutajanimi → 400', (await send('POST', '/api/admin/users', admin.cookie, { username: 'vale nimi', password: TEMP_PASS })).status === 400);
+  check('sama kasutajanimi → 409', (await send('POST', '/api/admin/users', admin.cookie, { username: NEWUSER, email: '_muu@example.invalid', password: TEMP_PASS })).status === 409);
+  check('sama e-post → 409', (await send('POST', '/api/admin/users', admin.cookie, { username: '_smokemuu', email: '_smokenew@example.invalid', password: TEMP_PASS })).status === 409);
+  check('e-post puudub → 400', (await send('POST', '/api/admin/users', admin.cookie, { username: '_smokemuu', password: TEMP_PASS })).status === 400);
+  check('vigane kasutajanimi → 400', (await send('POST', '/api/admin/users', admin.cookie, { username: 'vale nimi', email: '_x@example.invalid', password: TEMP_PASS })).status === 400);
+  const listed = await (await send('GET', '/api/admin/users', admin.cookie)).json();
+  check('nimekirjas pole paroolirässi', Array.isArray(listed.users) && listed.users.every((u: Record<string, unknown>) => !('passwordHash' in u) && 'hasPassword' in u));
 
   const fresh = await loginAs(NEWUSER, TEMP_PASS);
   check('uus kasutaja peab parooli vahetama', fresh.status === 200 && fresh.user?.mustChangePassword === true);
@@ -87,6 +92,22 @@ try {
 
   await post('/api/auth/logout', {}, { Cookie: cookie });
   check('pärast väljalogimist → 401', (await fetch(BASE + '/api/auth/me', { headers: { Cookie: cookie } })).status === 401);
+
+  // Parooli link: token luuakse otse DB-sse (testis e-kirju ei saadeta).
+  const linkUser = await prisma.user.create({ data: { username: LINKUSER, email: '_smokelink@example.invalid', passwordHash: '' } });
+  const rawToken = 'smoke-token-' + Date.now();
+  await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'INVITE', tokenHash: hashToken(rawToken), expiresAt: new Date(Date.now() + 3600_000) } });
+  await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'RESET', tokenHash: hashToken(rawToken + '-old'), expiresAt: new Date(Date.now() - 1000) } });
+  check('kutsutud kasutaja ei saa enne parooli sisse', (await post('/api/auth/login', { username: LINKUSER, password: '' })).status === 401);
+  check('forgot tundmatu kasutajaga → 200', (await post('/api/auth/forgot', { login: '_olematu_kasutaja' })).status === 200);
+  check('vale token → 400', (await post('/api/auth/token', { token: 'vale' })).status === 400);
+  check('aegunud token → 400', (await post('/api/auth/token', { token: rawToken + '-old' })).status === 400);
+  const tokenCheck = await post('/api/auth/token', { token: rawToken });
+  check('kehtiv token → 200', tokenCheck.status === 200 && (await tokenCheck.json()).username === LINKUSER);
+  check('liiga lühike parool → 400', (await post('/api/auth/set-password', { token: rawToken, password: 'lyhike' })).status === 400);
+  check('parooli määramine → 200', (await post('/api/auth/set-password', { token: rawToken, password: NEW_PASS })).status === 200);
+  check('sama token uuesti → 400', (await post('/api/auth/set-password', { token: rawToken, password: NEW_PASS })).status === 400);
+  check('uue parooliga sisse → 200', (await loginAs(LINKUSER, NEW_PASS)).status === 200);
 
   let last = 0;
   for (let i = 0; i < 11; i++) last = (await post('/api/auth/login', { username: USER, password: 'vale-parool-1' }, { 'X-Forwarded-For': '203.0.113.9' })).status;

@@ -1,10 +1,11 @@
 // src/server/userCli.ts
-// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"]
+// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress]
 // Parool küsitakse varjatult (terminalis) või loetakse stdin'i ridadest (toru kaudu).
 import readline from 'node:readline';
 import { prisma } from './db';
 import { hashPassword, validateNewPassword } from './auth';
 import { checkAdminChange } from './adminRules';
+import { normalizeEmail } from './mail';
 
 const queued: string[] = [];
 let waiting: ((line: string) => void) | null = null;
@@ -58,15 +59,20 @@ async function main(): Promise<void> {
   const [command, name, ...rest] = process.argv.slice(2);
   const displayIdx = rest.indexOf('--display');
   const displayName = displayIdx >= 0 ? rest[displayIdx + 1] ?? null : null;
+  const emailIdx = rest.indexOf('--email');
+  const emailRaw = emailIdx >= 0 ? rest[emailIdx + 1] ?? '' : null;
 
   switch (command) {
     case 'add': {
-      if (!name) throw new Error('Kasutus: add <nimi> [--display "Nimi"]');
+      if (!name) throw new Error('Kasutus: add <nimi> [--display "Nimi"] [--email aadress]');
       const username = name.toLowerCase();
       if (username.length > 64) throw new Error('Kasutajanimi on liiga pikk (maksimaalselt 64 märki)');
       if (await prisma.user.findUnique({ where: { username } })) throw new Error(`Kasutaja "${username}" on juba olemas`);
+      const email = emailRaw === null ? null : normalizeEmail(emailRaw);
+      if (emailRaw !== null && !email) throw new Error('Vigane e-posti aadress');
+      if (email && (await prisma.user.findUnique({ where: { email } }))) throw new Error(`E-post "${email}" on juba kasutusel`);
       const passwordHash = await hashPassword(await askNewPassword());
-      await prisma.user.create({ data: { username, passwordHash, displayName } });
+      await prisma.user.create({ data: { username, passwordHash, displayName, email } });
       console.log(`Kasutaja "${username}" loodud.`);
       break;
     }
@@ -111,6 +117,7 @@ async function main(): Promise<void> {
         console.log([
           u.username.padEnd(20),
           (u.displayName ?? '').padEnd(24),
+          (u.email ?? '').padEnd(30),
           u.isActive ? 'aktiivne' : 'keelatud',
           u.isAdmin ? 'admin' : 'kasutaja',
           u.mustChangePassword ? 'parool vahetamata' : '',
@@ -122,7 +129,7 @@ async function main(): Promise<void> {
       break;
     }
     default:
-      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"]');
+      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress]');
   }
 }
 
