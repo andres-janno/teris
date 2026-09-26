@@ -452,6 +452,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   };
 
 
+  // Lukustatud hooajad, milles põllul on andmeid — selliseid põlde ei kustutata
+  // (kustutamine eemaldaks ka arhiveeritud aastate kirjed).
+  const lockedYearsOf = (field: MasterField): number[] =>
+    [...new Set(field.history.map((h) => h.year))]
+      .filter((y) => seasons.some((s) => s.year === y && s.isLocked))
+      .sort((a, b) => a - b);
+
   // Näita põldu kaardil (valitud aasta või viimase kirje geomeetriaga).
   const focusOnMap = (field: MasterField) => {
     const rec = field.history.find((h) => h.year === selectedYear) || [...field.history].sort((a, b) => b.year - a.year)[0];
@@ -1210,12 +1217,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           </button>
                           <button
                             className="icon-btn-danger"
-                            disabled={isCurrentSeasonLocked}
                             onClick={() => {
                               const label = `${field.num ? `Nr ${field.num} ` : ''}${field.name}`;
+                              const locked = lockedYearsOf(field);
+                              if (locked.length > 0) {
+                                alert(`Põldu "${label}" ei saa kustutada: sellel on andmeid lukustatud hooaegades ${locked.join(', ')}.`);
+                                return;
+                              }
                               if (confirm(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
                             }}
-                            title={isCurrentSeasonLocked ? 'Hooaeg on muudatusteks suletud' : 'Kustuta'}
+                            title="Kustuta"
                           >
                             <Trash2 size={15} />
                           </button>
