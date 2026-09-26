@@ -1,6 +1,6 @@
 // src/components/UsersAdminModal.tsx — kasutajate haldus (ainult adminile).
 import React, { useCallback, useEffect, useState } from 'react';
-import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check } from 'lucide-react';
+import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check, Mail } from 'lucide-react';
 import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
 
@@ -27,6 +27,9 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
   const [password, setPassword] = useState('');
   const [repeat, setRepeat] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [email, setEmail] = useState('');
+  const [useInvite, setUseInvite] = useState(true);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     try {
@@ -52,14 +55,19 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     setRepeat('');
     setDisplayName(next.kind === 'edit' ? next.user.displayName ?? '' : '');
     setIsAdmin(next.kind === 'edit' ? next.user.isAdmin : false);
+    setEmail(next.kind === 'edit' ? next.user.email ?? '' : '');
+    setUseInvite(true);
+    setNotice(null);
     setMode(next);
   };
 
   const run = async (action: () => Promise<unknown>) => {
     setError(null);
+    setNotice(null);
     setBusy(true);
     try {
-      await action();
+      const result = await action();
+      if (typeof result === 'string') setNotice(result);
       // Toiming õnnestus — tagasi nimekirja ka siis, kui järgnev laadimine ebaõnnestub.
       setMode({ kind: 'list' });
       await load();
@@ -72,16 +80,30 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (mode.kind === 'add' || mode.kind === 'reset') {
+    if (mode.kind === 'reset' || (mode.kind === 'add' && !useInvite)) {
       if (password.length < 10) return setError('Parool peab olema vähemalt 10 märki');
       if (password !== repeat) return setError('Paroolid ei kattu');
     }
-    if (mode.kind === 'add') void run(() => api.createUser({ username, displayName, password, isAdmin }));
-    else if (mode.kind === 'edit') {
+    if (mode.kind === 'add') {
+      void run(async () => {
+        const { emailSent } = await api.createUser({ username, displayName, email, isAdmin, ...(useInvite ? {} : { password }) });
+        if (useInvite) {
+          return emailSent
+            ? `Kutse saadeti aadressile ${email}.`
+            : 'Kasutaja loodi, aga e-kirja saatmine ebaõnnestus — proovi „Saada parooli link“.';
+        }
+      });
+    } else if (mode.kind === 'edit') {
       const self = mode.user.id === currentUserId;
-      void run(() => api.updateUser(mode.user.id, self ? { displayName } : { displayName, isAdmin }));
+      void run(() => api.updateUser(mode.user.id, self ? { displayName, email } : { displayName, email, isAdmin }));
     } else if (mode.kind === 'reset') void run(() => api.resetUserPassword(mode.user.id, password));
   };
+
+  const sendLink = (u: AdminUser) =>
+    void run(async () => {
+      const { emailSent } = await api.sendUserLink(u.id);
+      return emailSent ? `Parooli link saadeti aadressile ${u.email}.` : 'E-kirja saatmine ebaõnnestus. Proovi hiljem uuesti.';
+    });
 
   const toggleActive = (u: AdminUser) => void run(() => api.updateUser(u.id, { isActive: !u.isActive }));
 
@@ -118,6 +140,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
               <span>{error}</span>
             </div>
           )}
+          {notice && <div className="alert-box">{notice}</div>}
 
           {mode.kind === 'list' ? (
             <>
@@ -133,6 +156,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                     <tr>
                       <th>Nimi</th>
                       <th>Kasutajanimi</th>
+                      <th>E-post</th>
                       <th>Roll</th>
                       <th>Olek</th>
                       <th>Viimati sees</th>
@@ -146,10 +170,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                         <tr key={u.id} className={u.isActive ? '' : 'inactive'}>
                           <td>{u.displayName ?? '–'}</td>
                           <td>{u.username}</td>
+                          <td>{u.email ?? '–'}</td>
                           <td>{u.isAdmin ? 'Admin' : 'Kasutaja'}</td>
                           <td>
                             {u.isActive ? 'Aktiivne' : 'Keelatud'}
                             {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
+                            {!u.hasPassword && <span className="users-admin-badge">Kutse saadetud</span>}
                           </td>
                           <td>{formatDate(u.lastLoginAt)}</td>
                           <td className="users-admin-actions">
@@ -158,6 +184,11 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                             </button>
                             {!self && (
                               <>
+                                {u.email && u.isActive && (
+                                  <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
+                                    <Mail size={15} />
+                                  </button>
+                                )}
                                 <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
                                   <KeyRound size={15} />
                                 </button>
@@ -192,7 +223,25 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   <input id="ua-display" className="form-input" autoComplete="off" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
                 </div>
               )}
-              {(mode.kind === 'add' || mode.kind === 'reset') && (
+              {(mode.kind === 'add' || mode.kind === 'edit') && (
+                <div className="form-group">
+                  <label htmlFor="ua-email">E-post{mode.kind === 'add' ? ' (kohustuslik)' : ''}</label>
+                  <input id="ua-email" type="email" className="form-input" required={mode.kind === 'add'} autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </div>
+              )}
+              {mode.kind === 'add' && (
+                <div className="users-admin-mode">
+                  <label className="users-admin-checkbox">
+                    <input type="radio" name="ua-mode" checked={useInvite} onChange={() => setUseInvite(true)} />
+                    <span>Saada kutse e-postiga (kasutaja määrab parooli ise)</span>
+                  </label>
+                  <label className="users-admin-checkbox">
+                    <input type="radio" name="ua-mode" checked={!useInvite} onChange={() => setUseInvite(false)} />
+                    <span>Määra ajutine parool</span>
+                  </label>
+                </div>
+              )}
+              {(mode.kind === 'reset' || (mode.kind === 'add' && !useInvite)) && (
                 <>
                   <div className="form-group">
                     <label htmlFor="ua-password">Ajutine parool (vähemalt 10 märki)</label>

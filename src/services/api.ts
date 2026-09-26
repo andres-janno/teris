@@ -64,17 +64,17 @@ export const api = {
     return (await res.json()).users;
   },
 
-  async createUser(data: { username: string; displayName: string; password: string; isAdmin: boolean }): Promise<AdminUser> {
+  async createUser(data: { username: string; displayName: string; email: string; isAdmin: boolean; password?: string }): Promise<{ user: AdminUser; emailSent: boolean }> {
     const res = await apiFetch('/api/admin/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Kasutaja lisamine ebaõnnestus'));
-    return (await res.json()).user;
+    return res.json();
   },
 
-  async updateUser(id: string, data: { displayName?: string; isActive?: boolean; isAdmin?: boolean }): Promise<AdminUser> {
+  async updateUser(id: string, data: { displayName?: string; email?: string; isActive?: boolean; isAdmin?: boolean }): Promise<AdminUser> {
     const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -91,6 +91,41 @@ export const api = {
       body: JSON.stringify({ password })
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Parooli lähtestamine ebaõnnestus'));
+  },
+
+  async sendUserLink(id: string): Promise<{ emailSent: boolean }> {
+    const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}/send-link`, { method: 'POST' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Lingi saatmine ebaõnnestus'));
+    return res.json();
+  },
+
+  async forgotPassword(login: string): Promise<void> {
+    const res = await apiFetch('/api/auth/forgot', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ login })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Päring ebaõnnestus'));
+  },
+
+  async checkPasswordToken(token: string): Promise<{ purpose: 'INVITE' | 'RESET'; username: string }> {
+    const res = await apiFetch('/api/auth/token', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Link on aegunud või juba kasutatud'));
+    return res.json();
+  },
+
+  async setPasswordWithToken(token: string, password: string): Promise<{ username: string }> {
+    const res = await apiFetch('/api/auth/set-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token, password })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Parooli määramine ebaõnnestus'));
+    return res.json();
   },
 
   async deleteUser(id: string): Promise<void> {

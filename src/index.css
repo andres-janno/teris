@@ -5289,6 +5289,41 @@ a.history-pill:hover {
   width: min(420px, 94vw);
 }
 
+.login-forgot-link {
+  align-self: center;
+  margin-top: 4px;
+  border: none;
+  background: none;
+  color: var(--text-secondary);
+  font-family: inherit;
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.login-forgot-box {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.8rem;
+}
+
+.login-forgot-row {
+  display: flex;
+  gap: 6px;
+}
+
+.login-forgot-row .form-input {
+  flex: 1;
+}
+
+.users-admin-mode {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
 .forced-password-page {
   min-height: 100vh;
   background: var(--bg-dark);

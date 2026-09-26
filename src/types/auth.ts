@@ -11,6 +11,8 @@ export interface AdminUser {
   id: string;
   username: string;
   displayName: string | null;
+  email: string | null;
+  hasPassword: boolean;
   isActive: boolean;
   isAdmin: boolean;
   mustChangePassword: boolean;

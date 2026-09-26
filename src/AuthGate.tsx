@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { App } from './App';
 import { LoginPage } from './components/LoginPage';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { SetPasswordPage } from './components/SetPasswordPage';
 import type { AuthUser } from './types/auth';
 import { api, setUnauthorizedHandler } from './services/api';
 
@@ -10,6 +11,16 @@ export const AuthGate: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checking, setChecking] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
+
+  // /parool#<token> — e-kirja link parooli määramiseks.
+  const [linkToken, setLinkToken] = useState<string | null>(() =>
+    window.location.pathname === '/parool' && window.location.hash.length > 1 ? window.location.hash.slice(1) : null
+  );
+  const leaveLinkPage = (message?: string) => {
+    window.history.replaceState(null, '', '/');
+    setLinkToken(null);
+    if (message) setNotice(message);
+  };
 
   useEffect(() => {
     setUnauthorizedHandler(() => {
@@ -23,6 +34,10 @@ export const AuthGate: React.FC = () => {
       .finally(() => setChecking(false));
     return () => setUnauthorizedHandler(null);
   }, []);
+
+  if (linkToken) {
+    return <SetPasswordPage token={linkToken} onDone={(m) => leaveLinkPage(m)} onCancel={() => leaveLinkPage()} />;
+  }
 
   if (checking) return <div className="auth-loading">Laadin…</div>;
 

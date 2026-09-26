@@ -15,6 +15,9 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [forgotOpen, setForgotOpen] = useState(false);
+  const [forgotLogin, setForgotLogin] = useState('');
+  const [forgotSent, setForgotSent] = useState(false);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,6 +76,39 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
           <LogIn size={16} />
           <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
         </button>
+        <button type="button" className="login-forgot-link" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
+          Unustasid parooli?
+        </button>
+        {forgotOpen && (
+          <div className="login-forgot-box">
+            {forgotSent ? (
+              <div className="alert-box">Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
+            ) : (
+              <>
+                <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
+                <div className="login-forgot-row">
+                  <input id="forgot-login" className="form-input" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    disabled={!forgotLogin.trim()}
+                    onClick={async () => {
+                      setError(null);
+                      try {
+                        await api.forgotPassword(forgotLogin.trim());
+                        setForgotSent(true);
+                      } catch (err) {
+                        setError(err instanceof Error ? err.message : 'Päring ebaõnnestus');
+                      }
+                    }}
+                  >
+                    Saada link
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+        )}
       </form>
     </div>
   );

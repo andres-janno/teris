@@ -83,7 +83,7 @@ Kui arendusserver jookseb, taaskäivita see (Vite'i sõltuvuste vahemälu).
 | `npm run release` | tüübikontroll, testid, ehitus, `agro` teenuse taaskäivitus |
 | `npm run build` | kasutajaliides `dist/` + server `dist-server/` |
 | `npm test` | ühiktestid (Vitest) |
-| `npm run user -- add <nimi> [--display "Nimi"]` | uus kasutaja (parool küsitakse) |
+| `npm run user -- add <nimi> [--display "Nimi"] [--email aadress]` | uus kasutaja (parool küsitakse) |
 | `npm run user -- passwd <nimi>` | parooli muutmine |
 | `npm run user -- disable <nimi>` / `enable <nimi>` | keelamine / lubamine |
 | `npm run user -- list` | kasutajad |
@@ -93,6 +93,11 @@ Kui arendusserver jookseb, taaskäivita see (Vite'i sõltuvuste vahemälu).
 
 Kasutajaid saab hallata ka rakenduses: kasutajamenüü → **Kasutajad** (ainult admin). Admini
 lisatud või lähtestatud parool on ajutine — kasutaja peab selle esimesel sisselogimisel vahetama.
+
+Uuele kasutajale saadetakse vaikimisi e-postiga kutse (link kehtib 7 päeva); sisselogimise
+lehel on „Unustasid parooli?“ (link kehtib 1 tund). Kirjad saadab serveri Postfix (DKIM
+selektor `agro`, domeen `agro.ventcap.ee`); `.env`: `MAIL_FROM`, `APP_BASE_URL`,
+`MAIL_DISABLED=1` (arenduses kirju ei saadeta).
 
 Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json`.
 Integratsioonitest töötava serveri vastu: `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts`.
