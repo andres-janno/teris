@@ -9,7 +9,7 @@ import {
   Plus,
   Edit2,
   Trash2,
-  Map as MapIcon,
+  Crosshair,
   Check,
   Download,
   AlertCircle,
@@ -1377,7 +1377,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                                       setShapeView({ fieldId: field.id, year: yr });
                                     }}
                                   >
-                                    <MapIcon size={13} />
+                                    <Crosshair size={13} />
                                   </button>
                                 </div>
                                 {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
