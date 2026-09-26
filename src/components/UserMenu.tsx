@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database } from 'lucide-react';
+import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
 
 interface UserMenuProps {
@@ -7,6 +7,7 @@ interface UserMenuProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onChangePassword?: () => void;
+  onOpenUsers?: () => void;
   onLogout?: () => void;
   dbConnected: boolean;
 }
@@ -18,6 +19,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   theme,
   onToggleTheme,
   onChangePassword,
+  onOpenUsers,
   onLogout,
   dbConnected
 }) => {
@@ -74,6 +76,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             <KeyRound size={15} />
             <span>Muuda parooli</span>
           </button>
+          {user.isAdmin && onOpenUsers && (
+            <button type="button" role="menuitem" className="user-menu-item" onClick={run(onOpenUsers)}>
+              <Users size={15} />
+              <span>Kasutajad</span>
+            </button>
+          )}
           <button type="button" role="menuitem" className="user-menu-item" onClick={run(onToggleTheme)}>
             {theme === 'light' ? <Moon size={15} /> : <Sun size={15} className="text-amber-400" />}
             <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>

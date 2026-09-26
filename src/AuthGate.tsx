@@ -2,6 +2,7 @@
 import React, { useEffect, useState } from 'react';
 import { App } from './App';
 import { LoginPage } from './components/LoginPage';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 import type { AuthUser } from './types/auth';
 import { api, setUnauthorizedHandler } from './services/api';
 
@@ -37,22 +38,34 @@ export const AuthGate: React.FC = () => {
     );
   }
 
-  return (
-    <App
-      user={user}
-      onLogout={() => {
-        api
-          .logout()
-          .then(() => {
-            setNotice(null);
-            setUser(null);
-          })
-          .catch((err) => {
-            // Väljalogimine ebaõnnestus — jäetakse sisse logituks (notice ei paistaks
-            // App'i vaates), kasutajale teatatakse olemasoleva alert()-mustri järgi.
-            alert(err instanceof Error ? err.message : 'Väljalogimine ebaõnnestus');
-          });
-      }}
-    />
-  );
+  const logout = () => {
+    api
+      .logout()
+      .then(() => {
+        setNotice(null);
+        setUser(null);
+      })
+      .catch((err) => {
+        // Väljalogimine ebaõnnestus — jäetakse sisse logituks, kasutajale teatatakse alert()-iga.
+        alert(err instanceof Error ? err.message : 'Väljalogimine ebaõnnestus');
+      });
+  };
+
+  if (user.mustChangePassword) {
+    return (
+      <div className="forced-password-page">
+        <ChangePasswordModal
+          isOpen
+          forced
+          onClose={() => undefined}
+          onDone={() => {
+            api.getMe().then(setUser).catch(() => setUser(null));
+          }}
+          onLogout={logout}
+        />
+      </div>
+    );
+  }
+
+  return <App user={user} onLogout={logout} />;
 };

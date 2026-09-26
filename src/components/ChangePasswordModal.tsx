@@ -6,9 +6,13 @@ import { api } from '../services/api';
 interface ChangePasswordModalProps {
   isOpen: boolean;
   onClose: () => void;
+  // Sundvahetus: aken ei sulgu, õnnestumisel kutsutakse onDone, lisaks "Logi välja".
+  forced?: boolean;
+  onDone?: () => void;
+  onLogout?: () => void;
 }
 
-export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose }) => {
+export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen, onClose, forced = false, onDone, onLogout }) => {
   const [current, setCurrent] = useState('');
   const [next, setNext] = useState('');
   const [repeat, setRepeat] = useState('');
@@ -35,7 +39,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
     setBusy(true);
     try {
       await api.changePassword(current, next);
-      setDone(true);
+      if (forced) onDone?.();
+      else setDone(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Parooli muutmine ebaõnnestus');
     } finally {
@@ -44,18 +49,21 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
   };
 
   return (
-    <div className="modal-backdrop" onClick={close}>
+    <div className="modal-backdrop" onClick={forced ? undefined : close}>
       <form className="modal-content animate-scale-up change-password-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
         <div className="modal-header">
           <div className="modal-title-group">
             <KeyRound className="text-emerald" size={22} />
-            <h3>Muuda parooli</h3>
+            <h3>{forced ? 'Määra uus parool' : 'Muuda parooli'}</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={close}>
-            <X size={20} />
-          </button>
+          {!forced && (
+            <button type="button" className="icon-btn-ghost" onClick={close}>
+              <X size={20} />
+            </button>
+          )}
         </div>
         <div className="modal-body">
+          {forced && <p className="modal-subtitle">Sinu parool on ajutine. Määra endale uus parool, et jätkata.</p>}
           {done ? (
             <div className="alert-box">
               <Check size={16} />
@@ -70,7 +78,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                 </div>
               )}
               <div className="form-group">
-                <label htmlFor="pw-current">Praegune parool</label>
+                <label htmlFor="pw-current">{forced ? 'Ajutine parool' : 'Praegune parool'}</label>
                 <input id="pw-current" type="password" className="form-input" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
               </div>
               <div className="form-group">
@@ -85,7 +93,11 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
           )}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={close}>{done ? 'Sulge' : 'Loobu'}</button>
+          {forced ? (
+            <button type="button" className="btn btn-ghost" onClick={onLogout}>Logi välja</button>
+          ) : (
+            <button type="button" className="btn btn-ghost" onClick={close}>{done ? 'Sulge' : 'Loobu'}</button>
+          )}
           {!done && (
             <button type="submit" className="btn btn-primary" disabled={busy}>
               <Check size={16} />

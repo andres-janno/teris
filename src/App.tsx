@@ -18,6 +18,7 @@ import { SeasonManagerModal } from './components/SeasonManagerModal';
 import { RelatedPartiesModal } from './components/RelatedPartiesModal';
 import { CropRegisterModal } from './components/CropRegisterModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
+import { UsersAdminModal } from './components/UsersAdminModal';
 
 import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
@@ -279,6 +280,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [parties, setParties] = useState<RelatedParty[]>([]);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
+  const [isUsersAdminOpen, setIsUsersAdminOpen] = useState(false);
 
   const handleSaveParty = (partyToSave: RelatedParty) => {
     setParties((prev) => {
@@ -1082,6 +1084,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         dbConnected={dbConnected}
         currentUser={user}
         onChangePassword={() => setIsChangePasswordOpen(true)}
+        onOpenUsers={user.isAdmin ? () => setIsUsersAdminOpen(true) : undefined}
         onLogout={onLogout}
       />
 
@@ -1313,6 +1316,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       />
 
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
+      <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} />
     </div>
   );
 };

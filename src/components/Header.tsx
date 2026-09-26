@@ -43,6 +43,7 @@ interface HeaderProps {
   dbConnected?: boolean;
   currentUser?: AuthUser;
   onChangePassword?: () => void;
+  onOpenUsers?: () => void;
   onLogout?: () => void;
 }
 
@@ -74,6 +75,7 @@ export const Header: React.FC<HeaderProps> = ({
   dbConnected = false,
   currentUser,
   onChangePassword,
+  onOpenUsers,
   onLogout
 }) => {
   const overallProgress = totalAreaHa > 0 ? Math.round((workedAreaHa / totalAreaHa) * 100) : 0;
@@ -223,6 +225,7 @@ export const Header: React.FC<HeaderProps> = ({
             theme={theme}
             onToggleTheme={onToggleTheme}
             onChangePassword={onChangePassword}
+            onOpenUsers={onOpenUsers}
             onLogout={onLogout}
             dbConnected={dbConnected}
           />

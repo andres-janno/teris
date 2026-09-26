@@ -7,7 +7,7 @@ import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
-import type { AuthUser } from '../types/auth';
+import type { AuthUser, AdminUser } from '../types/auth';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -56,6 +56,46 @@ export const api = {
       body: JSON.stringify({ currentPassword, newPassword })
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Parooli muutmine ebaõnnestus'));
+  },
+
+  async listUsers(): Promise<AdminUser[]> {
+    const res = await apiFetch('/api/admin/users');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kasutajate laadimine ebaõnnestus'));
+    return (await res.json()).users;
+  },
+
+  async createUser(data: { username: string; displayName: string; password: string; isAdmin: boolean }): Promise<AdminUser> {
+    const res = await apiFetch('/api/admin/users', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kasutaja lisamine ebaõnnestus'));
+    return (await res.json()).user;
+  },
+
+  async updateUser(id: string, data: { displayName?: string; isActive?: boolean; isAdmin?: boolean }): Promise<AdminUser> {
+    const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kasutaja muutmine ebaõnnestus'));
+    return (await res.json()).user;
+  },
+
+  async resetUserPassword(id: string, password: string): Promise<void> {
+    const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}/password`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ password })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Parooli lähtestamine ebaõnnestus'));
+  },
+
+  async deleteUser(id: string): Promise<void> {
+    const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kasutaja kustutamine ebaõnnestus'));
   },
 
   async getStatus(): Promise<{ status: string; database: string; counts: Record<string, number> }> {

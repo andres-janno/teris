@@ -88,7 +88,11 @@ Kui arendusserver jookseb, taaskäivita see (Vite'i sõltuvuste vahemälu).
 | `npm run user -- disable <nimi>` / `enable <nimi>` | keelamine / lubamine |
 | `npm run user -- list` | kasutajad |
 | `npm run user -- logout <nimi>` | lõpetab kasutaja sessioonid |
+| `npm run user -- admin <nimi>` / `unadmin <nimi>` | annab / võtab admini õiguse |
 | `npm run dev` | Vite arendusserver `127.0.0.1:5173` (nt SSH tunneliga) |
+
+Kasutajaid saab hallata ka rakenduses: kasutajamenüü → **Kasutajad** (ainult admin). Admini
+lisatud või lähtestatud parool on ajutine — kasutaja peab selle esimesel sisselogimisel vahetama.
 
 Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json`.
 Integratsioonitest töötava serveri vastu: `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts`.
