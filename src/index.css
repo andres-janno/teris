@@ -3184,7 +3184,8 @@ input[type="number"],
 }
 
 .register-table td.year-cell {
-  min-width: 130px;
+  width: 190px;
+  min-width: 150px;
   max-width: 190px;
 }
 
@@ -3281,9 +3282,12 @@ input[type="number"],
   overflow: hidden;
 }
 
-.register-table .year-crop span:last-child {
+.register-table .year-crop-name {
+  flex: 1 1 auto;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .register-table .year-crop .crop-dot {

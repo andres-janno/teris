@@ -1393,7 +1393,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                               <>
                                 <div className="year-crop">
                                   <span className="crop-dot" style={{ backgroundColor: rec.cropColor }}></span>
-                                  <span>{rec.crop}</span>
+                                  <span className="year-crop-name" title={rec.crop}>{rec.crop}</span>
                                   {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                                   <button
                                     type="button"
