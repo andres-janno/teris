@@ -226,9 +226,12 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
       const matchesOperator = operatorFilterLocal === 'all' || f.operatorId === operatorFilterLocal;
 
-      return matchesSearch && matchesCrop && matchesTenure && matchesOperator;
+      // Ainult põllud, millel on tabeli perioodis (valitud hooaeg ±2) vähemalt üks kirje.
+      const inPeriod = f.history.some((h) => tableYears.includes(h.year));
+
+      return inPeriod && matchesSearch && matchesCrop && matchesTenure && matchesOperator;
     });
-  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, operatorFilterLocal]);
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, operatorFilterLocal, tableYears]);
 
   // Registris olevate põldude operaatorid (operaatori filtri valikud).
   const operatorsList = useMemo(() => {
