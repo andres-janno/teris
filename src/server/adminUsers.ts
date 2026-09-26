@@ -166,6 +166,8 @@ export async function handleAdminUsers(
       data: { passwordHash: await hashPassword(password), mustChangePassword: true }
     });
     await prisma.session.deleteMany({ where: { userId: target.id } });
+    // Ajutine parool teeb varasemad kutse/lähtestuslingid kehtetuks.
+    await prisma.passwordToken.deleteMany({ where: { userId: target.id } });
     json(res, { success: true });
     return true;
   }
@@ -184,15 +186,20 @@ export async function handleAdminUsers(
   // PATCH
   const body = await parseBody(req, MAX_BODY_BYTES);
   const isObject = body !== null && typeof body === 'object';
-  const data: { displayName?: string | null; email?: string; isActive?: boolean; isAdmin?: boolean } = {};
+  const data: { displayName?: string | null; email?: string | null; isActive?: boolean; isAdmin?: boolean } = {};
   if (isObject && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
   if (isObject && 'email' in body) {
-    const email = normalizeEmail(body.email);
-    if (!email) {
-      json(res, { error: EMAIL_ERROR }, 400);
-      return true;
+    // Tühi string tähendab "eemalda e-post" — mitte-tühi peab siiski kehtiv olema.
+    if (typeof body.email === 'string' && body.email.trim() === '') {
+      data.email = null;
+    } else {
+      const email = normalizeEmail(body.email);
+      if (!email) {
+        json(res, { error: EMAIL_ERROR }, 400);
+        return true;
+      }
+      data.email = email;
     }
-    data.email = email;
   }
   if (typeof body?.isActive === 'boolean') data.isActive = body.isActive;
   if (typeof body?.isAdmin === 'boolean') data.isAdmin = body.isAdmin;
@@ -211,9 +218,9 @@ export async function handleAdminUsers(
   try {
     const user = await prisma.user.update({ where: { id: target.id }, data, select: USER_FIELDS });
     if (data.isActive === false) await prisma.session.deleteMany({ where: { userId: target.id } });
-    // E-posti muutmisel kaotavad vanad kutse/lähtestuslingid kehtivuse — need viitasid
-    // eelmisele aadressile.
-    if (data.email && data.email !== target.email) {
+    // E-posti muutmisel (sh eemaldamisel) kaotavad vanad kutse/lähtestuslingid
+    // kehtivuse — need viitasid eelmisele aadressile või pole enam saadetavad.
+    if ('email' in data && data.email !== target.email) {
       await prisma.passwordToken.deleteMany({ where: { userId: target.id, usedAt: null } });
     }
     json(res, { user: toPublic(user) });

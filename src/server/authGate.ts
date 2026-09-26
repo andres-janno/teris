@@ -162,10 +162,17 @@ async function handleForgot(req: IncomingMessage, res: ServerResponse): Promise<
       // konto on olemas. Kutsutud (parool määramata) kasutajale saadetakse taas
       // kutse, mitte lähtestus, et tema kutse tähtaega ei lühendataks.
       json(res, { success: true });
-      void sendPasswordLink(
-        { id: user.id, username: user.username, displayName: user.displayName, email: targetEmail },
-        user.passwordHash === '' ? 'INVITE' : 'RESET'
-      ).catch((err) => console.error('[Auth] forgot:', err instanceof Error ? err.message : err));
+      // Konto enda limiit lisaks login/IP limiidile — takistab ühe kasutaja
+      // e-posti uputamist ka siis, kui kutsuja vahetab iga kord IP-d.
+      const accountKey = `fu:${user.id}`;
+      const accountBlocked = forgotLimiter.isBlocked(accountKey);
+      forgotLimiter.registerFailure(accountKey);
+      if (!accountBlocked) {
+        void sendPasswordLink(
+          { id: user.id, username: user.username, displayName: user.displayName, email: targetEmail },
+          user.passwordHash === '' ? 'INVITE' : 'RESET'
+        ).catch((err) => console.error('[Auth] forgot:', err instanceof Error ? err.message : err));
+      }
       return;
     }
   }
@@ -201,6 +208,9 @@ async function handleSetPassword(req: IncomingMessage, res: ServerResponse): Pro
     json(res, { error: 'Link on aegunud või juba kasutatud' }, 400);
     return;
   }
+  // Uus parool kehtib kohe — varasemad sisselogimise piirangud selle kasutajanime
+  // peale ei tohi enam takistada.
+  limiter.reset(`u:${token.user.username}`);
   json(res, { success: true, username: token.user.username });
 }
 
@@ -293,6 +303,8 @@ export async function authGate(
       data: { passwordHash: await hashPassword(newPassword), mustChangePassword: false }
     });
     await prisma.session.deleteMany({ where: { userId: current.user.id, NOT: { id: current.sessionId } } });
+    // Uus parool teeb varasemad kutse/lähtestuslingid kehtetuks.
+    await prisma.passwordToken.deleteMany({ where: { userId: current.user.id } });
     json(res, { success: true });
     return true;
   }

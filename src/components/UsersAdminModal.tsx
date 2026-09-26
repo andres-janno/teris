@@ -96,7 +96,13 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
       });
     } else if (mode.kind === 'edit') {
       const self = mode.user.id === currentUserId;
-      void run(() => api.updateUser(mode.user.id, self ? { displayName, email } : { displayName, email, isAdmin }));
+      const trimmedEmail = email.trim();
+      const payload: { displayName: string; email?: string; isAdmin?: boolean } = { displayName };
+      // E-posti saadetakse ainult siis, kui see kasutaja praegusest väärtusest erineb —
+      // muidu lükkab server tagasi (tühi string tähendaks „eemalda e-post").
+      if (trimmedEmail !== (mode.user.email ?? '')) payload.email = trimmedEmail;
+      if (!self) payload.isAdmin = isAdmin;
+      void run(() => api.updateUser(mode.user.id, payload));
     } else if (mode.kind === 'reset') void run(() => api.resetUserPassword(mode.user.id, password));
   };
 

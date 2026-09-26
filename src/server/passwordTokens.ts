@@ -64,7 +64,7 @@ export async function sendPasswordLink(
     displayName: user.displayName
   });
   try {
-    await sendMail(message);
+    await sendMail(message, user.email);
     return true;
   } catch (err) {
     console.error(`[Mail] ${purpose} kirja saatmine ebaõnnestus (kasutaja ${user.username}):`, err instanceof Error ? err.message : err);

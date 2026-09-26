@@ -7,7 +7,8 @@ export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://agro.ventcap.e
 export function normalizeEmail(raw: unknown): string | null {
   const email = String(raw ?? '').trim().toLowerCase();
   if (email.length > 254) return null;
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) ? email : null;
+  // Keelemärgid ,;<>()"' võimaldaksid päise/argumendi süsti (nt mitu saajat, sendmail'i lipud) — need ei tohi läbida.
+  return /^[^\s@,;<>()"']+@[^\s@,;<>()"']+\.[^\s@,;<>()"']+$/.test(email) ? email : null;
 }
 
 const encodeHeader = (text: string) => `=?UTF-8?B?${Buffer.from(text, 'utf8').toString('base64')}?=`;
@@ -60,23 +61,34 @@ export function buildPasswordLinkMail(o: {
   return `${headers.join('\n')}\n\n${lines.join('\n')}\n`;
 }
 
-export function sendMail(message: string): Promise<void> {
+const SENDMAIL_TIMEOUT_MS = 15_000;
+
+// Saaja antakse argumendina (mitte -t + To: päisest), et päisesse sattunud
+// koma/semikoolon vms ei saaks lisada varjatud saajaid ega sendmail'i lippe.
+export function sendMail(message: string, to: string): Promise<void> {
   if (process.env.MAIL_DISABLED === '1') {
     const subject = /^Subject: (.*)$/m.exec(message)?.[1] ?? '';
     console.log('[Mail] MAIL_DISABLED — kirja ei saadetud:', subject);
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
-    const child = spawn('/usr/sbin/sendmail', ['-t', '-i', '-f', MAIL_FROM], { stdio: ['pipe', 'ignore', 'ignore'] });
+    const child = spawn('/usr/sbin/sendmail', ['-i', '-f', MAIL_FROM, '--', to], { stdio: ['pipe', 'ignore', 'ignore'] });
     let settled = false;
+    const timer = setTimeout(() => {
+      if (settled) return;
+      child.kill();
+      settleReject(new Error('sendmail ei vastanud 15 sekundi jooksul'));
+    }, SENDMAIL_TIMEOUT_MS);
     const settleResolve = () => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       resolve();
     };
     const settleReject = (err: Error) => {
       if (settled) return;
       settled = true;
+      clearTimeout(timer);
       reject(err);
     };
     child.on('error', settleReject);

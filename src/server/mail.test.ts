@@ -12,6 +12,12 @@ describe('normalizeEmail', () => {
     expect(normalizeEmail('mari @x.ee')).toBeNull();
     expect(normalizeEmail(`${'a'.repeat(250)}@x.ee`)).toBeNull();
   });
+  it('lükkab tagasi saaja süsti võimaldavad märgid', () => {
+    expect(normalizeEmail('a@x.ee,root')).toBeNull();
+    expect(normalizeEmail('a@x.ee;root')).toBeNull();
+    expect(normalizeEmail('"a"@x.ee')).toBeNull();
+    expect(normalizeEmail('<a@x.ee>')).toBeNull();
+  });
 });
 
 describe('buildPasswordLinkMail', () => {

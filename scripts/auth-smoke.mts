@@ -77,6 +77,12 @@ try {
   const listed = await (await send('GET', '/api/admin/users', admin.cookie)).json();
   check('nimekirjas pole paroolirässi', Array.isArray(listed.users) && listed.users.every((u: Record<string, unknown>) => !('passwordHash' in u) && 'hasPassword' in u));
 
+  const patchName = await send('PATCH', `/api/admin/users/${newId}`, admin.cookie, { displayName: 'Smoke Uus2' });
+  check('admin muudab ainult nime → 200', patchName.status === 200, `${patchName.status}`);
+  const patchClearEmail = await send('PATCH', `/api/admin/users/${newId}`, admin.cookie, { email: '' });
+  const patchClearBody = await patchClearEmail.json().catch(() => ({}));
+  check('admin tühjendab e-posti → 200 ja email null', patchClearEmail.status === 200 && patchClearBody?.user?.email === null, `${patchClearEmail.status}`);
+
   const fresh = await loginAs(NEWUSER, TEMP_PASS);
   check('uus kasutaja peab parooli vahetama', fresh.status === 200 && fresh.user?.mustChangePassword === true);
   check('sundvahetuse ajal /api/status → 403', (await fetch(BASE + '/api/status', { headers: { Cookie: fresh.cookie } })).status === 403);
