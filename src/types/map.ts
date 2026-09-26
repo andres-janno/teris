@@ -1,9 +1,4 @@
-export type BaseMapLayerId = 
-  | 'maaamet-pohikaart' 
-  | 'maaamet-foto' 
-  | 'maaamet-hybriid' 
-  | 'maaamet-hallkaart'
-  | 'osm-standard';
+export type BaseMapLayerId = 'maaamet-pohikaart' | 'maaamet-foto';
 
 export interface BaseMapConfig {
   id: BaseMapLayerId;

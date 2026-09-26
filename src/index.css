@@ -679,6 +679,11 @@ body {
   margin-bottom: 8px;
 }
 
+.basemap-cadastre-toggle {
+  margin-top: 10px;
+  padding: 0 4px;
+}
+
 .basemap-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;

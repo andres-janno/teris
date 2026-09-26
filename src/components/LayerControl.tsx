@@ -104,6 +104,15 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 );
               })}
             </div>
+            <label className="layer-label basemap-cadastre-toggle">
+              <input
+                type="checkbox"
+                checked={visibility.cadastre}
+                onChange={() => onToggleLayer('cadastre')}
+              />
+              <span className="layer-color-indicator cadastre-color"></span>
+              <span className="layer-text">Katastripiirid</span>
+            </label>
           </div>
 
           {/* Overlays / Thematic Layers */}
@@ -295,26 +304,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   title={visibility.poi ? 'Peida' : 'Näita'}
                 >
                   {visibility.poi ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
-
-              {/* Cadastre WMS */}
-              <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.cadastre}
-                    onChange={() => onToggleLayer('cadastre')}
-                  />
-                  <span className="layer-color-indicator cadastre-color"></span>
-                  <span className="layer-text">Katastripiirid</span>
-                </label>
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('cadastre')}
-                  title={visibility.cadastre ? 'Peida' : 'Näita'}
-                >
-                  {visibility.cadastre ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
             </div>

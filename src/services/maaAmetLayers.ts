@@ -21,37 +21,6 @@ export const BASE_MAPS: Record<BaseMapLayerId, BaseMapConfig> = {
     attribution: '&copy; <a href="https://www.maaamet.ee" target="_blank" rel="noreferrer">Maa-amet</a>',
     minZoom: 6,
     maxZoom: 19
-  },
-  'maaamet-hybriid': {
-    id: 'maaamet-hybriid',
-    name: 'Hübriid',
-    category: 'maaamet',
-    url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/hybriid@GMC/{z}/{x}/{y}.png',
-    tms: true,
-    attribution: '&copy; <a href="https://www.maaamet.ee" target="_blank" rel="noreferrer">Maa-amet</a>',
-    minZoom: 6,
-    maxZoom: 19
-  },
-  'maaamet-hallkaart': {
-    id: 'maaamet-hallkaart',
-    name: 'Hallkaart',
-    category: 'maaamet',
-    url: 'https://tiles.maaamet.ee/tm/tms/1.0.0/hallkaart@GMC/{z}/{x}/{y}.png',
-    tms: true,
-    attribution: '&copy; <a href="https://www.maaamet.ee" target="_blank" rel="noreferrer">Maa-amet</a>',
-    minZoom: 6,
-    maxZoom: 19
-  },
-  'osm-standard': {
-    id: 'osm-standard',
-    name: 'OpenStreetMap',
-    category: 'osm',
-    url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    tms: false,
-    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
-    minZoom: 3,
-    maxZoom: 19,
-    subdomains: ['a', 'b', 'c']
   }
 };
 

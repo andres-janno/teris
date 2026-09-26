@@ -22,6 +22,7 @@ import { UsersAdminModal } from './components/UsersAdminModal';
 
 import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
+import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
 import { generateFieldCollectionForYear } from './types/fieldRegister';
@@ -107,7 +108,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     const saved = localStorage.getItem('agrimap_visibility');
     if (!saved) return DEFAULT_VISIBILITY;
     try {
-      return { ...DEFAULT_VISIBILITY, ...JSON.parse(saved) };
+      const parsed = { ...DEFAULT_VISIBILITY, ...JSON.parse(saved) } as LayerVisibility;
+      // Varem salvestatud, nüüdseks eemaldatud aluskaart (hübriid, hallkaart, OSM) → põhikaart.
+      if (!(parsed.baseMap in BASE_MAPS)) parsed.baseMap = DEFAULT_VISIBILITY.baseMap;
+      return parsed;
     } catch {
       return DEFAULT_VISIBILITY;
     }
