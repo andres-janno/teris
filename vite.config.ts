@@ -6,18 +6,10 @@ import { dbApiPlugin } from './src/server/dbApiPlugin.ts';
 export default defineConfig({
   plugins: [react(), dbApiPlugin()],
   server: {
-    // Ainult localhost — avalik ligipääs käib Apache'i kaudu (HTTPS + parool),
-    // vt /etc/apache2/sites-available/agro.ventcap.ee.conf
+    // Ainult localhost — arendus käib kohapeal (nt SSH tunneli kaudu), avalikku
+    // ligipääsu pole. Toodang jookseb eraldi (vt src/server/prod.ts, agro.service).
     host: '127.0.0.1',
     port: 5173,
-    strictPort: true,
-    allowedHosts: [
-      'agro.ventcap.ee'
-    ],
-    hmr: {
-      host: 'agro.ventcap.ee',
-      protocol: 'wss',
-      clientPort: 443
-    }
+    strictPort: true
   }
 });

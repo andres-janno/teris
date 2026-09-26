@@ -45,7 +45,8 @@ export const api = {
   },
 
   async logout(): Promise<void> {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
+    const res = await apiFetch('/api/auth/logout', { method: 'POST' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Väljalogimine ebaõnnestus'));
   },
 
   async changePassword(currentPassword: string, newPassword: string): Promise<void> {

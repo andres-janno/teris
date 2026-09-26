@@ -1081,6 +1081,12 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     return json(res, { error: 'Not found' }, 404);
   } catch (err: any) {
     console.error('[API Error]:', err);
-    return json(res, { error: err.message || 'Internal Server Error' }, 500);
+    // Sisemine veateade (nt Prisma stack) ei tohi kliendini jõuda — see on nähtav
+    // ka autentimata authGate'i teede kaudu. Erand: keha suuruse piirang, mis on
+    // kasutajale mõistetav ja kajastab tema enda päringut, mitte serveri siseasju.
+    if (err instanceof Error && err.message === 'Päringu keha on liiga suur') {
+      return json(res, { error: err.message }, 413);
+    }
+    return json(res, { error: 'Serveri viga' }, 500);
   }
 }

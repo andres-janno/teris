@@ -6,8 +6,8 @@ import { handleApiRequest } from './apiHandler.ts';
 
 const DEV_OPTIONS = {
   allowedOrigins: ['https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
-  // Kuni toodanguserverile üleminekuni kaitseb arendusserverit Apache'i Basic Auth.
-  requireAuth: false
+  // Basic Auth on kadunud — arendusserver kasutab sama sisselogimist/sessiooni nõuet mis toodang.
+  requireAuth: true
 };
 
 export function dbApiPlugin(): Plugin {

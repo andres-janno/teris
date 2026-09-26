@@ -43,16 +43,21 @@ function sessionToken(req: IncomingMessage): string | undefined {
   return parseCookies(req.headers.cookie)[SESSION_COOKIE];
 }
 
-async function currentSession(req: IncomingMessage): Promise<{ user: DbUser; sessionId: string } | null> {
+async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string } | null> {
   const token = sessionToken(req);
   if (!token) return null;
   const session = await prisma.session.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: true } });
   if (!session || session.expiresAt.getTime() < Date.now() || !session.user.isActive) return null;
   if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
-    await prisma.session.update({
+    // updateMany, mitte update: kui sessioon on vahepeal (nt paroolivahetusest) kustunud,
+    // ei tohi see visata (P2025) — lihtsalt ei uuenda midagi.
+    const { count } = await prisma.session.updateMany({
       where: { id: session.id },
       data: { lastSeenAt: new Date(), expiresAt: new Date(Date.now() + SESSION_TTL_MS) }
     });
+    // Libisev aegumine peab jõudma ka küpsiseni, muidu brauser kustutab küpsise
+    // 14 päeva pärast esimest sisselogimist, kuigi sessioon andmebaasis kehtib.
+    if (count > 0) res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000));
   }
   return { user: session.user, sessionId: session.id };
 }
@@ -85,6 +90,14 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
   }
 
   keys.forEach((k) => limiter.reset(k));
+
+  // Aegunud sessioonide koristus — parim katse, ei tohi sisselogimist katkestada.
+  try {
+    await prisma.session.deleteMany({ where: { expiresAt: { lt: new Date() } } });
+  } catch (err) {
+    console.error('[Auth] Aegunud sessioonide koristus ebaõnnestus:', err);
+  }
+
   const token = generateSessionToken();
   const userAgent = String(req.headers['user-agent'] ?? '').slice(0, 300);
   await prisma.session.create({
@@ -134,7 +147,7 @@ export async function authGate(
     return true;
   }
 
-  const current = await currentSession(req);
+  const current = await currentSession(req, res);
 
   if (pathname === '/api/auth/me' && method === 'GET') {
     if (current) json(res, { user: toAuthUser(current.user) });

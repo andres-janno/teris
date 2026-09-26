@@ -41,10 +41,17 @@ export const AuthGate: React.FC = () => {
     <App
       user={user}
       onLogout={() => {
-        api.logout().catch(() => undefined).finally(() => {
-          setNotice(null);
-          setUser(null);
-        });
+        api
+          .logout()
+          .then(() => {
+            setNotice(null);
+            setUser(null);
+          })
+          .catch((err) => {
+            // Väljalogimine ebaõnnestus — jäetakse sisse logituks (notice ei paistaks
+            // App'i vaates), kasutajale teatatakse olemasoleva alert()-mustri järgi.
+            alert(err instanceof Error ? err.message : 'Väljalogimine ebaõnnestus');
+          });
       }}
     />
   );
