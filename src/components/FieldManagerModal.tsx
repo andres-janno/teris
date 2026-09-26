@@ -247,6 +247,33 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return Array.from(byCrop.values()).sort((a, b) => b.areaHa - a.areaHa);
   }, [fieldsForSelectedYear, selectedYear]);
 
+  // Kultuuri kiirmuutmine tabeli lahtrist (ainult avatud hooaeg ja ilma põlluraamatu tegevusteta).
+  const [cropEdit, setCropEdit] = useState<{
+    fieldId: number | string;
+    year: number;
+    crop: string;
+    variety: string;
+    top: number;
+    left: number;
+  } | null>(null);
+  const cropEditRef = React.useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!cropEdit) return;
+    const onPointerDown = (e: PointerEvent) => {
+      if (cropEditRef.current && !cropEditRef.current.contains(e.target as Node)) setCropEdit(null);
+    };
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setCropEdit(null);
+    };
+    document.addEventListener('pointerdown', onPointerDown);
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.removeEventListener('pointerdown', onPointerDown);
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [cropEdit]);
+
   // Esc sulgeb ainult muutmisakna (register jääb avatuks).
   useEffect(() => {
     if (editingFieldId === null) return;
@@ -469,6 +496,39 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     [...new Set(field.history.map((h) => h.year))]
       .filter((y) => seasons.some((s) => s.year === y && s.isLocked))
       .sort((a, b) => a - b);
+
+  // Miks lahtri kultuuri ei saa otse muuta (null = saab).
+  const cropEditBlockReason = (rec: FieldYearlyRecord, year: number): string | null => {
+    if (seasons.some((s) => s.year === year && s.isLocked)) return 'Hooaeg on lukus';
+    if ((rec.operationsCount ?? 0) > 0) return 'Põlluraamatus on selle aasta tegevused';
+    return null;
+  };
+
+  const openCropEdit = (e: React.MouseEvent<HTMLElement>, field: MasterField, rec: FieldYearlyRecord) => {
+    const rect = e.currentTarget.getBoundingClientRect();
+    setCropEdit({
+      fieldId: field.id,
+      year: rec.year,
+      crop: rec.crop,
+      variety: rec.cropVariety ?? '',
+      top: Math.min(rect.bottom + 4, window.innerHeight - 220),
+      left: Math.min(rect.left, window.innerWidth - 300)
+    });
+  };
+
+  const saveCropEdit = () => {
+    if (!cropEdit) return;
+    const field = masterFields.find((f) => f.id === cropEdit.fieldId);
+    const rec = field?.history.find((h) => h.year === cropEdit.year);
+    if (!field || !rec) return setCropEdit(null);
+    onUpdateField(field.id, {}, {
+      ...rec,
+      crop: cropEdit.crop,
+      cropVariety: cropEdit.variety || undefined,
+      cropColor: findRegistryCrop(cropEdit.crop)?.color || rec.cropColor
+    });
+    setCropEdit(null);
+  };
 
   // Näita põldu kaardil (valitud aasta või viimase kirje geomeetriaga).
   const focusOnMap = (field: MasterField) => {
@@ -1160,7 +1220,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           )}
 
           {/* Põldude tabel: põhiandmed, suurus, aastate kultuurid, tegevused */}
-          <div className="register-table-wrap">
+          <div className="register-table-wrap" onScroll={() => cropEdit && setCropEdit(null)}>
             <table className="register-table">
               <thead>
                 <tr>
@@ -1210,13 +1270,21 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       </td>
                       {tableYears.map((yr) => {
                         const rec = field.history.find((h) => h.year === yr);
+                        const blockReason = rec ? cropEditBlockReason(rec, yr) : null;
+                        const editable = Boolean(rec) && !blockReason;
                         return (
-                          <td key={yr} className={`year-cell ${yr === selectedYear ? 'selected' : ''}`}>
+                          <td
+                            key={yr}
+                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''}`}
+                            title={rec ? (editable ? 'Klõpsa kultuuri muutmiseks' : blockReason ?? undefined) : undefined}
+                            onClick={editable && rec ? (e) => openCropEdit(e, field, rec) : undefined}
+                          >
                             {rec ? (
                               <>
-                                <div className="year-crop" title={rec.crop}>
+                                <div className="year-crop">
                                   <span className="crop-dot" style={{ backgroundColor: rec.cropColor }}></span>
                                   <span>{rec.crop}</span>
+                                  {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                                 </div>
                                 {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
                               </>
@@ -1256,6 +1324,49 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 })}
               </tbody>
             </table>
+
+            {cropEdit && createPortal(
+              <div
+                ref={cropEditRef}
+                className="crop-quick-edit animate-scale-up"
+                style={{ top: cropEdit.top, left: cropEdit.left }}
+              >
+                <div className="crop-quick-edit-title">Kultuur {cropEdit.year}</div>
+                <select
+                  className="form-input"
+                  value={cropEdit.crop}
+                  autoFocus
+                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
+                >
+                  {!activeCrops.some((c) => c.name === cropEdit.crop) && <option value={cropEdit.crop}>{cropEdit.crop}</option>}
+                  {activeCrops.map((c) => (
+                    <option key={c.id} value={c.name}>{c.name}</option>
+                  ))}
+                </select>
+                {(() => {
+                  const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
+                  const options = cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
+                  return (
+                    <select
+                      className="form-input"
+                      value={cropEdit.variety}
+                      onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
+                      disabled={options.length === 0}
+                    >
+                      <option value="">{options.length === 0 ? 'Sorte pole registris' : 'Sort määramata'}</option>
+                      {options.map((v) => (
+                        <option key={v} value={v}>{v}</option>
+                      ))}
+                    </select>
+                  );
+                })()}
+                <div className="crop-quick-edit-actions">
+                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCropEdit(null)}>Loobu</button>
+                  <button type="button" className="btn btn-primary btn-sm" onClick={saveCropEdit}>Salvesta</button>
+                </div>
+              </div>,
+              document.body
+            )}
 
             {filteredFields.length === 0 && (
               <div className="empty-register-state glass-card">

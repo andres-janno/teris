@@ -252,7 +252,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       const dbFields = await prisma.field.findMany({
         include: {
           fieldSeasons: {
-            orderBy: { year: 'desc' }
+            orderBy: { year: 'desc' },
+            include: { _count: { select: { operations: true } } }
           },
           operator: true
         },
@@ -278,6 +279,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           crop: fs.crop,
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
+          operationsCount: fs._count.operations,
           targetYieldTonsHa: fs.targetYieldTonsHa,
           actualYieldTonsHa: fs.actualYieldTonsHa,
           workedAreaHa: fs.workedAreaHa,
