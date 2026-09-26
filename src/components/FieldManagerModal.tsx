@@ -10,6 +10,7 @@ import {
   Edit2,
   Trash2,
   Crosshair,
+  Check,
   Download,
   AlertCircle,
   Lock,
@@ -253,8 +254,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     year: number;
     crop: string;
     variety: string;
-    top: number;
-    left: number;
   } | null>(null);
   const cropEditRef = React.useRef<HTMLDivElement>(null);
 
@@ -504,17 +503,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return null;
   };
 
-  const openCropEdit = (e: React.MouseEvent<HTMLElement>, field: MasterField, rec: FieldYearlyRecord) => {
-    const rect = e.currentTarget.getBoundingClientRect();
-    setCropEdit({
-      fieldId: field.id,
-      year: rec.year,
-      crop: rec.crop,
-      variety: rec.cropVariety ?? '',
-      top: Math.min(rect.bottom + 4, window.innerHeight - 220),
-      left: Math.min(rect.left, window.innerWidth - 300)
-    });
-  };
+  const openCropEdit = (field: MasterField, rec: FieldYearlyRecord) =>
+    setCropEdit({ fieldId: field.id, year: rec.year, crop: rec.crop, variety: rec.cropVariety ?? '' });
 
   const saveCropEdit = () => {
     if (!cropEdit) return;
@@ -1220,7 +1210,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           )}
 
           {/* Põldude tabel: põhiandmed, suurus, aastate kultuurid, tegevused */}
-          <div className="register-table-wrap" onScroll={() => cropEdit && setCropEdit(null)}>
+          <div className="register-table-wrap">
             <table className="register-table">
               <thead>
                 <tr>
@@ -1272,12 +1262,56 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         const rec = field.history.find((h) => h.year === yr);
                         const blockReason = rec ? cropEditBlockReason(rec, yr) : null;
                         const editable = Boolean(rec) && !blockReason;
+                        const isEditing = cropEdit !== null && cropEdit.fieldId === field.id && cropEdit.year === yr;
+                        if (isEditing && cropEdit) {
+                          const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
+                          const varietyOptions =
+                            cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
+                          return (
+                            <td key={yr} className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
+                              <div ref={cropEditRef} className="crop-inline-edit">
+                                <select
+                                  className="form-input"
+                                  value={cropEdit.crop}
+                                  autoFocus
+                                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
+                                >
+                                  {!activeCrops.some((c) => c.name === cropEdit.crop) && (
+                                    <option value={cropEdit.crop}>{cropEdit.crop}</option>
+                                  )}
+                                  {activeCrops.map((c) => (
+                                    <option key={c.id} value={c.name}>{c.name}</option>
+                                  ))}
+                                </select>
+                                <select
+                                  className="form-input"
+                                  value={cropEdit.variety}
+                                  onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
+                                  disabled={varietyOptions.length === 0}
+                                >
+                                  <option value="">{varietyOptions.length === 0 ? 'Sorte pole' : 'Sort määramata'}</option>
+                                  {varietyOptions.map((v) => (
+                                    <option key={v} value={v}>{v}</option>
+                                  ))}
+                                </select>
+                                <div className="crop-inline-edit-actions">
+                                  <button type="button" className="icon-btn-ghost" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
+                                    <X size={15} />
+                                  </button>
+                                  <button type="button" className="icon-btn-ghost save" onClick={saveCropEdit} title="Salvesta">
+                                    <Check size={15} />
+                                  </button>
+                                </div>
+                              </div>
+                            </td>
+                          );
+                        }
                         return (
                           <td
                             key={yr}
                             className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''}`}
                             title={rec ? (editable ? 'Klõpsa kultuuri muutmiseks' : blockReason ?? undefined) : undefined}
-                            onClick={editable && rec ? (e) => openCropEdit(e, field, rec) : undefined}
+                            onClick={editable && rec ? () => openCropEdit(field, rec) : undefined}
                           >
                             {rec ? (
                               <>
@@ -1324,49 +1358,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 })}
               </tbody>
             </table>
-
-            {cropEdit && createPortal(
-              <div
-                ref={cropEditRef}
-                className="crop-quick-edit animate-scale-up"
-                style={{ top: cropEdit.top, left: cropEdit.left }}
-              >
-                <div className="crop-quick-edit-title">Kultuur {cropEdit.year}</div>
-                <select
-                  className="form-input"
-                  value={cropEdit.crop}
-                  autoFocus
-                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
-                >
-                  {!activeCrops.some((c) => c.name === cropEdit.crop) && <option value={cropEdit.crop}>{cropEdit.crop}</option>}
-                  {activeCrops.map((c) => (
-                    <option key={c.id} value={c.name}>{c.name}</option>
-                  ))}
-                </select>
-                {(() => {
-                  const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
-                  const options = cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
-                  return (
-                    <select
-                      className="form-input"
-                      value={cropEdit.variety}
-                      onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
-                      disabled={options.length === 0}
-                    >
-                      <option value="">{options.length === 0 ? 'Sorte pole registris' : 'Sort määramata'}</option>
-                      {options.map((v) => (
-                        <option key={v} value={v}>{v}</option>
-                      ))}
-                    </select>
-                  );
-                })()}
-                <div className="crop-quick-edit-actions">
-                  <button type="button" className="btn btn-ghost btn-sm" onClick={() => setCropEdit(null)}>Loobu</button>
-                  <button type="button" className="btn btn-primary btn-sm" onClick={saveCropEdit}>Salvesta</button>
-                </div>
-              </div>,
-              document.body
-            )}
 
             {filteredFields.length === 0 && (
               <div className="empty-register-state glass-card">

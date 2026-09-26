@@ -3210,30 +3210,30 @@ input[type="number"],
   opacity: 1;
 }
 
-.crop-quick-edit {
-  position: fixed;
-  z-index: 2600;
-  width: 280px;
-  padding: 12px;
+.register-table td.year-cell.editing {
+  white-space: normal;
+  min-width: 190px;
+}
+
+.crop-inline-edit {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  background: var(--bg-modal);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-modal);
+  gap: 4px;
 }
 
-.crop-quick-edit-title {
+.crop-inline-edit .form-input {
+  padding: 4px 6px;
   font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-secondary);
 }
 
-.crop-quick-edit-actions {
+.crop-inline-edit-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 6px;
+  gap: 2px;
+}
+
+.crop-inline-edit-actions .save {
+  color: var(--emerald-500);
 }
 
 .register-table .year-crop {
