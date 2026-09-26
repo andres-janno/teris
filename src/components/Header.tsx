@@ -5,15 +5,12 @@ import {
   MapPin,
   Activity,
   BarChart3,
-  Sun,
-  Moon,
   CalendarDays,
   Users,
-  Sprout,
-  User as UserIcon,
-  KeyRound,
-  LogOut
+  Sprout
 } from 'lucide-react';
+import { WheatLogo } from './WheatLogo';
+import { UserMenu } from './UserMenu';
 import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
@@ -86,17 +83,12 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <div className="logo-icon">
-          <Tractor className="brand-tractor" size={24} />
+          <WheatLogo className="brand-logo-mark" size={26} />
           <span className="brand-pulse"></span>
         </div>
         <div className="brand-text">
           <div className="brand-title">
-            <span>AGRO</span> kaart
-            {dbConnected && (
-              <span className="db-connected-badge" title="Ühendatud PostgreSQL andmebaasiga agro_db">
-                <span className="db-dot"></span> agro_db
-              </span>
-            )}
+            <span>AGRO</span>
           </div>
         </div>
       </div>
@@ -233,31 +225,15 @@ export const Header: React.FC<HeaderProps> = ({
           <span>Analüütika</span>
         </button>
 
-        {/* Theme Toggle Button */}
-        <button
-          className="btn btn-secondary theme-toggle-btn"
-          onClick={onToggleTheme}
-          title={theme === 'light' ? 'Lülita tumedale režiimile (Dark Mode)' : 'Lülita heledale režiimile (Light Mode)'}
-        >
-          {theme === 'light' ? <Moon size={16} /> : <Sun size={16} className="text-amber-400" />}
-          <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>
-        </button>
-
         {currentUser && (
-          <div className="user-menu">
-            <span className="user-menu-name" title={currentUser.username}>
-              <UserIcon size={14} />
-              {currentUser.displayName || currentUser.username}
-            </span>
-            <button className="btn btn-secondary" onClick={onChangePassword} title="Muuda oma parooli">
-              <KeyRound size={16} />
-              <span>Muuda parooli</span>
-            </button>
-            <button className="btn btn-secondary" onClick={onLogout} title="Logi välja">
-              <LogOut size={16} />
-              <span>Logi välja</span>
-            </button>
-          </div>
+          <UserMenu
+            user={currentUser}
+            theme={theme}
+            onToggleTheme={onToggleTheme}
+            onChangePassword={onChangePassword}
+            onLogout={onLogout}
+            dbConnected={dbConnected}
+          />
         )}
       </div>
     </header>
