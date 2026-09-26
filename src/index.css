@@ -187,26 +187,17 @@ body {
   padding: 6px 12px 6px 12px;
   border: none;
   border-radius: 9999px;
-  background: #0f172a;
+  background: #15803d;
   color: #f8fafc;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+  box-shadow: 0 4px 14px rgba(21, 128, 61, 0.35);
   transition: background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .operator-selector-trigger:hover {
-  background: #1e293b;
-  box-shadow: 0 6px 18px rgba(15, 23, 42, 0.35);
-}
-
-:root[data-theme="dark"] .operator-selector-trigger {
-  background: #15803d;
-  box-shadow: 0 4px 14px rgba(21, 128, 61, 0.35);
-}
-
-:root[data-theme="dark"] .operator-selector-trigger:hover {
   background: #16a34a;
+  box-shadow: 0 6px 18px rgba(21, 128, 61, 0.45);
 }
 
 .operator-selector-text {
@@ -237,11 +228,6 @@ body {
   width: 7px;
   height: 7px;
   border-radius: 50%;
-  background: #4ade80;
-  box-shadow: 0 0 6px #4ade80;
-}
-
-:root[data-theme="dark"] .operator-selector-dot {
   background: #fef08a;
   box-shadow: 0 0 6px #fef08a;
 }
