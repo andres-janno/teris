@@ -497,26 +497,46 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       .sort((a, b) => a - b);
 
   // Miks lahtri kultuuri ei saa otse muuta (null = saab).
-  const cropEditBlockReason = (rec: FieldYearlyRecord, year: number): string | null => {
+  const cropEditBlockReason = (field: MasterField, rec: FieldYearlyRecord | undefined, year: number): string | null => {
     if (seasons.some((s) => s.year === year && s.isLocked)) return 'Hooaeg on lukus';
-    if ((rec.operationsCount ?? 0) > 0) return 'Põlluraamatus on selle aasta tegevused';
+    if (rec && (rec.operationsCount ?? 0) > 0) return 'Põlluraamatus on selle aasta tegevused';
+    if (!rec && field.history.length === 0) return 'Põllul pole ühegi aasta andmeid';
     return null;
   };
 
-  const openCropEdit = (field: MasterField, rec: FieldYearlyRecord) =>
-    setCropEdit({ fieldId: field.id, year: rec.year, crop: rec.crop, variety: rec.cropVariety ?? '' });
+  const openCropEdit = (field: MasterField, year: number, rec?: FieldYearlyRecord) =>
+    setCropEdit({ fieldId: field.id, year, crop: rec?.crop ?? '', variety: rec?.cropVariety ?? '' });
 
   const saveCropEdit = () => {
     if (!cropEdit) return;
     const field = masterFields.find((f) => f.id === cropEdit.fieldId);
-    const rec = field?.history.find((h) => h.year === cropEdit.year);
-    if (!field || !rec) return setCropEdit(null);
-    onUpdateField(field.id, {}, {
-      ...rec,
-      crop: cropEdit.crop,
-      cropVariety: cropEdit.variety || undefined,
-      cropColor: findRegistryCrop(cropEdit.crop)?.color || rec.cropColor
-    });
+    if (!field) return setCropEdit(null);
+    if (!cropEdit.crop) return alert('Vali kultuur');
+    const rec = field.history.find((h) => h.year === cropEdit.year);
+    const cropColor = findRegistryCrop(cropEdit.crop)?.color || rec?.cropColor || '#22c55e';
+
+    if (rec) {
+      onUpdateField(field.id, {}, { ...rec, crop: cropEdit.crop, cropVariety: cropEdit.variety || undefined, cropColor });
+    } else {
+      // Uus aasta kirje: pindala, piirid ja katastriüksused lähimast varasemast (või viimasest) aastast.
+      const byYearDesc = [...field.history].sort((a, b) => b.year - a.year);
+      const source = byYearDesc.find((h) => h.year < cropEdit.year) || byYearDesc[0];
+      onUpdateField(field.id, {}, {
+        year: cropEdit.year,
+        areaHa: source.areaHa,
+        eligibleAreaHa: source.eligibleAreaHa,
+        crop: cropEdit.crop,
+        cropVariety: cropEdit.variety || undefined,
+        cropColor,
+        workedAreaHa: 0,
+        workProgress: 0,
+        status: 'not_started',
+        geometry: source.geometry || field.geometry,
+        boundaryPointsCount: source.boundaryPointsCount,
+        perimeterM: source.perimeterM,
+        cadastralParcels: source.cadastralParcels ? [...source.cadastralParcels] : field.cadastralParcels ? [...field.cadastralParcels] : []
+      });
+    }
     setCropEdit(null);
   };
 
@@ -1260,8 +1280,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       </td>
                       {tableYears.map((yr) => {
                         const rec = field.history.find((h) => h.year === yr);
-                        const blockReason = rec ? cropEditBlockReason(rec, yr) : null;
-                        const editable = Boolean(rec) && !blockReason;
+                        const blockReason = cropEditBlockReason(field, rec, yr);
+                        const editable = !blockReason;
                         const isEditing = cropEdit !== null && cropEdit.fieldId === field.id && cropEdit.year === yr;
                         if (isEditing && cropEdit) {
                           const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
@@ -1276,7 +1296,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                                   autoFocus
                                   onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
                                 >
-                                  {!activeCrops.some((c) => c.name === cropEdit.crop) && (
+                                  {!cropEdit.crop && <option value="">Vali kultuur</option>}
+                                  {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
                                     <option value={cropEdit.crop}>{cropEdit.crop}</option>
                                   )}
                                   {activeCrops.map((c) => (
@@ -1310,8 +1331,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           <td
                             key={yr}
                             className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''}`}
-                            title={rec ? (editable ? 'Klõpsa kultuuri muutmiseks' : blockReason ?? undefined) : undefined}
-                            onClick={editable && rec ? () => openCropEdit(field, rec) : undefined}
+                            title={editable ? (rec ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
+                            onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
                           >
                             {rec ? (
                               <>
@@ -1323,7 +1344,10 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                                 {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
                               </>
                             ) : (
-                              <span className="muted">–</span>
+                              <div className="year-crop">
+                                <span className="muted">–</span>
+                                {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                              </div>
                             )}
                           </td>
                         );
