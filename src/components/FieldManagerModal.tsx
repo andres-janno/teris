@@ -1232,7 +1232,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                       >
                         <div className="season-area-box">
-                          <span className="season-year-label">Põllu suurus:</span>
                           <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
                           {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
                         </div>
