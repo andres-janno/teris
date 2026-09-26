@@ -10,7 +10,8 @@ import {
   clearSessionCookie,
   createLoginLimiter,
   checkMutationRequest,
-  clientIpFrom
+  clientIpFrom,
+  allowedDuringForcedPasswordChange
 } from './auth';
 
 describe('paroolid', () => {
@@ -119,5 +120,18 @@ describe('checkMutationRequest', () => {
   });
   it('DELETE ilma kehata lubatud päritoluga on ok', () => {
     expect(checkMutationRequest({ method: 'DELETE', origin: allowed[0], hasBody: false }, allowed)).toBe('ok');
+  });
+});
+
+describe('allowedDuringForcedPasswordChange', () => {
+  it('lubab ainult me, parooli vahetuse ja väljalogimise', () => {
+    expect(allowedDuringForcedPasswordChange('/api/auth/me', 'GET')).toBe(true);
+    expect(allowedDuringForcedPasswordChange('/api/auth/password', 'POST')).toBe(true);
+    expect(allowedDuringForcedPasswordChange('/api/auth/logout', 'post')).toBe(true);
+  });
+  it('keelab muud teed ja meetodid', () => {
+    expect(allowedDuringForcedPasswordChange('/api/status', 'GET')).toBe(false);
+    expect(allowedDuringForcedPasswordChange('/api/auth/password', 'GET')).toBe(false);
+    expect(allowedDuringForcedPasswordChange('/api/admin/users', 'GET')).toBe(false);
   });
 });

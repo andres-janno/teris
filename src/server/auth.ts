@@ -122,3 +122,13 @@ export function checkMutationRequest(
   if (r.hasBody && !(r.contentType ?? '').toLowerCase().startsWith('application/json')) return 'bad-content-type';
   return 'ok';
 }
+
+// Parooli sundvahetuse ajal lubatud päringud; kõik muu saab 403 'Parool tuleb vahetada'.
+export function allowedDuringForcedPasswordChange(pathname: string, method: string): boolean {
+  const m = method.toUpperCase();
+  return (
+    (pathname === '/api/auth/me' && m === 'GET') ||
+    (pathname === '/api/auth/password' && m === 'POST') ||
+    (pathname === '/api/auth/logout' && m === 'POST')
+  );
+}

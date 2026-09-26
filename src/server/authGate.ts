@@ -17,7 +17,8 @@ import {
   clearSessionCookie,
   createLoginLimiter,
   checkMutationRequest,
-  clientIpFrom
+  clientIpFrom,
+  allowedDuringForcedPasswordChange
 } from './auth.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -26,9 +27,32 @@ const MAX_AUTH_BODY_BYTES = 16 * 1024;
 const MAX_USERNAME_LENGTH = 64;
 const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
 
-type DbUser = { id: string; username: string; displayName: string | null; passwordHash: string; isActive: boolean };
+type DbUser = {
+  id: string;
+  username: string;
+  displayName: string | null;
+  passwordHash: string;
+  isActive: boolean;
+  isAdmin: boolean;
+  mustChangePassword: boolean;
+};
+export type SessionUser = DbUser;
 
-const toAuthUser = (u: DbUser) => ({ id: u.id, username: u.username, displayName: u.displayName ?? null });
+const toAuthUser = (u: DbUser) => ({
+  id: u.id,
+  username: u.username,
+  displayName: u.displayName ?? null,
+  isAdmin: u.isAdmin,
+  mustChangePassword: u.mustChangePassword
+});
+
+// Sessiooni kasutaja päringu kohta — hilisemad käsitlejad (nt adminUsers.ts) loevad
+// selle siit, et sessiooni ei peaks teist korda andmebaasist otsima.
+const sessionUsers = new WeakMap<IncomingMessage, DbUser | null>();
+
+export function sessionUserOf(req: IncomingMessage): SessionUser | null {
+  return sessionUsers.get(req) ?? null;
+}
 
 // Vale kasutajanime korral kontrollitakse parooli selle vastu, et vastuse aeg ei
 // paljastaks, kas kasutaja on olemas.
@@ -149,6 +173,13 @@ export async function authGate(
 
   const current = await currentSession(req, res);
 
+  sessionUsers.set(req, current?.user ?? null);
+
+  if (current?.user.mustChangePassword && !allowedDuringForcedPasswordChange(pathname, method)) {
+    json(res, { error: 'Parool tuleb vahetada' }, 403);
+    return true;
+  }
+
   if (pathname === '/api/auth/me' && method === 'GET') {
     if (current) json(res, { user: toAuthUser(current.user) });
     else json(res, { error: 'Sisselogimine on vajalik' }, 401);
@@ -172,7 +203,10 @@ export async function authGate(
       json(res, { error: problem }, 400);
       return true;
     }
-    await prisma.user.update({ where: { id: current.user.id }, data: { passwordHash: await hashPassword(newPassword) } });
+    await prisma.user.update({
+      where: { id: current.user.id },
+      data: { passwordHash: await hashPassword(newPassword), mustChangePassword: false }
+    });
     await prisma.session.deleteMany({ where: { userId: current.user.id, NOT: { id: current.sessionId } } });
     json(res, { success: true });
     return true;

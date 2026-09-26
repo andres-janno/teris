@@ -508,6 +508,8 @@ model User {
   passwordHash String
   displayName  String?
   isActive     Boolean   @default(true)
+  isAdmin            Boolean   @default(false)
+  mustChangePassword Boolean   @default(false)
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
