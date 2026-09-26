@@ -187,11 +187,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     };
   }, [fieldsForSelectedYear, selectedYear]);
 
-  // Tabeli aastaveerud: aktiivne hooaeg −4 … +2, vanemad vasakul.
-  const tableYears = useMemo(() => {
-    const activeYear = seasons.find((s) => s.status === 'active')?.year || new Date().getFullYear();
-    return Array.from({ length: 7 }, (_, i) => activeYear - 4 + i);
-  }, [seasons]);
+  // Tabeli aastaveerud: valitud hooaeg −2 … +2 (alati 5 veergu), vanemad vasakul.
+  const tableYears = useMemo(() => Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i), [selectedYear]);
 
   // Tabelis on kõik (operaatori filtriga) põllud; otsing ja filtrid rakenduvad valitud aasta andmetele.
   const filteredFields = useMemo(() => {
