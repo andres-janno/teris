@@ -9,10 +9,14 @@ import {
   Moon,
   CalendarDays,
   Users,
-  Sprout
+  Sprout,
+  User as UserIcon,
+  KeyRound,
+  LogOut
 } from 'lucide-react';
 import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
+import type { AuthUser } from '../types/auth';
 
 interface HeaderProps {
   fieldsCount: number;
@@ -40,6 +44,9 @@ interface HeaderProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   dbConnected?: boolean;
+  currentUser?: AuthUser;
+  onChangePassword?: () => void;
+  onLogout?: () => void;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -67,7 +74,10 @@ export const Header: React.FC<HeaderProps> = ({
   onToggleAddPoiMode,
   theme,
   onToggleTheme,
-  dbConnected = false
+  dbConnected = false,
+  currentUser,
+  onChangePassword,
+  onLogout
 }) => {
   const overallProgress = totalAreaHa > 0 ? Math.round((workedAreaHa / totalAreaHa) * 100) : 0;
   const isLocked = activeSeason?.isLocked ?? false;
@@ -232,6 +242,23 @@ export const Header: React.FC<HeaderProps> = ({
           {theme === 'light' ? <Moon size={16} /> : <Sun size={16} className="text-amber-400" />}
           <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>
         </button>
+
+        {currentUser && (
+          <div className="user-menu">
+            <span className="user-menu-name" title={currentUser.username}>
+              <UserIcon size={14} />
+              {currentUser.displayName || currentUser.username}
+            </span>
+            <button className="btn btn-secondary" onClick={onChangePassword} title="Muuda oma parooli">
+              <KeyRound size={16} />
+              <span>Muuda parooli</span>
+            </button>
+            <button className="btn btn-secondary" onClick={onLogout} title="Logi välja">
+              <LogOut size={16} />
+              <span>Logi välja</span>
+            </button>
+          </div>
+        )}
       </div>
     </header>
   );

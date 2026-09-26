@@ -17,7 +17,9 @@ import { MapYearSelector } from './components/MapYearSelector';
 import { SeasonManagerModal } from './components/SeasonManagerModal';
 import { RelatedPartiesModal } from './components/RelatedPartiesModal';
 import { CropRegisterModal } from './components/CropRegisterModal';
+import { ChangePasswordModal } from './components/ChangePasswordModal';
 
+import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
@@ -68,7 +70,12 @@ const LEGACY_DATA_CACHE_KEYS = [
   'agrimap_pois'
 ];
 
-export const App: React.FC = () => {
+interface AppProps {
+  user: AuthUser;
+  onLogout: () => void;
+}
+
+export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Database connection status
   const [dbConnected, setDbConnected] = useState<boolean>(false);
   const [dbError, setDbError] = useState<boolean>(false);
@@ -271,6 +278,7 @@ export const App: React.FC = () => {
   // 6. Seotud isikute register (maaomanikud, rentnikud, masinajuhid, partnerid)
   const [parties, setParties] = useState<RelatedParty[]>([]);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const handleSaveParty = (partyToSave: RelatedParty) => {
     setParties((prev) => {
@@ -1072,6 +1080,9 @@ export const App: React.FC = () => {
         theme={theme}
         onToggleTheme={handleToggleTheme}
         dbConnected={dbConnected}
+        currentUser={user}
+        onChangePassword={() => setIsChangePasswordOpen(true)}
+        onLogout={onLogout}
       />
 
       {/* Main Map View */}
@@ -1300,6 +1311,8 @@ export const App: React.FC = () => {
         masterFields={operatorMasterFields}
         selectedYear={selectedYear}
       />
+
+      <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
     </div>
   );
 };
