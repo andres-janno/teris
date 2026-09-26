@@ -58,6 +58,9 @@ try {
   check('muutev päring ilma Originita → 403', (await fetch(BASE + '/api/crops', { method: 'POST', headers: { Cookie: cookie, 'Content-Type': 'application/json' }, body: '{}' })).status === 403);
 
   check('tavakasutaja /api/admin/users → 403', (await fetch(BASE + '/api/admin/users', { headers: { Cookie: cookie } })).status === 403);
+  check('tavakasutaja PRIA import (massiiv) → 403', (await post('/api/master-fields', [], { Cookie: cookie })).status === 403);
+  check('tavakasutaja mullaproovide import → 403', (await post('/api/soil-samples/import', [], { Cookie: cookie })).status === 403);
+  check('tavakasutaja põlluraamatu import → 403', (await post('/api/field-operations/import', { fields: [] }, { Cookie: cookie })).status === 403);
 
   const admin = await loginAs(ADMIN, PASS);
   check('admin login → isAdmin', admin.status === 200 && admin.user?.isAdmin === true);

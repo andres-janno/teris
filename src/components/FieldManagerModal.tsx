@@ -36,7 +36,7 @@ interface FieldManagerModalProps {
   onFocusField: (fieldFeature: FieldFeature) => void;
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onDeleteField: (fieldId: number | string) => void;
-  onOpenUpload: () => void;
+  onOpenUpload?: () => void; // puudub mitteadminil (import ainult adminile)
   onOpenSoilUpload?: () => void;
   onOpenFieldBookUpload?: () => void;
   seasons?: FarmingSeason[];
@@ -705,16 +705,18 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   </button>
                 )}
 
-                <button
-                  className="btn btn-secondary btn-sm"
-                  onClick={() => {
-                    onClose();
-                    onOpenUpload();
-                  }}
-                >
-                  <Plus size={14} />
-                  <span>Impordi PRIA ZIP</span>
-                </button>
+                {onOpenUpload && (
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenUpload();
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>Impordi PRIA ZIP</span>
+                  </button>
+                )}
               </div>
             </div>
 

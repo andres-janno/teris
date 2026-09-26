@@ -2,7 +2,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tsdb } from './db.ts';
 import { json, parseBody } from './http.ts';
-import { authGate } from './authGate.ts';
+import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
@@ -138,6 +138,10 @@ async function fetchDeviceHistory(imei: string, hours: number): Promise<HistoryR
     return [];
   }
 }
+
+// Andmete importimine (PRIA, mullaproovid, põlluraamat) on lubatud ainult adminile.
+const IMPORT_FORBIDDEN = 'Andmete importimine on lubatud ainult adminile';
+const isAdmin = (req: IncomingMessage) => sessionUserOf(req)?.isAdmin === true;
 
 export interface ApiOptions {
   allowedOrigins: string[];
@@ -299,6 +303,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname === '/api/master-fields' && method === 'POST') {
       const body = await parseBody(req);
+      // Massiline salvestus (massiiv) = PRIA import — ainult adminile. Üksiku põllu muutmine on kõigile.
+      if (Array.isArray(body) && !isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const items = Array.isArray(body) ? body : [body];
       const results = [];
 
@@ -913,6 +919,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     }
 
     if (pathname === '/api/soil-samples/import' && method === 'POST') {
+      if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const samples = await parseBody(req);
       const list = Array.isArray(samples) ? samples : [samples];
       let count = 0;
@@ -960,6 +967,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     // 9. Põlluraamat (e-PRIA väljavõtte import)
     if (pathname === '/api/field-operations/import' && method === 'POST') {
+      if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const body = await parseBody(req);
       const operatorId: string | undefined = body?.operatorId;
       const fieldsIn: any[] = Array.isArray(body?.fields) ? body.fields : [];

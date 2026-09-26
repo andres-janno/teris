@@ -1208,9 +1208,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         baseMap={visibility.baseMap}
         onUpdateField={handleUpdateMasterField}
         onDeleteField={handleDeleteMasterField}
-        onOpenUpload={() => setIsUploadOpen(true)}
-        onOpenSoilUpload={() => setIsSoilUploadOpen(true)}
-        onOpenFieldBookUpload={() => setIsFieldBookUploadOpen(true)}
+        onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
+        onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
+        onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
         seasons={seasons}
         onOpenSeasonManager={() => {
           setIsFieldsRegisterOpen(false);
