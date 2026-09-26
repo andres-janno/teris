@@ -1192,12 +1192,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             <table className="register-table">
               <thead>
                 <tr>
-                  <th className="num-col">#</th>
-                  <th>Nr</th>
-                  <th>Nimi</th>
-                  <th>Massiiv</th>
-                  <th>Kataster</th>
-                  <th>Operaator</th>
+                  <th>Põld</th>
                   <th>Omand</th>
                   <th className="num-col">Suurus (ha)</th>
                   {tableYears.map((yr) => (
@@ -1227,12 +1222,19 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
                   return (
                     <tr key={field.id}>
-                      <td className="num-col muted">{field.id}</td>
-                      <td>{field.num || '–'}</td>
-                      <td className="name-cell">{field.name}</td>
-                      <td className="mono">{field.fieldCode}</td>
-                      <td className="mono">{field.cadastralCode || '–'}</td>
-                      <td>{field.operatorName || '–'}</td>
+                      <td className="name-cell">
+                        <div className="field-title-line">
+                          <span className="field-id-badge" title="Sisemine unikaalne ID">#{field.id}</span>
+                          <span className="field-name">{field.name}</span>
+                          {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                        </div>
+                        <div className="field-sub-tags">
+                          <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
+                          {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
+                          {field.soilType && <span className="sub-tag soil-tag">🌱 {field.soilType}</span>}
+                          {field.drainageSystem && <span className="sub-tag drainage-tag">💧 Drenaaž</span>}
+                        </div>
+                      </td>
                       <td title={parcelTitle || undefined}>
                         {owned.length > 0 && <span className="tenure-tag owned">Oma</span>}
                         {rented.length > 0 && <span className="tenure-tag rented">Rent</span>}

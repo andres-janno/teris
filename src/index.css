@@ -3080,7 +3080,16 @@ input[type="number"],
 }
 
 .register-table .name-cell {
-  font-weight: 600;
+  min-width: 280px;
+  white-space: normal;
+}
+
+.register-table .name-cell .field-title-line {
+  gap: 8px;
+}
+
+.register-table .name-cell .field-sub-tags {
+  margin-top: 4px;
 }
 
 .register-table .mono {
