@@ -1266,7 +1266,10 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           <button
                             className="icon-btn-danger"
                             disabled={isCurrentSeasonLocked}
-                            onClick={() => onDeleteField(field.id)}
+                            onClick={() => {
+                              const label = `${field.num ? `Nr ${field.num} ` : ''}${field.name}`;
+                              if (confirm(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
+                            }}
                             title={isCurrentSeasonLocked ? 'Hooaeg on muudatusteks suletud' : 'Kustuta'}
                           >
                             <Trash2 size={15} />
