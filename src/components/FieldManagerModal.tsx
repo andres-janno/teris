@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import type { Polygon, MultiPolygon } from 'geojson';
 import {
   X,
@@ -245,6 +246,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     });
     return Array.from(byCrop.values()).sort((a, b) => b.areaHa - a.areaHa);
   }, [fieldsForSelectedYear, selectedYear]);
+
+  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
+  useEffect(() => {
+    if (editingFieldId === null) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setEditingFieldId(null);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [editingFieldId]);
 
   // Sync edit form with selectedYear whenever selectedYear changes
   useEffect(() => {
@@ -698,20 +709,24 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
           </div>
 
-          {/* Edit Master Field & Season Drawer / Form */}
-          {editingFieldId !== null && (
-            <form onSubmit={handleSaveEdit} className="field-edit-season-card glass-card animate-slide-in">
-              <div className="edit-card-header">
-                <div className="edit-title">
-                  <Edit2 size={16} className="text-emerald" />
-                  <strong>
-                    Muuda põllu andmeid: {editName || `Põld ${editNum || editingFieldId}`} (ID #{editingFieldId})
-                  </strong>
+          {/* Põllu muutmine eraldi aknas registri peal (portal: registri aken on glass-card,
+              mille backdrop-filter piiraks muidu position: fixed tausta) */}
+          {editingFieldId !== null && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleSaveEdit} className="modal-content field-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Edit2 size={20} className="text-emerald" />
+                  <h3>
+                    Muuda: {editNum ? `Nr ${editNum} ` : ''}{editName || `Põld ${editingFieldId}`} · {selectedYear}
+                  </h3>
                 </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setEditingFieldId(null)}>
-                  <X size={16} />
+                <button className="icon-btn-ghost" type="button" onClick={() => setEditingFieldId(null)} title="Sulge (Esc)">
+                  <X size={20} />
                 </button>
               </div>
+
+              <div className="modal-body">
 
               {/* General Master Field Data */}
               <div className="form-sub-header">
@@ -1127,17 +1142,21 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 ))}
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingFieldId(null)}>Loobu</button>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setEditingFieldId(null)}>Loobu</button>
                 <button
                   type="submit"
                   disabled={isEditSeasonLocked}
-                  className={`btn btn-primary btn-sm ${isEditSeasonLocked ? 'btn-disabled' : ''}`}
+                  className={`btn btn-primary ${isEditSeasonLocked ? 'btn-disabled' : ''}`}
                 >
                   Salvesta muudatused
                 </button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
           {/* Põldude tabel: põhiandmed, suurus, aastate kultuurid, tegevused */}
