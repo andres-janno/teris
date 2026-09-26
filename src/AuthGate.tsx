@@ -19,7 +19,11 @@ export const AuthGate: React.FC = () => {
   const leaveLinkPage = (message?: string) => {
     window.history.replaceState(null, '', '/');
     setLinkToken(null);
-    if (message) setNotice(message);
+    if (message) {
+      // Parooli määramine lõpetas kõik selle kasutaja sessioonid — näita sisselogimist.
+      setUser(null);
+      setNotice(message);
+    }
   };
 
   useEffect(() => {

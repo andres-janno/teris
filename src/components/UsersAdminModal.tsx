@@ -43,6 +43,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     if (!isOpen) return;
     setMode({ kind: 'list' });
     setError(null);
+    setNotice(null);
     void load();
   }, [isOpen, load]);
 
