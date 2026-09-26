@@ -67,11 +67,21 @@ export function sendMail(message: string): Promise<void> {
     return Promise.resolve();
   }
   return new Promise((resolve, reject) => {
-    const child = spawn('/usr/sbin/sendmail', ['-t', '-i', '-f', MAIL_FROM], { stdio: ['pipe', 'ignore', 'pipe'] });
-    let stderr = '';
-    child.stderr.on('data', (d) => (stderr += d));
-    child.on('error', reject);
-    child.on('close', (code) => (code === 0 ? resolve() : reject(new Error(`sendmail lõpetas koodiga ${code}: ${stderr.trim()}`))));
+    const child = spawn('/usr/sbin/sendmail', ['-t', '-i', '-f', MAIL_FROM], { stdio: ['pipe', 'ignore', 'ignore'] });
+    let settled = false;
+    const settleResolve = () => {
+      if (settled) return;
+      settled = true;
+      resolve();
+    };
+    const settleReject = (err: Error) => {
+      if (settled) return;
+      settled = true;
+      reject(err);
+    };
+    child.on('error', settleReject);
+    child.stdin.on('error', settleReject);
+    child.on('close', (code) => (code === 0 ? settleResolve() : settleReject(new Error(`sendmail lõpetas koodiga ${code}`))));
     child.stdin.end(message);
   });
 }
