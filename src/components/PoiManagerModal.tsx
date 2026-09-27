@@ -1,5 +1,6 @@
 // src/components/PoiManagerModal.tsx
 import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   MapPin,
@@ -105,6 +106,16 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
       setLng(initialCoords[1]);
     }
   }, [initialDraft, initialCoords, isOpen]);
+
+  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
+  useEffect(() => {
+    if (!isAdding) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setIsAdding(false); setEditingId(null); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isAdding]);
 
   if (!isOpen) return null;
 
@@ -250,29 +261,37 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               </button>
               <button
                 className="btn btn-primary btn-sm"
-                onClick={() => {
-                  if (isAdding) {
-                    setIsAdding(false);
-                    setEditingId(null);
-                  } else {
-                    handleStartAdd();
-                  }
-                }}
+                onClick={handleStartAdd}
               >
-                {isAdding ? <X size={14} /> : <Plus size={14} />}
-                <span>{isAdding ? 'Sulge vorm' : 'Lisa uus asukoht'}</span>
+                <Plus size={14} />
+                <span>Lisa uus asukoht</span>
               </button>
             </div>
           </div>
 
-          {/* Add / Edit Form */}
-          {isAdding && (
-            <form onSubmit={handleSubmit} className="poi-add-form glass-card animate-slide-in">
+          {/* Asukoha lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
+              glass-card, mille backdrop-filter piiraks muidu position: fixed tausta) */}
+          {isAdding && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleSubmit} className="modal-content poi-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  {editingId ? <Edit2 size={20} className="text-emerald" /> : <Plus size={20} className="text-emerald" />}
+                  <h3>{editingId ? `Muuda asukohta: ${name}` : 'Lisa uus asukoht'}</h3>
+                </div>
+                <button
+                  className="icon-btn-ghost"
+                  type="button"
+                  onClick={() => { setIsAdding(false); setEditingId(null); }}
+                  title="Sulge (Esc)"
+                >
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body">
+
               <div className="form-header-row">
-                <h4 className="form-title">
-                  {editingId ? <Edit2 size={16} className="text-emerald" /> : <Plus size={16} className="text-emerald" />}
-                  <span>{editingId ? 'Taristupunkti muutmine' : 'Uue taristupunkti lisamine'}</span>
-                </h4>
                 <button
                   type="button"
                   className="btn btn-secondary btn-sm btn-pick-map-highlight"
@@ -377,10 +396,12 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 </div>
               </div>
 
-              <div className="form-actions">
+              </div>
+
+              <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost"
                   onClick={() => {
                     setIsAdding(false);
                     setEditingId(null);
@@ -388,12 +409,14 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 >
                   Loobu
                 </button>
-                <button type="submit" className="btn btn-primary btn-sm">
+                <button type="submit" className="btn btn-primary">
                   <Check size={14} />
                   <span>{editingId ? 'Salvesta muudatused' : 'Lisa asukoht'}</span>
                 </button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
           {/* List of POIs */}

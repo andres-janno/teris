@@ -3498,6 +3498,72 @@ input[type="number"],
   overflow-y: auto;
 }
 
+.modal-content.crop-edit-modal {
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.crop-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
+.modal-content.party-edit-modal {
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.party-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
+.modal-content.season-edit-modal {
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.season-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
+.modal-content.poi-edit-modal {
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.poi-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
+.modal-content.fleet-edit-modal {
+  width: min(720px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.fleet-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
+.modal-content.users-edit-modal {
+  width: min(560px, 96vw);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-content.users-edit-modal .modal-body {
+  overflow-y: auto;
+}
+
 .field-edit-season-card {
   margin-bottom: 16px;
   padding: 16px;
@@ -5385,11 +5451,6 @@ a.history-pill:hover {
   font-weight: 600;
   background: rgba(217, 119, 6, 0.14);
   color: var(--amber-500);
-}
-
-.users-admin-form h4 {
-  margin: 0 0 12px;
-  font-size: 0.95rem;
 }
 
 .users-admin-checkbox {

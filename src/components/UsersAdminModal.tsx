@@ -1,5 +1,6 @@
 // src/components/UsersAdminModal.tsx — kasutajate haldus (ainult adminile).
 import React, { useCallback, useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check, Mail } from 'lucide-react';
 import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
@@ -46,6 +47,16 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     setNotice(null);
     void load();
   }, [isOpen, load]);
+
+  // Esc sulgeb ainult muutmis-/lisamisvormi (kasutajate nimekiri jääb avatuks).
+  useEffect(() => {
+    if (mode.kind === 'list') return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setError(null); setMode({ kind: 'list' }); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [mode.kind]);
 
   if (!isOpen) return null;
 
@@ -122,10 +133,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     mode.kind === 'add'
       ? 'Lisa kasutaja'
       : mode.kind === 'edit'
-        ? `Muuda: ${mode.user.username}`
+        ? `Muuda kasutajat: ${mode.user.username}`
         : mode.kind === 'reset'
           ? `Lähtesta parool: ${mode.user.username}`
           : '';
+
+  const FormIcon = mode.kind === 'reset' ? KeyRound : mode.kind === 'edit' ? Pencil : UserPlus;
 
   return (
     <div className="modal-backdrop" onClick={onClose}>
@@ -141,83 +154,108 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
         </div>
 
         <div className="modal-body">
-          {error && (
+          {error && mode.kind === 'list' && (
             <div className="alert-box error">
               <AlertCircle size={16} />
               <span>{error}</span>
             </div>
           )}
-          {notice && <div className="alert-box">{notice}</div>}
+          {notice && (
+            <div className="alert-box">{notice}</div>
+          )}
 
-          {mode.kind === 'list' ? (
-            <>
-              <div className="users-admin-toolbar">
-                <button type="button" className="btn btn-primary" onClick={() => openForm({ kind: 'add' })}>
-                  <UserPlus size={16} />
-                  <span>Lisa kasutaja</span>
-                </button>
-              </div>
-              <div className="users-admin-table-wrap">
-                <table className="users-admin-table">
-                  <thead>
-                    <tr>
-                      <th>Nimi</th>
-                      <th>Kasutajanimi</th>
-                      <th>E-post</th>
-                      <th>Roll</th>
-                      <th>Olek</th>
-                      <th>Viimati sees</th>
-                      <th></th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {users.map((u) => {
-                      const self = u.id === currentUserId;
-                      return (
-                        <tr key={u.id} className={u.isActive ? '' : 'inactive'}>
-                          <td>{u.displayName ?? '–'}</td>
-                          <td>{u.username}</td>
-                          <td>{u.email ?? '–'}</td>
-                          <td>{u.isAdmin ? 'Admin' : 'Kasutaja'}</td>
-                          <td>
-                            {u.isActive ? 'Aktiivne' : 'Keelatud'}
-                            {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
-                            {!u.hasPassword && <span className="users-admin-badge">Kutse saadetud</span>}
-                          </td>
-                          <td>{formatDate(u.lastLoginAt)}</td>
-                          <td className="users-admin-actions">
-                            <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
-                              <Pencil size={15} />
-                            </button>
-                            {!self && (
-                              <>
-                                {u.email && u.isActive && (
-                                  <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
-                                    <Mail size={15} />
-                                  </button>
-                                )}
-                                <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
-                                  <KeyRound size={15} />
-                                </button>
-                                <button type="button" className="icon-btn-ghost" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
-                                  {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
-                                </button>
-                                <button type="button" className="icon-btn-danger" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
-                                  <Trash2 size={15} />
-                                </button>
-                              </>
+          <div className="users-admin-toolbar">
+            <button type="button" className="btn btn-primary" onClick={() => openForm({ kind: 'add' })}>
+              <UserPlus size={16} />
+              <span>Lisa kasutaja</span>
+            </button>
+          </div>
+          <div className="users-admin-table-wrap">
+            <table className="users-admin-table">
+              <thead>
+                <tr>
+                  <th>Nimi</th>
+                  <th>Kasutajanimi</th>
+                  <th>E-post</th>
+                  <th>Roll</th>
+                  <th>Olek</th>
+                  <th>Viimati sees</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map((u) => {
+                  const self = u.id === currentUserId;
+                  return (
+                    <tr key={u.id} className={u.isActive ? '' : 'inactive'}>
+                      <td>{u.displayName ?? '–'}</td>
+                      <td>{u.username}</td>
+                      <td>{u.email ?? '–'}</td>
+                      <td>{u.isAdmin ? 'Admin' : 'Kasutaja'}</td>
+                      <td>
+                        {u.isActive ? 'Aktiivne' : 'Keelatud'}
+                        {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
+                        {!u.hasPassword && <span className="users-admin-badge">Kutse saadetud</span>}
+                      </td>
+                      <td>{formatDate(u.lastLoginAt)}</td>
+                      <td className="users-admin-actions">
+                        <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
+                          <Pencil size={15} />
+                        </button>
+                        {!self && (
+                          <>
+                            {u.email && u.isActive && (
+                              <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
+                                <Mail size={15} />
+                              </button>
                             )}
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+                            <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
+                              <KeyRound size={15} />
+                            </button>
+                            <button type="button" className="icon-btn-ghost" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
+                              {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
+                            </button>
+                            <button type="button" className="icon-btn-danger" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
+                              <Trash2 size={15} />
+                            </button>
+                          </>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div className="modal-footer">
+          <button type="button" className="btn btn-ghost" onClick={onClose}>Sulge</button>
+        </div>
+      </div>
+
+      {/* Kasutaja lisamine/muutmine/parooli lähtestamine eraldi aknas registri peal
+          (portal: registri aken on modal-backdrop sees, list jääb all nähtavaks) */}
+      {mode.kind !== 'list' && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <form id="users-admin-form" className="modal-content users-edit-modal animate-scale-up" onSubmit={submit}>
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <FormIcon size={20} className="text-emerald" />
+                <h3>{formTitle}</h3>
               </div>
-            </>
-          ) : (
-            <form id="users-admin-form" className="users-admin-form" onSubmit={submit}>
-              <h4>{formTitle}</h4>
+              <button type="button" className="icon-btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }} title="Sulge (Esc)">
+                <X size={20} />
+              </button>
+            </div>
+
+            <div className="modal-body">
+              {error && (
+                <div className="alert-box error">
+                  <AlertCircle size={16} />
+                  <span>{error}</span>
+                </div>
+              )}
               {mode.kind === 'add' && (
                 <div className="form-group">
                   <label htmlFor="ua-username">Kasutajanimi (a–z, 0–9, . _ -)</label>
@@ -267,24 +305,19 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   <span>Admin (saab kasutajaid hallata)</span>
                 </label>
               )}
-            </form>
-          )}
-        </div>
+            </div>
 
-        <div className="modal-footer">
-          {mode.kind === 'list' ? (
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Sulge</button>
-          ) : (
-            <>
-              <button type="button" className="btn btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Tagasi</button>
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</button>
               <button type="submit" form="users-admin-form" className="btn btn-primary" disabled={busy}>
                 <Check size={16} />
                 <span>Salvesta</span>
               </button>
-            </>
-          )}
-        </div>
-      </div>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
     </div>
   );
 };

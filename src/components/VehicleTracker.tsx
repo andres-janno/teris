@@ -1,5 +1,6 @@
 // src/components/VehicleTracker.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Tractor,
@@ -157,6 +158,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     targetVehicleId: string;
     targetVehicleName: string;
   } | null>(null);
+
+  // Esc sulgeb ainult lisamis-/muutmisvormi (register jääb avatuks).
+  useEffect(() => {
+    if (!isAddingNew) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsAddingNew(false);
+        setEditingVehicleId(null);
+        setEditingImplementId(null);
+        setEditingDeviceId(null);
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isAddingNew]);
 
   if (!isOpen) return null;
 
@@ -386,13 +402,23 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             )}
           </div>
 
-          {/* ADD FORMS */}
-          {isAddingNew && activeTab === 'vehicles' && (
-            <form onSubmit={handleCreateVehicle} className="poi-add-form glass-card animate-slide-in">
-              <h4 className="form-title">
-                <Tractor size={16} className="text-emerald" />
-                <span>{editingVehicleId ? 'Sõiduki andmete muutmine' : 'Uue sõiduki registreerimine'}</span>
-              </h4>
+          {/* ADD FORMS eraldi aknas registri peal (portal: registri aken on glass-card,
+              mille backdrop-filter piiraks muidu position: fixed tausta) */}
+          {isAddingNew && activeTab === 'vehicles' && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleCreateVehicle} className="modal-content fleet-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Tractor size={20} className="text-emerald" />
+                  <h3>{editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'}</h3>
+                </div>
+                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body">
+
               <div className="form-grid">
                 <div className="form-group">
                   <label>Masina nimi *</label>
@@ -487,19 +513,33 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </select>
                 </div>
               </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
+
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
-          {isAddingNew && activeTab === 'implements' && (
-            <form onSubmit={handleCreateImplement} className="poi-add-form glass-card animate-slide-in">
-              <h4 className="form-title">
-                <Wrench size={16} className="text-emerald" />
-                <span>{editingImplementId ? 'Haakeriista andmete muutmine' : 'Uue haakeriista registreerimine'}</span>
-              </h4>
+          {isAddingNew && activeTab === 'implements' && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleCreateImplement} className="modal-content fleet-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Wrench size={20} className="text-emerald" />
+                  <h3>{editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'}</h3>
+                </div>
+                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body">
+
               <div className="form-grid">
                 <div className="form-group">
                   <label>Haakeriista nimi *</label>
@@ -578,19 +618,33 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </select>
                 </div>
               </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
+
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
-          {isAddingNew && activeTab === 'devices' && (
-            <form onSubmit={handleCreateDevice} className="poi-add-form glass-card animate-slide-in">
-              <h4 className="form-title">
-                <Radio size={16} className="text-emerald" />
-                <span>{editingDeviceId ? 'Seadme andmete muutmine' : 'Uue Teltonika GPS seadme registreerimine'}</span>
-              </h4>
+          {isAddingNew && activeTab === 'devices' && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleCreateDevice} className="modal-content fleet-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Radio size={20} className="text-emerald" />
+                  <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri Teltonika seade'}</h3>
+                </div>
+                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="modal-body">
+
               <div className="form-group connectivity-type-picker">
                 <label>Seadme tüüp</label>
                 <div className="segmented-control">
@@ -693,11 +747,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </select>
                 </div>
               </div>
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary btn-sm">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
+
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+                <button type="submit" className="btn btn-primary">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
           {/* TAB 1: SÕIDUKID / MASINAD */}

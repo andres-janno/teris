@@ -1,5 +1,6 @@
 // src/components/SeasonManagerModal.tsx
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Lock,
@@ -52,6 +53,16 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const [formHarvestEndDate, setFormHarvestEndDate] = useState<string>('');
   const [formTargetYield, setFormTargetYield] = useState<string>('');
   const [formNotes, setFormNotes] = useState<string>('');
+
+  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
+  useEffect(() => {
+    if (!isAdding) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') { setIsAdding(false); setEditingYear(null); }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isAdding]);
 
   if (!isOpen) return null;
 
@@ -182,19 +193,27 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
         {/* Modal Body */}
         <div className="modal-body season-modal-body">
-          {/* Add / Edit Form */}
-          {isAdding && (
-            <form className="season-form-card glass-card" onSubmit={handleSaveForm}>
-              <div className="form-card-header">
-                <h4>{editingYear ? `Muuda hooaja ${editingYear} andmeid` : 'Uue põllumajandusaasta loomine'}</h4>
+          {/* Add / Edit Form eraldi aknas registri peal (portal: registri aken võib olla
+              glass-card/glass-modal, mille backdrop-filter piiraks muidu position: fixed tausta) */}
+          {isAdding && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form className="modal-content season-edit-modal animate-scale-up" onSubmit={handleSaveForm}>
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Edit2 size={20} className="text-emerald" />
+                  <h3>{editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'}</h3>
+                </div>
                 <button
                   type="button"
-                  className="icon-btn-sm"
+                  className="icon-btn-ghost"
                   onClick={() => { setIsAdding(false); setEditingYear(null); }}
+                  title="Sulge (Esc)"
                 >
-                  <X size={14} />
+                  <X size={20} />
                 </button>
               </div>
+
+              <div className="modal-body">
 
               <div className="form-grid season-form-grid">
                 <div className="form-group">
@@ -303,19 +322,23 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 </div>
               </div>
 
-              <div className="form-actions">
+              </div>
+
+              <div className="modal-footer">
                 <button
                   type="button"
-                  className="btn btn-ghost btn-sm"
+                  className="btn btn-ghost"
                   onClick={() => { setIsAdding(false); setEditingYear(null); }}
                 >
-                  Tühista
+                  Loobu
                 </button>
-                <button type="submit" className="btn btn-primary btn-sm">
+                <button type="submit" className="btn btn-primary">
                   {editingYear ? 'Salvesta muudatused' : 'Loo hooaeg'}
                 </button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
           {/* Season Cards List */}

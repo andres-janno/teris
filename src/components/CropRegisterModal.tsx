@@ -1,5 +1,6 @@
 // src/components/CropRegisterModal.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Sprout,
@@ -262,6 +263,25 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     }
   };
 
+  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
+  useEffect(() => {
+    if (!isEditingCrop) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsEditingCrop(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isEditingCrop]);
+
+  useEffect(() => {
+    if (!isEditingVariety) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsEditingVariety(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isEditingVariety]);
+
   if (!isOpen) return null;
 
   const targetCropForVariety = crops.find((c) => c.id === varietyTargetCropId);
@@ -353,18 +373,22 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             </div>
           </div>
 
-          {/* 1. Inline Crop Form */}
-          {isEditingCrop && (
-            <form onSubmit={handleSaveCropForm} className="field-edit-season-card glass-card animate-slide-in">
-              <div className="edit-card-header">
-                <div className="edit-title">
-                  <Edit2 size={16} className="text-emerald" />
-                  <strong>{editCropId ? `Muuda kultuuri: ${editCropName}` : 'Uue põllukultuuri lisamine registrisse'}</strong>
+          {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
+              glass-card, mille backdrop-filter piiraks muidu position: fixed tausta) */}
+          {isEditingCrop && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleSaveCropForm} className="modal-content crop-edit-modal animate-scale-up">
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Edit2 size={20} className="text-emerald" />
+                  <h3>{editCropId ? `Muuda kultuuri: ${editCropName}` : 'Lisa uus kultuur'}</h3>
                 </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingCrop(false)}>
-                  <X size={16} />
+                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingCrop(false)} title="Sulge (Esc)">
+                  <X size={20} />
                 </button>
               </div>
+
+              <div className="modal-body">
 
               <div className="form-sub-header">
                 <Sprout size={14} />
@@ -475,31 +499,38 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsEditingCrop(false)}>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setIsEditingCrop(false)}>
                   Loobu
                 </button>
-                <button type="submit" className="btn btn-primary btn-sm">
+                <button type="submit" className="btn btn-primary">
                   Salvesta kultuur
                 </button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
-          {/* 2. Inline Variety Sub-Register Form */}
-          {isEditingVariety && targetCropForVariety && (
-            <form onSubmit={handleSaveVarietyForm} className="field-edit-season-card glass-card animate-slide-in" style={{ borderLeft: '4px solid var(--blue-500)' }}>
-              <div className="edit-card-header">
-                <div className="edit-title">
-                  <Tag size={16} className="text-blue" />
-                  <strong>
-                    {editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa uus sort kultuurile "${targetCropForVariety.name}"`}
-                  </strong>
+          {/* 2. Sordi lisamine/muutmine eraldi aknas registri peal */}
+          {isEditingVariety && targetCropForVariety && createPortal(
+            <div className="modal-backdrop sub-modal">
+            <form onSubmit={handleSaveVarietyForm} className="modal-content crop-edit-modal animate-scale-up" style={{ borderTop: '4px solid var(--blue-500)' }}>
+              <div className="modal-header">
+                <div className="modal-title-group">
+                  <Tag size={20} className="text-blue" />
+                  <h3>
+                    {editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa sort: ${targetCropForVariety.name}`}
+                  </h3>
                 </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingVariety(false)}>
-                  <X size={16} />
+                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingVariety(false)} title="Sulge (Esc)">
+                  <X size={20} />
                 </button>
               </div>
+
+              <div className="modal-body">
 
               <div className="form-sub-header">
                 <Sparkles size={14} />
@@ -598,15 +629,19 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </div>
               </div>
 
-              <div className="form-actions">
-                <button type="button" className="btn btn-ghost btn-sm" onClick={() => setIsEditingVariety(false)}>
+              </div>
+
+              <div className="modal-footer">
+                <button type="button" className="btn btn-ghost" onClick={() => setIsEditingVariety(false)}>
                   Loobu
                 </button>
-                <button type="submit" className="btn btn-primary btn-sm">
+                <button type="submit" className="btn btn-primary">
                   Salvesta sort
                 </button>
               </div>
             </form>
+            </div>,
+            document.body
           )}
 
           {/* Master Crops List */}

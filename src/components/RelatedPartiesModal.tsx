@@ -1,5 +1,6 @@
 // src/components/RelatedPartiesModal.tsx
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import {
   X,
   Users,
@@ -243,21 +244,34 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     };
   }, [enrichedParties]);
 
+  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
+  useEffect(() => {
+    if (!isEditing) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsEditing(false);
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  }, [isEditing]);
+
   if (!isOpen) return null;
 
-  const editForm = (
-    <form onSubmit={handleSaveForm} className="field-edit-season-card glass-card animate-slide-in">
-      <div className="edit-card-header">
-        <div className="edit-title">
-          <Edit2 size={16} className="text-emerald" />
-          <strong>
-            {editId ? `Muuda isiku andmeid: ${editName}` : 'Uue seotud isiku lisamine registrisse'}
-          </strong>
+  const editForm = isEditing && createPortal(
+    <div className="modal-backdrop sub-modal">
+    <form onSubmit={handleSaveForm} className="modal-content party-edit-modal animate-scale-up">
+      <div className="modal-header">
+        <div className="modal-title-group">
+          <Edit2 size={20} className="text-emerald" />
+          <h3>
+            {editId ? `Muuda isikut: ${editName}` : 'Lisa uus seotud isik'}
+          </h3>
         </div>
-        <button className="icon-btn-ghost" type="button" onClick={() => setIsEditing(false)}>
-          <X size={16} />
+        <button className="icon-btn-ghost" type="button" onClick={() => setIsEditing(false)} title="Sulge (Esc)">
+          <X size={20} />
         </button>
       </div>
+
+      <div className="modal-body">
 
       {/* 1. Põhiandmed */}
       <div className="form-sub-header">
@@ -408,19 +422,23 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         </div>
       </div>
 
-      <div className="form-actions">
+      </div>
+
+      <div className="modal-footer">
         <button
           type="button"
-          className="btn btn-ghost btn-sm"
+          className="btn btn-ghost"
           onClick={() => setIsEditing(false)}
         >
           Loobu
         </button>
-        <button type="submit" className="btn btn-primary btn-sm">
+        <button type="submit" className="btn btn-primary">
           Salvesta isik
         </button>
       </div>
     </form>
+    </div>,
+    document.body
   );
 
   return (
@@ -520,17 +538,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             </div>
           </div>
 
-          {/* Edit / Create Form (Matching field-edit-season-card) */}
-          {isEditing && !editId && editForm}
-
           {/* Parties List (Identical horizontal card format to FieldManagerModal) */}
           <div className="register-fields-list">
             {filteredParties.map((party, idx) => {
               const isCompany = party.type === 'LEGAL_ENTITY';
-
-              if (isEditing && editId === party.id) {
-                return <React.Fragment key={party.id}>{editForm}</React.Fragment>;
-              }
 
               return (
                 <div
@@ -745,6 +756,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             )}
           </div>
         </div>
+
+        {editForm}
 
         <div className="modal-footer">
           <div className="footer-left-info">
