@@ -139,6 +139,41 @@ async function fetchDeviceHistory(imei: string, hours: number): Promise<HistoryR
   }
 }
 
+// Asendab hooaja katastriüksuste seosed kliendi saadetud nimekirjaga; tundmatu tunnus lisatakse registrisse.
+async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): Promise<void> {
+  const num = (v: unknown) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
+  const keepParcelIds: number[] = [];
+  for (const l of links) {
+    const cadastralCode = String(l?.cadastralCode ?? '').trim();
+    if (!cadastralCode) continue;
+    const parcelName = String(l?.parcelName ?? '').trim() || null;
+    const parcel = await prisma.cadastralParcel.upsert({
+      where: { cadastralCode },
+      update: parcelName ? { name: parcelName } : {},
+      create: { cadastralCode, name: parcelName }
+    });
+    const data = {
+      fieldAreaHa: num(l?.fieldAreaHa) ?? 0,
+      ownershipType: (l?.ownershipType === 'RENTED' ? 'RENTED' : 'OWNED') as 'OWNED' | 'RENTED',
+      ownerName: String(l?.ownerName ?? '').trim() || null,
+      landTaxEurHa: num(l?.landTaxEurHa),
+      landTaxEurYear: num(l?.landTaxEurYear),
+      rentFeeEurHa: num(l?.rentFeeEurHa),
+      rentFeeEurYear: num(l?.rentFeeEurYear),
+      notes: String(l?.notes ?? '').trim() || null
+    };
+    await prisma.fieldCadastralParcel.upsert({
+      where: { fieldSeasonId_cadastralParcelId: { fieldSeasonId, cadastralParcelId: parcel.id } },
+      update: data,
+      create: { fieldSeasonId, cadastralParcelId: parcel.id, ...data }
+    });
+    keepParcelIds.push(parcel.id);
+  }
+  await prisma.fieldCadastralParcel.deleteMany({
+    where: { fieldSeasonId, cadastralParcelId: { notIn: keepParcelIds } }
+  });
+}
+
 // Andmete importimine (PRIA, mullaproovid, põlluraamat) on lubatud ainult adminile.
 const IMPORT_FORBIDDEN = 'Andmete importimine on lubatud ainult adminile';
 const isAdmin = (req: IncomingMessage) => sessionUserOf(req)?.isAdmin === true;
@@ -257,7 +292,10 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         include: {
           fieldSeasons: {
             orderBy: { year: 'desc' },
-            include: { _count: { select: { operations: true } } }
+            include: {
+              _count: { select: { operations: true } },
+              cadastralParcels: { include: { cadastralParcel: true }, orderBy: { id: 'asc' } }
+            }
           },
           operator: true
         },
@@ -284,6 +322,18 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
           operationsCount: fs._count.operations,
+          cadastralParcels: fs.cadastralParcels.map((link) => ({
+            cadastralCode: link.cadastralParcel.cadastralCode,
+            parcelName: link.cadastralParcel.name ?? undefined,
+            ownershipType: link.ownershipType,
+            ownerName: link.ownerName ?? '',
+            fieldAreaHa: link.fieldAreaHa,
+            landTaxEurHa: link.landTaxEurHa ?? undefined,
+            landTaxEurYear: link.landTaxEurYear ?? undefined,
+            rentFeeEurHa: link.rentFeeEurHa ?? undefined,
+            rentFeeEurYear: link.rentFeeEurYear ?? undefined,
+            notes: link.notes ?? undefined
+          })),
           targetYieldTonsHa: fs.targetYieldTonsHa,
           actualYieldTonsHa: fs.actualYieldTonsHa,
           workedAreaHa: fs.workedAreaHa,
@@ -354,7 +404,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
             const statusUpper = (h.status || 'not_started').toUpperCase();
             const season = await prisma.season.findUnique({ where: { year: Number(h.year) } });
             const seasonId = season?.id ?? null;
-            await prisma.fieldSeason.upsert({
+            const savedSeason = await prisma.fieldSeason.upsert({
               where: {
                 fieldId_year: {
                   fieldId: upsertedField.id,
@@ -400,6 +450,10 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
                 geometry: h.geometry || item.geometry || null
               }
             });
+            // Hooaja katastriüksused: ainult kui klient need saatis (PRIA import ei saada → jäävad puutumata).
+            if (Array.isArray(h.cadastralParcels)) {
+              await syncSeasonCadastralParcels(savedSeason.id, h.cadastralParcels);
+            }
           }
         }
 
