@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
+import { COPYRIGHT_TEXT } from '../copyright';
 
 interface UserMenuProps {
   user: AuthUser;
@@ -89,6 +90,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
 
           <div className="user-menu-footer">
             <div>Versioon {VERSION_LABEL}</div>
+            <div>{COPYRIGHT_TEXT}</div>
             <div className="user-menu-db" title="PostgreSQL andmebaas">
               <Database size={12} />
               <span className={`user-menu-db-dot ${dbConnected ? 'connected' : ''}`}></span>

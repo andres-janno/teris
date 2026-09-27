@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { LogIn, AlertCircle } from 'lucide-react';
 import { AgroLogo } from './AgroLogo';
+import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
 
@@ -110,6 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
           </div>
         )}
       </form>
+      <p className="login-copyright">{COPYRIGHT_TEXT}</p>
     </div>
   );
 };

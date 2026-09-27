@@ -11,6 +11,7 @@ import type { PointOfInterest } from '../types/poi';
 import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
 import { getSoilMetricColor, getSoilMetricValue, SOIL_METRIC_CONFIG } from '../types/soilSample';
 import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
+import { COPYRIGHT_TEXT } from '../copyright';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
 import { getVisibleElementsBounds } from '../services/geometryEngine';
 import { getCropColor } from '../services/shpParser';
@@ -120,6 +121,7 @@ export const MapView: React.FC<MapViewProps> = ({
       attributionControl: true
     });
 
+    map.attributionControl.setPrefix(`${COPYRIGHT_TEXT} | <a href="https://leafletjs.com" target="_blank" rel="noreferrer">Leaflet</a>`);
     L.control.zoom({ position: 'bottomright' }).addTo(map);
     L.control.scale({ imperial: false, metric: true, position: 'bottomleft' }).addTo(map);
 
