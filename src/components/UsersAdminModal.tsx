@@ -237,7 +237,8 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
       {/* Kasutaja lisamine/muutmine/parooli lähtestamine eraldi aknas registri peal
           (portal: registri aken on modal-backdrop sees, list jääb all nähtavaks) */}
       {mode.kind !== 'list' && createPortal(
-        <div className="modal-backdrop sub-modal">
+        // Portaali klõpsud mullivad Reacti puus registri taustani (onClick={onClose}) — peata siin.
+        <div className="modal-backdrop sub-modal" onClick={(e) => e.stopPropagation()}>
           <form id="users-admin-form" className="modal-content users-edit-modal animate-scale-up" onSubmit={submit}>
             <div className="modal-header">
               <div className="modal-title-group">
@@ -309,7 +310,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
             <div className="modal-footer">
               <button type="button" className="btn btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</button>
-              <button type="submit" form="users-admin-form" className="btn btn-primary" disabled={busy}>
+              <button type="submit" className="btn btn-primary" disabled={busy}>
                 <Check size={16} />
                 <span>Salvesta</span>
               </button>

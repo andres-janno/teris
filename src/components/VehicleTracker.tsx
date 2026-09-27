@@ -1160,7 +1160,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         </div>
 
         {/* Quick Swap Sub-Modal */}
-        {swapModal && (
+        {swapModal && createPortal(
           <div className="modal-backdrop sub-modal">
             <div className="modal-content glass-card swap-modal-card animate-scale-up">
               <div className="modal-header">
@@ -1270,7 +1270,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               </div>
             </div>
           </div>
-        )}
+        , document.body)}
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
