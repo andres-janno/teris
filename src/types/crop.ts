@@ -33,6 +33,7 @@ export interface Crop {
   defaultSeedRateKgHa?: number;         // Vaikimisi soovituslik külvinorm kg/ha
   defaultYieldTonsHa?: number;          // Baas-saagiootus t/ha
   description?: string;                 // Agrotehniline kirjeldus või märkmed
+  isWinterCrop?: boolean;               // Talivili (külv sügisel) — hooaeg algab eelmisel sügisel
   varieties: CropVariety[];             // Alamregister antud kultuuri sortidest
   createdAt?: string;
   updatedAt?: string;

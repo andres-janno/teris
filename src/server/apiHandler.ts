@@ -940,7 +940,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           priaCode: crop.priaCode ?? null,
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
-          description: crop.description ?? null
+          description: crop.description ?? null,
+          isWinterCrop: crop.isWinterCrop === true
         },
         create: {
           id: crop.id || `crop-${Date.now()}`,
@@ -952,7 +953,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           priaCode: crop.priaCode ?? null,
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
-          description: crop.description ?? null
+          description: crop.description ?? null,
+          isWinterCrop: crop.isWinterCrop === true
         }
       });
       return json(res, saved);

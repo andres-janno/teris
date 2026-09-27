@@ -390,6 +390,7 @@ model Crop {
   defaultSeedRateKgHa   Float?
   defaultYieldTonsHa    Float?
   description           String?
+  isWinterCrop          Boolean       @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
   createdAt             DateTime      @default(now())
   updatedAt             DateTime      @updatedAt
 

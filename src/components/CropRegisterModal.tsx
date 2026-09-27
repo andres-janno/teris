@@ -50,6 +50,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editCropSeedRate, setEditCropSeedRate] = useState<number | ''>('');
   const [editCropYield, setEditCropYield] = useState<number | ''>('');
   const [editCropDescription, setEditCropDescription] = useState('');
+  const [editCropIsWinter, setEditCropIsWinter] = useState(false);
 
   // Variety Editing State
   const [isEditingVariety, setIsEditingVariety] = useState(false);
@@ -141,6 +142,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropSeedRate('');
     setEditCropYield('');
     setEditCropDescription('');
+    setEditCropIsWinter(false);
     setIsEditingCrop(true);
     setIsEditingVariety(false);
   };
@@ -156,6 +158,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropSeedRate(crop.defaultSeedRateKgHa ?? '');
     setEditCropYield(crop.defaultYieldTonsHa ?? '');
     setEditCropDescription(crop.description || '');
+    setEditCropIsWinter(crop.isWinterCrop === true);
     setIsEditingCrop(true);
     setIsEditingVariety(false);
   };
@@ -176,6 +179,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
       defaultSeedRateKgHa: editCropSeedRate !== '' ? Number(editCropSeedRate) : undefined,
       defaultYieldTonsHa: editCropYield !== '' ? Number(editCropYield) : undefined,
       description: editCropDescription.trim() || undefined,
+      isWinterCrop: editCropIsWinter,
       varieties: existingCrop ? existingCrop.varieties : [],
       updatedAt: new Date().toISOString()
     };
@@ -431,6 +435,13 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                       </option>
                     ))}
                   </select>
+                </div>
+
+                <div className="form-group">
+                  <label className="crop-winter-toggle">
+                    <input type="checkbox" checked={editCropIsWinter} onChange={(e) => setEditCropIsWinter(e.target.checked)} />
+                    <span>Talivili (külvatakse sügisel)</span>
+                  </label>
                 </div>
 
                 <div className="form-group">
@@ -708,6 +719,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                       {/* Technical metadata tags */}
                       <div className="field-sub-tags">
+                        <span className={`sub-tag ${crop.isWinterCrop ? 'winter-tag' : 'spring-tag'}`}>
+                          {crop.isWinterCrop ? '❄️ Talivili (sügiskülv)' : '☀️ Suvivili / kevadkülv'}
+                        </span>
                         {crop.defaultSeedRateKgHa && (
                           <span className="sub-tag soil-tag">
                             🌱 Külvinorm: {crop.defaultSeedRateKgHa} kg/ha
