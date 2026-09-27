@@ -3057,6 +3057,29 @@ input[type="number"],
   color: var(--text-muted);
 }
 
+.register-crop-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.register-crop-group-title {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 230px;
+}
+
+.register-crop-group.winter .register-crop-group-title strong {
+  color: #0369a1;
+}
+
+.register-crop-group.spring .register-crop-group-title strong {
+  color: var(--emerald-500);
+}
+
 .register-crop-stat {
   display: inline-flex;
   align-items: center;

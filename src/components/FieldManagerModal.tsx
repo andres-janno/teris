@@ -253,19 +253,33 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   }, [fieldsForSelectedYear, selectedYear]);
 
   // Valitud hooaja pindalad kultuuride lõikes (jaluses), suurimast väiksemani.
-  const cropAreas = useMemo(() => {
-    const byCrop = new Map<string, { crop: string; color: string; areaHa: number; count: number }>();
+  // Grupeeritud kultuuride registri talivilja tunnuse järgi: sügiskülv (eelmine sügis) / kevadkülv.
+  const cropGroups = useMemo(() => {
+    type Row = { crop: string; color: string; areaHa: number; count: number };
+    type Kind = 'winter' | 'spring' | 'unknown';
+    const byKind: Record<Kind, Map<string, Row>> = { winter: new Map(), spring: new Map(), unknown: new Map() };
     fieldsForSelectedYear.forEach((f) => {
       const rec = f.history.find((h) => h.year === selectedYear);
       if (!rec) return;
       const crop = (rec.crop || 'Määramata').split('(')[0].trim() || 'Määramata';
-      const entry = byCrop.get(crop) ?? { crop, color: rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
+      const registryCrop = findRegistryCrop(rec.crop || '');
+      const kind: Kind = !registryCrop ? 'unknown' : registryCrop.isWinterCrop ? 'winter' : 'spring';
+      const map = byKind[kind];
+      const entry = map.get(crop) ?? { crop, color: rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
       entry.areaHa += rec.areaHa || 0;
       entry.count += 1;
-      byCrop.set(crop, entry);
+      map.set(crop, entry);
     });
-    return Array.from(byCrop.values()).sort((a, b) => b.areaHa - a.areaHa);
-  }, [fieldsForSelectedYear, selectedYear]);
+    const group = (kind: Kind, label: string, title: string) => {
+      const rows = Array.from(byKind[kind].values()).sort((a, b) => b.areaHa - a.areaHa);
+      return { kind, label, title, rows, totalHa: rows.reduce((sum, r) => sum + r.areaHa, 0) };
+    };
+    return [
+      group('winter', `❄️ Sügiskülv ${selectedYear - 1} (talivili)`, 'Talivili külvatakse hooajale eelneval sügisel'),
+      group('spring', `☀️ Kevadkülv ${selectedYear}`, 'Suvivili ja muud kultuurid — külv/tööd hooaja kevadel'),
+      group('unknown', '❔ Kultuuriregistrist puudu', 'Kultuuri ei leitud registrist — talivilja tunnus teadmata')
+    ].filter((g) => g.rows.length > 0);
+  }, [fieldsForSelectedYear, selectedYear, crops]);
 
   // Kultuuri kiirmuutmine tabeli lahtrist (ainult avatud hooaeg ja ilma põlluraamatu tegevusteta).
   const [cropEdit, setCropEdit] = useState<{
@@ -1460,13 +1474,20 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
         <div className="modal-footer register-crop-footer">
           <span className="register-crop-footer-title">{selectedYear} kultuurid:</span>
-          {cropAreas.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
-          {cropAreas.map((c) => (
-            <span key={c.crop} className="register-crop-stat" title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}>
-              <span className="crop-dot" style={{ backgroundColor: c.color }}></span>
-              <span>{c.crop}</span>
-              <strong>{c.areaHa.toFixed(2)} ha</strong>
-            </span>
+          {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+          {cropGroups.map((g) => (
+            <div key={g.kind} className={`register-crop-group ${g.kind}`}>
+              <span className="register-crop-group-title" title={g.title}>
+                {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
+              </span>
+              {g.rows.map((c) => (
+                <span key={c.crop} className="register-crop-stat" title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}>
+                  <span className="crop-dot" style={{ backgroundColor: c.color }}></span>
+                  <span>{c.crop}</span>
+                  <strong>{c.areaHa.toFixed(2)} ha</strong>
+                </span>
+              ))}
+            </div>
           ))}
         </div>
       </div>
