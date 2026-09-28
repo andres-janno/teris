@@ -3131,14 +3131,14 @@ input[type="number"],
 }
 
 .register-crop-footer-title {
-  font-size: 0.8rem;
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-secondary);
   margin-right: 4px;
 }
 
 .register-crop-footer .muted {
-  font-size: 0.8rem;
+  font-size: 0.92rem;
   color: var(--text-muted);
 }
 
@@ -3146,15 +3146,15 @@ input[type="number"],
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
   width: 100%;
 }
 
 .register-crop-group-title {
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-secondary);
-  min-width: 230px;
+  min-width: 270px;
 }
 
 .register-crop-group.winter .register-crop-group-title strong {
@@ -3169,11 +3169,11 @@ input[type="number"],
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 3px 10px;
-  border-radius: 5px;
+  padding: 5px 12px;
+  border-radius: 6px;
   background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
   box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
-  font-size: 0.78rem;
+  font-size: 0.92rem;
   color: var(--text-primary);
 }
 
