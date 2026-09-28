@@ -4080,7 +4080,9 @@ input[type="number"],
 }
 
 .crop-legend-item.selected {
+  /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
   border-color: #16a34a;
+  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8), inset 0 0 0 1px #16a34a;
   background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
 }
 
