@@ -839,9 +839,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
             <form onSubmit={handleSaveEdit} className="modal-content field-edit-modal animate-scale-up">
               <div className="modal-header">
                 <div className="modal-title-group">
-                  <Edit2 size={20} className="text-emerald" />
+                  {isEditSeasonLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
                   <h3>
-                    Muuda: {editNum ? `Nr ${editNum} ` : ''}{editName || `Põld ${editingFieldId}`} · {selectedYear}
+                    {isEditSeasonLocked ? 'Lukus' : 'Muuda'}: {editNum ? `Nr ${editNum} ` : ''}{editName || `Põld ${editingFieldId}`} · {selectedYear}
                   </h3>
                 </div>
                 <button className="icon-btn-ghost" type="button" onClick={() => setEditingFieldId(null)} title="Sulge (Esc)">
@@ -864,6 +864,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       type="text"
                       required
                       placeholder="nt Loisu tagune, Kodu põld, Suur põld..."
+                      disabled={isEditSeasonLocked}
                       value={editName}
                       onChange={(e) => setEditName(e.target.value)}
                       className="form-input"
@@ -875,6 +876,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                     <input
                       type="text"
                       placeholder="nt 4, 4-1, 1"
+                      disabled={isEditSeasonLocked}
                       value={editNum}
                       onChange={(e) => setEditNum(e.target.value)}
                       className="form-input text-right"
@@ -887,6 +889,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       type="text"
                       required
                       placeholder="nt 61144313542"
+                      disabled={isEditSeasonLocked}
                       value={editFieldCode}
                       onChange={(e) => setEditFieldCode(e.target.value)}
                       className="form-input"
@@ -899,6 +902,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   <input
                     type="text"
                     placeholder="nt Leostunud liivsavi (LP)"
+                    disabled={isEditSeasonLocked}
                     value={editSoilType}
                     onChange={(e) => setEditSoilType(e.target.value)}
                     className="form-input"
@@ -908,6 +912,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 <div className="form-group">
                   <label>Operaator</label>
                   <select
+                    disabled={isEditSeasonLocked}
                     value={editOperatorId}
                     onChange={(e) => setEditOperatorId(e.target.value)}
                     className="form-input"
@@ -1105,15 +1110,16 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
               <div className="form-sub-header" style={{ marginTop: '16px' }}>
                 <Landmark size={14} />
                 <span>3. Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
-                <button
-                  type="button"
-                  className="btn btn-ghost btn-xs add-cad-btn"
-                  disabled={isEditSeasonLocked}
-                  onClick={handleAddCadastralParcelToEdit}
-                >
-                  <Plus size={12} />
-                  <span>Lisa katastriüksus</span>
-                </button>
+                {!isEditSeasonLocked && (
+                  <button
+                    type="button"
+                    className="btn btn-ghost btn-xs add-cad-btn"
+                    onClick={handleAddCadastralParcelToEdit}
+                  >
+                    <Plus size={12} />
+                    <span>Lisa katastriüksus</span>
+                  </button>
+                )}
               </div>
 
               <div className="edit-cadastral-list">
@@ -1250,15 +1256,20 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       </div>
 
                       <div className="form-group edit-cad-action">
-                        <button
-                          type="button"
-                          className="icon-btn-danger"
-                          disabled={isEditSeasonLocked}
-                          onClick={() => handleRemoveCadastralParcelFromEdit(pIdx)}
-                          title={isEditSeasonLocked ? "Hooaeg on muudatusteks suletud" : "Eemalda see katastriüksus"}
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        {isEditSeasonLocked ? (
+                          <span className="edit-cad-locked" title="Hooaeg on muudatusteks suletud">
+                            <Lock size={14} />
+                          </span>
+                        ) : (
+                          <button
+                            type="button"
+                            className="icon-btn-danger"
+                            onClick={() => handleRemoveCadastralParcelFromEdit(pIdx)}
+                            title="Eemalda see katastriüksus"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1267,16 +1278,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
               </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setEditingFieldId(null)}>Loobu</button>
-                <button
-                  type="submit"
-                  disabled={isEditSeasonLocked}
-                  className={`btn btn-primary ${isEditSeasonLocked ? 'btn-disabled' : ''}`}
-                >
-                  Salvesta muudatused
-                </button>
-              </div>
+              {!isEditSeasonLocked && (
+                <div className="modal-footer">
+                  <button type="button" className="btn btn-ghost" onClick={() => setEditingFieldId(null)}>Loobu</button>
+                  <button type="submit" className="btn btn-primary">
+                    Salvesta muudatused
+                  </button>
+                </div>
+              )}
             </form>
             </div>,
             document.body
