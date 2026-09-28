@@ -476,7 +476,9 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                       </button>
                       <button
                         className="icon-btn-danger"
-                        onClick={() => onDeletePoi(p.id)}
+                        onClick={() => {
+                          if (confirm(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
+                        }}
                         title="Kustuta"
                       >
                         <Trash2 size={15} />

@@ -67,6 +67,8 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
 
   const handleConfirm = async () => {
     if (!built || built.payload.fields.length === 0) return;
+    const n = built.payload.fields.length;
+    if (!confirm(`Import asendab ${n} põllu hooajakirje olemasolevad põlluraamatu tegevused failis olevatega.\n\nVarasemad tegevused nendel kirjetel kustutatakse. Jätkata?`)) return;
     setIsSaving(true);
     setError(null);
     try {

@@ -133,6 +133,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
   const handleConfirmImport = () => {
     if (parsedPreview) {
+      if (replaceExisting && !confirm('Valitud on „Asenda olemasolevad põllud“: registris kuvatakse pärast importi ainult faili põllud.\n\nJätkata?')) return;
       onFieldsImported(parsedPreview, replaceExisting, operatorId || undefined, importYear);
       onClose();
     }
