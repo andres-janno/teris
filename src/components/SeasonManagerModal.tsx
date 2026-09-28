@@ -7,15 +7,40 @@ import {
   Unlock,
   Plus,
   Edit2,
-  Tractor,
-  Sprout,
-  Wheat,
   Info,
-  Check,
+  Map as MapIcon,
   CalendarDays
 } from 'lucide-react';
 import type { FarmingSeason, SeasonStatus } from '../types/season';
 import { SEASON_STATUS_META } from '../types/season';
+
+// Kuupäevad eesti vormingus (pp.kk.aaaa); sisend on ISO 'YYYY-MM-DD' (või pikem ISO aeg).
+const splitIso = (iso: string) => {
+  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
+  return m ? { y: m[1], m: m[2], d: m[3] } : null;
+};
+
+const formatDate = (iso?: string | null) => {
+  if (!iso) return '–';
+  const p = splitIso(iso);
+  return p ? `${p.d}.${p.m}.${p.y}` : iso;
+};
+
+// Sama aasta piires lühem vahemik: 01.08–30.09.2026
+const formatRange = (start?: string | null, end?: string | null) => {
+  if (!start) return '–';
+  if (!end) return `${formatDate(start)} –`;
+  const a = splitIso(start);
+  const b = splitIso(end);
+  if (a && b && a.y === b.y) return `${a.d}.${a.m}–${b.d}.${b.m}.${b.y}`;
+  return `${formatDate(start)} – ${formatDate(end)}`;
+};
+
+const formatNum = (n: number | null | undefined, digits: number) =>
+  n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
+
+const formatPerHa = (tons?: number | null, areaHa?: number | null) =>
+  tons != null && areaHa ? formatNum(tons / areaHa, 2) : '–';
 
 interface SeasonManagerModalProps {
   isOpen: boolean;
@@ -42,6 +67,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingYear, setEditingYear] = useState<number | null>(null);
+  const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
 
   // Form State
   const [formYear, setFormYear] = useState<number>(2027);
@@ -70,6 +96,13 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
   const activeCount = seasons.filter(s => s.status === 'active' || s.status === 'harvesting').length;
   const closedCount = seasons.filter(s => s.isLocked).length;
+
+  const toggleNotes = (year: number) =>
+    setExpandedYears(prev => {
+      const next = new Set(prev);
+      if (next.has(year)) next.delete(year); else next.add(year);
+      return next;
+    });
 
   const handleStartAdd = () => {
     const nextYear = Math.max(...seasons.map(s => s.year), 2026) + 1;
@@ -341,171 +374,130 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
             document.body
           )}
 
-          {/* Season Cards List */}
-          <div className="seasons-list">
-            {sortedSeasons.map((season) => {
-              const meta = SEASON_STATUS_META[season.status] || SEASON_STATUS_META.planning;
-              const isCurrent = season.year === selectedYear;
+          {/* Hooaegade tabel: üks rida hooaja kohta, et hooaegu oleks lihtne võrrelda */}
+          <div className="seasons-table-wrap">
+            <table className="seasons-table">
+              <thead>
+                <tr>
+                  <th>Hooaeg</th>
+                  <th>Olek</th>
+                  <th>Ettevalmistus</th>
+                  <th>Külv</th>
+                  <th>Koristus</th>
+                  <th className="num">Pindala, ha</th>
+                  <th className="num">Põlde</th>
+                  <th className="num">Saagiootus, t</th>
+                  <th className="num">Ootus, t/ha</th>
+                  <th className="num">Koristatud, t</th>
+                  <th className="num">Tegelik, t/ha</th>
+                  <th><span className="sr-only">Tegevused</span></th>
+                </tr>
+              </thead>
+              <tbody>
+                {sortedSeasons.map((season, i) => {
+                  const meta = SEASON_STATUS_META[season.status] || SEASON_STATUS_META.planning;
+                  const isCurrent = season.year === selectedYear;
+                  const prev = sortedSeasons[i + 1];
+                  const delta = season.targetYieldTons != null && prev?.targetYieldTons != null
+                    ? season.targetYieldTons - prev.targetYieldTons
+                    : null;
+                  const notesOpen = expandedYears.has(season.year);
 
-              return (
-                <div
-                  key={season.year}
-                  className={`season-card glass-card ${isCurrent ? 'selected-season-card' : ''} ${season.isLocked ? 'locked-season-card' : ''}`}
-                >
-                  <div className="season-card-header">
-                    <div className="season-card-title-area">
-                      <span className="season-year-badge">{season.year}</span>
-                      <h4 className="season-name">{season.name}</h4>
-                      {isCurrent && (
-                        <span className="active-view-tag">
-                          <Check size={12} /> Aktiivne vaade
-                        </span>
-                      )}
-                      <span
-                        className="season-status-badge"
-                        style={{ color: meta.color, backgroundColor: meta.bg, borderColor: meta.color }}
-                        title={meta.description}
-                      >
-                        <span>{meta.icon}</span>
-                        <span>{meta.label}</span>
-                      </span>
-                    </div>
-
-                    <div className="season-card-top-actions">
-                      {!isCurrent && (
-                        <button
-                          className="btn btn-secondary btn-xs"
-                          onClick={() => {
-                            onSelectYear(season.year);
-                            onClose();
-                          }}
-                          title={`Vali ${season.year}. aasta aktiivseks kaardil`}
-                        >
-                          <span>Vali kaardile</span>
-                        </button>
-                      )}
-                      <button
-                        className="btn btn-ghost btn-xs"
-                        onClick={() => handleStartEdit(season)}
-                        title="Muuda hooaja parameetreid"
-                      >
-                        <Edit2 size={13} />
-                        <span>Muuda</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Lifecycle Stages Timeline */}
-                  <div className="season-timeline-row">
-                    <div className="timeline-stage" title="Põldude ettevalmistuse algus">
-                      <div className="stage-icon prep"><Tractor size={13} /></div>
-                      <div className="stage-info">
-                        <span className="stage-name">Ettevalmistus</span>
-                        <span className="stage-date">{season.preparationStartDate || 'Määramata'}</span>
-                      </div>
-                    </div>
-
-                    <div className="timeline-arrow">&rarr;</div>
-
-                    <div className="timeline-stage" title="Külvide algus">
-                      <div className="stage-icon seed"><Sprout size={13} /></div>
-                      <div className="stage-info">
-                        <span className="stage-name">Külvamine</span>
-                        <span className="stage-date">{season.seedingStartDate || 'Määramata'}</span>
-                      </div>
-                    </div>
-
-                    <div className="timeline-arrow">&rarr;</div>
-
-                    <div className="timeline-stage" title="Koristuse periood">
-                      <div className="stage-icon harvest"><Wheat size={13} /></div>
-                      <div className="stage-info">
-                        <span className="stage-name">Koristus</span>
-                        <span className="stage-date">
-                          {season.harvestStartDate ? `${season.harvestStartDate} - ${season.harvestEndDate || ''}` : 'Määramata'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Metrics & Notes */}
-                  <div className="season-card-meta-row">
-                    <div className="season-metrics">
-                      {season.totalAreaHa && (
-                        <span className="metric-tag"><strong>Pindala:</strong> {season.totalAreaHa.toFixed(1)} ha</span>
-                      )}
-                      {season.fieldsCount && (
-                        <span className="metric-tag"><strong>Põlde:</strong> {season.fieldsCount} tk</span>
-                      )}
-                      {season.targetYieldTons && (
-                        <span className="metric-tag"><strong>Saagiootus:</strong> {season.targetYieldTons} t</span>
-                      )}
-                      {season.actualYieldTons && (
-                        <span className="metric-tag success"><strong>Koristatud:</strong> {season.actualYieldTons} t</span>
-                      )}
-                    </div>
-
-                    {season.notes && (
-                      <div className="season-notes-box">
-                        <Info size={13} className="text-slate-400" />
-                        <span>{season.notes}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Lock / Close Season Action Area */}
-                  <div className="season-lock-footer">
-                    {season.isLocked ? (
-                      <div className="locked-info-bar">
-                        <div className="locked-msg">
-                          <Lock size={14} className="text-slate-400" />
-                          <span>
-                            <strong>Hooaeg on muudatusteks suletud.</strong>
-                            {season.closedAt && ` Koristus lõpetatud ja arhiveeritud ${season.closedAt}${season.closedBy ? ` (${season.closedBy})` : ''}.`}
-                          </span>
+                  return (
+                    <tr
+                      key={season.year}
+                      className={`${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''} ${season.notes ? 'has-notes' : ''}`}
+                      onClick={() => season.notes && toggleNotes(season.year)}
+                      title={season.notes && !notesOpen ? 'Klõpsa märkuse nägemiseks' : undefined}
+                    >
+                      <td className="season-cell">
+                        <div className="season-cell-head">
+                          <span className="season-year">{season.year}</span>
+                          {isCurrent && <span className="season-current-tag">Kaardil</span>}
+                          {season.notes && <Info size={13} className="season-notes-icon" />}
                         </div>
-                        <button
-                          className="btn btn-ghost btn-xs btn-reopen"
-                          onClick={() => onReopenSeason(season.year)}
-                          title="Vajadusel ava hooaeg parandusteks"
+                        {season.name !== `Hooaeg ${season.year}` && (
+                          <div className="season-cell-name">{season.name}</div>
+                        )}
+                        {notesOpen && season.notes && <div className="season-cell-notes">{season.notes}</div>}
+                      </td>
+                      <td>
+                        <span
+                          className="season-status-badge"
+                          style={{ color: meta.color, backgroundColor: meta.bg }}
+                          title={meta.description}
                         >
-                          <Unlock size={12} />
-                          <span>Ava muudatusteks</span>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="active-season-control-bar">
-                        <span className="unlocked-msg">
-                          <Unlock size={13} className="text-emerald" />
-                          <span>Hooaeg on avatud ja andmed on muudetavad.</span>
+                          {meta.label}
                         </span>
-                        <div className="season-action-buttons">
-                          {season.status !== 'harvesting' && (
-                            <button
-                              className="btn btn-secondary btn-xs"
-                              onClick={() => onUpdateSeason({ ...season, status: 'harvesting' })}
-                              title="Märgi hooaeg koristusetappi"
-                            >
-                              <Wheat size={12} />
-                              <span>Alusta koristust</span>
-                            </button>
-                          )}
+                      </td>
+                      <td className="mono">{formatDate(season.preparationStartDate)}</td>
+                      <td className="mono">{formatDate(season.seedingStartDate)}</td>
+                      <td className="mono">{formatRange(season.harvestStartDate, season.harvestEndDate)}</td>
+                      <td className="num mono">{formatNum(season.totalAreaHa, 1)}</td>
+                      <td className="num mono">{formatNum(season.fieldsCount, 0)}</td>
+                      <td className="num mono">
+                        {formatNum(season.targetYieldTons, 0)}
+                        {delta != null && (
+                          <div className={`season-delta ${delta < 0 ? 'down' : 'up'}`}>
+                            Δ {delta < 0 ? '−' : '+'}{formatNum(Math.abs(delta), 0)}
+                          </div>
+                        )}
+                      </td>
+                      <td className="num mono muted">{formatPerHa(season.targetYieldTons, season.totalAreaHa)}</td>
+                      <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
+                        {formatNum(season.actualYieldTons, 0)}
+                      </td>
+                      <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
+                        {formatPerHa(season.actualYieldTons, season.totalAreaHa)}
+                      </td>
+                      <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
+                        {!isCurrent && (
                           <button
-                            className="btn btn-danger-outline btn-xs"
+                            type="button"
+                            className="icon-btn-ghost"
+                            onClick={() => { onSelectYear(season.year); onClose(); }}
+                            title={`Vali ${season.year}. aasta aktiivseks kaardil`}
+                          >
+                            <MapIcon size={15} />
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="icon-btn-ghost"
+                          onClick={() => handleStartEdit(season)}
+                          title="Muuda hooaja parameetreid"
+                        >
+                          <Edit2 size={15} />
+                        </button>
+                        {season.isLocked ? (
+                          <button
+                            type="button"
+                            className="icon-btn-ghost"
+                            onClick={() => onReopenSeason(season.year)}
+                            title={`Ava muudatusteks${season.closedAt ? ` (suletud ${formatDate(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''}`}
+                          >
+                            <Unlock size={15} />
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="icon-btn-danger"
                             onClick={() => onCloseSeason(season.year)}
                             title="Lõpeta koristus ja sulge hooaeg muudatusteks"
                           >
-                            <Lock size={12} />
-                            <span>Sulge hooaeg (Lukusta)</span>
+                            <Lock size={15} />
                           </button>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+          <p className="seasons-table-hint">
+            Märkusega real (<Info size={11} />) näitab klõps märkust. Δ = saagiootuse muutus eelmise hooajaga võrreldes. Suletud hooaega saab muuta pärast avamist.
+          </p>
         </div>
       </div>
     </div>
