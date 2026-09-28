@@ -3460,12 +3460,12 @@ input[type="number"],
   vertical-align: middle;
 }
 
-/* Tegevused vasakule joondatud */
-.parties-table .actions-col {
+/* Tegevused vasakule joondatud (kõrgem spetsiifilisus kui hilisemal .register-table .row-actions reeglil) */
+.register-table.parties-table .actions-col {
   text-align: left;
 }
 
-.parties-table .row-actions {
+.register-table.parties-table .row-actions {
   justify-content: flex-start;
 }
 
