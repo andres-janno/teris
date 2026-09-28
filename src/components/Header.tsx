@@ -142,7 +142,7 @@ export const Header: React.FC<HeaderProps> = ({
         <div className="stat-pill clickable" onClick={onOpenPoi} title="Olulised asukohad">
           <MapPin size={16} className="stat-icon poi-icon" />
           <div>
-            <div className="stat-label">Taristu / POI</div>
+            <div className="stat-label">Taristu</div>
             <div className="stat-value">{poiCount} <span className="unit">punkti</span></div>
           </div>
         </div>

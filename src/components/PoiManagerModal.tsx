@@ -49,10 +49,10 @@ interface PoiManagerModalProps {
 
 const CATEGORY_META: Record<PoiCategory, { label: string; emoji: string }> = {
   dryer: { label: 'Kuivati / Viljahoidla', emoji: '🌾' },
-  water_point: { label: 'Veepunkt / Täitmiskoht', emoji: '💧' },
-  workshop: { label: 'Töökoda / Remondiboks', emoji: '🔧' },
-  fuel_station: { label: 'Kütusetankla / Mahuti', emoji: '⛽' },
-  warehouse: { label: 'Väetise- ja Kemikaaliladu', emoji: '📦' },
+  water_point: { label: 'Veepunkt', emoji: '💧' },
+  workshop: { label: 'Töökoda', emoji: '🔧' },
+  fuel_station: { label: 'Tankla', emoji: '⛽' },
+  warehouse: { label: 'Väetis', emoji: '📦' },
   scale: { label: 'Autokaal', emoji: '⚖️' },
   other: { label: 'Muu taristupunkt', emoji: '📍' }
 };
@@ -215,7 +215,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           <div className="modal-title-group">
             <MapPin className="text-emerald" size={24} />
             <div>
-              <h3>Olulised Asukohad ja Taristu (POI)</h3>
+              <h3>Olulised asukohad ja taristu</h3>
               <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
             </div>
           </div>
