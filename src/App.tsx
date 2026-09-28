@@ -746,7 +746,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setPoiDraft(null);
     setVisibility((prev) => ({ ...prev, poi: true }));
     setFocusedTarget({ coords: newPoi.position, zoom: 15 });
-    api.savePoi(newPoi).catch((err) => console.error('Error saving POI to DB:', err));
+    api.savePoi(newPoi).catch((err) => {
+      console.error('Error saving POI to DB:', err);
+      alert(`Asukoha "${newPoi.name}" salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.`);
+    });
   };
 
   const handleUpdatePoi = (id: string, updatedData: Partial<PointOfInterest>) => {
@@ -760,7 +763,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (updatedData.position) {
       setFocusedTarget({ coords: updatedData.position as [number, number], zoom: 15 });
     }
-    api.savePoi({ id, ...updatedData }).catch((err) => console.error('Error updating POI in DB:', err));
+    api.savePoi({ id, ...updatedData }).catch((err) => {
+      console.error('Error updating POI in DB:', err);
+      alert('Asukoha muudatuste salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.');
+    });
   };
 
   const handleDeletePoi = (id: string) => {

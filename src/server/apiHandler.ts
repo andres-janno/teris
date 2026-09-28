@@ -474,6 +474,20 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     }
 
     // 4. Points of Interest (POI)
+    // Rakenduse kategooria ↔ andmebaasi enum (nimed erinevad; puuduv vaste → OTHER / 'other').
+    const POI_CATEGORY_TO_DB: Record<string, string> = {
+      dryer: 'DRYER',
+      water_point: 'WATER_SOURCE',
+      workshop: 'WORKSHOP',
+      fuel_station: 'FUEL_STATION',
+      warehouse: 'STORAGE',
+      scale: 'SCALE',
+      other: 'OTHER'
+    };
+    const POI_CATEGORY_FROM_DB: Record<string, string> = Object.fromEntries(
+      Object.entries(POI_CATEGORY_TO_DB).map(([app, db]) => [db, app])
+    );
+
     if (pathname === '/api/poi' && method === 'GET') {
       const dbPois = await prisma.pointOfInterest.findMany({
         orderBy: { name: 'asc' }
@@ -481,7 +495,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       const mapped = dbPois.map((p) => ({
         id: p.id,
         name: p.name,
-        category: p.category.toLowerCase(),
+        category: POI_CATEGORY_FROM_DB[p.category] ?? 'other',
         position: [p.latitude, p.longitude],
         description: p.description ?? undefined,
         capacity: p.capacity ?? undefined,
@@ -494,7 +508,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname === '/api/poi' && method === 'POST') {
       const body = await parseBody(req);
-      const categoryUpper = (body.category || 'other').toUpperCase();
+      const categoryUpper = POI_CATEGORY_TO_DB[body.category] ?? 'OTHER';
       const lat = Array.isArray(body.position) ? body.position[0] : body.latitude;
       const lng = Array.isArray(body.position) ? body.position[1] : body.longitude;
 

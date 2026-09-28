@@ -34,6 +34,7 @@ enum PoiCategory {
   FUEL_STATION
   FIELD_ENTRANCE
   STORAGE
+  SCALE
   OTHER
 }
 
