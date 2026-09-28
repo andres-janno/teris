@@ -4060,27 +4060,28 @@ input[type="number"],
   padding-right: 2px;
 }
 
+/* Sama stiil nagu põldude registris: kultuuri värvi hele toon + vasakul värviriba */
 .crop-legend-item {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 5px 8px;
+  padding: 5px 8px 5px 11px;
   border-radius: 6px;
-  background: var(--stat-bg);
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
+  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
   border: 1px solid transparent;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .crop-legend-item:hover {
-  background: var(--stat-bg-hover);
-  border-color: var(--border-card);
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
   transform: translateX(2px);
 }
 
 .crop-legend-item.selected {
-  border-color: var(--emerald-500);
-  background: rgba(16, 185, 129, 0.15);
+  border-color: #16a34a;
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
 }
 
 .crop-left-info {
@@ -4088,15 +4089,6 @@ input[type="number"],
   align-items: center;
   gap: 8px;
   min-width: 0;
-}
-
-.crop-legend-color-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  flex-shrink: 0;
-  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
-  border: 1.5px solid rgba(255, 255, 255, 0.6);
 }
 
 .crop-text-block {

@@ -162,6 +162,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                   <div
                     key={item.name}
                     className={`crop-legend-item ${isSelected ? 'selected' : ''}`}
+                    style={{ '--crop-color': item.color } as React.CSSProperties}
                     onClick={() => {
                       if (onSelectCropFilter) {
                         onSelectCropFilter(isSelected ? null : item.name);
@@ -170,10 +171,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     title={onSelectCropFilter ? `Klõpsa, et filtreerida ${item.name} põlde kaardil` : undefined}
                   >
                     <div className="crop-left-info">
-                      <span
-                        className="crop-legend-color-dot"
-                        style={{ backgroundColor: item.color }}
-                      />
                       <div className="crop-text-block">
                         <span className="crop-name-label">{item.name}</span>
                         <span className="crop-field-count">{item.count} tk &bull; {item.pct}%</span>
