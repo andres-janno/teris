@@ -646,9 +646,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           <div className="modal-title-group">
             <Layers className="text-emerald" size={24} />
             <div>
-              <h3>Põldude ja Maakasutuse Register</h3>
+              <h3>Põldude register</h3>
               <p className="modal-subtitle">
-                Aastatepõhine külvikord, pindalade muutused ja PRIA massiivid ({masterFields.length} põldu)
+                Aastatepõhine külvikord, PRIA pindalade muutused.
               </p>
             </div>
           </div>
