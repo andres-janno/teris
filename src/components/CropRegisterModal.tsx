@@ -15,6 +15,7 @@ import {
 import type { Crop, CropVariety, CropGroup } from '../types/crop';
 import { CROP_GROUP_CONFIG } from '../types/crop';
 import type { MasterField } from '../types/fieldRegister';
+import { pickCropColor } from '../services/cropColors';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -54,6 +55,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editCropYield, setEditCropYield] = useState<number | ''>('');
   const [editCropDescription, setEditCropDescription] = useState('');
   const [editCropIsWinter, setEditCropIsWinter] = useState(false);
+  // Uuele kultuurile värv automaatselt (talivili külm, suvivili soe toon); kasutaja võib üle kirjutada.
+  const [editCropAutoColor, setEditCropAutoColor] = useState(false);
 
   // Variety Editing State
   const [isEditingVariety, setIsEditingVariety] = useState(false);
@@ -139,7 +142,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropName('');
     setEditCropScientific('');
     setEditCropGroup('CEREAL');
-    setEditCropColor('#eab308');
+    setEditCropColor(pickCropColor(false, crops.map((c) => c.color)));
+    setEditCropAutoColor(true);
     setEditCropIcon('🌾');
     setEditCropPriaCode('');
     setEditCropSeedRate('');
@@ -156,6 +160,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropScientific(crop.scientificName || '');
     setEditCropGroup(crop.group);
     setEditCropColor(crop.color);
+    setEditCropAutoColor(false);
     setEditCropIcon(crop.icon || '🌾');
     setEditCropPriaCode(crop.priaCode || '');
     setEditCropSeedRate(crop.defaultSeedRateKgHa ?? '');
@@ -442,7 +447,14 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                 <div className="form-group">
                   <label className="crop-winter-toggle">
-                    <input type="checkbox" checked={editCropIsWinter} onChange={(e) => setEditCropIsWinter(e.target.checked)} />
+                    <input
+                      type="checkbox"
+                      checked={editCropIsWinter}
+                      onChange={(e) => {
+                        setEditCropIsWinter(e.target.checked);
+                        if (editCropAutoColor) setEditCropColor(pickCropColor(e.target.checked, crops.map((c) => c.color)));
+                      }}
+                    />
                     <span>Talivili (külvatakse sügisel)</span>
                   </label>
                 </div>
@@ -453,7 +465,10 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     <input
                       type="color"
                       value={editCropColor}
-                      onChange={(e) => setEditCropColor(e.target.value)}
+                      onChange={(e) => {
+                        setEditCropColor(e.target.value);
+                        setEditCropAutoColor(false);
+                      }}
                       className="form-input"
                       style={{ padding: '2px', height: '36px', width: '50px' }}
                       title="Kultuuri värv kaardil"
@@ -475,6 +490,19 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                       className="form-input"
                     />
                   </div>
+                  {editCropId === null && (
+                    <label className="crop-winter-toggle crop-auto-color-toggle" title="Talivili saab külma, suvivili sooja tooni, mida ükski kultuur veel ei kasuta">
+                      <input
+                        type="checkbox"
+                        checked={editCropAutoColor}
+                        onChange={(e) => {
+                          setEditCropAutoColor(e.target.checked);
+                          if (e.target.checked) setEditCropColor(pickCropColor(editCropIsWinter, crops.map((c) => c.color)));
+                        }}
+                      />
+                      <span>Genereeri värv automaatselt (talivili külm, suvivili soe toon)</span>
+                    </label>
+                  )}
                 </div>
 
                 <div className="form-group">

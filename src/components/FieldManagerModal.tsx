@@ -275,7 +275,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       return { kind, label, title, rows, totalHa: rows.reduce((sum, r) => sum + r.areaHa, 0) };
     };
     return [
-      group('winter', `❄️ Sügiskülv ${selectedYear - 1} (talivili)`, 'Talivili külvatakse hooajale eelneval sügisel'),
+      group('winter', `❄️ Sügiskülv ${selectedYear - 1}`, 'Talivili külvatakse hooajale eelneval sügisel'),
       group('spring', `☀️ Kevadkülv ${selectedYear}`, 'Suvivili ja muud kultuurid — külv/tööd hooaja kevadel'),
       group('unknown', '❔ Kultuuriregistrist puudu', 'Kultuuri ei leitud registrist — talivilja tunnus teadmata')
     ].filter((g) => g.rows.length > 0);

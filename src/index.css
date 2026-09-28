@@ -3820,6 +3820,12 @@ input[type="number"],
   font-size: 0.85rem;
 }
 
+.crop-auto-color-toggle {
+  margin-top: 6px;
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
 .sub-tag.winter-tag {
   color: #0369a1;
   border-color: rgba(3, 105, 161, 0.35);
