@@ -117,7 +117,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   });
 
+  // Asukoha valimisel kaardilt on näha ainult olulised asukohad; eelmine kihtide valik
+  // hoitakse siin ja taastatakse, kui valik on tehtud või katkestatud.
+  const visibilityBeforePickRef = useRef<LayerVisibility | null>(null);
+
   useEffect(() => {
+    if (visibilityBeforePickRef.current) return; // ajutist valikut ei salvestata
     localStorage.setItem('agrimap_visibility', JSON.stringify(visibility));
   }, [visibility]);
 
@@ -763,8 +768,44 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   }) => {
     setPoiDraft(currentDraft);
     setIsPoiModalOpen(false);
+    if (!visibilityBeforePickRef.current) {
+      visibilityBeforePickRef.current = visibility;
+      setVisibility((prev) => ({
+        ...prev,
+        cadastre: false,
+        fields: false,
+        vehicles: false,
+        cultivation: false,
+        fieldLabels: false,
+        swathTrails: false,
+        soilSamples: false,
+        poi: true
+      }));
+    }
     setIsAddPoiMode(true);
   };
+
+  // Asukoha valimise lõpp (tehtud või katkestatud): taasta teemakihid, aluskaart jääb praeguseks.
+  useEffect(() => {
+    if (isAddPoiMode || !visibilityBeforePickRef.current) return;
+    const saved = visibilityBeforePickRef.current;
+    visibilityBeforePickRef.current = null;
+    setVisibility((prev) => ({ ...saved, baseMap: prev.baseMap }));
+  }, [isAddPoiMode]);
+
+  const handleCancelPickLocation = () => {
+    setIsAddPoiMode(false);
+    if (poiDraft) setIsPoiModalOpen(true);
+  };
+
+  useEffect(() => {
+    if (!isAddPoiMode) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') handleCancelPickLocation();
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => document.removeEventListener('keydown', onKeyDown);
+  });
 
   const handleMapClickAddPoi = (coords: [number, number]) => {
     if (poiDraft) {
@@ -1085,8 +1126,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenVehicles={() => setIsVehiclesOpen(true)}
         onOpenPoi={() => setIsPoiModalOpen(true)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
-        isAddPoiMode={isAddPoiMode}
-        onToggleAddPoiMode={() => setIsAddPoiMode(!isAddPoiMode)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         dbConnected={dbConnected}
@@ -1117,6 +1156,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onSelectPoi={setSelectedPoi}
           isAddPoiMode={isAddPoiMode}
           onMapClickAddPoi={handleMapClickAddPoi}
+          onCancelAddPoi={handleCancelPickLocation}
           focusedTarget={focusedTarget}
           fitBoundsTrigger={fitBoundsTrigger}
           selectedCropFilter={selectedCropFilter}

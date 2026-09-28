@@ -30,6 +30,7 @@ interface MapViewProps {
   onSelectPoi: (poi: PointOfInterest | null) => void;
   isAddPoiMode: boolean;
   onMapClickAddPoi: (coords: [number, number]) => void;
+  onCancelAddPoi: () => void;
   focusedTarget: {
     coords: [number, number];
     bounds?: [[number, number], [number, number]];
@@ -54,6 +55,7 @@ export const MapView: React.FC<MapViewProps> = ({
   onSelectPoi,
   isAddPoiMode,
   onMapClickAddPoi,
+  onCancelAddPoi,
   focusedTarget,
   fitBoundsTrigger,
   selectedCropFilter,
@@ -575,7 +577,10 @@ export const MapView: React.FC<MapViewProps> = ({
       {/* Add POI Banner */}
       {isAddPoiMode && (
         <div className="add-poi-banner glass-card animate-pulse">
-          <span>📍 Klõpsa kaardile, et määrata uue kuivati, veepunkti või töökoja asukoht!</span>
+          <span>📍 Klõpsa kaardile, et määrata asukoht. Kaardil on ajutiselt ainult olulised asukohad.</span>
+          <button type="button" className="btn btn-secondary btn-xs" onClick={onCancelAddPoi} title="Katkesta (Esc)">
+            Katkesta
+          </button>
         </div>
       )}
     </div>

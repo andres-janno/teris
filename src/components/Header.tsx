@@ -37,8 +37,6 @@ interface HeaderProps {
   onOpenVehicles: () => void;
   onOpenPoi: () => void;
   onOpenAnalytics: () => void;
-  isAddPoiMode: boolean;
-  onToggleAddPoiMode: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   dbConnected?: boolean;
@@ -69,8 +67,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenVehicles,
   onOpenPoi,
   onOpenAnalytics,
-  isAddPoiMode,
-  onToggleAddPoiMode,
   theme,
   onToggleTheme,
   dbConnected = false,
@@ -184,15 +180,6 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions">
-        <button
-          className={`btn btn-secondary ${isAddPoiMode ? 'btn-active-poi' : ''}`}
-          onClick={onToggleAddPoiMode}
-          title="Klõpsa kaardile, et lisada kuivati, veepunkt või töökoda"
-        >
-          <MapPin size={16} />
-          <span>{isAddPoiMode ? 'Lõpeta lisamine' : 'Lisa marker (POI)'}</span>
-        </button>
-
         <button
           className="btn btn-secondary"
           onClick={onOpenAnalytics}

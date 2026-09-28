@@ -447,19 +447,6 @@ body {
   background: var(--btn-sec-bg);
 }
 
-.btn-active-poi {
-  background: #0f172a !important;
-  color: #ffffff !important;
-  border-color: #2563eb !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
-}
-
-:root[data-theme="dark"] .btn-active-poi {
-  background: #1e293b !important;
-  border-color: #38bdf8 !important;
-  color: #ffffff !important;
-}
-
 .btn-sm {
   padding: 6px 12px;
   font-size: 0.78rem;
@@ -631,6 +618,9 @@ body {
   font-size: 0.88rem;
   border: 1px solid rgba(219, 39, 119, 0.4);
   background: var(--bg-card);
+  display: flex;
+  align-items: center;
+  gap: 14px;
 }
 
 /* Layer Control Panel */
