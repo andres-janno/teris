@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
+import { isCropUndetermined } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -257,16 +258,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   // Grupeeritud kultuuride registri talivilja tunnuse järgi: sügiskülv (eelmine sügis) / kevadkülv.
   const cropGroups = useMemo(() => {
     type Row = { crop: string; color: string; areaHa: number; count: number };
-    type Kind = 'winter' | 'spring' | 'unknown';
-    const byKind: Record<Kind, Map<string, Row>> = { winter: new Map(), spring: new Map(), unknown: new Map() };
+    type Kind = 'winter' | 'spring' | 'unknown' | 'undetermined';
+    const byKind: Record<Kind, Map<string, Row>> = { winter: new Map(), spring: new Map(), unknown: new Map(), undetermined: new Map() };
     fieldsForSelectedYear.forEach((f) => {
       const rec = f.history.find((h) => h.year === selectedYear);
       if (!rec) return;
-      const crop = (rec.crop || 'Määramata').split('(')[0].trim() || 'Määramata';
-      const registryCrop = findRegistryCrop(rec.crop || '');
-      const kind: Kind = !registryCrop ? 'unknown' : registryCrop.isWinterCrop ? 'winter' : 'spring';
+      const undetermined = isCropUndetermined(rec.crop);
+      const crop = undetermined ? 'Määramata' : rec.crop.split('(')[0].trim() || 'Määramata';
+      const registryCrop = undetermined ? undefined : findRegistryCrop(rec.crop);
+      const kind: Kind = undetermined ? 'undetermined' : !registryCrop ? 'unknown' : registryCrop.isWinterCrop ? 'winter' : 'spring';
       const map = byKind[kind];
-      const entry = map.get(crop) ?? { crop, color: rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
+      const entry = map.get(crop) ?? { crop, color: undetermined ? '#94a3b8' : rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
       entry.areaHa += rec.areaHa || 0;
       entry.count += 1;
       map.set(crop, entry);
@@ -278,7 +280,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     return [
       group('winter', `❄️ Sügiskülv ${selectedYear - 1}`, 'Talivili külvatakse hooajale eelneval sügisel'),
       group('spring', `☀️ Kevadkülv ${selectedYear}`, 'Suvivili ja muud kultuurid — külv/tööd hooaja kevadel'),
-      group('unknown', '❔ Kultuuriregistrist puudu', 'Kultuuri ei leitud registrist — talivilja tunnus teadmata')
+      group('unknown', '❔ Kultuuriregistrist puudu', 'Kultuuri ei leitud registrist — talivilja tunnus teadmata'),
+      group('undetermined', '⬜ Kultuur määramata', 'Põllud, millele selle hooaja kultuuri pole veel valitud')
     ].filter((g) => g.rows.length > 0);
   }, [fieldsForSelectedYear, selectedYear, crops]);
 
@@ -550,8 +553,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     if (!cropEdit) return;
     const field = masterFields.find((f) => f.id === cropEdit.fieldId);
     if (!field) return setCropEdit(null);
-    if (!cropEdit.crop) return alert('Vali kultuur');
     const rec = field.history.find((h) => h.year === cropEdit.year);
+    // Tühi valik: kultuur eemaldatakse, aasta kirje (pindala, piirid, katastrid) jääb alles.
+    if (!cropEdit.crop) {
+      if (rec && !isCropUndetermined(rec.crop)) {
+        onUpdateField(field.id, {}, { ...rec, crop: '', cropVariety: undefined, cropColor: '#94a3b8' });
+      }
+      return setCropEdit(null);
+    }
     const cropColor = findRegistryCrop(cropEdit.crop)?.color || rec?.cropColor || '#22c55e';
 
     if (rec) {
@@ -1344,6 +1353,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       </td>
                       {tableYears.map((yr) => {
                         const rec = field.history.find((h) => h.year === yr);
+                        const hasCrop = !!rec && !isCropUndetermined(rec.crop);
                         const blockReason = cropEditBlockReason(field, rec, yr);
                         const editable = !blockReason;
                         const isEditing = cropEdit !== null && cropEdit.fieldId === field.id && cropEdit.year === yr;
@@ -1360,7 +1370,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                                   autoFocus
                                   onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
                                 >
-                                  {!cropEdit.crop && <option value="">Vali kultuur</option>}
+                                  <option value="">– Kultuur määramata –</option>
                                   {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
                                     <option value={cropEdit.crop}>{cropEdit.crop}</option>
                                   )}
@@ -1394,15 +1404,17 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         return (
                           <td
                             key={yr}
-                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${rec ? 'has-crop' : ''}`}
-                            style={rec ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
-                            title={editable ? (rec ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
+                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${hasCrop ? 'has-crop' : ''}`}
+                            style={hasCrop ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
+                            title={editable ? (hasCrop ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
                             onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
                           >
                             {rec ? (
                               <>
                                 <div className="year-crop">
-                                  <span className="year-crop-name" title={rec.crop}>{rec.crop}</span>
+                                  {hasCrop
+                                    ? <span className="year-crop-name" title={rec.crop}>{rec.crop}</span>
+                                    : <span className="muted">–</span>}
                                   {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                                   <button
                                     type="button"

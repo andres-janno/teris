@@ -67,7 +67,8 @@ export const SEASON_PHASE_META: Record<SeasonPhase, { label: string; color: stri
 
 export const isCropUndetermined = (crop?: string | null): boolean => {
   const c = (crop ?? '').trim().toLowerCase();
-  return c === '' || c === 'määramata';
+  // 'teadmata kultuur' = server salvestab tühja kultuuri sellisena
+  return c === '' || c === 'määramata' || c === 'teadmata kultuur';
 };
 
 /** Hooaja olek selle aasta põllukirjete kultuuride järgi. */

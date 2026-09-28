@@ -7,7 +7,7 @@ describe('deriveSeasonPhase', () => {
   });
   it('põlde või kultuure pole → avamata', () => {
     expect(deriveSeasonPhase(false, [])).toBe('unopened');
-    expect(deriveSeasonPhase(false, ['', 'Määramata', null])).toBe('unopened');
+    expect(deriveSeasonPhase(false, ['', 'Määramata', null, 'Teadmata kultuur'])).toBe('unopened');
   });
   it('osal põldudel kultuur määramata → planeerimisel', () => {
     expect(deriveSeasonPhase(false, ['Talinisu', 'Määramata'])).toBe('planning');
