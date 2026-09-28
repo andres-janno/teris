@@ -169,8 +169,24 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
   // päisestatistikas, põldude ja kultuuride registris ainult nende
-  // operaatoritega põlde. Tühi = kõik.
-  const [operatorFilter, setOperatorFilter] = useState<string[]>([]);
+  // operaatoritega põlde. Tühi = kõik. Viimane valik jäetakse meelde kasutaja kaupa (selles brauseris).
+  const operatorFilterKey = `agrimap_operator_filter_${user.id}`;
+  const [operatorFilter, setOperatorFilter] = useState<string[]>(() => {
+    try {
+      const saved = JSON.parse(localStorage.getItem(operatorFilterKey) || '[]');
+      return Array.isArray(saved) ? saved.filter((id): id is string => typeof id === 'string') : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(operatorFilterKey, JSON.stringify(operatorFilter));
+    } catch {
+      // brauseri salvestus pole saadaval — valik kehtib ainult selle seansi ajal
+    }
+  }, [operatorFilterKey, operatorFilter]);
 
   const operatorMasterFields = React.useMemo(
     () =>
@@ -290,6 +306,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // 6. Seotud isikute register (maaomanikud, rentnikud, masinajuhid, partnerid)
   const [parties, setParties] = useState<RelatedParty[]>([]);
+
+  // Meeldejäetud valikust eemaldatakse operaatorid, keda registris enam pole.
+  useEffect(() => {
+    if (parties.length === 0) return;
+    setOperatorFilter((prev) => {
+      const next = prev.filter((id) => parties.some((p) => p.id === id));
+      return next.length === prev.length ? prev : next;
+    });
+  }, [parties]);
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isUsersAdminOpen, setIsUsersAdminOpen] = useState(false);
