@@ -117,16 +117,19 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     } else if (mode.kind === 'reset') void run(() => api.resetUserPassword(mode.user.id, password));
   };
 
-  const sendLink = (u: AdminUser) =>
+  const sendLink = (u: AdminUser) => {
+    const kind = u.hasPassword ? 'parooli määramise lingi' : 'kutse';
+    if (!confirm(`Saata kasutajale "${u.username}" ${kind} aadressile ${u.email}?\n\nVarem saadetud lingid kaotavad kehtivuse.`)) return;
     void run(async () => {
       const { emailSent } = await api.sendUserLink(u.id);
       return emailSent ? `Parooli link saadeti aadressile ${u.email}.` : 'E-kirja saatmine ebaõnnestus. Proovi hiljem uuesti.';
     });
+  };
 
   const toggleActive = (u: AdminUser) => void run(() => api.updateUser(u.id, { isActive: !u.isActive }));
 
   const remove = (u: AdminUser) => {
-    if (confirm(`Kustutada kasutaja "${u.username}" jäädavalt?`)) void run(() => api.deleteUser(u.id));
+    if (confirm(`Kustutada kasutaja "${u.username}"${u.displayName ? ` (${u.displayName})` : ''} jäädavalt?\n\nKasutaja sessioonid ja saadetud lingid kaovad. Seda ei saa tagasi võtta.`)) void run(() => api.deleteUser(u.id));
   };
 
   const formTitle =
