@@ -11,7 +11,6 @@ import {
   Building2,
   Phone,
   Mail,
-  MapPin,
   CreditCard,
   Copy,
   Check,
@@ -531,223 +530,189 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             </div>
           </div>
 
-          {/* Parties List (Identical horizontal card format to FieldManagerModal) */}
-          <div className="register-fields-list">
-            {filteredParties.map((party, idx) => {
-              const isCompany = party.type === 'LEGAL_ENTITY';
+          {/* Seotud isikute tabel (sama stiil nagu põldude registris) */}
+          <div className="register-table-wrap parties-table-wrap">
+            <table className="register-table parties-table">
+              <thead>
+                <tr>
+                  <th>Nimi</th>
+                  <th>Rollid</th>
+                  <th className="num">Seotud maa</th>
+                  <th>Masinad</th>
+                  <th>Telefon</th>
+                  <th>E-post</th>
+                  <th>Aadress</th>
+                  <th>IBAN</th>
+                  <th className="actions-col">Tegevused</th>
+                </tr>
+              </thead>
+              <tbody>
+                {filteredParties.map((party) => {
+                  const isCompany = party.type === 'LEGAL_ENTITY';
+                  const parcelsTitle = party.linkedParcels?.length
+                    ? party.linkedParcels.map((p) => `${p.fieldName}: ${p.cadastralCode} (${p.fieldAreaHa} ha)`).join('\n')
+                    : undefined;
 
-              return (
-                <div
-                  key={party.id}
-                  className="master-field-card glass-card"
-                >
-                  <div className="field-card-main-row">
-                    {/* Left: Info Column */}
-                    <div className="field-info-col">
-                      <div className="field-title-line">
-                        <span className="field-id-badge">#{idx + 1}</span>
-                        <h4 className="field-name">{party.name}</h4>
-                        <span className="field-num-badge">
-                          {isCompany ? '🏢 Ettevõte' : '👤 Eraisik'}
-                        </span>
-                        {party.code && (
-                          <span className="field-code-badge">
-                            {isCompany ? `Reg: ${party.code}` : `IK: ${party.code}`}
-                          </span>
-                        )}
-                        {party.vatNumber && (
-                          <span className="cadastre-code">KMKR: {party.vatNumber}</span>
-                        )}
-                      </div>
-
-                      {/* Roles and Linked Tags */}
-                      <div className="field-sub-tags">
-                        {party.roles.map((role) => {
-                          const cfg = PARTY_ROLE_CONFIG[role];
-                          if (!cfg) return null;
-                          return (
-                            <span
-                              key={role}
-                              className="sub-tag"
-                              style={{
-                                color: cfg.color,
-                                backgroundColor: cfg.bgColor,
-                                borderColor: `${cfg.color}40`,
-                                fontWeight: 600
-                              }}
-                            >
-                              {cfg.icon} {cfg.label}
-                            </span>
-                          );
-                        })}
-
-                        {/* Linked parcels badge if any */}
-                        {party.linkedParcels && party.linkedParcels.length > 0 && (
-                          party.linkedParcels.slice(0, 3).map((p, pIdx) => (
-                            <span
-                              key={pIdx}
-                              className="sub-tag rent-tag"
-                              title={`${p.cadastralCode} (${p.fieldAreaHa} ha)`}
-                            >
-                              🏛️ {p.fieldName} ({p.fieldAreaHa} ha)
-                            </span>
-                          ))
-                        )}
-                        {party.linkedParcels && party.linkedParcels.length > 3 && (
-                          <span className="sub-tag rent-tag">
-                            +{party.linkedParcels.length - 3} muud katastrit
-                          </span>
-                        )}
-
-                        {/* Machinery badge if driver */}
-                        {party.assignedVehicles && party.assignedVehicles.length > 0 && (
-                          party.assignedVehicles.map((v, vIdx) => (
-                            <span key={vIdx} className="sub-tag soil-tag">
-                              🚜 {v.name}
-                            </span>
-                          ))
-                        )}
-                      </div>
-
-                      {/* Notes / Special conditions */}
-                      {party.notes && (
-                        <div className="field-change-reason-line">
-                          <span>💬 {party.notes}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Middle: Active Summary Box (Hectares or Vehicles) */}
-                    <div className="field-active-season-col">
-                      {party.totalAreaHa > 0 ? (
-                        <div className="season-area-box">
-                          <span className="season-year-label">Seotud põllumaa:</span>
-                          <strong className="season-ha-val">{party.totalAreaHa} ha</strong>
-                          <span className="eligible-ha-sub">
-                            {party.linkedParcels?.length} katastriüksust
+                  return (
+                    <tr key={party.id}>
+                      <td className="name-cell">
+                        <div className="field-title-line">
+                          <span className="field-name">{party.name}</span>
+                          <span className="party-type-tag" title={isCompany ? 'Ettevõte' : 'Eraisik'}>
+                            {isCompany ? '🏢' : '👤'}
                           </span>
                         </div>
-                      ) : party.assignedVehicles && party.assignedVehicles.length > 0 ? (
-                        <div className="season-area-box">
-                          <span className="season-year-label">Masinapargis:</span>
-                          <strong className="season-ha-val text-blue">
-                            {party.assignedVehicles.length} masinat
-                          </strong>
-                          <span className="eligible-ha-sub">Aktiivne masinajuht</span>
+                        {(party.code || party.vatNumber) && (
+                          <div className="cell-sub">
+                            {party.code && (isCompany ? `Reg: ${party.code}` : `IK: ${party.code}`)}
+                            {party.code && party.vatNumber && ' · '}
+                            {party.vatNumber && `KMKR: ${party.vatNumber}`}
+                          </div>
+                        )}
+                        {party.notes && <div className="cell-sub party-notes" title={party.notes}>💬 {party.notes}</div>}
+                      </td>
+                      <td>
+                        <div className="field-sub-tags">
+                          {party.roles.map((role) => {
+                            const cfg = PARTY_ROLE_CONFIG[role];
+                            if (!cfg) return null;
+                            return (
+                              <span
+                                key={role}
+                                className="sub-tag"
+                                style={{
+                                  color: cfg.color,
+                                  backgroundColor: cfg.bgColor,
+                                  borderColor: `${cfg.color}40`,
+                                  fontWeight: 600
+                                }}
+                              >
+                                {cfg.icon} {cfg.label}
+                              </span>
+                            );
+                          })}
                         </div>
-                      ) : (
-                        <div className="season-area-box">
-                          <span className="season-year-label">Staatus:</span>
-                          <strong className="season-ha-val" style={{ fontSize: '0.92rem', color: 'var(--text-secondary)' }}>
-                            Aktiivne
-                          </strong>
-                          <span className="eligible-ha-sub">Koostööpartner</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="field-card-actions">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => startEdit(party)}
-                        title="Muuda isiku andmeid"
-                      >
-                        <Edit2 size={13} />
-                        <span>Muuda</span>
-                      </button>
-
-                      {party.usageCount ? (
-                        <button
-                          className="icon-btn-ghost"
-                          onClick={() => {
-                            const parts: string[] = [];
-                            if (party.assignedVehiclesCount) parts.push(`${party.assignedVehiclesCount} sõidukiga (juht)`);
-                            if (party.operatorFieldsCount) parts.push(`${party.operatorFieldsCount} põlluga (operaator)`);
-                            if (party.ownedParcelsCount) parts.push(`${party.ownedParcelsCount} katastriüksusega (omanik)`);
-                            if (party.poiContactsCount) parts.push(`${party.poiContactsCount} POI-punktiga (kontakt)`);
-                            if (party.performedOperationsCount) parts.push(`${party.performedOperationsCount} põllutööga (teostaja)`);
-                            alert(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
-                          }}
-                          title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}
-                        >
-                          <Link2 size={14} />
-                          <span className="usage-count-badge">{party.usageCount}</span>
-                        </button>
-                      ) : (
-                        <button
-                          className="icon-btn-danger"
-                          onClick={() => {
-                            if (confirm(`Kas soovid kindlasti eemaldada isiku "${party.name}"?`)) {
-                              onDeleteParty(party.id);
-                            }
-                          }}
-                          title="Kustuta isik registrist"
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Bottom Contacts & IBAN Row (Matching field-history-row) */}
-                  {(party.phone || party.email || party.address || party.bankAccount) && (
-                    <div className="field-history-row">
-                      <span className="history-label">Kontaktandmed:</span>
-                      <div className="history-pills-list">
-                        {party.phone && (
-                          <a href={`tel:${party.phone}`} className="history-pill" title="Helista">
+                      </td>
+                      <td className="num" title={parcelsTitle}>
+                        {party.totalAreaHa > 0 ? (
+                          <>
+                            <strong>{party.totalAreaHa.toFixed(2)} ha</strong>
+                            <div className="cell-sub">{party.linkedParcels?.length} katastriüksust</div>
+                          </>
+                        ) : (
+                          <span className="muted">–</span>
+                        )}
+                      </td>
+                      <td>
+                        {party.assignedVehicles && party.assignedVehicles.length > 0 ? (
+                          <div className="field-sub-tags">
+                            {party.assignedVehicles.map((v) => (
+                              <span key={v.id} className="sub-tag soil-tag">🚜 {v.name}</span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="muted">–</span>
+                        )}
+                      </td>
+                      <td>
+                        {party.phone ? (
+                          <a href={`tel:${party.phone}`} className="party-contact-link" title="Helista">
                             <Phone size={12} className="text-emerald" />
                             <span>{party.phone}</span>
                           </a>
+                        ) : (
+                          <span className="muted">–</span>
                         )}
-                        {party.email && (
-                          <a href={`mailto:${party.email}`} className="history-pill" title="Saada e-kiri">
+                      </td>
+                      <td>
+                        {party.email ? (
+                          <a href={`mailto:${party.email}`} className="party-contact-link" title="Saada e-kiri">
                             <Mail size={12} className="text-blue" />
                             <span>{party.email}</span>
                           </a>
+                        ) : (
+                          <span className="muted">–</span>
                         )}
-                        {party.address && (
-                          <span className="history-pill" title="Aadress">
-                            <MapPin size={12} className="text-amber" />
-                            <span>{party.address}</span>
-                          </span>
-                        )}
-                        {party.bankAccount && (
-                          <div
-                            className="history-pill"
+                      </td>
+                      <td className="party-address-cell" title={party.address || undefined}>
+                        {party.address || <span className="muted">–</span>}
+                      </td>
+                      <td>
+                        {party.bankAccount ? (
+                          <button
+                            type="button"
+                            className="party-iban-btn"
                             onClick={() => handleCopyIban(party.bankAccount!)}
                             title="Klõpsa IBAN kopeerimiseks lõikelauale"
-                            style={{ cursor: 'pointer' }}
                           >
-                            <CreditCard size={12} className="text-emerald" />
-                            <code style={{ fontFamily: 'monospace', fontWeight: 600 }}>
-                              {party.bankAccount}
-                            </code>
+                            <code>{party.bankAccount}</code>
                             {copiedIban === party.bankAccount ? (
-                              <span style={{ fontSize: '0.68rem', color: 'var(--emerald-400)', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <Check size={11} /> Kopeeritud!
-                              </span>
+                              <Check size={12} className="text-emerald" />
                             ) : (
                               <Copy size={11} className="text-muted" />
                             )}
-                          </div>
+                          </button>
+                        ) : (
+                          <span className="muted">–</span>
                         )}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {filteredParties.length === 0 && (
-              <div className="empty-register-state glass-card" style={{ padding: '32px', textAlign: 'center' }}>
-                <AlertCircle size={28} className="text-amber" style={{ margin: '0 auto 8px auto' }} />
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Otsingule vastavaid isikuid ei leitud</h4>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
-              </div>
-            )}
+                      </td>
+                      <td className="actions-col">
+                        <div className="row-actions">
+                          <button
+                            className="icon-btn-ghost"
+                            onClick={() => startEdit(party)}
+                            title="Muuda isiku andmeid"
+                            aria-label="Muuda"
+                          >
+                            <Edit2 size={15} />
+                          </button>
+                          {party.usageCount ? (
+                            <button
+                              className="icon-btn-ghost"
+                              onClick={() => {
+                                const parts: string[] = [];
+                                if (party.assignedVehiclesCount) parts.push(`${party.assignedVehiclesCount} sõidukiga (juht)`);
+                                if (party.operatorFieldsCount) parts.push(`${party.operatorFieldsCount} põlluga (operaator)`);
+                                if (party.ownedParcelsCount) parts.push(`${party.ownedParcelsCount} katastriüksusega (omanik)`);
+                                if (party.poiContactsCount) parts.push(`${party.poiContactsCount} asukohaga (kontakt)`);
+                                if (party.performedOperationsCount) parts.push(`${party.performedOperationsCount} põllutööga (teostaja)`);
+                                alert(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
+                              }}
+                              title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}
+                            >
+                              <Link2 size={14} />
+                              <span className="usage-count-badge">{party.usageCount}</span>
+                            </button>
+                          ) : (
+                            <button
+                              className="icon-btn-danger"
+                              onClick={() => {
+                                if (confirm(`Kas soovid kindlasti eemaldada isiku "${party.name}"?`)) {
+                                  onDeleteParty(party.id);
+                                }
+                              }}
+                              title="Kustuta isik registrist"
+                              aria-label="Kustuta"
+                            >
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
           </div>
+
+          {filteredParties.length === 0 && (
+            <div className="empty-register-state glass-card" style={{ padding: '32px', textAlign: 'center' }}>
+              <AlertCircle size={28} className="text-amber" style={{ margin: '0 auto 8px auto' }} />
+              <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Otsingule vastavaid isikuid ei leitud</h4>
+              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
+            </div>
+          )}
         </div>
 
         {editForm}
