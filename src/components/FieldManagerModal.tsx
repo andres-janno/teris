@@ -1193,11 +1193,11 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           placeholder="nt Loisu Agro OÜ / Jaan Tamm"
                         />
                         <datalist id="parties-landowners-list">
-                          {parties.map((p) => (
-                            <option key={p.id} value={p.name}>
-                              {p.name} {p.roles.includes('LANDOWNER') ? '(Maaomanik)' : `(${p.roles.join(', ')})`}
-                            </option>
-                          ))}
+                          {parties
+                            .filter((p) => p.roles.includes('LANDOWNER'))
+                            .map((p) => (
+                              <option key={p.id} value={p.name} />
+                            ))}
                         </datalist>
                       </div>
 
