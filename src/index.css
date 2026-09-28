@@ -3148,17 +3148,22 @@ input[type="number"],
   align-items: center;
   gap: 6px;
   padding: 3px 10px;
-  border-radius: 9999px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
+  border-radius: 5px;
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
+  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
   font-size: 0.78rem;
   color: var(--text-primary);
 }
 
-.register-crop-stat .crop-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
+:root {
+  /* Kultuuri värvi toon põldude registri lahtrites ja jaluses */
+  --crop-tint: 18%;
+  --crop-tint-hover: 26%;
+}
+
+:root[data-theme="dark"] {
+  --crop-tint: 28%;
+  --crop-tint-hover: 36%;
 }
 
 /* Põldude tabel (Exceli-laadne) */
@@ -3271,7 +3276,8 @@ input[type="number"],
 
 .register-table th.year-col.selected {
   color: var(--emerald-500);
-  box-shadow: inset 0 -2px 0 var(--emerald-500);
+  background: rgba(34, 197, 94, 0.07);
+  box-shadow: inset 0 -2px 0 var(--emerald-500), inset 1px 0 0 var(--emerald-500), inset -1px 0 0 var(--emerald-500);
 }
 
 .register-table td.year-cell {
@@ -3280,12 +3286,20 @@ input[type="number"],
   max-width: 190px;
 }
 
-.register-table td.year-cell.selected {
-  background: rgba(34, 197, 94, 0.07);
+/* Kultuuri värv: hele toon + vasakul täisvärvis riba */
+.register-table td.year-cell.has-crop {
+  background: color-mix(in srgb, var(--crop-color) var(--crop-tint), transparent);
+  box-shadow: inset 3px 0 0 var(--crop-color);
 }
 
-.register-table tbody tr:hover td.year-cell.selected {
-  background: rgba(34, 197, 94, 0.14);
+.register-table tbody tr:hover td.year-cell.has-crop {
+  background: color-mix(in srgb, var(--crop-color) var(--crop-tint-hover), transparent);
+}
+
+/* Valitud aasta veerg raamitud (roheline taust segaks kultuuride toone) */
+.register-table td.year-cell.selected {
+  border-left: 1px solid var(--emerald-500);
+  border-right: 1px solid var(--emerald-500);
 }
 
 .register-table td.year-cell.editable {

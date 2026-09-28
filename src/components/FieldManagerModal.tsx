@@ -1412,14 +1412,14 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         return (
                           <td
                             key={yr}
-                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''}`}
+                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${rec ? 'has-crop' : ''}`}
+                            style={rec ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
                             title={editable ? (rec ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
                             onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
                           >
                             {rec ? (
                               <>
                                 <div className="year-crop">
-                                  <span className="crop-dot" style={{ backgroundColor: rec.cropColor }}></span>
                                   <span className="year-crop-name" title={rec.crop}>{rec.crop}</span>
                                   {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                                   <button
@@ -1492,8 +1492,12 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
               </span>
               {g.rows.map((c) => (
-                <span key={c.crop} className="register-crop-stat" title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}>
-                  <span className="crop-dot" style={{ backgroundColor: c.color }}></span>
+                <span
+                  key={c.crop}
+                  className="register-crop-stat"
+                  style={{ '--crop-color': c.color } as React.CSSProperties}
+                  title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}
+                >
                   <span>{c.crop}</span>
                   <strong>{c.areaHa.toFixed(2)} ha</strong>
                 </span>
