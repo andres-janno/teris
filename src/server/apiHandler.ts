@@ -929,6 +929,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname === '/api/crops' && method === 'POST') {
       const crop = await parseBody(req);
+      const previous = crop.id ? await prisma.crop.findUnique({ where: { id: crop.id } }) : null;
       const saved = await prisma.crop.upsert({
         where: { id: crop.id || `crop-${Date.now()}` },
         update: {
@@ -957,6 +958,13 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           isWinterCrop: crop.isWinterCrop === true
         }
       });
+      // Põllukirjetes on kultuuri värv koopiana: värvi muutmisel uuendame selle kultuuri kirjed.
+      if (previous && previous.color !== saved.color) {
+        await prisma.fieldSeason.updateMany({
+          where: { cropColor: previous.color, crop: { contains: previous.name, mode: 'insensitive' } },
+          data: { cropColor: saved.color }
+        });
+      }
       return json(res, saved);
     }
 
