@@ -2538,6 +2538,60 @@ body {
   border-color: var(--emerald-500);
 }
 
+/* Kuupäeva väli eesti vormingus (DateInput) */
+.date-input {
+  position: relative;
+  display: flex;
+}
+
+.date-input > .form-input {
+  flex: 1;
+  min-width: 0;
+  padding-right: 34px;
+}
+
+.date-input.invalid > .form-input {
+  border-color: #ef4444;
+}
+
+.date-input-btn {
+  position: absolute;
+  right: 4px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+
+.date-input-btn:hover:not(:disabled) {
+  color: var(--emerald-600);
+}
+
+.date-input-btn:disabled {
+  cursor: default;
+  opacity: 0.6;
+}
+
+/* Brauseri kalendrivalija ankur: nähtamatu, aga showPicker() vajab renderdatud elementi */
+.date-input-picker {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+  border: 0;
+  padding: 0;
+}
+
 /* Native <select> chrome adds its own height/padding on top of ours unless
    appearance is reset — without this, selects render taller than text
    inputs sharing the same .form-input class. */

@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check, Mail } from 'lucide-react';
 import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
+import { formatDateTime } from '../services/dateFormat';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -15,8 +16,6 @@ type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; user: AdminUser
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
-const formatDate = (iso: string | null) =>
-  iso ? new Date(iso).toLocaleString('et-EE', { dateStyle: 'short', timeStyle: 'short' }) : '–';
 
 export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClose, currentUserId }) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
@@ -200,7 +199,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                         {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
                         {!u.hasPassword && <span className="users-admin-badge">Kutse saadetud</span>}
                       </td>
-                      <td>{formatDate(u.lastLoginAt)}</td>
+                      <td>{formatDateTime(u.lastLoginAt)}</td>
                       <td className="users-admin-actions">
                         <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
                           <Pencil size={15} />

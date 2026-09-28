@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { ClipboardList, ChevronDown, ChevronUp } from 'lucide-react';
 import type { FieldOperationsResponse, FieldOperationProductDto } from '../types/fieldOperation';
 import { api } from '../services/api';
+import { formatDate } from '../services/dateFormat';
 
 interface FieldOperationsSectionProps {
   fieldId: number | string;
@@ -10,10 +11,6 @@ interface FieldOperationsSectionProps {
   fill?: boolean; // ajatelg täidab vanema kõrguse (keskmine aken), mitte ei piirdu 320 px-ga
 }
 
-const fmtDate = (iso: string) => {
-  const [y, m, d] = iso.split('-');
-  return `${d}.${m}.${y}`;
-};
 
 const fmtNum = (n: number) => String(Math.round(n * 100) / 100).replace('.', ',');
 
@@ -84,7 +81,7 @@ export const FieldOperationsSection: React.FC<FieldOperationsSectionProps> = ({ 
             {ops.map((op) => (
               <li key={op.id} className="field-op-item">
                 <div className="field-op-head">
-                  <span className="field-op-date">{op.dateTo ? `${fmtDate(op.dateFrom)} – ${fmtDate(op.dateTo)}` : fmtDate(op.dateFrom)}</span>
+                  <span className="field-op-date">{op.dateTo ? `${formatDate(op.dateFrom)} – ${formatDate(op.dateTo)}` : formatDate(op.dateFrom)}</span>
                   <span className="field-op-type">{op.type}</span>
                 </div>
                 {(op.method || op.performerName) && (

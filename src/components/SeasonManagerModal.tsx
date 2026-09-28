@@ -12,29 +12,9 @@ import {
 } from 'lucide-react';
 import type { FarmingSeason, SeasonStatus } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
+import { formatDate, formatDateRange } from '../services/dateFormat';
+import { DateInput } from './DateInput';
 import { SEASON_STATUS_META } from '../types/season';
-
-// Kuupäevad eesti vormingus (pp.kk.aaaa); sisend on ISO 'YYYY-MM-DD' (või pikem ISO aeg).
-const splitIso = (iso: string) => {
-  const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(iso);
-  return m ? { y: m[1], m: m[2], d: m[3] } : null;
-};
-
-const formatDate = (iso?: string | null) => {
-  if (!iso) return '–';
-  const p = splitIso(iso);
-  return p ? `${p.d}.${p.m}.${p.y}` : iso;
-};
-
-// Sama aasta piires lühem vahemik: 01.08–30.09.2026
-const formatRange = (start?: string | null, end?: string | null) => {
-  if (!start) return '–';
-  if (!end) return `${formatDate(start)} –`;
-  const a = splitIso(start);
-  const b = splitIso(end);
-  if (a && b && a.y === b.y) return `${a.d}.${a.m}–${b.d}.${b.m}.${b.y}`;
-  return `${formatDate(start)} – ${formatDate(end)}`;
-};
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -299,40 +279,36 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
                 <div className="form-group">
                   <label>🚜 Ettevalmistuse algus</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={formPrepDate}
-                    onChange={(e) => setFormPrepDate(e.target.value)}
+                    onChange={setFormPrepDate}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>🌱 Külvide algus</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={formSeedDate}
-                    onChange={(e) => setFormSeedDate(e.target.value)}
+                    onChange={setFormSeedDate}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>🌾 Koristuse algus</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={formHarvestStartDate}
-                    onChange={(e) => setFormHarvestStartDate(e.target.value)}
+                    onChange={setFormHarvestStartDate}
                     className="form-input"
                   />
                 </div>
 
                 <div className="form-group">
                   <label>🏁 Koristuse lõpp (Hooaja lõpp)</label>
-                  <input
-                    type="date"
+                  <DateInput
                     value={formHarvestEndDate}
-                    onChange={(e) => setFormHarvestEndDate(e.target.value)}
+                    onChange={setFormHarvestEndDate}
                     className="form-input"
                   />
                 </div>
@@ -428,7 +404,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       </td>
                       <td className="mono">{formatDate(season.preparationStartDate)}</td>
                       <td className="mono">{formatDate(season.seedingStartDate)}</td>
-                      <td className="mono">{formatRange(season.harvestStartDate, season.harvestEndDate)}</td>
+                      <td className="mono">{formatDateRange(season.harvestStartDate, season.harvestEndDate)}</td>
                       <td className="num mono">{formatNum(areaHa, 1)}</td>
                       <td className="num mono">{formatNum(totals?.count ?? null, 0)}</td>
                       <td className="num mono">
