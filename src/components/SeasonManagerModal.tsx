@@ -12,6 +12,7 @@ import {
   CalendarDays
 } from 'lucide-react';
 import type { FarmingSeason, SeasonStatus } from '../types/season';
+import type { MasterField } from '../types/fieldRegister';
 import { SEASON_STATUS_META } from '../types/season';
 
 // Kuupäevad eesti vormingus (pp.kk.aaaa); sisend on ISO 'YYYY-MM-DD' (või pikem ISO aeg).
@@ -46,6 +47,7 @@ interface SeasonManagerModalProps {
   isOpen: boolean;
   onClose: () => void;
   seasons: FarmingSeason[];
+  masterFields: MasterField[];
   selectedYear: number;
   onSelectYear: (year: number) => void;
   onUpdateSeason: (season: FarmingSeason) => void;
@@ -58,6 +60,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   isOpen,
   onClose,
   seasons,
+  masterFields,
   selectedYear,
   onSelectYear,
   onUpdateSeason,
@@ -94,6 +97,17 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
   // Hooajaregistris uusim üleval (ainus koht, kus hooajad on kahanevas järjekorras).
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
+
+  // Pindala ja põldude arv arvutatakse põldude aastaandmetest (mitte hooaja kirjest).
+  const fieldTotalsByYear = new Map<number, { areaHa: number; count: number }>();
+  masterFields.forEach((mf) => {
+    mf.history.forEach((h) => {
+      const t = fieldTotalsByYear.get(h.year) ?? { areaHa: 0, count: 0 };
+      t.areaHa += h.areaHa || 0;
+      t.count += 1;
+      fieldTotalsByYear.set(h.year, t);
+    });
+  });
 
   const toggleNotes = (year: number) =>
     setExpandedYears(prev => {
@@ -162,9 +176,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         harvestStartDate: formHarvestStartDate || undefined,
         harvestEndDate: formHarvestEndDate || undefined,
         targetYieldTons: formTargetYield ? Number(formTargetYield) : undefined,
-        notes: formNotes || undefined,
-        fieldsCount: 32,
-        totalAreaHa: 298.5
+        notes: formNotes || undefined
       };
       onCreateSeason(newSeason);
     }
@@ -379,6 +391,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                     ? season.targetYieldTons - prev.targetYieldTons
                     : null;
                   const notesOpen = expandedYears.has(season.year);
+                  const totals = fieldTotalsByYear.get(season.year);
+                  const areaHa = totals?.areaHa ?? null;
 
                   return (
                     <tr
@@ -409,8 +423,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       <td className="mono">{formatDate(season.preparationStartDate)}</td>
                       <td className="mono">{formatDate(season.seedingStartDate)}</td>
                       <td className="mono">{formatRange(season.harvestStartDate, season.harvestEndDate)}</td>
-                      <td className="num mono">{formatNum(season.totalAreaHa, 1)}</td>
-                      <td className="num mono">{formatNum(season.fieldsCount, 0)}</td>
+                      <td className="num mono">{formatNum(areaHa, 1)}</td>
+                      <td className="num mono">{formatNum(totals?.count ?? null, 0)}</td>
                       <td className="num mono">
                         {formatNum(season.targetYieldTons, 0)}
                         {delta != null && (
@@ -419,12 +433,12 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                           </div>
                         )}
                       </td>
-                      <td className="num mono muted">{formatPerHa(season.targetYieldTons, season.totalAreaHa)}</td>
+                      <td className="num mono muted">{formatPerHa(season.targetYieldTons, areaHa)}</td>
                       <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
                         {formatNum(season.actualYieldTons, 0)}
                       </td>
                       <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
-                        {formatPerHa(season.actualYieldTons, season.totalAreaHa)}
+                        {formatPerHa(season.actualYieldTons, areaHa)}
                       </td>
                       <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
                         {!isCurrent && (

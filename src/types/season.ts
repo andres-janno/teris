@@ -53,7 +53,7 @@ export const SEASON_STATUS_META: Record<SeasonStatus, { label: string; color: st
     description: 'Kultuuride koristus ja viljavedu kuivatisse.'
   },
   closed: {
-    label: 'Suletud (Lukus)',
+    label: 'Suletud',
     color: '#94a3b8',
     bg: 'rgba(148, 163, 184, 0.15)',
     icon: '🔒',

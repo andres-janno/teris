@@ -1190,6 +1190,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         isOpen={isSeasonManagerOpen}
         onClose={() => setIsSeasonManagerOpen(false)}
         seasons={seasons}
+        masterFields={masterFields}
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
         onUpdateSeason={handleUpdateSeason}
