@@ -31,7 +31,8 @@ export interface FarmingSeason {
 }
 
 /**
- * Registris kuvatav olek, tuletatud põldude kultuuridest (mitte käsitsi valitud):
+ * Registris kuvatav olek, tuletatud põldude kultuuridest (mitte käsitsi valitud).
+ * Hooaja põllud = selle või eelmise hooaja põllud; puuduv kirje = kultuur määramata.
  * lukus → Suletud; ühtki määratud kultuuri → Avamata;
  * osal põldudel kultuur määramata → Planeerimisel; kõigil määratud → Aktiivne.
  */

@@ -78,14 +78,12 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
 
   // Pindala ja põldude arv arvutatakse põldude aastaandmetest (mitte hooaja kirjest).
-  // Kultuurid on hooaja oleku jaoks (Avamata / Planeerimisel / Aktiivne).
-  const fieldTotalsByYear = new Map<number, { areaHa: number; count: number; crops: string[] }>();
+  const fieldTotalsByYear = new Map<number, { areaHa: number; count: number }>();
   masterFields.forEach((mf) => {
     mf.history.forEach((h) => {
-      const t = fieldTotalsByYear.get(h.year) ?? { areaHa: 0, count: 0, crops: [] };
+      const t = fieldTotalsByYear.get(h.year) ?? { areaHa: 0, count: 0 };
       t.areaHa += h.areaHa || 0;
       t.count += 1;
-      t.crops.push(h.crop);
       fieldTotalsByYear.set(h.year, t);
     });
   });
@@ -96,6 +94,13 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
       if (next.has(year)) next.delete(year); else next.add(year);
       return next;
     });
+
+  // Hooaja oleku jaoks: hooaja põllud on selle või eelmise hooaja põllud. Põllul, millel
+  // selle aasta kirje puudub (eelmisest hooajast edasi tulnud), on kultuur määramata.
+  const seasonCrops = (year: number): (string | null)[] =>
+    masterFields
+      .filter((mf) => mf.history.some((h) => h.year === year || h.year === year - 1))
+      .map((mf) => mf.history.find((h) => h.year === year)?.crop ?? null);
 
   const handleStartAdd = () => {
     const nextYear = Math.max(...seasons.map(s => s.year), 2026) + 1;
@@ -357,7 +362,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   const notesOpen = expandedYears.has(season.year);
                   const totals = fieldTotalsByYear.get(season.year);
                   const areaHa = totals?.areaHa ?? null;
-                  const meta = SEASON_PHASE_META[deriveSeasonPhase(season.isLocked, totals?.crops ?? [])];
+                  const meta = SEASON_PHASE_META[deriveSeasonPhase(season.isLocked, seasonCrops(season.year))];
 
                   const rowClass = `${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''}`;
                   return (
