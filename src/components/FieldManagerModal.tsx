@@ -15,7 +15,8 @@ import {
   Lock,
   Landmark,
   Compass,
-  ExternalLink
+  ExternalLink,
+  Info
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
@@ -24,6 +25,10 @@ import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
+
+// Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
+const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
+const DRAINAGE_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti maaparandussüsteemide andmete põhjal (põllu kuju järgi).';
 
 interface FieldManagerModalProps {
   isOpen: boolean;
@@ -863,15 +868,32 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                   </div>
                 </div>
 
-                <div className="form-group">
-                  <label>Mullastiku tüüp</label>
+                <div className="form-row-3 field-auto-row">
+                <div className="form-group" title={SOIL_AUTO_HINT}>
+                  <label>
+                    Mullastiku tüüp <Info size={12} className="auto-field-icon" />
+                  </label>
                   <input
                     type="text"
-                    placeholder="nt Leostunud liivsavi (LP)"
-                    disabled={isEditSeasonLocked}
+                    readOnly
+                    tabIndex={-1}
+                    placeholder="Täidetakse hiljem automaatselt"
                     value={editSoilType}
-                    onChange={(e) => setEditSoilType(e.target.value)}
-                    className="form-input"
+                    className="form-input auto-field-input"
+                  />
+                </div>
+
+                <div className="form-group" title={DRAINAGE_AUTO_HINT}>
+                  <label>
+                    Drenaaž <Info size={12} className="auto-field-icon" />
+                  </label>
+                  <input
+                    type="text"
+                    readOnly
+                    tabIndex={-1}
+                    placeholder="Täidetakse hiljem automaatselt"
+                    value={masterFields.find((f) => f.id === editingFieldId)?.drainageSystem ? 'Jah' : ''}
+                    className="form-input auto-field-input"
                   />
                 </div>
 
@@ -890,6 +912,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         <option key={p.id} value={p.id}>{p.name}</option>
                       ))}
                   </select>
+                </div>
                 </div>
               </div>
 
@@ -1307,7 +1330,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                         <div className="field-sub-tags">
                           <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
                           {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
-                          {field.soilType && <span className="sub-tag soil-tag">🌱 {field.soilType}</span>}
+                          {field.soilType && <span className="sub-tag soil-tag" title={SOIL_AUTO_HINT}>🌱 {field.soilType}</span>}
                         </div>
                       </td>
                       <td

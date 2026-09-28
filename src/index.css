@@ -2473,6 +2473,28 @@ body {
   }
 }
 
+.form-row-3.field-auto-row {
+  grid-template-columns: 1.5fr 1fr 1.5fr;
+}
+
+@media (max-width: 640px) {
+  .form-row-3.field-auto-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.auto-field-icon {
+  color: var(--text-muted);
+  vertical-align: -1px;
+  margin-left: 2px;
+}
+
+.form-input.auto-field-input {
+  cursor: help;
+  color: var(--text-secondary);
+  background: var(--stat-bg);
+}
+
 .form-group label {
   font-size: 0.72rem;
   font-weight: 600;
