@@ -1211,19 +1211,13 @@ body {
   background: var(--stat-bg-hover);
 }
 
-.field-season-chip.active {
-  background: var(--basemap-active-bg);
-  border-color: var(--basemap-active-border);
-  color: var(--basemap-active-color);
-}
-
-.field-season-chip-tag {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 0 4px;
-  border-radius: 3px;
-  background: var(--emerald-500);
-  color: #fff;
+/* Valitud hooaeg: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active) */
+.field-season-chip.active,
+.field-season-chip.active:hover {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
 }
 
 .soil-table {

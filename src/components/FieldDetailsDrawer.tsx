@@ -135,7 +135,6 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
               >
                 <span>{y}</span>
                 {locked && <Lock size={11} />}
-                {y === mapYear && <span className="field-season-chip-tag">kaardil</span>}
               </button>
             );
           })}
