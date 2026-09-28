@@ -3157,6 +3157,11 @@ input[type="number"],
   min-width: 270px;
 }
 
+.register-crop-group-title strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+}
+
 .register-crop-group.winter .register-crop-group-title strong {
   color: #0369a1;
 }
