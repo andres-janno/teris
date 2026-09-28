@@ -1201,7 +1201,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             selectedCropFilter={selectedCropFilter}
             onSelectCropFilter={setSelectedCropFilter}
             seasons={seasons}
-            onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
           />
 
         </div>

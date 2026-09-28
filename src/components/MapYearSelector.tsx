@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock, Settings2 } from 'lucide-react';
+import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/shpParser';
@@ -13,7 +13,6 @@ interface MapYearSelectorProps {
   selectedCropFilter?: string | null;
   onSelectCropFilter?: (cropName: string | null) => void;
   seasons?: FarmingSeason[];
-  onOpenSeasonManager?: () => void;
 }
 
 interface CropSummary {
@@ -32,8 +31,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   totalAreaHa,
   selectedCropFilter = null,
   onSelectCropFilter,
-  seasons = [],
-  onOpenSeasonManager
+  seasons = []
 }) => {
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
@@ -88,15 +86,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           <span className="year-widget-stat">
             {fields.features.length} põldu &bull; {totalAreaHa.toFixed(1)} ha
           </span>
-          {onOpenSeasonManager && (
-            <button
-              className="icon-btn-ghost-xs"
-              onClick={onOpenSeasonManager}
-              title="Ava hooaja register ja haldus"
-            >
-              <Settings2 size={13} />
-            </button>
-          )}
         </div>
       </div>
 
