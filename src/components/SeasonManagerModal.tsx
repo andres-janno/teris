@@ -10,11 +10,11 @@ import {
   Info,
   CalendarDays
 } from 'lucide-react';
-import type { FarmingSeason, SeasonStatus } from '../types/season';
+import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import { DateInput } from './DateInput';
-import { SEASON_STATUS_META } from '../types/season';
+import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -52,7 +52,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   // Form State
   const [formYear, setFormYear] = useState<number>(2027);
   const [formName, setFormName] = useState<string>('Hooaeg 2027');
-  const [formStatus, setFormStatus] = useState<SeasonStatus>('planning');
   const [formPrepDate, setFormPrepDate] = useState<string>('');
   const [formSeedDate, setFormSeedDate] = useState<string>('');
   const [formHarvestStartDate, setFormHarvestStartDate] = useState<string>('');
@@ -79,12 +78,14 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
 
   // Pindala ja põldude arv arvutatakse põldude aastaandmetest (mitte hooaja kirjest).
-  const fieldTotalsByYear = new Map<number, { areaHa: number; count: number }>();
+  // Kultuurid on hooaja oleku jaoks (Avamata / Planeerimisel / Aktiivne).
+  const fieldTotalsByYear = new Map<number, { areaHa: number; count: number; crops: string[] }>();
   masterFields.forEach((mf) => {
     mf.history.forEach((h) => {
-      const t = fieldTotalsByYear.get(h.year) ?? { areaHa: 0, count: 0 };
+      const t = fieldTotalsByYear.get(h.year) ?? { areaHa: 0, count: 0, crops: [] };
       t.areaHa += h.areaHa || 0;
       t.count += 1;
+      t.crops.push(h.crop);
       fieldTotalsByYear.set(h.year, t);
     });
   });
@@ -100,7 +101,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
     const nextYear = Math.max(...seasons.map(s => s.year), 2026) + 1;
     setFormYear(nextYear);
     setFormName(`Hooaeg ${nextYear}`);
-    setFormStatus('planning');
     setFormPrepDate(`${nextYear - 1}-08-20`);
     setFormSeedDate(`${nextYear - 1}-09-05`);
     setFormHarvestStartDate(`${nextYear}-08-01`);
@@ -114,7 +114,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const handleStartEdit = (s: FarmingSeason) => {
     setFormYear(s.year);
     setFormName(s.name);
-    setFormStatus(s.status);
     setFormPrepDate(s.preparationStartDate || '');
     setFormSeedDate(s.seedingStartDate || '');
     setFormHarvestStartDate(s.harvestStartDate || '');
@@ -133,8 +132,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         const updated: FarmingSeason = {
           ...existing,
           name: formName,
-          status: formStatus,
-          isLocked: formStatus === 'closed',
           preparationStartDate: formPrepDate || undefined,
           seedingStartDate: formSeedDate || undefined,
           harvestStartDate: formHarvestStartDate || undefined,
@@ -149,8 +146,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         id: `season-${formYear}`,
         year: formYear,
         name: formName,
-        status: formStatus,
-        isLocked: formStatus === 'closed',
+        status: 'planning',
+        isLocked: false,
         preparationStartDate: formPrepDate || undefined,
         seedingStartDate: formSeedDate || undefined,
         harvestStartDate: formHarvestStartDate || undefined,
@@ -253,20 +250,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 </div>
 
                 <div className="form-group">
-                  <label>Staatuse etapp</label>
-                  <select
-                    value={formStatus}
-                    onChange={(e) => setFormStatus(e.target.value as SeasonStatus)}
-                    className="form-input"
-                  >
-                    <option value="planning">📝 Planeerimisel</option>
-                    <option value="active">🌱 Aktiivne (Külv & Hooldus)</option>
-                    <option value="harvesting">🚜 Koristusel</option>
-                    <option value="closed">🔒 Suletud (Muudatusteks lukus)</option>
-                  </select>
-                </div>
-
-                <div className="form-group">
                   <label>Saagiootus (tonnides kokku)</label>
                   <input
                     type="number"
@@ -366,7 +349,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               </thead>
               <tbody>
                 {sortedSeasons.map((season, i) => {
-                  const meta = SEASON_STATUS_META[season.status] || SEASON_STATUS_META.planning;
                   const isCurrent = season.year === selectedYear;
                   const prev = sortedSeasons[i + 1];
                   const delta = season.targetYieldTons != null && prev?.targetYieldTons != null
@@ -375,6 +357,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   const notesOpen = expandedYears.has(season.year);
                   const totals = fieldTotalsByYear.get(season.year);
                   const areaHa = totals?.areaHa ?? null;
+                  const meta = SEASON_PHASE_META[deriveSeasonPhase(season.isLocked, totals?.crops ?? [])];
 
                   const rowClass = `${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''}`;
                   return (

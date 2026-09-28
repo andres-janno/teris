@@ -30,33 +30,49 @@ export interface FarmingSeason {
   notes?: string | null;                // Hooaja kokkuvõte / märkmed (ilm, kvaliteet, PRIA toetused)
 }
 
-export const SEASON_STATUS_META: Record<SeasonStatus, { label: string; color: string; bg: string; icon: string; description: string }> = {
+/**
+ * Registris kuvatav olek, tuletatud põldude kultuuridest (mitte käsitsi valitud):
+ * lukus → Suletud; ühtki määratud kultuuri → Avamata;
+ * osal põldudel kultuur määramata → Planeerimisel; kõigil määratud → Aktiivne.
+ */
+export type SeasonPhase = 'unopened' | 'planning' | 'active' | 'closed';
+
+export const SEASON_PHASE_META: Record<SeasonPhase, { label: string; color: string; bg: string; description: string }> = {
+  unopened: {
+    label: 'Avamata',
+    color: '#64748b',
+    bg: 'rgba(100, 116, 139, 0.12)',
+    description: 'Hooaja põldudele pole veel ühtegi kultuuri määratud.'
+  },
   planning: {
     label: 'Planeerimisel',
     color: '#3b82f6',
     bg: 'rgba(59, 130, 246, 0.15)',
-    icon: '📝',
-    description: 'Külvikorra, väetamise ja põllutööde eelplaneerimine.'
+    description: 'Osal hooaja põldudel on kultuur veel määramata.'
   },
   active: {
     label: 'Aktiivne',
     color: '#10b981',
     bg: 'rgba(16, 185, 129, 0.15)',
-    icon: '🌱',
-    description: 'Külvitööd, hooldus, pritsimine ja väetamine täies hoos.'
-  },
-  harvesting: {
-    label: 'Koristusel',
-    color: '#f59e0b',
-    bg: 'rgba(245, 158, 11, 0.15)',
-    icon: '🚜',
-    description: 'Kultuuride koristus ja viljavedu kuivatisse.'
+    description: 'Kõigil hooaja põldudel on kultuur määratud.'
   },
   closed: {
     label: 'Suletud',
     color: '#94a3b8',
     bg: 'rgba(148, 163, 184, 0.15)',
-    icon: '🔒',
-    description: 'Koristus on lõppenud. Hooaeg on muudatusteks suletud ja arhiveeritud.'
+    description: 'Hooaeg on muudatusteks suletud.'
   }
+};
+
+export const isCropUndetermined = (crop?: string | null): boolean => {
+  const c = (crop ?? '').trim().toLowerCase();
+  return c === '' || c === 'määramata';
+};
+
+/** Hooaja olek selle aasta põllukirjete kultuuride järgi. */
+export const deriveSeasonPhase = (isLocked: boolean, crops: (string | null | undefined)[]): SeasonPhase => {
+  if (isLocked) return 'closed';
+  const determined = crops.filter((c) => !isCropUndetermined(c)).length;
+  if (determined === 0) return 'unopened';
+  return determined < crops.length ? 'planning' : 'active';
 };
