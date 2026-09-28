@@ -1204,7 +1204,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         masterFields={operatorMasterFields}
         selectedYear={selectedYear}
         onSelectYear={setSelectedYear}
-        onFocusField={handleFocusField}
         baseMap={visibility.baseMap}
         onUpdateField={handleUpdateMasterField}
         onDeleteField={handleDeleteMasterField}

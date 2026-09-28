@@ -12,10 +12,9 @@ interface FieldShapeModalProps {
   record: FieldYearlyRecord;
   baseMap: BaseMapLayerId;
   onClose: () => void;
-  onOpenOnMap: () => void;
 }
 
-export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record, baseMap, onClose, onOpenOnMap }) => {
+export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record, baseMap, onClose }) => {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const geometry = record.geometry;
 
@@ -81,15 +80,6 @@ export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record,
             <div ref={mapDivRef} className="field-shape-map" />
           ) : (
             <div className="field-shape-empty">Selle aasta kirjel pole põllu kuju.</div>
-          )}
-        </div>
-        <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Sulge</button>
-          {geometry && (
-            <button type="button" className="btn btn-secondary" onClick={onOpenOnMap}>
-              <MapIcon size={16} />
-              <span>Ava põhikaardil</span>
-            </button>
           )}
         </div>
       </div>

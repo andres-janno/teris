@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import type { Polygon, MultiPolygon } from 'geojson';
 import {
   X,
   Layers,
@@ -19,7 +18,6 @@ import {
   ExternalLink
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
-import type { FieldFeature } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
@@ -33,7 +31,6 @@ interface FieldManagerModalProps {
   masterFields: MasterField[];
   selectedYear: number;
   onSelectYear: (year: number) => void;
-  onFocusField: (fieldFeature: FieldFeature) => void;
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload?: () => void; // puudub mitteadminil (import ainult adminile)
@@ -54,7 +51,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   masterFields,
   selectedYear,
   onSelectYear,
-  onFocusField,
   onUpdateField,
   onDeleteField,
   onOpenUpload,
@@ -576,38 +572,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       });
     }
     setCropEdit(null);
-  };
-
-  // Näita põldu kaardil (valitud aasta või viimase kirje geomeetriaga).
-  // Ava põld põhikaardil antud aasta kujuga (lülitab kaardi samale aastale, et põld oleks nähtav).
-  const focusOnMap = (field: MasterField, year: number) => {
-    const rec = field.history.find((h) => h.year === year);
-    if (!rec) return;
-    onSelectYear(year);
-    const feature: FieldFeature = {
-      type: 'Feature',
-      id: field.id,
-      geometry: (rec?.geometry || field.geometry || { type: 'Polygon', coordinates: [] }) as Polygon | MultiPolygon,
-      properties: {
-        id: field.id,
-        num: field.num,
-        name: field.name,
-        fieldCode: field.fieldCode,
-        areaHa: rec ? rec.areaHa : 0,
-        eligibleAreaHa: rec?.eligibleAreaHa,
-        areaChangeReason: rec?.areaChangeReason,
-        crop: rec ? rec.crop : 'Määramata',
-        cropVariety: rec?.cropVariety,
-        cropColor: rec ? rec.cropColor : '#94a3b8',
-        year,
-        status: rec?.status || 'not_started',
-        rawProperties: {
-          cadastralParcels: field.cadastralParcels || []
-        }
-      }
-    };
-    onFocusField(feature);
-    onClose();
   };
 
   const handleExportCsv = () => {
@@ -1304,10 +1268,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                 record={record}
                 baseMap={baseMap}
                 onClose={() => setShapeView(null)}
-                onOpenOnMap={() => {
-                  setShapeView(null);
-                  focusOnMap(field, record.year);
-                }}
               />
             );
           })()}
