@@ -432,6 +432,10 @@ export const MapView: React.FC<MapViewProps> = ({
       const icon = createPoiIcon(poi);
       const marker = L.marker(poi.position, { icon, zIndexOffset: 500 });
 
+      // Kattuvatest markeritest tõuseb kursori all olev (koos nimesildiga) kõige peale.
+      marker.on('mouseover', () => marker.setZIndexOffset(10000));
+      marker.on('mouseout', () => marker.setZIndexOffset(500));
+
       marker.on('click', (e) => {
         L.DomEvent.stopPropagation(e);
         onSelectPoi(poi);
