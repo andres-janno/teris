@@ -3455,6 +3455,13 @@ input[type="number"],
   padding-right: 6px;
 }
 
+/* Seotud isikute register: aken sisu laiune (tabelis on vähe veerge) */
+.field-register-modal.parties-register-modal {
+  width: max-content;
+  min-width: min(900px, 96vw);
+  max-width: 96vw;
+}
+
 /* Seotud isikute tabel */
 .parties-table td {
   vertical-align: middle;

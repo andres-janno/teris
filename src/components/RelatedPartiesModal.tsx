@@ -427,7 +427,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   return (
     <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
-      <div className="modal-content glass-card field-register-modal animate-scale-up">
+      <div className="modal-content glass-card field-register-modal parties-register-modal animate-scale-up">
         {/* Header - Identical to FieldManagerModal */}
         <div className="modal-header">
           <div className="modal-title-group">
