@@ -4217,25 +4217,15 @@ input[type="number"],
   justify-content: center;
 }
 
-.season-icon-badge {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--emerald-600);
-}
-
-.season-top-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 10px 18px;
-  border-bottom: 1px solid var(--border-color);
-  background: var(--stat-bg);
-}
-
-.season-stats-pills {
+.season-header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
-  flex-wrap: wrap;
+}
+
+.season-icon-badge {
+  background: rgba(16, 185, 129, 0.15);
+  color: var(--emerald-600);
 }
 
 .season-stat-pill {
@@ -4247,26 +4237,6 @@ input[type="number"],
   border-radius: 6px;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
-}
-
-.stat-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.stat-dot.green {
-  background: var(--emerald-500);
-  box-shadow: 0 0 6px rgba(16, 185, 129, 0.5);
-}
-
-.season-stat-pill .stat-title {
-  color: var(--text-secondary);
-}
-
-.season-stat-pill .stat-num {
-  font-weight: 800;
-  color: var(--text-primary);
 }
 
 .season-modal-body {
@@ -4377,7 +4347,6 @@ input[type="number"],
   color: #ffffff;
 }
 
-.seasons-table tr.current .season-current-tag,
 .seasons-table tr.current .season-status-badge {
   color: #ffffff !important;
   background: rgba(255, 255, 255, 0.2) !important;
@@ -4419,16 +4388,6 @@ input[type="number"],
 .season-year {
   font-size: 0.95rem;
   font-weight: 800;
-}
-
-.season-current-tag {
-  font-size: 0.64rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: var(--emerald-600);
-  background: rgba(16, 185, 129, 0.15);
-  padding: 1px 6px;
-  border-radius: 4px;
 }
 
 .season-notes-icon {

@@ -94,8 +94,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
   // Hooajaregistris uusim üleval (ainus koht, kus hooajad on kahanevas järjekorras).
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
-  const activeCount = seasons.filter(s => s.status === 'active' || s.status === 'harvesting').length;
-  const closedCount = seasons.filter(s => s.isLocked).length;
 
   const toggleNotes = (year: number) =>
     setExpandedYears(prev => {
@@ -190,37 +188,16 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="icon-btn" onClick={onClose} title="Sulge">
-            <X size={18} />
-          </button>
-        </div>
-
-        {/* Top Summary Bar */}
-        <div className="season-top-bar">
-          <div className="season-stats-pills">
-            <div className="season-stat-pill active">
-              <span className="stat-dot green"></span>
-              <span className="stat-title">Aktiivseid / Töös:</span>
-              <strong className="stat-num">{activeCount}</strong>
-            </div>
-            <div className="season-stat-pill locked">
-              <Lock size={13} className="text-slate-400" />
-              <span className="stat-title">Suletud (Lukus):</span>
-              <strong className="stat-num">{closedCount}</strong>
-            </div>
-            <div className="season-stat-pill current">
-              <span className="stat-title">Vaates aktiivne:</span>
-              <strong className="stat-num">{selectedYear}</strong>
-            </div>
-          </div>
-
-          <div className="season-actions-right">
+          <div className="season-header-actions">
             {!isAdding && (
               <button className="btn btn-primary btn-sm" onClick={handleStartAdd}>
                 <Plus size={14} />
                 <span>Loo uus hooaeg</span>
               </button>
             )}
+            <button className="icon-btn" onClick={onClose} title="Sulge">
+              <X size={18} />
+            </button>
           </div>
         </div>
 
@@ -413,7 +390,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       <td className="season-cell">
                         <div className="season-cell-head">
                           <span className="season-year">{season.year}</span>
-                          {isCurrent && <span className="season-current-tag">Kaardil</span>}
                           {season.notes && <Info size={13} className="season-notes-icon" />}
                         </div>
                         {season.name !== `Hooaeg ${season.year}` && (

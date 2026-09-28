@@ -39,7 +39,7 @@ export const SEASON_STATUS_META: Record<SeasonStatus, { label: string; color: st
     description: 'Külvikorra, väetamise ja põllutööde eelplaneerimine.'
   },
   active: {
-    label: 'Aktiivne (Käimas)',
+    label: 'Aktiivne',
     color: '#10b981',
     bg: 'rgba(16, 185, 129, 0.15)',
     icon: '🌱',
