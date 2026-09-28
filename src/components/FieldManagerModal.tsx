@@ -462,6 +462,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
       alert(`Hooaeg ${editYear} on suletud/lukustatud. Katastriüksuste kustutamine on keelatud!`);
       return;
     }
+    const code = editCadastralParcels[index]?.cadastralCode?.trim();
+    if (!confirm(`Eemaldada katastriüksus${code ? ` ${code}` : ''} põllult ${editYear}. a hooajal?\n\nMuudatus jõustub salvestamisel.`)) return;
     setEditCadastralParcels(editCadastralParcels.filter((_, i) => i !== index));
   };
 
