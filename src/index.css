@@ -3296,16 +3296,23 @@ input[type="number"],
   color: var(--emerald-500);
 }
 
-.register-table th.year-col.selected:hover {
-  color: #ffffff;
-  background: #15803d;
+/* Valitud aasta: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active).
+   Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
+.register-table th.year-col .year-col-label {
+  display: block;
+  margin: -8px -10px;
+  padding: 8px 10px;
 }
 
-.register-table th.year-col.selected {
-  /* sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active); läbipaistmatu kleepuva päise jaoks */
+.register-table th.year-col.selected .year-col-label {
   color: #ffffff;
   background: #16a34a;
-  box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d;
+  border-radius: 6px 6px 0 0;
+  box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d, inset 0 1px 0 #15803d;
+}
+
+.register-table th.year-col.selected:hover .year-col-label {
+  background: #15803d;
 }
 
 .register-table td.year-cell {

@@ -1308,7 +1308,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                       onClick={() => onSelectYear(yr)}
                       title={`Vali hooaeg ${yr}`}
                     >
-                      {yr}
+                      <span className="year-col-label">{yr}</span>
                     </th>
                   ))}
                   <th className="actions-col">Tegevused</th>
