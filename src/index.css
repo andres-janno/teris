@@ -3276,7 +3276,8 @@ input[type="number"],
 
 .register-table th.year-col.selected {
   color: var(--emerald-500);
-  background: rgba(34, 197, 94, 0.07);
+  /* läbipaistmatu: kleepuv päis peab keritava sisu katma */
+  background: linear-gradient(rgba(34, 197, 94, 0.07), rgba(34, 197, 94, 0.07)), var(--bg-modal);
   box-shadow: inset 0 -2px 0 var(--emerald-500), inset 1px 0 0 var(--emerald-500), inset -1px 0 0 var(--emerald-500);
 }
 
