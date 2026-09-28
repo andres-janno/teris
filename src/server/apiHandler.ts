@@ -481,7 +481,6 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       workshop: 'WORKSHOP',
       fuel_station: 'FUEL_STATION',
       warehouse: 'STORAGE',
-      scale: 'SCALE',
       other: 'OTHER'
     };
     const POI_CATEGORY_FROM_DB: Record<string, string> = Object.fromEntries(

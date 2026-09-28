@@ -53,8 +53,7 @@ const CATEGORY_META: Record<PoiCategory, { label: string; emoji: string }> = {
   workshop: { label: 'Töökoda', emoji: '🔧' },
   fuel_station: { label: 'Tankla', emoji: '⛽' },
   warehouse: { label: 'Väetis', emoji: '📦' },
-  scale: { label: 'Autokaal', emoji: '⚖️' },
-  other: { label: 'Muu taristupunkt', emoji: '📍' }
+  other: { label: 'Muu', emoji: '📍' }
 };
 
 export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({

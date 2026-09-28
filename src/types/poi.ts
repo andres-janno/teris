@@ -5,7 +5,6 @@ export type PoiCategory =
   | 'workshop'      // Töökoda / masinakuur / garaaž
   | 'fuel_station'  // Kütusetankla / mahuti
   | 'warehouse'     // Väetise- ja kemikaaliladu
-  | 'scale'         // Autokaal
   | 'other';        // Muu oluline punkt
 
 export interface PointOfInterest {

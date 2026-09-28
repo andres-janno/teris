@@ -71,7 +71,6 @@ const POI_ICONS: Record<PoiCategory, { emoji: string; bg: string; border: string
   workshop: { emoji: '🔧', bg: '#64748b', border: '#cbd5e1' },
   fuel_station: { emoji: '⛽', bg: '#dc2626', border: '#fecaca' },
   warehouse: { emoji: '📦', bg: '#d97706', border: '#fed7aa' },
-  scale: { emoji: '⚖️', bg: '#7c3aed', border: '#ddd6fe' },
   other: { emoji: '📍', bg: '#475569', border: '#cbd5e1' }
 };
 
