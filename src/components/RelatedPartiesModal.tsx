@@ -34,16 +34,7 @@ interface RelatedPartiesModalProps {
   selectedYear?: number;
 }
 
-const ALL_ROLES: PartyRole[] = [
-  'LANDOWNER',
-  'TENANT',
-  'DRIVER',
-  'OPERATOR',
-  'CONTACT_PERSON',
-  'SUPPLIER',
-  'BUYER',
-  'OTHER'
-];
+const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'OTHER'];
 
 export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   isOpen,
@@ -135,7 +126,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       type: editType,
       code: editCode.trim() || undefined,
       vatNumber: editVatNumber.trim() || undefined,
-      roles: editRoles,
+      // Ilma rollita kirje on "Muu seotud isik" (täpsustus märkustes).
+      roles: editRoles.length > 0 ? editRoles : ['OTHER'],
       phone: editPhone.trim() || undefined,
       email: editEmail.trim() || undefined,
       address: editAddress.trim() || undefined,
@@ -359,6 +351,16 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           })}
         </div>
       </div>
+      <div className="form-group">
+        <label>Märkused (nt muu seotud isiku täpsustus, lepingute info)</label>
+        <textarea
+          rows={2}
+          placeholder="nt Raamatupidaja; rendileping L-2024/02 kehtib kuni 2032..."
+          value={editNotes}
+          onChange={(e) => setEditNotes(e.target.value)}
+          className="form-input"
+        />
+      </div>
 
       {/* 3. Kontakt- ja finantsandmed */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
@@ -410,16 +412,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           />
         </div>
 
-        <div className="form-group">
-          <label>Märkused ja lepingute info</label>
-          <input
-            type="text"
-            placeholder="nt Rendileping L-2024/02 kehtib kuni 2032..."
-            value={editNotes}
-            onChange={(e) => setEditNotes(e.target.value)}
-            className="form-input"
-          />
-        </div>
       </div>
 
       </div>
@@ -512,11 +504,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             >
               <option value="all">Kõik rollid ({parties.length})</option>
               <option value="LANDOWNER">🏛️ Maaomanikud ({parties.filter(p => p.roles.includes('LANDOWNER')).length})</option>
-              <option value="DRIVER">🚜 Masinajuhid ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
-              <option value="TENANT">🤝 Rentnikud / Ettevõtted ({parties.filter(p => p.roles.includes('TENANT')).length})</option>
-              <option value="CONTACT_PERSON">📍 Kontaktisikud ({parties.filter(p => p.roles.includes('CONTACT_PERSON')).length})</option>
-              <option value="SUPPLIER">📦 Tarnijad ({parties.filter(p => p.roles.includes('SUPPLIER')).length})</option>
-              <option value="BUYER">🌾 Viljaostjad ({parties.filter(p => p.roles.includes('BUYER')).length})</option>
+              <option value="DRIVER">👤 Töötajad ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
+              <option value="OPERATOR">🧑‍🌾 Operaatorid ({parties.filter(p => p.roles.includes('OPERATOR')).length})</option>
+              <option value="OTHER">🤝 Muud seotud isikud ({parties.filter(p => p.roles.includes('OTHER')).length})</option>
             </select>
 
             {/* Type filter */}

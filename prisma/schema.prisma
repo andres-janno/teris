@@ -81,12 +81,12 @@ enum PartyType {
 
 enum PartyRole {
   LANDOWNER
-  TENANT
-  DRIVER
+  TENANT         // kasutusest eemaldatud (2026-09-28), andmed migreeritud — jäetud DB enum'i ühilduvuse pärast
+  DRIVER         // kuvatakse "Töötaja"
   OPERATOR
-  CONTACT_PERSON
-  SUPPLIER
-  BUYER
+  CONTACT_PERSON // kasutusest eemaldatud
+  SUPPLIER       // kasutusest eemaldatud
+  BUYER          // kasutusest eemaldatud
   OTHER
 }
 

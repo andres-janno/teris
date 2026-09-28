@@ -4,13 +4,9 @@ export type PartyType = 'PERSON' | 'LEGAL_ENTITY';
 
 export type PartyRole =
   | 'LANDOWNER'      // Maaomanik / Rendileandja
-  | 'TENANT'         // Rentnik / Operaator (meie ettevõte või partner)
-  | 'DRIVER'         // Masinajuht / Töötaja
+  | 'DRIVER'         // Töötaja (sh masinajuht)
   | 'OPERATOR'       // Põllu operaator / harija
-  | 'CONTACT_PERSON' // Objekti / taristu kontaktisik
-  | 'SUPPLIER'       // Tarnija (väetised, seemned, tehnika)
-  | 'BUYER'          // Ostja / Viljakaupleja
-  | 'OTHER';         // Muu seotud osapool
+  | 'OTHER';         // Muu seotud isik (täpsustus märkustes)
 
 export interface RelatedParty {
   id: string;
@@ -44,14 +40,8 @@ export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string;
     color: '#059669',
     bgColor: 'rgba(16, 185, 129, 0.12)'
   },
-  TENANT: {
-    label: 'Rentnik / Ettevõte',
-    icon: '🚜',
-    color: '#2563eb',
-    bgColor: 'rgba(59, 130, 246, 0.12)'
-  },
   DRIVER: {
-    label: 'Masinajuht / Töötaja',
+    label: 'Töötaja',
     icon: '👤',
     color: '#d97706',
     bgColor: 'rgba(245, 158, 11, 0.12)'
@@ -61,24 +51,6 @@ export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string;
     icon: '🧑‍🌾',
     color: '#15803d',
     bgColor: 'rgba(34, 197, 94, 0.12)'
-  },
-  CONTACT_PERSON: {
-    label: 'Taristu kontakt',
-    icon: '📍',
-    color: '#7c3aed',
-    bgColor: 'rgba(139, 92, 246, 0.12)'
-  },
-  SUPPLIER: {
-    label: 'Tarnija',
-    icon: '📦',
-    color: '#0891b2',
-    bgColor: 'rgba(6, 182, 212, 0.12)'
-  },
-  BUYER: {
-    label: 'Viljaostja',
-    icon: '🌾',
-    color: '#ca8a04',
-    bgColor: 'rgba(234, 179, 8, 0.12)'
   },
   OTHER: {
     label: 'Muu seotud isik',
