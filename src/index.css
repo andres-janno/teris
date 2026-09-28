@@ -3437,6 +3437,11 @@ input[type="number"],
   flex-shrink: 0;
 }
 
+.register-table .size-cell .season-ha-val {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
 .register-table .size-cell.muted .season-ha-val {
   color: var(--text-muted);
 }
