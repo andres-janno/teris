@@ -1222,7 +1222,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         }}
         crops={crops}
         onOpenCrops={() => {
-          setIsFieldsRegisterOpen(false);
+          // Register jääb avatuks (pooleli muudatused säilivad); kultuuride register avaneb peale.
           setIsCropsModalOpen(true);
         }}
       />
@@ -1310,6 +1310,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         masterFields={masterFields}
         vehicles={vehicles}
         selectedYear={selectedYear}
+        stacked={isFieldsRegisterOpen}
       />
 
       <CropRegisterModal
@@ -1320,6 +1321,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onDeleteCrop={handleDeleteCrop}
         masterFields={operatorMasterFields}
         selectedYear={selectedYear}
+        stacked={isFieldsRegisterOpen}
       />
 
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />

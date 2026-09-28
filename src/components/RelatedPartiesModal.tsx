@@ -32,6 +32,8 @@ interface RelatedPartiesModalProps {
   masterFields?: MasterField[];
   vehicles?: Vehicle[];
   selectedYear?: number;
+  // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
+  stacked?: boolean;
 }
 
 const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'OTHER'];
@@ -44,7 +46,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   onDeleteParty,
   masterFields = [],
   vehicles = [],
-  selectedYear = 2026
+  selectedYear = 2026,
+  stacked = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
@@ -249,7 +252,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   if (!isOpen) return null;
 
   const editForm = isEditing && createPortal(
-    <div className="modal-backdrop sub-modal">
+    <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
     <form onSubmit={handleSaveForm} className="modal-content party-edit-modal animate-scale-up">
       <div className="modal-header">
         <div className="modal-title-group">
@@ -434,7 +437,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   );
 
   return (
-    <div className="modal-backdrop">
+    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
       <div className="modal-content glass-card field-register-modal animate-scale-up">
         {/* Header - Identical to FieldManagerModal */}
         <div className="modal-header">

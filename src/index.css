@@ -2289,6 +2289,15 @@ body {
   background: rgba(0, 0, 0, 0.5);
 }
 
+/* Teise akna pealt avatud register (nt seotud isikud põllu muutmisest) ja selle alamaken — kõige peal */
+.modal-backdrop.stacked {
+  z-index: 3000;
+}
+
+.modal-backdrop.sub-modal.stacked {
+  z-index: 3500;
+}
+
 .swap-modal-card {
   width: min(520px, 92vw);
 }

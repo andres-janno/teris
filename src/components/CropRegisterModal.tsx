@@ -24,6 +24,8 @@ interface CropRegisterModalProps {
   onDeleteCrop: (cropId: string) => void;
   masterFields?: MasterField[];
   selectedYear?: number;
+  // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
+  stacked?: boolean;
 }
 
 export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
@@ -33,7 +35,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   onSaveCrop,
   onDeleteCrop,
   masterFields = [],
-  selectedYear = 2026
+  selectedYear = 2026,
+  stacked = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
@@ -291,7 +294,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const targetCropForVariety = crops.find((c) => c.id === varietyTargetCropId);
 
   return (
-    <div className="modal-backdrop">
+    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
       <div className="modal-content glass-card field-register-modal animate-scale-up">
         {/* Header - Identical to Field & Parties modals */}
         <div className="modal-header">
@@ -380,7 +383,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
               glass-card, mille backdrop-filter piiraks muidu position: fixed tausta) */}
           {isEditingCrop && createPortal(
-            <div className="modal-backdrop sub-modal">
+            <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
             <form onSubmit={handleSaveCropForm} className="modal-content crop-edit-modal animate-scale-up">
               <div className="modal-header">
                 <div className="modal-title-group">
@@ -527,7 +530,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
           {/* 2. Sordi lisamine/muutmine eraldi aknas registri peal */}
           {isEditingVariety && targetCropForVariety && createPortal(
-            <div className="modal-backdrop sub-modal">
+            <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
             <form onSubmit={handleSaveVarietyForm} className="modal-content crop-edit-modal animate-scale-up" style={{ borderTop: '4px solid var(--blue-500)' }}>
               <div className="modal-header">
                 <div className="modal-title-group">
