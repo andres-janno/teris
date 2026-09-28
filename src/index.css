@@ -4272,6 +4272,18 @@ input[type="number"],
   color: var(--text-primary);
 }
 
+.season-form-fieldset {
+  border: none;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.season-form-fieldset:disabled .form-input {
+  opacity: 0.75;
+  cursor: default;
+}
+
 .season-form-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));

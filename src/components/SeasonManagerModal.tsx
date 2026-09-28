@@ -8,7 +8,6 @@ import {
   Plus,
   Edit2,
   Info,
-  Map as MapIcon,
   CalendarDays
 } from 'lucide-react';
 import type { FarmingSeason, SeasonStatus } from '../types/season';
@@ -49,7 +48,6 @@ interface SeasonManagerModalProps {
   seasons: FarmingSeason[];
   masterFields: MasterField[];
   selectedYear: number;
-  onSelectYear: (year: number) => void;
   onUpdateSeason: (season: FarmingSeason) => void;
   onCloseSeason: (year: number) => void;
   onReopenSeason: (year: number) => void;
@@ -62,7 +60,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   seasons,
   masterFields,
   selectedYear,
-  onSelectYear,
   onUpdateSeason,
   onCloseSeason,
   onReopenSeason,
@@ -94,6 +91,9 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   }, [isAdding]);
 
   if (!isOpen) return null;
+
+  // Lukus hooaega saab ainult vaadata: väljad keelatud, salvestusnuppe pole.
+  const editingLocked = editingYear !== null && !!seasons.find(s => s.year === editingYear)?.isLocked;
 
   // Hooajaregistris uusim üleval (ainus koht, kus hooajad on kahanevas järjekorras).
   const sortedSeasons = [...seasons].sort((a, b) => b.year - a.year);
@@ -222,8 +222,12 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
             <form className="modal-content season-edit-modal animate-scale-up" onSubmit={handleSaveForm}>
               <div className="modal-header">
                 <div className="modal-title-group">
-                  <Edit2 size={20} className="text-emerald" />
-                  <h3>{editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'}</h3>
+                  {editingLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
+                  <h3>
+                    {editingLocked
+                      ? `Lukus hooaeg: ${editingYear}`
+                      : editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'}
+                  </h3>
                 </div>
                 <button
                   type="button"
@@ -237,6 +241,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
               <div className="modal-body">
 
+              <fieldset className="season-form-fieldset" disabled={editingLocked}>
               <div className="form-grid season-form-grid">
                 <div className="form-group">
                   <label>Aasta (Hooaeg) *</label>
@@ -343,10 +348,11 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   />
                 </div>
               </div>
+              </fieldset>
 
               </div>
 
-              <div className="modal-footer">
+              {!editingLocked && <div className="modal-footer">
                 <button
                   type="button"
                   className="btn btn-ghost"
@@ -357,7 +363,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 <button type="submit" className="btn btn-primary">
                   {editingYear ? 'Salvesta muudatused' : 'Loo hooaeg'}
                 </button>
-              </div>
+              </div>}
             </form>
             </div>,
             document.body
@@ -441,21 +447,11 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         {formatPerHa(season.actualYieldTons, areaHa)}
                       </td>
                       <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
-                        {!isCurrent && (
-                          <button
-                            type="button"
-                            className="icon-btn-ghost"
-                            onClick={() => { onSelectYear(season.year); onClose(); }}
-                            title={`Vali ${season.year}. aasta aktiivseks kaardil`}
-                          >
-                            <MapIcon size={15} />
-                          </button>
-                        )}
                         <button
                           type="button"
                           className="icon-btn-ghost"
                           onClick={() => handleStartEdit(season)}
-                          title="Muuda hooaja parameetreid"
+                          title={season.isLocked ? 'Vaata hooaja andmeid' : 'Muuda hooaja parameetreid'}
                         >
                           <Edit2 size={15} />
                         </button>
@@ -464,18 +460,18 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                             type="button"
                             className="icon-btn-ghost"
                             onClick={() => onReopenSeason(season.year)}
-                            title={`Ava muudatusteks${season.closedAt ? ` (suletud ${formatDate(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''}`}
+                            title={`Hooaeg on lukus${season.closedAt ? ` (suletud ${formatDate(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''} – klõpsa avamiseks`}
                           >
-                            <Unlock size={15} />
+                            <Lock size={15} />
                           </button>
                         ) : (
                           <button
                             type="button"
-                            className="icon-btn-danger"
+                            className="icon-btn-ghost"
                             onClick={() => onCloseSeason(season.year)}
-                            title="Lõpeta koristus ja sulge hooaeg muudatusteks"
+                            title="Hooaeg on avatud – klõpsa lukustamiseks (lõpeta koristus ja sulge muudatusteks)"
                           >
-                            <Lock size={15} />
+                            <Unlock size={15} />
                           </button>
                         )}
                       </td>
@@ -486,7 +482,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
             </table>
           </div>
           <p className="seasons-table-hint">
-            Märkusega real (<Info size={11} />) näitab klõps märkust. Δ = saagiootuse muutus eelmise hooajaga võrreldes. Suletud hooaega saab muuta pärast avamist.
+            Märkusega real (<Info size={11} />) näitab klõps märkust. Δ = saagiootuse muutus eelmise hooajaga võrreldes. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>
         </div>
       </div>

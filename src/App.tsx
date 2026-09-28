@@ -1192,7 +1192,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         seasons={seasons}
         masterFields={masterFields}
         selectedYear={selectedYear}
-        onSelectYear={setSelectedYear}
         onUpdateSeason={handleUpdateSeason}
         onCloseSeason={handleCloseSeason}
         onReopenSeason={handleReopenSeason}
