@@ -951,7 +951,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       const name = existing?.name || p.name || `Põld ${num}`;
       const cadastralCode = existing?.cadastralCode || p.cadastralCode || undefined;
       const soilType = existing?.soilType || p.rawProperties?.soilType || undefined;
-      const drainageSystem = existing ? existing.drainageSystem : (p.rawProperties?.drainageSystem ?? true);
+      // Drenaaži PRIA fail ei sisalda: uuel põllul jääb see määramata (varem vaikimisi true).
+      const drainageSystem = existing ? existing.drainageSystem : (p.rawProperties?.drainageSystem ?? false);
       const notes = existing?.notes || p.notes || '';
       const operatorId = importOperatorId || existing?.operatorId;
       const otherYearsHistory = existing?.history.filter((h) => h.year !== importYear) || [];

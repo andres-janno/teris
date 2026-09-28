@@ -1308,7 +1308,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
                           <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
                           {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
                           {field.soilType && <span className="sub-tag soil-tag">🌱 {field.soilType}</span>}
-                          {field.drainageSystem && <span className="sub-tag drainage-tag">💧 Drenaaž</span>}
                         </div>
                       </td>
                       <td
