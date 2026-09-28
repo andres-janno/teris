@@ -173,7 +173,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     <div className="crop-left-info">
                       <div className="crop-text-block">
                         <span className="crop-name-label">{item.name}</span>
-                        <span className="crop-field-count">{item.count} tk &bull; {item.pct}%</span>
+                        <span className="crop-field-count">{item.count} {item.count === 1 ? 'põld' : 'põldu'} &bull; {item.pct}%</span>
                       </div>
                     </div>
 
