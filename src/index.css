@@ -3460,8 +3460,13 @@ input[type="number"],
   vertical-align: middle;
 }
 
-.parties-table .num {
-  text-align: right;
+/* Tegevused vasakule joondatud */
+.parties-table .actions-col {
+  text-align: left;
+}
+
+.parties-table .row-actions {
+  justify-content: flex-start;
 }
 
 .parties-table .muted {
@@ -3472,9 +3477,8 @@ input[type="number"],
   font-size: 0.8rem;
 }
 
-.parties-table .party-notes,
-.parties-table .party-address-cell {
-  max-width: 240px;
+.parties-table .party-notes {
+  max-width: 320px;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -3489,25 +3493,6 @@ input[type="number"],
 
 .parties-table .party-contact-link:hover {
   color: var(--emerald-600);
-}
-
-.parties-table .party-iban-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 2px 6px;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
-  color: var(--text-primary);
-  font: inherit;
-  cursor: pointer;
-}
-
-.parties-table .party-iban-btn code {
-  font-family: ui-monospace, monospace;
-  font-weight: 600;
-  font-size: 0.76rem;
 }
 
 .register-table .row-actions {

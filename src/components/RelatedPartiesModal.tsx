@@ -12,8 +12,6 @@ import {
   Phone,
   Mail,
   CreditCard,
-  Copy,
-  Check,
   AlertCircle,
   Link2
 } from 'lucide-react';
@@ -51,7 +49,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
   const [selectedTypeFilter, setSelectedTypeFilter] = useState<string>('all');
-  const [copiedIban, setCopiedIban] = useState<string | null>(null);
 
   // Form State for creating or editing
   const [isEditing, setIsEditing] = useState(false);
@@ -66,13 +63,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const [editAddress, setEditAddress] = useState('');
   const [editBankAccount, setEditBankAccount] = useState('');
   const [editNotes, setEditNotes] = useState('');
-
-  // Copy IBAN helper
-  const handleCopyIban = (iban: string) => {
-    navigator.clipboard.writeText(iban);
-    setCopiedIban(iban);
-    setTimeout(() => setCopiedIban(null), 2000);
-  };
 
   // Open Edit Form
   const startEdit = (party: RelatedParty) => {
@@ -443,7 +433,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           <div className="modal-title-group">
             <Users className="text-emerald" size={24} />
             <div>
-              <h3>Seotud Isikute Register</h3>
+              <h3>Seotud isikute register</h3>
               <p className="modal-subtitle">
                 Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid ({parties.length} isikut)
               </p>
@@ -473,9 +463,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               </div>
 
               <div className="reg-stat-pill tenure-owned">
-                <span className="lbl">🚜 Masinajuhte / Töötajaid:</span>
+                <span className="lbl">🚜 Töötajaid:</span>
                 <strong>{stats.driversCount} tk</strong>
-                <span className="sub-val text-blue">({vehicles.length} tehnikat masinapargis)</span>
               </div>
             </div>
           </div>
@@ -537,21 +526,14 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                 <tr>
                   <th>Nimi</th>
                   <th>Rollid</th>
-                  <th className="num">Seotud maa</th>
-                  <th>Masinad</th>
                   <th>Telefon</th>
                   <th>E-post</th>
-                  <th>Aadress</th>
-                  <th>IBAN</th>
                   <th className="actions-col">Tegevused</th>
                 </tr>
               </thead>
               <tbody>
                 {filteredParties.map((party) => {
                   const isCompany = party.type === 'LEGAL_ENTITY';
-                  const parcelsTitle = party.linkedParcels?.length
-                    ? party.linkedParcels.map((p) => `${p.fieldName}: ${p.cadastralCode} (${p.fieldAreaHa} ha)`).join('\n')
-                    : undefined;
 
                   return (
                     <tr key={party.id}>
@@ -593,27 +575,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           })}
                         </div>
                       </td>
-                      <td className="num" title={parcelsTitle}>
-                        {party.totalAreaHa > 0 ? (
-                          <>
-                            <strong>{party.totalAreaHa.toFixed(2)} ha</strong>
-                            <div className="cell-sub">{party.linkedParcels?.length} katastriüksust</div>
-                          </>
-                        ) : (
-                          <span className="muted">–</span>
-                        )}
-                      </td>
-                      <td>
-                        {party.assignedVehicles && party.assignedVehicles.length > 0 ? (
-                          <div className="field-sub-tags">
-                            {party.assignedVehicles.map((v) => (
-                              <span key={v.id} className="sub-tag soil-tag">🚜 {v.name}</span>
-                            ))}
-                          </div>
-                        ) : (
-                          <span className="muted">–</span>
-                        )}
-                      </td>
                       <td>
                         {party.phone ? (
                           <a href={`tel:${party.phone}`} className="party-contact-link" title="Helista">
@@ -630,28 +591,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                             <Mail size={12} className="text-blue" />
                             <span>{party.email}</span>
                           </a>
-                        ) : (
-                          <span className="muted">–</span>
-                        )}
-                      </td>
-                      <td className="party-address-cell" title={party.address || undefined}>
-                        {party.address || <span className="muted">–</span>}
-                      </td>
-                      <td>
-                        {party.bankAccount ? (
-                          <button
-                            type="button"
-                            className="party-iban-btn"
-                            onClick={() => handleCopyIban(party.bankAccount!)}
-                            title="Klõpsa IBAN kopeerimiseks lõikelauale"
-                          >
-                            <code>{party.bankAccount}</code>
-                            {copiedIban === party.bankAccount ? (
-                              <Check size={12} className="text-emerald" />
-                            ) : (
-                              <Copy size={11} className="text-muted" />
-                            )}
-                          </button>
                         ) : (
                           <span className="muted">–</span>
                         )}
