@@ -4465,12 +4465,27 @@ input[type="number"],
   color: var(--text-secondary);
 }
 
+.seasons-table tr.notes-open td {
+  border-bottom-color: transparent;
+}
+
+.seasons-table tr.season-notes-row td {
+  padding-top: 0;
+  white-space: normal;
+}
+
 .season-cell-notes {
-  margin-top: 4px;
-  max-width: 240px;
-  font-size: 0.74rem;
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 0.76rem;
   line-height: 1.4;
   color: var(--text-secondary);
+}
+
+.season-cell-notes svg {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .season-status-badge {

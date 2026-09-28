@@ -376,10 +376,11 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   const totals = fieldTotalsByYear.get(season.year);
                   const areaHa = totals?.areaHa ?? null;
 
+                  const rowClass = `${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''}`;
                   return (
+                    <React.Fragment key={season.year}>
                     <tr
-                      key={season.year}
-                      className={`${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''} ${season.notes ? 'has-notes' : ''}`}
+                      className={`${rowClass} ${season.notes ? 'has-notes' : ''} ${notesOpen && season.notes ? 'notes-open' : ''}`}
                       onClick={() => season.notes && toggleNotes(season.year)}
                       title={season.notes && !notesOpen ? 'Klõpsa märkuse nägemiseks' : undefined}
                     >
@@ -391,7 +392,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         {season.name !== `Hooaeg ${season.year}` && (
                           <div className="season-cell-name">{season.name}</div>
                         )}
-                        {notesOpen && season.notes && <div className="season-cell-notes">{season.notes}</div>}
                       </td>
                       <td>
                         <span
@@ -452,6 +452,17 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         )}
                       </td>
                     </tr>
+                    {notesOpen && season.notes && (
+                      <tr className={`${rowClass} has-notes season-notes-row`} onClick={() => toggleNotes(season.year)}>
+                        <td colSpan={12}>
+                          <div className="season-cell-notes">
+                            <Info size={13} />
+                            <span>{season.notes}</span>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                    </React.Fragment>
                   );
                 })}
               </tbody>
