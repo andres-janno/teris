@@ -4297,9 +4297,10 @@ input[type="number"],
 
 /* Season Manager Modal */
 .season-manager-modal {
-  max-width: 1180px;
-  width: 95%;
-  max-height: 88vh;
+  /* laius tabeli järgi, et kerimisribasid ei tekiks (kitsamal ekraanil kerib) */
+  width: max-content;
+  max-width: 98vw;
+  max-height: 96vh;
   display: flex;
   flex-direction: column;
 }
@@ -4575,6 +4576,9 @@ input[type="number"],
 }
 
 .seasons-table-hint {
+  /* ei laienda akent: murdub tabeli laiuses */
+  width: 0;
+  min-width: 100%;
   margin: 0;
   font-size: 0.72rem;
   color: var(--text-muted);
