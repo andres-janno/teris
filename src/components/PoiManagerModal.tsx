@@ -385,7 +385,18 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 </div>
 
                 <div className="form-group full-width">
-                  <label>Kirjeldus & Ligipääsujuhis (suurtele pritsidele/veokitele)</label>
+                  <label>Kirjeldus</label>
+                  <textarea
+                    rows={2}
+                    placeholder="nt tootmisbaas, masinakuur ja töökoda"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+
+                <div className="form-group full-width">
+                  <label>Ligipääsujuhis (suurtele pritsidele/veokitele)</label>
                   <textarea
                     rows={2}
                     placeholder="Ligipääs maanteelt 24198, kõvakattega ringtee..."
@@ -446,23 +457,23 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
                     <div className="poi-item-actions">
                       <button
-                        className="btn btn-secondary btn-sm"
+                        className="icon-btn-ghost"
                         onClick={() => handleStartEdit(p)}
                         title="Muuda andmeid või asukohta"
+                        aria-label="Muuda"
                       >
-                        <Edit2 size={13} />
-                        <span>Muuda</span>
+                        <Edit2 size={15} />
                       </button>
                       <button
-                        className="btn btn-secondary btn-sm"
+                        className="icon-btn-ghost"
                         onClick={() => {
                           onFocusPoi(p);
                           onClose();
                         }}
-                        title="Vaata kaardil"
+                        title="Näita kaardil"
+                        aria-label="Näita kaardil"
                       >
-                        <Crosshair size={13} />
-                        <span>Kaardile</span>
+                        <Crosshair size={15} />
                       </button>
                       <button
                         className="icon-btn-danger"
