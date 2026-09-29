@@ -6,6 +6,7 @@ import type { FieldCadastralLink } from './cadastre';
  * Ühe konkreetse põllumajandusaasta / hooaja kirje (suurus ja kultuur võivad igal aastal erineda)
  */
 export interface FieldYearlyRecord {
+  fieldSeasonId?: number;       // andmebaasi field_seasons.id (serverist; uuel kirjel puudub)
   year: number;                 // Hooaja aasta (nt 2026, 2025, 2024, 2027)
   areaHa: number;               // Põllu pindala sellel aastal (hektarites)
   eligibleAreaHa?: number | null; // PRIA toetusõiguslik pindala ha

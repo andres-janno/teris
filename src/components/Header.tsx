@@ -8,7 +8,9 @@ import {
   CalendarDays,
   Users,
   Sprout,
-  ListChecks
+  ListChecks,
+  Map as MapIcon,
+  SquareKanban
 } from 'lucide-react';
 import { AgroLogo } from './AgroLogo';
 import { UserMenu } from './UserMenu';
@@ -36,6 +38,8 @@ interface HeaderProps {
   onOpenParties?: () => void;
   onOpenCrops?: () => void;
   onOpenWorkRegister?: () => void;
+  mainView?: 'map' | 'works';
+  onChangeMainView?: (view: 'map' | 'works') => void;
   onOpenVehicles: () => void;
   onOpenPoi: () => void;
   onOpenAnalytics: () => void;
@@ -67,6 +71,8 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenParties,
   onOpenCrops,
   onOpenWorkRegister,
+  mainView = 'map',
+  onChangeMainView,
   onOpenVehicles,
   onOpenPoi,
   onOpenAnalytics,
@@ -85,6 +91,18 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <AgroLogo variant="horizontal" />
+        {onChangeMainView && (
+          <nav className="main-view-switch" aria-label="Põhivaade">
+            <button type="button" className={mainView === 'map' ? 'active' : ''} aria-current={mainView === 'map' ? 'page' : undefined} onClick={() => onChangeMainView('map')}>
+              <MapIcon size={15} />
+              <span>Kaart</span>
+            </button>
+            <button type="button" className={mainView === 'works' ? 'active' : ''} aria-current={mainView === 'works' ? 'page' : undefined} onClick={() => onChangeMainView('works')}>
+              <SquareKanban size={15} />
+              <span>Põllutööd</span>
+            </button>
+          </nav>
+        )}
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
         )}

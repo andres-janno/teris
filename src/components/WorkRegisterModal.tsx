@@ -174,7 +174,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
   if (!isOpen) return null;
 
-  const sortedCrops = [...crops].sort((a, b) => Number(b.isWinterCrop) - Number(a.isWinterCrop) || a.name.localeCompare(b.name, 'et'));
+  const sortedCrops = [...crops].sort((a, b) => Number(!!b.isWinterCrop) - Number(!!a.isWinterCrop) || a.name.localeCompare(b.name, 'et'));
   const missingWorkTypes = workTypes.filter((w) => w.isActive && !shownItems.some((it) => it.workTypeId === w.id));
   const selectedCrop = selectedCropId ? crops.find((c) => c.id === selectedCropId) : null;
 

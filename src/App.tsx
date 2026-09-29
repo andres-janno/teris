@@ -17,6 +17,7 @@ import { MapYearSelector } from './components/MapYearSelector';
 import { SeasonManagerModal } from './components/SeasonManagerModal';
 import { RelatedPartiesModal } from './components/RelatedPartiesModal';
 import { WorkRegisterModal } from './components/WorkRegisterModal';
+import { FieldWorksBoard } from './components/FieldWorksBoard';
 import { CropRegisterModal } from './components/CropRegisterModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { UsersAdminModal } from './components/UsersAdminModal';
@@ -342,6 +343,26 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [crops, setCrops] = useState<Crop[]>([]);
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
   const [isWorkRegisterOpen, setIsWorkRegisterOpen] = useState(false);
+
+  // Põhivaade: kaart või põllutööde tahvel (jäetakse meelde kasutaja kaupa)
+  const mainViewKey = `agrimap_main_view_${user.id}`;
+  const [mainView, setMainView] = useState<'map' | 'works'>(() => {
+    try {
+      return localStorage.getItem(mainViewKey) === 'works' ? 'works' : 'map';
+    } catch {
+      return 'map';
+    }
+  });
+  const changeMainView = (view: 'map' | 'works') => {
+    setMainView(view);
+    try {
+      localStorage.setItem(mainViewKey, view);
+    } catch {
+      // brauseri salvestus pole saadaval
+    }
+    // Leaflet peab peidetud konteineri suuruse uuesti arvutama
+    if (view === 'map') setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
+  };
 
   const handleSaveCrop = (cropToSave: Crop) => {
     setCrops((prev) => {
@@ -1157,6 +1178,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenParties={() => setIsPartiesModalOpen(true)}
         onOpenCrops={() => setIsCropsModalOpen(true)}
         onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
+        mainView={mainView}
+        onChangeMainView={changeMainView}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
         onOpenPoi={() => setIsPoiModalOpen(true)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
@@ -1169,8 +1192,23 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onLogout={onLogout}
       />
 
-      {/* Main Map View */}
-      <div className="main-content">
+      {mainView === 'works' && (
+        <FieldWorksBoard
+          year={selectedYear}
+          onSelectYear={setSelectedYear}
+          availableYears={availableYears}
+          seasons={seasons}
+          masterFields={operatorMasterFields}
+          crops={crops}
+          parties={parties}
+          vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
+          implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
+          onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
+        />
+      )}
+
+      {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
+      <div className="main-content" style={mainView === 'works' ? { display: 'none' } : undefined}>
         {dbError && (
           <div className="db-error-banner alert-box error" role="alert">
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.

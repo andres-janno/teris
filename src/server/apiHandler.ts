@@ -316,6 +316,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         operatorName: f.operator?.name ?? undefined,
         notes: f.notes,
         history: f.fieldSeasons.map((fs) => ({
+          fieldSeasonId: fs.id,
           year: fs.year,
           areaHa: fs.areaHa,
           eligibleAreaHa: fs.eligibleAreaHa,
