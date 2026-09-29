@@ -16,6 +16,7 @@ import { AnalyticsModal } from './components/AnalyticsModal';
 import { MapYearSelector } from './components/MapYearSelector';
 import { SeasonManagerModal } from './components/SeasonManagerModal';
 import { RelatedPartiesModal } from './components/RelatedPartiesModal';
+import { WorkRegisterModal } from './components/WorkRegisterModal';
 import { CropRegisterModal } from './components/CropRegisterModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { UsersAdminModal } from './components/UsersAdminModal';
@@ -340,6 +341,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Crops & Varieties Register state
   const [crops, setCrops] = useState<Crop[]>([]);
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
+  const [isWorkRegisterOpen, setIsWorkRegisterOpen] = useState(false);
 
   const handleSaveCrop = (cropToSave: Crop) => {
     setCrops((prev) => {
@@ -1154,6 +1156,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
         onOpenParties={() => setIsPartiesModalOpen(true)}
         onOpenCrops={() => setIsCropsModalOpen(true)}
+        onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
         onOpenPoi={() => setIsPoiModalOpen(true)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
@@ -1382,6 +1385,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         selectedYear={selectedYear}
         stacked={isFieldsRegisterOpen}
       />
+
+      <WorkRegisterModal isOpen={isWorkRegisterOpen} onClose={() => setIsWorkRegisterOpen(false)} crops={crops} />
 
       <CropRegisterModal
         isOpen={isCropsModalOpen}

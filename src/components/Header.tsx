@@ -7,7 +7,8 @@ import {
   BarChart3,
   CalendarDays,
   Users,
-  Sprout
+  Sprout,
+  ListChecks
 } from 'lucide-react';
 import { AgroLogo } from './AgroLogo';
 import { UserMenu } from './UserMenu';
@@ -34,6 +35,7 @@ interface HeaderProps {
   onOpenFieldsRegister: () => void;
   onOpenParties?: () => void;
   onOpenCrops?: () => void;
+  onOpenWorkRegister?: () => void;
   onOpenVehicles: () => void;
   onOpenPoi: () => void;
   onOpenAnalytics: () => void;
@@ -64,6 +66,7 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFieldsRegister,
   onOpenParties,
   onOpenCrops,
+  onOpenWorkRegister,
   onOpenVehicles,
   onOpenPoi,
   onOpenAnalytics,
@@ -174,6 +177,16 @@ export const Header: React.FC<HeaderProps> = ({
                 {cropsCount ?? 0} <span className="unit">kultuuri</span>
                 {varietiesCount ? ` (${varietiesCount} sorti)` : ''}
               </div>
+            </div>
+          </div>
+        )}
+
+        {onOpenWorkRegister && (
+          <div className="stat-pill clickable" onClick={onOpenWorkRegister} title="Ava tööde register: tööd, kultuuride mallid ja kulumaterjalid">
+            <ListChecks size={16} className="stat-icon text-emerald" />
+            <div>
+              <div className="stat-label">Tööde register</div>
+              <div className="stat-value">Tööd ja mallid</div>
             </div>
           </div>
         )}

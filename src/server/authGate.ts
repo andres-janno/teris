@@ -37,6 +37,7 @@ type DbUser = {
   passwordHash: string;
   isActive: boolean;
   isAdmin: boolean;
+  isFinanceManager: boolean;
   mustChangePassword: boolean;
 };
 export type SessionUser = DbUser;
@@ -46,6 +47,7 @@ const toAuthUser = (u: DbUser) => ({
   username: u.username,
   displayName: u.displayName ?? null,
   isAdmin: u.isAdmin,
+  isFinanceManager: u.isFinanceManager,
   mustChangePassword: u.mustChangePassword
 });
 

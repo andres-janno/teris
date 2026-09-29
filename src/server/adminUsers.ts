@@ -21,6 +21,7 @@ const USER_FIELDS = {
   passwordHash: true,
   isActive: true,
   isAdmin: true,
+  isFinanceManager: true,
   mustChangePassword: true,
   lastLoginAt: true,
   createdAt: true
@@ -34,6 +35,7 @@ type UserRow = {
   passwordHash: string;
   isActive: boolean;
   isAdmin: boolean;
+  isFinanceManager: boolean;
   mustChangePassword: boolean;
   lastLoginAt: Date | null;
   createdAt: Date;
@@ -105,6 +107,7 @@ export async function handleAdminUsers(
           displayName: cleanDisplayName(body?.displayName),
           passwordHash: password !== null ? await hashPassword(password) : '',
           isAdmin: body?.isAdmin === true,
+          isFinanceManager: body?.isFinanceManager === true,
           mustChangePassword: password !== null
         },
         select: USER_FIELDS
@@ -186,7 +189,7 @@ export async function handleAdminUsers(
   // PATCH
   const body = await parseBody(req, MAX_BODY_BYTES);
   const isObject = body !== null && typeof body === 'object';
-  const data: { displayName?: string | null; email?: string | null; isActive?: boolean; isAdmin?: boolean } = {};
+  const data: { displayName?: string | null; email?: string | null; isActive?: boolean; isAdmin?: boolean; isFinanceManager?: boolean } = {};
   if (isObject && 'displayName' in body) data.displayName = cleanDisplayName(body.displayName);
   if (isObject && 'email' in body) {
     // Tühi string tähendab "eemalda e-post" — mitte-tühi peab siiski kehtiv olema.
@@ -203,6 +206,7 @@ export async function handleAdminUsers(
   }
   if (typeof body?.isActive === 'boolean') data.isActive = body.isActive;
   if (typeof body?.isAdmin === 'boolean') data.isAdmin = body.isAdmin;
+  if (typeof body?.isFinanceManager === 'boolean') data.isFinanceManager = body.isFinanceManager;
 
   const problem = checkAdminChange(
     actor.id,

@@ -4,6 +4,7 @@ import { prisma, tsdb } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
+import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -191,6 +192,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
   try {
     if (await authGate(req, res, pathname, method, options)) return;
     if (await handleAdminUsers(req, res, pathname, method)) return;
+    if (await handleFieldWorks(req, res, pathname, method, url)) return;
 
     // 1. Health check / status
     if (pathname === '/api/status' && method === 'GET') {
@@ -404,6 +406,11 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
             const statusUpper = (h.status || 'not_started').toUpperCase();
             const season = await prisma.season.findUnique({ where: { year: Number(h.year) } });
             const seasonId = season?.id ?? null;
+            // Kultuuri muutus → põllutööde mall (vt fieldWorks.ts applyCropTemplate)
+            const previousSeason = await prisma.fieldSeason.findUnique({
+              where: { fieldId_year: { fieldId: upsertedField.id, year: Number(h.year) } },
+              select: { crop: true }
+            });
             const savedSeason = await prisma.fieldSeason.upsert({
               where: {
                 fieldId_year: {
@@ -453,6 +460,9 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
             // Hooaja katastriüksused: ainult kui klient need saatis (PRIA import ei saada → jäävad puutumata).
             if (Array.isArray(h.cadastralParcels)) {
               await syncSeasonCadastralParcels(savedSeason.id, h.cadastralParcels);
+            }
+            if (previousSeason?.crop !== savedSeason.crop) {
+              await applyCropTemplate(savedSeason.id);
             }
           }
         }

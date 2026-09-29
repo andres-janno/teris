@@ -197,6 +197,7 @@ model FieldSeason {
   cropEntity          Crop?        @relation(fields: [cropId], references: [id], onDelete: SetNull)
   varietyEntity       CropVariety? @relation(fields: [varietyId], references: [id], onDelete: SetNull)
   operations          FieldOperation[]
+  fieldWorks          FieldWork[]
 
   @@unique([fieldId, year])
   @@index([fieldId])
@@ -237,6 +238,7 @@ model RelatedParty {
   poiContacts      PointOfInterest[]
   fieldsAsOperator Field[]
   performedOperations FieldOperation[]
+  workEntries      WorkEntry[]
 
   @@map("related_parties")
 }
@@ -316,6 +318,8 @@ model Vehicle {
   assignedDriver      RelatedParty?    @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
   assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
+  workEntries         WorkEntry[]
+  workEntryLines      WorkEntryLine[]
 
   @@index([assignedDriverId])
   @@map("vehicles")
@@ -336,6 +340,8 @@ model Implement {
 
   vehicle          Vehicle?
   assignedDevice   TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
+  workEntries      WorkEntry[]
+  workEntryLines   WorkEntryLine[]
 
   @@map("implements")
 }
@@ -393,6 +399,7 @@ model Crop {
 
   varieties             CropVariety[]
   fieldSeasons          FieldSeason[]
+  workTemplate          WorkTemplate?
 
   @@map("crops")
 }
@@ -414,6 +421,8 @@ model CropVariety {
 
   crop                    Crop          @relation(fields: [cropId], references: [id], onDelete: Cascade)
   fieldSeasons            FieldSeason[]
+
+  materials     Material[]
 
   @@unique([cropId, name])
   @@index([cropId])
@@ -497,6 +506,208 @@ model FieldOperationProduct {
 }
 
 // ============================================================================
+// 9b. PÕLLUTÖÖDE REGISTER (PRIA põlluraamatust lahus)
+// Tööde register → mallid (üldmall + kultuuri mall) → hooaja põllu tööd →
+// kanded (tööpäevad, töötaja sisestab kogused) → read (finantsjuht lisab ühiku kulu).
+// ============================================================================
+
+enum WorkPhase {
+  PREPARATION // ettevalmistus
+  SOWING      // külv
+  CARE        // hooldus
+  HARVEST     // koristus
+}
+
+enum WorkRepeatMode {
+  ONCE     // ühekordne
+  UP_TO    // kuni maxRepeats korda
+  INTERVAL // iga intervalDays päeva järel
+}
+
+enum FieldWorkStatus {
+  PLANNED
+  IN_PROGRESS
+  DONE
+}
+
+enum WorkEntryLineKind {
+  LABOR     // tööaeg (h)
+  MACHINE   // masin (h)
+  IMPLEMENT // haakeriist (h, sama mis masinal)
+  FUEL      // kütus (l)
+  MATERIAL  // kulumaterjal
+  HARVEST   // saak (t) — tulu
+}
+
+enum FinanceStatus {
+  PENDING   // ootab finantsjuhti
+  CONFIRMED // kinnitatud
+  CHANGED   // kogust muudeti pärast kinnitamist — kinnita uuesti
+}
+
+enum MaterialCategory {
+  SEED
+  FERTILIZER
+  PLANT_PROTECTION
+  OTHER
+}
+
+model WorkType {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  phase         WorkPhase
+  repeatMode    WorkRepeatMode @default(ONCE)
+  maxRepeats    Int?
+  intervalDays  Int?
+  usesMaterials Boolean        @default(false) // kandes küsitakse kulumaterjale
+  sortOrder     Int            @default(0)
+  isActive      Boolean        @default(true)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+
+  templateItems WorkTemplateItem[]
+  fieldWorks    FieldWork[]
+
+  @@map("work_types")
+}
+
+model Material {
+  id            String           @id @default(cuid())
+  name          String
+  category      MaterialCategory
+  unit          String           // kg, l, t, tk
+  cropVarietyId String?          // seemne puhul sort
+  isActive      Boolean          @default(true)
+  notes         String?
+  createdAt     DateTime         @default(now())
+  updatedAt     DateTime         @updatedAt
+
+  cropVariety   CropVariety?     @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
+  entryLines    WorkEntryLine[]
+
+  @@unique([category, name])
+  @@index([cropVarietyId])
+  @@map("materials")
+}
+
+// cropId = null → üldmall (kasutatakse kultuuridel, millel oma malli pole)
+model WorkTemplate {
+  id        String   @id @default(cuid())
+  cropId    String?  @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  crop      Crop?              @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  items     WorkTemplateItem[]
+
+  @@map("work_templates")
+}
+
+model WorkTemplateItem {
+  id            String  @id @default(cuid())
+  templateId    String
+  workTypeId    String
+  sortOrder     Int     @default(0)
+  typicalTiming String? // nt "apr–mai", "eelmine sügis"
+  plannedCount  Int?    // korduva töö plaanitud kordi (tühi = töö liigi järgi)
+
+  template      WorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  workType      WorkType     @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([templateId, workTypeId])
+  @@index([workTypeId])
+  @@map("work_template_items")
+}
+
+// Hooaja põllu töö (kopeeritakse mallist kultuuri valimisel; lisatav/eemaldatav)
+model FieldWork {
+  id            String          @id @default(cuid())
+  fieldSeasonId Int
+  workTypeId    String
+  phase         WorkPhase
+  sortOrder     Int             @default(0)
+  plannedText   String?         // nt "okt 2026"
+  plannedCount  Int             @default(1)
+  status        FieldWorkStatus @default(PLANNED)
+  finishedAt    DateTime?
+  finishedById  String?
+  fromTemplate  Boolean         @default(false)
+  notes         String?
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  fieldSeason   FieldSeason     @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  workType      WorkType        @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
+  finishedBy    User?           @relation("FieldWorkFinishedBy", fields: [finishedById], references: [id], onDelete: SetNull)
+  entries       WorkEntry[]
+
+  @@unique([fieldSeasonId, workTypeId])
+  @@index([workTypeId])
+  @@map("field_works")
+}
+
+// Kanne = üks tööpäev/tööosa; töötaja sisestab ainult kogused
+model WorkEntry {
+  id                   String        @id @default(cuid())
+  fieldWorkId          String
+  date                 DateTime
+  workerId             String?       // seotud isik (roll Töötaja)
+  areaHa               Float?
+  occurrenceNo         Int?          // korduva töö mitmes kord
+  vehicleId            String?
+  implementId          String?
+  equipmentHours       Float?        // masina ja haakeriista töötunnid (sisestatakse korraga)
+  fuelLiters           Float?
+  laborHours           Float?
+  notes                String?
+  createdById          String?
+  financeStatus        FinanceStatus @default(PENDING)
+  financeConfirmedAt   DateTime?
+  financeConfirmedById String?
+  financeNotes         String?
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  fieldWork            FieldWork     @relation(fields: [fieldWorkId], references: [id], onDelete: Cascade)
+  worker               RelatedParty? @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  vehicle              Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  implement            Implement?    @relation(fields: [implementId], references: [id], onDelete: SetNull)
+  createdBy            User?         @relation("WorkEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  financeConfirmedBy   User?         @relation("WorkEntryConfirmedBy", fields: [financeConfirmedById], references: [id], onDelete: SetNull)
+  lines                WorkEntryLine[]
+
+  @@index([fieldWorkId])
+  @@index([financeStatus])
+  @@index([workerId])
+  @@map("work_entries")
+}
+
+// Kande finantsrida: kogus töötajalt, ühiku kulu/hind finantsjuhilt (ERP-st käsitsi)
+model WorkEntryLine {
+  id                String            @id @default(cuid())
+  entryId           String
+  kind              WorkEntryLineKind
+  vehicleId         String?
+  implementId       String?
+  materialId        String?
+  label             String            // nimi salvestamise hetkel
+  quantity          Float
+  unit              String
+  unitPrice         Decimal?          @db.Decimal(12, 4)
+  confirmedQuantity Float?            // kogus viimasel kinnitamisel (muudatuse näitamiseks)
+  sortOrder         Int               @default(0)
+
+  entry             WorkEntry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  vehicle           Vehicle?          @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  implement         Implement?        @relation(fields: [implementId], references: [id], onDelete: SetNull)
+  material          Material?         @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@index([entryId])
+  @@index([materialId])
+  @@map("work_entry_lines")
+}
+
+// ============================================================================
 // 10. KASUTAJAD JA SESSIOONID (rakenduse sisselogimine)
 // ============================================================================
 
@@ -509,12 +720,16 @@ model User {
   isActive     Boolean   @default(true)
   isAdmin            Boolean   @default(false)
   mustChangePassword Boolean   @default(false)
+  isFinanceManager   Boolean   @default(false) // finantsjuht: kannete ühiku kulud, kinnitamine, põldude tulemus
   lastLoginAt  DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
   sessions     Session[]
   passwordTokens PasswordToken[]
+  finishedFieldWorks  FieldWork[] @relation("FieldWorkFinishedBy")
+  createdWorkEntries  WorkEntry[] @relation("WorkEntryCreatedBy")
+  confirmedWorkEntries WorkEntry[] @relation("WorkEntryConfirmedBy")
 
   @@map("users")
 }

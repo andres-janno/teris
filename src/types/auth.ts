@@ -4,6 +4,7 @@ export interface AuthUser {
   username: string;
   displayName: string | null;
   isAdmin: boolean;
+  isFinanceManager: boolean; // finantsjuht: kannete finantsid ja põldude tulemus
   mustChangePassword: boolean;
 }
 
@@ -15,6 +16,7 @@ export interface AdminUser {
   hasPassword: boolean;
   isActive: boolean;
   isAdmin: boolean;
+  isFinanceManager: boolean;
   mustChangePassword: boolean;
   lastLoginAt: string | null;
   createdAt: string;

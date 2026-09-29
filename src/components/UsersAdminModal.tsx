@@ -27,6 +27,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
   const [password, setPassword] = useState('');
   const [repeat, setRepeat] = useState('');
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isFinanceManager, setIsFinanceManager] = useState(false);
   const [email, setEmail] = useState('');
   const [useInvite, setUseInvite] = useState(true);
   const [notice, setNotice] = useState<string | null>(null);
@@ -66,6 +67,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     setRepeat('');
     setDisplayName(next.kind === 'edit' ? next.user.displayName ?? '' : '');
     setIsAdmin(next.kind === 'edit' ? next.user.isAdmin : false);
+    setIsFinanceManager(next.kind === 'edit' ? next.user.isFinanceManager : false);
     setEmail(next.kind === 'edit' ? next.user.email ?? '' : '');
     setUseInvite(true);
     setNotice(null);
@@ -97,7 +99,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     }
     if (mode.kind === 'add') {
       void run(async () => {
-        const { emailSent } = await api.createUser({ username, displayName, email, isAdmin, ...(useInvite ? {} : { password }) });
+        const { emailSent } = await api.createUser({ username, displayName, email, isAdmin, isFinanceManager, ...(useInvite ? {} : { password }) });
         if (useInvite) {
           return emailSent
             ? `Kutse saadeti aadressile ${email}.`
@@ -107,7 +109,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     } else if (mode.kind === 'edit') {
       const self = mode.user.id === currentUserId;
       const trimmedEmail = email.trim();
-      const payload: { displayName: string; email?: string; isAdmin?: boolean } = { displayName };
+      const payload: { displayName: string; email?: string; isAdmin?: boolean; isFinanceManager?: boolean } = { displayName, isFinanceManager };
       // E-posti saadetakse ainult siis, kui see kasutaja praegusest väärtusest erineb —
       // muidu lükkab server tagasi (tühi string tähendaks „eemalda e-post").
       if (trimmedEmail !== (mode.user.email ?? '')) payload.email = trimmedEmail;
@@ -193,7 +195,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       <td>{u.displayName ?? '–'}</td>
                       <td>{u.username}</td>
                       <td>{u.email ?? '–'}</td>
-                      <td>{u.isAdmin ? 'Admin' : 'Kasutaja'}</td>
+                      <td>{[u.isAdmin ? 'Admin' : 'Kasutaja', u.isFinanceManager ? 'Finantsjuht' : null].filter(Boolean).join(' · ')}</td>
                       <td>
                         {u.isActive ? 'Aktiivne' : 'Keelatud'}
                         {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
@@ -306,6 +308,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                 <label className="users-admin-checkbox">
                   <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
                   <span>Admin (saab kasutajaid hallata)</span>
+                </label>
+              )}
+              {(mode.kind === 'add' || mode.kind === 'edit') && (
+                <label className="users-admin-checkbox">
+                  <input type="checkbox" checked={isFinanceManager} onChange={(e) => setIsFinanceManager(e.target.checked)} />
+                  <span>Finantsjuht (kannete ühiku kulud, kinnitamine, põldude tulemus)</span>
                 </label>
               )}
             </div>

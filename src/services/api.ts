@@ -8,6 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser } from '../types/auth';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -64,7 +65,7 @@ export const api = {
     return (await res.json()).users;
   },
 
-  async createUser(data: { username: string; displayName: string; email: string; isAdmin: boolean; password?: string }): Promise<{ user: AdminUser; emailSent: boolean }> {
+  async createUser(data: { username: string; displayName: string; email: string; isAdmin: boolean; isFinanceManager: boolean; password?: string }): Promise<{ user: AdminUser; emailSent: boolean }> {
     const res = await apiFetch('/api/admin/users', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -74,7 +75,7 @@ export const api = {
     return res.json();
   },
 
-  async updateUser(id: string, data: { displayName?: string; email?: string; isActive?: boolean; isAdmin?: boolean }): Promise<AdminUser> {
+  async updateUser(id: string, data: { displayName?: string; email?: string; isActive?: boolean; isAdmin?: boolean; isFinanceManager?: boolean }): Promise<AdminUser> {
     const res = await apiFetch(`/api/admin/users/${encodeURIComponent(id)}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
@@ -372,5 +373,96 @@ export const api = {
     const res = await apiFetch(`/api/field-operations?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`);
     if (!res.ok) throw new Error('Põllutööde laadimine ebaõnnestus');
     return res.json();
+  },
+
+  // --- Põllutööde register (PRIA põlluraamatust lahus) ---
+  async getWorkTypes(): Promise<WorkType[]> {
+    return jsonOrThrow(await apiFetch('/api/work-types'), 'Tööde registri laadimine ebaõnnestus');
+  },
+
+  async saveWorkType(w: Partial<WorkType>): Promise<WorkType> {
+    return jsonOrThrow(await apiFetch('/api/work-types', jsonInit('POST', w)), 'Töö salvestamine ebaõnnestus');
+  },
+
+  async deleteWorkType(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/work-types/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö kustutamine ebaõnnestus');
+  },
+
+  async getMaterials(): Promise<Material[]> {
+    return jsonOrThrow(await apiFetch('/api/materials'), 'Materjalide laadimine ebaõnnestus');
+  },
+
+  async saveMaterial(m: Partial<Material>): Promise<Material> {
+    return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', m)), 'Materjali salvestamine ebaõnnestus');
+  },
+
+  async deleteMaterial(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
+  },
+
+  async getWorkTemplates(): Promise<WorkTemplate[]> {
+    return jsonOrThrow(await apiFetch('/api/work-templates'), 'Mallide laadimine ebaõnnestus');
+  },
+
+  async saveWorkTemplate(cropId: string | null, items: WorkTemplateItem[]): Promise<void> {
+    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', { cropId, items })), 'Malli salvestamine ebaõnnestus');
+  },
+
+  async deleteWorkTemplate(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/work-templates/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Malli kustutamine ebaõnnestus');
+  },
+
+  async getFieldWorks(year: number): Promise<FieldWork[]> {
+    return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}`), 'Põllutööde laadimine ebaõnnestus');
+  },
+
+  async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; plannedText?: string | null; plannedCount?: number | null }): Promise<void> {
+    await jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
+  },
+
+  async applyWorkTemplate(fieldSeasonIds: number[]): Promise<void> {
+    await jsonOrThrow(await apiFetch('/api/field-works/apply-template', jsonInit('POST', { fieldSeasonIds })), 'Malli lisamine ebaõnnestus');
+  },
+
+  async updateFieldWork(id: string, data: { plannedText?: string | null; plannedCount?: number; notes?: string | null; status?: 'DONE' | 'REOPEN' }): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, jsonInit('PATCH', data)), 'Töö muutmine ebaõnnestus');
+  },
+
+  async deleteFieldWork(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö eemaldamine ebaõnnestus');
+  },
+
+  async saveWorkEntry(input: WorkEntryInput, id?: string): Promise<WorkEntry> {
+    return jsonOrThrow(
+      await apiFetch(id ? `/api/work-entries/${encodeURIComponent(id)}` : '/api/work-entries', jsonInit(id ? 'PUT' : 'POST', input)),
+      'Kande salvestamine ebaõnnestus'
+    );
+  },
+
+  async deleteWorkEntry(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/work-entries/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Kande kustutamine ebaõnnestus');
+  },
+
+  async getFinanceEntries(year: number, status?: FinanceStatus): Promise<FinanceEntry[]> {
+    const q = `year=${year}${status ? `&status=${status}` : ''}`;
+    return jsonOrThrow(await apiFetch(`/api/finance/entries?${q}`), 'Kannete laadimine ebaõnnestus');
+  },
+
+  async saveFinanceEntry(id: string, data: { prices: Record<string, number | null>; financeNotes?: string | null; confirm?: boolean }): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/finance/entries/${encodeURIComponent(id)}`, jsonInit('PATCH', data)), 'Finantsi salvestamine ebaõnnestus');
+  },
+
+  async getFieldResults(year: number): Promise<FieldResult[]> {
+    return jsonOrThrow(await apiFetch(`/api/finance/field-results?year=${year}`), 'Põldude tulemuse laadimine ebaõnnestus');
   }
 };
+
+function jsonInit(method: string, body: unknown): RequestInit {
+  return { method, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) };
+}
+
+// Veateade serverist (eesti keeles) visatakse edasi, et selle saaks kasutajale näidata.
+async function jsonOrThrow<T>(res: Response, fallback: string): Promise<T> {
+  if (!res.ok) throw new Error(await errorMessage(res, fallback));
+  return res.json();
+}
