@@ -404,8 +404,8 @@ export const api = {
     return jsonOrThrow(await apiFetch('/api/work-templates'), 'Mallide laadimine ebaõnnestus');
   },
 
-  async saveWorkTemplate(cropId: string | null, items: WorkTemplateItem[]): Promise<void> {
-    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', { cropId, items })), 'Malli salvestamine ebaõnnestus');
+  async saveWorkTemplate(cropId: string | null, items: WorkTemplateItem[], isWinter?: boolean): Promise<void> {
+    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', { cropId, items, isWinter })), 'Malli salvestamine ebaõnnestus');
   },
 
   async deleteWorkTemplate(id: string): Promise<void> {
@@ -430,6 +430,13 @@ export const api = {
 
   async deleteFieldWork(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö eemaldamine ebaõnnestus');
+  },
+
+  async clearFieldWorks(fieldSeasonId: number): Promise<{ success: boolean; count: number }> {
+    return jsonOrThrow(
+      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId })),
+      'Põllu tööde eemaldamine ebaõnnestus'
+    );
   },
 
   async saveWorkEntry(input: WorkEntryInput, id?: string): Promise<WorkEntry> {

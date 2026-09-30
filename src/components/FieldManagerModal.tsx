@@ -196,43 +196,59 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     };
   }, [fieldsForSelectedYear, selectedYear]);
 
+function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?: string | null; name: string }): number {
+  const numA = (a.num ?? '').trim();
+  const numB = (b.num ?? '').trim();
+  if (numA && numB) {
+    const cmp = numA.localeCompare(numB, 'et', { numeric: true, sensitivity: 'base' });
+    if (cmp !== 0) return cmp;
+  } else if (numA && !numB) {
+    return -1;
+  } else if (!numA && numB) {
+    return 1;
+  }
+  return a.name.localeCompare(b.name, 'et');
+}
+
   // Tabeli aastaveerud: valitud hooaeg −2 … +2 (alati 5 veergu), vanemad vasakul.
   const tableYears = useMemo(() => Array.from({ length: 5 }, (_, i) => selectedYear - 2 + i), [selectedYear]);
 
   // Tabelis on kõik (operaatori filtriga) põllud; otsing ja filtrid rakenduvad valitud aasta andmetele.
   const filteredFields = useMemo(() => {
-    return masterFields.filter((f) => {
-      const yearRecord = f.history.find(h => h.year === selectedYear);
-      const cropName = yearRecord ? yearRecord.crop : '';
-      const q = searchQuery.toLowerCase();
+    return masterFields
+      .filter((f) => {
+        const yearRecord = f.history.find(h => h.year === selectedYear);
+        const cropName = yearRecord ? yearRecord.crop : '';
+        const q = searchQuery.toLowerCase();
 
-      const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
-      const hasOwned = parcels.some(p => p.ownershipType === 'OWNED');
-      const hasRented = parcels.some(p => p.ownershipType === 'RENTED');
+        const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
+        const hasOwned = parcels.some(p => p.ownershipType === 'OWNED');
+        const hasRented = parcels.some(p => p.ownershipType === 'RENTED');
 
-      const matchesSearch =
-        f.name.toLowerCase().includes(q) ||
-        String(f.id).includes(q) ||
-        (f.num && f.num.toLowerCase().includes(q)) ||
-        f.fieldCode.toLowerCase().includes(q) ||
-        (f.cadastralCode && f.cadastralCode.toLowerCase().includes(q)) ||
-        parcels.some(p => p.cadastralCode.toLowerCase().includes(q) || p.ownerName.toLowerCase().includes(q)) ||
-        cropName.toLowerCase().includes(q);
+        const matchesSearch =
+          f.name.toLowerCase().includes(q) ||
+          String(f.id).includes(q) ||
+          (f.num && f.num.toLowerCase().includes(q)) ||
+          f.fieldCode.toLowerCase().includes(q) ||
+          (f.cadastralCode && f.cadastralCode.toLowerCase().includes(q)) ||
+          parcels.some(p => p.cadastralCode.toLowerCase().includes(q) || p.ownerName.toLowerCase().includes(q)) ||
+          cropName.toLowerCase().includes(q);
 
-      const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
+        const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
 
-      const matchesTenure =
-        tenureFilter === 'all' ||
-        (tenureFilter === 'OWNED' && hasOwned) ||
-        (tenureFilter === 'RENTED' && hasRented);
+        const matchesTenure =
+          tenureFilter === 'all' ||
+          (tenureFilter === 'OWNED' && hasOwned) ||
+          (tenureFilter === 'RENTED' && hasRented);
 
-      const matchesOperator = operatorFilterLocal === 'all' || f.operatorId === operatorFilterLocal;
+        const matchesOperator = operatorFilterLocal === 'all' || f.operatorId === operatorFilterLocal;
 
-      // Ainult põllud, millel on tabeli perioodis (valitud hooaeg ±2) vähemalt üks kirje.
-      const inPeriod = f.history.some((h) => tableYears.includes(h.year));
+        // Ainult põllud, millel on tabeli perioodis (valitud hooaeg ±2) vähemalt üks kirje.
+        const inPeriod = f.history.some((h) => tableYears.includes(h.year));
 
-      return inPeriod && matchesSearch && matchesCrop && matchesTenure && matchesOperator;
-    });
+        return inPeriod && matchesSearch && matchesCrop && matchesTenure && matchesOperator;
+      })
+      .sort(compareFieldNumbers);
   }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, operatorFilterLocal, tableYears]);
 
   // Registris olevate põldude operaatorid (operaatori filtri valikud).
@@ -590,7 +606,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
   const handleExportCsv = () => {
     const headers = ['ID', 'Põllu Nimi', 'Põllu Nr (PRIA)', 'PRIA Massiiv', 'Kataster', 'Operaator', `Pindala ${selectedYear} (ha)`, `Kultuur ${selectedYear}`, 'Aastate Ajalugu'];
-    const rows = masterFields.map((f) => {
+    const rows = [...masterFields].sort(compareFieldNumbers).map((f) => {
       const yearRec = f.history.find(h => h.year === selectedYear);
       const historyStr = f.history.map(h => `${h.year}: ${h.areaHa}ha (${h.crop})`).join('; ');
       return [

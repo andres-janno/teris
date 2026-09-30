@@ -64,6 +64,19 @@ export function sessionUserOf(req: IncomingMessage): SessionUser | null {
 let dummyHash: Promise<string> | null = null;
 const getDummyHash = () => (dummyHash ??= hashPassword('agro-map-dummy-password'));
 
+function isSecure(req: IncomingMessage): boolean {
+  if ((req.socket as any)?.encrypted) return true;
+  const proto = req.headers['x-forwarded-proto'];
+  if (typeof proto === 'string') {
+    return proto.split(',')[0].trim().toLowerCase() === 'https';
+  }
+  const host = req.headers.host || '';
+  if (host.startsWith('localhost') || host.startsWith('127.0.0.1') || host.startsWith('[::1]')) {
+    return false;
+  }
+  return process.env.NODE_ENV === 'production';
+}
+
 function clientIp(req: IncomingMessage): string {
   return clientIpFrom(req.headers['x-forwarded-for'], req.socket.remoteAddress);
 }
@@ -86,7 +99,7 @@ async function currentSession(req: IncomingMessage, res: ServerResponse): Promis
     });
     // Libisev aegumine peab jõudma ka küpsiseni, muidu brauser kustutab küpsise
     // 14 päeva pärast esimest sisselogimist, kuigi sessioon andmebaasis kehtib.
-    if (count > 0) res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000));
+    if (count > 0) res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
   }
   return { user: session.user, sessionId: session.id };
 }
@@ -141,7 +154,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
     }
   });
   await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
-  res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000));
+  res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
   json(res, { user: toAuthUser(user) });
 }
 
@@ -245,7 +258,7 @@ export async function authGate(
   if (pathname === '/api/auth/logout' && method === 'POST') {
     const token = sessionToken(req);
     if (token) await prisma.session.deleteMany({ where: { tokenHash: hashToken(token) } });
-    res.setHeader('Set-Cookie', clearSessionCookie());
+    res.setHeader('Set-Cookie', clearSessionCookie(isSecure(req)));
     json(res, { success: true });
     return true;
   }

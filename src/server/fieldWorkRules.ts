@@ -52,6 +52,19 @@ export function matchCrop<T extends { id: string; name: string }>(cropText: stri
   );
 }
 
+// Talivilja tuvastamine (nt "Talinisu allakülvita", "Taliraps", "Rukis" jne).
+export function isWinterCrop(cropText: string | null | undefined, crops?: { name: string; isWinterCrop?: boolean }[]): boolean {
+  if (isUndeterminedCrop(cropText)) return false;
+  if (crops && crops.length > 0) {
+    const matched = matchCrop(cropText, crops as any);
+    if (matched && typeof (matched as any).isWinterCrop === 'boolean') {
+      return (matched as any).isWinterCrop;
+    }
+  }
+  const text = String(cropText).toLowerCase().trim();
+  return text.startsWith('tali') || text.includes('talinisu') || text.includes('taliraps') || text.includes('talioder') || text.includes('rukis');
+}
+
 // Kande kogustest finantsread. Masin ja haakeriist saavad sama tundide arvu, aga eraldi read,
 // sest neile pannakse erinev ühiku kulu.
 export function buildEntryLines(q: EntryQuantities): LineDraft[] {

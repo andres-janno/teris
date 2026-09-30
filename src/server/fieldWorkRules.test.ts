@@ -1,10 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { buildEntryLines, canConfirm, matchCrop, mergeLines, summarizeLines, type StoredLine } from './fieldWorkRules';
+import { buildEntryLines, canConfirm, isWinterCrop, matchCrop, mergeLines, summarizeLines, type StoredLine } from './fieldWorkRules';
 
 const crops = [
-  { id: 'c1', name: 'Talinisu' },
-  { id: 'c2', name: 'Põlduba' },
-  { id: 'c3', name: 'Suvinisu' }
+  { id: 'c1', name: 'Talinisu', isWinterCrop: true },
+  { id: 'c2', name: 'Põlduba', isWinterCrop: false },
+  { id: 'c3', name: 'Suvinisu', isWinterCrop: false }
 ];
 
 describe('matchCrop', () => {
@@ -16,6 +16,17 @@ describe('matchCrop', () => {
     expect(matchCrop('Teadmata kultuur', crops)).toBeNull();
     expect(matchCrop('', crops)).toBeNull();
     expect(matchCrop('Kartul', crops)).toBeNull();
+  });
+});
+
+describe('isWinterCrop', () => {
+  it('tuvastab talivilja nimest või registrist', () => {
+    expect(isWinterCrop('Talinisu allakülvita', crops)).toBe(true);
+    expect(isWinterCrop('Taliraps', crops)).toBe(true);
+    expect(isWinterCrop('Rukis', crops)).toBe(true);
+    expect(isWinterCrop('Muu põlduba', crops)).toBe(false);
+    expect(isWinterCrop('Suvinisu', crops)).toBe(false);
+    expect(isWinterCrop('', crops)).toBe(false);
   });
 });
 

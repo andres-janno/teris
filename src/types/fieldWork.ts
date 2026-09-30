@@ -12,7 +12,7 @@ export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVE
 export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; bg: string }> = {
   PREPARATION: { label: 'Ettevalmistus', color: '#1d4ed8', bg: '#e8efff' },
   SOWING: { label: 'Külv', color: '#15803d', bg: '#dcf5e4' },
-  CARE: { label: 'Hooldus', color: '#7c3aed', bg: '#efe8fe' },
+  CARE: { label: 'Hooldamine', color: '#7c3aed', bg: '#efe8fe' },
   HARVEST: { label: 'Koristus', color: '#9a5b00', bg: '#fdf1d8' }
 };
 
@@ -58,7 +58,8 @@ export interface WorkTemplateItem {
 
 export interface WorkTemplate {
   id: string;
-  cropId: string | null; // null = üldmall
+  cropId: string | null; // null = üldmall (isWinter: false = kevadkülv, true = sügiskülv)
+  isWinter: boolean;
   items: WorkTemplateItem[];
 }
 
@@ -121,6 +122,8 @@ export interface FieldWork {
   fromTemplate: boolean;
   notes: string | null;
   entries: WorkEntry[];
+  carriedOverFromYear?: number | null;
+  carriedOverToYear?: number | null;
 }
 
 // Kande sisestus (töötaja: ainult kogused)

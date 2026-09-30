@@ -68,12 +68,14 @@ export function parseCookies(header?: string): Record<string, string> {
   return out;
 }
 
-export function sessionCookie(token: string, maxAgeSec: number): string {
-  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=${Math.floor(maxAgeSec)}`;
+export function sessionCookie(token: string, maxAgeSec: number, secure: boolean = true): string {
+  const sec = secure ? '; Secure' : '';
+  return `${SESSION_COOKIE}=${token}; Path=/; HttpOnly${sec}; SameSite=Lax; Max-Age=${Math.floor(maxAgeSec)}`;
 }
 
-export function clearSessionCookie(): string {
-  return `${SESSION_COOKIE}=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0`;
+export function clearSessionCookie(secure: boolean = true): string {
+  const sec = secure ? '; Secure' : '';
+  return `${SESSION_COOKIE}=; Path=/; HttpOnly${sec}; SameSite=Lax; Max-Age=0`;
 }
 
 export function createLoginLimiter(opts: { max: number; windowMs: number }, now: () => number = () => Date.now()) {

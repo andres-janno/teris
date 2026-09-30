@@ -8,6 +8,7 @@ import {
   buildEntryLines,
   canConfirm,
   isUndeterminedCrop,
+  isWinterCrop,
   matchCrop,
   mergeLines,
   summarizeLines,
@@ -60,22 +61,39 @@ const SEED_WORK_TYPES: { name: string; phase: Phase; repeatMode?: 'ONCE' | 'UP_T
   { name: 'Künd', phase: 'PREPARATION' },
   { name: 'Kivikoristus', phase: 'PREPARATION' },
   { name: 'Randaalimine', phase: 'PREPARATION' },
+  { name: 'Libistamine', phase: 'PREPARATION' },
+  { name: 'Rullimine', phase: 'PREPARATION' },
   { name: 'Umbrohutõrje (enne külvi)', phase: 'PREPARATION', usesMaterials: true },
   { name: 'Külv', phase: 'SOWING', usesMaterials: true },
-  { name: 'Umbrohutõrje', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
   { name: 'Väetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 3, usesMaterials: true },
+  { name: 'Taimekaitse', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 4, usesMaterials: true },
+  { name: 'Leheväetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
+  { name: 'Umbrohutõrje', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
   { name: 'Seire', phase: 'CARE', repeatMode: 'INTERVAL', intervalDays: 14 },
   { name: 'Koristus', phase: 'HARVEST' }
 ];
 
-const SEED_GENERAL_TEMPLATE: { name: string; timing: string; count?: number }[] = [
-  { name: 'Künd', timing: 'sügis / kevad' },
-  { name: 'Randaalimine', timing: 'enne külvi' },
-  { name: 'Külv', timing: 'külviaeg' },
-  { name: 'Umbrohutõrje', timing: 'pärast külvi', count: 2 },
-  { name: 'Väetamine', timing: 'kasvuajal', count: 2 },
-  { name: 'Seire', timing: 'kasvuajal' },
-  { name: 'Koristus', timing: 'valmimisel' }
+const SEED_SPRING_TEMPLATE: { name: string; timing: string; count?: number }[] = [
+  { name: 'Künd', timing: 'sügis / aprill' },
+  { name: 'Libistamine', timing: 'aprill' },
+  { name: 'Randaalimine', timing: 'aprill – mai' },
+  { name: 'Külv', timing: 'aprill – mai', count: 1 },
+  { name: 'Väetamine', timing: 'aprill – mai', count: 2 },
+  { name: 'Taimekaitse', timing: 'mai – juuni', count: 2 },
+  { name: 'Leheväetamine', timing: 'mai', count: 1 },
+  { name: 'Seire', timing: 'mai – juuni' },
+  { name: 'Koristus', timing: 'august – september', count: 1 }
+];
+
+const SEED_AUTUMN_TEMPLATE: { name: string; timing: string; count?: number }[] = [
+  { name: 'Künd', timing: 'juuli – august' },
+  { name: 'Randaalimine', timing: 'august' },
+  { name: 'Külv', timing: 'august – september', count: 1 },
+  { name: 'Taimekaitse', timing: 'sügis (sept–okt) / kevad (mai–juuni)', count: 3 },
+  { name: 'Väetamine', timing: 'sügis (aug–sept) / kevad (apr–mai)', count: 3 },
+  { name: 'Leheväetamine', timing: 'mai', count: 1 },
+  { name: 'Seire', timing: 'aprill – mai' },
+  { name: 'Koristus', timing: 'juuli – august', count: 1 }
 ];
 
 let seedChecked = false;
@@ -98,15 +116,38 @@ async function ensureSeed(): Promise<void> {
         });
         ids.set(w.name, created.id);
       }
-      const general = await tx.workTemplate.create({ data: { cropId: null } });
-      for (const [i, t] of SEED_GENERAL_TEMPLATE.entries()) {
+      const spring = await tx.workTemplate.create({ data: { cropId: null, isWinter: false } });
+      for (const [i, t] of SEED_SPRING_TEMPLATE.entries()) {
         await tx.workTemplateItem.create({
-          data: { templateId: general.id, workTypeId: ids.get(t.name)!, sortOrder: i, typicalTiming: t.timing, plannedCount: t.count ?? null }
+          data: { templateId: spring.id, workTypeId: ids.get(t.name)!, sortOrder: i, typicalTiming: t.timing, plannedCount: t.count ?? null }
+        });
+      }
+      const autumn = await tx.workTemplate.create({ data: { cropId: null, isWinter: true } });
+      for (const [i, t] of SEED_AUTUMN_TEMPLATE.entries()) {
+        await tx.workTemplateItem.create({
+          data: { templateId: autumn.id, workTypeId: ids.get(t.name)!, sortOrder: i, typicalTiming: t.timing, plannedCount: t.count ?? null }
         });
       }
     });
-  } else if (!(await prisma.workTemplate.findFirst({ where: { cropId: null } }))) {
-    await prisma.workTemplate.create({ data: { cropId: null } });
+  } else {
+    const types = await prisma.workType.findMany();
+    const ids = new Map(types.map((w) => [w.name, w.id]));
+    const ensureGeneral = async (isWinter: boolean, items: typeof SEED_SPRING_TEMPLATE) => {
+      let t = await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter } });
+      if (!t) {
+        t = await prisma.workTemplate.create({ data: { cropId: null, isWinter } });
+        for (const [i, it] of items.entries()) {
+          const typeId = ids.get(it.name);
+          if (typeId) {
+            await prisma.workTemplateItem.create({
+              data: { templateId: t.id, workTypeId: typeId, sortOrder: i, typicalTiming: it.timing, plannedCount: it.count ?? null }
+            });
+          }
+        }
+      }
+    };
+    await ensureGeneral(false, SEED_SPRING_TEMPLATE);
+    await ensureGeneral(true, SEED_AUTUMN_TEMPLATE);
   }
   seedChecked = true;
 }
@@ -122,24 +163,34 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
   await ensureSeed();
   const fs = await prisma.fieldSeason.findUnique({
     where: { id: fieldSeasonId },
-    select: { id: true, crop: true, season: { select: { isLocked: true } } }
+    select: { id: true, fieldId: true, year: true, crop: true, cropColor: true, areaHa: true, geometry: true, season: { select: { isLocked: true } } }
   });
   if (!fs || fs.season?.isLocked) return;
 
   await prisma.fieldWork.deleteMany({ where: { fieldSeasonId, fromTemplate: true, entries: { none: {} } } });
   if (isUndeterminedCrop(fs.crop)) return;
 
-  const crops = await prisma.crop.findMany({ select: { id: true, name: true } });
+  const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
   const crop = matchCrop(fs.crop, crops);
+  const isWinter = isWinterCrop(fs.crop, crops);
   const template =
-    (crop && (await prisma.workTemplate.findUnique({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } }))) ||
+    (crop && (await prisma.workTemplate.findFirst({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } }))) ||
+    (await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter }, include: { items: { include: { workType: true } } } })) ||
     (await prisma.workTemplate.findFirst({ where: { cropId: null }, include: { items: { include: { workType: true } } } }));
   if (!template) return;
+
+  // Kontrollime, kas fs.year on külviaasta või juba eelmisest aastast üle kantud koristusaasta
+  const prevFs = await prisma.fieldSeason.findUnique({
+    where: { fieldId_year: { fieldId: fs.fieldId, year: fs.year - 1 } }
+  });
+  const isCarriedFromPrev = !!(prevFs && isWinterCrop(prevFs.crop, crops));
 
   const existing = new Set((await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId));
   const items = [...template.items].sort((a, b) => a.sortOrder - b.sortOrder);
   for (const item of items) {
     if (existing.has(item.workTypeId) || !item.workType.isActive) continue;
+    // Kui see hooaeg on eelmisest sügisest üle kantud koristusaasta, tehti ettevalmistus ja külv juba eelmisel aastal
+    if (isCarriedFromPrev && (item.workType.phase === 'PREPARATION' || item.workType.phase === 'SOWING')) continue;
     await prisma.fieldWork.create({
       data: {
         fieldSeasonId,
@@ -151,6 +202,50 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
         fromTemplate: true
       }
     });
+  }
+
+  // Kui tegemist on taliviljaga külviaastal: kandub edasi järgmisse hooaega!
+  // Tagame, et järgmises hooajas (fs.year + 1) on sama talivili olemas ja tema hooldus/koristustööd lisatud.
+  if (isWinter && !isCarriedFromPrev) {
+    const nextYear = fs.year + 1;
+    let nextFs = await prisma.fieldSeason.findUnique({
+      where: { fieldId_year: { fieldId: fs.fieldId, year: nextYear } }
+    });
+    if (!nextFs) {
+      nextFs = await prisma.fieldSeason.create({
+        data: {
+          fieldId: fs.fieldId,
+          year: nextYear,
+          crop: fs.crop,
+          cropColor: fs.cropColor,
+          areaHa: fs.areaHa,
+          geometry: fs.geometry as any
+        }
+      });
+    } else if (isUndeterminedCrop(nextFs.crop)) {
+      nextFs = await prisma.fieldSeason.update({
+        where: { id: nextFs.id },
+        data: { crop: fs.crop, cropColor: fs.cropColor }
+      });
+    }
+    if (nextFs && (nextFs.crop === fs.crop || isWinterCrop(nextFs.crop, crops))) {
+      const nextExisting = new Set((await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFs.id }, select: { workTypeId: true } })).map((w) => w.workTypeId));
+      for (const item of items) {
+        if (nextExisting.has(item.workTypeId) || !item.workType.isActive) continue;
+        if (item.workType.phase !== 'CARE' && item.workType.phase !== 'HARVEST') continue;
+        await prisma.fieldWork.create({
+          data: {
+            fieldSeasonId: nextFs.id,
+            workTypeId: item.workTypeId,
+            phase: item.workType.phase,
+            sortOrder: item.sortOrder,
+            plannedText: item.typicalTiming,
+            plannedCount: item.plannedCount ?? item.workType.maxRepeats ?? 1,
+            fromTemplate: true
+          }
+        });
+      }
+    }
   }
 }
 
@@ -394,6 +489,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     json(res, rows.map((t) => ({
       id: t.id,
       cropId: t.cropId,
+      isWinter: t.isWinter,
       items: t.items.map((i) => ({ id: i.id, workTypeId: i.workTypeId, sortOrder: i.sortOrder, typicalTiming: i.typicalTiming, plannedCount: i.plannedCount }))
     })));
     return true;
@@ -402,10 +498,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     await ensureSeed();
     const b = await parseBody(req, MAX_BODY_BYTES);
     const cropId = text(b?.cropId, 64);
+    const isWinter = b?.isWinter === true;
     const items: any[] = Array.isArray(b?.items) ? b.items : [];
     const saved = await prisma.$transaction(async (tx) => {
       const template =
-        (await tx.workTemplate.findFirst({ where: { cropId } })) ?? (await tx.workTemplate.create({ data: { cropId } }));
+        (await tx.workTemplate.findFirst({ where: { cropId, isWinter } })) ?? (await tx.workTemplate.create({ data: { cropId, isWinter } }));
       await tx.workTemplateItem.deleteMany({ where: { templateId: template.id } });
       const seen = new Set<string>();
       for (const [i, it] of items.entries()) {
@@ -445,29 +542,188 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     const finance = canSeeFinance(req);
+    const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
+    const currentSeasons = await prisma.fieldSeason.findMany({
+      where: { year },
+      select: {
+        id: true,
+        fieldId: true,
+        crop: true,
+        cropColor: true,
+        cropVariety: true,
+        fieldWorks: { select: { id: true } }
+      }
+    });
+
+    const winterHarvestMap = new Map<number, any>();
+    for (const fs of currentSeasons) {
+      const prevSeason = await prisma.fieldSeason.findUnique({
+        where: { fieldId_year: { fieldId: fs.fieldId, year: year - 1 } },
+        include: {
+          fieldWorks: {
+            include: { workType: true, entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE } }
+          }
+        }
+      });
+      // Kui kultuur on määramata, aga eelmisel aastal oli talivili: päri kultuur eelmisest aastast
+      if (isUndeterminedCrop(fs.crop) && prevSeason && isWinterCrop(prevSeason.crop, crops)) {
+        await prisma.fieldSeason.update({
+          where: { id: fs.id },
+          data: {
+            crop: prevSeason.crop,
+            cropColor: prevSeason.cropColor,
+            cropVariety: prevSeason.cropVariety
+          }
+        });
+        fs.crop = prevSeason.crop;
+      }
+
+      // Üle hooaja kandumine kehtib käesoleva hooaja taliviljale (koristusaastal)
+      const currentIsWinter = isWinterCrop(fs.crop, crops);
+      if (currentIsWinter) {
+        winterHarvestMap.set(fs.id, prevSeason);
+        if (fs.fieldWorks.length === 0) {
+          await applyCropTemplate(fs.id);
+        }
+      }
+    }
+
     const rows = await prisma.fieldWork.findMany({
       where: { fieldSeason: { year } },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
-      include: { workType: true, entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE } }
+      include: {
+        workType: true,
+        fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } },
+        entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE }
+      }
     });
-    json(res, rows.map((w) => ({
-      id: w.id,
-      fieldSeasonId: w.fieldSeasonId,
-      workTypeId: w.workTypeId,
-      workTypeName: w.workType.name,
-      phase: w.phase,
-      repeatMode: w.workType.repeatMode,
-      intervalDays: w.workType.intervalDays,
-      usesMaterials: w.workType.usesMaterials,
-      sortOrder: w.sortOrder,
-      plannedText: w.plannedText,
-      plannedCount: w.plannedCount,
-      status: w.status,
-      finishedAt: isoDate(w.finishedAt),
-      fromTemplate: w.fromTemplate,
-      notes: w.notes,
-      entries: w.entries.map((e) => entryDto(e, finance))
-    })));
+
+    const worksDto: any[] = rows.map((w) => {
+      const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
+      const isCarriedFromPrev = winterHarvestMap.has(w.fieldSeasonId);
+      const carriedOverToYear = isWinter && !isCarriedFromPrev && (w.phase === 'CARE' || w.phase === 'HARVEST') ? year + 1 : null;
+      return {
+        id: w.id,
+        fieldSeasonId: w.fieldSeasonId,
+        workTypeId: w.workTypeId,
+        workTypeName: w.workType.name,
+        phase: w.phase,
+        repeatMode: w.workType.repeatMode,
+        intervalDays: w.workType.intervalDays,
+        usesMaterials: w.workType.usesMaterials,
+        sortOrder: w.sortOrder,
+        plannedText: w.plannedText,
+        plannedCount: w.plannedCount,
+        status: w.status,
+        finishedAt: isoDate(w.finishedAt),
+        fromTemplate: w.fromTemplate,
+        notes: w.notes,
+        entries: w.entries.map((e) => entryDto(e, finance)),
+        carriedOverFromYear: null as number | null,
+        carriedOverToYear
+      };
+    });
+
+    // Lisa iga talivilja põllu jaoks eelmise sügise ettevalmistus- ja külvitööd
+    for (const [fieldSeasonId, prevSeason] of winterHarvestMap.entries()) {
+      const prevWorks = prevSeason?.fieldWorks ?? [];
+      const prepWorks = prevWorks.filter((w: any) => w.phase === 'PREPARATION');
+      const sowWorks = prevWorks.filter((w: any) => w.phase === 'SOWING');
+
+      for (const w of prepWorks) {
+        worksDto.push({
+          id: `carried-prep-${w.id}`,
+          fieldSeasonId,
+          workTypeId: w.workTypeId,
+          workTypeName: w.workType.name,
+          phase: 'PREPARATION',
+          repeatMode: w.workType.repeatMode,
+          intervalDays: w.workType.intervalDays,
+          usesMaterials: w.workType.usesMaterials,
+          sortOrder: w.sortOrder,
+          plannedText: w.plannedText ?? `Sügis ${year - 1}`,
+          plannedCount: w.plannedCount,
+          status: w.status,
+          finishedAt: isoDate(w.finishedAt),
+          fromTemplate: true,
+          notes: w.notes,
+          entries: w.entries.map((e: any) => entryDto(e, finance)),
+          carriedOverFromYear: year - 1,
+          carriedOverToYear: null
+        });
+      }
+
+      if (prepWorks.length === 0) {
+        worksDto.push({
+          id: `carried-prep-virt-${fieldSeasonId}`,
+          fieldSeasonId,
+          workTypeId: 'virtual-prep',
+          workTypeName: 'Ettevalmistus',
+          phase: 'PREPARATION',
+          repeatMode: 'ONCE',
+          intervalDays: null,
+          usesMaterials: false,
+          sortOrder: -2,
+          plannedText: `Sügis ${year - 1}`,
+          plannedCount: 1,
+          status: 'DONE',
+          finishedAt: null,
+          fromTemplate: true,
+          notes: null,
+          entries: [],
+          carriedOverFromYear: year - 1,
+          carriedOverToYear: null
+        });
+      }
+
+      for (const w of sowWorks) {
+        worksDto.push({
+          id: `carried-sow-${w.id}`,
+          fieldSeasonId,
+          workTypeId: w.workTypeId,
+          workTypeName: w.workType.name,
+          phase: 'SOWING',
+          repeatMode: w.workType.repeatMode,
+          intervalDays: w.workType.intervalDays,
+          usesMaterials: w.workType.usesMaterials,
+          sortOrder: w.sortOrder,
+          plannedText: w.plannedText ?? `Sügis ${year - 1}`,
+          plannedCount: w.plannedCount,
+          status: w.status,
+          finishedAt: isoDate(w.finishedAt),
+          fromTemplate: true,
+          notes: w.notes,
+          entries: w.entries.map((e: any) => entryDto(e, finance)),
+          carriedOverFromYear: year - 1,
+          carriedOverToYear: null
+        });
+      }
+
+      if (sowWorks.length === 0) {
+        worksDto.push({
+          id: `carried-sow-virt-${fieldSeasonId}`,
+          fieldSeasonId,
+          workTypeId: 'virtual-sow',
+          workTypeName: 'Külv',
+          phase: 'SOWING',
+          repeatMode: 'ONCE',
+          intervalDays: null,
+          usesMaterials: false,
+          sortOrder: -1,
+          plannedText: `Külvatud sügisel ${year - 1}`,
+          plannedCount: 1,
+          status: 'DONE',
+          finishedAt: null,
+          fromTemplate: true,
+          notes: null,
+          entries: [],
+          carriedOverFromYear: year - 1,
+          carriedOverToYear: null
+        });
+      }
+    }
+
+    json(res, worksDto);
     return true;
   }
   if (pathname === '/api/field-works' && method === 'POST') {
@@ -503,6 +759,34 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const ids: number[] = (Array.isArray(b?.fieldSeasonIds) ? b.fieldSeasonIds : [b?.fieldSeasonId]).map(int).filter((n: number | null): n is number => n !== null);
     for (const id of ids) await applyCropTemplate(id);
     json(res, { success: true, count: ids.length });
+    return true;
+  }
+  if (pathname === '/api/field-works/clear' && method === 'POST') {
+    const b = await parseBody(req, MAX_BODY_BYTES);
+    const fieldSeasonId = int(b?.fieldSeasonId);
+    if (!fieldSeasonId) {
+      json(res, { error: 'Põlluhooaja ID on kohustuslik' }, 400);
+      return true;
+    }
+    const fs = await prisma.fieldSeason.findUnique({
+      where: { id: fieldSeasonId },
+      select: { season: { select: { isLocked: true } } }
+    });
+    if (fs?.season?.isLocked) {
+      json(res, { error: 'Lukus hooaja töid ei saa muuta' }, 403);
+      return true;
+    }
+    const entriesCount = await prisma.workEntry.count({
+      where: { fieldWork: { fieldSeasonId } }
+    });
+    if (entriesCount > 0) {
+      json(res, { error: `Põllu töödel on ${entriesCount} kannet. Töid ei saa eemaldada enne kannete kustutamist.` }, 409);
+      return true;
+    }
+    const { count } = await prisma.fieldWork.deleteMany({
+      where: { fieldSeasonId }
+    });
+    json(res, { success: true, count });
     return true;
   }
   if (pathname.startsWith('/api/field-works/') && method === 'PATCH') {
@@ -674,36 +958,55 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         json(res, { error: 'Hooaeg (year) on kohustuslik' }, 400);
         return true;
       }
+      const crops = await prisma.crop.findMany({ select: { name: true, isWinterCrop: true } });
       const seasons = await prisma.fieldSeason.findMany({
         where: { year },
         select: {
           id: true,
+          fieldId: true,
           crop: true,
           cropColor: true,
           areaHa: true,
           field: { select: { id: true, num: true, name: true } },
-          fieldWorks: { select: { entries: { select: { financeStatus: true, lines: { select: { kind: true, quantity: true, unitPrice: true } } } } } }
+          fieldWorks: { select: { phase: true, entries: { select: { financeStatus: true, lines: { select: { kind: true, quantity: true, unitPrice: true } } } } } }
         }
       });
-      json(res, seasons
-        .map((s) => {
-          const entries = s.fieldWorks.flatMap((w) => w.entries);
-          const confirmed = entries.filter((e) => e.financeStatus === 'CONFIRMED');
-          const result = summarizeLines(confirmed.flatMap((e) => e.lines.map((l) => ({ kind: l.kind, quantity: l.quantity, unitPrice: decimalToNumber(l.unitPrice) }))));
-          return {
-            fieldSeasonId: s.id,
-            fieldId: s.field.id,
-            fieldNum: s.field.num,
-            fieldName: s.field.name,
-            crop: s.crop,
-            cropColor: s.cropColor,
-            areaHa: s.areaHa,
-            entriesTotal: entries.length,
-            entriesConfirmed: confirmed.length,
-            ...result
-          };
-        })
-        .filter((r) => r.entriesTotal > 0));
+      const results = [];
+      for (const s of seasons) {
+        let entries = s.fieldWorks.flatMap((w) => w.entries);
+        const isWinter = isWinterCrop(s.crop, crops);
+        // Kui tegemist on taliviljaga, kaasame saagiaasta tulemusse ka eelmise sügise ettevalmistuse ja külvi kanded!
+        if (isWinter) {
+          const prevSeason = await prisma.fieldSeason.findUnique({
+            where: { fieldId_year: { fieldId: s.fieldId, year: year - 1 } },
+            select: {
+              fieldWorks: {
+                where: { phase: { in: ['PREPARATION', 'SOWING'] } },
+                select: { entries: { select: { financeStatus: true, lines: { select: { kind: true, quantity: true, unitPrice: true } } } } }
+              }
+            }
+          });
+          if (prevSeason) {
+            const prevEntries = prevSeason.fieldWorks.flatMap((w) => w.entries);
+            entries = [...prevEntries, ...entries];
+          }
+        }
+        const confirmed = entries.filter((e) => e.financeStatus === 'CONFIRMED');
+        const resObj = summarizeLines(confirmed.flatMap((e) => e.lines.map((l) => ({ kind: l.kind, quantity: l.quantity, unitPrice: decimalToNumber(l.unitPrice) }))));
+        results.push({
+          fieldSeasonId: s.id,
+          fieldId: s.field.id,
+          fieldNum: s.field.num,
+          fieldName: s.field.name,
+          crop: s.crop,
+          cropColor: s.cropColor,
+          areaHa: s.areaHa,
+          entriesTotal: entries.length,
+          entriesConfirmed: confirmed.length,
+          ...resObj
+        });
+      }
+      json(res, results.filter((r) => r.entriesTotal > 0));
       return true;
     }
     json(res, { error: 'Tundmatu finantspäring' }, 404);

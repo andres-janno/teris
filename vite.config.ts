@@ -28,5 +28,9 @@ export default defineConfig({
     host: '127.0.0.1',
     port: 5173,
     strictPort: true
+  },
+  // @ts-expect-error vitest config
+  test: {
+    exclude: ['**/node_modules/**', '**/dist/**', '**/cypress/**', '**/.{idea,git,cache,output,temp}/**', '**/._*']
   }
 });

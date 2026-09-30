@@ -8,7 +8,6 @@ import {
   CalendarDays,
   Users,
   Sprout,
-  ListChecks,
   Map as MapIcon,
   SquareKanban
 } from 'lucide-react';
@@ -37,7 +36,6 @@ interface HeaderProps {
   onOpenFieldsRegister: () => void;
   onOpenParties?: () => void;
   onOpenCrops?: () => void;
-  onOpenWorkRegister?: () => void;
   mainView?: 'map' | 'works';
   onChangeMainView?: (view: 'map' | 'works') => void;
   onOpenVehicles: () => void;
@@ -70,7 +68,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenFieldsRegister,
   onOpenParties,
   onOpenCrops,
-  onOpenWorkRegister,
   mainView = 'map',
   onChangeMainView,
   onOpenVehicles,
@@ -195,16 +192,6 @@ export const Header: React.FC<HeaderProps> = ({
                 {cropsCount ?? 0} <span className="unit">kultuuri</span>
                 {varietiesCount ? ` (${varietiesCount} sorti)` : ''}
               </div>
-            </div>
-          </div>
-        )}
-
-        {onOpenWorkRegister && (
-          <div className="stat-pill clickable" onClick={onOpenWorkRegister} title="Ava tööde register: tööd, kultuuride mallid ja kulumaterjalid">
-            <ListChecks size={16} className="stat-icon text-emerald" />
-            <div>
-              <div className="stat-label">Tööde register</div>
-              <div className="stat-value">Tööd ja mallid</div>
             </div>
           </div>
         )}

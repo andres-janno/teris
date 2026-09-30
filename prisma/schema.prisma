@@ -399,7 +399,7 @@ model Crop {
 
   varieties             CropVariety[]
   fieldSeasons          FieldSeason[]
-  workTemplate          WorkTemplate?
+  workTemplates         WorkTemplate[]
 
   @@map("crops")
 }
@@ -590,16 +590,18 @@ model Material {
   @@map("materials")
 }
 
-// cropId = null → üldmall (kasutatakse kultuuridel, millel oma malli pole)
+// cropId = null → üldmall (isWinter = false → Kevadkülvi mall, isWinter = true → Sügiskülvi mall)
 model WorkTemplate {
   id        String   @id @default(cuid())
-  cropId    String?  @unique
+  cropId    String?
+  isWinter  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   crop      Crop?              @relation(fields: [cropId], references: [id], onDelete: Cascade)
   items     WorkTemplateItem[]
 
+  @@unique([cropId, isWinter])
   @@map("work_templates")
 }
 

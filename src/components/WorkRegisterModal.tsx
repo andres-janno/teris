@@ -113,20 +113,31 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   };
 
   // --- Mallid ---
-  const [selectedCropId, setSelectedCropId] = useState<string | null>(null); // null = üldmall
+  type TemplateTarget = 'SPRING' | 'AUTUMN' | string;
+  const [selectedTarget, setSelectedTarget] = useState<TemplateTarget>('SPRING');
   const [draftItems, setDraftItems] = useState<WorkTemplateItem[] | null>(null);
   const [addWorkTypeId, setAddWorkTypeId] = useState('');
-  const generalTemplate = templates.find((t) => t.cropId === null) ?? null;
-  const ownTemplate = selectedCropId ? templates.find((t) => t.cropId === selectedCropId) ?? null : generalTemplate;
-  const usesGeneral = selectedCropId !== null && !ownTemplate;
+
+  const springTemplate = templates.find((t) => t.cropId === null && !t.isWinter) ?? null;
+  const autumnTemplate = templates.find((t) => t.cropId === null && t.isWinter) ?? null;
+
+  const isGeneralTarget = selectedTarget === 'SPRING' || selectedTarget === 'AUTUMN';
+  const selectedCrop = !isGeneralTarget ? crops.find((c) => c.id === selectedTarget) ?? null : null;
+  const selectedCropId = selectedCrop ? selectedCrop.id : null;
+  const targetIsWinter = selectedTarget === 'AUTUMN' || (selectedCrop?.isWinterCrop ?? false);
+
+  const fallbackGeneral = targetIsWinter ? autumnTemplate : springTemplate;
+  const ownTemplate = selectedCrop ? templates.find((t) => t.cropId === selectedCrop.id) ?? null : fallbackGeneral;
+  const usesGeneral = selectedCrop !== null && !templates.some((t) => t.cropId === selectedCrop.id);
+
   const workTypeById = useMemo(() => new Map(workTypes.map((w) => [w.id, w])), [workTypes]);
-  const shownItems = draftItems ?? (ownTemplate ?? generalTemplate)?.items ?? [];
+  const shownItems = draftItems ?? (ownTemplate ?? fallbackGeneral)?.items ?? [];
   const dirty = draftItems !== null;
 
-  const selectTemplate = (cropId: string | null) => {
+  const selectTarget = (target: TemplateTarget) => {
     if (dirty && !confirm('Mallis on salvestamata muudatusi. Kas loobud neist?')) return;
     setDraftItems(null);
-    setSelectedCropId(cropId);
+    setSelectedTarget(target);
   };
   const editItems = (fn: (items: WorkTemplateItem[]) => WorkTemplateItem[]) =>
     setDraftItems(fn([...shownItems]).map((it, i) => ({ ...it, sortOrder: i })));
@@ -158,16 +169,17 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   };
   const saveTemplate = () =>
     run(async () => {
-      await api.saveWorkTemplate(selectedCropId, shownItems);
+      await api.saveWorkTemplate(selectedCropId, shownItems, targetIsWinter);
       setDraftItems(null);
     });
-  const createOwnTemplate = () => setDraftItems([...(generalTemplate?.items ?? [])]);
+  const createOwnTemplate = () => setDraftItems([...(fallbackGeneral?.items ?? [])]);
   const deleteOwnTemplate = () => {
-    if (!ownTemplate || selectedCropId === null) return;
-    const crop = crops.find((c) => c.id === selectedCropId);
-    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${crop?.name ?? ''}" malli? Edaspidi kasutatakse sellel kultuuril üldmalli.`)) return;
+    if (!selectedCrop) return;
+    const existing = templates.find((t) => t.cropId === selectedCrop.id);
+    if (!existing) return;
+    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" malli? Edaspidi kasutatakse sellel kultuuril ${selectedCrop.isWinterCrop ? 'sügiskülvi' : 'kevadkülvi'} üldmalli.`)) return;
     void run(async () => {
-      await api.deleteWorkTemplate(ownTemplate.id);
+      await api.deleteWorkTemplate(existing.id);
       setDraftItems(null);
     });
   };
@@ -176,7 +188,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
   const sortedCrops = [...crops].sort((a, b) => Number(!!b.isWinterCrop) - Number(!!a.isWinterCrop) || a.name.localeCompare(b.name, 'et'));
   const missingWorkTypes = workTypes.filter((w) => w.isActive && !shownItems.some((it) => it.workTypeId === w.id));
-  const selectedCrop = selectedCropId ? crops.find((c) => c.id === selectedCropId) : null;
 
   return (
     <div className="modal-backdrop">
@@ -266,12 +277,28 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           {tab === 'templates' && (
             <div className="work-templates-layout">
               <div className="work-templates-list">
-                <button type="button" className={`work-template-crop general ${selectedCropId === null ? 'selected' : ''}`} onClick={() => selectTemplate(null)}>
+                <span className="work-templates-list-label">ÜLDMALLID</span>
+                <button
+                  type="button"
+                  className={`work-template-crop general ${selectedTarget === 'SPRING' ? 'selected' : ''}`}
+                  onClick={() => selectTarget('SPRING')}
+                >
                   <span className="work-template-crop-name">
-                    Üldmall
-                    <small>kõik kultuurid, kui oma malli pole</small>
+                    Kevadkülvi üldmall
+                    <small>suviviljad (kui oma malli pole)</small>
                   </span>
-                  <span className="work-template-crop-count">{generalTemplate?.items.length ?? 0} tööd</span>
+                  <span className="work-template-crop-count">{springTemplate?.items.length ?? 0} tööd</span>
+                </button>
+                <button
+                  type="button"
+                  className={`work-template-crop general ${selectedTarget === 'AUTUMN' ? 'selected' : ''}`}
+                  onClick={() => selectTarget('AUTUMN')}
+                >
+                  <span className="work-template-crop-name">
+                    Sügiskülvi üldmall
+                    <small>taliviljad (kui oma malli pole)</small>
+                  </span>
+                  <span className="work-template-crop-count">{autumnTemplate?.items.length ?? 0} tööd</span>
                 </button>
                 <span className="work-templates-list-label">KULTUURID</span>
                 {sortedCrops.map((c) => {
@@ -280,12 +307,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                     <button
                       key={c.id}
                       type="button"
-                      className={`work-template-crop ${selectedCropId === c.id ? 'selected' : ''}`}
+                      className={`work-template-crop ${selectedTarget === c.id ? 'selected' : ''}`}
                       style={{ '--crop-color': c.color } as React.CSSProperties}
-                      onClick={() => selectTemplate(c.id)}
+                      onClick={() => selectTarget(c.id)}
                     >
-                      <span className="work-template-crop-name">{c.name}</span>
-                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : 'üldmall'}</span>
+                      <span className="work-template-crop-name">
+                        {c.name}
+                        <small>{c.isWinterCrop ? 'talivili · sügiskülv' : 'suvivili · kevadkülv'}</small>
+                      </span>
+                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : c.isWinterCrop ? 'sügiskülvi mall' : 'kevadkülvi mall'}</span>
                     </button>
                   );
                 })}
@@ -294,11 +324,19 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
               <div className="work-template-editor">
                 <div className="work-template-head">
                   <div>
-                    <h4>{selectedCrop ? `${selectedCrop.name} – tööde mall` : 'Üldmall'}</h4>
+                    <h4>
+                      {selectedCrop
+                        ? `${selectedCrop.name} – tööde mall`
+                        : selectedTarget === 'AUTUMN'
+                          ? 'Sügiskülvi üldmall'
+                          : 'Kevadkülvi üldmall'}
+                    </h4>
                     <p className="modal-subtitle">
                       {selectedCrop
                         ? selectedCrop.isWinterCrop ? 'Talivili · ettevalmistus ja külv hooajale eelneval sügisel' : 'Suvivili · kevadkülv'
-                        : 'Kasutatakse kultuuridel, millel oma malli pole'}
+                        : selectedTarget === 'AUTUMN'
+                          ? 'Taliviljad · kasutatakse kultuuridel, millel oma malli pole · ettevalmistus ja külv hooajale eelneval sügisel'
+                          : 'Suviviljad · kasutatakse kultuuridel, millel oma malli pole · ettevalmistus ja külv kevadel'}
                       {' · '}Malli muudatus mõjutab ainult uusi hooaegu.
                     </p>
                   </div>
@@ -318,8 +356,12 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                 {usesGeneral && !dirty && (
                   <div className="work-template-notice">
                     <AlertCircle size={16} />
-                    <span>Sellel kultuuril oma malli pole – põllule lisatakse üldmalli tööd. Allpool on üldmall.</span>
-                    <button className="btn btn-secondary btn-sm" onClick={createOwnTemplate}>Loo oma mall üldmalli põhjal</button>
+                    <span>
+                      Sellel kultuuril oma malli pole – põllule lisatakse <strong>{selectedCrop?.isWinterCrop ? 'sügiskülvi' : 'kevadkülvi'} üldmalli</strong> tööd. Allpool on {selectedCrop?.isWinterCrop ? 'sügiskülvi' : 'kevadkülvi'} üldmall.
+                    </span>
+                    <button className="btn btn-secondary btn-sm" onClick={createOwnTemplate}>
+                      Loo oma mall {selectedCrop?.isWinterCrop ? 'sügiskülvi' : 'kevadkülvi'} üldmalli põhjal
+                    </button>
                   </div>
                 )}
 
@@ -333,14 +375,14 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                       </span>
                       {rows.length === 0 && <div className="work-template-empty">Selles faasis töid pole</div>}
                       {rows.map(({ it, index, w }, i) => (
-                        <div key={it.workTypeId} className="work-template-item">
+                        <div key={it.workTypeId} className={`work-template-item ${readOnly ? 'readonly' : ''}`}>
                           {!readOnly && (
                             <span className="work-template-move">
                               <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta üles" disabled={i === 0} onClick={() => moveItem(index, -1)}><ChevronUp size={14} /></button>
                               <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
                             </span>
                           )}
-                          <span className="work-template-name">{w?.name}</span>
+                          <span className="work-template-name" title={w?.name}>{w?.name}</span>
                           <input
                             className="form-input"
                             placeholder="Tavapärane aeg, nt apr–mai"

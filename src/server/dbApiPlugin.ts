@@ -14,6 +14,11 @@ export function dbApiPlugin(): Plugin {
   return {
     name: 'db-api-plugin',
     configureServer(server) {
+      server.watcher.on('change', async (file) => {
+        if (file.includes('/src/server/')) {
+          await server.restart();
+        }
+      });
       server.middlewares.use(async (req, res, next) => {
         if (!req.url?.startsWith('/api')) return next();
         await handleApiRequest(req, res, DEV_OPTIONS);

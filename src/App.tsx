@@ -1177,7 +1177,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
         onOpenParties={() => setIsPartiesModalOpen(true)}
         onOpenCrops={() => setIsCropsModalOpen(true)}
-        onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
         mainView={mainView}
         onChangeMainView={changeMainView}
         onOpenVehicles={() => setIsVehiclesOpen(true)}
@@ -1204,6 +1203,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
           implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
           onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
+          canManageFinance={user.isAdmin || user.isFinanceManager}
         />
       )}
 
