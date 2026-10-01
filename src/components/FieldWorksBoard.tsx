@@ -1,7 +1,7 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud, veerud = Ettevalmistus → Külvatud → Hooldamine → Koristatud.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, Plus, Lock, Check, X, Edit2, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Snowflake, Sun, Crosshair } from 'lucide-react';
+import { Search, Plus, Lock, Check, X, Edit2, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
 import { matchCrop, isWinterCrop } from '../services/cropMatch';
 import { getCropColor } from '../services/shpParser';
@@ -10,7 +10,7 @@ import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
-import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType } from '../types/fieldWork';
+import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType, type TemplateVariant } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
@@ -233,7 +233,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         return {
           fieldSeasonId: rec.fieldSeasonId,
           field,
-          rec: { ...rec, crop: cropName, cropColor: cropColor ?? undefined },
+          rec: { ...rec, crop: cropName, cropColor: cropColor ?? rec.cropColor ?? '#eab308' },
           crop,
           cropColor,
           undetermined,
@@ -337,20 +337,33 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     ? allRows.find((r) => r.fieldSeasonId === selected.fieldSeasonId || r.nextRec?.fieldSeasonId === selected.fieldSeasonId) ?? null
     : null;
 
+  const getVariantKey = (row: Row): TemplateVariant => {
+    if (!row.isWinter) {
+      return row.nextIsWinter ? 'SPRING_TO_WINTER' : 'SPRING_TO_SPRING';
+    }
+    return row.nextIsWinter ? 'WINTER_TO_WINTER' : 'WINTER_TO_SPRING';
+  };
+
   const templateIdsFor = (row: Row) => {
+    const vKey = getVariantKey(row);
     const t =
       (row.crop && templates.find((x) => x.cropId === row.crop!.id)) ||
+      templates.find((x) => x.variant === vKey) ||
       templates.find((x) => x.cropId === null && x.isWinter === row.isWinter) ||
       templates.find((x) => x.cropId === null);
-    return new Set(t?.items.map((i) => i.workTypeId) ?? []);
+    const items = t?.items.filter((i) => (i.section ?? 'CURRENT') === 'CURRENT') ?? t?.items ?? [];
+    return new Set(items.map((i) => i.workTypeId));
   };
 
   const templateIdsForNext = (row: Row) => {
+    const vKey = getVariantKey(row);
     const t =
+      templates.find((x) => x.variant === vKey) ||
       (row.nextCrop && templates.find((x) => x.cropId === row.nextCrop!.id)) ||
       templates.find((x) => x.cropId === null && x.isWinter === true) ||
       templates.find((x) => x.cropId === null);
-    return new Set(t?.items.map((i) => i.workTypeId) ?? []);
+    const items = t?.items.filter((i) => i.section === 'NEXT_AUTUMN') ?? t?.items ?? [];
+    return new Set(items.map((i) => i.workTypeId));
   };
 
   const fieldLabel = (row: Row) =>
@@ -604,8 +617,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           {groups.map((group) => {
             const isCollapsed = !!collapsedGroups[group.key];
             const groupWithoutWorks = group.rows.filter((r) => r.works.length === 0 && !r.undetermined);
-            const groupSownCount = group.rows.filter((r) => sownDone(r)).length;
-            const groupHarvestCount = group.rows.filter((r) => r.works.some((w) => w.phase === 'HARVEST' && w.status === 'DONE')).length;
 
             return (
               <React.Fragment key={group.key}>
@@ -627,36 +638,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     <span className="fw-group-title">{group.title}</span>
                   </div>
 
-                  <div className="fw-group-meta">
-                    <span className="fw-group-stat">
-                      <strong>{group.rows.length}</strong> {group.rows.length === 1 ? 'põld' : 'põldu'}
-                    </span>
-                    <span className="fw-group-stat-sep">·</span>
-                    <span className="fw-group-stat">
-                      <strong>{fmtHa(group.totalHa)}</strong> ha
-                    </span>
-                    {group.key === 'winter' && (
-                      <>
-                        <span className="fw-group-stat-sep">·</span>
-                        <span className="fw-group-stat" title="Selle sügise külv tehtud">
-                          <Sprout size={13} className="text-emerald" /> Sügiskülv: <strong>{group.rows.filter((r) => nextSownDone(r)).length}/{group.rows.length}</strong>
-                        </span>
-                        <span className="fw-group-stat-sep">·</span>
-                        <span className="fw-group-stat" title="Käesoleva aasta saak koristatud">
-                          <Wheat size={13} className="text-amber" /> Koristatud: <strong>{groupHarvestCount}/{group.rows.length}</strong>
-                        </span>
-                      </>
-                    )}
-                    {group.key === 'spring' && (
-                      <>
-                        <span className="fw-group-stat-sep">·</span>
-                        <span className="fw-group-stat" title="Käesoleva aasta saak koristatud">
-                          <Wheat size={13} className="text-amber" /> Koristatud: <strong>{groupHarvestCount}/{group.rows.length}</strong>
-                        </span>
-                      </>
-                    )}
-
-                    {!locked && groupWithoutWorks.length > 0 && (
+                  {!locked && groupWithoutWorks.length > 0 && (
+                    <div className="fw-group-meta">
                       <button
                         type="button"
                         className="btn btn-secondary btn-xs fw-group-action-btn"
@@ -670,8 +653,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <ListChecks size={12} />
                         <span>Lisa mall ({groupWithoutWorks.length})</span>
                       </button>
-                    )}
-                  </div>
+                    </div>
+                  )}
                 </div>
 
                 {!isCollapsed &&

@@ -8,7 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, TemplateVariant, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -404,8 +404,16 @@ export const api = {
     return jsonOrThrow(await apiFetch('/api/work-templates'), 'Mallide laadimine ebaõnnestus');
   },
 
-  async saveWorkTemplate(cropId: string | null, items: WorkTemplateItem[], isWinter?: boolean): Promise<void> {
-    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', { cropId, items, isWinter })), 'Malli salvestamine ebaõnnestus');
+  async saveWorkTemplate(
+    targetOrCropId: string | null | { cropId?: string | null; variant?: TemplateVariant; isWinter?: boolean },
+    items: WorkTemplateItem[],
+    isWinter?: boolean
+  ): Promise<void> {
+    const payload =
+      typeof targetOrCropId === 'object' && targetOrCropId !== null && 'variant' in targetOrCropId
+        ? { ...targetOrCropId, items }
+        : { cropId: typeof targetOrCropId === 'string' || targetOrCropId === null ? targetOrCropId : targetOrCropId?.cropId ?? null, items, isWinter };
+    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', payload)), 'Malli salvestamine ebaõnnestus');
   },
 
   async deleteWorkTemplate(id: string): Promise<void> {

@@ -1,9 +1,12 @@
 // src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, mallid, hooaja tööd, kanded, finantsid.
 // PRIA põlluraamatust (field_operations) täiesti lahus.
 import type { IncomingMessage, ServerResponse } from 'http';
+import fs from 'fs/promises';
+import path from 'path';
 import { prisma } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
+import type { TemplateVariant } from '../types/fieldWork.ts';
 import {
   buildEntryLines,
   canConfirm,
@@ -68,10 +71,90 @@ const SEED_WORK_TYPES: { name: string; phase: Phase; repeatMode?: 'ONCE' | 'UP_T
   { name: 'Väetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 3, usesMaterials: true },
   { name: 'Taimekaitse', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 4, usesMaterials: true },
   { name: 'Leheväetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
-  { name: 'Umbrohutõrje', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
-  { name: 'Seire', phase: 'CARE', repeatMode: 'INTERVAL', intervalDays: 14 },
   { name: 'Koristus', phase: 'HARVEST' }
 ];
+
+const TEMPLATES_FILE = path.resolve(process.cwd(), 'prisma', 'work-templates.json');
+
+interface SeedVariantItem {
+  name: string;
+  timing: string;
+  count?: number;
+  section: 'CURRENT' | 'NEXT_AUTUMN';
+}
+
+const SEED_VARIANT_TEMPLATES: Record<TemplateVariant, SeedVariantItem[]> = {
+  // 1. Suvivili -> Talivili: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus, sügiskülv
+  SPRING_TO_WINTER: [
+    { name: 'Libistamine', timing: 'aprill', section: 'CURRENT' },
+    { name: 'Randaalimine', timing: 'aprill – mai', section: 'CURRENT' },
+    { name: 'Külv', timing: 'aprill – mai', count: 1, section: 'CURRENT' },
+    { name: 'Väetamine', timing: 'aprill – mai', count: 2, section: 'CURRENT' },
+    { name: 'Taimekaitse', timing: 'mai – juuni', count: 2, section: 'CURRENT' },
+    { name: 'Leheväetamine', timing: 'mai', count: 1, section: 'CURRENT' },
+    { name: 'Seire', timing: 'mai – juuni', section: 'CURRENT' },
+    { name: 'Koristus', timing: 'august – september', count: 1, section: 'CURRENT' },
+    { name: 'Kõrrekoorimine', timing: 'august', section: 'NEXT_AUTUMN' },
+    { name: 'Künd', timing: 'august – september', section: 'NEXT_AUTUMN' },
+    { name: 'Randaalimine', timing: 'september', section: 'NEXT_AUTUMN' },
+    { name: 'Külv', timing: 'august – september', count: 1, section: 'NEXT_AUTUMN' }
+  ],
+
+  // 2. Suvivili -> Suvivili: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus
+  SPRING_TO_SPRING: [
+    { name: 'Libistamine', timing: 'aprill', section: 'CURRENT' },
+    { name: 'Randaalimine', timing: 'aprill – mai', section: 'CURRENT' },
+    { name: 'Külv', timing: 'aprill – mai', count: 1, section: 'CURRENT' },
+    { name: 'Väetamine', timing: 'aprill – mai', count: 2, section: 'CURRENT' },
+    { name: 'Taimekaitse', timing: 'mai – juuni', count: 2, section: 'CURRENT' },
+    { name: 'Leheväetamine', timing: 'mai', count: 1, section: 'CURRENT' },
+    { name: 'Seire', timing: 'mai – juuni', section: 'CURRENT' },
+    { name: 'Koristus', timing: 'august – september', count: 1, section: 'CURRENT' },
+    { name: 'Kõrrekoorimine', timing: 'august – september', section: 'NEXT_AUTUMN' },
+    { name: 'Künd', timing: 'september – oktoober', section: 'NEXT_AUTUMN' }
+  ],
+
+  // 3. Talivili -> Talivili: hooldamine, koristus, ettevalmistus, sügiskülv
+  WINTER_TO_WINTER: [
+    { name: 'Väetamine', timing: 'aprill – mai', count: 3, section: 'CURRENT' },
+    { name: 'Taimekaitse', timing: 'mai – juuni', count: 3, section: 'CURRENT' },
+    { name: 'Leheväetamine', timing: 'mai', count: 1, section: 'CURRENT' },
+    { name: 'Seire', timing: 'aprill – mai', section: 'CURRENT' },
+    { name: 'Koristus', timing: 'juuli – august', count: 1, section: 'CURRENT' },
+    { name: 'Kõrrekoorimine', timing: 'august', section: 'NEXT_AUTUMN' },
+    { name: 'Künd', timing: 'august – september', section: 'NEXT_AUTUMN' },
+    { name: 'Randaalimine', timing: 'september', section: 'NEXT_AUTUMN' },
+    { name: 'Külv', timing: 'august – september', count: 1, section: 'NEXT_AUTUMN' }
+  ],
+
+  // 4. Talivili -> Suvivili: hooldamine, koristus, ettevalmistus
+  WINTER_TO_SPRING: [
+    { name: 'Väetamine', timing: 'aprill – mai', count: 3, section: 'CURRENT' },
+    { name: 'Taimekaitse', timing: 'mai – juuni', count: 3, section: 'CURRENT' },
+    { name: 'Leheväetamine', timing: 'mai', count: 1, section: 'CURRENT' },
+    { name: 'Seire', timing: 'aprill – mai', section: 'CURRENT' },
+    { name: 'Koristus', timing: 'juuli – august', count: 1, section: 'CURRENT' },
+    { name: 'Kõrrekoorimine', timing: 'august – september', section: 'NEXT_AUTUMN' },
+    { name: 'Künd', timing: 'september – oktoober', section: 'NEXT_AUTUMN' }
+  ]
+};
+
+async function loadVariantTemplates(): Promise<Record<string, any[]>> {
+  try {
+    const raw = await fs.readFile(TEMPLATES_FILE, 'utf-8');
+    return JSON.parse(raw);
+  } catch {
+    return {};
+  }
+}
+
+async function saveVariantTemplates(data: Record<string, any[]>): Promise<void> {
+  try {
+    await fs.writeFile(TEMPLATES_FILE, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (err) {
+    console.error('Failed to write work-templates.json', err);
+  }
+}
 
 const SEED_SPRING_TEMPLATE: { name: string; timing: string; count?: number }[] = [
   { name: 'Künd', timing: 'sügis / aprill' },
@@ -153,13 +236,17 @@ async function ensureSeed(): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------
-// Mall → hooaja põllu tööd
+// Mall → hooaja põllu tööd (4 elutsükli varianti)
 // ---------------------------------------------------------------------------
 
-// Kultuuri valimisel/muutmisel: mallist tulnud kannete-ta tööd eemaldatakse ja lisatakse uue
-// kultuuri mall (või üldmall). Kannetega ja käsitsi lisatud tööd jäävad alles.
-// Lukus hooajale malli ei rakendata.
-export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
+// Kultuuri valimisel/muutmisel või "Lisa tööd mallist" nupule vajutamisel:
+// Mallist tulnud kanneteta tööd eemaldatakse ja lisatakse automaatselt sobiv mall
+// 4 variandi hulgast vastavalt käesolevale ja järgmisele kultuurile:
+// 1. SPRING_TO_WINTER: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus, sügiskülv
+// 2. SPRING_TO_SPRING: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus
+// 3. WINTER_TO_WINTER: hooldamine, koristus, ettevalmistus, sügiskülv
+// 4. WINTER_TO_SPRING: hooldamine, koristus, ettevalmistus
+export async function applyCropTemplate(fieldSeasonId: number, preferredVariant?: TemplateVariant): Promise<void> {
   await ensureSeed();
   const fs = await prisma.fieldSeason.findUnique({
     where: { id: fieldSeasonId },
@@ -172,34 +259,108 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
 
   const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
   const crop = matchCrop(fs.crop, crops);
-  const isWinter = isWinterCrop(fs.crop, crops);
-  const template =
-    (crop && (await prisma.workTemplate.findFirst({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } }))) ||
-    (await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter }, include: { items: { include: { workType: true } } } })) ||
-    (await prisma.workTemplate.findFirst({ where: { cropId: null }, include: { items: { include: { workType: true } } } }));
-  if (!template) return;
+  const currentIsWinter = isWinterCrop(fs.crop, crops);
 
-  // Kontrollime, kas fs.year on külviaasta või juba eelmisest aastast üle kantud koristusaasta
-  const prevFs = await prisma.fieldSeason.findUnique({
-    where: { fieldId_year: { fieldId: fs.fieldId, year: fs.year - 1 } }
+  // Kontrollime järgmise aasta hooaega
+  const nextFs = await prisma.fieldSeason.findUnique({
+    where: { fieldId_year: { fieldId: fs.fieldId, year: fs.year + 1 } },
+    select: { id: true, crop: true, season: { select: { isLocked: true } } }
   });
-  const isCarriedFromPrev = !!(prevFs && isWinterCrop(prevFs.crop, crops));
+  const nextCropName = nextFs?.crop ?? null;
+  const nextHasCrop = nextCropName && !isUndeterminedCrop(nextCropName);
+  const nextIsWinter = nextHasCrop ? isWinterCrop(nextCropName, crops) : null;
 
-  const existing = new Set((await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId));
-  const items = [...template.items].sort((a, b) => a.sortOrder - b.sortOrder);
-  for (const item of items) {
-    if (existing.has(item.workTypeId) || !item.workType.isActive) continue;
-    await prisma.fieldWork.create({
-      data: {
-        fieldSeasonId,
-        workTypeId: item.workTypeId,
-        phase: item.workType.phase,
-        sortOrder: item.sortOrder,
-        plannedText: item.typicalTiming,
-        plannedCount: item.plannedCount ?? item.workType.maxRepeats ?? 1,
-        fromTemplate: true
-      }
-    });
+  // Tuletame automaatselt sobiva variandi 1, 2, 3 või 4
+  const variant: TemplateVariant = preferredVariant ?? (
+    !currentIsWinter && nextIsWinter === true ? 'SPRING_TO_WINTER' :
+    !currentIsWinter ? 'SPRING_TO_SPRING' :
+    currentIsWinter && nextIsWinter === false ? 'WINTER_TO_SPRING' :
+    'WINTER_TO_WINTER'
+  );
+
+  const customVariantTemplates = await loadVariantTemplates();
+  const variantItems = customVariantTemplates[variant] ?? SEED_VARIANT_TEMPLATES[variant];
+
+  // Kontrollime, kas kultuuril on oma erimall
+  const ownTemplate = crop
+    ? await prisma.workTemplate.findFirst({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } })
+    : null;
+
+  const workTypes = await prisma.workType.findMany();
+  const typeByName = new Map(workTypes.map((w) => [w.name, w]));
+  const typeById = new Map(workTypes.map((w) => [w.id, w]));
+
+  const existingCurrent = new Set(
+    (await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId)
+  );
+
+  // 1. Käesoleva hooaja tööd (CURRENT)
+  if (ownTemplate && ownTemplate.items.length > 0) {
+    for (const item of ownTemplate.items) {
+      if (existingCurrent.has(item.workTypeId) || !item.workType.isActive) continue;
+      // Taliviljal käesoleval koristusaastal kevadist ettevalmistust ja külvi ei tehta
+      if (currentIsWinter && (item.workType.phase === 'PREPARATION' || item.workType.phase === 'SOWING')) continue;
+      await prisma.fieldWork.create({
+        data: {
+          fieldSeasonId,
+          workTypeId: item.workTypeId,
+          phase: item.workType.phase,
+          sortOrder: item.sortOrder,
+          plannedText: item.typicalTiming,
+          plannedCount: item.plannedCount ?? item.workType.maxRepeats ?? 1,
+          fromTemplate: true
+        }
+      });
+      existingCurrent.add(item.workTypeId);
+    }
+  } else {
+    const currentItems = variantItems.filter((it: any) => (it.section ?? 'CURRENT') === 'CURRENT');
+    for (let i = 0; i < currentItems.length; i++) {
+      const it = currentItems[i];
+      const wt = it.workTypeId ? typeById.get(it.workTypeId) : typeByName.get(it.name);
+      if (!wt || !wt.isActive || existingCurrent.has(wt.id)) continue;
+      // Taliviljal käesoleval koristusaastal kevadist ettevalmistust ja külvi ei tehta
+      if (currentIsWinter && (wt.phase === 'PREPARATION' || wt.phase === 'SOWING')) continue;
+      await prisma.fieldWork.create({
+        data: {
+          fieldSeasonId,
+          workTypeId: wt.id,
+          phase: wt.phase,
+          sortOrder: i,
+          plannedText: it.typicalTiming ?? it.timing ?? null,
+          plannedCount: it.plannedCount ?? it.count ?? (wt.repeatMode === 'UP_TO' ? wt.maxRepeats : 1),
+          fromTemplate: true
+        }
+      });
+      existingCurrent.add(wt.id);
+    }
+  }
+
+  // 2. Järgmise hooaja sügistööd (NEXT_AUTUMN) lisatakse järgmise aasta hooajale (nextFs), kui kultuur on teada
+  if (nextFs && !nextFs.season?.isLocked && nextHasCrop) {
+    const autumnItems = variantItems.filter((it: any) => it.section === 'NEXT_AUTUMN');
+    const existingNext = new Set(
+      (await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFs.id }, select: { workTypeId: true } })).map((w) => w.workTypeId)
+    );
+    for (let i = 0; i < autumnItems.length; i++) {
+      const it = autumnItems[i];
+      const wt = it.workTypeId ? typeById.get(it.workTypeId) : typeByName.get(it.name);
+      if (!wt || !wt.isActive || existingNext.has(wt.id)) continue;
+      // Kui järgmine on suvivili, siis sügiskülvi ei tehta!
+      if (!nextIsWinter && wt.phase === 'SOWING') continue;
+      await prisma.fieldWork.create({
+        data: {
+          fieldSeasonId: nextFs.id,
+          workTypeId: wt.id,
+          phase: wt.phase,
+          sortOrder: i,
+          plannedText: it.typicalTiming ?? it.timing ?? `Sügis ${fs.year}`,
+          plannedCount: it.plannedCount ?? it.count ?? (wt.repeatMode === 'UP_TO' ? wt.maxRepeats : 1),
+          fromTemplate: true
+        }
+      });
+      existingNext.add(wt.id);
+    }
   }
 }
 
@@ -436,24 +597,103 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     return true;
   }
 
-  // --- Mallid (cropId = null → üldmall) ---
+  // --- Mallid (4 universaalset varianti + kultuuride erimallid) ---
   if (pathname === '/api/work-templates' && method === 'GET') {
     await ensureSeed();
-    const rows = await prisma.workTemplate.findMany({ include: { items: { orderBy: { sortOrder: 'asc' } } } });
-    json(res, rows.map((t) => ({
+    const types = await prisma.workType.findMany();
+    const typeByName = new Map(types.map((w) => [w.name, w]));
+    const typeById = new Map(types.map((w) => [w.id, w]));
+
+    const customVariantTemplates = await loadVariantTemplates();
+
+    const variants: {
+      id: string;
+      variant: TemplateVariant;
+      name: string;
+      cropId: null;
+      isWinter: boolean;
+      nextIsWinter: boolean;
+      items: any[];
+    }[] = (['SPRING_TO_WINTER', 'SPRING_TO_SPRING', 'WINTER_TO_WINTER', 'WINTER_TO_SPRING'] as const).map((vKey) => {
+      const isWinter = vKey.startsWith('WINTER');
+      const nextIsWinter = vKey.endsWith('WINTER');
+      const name =
+        vKey === 'SPRING_TO_WINTER' ? '1. Suvivili → Talivili' :
+        vKey === 'SPRING_TO_SPRING' ? '2. Suvivili → Suvivili' :
+        vKey === 'WINTER_TO_WINTER' ? '3. Talivili → Talivili' :
+        '4. Talivili → Suvivili';
+
+      const customItems = customVariantTemplates[vKey];
+      const seedItems = SEED_VARIANT_TEMPLATES[vKey];
+      const itemsList = customItems ?? seedItems;
+
+      const items = itemsList.map((it: any, idx: number) => {
+        const wt = it.workTypeId ? typeById.get(it.workTypeId) : typeByName.get(it.name);
+        return {
+          id: `item-${vKey}-${idx}`,
+          workTypeId: wt?.id ?? it.workTypeId,
+          sortOrder: idx,
+          typicalTiming: it.timing ?? it.typicalTiming ?? null,
+          plannedCount: it.count ?? it.plannedCount ?? (wt?.repeatMode === 'UP_TO' ? wt.maxRepeats : null),
+          section: it.section ?? 'CURRENT'
+        };
+      }).filter((it: any) => Boolean(it.workTypeId));
+
+      return {
+        id: `tpl-${vKey.toLowerCase().replace(/_/g, '-')}`,
+        variant: vKey,
+        name,
+        cropId: null,
+        isWinter,
+        nextIsWinter,
+        items
+      };
+    });
+
+    const cropTemplates = await prisma.workTemplate.findMany({
+      where: { cropId: { not: null } },
+      include: { items: { orderBy: { sortOrder: 'asc' } } }
+    });
+
+    const cropResults = cropTemplates.map((t) => ({
       id: t.id,
       cropId: t.cropId,
       isWinter: t.isWinter,
-      items: t.items.map((i) => ({ id: i.id, workTypeId: i.workTypeId, sortOrder: i.sortOrder, typicalTiming: i.typicalTiming, plannedCount: i.plannedCount }))
-    })));
+      items: t.items.map((i) => ({
+        id: i.id,
+        workTypeId: i.workTypeId,
+        sortOrder: i.sortOrder,
+        typicalTiming: i.typicalTiming,
+        plannedCount: i.plannedCount,
+        section: 'CURRENT' as const
+      }))
+    }));
+
+    json(res, [...variants, ...cropResults]);
     return true;
   }
   if (pathname === '/api/work-templates' && method === 'PUT') {
     await ensureSeed();
     const b = await parseBody(req, MAX_BODY_BYTES);
+    const variant = text(b?.variant, 64) as TemplateVariant | null;
     const cropId = text(b?.cropId, 64);
     const isWinter = b?.isWinter === true;
     const items: any[] = Array.isArray(b?.items) ? b.items : [];
+
+    if (variant && (['SPRING_TO_WINTER', 'SPRING_TO_SPRING', 'WINTER_TO_WINTER', 'WINTER_TO_SPRING'] as string[]).includes(variant)) {
+      const store = await loadVariantTemplates();
+      store[variant] = items.map((it: any, idx: number) => ({
+        workTypeId: text(it.workTypeId, 64),
+        sortOrder: idx,
+        typicalTiming: text(it.typicalTiming, 80),
+        plannedCount: int(it.plannedCount),
+        section: it.section === 'NEXT_AUTUMN' ? 'NEXT_AUTUMN' : 'CURRENT'
+      }));
+      await saveVariantTemplates(store);
+      json(res, { success: true, variant });
+      return true;
+    }
+
     const saved = await prisma.$transaction(async (tx) => {
       const template =
         (await tx.workTemplate.findFirst({ where: { cropId, isWinter } })) ?? (await tx.workTemplate.create({ data: { cropId, isWinter } }));
@@ -552,7 +792,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
     });
 
-    // Järgmise aasta taliviljade sügiskülvi tööd (teostatakse selle aasta sügisel)
+    // Järgmise aasta taliviljade ja suviviljade sügistööd (teostatakse selle aasta sügisel)
     const nextYearSeasons = await prisma.fieldSeason.findMany({
       where: { year: year + 1 },
       select: {
@@ -564,23 +804,26 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
     });
 
-    const nextWinterSeasonIds: number[] = [];
+    const nextAutumnSeasonIds: number[] = [];
     for (const ns of nextYearSeasons) {
-      if (isWinterCrop(ns.crop, crops)) {
-        const hasPrepOrSow = await prisma.fieldWork.findFirst({
-          where: { fieldSeasonId: ns.id, phase: { in: ['PREPARATION', 'SOWING'] } },
-          select: { id: true }
-        });
-        if (!hasPrepOrSow) {
-          await applyCropTemplate(ns.id);
+      if (!isUndeterminedCrop(ns.crop)) {
+        const isWinter = isWinterCrop(ns.crop, crops);
+        if (isWinter) {
+          const hasPrepOrSow = await prisma.fieldWork.findFirst({
+            where: { fieldSeasonId: ns.id, phase: { in: ['PREPARATION', 'SOWING'] } },
+            select: { id: true }
+          });
+          if (!hasPrepOrSow) {
+            await applyCropTemplate(ns.id);
+          }
         }
-        nextWinterSeasonIds.push(ns.id);
+        nextAutumnSeasonIds.push(ns.id);
       }
     }
 
-    const nextAutumnRows = nextWinterSeasonIds.length > 0 ? await prisma.fieldWork.findMany({
+    const nextAutumnRows = nextAutumnSeasonIds.length > 0 ? await prisma.fieldWork.findMany({
       where: {
-        fieldSeasonId: { in: nextWinterSeasonIds },
+        fieldSeasonId: { in: nextAutumnSeasonIds },
         phase: { in: ['PREPARATION', 'SOWING'] }
       },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
@@ -620,6 +863,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     });
 
     for (const w of nextAutumnRows) {
+      const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
+      // Suviviljal ei toimu sügisel külvi (kevadkülv toimub järgmisel kevadel)
+      if (!isWinter && w.phase === 'SOWING') continue;
       worksDto.push({
         id: w.id,
         fieldSeasonId: w.fieldSeasonId,
@@ -640,7 +886,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         carriedOverFromYear: null,
         carriedOverToYear: year + 1,
         seasonYear: year + 1,
-        isNextSeasonWinterSowing: true
+        isNextSeasonWinterSowing: isWinter
       });
     }
 

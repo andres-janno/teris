@@ -48,18 +48,77 @@ export interface Material {
   usageCount?: number;
 }
 
+export type TemplateVariant =
+  | 'SPRING_TO_WINTER' // 1. Suvivili -> Talivili: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus, sügiskülv
+  | 'SPRING_TO_SPRING' // 2. Suvivili -> Suvivili: ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus
+  | 'WINTER_TO_WINTER' // 3. Talivili -> Talivili: hooldamine, koristus, ettevalmistus, sügiskülv
+  | 'WINTER_TO_SPRING'; // 4. Talivili -> Suvivili: hooldamine, koristus, ettevalmistus
+
+export type TemplateSection = 'CURRENT' | 'NEXT_AUTUMN';
+
+export const TEMPLATE_VARIANTS: {
+  variant: TemplateVariant;
+  name: string;
+  shortLabel: string;
+  description: string;
+  currentIsWinter: boolean;
+  nextIsWinter: boolean;
+  phases: string[];
+}[] = [
+  {
+    variant: 'SPRING_TO_WINTER',
+    name: '1. Suvivili → Talivili',
+    shortLabel: 'Suvi → Tali',
+    description: 'Ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus, sügiskülv',
+    currentIsWinter: false,
+    nextIsWinter: true,
+    phases: ['Ettevalmistus (kevad)', 'Kevadkülv', 'Hooldamine', 'Koristus', 'Ettevalmistus (sügis)', 'Sügiskülv']
+  },
+  {
+    variant: 'SPRING_TO_SPRING',
+    name: '2. Suvivili → Suvivili',
+    shortLabel: 'Suvi → Suvi',
+    description: 'Ettevalmistus, kevadkülv, hooldamine, koristus, ettevalmistus',
+    currentIsWinter: false,
+    nextIsWinter: false,
+    phases: ['Ettevalmistus (kevad)', 'Kevadkülv', 'Hooldamine', 'Koristus', 'Ettevalmistus (sügis)']
+  },
+  {
+    variant: 'WINTER_TO_WINTER',
+    name: '3. Talivili → Talivili',
+    shortLabel: 'Tali → Tali',
+    description: 'Hooldamine, koristus, ettevalmistus, sügiskülv',
+    currentIsWinter: true,
+    nextIsWinter: true,
+    phases: ['Hooldamine', 'Koristus', 'Ettevalmistus (sügis)', 'Sügiskülv']
+  },
+  {
+    variant: 'WINTER_TO_SPRING',
+    name: '4. Talivili → Suvivili',
+    shortLabel: 'Tali → Suvi',
+    description: 'Hooldamine, koristus, ettevalmistus',
+    currentIsWinter: true,
+    nextIsWinter: false,
+    phases: ['Hooldamine', 'Koristus', 'Ettevalmistus (sügis)']
+  }
+];
+
 export interface WorkTemplateItem {
   id?: string;
   workTypeId: string;
   sortOrder: number;
   typicalTiming: string | null;
   plannedCount: number | null;
+  section?: TemplateSection;
 }
 
 export interface WorkTemplate {
   id: string;
+  variant?: TemplateVariant;
+  name?: string;
   cropId: string | null; // null = üldmall (isWinter: false = kevadkülv, true = sügiskülv)
   isWinter: boolean;
+  nextIsWinter?: boolean;
   items: WorkTemplateItem[];
 }
 
