@@ -776,9 +776,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       const currentIsWinter = isWinterCrop(fs.crop, crops);
       if (currentIsWinter) {
         winterHarvestMap.set(fs.id, prevSeason);
-        if (fs.fieldWorks.length === 0) {
-          await applyCropTemplate(fs.id);
-        }
       }
     }
 
@@ -807,16 +804,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const nextAutumnSeasonIds: number[] = [];
     for (const ns of nextYearSeasons) {
       if (!isUndeterminedCrop(ns.crop)) {
-        const isWinter = isWinterCrop(ns.crop, crops);
-        if (isWinter) {
-          const hasPrepOrSow = await prisma.fieldWork.findFirst({
-            where: { fieldSeasonId: ns.id, phase: { in: ['PREPARATION', 'SOWING'] } },
-            select: { id: true }
-          });
-          if (!hasPrepOrSow) {
-            await applyCropTemplate(ns.id);
-          }
-        }
         nextAutumnSeasonIds.push(ns.id);
       }
     }
@@ -1049,10 +1036,32 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: `Põllu töödel on ${entriesCount} kannet. Töid ei saa eemaldada enne kannete kustutamist.` }, 409);
       return true;
     }
+    let totalCount = 0;
     const { count } = await prisma.fieldWork.deleteMany({
       where: { fieldSeasonId }
     });
-    json(res, { success: true, count });
+    totalCount += count;
+
+    const nextSeasonId = int(b?.nextSeasonId);
+    if (nextSeasonId) {
+      const nextFs = await prisma.fieldSeason.findUnique({
+        where: { id: nextSeasonId },
+        select: { season: { select: { isLocked: true } } }
+      });
+      if (!nextFs?.season?.isLocked) {
+        const nextEntries = await prisma.workEntry.count({
+          where: { fieldWork: { fieldSeasonId: nextSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } } }
+        });
+        if (nextEntries === 0) {
+          const resNext = await prisma.fieldWork.deleteMany({
+            where: { fieldSeasonId: nextSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } }
+          });
+          totalCount += resNext.count;
+        }
+      }
+    }
+
+    json(res, { success: true, count: totalCount });
     return true;
   }
   if (pathname.startsWith('/api/field-works/') && method === 'PATCH') {

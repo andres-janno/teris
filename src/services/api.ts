@@ -440,9 +440,9 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö eemaldamine ebaõnnestus');
   },
 
-  async clearFieldWorks(fieldSeasonId: number): Promise<{ success: boolean; count: number }> {
+  async clearFieldWorks(fieldSeasonId: number, nextSeasonId?: number | null): Promise<{ success: boolean; count: number }> {
     return jsonOrThrow(
-      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId })),
+      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId, nextSeasonId: nextSeasonId ?? undefined })),
       'Põllu tööde eemaldamine ebaõnnestus'
     );
   },

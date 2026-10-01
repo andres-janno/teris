@@ -403,16 +403,26 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     });
   };
 
-  const hasAnyEntries = (r: Row) => r.works.some((w) => (w.entries?.length ?? 0) > 0);
+  // Nähtavad tööd sellel real (arvestab talivilja eelmise sügise töid, mida näidatakse eraldi ribana, ja järgmise aasta sügistöid)
+  const getRowVisibleWorks = (r: Row): FieldWork[] => {
+    const currentVisible = r.isWinter
+      ? r.works.filter((w) => w.phase !== 'PREPARATION' && w.phase !== 'SOWING')
+      : r.works;
+    return [...currentVisible, ...r.nextWorks];
+  };
+
+  const hasAnyEntries = (r: Row) =>
+    r.works.some((w) => (w.entries?.length ?? 0) > 0) || r.nextWorks.some((w) => (w.entries?.length ?? 0) > 0);
 
   const clearFieldWorks = (r: Row) => {
     if (hasAnyEntries(r)) {
       alert(`Põllu "${r.field.name}" töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
       return;
     }
-    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kõik tööd (${r.works.length} tk)?`)) return;
+    const visibleCount = getRowVisibleWorks(r).length;
+    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kõik tööd (${visibleCount} tk)?`)) return;
     void run(async () => {
-      await api.clearFieldWorks(r.fieldSeasonId);
+      await api.clearFieldWorks(r.fieldSeasonId, r.nextRec?.fieldSeasonId ?? null);
       if (selectedRow?.fieldSeasonId === r.fieldSeasonId) setSelectedId(null);
     });
   };
@@ -695,11 +705,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             </div>
                           </div>
                           <div className="fw-field-sub">
-                            {!locked && row.works.length > 0 && !hasAnyEntries(row) && (
+                            {!locked && getRowVisibleWorks(row).length > 0 && !hasAnyEntries(row) && (
                               <button
                                 type="button"
                                 className="btn btn-secondary btn-xs"
-                                title={`Eemalda põllult "${row.field.name}" kõik tööd (${row.works.length} tk)`}
+                                title={`Eemalda põllult "${row.field.name}" kõik tööd (${getRowVisibleWorks(row).length} tk)`}
                                 aria-label="Kustuta tööd"
                                 disabled={busy}
                                 onClick={(e) => {
@@ -1048,7 +1058,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               </div>
             )}
 
-            {!locked && !hasAnyEntries(selectedRow) && selectedRow.works.length > 1 && (
+            {!locked && !hasAnyEntries(selectedRow) && getRowVisibleWorks(selectedRow).length > 1 && (
               <div className="fw-panel-clear-wrap">
                 <button
                   type="button"
@@ -1057,7 +1067,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   onClick={() => clearFieldWorks(selectedRow)}
                 >
                   <Trash2 size={12} />
-                  <span>Eemalda kõik selle põllu tööd ({selectedRow.works.length})</span>
+                  <span>Eemalda kõik selle põllu tööd ({getRowVisibleWorks(selectedRow).length})</span>
                 </button>
               </div>
             )}
