@@ -1,9 +1,10 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud, veerud = Ettevalmistus → Külvatud → Hooldamine → Koristatud.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Search, Plus, Lock, Check, X, Edit2, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info } from 'lucide-react';
+import { Search, Plus, Lock, Check, X, Edit2, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Snowflake, Sun, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
-import { matchCrop } from '../services/cropMatch';
+import { matchCrop, isWinterCrop } from '../services/cropMatch';
+import { getCropColor } from '../services/shpParser';
 import { formatDate } from '../services/dateFormat';
 import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
@@ -13,6 +14,7 @@ import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type Wo
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
+import { FieldShapeModal } from './FieldShapeModal';
 
 interface Option {
   id: string;
@@ -40,9 +42,19 @@ interface Row {
   field: MasterField;
   rec: FieldYearlyRecord;
   crop: Crop | null;
+  cropColor: string | null;
   undetermined: boolean;
+  isWinter: boolean;
   works: FieldWork[];
   carriedFromYear: number | null;
+  prevRec: FieldYearlyRecord | null;
+  nextRec: FieldYearlyRecord | null;
+  nextCrop: Crop | null;
+  nextCropName: string | null;
+  nextCropColor: string | null;
+  nextIsWinter: boolean;
+  nextUndetermined: boolean;
+  nextWorks: FieldWork[];
 }
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -118,11 +130,17 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [search, setSearch] = useState('');
   const [kind, setKind] = useState<KindFilter>('all');
   const [hideDone, setHideDone] = useState(false);
+  const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
-  const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase } | null>(null);
+  const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean } | null>(null);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [financeEntryId, setFinanceEntryId] = useState<string | null>(null);
+  const [shapeView, setShapeView] = useState<{ field: MasterField; record: FieldYearlyRecord } | null>(null);
   const [busy, setBusy] = useState(false);
+
+  const toggleGroup = (key: string) => {
+    setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const pendingFinanceCount = useMemo(() => {
     return fieldWorks
@@ -187,25 +205,49 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         if (!rec?.fieldSeasonId) return null;
         const works = (byFs.get(rec.fieldSeasonId) ?? []).sort((a, b) => a.sortOrder - b.sortOrder);
         const carriedWork = works.find((w) => !!w.carriedOverFromYear);
-        const prevRec = field.history.find((h) => h.year === year - 1);
-        const prevCrop = prevRec ? matchCrop(prevRec.crop, crops) : null;
-        const prevIsWinter = !!(prevCrop?.isWinterCrop || (prevRec?.crop && (prevRec.crop.toLowerCase().includes('tali') || prevRec.crop.toLowerCase().includes('rukis'))));
+        const prevRec = field.history.find((h) => h.year === year - 1) ?? null;
+        const prevIsWinter = prevRec ? isWinterCrop(prevRec.crop, crops) : false;
 
         const cropName = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.crop ? prevRec.crop : rec.crop;
-        const cropColor = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.cropColor ? prevRec.cropColor : rec.cropColor;
         const crop = matchCrop(cropName, crops);
-        const currentIsWinter = !!(crop?.isWinterCrop || (cropName && (cropName.toLowerCase().includes('tali') || cropName.toLowerCase().includes('rukis'))));
+        const cropColor = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.cropColor
+          ? prevRec.cropColor
+          : (crop?.color || rec.cropColor || (cropName ? getCropColor(cropName) : null));
+        const currentIsWinter = isWinterCrop(cropName, crops);
 
         const carriedFromYear: number | null = carriedWork?.carriedOverFromYear ?? (currentIsWinter ? year - 1 : null);
+        const undetermined = isCropUndetermined(cropName);
+        const isWinter = !undetermined && (currentIsWinter || !!carriedWork);
+
+        // Järgmise aasta kultuur (sügiskülvi tuletamiseks)
+        const nextRec = field.history.find((h) => h.year === year + 1) ?? null;
+        const nextCropName = nextRec?.crop ?? null;
+        const nextCrop = nextCropName ? matchCrop(nextCropName, crops) : null;
+        const nextCropColor = nextCrop?.color || nextRec?.cropColor || (nextCropName ? getCropColor(nextCropName) : null);
+        const nextUndetermined = !nextRec || isCropUndetermined(nextCropName);
+        const nextIsWinter = !nextUndetermined && isWinterCrop(nextCropName, crops);
+        const nextWorks = nextRec?.fieldSeasonId
+          ? (byFs.get(nextRec.fieldSeasonId) ?? []).filter((w) => w.phase === 'PREPARATION' || w.phase === 'SOWING').sort((a, b) => a.sortOrder - b.sortOrder)
+          : [];
 
         return {
           fieldSeasonId: rec.fieldSeasonId,
           field,
-          rec: { ...rec, crop: cropName, cropColor },
+          rec: { ...rec, crop: cropName, cropColor: cropColor ?? undefined },
           crop,
-          undetermined: isCropUndetermined(cropName),
+          cropColor,
+          undetermined,
+          isWinter,
           works,
-          carriedFromYear
+          carriedFromYear,
+          prevRec,
+          nextRec,
+          nextCrop,
+          nextCropName,
+          nextCropColor,
+          nextIsWinter,
+          nextUndetermined,
+          nextWorks
         };
       })
       .filter((r): r is Row => r !== null)
@@ -214,23 +256,103 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const rows = allRows.filter((r) => {
     const q = search.trim().toLowerCase();
-    if (q && !`${r.field.num ?? ''} ${r.field.name} ${r.rec.crop} ${r.works.map((w) => w.workTypeName).join(' ')}`.toLowerCase().includes(q)) return false;
-    if (kind === 'none') return r.undetermined;
-    if (kind === 'winter') return r.crop?.isWinterCrop === true;
-    if (kind === 'spring') return !!r.crop && r.crop.isWinterCrop !== true;
+    if (
+      q &&
+      !`${r.field.num ?? ''} ${r.field.name} ${r.rec.crop} ${r.nextCropName ?? ''} ${r.works.map((w) => w.workTypeName).join(' ')} ${r.nextWorks.map((w) => w.workTypeName).join(' ')}`
+        .toLowerCase()
+        .includes(q)
+    )
+      return false;
+    if (kind === 'none') return r.nextUndetermined;
+    if (kind === 'winter') return r.nextIsWinter;
+    if (kind === 'spring') return !r.nextUndetermined && !r.nextIsWinter;
     return true;
   });
+
+  const groups = useMemo(() => {
+    const winterRows: Row[] = [];
+    const springRows: Row[] = [];
+    const undeterminedRows: Row[] = [];
+
+    rows.forEach((r) => {
+      if (r.nextUndetermined) {
+        undeterminedRows.push(r);
+      } else if (r.nextIsWinter) {
+        winterRows.push(r);
+      } else {
+        springRows.push(r);
+      }
+    });
+
+    const res: {
+      key: 'winter' | 'spring' | 'undetermined';
+      title: string;
+      description: string;
+      className: string;
+      rows: Row[];
+      totalHa: number;
+    }[] = [];
+
+    if (winterRows.length > 0) {
+      res.push({
+        key: 'winter',
+        title: 'Sügiskülviga põllud',
+        description: `Põllud, kus järgmise (${year + 1}) aasta kultuuriks on talivili ja külv toimub ${year}. a sügisel`,
+        className: 'winter',
+        rows: winterRows,
+        totalHa: winterRows.reduce((sum, r) => sum + (r.rec.areaHa || 0), 0)
+      });
+    }
+
+    if (springRows.length > 0) {
+      res.push({
+        key: 'spring',
+        title: 'Sügiskülvita põllud',
+        description: `Põllud, kus järgmise (${year + 1}) aasta kultuuriks on suvivili ja ${year}. a sügisel külvi ei toimu`,
+        className: 'spring',
+        rows: springRows,
+        totalHa: springRows.reduce((sum, r) => sum + (r.rec.areaHa || 0), 0)
+      });
+    }
+
+    if (undeterminedRows.length > 0) {
+      res.push({
+        key: 'undetermined',
+        title: 'Järgmine kultuur valimata',
+        description: `${year + 1}. a kultuur pole veel külvikorras valitud`,
+        className: 'undetermined',
+        rows: undeterminedRows,
+        totalHa: undeterminedRows.reduce((sum, r) => sum + (r.rec.areaHa || 0), 0)
+      });
+    }
+
+    return res;
+  }, [rows, year]);
 
   const visibleWorks = (r: Row, phase: WorkPhase) => r.works.filter((w) => w.phase === phase && (!hideDone || w.status !== 'DONE'));
   const withoutWorks = allRows.filter((r) => r.works.length === 0 && !r.undetermined);
 
   const selected = fieldWorks.find((w) => w.id === selectedId) ?? null;
-  const selectedRow = selected ? allRows.find((r) => r.fieldSeasonId === selected.fieldSeasonId) ?? null : null;
+  const selectedRow = selected
+    ? allRows.find((r) => r.fieldSeasonId === selected.fieldSeasonId || r.nextRec?.fieldSeasonId === selected.fieldSeasonId) ?? null
+    : null;
 
   const templateIdsFor = (row: Row) => {
-    const t = (row.crop && templates.find((x) => x.cropId === row.crop!.id)) || templates.find((x) => x.cropId === null);
+    const t =
+      (row.crop && templates.find((x) => x.cropId === row.crop!.id)) ||
+      templates.find((x) => x.cropId === null && x.isWinter === row.isWinter) ||
+      templates.find((x) => x.cropId === null);
     return new Set(t?.items.map((i) => i.workTypeId) ?? []);
   };
+
+  const templateIdsForNext = (row: Row) => {
+    const t =
+      (row.nextCrop && templates.find((x) => x.cropId === row.nextCrop!.id)) ||
+      templates.find((x) => x.cropId === null && x.isWinter === true) ||
+      templates.find((x) => x.cropId === null);
+    return new Set(t?.items.map((i) => i.workTypeId) ?? []);
+  };
+
   const fieldLabel = (row: Row) =>
     `Nr ${row.field.num ?? '–'} ${row.field.name} · ${row.undetermined ? 'kultuur valimata' : row.rec.crop} · ${fmtHa(row.rec.areaHa)} ha · hooaeg ${year}`;
 
@@ -243,6 +365,17 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       : `Lisa ${list.length} tööta põllule tööd kultuuri mallist (või üldmallist)?`;
     if (!confirm(msg)) return;
     void run(() => api.applyWorkTemplate(list.map((r) => r.fieldSeasonId)));
+  };
+
+  const applyNextTemplates = (list: Row[]) => {
+    const fsIds = list.map((r) => r.nextRec?.fieldSeasonId).filter((id): id is number => typeof id === 'number');
+    if (!fsIds.length) return;
+    const msg =
+      list.length === 1
+        ? `Lisa põllu "${list[0].field.name}" sügistöödele tööd mallist?`
+        : `Lisa ${list.length} põllu sügistöödele tööd mallist?`;
+    if (!confirm(msg)) return;
+    void run(() => api.applyWorkTemplate(fsIds));
   };
 
   const deleteEntry = (e: WorkEntry) => {
@@ -280,6 +413,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const milestoneCount = (phase: WorkPhase) =>
     `${allRows.filter((r) => r.works.some((w) => w.phase === phase && w.status === 'DONE')).length} / ${withCrop} põldu`;
 
+  const countNextPhase = (phase: WorkPhase) => {
+    const ws = allRows.flatMap((r) => r.nextWorks.filter((w) => w.phase === phase));
+    return `${ws.length} tööd · ${ws.filter((w) => w.status === 'DONE').length} tehtud`;
+  };
+  const nextWinterRows = allRows.filter((r) => r.nextIsWinter);
+  const nextMilestoneCount = (phase: WorkPhase) =>
+    `${nextWinterRows.filter((r) => r.nextWorks.some((w) => w.phase === phase && w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
+
   const renderCards = (row: Row, phase: WorkPhase) =>
     visibleWorks(row, phase).map((w) => <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />);
 
@@ -310,12 +451,44 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     });
   };
 
+  const visibleNextWorks = (r: Row, phase: WorkPhase) =>
+    r.nextWorks.filter((w) => w.phase === phase && (!hideDone || w.status !== 'DONE'));
+
+  const renderNextCards = (row: Row, phase: WorkPhase) =>
+    visibleNextWorks(row, phase).map((w) => (
+      <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+    ));
+
+  const renderNextMilestone = (row: Row, phase: WorkPhase) => {
+    const ws = row.nextWorks.filter((w) => w.phase === phase);
+    if (ws.length === 0) return <span className="fw-muted">–</span>;
+    return ws.map((w) =>
+      w.status === 'DONE' ? (
+        <button
+          key={w.id}
+          type="button"
+          className={`fw-milestone-done ${w.id === selectedId ? 'selected' : ''}`}
+          onClick={() => setSelectedId(w.id)}
+          title={w.workTypeName}
+        >
+          <Check size={12} strokeWidth={3} /> {w.finishedAt ? formatDate(w.finishedAt) : 'Lõpetatud'}
+        </button>
+      ) : (
+        <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      )
+    );
+  };
+
   const sownDone = (row: Row) => {
     if (row.carriedFromYear) {
       const sowWork = row.works.find((w) => w.phase === 'SOWING');
       return sowWork ? sowWork.status === 'DONE' || sowWork.entries.length > 0 : true;
     }
     return row.works.some((w) => w.phase === 'SOWING' && (w.status === 'DONE' || !!w.carriedOverFromYear));
+  };
+
+  const nextSownDone = (row: Row) => {
+    return row.nextWorks.some((w) => w.phase === 'SOWING' && w.status === 'DONE');
   };
 
   return (
@@ -343,12 +516,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             <input type="search" placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" value={search} onChange={(e) => setSearch(e.target.value)} />
           </label>
           <label className="fw-filter">
-            <span>Kultuur</span>
+            <span>Külv</span>
             <select className="form-input" value={kind} onChange={(e) => setKind(e.target.value as KindFilter)}>
-              <option value="all">Kõik</option>
-              <option value="winter">Talivili</option>
-              <option value="spring">Suvivili</option>
-              <option value="none">Kultuur valimata</option>
+              <option value="all">Kõik põllud</option>
+              <option value="winter">Sügiskülviga (järgmine talivili)</option>
+              <option value="spring">Ilma sügiskülvita (järgmine suvivili)</option>
+              <option value="none">Järgmine kultuur valimata</option>
             </select>
           </label>
           <label className="fw-filter checkbox">
@@ -383,122 +556,322 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         </div>
 
         <div className="fw-board" aria-busy={loading}>
-          <div className="fw-grid fw-head">
-            <div className="fw-head-cell">PÕLD</div>
-            <div className="fw-head-cell phase"><strong>Ettevalmistus</strong><small>{countPhase('PREPARATION')}</small></div>
-            <div className="fw-head-cell milestone sow"><strong><Sprout size={14} /> Külvatud</strong><small>{milestoneCount('SOWING')}</small></div>
-            <div className="fw-head-cell phase"><strong>Hooldamine</strong><small>{countPhase('CARE')}</small></div>
-            <div className="fw-head-cell milestone harvest"><strong><Wheat size={14} /> Koristatud</strong><small>{milestoneCount('HARVEST')}</small></div>
+          <div className="fw-head">
+            <div className="fw-grid fw-head-top">
+              <div className="fw-head-section">PÕLD</div>
+              <div className="fw-head-section current" style={{ gridColumn: '2 / 6' }}>
+                <span>KÄESOLEVA AASTA SAAK ({year})</span>
+              </div>
+              <div className="fw-head-section next" style={{ gridColumn: '6 / 8' }}>
+                <span>JÄRGMISE AASTA SAAK ({year + 1})</span>
+              </div>
+            </div>
+            <div className="fw-grid fw-head-cols">
+              <div className="fw-head-cell">
+                <strong>{rows.length} {rows.length === 1 ? 'põld' : 'põldu'}</strong>
+              </div>
+              <div className="fw-head-cell phase">
+                <strong>Ettevalmistus</strong>
+                <small>{countPhase('PREPARATION')}</small>
+              </div>
+              <div className="fw-head-cell milestone sow">
+                <strong><Sprout size={14} /> Kevadkülv</strong>
+                <small>{milestoneCount('SOWING')}</small>
+              </div>
+              <div className="fw-head-cell phase">
+                <strong>Hooldamine</strong>
+                <small>{countPhase('CARE')}</small>
+              </div>
+              <div className="fw-head-cell milestone harvest">
+                <strong><Wheat size={14} /> Koristus</strong>
+                <small>{milestoneCount('HARVEST')}</small>
+              </div>
+              <div className="fw-head-cell phase">
+                <strong>Ettevalmistus</strong>
+                <small>{countNextPhase('PREPARATION')}</small>
+              </div>
+              <div className="fw-head-cell milestone autumn-sow">
+                <strong><Sprout size={14} /> Sügiskülv</strong>
+                <small>{nextMilestoneCount('SOWING')}</small>
+              </div>
+            </div>
           </div>
 
           {rows.length === 0 && (
             <div className="fw-empty">{allRows.length === 0 ? `${year}. a hooajal pole põlde.` : 'Filtrile vastavaid põlde pole.'}</div>
           )}
 
-          {rows.map((row) => {
-            const color = row.crop?.color ?? (row.undetermined ? null : row.rec.cropColor);
+          {groups.map((group) => {
+            const isCollapsed = !!collapsedGroups[group.key];
+            const groupWithoutWorks = group.rows.filter((r) => r.works.length === 0 && !r.undetermined);
+            const groupSownCount = group.rows.filter((r) => sownDone(r)).length;
+            const groupHarvestCount = group.rows.filter((r) => r.works.some((w) => w.phase === 'HARVEST' && w.status === 'DONE')).length;
+
             return (
-              <div key={row.fieldSeasonId} className="fw-grid fw-row">
-                <div className={`fw-field ${color ? 'has-crop' : ''}`} style={color ? ({ '--crop-color': color } as React.CSSProperties) : undefined}>
-                  <div className="fw-field-title">
-                    {row.field.num && <span className="field-num-badge">Nr {row.field.num}</span>}
-                    <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>
-                    {!locked && row.works.length > 0 && !hasAnyEntries(row) && (
+              <React.Fragment key={group.key}>
+                <div
+                  className={`fw-group-header ${group.className}`}
+                  onClick={() => toggleGroup(group.key)}
+                  title={`${group.description}. Klõpsa grupi peitmiseks või avamiseks.`}
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      toggleGroup(group.key);
+                    }
+                  }}
+                >
+                  <div className="fw-group-toggle">
+                    {isCollapsed ? <ChevronRight size={16} className="fw-group-chevron" /> : <ChevronDown size={16} className="fw-group-chevron" />}
+                    <span className="fw-group-title">{group.title}</span>
+                  </div>
+
+                  <div className="fw-group-meta">
+                    <span className="fw-group-stat">
+                      <strong>{group.rows.length}</strong> {group.rows.length === 1 ? 'põld' : 'põldu'}
+                    </span>
+                    <span className="fw-group-stat-sep">·</span>
+                    <span className="fw-group-stat">
+                      <strong>{fmtHa(group.totalHa)}</strong> ha
+                    </span>
+                    {group.key === 'winter' && (
+                      <>
+                        <span className="fw-group-stat-sep">·</span>
+                        <span className="fw-group-stat" title="Selle sügise külv tehtud">
+                          <Sprout size={13} className="text-emerald" /> Sügiskülv: <strong>{group.rows.filter((r) => nextSownDone(r)).length}/{group.rows.length}</strong>
+                        </span>
+                        <span className="fw-group-stat-sep">·</span>
+                        <span className="fw-group-stat" title="Käesoleva aasta saak koristatud">
+                          <Wheat size={13} className="text-amber" /> Koristatud: <strong>{groupHarvestCount}/{group.rows.length}</strong>
+                        </span>
+                      </>
+                    )}
+                    {group.key === 'spring' && (
+                      <>
+                        <span className="fw-group-stat-sep">·</span>
+                        <span className="fw-group-stat" title="Käesoleva aasta saak koristatud">
+                          <Wheat size={13} className="text-amber" /> Koristatud: <strong>{groupHarvestCount}/{group.rows.length}</strong>
+                        </span>
+                      </>
+                    )}
+
+                    {!locked && groupWithoutWorks.length > 0 && (
                       <button
                         type="button"
-                        className="fw-field-clear-btn"
-                        title={`Eemalda põllult "${row.field.name}" kõik tööd (${row.works.length} tk)`}
-                        aria-label="Eemalda kõik tööd"
+                        className="btn btn-secondary btn-xs fw-group-action-btn"
                         disabled={busy}
                         onClick={(e) => {
                           e.stopPropagation();
-                          clearFieldWorks(row);
+                          applyTemplates(groupWithoutWorks);
                         }}
+                        title={`Lisa mall selle grupi ${groupWithoutWorks.length} tööta põllule`}
                       >
-                        <Trash2 size={13} />
+                        <ListChecks size={12} />
+                        <span>Lisa mall ({groupWithoutWorks.length})</span>
                       </button>
                     )}
                   </div>
-                  <div className="fw-field-sub">
-                    <strong>{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</strong>
-                    <span className="fw-field-ha">{fmtHa(row.rec.areaHa)} ha</span>
-                  </div>
-                  {row.crop && <div className="fw-field-kind">{row.crop.isWinterCrop ? 'Talivili · sügiskülv' : 'Suvivili · kevadkülv'}</div>}
                 </div>
 
-                <div className="fw-cell">
-                  {row.carriedFromYear ? (
-                    <div
-                      className={`fw-carried-from-pill ${row.works.filter((w) => w.phase === 'PREPARATION').length > 0 && row.works.filter((w) => w.phase === 'PREPARATION').every((w) => w.status === 'DONE') ? 'done' : ''}`}
-                      title={`Talivilja ettevalmistustööd teostati ${row.carriedFromYear}. a sügisel`}
-                    >
-                      <span>
-                        {row.works.filter((w) => w.phase === 'PREPARATION').length > 0 && row.works.filter((w) => w.phase === 'PREPARATION').every((w) => w.status === 'DONE') ? '✓ Ettevalmistus tehtud' : '🌱 Ettevalmistus'} sügisel {row.carriedFromYear}
-                      </span>
-                      <button type="button" onClick={() => onSelectYear(row.carriedFromYear!)}>← Ava {row.carriedFromYear}</button>
-                    </div>
-                  ) : (
-                    <>
-                      {row.undetermined && <span className="fw-muted">Kultuur valimata – tööde mall lisatakse kultuuri valimisel</span>}
-                      {!row.undetermined && row.works.length === 0 && !locked && (
-                        <button type="button" className="btn btn-secondary btn-xs" onClick={() => applyTemplates([row])}>
-                          <ListChecks size={12} /> Lisa tööd mallist
-                        </button>
-                      )}
-                      {renderCards(row, 'PREPARATION')}
-                      {!locked && !row.undetermined && (
-                        <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
-                          <Plus size={14} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+                {!isCollapsed &&
+                  group.rows.map((row) => {
+                    const color = row.crop?.color ?? (row.undetermined ? null : row.cropColor);
+                    const nextColor = row.nextCrop?.color ?? (row.nextUndetermined ? null : row.nextCropColor);
+                    const fieldNextClass = row.nextIsWinter
+                      ? 'winter-next'
+                      : !row.nextUndetermined
+                        ? 'spring-next'
+                        : 'undetermined-next';
 
-                <div className={`fw-cell milestone sow ${sownDone(row) ? 'done' : ''}`}>
-                  {row.carriedFromYear ? (
-                    <div
-                      className={`fw-carried-from-pill ${sownDone(row) ? 'done' : ''}`}
-                      title={`Talivilja külv teostati ${row.carriedFromYear}. a sügisel`}
-                    >
-                      <span>{sownDone(row) ? '✓ Külvatud' : '🌱 Külv'} sügisel {row.carriedFromYear}</span>
-                      <button type="button" onClick={() => onSelectYear(row.carriedFromYear!)}>← Ava {row.carriedFromYear}</button>
-                    </div>
-                  ) : (
-                    renderMilestone(row, 'SOWING')
-                  )}
-                </div>
+                    return (
+                      <div key={row.fieldSeasonId} className="fw-row-container">
+                        {/* 1. Põllu info (taustavärvitud vastavalt sügiskülvi / järgmise kultuuri staatusele) */}
+                        <div
+                          className={`fw-field ${fieldNextClass}`}
+                          style={{
+                            gridColumn: '1 / 2',
+                            gridRow: '1 / 3'
+                          }}
+                        >
+                          <div className="fw-field-title">
+                            {row.field.num && <span className="field-num-badge">Nr {row.field.num}</span>}
+                            <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>
+                            <div className="fw-field-actions">
+                              <button
+                                type="button"
+                                className="fw-field-shape-btn"
+                                title={`Näita ${year}. a põllu kuju`}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setShapeView({ field: row.field, record: row.rec });
+                                }}
+                              >
+                                <Crosshair size={13} />
+                              </button>
+                            </div>
+                          </div>
+                          <div className="fw-field-sub">
+                            {!locked && row.works.length > 0 && !hasAnyEntries(row) && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-xs"
+                                title={`Eemalda põllult "${row.field.name}" kõik tööd (${row.works.length} tk)`}
+                                aria-label="Kustuta tööd"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  clearFieldWorks(row);
+                                }}
+                              >
+                                <Trash2 size={12} style={{ color: '#dc2626' }} />
+                                <span>Kustuta tööd</span>
+                              </button>
+                            )}
+                            <span className="fw-field-ha">{fmtHa(row.rec.areaHa)} ha</span>
+                          </div>
+                        </div>
 
-                <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`}>
-                  {row.crop?.isWinterCrop && !row.carriedFromYear && row.works.some((w) => w.phase === 'CARE' && w.carriedOverToYear) ? (
-                    <div className="fw-carried-to-pill" title={`Talivilja kevadised hooldustööd kanduvad ${year + 1}. a hooajale`}>
-                      <span>🌾 Hooldus {year + 1}. a kevadel</span>
-                      <button type="button" onClick={() => onSelectYear(year + 1)}>Ava {year + 1} →</button>
-                    </div>
-                  ) : (
-                    <>
-                      {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined && <span className="fw-muted">Algab pärast külvi</span>}
-                      {renderCards(row, 'CARE')}
-                      {!locked && !row.undetermined && (
-                        <button type="button" className="fw-add" aria-label="Lisa hooldustöö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
-                          <Plus size={14} />
-                        </button>
-                      )}
-                    </>
-                  )}
-                </div>
+                        {/* Rida 1: Käesoleva kultuuri päis (Cols 2-5) */}
+                        <div
+                          className="fw-crop-banner current"
+                          style={{
+                            gridColumn: '2 / 6',
+                            gridRow: '1 / 2',
+                            ...(color ? ({ '--crop-color': color } as React.CSSProperties) : {})
+                          }}
+                        >
+                          <span className="fw-crop-dot" />
+                          <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
+                        </div>
 
-                <div className="fw-cell milestone harvest">
-                  {row.crop?.isWinterCrop && !row.carriedFromYear && row.works.some((w) => w.phase === 'HARVEST' && w.carriedOverToYear) ? (
-                    <div className="fw-carried-to-pill" title={`Talivilja saagikoristus toimub ${year + 1}. a suvel`}>
-                      <span>🌾 Koristus suvel {year + 1}</span>
-                      <button type="button" onClick={() => onSelectYear(year + 1)}>Ava {year + 1} →</button>
-                    </div>
-                  ) : (
-                    renderMilestone(row, 'HARVEST')
-                  )}
-                </div>
-              </div>
+                        {/* Rida 1: Järgmise kultuuri päis (Cols 6-7) */}
+                        {!row.nextUndetermined ? (
+                          <div
+                            className="fw-crop-banner next"
+                            style={{
+                              gridColumn: '6 / 8',
+                              gridRow: '1 / 2',
+                              ...(nextColor ? ({ '--next-crop-color': nextColor } as React.CSSProperties) : {})
+                            }}
+                          >
+                            <span className="fw-crop-dot next" />
+                            <span className="fw-crop-name">{row.nextCropName}</span>
+                          </div>
+                        ) : (
+                          <div className="fw-crop-banner next undetermined" style={{ gridColumn: '6 / 8', gridRow: '1 / 2' }}>
+                            <span className="fw-crop-name muted">Järgmine kultuur määramata</span>
+                          </div>
+                        )}
+
+                        {/* Rida 2: Käesoleva kultuuri tööd (Cols 2-5) */}
+                        {!row.isWinter ? (
+                          <>
+                            {/* Col 2: Ettevalmistus */}
+                            <div className="fw-cell" style={{ gridColumn: '2 / 3', gridRow: '2 / 3' }}>
+                              {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
+                              {!row.undetermined && row.works.length === 0 && !locked && (
+                                <button type="button" className="btn btn-secondary btn-xs" onClick={() => applyTemplates([row])}>
+                                  <ListChecks size={12} /> Lisa tööd mallist
+                                </button>
+                              )}
+                              {renderCards(row, 'PREPARATION')}
+                              {!locked && !row.undetermined && (
+                                <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
+                                  <Plus size={14} />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Col 3: Kevadkülv */}
+                            <div className={`fw-cell milestone sow ${sownDone(row) ? 'done' : ''}`} style={{ gridColumn: '3 / 4', gridRow: '2 / 3' }}>
+                              {renderMilestone(row, 'SOWING')}
+                            </div>
+                          </>
+                        ) : (
+                          /* Talivili: Cols 2-3 liidetud – Ettevalmistus ja külv eelmise aasta sügisel */
+                          <div
+                            className="fw-cell fw-cell-carried"
+                            style={{ gridColumn: '2 / 4', gridRow: '2 / 3' }}
+                            title={`Talivilja ettevalmistus ja külv teostati ${row.carriedFromYear ?? year - 1}. a sügisel`}
+                          >
+                            <div className={`fw-carried-from-pill ${sownDone(row) ? 'done' : ''}`}>
+                              <span>✓ Ettevalmistus ja külv tehtud sügisel {row.carriedFromYear ?? year - 1}</span>
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Col 4: Hooldus */}
+                        <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
+                          {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined}
+                          {renderCards(row, 'CARE')}
+                          {!locked && !row.undetermined && (
+                            <button type="button" className="fw-add" aria-label="Lisa hooldustöö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
+                              <Plus size={14} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Col 5: Koristus */}
+                        <div className="fw-cell milestone harvest" style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}>
+                          {renderMilestone(row, 'HARVEST')}
+                        </div>
+
+                        {/* Rida 2: Järgmise kultuuri sügistööd (Cols 6-7) */}
+                        {!row.nextUndetermined ? (
+                          <>
+                            {/* Col 6: Sügise ettevalmistus (nii tali- kui ka suviviljadel, nt sügiskünd) */}
+                            <div className="fw-cell" style={{ gridColumn: '6 / 7', gridRow: '2 / 3' }}>
+                              {row.nextWorks.length === 0 && !locked && row.nextRec?.fieldSeasonId && (
+                                <button type="button" className="btn btn-secondary btn-xs" onClick={() => applyNextTemplates([row])}>
+                                  <ListChecks size={12} /> Lisa sügistööd
+                                </button>
+                              )}
+                              {renderNextCards(row, 'PREPARATION')}
+                              {!locked && row.nextRec?.fieldSeasonId && (
+                                <button
+                                  type="button"
+                                  className="fw-add"
+                                  aria-label="Lisa sügise ettevalmistustöö"
+                                  title="Lisa sügise ettevalmistustöö (nt künd)"
+                                  onClick={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true })}
+                                >
+                                  <Plus size={14} />
+                                </button>
+                              )}
+                            </div>
+
+                            {/* Col 7: Sügiskülv (ainult taliviljal; suviviljal ei toimu sügisel külvi) */}
+                            {row.nextIsWinter ? (
+                              <div className={`fw-cell milestone autumn-sow ${nextSownDone(row) ? 'done' : ''}`} style={{ gridColumn: '7 / 8', gridRow: '2 / 3' }}>
+                                {renderNextMilestone(row, 'SOWING')}
+                                {!locked && row.nextRec?.fieldSeasonId && row.nextWorks.filter((w) => w.phase === 'SOWING').length === 0 && (
+                                  <button
+                                    type="button"
+                                    className="fw-add"
+                                    aria-label="Lisa sügiskülv"
+                                    title="Lisa sügiskülv"
+                                    onClick={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true })}
+                                  >
+                                    <Plus size={14} />
+                                  </button>
+                                )}
+                              </div>
+                            ) : (
+                              <div className="fw-cell fw-cell-no-sow" style={{ gridColumn: '7 / 8', gridRow: '2 / 3' }}>
+                                <span className="fw-muted" title="Suvivili – sügiskülvi ei toimu">—</span>
+                              </div>
+                            )}
+                          </>
+                        ) : (
+                          <div className="fw-cell fw-cell-next-none" style={{ gridColumn: '6 / 8', gridRow: '2 / 3' }}>
+                            <span className="fw-muted">Järgmine kultuur määramata</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+              </React.Fragment>
             );
           })}
         </div>
@@ -511,215 +884,240 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         </div>
       </main>
 
-      {selected && selectedRow && (
-        <aside className="fw-panel" aria-label="Valitud töö">
-          <div className="fw-panel-head">
-            <div className="fw-panel-top">
-              <span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>
-              <button type="button" className="icon-btn-ghost" aria-label="Sulge" onClick={() => setSelectedId(null)}>
-                <X size={16} />
-              </button>
-            </div>
-            <h2>{selected.workTypeName}</h2>
-            <div className="fw-panel-field">{fieldLabel(selectedRow)}</div>
-          </div>
+      {selected && selectedRow && (() => {
+        const isSelectedNext = selected.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === selected.fieldSeasonId);
+        const activeLabel = isSelectedNext
+          ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1}) · ${fmtHa(selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa)} ha`
+          : fieldLabel(selectedRow);
+        const activeArea = isSelectedNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
 
-          <div className="fw-panel-body">
-            <div className="fw-panel-status">
-              <span className={`fw-status-pill ${selected.status.toLowerCase()}`}>{STATUS_LABEL[selected.status]}</span>
-              <span className="fw-muted">
-                {selected.status === 'PLANNED' && 'Esimene kanne muudab töö olekuks „Töös“.'}
-                {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
-                {selected.status === 'DONE' && `Lõpetatud ${selected.finishedAt ? formatDate(selected.finishedAt) : ''}`}
-              </span>
+        return (
+          <aside className="fw-panel" aria-label="Valitud töö">
+            <div className="fw-panel-head">
+              <div className="fw-panel-top">
+                <span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>
+                <button type="button" className="icon-btn-ghost" aria-label="Sulge" onClick={() => setSelectedId(null)}>
+                  <X size={16} />
+                </button>
+              </div>
+              <h2>{selected.workTypeName}</h2>
+              <div className="fw-panel-field">{activeLabel}</div>
             </div>
 
-            {selected.carriedOverFromYear && (
-              <div className="alert-box info finance-alert">
-                <Info size={14} />
-                <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
+            <div className="fw-panel-body">
+              <div className="fw-panel-status">
+                <span className={`fw-status-pill ${selected.status.toLowerCase()}`}>{STATUS_LABEL[selected.status]}</span>
+                <span className="fw-muted">
+                  {selected.status === 'PLANNED' && 'Esimene kanne muudab töö olekuks „Töös“.'}
+                  {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
+                  {selected.status === 'DONE' && `Lõpetatud ${selected.finishedAt ? formatDate(selected.finishedAt) : ''}`}
+                </span>
               </div>
-            )}
-            {selected.carriedOverToYear && (
-              <div className="alert-box info finance-alert">
-                <Info size={14} />
-                <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
-              </div>
-            )}
 
-            <div className="fw-panel-grid">
-              <label>
-                <span>Planeeritud</span>
-                <input
-                  key={`${selected.id}-planned`}
-                  className="form-input"
-                  defaultValue={selected.plannedText ?? ''}
-                  placeholder="nt okt 2026"
-                  disabled={locked}
-                  onBlur={(e) => {
-                    const v = e.target.value.trim() || null;
-                    if (v !== (selected.plannedText ?? null)) void run(() => api.updateFieldWork(selected.id, { plannedText: v }));
-                  }}
-                />
-              </label>
-              {selected.repeatMode !== 'ONCE' && (
+              {selected.isNextSeasonWinterSowing && (
+                <div className="alert-box info finance-alert">
+                  <Info size={14} />
+                  <span>See on {year}. a sügisene ettevalmistus/külv järgmise hooaja ({year + 1}) taliviljale {selectedRow.nextCropName ?? ''}.</span>
+                </div>
+              )}
+              {selected.carriedOverFromYear && (
+                <div className="alert-box info finance-alert">
+                  <Info size={14} />
+                  <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
+                </div>
+              )}
+              {selected.carriedOverToYear && !selected.isNextSeasonWinterSowing && (
+                <div className="alert-box info finance-alert">
+                  <Info size={14} />
+                  <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
+                </div>
+              )}
+
+              <div className="fw-panel-grid">
                 <label>
-                  <span>Plaanitud kordi</span>
+                  <span>Planeeritud</span>
                   <input
-                    key={`${selected.id}-count`}
+                    key={`${selected.id}-planned`}
                     className="form-input"
-                    type="number"
-                    min={1}
-                    defaultValue={selected.plannedCount}
+                    defaultValue={selected.plannedText ?? ''}
+                    placeholder={isSelectedNext ? `nt sügis ${year}` : 'nt mai 2026'}
                     disabled={locked}
                     onBlur={(e) => {
-                      const v = Math.max(1, Number(e.target.value) || 1);
-                      if (v !== selected.plannedCount) void run(() => api.updateFieldWork(selected.id, { plannedCount: v }));
+                      const v = e.target.value.trim() || null;
+                      if (v !== (selected.plannedText ?? null)) void run(() => api.updateFieldWork(selected.id, { plannedText: v }));
                     }}
                   />
                 </label>
-              )}
-            </div>
-
-            {selected.repeatMode === 'ONCE' && selectedRow.rec.areaHa > 0 && (() => {
-              const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
-              const pct = Math.min(100, Math.round((done / selectedRow.rec.areaHa) * 100));
-              return (
-                <div className="fw-panel-progress">
-                  <div className="fw-panel-progress-head"><span>Tehtud pindala</span><strong>{fmtHa(done)} / {fmtHa(selectedRow.rec.areaHa)} ha ({pct}%)</strong></div>
-                  <div className="work-progress-bar"><div style={{ width: `${pct}%` }} /></div>
-                </div>
-              );
-            })()}
-
-            <div className="fw-panel-entries-head">
-              <span>Kanded</span>
-              <span className="fw-muted">{selected.entries.length || ''}</span>
-            </div>
-            {selected.entries.length === 0 && (
-              <div className="fw-panel-empty">Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
-            )}
-            {selected.entries.map((e) => (
-              <div key={e.id} className="fw-entry">
-                <div className="fw-entry-head">
-                  <strong>{formatDate(e.date)}{e.occurrenceNo ? ` · ${e.occurrenceNo}. kord` : ''}</strong>
-                  <span>{e.areaHa ? `${fmtHa(e.areaHa)} ha` : ''}</span>
-                </div>
-                <div className="fw-entry-line">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
-                <div className="fw-entry-line muted">
-                  {[
-                    fmtNum(e.laborHours, 'h tööaeg'),
-                    fmtNum(e.equipmentHours, 'h masin'),
-                    fmtNum(e.fuelLiters, 'l kütust'),
-                    ...e.materials.map((m) => `${m.name} ${m.quantity.toLocaleString('et-EE')} ${m.unit}`),
-                    fmtNum(e.harvestTonnes, 't saaki')
-                  ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
-                </div>
-                <div className="fw-entry-foot">
-                  {canManageFinance ? (
-                    <button
-                      type="button"
-                      className={`fw-finance-chip clickable ${e.financeStatus.toLowerCase()}`}
-                      title="Ava kande finants ja määra ühikuhinnad"
-                      onClick={() => {
-                        setFinanceEntryId(e.id);
-                        setIsFinanceOpen(true);
+                {selected.repeatMode !== 'ONCE' && (
+                  <label>
+                    <span>Plaanitud kordi</span>
+                    <input
+                      key={`${selected.id}-count`}
+                      className="form-input"
+                      type="number"
+                      min={1}
+                      defaultValue={selected.plannedCount}
+                      disabled={locked}
+                      onBlur={(e) => {
+                        const v = Math.max(1, Number(e.target.value) || 1);
+                        if (v !== selected.plannedCount) void run(() => api.updateFieldWork(selected.id, { plannedCount: v }));
                       }}
-                    >
-                      <Euro size={10} />
-                      <span>{FINANCE_LABEL[e.financeStatus]}</span>
-                    </button>
-                  ) : (
-                    <span className={`fw-finance-chip ${e.financeStatus.toLowerCase()}`}>{FINANCE_LABEL[e.financeStatus]}</span>
-                  )}
-                  {!locked && (
-                    <span className="fw-entry-actions">
-                      <button type="button" className="icon-btn-ghost" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
-                        <Edit2 size={14} />
-                      </button>
-                      <button type="button" className="icon-btn-danger" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
-                        <Trash2 size={14} />
-                      </button>
-                    </span>
-                  )}
-                </div>
+                    />
+                  </label>
+                )}
               </div>
-            ))}
-            {!locked && (
-              <button type="button" className="btn btn-secondary fw-add-entry" onClick={() => setEntryDialog({ work: selected, entry: null })}>
-                <Plus size={14} />
-                <span>Lisa kanne…</span>
-              </button>
-            )}
-          </div>
 
-          {!locked && (
-            <div className="fw-panel-foot">
-              {selected.status === 'DONE' ? (
-                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
-                  <RotateCcw size={14} />
-                  <span>Ava uuesti</span>
-                </button>
-              ) : (
-                <button type="button" className="btn btn-primary" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
-                  <Check size={14} />
-                  <span>Märgi lõpetatuks</span>
+              {selected.repeatMode === 'ONCE' && activeArea > 0 && (() => {
+                const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
+                const pct = Math.min(100, Math.round((done / activeArea) * 100));
+                return (
+                  <div className="fw-panel-progress">
+                    <div className="fw-panel-progress-head"><span>Tehtud pindala</span><strong>{fmtHa(done)} / {fmtHa(activeArea)} ha ({pct}%)</strong></div>
+                    <div className="work-progress-bar"><div style={{ width: `${pct}%` }} /></div>
+                  </div>
+                );
+              })()}
+
+              <div className="fw-panel-entries-head">
+                <span>Kanded</span>
+                <span className="fw-muted">{selected.entries.length || ''}</span>
+              </div>
+              {selected.entries.length === 0 && (
+                <div className="fw-panel-empty">Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
+              )}
+              {selected.entries.map((e) => (
+                <div key={e.id} className="fw-entry">
+                  <div className="fw-entry-head">
+                    <strong>{formatDate(e.date)}{e.occurrenceNo ? ` · ${e.occurrenceNo}. kord` : ''}</strong>
+                    <span>{e.areaHa ? `${fmtHa(e.areaHa)} ha` : ''}</span>
+                  </div>
+                  <div className="fw-entry-line">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
+                  <div className="fw-entry-line muted">
+                    {[
+                      fmtNum(e.laborHours, 'h tööaeg'),
+                      fmtNum(e.equipmentHours, 'h masin'),
+                      fmtNum(e.fuelLiters, 'l kütust'),
+                      ...e.materials.map((m) => `${m.name} ${m.quantity.toLocaleString('et-EE')} ${m.unit}`),
+                      fmtNum(e.harvestTonnes, 't saaki')
+                    ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
+                  </div>
+                  <div className="fw-entry-foot">
+                    {canManageFinance ? (
+                      <button
+                        type="button"
+                        className={`fw-finance-chip clickable ${e.financeStatus.toLowerCase()}`}
+                        title="Ava kande finants ja määra ühikuhinnad"
+                        onClick={() => {
+                          setFinanceEntryId(e.id);
+                          setIsFinanceOpen(true);
+                        }}
+                      >
+                        <Euro size={10} />
+                        <span>{FINANCE_LABEL[e.financeStatus]}</span>
+                      </button>
+                    ) : (
+                      <span className={`fw-finance-chip ${e.financeStatus.toLowerCase()}`}>{FINANCE_LABEL[e.financeStatus]}</span>
+                    )}
+                    {!locked && (
+                      <span className="fw-entry-actions">
+                        <button type="button" className="icon-btn-ghost" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
+                          <Edit2 size={14} />
+                        </button>
+                        <button type="button" className="icon-btn-danger" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
+                          <Trash2 size={14} />
+                        </button>
+                      </span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {!locked && (
+                <button type="button" className="btn btn-secondary fw-add-entry" onClick={() => setEntryDialog({ work: selected, entry: null })}>
+                  <Plus size={14} />
+                  <span>Lisa kanne…</span>
                 </button>
               )}
-              <button
-                type="button"
-                className="icon-btn-danger"
-                title={selected.entries.length ? 'Kannetega tööd ei saa eemaldada' : 'Eemalda töö põllult'}
-                aria-label="Eemalda töö põllult"
-                disabled={busy || selected.entries.length > 0}
-                onClick={() => removeWork(selected)}
-              >
-                <Trash2 size={16} />
-              </button>
             </div>
-          )}
 
-          {!locked && !hasAnyEntries(selectedRow) && selectedRow.works.length > 1 && (
-            <div className="fw-panel-clear-wrap">
-              <button
-                type="button"
-                className="btn btn-ghost btn-xs fw-panel-clear-btn"
-                disabled={busy}
-                onClick={() => clearFieldWorks(selectedRow)}
-              >
-                <Trash2 size={12} />
-                <span>Eemalda kõik selle põllu tööd ({selectedRow.works.length})</span>
-              </button>
-            </div>
-          )}
-        </aside>
-      )}
+            {!locked && (
+              <div className="fw-panel-foot">
+                {selected.status === 'DONE' ? (
+                  <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
+                    <RotateCcw size={14} />
+                    <span>Ava uuesti</span>
+                  </button>
+                ) : (
+                  <button type="button" className="btn btn-primary" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
+                    <Check size={14} />
+                    <span>Märgi lõpetatuks</span>
+                  </button>
+                )}
+                <button
+                  type="button"
+                  className="icon-btn-danger"
+                  title={selected.entries.length ? 'Kannetega tööd ei saa eemaldada' : 'Eemalda töö põllult'}
+                  aria-label="Eemalda töö põllult"
+                  disabled={busy || selected.entries.length > 0}
+                  onClick={() => removeWork(selected)}
+                >
+                  <Trash2 size={16} />
+                </button>
+              </div>
+            )}
 
-      {entryDialog && selectedRow && (
-        <FieldWorkEntryDialog
-          work={entryDialog.work}
-          entry={entryDialog.entry}
-          fieldLabel={fieldLabel(selectedRow)}
-          fieldAreaHa={selectedRow.rec.areaHa}
-          workers={workers}
-          vehicles={vehicles}
-          implementsList={implementsList}
-          materials={materials}
-          onClose={() => setEntryDialog(null)}
-          onSaved={() => {
-            setEntryDialog(null);
-            void reload();
-          }}
-        />
-      )}
+            {!locked && !hasAnyEntries(selectedRow) && selectedRow.works.length > 1 && (
+              <div className="fw-panel-clear-wrap">
+                <button
+                  type="button"
+                  className="btn btn-ghost btn-xs fw-panel-clear-btn"
+                  disabled={busy}
+                  onClick={() => clearFieldWorks(selectedRow)}
+                >
+                  <Trash2 size={12} />
+                  <span>Eemalda kõik selle põllu tööd ({selectedRow.works.length})</span>
+                </button>
+              </div>
+            )}
+          </aside>
+        );
+      })()}
+
+      {entryDialog && selectedRow && (() => {
+        const isNext = entryDialog.work.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === entryDialog.work.fieldSeasonId);
+        const activeLabel = isNext
+          ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1})`
+          : fieldLabel(selectedRow);
+        const activeArea = isNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
+
+        return (
+          <FieldWorkEntryDialog
+            work={entryDialog.work}
+            entry={entryDialog.entry}
+            fieldLabel={activeLabel}
+            fieldAreaHa={activeArea}
+            workers={workers}
+            vehicles={vehicles}
+            implementsList={implementsList}
+            materials={materials}
+            onClose={() => setEntryDialog(null)}
+            onSaved={() => {
+              setEntryDialog(null);
+              void reload();
+            }}
+          />
+        );
+      })()}
 
       {addDialog && (
         <AddFieldWorkDialog
-          fieldSeasonId={addDialog.row.fieldSeasonId}
-          fieldLabel={fieldLabel(addDialog.row)}
+          fieldSeasonId={addDialog.isNextCrop && addDialog.row.nextRec?.fieldSeasonId ? addDialog.row.nextRec.fieldSeasonId : addDialog.row.fieldSeasonId}
+          fieldLabel={addDialog.isNextCrop
+            ? `Nr ${addDialog.row.field.num ?? '–'} ${addDialog.row.field.name} · Sügiskülv ${year} (Saak ${year + 1}: ${addDialog.row.nextCropName ?? 'talivili'})`
+            : fieldLabel(addDialog.row)
+          }
           workTypes={workTypes}
-          existing={addDialog.row.works}
-          templateWorkTypeIds={templateIdsFor(addDialog.row)}
+          existing={addDialog.isNextCrop ? addDialog.row.nextWorks : addDialog.row.works}
+          templateWorkTypeIds={addDialog.isNextCrop ? templateIdsForNext(addDialog.row) : templateIdsFor(addDialog.row)}
           initialPhase={addDialog.phase}
           onClose={() => setAddDialog(null)}
           onSaved={() => {
@@ -739,6 +1137,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           year={year}
           initialEntryId={financeEntryId}
           onEntryUpdated={reload}
+        />
+      )}
+
+      {shapeView && (
+        <FieldShapeModal
+          field={shapeView.field}
+          record={shapeView.record}
+          baseMap="maaamet-pohikaart"
+          onClose={() => setShapeView(null)}
         />
       )}
     </div>

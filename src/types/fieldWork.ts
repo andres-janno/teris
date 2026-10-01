@@ -124,6 +124,8 @@ export interface FieldWork {
   entries: WorkEntry[];
   carriedOverFromYear?: number | null;
   carriedOverToYear?: number | null;
+  seasonYear?: number | null;
+  isNextSeasonWinterSowing?: boolean;
 }
 
 // Kande sisestus (töötaja: ainult kogused)

@@ -13,3 +13,16 @@ export function matchCrop<T extends { name: string }>(cropText: string | null | 
     }) ?? null
   );
 }
+
+export function isWinterCrop(cropText: string | null | undefined, crops?: { name: string; isWinterCrop?: boolean }[]): boolean {
+  if (isCropUndetermined(cropText)) return false;
+  if (crops && crops.length > 0) {
+    const matched = matchCrop(cropText, crops as any);
+    if (matched && typeof (matched as any).isWinterCrop === 'boolean') {
+      return (matched as any).isWinterCrop;
+    }
+  }
+  const text = String(cropText).toLowerCase().trim();
+  return text.startsWith('tali') || text.includes('talinisu') || text.includes('taliraps') || text.includes('talioder') || text.includes('rukis');
+}
+

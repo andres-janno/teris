@@ -6053,24 +6053,68 @@ a.history-pill:hover {
 
 .fw-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 2fr) minmax(0, 1fr) minmax(0, 2fr) minmax(0, 1fr);
+  grid-template-columns: minmax(150px, 1.05fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
   width: 100%;
 }
 
 .fw-head {
   position: sticky;
   top: 0;
-  z-index: 2;
+  z-index: 3;
   background: var(--bg-modal);
   border-bottom: 1px solid var(--border-card);
 }
 
+.fw-head-section {
+  padding: 6px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-width: 0;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.fw-head-section + .fw-head-section {
+  border-left: 1px solid var(--border-card);
+}
+
+.fw-head-section.current {
+  background: color-mix(in srgb, #16a34a 8%, var(--bg-modal));
+  color: #15803d;
+}
+
+:root[data-theme="dark"] .fw-head-section.current {
+  color: #4ade80;
+}
+
+.fw-head-section.next {
+  background: color-mix(in srgb, #0284c7 10%, var(--bg-modal));
+  color: #0369a1;
+}
+
+:root[data-theme="dark"] .fw-head-section.next {
+  color: #38bdf8;
+}
+
+.fw-head-section small {
+  font-size: 0.68rem;
+  font-weight: 500;
+  text-transform: none;
+  letter-spacing: 0;
+  opacity: 0.85;
+}
+
 .fw-head-cell {
-  padding: 9px 12px;
+  padding: 8px 10px;
   display: flex;
   flex-direction: column;
   gap: 1px;
-  font-size: 0.7rem;
+  font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
@@ -6084,14 +6128,14 @@ a.history-pill:hover {
 .fw-head-cell strong {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  font-size: 0.86rem;
+  gap: 4px;
+  font-size: 0.84rem;
   letter-spacing: 0;
   color: var(--text-primary);
 }
 
 .fw-head-cell small {
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 500;
   letter-spacing: 0;
 }
@@ -6110,6 +6154,343 @@ a.history-pill:hover {
 
 .fw-head-cell.milestone.harvest strong {
   color: #9a5b00;
+}
+
+.fw-head-cell.milestone.autumn-sow {
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.fw-head-cell.milestone.autumn-sow strong {
+  color: #0284c7;
+}
+
+:root[data-theme="dark"] .fw-head-cell.milestone.autumn-sow strong {
+  color: #38bdf8;
+}
+
+/* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
+.fw-row-container {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.05fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
+  grid-template-rows: auto 1fr;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.fw-row-container:hover {
+  background: color-mix(in srgb, var(--bg-hover) 35%, transparent);
+}
+
+.fw-row-container .fw-field {
+  border-right: 1px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 10px 12px;
+  gap: 4px;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+
+.fw-field.winter-next {
+  background: color-mix(in srgb, #0284c7 9%, var(--bg-card));
+}
+
+:root[data-theme="dark"] .fw-field.winter-next {
+  background: color-mix(in srgb, #0284c7 14%, var(--bg-card));
+}
+
+.fw-field.spring-next {
+  background: color-mix(in srgb, #16a34a 9%, var(--bg-card));
+}
+
+:root[data-theme="dark"] .fw-field.spring-next {
+  background: color-mix(in srgb, #16a34a 14%, var(--bg-card));
+}
+
+.fw-field.undetermined-next {
+  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card));
+}
+
+:root[data-theme="dark"] .fw-field.undetermined-next {
+  background: color-mix(in srgb, #94a3b8 14%, var(--bg-card));
+}
+
+.fw-row-container:hover .fw-field.winter-next {
+  background: color-mix(in srgb, #0284c7 15%, var(--bg-card));
+}
+
+.fw-row-container:hover .fw-field.spring-next {
+  background: color-mix(in srgb, #16a34a 15%, var(--bg-card));
+}
+
+.fw-row-container:hover .fw-field.undetermined-next {
+  background: color-mix(in srgb, #94a3b8 15%, var(--bg-card));
+}
+
+.fw-row-container:hover .fw-field-clear-btn {
+  opacity: 1;
+}
+
+.fw-crop-banner {
+  padding: 5px 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  min-width: 0;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.fw-crop-banner + .fw-crop-banner {
+  border-left: 1px solid var(--border-card);
+}
+
+.fw-crop-banner.current {
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) 12%, var(--bg-card));
+  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
+}
+
+.fw-crop-banner.next {
+  background: color-mix(in srgb, var(--next-crop-color, #94a3b8) 10%, var(--bg-card));
+  box-shadow: inset 3px 0 0 var(--next-crop-color, #94a3b8);
+}
+
+.fw-crop-banner.next.undetermined {
+  background: var(--stat-bg);
+  box-shadow: none;
+  opacity: 0.85;
+}
+
+.fw-crop-banner.carried {
+  background: var(--stat-bg);
+  box-shadow: none;
+  color: var(--text-secondary);
+  font-size: 0.73rem;
+}
+
+.fw-crop-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--crop-color, #94a3b8);
+  flex-shrink: 0;
+}
+
+.fw-crop-dot.next {
+  background: var(--next-crop-color, #94a3b8);
+}
+
+.fw-crop-name {
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fw-crop-badge-tag {
+  font-size: 0.67rem;
+  font-weight: 600;
+  padding: 1px 6px;
+  border-radius: 9999px;
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  margin-left: auto;
+}
+
+:root[data-theme="dark"] .fw-crop-badge-tag {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.fw-cell.fw-cell-carried {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--stat-bg);
+  padding: 8px 10px;
+}
+
+.fw-cell.fw-cell-next-spring,
+.fw-cell.fw-cell-no-sow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: color-mix(in srgb, #16a34a 9%, var(--bg-card));
+  padding: 8px 10px;
+}
+
+:root[data-theme="dark"] .fw-cell.fw-cell-next-spring,
+:root[data-theme="dark"] .fw-cell.fw-cell-no-sow {
+  background: color-mix(in srgb, #16a34a 14%, var(--bg-card));
+}
+
+.fw-cell.fw-cell-next-none {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--stat-bg);
+  padding: 8px 10px;
+}
+
+.fw-next-spring-banner {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+  padding: 4px 9px;
+  border-radius: 6px;
+  background: var(--bg-modal);
+  border: 1px dashed var(--border-card);
+}
+
+/* Põllutööde tahvli grupipäised (sügiskülv / kevadkülv) */
+.fw-group-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  background: var(--bg-hover);
+  border-top: 1px solid var(--border-card);
+  border-bottom: 1px solid var(--border-card);
+  cursor: pointer;
+  user-select: none;
+  transition: background 0.12s ease;
+}
+
+.fw-group-header:first-of-type {
+  border-top: none;
+}
+
+.fw-group-header:hover {
+  filter: brightness(0.98);
+}
+
+:root[data-theme="dark"] .fw-group-header:hover {
+  filter: brightness(1.05);
+}
+
+.fw-group-header.winter {
+  background: color-mix(in srgb, #0284c7 9%, var(--bg-card));
+}
+
+.fw-group-header.spring {
+  background: color-mix(in srgb, #16a34a 9%, var(--bg-card));
+}
+
+.fw-group-header.undetermined {
+  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card));
+}
+
+.fw-group-toggle {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.fw-group-chevron {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.fw-group-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+  white-space: nowrap;
+}
+
+.fw-group-icon.winter {
+  color: #0284c7;
+}
+
+.fw-group-icon.spring {
+  color: #16a34a;
+}
+
+.fw-group-icon.undetermined {
+  color: #94a3b8;
+}
+
+.fw-group-kind-label {
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.fw-group-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 9999px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.fw-group-badge.winter {
+  background: #e0f2fe;
+  color: #0369a1;
+}
+
+.fw-group-badge.spring {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.fw-group-badge.undetermined {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+:root[data-theme="dark"] .fw-group-badge.winter {
+  background: rgba(2, 132, 199, 0.22);
+  color: #38bdf8;
+}
+
+:root[data-theme="dark"] .fw-group-badge.spring {
+  background: rgba(22, 163, 74, 0.22);
+  color: #4ade80;
+}
+
+:root[data-theme="dark"] .fw-group-badge.undetermined {
+  background: rgba(148, 163, 184, 0.22);
+  color: #cbd5e1;
+}
+
+.fw-group-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.fw-group-stat {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.fw-group-stat strong {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.fw-group-stat-sep {
+  color: var(--border-card);
+}
+
+.fw-group-action-btn {
+  margin-left: 6px;
 }
 
 .fw-row {
@@ -6145,43 +6526,41 @@ a.history-pill:hover {
   text-overflow: ellipsis;
 }
 
-.fw-field-clear-btn {
+.fw-field-actions {
   margin-left: auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
   flex-shrink: 0;
+}
+
+.fw-field-shape-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
+  padding: 3px;
+  border: none;
   border-radius: 4px;
-  border: 1px solid transparent;
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition: all 0.15s ease;
 }
 
-.fw-row:hover .fw-field-clear-btn,
-.fw-field-clear-btn:focus,
-.fw-field-clear-btn:hover {
-  opacity: 1;
+.fw-field-shape-btn:hover {
+  color: var(--emerald-500);
+  background: var(--btn-sec-hover);
 }
 
-.fw-field-clear-btn:hover {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
-  border-color: rgba(220, 38, 38, 0.2);
-}
+
 
 .fw-field-sub {
   display: flex;
   gap: 6px;
   font-size: 0.74rem;
   color: var(--text-secondary);
-  justify-content: space-between;
-  align-items: baseline;
+  justify-content: flex-end;
+  align-items: center;
 }
 
 .fw-field-sub strong {
@@ -6190,13 +6569,13 @@ a.history-pill:hover {
   word-break: break-word;
 }
 
-.fw-field-sub span,
 .fw-field-ha {
   white-space: nowrap;
   flex-shrink: 0;
   font-size: 0.92rem;
   font-weight: 700;
   color: var(--text-primary);
+  margin-left: auto;
 }
 
 .fw-field-kind {
@@ -6216,7 +6595,7 @@ a.history-pill:hover {
 }
 
 .fw-cell.waiting {
-  background: var(--stat-bg);
+  background: transparent;
 }
 
 .fw-cell.milestone.sow {
@@ -6229,6 +6608,22 @@ a.history-pill:hover {
 
 .fw-cell.milestone.harvest {
   background: rgba(245, 158, 11, 0.06);
+}
+
+.fw-cell.milestone.autumn-sow {
+  background: rgba(2, 132, 199, 0.08);
+}
+
+.fw-cell.milestone.autumn-sow.done {
+  background: rgba(2, 132, 199, 0.15);
+}
+
+:root[data-theme="dark"] .fw-cell.milestone.autumn-sow {
+  background: rgba(2, 132, 199, 0.14);
+}
+
+:root[data-theme="dark"] .fw-cell.milestone.autumn-sow.done {
+  background: rgba(2, 132, 199, 0.22);
 }
 
 .fw-cell.milestone .fw-card {

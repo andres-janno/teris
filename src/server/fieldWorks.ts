@@ -189,8 +189,6 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
   const items = [...template.items].sort((a, b) => a.sortOrder - b.sortOrder);
   for (const item of items) {
     if (existing.has(item.workTypeId) || !item.workType.isActive) continue;
-    // Kui see hooaeg on eelmisest sügisest üle kantud koristusaasta, tehti ettevalmistus ja külv juba eelmisel aastal
-    if (isCarriedFromPrev && (item.workType.phase === 'PREPARATION' || item.workType.phase === 'SOWING')) continue;
     await prisma.fieldWork.create({
       data: {
         fieldSeasonId,
@@ -202,50 +200,6 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
         fromTemplate: true
       }
     });
-  }
-
-  // Kui tegemist on taliviljaga külviaastal: kandub edasi järgmisse hooaega!
-  // Tagame, et järgmises hooajas (fs.year + 1) on sama talivili olemas ja tema hooldus/koristustööd lisatud.
-  if (isWinter && !isCarriedFromPrev) {
-    const nextYear = fs.year + 1;
-    let nextFs = await prisma.fieldSeason.findUnique({
-      where: { fieldId_year: { fieldId: fs.fieldId, year: nextYear } }
-    });
-    if (!nextFs) {
-      nextFs = await prisma.fieldSeason.create({
-        data: {
-          fieldId: fs.fieldId,
-          year: nextYear,
-          crop: fs.crop,
-          cropColor: fs.cropColor,
-          areaHa: fs.areaHa,
-          geometry: fs.geometry as any
-        }
-      });
-    } else if (isUndeterminedCrop(nextFs.crop)) {
-      nextFs = await prisma.fieldSeason.update({
-        where: { id: nextFs.id },
-        data: { crop: fs.crop, cropColor: fs.cropColor }
-      });
-    }
-    if (nextFs && (nextFs.crop === fs.crop || isWinterCrop(nextFs.crop, crops))) {
-      const nextExisting = new Set((await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFs.id }, select: { workTypeId: true } })).map((w) => w.workTypeId));
-      for (const item of items) {
-        if (nextExisting.has(item.workTypeId) || !item.workType.isActive) continue;
-        if (item.workType.phase !== 'CARE' && item.workType.phase !== 'HARVEST') continue;
-        await prisma.fieldWork.create({
-          data: {
-            fieldSeasonId: nextFs.id,
-            workTypeId: item.workTypeId,
-            phase: item.workType.phase,
-            sortOrder: item.sortOrder,
-            plannedText: item.typicalTiming,
-            plannedCount: item.plannedCount ?? item.workType.maxRepeats ?? 1,
-            fromTemplate: true
-          }
-        });
-      }
-    }
   }
 }
 
@@ -598,6 +552,45 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
     });
 
+    // Järgmise aasta taliviljade sügiskülvi tööd (teostatakse selle aasta sügisel)
+    const nextYearSeasons = await prisma.fieldSeason.findMany({
+      where: { year: year + 1 },
+      select: {
+        id: true,
+        fieldId: true,
+        crop: true,
+        year: true,
+        fieldWorks: { select: { id: true } }
+      }
+    });
+
+    const nextWinterSeasonIds: number[] = [];
+    for (const ns of nextYearSeasons) {
+      if (isWinterCrop(ns.crop, crops)) {
+        const hasPrepOrSow = await prisma.fieldWork.findFirst({
+          where: { fieldSeasonId: ns.id, phase: { in: ['PREPARATION', 'SOWING'] } },
+          select: { id: true }
+        });
+        if (!hasPrepOrSow) {
+          await applyCropTemplate(ns.id);
+        }
+        nextWinterSeasonIds.push(ns.id);
+      }
+    }
+
+    const nextAutumnRows = nextWinterSeasonIds.length > 0 ? await prisma.fieldWork.findMany({
+      where: {
+        fieldSeasonId: { in: nextWinterSeasonIds },
+        phase: { in: ['PREPARATION', 'SOWING'] }
+      },
+      orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
+      include: {
+        workType: true,
+        fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } },
+        entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE }
+      }
+    }) : [];
+
     const worksDto: any[] = rows.map((w) => {
       const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
       const isCarriedFromPrev = winterHarvestMap.has(w.fieldSeasonId);
@@ -620,9 +613,36 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         notes: w.notes,
         entries: w.entries.map((e) => entryDto(e, finance)),
         carriedOverFromYear: null as number | null,
-        carriedOverToYear
+        carriedOverToYear,
+        seasonYear: year,
+        isNextSeasonWinterSowing: false
       };
     });
+
+    for (const w of nextAutumnRows) {
+      worksDto.push({
+        id: w.id,
+        fieldSeasonId: w.fieldSeasonId,
+        workTypeId: w.workTypeId,
+        workTypeName: w.workType.name,
+        phase: w.phase,
+        repeatMode: w.workType.repeatMode,
+        intervalDays: w.workType.intervalDays,
+        usesMaterials: w.workType.usesMaterials,
+        sortOrder: w.sortOrder,
+        plannedText: w.plannedText ?? `Sügis ${year}`,
+        plannedCount: w.plannedCount,
+        status: w.status,
+        finishedAt: isoDate(w.finishedAt),
+        fromTemplate: w.fromTemplate,
+        notes: w.notes,
+        entries: w.entries.map((e) => entryDto(e, finance)),
+        carriedOverFromYear: null,
+        carriedOverToYear: year + 1,
+        seasonYear: year + 1,
+        isNextSeasonWinterSowing: true
+      });
+    }
 
     // Lisa iga talivilja põllu jaoks eelmise sügise ettevalmistus- ja külvitööd
     for (const [fieldSeasonId, prevSeason] of winterHarvestMap.entries()) {
