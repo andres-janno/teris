@@ -208,7 +208,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
       return json(res, {
         status: 'connected',
-        database: 'agro_db',
+        database: 'teris_db',
         counts: {
           seasons: seasonsCount,
           fields: fieldsCount,

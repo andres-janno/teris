@@ -12,7 +12,7 @@
     "build:server": "vite build --config vite.server.config.ts",
     "user": "node dist-server/userCli.js",
     "start": "node dist-server/prod.js",
-    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart agro"
+    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris"
   },
   "dependencies": {
     "@prisma/client": "^6.19.3",

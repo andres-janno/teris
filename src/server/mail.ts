@@ -1,8 +1,8 @@
 // src/server/mail.ts — e-kirjad (parooli lingid) serveri sendmail'i (Postfix) kaudu.
 import { spawn } from 'node:child_process';
 
-export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@agro.ventcap.ee';
-export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://agro.ventcap.ee').replace(/\/+$/, '');
+export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@teris.ventcap.ee';
+export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://teris.ventcap.ee').replace(/\/+$/, '');
 
 export function normalizeEmail(raw: unknown): string | null {
   const email = String(raw ?? '').trim().toLowerCase();
@@ -26,14 +26,14 @@ export function buildPasswordLinkMail(o: {
   username: string;
   displayName: string | null;
 }): string {
-  const subject = o.purpose === 'INVITE' ? 'Kutse AGRO rakendusse' : 'AGRO parooli määramine';
+  const subject = o.purpose === 'INVITE' ? 'Kutse TERIS rakendusse' : 'TERIS parooli määramine';
   const greeting = o.displayName ? `Tere, ${o.displayName}!` : 'Tere!';
   const lines =
     o.purpose === 'INVITE'
       ? [
           greeting,
           '',
-          `Sulle on loodud konto AGRO rakendusse kasutajanimega ${o.username}.`,
+          `Sulle on loodud konto TERIS rakendusse kasutajanimega ${o.username}.`,
           'Määra endale parool alloleval lingil, seejärel saad sisse logida:',
           '',
           o.link,
@@ -50,7 +50,7 @@ export function buildPasswordLinkMail(o: {
           'Link kehtib 1 tund ja on ühekordne. Kui sa seda ei tellinud, võid kirja eirata.'
         ];
   const headers = [
-    `From: AGRO <${assertHeaderSafe(o.from)}>`,
+    `From: TERIS <${assertHeaderSafe(o.from)}>`,
     `To: ${assertHeaderSafe(o.to)}`,
     `Subject: ${encodeHeader(subject)}`,
     `Date: ${new Date().toUTCString()}`,

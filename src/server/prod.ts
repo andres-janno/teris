@@ -8,7 +8,7 @@ import { serveStatic } from './static';
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
 const DIST_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
-const API_OPTIONS = { allowedOrigins: ['https://agro.ventcap.ee'], requireAuth: true };
+const API_OPTIONS = { allowedOrigins: ['https://teris.ventcap.ee', 'https://agro.ventcap.ee'], requireAuth: true };
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -27,5 +27,5 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`agro map kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
+  console.log(`teris map kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
 });

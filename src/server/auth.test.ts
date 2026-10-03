@@ -50,13 +50,13 @@ describe('sessioonitoken ja küpsis', () => {
     expect(hashToken(t)).toMatch(/^[0-9a-f]{64}$/);
   });
   it('loeb küpsiseid', () => {
-    expect(parseCookies('a=1; agro_session=abc%3D; b=2')).toEqual({ a: '1', agro_session: 'abc=', b: '2' });
+    expect(parseCookies('a=1; teris_session=abc%3D; b=2')).toEqual({ a: '1', teris_session: 'abc=', b: '2' });
     expect(parseCookies(undefined)).toEqual({});
     expect(parseCookies('vigane; x=%E0%A4%A')).toEqual({});
   });
   it('seab ja kustutab küpsise', () => {
-    expect(sessionCookie('tok', 1209600)).toBe('agro_session=tok; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600');
-    expect(clearSessionCookie()).toBe('agro_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+    expect(sessionCookie('tok', 1209600)).toBe('teris_session=tok; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600');
+    expect(clearSessionCookie()).toBe('teris_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
   });
 });
 

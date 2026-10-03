@@ -3,7 +3,7 @@
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
-export const SESSION_COOKIE = 'agro_session';
+export const SESSION_COOKIE = 'teris_session';
 
 const SCRYPT_N = 16384;
 const SCRYPT_R = 8;

@@ -94,7 +94,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             <div className="user-menu-db" title="PostgreSQL andmebaas">
               <Database size={12} />
               <span className={`user-menu-db-dot ${dbConnected ? 'connected' : ''}`}></span>
-              agro_db {dbConnected ? '' : '(ühendus puudub)'}
+              teris_db {dbConnected ? '' : '(ühendus puudub)'}
             </div>
           </div>
         </div>

@@ -5,7 +5,7 @@ import type { Plugin } from 'vite';
 import { handleApiRequest } from './apiHandler.ts';
 
 const DEV_OPTIONS = {
-  allowedOrigins: ['https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  allowedOrigins: ['https://teris.ventcap.ee', 'https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
   // Basic Auth on kadunud — arendusserver kasutab sama sisselogimist/sessiooni nõuet mis toodang.
   requireAuth: true
 };

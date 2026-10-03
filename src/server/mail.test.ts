@@ -21,22 +21,22 @@ describe('normalizeEmail', () => {
 });
 
 describe('buildPasswordLinkMail', () => {
-  const base = { to: 'mari@x.ee', from: 'noreply@agro.ventcap.ee', link: 'https://agro.ventcap.ee/parool#abc', username: 'mari', displayName: 'Mari Maasikas' };
+  const base = { to: 'mari@x.ee', from: 'noreply@teris.ventcap.ee', link: 'https://teris.ventcap.ee/parool#abc', username: 'mari', displayName: 'Mari Maasikas' };
   it('kutse: päised, MIME-teema ja link', () => {
     const msg = buildPasswordLinkMail({ ...base, purpose: 'INVITE' });
     const [head, ...bodyParts] = msg.split('\n\n');
     const body = bodyParts.join('\n\n');
     expect(head).toContain('To: mari@x.ee');
-    expect(head).toContain('From: AGRO <noreply@agro.ventcap.ee>');
-    expect(head).toContain(`Subject: =?UTF-8?B?${Buffer.from('Kutse AGRO rakendusse').toString('base64')}?=`);
+    expect(head).toContain('From: TERIS <noreply@teris.ventcap.ee>');
+    expect(head).toContain(`Subject: =?UTF-8?B?${Buffer.from('Kutse TERIS rakendusse').toString('base64')}?=`);
     expect(head).toContain('Content-Type: text/plain; charset=UTF-8');
-    expect(body).toContain('https://agro.ventcap.ee/parool#abc');
+    expect(body).toContain('https://teris.ventcap.ee/parool#abc');
     expect(body).toContain('kasutajanimega mari');
     expect(body).toContain('7 päeva');
   });
   it('lähtestus: teema ja kehtivus', () => {
     const msg = buildPasswordLinkMail({ ...base, purpose: 'RESET' });
-    expect(msg).toContain(`=?UTF-8?B?${Buffer.from('AGRO parooli määramine').toString('base64')}?=`);
+    expect(msg).toContain(`=?UTF-8?B?${Buffer.from('TERIS parooli määramine').toString('base64')}?=`);
     expect(msg).toContain('1 tund');
   });
   it('ei luba päisesse reavahetust', () => {

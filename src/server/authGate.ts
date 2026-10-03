@@ -62,7 +62,7 @@ export function sessionUserOf(req: IncomingMessage): SessionUser | null {
 // Vale kasutajanime korral kontrollitakse parooli selle vastu, et vastuse aeg ei
 // paljastaks, kas kasutaja on olemas.
 let dummyHash: Promise<string> | null = null;
-const getDummyHash = () => (dummyHash ??= hashPassword('agro-map-dummy-password'));
+const getDummyHash = () => (dummyHash ??= hashPassword('teris-map-dummy-password'));
 
 function isSecure(req: IncomingMessage): boolean {
   if ((req.socket as any)?.encrypted) return true;
@@ -82,7 +82,8 @@ function clientIp(req: IncomingMessage): string {
 }
 
 function sessionToken(req: IncomingMessage): string | undefined {
-  return parseCookies(req.headers.cookie)[SESSION_COOKIE];
+  const cookies = parseCookies(req.headers.cookie);
+  return cookies[SESSION_COOKIE] || cookies['agro_session'];
 }
 
 async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string } | null> {

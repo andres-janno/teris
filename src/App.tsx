@@ -235,7 +235,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [soilSamples, setSoilSamples] = useState<SoilSample[]>([]);
   const [soilMetric, setSoilMetric] = useState<SoilSampleMetricKey>('ph');
 
-  // Laadi andmed otse PostgreSQL agro_db andmebaasist
+  // Laadi andmed otse PostgreSQL teris_db andmebaasist
   useEffect(() => {
     let isMounted = true;
     api.getStatus()
@@ -273,7 +273,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         }
       })
       .catch((err) => {
-        console.warn('agro_db API pole saadaval:', err);
+        console.warn('teris_db API pole saadaval:', err);
         setDbError(true);
       });
 
