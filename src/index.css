@@ -6829,6 +6829,13 @@ a.history-pill:hover {
   color: #14532d;
 }
 
+.fw-carried-from-pill.missing {
+  background: var(--stat-bg);
+  border: 1px dashed var(--border-card);
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 .fw-carried-from-pill button {
   border: none;
   background: #16a34a;

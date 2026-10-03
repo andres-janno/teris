@@ -330,10 +330,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [rows, year]);
 
   const visibleWorks = (r: Row, phase: WorkPhase) => r.works.filter((w) => w.phase === phase && (!hideDone || w.status !== 'DONE'));
+  const hasAutumnWorks = (r: Row) =>
+    r.works.some((w) => w.phase === 'PREPARATION' || w.phase === 'SOWING');
+
   const rowNeedsWorks = (r: Row) => {
     if (r.undetermined) return false;
     if (r.isWinter) {
-      return r.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0;
+      return hasAutumnWorks(r) && r.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0;
     }
     return r.works.length === 0;
   };
@@ -610,7 +613,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const sownDone = (row: Row) => {
     if (row.carriedFromYear) {
       const sowWork = row.works.find((w) => w.phase === 'SOWING');
-      return sowWork ? sowWork.status === 'DONE' || sowWork.entries.length > 0 : true;
+      return sowWork ? sowWork.status === 'DONE' || sowWork.entries.length > 0 : false;
     }
     return row.works.some((w) => w.phase === 'SOWING' && (w.status === 'DONE' || !!w.carriedOverFromYear));
   };
@@ -918,16 +921,25 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             style={{ gridColumn: '2 / 4', gridRow: '2 / 3' }}
                             title={`Talivilja ettevalmistus ja külv teostati ${row.carriedFromYear ?? year - 1}. a sügisel`}
                           >
-                            <div className={`fw-carried-from-pill ${sownDone(row) ? 'done' : ''}`}>
-                              <span>✓ Ettevalmistus ja külv tehtud sügisel {row.carriedFromYear ?? year - 1}</span>
-                            </div>
+                            {hasAutumnWorks(row) ? (
+                              <div className={`fw-carried-from-pill ${sownDone(row) ? 'done' : ''}`}>
+                                <span>✓ Ettevalmistus ja külv tehtud sügisel {row.carriedFromYear ?? year - 1}</span>
+                              </div>
+                            ) : (
+                              <div
+                                className="fw-carried-from-pill missing"
+                                title={`Talivilja tööd tuleb lisada ${row.carriedFromYear ?? year - 1}. a sügistöödes`}
+                              >
+                                <span>Ettevalmistus ja külv lisamata ({row.carriedFromYear ?? year - 1}. a sügis)</span>
+                              </div>
+                            )}
                           </div>
                         )}
 
                         {/* Col 4: Hooldus */}
                         <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
                           {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined}
-                          {row.isWinter && !row.undetermined && row.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0 && !locked && (
+                          {row.isWinter && !row.undetermined && hasAutumnWorks(row) && row.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0 && !locked && (
                             <button
                               type="button"
                               className="btn btn-secondary btn-xs"
