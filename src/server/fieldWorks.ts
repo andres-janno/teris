@@ -185,9 +185,19 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
       where: { fieldSeasonId, fromTemplate: true, phase: { in: ['CARE', 'HARVEST'] }, entries: { none: {} } }
     });
   } else {
-    await prisma.fieldWork.deleteMany({
-      where: { fieldSeasonId, fromTemplate: true, entries: { none: {} } }
+    // Kui suviviljal oli sügisene ettevalmistus tehtud (nt sügiskünd), hoiame selle alles
+    const hasAutumnPrep = await prisma.fieldWork.count({
+      where: { fieldSeasonId, phase: 'PREPARATION', plannedText: { contains: 'ügis' } }
     });
+    if (hasAutumnPrep > 0) {
+      await prisma.fieldWork.deleteMany({
+        where: { fieldSeasonId, fromTemplate: true, phase: { in: ['SOWING', 'CARE', 'HARVEST'] }, entries: { none: {} } }
+      });
+    } else {
+      await prisma.fieldWork.deleteMany({
+        where: { fieldSeasonId, fromTemplate: true, entries: { none: {} } }
+      });
+    }
   }
 
   const existing = new Set(
@@ -218,8 +228,9 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
 }
 
 // Sügistööde lisamine järgmise aasta hooajale (nextFieldSeasonId):
-// - Taliviljal: lisatakse sügisesse PREPARATION ja SOWING (ettevalmistus ja sügiskülv).
-// - Suviviljal: lisatakse sügisesse AINULT PREPARATION (sügisene ettevalmistus; külv toimub kevadel!).
+// - Taliviljal: lisatakse kogu talivilja elutsükkel: ettevalmistus ja külv sügisesse (näha sügistöödes),
+//   hooldus ja koristus saagiaastasse (näha järgmise aasta hooldus- ja koristusveergudes).
+// - Suviviljal: lisatakse sügisesse AINULT PREPARATION (sügisene ettevalmistus; külv, hooldus ja koristus on järgmise aasta töödes).
 export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<void> {
   await ensureSeed();
   const nextFs = await prisma.fieldSeason.findUnique({
@@ -241,16 +252,26 @@ export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<vo
 
   if (!template || !template.items.length) return;
 
-  // Eemaldatakse kanneteta sügistööd: taliviljal PREPARATION ja SOWING, suviviljal AINULT PREPARATION
-  const autumnPhases: Phase[] = isWinter ? ['PREPARATION', 'SOWING'] : ['PREPARATION'];
-  await prisma.fieldWork.deleteMany({
-    where: {
-      fieldSeasonId: nextFieldSeasonId,
-      fromTemplate: true,
-      phase: { in: autumnPhases },
-      entries: { none: {} }
-    }
-  });
+  // Eemaldatakse kanneteta tööd enne malli rakendamist:
+  // Taliviljal kogu tsükkel, suviviljal ainult sügisene PREPARATION
+  if (isWinter) {
+    await prisma.fieldWork.deleteMany({
+      where: {
+        fieldSeasonId: nextFieldSeasonId,
+        fromTemplate: true,
+        entries: { none: {} }
+      }
+    });
+  } else {
+    await prisma.fieldWork.deleteMany({
+      where: {
+        fieldSeasonId: nextFieldSeasonId,
+        fromTemplate: true,
+        phase: 'PREPARATION',
+        entries: { none: {} }
+      }
+    });
+  }
 
   const existing = new Set(
     (await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId)
@@ -261,20 +282,17 @@ export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<vo
     const wt = item.workType;
     if (!wt || !wt.isActive || existing.has(wt.id)) continue;
 
-    // Taliviljal lähevad sügisesse PREPARATION ja SOWING; suviviljal AINULT PREPARATION
-    if (isWinter) {
-      if (wt.phase !== 'PREPARATION' && wt.phase !== 'SOWING') continue;
-    } else {
-      if (wt.phase !== 'PREPARATION') continue;
-    }
+    // Suviviljal lisatakse sügisesse AINULT PREPARATION tööd (külv, hooldus ja koristus on järgmise aasta töödes)
+    if (!isWinter && wt.phase !== 'PREPARATION') continue;
 
+    const isAutumnPhase = wt.phase === 'PREPARATION' || wt.phase === 'SOWING';
     await prisma.fieldWork.create({
       data: {
         fieldSeasonId: nextFieldSeasonId,
         workTypeId: wt.id,
         phase: wt.phase,
         sortOrder: item.sortOrder,
-        plannedText: item.typicalTiming ?? `Sügis ${nextFs.year - 1}`,
+        plannedText: isAutumnPhase ? (item.typicalTiming ?? `Sügis ${nextFs.year - 1}`) : item.typicalTiming,
         plannedCount: (item.plannedCount ?? (wt.repeatMode === 'UP_TO' ? wt.maxRepeats : 1)) ?? 1,
         fromTemplate: true
       }

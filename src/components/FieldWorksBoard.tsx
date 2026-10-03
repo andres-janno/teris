@@ -330,7 +330,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [rows, year]);
 
   const visibleWorks = (r: Row, phase: WorkPhase) => r.works.filter((w) => w.phase === phase && (!hideDone || w.status !== 'DONE'));
-  const withoutWorks = allRows.filter((r) => r.works.length === 0 && !r.undetermined);
+  const rowNeedsWorks = (r: Row) => {
+    if (r.undetermined) return false;
+    if (r.isWinter) {
+      return r.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0;
+    }
+    return r.works.length === 0;
+  };
+
+  const withoutWorks = allRows.filter(rowNeedsWorks);
 
   const selected = fieldWorks.find((w) => w.id === selectedId) ?? null;
   const selectedRow = selected
@@ -723,7 +731,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
           {groups.map((group) => {
             const isCollapsed = !!collapsedGroups[group.key];
-            const groupWithoutWorks = group.rows.filter((r) => r.works.length === 0 && !r.undetermined);
+            const groupWithoutWorks = group.rows.filter(rowNeedsWorks);
 
             return (
               <React.Fragment key={group.key}>
@@ -919,7 +927,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Col 4: Hooldus */}
                         <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
                           {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined}
-                          {row.isWinter && !row.undetermined && row.works.length === 0 && !locked && (
+                          {row.isWinter && !row.undetermined && row.works.filter((w) => w.phase === 'CARE' || w.phase === 'HARVEST').length === 0 && !locked && (
                             <button
                               type="button"
                               className="btn btn-secondary btn-xs"
