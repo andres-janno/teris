@@ -472,6 +472,45 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const hasAnyEntries = (r: Row) =>
     r.works.some((w) => (w.entries?.length ?? 0) > 0) || r.nextWorks.some((w) => (w.entries?.length ?? 0) > 0);
 
+  const hasCurrentEntries = (r: Row) =>
+    r.works.some((w) => (w.entries?.length ?? 0) > 0);
+
+  const hasNextEntries = (r: Row) =>
+    r.nextWorks.some((w) => (w.entries?.length ?? 0) > 0);
+
+  const clearCurrentCropWorks = (r: Row) => {
+    if (hasCurrentEntries(r)) {
+      alert(`Põllu "${r.field.name}" kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
+      return;
+    }
+    const cropName = r.undetermined ? 'valimata kultuur' : r.rec.crop;
+    const count = r.works.length;
+    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kultuuri "${cropName}" tööd (${count} tk)?`)) return;
+    void run(async () => {
+      await api.clearFieldWorks(r.fieldSeasonId);
+      if (selectedRow?.fieldSeasonId === r.fieldSeasonId && selected && r.works.some((w) => w.id === selected.id)) {
+        setSelectedId(null);
+      }
+    });
+  };
+
+  const clearNextCropWorks = (r: Row) => {
+    if (!r.nextRec?.fieldSeasonId) return;
+    if (hasNextEntries(r)) {
+      alert(`Põllu "${r.field.name}" järgmise kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
+      return;
+    }
+    const count = r.nextWorks.length;
+    const nextName = r.nextCropName || 'järgmine kultuur';
+    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" järgmise kultuuri "${nextName}" sügistööd (${count} tk)?`)) return;
+    void run(async () => {
+      await api.clearFieldWorks(r.nextRec!.fieldSeasonId!);
+      if (selectedRow?.fieldSeasonId === r.fieldSeasonId && selected && r.nextWorks.some((w) => w.id === selected.id)) {
+        setSelectedId(null);
+      }
+    });
+  };
+
   const clearFieldWorks = (r: Row) => {
     if (hasAnyEntries(r)) {
       alert(`Põllu "${r.field.name}" töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
@@ -763,22 +802,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             </div>
                           </div>
                           <div className="fw-field-sub">
-                            {!locked && getRowVisibleWorks(row).length > 0 && !hasAnyEntries(row) && (
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-xs"
-                                title={`Eemalda põllult "${row.field.name}" kõik tööd (${getRowVisibleWorks(row).length} tk)`}
-                                aria-label="Kustuta tööd"
-                                disabled={busy}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  clearFieldWorks(row);
-                                }}
-                              >
-                                <Trash2 size={12} style={{ color: '#dc2626' }} />
-                                <span>Kustuta tööd</span>
-                              </button>
-                            )}
                             <span className="fw-field-ha">{fmtHa(row.rec.areaHa)} ha</span>
                           </div>
                         </div>
@@ -792,8 +815,26 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             ...(color ? ({ '--crop-color': color } as React.CSSProperties) : {})
                           }}
                         >
-                          <span className="fw-crop-dot" />
-                          <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
+                          <div className="fw-crop-banner-main">
+                            <span className="fw-crop-dot" />
+                            <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
+                          </div>
+                          {!locked && row.works.length > 0 && !hasCurrentEntries(row) && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-xs fw-crop-delete-btn"
+                              title={`Eemalda kultuuri "${row.undetermined ? 'valimata' : row.rec.crop}" tööd (${row.works.length} tk)`}
+                              aria-label="Kustuta tööd"
+                              disabled={busy}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                clearCurrentCropWorks(row);
+                              }}
+                            >
+                              <Trash2 size={11} style={{ color: '#dc2626' }} />
+                              <span>Kustuta tööd</span>
+                            </button>
+                          )}
                         </div>
 
                         {/* Rida 1: Järgmise kultuuri päis (Cols 6-7) */}
@@ -806,8 +847,26 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               ...(nextColor ? ({ '--next-crop-color': nextColor } as React.CSSProperties) : {})
                             }}
                           >
-                            <span className="fw-crop-dot next" />
-                            <span className="fw-crop-name">{row.nextCropName}</span>
+                            <div className="fw-crop-banner-main">
+                              <span className="fw-crop-dot next" />
+                              <span className="fw-crop-name">{row.nextCropName}</span>
+                            </div>
+                            {!locked && row.nextWorks.length > 0 && !hasNextEntries(row) && row.nextRec?.fieldSeasonId && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-xs fw-crop-delete-btn"
+                                title={`Eemalda järgmise kultuuri "${row.nextCropName}" sügistööd (${row.nextWorks.length} tk)`}
+                                aria-label="Kustuta tööd"
+                                disabled={busy}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  clearNextCropWorks(row);
+                                }}
+                              >
+                                <Trash2 size={11} style={{ color: '#dc2626' }} />
+                                <span>Kustuta tööd</span>
+                              </button>
+                            )}
                           </div>
                         ) : (
                           <div className="fw-crop-banner next undetermined" style={{ gridColumn: '6 / 8', gridRow: '1 / 2' }}>
@@ -828,7 +887,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                   onClick={() => applyTemplates([row])}
                                   title={`Lisa tööd: ${getTemplateFor(row).sourceLabel}`}
                                 >
-                                  <ListChecks size={12} /> Lisa tööd mallist
+                                  <ListChecks size={12} /> Lisa tööd
                                 </button>
                               )}
                               {renderCards(row, 'PREPARATION')}
@@ -867,7 +926,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               onClick={() => applyTemplates([row])}
                               title={`Lisa tööd: ${getTemplateFor(row).sourceLabel}`}
                             >
-                              <ListChecks size={12} /> Lisa tööd mallist
+                              <ListChecks size={12} /> Lisa tööd
                             </button>
                           )}
                           {renderCards(row, 'CARE')}
@@ -895,7 +954,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                   onClick={() => applyNextTemplates([row])}
                                   title={`Lisa sügistööd: ${getNextTemplateFor(row).sourceLabel}`}
                                 >
-                                  <ListChecks size={12} /> Lisa sügistööd
+                                  <ListChecks size={12} /> Lisa tööd
                                 </button>
                               )}
                               {renderNextCards(row, 'PREPARATION')}

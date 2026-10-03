@@ -6251,14 +6251,42 @@ a.history-pill:hover {
 }
 
 .fw-crop-banner {
-  padding: 5px 12px;
+  padding: 4px 10px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  gap: 8px;
   font-size: 0.78rem;
   min-width: 0;
   border-bottom: 1px solid var(--border-card);
 }
+
+.fw-crop-banner-main {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.fw-crop-delete-btn {
+  margin-left: auto;
+  padding: 2px 7px;
+  font-size: 0.70rem;
+  line-height: 1.2;
+  gap: 4px;
+  flex-shrink: 0;
+  background: var(--bg-surface);
+  border-color: var(--border-card);
+  color: var(--text-secondary);
+}
+
+.fw-crop-delete-btn:hover {
+  background: color-mix(in srgb, #dc2626 12%, var(--bg-surface));
+  border-color: color-mix(in srgb, #dc2626 40%, var(--border-card));
+  color: #dc2626;
+}
+
 
 .fw-crop-banner + .fw-crop-banner {
   border-left: 1px solid var(--border-card);
