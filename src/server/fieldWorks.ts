@@ -274,8 +274,8 @@ export async function applyCropTemplate(fieldSeasonId: number, preferredVariant?
   const variant: TemplateVariant = preferredVariant ?? (
     !currentIsWinter && nextIsWinter === true ? 'SPRING_TO_WINTER' :
     !currentIsWinter ? 'SPRING_TO_SPRING' :
-    currentIsWinter && nextIsWinter === false ? 'WINTER_TO_SPRING' :
-    'WINTER_TO_WINTER'
+    currentIsWinter && nextIsWinter === true ? 'WINTER_TO_WINTER' :
+    'WINTER_TO_SPRING'
   );
 
   const customVariantTemplates = await loadVariantTemplates();
@@ -720,7 +720,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     if (t.cropId === null) {
-      json(res, { error: 'Üldmalli ei saa kustutada' }, 409);
+      json(res, { error: 'Elutsükli malli ei saa kustutada' }, 409);
       return true;
     }
     await prisma.workTemplate.delete({ where: { id } });

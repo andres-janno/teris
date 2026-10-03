@@ -202,7 +202,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     if (!selectedCrop) return;
     const existing = templates.find((t) => t.cropId === selectedCrop.id);
     if (!existing) return;
-    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" malli? Edaspidi kasutatakse sellel kultuuril universaalset üldmalli.`)) return;
+    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" erimalli? Edaspidi rakendatakse sellel kultuuril elutsükli malli.`)) return;
     void run(async () => {
       await api.deleteWorkTemplate(existing.id);
       setDraftItems(null);
@@ -306,7 +306,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           {tab === 'templates' && (
             <div className="work-templates-layout">
               <div className="work-templates-list">
-                <span className="work-templates-list-label">ÜLDMALLID (4 ELUTSÜKLIT)</span>
+                <span className="work-templates-list-label">ELUTSÜKLI MALLID (4 VARIANTI)</span>
                 {TEMPLATE_VARIANTS.map((v) => {
                   const tpl = templates.find((t) => t.variant === v.variant);
                   const count = tpl?.items.length ?? 0;
@@ -340,7 +340,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                         {c.name}
                         <small>{c.isWinterCrop ? 'talivili · sügiskülv' : 'suvivili · kevadkülv'}</small>
                       </span>
-                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : 'üldmall'}</span>
+                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : 'elutsükli mall'}</span>
                     </button>
                   );
                 })}
@@ -382,10 +382,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                   <div className="work-template-notice">
                     <AlertCircle size={16} />
                     <span>
-                      Sellel kultuuril oma malli pole – põllule rakendatakse universaalset üldmalli vastavalt kultuuride vahetusele.
+                      Sellel kultuuril oma erimalli pole – põllule rakendatakse automaatselt sobivat elutsükli malli vastavalt kultuuride vahetusele.
                     </span>
                     <button className="btn btn-secondary btn-sm" onClick={createOwnTemplate}>
-                      Loo kultuurile oma mall üldmalli põhjal
+                      Loo kultuurile oma mall elutsükli malli põhjal
                     </button>
                   </div>
                 )}

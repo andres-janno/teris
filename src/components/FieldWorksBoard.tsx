@@ -10,7 +10,7 @@ import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
-import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType, type TemplateVariant } from '../types/fieldWork';
+import { WORK_PHASE_META, TEMPLATE_VARIANTS, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType, type TemplateVariant } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
@@ -344,24 +344,62 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     return row.nextIsWinter ? 'WINTER_TO_WINTER' : 'WINTER_TO_SPRING';
   };
 
-  const templateIdsFor = (row: Row) => {
+  // Tagastab põllu käesoleva hooaja töödele rakenduva malli info ja allika nimetuse
+  const getTemplateFor = (row: Row) => {
+    const own = row.crop ? templates.find((x) => x.cropId === row.crop!.id && (x.items?.length ?? 0) > 0) : null;
+    if (own) {
+      const cropName = row.crop?.name || row.rec.crop || 'kultuur';
+      return {
+        isCustomCrop: true,
+        templateName: `Kultuuri "${cropName}" mall`,
+        sourceLabel: `kultuuri "${cropName}" mallist`,
+        template: own
+      };
+    }
     const vKey = getVariantKey(row);
-    const t =
-      (row.crop && templates.find((x) => x.cropId === row.crop!.id)) ||
-      templates.find((x) => x.variant === vKey) ||
-      templates.find((x) => x.cropId === null && x.isWinter === row.isWinter) ||
-      templates.find((x) => x.cropId === null);
+    const variantMeta = TEMPLATE_VARIANTS.find((v) => v.variant === vKey);
+    const vName = variantMeta?.name || templates.find((x) => x.variant === vKey)?.name || vKey;
+    const vTemplate = templates.find((x) => x.variant === vKey) ?? null;
+    return {
+      isCustomCrop: false,
+      templateName: `Mall "${vName}"`,
+      sourceLabel: `mallist "${vName}"`,
+      template: vTemplate
+    };
+  };
+
+  // Tagastab järgmise aasta sügistöödele rakenduva malli info ja allika nimetuse
+  const getNextTemplateFor = (row: Row) => {
+    const nextCropName = row.nextCropName || 'talivili';
+    const own = row.nextCrop ? templates.find((x) => x.cropId === row.nextCrop!.id && (x.items?.length ?? 0) > 0) : null;
+    if (own) {
+      return {
+        isCustomCrop: true,
+        templateName: `Kultuuri "${nextCropName}" mall`,
+        sourceLabel: `kultuuri "${nextCropName}" mallist`,
+        template: own
+      };
+    }
+    const vKey = getVariantKey(row);
+    const variantMeta = TEMPLATE_VARIANTS.find((v) => v.variant === vKey);
+    const vName = variantMeta?.name || templates.find((x) => x.variant === vKey)?.name || vKey;
+    const vTemplate = templates.find((x) => x.variant === vKey) ?? null;
+    return {
+      isCustomCrop: false,
+      templateName: `Mall "${vName}"`,
+      sourceLabel: `mallist "${vName}"`,
+      template: vTemplate
+    };
+  };
+
+  const templateIdsFor = (row: Row) => {
+    const t = getTemplateFor(row).template;
     const items = t?.items.filter((i) => (i.section ?? 'CURRENT') === 'CURRENT') ?? t?.items ?? [];
     return new Set(items.map((i) => i.workTypeId));
   };
 
   const templateIdsForNext = (row: Row) => {
-    const vKey = getVariantKey(row);
-    const t =
-      templates.find((x) => x.variant === vKey) ||
-      (row.nextCrop && templates.find((x) => x.cropId === row.nextCrop!.id)) ||
-      templates.find((x) => x.cropId === null && x.isWinter === true) ||
-      templates.find((x) => x.cropId === null);
+    const t = getNextTemplateFor(row).template;
     const items = t?.items.filter((i) => i.section === 'NEXT_AUTUMN') ?? t?.items ?? [];
     return new Set(items.map((i) => i.workTypeId));
   };
@@ -373,20 +411,38 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const applyTemplates = (list: Row[]) => {
     if (!list.length) return;
-    const msg = list.length === 1
-      ? `Lisa põllule "${list[0].field.name}" tööd kultuuri mallist (või üldmallist)?`
-      : `Lisa ${list.length} tööta põllule tööd kultuuri mallist (või üldmallist)?`;
+    let msg: string;
+    if (list.length === 1) {
+      const tInfo = getTemplateFor(list[0]);
+      msg = `Lisa põllule "${list[0].field.name}" tööd ${tInfo.sourceLabel}?`;
+    } else {
+      const distinctSources = Array.from(new Set(list.map((r) => getTemplateFor(r).sourceLabel)));
+      if (distinctSources.length === 1) {
+        msg = `Lisa ${list.length} tööta põllule tööd ${distinctSources[0]}?`;
+      } else {
+        msg = `Lisa ${list.length} tööta põllule tööd vastavatest kultuuri ja elutsükli mallidest?`;
+      }
+    }
     if (!confirm(msg)) return;
     void run(() => api.applyWorkTemplate(list.map((r) => r.fieldSeasonId)));
   };
 
   const applyNextTemplates = (list: Row[]) => {
-    const fsIds = list.map((r) => r.nextRec?.fieldSeasonId).filter((id): id is number => typeof id === 'number');
-    if (!fsIds.length) return;
-    const msg =
-      list.length === 1
-        ? `Lisa põllu "${list[0].field.name}" sügistöödele tööd mallist?`
-        : `Lisa ${list.length} põllu sügistöödele tööd mallist?`;
+    const valid = list.filter((r) => typeof r.nextRec?.fieldSeasonId === 'number' && !r.nextUndetermined);
+    if (!valid.length) return;
+    const fsIds = valid.map((r) => r.nextRec!.fieldSeasonId!);
+    let msg: string;
+    if (valid.length === 1) {
+      const tInfo = getNextTemplateFor(valid[0]);
+      msg = `Lisa põllu "${valid[0].field.name}" sügistöödele tööd ${tInfo.sourceLabel}?`;
+    } else {
+      const distinctSources = Array.from(new Set(valid.map((r) => getNextTemplateFor(r).sourceLabel)));
+      if (distinctSources.length === 1) {
+        msg = `Lisa ${valid.length} põllu sügistöödele tööd ${distinctSources[0]}?`;
+      } else {
+        msg = `Lisa ${valid.length} põllu sügistöödele tööd vastavatest mallidest?`;
+      }
+    }
     if (!confirm(msg)) return;
     void run(() => api.applyWorkTemplate(fsIds));
   };
@@ -764,7 +820,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <div className="fw-cell" style={{ gridColumn: '2 / 3', gridRow: '2 / 3' }}>
                               {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
                               {!row.undetermined && row.works.length === 0 && !locked && (
-                                <button type="button" className="btn btn-secondary btn-xs" onClick={() => applyTemplates([row])}>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-xs"
+                                  onClick={() => applyTemplates([row])}
+                                  title={`Lisa tööd: ${getTemplateFor(row).sourceLabel}`}
+                                >
                                   <ListChecks size={12} /> Lisa tööd mallist
                                 </button>
                               )}
@@ -797,6 +858,16 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Col 4: Hooldus */}
                         <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
                           {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined}
+                          {row.isWinter && !row.undetermined && row.works.length === 0 && !locked && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-xs"
+                              onClick={() => applyTemplates([row])}
+                              title={`Lisa tööd: ${getTemplateFor(row).sourceLabel}`}
+                            >
+                              <ListChecks size={12} /> Lisa tööd mallist
+                            </button>
+                          )}
                           {renderCards(row, 'CARE')}
                           {!locked && !row.undetermined && (
                             <button type="button" className="fw-add" aria-label="Lisa hooldustöö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
@@ -816,7 +887,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             {/* Col 6: Sügise ettevalmistus (nii tali- kui ka suviviljadel, nt sügiskünd) */}
                             <div className="fw-cell" style={{ gridColumn: '6 / 7', gridRow: '2 / 3' }}>
                               {row.nextWorks.length === 0 && !locked && row.nextRec?.fieldSeasonId && (
-                                <button type="button" className="btn btn-secondary btn-xs" onClick={() => applyNextTemplates([row])}>
+                                <button
+                                  type="button"
+                                  className="btn btn-secondary btn-xs"
+                                  onClick={() => applyNextTemplates([row])}
+                                  title={`Lisa sügistööd: ${getNextTemplateFor(row).sourceLabel}`}
+                                >
                                   <ListChecks size={12} /> Lisa sügistööd
                                 </button>
                               )}
