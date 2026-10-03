@@ -1,8 +1,8 @@
 // src/server/mail.ts — e-kirjad (parooli lingid) serveri sendmail'i (Postfix) kaudu.
 import { spawn } from 'node:child_process';
 
-export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@teris.ventcap.ee';
-export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://teris.ventcap.ee').replace(/\/+$/, '');
+export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@teris.ee';
+export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://teris.ee').replace(/\/+$/, '');
 
 export function normalizeEmail(raw: unknown): string | null {
   const email = String(raw ?? '').trim().toLowerCase();
