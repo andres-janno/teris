@@ -620,33 +620,24 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
     });
 
-    const winterHarvestMap = new Map<number, any>();
     for (const fs of currentSeasons) {
-      const prevSeason = await prisma.fieldSeason.findUnique({
-        where: { fieldId_year: { fieldId: fs.fieldId, year: year - 1 } },
-        include: {
-          fieldWorks: {
-            include: { workType: true, entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE } }
-          }
-        }
-      });
       // Kui kultuur on määramata, aga eelmisel aastal oli talivili: päri kultuur eelmisest aastast
-      if (isUndeterminedCrop(fs.crop) && prevSeason && isWinterCrop(prevSeason.crop, crops)) {
-        await prisma.fieldSeason.update({
-          where: { id: fs.id },
-          data: {
-            crop: prevSeason.crop,
-            cropColor: prevSeason.cropColor,
-            cropVariety: prevSeason.cropVariety
-          }
+      if (isUndeterminedCrop(fs.crop)) {
+        const prevSeason = await prisma.fieldSeason.findUnique({
+          where: { fieldId_year: { fieldId: fs.fieldId, year: year - 1 } },
+          select: { crop: true, cropColor: true, cropVariety: true }
         });
-        fs.crop = prevSeason.crop;
-      }
-
-      // Üle hooaja kandumine kehtib käesoleva hooaja taliviljale (koristusaastal)
-      const currentIsWinter = isWinterCrop(fs.crop, crops);
-      if (currentIsWinter) {
-        winterHarvestMap.set(fs.id, prevSeason);
+        if (prevSeason && isWinterCrop(prevSeason.crop, crops)) {
+          await prisma.fieldSeason.update({
+            where: { id: fs.id },
+            data: {
+              crop: prevSeason.crop,
+              cropColor: prevSeason.cropColor,
+              cropVariety: prevSeason.cropVariety
+            }
+          });
+          fs.crop = prevSeason.crop;
+        }
       }
     }
 
@@ -694,8 +685,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
     const worksDto: any[] = rows.map((w) => {
       const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
-      const isCarriedFromPrev = winterHarvestMap.has(w.fieldSeasonId);
-      const carriedOverToYear = isWinter && !isCarriedFromPrev && (w.phase === 'CARE' || w.phase === 'HARVEST') ? year + 1 : null;
+      const isAutumnPhase = isWinter && (w.phase === 'PREPARATION' || w.phase === 'SOWING');
       return {
         id: w.id,
         fieldSeasonId: w.fieldSeasonId,
@@ -713,8 +703,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         fromTemplate: w.fromTemplate,
         notes: w.notes,
         entries: w.entries.map((e) => entryDto(e, finance)),
-        carriedOverFromYear: null as number | null,
-        carriedOverToYear,
+        carriedOverFromYear: isAutumnPhase ? year - 1 : null,
+        carriedOverToYear: null,
         seasonYear: year,
         isNextSeasonWinterSowing: false
       };
@@ -746,105 +736,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         seasonYear: year + 1,
         isNextSeasonWinterSowing: isWinter
       });
-    }
-
-    // Lisa iga talivilja põllu jaoks eelmise sügise ettevalmistus- ja külvitööd
-    for (const [fieldSeasonId, prevSeason] of winterHarvestMap.entries()) {
-      const prevWorks = prevSeason?.fieldWorks ?? [];
-      const prepWorks = prevWorks.filter((w: any) => w.phase === 'PREPARATION');
-      const sowWorks = prevWorks.filter((w: any) => w.phase === 'SOWING');
-
-      for (const w of prepWorks) {
-        worksDto.push({
-          id: `carried-prep-${w.id}`,
-          fieldSeasonId,
-          workTypeId: w.workTypeId,
-          workTypeName: w.workType.name,
-          phase: 'PREPARATION',
-          repeatMode: w.workType.repeatMode,
-          intervalDays: w.workType.intervalDays,
-          usesMaterials: w.workType.usesMaterials,
-          sortOrder: w.sortOrder,
-          plannedText: w.plannedText ?? `Sügis ${year - 1}`,
-          plannedCount: w.plannedCount,
-          status: w.status,
-          finishedAt: isoDate(w.finishedAt),
-          fromTemplate: true,
-          notes: w.notes,
-          entries: w.entries.map((e: any) => entryDto(e, finance)),
-          carriedOverFromYear: year - 1,
-          carriedOverToYear: null
-        });
-      }
-
-      if (prepWorks.length === 0) {
-        worksDto.push({
-          id: `carried-prep-virt-${fieldSeasonId}`,
-          fieldSeasonId,
-          workTypeId: 'virtual-prep',
-          workTypeName: 'Ettevalmistus',
-          phase: 'PREPARATION',
-          repeatMode: 'ONCE',
-          intervalDays: null,
-          usesMaterials: false,
-          sortOrder: -2,
-          plannedText: `Sügis ${year - 1}`,
-          plannedCount: 1,
-          status: 'DONE',
-          finishedAt: null,
-          fromTemplate: true,
-          notes: null,
-          entries: [],
-          carriedOverFromYear: year - 1,
-          carriedOverToYear: null
-        });
-      }
-
-      for (const w of sowWorks) {
-        worksDto.push({
-          id: `carried-sow-${w.id}`,
-          fieldSeasonId,
-          workTypeId: w.workTypeId,
-          workTypeName: w.workType.name,
-          phase: 'SOWING',
-          repeatMode: w.workType.repeatMode,
-          intervalDays: w.workType.intervalDays,
-          usesMaterials: w.workType.usesMaterials,
-          sortOrder: w.sortOrder,
-          plannedText: w.plannedText ?? `Sügis ${year - 1}`,
-          plannedCount: w.plannedCount,
-          status: w.status,
-          finishedAt: isoDate(w.finishedAt),
-          fromTemplate: true,
-          notes: w.notes,
-          entries: w.entries.map((e: any) => entryDto(e, finance)),
-          carriedOverFromYear: year - 1,
-          carriedOverToYear: null
-        });
-      }
-
-      if (sowWorks.length === 0) {
-        worksDto.push({
-          id: `carried-sow-virt-${fieldSeasonId}`,
-          fieldSeasonId,
-          workTypeId: 'virtual-sow',
-          workTypeName: 'Külv',
-          phase: 'SOWING',
-          repeatMode: 'ONCE',
-          intervalDays: null,
-          usesMaterials: false,
-          sortOrder: -1,
-          plannedText: `Külvatud sügisel ${year - 1}`,
-          plannedCount: 1,
-          status: 'DONE',
-          finishedAt: null,
-          fromTemplate: true,
-          notes: null,
-          entries: [],
-          carriedOverFromYear: year - 1,
-          carriedOverToYear: null
-        });
-      }
     }
 
     json(res, worksDto);
