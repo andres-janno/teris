@@ -1,5 +1,15 @@
 import { describe, expect, it } from 'vitest';
-import { buildEntryLines, canConfirm, isWinterCrop, matchCrop, mergeLines, summarizeLines, type StoredLine } from './fieldWorkRules';
+import {
+  buildEntryLines,
+  canConfirm,
+  filterTemplatePhasesForAutumn,
+  filterTemplatePhasesForCurrent,
+  isWinterCrop,
+  matchCrop,
+  mergeLines,
+  summarizeLines,
+  type StoredLine
+} from './fieldWorkRules';
 
 const crops = [
   { id: 'c1', name: 'Talinisu', isWinterCrop: true },
@@ -97,3 +107,34 @@ describe('canConfirm / summarizeLines', () => {
     expect(r).toEqual({ labor: 150, equipment: 250, fuel: 120, materials: 100, costTotal: 620, revenue: 2000, profit: 1380 });
   });
 });
+
+describe('filterTemplatePhases (malli tööde filtreerimine hooaja ja vilja tüübi järgi)', () => {
+  it('jooksvas aastas taliviljal rakenduvad ainult hooldus ja koristus', () => {
+    expect(filterTemplatePhasesForCurrent(true, 'PREPARATION')).toBe(false);
+    expect(filterTemplatePhasesForCurrent(true, 'SOWING')).toBe(false);
+    expect(filterTemplatePhasesForCurrent(true, 'CARE')).toBe(true);
+    expect(filterTemplatePhasesForCurrent(true, 'HARVEST')).toBe(true);
+  });
+
+  it('jooksvas aastas suviviljal rakenduvad kõik 4 faasi', () => {
+    expect(filterTemplatePhasesForCurrent(false, 'PREPARATION')).toBe(true);
+    expect(filterTemplatePhasesForCurrent(false, 'SOWING')).toBe(true);
+    expect(filterTemplatePhasesForCurrent(false, 'CARE')).toBe(true);
+    expect(filterTemplatePhasesForCurrent(false, 'HARVEST')).toBe(true);
+  });
+
+  it('sügistöödes taliviljal rakenduvad ettevalmistus ja külv', () => {
+    expect(filterTemplatePhasesForAutumn(true, 'PREPARATION')).toBe(true);
+    expect(filterTemplatePhasesForAutumn(true, 'SOWING')).toBe(true);
+    expect(filterTemplatePhasesForAutumn(true, 'CARE')).toBe(false);
+    expect(filterTemplatePhasesForAutumn(true, 'HARVEST')).toBe(false);
+  });
+
+  it('sügistöödes suviviljal rakendub AINULT ettevalmistus (külv toimub kevadel)', () => {
+    expect(filterTemplatePhasesForAutumn(false, 'PREPARATION')).toBe(true);
+    expect(filterTemplatePhasesForAutumn(false, 'SOWING')).toBe(false);
+    expect(filterTemplatePhasesForAutumn(false, 'CARE')).toBe(false);
+    expect(filterTemplatePhasesForAutumn(false, 'HARVEST')).toBe(false);
+  });
+});
+

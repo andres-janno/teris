@@ -10,7 +10,7 @@ import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
-import { WORK_PHASE_META, TEMPLATE_VARIANTS, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType, type TemplateVariant } from '../types/fieldWork';
+import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
@@ -337,13 +337,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     ? allRows.find((r) => r.fieldSeasonId === selected.fieldSeasonId || r.nextRec?.fieldSeasonId === selected.fieldSeasonId) ?? null
     : null;
 
-  const getVariantKey = (row: Row): TemplateVariant => {
-    if (!row.isWinter) {
-      return row.nextIsWinter ? 'SPRING_TO_WINTER' : 'SPRING_TO_SPRING';
-    }
-    return row.nextIsWinter ? 'WINTER_TO_WINTER' : 'WINTER_TO_SPRING';
-  };
-
   // Tagastab põllu käesoleva hooaja töödele rakenduva malli info ja allika nimetuse
   const getTemplateFor = (row: Row) => {
     const own = row.crop ? templates.find((x) => x.cropId === row.crop!.id && (x.items?.length ?? 0) > 0) : null;
@@ -353,54 +346,62 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         isCustomCrop: true,
         templateName: `Kultuuri "${cropName}" mall`,
         sourceLabel: `kultuuri "${cropName}" mallist`,
-        template: own
+        template: own,
       };
     }
-    const vKey = getVariantKey(row);
-    const variantMeta = TEMPLATE_VARIANTS.find((v) => v.variant === vKey);
-    const vName = variantMeta?.name || templates.find((x) => x.variant === vKey)?.name || vKey;
-    const vTemplate = templates.find((x) => x.variant === vKey) ?? null;
+    const general = templates.find((x) => x.cropId === null && x.isWinter === row.isWinter) ?? null;
+    const name = row.isWinter ? 'talivilja üldmall' : 'suvivilja üldmall';
     return {
       isCustomCrop: false,
-      templateName: `Mall "${vName}"`,
-      sourceLabel: `mallist "${vName}"`,
-      template: vTemplate
+      templateName: row.isWinter ? 'Talivilja üldmall' : 'Suvivilja üldmall',
+      sourceLabel: `${name}ist`,
+      template: general,
     };
   };
 
   // Tagastab järgmise aasta sügistöödele rakenduva malli info ja allika nimetuse
   const getNextTemplateFor = (row: Row) => {
-    const nextCropName = row.nextCropName || 'talivili';
+    const nextCropName = row.nextCropName || 'kultuur';
     const own = row.nextCrop ? templates.find((x) => x.cropId === row.nextCrop!.id && (x.items?.length ?? 0) > 0) : null;
     if (own) {
       return {
         isCustomCrop: true,
         templateName: `Kultuuri "${nextCropName}" mall`,
         sourceLabel: `kultuuri "${nextCropName}" mallist`,
-        template: own
+        template: own,
       };
     }
-    const vKey = getVariantKey(row);
-    const variantMeta = TEMPLATE_VARIANTS.find((v) => v.variant === vKey);
-    const vName = variantMeta?.name || templates.find((x) => x.variant === vKey)?.name || vKey;
-    const vTemplate = templates.find((x) => x.variant === vKey) ?? null;
+    const general = templates.find((x) => x.cropId === null && x.isWinter === row.nextIsWinter) ?? null;
+    const name = row.nextIsWinter ? 'talivilja üldmall' : 'suvivilja üldmall';
     return {
       isCustomCrop: false,
-      templateName: `Mall "${vName}"`,
-      sourceLabel: `mallist "${vName}"`,
-      template: vTemplate
+      templateName: row.nextIsWinter ? 'Talivilja üldmall' : 'Suvivilja üldmall',
+      sourceLabel: `${name}ist`,
+      template: general,
     };
   };
 
   const templateIdsFor = (row: Row) => {
     const t = getTemplateFor(row).template;
-    const items = t?.items.filter((i) => (i.section ?? 'CURRENT') === 'CURRENT') ?? t?.items ?? [];
+    const workTypeById = new Map(workTypes.map((w) => [w.id, w]));
+    const items = (t?.items ?? []).filter((i) => {
+      const phase = workTypeById.get(i.workTypeId)?.phase;
+      // Taliviljal jooksvas aastas ainult hooldus ja koristus (külv ja ettevalmistus olid eelmisel sügisel)
+      if (row.isWinter) return phase === 'CARE' || phase === 'HARVEST';
+      return true;
+    });
     return new Set(items.map((i) => i.workTypeId));
   };
 
   const templateIdsForNext = (row: Row) => {
     const t = getNextTemplateFor(row).template;
-    const items = t?.items.filter((i) => i.section === 'NEXT_AUTUMN') ?? t?.items ?? [];
+    const workTypeById = new Map(workTypes.map((w) => [w.id, w]));
+    const items = (t?.items ?? []).filter((i) => {
+      const phase = workTypeById.get(i.workTypeId)?.phase;
+      // Taliviljal sügisel ettevalmistus ja külv; suviviljal sügisel ainult ettevalmistus (külv on kevadel)
+      if (row.nextIsWinter) return phase === 'PREPARATION' || phase === 'SOWING';
+      return phase === 'PREPARATION';
+    });
     return new Set(items.map((i) => i.workTypeId));
   };
 
@@ -420,11 +421,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       if (distinctSources.length === 1) {
         msg = `Lisa ${list.length} tööta põllule tööd ${distinctSources[0]}?`;
       } else {
-        msg = `Lisa ${list.length} tööta põllule tööd vastavatest kultuuri ja elutsükli mallidest?`;
+        msg = `Lisa ${list.length} tööta põllule tööd vastavatest mallidest?`;
       }
     }
     if (!confirm(msg)) return;
-    void run(() => api.applyWorkTemplate(list.map((r) => r.fieldSeasonId)));
+    void run(() => api.applyWorkTemplate(list.map((r) => r.fieldSeasonId), 'CURRENT'));
   };
 
   const applyNextTemplates = (list: Row[]) => {
@@ -434,7 +435,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     let msg: string;
     if (valid.length === 1) {
       const tInfo = getNextTemplateFor(valid[0]);
-      msg = `Lisa põllu "${valid[0].field.name}" sügistöödele tööd ${tInfo.sourceLabel}?`;
+      const detail = valid[0].nextIsWinter ? 'sügisene ettevalmistus ja külv' : 'sügisene ettevalmistus';
+      msg = `Lisa põllu "${valid[0].field.name}" sügistöödele tööd ${tInfo.sourceLabel} (${detail})?`;
     } else {
       const distinctSources = Array.from(new Set(valid.map((r) => getNextTemplateFor(r).sourceLabel)));
       if (distinctSources.length === 1) {
@@ -444,7 +446,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       }
     }
     if (!confirm(msg)) return;
-    void run(() => api.applyWorkTemplate(fsIds));
+    void run(() => api.applyWorkTemplate(fsIds, 'AUTUMN'));
   };
 
   const deleteEntry = (e: WorkEntry) => {

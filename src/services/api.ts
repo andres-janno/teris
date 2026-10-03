@@ -8,7 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, TemplateVariant, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -405,14 +405,14 @@ export const api = {
   },
 
   async saveWorkTemplate(
-    targetOrCropId: string | null | { cropId?: string | null; variant?: TemplateVariant; isWinter?: boolean },
+    targetOrCropId: string | null | { cropId?: string | null; isWinter?: boolean },
     items: WorkTemplateItem[],
     isWinter?: boolean
   ): Promise<void> {
     const payload =
-      typeof targetOrCropId === 'object' && targetOrCropId !== null && 'variant' in targetOrCropId
+      typeof targetOrCropId === 'object' && targetOrCropId !== null
         ? { ...targetOrCropId, items }
-        : { cropId: typeof targetOrCropId === 'string' || targetOrCropId === null ? targetOrCropId : targetOrCropId?.cropId ?? null, items, isWinter };
+        : { cropId: targetOrCropId, items, isWinter };
     await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', payload)), 'Malli salvestamine ebaõnnestus');
   },
 
@@ -428,8 +428,8 @@ export const api = {
     await jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
   },
 
-  async applyWorkTemplate(fieldSeasonIds: number[]): Promise<void> {
-    await jsonOrThrow(await apiFetch('/api/field-works/apply-template', jsonInit('POST', { fieldSeasonIds })), 'Malli lisamine ebaõnnestus');
+  async applyWorkTemplate(fieldSeasonIds: number[], mode: 'CURRENT' | 'AUTUMN' = 'CURRENT'): Promise<void> {
+    await jsonOrThrow(await apiFetch('/api/field-works/apply-template', jsonInit('POST', { fieldSeasonIds, mode })), 'Malli lisamine ebaõnnestus');
   },
 
   async updateFieldWork(id: string, data: { plannedText?: string | null; plannedCount?: number; notes?: string | null; status?: 'DONE' | 'REOPEN' }): Promise<void> {

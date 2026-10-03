@@ -8,16 +8,13 @@ import {
   WORK_PHASES,
   WORK_PHASE_META,
   MATERIAL_CATEGORY_LABEL,
-  TEMPLATE_VARIANTS,
   type Material,
   type MaterialCategory,
   type WorkPhase,
   type WorkRepeatMode,
   type WorkTemplate,
   type WorkTemplateItem,
-  type WorkType,
-  type TemplateVariant,
-  type TemplateSection
+  type WorkType
 } from '../types/fieldWork';
 
 interface WorkRegisterModalProps {
@@ -115,25 +112,26 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     void run(() => api.deleteMaterial(m.id));
   };
 
-  // --- Mallid (4 universaalset elutsükli varianti + kultuuride erimallid) ---
-  type TemplateTarget = TemplateVariant | string;
-  const [selectedTarget, setSelectedTarget] = useState<TemplateTarget>('SPRING_TO_WINTER');
+  // --- Mallid (2 üldmalli + kultuuride erimallid) ---
+  type TemplateTarget = 'GENERAL_SPRING' | 'GENERAL_WINTER' | string;
+  const [selectedTarget, setSelectedTarget] = useState<TemplateTarget>('GENERAL_SPRING');
   const [draftItems, setDraftItems] = useState<WorkTemplateItem[] | null>(null);
   const [addWorkTypeId, setAddWorkTypeId] = useState('');
-  const [addSection, setAddSection] = useState<TemplateSection>('CURRENT');
 
-  const isVariantTarget = ['SPRING_TO_WINTER', 'SPRING_TO_SPRING', 'WINTER_TO_WINTER', 'WINTER_TO_SPRING'].includes(selectedTarget);
-  const selectedVariant = isVariantTarget ? (selectedTarget as TemplateVariant) : null;
-  const currentVariantMeta = TEMPLATE_VARIANTS.find((v) => v.variant === selectedVariant) ?? null;
+  const isGeneralSpring = selectedTarget === 'GENERAL_SPRING';
+  const isGeneralWinter = selectedTarget === 'GENERAL_WINTER';
+  const isGeneral = isGeneralSpring || isGeneralWinter;
 
-  const selectedCrop = !isVariantTarget ? crops.find((c) => c.id === selectedTarget) ?? null : null;
+  const selectedCrop = !isGeneral ? crops.find((c) => c.id === selectedTarget) ?? null : null;
   const selectedCropId = selectedCrop ? selectedCrop.id : null;
-  const targetIsWinter = selectedVariant ? currentVariantMeta?.currentIsWinter ?? false : (selectedCrop?.isWinterCrop ?? false);
+  const targetIsWinter = isGeneral ? isGeneralWinter : (selectedCrop?.isWinterCrop ?? false);
 
-  const fallbackGeneral = selectedVariant
-    ? (templates.find((t) => t.variant === selectedVariant) ?? null)
-    : (templates.find((t) => t.variant === (selectedCrop?.isWinterCrop ? 'WINTER_TO_WINTER' : 'SPRING_TO_WINTER')) ??
-       templates.find((t) => t.cropId === null && t.isWinter === (selectedCrop?.isWinterCrop ?? false)) ?? null);
+  const springGeneral = templates.find((t) => t.cropId === null && !t.isWinter) ?? null;
+  const winterGeneral = templates.find((t) => t.cropId === null && t.isWinter) ?? null;
+
+  const fallbackGeneral = isGeneral
+    ? (isGeneralWinter ? winterGeneral : springGeneral)
+    : (selectedCrop?.isWinterCrop ? winterGeneral : springGeneral);
 
   const ownTemplate = selectedCrop ? templates.find((t) => t.cropId === selectedCrop.id) ?? null : fallbackGeneral;
   const usesGeneral = selectedCrop !== null && !templates.some((t) => t.cropId === selectedCrop.id);
@@ -146,21 +144,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     if (dirty && !confirm('Mallis on salvestamata muudatusi. Kas loobud neist?')) return;
     setDraftItems(null);
     setSelectedTarget(target);
-    setAddSection('CURRENT');
   };
   const editItems = (fn: (items: WorkTemplateItem[]) => WorkTemplateItem[]) =>
     setDraftItems(fn([...shownItems]).map((it, i) => ({ ...it, sortOrder: i })));
   const moveItem = (index: number, dir: -1 | 1) =>
     editItems((items) => {
       const curItem = items[index];
-      const curSection = curItem.section ?? 'CURRENT';
       const phase = workTypeById.get(curItem.workTypeId)?.phase;
       let j = index + dir;
-      while (
-        j >= 0 &&
-        j < items.length &&
-        ((items[j].section ?? 'CURRENT') !== curSection || workTypeById.get(items[j].workTypeId)?.phase !== phase)
-      ) {
+      while (j >= 0 && j < items.length && workTypeById.get(items[j].workTypeId)?.phase !== phase) {
         j += dir;
       }
       if (j < 0 || j >= items.length) return items;
@@ -176,13 +168,11 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     const w = workTypeById.get(addWorkTypeId);
     if (!w) return;
     editItems((items) => {
-      const targetSec = selectedVariant ? addSection : 'CURRENT';
       items.push({
         workTypeId: w.id,
         sortOrder: items.length,
         typicalTiming: null,
-        plannedCount: w.repeatMode === 'UP_TO' ? w.maxRepeats : null,
-        section: targetSec
+        plannedCount: w.repeatMode === 'UP_TO' ? w.maxRepeats : null
       });
       return items;
     });
@@ -190,8 +180,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   };
   const saveTemplate = () =>
     run(async () => {
-      if (selectedVariant) {
-        await api.saveWorkTemplate({ variant: selectedVariant, isWinter: selectedVariant.startsWith('WINTER') }, shownItems);
+      if (isGeneral) {
+        await api.saveWorkTemplate({ cropId: null, isWinter: targetIsWinter }, shownItems);
       } else if (selectedCropId) {
         await api.saveWorkTemplate({ cropId: selectedCropId, isWinter: targetIsWinter }, shownItems);
       }
@@ -202,7 +192,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     if (!selectedCrop) return;
     const existing = templates.find((t) => t.cropId === selectedCrop.id);
     if (!existing) return;
-    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" erimalli? Edaspidi rakendatakse sellel kultuuril elutsükli malli.`)) return;
+    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" erimalli? Edaspidi rakendatakse sellel kultuuril ${selectedCrop.isWinterCrop ? 'talivilja' : 'suvivilja'} üldmalli.`)) return;
     void run(async () => {
       await api.deleteWorkTemplate(existing.id);
       setDraftItems(null);
@@ -214,8 +204,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   const sortedCrops = [...crops].sort((a, b) => Number(!!b.isWinterCrop) - Number(!!a.isWinterCrop) || a.name.localeCompare(b.name, 'et'));
   const missingWorkTypes = workTypes.filter((w) => {
     if (!w.isActive) return false;
-    const targetSec = selectedVariant ? addSection : 'CURRENT';
-    return !shownItems.some((it) => it.workTypeId === w.id && (it.section ?? 'CURRENT') === targetSec);
+    return !shownItems.some((it) => it.workTypeId === w.id);
   });
 
   return (
@@ -306,25 +295,30 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           {tab === 'templates' && (
             <div className="work-templates-layout">
               <div className="work-templates-list">
-                <span className="work-templates-list-label">ELUTSÜKLI MALLID (4 VARIANTI)</span>
-                {TEMPLATE_VARIANTS.map((v) => {
-                  const tpl = templates.find((t) => t.variant === v.variant);
-                  const count = tpl?.items.length ?? 0;
-                  return (
-                    <button
-                      key={v.variant}
-                      type="button"
-                      className={`work-template-crop general ${selectedTarget === v.variant ? 'selected' : ''}`}
-                      onClick={() => selectTarget(v.variant)}
-                    >
-                      <span className="work-template-crop-name">
-                        {v.name}
-                        <small>{v.description}</small>
-                      </span>
-                      <span className="work-template-crop-count">{count} tööd</span>
-                    </button>
-                  );
-                })}
+                <span className="work-templates-list-label">ÜLDMALLID</span>
+                <button
+                  type="button"
+                  className={`work-template-crop general ${selectedTarget === 'GENERAL_SPRING' ? 'selected' : ''}`}
+                  onClick={() => selectTarget('GENERAL_SPRING')}
+                >
+                  <span className="work-template-crop-name">
+                    🌸 Suvivilja üldmall
+                    <small>Kevadkülv · alusmall suviviljadele</small>
+                  </span>
+                  <span className="work-template-crop-count">{springGeneral?.items.length ?? 0} tööd</span>
+                </button>
+                <button
+                  type="button"
+                  className={`work-template-crop general ${selectedTarget === 'GENERAL_WINTER' ? 'selected' : ''}`}
+                  onClick={() => selectTarget('GENERAL_WINTER')}
+                >
+                  <span className="work-template-crop-name">
+                    ❄️ Talivilja üldmall
+                    <small>Sügiskülv · alusmall taliviljadele</small>
+                  </span>
+                  <span className="work-template-crop-count">{winterGeneral?.items.length ?? 0} tööd</span>
+                </button>
+
                 <span className="work-templates-list-label">KULTUURID</span>
                 {sortedCrops.map((c) => {
                   const own = templates.find((t) => t.cropId === c.id);
@@ -340,7 +334,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                         {c.name}
                         <small>{c.isWinterCrop ? 'talivili · sügiskülv' : 'suvivili · kevadkülv'}</small>
                       </span>
-                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : 'elutsükli mall'}</span>
+                      <span className="work-template-crop-count">{own ? `${own.items.length} tööd` : 'üldmall'}</span>
                     </button>
                   );
                 })}
@@ -352,16 +346,17 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                     <h4>
                       {selectedCrop
                         ? `${selectedCrop.name} – tööde mall`
-                        : currentVariantMeta
-                          ? currentVariantMeta.name
-                          : 'Tööde mall'}
+                        : isGeneralWinter
+                          ? 'Talivilja üldmall'
+                          : 'Suvivilja üldmall'}
                     </h4>
                     <p className="modal-subtitle">
                       {selectedCrop
-                        ? selectedCrop.isWinterCrop ? 'Talivili · kultuuri oma erimall' : 'Suvivili · kultuuri oma erimall'
-                        : currentVariantMeta
-                          ? `${currentVariantMeta.description} · Rakendub automaatselt sobiva kultuuripaari põllule.`
-                          : ''}
+                        ? (selectedCrop.isWinterCrop ? 'Talivili · ' : 'Suvivili · ') +
+                          (ownTemplate ? 'kultuuri oma erimall' : `kasutab ${selectedCrop.isWinterCrop ? 'talivilja' : 'suvivilja'} üldmalli`)
+                        : isGeneralWinter
+                          ? 'Sügiskülviga kultuuride alusmall. Muudatused mõjutavad uusi taliviljapõlde, millel erimalli pole.'
+                          : 'Kevadkülviga kultuuride alusmall. Muudatused mõjutavad uusi suviviljapõlde, millel erimalli pole.'}
                       {' · '}Malli muudatus mõjutab uusi lisamisi.
                     </p>
                   </div>
@@ -382,195 +377,71 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                   <div className="work-template-notice">
                     <AlertCircle size={16} />
                     <span>
-                      Sellel kultuuril oma erimalli pole – põllule rakendatakse automaatselt sobivat elutsükli malli vastavalt kultuuride vahetusele.
+                      Sellel kultuuril oma erimalli pole – kasutatakse {selectedCrop?.isWinterCrop ? 'talivilja' : 'suvivilja'} üldmalli.
                     </span>
                     <button className="btn btn-secondary btn-sm" onClick={createOwnTemplate}>
-                      Loo kultuurile oma mall elutsükli malli põhjal
+                      Loo kultuurile oma mall üldmalli põhjal
                     </button>
                   </div>
                 )}
 
-                {selectedVariant ? (
-                  <>
-                    {/* Sektsioon 1: Käesolev kultuur */}
-                    <div className="work-template-section-header">
-                      <span>{currentVariantMeta?.currentIsWinter ? '❄️ Käesoleva aasta talivili (hooldus ja koristus)' : '🌸 Käesoleva aasta suvivili (kevadkülv, hooldus ja koristus)'}</span>
-                    </div>
-                    {(currentVariantMeta?.currentIsWinter ? (['CARE', 'HARVEST'] as const) : (['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const)).map((phase) => {
-                      const rows = shownItems
-                        .map((it, index) => ({ it, index, w: workTypeById.get(it.workTypeId) }))
-                        .filter((r) => (r.it.section ?? 'CURRENT') === 'CURRENT' && r.w?.phase === phase);
-                      const label =
-                        phase === 'PREPARATION' ? 'KEVADINE ETTEVALMISTUS' :
-                        phase === 'SOWING' ? 'KEVADKÜLV' :
-                        WORK_PHASE_META[phase].label.toUpperCase();
-                      return (
-                        <section key={`cur-${phase}`} className="work-template-phase">
-                          <span className="work-template-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
-                            {label}
-                          </span>
-                          {rows.length === 0 && <div className="work-template-empty">Selles faasis töid pole</div>}
-                          {rows.map(({ it, index, w }, i) => (
-                            <div key={`${it.workTypeId}-${it.section ?? 'CURRENT'}`} className="work-template-item">
-                              <span className="work-template-move">
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta üles" disabled={i === 0} onClick={() => moveItem(index, -1)}><ChevronUp size={14} /></button>
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
-                              </span>
-                              <span className="work-template-name" title={w?.name}>{w?.name}</span>
-                              <input
-                                className="form-input"
-                                placeholder="Tavapärane aeg, nt apr–mai"
-                                value={it.typicalTiming ?? ''}
-                                onChange={(e) => editItems((items) => { items[index] = { ...items[index], typicalTiming: e.target.value || null }; return items; })}
-                              />
-                              {w && w.repeatMode !== 'ONCE' ? (
-                                <label className="work-template-count">
-                                  <span>{w.repeatMode === 'INTERVAL' ? `iga ${w.intervalDays} p` : 'kordi'}</span>
-                                  {w.repeatMode === 'UP_TO' && (
-                                    <input
-                                      className="form-input"
-                                      type="number"
-                                      min={1}
-                                      value={it.plannedCount ?? w.maxRepeats ?? 1}
-                                      onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
-                                    />
-                                  )}
-                                </label>
-                              ) : (
-                                <span className="work-template-count muted">ühekordne</span>
+                {WORK_PHASES.map((phase) => {
+                  const rows = shownItems
+                    .map((it, index) => ({ it, index, w: workTypeById.get(it.workTypeId) }))
+                    .filter((r) => r.w?.phase === phase);
+                  const readOnly = usesGeneral && !dirty;
+                  return (
+                    <section key={phase} className="work-template-phase">
+                      <span className="work-template-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
+                        {WORK_PHASE_META[phase].label.toUpperCase()}
+                      </span>
+                      {rows.length === 0 && <div className="work-template-empty">Selles faasis töid pole</div>}
+                      {rows.map(({ it, index, w }, i) => (
+                        <div key={it.workTypeId} className={`work-template-item ${readOnly ? 'readonly' : ''}`}>
+                          {!readOnly && (
+                            <span className="work-template-move">
+                              <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta üles" disabled={i === 0} onClick={() => moveItem(index, -1)}><ChevronUp size={14} /></button>
+                              <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
+                            </span>
+                          )}
+                          <span className="work-template-name" title={w?.name}>{w?.name}</span>
+                          <input
+                            className="form-input"
+                            placeholder="Tavapärane aeg, nt apr–mai"
+                            value={it.typicalTiming ?? ''}
+                            disabled={readOnly}
+                            onChange={(e) => editItems((items) => { items[index] = { ...items[index], typicalTiming: e.target.value || null }; return items; })}
+                          />
+                          {w && w.repeatMode !== 'ONCE' ? (
+                            <label className="work-template-count">
+                              <span>{w.repeatMode === 'INTERVAL' ? `iga ${w.intervalDays} p` : 'kordi'}</span>
+                              {w.repeatMode === 'UP_TO' && (
+                                <input
+                                  className="form-input"
+                                  type="number"
+                                  min={1}
+                                  value={it.plannedCount ?? w.maxRepeats ?? 1}
+                                  disabled={readOnly}
+                                  onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
+                                />
                               )}
-                              <button type="button" className="icon-btn-danger" title="Eemalda mallist" aria-label="Eemalda mallist" onClick={() => removeItem(index)}>
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          ))}
-                        </section>
-                      );
-                    })}
-
-                    {/* Sektsioon 2: Järgmise kultuuri sügistööd */}
-                    <div className="work-template-section-header autumn">
-                      <span>{currentVariantMeta?.nextIsWinter ? '🍂 Järgmise aasta talivilja sügistööd (ettevalmistus ja sügiskülv)' : '🍂 Järgmise aasta suvivilja sügistööd (sügisharimine enne talve)'}</span>
-                    </div>
-                    {(currentVariantMeta?.nextIsWinter ? (['PREPARATION', 'SOWING'] as const) : (['PREPARATION'] as const)).map((phase) => {
-                      const rows = shownItems
-                        .map((it, index) => ({ it, index, w: workTypeById.get(it.workTypeId) }))
-                        .filter((r) => r.it.section === 'NEXT_AUTUMN' && r.w?.phase === phase);
-                      const label =
-                        phase === 'PREPARATION' ? 'SÜGISENE ETTEVALMISTUS (MULLAHARIMINE / KÜND)' :
-                        'SÜGISKÜLV (TALIVILJALE)';
-                      return (
-                        <section key={`next-${phase}`} className="work-template-phase">
-                          <span className="work-template-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
-                            {label}
-                          </span>
-                          {rows.length === 0 && <div className="work-template-empty">Selles faasis töid pole</div>}
-                          {rows.map(({ it, index, w }, i) => (
-                            <div key={`${it.workTypeId}-${it.section ?? 'CURRENT'}`} className="work-template-item">
-                              <span className="work-template-move">
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta üles" disabled={i === 0} onClick={() => moveItem(index, -1)}><ChevronUp size={14} /></button>
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
-                              </span>
-                              <span className="work-template-name" title={w?.name}>{w?.name}</span>
-                              <input
-                                className="form-input"
-                                placeholder="Tavapärane aeg, nt aug–sept"
-                                value={it.typicalTiming ?? ''}
-                                onChange={(e) => editItems((items) => { items[index] = { ...items[index], typicalTiming: e.target.value || null }; return items; })}
-                              />
-                              {w && w.repeatMode !== 'ONCE' ? (
-                                <label className="work-template-count">
-                                  <span>{w.repeatMode === 'INTERVAL' ? `iga ${w.intervalDays} p` : 'kordi'}</span>
-                                  {w.repeatMode === 'UP_TO' && (
-                                    <input
-                                      className="form-input"
-                                      type="number"
-                                      min={1}
-                                      value={it.plannedCount ?? w.maxRepeats ?? 1}
-                                      onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
-                                    />
-                                  )}
-                                </label>
-                              ) : (
-                                <span className="work-template-count muted">ühekordne</span>
-                              )}
-                              <button type="button" className="icon-btn-danger" title="Eemalda mallist" aria-label="Eemalda mallist" onClick={() => removeItem(index)}>
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          ))}
-                        </section>
-                      );
-                    })}
-                  </>
-                ) : (
-                  WORK_PHASES.map((phase) => {
-                    const rows = shownItems.map((it, index) => ({ it, index, w: workTypeById.get(it.workTypeId) })).filter((r) => r.w?.phase === phase);
-                    const readOnly = usesGeneral && !dirty;
-                    return (
-                      <section key={phase} className="work-template-phase">
-                        <span className="work-template-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
-                          {WORK_PHASE_META[phase].label.toUpperCase()}
-                        </span>
-                        {rows.length === 0 && <div className="work-template-empty">Selles faasis töid pole</div>}
-                        {rows.map(({ it, index, w }, i) => (
-                          <div key={it.workTypeId} className={`work-template-item ${readOnly ? 'readonly' : ''}`}>
-                            {!readOnly && (
-                              <span className="work-template-move">
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta üles" disabled={i === 0} onClick={() => moveItem(index, -1)}><ChevronUp size={14} /></button>
-                                <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
-                              </span>
-                            )}
-                            <span className="work-template-name" title={w?.name}>{w?.name}</span>
-                            <input
-                              className="form-input"
-                              placeholder="Tavapärane aeg, nt apr–mai"
-                              value={it.typicalTiming ?? ''}
-                              disabled={readOnly}
-                              onChange={(e) => editItems((items) => { items[index] = { ...items[index], typicalTiming: e.target.value || null }; return items; })}
-                            />
-                            {w && w.repeatMode !== 'ONCE' ? (
-                              <label className="work-template-count">
-                                <span>{w.repeatMode === 'INTERVAL' ? `iga ${w.intervalDays} p` : 'kordi'}</span>
-                                {w.repeatMode === 'UP_TO' && (
-                                  <input
-                                    className="form-input"
-                                    type="number"
-                                    min={1}
-                                    value={it.plannedCount ?? w.maxRepeats ?? 1}
-                                    disabled={readOnly}
-                                    onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
-                                  />
-                                )}
-                              </label>
-                            ) : (
-                              <span className="work-template-count muted">ühekordne</span>
-                            )}
-                            {!readOnly && (
-                              <button type="button" className="icon-btn-danger" title="Eemalda mallist" aria-label="Eemalda mallist" onClick={() => removeItem(index)}>
-                                <Trash2 size={15} />
-                              </button>
-                            )}
-                          </div>
-                        ))}
-                      </section>
-                    );
-                  })
-                )}
+                            </label>
+                          ) : (
+                            <span className="work-template-count muted">ühekordne</span>
+                          )}
+                          {!readOnly && (
+                            <button type="button" className="icon-btn-danger" title="Eemalda mallist" aria-label="Eemalda mallist" onClick={() => removeItem(index)}>
+                              <Trash2 size={15} />
+                            </button>
+                          )}
+                        </div>
+                      ))}
+                    </section>
+                  );
+                })}
 
                 {!(usesGeneral && !dirty) && (
                   <div className="work-template-add">
-                    {selectedVariant && (
-                      <select
-                        className="form-input"
-                        style={{ maxWidth: 190 }}
-                        value={addSection}
-                        onChange={(e) => setAddSection(e.target.value as TemplateSection)}
-                      >
-                        <option value="CURRENT">🌸 Käesolev kultuur</option>
-                        <option value="NEXT_AUTUMN">🍂 Sügistööd</option>
-                      </select>
-                    )}
                     <select className="form-input" value={addWorkTypeId} onChange={(e) => setAddWorkTypeId(e.target.value)}>
                       <option value="">Lisa registrist…</option>
                       {missingWorkTypes.map((w) => (

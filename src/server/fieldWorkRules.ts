@@ -139,3 +139,24 @@ export function summarizeLines(lines: Pick<StoredLine, 'kind' | 'quantity' | 'un
   r.profit = r.revenue - r.costTotal;
   return r;
 }
+
+export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
+
+// Jooksvas aastas: taliviljal ainult hooldus ja koristus (ettevalmistus ja külv olid sügisel);
+// suviviljal kõik 4 faasi.
+export function filterTemplatePhasesForCurrent(isWinter: boolean, phase: WorkPhase): boolean {
+  if (isWinter) {
+    return phase === 'CARE' || phase === 'HARVEST';
+  }
+  return true;
+}
+
+// Sügistöödes (jooksva aasta sügis järgmise aasta saagiks):
+// taliviljal ettevalmistus ja külv; suviviljal ainult ettevalmistus (külv, hooldus ja koristus on kevadel).
+export function filterTemplatePhasesForAutumn(nextIsWinter: boolean, phase: WorkPhase): boolean {
+  if (nextIsWinter) {
+    return phase === 'PREPARATION' || phase === 'SOWING';
+  }
+  return phase === 'PREPARATION';
+}
+
