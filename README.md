@@ -1,15 +1,15 @@
-# agro map
+# TERIS
 
-Põllumajandusettevõtte kaardirakendus: PRIA põllud ja külvikord, masinapark ja
-Teltonika telemeetria, mullaproovid, e-PRIA põlluraamat, seotud isikud.
+Teraviljakasvataja abirakendus: PRIA põllud ja külvikord, masinapark ja
+Teltonika telemeetria, mullaproovid, põlluraamat, seotud isikud.
 
 ## Arhitektuur
 
-    Brauser ──HTTPS──> Apache (agro.ventcap.ee)
-                         └─> 127.0.0.1:8820  agro.service (node dist-server/prod.js)
+    Brauser ──HTTPS──> Apache (teris.ee)
+                         └─> 127.0.0.1:8820  teris.service (node dist-server/prod.js)
                                ├─ /api/*  API + sisselogimine (src/server/apiHandler.ts, authGate.ts)
                                └─ muu     dist/ (React + Vite)
-                             PostgreSQL: agro_db (Prisma), agro_tsdb (telemeetria)
+                             PostgreSQL: teris_db (Prisma), agro_tsdb (telemeetria)
 
 - Kasutajaliides: React 19 + TypeScript + Vite, kaart Leaflet.
 - Server: `node:http` ilma raamistikuta, Prisma 6. Sama API käsitleja töötab ka
@@ -19,8 +19,8 @@ Teltonika telemeetria, mullaproovid, e-PRIA põlluraamat, seotud isikud.
 
 ## Arendusprotsess
 
-Kood elab serveris `/home/debian/agro` (git remote `git.5dvision.ee:andresj/agro.git`,
-haru `master`). Live (`agro.service`) jookseb **ehitatud** koodist (`dist/`, `dist-server/`),
+Kood elab serveris `/home/debian/teris` (git remote `git.5dvision.ee:andresj/teris.git`,
+haru `master`). Live (`teris.service`) jookseb **ehitatud** koodist (`dist/`, `dist-server/`),
 seega faili muutmine live'i ei muuda — muudatus jõuab kasutajani alles `npm run release`
 järel.
 
@@ -31,7 +31,7 @@ järel.
 2. **Proovi arendusserveris** (valikuline, kasutajaliidese muudatuste puhul soovitatav):
    ```bash
    ssh -L 5173:127.0.0.1:5173 uvn-243-120.tll07.zonevs.eu
-   cd /home/debian/agro && npm run dev
+   cd /home/debian/teris && npm run dev
    ```
    Ava kohalikus brauseris `http://localhost:5173` ja logi sisse sama kontoga mis live'is
    (Chrome/Firefox; Safari ei pruugi `Secure` küpsist `http://localhost` peal salvestada).
@@ -43,13 +43,13 @@ järel.
 4. **Commit** (`git add <failid>`, mitte `git add -A` — vt „Failid, mis ei käi git'i“).
 5. **Release:** `npm run release` (tüübikontroll + testid + ehitus + teenuse taaskäivitus;
    kui mõni samm kukub, teenust ei taaskäivitata ja live jääb vanale versioonile).
-6. **Kontrolli live'i:** `systemctl is-active agro`, `journalctl -u agro -n 30 --no-pager`,
-   brauseris https://agro.ventcap.ee (kõva värskendus Cmd+Shift+R).
+6. **Kontrolli live'i:** `systemctl is-active teris`, `journalctl -u teris -n 30 --no-pager`,
+   brauseris https://teris.ee (kõva värskendus Cmd+Shift+R).
 7. **Push:** `git push origin master`.
 
 ### Andmebaasi skeemi muudatus
 
-1. Varukoopia: `pg_dump "…" -Fc -f ~/db_backups/agro_db_$(date +%Y%m%d_%H%M%S).dump`.
+1. Varukoopia: `pg_dump "…" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump`.
 2. Muuda `prisma/schema.prisma`, siis `npx prisma db push` ja `npx prisma generate`.
 3. `npm run release`.
 
@@ -76,11 +76,11 @@ Kui arendusserver jookseb, taaskäivita see (Vite'i sõltuvuste vahemälu).
   käsuga `npm run user -- …`.
 - Enne andmeid kustutavat või massilist muudatust tee andmebaasist varukoopia.
 
-## Käsud (serveris `/home/debian/agro`)
+## Käsud (serveris `/home/debian/teris`)
 
 | Käsk | Tegevus |
 |---|---|
-| `npm run release` | tüübikontroll, testid, ehitus, `agro` teenuse taaskäivitus |
+| `npm run release` | tüübikontroll, testid, ehitus, `teris` teenuse taaskäivitus |
 | `npm run build` | kasutajaliides `dist/` + server `dist-server/` |
 | `npm test` | ühiktestid (Vitest) |
 | `npm run user -- add <nimi> [--display "Nimi"] [--email aadress]` | uus kasutaja (parool küsitakse) |
@@ -96,7 +96,7 @@ lisatud või lähtestatud parool on ajutine — kasutaja peab selle esimesel sis
 
 Uuele kasutajale saadetakse vaikimisi e-postiga kutse (link kehtib 7 päeva); sisselogimise
 lehel on „Unustasid parooli?“ (link kehtib 1 tund). Kirjad saadab serveri Postfix (DKIM
-selektor `agro`, domeen `agro.ventcap.ee`); `.env`: `MAIL_FROM`, `APP_BASE_URL`,
+selektor `teris`, domeen `teris.ee`); `.env`: `MAIL_FROM`, `APP_BASE_URL`,
 `MAIL_DISABLED=1` (arenduses kirju ei saadeta).
 
 Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json`.
@@ -104,14 +104,14 @@ Integratsioonitest töötava serveri vastu: `BASE=http://127.0.0.1:8820 npx tsx 
 
 ## Teenus ja logid
 
-- `sudo systemctl status|restart agro`, logid `journalctl -u agro -f`.
-- Apache: `/etc/apache2/sites-available/agro.ventcap.ee.conf` (`*.ventcap.ee` sertifikaat).
+- `sudo systemctl status|restart teris`, logid `journalctl -u teris -f`.
+- Apache: `/etc/apache2/sites-available/teris.ventcap.ee.conf` (`*.ventcap.ee` sertifikaat).
 
 ## Andmebaas
 
 - Ühendused `.env` failis (`DATABASE_URL`, `TSDB_DATABASE_URL`) — ei ole repos.
 - Skeem: `prisma/schema.prisma`; muudatus: `npx prisma db push` + `npx prisma generate` + `npm run release`.
-- **Enne ohtlikku muudatust varukoopia:** `pg_dump … -Fc -f ~/db_backups/agro_db_<aeg>.dump`.
+- **Enne ohtlikku muudatust varukoopia:** `pg_dump … -Fc -f ~/db_backups/teris_db_<aeg>.dump`.
 
 ## Failid, mis ei käi git'i
 
