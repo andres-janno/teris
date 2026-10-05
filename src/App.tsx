@@ -1,5 +1,4 @@
-// src/App.tsx
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import confetti from 'canvas-confetti';
 import { Header } from './components/Header';
 import { MapView } from './components/MapView';
@@ -223,8 +222,65 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // 3. Teltonika GPS seadmete register
   const [devices, setDevices] = useState<TeltonikaDevice[]>([]);
 
+  // Kaardil peidetud sõidukite ID-d
+  const [hiddenVehicleMapIds, setHiddenVehicleMapIds] = useState<Set<string>>(() => new Set());
+
+  // Simulaatoris aktiivne sõiduki ID (kui on sisse lülitatud)
+  const [simulatedVehicleId, setSimulatedVehicleId] = useState<string | null>(null);
+
+  // Simulaatori dünaamiline hetkeolek (asukoht, kiirus, olek)
+  const [simulatedVehicleState, setSimulatedVehicleState] = useState<{
+    vehicleId: string;
+    position: [number, number];
+    heading: number;
+    speedKmH: number;
+    isWorking: boolean;
+  } | null>(null);
+
   // Liitandmetega sõidukid kaardile ja vaadetesse
-  const vehicles: EnrichedVehicle[] = enrichVehicles(rawVehicles, implementsList, devices);
+  const vehicles: EnrichedVehicle[] = useMemo(() => {
+    return enrichVehicles(rawVehicles, implementsList, devices).map((v) => {
+      if (simulatedVehicleState && simulatedVehicleState.vehicleId === v.id) {
+        return {
+          ...v,
+          position: simulatedVehicleState.position,
+          heading: simulatedVehicleState.heading,
+          speedKmH: simulatedVehicleState.speedKmH,
+          status: (simulatedVehicleState.isWorking ? 'working' : (simulatedVehicleState.speedKmH > 0 ? 'moving' : 'stopped')) as any,
+          telemetry: {
+            ...v.telemetry,
+            lastUpdate: new Date().toISOString()
+          }
+        };
+      }
+      return v;
+    });
+  }, [rawVehicles, implementsList, devices, simulatedVehicleState]);
+
+  // Kaardil kuvatavad sõidukid (arvestab eraldi peitmist)
+  const mapVisibleVehicles = useMemo(() => {
+    return vehicles.filter((v) => !hiddenVehicleMapIds.has(v.id));
+  }, [vehicles, hiddenVehicleMapIds]);
+
+  const handleToggleVehicleMap = (vehicleId: string) => {
+    setHiddenVehicleMapIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(vehicleId)) next.delete(vehicleId);
+      else next.add(vehicleId);
+      return next;
+    });
+  };
+
+  const handleToggleVehicleSimulator = (vehicleId: string) => {
+    setSimulatedVehicleId((prev) => {
+      const next = prev === vehicleId ? null : vehicleId;
+      if (next) {
+        setVisibility((v) => ({ ...v, cultivation: true }));
+      }
+      return next;
+    });
+  };
+
   const [selectedVehicle, setSelectedVehicle] = useState<EnrichedVehicle | null>(null);
 
   const [cultivationPass, setCultivationPass] = useState<CultivationPass>(EMPTY_CULTIVATION_PASS);
@@ -414,30 +470,95 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [playbackSpeed, setPlaybackSpeed] = useState(2);
   const [progressPct, setProgressPct] = useState(75);
   const [workingWidthM, setWorkingWidthM] = useState(12);
+  const [selectedStartTime, setSelectedStartTime] = useState<string>('');
+  const [telemetryHours, setTelemetryHours] = useState<number>(6);
 
   const simulatorRef = useRef<TelemetrySimulator | null>(null);
 
-  // Harimise taasesitus jälgib masinat, mille küljes on mobiilside
-  // (IMEI-ga) Teltonika seade — masina nimi, ID ja IMEI tulevad registrist.
-  const trackedTarget = React.useMemo(() => {
-    for (const v of rawVehicles) {
-      const device = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
-      if (device?.connectivityType === 'cellular' && device.imei) {
-        return { imei: device.imei, vehicleId: v.id, vehicleName: v.name };
+  // Demoraja genereerimine juhuks, kui masinal puudub reaalne GPS-seade (nt Demotraktor)
+  const createDemoCultivationPass = (vehicleId: string, vehicleName: string, widthM: number): CultivationPass => {
+    const baseLat = 58.1376;
+    const baseLng = 25.8805;
+    const points: TelemetryPoint[] = [];
+    const now = Date.now();
+    let time = now - 3600 * 1000;
+
+    const rows = 6;
+    const rowLen = 14;
+    for (let r = 0; r < rows; r++) {
+      const latOffset = r * 0.00035;
+      const isForward = r % 2 === 0;
+      const heading = isForward ? 45 : 225;
+
+      for (let i = 0; i < rowLen; i++) {
+        const step = isForward ? i : (rowLen - 1 - i);
+        const lat = baseLat + latOffset + (step * 0.00015);
+        const lng = baseLng + (step * 0.00028);
+        time += 4000;
+        points.push({
+          timestamp: new Date(time).toISOString(),
+          lat,
+          lng,
+          altitude: 68,
+          speedKmH: 7.8 + (i % 3) * 0.4,
+          heading,
+          isWorking: true,
+          workingWidthM: widthM
+        });
       }
     }
-    return null;
-  }, [rawVehicles, devices]);
-  const trackedImei = trackedTarget?.imei ?? null;
-  const trackedVehicleId = trackedTarget?.vehicleId ?? '';
-  const trackedVehicleName = trackedTarget?.vehicleName ?? '';
 
-  // Laeb jälgitava seadme päris GPS-ajaloo agro_tsdb-st ja taasesitab seda
-  // (mängi/paus/kiirus/scrubber). Andmete puudumisel jääb paneel tühjaks.
+    const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
+
+    return {
+      id: `demo-pass-${vehicleId}`,
+      vehicleId,
+      vehicleName,
+      operationType: 'Harimine (Demo)',
+      startTime: points[0].timestamp,
+      endTime: points[points.length - 1].timestamp,
+      workingWidthM: widthM,
+      points,
+      swathPolygon: swathPolygon || undefined,
+      trailLine: trailLine || undefined,
+      workedAreaHa: totalWorkedAreaHa,
+      distanceKm: totalDistanceKm,
+      avgSpeedKmH: 8.0
+    };
+  };
+
+  // Harimise taasesitus jälgib kasutaja poolt sisse lülitatud masinat
+  const trackedTarget = useMemo(() => {
+    if (!simulatedVehicleId) return null;
+    const v = rawVehicles.find((veh) => veh.id === simulatedVehicleId);
+    if (!v) return null;
+    const device = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
+    return {
+      vehicleId: v.id,
+      vehicleName: v.name,
+      imei: (device?.connectivityType === 'cellular' && device.imei) ? device.imei : null,
+      device
+    };
+  }, [simulatedVehicleId, rawVehicles, devices]);
+  // Laeb valitud masina GPS-ajaloo (või demoraja) ja taasesitab seda
   useEffect(() => {
-    if (!trackedImei) return;
+    if (!trackedTarget) {
+      if (simulatorRef.current) {
+        simulatorRef.current.destroy();
+        simulatorRef.current = null;
+      }
+      setSimulatedVehicleState(null);
+      setCultivationPass(EMPTY_CULTIVATION_PASS);
+      setIsPlaying(false);
+      setProgressPct(0);
+      return;
+    }
+
     let isMounted = true;
     let sim: TelemetrySimulator | null = null;
+    const currentImei = trackedTarget.imei;
+    const currentVehicleId = trackedTarget.vehicleId;
+    const currentVehicleName = trackedTarget.vehicleName;
 
     const attachSimulator = (pass: CultivationPass) => {
       if (!isMounted) return;
@@ -448,63 +569,72 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         setCultivationPass(updatedPass);
         setProgressPct(sim!.getProgress());
 
-        // Uuenda jälgitava seadme asukoht/kiirus kaardil taasesituse käigus
-        setDevices((prevDevs) =>
-          prevDevs.map((d) => {
-            if (d.imei === trackedImei) {
-              return {
-                ...d,
-                position: activePos,
-                heading,
-                speedKmH: speed,
-                status: isWorking ? 'working' : (speed > 0 ? 'moving' : 'stopped'),
-                lastUpdate: new Date().toISOString()
-              };
-            }
-            return d;
-          })
-        );
+        // Uuenda simuleeritud masina reaalaja andmeid kaardil
+        setSimulatedVehicleState({
+          vehicleId: currentVehicleId,
+          position: activePos,
+          heading,
+          speedKmH: speed,
+          isWorking
+        });
       });
+
+      // Kui kasutaja on määranud kohandatud alguskellaaja, rakenda see
+      if (selectedStartTime) {
+        sim.setPlaybackStartTime(selectedStartTime);
+        setProgressPct(sim.getProgress());
+      }
     };
 
-    api.getTelemetryHistory(trackedImei, 6)
+    // Pärime piisavalt laia aknaga (nt 48h), et leida viimane reaalne töösõit
+    const hoursToFetch = Math.max(telemetryHours, 48);
+    api.getTelemetryHistory({
+      imei: currentImei ?? undefined,
+      vehicleId: currentVehicleId,
+      hours: hoursToFetch
+    })
       .then((res) => {
         if (!isMounted) return;
-        if (res.points.length < 2) return;
+        if (res.points.length >= 2) {
+          const points: TelemetryPoint[] = res.points.map((p) => ({
+            timestamp: p.timestamp,
+            lat: p.lat,
+            lng: p.lng,
+            altitude: p.altitude,
+            speedKmH: p.speedKmH,
+            heading: p.heading,
+            isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
+            workingWidthM
+          }));
 
-        const points: TelemetryPoint[] = res.points.map((p) => ({
-          timestamp: p.timestamp,
-          lat: p.lat,
-          lng: p.lng,
-          altitude: p.altitude,
-          speedKmH: p.speedKmH,
-          heading: p.heading,
-          isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
-          workingWidthM
-        }));
+          const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
 
-        const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
+          const realPass: CultivationPass = {
+            id: `pass-${currentVehicleId}`,
+            vehicleId: currentVehicleId,
+            vehicleName: currentVehicleName,
+            operationType: 'Harimine',
+            startTime: points[0].timestamp,
+            endTime: points[points.length - 1].timestamp,
+            workingWidthM,
+            points,
+            swathPolygon: swathPolygon || undefined,
+            trailLine: trailLine || undefined,
+            workedAreaHa: totalWorkedAreaHa,
+            distanceKm: totalDistanceKm,
+            avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
+          };
 
-        const realPass: CultivationPass = {
-          id: `pass-${trackedImei}`,
-          vehicleId: trackedVehicleId,
-          vehicleName: trackedVehicleName,
-          operationType: 'Harimine',
-          startTime: points[0].timestamp,
-          endTime: points[points.length - 1].timestamp,
-          workingWidthM,
-          points,
-          swathPolygon: swathPolygon || undefined,
-          trailLine: trailLine || undefined,
-          workedAreaHa: totalWorkedAreaHa,
-          distanceKm: totalDistanceKm,
-          avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
-        };
+          attachSimulator(realPass);
+          return;
+        }
 
-        attachSimulator(realPass);
+        // Kui ajalugu oli tühi, kasuta demorada
+        attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, workingWidthM));
       })
-      .catch((err) => {
-        console.warn('Jälgitava seadme GPS-ajalugu ei õnnestunud laadida:', err);
+      .catch(() => {
+        if (!isMounted) return;
+        attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, workingWidthM));
       });
 
     return () => {
@@ -512,9 +642,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       sim?.destroy();
       simulatorRef.current = null;
     };
-    // Sõltub ainult jälgitava seadme identiteedist — mitte taasesituse ajal
-    // uuenevast devices-olekust, muidu käivituks simulaator iga sammu järel uuesti.
-  }, [trackedImei, trackedVehicleId, trackedVehicleName]);
+  }, [trackedTarget, telemetryHours, workingWidthM]);
 
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
@@ -534,10 +662,16 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   const handleReset = () => {
     if (!simulatorRef.current) return;
-    simulatorRef.current.pause();
-    simulatorRef.current.setProgress(0);
+    simulatorRef.current.reset();
     setIsPlaying(false);
-    setProgressPct(0);
+    setProgressPct(simulatorRef.current.getProgress());
+  };
+
+  const handleStartTimeChange = (timeStr: string) => {
+    setSelectedStartTime(timeStr);
+    if (!simulatorRef.current) return;
+    simulatorRef.current.setPlaybackStartTime(timeStr);
+    setProgressPct(simulatorRef.current.getProgress());
   };
 
   const handleSeek = (pct: number) => {
@@ -577,7 +711,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Vehicle focus
   const handleFocusVehicle = (vehicle: EnrichedVehicle) => {
     setSelectedVehicle(vehicle);
-    setFocusedTarget({ coords: vehicle.position, zoom: 16 });
+    if (vehicle.position) {
+      setFocusedTarget({ coords: vehicle.position, zoom: 16 });
+    }
   };
 
   // Reassignment handlers (Swapping devices and implements between machines)
@@ -606,7 +742,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           return { ...v, assignedDeviceId: deviceId };
         }
         if (v.assignedDeviceId === deviceId) {
-          return { ...v, assignedDeviceId: undefined };
+          const dev = devices.find((d) => d.id === deviceId);
+          return {
+            ...v,
+            assignedDeviceId: undefined,
+            lastKnownPosition: dev?.position ?? v.lastKnownPosition
+          };
         }
         return v;
       });
@@ -1219,7 +1360,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           fields={fields}
           selectedField={selectedField}
           onSelectField={handleSelectField}
-          vehicles={vehicles}
+          vehicles={mapVisibleVehicles}
           selectedVehicle={selectedVehicle}
           onSelectVehicle={setSelectedVehicle}
           cultivationPass={cultivationPass}
@@ -1278,6 +1419,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           soilFieldCount={new Set(soilSamples.map((s) => s.fieldCode)).size}
           soilMetric={soilMetric}
           onSelectSoilMetric={setSoilMetric}
+          vehicles={vehicles}
+          hiddenVehicleMapIds={hiddenVehicleMapIds}
+          onToggleVehicleMap={handleToggleVehicleMap}
+          simulatedVehicleId={simulatedVehicleId}
+          onToggleVehicleSimulator={handleToggleVehicleSimulator}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
@@ -1293,6 +1439,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onSpeedChange={handleSpeedChange}
             workingWidthM={workingWidthM}
             onWidthChange={handleWidthChange}
+            selectedStartTime={selectedStartTime}
+            onStartTimeChange={handleStartTimeChange}
+            telemetryHours={telemetryHours}
+            onHoursChange={setTelemetryHours}
           />
         )}
       </div>

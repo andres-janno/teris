@@ -113,9 +113,57 @@ type HistoryRow = {
 // taasesituse paneelis) — pivotib measurement='data' read ajatempli järgi
 // üheks JSON-objektiks per pakett, kuna Teltonika saadab kõik väljad
 // (lat/lng/kiirus/suund) sama ajatempliga korraga.
-async function fetchDeviceHistory(imei: string, hours: number): Promise<HistoryRow[]> {
+async function fetchDeviceHistory(imei: string, hours: number, from?: string | null, to?: string | null): Promise<HistoryRow[]> {
   if (!tsdb) return [];
   try {
+    const fromDate = from ? new Date(from) : null;
+    const toDate = to ? new Date(to) : null;
+    const validFrom = fromDate && !isNaN(fromDate.getTime()) ? fromDate : null;
+    const validTo = toDate && !isNaN(toDate.getTime()) ? toDate : null;
+
+    if (validFrom && validTo) {
+      return await tsdb.$queryRaw<HistoryRow[]>`
+        SELECT time, fields FROM (
+          SELECT time,
+            jsonb_object_agg(
+              field,
+              COALESCE(value_double, value_int::double precision, value_bigint::double precision)
+            ) AS fields
+          FROM measurements
+          WHERE device = ${imei}
+            AND measurement = 'data'
+            AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
+            AND time >= ${validFrom}
+            AND time <= ${validTo}
+          GROUP BY time
+          ORDER BY time DESC
+          LIMIT 5000
+        ) recent
+        ORDER BY time ASC
+      `;
+    }
+
+    if (validFrom) {
+      return await tsdb.$queryRaw<HistoryRow[]>`
+        SELECT time, fields FROM (
+          SELECT time,
+            jsonb_object_agg(
+              field,
+              COALESCE(value_double, value_int::double precision, value_bigint::double precision)
+            ) AS fields
+          FROM measurements
+          WHERE device = ${imei}
+            AND measurement = 'data'
+            AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
+            AND time >= ${validFrom}
+          GROUP BY time
+          ORDER BY time DESC
+          LIMIT 5000
+        ) recent
+        ORDER BY time ASC
+      `;
+    }
+
     return await tsdb.$queryRaw<HistoryRow[]>`
       SELECT time, fields FROM (
         SELECT time,
@@ -130,7 +178,7 @@ async function fetchDeviceHistory(imei: string, hours: number): Promise<HistoryR
           AND time > now() - (${hours} || ' hours')::interval
         GROUP BY time
         ORDER BY time DESC
-        LIMIT 3000
+        LIMIT 5000
       ) recent
       ORDER BY time ASC
     `;
@@ -559,12 +607,15 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     // 5. Fleet (Vehicles, Implements, Devices)
     if (pathname === '/api/fleet' && method === 'GET') {
-      const [rawVehicles, rawImplements, rawDevices] = await Promise.all([
+      const [rawVehicles, rawImplements, rawDevices, activeAssignments] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
         }),
         prisma.implement.findMany(),
-        prisma.teltonikaDevice.findMany()
+        prisma.teltonikaDevice.findMany(),
+        prisma.deviceAssignment.findMany({
+          where: { endedAt: null }
+        })
       ]);
 
       const vehicles = rawVehicles.map((v) => ({
@@ -577,6 +628,10 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         driverName: v.assignedDriver?.name,
         assignedDeviceId: v.assignedDeviceId ?? undefined,
         assignedImplementId: v.assignedImplementId ?? undefined,
+        lastKnownPosition: (v.lastLatitude != null && v.lastLongitude != null)
+          ? [v.lastLatitude, v.lastLongitude] as [number, number]
+          : undefined,
+        lastActiveAt: v.lastActiveAt ? v.lastActiveAt.toISOString() : undefined,
         notes: (v as any).notes ?? undefined
       }));
 
@@ -607,22 +662,30 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       const now = Date.now();
 
       const devices = rawDevices.map((d) => {
+        const assignment = activeAssignments.find((a) => a.deviceId === d.id);
         const isEye = d.connectivityType === 'EYE_SENSOR';
         const live = isEye
           ? (d.macAddress ? eyeTelemetry.get(d.macAddress.toUpperCase()) : undefined)
           : (d.imei ? cellularTelemetry.get(d.imei) : undefined);
 
-        const lastUpdate = live?.lastUpdate ?? null;
+        // Kontrolli, kas viimane mõõtmine tsdb-s toimus enne seadme praegusele masinale paigaldamist.
+        // Kui jah, kuulus see eelmisele tehnikale ja praeguse masina jaoks pole uusi andmeid veel tulnud.
+        const isBeforeAssignment = Boolean(
+          assignment && live?.lastUpdate && (new Date(live.lastUpdate) < assignment.startedAt)
+        );
+
+        const effectiveLive = isBeforeAssignment ? null : live;
+        const lastUpdate = effectiveLive?.lastUpdate ?? null;
         const isStale = !lastUpdate || (now - new Date(lastUpdate).getTime() > TELEMETRY_STALE_MS);
 
         let status: string;
-        if (!live || isStale) {
+        if (!effectiveLive || isStale) {
           status = 'offline';
         } else if (isEye) {
           status = 'idling';
         } else {
-          const speed = Number(live.speed ?? live.speed_avl_kmh ?? 0);
-          status = speed > 1 ? 'moving' : (live.ignition ? 'idling' : 'stopped');
+          const speed = Number(effectiveLive.speed ?? effectiveLive.speed_avl_kmh ?? 0);
+          status = speed > 1 ? 'moving' : (effectiveLive.ignition ? 'idling' : 'stopped');
         }
 
         const base = {
@@ -634,7 +697,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           simNumber: d.simNumber ?? '',
           firmwareVersion: d.firmware ?? undefined,
           status,
-          lastUpdate: lastUpdate ?? new Date().toISOString()
+          notes: (d as any).notes ?? undefined,
+          lastUpdate: lastUpdate ?? ''
         };
 
         if (isEye) {
@@ -642,16 +706,16 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
             ...base,
             // eye_sensor: batteryVoltage hoiab siin aku TASET %-des (mitte V) —
             // tsdb annab ainult protsendi, mitte pinget selle seadmetüübi jaoks.
-            batteryVoltage: Number(live?.eye_battery_percent ?? 0),
-            eyeTemperatureC: live?.eye_temperature_c != null ? Number(live.eye_temperature_c) : undefined,
-            eyeHumidityPercent: live?.eye_humidity_percent != null ? Number(live.eye_humidity_percent) : undefined,
-            eyeMagnetClosed: typeof live?.eye_magnet_closed === 'boolean' ? live.eye_magnet_closed : undefined,
+            batteryVoltage: Number(effectiveLive?.eye_battery_percent ?? 0),
+            eyeTemperatureC: effectiveLive?.eye_temperature_c != null ? Number(effectiveLive.eye_temperature_c) : undefined,
+            eyeHumidityPercent: effectiveLive?.eye_humidity_percent != null ? Number(effectiveLive.eye_humidity_percent) : undefined,
+            eyeMagnetClosed: typeof effectiveLive?.eye_magnet_closed === 'boolean' ? effectiveLive.eye_magnet_closed : undefined,
             fuelLevelPct: 0,
             ignition: false,
             hydraulicActive: false,
             satelliteCount: 0,
             hdop: 9.9,
-            position: [58.1385, 25.8835] as [number, number],
+            position: undefined,
             heading: 0,
             speedKmH: 0
           };
@@ -659,19 +723,19 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
         return {
           ...base,
-          batteryVoltage: Number(live?.external_voltage_v ?? 0),
+          batteryVoltage: Number(effectiveLive?.external_voltage_v ?? 0),
           fuelLevelPct: 0,
           // hydraulicActive: agro_tsdb ei anna selle jaoks (io_194) teadaolevat tähendust
-          ignition: Boolean(live?.ignition),
+          ignition: Boolean(effectiveLive?.ignition),
           hydraulicActive: false,
-          satelliteCount: Number(live?.satellites ?? 0),
-          hdop: Number(live?.gnss_hdop ?? 9.9),
-          altitude: live?.altitude != null ? Number(live.altitude) : undefined,
-          position: (live?.latitude != null && live?.longitude != null)
-            ? [Number(live.latitude), Number(live.longitude)] as [number, number]
-            : [58.1385, 25.8835] as [number, number],
-          heading: Number(live?.angle ?? 0),
-          speedKmH: Number(live?.speed ?? live?.speed_avl_kmh ?? 0)
+          satelliteCount: Number(effectiveLive?.satellites ?? 0),
+          hdop: Number(effectiveLive?.gnss_hdop ?? 9.9),
+          altitude: effectiveLive?.altitude != null ? Number(effectiveLive.altitude) : undefined,
+          position: (effectiveLive?.latitude != null && effectiveLive?.longitude != null)
+            ? [Number(effectiveLive.latitude), Number(effectiveLive.longitude)] as [number, number]
+            : undefined,
+          heading: Number(effectiveLive?.angle ?? 0),
+          speedKmH: isStale ? 0 : Number(effectiveLive?.speed ?? effectiveLive?.speed_avl_kmh ?? 0)
         };
       });
 
@@ -763,7 +827,8 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         model: d.model,
         simNumber: d.simNumber || null,
         firmware: d.firmwareVersion || null,
-        status: (d.status || 'offline').toUpperCase() as any
+        status: (d.status || 'offline').toUpperCase() as any,
+        notes: d.notes ?? null
       };
 
       const saved = await prisma.teltonikaDevice.upsert({
@@ -827,6 +892,51 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     if (pathname === '/api/fleet/devices/assign' && method === 'POST') {
       // A device attaches to at most one target (a vehicle OR an implement) at a time.
       const { deviceId, vehicleId, implementId } = await parseBody(req);
+
+      const device = await prisma.teltonikaDevice.findUnique({
+        where: { id: deviceId }
+      });
+
+      // Find current open assignment
+      const activeAssignment = await prisma.deviceAssignment.findFirst({
+        where: { deviceId, endedAt: null }
+      });
+
+      let lastLat: number | null = null;
+      let lastLng: number | null = null;
+
+      if (device?.imei) {
+        const liveMap = await fetchCellularTelemetry([device.imei]);
+        const live = liveMap.get(device.imei);
+        if (typeof live?.latitude === 'number' && typeof live?.longitude === 'number') {
+          lastLat = live.latitude;
+          lastLng = live.longitude;
+        }
+      }
+
+      const now = new Date();
+
+      if (activeAssignment) {
+        await prisma.deviceAssignment.update({
+          where: { id: activeAssignment.id },
+          data: {
+            endedAt: now,
+            lastLatitude: lastLat ?? activeAssignment.lastLatitude,
+            lastLongitude: lastLng ?? activeAssignment.lastLongitude
+          }
+        });
+        if (activeAssignment.vehicleId && (lastLat !== null || activeAssignment.lastLatitude !== null)) {
+          await prisma.vehicle.update({
+            where: { id: activeAssignment.vehicleId },
+            data: {
+              lastLatitude: lastLat ?? activeAssignment.lastLatitude,
+              lastLongitude: lastLng ?? activeAssignment.lastLongitude,
+              lastActiveAt: now
+            }
+          });
+        }
+      }
+
       await prisma.vehicle.updateMany({
         where: { assignedDeviceId: deviceId },
         data: { assignedDeviceId: null }
@@ -835,27 +945,75 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         where: { assignedDeviceId: deviceId },
         data: { assignedDeviceId: null }
       });
+
       if (vehicleId) {
         await prisma.vehicle.update({
           where: { id: vehicleId },
           data: { assignedDeviceId: deviceId }
+        });
+        await prisma.deviceAssignment.create({
+          data: {
+            deviceId,
+            vehicleId,
+            startedAt: now
+          }
         });
       } else if (implementId) {
         await prisma.implement.update({
           where: { id: implementId },
           data: { assignedDeviceId: deviceId }
         });
+        await prisma.deviceAssignment.create({
+          data: {
+            deviceId,
+            implementId,
+            startedAt: now
+          }
+        });
       }
       return json(res, { success: true });
     }
 
-    // 5b. Telemetry history (real GPS track for a single cellular device, from agro_tsdb)
+    // 5b. Telemetry history (real GPS track for a single cellular device or vehicle, from agro_tsdb)
     if (pathname === '/api/telemetry/history' && method === 'GET') {
-      const imei = url.searchParams.get('imei');
+      let imei = url.searchParams.get('imei');
+      const vehicleId = url.searchParams.get('vehicleId');
       const hours = Number(url.searchParams.get('hours')) || 6;
-      if (!imei) return json(res, { error: 'imei query param required' }, 400);
+      let from = url.searchParams.get('from');
+      let to = url.searchParams.get('to');
 
-      const rows = await fetchDeviceHistory(imei, hours);
+      if (vehicleId) {
+        // Find most recent assignment for this vehicle, or an active one
+        const assignment = await prisma.deviceAssignment.findFirst({
+          where: { vehicleId },
+          orderBy: { startedAt: 'desc' },
+          include: { device: true }
+        });
+
+        if (assignment) {
+          if (!imei && assignment.device?.imei) {
+            imei = assignment.device.imei;
+          }
+          if (!from && assignment.startedAt) {
+            from = assignment.startedAt.toISOString();
+          }
+          if (!to && assignment.endedAt) {
+            to = assignment.endedAt.toISOString();
+          }
+        } else {
+          const vehicle = await prisma.vehicle.findUnique({
+            where: { id: vehicleId },
+            include: { assignedDevice: true }
+          });
+          if (!imei && vehicle?.assignedDevice?.imei) {
+            imei = vehicle.assignedDevice.imei;
+          }
+        }
+      }
+
+      if (!imei) return json(res, { error: 'imei or vehicleId with assigned device required' }, 400);
+
+      const rows = await fetchDeviceHistory(imei, hours, from, to);
       const points = rows
         .filter((r) => r.fields.latitude != null && r.fields.longitude != null)
         .map((r) => ({

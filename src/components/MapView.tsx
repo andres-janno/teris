@@ -15,6 +15,7 @@ import { COPYRIGHT_TEXT } from '../copyright';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
 import { getVisibleElementsBounds } from '../services/geometryEngine';
 import { getCropColor } from '../services/shpParser';
+import { formatTimeAgo } from '../services/dateFormat';
 
 interface MapViewProps {
   visibility: LayerVisibility;
@@ -351,11 +352,10 @@ export const MapView: React.FC<MapViewProps> = ({
     if (!visibility.vehicles) return;
 
     displayedVehicles.forEach((vehicle) => {
+      if (!vehicle.position) return;
       const isWorking = vehicle.status === 'working';
       const isMoving = vehicle.status === 'moving';
-      const lastUpdateMs = vehicle.telemetry?.lastUpdate ? Date.now() - new Date(vehicle.telemetry.lastUpdate).getTime() : 0;
-      const minutesAgo = Math.max(0, Math.floor(lastUpdateMs / 60000));
-      const activityLabel = minutesAgo < 1 ? 'Just nüüd (< 1 min)' : `${minutesAgo} min tagasi`;
+      const activityLabel = formatTimeAgo(vehicle.telemetry?.lastUpdate);
 
       const icon = createVehicleIcon(vehicle);
       const marker = L.marker(vehicle.position, { icon, zIndexOffset: (isWorking || isMoving) ? 1200 : 900 });
@@ -377,6 +377,7 @@ export const MapView: React.FC<MapViewProps> = ({
           <div class="popup-row"><span>Kütusetase:</span> <strong>${vehicle.telemetry.fuelLevelPct}%</strong></div>
           <div class="popup-row"><span>Haakeriist:</span> <strong>${vehicle.implement ? `${vehicle.implement.name}` : 'Pole'}</strong></div>
           <div class="popup-row"><span>Mootor:</span> <strong>${vehicle.telemetry.engineRpm || 0} RPM</strong></div>
+          ${vehicle.notes ? `<div class="popup-note">📝 ${vehicle.notes}</div>` : ''}
         </div>
       `);
 
@@ -538,17 +539,31 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [focusedTarget]);
 
   // 8. Fit all visible elements on screen
+  // Hoiame andmeid ref-is, et telemeetria / sõidukite asukoha muutused taasesitusel
+  // ei käivitaks fitBounds efekti uuesti ega rikuks kasutaja valitud suurendust (zoom).
+  const fitBoundsDataRef = useRef({
+    visibility,
+    fields,
+    displayedVehicles,
+    cultivationPass,
+    pois
+  });
+
+  useEffect(() => {
+    fitBoundsDataRef.current = {
+      visibility,
+      fields,
+      displayedVehicles,
+      cultivationPass,
+      pois
+    };
+  }, [visibility, fields, displayedVehicles, cultivationPass, pois]);
+
   const handleFitAllBounds = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
 
-    const bounds = getVisibleElementsBounds({
-      visibility,
-      fields,
-      vehicles: displayedVehicles,
-      cultivationPass,
-      pois
-    });
+    const bounds = getVisibleElementsBounds(fitBoundsDataRef.current);
 
     if (bounds) {
       map.fitBounds(bounds, {
@@ -558,10 +573,13 @@ export const MapView: React.FC<MapViewProps> = ({
         duration: 0.8
       });
     }
-  }, [visibility, fields, displayedVehicles, cultivationPass, pois]);
+  }, []);
+
+  const prevFitBoundsTriggerRef = useRef<number>(0);
 
   useEffect(() => {
-    if (fitBoundsTrigger && fitBoundsTrigger > 0) {
+    if (fitBoundsTrigger && fitBoundsTrigger > 0 && fitBoundsTrigger !== prevFitBoundsTriggerRef.current) {
+      prevFitBoundsTriggerRef.current = fitBoundsTrigger;
       handleFitAllBounds();
     }
   }, [fitBoundsTrigger, handleFitAllBounds]);

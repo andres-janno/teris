@@ -165,13 +165,19 @@ body {
 }
 
 .agro-logo-horizontal svg {
-  height: 44px;
-  width: 159px;
+  height: 40px;
+  width: auto;
+  max-width: 165px;
 }
 
 .agro-logo-vertical svg {
-  height: 150px;
-  width: 150px;
+  height: 140px;
+  width: 140px;
+}
+
+.agro-logo-icon svg {
+  height: 36px;
+  width: 36px;
 }
 
 /* Operaatori valija logo kõrval — teadlikult teistsugune kui statistikapillid */
@@ -1479,7 +1485,7 @@ body {
   bottom: 20px;
   left: 50%;
   transform: translateX(-50%);
-  width: min(880px, 94vw);
+  width: min(980px, 96vw);
   z-index: 900;
   padding: 12px 18px;
   display: flex;
@@ -1654,6 +1660,117 @@ body {
   color: #ffffff;
   width: 36px;
   text-align: right;
+}
+
+.start-time-picker-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.76rem;
+  transition: all 0.2s ease;
+}
+
+.start-time-picker-badge:hover,
+.start-time-picker-badge:focus-within {
+  border-color: var(--emerald-400);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.start-time-icon {
+  color: var(--emerald-400);
+  flex-shrink: 0;
+}
+
+.start-time-label {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.start-time-input {
+  background: transparent;
+  border: none;
+  outline: none;
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  padding: 0;
+  width: 58px;
+}
+
+.start-time-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8) sepia(1) saturate(3) hue-rotate(90deg);
+  cursor: pointer;
+  opacity: 0.8;
+  padding: 0;
+  margin: 0;
+}
+
+.start-time-reset-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 1rem;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 2px;
+  transition: color 0.15s;
+}
+
+.start-time-reset-btn:hover {
+  color: #ef4444;
+}
+
+.timeline-clock-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.timeline-clock-label.bound-start {
+  color: var(--text-muted);
+}
+
+.timeline-clock-label.bound-end {
+  color: var(--text-muted);
+}
+
+.timeline-current-time-box {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(255, 255, 255, 0.04);
+  padding: 2px 7px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.current-clock-val {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.current-pct-val {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--emerald-400);
 }
 
 .speed-buttons {
@@ -2126,6 +2243,49 @@ body {
   align-items: center;
   gap: 4px;
   font-family: monospace;
+}
+
+.fleet-card-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 0.76rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.22);
+  border-radius: var(--radius-sm, 6px);
+  padding: 6px 9px;
+  word-break: break-word;
+  white-space: pre-wrap;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fleet-card-notes span {
+  white-space: pre-wrap;
+  flex: 1;
+}
+
+.fleet-card-notes:hover {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.38);
+  color: var(--text-primary);
+}
+
+.fleet-card-notes svg {
+  color: var(--amber-500, #f59e0b);
+  flex-shrink: 0;
+  margin-top: 2px;
+}
+
+.auto-resize-textarea {
+  field-sizing: content;
+  min-height: 62px;
+  max-height: 320px;
+  line-height: 1.45;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
 }
 
 /* Implements Grid */
@@ -4871,6 +5031,137 @@ input[type="number"],
   background: #0f172a;
 }
 
+/* Individual Vehicles / Devices in LayerControl */
+.vehicle-individual-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 5px;
+  padding-top: 5px;
+  border-top: 1px dashed var(--border-subtle);
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.v-indiv-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.v-indiv-row:hover {
+  background: var(--stat-bg-hover);
+  border-color: rgba(34, 197, 94, 0.35);
+}
+
+.v-indiv-row.is-hidden-map {
+  opacity: 0.55;
+  background: var(--stat-bg);
+}
+
+.v-indiv-row.is-sim-active {
+  border-color: rgba(16, 185, 129, 0.6);
+  background: rgba(16, 185, 129, 0.08);
+}
+
+.v-indiv-info {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex: 1;
+}
+
+.v-indiv-emoji {
+  font-size: 0.95rem;
+  line-height: 1;
+  flex-shrink: 0;
+}
+
+.v-indiv-names {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.v-indiv-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v-indiv-subtitle {
+  font-size: 0.60rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.v-indiv-actions {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.v-action-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  padding: 3px 6px;
+  font-size: 0.64rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid var(--border-card);
+  background: var(--stat-bg);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1;
+}
+
+.v-action-btn:hover {
+  color: var(--text-primary);
+  border-color: var(--border-subtle);
+  background: var(--stat-bg-hover);
+}
+
+.v-map-btn {
+  padding: 3px 5px;
+}
+
+.v-map-btn.active {
+  color: var(--emerald-500);
+  background: rgba(16, 185, 129, 0.12);
+  border-color: rgba(16, 185, 129, 0.35);
+}
+
+.v-sim-btn.active {
+  color: #ffffff;
+  background: var(--emerald-600);
+  border-color: var(--emerald-500);
+  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
+}
+
+[data-theme='dark'] .v-sim-btn.active {
+  color: #0f172a;
+  background: var(--emerald-400);
+  border-color: var(--emerald-300);
+  font-weight: 800;
+}
+
 /* ==========================================================================
    CADASTRAL PARCELS, TENURE & GEOMETRY INSPECTOR STYLES
    ========================================================================== */
@@ -7329,6 +7620,21 @@ a.history-pill:hover {
   background: rgba(22, 163, 74, 0.08);
 }
 
+.add-work-option.on-field {
+  border-color: rgba(22, 163, 74, 0.35);
+  background: rgba(22, 163, 74, 0.04);
+}
+
+.add-work-option.to-remove {
+  border-color: rgba(220, 38, 38, 0.4);
+  background: rgba(220, 38, 38, 0.06);
+}
+
+.add-work-option.to-remove .add-work-name {
+  text-decoration: line-through;
+  opacity: 0.65;
+}
+
 .add-work-option.disabled {
   opacity: 0.6;
   cursor: default;
@@ -7352,6 +7658,12 @@ a.history-pill:hover {
   background: #16a34a;
 }
 
+.add-work-check.removing {
+  border: 0;
+  background: #dc2626;
+  color: #ffffff;
+}
+
 .add-work-option.disabled .add-work-check.on {
   background: #9aa39e;
 }
@@ -7367,12 +7679,44 @@ a.history-pill:hover {
   color: var(--text-secondary);
 }
 
+.add-work-tag.on-field {
+  color: #15803d;
+}
+
+.add-work-tag.to-add {
+  color: #16a34a;
+  font-weight: 700;
+}
+
+.add-work-tag.to-remove {
+  color: #dc2626;
+  font-weight: 700;
+}
+
 .add-work-tag.removed {
   color: #9a5b00;
 }
 
 .add-work-tag.extra {
   color: #1d4ed8;
+}
+
+.fw-field-edit-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 3px;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fw-field-edit-btn:hover {
+  color: var(--emerald-500);
+  background: var(--btn-sec-hover);
 }
 
 .add-work-footer {

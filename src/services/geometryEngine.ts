@@ -139,9 +139,9 @@ export interface BoundsParams {
     poi: boolean;
   };
   fields?: { features: FieldFeature[] };
-  vehicles?: { position: [number, number] }[];
+  vehicles?: { position?: [number, number] }[];
   cultivationPass?: { swathPolygon?: any; points?: { lat: number; lng: number }[] };
-  pois?: { position: [number, number] }[];
+  pois?: { position?: [number, number] }[];
 }
 
 /**

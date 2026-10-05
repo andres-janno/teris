@@ -16,12 +16,9 @@ export function enrichVehicles(
     // Leia haagitud tööriist
     const implement = implementsList.find((imp) => imp.id === v.assignedImplementId || imp.assignedVehicleId === v.id);
 
-    // `??` (mitte `device ? device.X : ...`), sest seade võib eksisteerida, aga
-    // mõni telemeetriaväli olla puudu (nt registrist laaditud seade, millel
-    // pole veel elavat GPS-voogu) —
-    // sel juhul annab ternary otse `device.X` ehk undefined, mis lõhub UI-s
-    // `.toFixed()` jms kutsed.
-    const position = device?.position ?? ([58.1385, 25.8835] as [number, number]);
+    // Kui seade on hetkel küljes, kasuta seadme asukohta;
+    // kui seade eemaldati, säilita masina viimane teadaolev asukoht enne eemaldamist
+    const position = device?.position ?? v.lastKnownPosition;
     const heading = device?.heading ?? 0;
     const speedKmH = device?.speedKmH ?? 0;
     const status = device?.status ?? 'offline';
@@ -48,7 +45,7 @@ export function enrichVehicles(
         hydraulicActive: device?.hydraulicActive ?? false,
         satelliteCount: device?.satelliteCount ?? 0,
         hdop: device?.hdop ?? 9.9,
-        lastUpdate: device?.lastUpdate ?? new Date().toISOString()
+        lastUpdate: device?.lastUpdate || v.lastActiveAt || ''
       },
       implement: implement ? {
         id: implement.id,

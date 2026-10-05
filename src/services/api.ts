@@ -186,10 +186,28 @@ export const api = {
     return res.json();
   },
 
-  async getTelemetryHistory(imei: string, hours = 6): Promise<{
+  async getTelemetryHistory(
+    target: string | { imei?: string; vehicleId?: string; hours?: number; from?: string; to?: string },
+    hours = 6,
+    from?: string,
+    to?: string
+  ): Promise<{
     points: { timestamp: string; lat: number; lng: number; altitude?: number; speedKmH: number; heading: number }[]
   }> {
-    const res = await apiFetch(`/api/telemetry/history?imei=${encodeURIComponent(imei)}&hours=${hours}`);
+    const q = new URLSearchParams();
+    if (typeof target === 'string') {
+      q.set('imei', target);
+      if (from) q.set('from', from);
+      else q.set('hours', String(hours));
+      if (to) q.set('to', to);
+    } else {
+      if (target.imei) q.set('imei', target.imei);
+      if (target.vehicleId) q.set('vehicleId', target.vehicleId);
+      if (target.from) q.set('from', target.from);
+      else if (target.hours) q.set('hours', String(target.hours));
+      if (target.to) q.set('to', target.to);
+    }
+    const res = await apiFetch(`/api/telemetry/history?${q.toString()}`);
     if (!res.ok) throw new Error('Failed to fetch telemetry history');
     return res.json();
   },
@@ -424,7 +442,7 @@ export const api = {
     return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}`), 'Põllutööde laadimine ebaõnnestus');
   },
 
-  async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; plannedText?: string | null; plannedCount?: number | null }): Promise<void> {
+  async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; sortOrder?: number | null; plannedText?: string | null; plannedCount?: number | null }): Promise<void> {
     await jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
   },
 
@@ -440,9 +458,9 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö eemaldamine ebaõnnestus');
   },
 
-  async clearFieldWorks(fieldSeasonId: number, nextSeasonId?: number | null): Promise<{ success: boolean; count: number }> {
+  async clearFieldWorks(fieldSeasonId: number, nextSeasonId?: number | null, mode?: 'ALL' | 'AUTUMN'): Promise<{ success: boolean; count: number }> {
     return jsonOrThrow(
-      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId, nextSeasonId: nextSeasonId ?? undefined })),
+      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId, nextSeasonId: nextSeasonId ?? undefined, mode })),
       'Põllu tööde eemaldamine ebaõnnestus'
     );
   },

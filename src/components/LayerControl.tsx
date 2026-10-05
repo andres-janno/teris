@@ -7,10 +7,12 @@ import {
   Grid,
   ChevronDown,
   ChevronUp,
-  Maximize2
+  Maximize2,
+  Play
 } from 'lucide-react';
 import type { BaseMapLayerId, LayerVisibility, VehicleDisplayFilter } from '../types/map';
 import type { SoilSampleMetricKey } from '../types/soilSample';
+import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 
@@ -27,6 +29,13 @@ interface LayerControlProps {
   soilFieldCount?: number;
   soilMetric?: SoilSampleMetricKey;
   onSelectSoilMetric?: (metric: SoilSampleMetricKey) => void;
+
+  // Sõidukite individuaalsed lülitid
+  vehicles?: EnrichedVehicle[];
+  hiddenVehicleMapIds?: Set<string>;
+  onToggleVehicleMap?: (vehicleId: string) => void;
+  simulatedVehicleId?: string | null;
+  onToggleVehicleSimulator?: (vehicleId: string) => void;
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
@@ -41,7 +50,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   soilSampleCount = 0,
   soilFieldCount = 0,
   soilMetric = 'ph',
-  onSelectSoilMetric
+  onSelectSoilMetric,
+  vehicles = [],
+  hiddenVehicleMapIds,
+  onToggleVehicleMap,
+  simulatedVehicleId,
+  onToggleVehicleSimulator
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -283,6 +297,62 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     >
                       <span>Kõik ({totalVehiclesCount || activeVehiclesCount})</span>
                     </button>
+                  </div>
+                )}
+
+                {/* Sõidukite ja seadmete individuaalne juhtimine */}
+                {visibility.vehicles && vehicles && vehicles.length > 0 && (
+                  <div className="vehicle-individual-list">
+                    {vehicles.map((v) => {
+                      const isMapVisible = !hiddenVehicleMapIds?.has(v.id);
+                      const isSimActive = simulatedVehicleId === v.id;
+                      const iconEmoji = v.type === 'combine' ? '🌾' : (v.type === 'sprayer' ? '🚿' : (v.type === 'truck' ? '🚛' : '🚜'));
+                      const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
+                        ? v.telemetry.deviceId
+                        : (v.id.includes('demo') || v.name.toLowerCase().includes('demo') ? 'Demorežiim' : 'Seade puudub');
+
+                      return (
+                        <div
+                          key={v.id}
+                          className={`v-indiv-row ${!isMapVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
+                        >
+                          <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
+                            <span className="v-indiv-emoji">{iconEmoji}</span>
+                            <div className="v-indiv-names">
+                              <span className="v-indiv-title">{v.name}</span>
+                              <span className="v-indiv-subtitle">{deviceLabel}</span>
+                            </div>
+                          </div>
+
+                          <div className="v-indiv-actions">
+                            {/* Simulaatori lüliti */}
+                            {onToggleVehicleSimulator && (
+                              <button
+                                type="button"
+                                className={`v-action-btn v-sim-btn ${isSimActive ? 'active' : ''}`}
+                                title={isSimActive ? 'Lülita simulaator välja' : `Käivita simulaator (${v.name})`}
+                                onClick={() => onToggleVehicleSimulator(v.id)}
+                              >
+                                <Play size={10} fill={isSimActive ? 'currentColor' : 'none'} />
+                                <span>Sim</span>
+                              </button>
+                            )}
+
+                            {/* Kaardil kuvamise lüliti */}
+                            {onToggleVehicleMap && (
+                              <button
+                                type="button"
+                                className={`v-action-btn v-map-btn ${isMapVisible ? 'active' : ''}`}
+                                title={isMapVisible ? `Peida ${v.name} kaardilt` : `Kuva ${v.name} kaardil`}
+                                onClick={() => onToggleVehicleMap(v.id)}
+                              >
+                                {isMapVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>

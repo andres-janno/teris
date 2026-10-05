@@ -1,16 +1,40 @@
 import React from 'react';
-// Ametlikud logofailid (src/assets/logo); värv tuleb CSS `color` kaudu (fill="currentColor").
-import horizontalSvg from '../assets/logo/agro-horizontal.svg?raw';
-import verticalSvg from '../assets/logo/agro-logo.svg?raw';
+// Ametlikud TERIS logofailid (src/assets/logo ja public/); LOGO.md juhendi järgi.
+import horizontalColorSvg from '../assets/logo/teris-horizontal-color.svg?raw';
+import verticalColorSvg from '../assets/logo/teris-logo-color.svg?raw';
+import horizontalMonoSvg from '../assets/logo/teris-horizontal.svg?raw';
+import verticalMonoSvg from '../assets/logo/teris-logo.svg?raw';
+import iconColorSvg from '../assets/logo/teris-icon-color.svg?raw';
+import iconMonoSvg from '../assets/logo/teris-icon.svg?raw';
 
-export const TerisLogo: React.FC<{ variant: 'horizontal' | 'vertical'; className?: string }> = ({ variant, className }) => (
-  <span
-    className={`agro-logo agro-logo-${variant} ${className ?? ''}`}
-    role="img"
-    aria-label="TERIS"
-    dangerouslySetInnerHTML={{ __html: variant === 'horizontal' ? horizontalSvg : verticalSvg }}
-  />
-);
+export interface TerisLogoProps {
+  variant?: 'horizontal' | 'vertical' | 'icon';
+  monochrome?: boolean;
+  className?: string;
+}
+
+export const TerisLogo: React.FC<TerisLogoProps> = ({
+  variant = 'horizontal',
+  monochrome = false,
+  className
+}) => {
+  let svg = horizontalColorSvg;
+  if (variant === 'vertical') {
+    svg = monochrome ? verticalMonoSvg : verticalColorSvg;
+  } else if (variant === 'icon') {
+    svg = monochrome ? iconMonoSvg : iconColorSvg;
+  } else {
+    svg = monochrome ? horizontalMonoSvg : horizontalColorSvg;
+  }
+
+  return (
+    <span
+      className={`agro-logo agro-logo-${variant} ${className ?? ''}`}
+      role="img"
+      aria-label="TERIS"
+      dangerouslySetInnerHTML={{ __html: svg }}
+    />
+  );
+};
 
 export const AgroLogo = TerisLogo;
-

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateRange, parseEtDate } from './dateFormat';
+import { formatDate, formatDateRange, parseEtDate, formatTimeAgo } from './dateFormat';
 
 describe('formatDate', () => {
   it('vormindab ISO kuupäeva eesti kujule', () => {
@@ -33,5 +33,38 @@ describe('parseEtDate', () => {
     expect(parseEtDate('31.02.2026')).toBeNull();
     expect(parseEtDate('2026-09-05')).toBeNull();
     expect(parseEtDate('abc')).toBeNull();
+  });
+});
+
+describe('formatTimeAgo', () => {
+  it('tühi või vigane sisend tagastab Andmed puuduvad (mitte Just nüüd)', () => {
+    expect(formatTimeAgo(null)).toBe('Andmed puuduvad');
+    expect(formatTimeAgo('')).toBe('Andmed puuduvad');
+    expect(formatTimeAgo('invalid')).toBe('Andmed puuduvad');
+  });
+
+  it('alla 1 minuti tagastab Just nüüd (< 1 min)', () => {
+    const now = new Date().toISOString();
+    expect(formatTimeAgo(now)).toBe('Just nüüd (< 1 min)');
+  });
+
+  it('minutid alla tunni', () => {
+    const tenMinsAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+    expect(formatTimeAgo(tenMinsAgo)).toBe('10 min tagasi');
+  });
+
+  it('tunnid ja minutid (nt 1197 min -> 19 h 57 min tagasi)', () => {
+    const timeAgo = new Date(Date.now() - 1197 * 60 * 1000).toISOString();
+    expect(formatTimeAgo(timeAgo)).toBe('19 h 57 min tagasi');
+  });
+
+  it('täistund (nt 2 h tagasi)', () => {
+    const twoHoursAgo = new Date(Date.now() - 2 * 3600 * 1000).toISOString();
+    expect(formatTimeAgo(twoHoursAgo)).toBe('2 h tagasi');
+  });
+
+  it('päevad ja tunnid (nt 1 p 3 h tagasi)', () => {
+    const dayAgo = new Date(Date.now() - (24 + 3) * 3600 * 1000).toISOString();
+    expect(formatTimeAgo(dayAgo)).toBe('1 p 3 h tagasi');
   });
 });

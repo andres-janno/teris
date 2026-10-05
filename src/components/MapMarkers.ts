@@ -4,7 +4,9 @@ import type { Vehicle } from '../types/vehicle';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 
 export function isVehicleRecentlyActive(vehicle: Vehicle, maxMinutes = 5): boolean {
-  if (vehicle.status === 'working' || vehicle.status === 'moving' || (vehicle.speedKmH && vehicle.speedKmH > 0)) {
+  if (!vehicle.position) return false;
+  if (vehicle.status === 'offline') return false;
+  if (vehicle.status === 'working' || vehicle.status === 'moving') {
     return true;
   }
   if (vehicle.telemetry?.lastUpdate) {
@@ -30,7 +32,10 @@ export function createVehicleIcon(vehicle: Vehicle): L.DivIcon {
 
   let statusClass = 'status-stopped';
   let statusText = 'Seisab';
-  if (isWorking) {
+  if (vehicle.status === 'offline') {
+    statusClass = 'status-offline';
+    statusText = 'Offline';
+  } else if (isWorking) {
     statusClass = 'status-working';
     statusText = 'Töötab';
   } else if (isMoving) {
@@ -52,7 +57,7 @@ export function createVehicleIcon(vehicle: Vehicle): L.DivIcon {
       </div>
       <div class="vehicle-marker-label">
         <span class="v-name">${vehicle.name.split(' ')[0]}</span>
-        <span class="v-speed">${vehicle.speedKmH > 0 ? `${vehicle.speedKmH.toFixed(1)} km/h` : statusText}</span>
+        <span class="v-speed">${(vehicle.status !== 'offline' && vehicle.speedKmH > 0) ? `${vehicle.speedKmH.toFixed(1)} km/h` : statusText}</span>
       </div>
     </div>
   `;

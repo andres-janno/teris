@@ -672,8 +672,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
     const nextAutumnRows = nextAutumnSeasonIds.length > 0 ? await prisma.fieldWork.findMany({
       where: {
-        fieldSeasonId: { in: nextAutumnSeasonIds },
-        phase: { in: ['PREPARATION', 'SOWING'] }
+        fieldSeasonId: { in: nextAutumnSeasonIds }
       },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
       include: {
@@ -712,8 +711,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
     for (const w of nextAutumnRows) {
       const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
-      // Suviviljal ei toimu sügisel külvi (kevadkülv toimub järgmisel kevadel)
-      if (!isWinter && w.phase === 'SOWING') continue;
+      // Suviviljal kuulub sügisesse ainult ettevalmistus (külv, hooldus ja koristus on järgmisel aastal)
+      if (!isWinter && w.phase !== 'PREPARATION') continue;
+      const isAutumnPhase = w.phase === 'PREPARATION' || w.phase === 'SOWING';
       worksDto.push({
         id: w.id,
         fieldSeasonId: w.fieldSeasonId,
@@ -724,7 +724,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         intervalDays: w.workType.intervalDays,
         usesMaterials: w.workType.usesMaterials,
         sortOrder: w.sortOrder,
-        plannedText: w.plannedText ?? `Sügis ${year}`,
+        plannedText: isAutumnPhase ? (w.plannedText ?? `Sügis ${year}`) : w.plannedText,
         plannedCount: w.plannedCount,
         status: w.status,
         finishedAt: isoDate(w.finishedAt),
@@ -734,7 +734,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         carriedOverFromYear: null,
         carriedOverToYear: year + 1,
         seasonYear: year + 1,
-        isNextSeasonWinterSowing: isWinter
+        isNextSeasonWinterSowing: isWinter && isAutumnPhase
       });
     }
 
@@ -750,6 +750,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Põld ja töö on kohustuslikud' }, 400);
       return true;
     }
+    const preferredSortOrder = int(b?.sortOrder);
     const last = await prisma.fieldWork.findFirst({ where: { fieldSeasonId }, orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } });
     try {
       const saved = await prisma.fieldWork.create({
@@ -757,7 +758,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           fieldSeasonId,
           workTypeId: workType.id,
           phase: workType.phase,
-          sortOrder: (last?.sortOrder ?? -1) + 1,
+          sortOrder: preferredSortOrder !== null ? preferredSortOrder : (last?.sortOrder ?? -1) + 1,
           plannedText: text(b?.plannedText, 80),
           plannedCount: Math.max(1, int(b?.plannedCount) ?? workType.maxRepeats ?? 1)
         }
@@ -798,6 +799,22 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Lukus hooaja töid ei saa muuta' }, 403);
       return true;
     }
+    const mode = b?.mode === 'AUTUMN' ? 'AUTUMN' : 'ALL';
+    if (mode === 'AUTUMN') {
+      const entriesCount = await prisma.workEntry.count({
+        where: { fieldWork: { fieldSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } } }
+      });
+      if (entriesCount > 0) {
+        json(res, { error: `Põllu sügistöödel on ${entriesCount} kannet. Töid ei saa eemaldada enne kannete kustutamist.` }, 409);
+        return true;
+      }
+      const { count } = await prisma.fieldWork.deleteMany({
+        where: { fieldSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } }
+      });
+      json(res, { success: true, count, mode });
+      return true;
+    }
+
     const entriesCount = await prisma.workEntry.count({
       where: { fieldWork: { fieldSeasonId } }
     });

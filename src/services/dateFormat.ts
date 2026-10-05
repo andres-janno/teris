@@ -47,3 +47,32 @@ export const parseEtDate = (input: string): string | null => {
   if (date.getUTCFullYear() !== y || date.getUTCMonth() !== mo - 1 || date.getUTCDate() !== d) return null;
   return `${m[3]}-${String(mo).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
 };
+
+/**
+ * Suhteline aeg eesti keeles: 'Just nüüd (< 1 min)', '14 min tagasi',
+ * '19 h 57 min tagasi' või '1 p 3 h tagasi'.
+ * Tühja või vigase sisendi korral tagastab 'Andmed puuduvad'.
+ */
+export const formatTimeAgo = (iso?: string | null): string => {
+  if (!iso || !iso.trim()) return 'Andmed puuduvad';
+  const t = new Date(iso).getTime();
+  if (Number.isNaN(t)) return 'Andmed puuduvad';
+  const diffMs = Math.max(0, Date.now() - t);
+  const totalMins = Math.floor(diffMs / 60000);
+
+  if (totalMins < 1) return 'Just nüüd (< 1 min)';
+  if (totalMins < 60) return `${totalMins} min tagasi`;
+
+  const hours = Math.floor(totalMins / 60);
+  const mins = totalMins % 60;
+
+  if (hours < 24) {
+    return mins > 0 ? `${hours} h ${mins} min tagasi` : `${hours} h tagasi`;
+  }
+
+  const days = Math.floor(hours / 24);
+  const remHours = hours % 24;
+  if (remHours === 0) return `${days} p tagasi`;
+  return `${days} p ${remHours} h tagasi`;
+};
+

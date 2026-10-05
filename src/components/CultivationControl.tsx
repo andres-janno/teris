@@ -1,9 +1,10 @@
 // src/components/CultivationControl.tsx
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   Play, 
   Pause, 
-  RotateCcw
+  RotateCcw,
+  Clock
 } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
 
@@ -20,7 +21,32 @@ interface CultivationControlProps {
   onWidthChange: (width: number) => void;
   targetFieldName?: string;
   fieldAreaHa?: number;
+  selectedStartTime?: string;
+  onStartTimeChange?: (timeStr: string) => void;
+  telemetryHours?: number;
+  onHoursChange?: (hours: number) => void;
 }
+
+const toLocalTimeString = (iso?: string): string => {
+  if (!iso) return '';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '';
+  const hh = String(d.getHours()).padStart(2, '0');
+  const mm = String(d.getMinutes()).padStart(2, '0');
+  return `${hh}:${mm}`;
+};
+
+const formatTimeDisplay = (iso?: string, withSeconds = false): string => {
+  if (!iso) return '--:--';
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return '--:--';
+  return d.toLocaleTimeString('et-EE', {
+    hour: '2-digit',
+    minute: '2-digit',
+    second: withSeconds ? '2-digit' : undefined,
+    hour12: false
+  });
+};
 
 export const CultivationControl: React.FC<CultivationControlProps> = ({
   pass,
@@ -34,7 +60,11 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   workingWidthM,
   onWidthChange,
   targetFieldName,
-  fieldAreaHa
+  fieldAreaHa,
+  selectedStartTime,
+  onStartTimeChange,
+  telemetryHours,
+  onHoursChange
 }) => {
   const currentSpeedKmH = pass.points.length > 0 
     ? pass.points[pass.points.length - 1].speedKmH 
@@ -44,9 +74,43 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
     ? pass.points[pass.points.length - 1].isWorking
     : false;
 
+  const currentTimestamp = pass.points.length > 0
+    ? pass.points[pass.points.length - 1].timestamp
+    : pass.startTime;
+
   const coverageOfField = (fieldAreaHa && fieldAreaHa > 0)
     ? Math.min(100, Math.round((pass.workedAreaHa / fieldAreaHa) * 100))
     : 0;
+
+  // Kohalik alguskellaaja sisend (nt "08:30")
+  const defaultStartTime = toLocalTimeString(pass.startTime);
+  const [localStartTime, setLocalStartTime] = useState<string>(selectedStartTime || defaultStartTime);
+
+  useEffect(() => {
+    if (selectedStartTime) {
+      setLocalStartTime(selectedStartTime);
+    } else if (pass.startTime) {
+      setLocalStartTime(toLocalTimeString(pass.startTime));
+    }
+  }, [selectedStartTime, pass.startTime]);
+
+  const handleStartTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setLocalStartTime(val);
+    if (val && onStartTimeChange) {
+      onStartTimeChange(val);
+    }
+  };
+
+  const handleResetToOrigin = () => {
+    const origin = toLocalTimeString(pass.startTime);
+    setLocalStartTime(origin);
+    if (onStartTimeChange) {
+      onStartTimeChange(origin);
+    }
+  };
+
+  const isCustomStart = localStartTime && defaultStartTime && localStartTime !== defaultStartTime;
 
   return (
     <div className="cultivation-panel glass-card">
@@ -99,6 +163,24 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               <option value={36}>36 m (Suurprits)</option>
             </select>
           </div>
+
+          {onHoursChange && (
+            <div className="mini-stat">
+              <span className="stat-label">Ajalugu:</span>
+              <select
+                value={telemetryHours || 6}
+                onChange={(e) => onHoursChange(Number(e.target.value))}
+                className="width-select"
+                title="Laaditud GPS-ajaloo vahemik"
+              >
+                <option value={2}>2 h</option>
+                <option value={4}>4 h</option>
+                <option value={6}>6 h</option>
+                <option value={12}>12 h</option>
+                <option value={24}>24 h</option>
+              </select>
+            </div>
+          )}
         </div>
       </div>
 
@@ -107,7 +189,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         <button 
           className="play-btn"
           onClick={onTogglePlay}
-          title={isPlaying ? 'Paus' : 'Mängi harimise protsessi'}
+          title={isPlaying ? 'Paus' : 'Mängi marsruuti (alates valitud algusajast)'}
         >
           {isPlaying ? <Pause size={18} /> : <Play size={18} className="play-icon-offset" />}
         </button>
@@ -115,10 +197,40 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         <button 
           className="icon-btn-ghost"
           onClick={onReset}
-          title="Algusesse"
+          title={isCustomStart ? 'Tagasi valitud alguskellaaja juurde (uuesti vajutus viib 0%-ni)' : 'Algusesse'}
         >
           <RotateCcw size={16} />
         </button>
+
+        {/* Alguskellaaja valik / sisend */}
+        <div className="start-time-picker-badge" title="Määra alguskellaaeg, millest alates marsruuti mängima panna">
+          <Clock size={14} className="start-time-icon" />
+          <span className="start-time-label">Algus:</span>
+          <input 
+            type="time" 
+            step="60"
+            value={localStartTime}
+            onChange={handleStartTimeInputChange}
+            className="start-time-input"
+            title="Vali või sisesta kellaaeg, millest alates marsruuti mängima panna"
+          />
+          {isCustomStart && (
+            <button 
+              className="start-time-reset-btn" 
+              onClick={handleResetToOrigin}
+              title="Lähtesta marsruudi algsesse algusaega"
+            >
+              &times;
+            </button>
+          )}
+        </div>
+
+        {/* Marsruudi algusaeg sildi kujul */}
+        {pass.startTime && (
+          <span className="timeline-clock-label bound-start" title={`Marsruudi algus: ${pass.startTime}`}>
+            {formatTimeDisplay(pass.startTime)}
+          </span>
+        )}
 
         <div className="timeline-slider-wrapper">
           <input 
@@ -132,8 +244,17 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           <div className="timeline-progress-bar" style={{ width: `${progressPct}%` }}></div>
         </div>
 
-        <div className="timeline-time-label">
-          {Math.round(progressPct)}%
+        {/* Marsruudi lõppaeg sildi kujul */}
+        {pass.endTime && (
+          <span className="timeline-clock-label bound-end" title={`Marsruudi lõpp: ${pass.endTime}`}>
+            {formatTimeDisplay(pass.endTime)}
+          </span>
+        )}
+
+        {/* Hetkeline taasesituse kellaaeg ja protsent */}
+        <div className="timeline-current-time-box" title="Hetkeline taasesituse kellaaeg ja progress">
+          <span className="current-clock-val">{formatTimeDisplay(currentTimestamp, true)}</span>
+          <span className="current-pct-val">{Math.round(progressPct)}%</span>
         </div>
 
         {/* Speed multiplier selector */}

@@ -311,6 +311,9 @@ model Vehicle {
   assignedDriverId    String?          // Seotud isiku ID (töötaja / masinajuht)
   assignedImplementId String?          @unique
   assignedDeviceId    String?          @unique
+  lastLatitude        Float?
+  lastLongitude       Float?
+  lastActiveAt        DateTime?
   notes               String?
   createdAt           DateTime         @default(now())
   updatedAt           DateTime         @updatedAt
@@ -318,6 +321,7 @@ model Vehicle {
   assignedDriver      RelatedParty?    @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
   assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
+  deviceAssignments   DeviceAssignment[]
   workEntries         WorkEntry[]
   workEntryLines      WorkEntryLine[]
 
@@ -340,6 +344,7 @@ model Implement {
 
   vehicle          Vehicle?
   assignedDevice   TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
+  deviceAssignments DeviceAssignment[]
   workEntries      WorkEntry[]
   workEntryLines   WorkEntryLine[]
 
@@ -360,13 +365,35 @@ model TeltonikaDevice {
   simNumber        String?
   firmware         String?
   status           DeviceStatus       @default(OFFLINE)
+  notes            String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
 
   vehicle          Vehicle?
   implement        Implement?
+  assignments      DeviceAssignment[]
 
   @@map("teltonika_devices")
+}
+
+model DeviceAssignment {
+  id            String          @id @default(cuid())
+  deviceId      String
+  device        TeltonikaDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  vehicleId     String?
+  vehicle       Vehicle?        @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  implementId   String?
+  implement     Implement?      @relation(fields: [implementId], references: [id], onDelete: SetNull)
+  startedAt     DateTime        @default(now())
+  endedAt       DateTime?
+  lastLatitude  Float?
+  lastLongitude Float?
+  notes         String?
+  createdAt     DateTime        @default(now())
+
+  @@index([deviceId, startedAt])
+  @@index([vehicleId, startedAt])
+  @@map("device_assignments")
 }
 
 // ============================================================================

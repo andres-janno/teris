@@ -28,6 +28,20 @@ export interface Vehicle {
   year?: number;
   assignedDeviceId?: string;      // Seotud Teltonika seadme ID
   assignedImplementId?: string;   // Seotud Haakeriista ID
+  lastKnownPosition?: [number, number]; // Viimane teadaolev asukoht enne seadme eemaldamist
+  lastActiveAt?: string;                // Viimane liikumise / telemeetria aeg
+  notes?: string;
+}
+
+export interface DeviceAssignment {
+  id: string;
+  deviceId: string;
+  vehicleId?: string;
+  implementId?: string;
+  startedAt: string;
+  endedAt?: string;
+  lastLatitude?: number;
+  lastLongitude?: number;
   notes?: string;
 }
 
@@ -67,6 +81,7 @@ export interface TeltonikaDevice {
   firmwareVersion?: string;
   assignedVehicleId?: string;    // Millisesse masinasse paigaldatud (kui on paigaldatud)
   assignedImplementId?: string;  // Millise haakeriista külge paigaldatud (kui on paigaldatud)
+  notes?: string;
 
   // Reaalaja telemeetria
   // 'eye_sensor' seadmetel hoiab batteryVoltage aku TASET %-des (mitte V),
@@ -87,7 +102,7 @@ export interface TeltonikaDevice {
   hdop: number;                  // Täpsusfaktor
   
   // GPS Asukoht
-  position: [number, number];    // [lat, lng]
+  position?: [number, number];   // [lat, lng]
   altitude?: number;             // m
   heading: number;               // 0 - 360 kraadi
   speedKmH: number;              // km/h
@@ -100,7 +115,7 @@ export interface TeltonikaDevice {
  */
 export interface EnrichedVehicle extends Vehicle {
   status: VehicleStatus;
-  position: [number, number];
+  position?: [number, number];
   heading: number;
   speedKmH: number;
   altitude?: number;

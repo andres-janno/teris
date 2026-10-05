@@ -1,5 +1,5 @@
 // src/components/VehicleTracker.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -18,7 +18,8 @@ import {
   Unlink,
   Info,
   Activity,
-  Pencil
+  Pencil,
+  FileText
 } from 'lucide-react';
 import type {
   Vehicle,
@@ -83,6 +84,56 @@ const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   atv: 'ATV / Maastur'
 };
 
+interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+  value: string;
+}
+
+const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
+  value,
+  onChange,
+  className = '',
+  rows = 2,
+  style,
+  ...props
+}) => {
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const resize = useCallback(() => {
+    const el = textareaRef.current;
+    if (!el) return;
+    el.style.height = 'auto';
+    const scrollH = el.scrollHeight;
+    const targetHeight = Math.max(scrollH, 62);
+    el.style.height = `${targetHeight}px`;
+    el.style.overflowY = scrollH > 320 ? 'auto' : 'hidden';
+  }, []);
+
+  useEffect(() => {
+    resize();
+  }, [value, resize]);
+
+  return (
+    <textarea
+      ref={textareaRef}
+      value={value}
+      onChange={(e) => {
+        onChange?.(e);
+        resize();
+      }}
+      rows={rows}
+      className={`form-input auto-resize-textarea ${className}`}
+      style={{
+        resize: 'vertical',
+        minHeight: '62px',
+        maxHeight: '320px',
+        lineHeight: 1.45,
+        ...style
+      }}
+      {...props}
+    />
+  );
+};
+
 export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   isOpen,
   onClose,
@@ -124,6 +175,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vColor, setVColor] = useState('#22c55e');
   const [vSelectedDevId, setVSelectedDevId] = useState('');
   const [vSelectedImpId, setVSelectedImpId] = useState('');
+  const [vNotes, setVNotes] = useState('');
 
   // 2. Implement Form
   const [impName, setImpName] = useState('');
@@ -133,6 +185,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impWidth, setImpWidth] = useState(8.0);
   const [impSerial, setImpSerial] = useState('');
   const [impAssignedVehId, setImpAssignedVehId] = useState('');
+  const [impNotes, setImpNotes] = useState('');
 
   // 3. Teltonika Form
   const [devConnectivity, setDevConnectivity] = useState<DeviceConnectivity>('cellular');
@@ -143,6 +196,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // Kombineeritud sihtmärgi valik: '' | `veh:<id>` | `imp:<id>` — mõlemat
   // tüüpi seadet saab paigaldada kas masinasse või haakeriista külge.
   const [devAssignedTarget, setDevAssignedTarget] = useState('');
+  const [devNotes, setDevNotes] = useState('');
 
   const handleConnectivityChange = (next: DeviceConnectivity) => {
     setDevConnectivity(next);
@@ -194,6 +248,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVColor('#22c55e');
     setVSelectedDevId('');
     setVSelectedImpId('');
+    setVNotes('');
   };
 
   const resetImplementForm = () => {
@@ -204,6 +259,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpWidth(8.0);
     setImpSerial('');
     setImpAssignedVehId('');
+    setImpNotes('');
   };
 
   const resetDeviceForm = () => {
@@ -213,6 +269,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevSim('');
     setDevMac('');
     setDevAssignedTarget('');
+    setDevNotes('');
   };
 
   const openAddForm = () => {
@@ -234,7 +291,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       driverName: vDriver.trim() || undefined,
       color: vColor,
       assignedDeviceId: vSelectedDevId || undefined,
-      assignedImplementId: vSelectedImpId || undefined
+      assignedImplementId: vSelectedImpId || undefined,
+      notes: vNotes.trim() || undefined
     };
     if (editingVehicleId) {
       onUpdateVehicle(editingVehicleId, payload);
@@ -245,6 +303,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVName('');
     setVModel('');
     setVPlate('');
+    setVNotes('');
   };
 
   const handleCreateImplement = (e: React.FormEvent) => {
@@ -258,7 +317,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       workingWidthM: Number(impWidth) || 6.0,
       serialNumber: impSerial.trim() || undefined,
       assignedVehicleId: impAssignedVehId || undefined,
-      isActive: false
+      isActive: false,
+      notes: impNotes.trim() || undefined
     };
     if (editingImplementId) {
       onUpdateImplement(editingImplementId, payload);
@@ -269,6 +329,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpName('');
     setImpManufacturer('');
     setImpModel('');
+    setImpNotes('');
   };
 
   const handleCreateDevice = (e: React.FormEvent) => {
@@ -291,7 +352,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       ignition: false,
       hydraulicActive: false,
       satelliteCount: devConnectivity === 'eye_sensor' ? 0 : 16,
-      hdop: devConnectivity === 'eye_sensor' ? 0 : 0.8
+      hdop: devConnectivity === 'eye_sensor' ? 0 : 0.8,
+      notes: devNotes.trim() || undefined
     };
     if (editingDeviceId) {
       onUpdateDevice(editingDeviceId, payload);
@@ -303,6 +365,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevSim('');
     setDevMac('');
     setDevAssignedTarget('');
+    setDevNotes('');
   };
 
   const startEditVehicle = (v: Vehicle) => {
@@ -314,6 +377,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVColor(v.color);
     setVSelectedDevId(v.assignedDeviceId || '');
     setVSelectedImpId(v.assignedImplementId || '');
+    setVNotes(v.notes || '');
     setEditingVehicleId(v.id);
     setIsAddingNew(true);
   };
@@ -326,6 +390,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
     setImpAssignedVehId(imp.assignedVehicleId || '');
+    setImpNotes(imp.notes || '');
     setEditingImplementId(imp.id);
     setIsAddingNew(true);
   };
@@ -337,6 +402,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevSim(dev.simNumber || '');
     setDevMac(dev.macAddress || '');
     setDevAssignedTarget(dev.assignedVehicleId ? `veh:${dev.assignedVehicleId}` : (dev.assignedImplementId ? `imp:${dev.assignedImplementId}` : ''));
+    setDevNotes(dev.notes || '');
     setEditingDeviceId(dev.id);
     setIsAddingNew(true);
   };
@@ -512,6 +578,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     ))}
                   </select>
                 </div>
+                <div className="form-group full-width">
+                  <label>Märkused</label>
+                  <AutoResizeTextarea
+                    placeholder="Märkused masina kohta (nt hooldusvajadus, eriseadistus jne)..."
+                    value={vNotes}
+                    onChange={(e) => setVNotes(e.target.value)}
+                  />
+                </div>
               </div>
 
               </div>
@@ -616,6 +690,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <option key={v.id} value={v.id}>{v.name} ({v.registrationPlate || 'nr puudub'})</option>
                     ))}
                   </select>
+                </div>
+                <div className="form-group full-width">
+                  <label>Märkused</label>
+                  <AutoResizeTextarea
+                    placeholder="Märkused haakeriista kohta (nt kuluosad, asukoht jne)..."
+                    value={impNotes}
+                    onChange={(e) => setImpNotes(e.target.value)}
+                  />
                 </div>
               </div>
 
@@ -746,6 +828,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </optgroup>
                   </select>
                 </div>
+                <div className="form-group full-width">
+                  <label>Märkused</label>
+                  <AutoResizeTextarea
+                    placeholder="Märkused seadme kohta (nt paigalduskoht masinas, antenn jne)..."
+                    value={devNotes}
+                    onChange={(e) => setDevNotes(e.target.value)}
+                  />
+                </div>
               </div>
 
               </div>
@@ -864,6 +954,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       </div>
                     </div>
 
+                    {/* Märkused */}
+                    {v.notes && (
+                      <div
+                        className="fleet-card-notes"
+                        title="Kliki märkuse muutmiseks"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditVehicle(v);
+                        }}
+                      >
+                        <FileText size={13} />
+                        <span>{v.notes}</span>
+                      </div>
+                    )}
+
                     {/* Telemetry live gauges if device is installed */}
                     {installedDevice ? (
                       <div className="v-gauges-grid">
@@ -914,10 +1019,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <div className="card-actions-group">
                         <button
                           className="btn btn-secondary btn-sm"
+                          disabled={!v.position}
+                          title={!v.position ? 'GPS asukoht puudub' : 'Näita kaardil'}
                           onClick={(e) => {
                             e.stopPropagation();
-                            onFocusVehicle(v);
-                            onClose();
+                            if (v.position) {
+                              onFocusVehicle(v);
+                              onClose();
+                            }
                           }}
                         >
                           <Crosshair size={13} />
@@ -1002,6 +1111,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <span className="text-muted">Andur puudub</span>
                       )}
                     </div>
+
+                    {/* Märkused */}
+                    {imp.notes && (
+                      <div
+                        className="fleet-card-notes"
+                        title="Kliki märkuse muutmiseks"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditImplement(imp);
+                        }}
+                      >
+                        <FileText size={13} />
+                        <span>{imp.notes}</span>
+                      </div>
+                    )}
 
                     <div className="imp-card-footer">
                       <div className="imp-actions">
@@ -1146,6 +1270,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         </optgroup>
                       </select>
                     </div>
+
+                    {/* Märkused */}
+                    {dev.notes && (
+                      <div
+                        className="fleet-card-notes"
+                        title="Kliki märkuse muutmiseks"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          startEditDevice(dev);
+                        }}
+                      >
+                        <FileText size={13} />
+                        <span>{dev.notes}</span>
+                      </div>
+                    )}
 
                     <div className="dev-card-footer">
                       <span className="text-muted" style={{ fontSize: '0.68rem' }}>
