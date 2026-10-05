@@ -112,8 +112,18 @@ async function main(): Promise<void> {
       break;
     }
     case 'list': {
-      const users = await prisma.user.findMany({ orderBy: { username: 'asc' }, include: { _count: { select: { sessions: true } } } });
+      const users = await prisma.user.findMany({
+        orderBy: { username: 'asc' },
+        include: {
+          _count: { select: { sessions: true } },
+          sessions: { select: { lastSeenAt: true }, orderBy: { lastSeenAt: 'desc' }, take: 1 }
+        }
+      });
       for (const u of users) {
+        const latestSession = u.sessions?.[0]?.lastSeenAt ?? null;
+        const lastSeen = latestSession && u.lastLoginAt
+          ? (latestSession > u.lastLoginAt ? latestSession : u.lastLoginAt)
+          : (latestSession ?? u.lastLoginAt ?? null);
         console.log([
           u.username.padEnd(20),
           (u.displayName ?? '').padEnd(24),
@@ -121,7 +131,7 @@ async function main(): Promise<void> {
           u.isActive ? 'aktiivne' : 'keelatud',
           u.isAdmin ? 'admin' : 'kasutaja',
           u.mustChangePassword ? 'parool vahetamata' : '',
-          `viimati: ${u.lastLoginAt ? u.lastLoginAt.toISOString().slice(0, 16).replace('T', ' ') : '–'}`,
+          `viimati: ${lastSeen ? lastSeen.toISOString().slice(0, 16).replace('T', ' ') : '–'}`,
           `sessioone: ${u._count.sessions}`
         ].join('  '));
       }

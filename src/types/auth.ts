@@ -19,5 +19,6 @@ export interface AdminUser {
   isFinanceManager: boolean;
   mustChangePassword: boolean;
   lastLoginAt: string | null;
+  lastSeenAt?: string | null;
   createdAt: string;
 }

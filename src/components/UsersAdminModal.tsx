@@ -184,7 +184,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   <th>Roll</th>
                   <th>Olek</th>
                   <th>Viimati sees</th>
-                  <th></th>
+                  <th className="users-admin-actions-cell"></th>
                 </tr>
               </thead>
               <tbody>
@@ -197,33 +197,53 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       <td>{u.email ?? '–'}</td>
                       <td>{[u.isAdmin ? 'Admin' : 'Kasutaja', u.isFinanceManager ? 'Finantsjuht' : null].filter(Boolean).join(' · ')}</td>
                       <td>
-                        {u.isActive ? 'Aktiivne' : 'Keelatud'}
-                        {u.mustChangePassword && <span className="users-admin-badge">Parool vahetamata</span>}
-                        {!u.hasPassword && <span className="users-admin-badge">Kutse saadetud</span>}
-                      </td>
-                      <td>{formatDateTime(u.lastLoginAt)}</td>
-                      <td className="users-admin-actions">
-                        <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
-                          <Pencil size={15} />
-                        </button>
-                        {!self && (
-                          <>
-                            {u.email && u.isActive && (
-                              <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
-                                <Mail size={15} />
-                              </button>
-                            )}
-                            <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
-                              <KeyRound size={15} />
-                            </button>
-                            <button type="button" className="icon-btn-ghost" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
-                              {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
-                            </button>
-                            <button type="button" className="icon-btn-danger" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
-                              <Trash2 size={15} />
-                            </button>
-                          </>
+                        {!u.isActive ? (
+                          <span className="user-status-pill status-inactive">
+                            <span className="user-status-dot" />
+                            Keelatud
+                          </span>
+                        ) : !u.hasPassword ? (
+                          <span className="user-status-pill status-invited">
+                            <span className="user-status-dot" />
+                            Kutse saadetud
+                          </span>
+                        ) : u.mustChangePassword ? (
+                          <span className="user-status-pill status-pending">
+                            <span className="user-status-dot" />
+                            Parool vahetamata
+                          </span>
+                        ) : (
+                          <span className="user-status-pill status-active">
+                            <span className="user-status-dot" />
+                            Aktiivne
+                          </span>
                         )}
+                      </td>
+                      <td className="users-admin-date">{formatDateTime(u.lastSeenAt ?? u.lastLoginAt)}</td>
+                      <td className="users-admin-actions-cell">
+                        <div className="users-admin-actions">
+                          <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
+                            <Pencil size={15} />
+                          </button>
+                          {!self && (
+                            <>
+                              {u.email && u.isActive && (
+                                <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
+                                  <Mail size={15} />
+                                </button>
+                              )}
+                              <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
+                                <KeyRound size={15} />
+                              </button>
+                              <button type="button" className="icon-btn-ghost" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
+                                {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
+                              </button>
+                              <button type="button" className="icon-btn-danger" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
+                                <Trash2 size={15} />
+                              </button>
+                            </>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   );

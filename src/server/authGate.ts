@@ -24,7 +24,7 @@ import { normalizeEmail } from './mail.ts';
 import { findValidToken, consumeTokenAndSetPassword, sendPasswordLink } from './passwordTokens.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
-const TOUCH_INTERVAL_MS = 60 * 60 * 1000;
+const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_AUTH_BODY_BYTES = 16 * 1024;
 const MAX_USERNAME_LENGTH = 64;
 const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
@@ -92,15 +92,19 @@ async function currentSession(req: IncomingMessage, res: ServerResponse): Promis
   const session = await prisma.session.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: true } });
   if (!session || session.expiresAt.getTime() < Date.now() || !session.user.isActive) return null;
   if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
+    const now = new Date();
     // updateMany, mitte update: kui sessioon on vahepeal (nt paroolivahetusest) kustunud,
     // ei tohi see visata (P2025) — lihtsalt ei uuenda midagi.
     const { count } = await prisma.session.updateMany({
       where: { id: session.id },
-      data: { lastSeenAt: new Date(), expiresAt: new Date(Date.now() + SESSION_TTL_MS) }
+      data: { lastSeenAt: now, expiresAt: new Date(now.getTime() + SESSION_TTL_MS) }
     });
     // Libisev aegumine peab jõudma ka küpsiseni, muidu brauser kustutab küpsise
     // 14 päeva pärast esimest sisselogimist, kuigi sessioon andmebaasis kehtib.
-    if (count > 0) res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
+    if (count > 0) {
+      await prisma.user.updateMany({ where: { id: session.user.id }, data: { lastLoginAt: now } });
+      res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
+    }
   }
   return { user: session.user, sessionId: session.id };
 }

@@ -24,7 +24,16 @@ const USER_FIELDS = {
   isFinanceManager: true,
   mustChangePassword: true,
   lastLoginAt: true,
-  createdAt: true
+  createdAt: true,
+  sessions: {
+    select: {
+      lastSeenAt: true
+    },
+    orderBy: {
+      lastSeenAt: 'desc'
+    },
+    take: 1
+  }
 } as const;
 
 type UserRow = {
@@ -39,10 +48,24 @@ type UserRow = {
   mustChangePassword: boolean;
   lastLoginAt: Date | null;
   createdAt: Date;
+  sessions?: { lastSeenAt: Date }[];
 };
 
 // Paroolirässi ei saadeta kunagi välja — ainult teave, kas parool on määratud.
-const toPublic = ({ passwordHash, ...rest }: UserRow) => ({ ...rest, hasPassword: passwordHash !== '' });
+// "Viimati sees" võtab arvesse nii viimase sisselogimise kui ka viimase aktiivse sessiooni tegevuse.
+const toPublic = ({ passwordHash, sessions, ...rest }: UserRow) => {
+  const latestSession = sessions?.[0]?.lastSeenAt ?? null;
+  const lastSeenAt = latestSession && rest.lastLoginAt
+    ? (latestSession > rest.lastLoginAt ? latestSession : rest.lastLoginAt)
+    : (latestSession ?? rest.lastLoginAt ?? null);
+
+  return {
+    ...rest,
+    hasPassword: passwordHash !== '',
+    lastLoginAt: lastSeenAt,
+    lastSeenAt
+  };
+};
 
 const activeAdminCount = () => prisma.user.count({ where: { isActive: true, isAdmin: true } });
 
