@@ -83,7 +83,7 @@ function clientIp(req: IncomingMessage): string {
 
 function sessionToken(req: IncomingMessage): string | undefined {
   const cookies = parseCookies(req.headers.cookie);
-  return cookies[SESSION_COOKIE] || cookies['agro_session'];
+  return cookies[SESSION_COOKIE];
 }
 
 async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string } | null> {

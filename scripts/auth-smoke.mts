@@ -50,7 +50,7 @@ try {
   const login = await post('/api/auth/login', { username: USER, password: PASS });
   const setCookie = login.headers.get('set-cookie') ?? '';
   const cookie = setCookie.split(';')[0];
-  check('õige parool → 200 + küpsis', login.status === 200 && (cookie.startsWith('teris_session=') || cookie.startsWith('agro_session=')), `${login.status}`);
+  check('õige parool → 200 + küpsis', login.status === 200 && (cookie.startsWith('teris_session=')), `${login.status}`);
   check('küpsise atribuudid', /HttpOnly/.test(setCookie) && /Secure/.test(setCookie) && /SameSite=Lax/.test(setCookie));
 
   const me = await fetch(BASE + '/api/auth/me', { headers: { Cookie: cookie } });

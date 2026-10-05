@@ -113,7 +113,7 @@ describe('clientIpFrom', () => {
 });
 
 describe('checkMutationRequest', () => {
-  const allowed = ['https://agro.ventcap.ee'];
+  const allowed = ['https://teris.ee'];
   it('GET on alati lubatud', () => {
     expect(checkMutationRequest({ method: 'GET', hasBody: false }, allowed)).toBe('ok');
   });

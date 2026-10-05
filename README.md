@@ -9,7 +9,7 @@ Teltonika telemeetria, mullaproovid, põlluraamat, seotud isikud.
                          └─> 127.0.0.1:8820  teris.service (node dist-server/prod.js)
                                ├─ /api/*  API + sisselogimine (src/server/apiHandler.ts, authGate.ts)
                                └─ muu     dist/ (React + Vite)
-                             PostgreSQL: teris_db (Prisma), agro_tsdb (telemeetria)
+                             PostgreSQL: teris_db (Prisma), telemetry_tsdb (telemeetria)
 
 - Kasutajaliides: React 19 + TypeScript + Vite, kaart Leaflet.
 - Server: `node:http` ilma raamistikuta, Prisma 6. Sama API käsitleja töötab ka

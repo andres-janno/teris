@@ -29,12 +29,10 @@ export const TerisLogo: React.FC<TerisLogoProps> = ({
 
   return (
     <span
-      className={`teris-logo teris-logo-${variant} agro-logo agro-logo-${variant} ${className ?? ''}`}
+      className={`teris-logo teris-logo-${variant} ${className ?? ''}`}
       role="img"
       aria-label="TERIS"
       dangerouslySetInnerHTML={{ __html: svg }}
     />
   );
 };
-
-export const AgroLogo = TerisLogo;

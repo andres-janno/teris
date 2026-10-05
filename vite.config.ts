@@ -24,7 +24,7 @@ export default defineConfig({
   },
   server: {
     // Ainult localhost — arendus käib kohapeal (nt SSH tunneli kaudu), avalikku
-    // ligipääsu pole. Toodang jookseb eraldi (vt src/server/prod.ts, agro.service).
+    // ligipääsu pole. Toodang jookseb eraldi (vt src/server/prod.ts, teris.service).
     host: '127.0.0.1',
     port: 5173,
     strictPort: true
