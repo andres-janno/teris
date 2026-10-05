@@ -12,10 +12,10 @@
 
 ## Global Constraints
 
-- Käsud kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && <käsk>"`; kohalik `/Users/andresj/Progemine/agro` = sama kaust (sshfs). `npm`-i Macis ei käivitata. Pärast failide muutmist `touch` kaugel.
-- Kontroll: `npx tsc --noEmit -p tsconfig.app.json` (0 viga), `npm test`, live'i `npm run release`; seejärel `systemctl is-active agro`, `journalctl -u agro -n 20 --no-pager`, `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1` → `KÕIK KORRAS`. Piiraja on mälus: kui smoke käivitatakse 15 min jooksul teist korda, `sudo systemctl restart agro` enne.
+- Käsud kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && <käsk>"`; kohalik `/Users/andresj/Progemine/teris` = sama kaust (sshfs). `npm`-i Macis ei käivitata. Pärast failide muutmist `touch` kaugel.
+- Kontroll: `npx tsc --noEmit -p tsconfig.app.json` (0 viga), `npm test`, live'i `npm run release`; seejärel `systemctl is-active teris`, `journalctl -u teris -n 20 --no-pager`, `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1` → `KÕIK KORRAS`. Piiraja on mälus: kui smoke käivitatakse 15 min jooksul teist korda, `sudo systemctl restart teris` enne.
 - Serverifailid `vite.config.ts` kaudu kättesaadavad (`apiHandler.ts`, `authGate.ts`, `adminUsers.ts`, `mail.ts`, `passwordTokens.ts`, `auth.ts`, `adminRules.ts`) — suhtelised impordid `.ts` laiendiga. `userCli.ts` laiendita.
-- DB: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)"`; enne skeemimuudatust `pg_dump "…" -Fc -f ~/db_backups/agro_db_$(date +%Y%m%d_%H%M%S).dump`. `db push` andmekaotuse hoiatusel PEATU.
+- DB: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)"`; enne skeemimuudatust `pg_dump "…" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump`. `db push` andmekaotuse hoiatusel PEATU.
 - Uusi npm-sõltuvusi ei lisata. Paroole, tokeneid ega e-posti aadresse ei logita (kirja logis ainult „saadetud“/viga ja teema). Päris kasutaja kontot ei muudeta. Testkasutajad luuakse ja kustutatakse testis; testid päris kirju ei saada.
 - Veateated (täpselt): `'Sisesta korrektne e-posti aadress'`, `'Selline e-posti aadress on juba kasutusel'`, `'Kasutajal pole e-posti aadressi'`, `'Link on aegunud või juba kasutatud'`, `'Parool peab olema vähemalt 10 märki'`, `'Liiga palju katseid, proovi 15 minuti pärast'`.
 - Commit otse `master`-isse, eesti keeles, ainult nimetatud failid; lõpus `Co-Authored-By: <mudel> <noreply@anthropic.com>`. Push'i ei tehta.
@@ -40,7 +40,7 @@
 
 ### Task 1: Postfix + opendkim (serveri seadistus, teeb controller)
 
-**Files:** serveris `/etc/postfix/main.cf`, `/etc/opendkim.conf`, `/etc/default/opendkim`, `/etc/opendkim/keys/agro.ventcap.ee/`
+**Files:** serveris `/etc/postfix/main.cf`, `/etc/opendkim.conf`, `/etc/default/opendkim`, `/etc/opendkim/keys/teris.ee/`
 
 - [ ] **Step 1: Varukoopiad ja paigaldus**
 
@@ -52,10 +52,10 @@ sudo apt-get install -y opendkim opendkim-tools
 - [ ] **Step 2: DKIM võti** (selektor `agro`)
 
 ```bash
-sudo mkdir -p /etc/opendkim/keys/agro.ventcap.ee
-sudo opendkim-genkey -b 2048 -d agro.ventcap.ee -s agro -D /etc/opendkim/keys/agro.ventcap.ee
+sudo mkdir -p /etc/opendkim/keys/teris.ee
+sudo opendkim-genkey -b 2048 -d teris.ee -s agro -D /etc/opendkim/keys/teris.ee
 sudo chown -R opendkim:opendkim /etc/opendkim
-sudo chmod 600 /etc/opendkim/keys/agro.ventcap.ee/agro.private
+sudo chmod 600 /etc/opendkim/keys/teris.ee/agro.private
 ```
 
 - [ ] **Step 3: `/etc/opendkim.conf`** — lisa/muuda read:
@@ -65,9 +65,9 @@ Syslog                  yes
 UMask                   007
 Mode                    s
 Canonicalization        relaxed/simple
-Domain                  agro.ventcap.ee
+Domain                  teris.ee
 Selector                agro
-KeyFile                 /etc/opendkim/keys/agro.ventcap.ee/agro.private
+KeyFile                 /etc/opendkim/keys/teris.ee/agro.private
 Socket                  inet:8891@localhost
 PidFile                 /run/opendkim/opendkim.pid
 OversignHeaders         From
@@ -78,15 +78,15 @@ OversignHeaders         From
 - [ ] **Step 4: Postfix**
 
 ```bash
-sudo postconf -e 'myhostname = agro.ventcap.ee' 'inet_protocols = ipv4' 'smtp_tls_security_level = may' \
+sudo postconf -e 'myhostname = teris.ee' 'inet_protocols = ipv4' 'smtp_tls_security_level = may' \
   'milter_default_action = accept' 'milter_protocol = 6' \
   'smtpd_milters = inet:localhost:8891' 'non_smtpd_milters = inet:localhost:8891'
 sudo systemctl restart postfix
 ```
 
-- [ ] **Step 5: DNS kirjed kasutajale** — kuva `sudo cat /etc/opendkim/keys/agro.ventcap.ee/agro.txt` ja anna kasutajale kolm kirjet (spec: SPF, DKIM `agro._domainkey.agro.ventcap.ee`, DMARC). Soovita PTR muutmist Zone'ilt.
+- [ ] **Step 5: DNS kirjed kasutajale** — kuva `sudo cat /etc/opendkim/keys/teris.ee/agro.txt` ja anna kasutajale kolm kirjet (spec: SPF, DKIM `agro._domainkey.teris.ee`, DMARC). Soovita PTR muutmist Zone'ilt.
 
-- [ ] **Step 6: Kontroll pärast DNS-i** — `dig +short TXT agro._domainkey.agro.ventcap.ee`, `sudo opendkim-testkey -d agro.ventcap.ee -s agro -vvv` (`key OK`); testkiri kasutaja aadressile Task 4 lõpus (päringud `dkim=pass`, `spf=pass`).
+- [ ] **Step 6: Kontroll pärast DNS-i** — `dig +short TXT agro._domainkey.teris.ee`, `sudo opendkim-testkey -d teris.ee -s agro -vvv` (`key OK`); testkiri kasutaja aadressile Task 4 lõpus (päringud `dkim=pass`, `spf=pass`).
 
 ---
 
@@ -150,15 +150,15 @@ describe('normalizeEmail', () => {
 });
 
 describe('buildPasswordLinkMail', () => {
-  const base = { to: 'mari@x.ee', from: 'noreply@agro.ventcap.ee', link: 'https://agro.ventcap.ee/parool#abc', username: 'mari', displayName: 'Mari Maasikas' };
+  const base = { to: 'mari@x.ee', from: 'noreply@teris.ee', link: 'https://teris.ee/parool#abc', username: 'mari', displayName: 'Mari Maasikas' };
   it('kutse: päised, MIME-teema ja link', () => {
     const msg = buildPasswordLinkMail({ ...base, purpose: 'INVITE' });
     const [head, body] = msg.split('\r\n\r\n');
     expect(head).toContain('To: mari@x.ee');
-    expect(head).toContain('From: AGRO <noreply@agro.ventcap.ee>');
+    expect(head).toContain('From: AGRO <noreply@teris.ee>');
     expect(head).toContain(`Subject: =?UTF-8?B?${Buffer.from('Kutse AGRO rakendusse').toString('base64')}?=`);
     expect(head).toContain('Content-Type: text/plain; charset=UTF-8');
-    expect(body).toContain('https://agro.ventcap.ee/parool#abc');
+    expect(body).toContain('https://teris.ee/parool#abc');
     expect(body).toContain('kasutajanimega mari');
     expect(body).toContain('7 päeva');
   });
@@ -207,8 +207,8 @@ describe('tokenExpiry', () => {
 // src/server/mail.ts — e-kirjad (parooli lingid) serveri sendmail'i (Postfix) kaudu.
 import { spawn } from 'node:child_process';
 
-export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@agro.ventcap.ee';
-export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://agro.ventcap.ee').replace(/\/+$/, '');
+export const MAIL_FROM = process.env.MAIL_FROM || 'noreply@teris.ee';
+export const APP_BASE_URL = (process.env.APP_BASE_URL || 'https://teris.ee').replace(/\/+$/, '');
 
 export function normalizeEmail(raw: unknown): string | null {
   const email = String(raw ?? '').trim().toLowerCase();
@@ -733,7 +733,7 @@ Lisa (enne 429 tsüklit) tokenite plokk:
 
 `finally` kustutab `TEST_USERS` (sisaldab nüüd `LINKUSER`; tokenid kustuvad kaskaadiga).
 
-- [ ] **Step 5: Kontroll ja release.** `npx tsc --noEmit -p tsconfig.app.json`, `npm test`, `npm run release`, `systemctl is-active agro`, smoke → `KÕIK KORRAS`; `psql … -tAc "SELECT count(*) FROM users WHERE username LIKE '\_smoke%'"` → 0.
+- [ ] **Step 5: Kontroll ja release.** `npx tsc --noEmit -p tsconfig.app.json`, `npm test`, `npm run release`, `systemctl is-active teris`, smoke → `KÕIK KORRAS`; `psql … -tAc "SELECT count(*) FROM users WHERE username LIKE '\_smoke%'"` → 0.
 
 - [ ] **Step 6: Commit**
 
@@ -1067,7 +1067,7 @@ Enne `if (checking) return …` rida:
 }
 ```
 
-- [ ] **Step 8: README** — kasutajate halduse lõigu lõppu: „Uuele kasutajale saadetakse vaikimisi e-postiga kutse (link kehtib 7 päeva); sisselogimise lehel on „Unustasid parooli?“ (link kehtib 1 tund). Kirjad saadab serveri Postfix (DKIM selektor `agro`, domeen `agro.ventcap.ee`); `.env`: `MAIL_FROM`, `APP_BASE_URL`, `MAIL_DISABLED=1` (arenduses kirju ei saadeta).“ Käsutabelis `add` real `[--email aadress]`.
+- [ ] **Step 8: README** — kasutajate halduse lõigu lõppu: „Uuele kasutajale saadetakse vaikimisi e-postiga kutse (link kehtib 7 päeva); sisselogimise lehel on „Unustasid parooli?“ (link kehtib 1 tund). Kirjad saadab serveri Postfix (DKIM selektor `agro`, domeen `teris.ee`); `.env`: `MAIL_FROM`, `APP_BASE_URL`, `MAIL_DISABLED=1` (arenduses kirju ei saadeta).“ Käsutabelis `add` real `[--email aadress]`.
 
 - [ ] **Step 9: Kontroll ja release.** tsc, `npm test`, `npm run release`, smoke → `KÕIK KORRAS`, `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:8820/parool` → 200.
 

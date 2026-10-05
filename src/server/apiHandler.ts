@@ -55,7 +55,7 @@ async function fetchCellularTelemetry(imeis: string[]): Promise<Map<string, Live
       result.set(row.device, entry);
     }
   } catch (err) {
-    console.error('agro_tsdb: cellular telemetry query failed:', err);
+    console.error('telemetry_tsdb: cellular telemetry query failed:', err);
   }
 
   return result;
@@ -98,7 +98,7 @@ async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<string, Li
       }
     }
   } catch (err) {
-    console.error('agro_tsdb: eye sensor telemetry query failed:', err);
+    console.error('telemetry_tsdb: eye sensor telemetry query failed:', err);
   }
 
   return result;
@@ -183,7 +183,7 @@ async function fetchDeviceHistory(imei: string, hours: number, from?: string | n
       ORDER BY time ASC
     `;
   } catch (err) {
-    console.error('agro_tsdb: device history query failed:', err);
+    console.error('telemetry_tsdb: device history query failed:', err);
     return [];
   }
 }
@@ -725,7 +725,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
           ...base,
           batteryVoltage: Number(effectiveLive?.external_voltage_v ?? 0),
           fuelLevelPct: 0,
-          // hydraulicActive: agro_tsdb ei anna selle jaoks (io_194) teadaolevat tähendust
+          // hydraulicActive: telemetry_tsdb ei anna selle jaoks (io_194) teadaolevat tähendust
           ignition: Boolean(effectiveLive?.ignition),
           hydraulicActive: false,
           satelliteCount: Number(effectiveLive?.satellites ?? 0),
@@ -974,7 +974,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       return json(res, { success: true });
     }
 
-    // 5b. Telemetry history (real GPS track for a single cellular device or vehicle, from agro_tsdb)
+    // 5b. Telemetry history (real GPS track for a single cellular device or vehicle, from telemetry_tsdb)
     if (pathname === '/api/telemetry/history' && method === 'GET') {
       let imei = url.searchParams.get('imei');
       const vehicleId = url.searchParams.get('vehicleId');

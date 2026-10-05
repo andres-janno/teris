@@ -42,7 +42,7 @@ import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
 
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
-// (agro_tsdb-s puudub otsene hüdraulika/rippriist signaal).
+// (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
 const WORKING_SPEED_MIN_KMH = 0.5;
 const WORKING_SPEED_MAX_KMH = 15;
 

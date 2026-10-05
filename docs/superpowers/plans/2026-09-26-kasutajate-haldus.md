@@ -12,10 +12,10 @@
 
 ## Global Constraints
 
-- Käsud jooksevad kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && <käsk>"`. Kohalik `/Users/andresj/Progemine/agro` on sama kaust (sshfs) — faile muuda kohalikult, käivita kaugelt; pärast mitme faili muutmist `touch <failid>` kaugel. `npm`-i Macis ei käivitata.
-- Tüübikontroll `npx tsc --noEmit -p tsconfig.app.json` (0 viga), testid `npm test`, live'i viimine `npm run release` (tsc + testid + build + `sudo systemctl restart agro`); pärast releasi `systemctl is-active agro` ja `journalctl -u agro -n 20 --no-pager`.
+- Käsud jooksevad kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && <käsk>"`. Kohalik `/Users/andresj/Progemine/teris` on sama kaust (sshfs) — faile muuda kohalikult, käivita kaugelt; pärast mitme faili muutmist `touch <failid>` kaugel. `npm`-i Macis ei käivitata.
+- Tüübikontroll `npx tsc --noEmit -p tsconfig.app.json` (0 viga), testid `npm test`, live'i viimine `npm run release` (tsc + testid + build + `sudo systemctl restart teris`); pärast releasi `systemctl is-active teris` ja `journalctl -u teris -n 20 --no-pager`.
 - Serverifailid, mis on `vite.config.ts` kaudu kättesaadavad (`apiHandler.ts`, `authGate.ts`, `adminUsers.ts`, `adminRules.ts`, `auth.ts`), kasutavad suhtelistes importides `.ts` laiendit (tsconfig.node.json nodenext). `userCli.ts` jätkab oma laiendita stiili.
-- Andmebaas: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)"`. Enne skeemimuudatust `pg_dump "…" -Fc -f ~/db_backups/agro_db_$(date +%Y%m%d_%H%M%S).dump`.
+- Andmebaas: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)"`. Enne skeemimuudatust `pg_dump "…" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump`.
 - `User` väljadel pole `@map`-i → veerunimed on camelCase (`"isAdmin"`, `"mustChangePassword"`).
 - Veateated (täpselt): `'Keelatud päring'`, `'Parool tuleb vahetada'`, `'Kasutajanimi peab olema 1–64 märki (a–z, 0–9, . _ -)'`, `'Selline kasutajanimi on juba olemas'`, `'Kasutajat ei leitud'`, `'Parool peab olema vähemalt 10 märki'`, algus `'Seda muudatust ei saa teha'`.
 - Uusi npm-sõltuvusi ei lisata. Paroole ega isikuandmeid ei kirjutata logisse ega commit'itavatesse failidesse (v.a testide läbivisatavad testparoolid); testkasutajad luuakse ja kustutatakse testis. Päris kasutaja kontot ei muudeta.
@@ -98,7 +98,7 @@ export function allowedDuringForcedPasswordChange(pathname: string, method: stri
 Serveris (järjest):
 
 ```bash
-pg_dump "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -Fc -f ~/db_backups/agro_db_$(date +%Y%m%d_%H%M%S).dump
+pg_dump "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump
 npx prisma db push
 npx prisma generate
 psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -c 'UPDATE users SET "isAdmin" = true;'
@@ -173,7 +173,7 @@ reaga
 - [ ] **Step 8: Release ja kontroll.** `npm run release`; seejärel:
 
 ```bash
-systemctl is-active agro
+systemctl is-active teris
 BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1
 ```
 
@@ -568,7 +568,7 @@ Rea `check('muutev päring ilma Originita → 403', …);` järele (enne `await 
 
 ```bash
 npm run release
-systemctl is-active agro
+systemctl is-active teris
 BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts
 npm run user -- list
 psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -tAc "SELECT count(*) FROM users WHERE username LIKE '\_smoke%';"
@@ -1108,7 +1108,7 @@ Kasutajaid saab hallata ka rakenduses: kasutajamenüü → **Kasutajad** (ainult
 lisatud või lähtestatud parool on ajutine — kasutaja peab selle esimesel sisselogimisel vahetama.
 ```
 
-- [ ] **Step 9: Kontrolli ja vii live'i.** `npx tsc --noEmit -p tsconfig.app.json` (0 viga), `npm test`, `npm run release`, `systemctl is-active agro`, `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1` → `KÕIK KORRAS`.
+- [ ] **Step 9: Kontrolli ja vii live'i.** `npx tsc --noEmit -p tsconfig.app.json` (0 viga), `npm test`, `npm run release`, `systemctl is-active teris`, `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1` → `KÕIK KORRAS`.
 
 - [ ] **Step 10: Commit**
 
@@ -1117,4 +1117,4 @@ git add src/types/auth.ts src/services/api.ts src/components/ChangePasswordModal
 git commit -m "Kasutajate haldusaken ja parooli sundvahetus kasutajaliideses."
 ```
 
-- [ ] **Step 11: KASUTAJA KONTROLL** — https://agro.ventcap.ee: kasutajamenüü → Kasutajad; lisa testkasutaja, logi temana sisse (teises brauseris/privaatses aknas) → nõutakse parooli vahetust → pärast vahetust avaneb rakendus; keela/luba, lähtesta parool, kustuta.
+- [ ] **Step 11: KASUTAJA KONTROLL** — https://teris.ee: kasutajamenüü → Kasutajad; lisa testkasutaja, logi temana sisse (teises brauseris/privaatses aknas) → nõutakse parooli vahetust → pärast vahetust avaneb rakendus; keela/luba, lähtesta parool, kustuta.

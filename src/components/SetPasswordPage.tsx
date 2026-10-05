@@ -1,7 +1,7 @@
 // src/components/SetPasswordPage.tsx — parooli määramine e-kirja lingiga (/parool#token).
 import React, { useEffect, useState } from 'react';
 import { KeyRound, AlertCircle, Check } from 'lucide-react';
-import { AgroLogo } from './AgroLogo';
+import { TerisLogo } from './TerisLogo';
 import { api } from '../services/api';
 
 interface SetPasswordPageProps {
@@ -45,7 +45,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
     <div className="login-page">
       <form className="login-card glass-card" onSubmit={submit}>
         <div className="login-brand">
-          <AgroLogo variant="vertical" />
+          <TerisLogo variant="vertical" />
         </div>
         {invalid ? (
           <>

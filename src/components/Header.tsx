@@ -11,7 +11,7 @@ import {
   Map as MapIcon,
   SquareKanban
 } from 'lucide-react';
-import { AgroLogo } from './AgroLogo';
+import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
 import { OperatorSelector } from './OperatorSelector';
 import type { FarmingSeason } from '../types/season';
@@ -87,7 +87,7 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="app-header">
       <div className="header-brand">
-        <AgroLogo variant="horizontal" />
+        <TerisLogo variant="horizontal" />
         {onChangeMainView && (
           <nav className="main-view-switch" aria-label="Põhivaade">
             <button type="button" className={mainView === 'map' ? 'active' : ''} aria-current={mainView === 'map' ? 'page' : undefined} onClick={() => onChangeMainView('map')}>

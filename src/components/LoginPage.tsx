@@ -1,7 +1,7 @@
 // src/components/LoginPage.tsx
 import React, { useState } from 'react';
 import { LogIn, AlertCircle } from 'lucide-react';
-import { AgroLogo } from './AgroLogo';
+import { TerisLogo } from './TerisLogo';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
@@ -38,7 +38,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
     <div className="login-page">
       <form className="login-card glass-card" onSubmit={submit}>
         <div className="login-brand">
-          <AgroLogo variant="vertical" />
+          <TerisLogo variant="vertical" />
         </div>
 
         {notice && !error && <div className="alert-box">{notice}</div>}

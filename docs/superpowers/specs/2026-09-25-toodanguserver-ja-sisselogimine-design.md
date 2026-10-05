@@ -5,7 +5,7 @@ Staatus: kinnitatud vestluses osade kaupa, ootab spetsifikatsiooni ülevaatust
 
 ## Eesmärk
 
-1. Tuua API Vite'i arendusserverist välja: `agro.ventcap.ee` jookseb **ehitatud
+1. Tuua API Vite'i arendusserverist välja: `teris.ee` jookseb **ehitatud
    toodanguversioonina** eraldi Node'i serveris.
 2. Lisada **rakenduse enda sisselogimine** (kasutajad, sessioonid) ja eemaldada
    Apache'i Basic Auth.
@@ -16,7 +16,7 @@ Staatus: kinnitatud vestluses osade kaupa, ootab spetsifikatsiooni ülevaatust
 | Teema | Otsus |
 |---|---|
 | Kasutajad | Mõni inimene, kõik samade õigustega; rolle pole |
-| Keskkonnad | Üks keskkond: `agro.ventcap.ee` = toodanguserver; koodimuudatus jõuab kasutajateni pärast releasi (build + taaskäivitus) |
+| Keskkonnad | Üks keskkond: `teris.ee` = toodanguserver; koodimuudatus jõuab kasutajateni pärast releasi (build + taaskäivitus) |
 | Arendus | Eraldi arenduse alamdomeeni ega arendusteenust pole; `npm run dev` jääb repos alles (nt SSH tunneliga kasutamiseks), aga teenusena ei jookse |
 | Kasutajate haldus | Käsurea skript serveris; rakenduses ainult sisse-/väljalogimine ja oma parooli muutmine |
 | Server | Väike `node:http` server ilma raamistikuta, API käsitleja taaskasutus |
@@ -25,11 +25,11 @@ Staatus: kinnitatud vestluses osade kaupa, ootab spetsifikatsiooni ülevaatust
 ## Ülevaade
 
 ```
-Brauser ──HTTPS──> Apache (agro.ventcap.ee, *.ventcap.ee sertifikaat)
-                     └─ ProxyPass ─> 127.0.0.1:8820  agro.service (node dist-server/prod.js)
+Brauser ──HTTPS──> Apache (teris.ee, *.ventcap.ee sertifikaat)
+                     └─ ProxyPass ─> 127.0.0.1:8820  teris.service (node dist-server/prod.js)
                                         ├─ /api/*  → handleApiRequest (sessiooni kontroll + API)
                                         └─ muu     → dist/ staatilised failid (SPA)
-                                     PostgreSQL agro_db + agro_tsdb (Prisma)
+                                     PostgreSQL teris_db + agro_tsdb (Prisma)
 ```
 
 ## Osa 1: server ja failid
@@ -60,7 +60,7 @@ Brauser ──HTTPS──> Apache (agro.ventcap.ee, *.ventcap.ee sertifikaat)
   - Puuduv fail (ja tee ei alga `/api`-ga) → `index.html` (SPA varuvariant).
   - Tee lahendatakse `path.resolve`-iga ja peab jääma `dist/` sisse; muidu 404.
   - Ainult `GET` ja `HEAD` staatiliste failide jaoks; muu meetod → 405.
-- Käsitlemata viga → 500 (API puhul JSON), viga logitakse (`journalctl -u agro`).
+- Käsitlemata viga → 500 (API puhul JSON), viga logitakse (`journalctl -u teris`).
 
 ### Ehitus ja käivitus (`package.json`)
 
@@ -71,18 +71,18 @@ Brauser ──HTTPS──> Apache (agro.ventcap.ee, *.ventcap.ee sertifikaat)
   Vite'i pluginateta (eriti ilma `dbApiPlugin`-ita).
 - `start`: `node dist-server/prod.js`.
 - `user`: `node dist-server/userCli.js` (nt `npm run user -- add andres`).
-- `release`: `npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart agro`.
+- `release`: `npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris`.
 - `dist-server/` lisatakse `.gitignore`-i.
 - `.env` loetakse nagu praegu (Prisma laeb `DATABASE_URL`, `TSDB_DATABASE_URL`).
 
 ### Teenus ja Apache
 
-- `/etc/systemd/system/agro.service` (muster: `teltonika-api.service`):
-  `User=debian`, `WorkingDirectory=/home/debian/agro`,
+- `/etc/systemd/system/teris.service` (muster: `teltonika-api.service`):
+  `User=debian`, `WorkingDirectory=/home/debian/teris`,
   `ExecStart=/usr/bin/node dist-server/prod.js`, `Environment=PORT=8820`,
   `Restart=on-failure`, `RestartSec=5`, `After=network-online.target postgresql.service`.
 - `agro-dev.service` peatatakse, keelatakse ja eemaldatakse pärast edukat ümberlülitust.
-- `/etc/apache2/sites-available/agro.ventcap.ee.conf`: `ProxyPass / http://127.0.0.1:8820/`,
+- `/etc/apache2/sites-available/teris.ee.conf`: `ProxyPass / http://127.0.0.1:8820/`,
   WebSocketi reegel ja Basic Auth eemaldatakse; lisatakse `RequestHeader set X-Forwarded-Proto https`.
 - `/etc/apache2/.htpasswd-agro` eemaldatakse pärast ümberlülitust.
 
@@ -133,7 +133,7 @@ model Session {
 - `generateSessionToken(): string` — 32 juhuslikku baiti, base64url.
 - `hashToken(token): string` — SHA-256 hex.
 - `parseCookies(header): Record<string,string>`, `sessionCookie(token, maxAgeSec)`,
-  `clearSessionCookie()` — küpsis `agro_session`, `HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=…`.
+  `clearSessionCookie()` — küpsis `teris_session`, `HttpOnly; Secure; SameSite=Lax; Path=/; Max-Age=…`.
 - `createLoginLimiter({ max: 10, windowMs: 15*60*1000 })` — mälupõhine loendur võtmetega
   `u:<username>` ja `ip:<ip>`; `isBlocked(key)`, `registerFailure(key)`, `reset(key)`.
 - `checkMutationRequest(req, allowedOrigin): 'ok' | 'bad-origin' | 'bad-content-type'`.
@@ -149,7 +149,7 @@ model Session {
 ### Päringu kontroll (`handleApiRequest` alguses)
 
 1. **CSRF:** meetod POST/PUT/PATCH/DELETE → `Origin` peab olema `APP_ORIGIN`
-   (vaikimisi `https://agro.ventcap.ee`, arenduses `.env`-ist); kehaga päring peab olema
+   (vaikimisi `https://teris.ee`, arenduses `.env`-ist); kehaga päring peab olema
    `Content-Type: application/json`. Muidu 403 `{ error }`.
 2. **Avalikud teed:** `POST /api/auth/login`, `GET /api/auth/me` (vastab 401, kui sessiooni pole).
 3. **Kõik muud `/api/*` teed** (sh `/api/status`) nõuavad kehtivat sessiooni ja aktiivset
@@ -204,11 +204,11 @@ Kasutajaid ei kustutata (ainult keelatakse). Parooli valideerimine sama mis API-
 ### Ümberlülitus
 
 1. `prisma db push` (uued tabelid, andmekaota), `prisma generate`, `npm run build`.
-2. `agro.service` käivitatakse pordil 8820; `agro-dev` ja Apache töötavad edasi muutmata.
+2. `teris.service` käivitatakse pordil 8820; `agro-dev` ja Apache töötavad edasi muutmata.
 3. Integratsioonitest serveri vastu (`localhost:8820`).
 4. **Kasutaja samm:** `npm run user -- add <nimi>` (parool ei satu vestlusesse).
 5. Apache'i virtuaalhost suunatakse 8820 peale (vana fail varukoopiaks
-   `agro.ventcap.ee.conf.bak-basic-auth`), Basic Auth eemaldatakse, `apache2ctl configtest`,
+   `teris.ee.conf.bak-basic-auth`), Basic Auth eemaldatakse, `apache2ctl configtest`,
    `systemctl reload apache2`; `agro-dev` peatatakse ja keelatakse.
 6. Tagasipööramine: taasta `.bak` fail, `reload apache2`, `systemctl start agro-dev`.
 
@@ -216,7 +216,7 @@ Kasutajaid ei kustutata (ainult keelatakse). Parooli valideerimine sama mis API-
 
 | Olukord | Käitumine |
 |---|---|
-| API käsitlemata viga | 500 JSON; viga `journalctl -u agro` |
+| API käsitlemata viga | 500 JSON; viga `journalctl -u teris` |
 | Andmebaas ei vasta | 500; kasutajaliides näitab olemasolevat andmebaasi veateadet |
 | Puuduv staatiline fail | `index.html` (SPA) |
 | Puuduv `/api/...` | 404 JSON |
@@ -241,7 +241,7 @@ Kasutajaid ei kustutata (ainult keelatakse). Parooli valideerimine sama mis API-
 
 `README.md` asendatakse projekti README-ga: mis rakendus on; arhitektuur (joonis nagu
 ülal); nõuded; käsud (`npm run build`, `npm run release`, `npm test`, `npm run user -- …`);
-teenus ja logid (`systemctl`, `journalctl -u agro`); Apache virtuaalhost; andmebaasi
+teenus ja logid (`systemctl`, `journalctl -u teris`); Apache virtuaalhost; andmebaasi
 varundus enne ohtlikke muudatusi; `._scratch/` tähendus (git'ist välja jäetud,
 isikuandmetega impordifailid).
 

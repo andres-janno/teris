@@ -155,26 +155,31 @@ body {
   gap: 12px;
 }
 
+.teris-logo,
 .agro-logo {
   display: inline-flex;
   color: var(--emerald-500);
 }
 
+.teris-logo svg,
 .agro-logo svg {
   display: block;
 }
 
+.teris-logo-horizontal svg,
 .agro-logo-horizontal svg {
   height: 40px;
   width: auto;
   max-width: 165px;
 }
 
+.teris-logo-vertical svg,
 .agro-logo-vertical svg {
   height: 140px;
   width: 140px;
 }
 
+.teris-logo-icon svg,
 .agro-logo-icon svg {
   height: 36px;
   width: 36px;

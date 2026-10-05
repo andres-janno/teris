@@ -12,14 +12,14 @@
 
 ## Global Constraints
 
-- Kõik npm/npx/prisma/psql käsud jooksevad **kaugserveris**: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && <käsk>"`. Kohalik `/Users/andresj/Progemine/agro` ja kaugserveri `/home/debian/agro` on **sama failisüsteem** — faile muuda kohalikult (Edit/Write), käivita kaugelt. Ära käivita npm-i kohalikus Macis.
-- Andmebaasi päring: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"<SQL>\""`. Parooli ära kirjuta ühtegi faili.
+- Kõik npm/npx/prisma/psql käsud jooksevad **kaugserveris**: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && <käsk>"`. Kohalik `/Users/andresj/Progemine/teris` ja kaugserveri `/home/debian/teris` on **sama failisüsteem** — faile muuda kohalikult (Edit/Write), käivita kaugelt. Ära käivita npm-i kohalikus Macis.
+- Andmebaasi päring: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"<SQL>\""`. Parooli ära kirjuta ühtegi faili.
 - Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json` (juurkausta `tsconfig.json` on ainult viited — `-p .` ei kontrolli midagi). **Lähtetaseme teadaolev viga:** `src/components/MapYearSelector.tsx(41,9): error TS6133 'currentSeason'` — see ei ole selle töö oma; uusi vigu ei tohi tekkida.
 - Dev serveri taaskäivitus (pärast `prisma generate`) **kahe eraldi** SSH käsuna (üks käsk tapaks iseenda):
-  1. `ssh uvn-243-120.tll07.zonevs.eu "pkill -9 -f 'node /home/debian/agro/node_modules/.bin/vite'"`
-  2. `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && rm -f /tmp/agro_dev.log; setsid nohup npm run dev > /tmp/agro_dev.log 2>&1 < /dev/null & disown"` ja siis `sleep 6; ssh uvn-243-120.tll07.zonevs.eu "tail -5 /tmp/agro_dev.log"`
+  1. `ssh uvn-243-120.tll07.zonevs.eu "pkill -9 -f 'node /home/debian/teris/node_modules/.bin/vite'"`
+  2. `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && rm -f /tmp/teris_dev.log; setsid nohup npm run dev > /tmp/teris_dev.log 2>&1 < /dev/null & disown"` ja siis `sleep 6; ssh uvn-243-120.tll07.zonevs.eu "tail -5 /tmp/teris_dev.log"`
 - API baas-URL testimiseks: `http://185.31.243.120:5173`.
-- Enne iga andmeid muutvat testi: `ssh uvn-243-120.tll07.zonevs.eu "TS=\$(date +%Y%m%d_%H%M%S); cd /home/debian/agro && pg_dump \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -Fc -f ~/db_backups/agro_db_\$TS.dump && echo \$TS"`.
+- Enne iga andmeid muutvat testi: `ssh uvn-243-120.tll07.zonevs.eu "TS=\$(date +%Y%m%d_%H%M%S); cd /home/debian/teris && pg_dump \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -Fc -f ~/db_backups/teris_db_\$TS.dump && echo \$TS"`.
 - **Isikuandmed:** päris faili (`._scratch/polluraamat_valjavote_24_09_2026.xls`) ega selle nimesid **ei commit'ita**; testides kasuta väljamõeldud nimesid ("Testija Tõnu", "Mari Tamm").
 - UI tekstid ja koodikommentaarid eesti keeles (nagu ülejäänud koodibaasis).
 - Commit: ainult nimetatud failid (`git add <failid>`), sõnum eesti keeles, lõpus rida `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`.
@@ -64,7 +64,7 @@
 
 - [ ] **Step 1: Paigalda Vitest**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm i -D vitest@latest && npx vitest --version"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm i -D vitest@latest && npx vitest --version"`
 Expected: versiooninumber (nt `vitest/4.x`). Kui npm annab peer-dependency konflikti Vite 8-ga, peatu ja teata — ära kasuta `--force`.
 
 - [ ] **Step 2: Lisa skript ja Vitesti konfiguratsioon**
@@ -387,7 +387,7 @@ describe('parseFieldBookSheet', () => {
 
 - [ ] **Step 5: Käivita testid — peavad ebaõnnestuma**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | tail -15"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | tail -15"`
 Expected: FAIL — `Failed to resolve import "./fieldBookParser"` (moodulit veel pole).
 
 - [ ] **Step 6: Kirjuta `src/services/fieldBookParser.ts`**
@@ -541,12 +541,12 @@ export function parseFieldBookSheet(sheetName: string, rows: string[][]): Parsed
 
 - [ ] **Step 7: Käivita testid — peavad läbima**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | tail -15"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | tail -15"`
 Expected: PASS, kõik `fieldBookParser.test.ts` testid rohelised.
 
 - [ ] **Step 8: Tüübikontroll**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
 Expected: ainult lähtetaseme `MapYearSelector.tsx(41,9)` viga.
 
 - [ ] **Step 9: Commit**
@@ -577,7 +577,7 @@ EOF
 
 - [ ] **Step 1: Paigalda SheetJS ametlikust levitusest**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm i --save https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz && node -e \"import('xlsx').then(m => console.log(m.version))\""`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm i --save https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz && node -e \"import('xlsx').then(m => console.log(m.version))\""`
 Expected: `0.20.3`. Kui allalaadimine ebaõnnestub, peatu ja teata (ära paigalda npm registri `xlsx@0.18.5`).
 
 - [ ] **Step 2: Kirjuta `src/services/fieldBookWorkbook.ts`**
@@ -644,7 +644,7 @@ console.log('näide', JSON.stringify(ok.find((r) => r.sheetName === '2')?.sheet?
 console.log('massiivid numbrina?', ok.filter((r) => !/^\d{11}$/.test(r.sheet!.fieldCode)).map((r) => r.sheet!.fieldCode));
 ```
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsx ._scratch/check_fieldbook.mts"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsx ._scratch/check_fieldbook.mts"`
 Expected:
 - `lehti 31 vigu []`
 - `tegevusi 325`
@@ -656,7 +656,7 @@ Kui mõni arv erineb, uuri erinevust (nt kas SheetJS andis arvu teisiti kui pand
 
 - [ ] **Step 4: Tüübikontroll**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
 Expected: ainult lähtetaseme viga.
 
 - [ ] **Step 5: Commit**
@@ -772,7 +772,7 @@ describe('buildFieldBookImport', () => {
 
 - [ ] **Step 2: Käivita — peab ebaõnnestuma**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | tail -15"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | tail -15"`
 Expected: FAIL — `Failed to resolve import "./fieldBookImport"`.
 
 - [ ] **Step 3: Kirjuta `src/services/fieldBookImport.ts`**
@@ -880,12 +880,12 @@ export function buildFieldBookImport(
 
 - [ ] **Step 4: Käivita testid — peavad läbima**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | tail -15"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | tail -15"`
 Expected: PASS (mõlemad testifailid).
 
 - [ ] **Step 5: Tüübikontroll**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'"`
 Expected: ainult lähtetaseme viga.
 
 - [ ] **Step 6: Commit**
@@ -979,7 +979,7 @@ model FieldOperationProduct {
 
 - [ ] **Step 3: Rakenda skeem ja genereeri klient**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx prisma db push --skip-generate 2>&1 | tail -4 && npx prisma generate 2>&1 | grep -i 'generated\|error'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx prisma db push --skip-generate 2>&1 | tail -4 && npx prisma generate 2>&1 | grep -i 'generated\|error'"`
 Expected: "Your database is now in sync" **ilma** andmekao hoiatuseta (ainult uued tabelid) ja "Generated Prisma Client". Kui ilmub "data loss" hoiatus, peatu.
 
 - [ ] **Step 4: Lisa teostaja kasutusloendur `/api/parties` GET-i**
@@ -1010,7 +1010,7 @@ Taaskäivitus (vt Global Constraints), siis:
 Run: `curl -s http://185.31.243.120:5173/api/parties | python3 -c "import json,sys; print([(p['name'], p.get('performedOperationsCount'), p.get('usageCount')) for p in json.load(sys.stdin)])"`
 Expected: igal isikul `performedOperationsCount` = 0; `usageCount` sama mis enne.
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c '\d field_operations' -c '\d field_operation_products'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c '\d field_operations' -c '\d field_operation_products'"`
 Expected: mõlemad tabelid FK-dega (`ON DELETE CASCADE` hooajale/tegevusele, `ON DELETE SET NULL` teostajale).
 
 - [ ] **Step 6: Tüübikontroll** (vt Task 1 Step 8).
@@ -1210,7 +1210,7 @@ import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResp
 
 Leia testiks sobiv hooajakirje (põld massiiviga `61044415735`, nr `2`, operaator `party-loisu-agro`, 2025):
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -At -c \"SELECT f.id, fs.id, fs.\\\"actualYieldTonsHa\\\" FROM fields f JOIN field_seasons fs ON fs.\\\"fieldId\\\"=f.id WHERE f.\\\"fieldCode\\\"='61044415735' AND f.num='2' AND f.\\\"operatorId\\\"='party-loisu-agro' AND fs.year=2025;\""`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -At -c \"SELECT f.id, fs.id, fs.\\\"actualYieldTonsHa\\\" FROM fields f JOIN field_seasons fs ON fs.\\\"fieldId\\\"=f.id WHERE f.\\\"fieldCode\\\"='61044415735' AND f.num='2' AND f.\\\"operatorId\\\"='party-loisu-agro' AND fs.year=2025;\""`
 Expected: üks rida `<fieldId>|<fieldSeasonId>|` (saak tühi). Pane `fieldId` kirja.
 
 Loo `._scratch/op_test.json`:
@@ -1227,7 +1227,7 @@ Loo `._scratch/op_test.json`:
 ```
 
 Run (kaks korda järjest):
-`curl -s -X POST -H 'Content-Type: application/json' --data @/Users/andresj/Progemine/agro/._scratch/op_test.json http://185.31.243.120:5173/api/field-operations/import`
+`curl -s -X POST -H 'Content-Type: application/json' --data @/Users/andresj/Progemine/teris/._scratch/op_test.json http://185.31.243.120:5173/api/field-operations/import`
 Expected mõlemal korral: `{"success":true,"imported":1,"operations":1,"products":0,"skipped":[{"fieldCode":"00000000000","num":"1","season":2025}]}`
 
 Run: `curl -s "http://185.31.243.120:5173/api/field-operations?fieldId=<fieldId>&year=2025"`
@@ -1238,7 +1238,7 @@ Expected: HTTP 500 veaga; GET näitab endiselt ühte tegevust märkusega `"TEST"
 
 - [ ] **Step 5: Koristus**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"DELETE FROM field_operations WHERE notes IN ('TEST','TEST2');\"" && rm /Users/andresj/Progemine/agro/._scratch/op_test.json`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"DELETE FROM field_operations WHERE notes IN ('TEST','TEST2');\"" && rm /Users/andresj/Progemine/teris/._scratch/op_test.json`
 Expected: `DELETE 1`.
 
 - [ ] **Step 6: Commit**
@@ -1557,7 +1557,7 @@ State (rea `const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);` j�
 
 - [ ] **Step 4: Tüübikontroll ja HMR**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; tail -3 /tmp/agro_dev.log"` ja `curl -s -o /dev/null -w '%{http_code}\n' http://185.31.243.120:5173/`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; tail -3 /tmp/teris_dev.log"` ja `curl -s -o /dev/null -w '%{http_code}\n' http://185.31.243.120:5173/`
 Expected: ainult lähtetaseme viga; HMR uuendused ilma vigadeta; `200`.
 
 - [ ] **Step 5: Commit**
@@ -1810,7 +1810,7 @@ Kood selles etapis ei muutu — see on andmete import ja lõppkontroll. Kui kasu
 
 - [ ] **Step 2: Teiste hooajakirjete hetktõmmis**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -At -c \"SELECT md5(string_agg(fs.id||':'||fs.year||':'||fs.crop||':'||coalesce(fs.\\\"actualYieldTonsHa\\\"::text,'')||':'||coalesce(fs.\\\"seedingDate\\\"::text,''), ',' ORDER BY fs.id)) FROM field_seasons fs WHERE fs.year <> 2025;\""`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -At -c \"SELECT md5(string_agg(fs.id||':'||fs.year||':'||fs.crop||':'||coalesce(fs.\\\"actualYieldTonsHa\\\"::text,'')||':'||coalesce(fs.\\\"seedingDate\\\"::text,''), ',' ORDER BY fs.id)) FROM field_seasons fs WHERE fs.year <> 2025;\""`
 Expected: üks md5 väärtus — pane kirja.
 
 - [ ] **Step 3: Impordi skriptiga**
@@ -1842,12 +1842,12 @@ const res = await fetch(BASE + '/api/field-operations/import', {
 console.log('import', res.status, await res.text());
 ```
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx tsx ._scratch/run_fieldbook_import.mts"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx tsx ._scratch/run_fieldbook_import.mts"`
 Expected: `lehti 31 sobitatud 31 vigu 0`, `tegevusi 325`, `import 200 {"success":true,"imported":31,"operations":325,"products":<N>,"skipped":[]}`. Sobitamata teostajate arv teata kasutajale (nimesid väljundisse ei logi — ainult arv).
 
 - [ ] **Step 4: Kontrolli andmebaasis**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"SELECT COUNT(*) ops, COUNT(DISTINCT \\\"fieldSeasonId\\\") seasons, COUNT(\\\"performerId\\\") with_performer FROM field_operations;\" -c \"SELECT COUNT(*) FILTER (WHERE \\\"actualYieldTonsHa\\\" IS NOT NULL OR \\\"targetYieldTonsHa\\\" IS NOT NULL) with_yield, COUNT(*) FILTER (WHERE \\\"seedingDate\\\" IS NOT NULL) with_seeding, COUNT(*) FILTER (WHERE \\\"harvestDate\\\" IS NOT NULL) with_harvest FROM field_seasons WHERE year=2025;\""`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"SELECT COUNT(*) ops, COUNT(DISTINCT \\\"fieldSeasonId\\\") seasons, COUNT(\\\"performerId\\\") with_performer FROM field_operations;\" -c \"SELECT COUNT(*) FILTER (WHERE \\\"actualYieldTonsHa\\\" IS NOT NULL OR \\\"targetYieldTonsHa\\\" IS NOT NULL) with_yield, COUNT(*) FILTER (WHERE \\\"seedingDate\\\" IS NOT NULL) with_seeding, COUNT(*) FILTER (WHERE \\\"harvestDate\\\" IS NOT NULL) with_harvest FROM field_seasons WHERE year=2025;\""`
 Expected: `ops 325`, `seasons 31`; `with_yield 18`; külvi/koristuse arvud teata kasutajale.
 
 - [ ] **Step 5: Kordusimport ja teiste hooaegade puutumatus**
@@ -1859,5 +1859,5 @@ Expected: md5 **sama** mis Step 2-s.
 
 - [ ] **Step 6: Koristus ja üleandmine**
 
-Run: `rm /Users/andresj/Progemine/agro/._scratch/run_fieldbook_import.mts /Users/andresj/Progemine/agro/._scratch/check_fieldbook.mts`
+Run: `rm /Users/andresj/Progemine/teris/._scratch/run_fieldbook_import.mts /Users/andresj/Progemine/teris/._scratch/check_fieldbook.mts`
 Päris faili `._scratch/polluraamat_valjavote_24_09_2026.xls` kustutamise otsustab kasutaja (vaja 2. etapi arenduseks). Kasutajale: palu avada mõni 2025 põld kaardil ja vaadata jaotist "Põllutööd 2025" (brauseri kontroll, mida agent ise teha ei saa) ning mainida sobitamata teostajate arv.

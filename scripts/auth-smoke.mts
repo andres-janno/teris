@@ -4,7 +4,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword, hashToken } from '../src/server/auth.ts';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:8820';
-const ORIGIN = 'https://agro.ventcap.ee';
+const ORIGIN = 'https://teris.ee';
 const USER = '_smoketest';
 const PASS = 'Smoke-test-12345';
 const ADMIN = '_smokeadmin';
@@ -22,12 +22,12 @@ function check(name: string, ok: boolean, detail = '') {
 }
 
 const post = (path: string, body: unknown, headers: Record<string, string> = {}) =>
-  fetch(BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGIN, ...headers }, body: JSON.stringify(body) });
+  fetch(BASE + path, { method: 'POST', headers: { 'Content-Type': 'application/json', Origin: ORIGIN, 'X-Forwarded-Proto': 'https', ...headers }, body: JSON.stringify(body) });
 
 const send = (method: string, path: string, cookie: string, body?: unknown) =>
   fetch(BASE + path, {
     method,
-    headers: { Origin: ORIGIN, Cookie: cookie, ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
+    headers: { Origin: ORIGIN, Cookie: cookie, 'X-Forwarded-Proto': 'https', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
     body: body === undefined ? undefined : JSON.stringify(body)
   });
 
@@ -50,7 +50,7 @@ try {
   const login = await post('/api/auth/login', { username: USER, password: PASS });
   const setCookie = login.headers.get('set-cookie') ?? '';
   const cookie = setCookie.split(';')[0];
-  check('õige parool → 200 + küpsis', login.status === 200 && cookie.startsWith('agro_session='), `${login.status}`);
+  check('õige parool → 200 + küpsis', login.status === 200 && (cookie.startsWith('teris_session=') || cookie.startsWith('agro_session=')), `${login.status}`);
   check('küpsise atribuudid', /HttpOnly/.test(setCookie) && /Secure/.test(setCookie) && /SameSite=Lax/.test(setCookie));
 
   const me = await fetch(BASE + '/api/auth/me', { headers: { Cookie: cookie } });
@@ -108,7 +108,7 @@ try {
   // kasutaja olemasolevad sessioonid (loginAs pole enne parooli määramist võimalik).
   const linkSessionToken = 'smoke-session-' + Date.now();
   await prisma.session.create({ data: { userId: linkUser.id, tokenHash: hashToken(linkSessionToken), expiresAt: new Date(Date.now() + 3600_000) } });
-  const linkSessionCookie = `agro_session=${linkSessionToken}`;
+  const linkSessionCookie = `teris_session=${linkSessionToken}`;
   check('linkUseri sessioon kehtib enne parooli määramist', (await fetch(BASE + '/api/auth/me', { headers: { Cookie: linkSessionCookie } })).status === 200);
   check('kutsutud kasutaja ei saa enne parooli sisse', (await post('/api/auth/login', { username: LINKUSER, password: NEW_PASS })).status === 401);
   check('forgot tundmatu kasutajaga → 200', (await post('/api/auth/forgot', { login: '_olematu_kasutaja' })).status === 200);

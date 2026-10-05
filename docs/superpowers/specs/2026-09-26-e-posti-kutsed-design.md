@@ -10,7 +10,7 @@ sundvahetus).
 - Admini „ajutine parool“ jääb alternatiiviks (kirja ei saadeta).
 - Admin saab saata kasutajale parooli määramise lingi („Saada parooli link“).
 - Sisselogimise lehel „Unustasid parooli?“.
-- Kirjad lähevad serveri Postfixi kaudu aadressilt `noreply@agro.ventcap.ee`, SPF + DKIM +
+- Kirjad lähevad serveri Postfixi kaudu aadressilt `noreply@teris.ee`, SPF + DKIM +
   DMARC seadistatakse kohe.
 
 Väljas: HTML-kirjad, kirjade mallide haldus, e-posti kinnitamine muutmisel, PTR-kirje muutmine
@@ -33,8 +33,8 @@ Väljas: HTML-kirjad, kirjade mallide haldus, e-posti kinnitamine muutmisel, PTR
 - Saatmine: `spawn('/usr/sbin/sendmail', ['-t', '-i', '-f', MAIL_FROM])`, sõnum stdin'i kaudu
   (RFC 5322, `Content-Type: text/plain; charset=UTF-8`, `Content-Transfer-Encoding: 8bit`,
   päis `Subject` MIME-kodeeritud (`=?UTF-8?B?…?=`)). Uusi npm-sõltuvusi ei lisata.
-- Seaded `.env`-ist: `MAIL_FROM` (vaikimisi `noreply@agro.ventcap.ee`), `APP_BASE_URL`
-  (vaikimisi `https://agro.ventcap.ee`), `MAIL_DISABLED=1` → kirja ei saadeta, logitakse ainult
+- Seaded `.env`-ist: `MAIL_FROM` (vaikimisi `noreply@teris.ee`), `APP_BASE_URL`
+  (vaikimisi `https://teris.ee`), `MAIL_DISABLED=1` → kirja ei saadeta, logitakse ainult
   saaja ja teema (arenduseks).
 - Link: `${APP_BASE_URL}/parool#${token}` — token fragmendis, et see ei jõuaks serveri ega
   Apache logidesse. Token: 32 juhuslikku baiti base64url (sama mis sessioonitokenil).
@@ -97,16 +97,16 @@ Token liigub ainult POST-päringu kehas (mitte URL-is), et see ei jõuaks Apache
 
 ## Postfix, DKIM, SPF, DMARC
 
-- Postfix: `myhostname = agro.ventcap.ee`, `inet_protocols = ipv4`, `smtp_tls_security_level = may`.
+- Postfix: `myhostname = teris.ee`, `inet_protocols = ipv4`, `smtp_tls_security_level = may`.
 - opendkim (Debian pakett `opendkim`, `opendkim-tools`): selektor `agro`, domeen
-  `agro.ventcap.ee`, võti `/etc/opendkim/keys/agro.ventcap.ee/agro.private`; milter
+  `teris.ee`, võti `/etc/opendkim/keys/teris.ee/agro.private`; milter
   `inet:8891@localhost`; Postfix `smtpd_milters`/`non_smtpd_milters = inet:localhost:8891`,
   `milter_default_action = accept`.
 - DNS (kasutaja lisab):
-  - `agro.ventcap.ee TXT "v=spf1 ip4:185.31.243.120 -all"`
-  - `agro._domainkey.agro.ventcap.ee TXT "v=DKIM1; k=rsa; p=<avalik võti>"`
-  - `_dmarc.agro.ventcap.ee TXT "v=DMARC1; p=none; adkim=s; aspf=s"`
-- Soovitus: paluda hostingu pakkujal (Zone) muuta 185.31.243.120 PTR → `agro.ventcap.ee`.
+  - `teris.ee TXT "v=spf1 ip4:185.31.243.120 -all"`
+  - `agro._domainkey.teris.ee TXT "v=DKIM1; k=rsa; p=<avalik võti>"`
+  - `_dmarc.teris.ee TXT "v=DMARC1; p=none; adkim=s; aspf=s"`
+- Soovitus: paluda hostingu pakkujal (Zone) muuta 185.31.243.120 PTR → `teris.ee`.
 - Kontroll: testkiri kasutaja postkasti; päises `dkim=pass`, `spf=pass`.
 
 ## Testid

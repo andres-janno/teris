@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** `agro.ventcap.ee` jookseb ehitatud toodanguversioonina eraldi Node'i serveris (`agro.service`, port 8820) ja rakendusel on oma sisselogimine; Apache'i Basic Auth ja Vite'i arendusteenus kaovad.
+**Goal:** `teris.ee` jookseb ehitatud toodanguversioonina eraldi Node'i serveris (`teris.service`, port 8820) ja rakendusel on oma sisselogimine; Apache'i Basic Auth ja Vite'i arendusteenus kaovad.
 
 **Architecture:** API käsitleja tõstetakse Vite'i pluginast eraldi moodulisse `handleApiRequest`, mida kasutavad nii arenduse plugin kui uus `node:http` toodanguserver (serveerib ka `dist/`). Autentimine: sessioonid andmebaasis (`users`, `sessions`), `HttpOnly` küpsis, `scrypt` paroolid, päringu kontroll `authGate`-is. Kasutajaliidesesse tuleb sisselogimise leht, kasutajamenüü ja parooli muutmine.
 
@@ -12,16 +12,16 @@
 
 ## Global Constraints
 
-- Käsud jooksevad kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && <käsk>"`. Kohalik `/Users/andresj/Progemine/agro` on sama kaust (sshfs) — faile muuda kohalikult, käivita kaugelt.
+- Käsud jooksevad kaugserveris: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && <käsk>"`. Kohalik `/Users/andresj/Progemine/teris` on sama kaust (sshfs) — faile muuda kohalikult, käivita kaugelt.
 - **Pärast mitme faili skriptiga muutmist** tee kaugel `touch <failid>` (Vite on varem tühja faili vahemällu jätnud).
 - Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json` (ei tohi olla ühtegi `error TS`). Testid: `npm test`.
-- Andmebaas: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -c "<SQL>"`. Enne skeemimuudatust varukoopia: `pg_dump "…" -Fc -f ~/db_backups/agro_db_$(date +%Y%m%d_%H%M%S).dump`.
-- Praegune live on `agro-dev.service` (Vite, `127.0.0.1:5173`), logid `journalctl -u agro-dev`; Apache `agro.ventcap.ee` → 5173 Basic Auth'iga. **Kuni Task 7-ni peab see töötama.**
+- Andmebaas: `psql "$(sed -n 's/^DATABASE_URL="\(.*\)?schema=public"/\1/p' .env)" -c "<SQL>"`. Enne skeemimuudatust varukoopia: `pg_dump "…" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump`.
+- Praegune live on `agro-dev.service` (Vite, `127.0.0.1:5173`), logid `journalctl -u teris-dev`; Apache `teris.ee` → 5173 Basic Auth'iga. **Kuni Task 7-ni peab see töötama.**
 - Uusi npm-sõltuvusi ei lisata.
-- Lubatud päritolud: toodang `['https://agro.ventcap.ee']`; arenduse plugin `['https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173']`.
+- Lubatud päritolud: toodang `['https://teris.ee']`; arenduse plugin `['https://teris.ee', 'http://localhost:5173', 'http://127.0.0.1:5173']`.
 - Arenduse plugin: `requireAuth: false` (live'i kaitseb kuni Task 7-ni Basic Auth); toodanguserver: `requireAuth: true`.
 - Veateated (täpselt): `'Vale kasutajanimi või parool'`, `'Liiga palju katseid, proovi 15 minuti pärast'`, `'Sisselogimine on vajalik'`, `'Keelatud päring'`, `'Parool peab olema vähemalt 10 märki'`, `'Praegune parool on vale'`, `'Sessioon aegus, logi uuesti sisse'`.
-- Küpsis: nimi `agro_session`, `Path=/; HttpOnly; Secure; SameSite=Lax`. Sessioon 14 päeva, uuendus kõige rohkem kord tunnis. Limiter: 10 ebaõnnestumist 15 min kohta võtmetega `u:<username>`, `ip:<ip>`.
+- Küpsis: nimi `teris_session`, `Path=/; HttpOnly; Secure; SameSite=Lax`. Sessioon 14 päeva, uuendus kõige rohkem kord tunnis. Limiter: 10 ebaõnnestumist 15 min kohta võtmetega `u:<username>`, `ip:<ip>`.
 - Isikuandmeid ega paroole ei kirjutata faili ega logisse; testkasutajad luuakse ja kustutatakse testi sees.
 - Commit: ainult nimetatud failid, sõnum eesti keeles, lõpus `Co-Authored-By: Claude Opus 5.5 (1M context) <noreply@anthropic.com>`. Push'i ei tehta.
 
@@ -128,7 +128,7 @@ export function hasRequestBody(req: IncomingMessage): boolean {
 Käivita kohalikult (kontrollib, et kõik lähtemustrid on täpselt olemas):
 
 ```bash
-cd /Users/andresj/Progemine/agro && python3 - << 'PYEOF'
+cd /Users/andresj/Progemine/teris && python3 - << 'PYEOF'
 src = open('src/server/dbApiPlugin.ts', encoding='utf-8').read()
 lines = src.split('\n')
 
@@ -180,7 +180,7 @@ import type { Plugin } from 'vite';
 import { handleApiRequest } from './apiHandler';
 
 const DEV_OPTIONS = {
-  allowedOrigins: ['https://agro.ventcap.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
+  allowedOrigins: ['https://teris.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
   // Kuni toodanguserverile üleminekuni kaitseb arendusserverit Apache'i Basic Auth.
   requireAuth: false
 };
@@ -224,14 +224,14 @@ export async function authGate(
 
 - [ ] **Step 6: Tüübikontroll**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && touch src/server/*.ts vite.config.ts && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; echo done"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && touch src/server/*.ts vite.config.ts && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; echo done"`
 Expected: `done`, vigu pole. Kui `noUnusedLocals` kaebab mõne abifunktsiooni üle, mis enne oli kasutusel ainult pluginas, kontrolli, et teisendus ei jätnud teekondi välja (Step 4 väljund).
 
 - [ ] **Step 7: Kontrolli, et API vastused on samad**
 
 `vite.config.ts` muutus käivitab arendusserveri uuesti. Oota 3 s ja kordu Step 1 käsk, salvestades `api_after.txt`; siis:
 Run: `diff /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/api_before.txt /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/api_after.txt && echo SAMA`
-Expected: `SAMA`. Lisaks `ssh … "journalctl -u agro-dev -n 20 --no-pager | grep -i error"` → tühi.
+Expected: `SAMA`. Lisaks `ssh … "journalctl -u teris-dev -n 20 --no-pager | grep -i error"` → tühi.
 
 - [ ] **Step 8: Commit**
 
@@ -254,7 +254,7 @@ EOF
 
 **Interfaces:**
 - Produces (`src/server/auth.ts`):
-  - `SESSION_COOKIE = 'agro_session'`
+  - `SESSION_COOKIE = 'teris_session'`
   - `hashPassword(pw: string): Promise<string>`, `verifyPassword(pw: string, stored: string): Promise<boolean>`
   - `validateNewPassword(pw: string): string | null`
   - `generateSessionToken(): string`, `hashToken(token: string): string`
@@ -309,13 +309,13 @@ describe('sessioonitoken ja küpsis', () => {
     expect(hashToken(t)).toMatch(/^[0-9a-f]{64}$/);
   });
   it('loeb küpsiseid', () => {
-    expect(parseCookies('a=1; agro_session=abc%3D; b=2')).toEqual({ a: '1', agro_session: 'abc=', b: '2' });
+    expect(parseCookies('a=1; teris_session=abc%3D; b=2')).toEqual({ a: '1', teris_session: 'abc=', b: '2' });
     expect(parseCookies(undefined)).toEqual({});
     expect(parseCookies('vigane; x=%E0%A4%A')).toEqual({});
   });
   it('seab ja kustutab küpsise', () => {
-    expect(sessionCookie('tok', 1209600)).toBe('agro_session=tok; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600');
-    expect(clearSessionCookie()).toBe('agro_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
+    expect(sessionCookie('tok', 1209600)).toBe('teris_session=tok; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=1209600');
+    expect(clearSessionCookie()).toBe('teris_session=; Path=/; HttpOnly; Secure; SameSite=Lax; Max-Age=0');
   });
 });
 
@@ -341,7 +341,7 @@ describe('sisselogimise piiraja', () => {
 });
 
 describe('checkMutationRequest', () => {
-  const allowed = ['https://agro.ventcap.ee'];
+  const allowed = ['https://teris.ee'];
   it('GET on alati lubatud', () => {
     expect(checkMutationRequest({ method: 'GET', hasBody: false }, allowed)).toBe('ok');
   });
@@ -361,7 +361,7 @@ describe('checkMutationRequest', () => {
 
 - [ ] **Step 2: Käivita — peab ebaõnnestuma**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | grep -E 'auth.test|Failed to resolve|Tests '"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | grep -E 'auth.test|Failed to resolve|Tests '"`
 Expected: FAIL, `auth.test.ts` ei leia moodulit `./auth`.
 
 - [ ] **Step 3: Kirjuta `src/server/auth.ts`**
@@ -372,7 +372,7 @@ Expected: FAIL, `auth.test.ts` ei leia moodulit `./auth`.
 import { randomBytes, scrypt as scryptCallback, timingSafeEqual, createHash } from 'node:crypto';
 import { Buffer } from 'node:buffer';
 
-export const SESSION_COOKIE = 'agro_session';
+export const SESSION_COOKIE = 'teris_session';
 
 const SCRYPT_N = 16384;
 const SCRYPT_R = 8;
@@ -481,7 +481,7 @@ Märkus: testis `parseCookies('vigane; x=%E0%A4%A')` → `{}` — `vigane` ilma 
 
 - [ ] **Step 4: Testid peavad läbima**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npm test 2>&1 | grep -E '✓|×|FAIL|Tests '"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npm test 2>&1 | grep -E '✓|×|FAIL|Tests '"`
 Expected: kõik testid (sh uued `auth.test.ts`) PASS.
 
 - [ ] **Step 5: Tüübikontroll** (vt Global Constraints) — vigu pole.
@@ -550,7 +550,7 @@ model Session {
 }
 ```
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && npx prisma db push --skip-generate 2>&1 | tail -3 && npx prisma generate 2>&1 | grep -i 'generated\|error' && sudo systemctl restart agro-dev"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && npx prisma db push --skip-generate 2>&1 | tail -3 && npx prisma generate 2>&1 | grep -i 'generated\|error' && sudo systemctl restart teris-dev"`
 Expected: "in sync" **ilma** andmekao hoiatuseta, "Generated Prisma Client"; `agro-dev` taaskäivitub (uus Prisma klient).
 
 - [ ] **Step 3: Loo `vite.server.config.ts`**
@@ -724,7 +724,7 @@ dist-server
 
 Run:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep "error TS"; npm run -s build:server 2>&1 | tail -2 && printf "lyhike\n" | npm run -s user -- add _kontroll; echo "exit=$?"; printf "Kontroll-12345\nKontroll-12345\n" | npm run -s user -- add _kontroll --display "Test Kasutaja"; npm run -s user -- list; npm run -s user -- disable _kontroll; npm run -s user -- list | grep _kontroll'
+ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep "error TS"; npm run -s build:server 2>&1 | tail -2 && printf "lyhike\n" | npm run -s user -- add _kontroll; echo "exit=$?"; printf "Kontroll-12345\nKontroll-12345\n" | npm run -s user -- add _kontroll --display "Test Kasutaja"; npm run -s user -- list; npm run -s user -- disable _kontroll; npm run -s user -- list | grep _kontroll'
 ```
 Expected:
 - tüübivigu pole, `dist-server/userCli.js` ehitatud;
@@ -733,7 +733,7 @@ Expected:
 - `disable` → `keelatud`.
 
 Koristus:
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"DELETE FROM users WHERE username='_kontroll';\""`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && psql \"\$(sed -n 's/^DATABASE_URL=\"\(.*\)?schema=public\"/\1/p' .env)\" -c \"DELETE FROM users WHERE username='_kontroll';\""`
 Expected: `DELETE 1`.
 
 - [ ] **Step 7: Commit**
@@ -753,7 +753,7 @@ EOF
 Palu kasutajal serveris käivitada (parool ei tohi sattuda vestlusesse):
 ```
 ssh uvn-243-120.tll07.zonevs.eu
-cd /home/debian/agro && npm run user -- add <kasutajanimi> --display "Ees Perenimi"
+cd /home/debian/teris && npm run user -- add <kasutajanimi> --display "Ees Perenimi"
 ```
 **Ära jätka Task 6-ga enne, kui kasutaja kinnitab, et konto on loodud** (Task 6 järel küsib live'i leht sisselogimist).
 
@@ -804,7 +804,7 @@ const toAuthUser = (u: DbUser) => ({ id: u.id, username: u.username, displayName
 // Vale kasutajanime korral kontrollitakse parooli selle vastu, et vastuse aeg ei
 // paljastaks, kas kasutaja on olemas.
 let dummyHash: Promise<string> | null = null;
-const getDummyHash = () => (dummyHash ??= hashPassword('agro-map-dummy-password'));
+const getDummyHash = () => (dummyHash ??= hashPassword('teris-dummy-password'));
 
 function clientIp(req: IncomingMessage): string {
   const xff = req.headers['x-forwarded-for'];
@@ -952,12 +952,12 @@ export async function authGate(
 
 Run:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/agro && touch src/server/authGate.ts && sleep 3 && npm run -s build:server >/dev/null && printf "Kontroll-12345\nKontroll-12345\n" | npm run -s user -- add _kontroll >/dev/null && B=http://127.0.0.1:5173 && O="Origin: https://agro.ventcap.ee" && J="Content-Type: application/json" && rm -f /tmp/_ck &&
+ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && touch src/server/authGate.ts && sleep 3 && npm run -s build:server >/dev/null && printf "Kontroll-12345\nKontroll-12345\n" | npm run -s user -- add _kontroll >/dev/null && B=http://127.0.0.1:5173 && O="Origin: https://teris.ee" && J="Content-Type: application/json" && rm -f /tmp/_ck &&
 echo "me ilma: $(curl -s -o /dev/null -w %{http_code} $B/api/auth/me)" &&
 echo "vale parool: $(curl -s -o /dev/null -w %{http_code} -H "$O" -H "$J" -d "{\"username\":\"_kontroll\",\"password\":\"vale-parool-1\"}" $B/api/auth/login)" &&
 echo "ilma Originita: $(curl -s -o /dev/null -w %{http_code} -H "$J" -d "{\"username\":\"_kontroll\",\"password\":\"Kontroll-12345\"}" $B/api/auth/login)" &&
 echo "õige: $(curl -s -c /tmp/_ck -H "$O" -H "$J" -d "{\"username\":\"_KONTROLL\",\"password\":\"Kontroll-12345\"}" $B/api/auth/login)" &&
-echo "küpsis: $(grep -c agro_session /tmp/_ck)" &&
+echo "küpsis: $(grep -c teris_session /tmp/_ck)" &&
 echo "me: $(curl -s -b /tmp/_ck $B/api/auth/me)" &&
 echo "andmed ilma sessioonita (requireAuth false): $(curl -s -o /dev/null -w %{http_code} $B/api/crops)" &&
 echo "parooli muutmine lühike: $(curl -s -b /tmp/_ck -H "$O" -H "$J" -d "{\"currentPassword\":\"Kontroll-12345\",\"newPassword\":\"lyhike\"}" $B/api/auth/password)" &&
@@ -976,7 +976,7 @@ Koristus: `DELETE FROM users WHERE username='_kontroll';` (sessioonid kustuvad k
 - [ ] **Step 4: Kontrolli, et olemasolev rakendus töötab edasi**
 
 Run: kordu Task 1 Step 1 kontrollsummad ja võrdle `api_before.txt`-ga.
-Expected: kõik read samad (andmed pole muutunud). `journalctl -u agro-dev -n 30 --no-pager | grep -i error` → tühi.
+Expected: kõik read samad (andmed pole muutunud). `journalctl -u teris-dev -n 30 --no-pager | grep -i error` → tühi.
 
 - [ ] **Step 5: Commit**
 
@@ -1034,7 +1034,7 @@ describe('cacheControlFor', () => {
 });
 ```
 
-Run: `ssh … "cd /home/debian/agro && npm test 2>&1 | grep -E 'static.test|Tests '"` → FAIL (moodul puudub).
+Run: `ssh … "cd /home/debian/teris && npm test 2>&1 | grep -E 'static.test|Tests '"` → FAIL (moodul puudub).
 
 - [ ] **Step 2: Kirjuta `src/server/static.ts`**
 
@@ -1135,7 +1135,7 @@ import { serveStatic } from './static';
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
 const DIST_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
-const API_OPTIONS = { allowedOrigins: ['https://agro.ventcap.ee'], requireAuth: true };
+const API_OPTIONS = { allowedOrigins: ['https://teris.ee'], requireAuth: true };
 
 const server = http.createServer(async (req, res) => {
   try {
@@ -1154,7 +1154,7 @@ const server = http.createServer(async (req, res) => {
 });
 
 server.listen(PORT, HOST, () => {
-  console.log(`agro map kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
+  console.log(`teris kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
 });
 ```
 
@@ -1174,7 +1174,7 @@ server.listen(PORT, HOST, () => {
 ```json
     "build": "tsc -b && vite build && vite build --config vite.server.config.ts",
     "start": "node dist-server/prod.js",
-    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart agro",
+    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris",
 ```
 
 - [ ] **Step 5: Kirjuta `scripts/auth-smoke.mts`**
@@ -1186,7 +1186,7 @@ import { PrismaClient } from '@prisma/client';
 import { hashPassword } from '../src/server/auth.ts';
 
 const BASE = process.env.BASE ?? 'http://127.0.0.1:8820';
-const ORIGIN = 'https://agro.ventcap.ee';
+const ORIGIN = 'https://teris.ee';
 const USER = '_smoketest';
 const PASS = 'Smoke-test-12345';
 const prisma = new PrismaClient();
@@ -1211,7 +1211,7 @@ try {
   const login = await post('/api/auth/login', { username: USER, password: PASS });
   const setCookie = login.headers.get('set-cookie') ?? '';
   const cookie = setCookie.split(';')[0];
-  check('õige parool → 200 + küpsis', login.status === 200 && cookie.startsWith('agro_session='), `${login.status}`);
+  check('õige parool → 200 + küpsis', login.status === 200 && cookie.startsWith('teris_session='), `${login.status}`);
   check('küpsise atribuudid', /HttpOnly/.test(setCookie) && /Secure/.test(setCookie) && /SameSite=Lax/.test(setCookie));
 
   const me = await fetch(BASE + '/api/auth/me', { headers: { Cookie: cookie } });
@@ -1246,9 +1246,9 @@ process.exit(failures === 0 ? 0 : 1);
 
 Run:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/agro && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep "error TS"; npm test 2>&1 | grep "Tests " && npm run build 2>&1 | grep -E "built in|rror" && ls dist-server/ && (setsid nohup npm start > /tmp/agro_prod_test.log 2>&1 < /dev/null & disown) && sleep 3 && cat /tmp/agro_prod_test.log | tail -2 && BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts; pkill -f "node dist-server/prod.js"; echo stopped'
+ssh uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep "error TS"; npm test 2>&1 | grep "Tests " && npm run build 2>&1 | grep -E "built in|rror" && ls dist-server/ && (setsid nohup npm start > /tmp/teris_prod_test.log 2>&1 < /dev/null & disown) && sleep 3 && cat /tmp/teris_prod_test.log | tail -2 && BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts; pkill -f "node dist-server/prod.js"; echo stopped'
 ```
-Expected: tüübivigu pole; kõik testid PASS; kaks `built in`; `dist-server/` sisaldab `prod.js` ja `userCli.js`; logis `agro map kuulab http://127.0.0.1:8820`; smoke-testi iga rida `OK`, lõpus `KÕIK KORRAS`; `stopped`.
+Expected: tüübivigu pole; kõik testid PASS; kaks `built in`; `dist-server/` sisaldab `prod.js` ja `userCli.js`; logis `teris kuulab http://127.0.0.1:8820`; smoke-testi iga rida `OK`, lõpus `KÕIK KORRAS`; `stopped`.
 Kui ehitatud server annab vea `Named export 'PrismaClient' not found`, asenda `src/server/db.ts` import kujul `import pkg from '@prisma/client'; const { PrismaClient } = pkg;` ja kordu.
 
 - [ ] **Step 7: Commit**
@@ -1291,7 +1291,7 @@ export interface AuthUser {
 - [ ] **Step 2: `src/services/api.ts` — `apiFetch` ja auth-meetodid**
 
 Asenda kõik `await fetch(` → `await apiFetch(`:
-Run: `cd /Users/andresj/Progemine/agro && sed -i '' 's/await fetch(/await apiFetch(/g' src/services/api.ts && grep -c "await apiFetch(" src/services/api.ts && grep -c "await fetch(" src/services/api.ts`
+Run: `cd /Users/andresj/Progemine/teris && sed -i '' 's/await fetch(/await apiFetch(/g' src/services/api.ts && grep -c "await apiFetch(" src/services/api.ts && grep -c "await fetch(" src/services/api.ts`
 Expected: esimene arv = varasem `fetch` arv (29), teine `0`.
 
 Importide järele, enne `export const api = {`:
@@ -1716,7 +1716,7 @@ export const AuthGate: React.FC = () => {
 
 - [ ] **Step 8: Tüübikontroll, testid, ehitus**
 
-Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/agro && touch src/main.tsx src/AuthGate.tsx src/App.tsx src/services/api.ts src/components/Header.tsx src/components/LoginPage.tsx src/components/ChangePasswordModal.tsx src/types/auth.ts src/index.css && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; npm test 2>&1 | grep 'Tests '; npm run build 2>&1 | grep -E 'built in|rror'"`
+Run: `ssh uvn-243-120.tll07.zonevs.eu "cd /home/debian/teris && touch src/main.tsx src/AuthGate.tsx src/App.tsx src/services/api.ts src/components/Header.tsx src/components/LoginPage.tsx src/components/ChangePasswordModal.tsx src/types/auth.ts src/index.css && npx tsc --noEmit -p tsconfig.app.json 2>&1 | grep 'error TS'; npm test 2>&1 | grep 'Tests '; npm run build 2>&1 | grep -E 'built in|rror'"`
 Expected: tüübivigu pole, testid PASS, kaks `built in`.
 
 Kontrolli, et live (arendus) serveerib uut koodi: `curl -s http://127.0.0.1:5173/src/main.tsx | grep -c AuthGate` → `1`.
@@ -1733,31 +1733,31 @@ EOF
 )"
 ```
 
-- [ ] **Step 10: KASUTAJA KONTROLL** — palu kasutajal avada https://agro.ventcap.ee (Basic Auth + nüüd ka rakenduse sisselogimine), logida sisse oma kontoga, veenduda, et andmed laevad, ja proovida "Logi välja". (Täielik parooli muutmise test pärast Task 7.)
+- [ ] **Step 10: KASUTAJA KONTROLL** — palu kasutajal avada https://teris.ee (Basic Auth + nüüd ka rakenduse sisselogimine), logida sisse oma kontoga, veenduda, et andmed laevad, ja proovida "Logi välja". (Täielik parooli muutmise test pärast Task 7.)
 
 ---
 
 ### Task 7: Teenus ja ümberlülitus
 
 **Files:**
-- Create (serveris): `/etc/systemd/system/agro.service`
-- Modify (serveris): `/etc/apache2/sites-available/agro.ventcap.ee.conf`
+- Create (serveris): `/etc/systemd/system/teris.service`
+- Modify (serveris): `/etc/apache2/sites-available/teris.ee.conf`
 - Remove (serveris): `/etc/systemd/system/agro-dev.service`, `/etc/apache2/.htpasswd-agro`
 
-- [ ] **Step 1: Loo ja käivita `agro.service`** (Apache suunab veel 5173 peale)
+- [ ] **Step 1: Loo ja käivita `teris.service`** (Apache suunab veel 5173 peale)
 
-Fail `/private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/agro.service`:
+Fail `/private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/teris.service`:
 
 ```ini
 [Unit]
-Description=agro map (toodanguserver, 127.0.0.1:8820)
+Description=teris (toodanguserver, 127.0.0.1:8820)
 After=network-online.target postgresql.service
 Wants=network-online.target
 
 [Service]
 Type=simple
 User=debian
-WorkingDirectory=/home/debian/agro
+WorkingDirectory=/home/debian/teris
 Environment=PORT=8820
 Environment=NODE_ENV=production
 ExecStart=/usr/bin/node dist-server/prod.js
@@ -1772,26 +1772,26 @@ WantedBy=multi-user.target
 
 Run:
 ```bash
-cat /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/agro.service | ssh uvn-243-120.tll07.zonevs.eu "sudo tee /etc/systemd/system/agro.service >/dev/null && sudo systemctl daemon-reload && cd /home/debian/agro && npm run build 2>&1 | grep -c 'built in' && sudo systemctl enable --now agro && sleep 3 && systemctl is-active agro && journalctl -u agro -n 3 --no-pager | tail -1 && BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1"
+cat /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/teris.service | ssh uvn-243-120.tll07.zonevs.eu "sudo tee /etc/systemd/system/teris.service >/dev/null && sudo systemctl daemon-reload && cd /home/debian/teris && npm run build 2>&1 | grep -c 'built in' && sudo systemctl enable --now teris && sleep 3 && systemctl is-active teris && journalctl -u teris -n 3 --no-pager | tail -1 && BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts | tail -1"
 ```
-Expected: `2`, `active`, logis `agro map kuulab http://127.0.0.1:8820`, smoke `KÕIK KORRAS`.
+Expected: `2`, `active`, logis `teris kuulab http://127.0.0.1:8820`, smoke `KÕIK KORRAS`.
 
 - [ ] **Step 2: Suuna Apache toodanguserverile, eemalda Basic Auth**
 
-Varukoopia ja uus virtuaalhost (`/private/tmp/…/scratchpad/agro.ventcap.ee.conf`):
+Varukoopia ja uus virtuaalhost (`/private/tmp/…/scratchpad/teris.ee.conf`):
 
 ```apache
 <VirtualHost *:80>
-    ServerName agro.ventcap.ee
-    Redirect permanent / https://agro.ventcap.ee/
+    ServerName teris.ee
+    Redirect permanent / https://teris.ee/
 </VirtualHost>
 
 <IfModule mod_ssl.c>
 <VirtualHost *:443>
-    ServerName agro.ventcap.ee
+    ServerName teris.ee
     AddDefaultCharset UTF-8
 
-    # Toodanguserver (agro.service); sisselogimine on rakenduses endas.
+    # Toodanguserver (teris.service); sisselogimine on rakenduses endas.
     ProxyPreserveHost On
     ProxyRequests Off
     RequestHeader set X-Forwarded-Proto "https"
@@ -1799,8 +1799,8 @@ Varukoopia ja uus virtuaalhost (`/private/tmp/…/scratchpad/agro.ventcap.ee.con
     ProxyPassReverse / http://127.0.0.1:8820/
 
     LogLevel warn
-    CustomLog /var/log/apache2/agro.ventcap.ee_access.log combined
-    ErrorLog /var/log/apache2/agro.ventcap.ee_error.log
+    CustomLog /var/log/apache2/teris.ee_access.log combined
+    ErrorLog /var/log/apache2/teris.ee_error.log
 
     SSLCertificateFile      /etc/ssl/certs/ventcap-ee.crt
     SSLCertificateKeyFile   /etc/ssl/private/ventcap-ee.key
@@ -1816,7 +1816,7 @@ Varukoopia ja uus virtuaalhost (`/private/tmp/…/scratchpad/agro.ventcap.ee.con
 
 Run:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu "sudo cp /etc/apache2/sites-available/agro.ventcap.ee.conf /etc/apache2/sites-available/agro.ventcap.ee.conf.bak-basic-auth" && cat /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/agro.ventcap.ee.conf | ssh uvn-243-120.tll07.zonevs.eu "sudo tee /etc/apache2/sites-available/agro.ventcap.ee.conf >/dev/null && sudo apache2ctl configtest 2>&1 | tail -1 && sudo systemctl reload apache2 && echo reloaded"
+ssh uvn-243-120.tll07.zonevs.eu "sudo cp /etc/apache2/sites-available/teris.ee.conf /etc/apache2/sites-available/teris.ee.conf.bak-basic-auth" && cat /private/tmp/claude-501/-Users-andresj-Progemine-agro/ae21de2f-a0e7-47b4-902e-6a2b14b28645/scratchpad/teris.ee.conf | ssh uvn-243-120.tll07.zonevs.eu "sudo tee /etc/apache2/sites-available/teris.ee.conf >/dev/null && sudo apache2ctl configtest 2>&1 | tail -1 && sudo systemctl reload apache2 && echo reloaded"
 ```
 Expected: `Syntax OK`, `reloaded`.
 
@@ -1824,27 +1824,27 @@ Expected: `Syntax OK`, `reloaded`.
 
 Run (kohalikult):
 ```bash
-cd /tmp && echo "http: $(curl -s -o /dev/null -w '%{http_code} → %{redirect_url}' http://agro.ventcap.ee/)" && echo "leht: $(curl -s -o /dev/null -w '%{http_code}' https://agro.ventcap.ee/)" && echo "status ilma sessioonita: $(curl -s -o /dev/null -w '%{http_code}' https://agro.ventcap.ee/api/status)" && echo "me: $(curl -s -o /dev/null -w '%{http_code}' https://agro.ventcap.ee/api/auth/me)" && echo "port 8820 väljast: $(curl -s -m 5 -o /dev/null -w '%{http_code}' http://185.31.243.120:8820/ || echo 'ei vasta')"
+cd /tmp && echo "http: $(curl -s -o /dev/null -w '%{http_code} → %{redirect_url}' http://teris.ee/)" && echo "leht: $(curl -s -o /dev/null -w '%{http_code}' https://teris.ee/)" && echo "status ilma sessioonita: $(curl -s -o /dev/null -w '%{http_code}' https://teris.ee/api/status)" && echo "me: $(curl -s -o /dev/null -w '%{http_code}' https://teris.ee/api/auth/me)" && echo "port 8820 väljast: $(curl -s -m 5 -o /dev/null -w '%{http_code}' http://185.31.243.120:8820/ || echo 'ei vasta')"
 ```
-Expected: `301 → https://agro.ventcap.ee/`; `leht: 200` (Basic Auth'i enam pole); `status ilma sessioonita: 401`; `me: 401`; `port 8820 väljast: ei vasta`.
+Expected: `301 → https://teris.ee/`; `leht: 200` (Basic Auth'i enam pole); `status ilma sessioonita: 401`; `me: 401`; `port 8820 väljast: ei vasta`.
 
 - [ ] **Step 4: Eemalda vana arendusteenus ja Basic Auth'i fail**
 
 Run:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu "sudo systemctl disable --now agro-dev 2>&1 | tail -1; sudo rm -f /etc/systemd/system/agro-dev.service /etc/apache2/.htpasswd-agro && sudo systemctl daemon-reload && systemctl is-active agro-dev; ss -tlnp | grep -E ':5173|:8820'"
+ssh uvn-243-120.tll07.zonevs.eu "sudo systemctl disable --now teris-dev 2>&1 | tail -1; sudo rm -f /etc/systemd/system/agro-dev.service /etc/apache2/.htpasswd-agro && sudo systemctl daemon-reload && systemctl is-active teris-dev; ss -tlnp | grep -E ':5173|:8820'"
 ```
 Expected: `agro-dev` → `inactive` (või "could not be found"), kuulab ainult `127.0.0.1:8820`.
 
-- [ ] **Step 5: KASUTAJA KONTROLL** — https://agro.ventcap.ee: sisselogimine (Basic Auth'i akent enam pole), andmed, parooli muutmine, väljalogimine.
+- [ ] **Step 5: KASUTAJA KONTROLL** — https://teris.ee: sisselogimine (Basic Auth'i akent enam pole), andmed, parooli muutmine, väljalogimine.
 
 Tagasipööramine vajadusel:
 ```bash
-ssh uvn-243-120.tll07.zonevs.eu "sudo cp /etc/apache2/sites-available/agro.ventcap.ee.conf.bak-basic-auth /etc/apache2/sites-available/agro.ventcap.ee.conf && sudo systemctl reload apache2"
+ssh uvn-243-120.tll07.zonevs.eu "sudo cp /etc/apache2/sites-available/teris.ee.conf.bak-basic-auth /etc/apache2/sites-available/teris.ee.conf && sudo systemctl reload apache2"
 ```
 (Basic Auth'i paroolifail ja `agro-dev` tuleb siis uuesti luua — Task 7 Step 4 kustutas need.)
 
-- [ ] **Step 6: Mälu uuendus** — `agro_server_setup.md`: teenus `agro.service` (port 8820, `journalctl -u agro`), release `npm run release`, kasutajad `npm run user -- …`, Basic Auth ja `agro-dev` eemaldatud.
+- [ ] **Step 6: Mälu uuendus** — `teris_server_setup.md`: teenus `teris.service` (port 8820, `journalctl -u teris`), release `npm run release`, kasutajad `npm run user -- …`, Basic Auth ja `agro-dev` eemaldatud.
 
 ---
 
@@ -1856,18 +1856,18 @@ ssh uvn-243-120.tll07.zonevs.eu "sudo cp /etc/apache2/sites-available/agro.ventc
 - [ ] **Step 1: Kirjuta `README.md`**
 
 ```markdown
-# agro map
+# teris map
 
 Põllumajandusettevõtte kaardirakendus: PRIA põllud ja külvikord, masinapark ja
 Teltonika telemeetria, mullaproovid, e-PRIA põlluraamat, seotud isikud.
 
 ## Arhitektuur
 
-    Brauser ──HTTPS──> Apache (agro.ventcap.ee)
-                         └─> 127.0.0.1:8820  agro.service (node dist-server/prod.js)
+    Brauser ──HTTPS──> Apache (teris.ee)
+                         └─> 127.0.0.1:8820  teris.service (node dist-server/prod.js)
                                ├─ /api/*  API + sisselogimine (src/server/apiHandler.ts, authGate.ts)
                                └─ muu     dist/ (React + Vite)
-                             PostgreSQL: agro_db (Prisma), agro_tsdb (telemeetria)
+                             PostgreSQL: teris_db (Prisma), agro_tsdb (telemeetria)
 
 - Kasutajaliides: React 19 + TypeScript + Vite, kaart Leaflet.
 - Server: `node:http` ilma raamistikuta, Prisma 6. Sama API käsitleja töötab ka
@@ -1875,11 +1875,11 @@ Teltonika telemeetria, mullaproovid, e-PRIA põlluraamat, seotud isikud.
 - Sisselogimine: kasutajad ja sessioonid andmebaasis (`users`, `sessions`),
   `HttpOnly` küpsis, paroolid `scrypt`.
 
-## Käsud (serveris `/home/debian/agro`)
+## Käsud (serveris `/home/debian/teris`)
 
 | Käsk | Tegevus |
 |---|---|
-| `npm run release` | tüübikontroll, testid, ehitus, `agro` teenuse taaskäivitus |
+| `npm run release` | tüübikontroll, testid, ehitus, `teris` teenuse taaskäivitus |
 | `npm run build` | kasutajaliides `dist/` + server `dist-server/` |
 | `npm test` | ühiktestid (Vitest) |
 | `npm run user -- add <nimi> [--display "Nimi"]` | uus kasutaja (parool küsitakse) |
@@ -1894,14 +1894,14 @@ Integratsioonitest töötava serveri vastu: `BASE=http://127.0.0.1:8820 npx tsx 
 
 ## Teenus ja logid
 
-- `sudo systemctl status|restart agro`, logid `journalctl -u agro -f`.
-- Apache: `/etc/apache2/sites-available/agro.ventcap.ee.conf` (`*.ventcap.ee` sertifikaat).
+- `sudo systemctl status|restart teris`, logid `journalctl -u teris -f`.
+- Apache: `/etc/apache2/sites-available/teris.ee.conf` (`*.ventcap.ee` sertifikaat).
 
 ## Andmebaas
 
 - Ühendused `.env` failis (`DATABASE_URL`, `TSDB_DATABASE_URL`) — ei ole repos.
 - Skeem: `prisma/schema.prisma`; muudatus: `npx prisma db push` + `npx prisma generate` + `npm run release`.
-- **Enne ohtlikku muudatust varukoopia:** `pg_dump … -Fc -f ~/db_backups/agro_db_<aeg>.dump`.
+- **Enne ohtlikku muudatust varukoopia:** `pg_dump … -Fc -f ~/db_backups/teris_db_<aeg>.dump`.
 
 ## Failid, mis ei käi git'i
 
