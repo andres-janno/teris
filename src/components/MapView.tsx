@@ -86,7 +86,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const radarOverlayRef = useRef<L.ImageOverlay | null>(null);
   // Eelmine sajuradari olek: kaart mahutatakse Eestile ainult kasutaja sisselülitamisel, mitte lehe laadimisel
   const prevWeatherRadarRef = useRef(visibility.weatherRadar);
-  const [radarTime, setRadarTime] = useState<string | null>(null);
+  const [radarFrames, setRadarFrames] = useState<{ time: string; imageUrl: string }[]>([]);
+  const [radarFrameIdx, setRadarFrameIdx] = useState(0);
   const [radarError, setRadarError] = useState<string | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const soilSampleLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -505,27 +506,34 @@ export const MapView: React.FC<MapViewProps> = ({
     if (!map || !visibility.weatherRadar) {
       radarOverlayRef.current?.remove();
       radarOverlayRef.current = null;
-      setRadarTime(null);
+      setRadarFrames([]);
       setRadarError(null);
       return;
     }
     let cancelled = false;
     const load = async () => {
       try {
-        const frame = await api.getWeatherRadar();
+        const radar = await api.getWeatherRadar();
+        if (cancelled || !radar.frames.length) return;
+        // Kaadrid laaditakse ette, et animatsioon ei vilguks
+        await Promise.all(radar.frames.map((f) => new Promise<void>((resolve) => {
+          const img = new Image();
+          img.onload = img.onerror = () => resolve();
+          img.src = f.imageUrl;
+        })));
         if (cancelled) return;
-        const bounds = L.latLngBounds(frame.bounds);
+        const bounds = L.latLngBounds(radar.bounds);
+        const last = radar.frames[radar.frames.length - 1];
         if (radarOverlayRef.current && map.hasLayer(radarOverlayRef.current)) {
-          radarOverlayRef.current.setUrl(frame.imageUrl);
           radarOverlayRef.current.setBounds(bounds);
         } else {
-          radarOverlayRef.current = L.imageOverlay(frame.imageUrl, bounds, {
+          radarOverlayRef.current = L.imageOverlay(last.imageUrl, bounds, {
             pane: 'radarPane',
             interactive: false,
             attribution: 'Sajuradar: <a href="https://www.ilmateenistus.ee" target="_blank" rel="noopener">Keskkonnaagentuur</a>'
           }).addTo(map);
         }
-        setRadarTime(frame.time);
+        setRadarFrames(radar.frames);
         setRadarError(null);
       } catch (err) {
         if (!cancelled) setRadarError(err instanceof Error ? err.message : 'Radari andmed pole saadaval');
@@ -538,6 +546,23 @@ export const MapView: React.FC<MapViewProps> = ({
       clearInterval(timer);
     };
   }, [visibility.weatherRadar]);
+
+  // 5d. Sajuradari animatsioon: kaadrid järjest, viimane (hetkeseis) püsib kauem
+  useEffect(() => {
+    if (!radarFrames.length) return;
+    const lastIdx = radarFrames.length - 1;
+    let idx = 0;
+    let timer: number;
+    const show = () => {
+      radarOverlayRef.current?.setUrl(radarFrames[idx].imageUrl);
+      setRadarFrameIdx(idx);
+      const delay = idx === lastIdx ? 2500 : 900;
+      idx = idx === lastIdx ? 0 : idx + 1;
+      timer = window.setTimeout(show, delay);
+    };
+    show();
+    return () => clearTimeout(timer);
+  }, [radarFrames]);
 
   // 6. Render POI / Infrastructure Layer
   useEffect(() => {
@@ -722,8 +747,12 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="radar-legend-time">
               {radarError
                 ? radarError
-                : radarTime
-                  ? new Date(radarTime).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })
+                : radarFrames.length
+                  ? radarFrames.map((f, i) => (
+                      <span key={f.time} className={`radar-legend-frame ${i === radarFrameIdx ? 'active' : ''}`}>
+                        {new Date(f.time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    ))
                   : 'laadimine…'}
             </span>
           </div>

@@ -186,7 +186,7 @@ export const api = {
     return res.json();
   },
 
-  async getWeatherRadar(): Promise<{ time: string; bounds: [[number, number], [number, number]]; imageUrl: string }> {
+  async getWeatherRadar(): Promise<{ bounds: [[number, number], [number, number]]; frames: { time: string; imageUrl: string }[] }> {
     const res = await apiFetch('/api/weather/radar');
     if (!res.ok) throw new Error(await errorMessage(res, 'Radari andmed pole saadaval'));
     return res.json();

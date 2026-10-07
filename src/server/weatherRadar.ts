@@ -13,6 +13,8 @@ const KAIA_API = 'https://avaandmed.keskkonnaportaal.ee/api/lists/active';
 const RADAR_CONTENT_TYPE = '0102FB01';
 // KAIA uus kaader tuleb iga 5 min; kontrollime uut mitte sagedamini kui see
 const REFRESH_MS = 2.5 * 60 * 1000;
+// Mitu viimast kaadrit hoitakse ja antakse kaardile animatsiooniks (5 min vahega)
+export const RADAR_FRAME_COUNT = 3;
 
 export interface RadarFrame {
   /** Mõõtmise aeg (UTC, ISO) */
@@ -79,7 +81,10 @@ type KaiaDocument = {
   fileMetadata?: { id: number | string } | { id: number | string }[];
 };
 
-async function findLatestComposite(): Promise<{ docId: string; fileId: string; time: string } | null> {
+type CompositeRef = { docId: string; fileId: string; time: string };
+
+/** KAIA viimased koondpildid, uuemad eespool. */
+async function findRecentComposites(count: number): Promise<CompositeRef[]> {
   const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
   const res = await fetch(`${KAIA_API}/items/query`, {
     method: 'POST',
@@ -107,11 +112,16 @@ async function findLatestComposite(): Promise<{ docId: string; fileId: string; t
     .map((d) => ({ d, t: new Date(String(d.metadata.Timestamp)).getTime() }))
     .filter((x) => !isNaN(x.t))
     .sort((a, b) => b.t - a.t);
-  const latest = docs[0];
-  if (!latest) return null;
-  const file = Array.isArray(latest.d.fileMetadata) ? latest.d.fileMetadata[0] : latest.d.fileMetadata;
-  if (!file) return null;
-  return { docId: String(latest.d.id), fileId: String(file.id), time: new Date(latest.t).toISOString() };
+  const refs: CompositeRef[] = [];
+  for (const { d, t } of docs) {
+    const file = Array.isArray(d.fileMetadata) ? d.fileMetadata[0] : d.fileMetadata;
+    if (!file) continue;
+    const time = new Date(t).toISOString();
+    if (refs.some((r) => r.time === time)) continue;
+    refs.push({ docId: String(d.id), fileId: String(file.id), time });
+    if (refs.length >= count) break;
+  }
+  return refs;
 }
 
 async function loadComposite(docId: string, fileId: string, time: string): Promise<RadarFrame> {
@@ -154,21 +164,31 @@ async function loadComposite(docId: string, fileId: string, time: string): Promi
   }
 }
 
-let cached: RadarFrame | null = null;
+// Viimased kaadrid, vanemad eespool
+let cached: RadarFrame[] = [];
 let lastCheck = 0;
-let inFlight: Promise<RadarFrame | null> | null = null;
+let inFlight: Promise<RadarFrame[]> | null = null;
 
-/** Viimane radari kaader; uut kontrollitakse KAIA-st kõige rohkem kord REFRESH_MS jooksul. */
-export async function getLatestRadarFrame(): Promise<RadarFrame | null> {
-  if (cached && Date.now() - lastCheck < REFRESH_MS) return cached;
+/** Viimased RADAR_FRAME_COUNT kaadrit (vanemad eespool); KAIA-t kontrollitakse kõige rohkem kord REFRESH_MS jooksul. */
+export async function getRecentRadarFrames(): Promise<RadarFrame[]> {
+  if (cached.length && Date.now() - lastCheck < REFRESH_MS) return cached;
   if (inFlight) return inFlight;
   inFlight = (async () => {
     try {
-      const latest = await findLatestComposite();
+      const refs = await findRecentComposites(RADAR_FRAME_COUNT);
       lastCheck = Date.now();
-      if (!latest) return cached;
-      if (cached?.time === latest.time) return cached;
-      cached = await loadComposite(latest.docId, latest.fileId, latest.time);
+      if (!refs.length) return cached;
+      const frames: RadarFrame[] = [];
+      // Juba töödeldud kaadrid võetakse vahemälust, alla laaditakse ainult uued
+      for (const ref of refs) {
+        const existing = cached.find((f) => f.time === ref.time);
+        try {
+          frames.push(existing ?? await loadComposite(ref.docId, ref.fileId, ref.time));
+        } catch (err) {
+          console.error(`Sajuradar: kaadri ${ref.time} laadimine ebaõnnestus:`, err);
+        }
+      }
+      if (frames.length) cached = frames.sort((a, b) => a.time.localeCompare(b.time));
       return cached;
     } catch (err) {
       console.error('Sajuradar: KAIA andmete laadimine ebaõnnestus:', err);
@@ -180,4 +200,9 @@ export async function getLatestRadarFrame(): Promise<RadarFrame | null> {
     }
   })();
   return inFlight;
+}
+
+/** Konkreetse aja kaader (kui see on veel mälus). */
+export function getCachedRadarFrame(time: string): RadarFrame | null {
+  return cached.find((f) => f.time === time) ?? null;
 }

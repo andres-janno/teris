@@ -588,6 +588,17 @@ body {
   color: var(--text-secondary);
 }
 
+.radar-legend-frame {
+  margin-right: 6px;
+  opacity: 0.45;
+}
+
+.radar-legend-frame.active {
+  opacity: 1;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
 .radar-legend-scale {
   display: flex;
   align-items: flex-end;

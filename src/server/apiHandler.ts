@@ -6,7 +6,7 @@ import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
-import { getLatestRadarFrame } from './weatherRadar.ts';
+import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -943,22 +943,26 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     // 5a. Sajuradar (Keskkonnaagentuuri radarite koondpilt KAIA avaandmetest)
     if (pathname === '/api/weather/radar' && method === 'GET') {
-      const frame = await getLatestRadarFrame();
-      if (!frame) return json(res, { error: 'Radari andmed pole hetkel saadaval' }, 503);
+      const frames = await getRecentRadarFrames();
+      if (!frames.length) return json(res, { error: 'Radari andmed pole hetkel saadaval' }, 503);
       return json(res, {
-        time: frame.time,
-        bounds: frame.bounds,
-        imageUrl: `/api/weather/radar.png?t=${encodeURIComponent(frame.time)}`
+        bounds: frames[frames.length - 1].bounds,
+        frames: frames.map((f) => ({
+          time: f.time,
+          imageUrl: `/api/weather/radar.png?t=${encodeURIComponent(f.time)}`
+        }))
       });
     }
 
     if (pathname === '/api/weather/radar.png' && method === 'GET') {
-      const frame = await getLatestRadarFrame();
-      if (!frame) return json(res, { error: 'Radari andmed pole hetkel saadaval' }, 503);
+      const time = url.searchParams.get('t');
+      const frame = time ? getCachedRadarFrame(time) : (await getRecentRadarFrames()).at(-1) ?? null;
+      if (!frame) return json(res, { error: 'Radari kaader pole enam saadaval' }, 404);
       res.writeHead(200, {
         'Content-Type': 'image/png',
         'Content-Length': frame.png.length,
-        'Cache-Control': 'private, max-age=300'
+        // Ajatempliga kaader ei muutu kunagi
+        'Cache-Control': time ? 'private, max-age=3600, immutable' : 'private, max-age=300'
       });
       res.end(frame.png);
       return;
