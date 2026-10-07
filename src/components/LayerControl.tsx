@@ -155,7 +155,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
 
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
-              <div className={visibility.cultivation ? 'layer-box-group' : 'layer-field-box'}>
+              <div className="layer-field-box">
                 <div className="layer-item">
                   <label className="layer-label">
                     <input
@@ -164,16 +164,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       onChange={() => onToggleLayer('cultivation')}
                     />
                     <span className="layer-color-indicator cultivation-color"></span>
-                    {visibility.cultivation ? (
-                      <span className="layer-text-wrap">
-                        <span className="layer-text">Põllutööd</span>
-                        <span className="layer-subtext">
-                          {isLoadingVehicleTracks ? 'Radade laadimine…' : `${trackVehicleIds?.size ?? 0} masina rajad`}
-                        </span>
-                      </span>
-                    ) : (
-                      <span className="layer-text">Põllutööd</span>
-                    )}
+                    <span className="layer-text">Põllutööd</span>
                   </label>
                   <button
                     className="icon-toggle"
@@ -184,66 +175,73 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   </button>
                 </div>
 
-                {visibility.cultivation && vehicles.length > 0 && (
-                  <div className="vehicle-individual-list">
-                    {vehicles.map((v) => {
-                      const isSimActive = simulatedVehicleId === v.id;
-                      const hasTrack = trackVehicleIds?.has(v.id) ?? false;
-                      const isTrackVisible = hasTrack && !hiddenTrackVehicleIds?.has(v.id);
-                      const iconEmoji = v.type === 'combine' ? '🌾' : (v.type === 'sprayer' ? '🚿' : (v.type === 'truck' ? '🚛' : '🚜'));
-                      const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
-                        ? v.telemetry.deviceId
-                        : (v.id.includes('demo') || v.name.toLowerCase().includes('demo') ? 'Demorežiim' : 'Seade puudub');
-
-                      return (
-                        <div
-                          key={v.id}
-                          className={`v-indiv-row ${hasTrack && !isTrackVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
-                        >
-                          <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
-                            <span className="v-indiv-emoji">{iconEmoji}</span>
-                            <div className="v-indiv-names">
-                              <span className="v-indiv-title">{v.name}</span>
-                              <span className="v-indiv-subtitle">{deviceLabel}</span>
+                {visibility.cultivation && (
+                  <div className="layer-sub-options">
+                    <span className="layer-subtext">
+                      {isLoadingVehicleTracks ? 'Radade laadimine…' : `${trackVehicleIds?.size ?? 0} masina rajad`}
+                    </span>
+                    {vehicles.length > 0 && (
+                      <div className="vehicle-individual-list">
+                        {vehicles.map((v) => {
+                          const isSimActive = simulatedVehicleId === v.id;
+                          const hasTrack = trackVehicleIds?.has(v.id) ?? false;
+                          const isTrackVisible = hasTrack && !hiddenTrackVehicleIds?.has(v.id);
+                          const iconEmoji = v.type === 'combine' ? '🌾' : (v.type === 'sprayer' ? '🚿' : (v.type === 'truck' ? '🚛' : '🚜'));
+                          const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
+                            ? v.telemetry.deviceId
+                            : (v.id.includes('demo') || v.name.toLowerCase().includes('demo') ? 'Demorežiim' : 'Seade puudub');
+    
+                          return (
+                            <div
+                              key={v.id}
+                              className={`v-indiv-row ${hasTrack && !isTrackVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
+                            >
+                              <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
+                                <span className="v-indiv-emoji">{iconEmoji}</span>
+                                <div className="v-indiv-names">
+                                  <span className="v-indiv-title">{v.name}</span>
+                                  <span className="v-indiv-subtitle">{deviceLabel}</span>
+                                </div>
+                              </div>
+    
+                              <div className="v-indiv-actions">
+                                {onToggleVehicleSimulator && (
+                                  <button
+                                    type="button"
+                                    className={`v-action-btn v-sim-btn ${isSimActive ? 'active' : ''}`}
+                                    title={isSimActive ? 'Lülita simulaator välja' : `Käivita simulaator (${v.name})`}
+                                    onClick={() => onToggleVehicleSimulator(v.id)}
+                                  >
+                                    <Play size={10} fill={isSimActive ? 'currentColor' : 'none'} />
+                                    <span>Sim</span>
+                                  </button>
+                                )}
+    
+                                {onToggleTrackVisibility && (
+                                  <button
+                                    type="button"
+                                    className={`v-action-btn v-map-btn ${isTrackVisible ? 'active' : ''}`}
+                                    title={!hasTrack
+                                      ? (isLoadingVehicleTracks ? 'Rada laaditakse…' : 'GPS-rada puudub')
+                                      : (isTrackVisible ? `Peida ${v.name} rada` : `Kuva ${v.name} rada`)}
+                                    onClick={() => onToggleTrackVisibility(v.id)}
+                                    disabled={!hasTrack}
+                                  >
+                                    {isTrackVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-
-                          <div className="v-indiv-actions">
-                            {onToggleVehicleSimulator && (
-                              <button
-                                type="button"
-                                className={`v-action-btn v-sim-btn ${isSimActive ? 'active' : ''}`}
-                                title={isSimActive ? 'Lülita simulaator välja' : `Käivita simulaator (${v.name})`}
-                                onClick={() => onToggleVehicleSimulator(v.id)}
-                              >
-                                <Play size={10} fill={isSimActive ? 'currentColor' : 'none'} />
-                                <span>Sim</span>
-                              </button>
-                            )}
-
-                            {onToggleTrackVisibility && (
-                              <button
-                                type="button"
-                                className={`v-action-btn v-map-btn ${isTrackVisible ? 'active' : ''}`}
-                                title={!hasTrack
-                                  ? (isLoadingVehicleTracks ? 'Rada laaditakse…' : 'GPS-rada puudub')
-                                  : (isTrackVisible ? `Peida ${v.name} rada` : `Kuva ${v.name} rada`)}
-                                onClick={() => onToggleTrackVisibility(v.id)}
-                                disabled={!hasTrack}
-                              >
-                                {isTrackVisible ? <Eye size={12} /> : <EyeOff size={12} />}
-                              </button>
-                            )}
-                          </div>
-                        </div>
-                      );
-                    })}
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
 
               {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
-              <div className={visibility.soilSamples ? 'layer-box-group' : 'layer-field-box'}>
+              <div className="layer-field-box">
                 <div className="layer-item">
                   <label className="layer-label">
                     <input
@@ -252,14 +250,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       onChange={() => onToggleLayer('soilSamples')}
                     />
                     <span className="layer-color-indicator soil-color"></span>
-                    {visibility.soilSamples ? (
-                      <span className="layer-text-wrap">
-                        <span className="layer-text">Mullaproovid</span>
-                        <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
-                      </span>
-                    ) : (
-                      <span className="layer-text">Mullaproovid</span>
-                    )}
+                    <span className="layer-text">Mullaproovid</span>
                   </label>
                   <button
                     className="icon-toggle"
@@ -271,42 +262,45 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 </div>
 
                 {visibility.soilSamples && onSelectSoilMetric && (
-                  <div className="vehicle-filter-subgroup">
-                    <div className="soil-metric-radio-list">
-                      {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                        <label key={key} className="soil-metric-radio-item">
-                          <input
-                            type="radio"
-                            name="soil-metric"
-                            value={key}
-                            checked={soilMetric === key}
-                            onChange={() => onSelectSoilMetric(key)}
-                          />
-                          <span>{SOIL_METRIC_CONFIG[key].label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className="soil-legend-list">
-                      {isAgeMetric ? (
-                        <div className="soil-legend-gradient">
-                          <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
-                          <div className="soil-legend-gradient-labels">
-                            <span>0 a</span>
-                            <span>&gt; {AGE_MAX_YEARS} a</span>
+                  <div className="layer-sub-options">
+                    <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                    <div className="vehicle-filter-subgroup">
+                      <div className="soil-metric-radio-list">
+                        {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
+                          <label key={key} className="soil-metric-radio-item">
+                            <input
+                              type="radio"
+                              name="soil-metric"
+                              value={key}
+                              checked={soilMetric === key}
+                              onChange={() => onSelectSoilMetric(key)}
+                            />
+                            <span>{SOIL_METRIC_CONFIG[key].label}</span>
+                          </label>
+                        ))}
+                      </div>
+  
+                      <div className="soil-legend-list">
+                        {isAgeMetric ? (
+                          <div className="soil-legend-gradient">
+                            <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
+                            <div className="soil-legend-gradient-labels">
+                              <span>0 a</span>
+                              <span>&gt; {AGE_MAX_YEARS} a</span>
+                            </div>
                           </div>
+                        ) : (
+                          soilLegendItems.map((item) => (
+                            <div key={item.label} className="soil-legend-item">
+                              <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
+                              <span className="soil-legend-label">{item.label}</span>
+                            </div>
+                          ))
+                        )}
+                        <div className="soil-legend-item">
+                          <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
+                          <span className="soil-legend-label">Andmed puuduvad</span>
                         </div>
-                      ) : (
-                        soilLegendItems.map((item) => (
-                          <div key={item.label} className="soil-legend-item">
-                            <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
-                            <span className="soil-legend-label">{item.label}</span>
-                          </div>
-                        ))
-                      )}
-                      <div className="soil-legend-item">
-                        <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
-                        <span className="soil-legend-label">Andmed puuduvad</span>
                       </div>
                     </div>
                   </div>

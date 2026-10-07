@@ -950,6 +950,25 @@ body {
   background: transparent;
 }
 
+/* Kihi lisavalikud päise all samas kastis (päis ei liigu sisselülitamisel) */
+.layer-sub-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 6px 8px 8px;
+  border-top: 1px dashed var(--border-card);
+}
+
+.layer-sub-options .vehicle-individual-list {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.layer-sub-options .vehicle-filter-subgroup {
+  margin-top: 0;
+}
+
 .layer-year-selector {
   display: flex;
   flex-direction: column;
