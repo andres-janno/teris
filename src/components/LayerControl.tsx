@@ -8,7 +8,8 @@ import {
   ChevronDown,
   ChevronUp,
   Maximize2,
-  Play
+  Play,
+  Loader2
 } from 'lucide-react';
 import type { BaseMapLayerId, LayerVisibility } from '../types/map';
 import type { SoilSampleMetricKey } from '../types/soilSample';
@@ -165,6 +166,9 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     />
                     <span className="layer-color-indicator cultivation-color"></span>
                     <span className="layer-text">Põllutööd</span>
+                    {visibility.cultivation && isLoadingVehicleTracks && (
+                      <Loader2 size={14} className="layer-loading-spinner" aria-label="Radade laadimine" />
+                    )}
                   </label>
                   <button
                     className="icon-toggle"
@@ -177,9 +181,14 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
                 {visibility.cultivation && (
                   <div className="layer-sub-options">
-                    <span className="layer-subtext">
-                      {isLoadingVehicleTracks ? 'Radade laadimine…' : `${trackVehicleIds?.size ?? 0} masina rajad`}
-                    </span>
+                    {isLoadingVehicleTracks ? (
+                      <div className="layer-loading" role="status">
+                        <span className="layer-subtext">Masinate radade laadimine ja arvutamine…</span>
+                        <div className="layer-loading-bar" />
+                      </div>
+                    ) : (
+                      <span className="layer-subtext">{trackVehicleIds?.size ?? 0} masina rajad</span>
+                    )}
                     {vehicles.length > 0 && (
                       <div className="vehicle-individual-list">
                         {vehicles.map((v) => {
