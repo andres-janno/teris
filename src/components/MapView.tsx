@@ -21,6 +21,9 @@ import { RADAR_RATE_SCALE } from '../services/radarScale';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
+// Kihid, mille sisse/välja lülitamisel kaart mahutatakse nähtavatele elementidele
+const AUTO_FIT_LAYERS = ['fields', 'cultivation', 'soilSamples', 'vehicles', 'poi'] as const;
+
 // Mandri-Eesti ja saared (sajuradari sisselülitamisel kuvatakse kogu Eesti)
 const ESTONIA_BOUNDS = L.latLngBounds([57.5, 21.7], [59.75, 28.25]);
 
@@ -700,8 +703,10 @@ export const MapView: React.FC<MapViewProps> = ({
   const fitBoundsDataRef = useRef({
     visibility,
     fields,
-    displayedVehicles,
+    vehicles: displayedVehicles,
     cultivationPass,
+    vehicleTracks,
+    soilSamples: latestSoilSamples,
     pois
   });
 
@@ -709,11 +714,13 @@ export const MapView: React.FC<MapViewProps> = ({
     fitBoundsDataRef.current = {
       visibility,
       fields,
-      displayedVehicles,
+      vehicles: displayedVehicles,
       cultivationPass,
+      vehicleTracks,
+      soilSamples: latestSoilSamples,
       pois
     };
-  }, [visibility, fields, displayedVehicles, cultivationPass, pois]);
+  }, [visibility, fields, displayedVehicles, cultivationPass, vehicleTracks, latestSoilSamples, pois]);
 
   const handleFitAllBounds = useCallback(() => {
     const map = mapInstanceRef.current;
@@ -739,6 +746,32 @@ export const MapView: React.FC<MapViewProps> = ({
       handleFitAllBounds();
     }
   }, [fitBoundsTrigger, handleFitAllBounds]);
+
+  // 9. Automaatne mahutamine kihi sisse/välja lülitamisel (sajuradaril on oma vaade, aluskaart ja
+  // katastripiirid ei muuda sisu). Asukoha valimise ajutist kihivahetust ei mahutata.
+  const prevAutoFitVisibilityRef = useRef(visibility);
+  const prevAddPoiModeRef = useRef(isAddPoiMode);
+  // Põllutööde rajad laaditakse asünkroonselt — mahuta uuesti, kui need saabuvad
+  const pendingTracksFitRef = useRef(false);
+
+  useEffect(() => {
+    const prev = prevAutoFitVisibilityRef.current;
+    const wasPickMode = prevAddPoiModeRef.current;
+    prevAutoFitVisibilityRef.current = visibility;
+    prevAddPoiModeRef.current = isAddPoiMode;
+    if (!visibility.cultivation) pendingTracksFitRef.current = false;
+    if (isAddPoiMode || wasPickMode) return;
+    const changed = AUTO_FIT_LAYERS.filter((k) => prev[k] !== visibility[k]);
+    if (!changed.length) return;
+    if (changed.includes('cultivation') && visibility.cultivation) pendingTracksFitRef.current = true;
+    handleFitAllBounds();
+  }, [visibility, isAddPoiMode, handleFitAllBounds]);
+
+  useEffect(() => {
+    if (!pendingTracksFitRef.current || !vehicleTracks.length) return;
+    pendingTracksFitRef.current = false;
+    handleFitAllBounds();
+  }, [vehicleTracks, handleFitAllBounds]);
 
   return (
     <div className="map-wrapper">

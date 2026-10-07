@@ -137,10 +137,14 @@ export interface BoundsParams {
     vehicles: boolean;
     cultivation: boolean;
     poi: boolean;
+    soilSamples?: boolean;
   };
   fields?: { features: FieldFeature[] };
   vehicles?: { position?: [number, number] }[];
   cultivationPass?: { swathPolygon?: any; points?: { lat: number; lng: number }[] };
+  /** Põllutööde kihi masinate valmis rajad */
+  vehicleTracks?: { swathPolygon?: any; trailLine?: any }[];
+  soilSamples?: { lat: number; lng: number }[];
   pois?: { position?: [number, number] }[];
 }
 
@@ -188,6 +192,28 @@ export function getVisibleElementsBounds(params: BoundsParams): [[number, number
         points.push([p.lat, p.lng]);
       });
     }
+  }
+
+  // 3b. Põllutööde rajad
+  if (params.visibility.cultivation && params.vehicleTracks) {
+    params.vehicleTracks.forEach((t) => {
+      const geom = t.trailLine ?? t.swathPolygon;
+      if (!geom) return;
+      try {
+        const bbox = turf.bbox(geom);
+        points.push([bbox[1], bbox[0]]);
+        points.push([bbox[3], bbox[2]]);
+      } catch (e) {
+        // ignore
+      }
+    });
+  }
+
+  // 3c. Mullaproovid
+  if (params.visibility.soilSamples && params.soilSamples) {
+    params.soilSamples.forEach((s) => {
+      if (Number.isFinite(s.lat) && Number.isFinite(s.lng)) points.push([s.lat, s.lng]);
+    });
   }
 
   // 4. POIs
