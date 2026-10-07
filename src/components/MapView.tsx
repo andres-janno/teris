@@ -21,6 +21,9 @@ import { RADAR_RATE_SCALE } from '../services/radarScale';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
+// Mandri-Eesti ja saared (sajuradari sisselülitamisel kuvatakse kogu Eesti)
+const ESTONIA_BOUNDS = L.latLngBounds([57.5, 21.7], [59.75, 28.25]);
+
 interface MapViewProps {
   visibility: LayerVisibility;
   fields: FieldCollection;
@@ -81,6 +84,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const vehicleTracksLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const radarOverlayRef = useRef<L.ImageOverlay | null>(null);
+  // Eelmine sajuradari olek: kaart mahutatakse Eestile ainult kasutaja sisselülitamisel, mitte lehe laadimisel
+  const prevWeatherRadarRef = useRef(visibility.weatherRadar);
   const [radarTime, setRadarTime] = useState<string | null>(null);
   const [radarError, setRadarError] = useState<string | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -491,6 +496,11 @@ export const MapView: React.FC<MapViewProps> = ({
   // 5c. Sajuradar: viimane koondpilt, uuendatakse iga 5 min tagant (KAIA uus kaader tuleb sama sagedusega)
   useEffect(() => {
     const map = mapInstanceRef.current;
+    const justEnabled = visibility.weatherRadar && !prevWeatherRadarRef.current;
+    prevWeatherRadarRef.current = visibility.weatherRadar;
+    if (map && justEnabled) {
+      map.flyToBounds(ESTONIA_BOUNDS, { padding: [20, 20], duration: 0.8 });
+    }
     if (!map || !visibility.weatherRadar) {
       radarOverlayRef.current?.remove();
       radarOverlayRef.current = null;
