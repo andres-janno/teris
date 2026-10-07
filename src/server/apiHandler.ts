@@ -5,6 +5,7 @@ import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
+import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -116,56 +117,12 @@ type HistoryRow = {
 async function fetchDeviceHistory(imei: string, hours: number, from?: string | null, to?: string | null): Promise<HistoryRow[]> {
   if (!tsdb) return [];
   try {
-    const fromDate = from ? new Date(from) : null;
-    const toDate = to ? new Date(to) : null;
-    const validFrom = fromDate && !isNaN(fromDate.getTime()) ? fromDate : null;
-    const validTo = toDate && !isNaN(toDate.getTime()) ? toDate : null;
-
-    if (validFrom && validTo) {
-      return await tsdb.$queryRaw<HistoryRow[]>`
-        SELECT time, fields FROM (
-          SELECT time,
-            jsonb_object_agg(
-              field,
-              COALESCE(value_double, value_int::double precision, value_bigint::double precision)
-            ) AS fields
-          FROM measurements
-          WHERE device = ${imei}
-            AND measurement = 'data'
-            AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
-            AND time >= ${validFrom}
-            AND time <= ${validTo}
-          GROUP BY time
-          ORDER BY time DESC
-          LIMIT 5000
-        ) recent
-        ORDER BY time ASC
-      `;
-    }
-
-    if (validFrom) {
-      return await tsdb.$queryRaw<HistoryRow[]>`
-        SELECT time, fields FROM (
-          SELECT time,
-            jsonb_object_agg(
-              field,
-              COALESCE(value_double, value_int::double precision, value_bigint::double precision)
-            ) AS fields
-          FROM measurements
-          WHERE device = ${imei}
-            AND measurement = 'data'
-            AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
-            AND time >= ${validFrom}
-          GROUP BY time
-          ORDER BY time DESC
-          LIMIT 5000
-        ) recent
-        ORDER BY time ASC
-      `;
-    }
-
+    // Seotud seadme puhul piirab akent nii seotuse vahemik kui ka valitud tundide arv.
+    // Kui pakette on rohkem kui HISTORY_MAX_POINTS, hõrendatakse neid ühtlaselt üle kogu akna
+    // (mitte ei võeta viimaseid N), et sagedase saatmise korral ei kahaneks aken paarile minutile.
+    const { start, end } = resolveHistoryWindow(hours, from, to);
     return await tsdb.$queryRaw<HistoryRow[]>`
-      SELECT time, fields FROM (
+      WITH packets AS (
         SELECT time,
           jsonb_object_agg(
             field,
@@ -175,11 +132,20 @@ async function fetchDeviceHistory(imei: string, hours: number, from?: string | n
         WHERE device = ${imei}
           AND measurement = 'data'
           AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
-          AND time > now() - (${hours} || ' hours')::interval
+          AND time >= ${start}
+          AND time <= ${end}
         GROUP BY time
-        ORDER BY time DESC
-        LIMIT 5000
-      ) recent
+        HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
+      ),
+      numbered AS (
+        SELECT time, fields,
+          row_number() OVER (ORDER BY time) AS rn,
+          count(*) OVER () AS cnt
+        FROM packets
+      )
+      SELECT time, fields FROM numbered
+      WHERE (rn - 1) % GREATEST(1, CEIL(cnt / ${HISTORY_MAX_POINTS}::numeric))::bigint = 0
+        OR rn = cnt
       ORDER BY time ASC
     `;
   } catch (err) {

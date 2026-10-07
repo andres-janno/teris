@@ -195,7 +195,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       <td>{u.displayName ?? '–'}</td>
                       <td>{u.username}</td>
                       <td>{u.email ?? '–'}</td>
-                      <td>{[u.isAdmin ? 'Admin' : 'Kasutaja', u.isFinanceManager ? 'Finantsjuht' : null].filter(Boolean).join(' · ')}</td>
+                      <td>{[u.isAdmin ? 'Admin' : 'Kasutaja', u.isFinanceManager ? 'Finantsjuht' : null].filter(Boolean).join('<br>')}</td>
                       <td>
                         {!u.isActive ? (
                           <span className="user-status-pill status-inactive">

@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
-import { getCropColor } from '../services/shpParser';
+import { getCropColor } from '../services/cropColors';
 
 interface MapYearSelectorProps {
   selectedYear: number;

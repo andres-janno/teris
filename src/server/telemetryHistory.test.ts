@@ -1,6 +1,10 @@
 import { describe, it, expect } from 'vitest';
 import { prisma, tsdb } from './db';
 
+// Kombaini seade oli pärast ümbertõstmist (04.10 16:00 UTC) vaikne kuni 07.10 hommikuni, mil masin
+// päriselt tööle hakkas. Live-andmetest sõltuvad kontrollid piiratakse selle vaikse aknaga.
+const KOMBAIN_QUIET_UNTIL = new Date('2026-10-07T00:00:00.000Z');
+
 describe('Device Assignment and Telemetry History', () => {
   it('loads vehicle lastKnownPosition from db', async () => {
     const claas = await prisma.vehicle.findUnique({
@@ -68,6 +72,7 @@ describe('Device Assignment and Telemetry History', () => {
         WHERE device = ${imei}
           AND measurement = 'data'
           AND time >= ${from}
+          AND time < ${KOMBAIN_QUIET_UNTIL}
       `;
       expect(Number(rows[0].count)).toBe(0);
     });
@@ -80,7 +85,7 @@ describe('Device Assignment and Telemetry History', () => {
       });
       const imei = kombainAssignment!.device.imei!;
       const rows = await tsdb.$queryRaw<{ max_time: Date }[]>`
-        SELECT max(time) as max_time FROM measurements WHERE device = ${imei}
+        SELECT max(time) as max_time FROM measurements WHERE device = ${imei} AND time < ${KOMBAIN_QUIET_UNTIL}
       `;
       const lastMeasurement = rows[0]?.max_time;
       expect(lastMeasurement).toBeDefined();

@@ -1,25 +1,13 @@
-import React, { useState, useEffect, useRef, useMemo } from 'react';
+import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, startTransition } from 'react';
 import confetti from 'canvas-confetti';
 import { Header } from './components/Header';
 import { MapView } from './components/MapView';
 import { LayerControl } from './components/LayerControl';
 import { CultivationControl } from './components/CultivationControl';
 import { FieldDetailsDrawer } from './components/FieldDetailsDrawer';
-import { FieldManagerModal } from './components/FieldManagerModal';
-import { FieldUploadModal } from './components/FieldUploadModal';
-import { SoilSampleUploadModal } from './components/SoilSampleUploadModal';
-import { FieldBookUploadModal } from './components/FieldBookUploadModal';
 import { VehicleTracker } from './components/VehicleTracker';
-import { PoiManagerModal } from './components/PoiManagerModal';
-import { AnalyticsModal } from './components/AnalyticsModal';
 import { MapYearSelector } from './components/MapYearSelector';
-import { SeasonManagerModal } from './components/SeasonManagerModal';
-import { RelatedPartiesModal } from './components/RelatedPartiesModal';
-import { WorkRegisterModal } from './components/WorkRegisterModal';
-import { FieldWorksBoard } from './components/FieldWorksBoard';
-import { CropRegisterModal } from './components/CropRegisterModal';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
-import { UsersAdminModal } from './components/UsersAdminModal';
 
 import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
@@ -37,9 +25,25 @@ import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
 import { enrichVehicles } from './services/fleet';
 import { TelemetrySimulator } from './services/telemetrySimulator';
-import { getBoundingBox, generateCultivationPolygon } from './services/geometryEngine';
+import { getBoundingBox } from './services/geometryEngine';
+import { cleanTrack } from './services/trackCleaning';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
+import { DeferredMount } from './components/DeferredMount';
+
+// Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
+const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
+const FieldUploadModal = lazy(() => import('./components/FieldUploadModal').then((m) => ({ default: m.FieldUploadModal })));
+const SoilSampleUploadModal = lazy(() => import('./components/SoilSampleUploadModal').then((m) => ({ default: m.SoilSampleUploadModal })));
+const FieldBookUploadModal = lazy(() => import('./components/FieldBookUploadModal').then((m) => ({ default: m.FieldBookUploadModal })));
+const PoiManagerModal = lazy(() => import('./components/PoiManagerModal').then((m) => ({ default: m.PoiManagerModal })));
+const AnalyticsModal = lazy(() => import('./components/AnalyticsModal').then((m) => ({ default: m.AnalyticsModal })));
+const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
+const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
+const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
+const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
+const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
+const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
 
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
 // (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
@@ -227,6 +231,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Simulaatoris aktiivne sõiduki ID (kui on sisse lülitatud)
   const [simulatedVehicleId, setSimulatedVehicleId] = useState<string | null>(null);
+  // 'sim' = taasesitus, 'full' = kogu sõidetud rada ja haritud ala korraga (ilma taasesituseta)
+  const [vehicleTrackMode, setVehicleTrackMode] = useState<'sim' | 'full'>('sim');
+  // Raja laadimise efekt loeb režiimi ref'ist, et režiimi vahetus ei käivitaks andmete uuesti pärimist
+  const vehicleTrackModeRef = useRef(vehicleTrackMode);
+  useEffect(() => {
+    vehicleTrackModeRef.current = vehicleTrackMode;
+  }, [vehicleTrackMode]);
 
   // Simulaatori dünaamiline hetkeolek (asukoht, kiirus, olek)
   const [simulatedVehicleState, setSimulatedVehicleState] = useState<{
@@ -271,15 +282,19 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     });
   };
 
-  const handleToggleVehicleSimulator = (vehicleId: string) => {
-    setSimulatedVehicleId((prev) => {
-      const next = prev === vehicleId ? null : vehicleId;
-      if (next) {
-        setVisibility((v) => ({ ...v, cultivation: true }));
-      }
-      return next;
-    });
+  // Sama masina sama režiimi nupp lülitab välja; teine režiim samal masinal vahetab ainult režiimi.
+  const toggleVehicleTrack = (vehicleId: string, mode: 'sim' | 'full') => {
+    if (simulatedVehicleId === vehicleId && vehicleTrackMode === mode) {
+      setSimulatedVehicleId(null);
+      return;
+    }
+    setVehicleTrackMode(mode);
+    setSimulatedVehicleId(vehicleId);
+    setVisibility((v) => ({ ...v, cultivation: true }));
   };
+
+  const handleToggleVehicleSimulator = (vehicleId: string) => toggleVehicleTrack(vehicleId, 'sim');
+  const handleToggleVehicleFullTrack = (vehicleId: string) => toggleVehicleTrack(vehicleId, 'full');
 
   const [selectedVehicle, setSelectedVehicle] = useState<EnrichedVehicle | null>(null);
 
@@ -508,8 +523,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       }
     }
 
-    const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
-
+    // Harimisala ja vahemaa arvutab TelemetrySimulator taasesituse käigus järk-järgult
     return {
       id: `demo-pass-${vehicleId}`,
       vehicleId,
@@ -519,10 +533,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       endTime: points[points.length - 1].timestamp,
       workingWidthM: widthM,
       points,
-      swathPolygon: swathPolygon || undefined,
-      trailLine: trailLine || undefined,
-      workedAreaHa: totalWorkedAreaHa,
-      distanceKm: totalDistanceKm,
+      workedAreaHa: 0,
+      distanceKm: 0,
       avgSpeedKmH: 8.0
     };
   };
@@ -566,21 +578,29 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       simulatorRef.current = sim;
 
       sim.setOnUpdate((updatedPass, activePos, heading, speed, isWorking) => {
-        setCultivationPass(updatedPass);
-        setProgressPct(sim!.getProgress());
+        const progress = sim!.getProgress();
+        // Taasesituse uuendused on madala prioriteediga, et kasutaja klikid
+        // (nt kaardikihtide lülitamine) ei jääks simulaatori sammude järjekorda ootama.
+        startTransition(() => {
+          setCultivationPass(updatedPass);
+          setProgressPct(progress);
 
-        // Uuenda simuleeritud masina reaalaja andmeid kaardil
-        setSimulatedVehicleState({
-          vehicleId: currentVehicleId,
-          position: activePos,
-          heading,
-          speedKmH: speed,
-          isWorking
+          // Uuenda simuleeritud masina reaalaja andmeid kaardil
+          setSimulatedVehicleState({
+            vehicleId: currentVehicleId,
+            position: activePos,
+            heading,
+            speedKmH: speed,
+            isWorking
+          });
         });
       });
 
-      // Kui kasutaja on määranud kohandatud alguskellaaja, rakenda see
-      if (selectedStartTime) {
+      if (vehicleTrackModeRef.current === 'full') {
+        // Kogu rada korraga: keri kohe lõppu, taasesitust ei käivitata
+        sim.setProgress(100);
+      } else if (selectedStartTime) {
+        // Kui kasutaja on määranud kohandatud alguskellaaja, rakenda see
         sim.setPlaybackStartTime(selectedStartTime);
         setProgressPct(sim.getProgress());
       }
@@ -596,7 +616,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       .then((res) => {
         if (!isMounted) return;
         if (res.points.length >= 2) {
-          const points: TelemetryPoint[] = res.points.map((p) => ({
+          // Seismise GPS-müra ja kiiruse kõikumisest tekkivad pisikesed töölõigud välja
+          const points: TelemetryPoint[] = cleanTrack(res.points.map((p) => ({
             timestamp: p.timestamp,
             lat: p.lat,
             lng: p.lng,
@@ -605,10 +626,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             heading: p.heading,
             isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
             workingWidthM
-          }));
+          })));
 
-          const { swathPolygon, trailLine, totalDistanceKm, totalWorkedAreaHa } = generateCultivationPolygon(points);
-
+          // Kogu raja polügooni siin ei arvutata (tuhandete punktide puhul mitu sekundit);
+          // harimisala ja vahemaa arvutab TelemetrySimulator taasesituse käigus järk-järgult.
           const realPass: CultivationPass = {
             id: `pass-${currentVehicleId}`,
             vehicleId: currentVehicleId,
@@ -618,10 +639,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             endTime: points[points.length - 1].timestamp,
             workingWidthM,
             points,
-            swathPolygon: swathPolygon || undefined,
-            trailLine: trailLine || undefined,
-            workedAreaHa: totalWorkedAreaHa,
-            distanceKm: totalDistanceKm,
+            workedAreaHa: 0,
+            distanceKm: 0,
             avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
           };
 
@@ -654,8 +673,19 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   };
 
   // Playback control actions
+  // Režiimi vahetus juba laaditud raja peal (andmeid uuesti ei pärita)
+  useEffect(() => {
+    const sim = simulatorRef.current;
+    if (!sim || vehicleTrackMode !== 'full') return;
+    sim.pause();
+    setIsPlaying(false);
+    sim.setProgress(100);
+  }, [vehicleTrackMode]);
+
   const handleTogglePlay = () => {
     if (!simulatorRef.current) return;
+    // Play kogu raja vaates tähendab taasesituse alustamist
+    if (vehicleTrackMode === 'full') setVehicleTrackMode('sim');
     simulatorRef.current.togglePlay();
     setIsPlaying(simulatorRef.current.getIsPlaying());
   };
@@ -1333,19 +1363,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       />
 
       {mainView === 'works' && (
-        <FieldWorksBoard
-          year={selectedYear}
-          onSelectYear={setSelectedYear}
-          availableYears={availableYears}
-          seasons={seasons}
-          masterFields={operatorMasterFields}
-          crops={crops}
-          parties={parties}
-          vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
-          implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
-          onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
-          canManageFinance={user.isAdmin || user.isFinanceManager}
-        />
+        <Suspense fallback={null}>
+          <FieldWorksBoard
+            year={selectedYear}
+            onSelectYear={setSelectedYear}
+            availableYears={availableYears}
+            seasons={seasons}
+            masterFields={operatorMasterFields}
+            crops={crops}
+            parties={parties}
+            vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
+            implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
+            onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
+            canManageFinance={user.isAdmin || user.isFinanceManager}
+          />
+        </Suspense>
       )}
 
       {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
@@ -1423,7 +1455,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           hiddenVehicleMapIds={hiddenVehicleMapIds}
           onToggleVehicleMap={handleToggleVehicleMap}
           simulatedVehicleId={simulatedVehicleId}
+          vehicleTrackMode={vehicleTrackMode}
           onToggleVehicleSimulator={handleToggleVehicleSimulator}
+          onToggleVehicleFullTrack={handleToggleVehicleFullTrack}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
@@ -1448,71 +1482,81 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       </div>
 
       {/* Modals */}
-      <SeasonManagerModal 
-        isOpen={isSeasonManagerOpen}
-        onClose={() => setIsSeasonManagerOpen(false)}
-        seasons={seasons}
-        masterFields={masterFields}
-        selectedYear={selectedYear}
-        onUpdateSeason={handleUpdateSeason}
-        onCloseSeason={handleCloseSeason}
-        onReopenSeason={handleReopenSeason}
-        onCreateSeason={handleCreateSeason}
-      />
+      <DeferredMount when={isSeasonManagerOpen}>
+        <SeasonManagerModal
+          isOpen={isSeasonManagerOpen}
+          onClose={() => setIsSeasonManagerOpen(false)}
+          seasons={seasons}
+          masterFields={masterFields}
+          selectedYear={selectedYear}
+          onUpdateSeason={handleUpdateSeason}
+          onCloseSeason={handleCloseSeason}
+          onReopenSeason={handleReopenSeason}
+          onCreateSeason={handleCreateSeason}
+        />
+      </DeferredMount>
 
-      <FieldManagerModal 
-        isOpen={isFieldsRegisterOpen}
-        onClose={() => setIsFieldsRegisterOpen(false)}
-        masterFields={operatorMasterFields}
-        selectedYear={selectedYear}
-        onSelectYear={setSelectedYear}
-        baseMap={visibility.baseMap}
-        onUpdateField={handleUpdateMasterField}
-        onDeleteField={handleDeleteMasterField}
-        onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
-        onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
-        onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
-        seasons={seasons}
-        onOpenSeasonManager={() => {
-          setIsFieldsRegisterOpen(false);
-          setIsSeasonManagerOpen(true);
-        }}
-        parties={parties}
-        onOpenParties={() => {
-          setIsPartiesModalOpen(true);
-        }}
-        crops={crops}
-        onOpenCrops={() => {
-          // Register jääb avatuks (pooleli muudatused säilivad); kultuuride register avaneb peale.
-          setIsCropsModalOpen(true);
-        }}
-      />
+      <DeferredMount when={isFieldsRegisterOpen}>
+        <FieldManagerModal
+          isOpen={isFieldsRegisterOpen}
+          onClose={() => setIsFieldsRegisterOpen(false)}
+          masterFields={operatorMasterFields}
+          selectedYear={selectedYear}
+          onSelectYear={setSelectedYear}
+          baseMap={visibility.baseMap}
+          onUpdateField={handleUpdateMasterField}
+          onDeleteField={handleDeleteMasterField}
+          onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
+          onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
+          onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
+          seasons={seasons}
+          onOpenSeasonManager={() => {
+            setIsFieldsRegisterOpen(false);
+            setIsSeasonManagerOpen(true);
+          }}
+          parties={parties}
+          onOpenParties={() => {
+            setIsPartiesModalOpen(true);
+          }}
+          crops={crops}
+          onOpenCrops={() => {
+            // Register jääb avatuks (pooleli muudatused säilivad); kultuuride register avaneb peale.
+            setIsCropsModalOpen(true);
+          }}
+        />
+      </DeferredMount>
 
-      <FieldUploadModal
-        isOpen={isUploadOpen}
-        onClose={() => setIsUploadOpen(false)}
-        onFieldsImported={handleFieldsImported}
-        parties={parties}
-        availableYears={availableYears}
-        defaultYear={selectedYear}
-      />
+      <DeferredMount when={isUploadOpen}>
+        <FieldUploadModal
+          isOpen={isUploadOpen}
+          onClose={() => setIsUploadOpen(false)}
+          onFieldsImported={handleFieldsImported}
+          parties={parties}
+          availableYears={availableYears}
+          defaultYear={selectedYear}
+        />
+      </DeferredMount>
 
-      <SoilSampleUploadModal
-        isOpen={isSoilUploadOpen}
-        onClose={() => setIsSoilUploadOpen(false)}
-        onSamplesImported={handleSoilSamplesImported}
-      />
+      <DeferredMount when={isSoilUploadOpen}>
+        <SoilSampleUploadModal
+          isOpen={isSoilUploadOpen}
+          onClose={() => setIsSoilUploadOpen(false)}
+          onSamplesImported={handleSoilSamplesImported}
+        />
+      </DeferredMount>
 
-      <FieldBookUploadModal
-        isOpen={isFieldBookUploadOpen}
-        onClose={() => setIsFieldBookUploadOpen(false)}
-        onImported={() => {
-          api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude uuendamine ebaõnnestus:', err));
-        }}
-        masterFields={masterFields}
-        parties={parties}
-        seasons={seasons}
-      />
+      <DeferredMount when={isFieldBookUploadOpen}>
+        <FieldBookUploadModal
+          isOpen={isFieldBookUploadOpen}
+          onClose={() => setIsFieldBookUploadOpen(false)}
+          onImported={() => {
+            api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude uuendamine ebaõnnestus:', err));
+          }}
+          masterFields={masterFields}
+          parties={parties}
+          seasons={seasons}
+        />
+      </DeferredMount>
 
       <VehicleTracker 
         isOpen={isVehiclesOpen}
@@ -1537,58 +1581,70 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onDeleteDevice={handleDeleteDevice}
       />
 
-      <PoiManagerModal 
-        isOpen={isPoiModalOpen}
-        onClose={() => {
-          setIsPoiModalOpen(false);
-          setNewPoiCoords(null);
-          setPoiDraft(null);
-        }}
-        pois={pois}
-        onAddPoi={handleAddPoi}
-        onUpdatePoi={handleUpdatePoi}
-        onDeletePoi={handleDeletePoi}
-        onFocusPoi={handleFocusPoi}
-        onStartPickLocation={handleStartPickLocation}
-        initialDraft={poiDraft}
-        initialCoords={newPoiCoords}
-      />
+      <DeferredMount when={isPoiModalOpen}>
+        <PoiManagerModal
+          isOpen={isPoiModalOpen}
+          onClose={() => {
+            setIsPoiModalOpen(false);
+            setNewPoiCoords(null);
+            setPoiDraft(null);
+          }}
+          pois={pois}
+          onAddPoi={handleAddPoi}
+          onUpdatePoi={handleUpdatePoi}
+          onDeletePoi={handleDeletePoi}
+          onFocusPoi={handleFocusPoi}
+          onStartPickLocation={handleStartPickLocation}
+          initialDraft={poiDraft}
+          initialCoords={newPoiCoords}
+        />
+      </DeferredMount>
 
-      <AnalyticsModal 
-        isOpen={isAnalyticsOpen}
-        onClose={() => setIsAnalyticsOpen(false)}
-        fields={fields}
-        vehicles={vehicles}
-        cultivationPass={cultivationPass}
-      />
+      <DeferredMount when={isAnalyticsOpen}>
+        <AnalyticsModal
+          isOpen={isAnalyticsOpen}
+          onClose={() => setIsAnalyticsOpen(false)}
+          fields={fields}
+          vehicles={vehicles}
+          cultivationPass={cultivationPass}
+        />
+      </DeferredMount>
 
-      <RelatedPartiesModal
-        isOpen={isPartiesModalOpen}
-        onClose={() => setIsPartiesModalOpen(false)}
-        parties={parties}
-        onSaveParty={handleSaveParty}
-        onDeleteParty={handleDeleteParty}
-        masterFields={masterFields}
-        vehicles={vehicles}
-        selectedYear={selectedYear}
-        stacked={isFieldsRegisterOpen}
-      />
+      <DeferredMount when={isPartiesModalOpen}>
+        <RelatedPartiesModal
+          isOpen={isPartiesModalOpen}
+          onClose={() => setIsPartiesModalOpen(false)}
+          parties={parties}
+          onSaveParty={handleSaveParty}
+          onDeleteParty={handleDeleteParty}
+          masterFields={masterFields}
+          vehicles={vehicles}
+          selectedYear={selectedYear}
+          stacked={isFieldsRegisterOpen}
+        />
+      </DeferredMount>
 
-      <WorkRegisterModal isOpen={isWorkRegisterOpen} onClose={() => setIsWorkRegisterOpen(false)} crops={crops} />
+      <DeferredMount when={isWorkRegisterOpen}>
+        <WorkRegisterModal isOpen={isWorkRegisterOpen} onClose={() => setIsWorkRegisterOpen(false)} crops={crops} />
+      </DeferredMount>
 
-      <CropRegisterModal
-        isOpen={isCropsModalOpen}
-        onClose={() => setIsCropsModalOpen(false)}
-        crops={crops}
-        onSaveCrop={handleSaveCrop}
-        onDeleteCrop={handleDeleteCrop}
-        masterFields={operatorMasterFields}
-        selectedYear={selectedYear}
-        stacked={isFieldsRegisterOpen}
-      />
+      <DeferredMount when={isCropsModalOpen}>
+        <CropRegisterModal
+          isOpen={isCropsModalOpen}
+          onClose={() => setIsCropsModalOpen(false)}
+          crops={crops}
+          onSaveCrop={handleSaveCrop}
+          onDeleteCrop={handleDeleteCrop}
+          masterFields={operatorMasterFields}
+          selectedYear={selectedYear}
+          stacked={isFieldsRegisterOpen}
+        />
+      </DeferredMount>
 
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
-      <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} />
+      <DeferredMount when={isUsersAdminOpen}>
+        <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} />
+      </DeferredMount>
     </div>
   );
 };

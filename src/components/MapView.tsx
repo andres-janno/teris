@@ -14,7 +14,7 @@ import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
 import { getVisibleElementsBounds } from '../services/geometryEngine';
-import { getCropColor } from '../services/shpParser';
+import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 
 interface MapViewProps {
@@ -386,38 +386,54 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [displayedVehicles, visibility.vehicles]);
 
   // 5. Render Cultivation (Haritud ala & Swaths) Layer
+  // Kihid luuakse üks kord ja taasesitusel uuendatakse ainult koordinaate (setLatLngs),
+  // et iga simulaatori samm ei looks Leafleti kihte uuesti.
+  const swathLayerRef = useRef<L.Polygon | null>(null);
+  const trailLayerRef = useRef<L.Polyline | null>(null);
+
   useEffect(() => {
     const layerGroup = cultivationLayerGroupRef.current;
     if (!layerGroup) return;
 
-    layerGroup.clearLayers();
-    if (!visibility.cultivation) return;
-
-    // Draw swath polygon
-    if (cultivationPass.swathPolygon) {
-      const swathLayer = L.geoJSON(cultivationPass.swathPolygon as any, {
-        style: {
+    const swath = visibility.cultivation ? cultivationPass.swathPolygon : undefined;
+    if (swath) {
+      const latLngs = swath.geometry.type === 'Polygon'
+        ? L.GeoJSON.coordsToLatLngs(swath.geometry.coordinates, 1)
+        : L.GeoJSON.coordsToLatLngs(swath.geometry.coordinates, 2);
+      if (!swathLayerRef.current || !layerGroup.hasLayer(swathLayerRef.current)) {
+        swathLayerRef.current = L.polygon(latLngs as any, {
           color: '#16a34a',
           weight: 1.5,
           opacity: 0.85,
           fillColor: '#22c55e',
-          fillOpacity: 0.55
-        }
-      });
-      swathLayer.addTo(layerGroup);
+          fillOpacity: 0.55,
+          // Taasesitusel koosneb ala kattuvatest osadest; nonzero täidab ülekatted ühtlaselt
+          fillRule: 'nonzero'
+        }).addTo(layerGroup);
+      } else {
+        swathLayerRef.current.setLatLngs(latLngs as any);
+      }
+    } else if (swathLayerRef.current) {
+      swathLayerRef.current.remove();
+      swathLayerRef.current = null;
     }
 
-    // Draw trajectory trail line
-    if (cultivationPass.trailLine && visibility.swathTrails) {
-      const trailLayer = L.geoJSON(cultivationPass.trailLine as any, {
-        style: {
+    const trail = visibility.cultivation && visibility.swathTrails ? cultivationPass.trailLine : undefined;
+    if (trail) {
+      const latLngs = L.GeoJSON.coordsToLatLngs(trail.geometry.coordinates, 0);
+      if (!trailLayerRef.current || !layerGroup.hasLayer(trailLayerRef.current)) {
+        trailLayerRef.current = L.polyline(latLngs as any, {
           color: '#38bdf8',
           weight: 2,
           opacity: 0.7,
           dashArray: '4, 4'
-        }
-      });
-      trailLayer.addTo(layerGroup);
+        }).addTo(layerGroup);
+      } else {
+        trailLayerRef.current.setLatLngs(latLngs as any);
+      }
+    } else if (trailLayerRef.current) {
+      trailLayerRef.current.remove();
+      trailLayerRef.current = null;
     }
   }, [cultivationPass, visibility.cultivation, visibility.swathTrails]);
 

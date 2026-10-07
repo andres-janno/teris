@@ -8,7 +8,8 @@ import {
   ChevronDown,
   ChevronUp,
   Maximize2,
-  Play
+  Play,
+  Route
 } from 'lucide-react';
 import type { BaseMapLayerId, LayerVisibility, VehicleDisplayFilter } from '../types/map';
 import type { SoilSampleMetricKey } from '../types/soilSample';
@@ -35,7 +36,9 @@ interface LayerControlProps {
   hiddenVehicleMapIds?: Set<string>;
   onToggleVehicleMap?: (vehicleId: string) => void;
   simulatedVehicleId?: string | null;
+  vehicleTrackMode?: 'sim' | 'full';
   onToggleVehicleSimulator?: (vehicleId: string) => void;
+  onToggleVehicleFullTrack?: (vehicleId: string) => void;
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
@@ -55,7 +58,9 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   hiddenVehicleMapIds,
   onToggleVehicleMap,
   simulatedVehicleId,
-  onToggleVehicleSimulator
+  vehicleTrackMode = 'sim',
+  onToggleVehicleSimulator,
+  onToggleVehicleFullTrack
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -305,7 +310,9 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   <div className="vehicle-individual-list">
                     {vehicles.map((v) => {
                       const isMapVisible = !hiddenVehicleMapIds?.has(v.id);
-                      const isSimActive = simulatedVehicleId === v.id;
+                      const isTrackActive = simulatedVehicleId === v.id;
+                      const isSimActive = isTrackActive && vehicleTrackMode === 'sim';
+                      const isFullTrackActive = isTrackActive && vehicleTrackMode === 'full';
                       const iconEmoji = v.type === 'combine' ? '🌾' : (v.type === 'sprayer' ? '🚿' : (v.type === 'truck' ? '🚛' : '🚜'));
                       const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
                         ? v.telemetry.deviceId
@@ -314,7 +321,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       return (
                         <div
                           key={v.id}
-                          className={`v-indiv-row ${!isMapVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
+                          className={`v-indiv-row ${!isMapVisible ? 'is-hidden-map' : ''} ${isTrackActive ? 'is-sim-active' : ''}`}
                         >
                           <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
                             <span className="v-indiv-emoji">{iconEmoji}</span>
@@ -335,6 +342,19 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                               >
                                 <Play size={10} fill={isSimActive ? 'currentColor' : 'none'} />
                                 <span>Sim</span>
+                              </button>
+                            )}
+
+                            {/* Kogu sõidetud rada ja haritud ala korraga (ilma taasesituseta) */}
+                            {onToggleVehicleFullTrack && (
+                              <button
+                                type="button"
+                                className={`v-action-btn v-sim-btn ${isFullTrackActive ? 'active' : ''}`}
+                                title={isFullTrackActive ? 'Peida sõidetud rada' : `Kuva kogu sõidetud rada ja haritud ala (${v.name})`}
+                                onClick={() => onToggleVehicleFullTrack(v.id)}
+                              >
+                                <Route size={10} />
+                                <span>Rada</span>
                               </button>
                             )}
 

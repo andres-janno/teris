@@ -70,3 +70,31 @@ export const pickCropColor = (isWinterCrop: boolean, usedColors: string[]): stri
   }
   return hslToHex(best, 0.75, 0.45);
 };
+
+// Kultuuri värv nime järgi (kaart, aastavalija, tööde tahvel, SHP import).
+const CROP_COLORS: Record<string, string> = {
+  'talinisu': '#eab308',      // Yellow/Gold
+  'suvinisu': '#facc15',
+  'oder': '#ca8a04',          // Amber
+  'suvioder': '#d97706',
+  'taliraps': '#10b981',      // Emerald Green
+  'suviraps': '#34d399',
+  'rukis': '#a16207',         // Brown/Bronze
+  'kaer': '#fbbf24',          // Light Gold
+  'hernes': '#65a30d',        // Lime Green
+  'uba': '#84cc16',
+  'hein': '#22c55e',          // Bright Green
+  'kesa': '#78716c',          // Gray/Stone
+  'mais': '#f59e0b',          // Orange-yellow
+  'kartul': '#d97706',
+  'default': '#3b82f6'        // Blue
+};
+
+export function getCropColor(cropName?: string): string {
+  if (!cropName) return CROP_COLORS.default;
+  const lower = cropName.toLowerCase();
+  for (const [key, color] of Object.entries(CROP_COLORS)) {
+    if (lower.includes(key)) return color;
+  }
+  return CROP_COLORS.default;
+}

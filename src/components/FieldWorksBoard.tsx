@@ -4,7 +4,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Search, Plus, Lock, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
 import { matchCrop, isWinterCrop } from '../services/cropMatch';
-import { getCropColor } from '../services/shpParser';
+import { getCropColor } from '../services/cropColors';
 import { formatDate } from '../services/dateFormat';
 import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
