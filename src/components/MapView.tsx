@@ -499,8 +499,8 @@ export const MapView: React.FC<MapViewProps> = ({
     const justEnabled = visibility.weatherRadar && !prevWeatherRadarRef.current;
     prevWeatherRadarRef.current = visibility.weatherRadar;
     if (map && justEnabled) {
-      // Eesti ümbris kahandatud poole võrra (−25% igast servast): vaade on kogu Eesti vaatest 50% lähemal
-      map.flyToBounds(ESTONIA_BOUNDS.pad(-0.25), { duration: 0.8 });
+      // Eesti ümbris kahandatud veerandini (−37,5% igast servast): vaade on kogu Eesti vaatest 2 suumiastet lähemal
+      map.flyToBounds(ESTONIA_BOUNDS.pad(-0.375), { duration: 0.8 });
     }
     if (!map || !visibility.weatherRadar) {
       radarOverlayRef.current?.remove();
