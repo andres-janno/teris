@@ -13,7 +13,7 @@ import { getSoilMetricColor, getSoilMetricValue, SOIL_METRIC_CONFIG } from '../t
 import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
-import { getVisibleElementsBounds } from '../services/geometryEngine';
+import { getVisibleElementsBounds, getBoundingBox } from '../services/geometryEngine';
 import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 import { api } from '../services/api';
@@ -500,8 +500,17 @@ export const MapView: React.FC<MapViewProps> = ({
     const justEnabled = visibility.weatherRadar && !prevWeatherRadarRef.current;
     prevWeatherRadarRef.current = visibility.weatherRadar;
     if (map && justEnabled) {
-      // Eesti ümbris kahandatud veerandini (−37,5% igast servast): vaade on kogu Eesti vaatest 2 suumiastet lähemal
-      map.flyToBounds(ESTONIA_BOUNDS.pad(-0.375), { duration: 0.8 });
+      // Suum: kogu Eesti vaatest 2 suumiastet lähemal (Eesti ümbris kahandatud veerandini).
+      // Keskpunkt: põldude keskkoht; kui põlde pole, siis Eesti keskkoht.
+      const zoom = map.getBoundsZoom(ESTONIA_BOUNDS.pad(-0.375));
+      const fieldFeatures = fitBoundsDataRef.current.fields?.features ?? [];
+      const center = fieldFeatures.length
+        ? (() => {
+            const [minLng, minLat, maxLng, maxLat] = getBoundingBox({ type: 'FeatureCollection', features: fieldFeatures });
+            return L.latLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
+          })()
+        : ESTONIA_BOUNDS.getCenter();
+      map.flyTo(center, zoom, { duration: 0.8 });
     }
     if (!map || !visibility.weatherRadar) {
       radarOverlayRef.current?.remove();
