@@ -6,6 +6,7 @@ import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
+import { getLatestRadarFrame } from './weatherRadar.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -938,6 +939,29 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
         });
       }
       return json(res, { success: true });
+    }
+
+    // 5a. Sajuradar (Keskkonnaagentuuri radarite koondpilt KAIA avaandmetest)
+    if (pathname === '/api/weather/radar' && method === 'GET') {
+      const frame = await getLatestRadarFrame();
+      if (!frame) return json(res, { error: 'Radari andmed pole hetkel saadaval' }, 503);
+      return json(res, {
+        time: frame.time,
+        bounds: frame.bounds,
+        imageUrl: `/api/weather/radar.png?t=${encodeURIComponent(frame.time)}`
+      });
+    }
+
+    if (pathname === '/api/weather/radar.png' && method === 'GET') {
+      const frame = await getLatestRadarFrame();
+      if (!frame) return json(res, { error: 'Radari andmed pole hetkel saadaval' }, 503);
+      res.writeHead(200, {
+        'Content-Type': 'image/png',
+        'Content-Length': frame.png.length,
+        'Cache-Control': 'private, max-age=300'
+      });
+      res.end(frame.png);
+      return;
     }
 
     // 5b. Telemetry history (real GPS track for a single cellular device or vehicle, from telemetry_tsdb)

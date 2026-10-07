@@ -561,6 +561,61 @@ body {
   pointer-events: none;
 }
 
+/* Sajuradari legend (koordinaatide riba kohal) */
+.radar-legend {
+  position: absolute;
+  bottom: 60px;
+  left: 80px;
+  padding: 8px 10px;
+  z-index: 800;
+  border-radius: var(--radius-sm);
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.radar-legend-title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin-bottom: 6px;
+}
+
+.radar-legend-time {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.radar-legend-scale {
+  display: flex;
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.radar-legend-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  min-width: 22px;
+}
+
+.radar-legend-swatch {
+  width: 100%;
+  height: 8px;
+  border-radius: 2px;
+}
+
+.radar-legend-unit {
+  margin-left: 4px;
+}
+
+.weather-color {
+  background: #1e6fff;
+}
+
 /* Map Navigation & Fit-All Toolbar */
 .map-nav-toolbar {
   position: absolute;

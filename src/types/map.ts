@@ -25,6 +25,7 @@ export interface LayerVisibility {
   fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
   swathTrails: boolean;     // Töötrajektoori joonekesed
   soilSamples: boolean;     // Mullaproovide punktid
+  weatherRadar: boolean;    // Sajuradar (Keskkonnaagentuur, KAIA)
 }
 
 export type VehicleDisplayFilter = 'active' | 'all';

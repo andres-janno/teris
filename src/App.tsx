@@ -136,7 +136,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     poi: false,
     fieldLabels: false,
     swathTrails: true,
-    soilSamples: false
+    soilSamples: false,
+    weatherRadar: false
   };
   const [visibility, setVisibility] = useState<LayerVisibility>(() => {
     const saved = localStorage.getItem('agrimap_visibility');
@@ -1029,6 +1030,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         fieldLabels: false,
         swathTrails: false,
         soilSamples: false,
+        weatherRadar: false,
         poi: true
       }));
     }

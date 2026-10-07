@@ -1,5 +1,5 @@
 // src/components/MapView.tsx
-import React, { useEffect, useRef, useCallback } from 'react';
+import React, { useEffect, useRef, useCallback, useState } from 'react';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import proj4 from 'proj4';
@@ -16,6 +16,8 @@ import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './Map
 import { getVisibleElementsBounds } from '../services/geometryEngine';
 import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
+import { api } from '../services/api';
+import { RADAR_RATE_SCALE } from '../services/radarScale';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -78,6 +80,9 @@ export const MapView: React.FC<MapViewProps> = ({
   const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const vehicleTracksLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const radarOverlayRef = useRef<L.ImageOverlay | null>(null);
+  const [radarTime, setRadarTime] = useState<string | null>(null);
+  const [radarError, setRadarError] = useState<string | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const soilSampleLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
@@ -153,6 +158,11 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // Create layer groups
     vehiclesLayerGroupRef.current = L.layerGroup().addTo(map);
+    // Sajuradar põldude kohal, kuid markerite ja hüpikakende all; klikid lähevad läbi
+    const radarPane = map.createPane('radarPane');
+    radarPane.style.zIndex = '450';
+    radarPane.style.pointerEvents = 'none';
+
     // Masinate valmis rajad enne taasesituse kihti, et simuleeritav rada jääks peale
     vehicleTracksLayerGroupRef.current = L.layerGroup().addTo(map);
     cultivationLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -478,6 +488,46 @@ export const MapView: React.FC<MapViewProps> = ({
     });
   }, [vehicleTracks, visibility.cultivation, visibility.swathTrails]);
 
+  // 5c. Sajuradar: viimane koondpilt, uuendatakse iga 5 min tagant (KAIA uus kaader tuleb sama sagedusega)
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !visibility.weatherRadar) {
+      radarOverlayRef.current?.remove();
+      radarOverlayRef.current = null;
+      setRadarTime(null);
+      setRadarError(null);
+      return;
+    }
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const frame = await api.getWeatherRadar();
+        if (cancelled) return;
+        const bounds = L.latLngBounds(frame.bounds);
+        if (radarOverlayRef.current && map.hasLayer(radarOverlayRef.current)) {
+          radarOverlayRef.current.setUrl(frame.imageUrl);
+          radarOverlayRef.current.setBounds(bounds);
+        } else {
+          radarOverlayRef.current = L.imageOverlay(frame.imageUrl, bounds, {
+            pane: 'radarPane',
+            interactive: false,
+            attribution: 'Sajuradar: <a href="https://www.ilmateenistus.ee" target="_blank" rel="noopener">Keskkonnaagentuur</a>'
+          }).addTo(map);
+        }
+        setRadarTime(frame.time);
+        setRadarError(null);
+      } catch (err) {
+        if (!cancelled) setRadarError(err instanceof Error ? err.message : 'Radari andmed pole saadaval');
+      }
+    };
+    load();
+    const timer = window.setInterval(load, 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      clearInterval(timer);
+    };
+  }, [visibility.weatherRadar]);
+
   // 6. Render POI / Infrastructure Layer
   useEffect(() => {
     const layerGroup = poiLayerGroupRef.current;
@@ -652,6 +702,31 @@ export const MapView: React.FC<MapViewProps> = ({
       <div ref={coordsDisplayRef} className="coords-tracker glass-card">
         WGS84: 58.13800, 25.88200 | L-EST97: X 532800 Y 6531200
       </div>
+
+      {/* Sajuradari legend */}
+      {visibility.weatherRadar && (
+        <div className="radar-legend glass-card">
+          <div className="radar-legend-title">
+            Sajuradar
+            <span className="radar-legend-time">
+              {radarError
+                ? radarError
+                : radarTime
+                  ? new Date(radarTime).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })
+                  : 'laadimine…'}
+            </span>
+          </div>
+          <div className="radar-legend-scale">
+            {RADAR_RATE_SCALE.map((s) => (
+              <div key={s.min} className="radar-legend-step">
+                <span className="radar-legend-swatch" style={{ backgroundColor: `rgb(${s.color.join(',')})` }} />
+                <span>{s.min}</span>
+              </div>
+            ))}
+            <span className="radar-legend-unit">mm/h</span>
+          </div>
+        </div>
+      )}
 
       {/* Add POI Banner */}
       {isAddPoiMode && (

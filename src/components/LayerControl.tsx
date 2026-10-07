@@ -354,6 +354,26 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   {visibility.poi ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
+
+              {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
+              <div className="layer-item">
+                <label className="layer-label">
+                  <input
+                    type="checkbox"
+                    checked={visibility.weatherRadar}
+                    onChange={() => onToggleLayer('weatherRadar')}
+                  />
+                  <span className="layer-color-indicator weather-color"></span>
+                  <span className="layer-text">Sajuradar</span>
+                </label>
+                <button
+                  className="icon-toggle"
+                  onClick={() => onToggleLayer('weatherRadar')}
+                  title={visibility.weatherRadar ? 'Peida' : 'Näita'}
+                >
+                  {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
+              </div>
             </div>
           </div>
 
