@@ -588,21 +588,27 @@ body {
   color: var(--text-secondary);
 }
 
-.radar-legend-frames {
-  display: flex;
-  gap: 3px;
+.radar-legend-timeline {
   margin-bottom: 6px;
 }
 
-.radar-legend-frame {
-  flex: 1;
+.radar-legend-track {
   height: 4px;
   border-radius: 2px;
   background: var(--border-subtle);
+  overflow: hidden;
 }
 
-.radar-legend-frame.active {
+.radar-legend-progress {
+  height: 100%;
   background: var(--emerald-500);
+}
+
+.radar-legend-range {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.62rem;
+  margin-top: 2px;
 }
 
 .radar-legend-scale {

@@ -13,8 +13,11 @@ const KAIA_API = 'https://avaandmed.keskkonnaportaal.ee/api/lists/active';
 const RADAR_CONTENT_TYPE = '0102FB01';
 // KAIA uus kaader tuleb iga 5 min; kontrollime uut mitte sagedamini kui see
 const REFRESH_MS = 2.5 * 60 * 1000;
-// Mitu viimast kaadrit hoitakse ja antakse kaardile animatsiooniks (5 min vahega)
-export const RADAR_FRAME_COUNT = 10;
+// Kaardile antakse viimase RADAR_HISTORY_HOURS tunni kaadrid animatsiooniks (KAIA kaader iga 5 min)
+export const RADAR_HISTORY_HOURS = 6;
+export const RADAR_FRAME_COUNT = RADAR_HISTORY_HOURS * 12;
+// Mitu faili korraga KAIA-st alla laaditakse (esimesel laadimisel on neid kuni RADAR_FRAME_COUNT)
+const DOWNLOAD_CONCURRENCY = 4;
 
 export interface RadarFrame {
   /** Mõõtmise aeg (UTC, ISO) */
@@ -101,7 +104,7 @@ async function findRecentComposites(count: number): Promise<CompositeRef[]> {
           ]
         }
       },
-      pageSize: 100,
+      pageSize: 250,
       includeFileMetadata: true,
       fields: ['Timestamp']
     }),
@@ -132,7 +135,7 @@ async function loadComposite(docId: string, fileId: string, time: string): Promi
 
   // h5wasm-i Node'i versioon loeb päris failisüsteemist
   await h5ready;
-  const path = join(tmpdir(), `teris-radar-${process.pid}-${Date.now()}.h5`);
+  const path = join(tmpdir(), `teris-radar-${process.pid}-${Date.now()}-${Math.random().toString(36).slice(2)}.h5`);
   await writeFile(path, bytes);
   try {
     const f = new H5File(path, 'r');
@@ -179,16 +182,26 @@ export async function getRecentRadarFrames(): Promise<RadarFrame[]> {
       const refs = await findRecentComposites(RADAR_FRAME_COUNT);
       lastCheck = Date.now();
       if (!refs.length) return cached;
+      // Juba töödeldud kaadrid võetakse vahemälust, alla laaditakse ainult uued (mitu korraga)
       const frames: RadarFrame[] = [];
-      // Juba töödeldud kaadrid võetakse vahemälust, alla laaditakse ainult uued
+      const missing: CompositeRef[] = [];
       for (const ref of refs) {
         const existing = cached.find((f) => f.time === ref.time);
-        try {
-          frames.push(existing ?? await loadComposite(ref.docId, ref.fileId, ref.time));
-        } catch (err) {
-          console.error(`Sajuradar: kaadri ${ref.time} laadimine ebaõnnestus:`, err);
-        }
+        if (existing) frames.push(existing);
+        else missing.push(ref);
       }
+      let next = 0;
+      const worker = async () => {
+        while (next < missing.length) {
+          const ref = missing[next++];
+          try {
+            frames.push(await loadComposite(ref.docId, ref.fileId, ref.time));
+          } catch (err) {
+            console.error(`Sajuradar: kaadri ${ref.time} laadimine ebaõnnestus:`, err);
+          }
+        }
+      };
+      await Promise.all(Array.from({ length: Math.min(DOWNLOAD_CONCURRENCY, missing.length) }, worker));
       if (frames.length) cached = frames.sort((a, b) => a.time.localeCompare(b.time));
       return cached;
     } catch (err) {

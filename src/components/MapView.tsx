@@ -556,7 +556,8 @@ export const MapView: React.FC<MapViewProps> = ({
     const show = () => {
       radarOverlayRef.current?.setUrl(radarFrames[idx].imageUrl);
       setRadarFrameIdx(idx);
-      const delay = idx === lastIdx ? 2500 : 600;
+      // 6 h = 72 kaadrit: vahekaadrid kiiresti, et tsükkel jääks ~10 s peale; hetkeseis püsib kauem
+      const delay = idx === lastIdx ? 2500 : 110;
       idx = idx === lastIdx ? 0 : idx + 1;
       timer = window.setTimeout(show, delay);
     };
@@ -753,10 +754,17 @@ export const MapView: React.FC<MapViewProps> = ({
             </span>
           </div>
           {radarFrames.length > 1 && (
-            <div className="radar-legend-frames" title="Kaadrid 5 min vahega, viimane on hetkeseis">
-              {radarFrames.map((f, i) => (
-                <span key={f.time} className={`radar-legend-frame ${i === radarFrameIdx ? 'active' : ''}`} />
-              ))}
+            <div className="radar-legend-timeline" title="Viimase 6 tunni kaadrid 5 min vahega, viimane on hetkeseis">
+              <div className="radar-legend-track">
+                <div
+                  className="radar-legend-progress"
+                  style={{ width: `${(radarFrameIdx / (radarFrames.length - 1)) * 100}%` }}
+                />
+              </div>
+              <div className="radar-legend-range">
+                <span>{new Date(radarFrames[0].time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}</span>
+                <span>{new Date(radarFrames[radarFrames.length - 1].time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}</span>
+              </div>
             </div>
           )}
           <div className="radar-legend-scale">
