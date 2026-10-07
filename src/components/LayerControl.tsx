@@ -142,7 +142,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       onChange={() => onToggleLayer('fields')}
                     />
                     <span className="layer-color-indicator fields-color"></span>
-                    <span className="layer-text">PRIA Põllud</span>
+                    <span className="layer-text">Põllud</span>
                   </label>
                   <button
                     className="icon-toggle"
@@ -152,77 +152,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     {visibility.fields ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
-              </div>
-
-              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
-              <div className={visibility.soilSamples ? 'layer-box-group' : 'layer-field-box'}>
-                <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.soilSamples}
-                      onChange={() => onToggleLayer('soilSamples')}
-                    />
-                    <span className="layer-color-indicator soil-color"></span>
-                    {visibility.soilSamples ? (
-                      <span className="layer-text-wrap">
-                        <span className="layer-text">METK Mullaproovid</span>
-                        <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
-                      </span>
-                    ) : (
-                      <span className="layer-text">METK Mullaproovid</span>
-                    )}
-                  </label>
-                  <button
-                    className="icon-toggle"
-                    onClick={() => onToggleLayer('soilSamples')}
-                    title={visibility.soilSamples ? 'Peida' : 'Näita'}
-                  >
-                    {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                </div>
-
-                {visibility.soilSamples && onSelectSoilMetric && (
-                  <div className="vehicle-filter-subgroup">
-                    <div className="soil-metric-radio-list">
-                      {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                        <label key={key} className="soil-metric-radio-item">
-                          <input
-                            type="radio"
-                            name="soil-metric"
-                            value={key}
-                            checked={soilMetric === key}
-                            onChange={() => onSelectSoilMetric(key)}
-                          />
-                          <span>{SOIL_METRIC_CONFIG[key].label}</span>
-                        </label>
-                      ))}
-                    </div>
-
-                    <div className="soil-legend-list">
-                      {isAgeMetric ? (
-                        <div className="soil-legend-gradient">
-                          <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
-                          <div className="soil-legend-gradient-labels">
-                            <span>0 a</span>
-                            <span>&gt; {AGE_MAX_YEARS} a</span>
-                          </div>
-                        </div>
-                      ) : (
-                        soilLegendItems.map((item) => (
-                          <div key={item.label} className="soil-legend-item">
-                            <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
-                            <span className="soil-legend-label">{item.label}</span>
-                          </div>
-                        ))
-                      )}
-                      <div className="soil-legend-item">
-                        <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
-                        <span className="soil-legend-label">Andmed puuduvad</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
               </div>
 
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
@@ -309,6 +238,77 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                         </div>
                       );
                     })}
+                  </div>
+                )}
+              </div>
+
+              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
+              <div className={visibility.soilSamples ? 'layer-box-group' : 'layer-field-box'}>
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.soilSamples}
+                      onChange={() => onToggleLayer('soilSamples')}
+                    />
+                    <span className="layer-color-indicator soil-color"></span>
+                    {visibility.soilSamples ? (
+                      <span className="layer-text-wrap">
+                        <span className="layer-text">Mullaproovid</span>
+                        <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                      </span>
+                    ) : (
+                      <span className="layer-text">Mullaproovid</span>
+                    )}
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('soilSamples')}
+                    title={visibility.soilSamples ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+
+                {visibility.soilSamples && onSelectSoilMetric && (
+                  <div className="vehicle-filter-subgroup">
+                    <div className="soil-metric-radio-list">
+                      {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
+                        <label key={key} className="soil-metric-radio-item">
+                          <input
+                            type="radio"
+                            name="soil-metric"
+                            value={key}
+                            checked={soilMetric === key}
+                            onChange={() => onSelectSoilMetric(key)}
+                          />
+                          <span>{SOIL_METRIC_CONFIG[key].label}</span>
+                        </label>
+                      ))}
+                    </div>
+
+                    <div className="soil-legend-list">
+                      {isAgeMetric ? (
+                        <div className="soil-legend-gradient">
+                          <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
+                          <div className="soil-legend-gradient-labels">
+                            <span>0 a</span>
+                            <span>&gt; {AGE_MAX_YEARS} a</span>
+                          </div>
+                        </div>
+                      ) : (
+                        soilLegendItems.map((item) => (
+                          <div key={item.label} className="soil-legend-item">
+                            <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
+                            <span className="soil-legend-label">{item.label}</span>
+                          </div>
+                        ))
+                      )}
+                      <div className="soil-legend-item">
+                        <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
+                        <span className="soil-legend-label">Andmed puuduvad</span>
+                      </div>
+                    </div>
                   </div>
                 )}
               </div>
