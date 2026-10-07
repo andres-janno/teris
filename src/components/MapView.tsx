@@ -497,20 +497,23 @@ export const MapView: React.FC<MapViewProps> = ({
   // 5c. Sajuradar: viimane koondpilt, uuendatakse iga 5 min tagant (KAIA uus kaader tuleb sama sagedusega)
   useEffect(() => {
     const map = mapInstanceRef.current;
-    const justEnabled = visibility.weatherRadar && !prevWeatherRadarRef.current;
+    const wasEnabled = prevWeatherRadarRef.current;
     prevWeatherRadarRef.current = visibility.weatherRadar;
-    if (map && justEnabled) {
-      // Suum: kogu Eesti vaatest 2 suumiastet lähemal (Eesti ümbris kahandatud veerandini).
-      // Keskpunkt: põldude keskkoht; kui põlde pole, siis Eesti keskkoht.
+    const fieldFeatures = fitBoundsDataRef.current.fields?.features ?? [];
+    const fieldsBbox = fieldFeatures.length
+      ? getBoundingBox({ type: 'FeatureCollection', features: fieldFeatures })
+      : null;
+    if (map && visibility.weatherRadar && !wasEnabled) {
+      // Sisselülitamisel: kogu Eesti vaatest 2 suumiastet lähemal (Eesti ümbris kahandatud veerandini),
+      // keskpunktiks põldude keskkoht; kui põlde pole, siis Eesti keskkoht.
       const zoom = map.getBoundsZoom(ESTONIA_BOUNDS.pad(-0.375));
-      const fieldFeatures = fitBoundsDataRef.current.fields?.features ?? [];
-      const center = fieldFeatures.length
-        ? (() => {
-            const [minLng, minLat, maxLng, maxLat] = getBoundingBox({ type: 'FeatureCollection', features: fieldFeatures });
-            return L.latLng((minLat + maxLat) / 2, (minLng + maxLng) / 2);
-          })()
+      const center = fieldsBbox
+        ? L.latLng((fieldsBbox[1] + fieldsBbox[3]) / 2, (fieldsBbox[0] + fieldsBbox[2]) / 2)
         : ESTONIA_BOUNDS.getCenter();
       map.flyTo(center, zoom, { duration: 0.8 });
+    } else if (map && !visibility.weatherRadar && wasEnabled && fieldsBbox) {
+      // Väljalülitamisel tagasi põldude vaatesse
+      map.flyToBounds([[fieldsBbox[1], fieldsBbox[0]], [fieldsBbox[3], fieldsBbox[2]]], { padding: [30, 30], duration: 0.8 });
     }
     if (!map || !visibility.weatherRadar) {
       radarOverlayRef.current?.remove();
