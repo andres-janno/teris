@@ -588,15 +588,21 @@ body {
   color: var(--text-secondary);
 }
 
+.radar-legend-frames {
+  display: flex;
+  gap: 3px;
+  margin-bottom: 6px;
+}
+
 .radar-legend-frame {
-  margin-right: 6px;
-  opacity: 0.45;
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border-subtle);
 }
 
 .radar-legend-frame.active {
-  opacity: 1;
-  font-weight: 700;
-  color: var(--text-primary);
+  background: var(--emerald-500);
 }
 
 .radar-legend-scale {

@@ -14,7 +14,7 @@ const RADAR_CONTENT_TYPE = '0102FB01';
 // KAIA uus kaader tuleb iga 5 min; kontrollime uut mitte sagedamini kui see
 const REFRESH_MS = 2.5 * 60 * 1000;
 // Mitu viimast kaadrit hoitakse ja antakse kaardile animatsiooniks (5 min vahega)
-export const RADAR_FRAME_COUNT = 3;
+export const RADAR_FRAME_COUNT = 10;
 
 export interface RadarFrame {
   /** Mõõtmise aeg (UTC, ISO) */
@@ -85,7 +85,8 @@ type CompositeRef = { docId: string; fileId: string; time: string };
 
 /** KAIA viimased koondpildid, uuemad eespool. */
 async function findRecentComposites(count: number): Promise<CompositeRef[]> {
-  const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+  // Aken peab katma RADAR_FRAME_COUNT kaadrit (5 min vahega) koos KAIA viite ja võimalike vahelejäämistega
+  const since = new Date(Date.now() - (count * 5 + 40) * 60 * 1000).toISOString();
   const res = await fetch(`${KAIA_API}/items/query`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -100,7 +101,7 @@ async function findRecentComposites(count: number): Promise<CompositeRef[]> {
           ]
         }
       },
-      pageSize: 50,
+      pageSize: 100,
       includeFileMetadata: true,
       fields: ['Timestamp']
     }),

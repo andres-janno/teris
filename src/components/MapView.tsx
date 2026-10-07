@@ -556,7 +556,7 @@ export const MapView: React.FC<MapViewProps> = ({
     const show = () => {
       radarOverlayRef.current?.setUrl(radarFrames[idx].imageUrl);
       setRadarFrameIdx(idx);
-      const delay = idx === lastIdx ? 2500 : 900;
+      const delay = idx === lastIdx ? 2500 : 600;
       idx = idx === lastIdx ? 0 : idx + 1;
       timer = window.setTimeout(show, delay);
     };
@@ -747,15 +747,18 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="radar-legend-time">
               {radarError
                 ? radarError
-                : radarFrames.length
-                  ? radarFrames.map((f, i) => (
-                      <span key={f.time} className={`radar-legend-frame ${i === radarFrameIdx ? 'active' : ''}`}>
-                        {new Date(f.time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}
-                      </span>
-                    ))
+                : radarFrames[radarFrameIdx]
+                  ? new Date(radarFrames[radarFrameIdx].time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })
                   : 'laadimine…'}
             </span>
           </div>
+          {radarFrames.length > 1 && (
+            <div className="radar-legend-frames" title="Kaadrid 5 min vahega, viimane on hetkeseis">
+              {radarFrames.map((f, i) => (
+                <span key={f.time} className={`radar-legend-frame ${i === radarFrameIdx ? 'active' : ''}`} />
+              ))}
+            </div>
+          )}
           <div className="radar-legend-scale">
             {RADAR_RATE_SCALE.map((s) => (
               <div key={s.min} className="radar-legend-step">
