@@ -17,6 +17,8 @@ import { getVisibleElementsBounds } from '../services/geometryEngine';
 import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 
+const NO_VEHICLE_TRACKS: CultivationPass[] = [];
+
 interface MapViewProps {
   visibility: LayerVisibility;
   fields: FieldCollection;
@@ -26,6 +28,7 @@ interface MapViewProps {
   selectedVehicle?: Vehicle | null;
   onSelectVehicle: (vehicle: Vehicle | null) => void;
   cultivationPass: CultivationPass;
+  vehicleTracks?: CultivationPass[];
   pois: PointOfInterest[];
   selectedPoi?: PointOfInterest | null;
   onSelectPoi: (poi: PointOfInterest | null) => void;
@@ -52,6 +55,7 @@ export const MapView: React.FC<MapViewProps> = ({
   vehicles,
   onSelectVehicle,
   cultivationPass,
+  vehicleTracks = NO_VEHICLE_TRACKS,
   pois,
   onSelectPoi,
   isAddPoiMode,
@@ -73,6 +77,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const fieldsLayerGroupRef = useRef<L.GeoJSON | null>(null);
   const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
+  const vehicleTracksLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const soilSampleLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
@@ -148,6 +153,8 @@ export const MapView: React.FC<MapViewProps> = ({
 
     // Create layer groups
     vehiclesLayerGroupRef.current = L.layerGroup().addTo(map);
+    // Masinate valmis rajad enne taasesituse kihti, et simuleeritav rada jääks peale
+    vehicleTracksLayerGroupRef.current = L.layerGroup().addTo(map);
     cultivationLayerGroupRef.current = L.layerGroup().addTo(map);
     poiLayerGroupRef.current = L.layerGroup().addTo(map);
     soilSampleLayerGroupRef.current = L.layerGroup().addTo(map);
@@ -436,6 +443,40 @@ export const MapView: React.FC<MapViewProps> = ({
       trailLayerRef.current = null;
     }
   }, [cultivationPass, visibility.cultivation, visibility.swathTrails]);
+
+  // 5b. Põllutööd: kõigi masinate valmis rajad korraga (muutuvad harva, joonistatakse uuesti)
+  useEffect(() => {
+    const layerGroup = vehicleTracksLayerGroupRef.current;
+    if (!layerGroup) return;
+    layerGroup.clearLayers();
+    if (!visibility.cultivation) return;
+
+    vehicleTracks.forEach((track) => {
+      if (track.swathPolygon) {
+        L.geoJSON(track.swathPolygon as any, {
+          style: {
+            color: '#16a34a',
+            weight: 1.5,
+            opacity: 0.85,
+            fillColor: '#22c55e',
+            fillOpacity: 0.55,
+            fillRule: 'nonzero'
+          }
+        }).bindTooltip(`${track.vehicleName}: ${track.workedAreaHa} ha, ${track.distanceKm} km`, { sticky: true })
+          .addTo(layerGroup);
+      }
+      if (track.trailLine && visibility.swathTrails) {
+        L.geoJSON(track.trailLine as any, {
+          style: {
+            color: '#38bdf8',
+            weight: 2,
+            opacity: 0.7,
+            dashArray: '4, 4'
+          }
+        }).addTo(layerGroup);
+      }
+    });
+  }, [vehicleTracks, visibility.cultivation, visibility.swathTrails]);
 
   // 6. Render POI / Infrastructure Layer
   useEffect(() => {

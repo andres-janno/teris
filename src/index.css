@@ -5216,6 +5216,11 @@ input[type="number"],
   padding: 3px 5px;
 }
 
+.v-action-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
 .v-map-btn.active {
   color: var(--emerald-500);
   background: rgba(16, 185, 129, 0.12);

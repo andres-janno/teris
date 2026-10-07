@@ -8,10 +8,9 @@ import {
   ChevronDown,
   ChevronUp,
   Maximize2,
-  Play,
-  Route
+  Play
 } from 'lucide-react';
-import type { BaseMapLayerId, LayerVisibility, VehicleDisplayFilter } from '../types/map';
+import type { BaseMapLayerId, LayerVisibility } from '../types/map';
 import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
@@ -22,23 +21,19 @@ interface LayerControlProps {
   onToggleLayer: (key: keyof LayerVisibility) => void;
   onSelectBaseMap: (id: BaseMapLayerId) => void;
   onFitAll?: () => void;
-  activeVehiclesCount?: number;
-  totalVehiclesCount?: number;
-  vehicleFilter?: VehicleDisplayFilter;
-  onSelectVehicleFilter?: (filter: VehicleDisplayFilter) => void;
   soilSampleCount?: number;
   soilFieldCount?: number;
   soilMetric?: SoilSampleMetricKey;
   onSelectSoilMetric?: (metric: SoilSampleMetricKey) => void;
 
-  // Sõidukite individuaalsed lülitid
+  // Põllutööd: masinate rajad ja taasesitus
   vehicles?: EnrichedVehicle[];
-  hiddenVehicleMapIds?: Set<string>;
-  onToggleVehicleMap?: (vehicleId: string) => void;
   simulatedVehicleId?: string | null;
-  vehicleTrackMode?: 'sim' | 'full';
   onToggleVehicleSimulator?: (vehicleId: string) => void;
-  onToggleVehicleFullTrack?: (vehicleId: string) => void;
+  trackVehicleIds?: Set<string>;
+  isLoadingVehicleTracks?: boolean;
+  hiddenTrackVehicleIds?: Set<string>;
+  onToggleTrackVisibility?: (vehicleId: string) => void;
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
@@ -46,21 +41,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   onToggleLayer,
   onSelectBaseMap,
   onFitAll,
-  activeVehiclesCount = 0,
-  totalVehiclesCount = 0,
-  vehicleFilter = 'active',
-  onSelectVehicleFilter,
   soilSampleCount = 0,
   soilFieldCount = 0,
   soilMetric = 'ph',
   onSelectSoilMetric,
   vehicles = [],
-  hiddenVehicleMapIds,
-  onToggleVehicleMap,
   simulatedVehicleId,
-  vehicleTrackMode = 'sim',
   onToggleVehicleSimulator,
-  onToggleVehicleFullTrack
+  trackVehicleIds,
+  isLoadingVehicleTracks = false,
+  hiddenTrackVehicleIds,
+  onToggleTrackVisibility
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -163,8 +154,8 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 </div>
               </div>
 
-              {/* Soil Samples */}
-              <div className="layer-box-group">
+              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
+              <div className={visibility.soilSamples ? 'layer-box-group' : 'layer-field-box'}>
                 <div className="layer-item">
                   <label className="layer-label">
                     <input
@@ -173,10 +164,14 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       onChange={() => onToggleLayer('soilSamples')}
                     />
                     <span className="layer-color-indicator soil-color"></span>
-                    <span className="layer-text-wrap">
+                    {visibility.soilSamples ? (
+                      <span className="layer-text-wrap">
+                        <span className="layer-text">METK Mullaproovid</span>
+                        <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                      </span>
+                    ) : (
                       <span className="layer-text">METK Mullaproovid</span>
-                      <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
-                    </span>
+                    )}
                   </label>
                   <button
                     className="icon-toggle"
@@ -230,89 +225,42 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 )}
               </div>
 
-              {/* Cultivation / Teltonika Swaths */}
-              <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.cultivation}
-                    onChange={() => onToggleLayer('cultivation')}
-                  />
-                  <span className="layer-color-indicator cultivation-color"></span>
-                  <span className="layer-text">Haritud ala</span>
-                </label>
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('cultivation')}
-                  title={visibility.cultivation ? 'Peida' : 'Näita'}
-                >
-                  {visibility.cultivation ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
-
-              {/* Machinery / Vehicles */}
-              <div className="layer-box-group">
+              {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
+              <div className={visibility.cultivation ? 'layer-box-group' : 'layer-field-box'}>
                 <div className="layer-item">
                   <label className="layer-label">
                     <input
                       type="checkbox"
-                      checked={visibility.vehicles}
-                      onChange={() => onToggleLayer('vehicles')}
+                      checked={visibility.cultivation}
+                      onChange={() => onToggleLayer('cultivation')}
                     />
-                    <span className="layer-color-indicator tech-color"></span>
-                    <span className="layer-text-wrap">
-                      <span className="layer-text">Masinapark</span>
-                      <span className="layer-subtext">
-                        {vehicleFilter === 'active' ? 'Ainult töötavad (< 5 min)' : 'Kõik masinad'}
+                    <span className="layer-color-indicator cultivation-color"></span>
+                    {visibility.cultivation ? (
+                      <span className="layer-text-wrap">
+                        <span className="layer-text">Põllutööd</span>
+                        <span className="layer-subtext">
+                          {isLoadingVehicleTracks ? 'Radade laadimine…' : `${trackVehicleIds?.size ?? 0} masina rajad`}
+                        </span>
                       </span>
-                    </span>
-                    {activeVehiclesCount > 0 && (
-                      <span className="live-count-badge" title={`${activeVehiclesCount} masinat parasjagu töös või hiljuti liikunud`}>
-                        <span className="live-dot-pulse"></span>
-                        <span>{activeVehiclesCount}</span>
-                      </span>
+                    ) : (
+                      <span className="layer-text">Põllutööd</span>
                     )}
                   </label>
                   <button
                     className="icon-toggle"
-                    onClick={() => onToggleLayer('vehicles')}
-                    title={visibility.vehicles ? 'Peida' : 'Näita'}
+                    onClick={() => onToggleLayer('cultivation')}
+                    title={visibility.cultivation ? 'Peida' : 'Näita'}
                   >
-                    {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
+                    {visibility.cultivation ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
 
-                {/* Sub-selector for Vehicle Filter: Active vs All */}
-                {visibility.vehicles && onSelectVehicleFilter && (
-                  <div className="vehicle-filter-subgroup">
-                    <button
-                      type="button"
-                      className={`v-filter-pill ${vehicleFilter === 'active' ? 'active' : ''}`}
-                      onClick={() => onSelectVehicleFilter('active')}
-                      title="Kuva ainult masinad, mis töötavad või on liikunud viimase 5 min jooksul"
-                    >
-                      <span className="dot-live"></span>
-                      <span>Ainult töötavad ({activeVehiclesCount})</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`v-filter-pill ${vehicleFilter === 'all' ? 'active' : ''}`}
-                      onClick={() => onSelectVehicleFilter('all')}
-                      title="Kuva kogu masinapark (sh seisvad ja vabad masinad)"
-                    >
-                      <span>Kõik ({totalVehiclesCount || activeVehiclesCount})</span>
-                    </button>
-                  </div>
-                )}
-
-                {/* Sõidukite ja seadmete individuaalne juhtimine */}
-                {visibility.vehicles && vehicles && vehicles.length > 0 && (
+                {visibility.cultivation && vehicles.length > 0 && (
                   <div className="vehicle-individual-list">
                     {vehicles.map((v) => {
-                      const isMapVisible = !hiddenVehicleMapIds?.has(v.id);
-                      const isTrackActive = simulatedVehicleId === v.id;
-                      const isSimActive = isTrackActive && vehicleTrackMode === 'sim';
-                      const isFullTrackActive = isTrackActive && vehicleTrackMode === 'full';
+                      const isSimActive = simulatedVehicleId === v.id;
+                      const hasTrack = trackVehicleIds?.has(v.id) ?? false;
+                      const isTrackVisible = hasTrack && !hiddenTrackVehicleIds?.has(v.id);
                       const iconEmoji = v.type === 'combine' ? '🌾' : (v.type === 'sprayer' ? '🚿' : (v.type === 'truck' ? '🚛' : '🚜'));
                       const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
                         ? v.telemetry.deviceId
@@ -321,7 +269,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       return (
                         <div
                           key={v.id}
-                          className={`v-indiv-row ${!isMapVisible ? 'is-hidden-map' : ''} ${isTrackActive ? 'is-sim-active' : ''}`}
+                          className={`v-indiv-row ${hasTrack && !isTrackVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
                         >
                           <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
                             <span className="v-indiv-emoji">{iconEmoji}</span>
@@ -332,7 +280,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           </div>
 
                           <div className="v-indiv-actions">
-                            {/* Simulaatori lüliti */}
                             {onToggleVehicleSimulator && (
                               <button
                                 type="button"
@@ -345,28 +292,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                               </button>
                             )}
 
-                            {/* Kogu sõidetud rada ja haritud ala korraga (ilma taasesituseta) */}
-                            {onToggleVehicleFullTrack && (
+                            {onToggleTrackVisibility && (
                               <button
                                 type="button"
-                                className={`v-action-btn v-sim-btn ${isFullTrackActive ? 'active' : ''}`}
-                                title={isFullTrackActive ? 'Peida sõidetud rada' : `Kuva kogu sõidetud rada ja haritud ala (${v.name})`}
-                                onClick={() => onToggleVehicleFullTrack(v.id)}
+                                className={`v-action-btn v-map-btn ${isTrackVisible ? 'active' : ''}`}
+                                title={!hasTrack
+                                  ? (isLoadingVehicleTracks ? 'Rada laaditakse…' : 'GPS-rada puudub')
+                                  : (isTrackVisible ? `Peida ${v.name} rada` : `Kuva ${v.name} rada`)}
+                                onClick={() => onToggleTrackVisibility(v.id)}
+                                disabled={!hasTrack}
                               >
-                                <Route size={10} />
-                                <span>Rada</span>
-                              </button>
-                            )}
-
-                            {/* Kaardil kuvamise lüliti */}
-                            {onToggleVehicleMap && (
-                              <button
-                                type="button"
-                                className={`v-action-btn v-map-btn ${isMapVisible ? 'active' : ''}`}
-                                title={isMapVisible ? `Peida ${v.name} kaardilt` : `Kuva ${v.name} kaardil`}
-                                onClick={() => onToggleVehicleMap(v.id)}
-                              >
-                                {isMapVisible ? <Eye size={12} /> : <EyeOff size={12} />}
+                                {isTrackVisible ? <Eye size={12} /> : <EyeOff size={12} />}
                               </button>
                             )}
                           </div>
@@ -375,6 +311,28 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     })}
                   </div>
                 )}
+              </div>
+
+              {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
+              <div className="layer-field-box">
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.vehicles}
+                      onChange={() => onToggleLayer('vehicles')}
+                    />
+                    <span className="layer-color-indicator tech-color"></span>
+                    <span className="layer-text">Masinapark</span>
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('vehicles')}
+                    title={visibility.vehicles ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
               </div>
 
               {/* POI / Infrastructure */}

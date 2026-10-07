@@ -20,7 +20,7 @@ export interface LayerVisibility {
   cadastre: boolean;        // Maa-ameti katastripiirid
   fields: boolean;          // PRIA põllud
   vehicles: boolean;        // Masinapark / tehnika
-  cultivation: boolean;     // Haritud ala / Teltonika katvus
+  cultivation: boolean;     // Põllutööd: masinate rajad ja haritud ala (Teltonika)
   poi: boolean;             // Olulised asukohad (kuivati, vesi jne)
   fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
   swathTrails: boolean;     // Töötrajektoori joonekesed

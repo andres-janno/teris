@@ -10,7 +10,7 @@ import { MapYearSelector } from './components/MapYearSelector';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 
 import type { AuthUser } from './types/auth';
-import type { LayerVisibility, BaseMapLayerId, VehicleDisplayFilter } from './types/map';
+import type { LayerVisibility, BaseMapLayerId } from './types/map';
 import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
@@ -24,7 +24,7 @@ import type { Crop } from './types/crop';
 import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
 import { enrichVehicles } from './services/fleet';
-import { TelemetrySimulator } from './services/telemetrySimulator';
+import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
 import { isVehicleRecentlyActive } from './components/MapMarkers';
@@ -49,6 +49,35 @@ const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((
 // (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
 const WORKING_SPEED_MIN_KMH = 0.5;
 const WORKING_SPEED_MAX_KMH = 15;
+
+type HistoryPoint = Awaited<ReturnType<typeof api.getTelemetryHistory>>['points'][number];
+
+// GPS-ajalugu harimise läbisõiduks: tööolek kiiruse järgi, seismise müra ja lühikesed töölõigud välja
+function historyToPass(history: HistoryPoint[], vehicleId: string, vehicleName: string, workingWidthM: number): CultivationPass {
+  const points: TelemetryPoint[] = cleanTrack(history.map((p) => ({
+    timestamp: p.timestamp,
+    lat: p.lat,
+    lng: p.lng,
+    altitude: p.altitude,
+    speedKmH: p.speedKmH,
+    heading: p.heading,
+    isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
+    workingWidthM
+  })));
+  return {
+    id: `pass-${vehicleId}`,
+    vehicleId,
+    vehicleName,
+    operationType: 'Harimine',
+    startTime: points[0].timestamp,
+    endTime: points[points.length - 1].timestamp,
+    workingWidthM,
+    points,
+    workedAreaHa: 0,
+    distanceKm: 0,
+    avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
+  };
+}
 
 // Tühi harimise taasesitus, kui jälgitava seadme GPS-ajalugu puudub.
 const EMPTY_CULTIVATION_PASS: CultivationPass = {
@@ -132,7 +161,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   }, [visibility]);
 
   // Masinapargi kuvamise filter: 'active' (ainult töötavad < 5 min) või 'all' (kõik masinad)
-  const [vehicleFilter, setVehicleFilter] = useState<VehicleDisplayFilter>('active');
 
   // Active Farming Season / Year
   const [selectedYear, setSelectedYear] = useState<number>(2026);
@@ -226,18 +254,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // 3. Teltonika GPS seadmete register
   const [devices, setDevices] = useState<TeltonikaDevice[]>([]);
 
-  // Kaardil peidetud sõidukite ID-d
-  const [hiddenVehicleMapIds, setHiddenVehicleMapIds] = useState<Set<string>>(() => new Set());
-
   // Simulaatoris aktiivne sõiduki ID (kui on sisse lülitatud)
   const [simulatedVehicleId, setSimulatedVehicleId] = useState<string | null>(null);
-  // 'sim' = taasesitus, 'full' = kogu sõidetud rada ja haritud ala korraga (ilma taasesituseta)
-  const [vehicleTrackMode, setVehicleTrackMode] = useState<'sim' | 'full'>('sim');
-  // Raja laadimise efekt loeb režiimi ref'ist, et režiimi vahetus ei käivitaks andmete uuesti pärimist
-  const vehicleTrackModeRef = useRef(vehicleTrackMode);
-  useEffect(() => {
-    vehicleTrackModeRef.current = vehicleTrackMode;
-  }, [vehicleTrackMode]);
+
+  // Põllutööde kiht: kõigi GPS-ajalooga masinate valmis rajad ja kasutaja peidetud rajad
+  const [vehicleTracks, setVehicleTracks] = useState<CultivationPass[]>([]);
+  const [isLoadingVehicleTracks, setIsLoadingVehicleTracks] = useState(false);
+  const [hiddenTrackVehicleIds, setHiddenTrackVehicleIds] = useState<Set<string>>(() => new Set());
 
   // Simulaatori dünaamiline hetkeolek (asukoht, kiirus, olek)
   const [simulatedVehicleState, setSimulatedVehicleState] = useState<{
@@ -268,33 +291,23 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     });
   }, [rawVehicles, implementsList, devices, simulatedVehicleState]);
 
-  // Kaardil kuvatavad sõidukid (arvestab eraldi peitmist)
-  const mapVisibleVehicles = useMemo(() => {
-    return vehicles.filter((v) => !hiddenVehicleMapIds.has(v.id));
-  }, [vehicles, hiddenVehicleMapIds]);
+  const handleToggleVehicleSimulator = (vehicleId: string) => {
+    if (simulatedVehicleId === vehicleId) {
+      setSimulatedVehicleId(null);
+      return;
+    }
+    setSimulatedVehicleId(vehicleId);
+    setVisibility((v) => ({ ...v, cultivation: true }));
+  };
 
-  const handleToggleVehicleMap = (vehicleId: string) => {
-    setHiddenVehicleMapIds((prev) => {
+  const handleToggleTrackVisibility = (vehicleId: string) => {
+    setHiddenTrackVehicleIds((prev) => {
       const next = new Set(prev);
       if (next.has(vehicleId)) next.delete(vehicleId);
       else next.add(vehicleId);
       return next;
     });
   };
-
-  // Sama masina sama režiimi nupp lülitab välja; teine režiim samal masinal vahetab ainult režiimi.
-  const toggleVehicleTrack = (vehicleId: string, mode: 'sim' | 'full') => {
-    if (simulatedVehicleId === vehicleId && vehicleTrackMode === mode) {
-      setSimulatedVehicleId(null);
-      return;
-    }
-    setVehicleTrackMode(mode);
-    setSimulatedVehicleId(vehicleId);
-    setVisibility((v) => ({ ...v, cultivation: true }));
-  };
-
-  const handleToggleVehicleSimulator = (vehicleId: string) => toggleVehicleTrack(vehicleId, 'sim');
-  const handleToggleVehicleFullTrack = (vehicleId: string) => toggleVehicleTrack(vehicleId, 'full');
 
   const [selectedVehicle, setSelectedVehicle] = useState<EnrichedVehicle | null>(null);
 
@@ -596,10 +609,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         });
       });
 
-      if (vehicleTrackModeRef.current === 'full') {
-        // Kogu rada korraga: keri kohe lõppu, taasesitust ei käivitata
-        sim.setProgress(100);
-      } else if (selectedStartTime) {
+      if (selectedStartTime) {
         // Kui kasutaja on määranud kohandatud alguskellaaja, rakenda see
         sim.setPlaybackStartTime(selectedStartTime);
         setProgressPct(sim.getProgress());
@@ -616,35 +626,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       .then((res) => {
         if (!isMounted) return;
         if (res.points.length >= 2) {
-          // Seismise GPS-müra ja kiiruse kõikumisest tekkivad pisikesed töölõigud välja
-          const points: TelemetryPoint[] = cleanTrack(res.points.map((p) => ({
-            timestamp: p.timestamp,
-            lat: p.lat,
-            lng: p.lng,
-            altitude: p.altitude,
-            speedKmH: p.speedKmH,
-            heading: p.heading,
-            isWorking: p.speedKmH >= WORKING_SPEED_MIN_KMH && p.speedKmH <= WORKING_SPEED_MAX_KMH,
-            workingWidthM
-          })));
-
-          // Kogu raja polügooni siin ei arvutata (tuhandete punktide puhul mitu sekundit);
-          // harimisala ja vahemaa arvutab TelemetrySimulator taasesituse käigus järk-järgult.
-          const realPass: CultivationPass = {
-            id: `pass-${currentVehicleId}`,
-            vehicleId: currentVehicleId,
-            vehicleName: currentVehicleName,
-            operationType: 'Harimine',
-            startTime: points[0].timestamp,
-            endTime: points[points.length - 1].timestamp,
-            workingWidthM,
-            points,
-            workedAreaHa: 0,
-            distanceKm: 0,
-            avgSpeedKmH: points.reduce((sum, p) => sum + p.speedKmH, 0) / points.length
-          };
-
-          attachSimulator(realPass);
+          // Harimisala ja vahemaa arvutab TelemetrySimulator taasesituse käigus järk-järgult
+          attachSimulator(historyToPass(res.points, currentVehicleId, currentVehicleName, workingWidthM));
           return;
         }
 
@@ -663,6 +646,59 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     };
   }, [trackedTarget, telemetryHours, workingWidthM]);
 
+  // Põllutööde kiht: laeb kõigi masinate GPS-ajaloo ja arvutab valmis rajad.
+  // Demorada siia ei lähe — ilma päris andmeteta masinal rada ei kuvata.
+  const vehicleIdsKey = rawVehicles.map((v) => `${v.id}:${v.name}`).join('|');
+  useEffect(() => {
+    if (!visibility.cultivation) {
+      setVehicleTracks([]);
+      setIsLoadingVehicleTracks(false);
+      return;
+    }
+    let isMounted = true;
+    const timers: number[] = [];
+    const targets = rawVehicles.map((v) => ({ id: v.id, name: v.name }));
+    setIsLoadingVehicleTracks(true);
+
+    Promise.all(targets.map((t) =>
+      api.getTelemetryHistory({ vehicleId: t.id, hours: Math.max(telemetryHours, 48) })
+        .then((res) => (res.points.length >= 2 ? { ...t, points: res.points } : null))
+        .catch(() => null)
+    )).then((results) => {
+      if (!isMounted) return;
+      const loaded = results.filter((r): r is NonNullable<typeof r> => r !== null);
+      const built: CultivationPass[] = [];
+      // Iga masina rada arvutatakse eraldi taskis, et brauser jõuaks vahepeal sisendit töödelda
+      const buildNext = (i: number) => {
+        if (!isMounted) return;
+        if (i >= loaded.length) {
+          startTransition(() => {
+            setVehicleTracks(built);
+            setIsLoadingVehicleTracks(false);
+          });
+          return;
+        }
+        const r = loaded[i];
+        built.push(buildCompletedPass(historyToPass(r.points, r.id, r.name, workingWidthM)));
+        timers.push(window.setTimeout(() => buildNext(i + 1), 0));
+      };
+      buildNext(0);
+    });
+
+    return () => {
+      isMounted = false;
+      timers.forEach((t) => clearTimeout(t));
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibility.cultivation, vehicleIdsKey, telemetryHours, workingWidthM]);
+
+  // Kaardil kuvatavad rajad: kasutaja peidetud ja parasjagu simuleeritav masin välja
+  const visibleVehicleTracks = useMemo(
+    () => vehicleTracks.filter((t) => !hiddenTrackVehicleIds.has(t.vehicleId) && t.vehicleId !== simulatedVehicleId),
+    [vehicleTracks, hiddenTrackVehicleIds, simulatedVehicleId]
+  );
+  const trackVehicleIds = useMemo(() => new Set(vehicleTracks.map((t) => t.vehicleId)), [vehicleTracks]);
+
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
     setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -673,19 +709,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   };
 
   // Playback control actions
-  // Režiimi vahetus juba laaditud raja peal (andmeid uuesti ei pärita)
-  useEffect(() => {
-    const sim = simulatorRef.current;
-    if (!sim || vehicleTrackMode !== 'full') return;
-    sim.pause();
-    setIsPlaying(false);
-    sim.setProgress(100);
-  }, [vehicleTrackMode]);
-
   const handleTogglePlay = () => {
     if (!simulatorRef.current) return;
-    // Play kogu raja vaates tähendab taasesituse alustamist
-    if (vehicleTrackMode === 'full') setVehicleTrackMode('sim');
     simulatorRef.current.togglePlay();
     setIsPlaying(simulatorRef.current.getIsPlaying());
   };
@@ -1392,10 +1417,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           fields={fields}
           selectedField={selectedField}
           onSelectField={handleSelectField}
-          vehicles={mapVisibleVehicles}
+          vehicles={vehicles}
           selectedVehicle={selectedVehicle}
           onSelectVehicle={setSelectedVehicle}
           cultivationPass={cultivationPass}
+          vehicleTracks={visibleVehicleTracks}
           pois={pois}
           selectedPoi={selectedPoi}
           onSelectPoi={setSelectedPoi}
@@ -1405,7 +1431,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           focusedTarget={focusedTarget}
           fitBoundsTrigger={fitBoundsTrigger}
           selectedCropFilter={selectedCropFilter}
-          vehicleFilter={vehicleFilter}
+          vehicleFilter="all"
           soilSamples={soilSamples}
           soilMetric={soilMetric}
         />
@@ -1443,25 +1469,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onToggleLayer={handleToggleLayer}
           onSelectBaseMap={handleSelectBaseMap}
           onFitAll={handleFitAll}
-          activeVehiclesCount={activeVehiclesCount}
-          totalVehiclesCount={vehicles.length}
-          vehicleFilter={vehicleFilter}
-          onSelectVehicleFilter={setVehicleFilter}
           soilSampleCount={soilSamples.length}
           soilFieldCount={new Set(soilSamples.map((s) => s.fieldCode)).size}
           soilMetric={soilMetric}
           onSelectSoilMetric={setSoilMetric}
           vehicles={vehicles}
-          hiddenVehicleMapIds={hiddenVehicleMapIds}
-          onToggleVehicleMap={handleToggleVehicleMap}
           simulatedVehicleId={simulatedVehicleId}
-          vehicleTrackMode={vehicleTrackMode}
           onToggleVehicleSimulator={handleToggleVehicleSimulator}
-          onToggleVehicleFullTrack={handleToggleVehicleFullTrack}
+          trackVehicleIds={trackVehicleIds}
+          isLoadingVehicleTracks={isLoadingVehicleTracks}
+          hiddenTrackVehicleIds={hiddenTrackVehicleIds}
+          onToggleTrackVisibility={handleToggleTrackVisibility}
         />
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
-        {visibility.cultivation && (
+        {visibility.cultivation && simulatedVehicleId && (
           <CultivationControl 
             pass={cultivationPass}
             isPlaying={isPlaying}

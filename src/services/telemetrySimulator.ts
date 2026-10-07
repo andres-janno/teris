@@ -298,3 +298,13 @@ export class TelemetrySimulator {
     this.onUpdateCallback = null;
   }
 }
+
+/** Kogu läbisõidu valmis harimisala, rada, pindala ja vahemaa (sama arvutus mis taasesituse lõpus). */
+export function buildCompletedPass(pass: CultivationPass): CultivationPass {
+  const sim = new TelemetrySimulator(pass, 0);
+  let completed = pass;
+  sim.setOnUpdate((updatedPass) => { completed = updatedPass; });
+  sim.setProgress(100);
+  sim.destroy();
+  return completed;
+}
