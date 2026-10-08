@@ -1150,6 +1150,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   }) => {
     setPoiDraft(currentDraft);
     setIsPoiModalOpen(false);
+    // Taristu leht katab kaardi: asukoha valimiseks tuleb kaart nähtavaks teha.
+    changeMainView('map');
     if (!visibilityBeforePickRef.current) {
       visibilityBeforePickRef.current = visibility;
       setVisibility((prev) => ({
