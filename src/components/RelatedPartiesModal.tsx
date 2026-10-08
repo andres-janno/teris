@@ -512,7 +512,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                   <th>Rollid</th>
                   <th>Telefon</th>
                   <th>E-post</th>
-                  <th className="actions-col">Tegevused</th>
+                  <th className="actions-col"><span className="sr-only">Tegevused</span></th>
                 </tr>
               </thead>
               <tbody>

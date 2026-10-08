@@ -1320,7 +1320,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                       <span className="year-col-label">{yr}</span>
                     </th>
                   ))}
-                  <th className="actions-col">Tegevused</th>
+                  <th className="actions-col"><span className="sr-only">Tegevused</span></th>
                 </tr>
               </thead>
               <tbody>
