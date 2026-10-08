@@ -21,7 +21,7 @@ Värviskeem on loodud spetsiaalselt teraviljakasvatajate äratundmisvajadust ja 
 | :--- | :--- | :--- | :--- |
 | **Küps Viljakuld** | `#D9822B` | `rgb(217, 130, 43)` | Embleemi sisetera. Valminud saagi ja väärtuse sümbol. |
 | **Orase roheline** | `#4C9A2A` | `rgb(76, 154, 42)` | Embleemi väliskestad ja kõrred. Tärkav ja võrsuv oras (vt p 2.1). Varem `#1B5E20`. |
-| **Metsaroheline / Muld** | `#143820` | `rgb(20, 56, 32)` | Tekst "TERIS". Loetav, kindel kontrast ja professionaalsus. |
+| **Turbapruun / Muld** | `#5C4033` | `rgb(92, 64, 51)` | Tekst "TERIS". Turba ja mulla toon, loetav kontrast (valgel 9,39 : 1). Varem metsaroheline `#143820`, mis mõjus peaaegu mustana (vt p 2.2). |
 | **Särav Viljakuld (Hele)** | `#E5A93C` | `rgb(229, 169, 60)` | Alternatiivne heledam kuldne toon või gradientaktsent. |
 | **Antratsiitmuld (Tume)** | `#1F2937` | `rgb(31, 41, 55)` | Neutraalne tume taust või trükitekst. |
 
@@ -51,11 +51,26 @@ kollakamaks toonideks, tekst jääb tumedaks.
 
 | Paar | Enne (`#1B5E20`) | Nüüd (`#4C9A2A`) | Märkus |
 | :--- | :---: | :---: | :--- |
-| Embleemi roheline ↔ tekst `#143820` | 1,65 : 1 | **3,69 : 1** | Märk ja tekst eristuvad selgelt |
+| Embleemi roheline ↔ tekst `#143820` | 1,65 : 1 | **3,69 : 1** | Märk ja tekst eristuvad selgelt (teksti värv hiljem muudetud, vt p 2.2) |
 | Embleemi roheline ↔ valge taust | 7,87 : 1 | **3,52 : 1** | Üle graafikaelementide nõude 3 : 1 |
 | Embleemi roheline ↔ viljakuld `#D9822B` | — | 1,20 : 1 | Eristus põhineb toonil (roheline vs oranž), mitte heledusel |
 
 Veel heledamaid rohelisi (nt `#4CAF50`) ei kasutata, sest need langevad valgel taustal alla 3 : 1.
+
+### 2.2 Miks tekst on turbapruun
+
+Teksti metsaroheline `#143820` mõjus peaaegu mustana, mistõttu ei kandunud edasi p 2.1 mõte, et tekst on
+"muld". Seepärast on sõna "TERIS" värviks valitud turbapruun `#5C4033`, mis on selgelt pruun, aga
+loetavuse jaoks piisavalt tume. Siis jaguneb logo värvides selgelt: roheline on oras, oranž on vili ja
+pruun on muld.
+
+| Paar | Kontrast | Märkus |
+| :--- | :---: | :--- |
+| Tekst `#5C4033` ↔ valge taust | **9,39 : 1** | Üle WCAG AAA nõude (7 : 1) |
+| Tekst `#5C4033` ↔ orase roheline `#4C9A2A` | 2,67 : 1 | Eristus toonil (pruun vs roheline); märk ja tekst ei kattu |
+| Tekst `#5C4033` ↔ viljakuld `#D9822B` | 3,21 : 1 | Sama toonipere, eristus heledusel |
+
+Heledamaid pruune (nt `#6F4E37`) ei kasutata: need mõjuvad väikeses mõõdus (päis) kahvatult.
 
 ---
 
