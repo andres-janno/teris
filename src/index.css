@@ -4142,7 +4142,6 @@ input[type="number"],
   right: 0;
   z-index: 1;
   text-align: center;
-  box-shadow: inset 1px 0 0 var(--border-card);
 }
 
 .register-table th.actions-col {
