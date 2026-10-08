@@ -8,7 +8,8 @@ import {
   Sprout,
   Map as MapIcon,
   SquareKanban,
-  Users
+  Users,
+  Package
 } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
@@ -17,7 +18,7 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure' | 'parties';
+export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure' | 'parties' | 'materials';
 
 interface HeaderProps {
   fieldsCount?: number;
@@ -147,6 +148,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Users size={15} />
               <span>Isikud</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'materials' ? 'active' : ''}
+              aria-current={mainView === 'materials' ? 'page' : undefined}
+              onClick={() => onChangeMainView('materials')}
+            >
+              <Package size={15} />
+              <span>Materjalid</span>
             </button>
           </nav>
         )}

@@ -62,6 +62,7 @@ const AnalyticsModal = lazy(() => import('./components/AnalyticsModal').then((m)
 const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
 const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
 const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
+const MaterialsView = lazy(() => import('./components/MaterialsView').then((m) => ({ default: m.MaterialsView })));
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
@@ -1641,6 +1642,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             vehicles={vehicles}
             selectedYear={selectedYear}
           />
+        </Suspense>
+      )}
+
+      {mainView === 'materials' && (
+        <Suspense fallback={null}>
+          <MaterialsView />
         </Suspense>
       )}
 

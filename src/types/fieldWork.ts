@@ -48,6 +48,9 @@ export interface Material {
   usageCount?: number;
 }
 
+// Uue kulumaterjali vaikeväärtused
+export const NEW_MATERIAL: Partial<Material> = { category: 'FERTILIZER', unit: 'kg', isActive: true };
+
 export interface WorkTemplateItem {
   id?: string;
   workTypeId: string;

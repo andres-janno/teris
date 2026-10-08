@@ -8,14 +8,15 @@ import {
   WORK_PHASES,
   WORK_PHASE_META,
   MATERIAL_CATEGORY_LABEL,
+  NEW_MATERIAL,
   type Material,
-  type MaterialCategory,
   type WorkPhase,
   type WorkRepeatMode,
   type WorkTemplate,
   type WorkTemplateItem,
   type WorkType
 } from '../types/fieldWork';
+import { MaterialFormDialog } from './MaterialFormDialog';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface WorkRegisterModalProps {
@@ -100,14 +101,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
   // --- Materjali vorm ---
   const [materialForm, setMaterialForm] = useState<Partial<Material> | null>(null);
-  const saveMaterial = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!materialForm) return;
-    void run(async () => {
-      await api.saveMaterial(materialForm);
-      setMaterialForm(null);
-    });
-  };
   const deleteMaterial = async (m: Material) => {
     if (!await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`)) return;
     void run(() => api.deleteMaterial(m.id));
@@ -462,7 +455,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           {tab === 'materials' && (
             <>
               <div className="work-register-toolbar">
-                <button className="btn btn-primary btn-sm" onClick={() => setMaterialForm({ category: 'FERTILIZER', unit: 'kg', isActive: true })}>
+                <button className="btn btn-primary btn-sm" onClick={() => setMaterialForm(NEW_MATERIAL)}>
                   <Plus size={14} />
                   <span>Lisa materjal</span>
                 </button>
@@ -574,50 +567,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         document.body
       )}
 
-      {materialForm && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form className="modal-content animate-scale-up work-form-modal" onSubmit={saveMaterial}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Edit2 size={20} className="text-emerald" />
-                <h3>{materialForm.id ? `Muuda materjali: ${materialForm.name}` : 'Lisa materjal'}</h3>
-              </div>
-              <button type="button" className="icon-btn-ghost" onClick={() => setMaterialForm(null)} title="Sulge"><X size={20} /></button>
-            </div>
-            <div className="modal-body">
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label htmlFor="mt-name">Nimi *</label>
-                  <input id="mt-name" className="form-input" required placeholder="nt YaraMila 16-27-7" value={materialForm.name ?? ''} onChange={(e) => setMaterialForm({ ...materialForm, name: e.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="mt-cat">Liik</label>
-                  <select id="mt-cat" className="form-input" value={materialForm.category} onChange={(e) => setMaterialForm({ ...materialForm, category: e.target.value as MaterialCategory })}>
-                    {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => <option key={c} value={c}>{MATERIAL_CATEGORY_LABEL[c]}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="mt-unit">Ühik *</label>
-                  <input id="mt-unit" className="form-input" required list="material-units" value={materialForm.unit ?? ''} onChange={(e) => setMaterialForm({ ...materialForm, unit: e.target.value })} />
-                  <datalist id="material-units"><option value="kg" /><option value="l" /><option value="t" /><option value="tk" /></datalist>
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor="mt-notes">Märkus</label>
-                  <input id="mt-notes" className="form-input" placeholder="nt ERP tootekood" value={materialForm.notes ?? ''} onChange={(e) => setMaterialForm({ ...materialForm, notes: e.target.value })} />
-                </div>
-                <label className="users-admin-checkbox full-width">
-                  <input type="checkbox" checked={materialForm.isActive ?? true} onChange={(e) => setMaterialForm({ ...materialForm, isActive: e.target.checked })} />
-                  <span>Aktiivne (kannetes valitav)</span>
-                </label>
-              </div>
-            </div>
-            <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setMaterialForm(null)}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
-            </div>
-          </form>
-        </div>,
-        document.body
+      {materialForm && (
+        <MaterialFormDialog
+          initial={materialForm}
+          onClose={() => setMaterialForm(null)}
+          onSaved={() => {
+            setMaterialForm(null);
+            void reload();
+          }}
+        />
       )}
     </div>
   );
