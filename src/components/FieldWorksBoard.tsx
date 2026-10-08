@@ -83,8 +83,13 @@ const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatu
 const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
   status === 'DONE' ? <Check size={13} strokeWidth={3} className="fw-status-done" /> : <span className={`fw-status-dot ${status === 'IN_PROGRESS' ? 'doing' : ''}`} />;
 
-const WorkCard: React.FC<{ work: FieldWork; selected: boolean; onSelect: () => void }> = ({ work, selected, onSelect }) => {
+const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void }> = ({ work, fieldAreaHa, selected, onSelect }) => {
   const n = work.entries.length;
+  // Tehtud osa põllust (korduvatel töödel on loendur, protsenti ei näidata)
+  const doneHa = work.entries.reduce((sum, e) => sum + (e.areaHa ?? 0), 0);
+  const donePct = work.repeatMode === 'ONCE' && fieldAreaHa > 0 && doneHa > 0
+    ? Math.min(100, Math.round((doneHa / fieldAreaHa) * 100))
+    : null;
 
   const sortedEntries = useMemo(() => {
     return [...work.entries].sort((a, b) => {
@@ -104,6 +109,9 @@ const WorkCard: React.FC<{ work: FieldWork; selected: boolean; onSelect: () => v
       <span className="fw-card-title">
         <StatusIcon status={work.status} />
         <span>{work.workTypeName}</span>
+        {donePct !== null && (
+          <span className="fw-card-pct" title={`${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha tehtud`}>{donePct}%</span>
+        )}
       </span>
       {n > 0 ? (
         <span className="fw-card-entries">
@@ -590,13 +598,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     `${nextWinterRows.filter((r) => r.nextWorks.some((w) => w.phase === phase && w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
 
   const renderCards = (row: Row, phase: WorkPhase) =>
-    visibleWorks(row, phase).map((w) => <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />);
+    visibleWorks(row, phase).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />);
 
   const renderMilestone = (row: Row, phase: WorkPhase) => {
     const ws = row.works.filter((w) => w.phase === phase);
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
     ));
   };
 
@@ -605,14 +613,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const renderNextCards = (row: Row, phase: WorkPhase) =>
     visibleNextWorks(row, phase).map((w) => (
-      <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
     ));
 
   const renderNextMilestone = (row: Row, phase: WorkPhase) => {
     const ws = row.nextWorks.filter((w) => w.phase === phase);
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
     ));
   };
 

@@ -7894,6 +7894,21 @@ a.history-pill:hover {
   font-weight: 700;
 }
 
+.fw-card-pct {
+  margin-left: 2px;
+  padding: 0 5px;
+  border-radius: 4px;
+  background: rgba(22, 163, 74, 0.12);
+  color: #15803d;
+  font-size: 0.7rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+[data-theme='dark'] .fw-card-pct {
+  color: #4ade80;
+}
+
 .fw-card-sub {
   font-size: 0.7rem;
   color: var(--text-secondary);
