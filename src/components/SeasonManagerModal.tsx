@@ -32,6 +32,7 @@ interface SeasonManagerModalProps {
   onCloseSeason: (year: number) => void;
   onReopenSeason: (year: number) => void;
   onCreateSeason: (season: FarmingSeason) => void;
+  isFullPage?: boolean;
 }
 
 export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
@@ -43,7 +44,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   onUpdateSeason,
   onCloseSeason,
   onReopenSeason,
-  onCreateSeason
+  onCreateSeason,
+  isFullPage = false
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingYear, setEditingYear] = useState<number | null>(null);
@@ -166,42 +168,14 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
     setEditingYear(null);
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-content season-manager-modal glass-modal">
-        {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-with-icon">
-            <div className="modal-icon-badge season-icon-badge">
-              <CalendarDays size={20} />
-            </div>
-            <div>
-              <h3>Hooaegade register & elutsükkel</h3>
-              <p className="modal-subtitle">
-                Hooaeg hõlmab ettevalmistust, külvi ja koristust. Koristuse järel suletakse hooaeg muudatusteks.
-              </p>
-            </div>
-          </div>
-          <div className="season-header-actions">
-            {!isAdding && (
-              <button className="btn btn-primary btn-sm" onClick={handleStartAdd}>
-                <Plus size={14} />
-                <span>Loo uus hooaeg</span>
-              </button>
-            )}
-            <button className="icon-btn" onClick={onClose} title="Sulge">
-              <X size={18} />
-            </button>
-          </div>
-        </div>
+  if (!isOpen && !isFullPage) return null;
 
-        {/* Modal Body */}
-        <div className="modal-body season-modal-body">
-          {/* Add / Edit Form eraldi aknas registri peal (portal: registri aken võib olla
-              glass-card/glass-modal, mille backdrop-filter piiraks muidu position: fixed tausta) */}
-          {isAdding && createPortal(
-            <div className="modal-backdrop sub-modal">
-            <form className="modal-content season-edit-modal animate-scale-up" onSubmit={handleSaveForm}>
+  const bodyContent = (
+    <>
+      {/* Add / Edit Form eraldi aknas registri peal */}
+      {isAdding && createPortal(
+        <div className="modal-backdrop sub-modal">
+        <form className="modal-content season-edit-modal animate-scale-up" onSubmit={handleSaveForm}>
               <div className="modal-header">
                 <div className="modal-title-group">
                   {editingLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
@@ -459,6 +433,66 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
           <p className="seasons-table-hint">
             Märkusega real (<Info size={11} />) näitab klõps märkust. Δ = saagiootuse muutus eelmise hooajaga võrreldes. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>
+    </>
+  );
+
+  if (isFullPage) {
+    return (
+      <div className="fullpage-board-view">
+        <main className="fullpage-board-main">
+          <div className="fullpage-board-header">
+            <div className="fullpage-title-wrap">
+              <CalendarDays className="text-emerald" size={26} />
+              <div>
+                <h2>Hooajad</h2>
+                <p className="fullpage-subtitle">Hooaegade register, elutsükkel, saagiootused ja koristuse staatused</p>
+              </div>
+            </div>
+            {!isAdding && (
+              <button className="btn btn-primary" onClick={handleStartAdd}>
+                <Plus size={16} />
+                <span>Loo uus hooaeg</span>
+              </button>
+            )}
+          </div>
+          <div className="fullpage-board-body">
+            {bodyContent}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content season-manager-modal glass-modal">
+        <div className="modal-header">
+          <div className="modal-title-with-icon">
+            <div className="modal-icon-badge season-icon-badge">
+              <CalendarDays size={20} />
+            </div>
+            <div>
+              <h3>Hooaegade register & elutsükkel</h3>
+              <p className="modal-subtitle">
+                Hooaeg hõlmab ettevalmistust, külvi ja koristust. Koristuse järel suletakse hooaeg muudatusteks.
+              </p>
+            </div>
+          </div>
+          <div className="season-header-actions">
+            {!isAdding && (
+              <button className="btn btn-primary btn-sm" onClick={handleStartAdd}>
+                <Plus size={14} />
+                <span>Loo uus hooaeg</span>
+              </button>
+            )}
+            <button className="icon-btn" onClick={onClose} title="Sulge">
+              <X size={18} />
+            </button>
+          </div>
+        </div>
+
+        <div className="modal-body season-modal-body">
+          {bodyContent}
         </div>
       </div>
     </div>

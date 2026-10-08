@@ -88,6 +88,7 @@ export interface WorkEntry {
   workerId: string | null;
   workerName: string | null;
   areaHa: number | null;
+  telemetryAreaHa?: number | null;
   occurrenceNo: number | null;
   vehicleId: string | null;
   vehicleName: string | null;
@@ -96,6 +97,8 @@ export interface WorkEntry {
   equipmentHours: number | null;
   fuelLiters: number | null;
   laborHours: number | null;
+  startTime: string | null;
+  endTime: string | null;
   materials: WorkEntryMaterial[];
   harvestTonnes: number | null;
   notes: string | null;
@@ -129,18 +132,36 @@ export interface FieldWork {
   isNextSeasonWinterSowing?: boolean;
 }
 
+export interface TelemetrySuggestion {
+  id: string;
+  vehicleId: string | null;
+  vehicleName: string | null;
+  implementId: string | null;
+  implementName: string | null;
+  workerId: string | null;
+  workerName: string | null;
+  startTime: string;
+  endTime: string;
+  durationHours: number;
+  workedAreaHa: number | null;
+  pointCount: number;
+}
+
 // Kande sisestus (töötaja: ainult kogused)
 export interface WorkEntryInput {
   fieldWorkId: string;
   date: string;
   workerId: string | null;
   areaHa: number | null;
+  telemetryAreaHa?: number | null;
   occurrenceNo: number | null;
   vehicleId: string | null;
   implementId: string | null;
   equipmentHours: number | null;
   fuelLiters: number | null;
   laborHours: number | null;
+  startTime?: string | null;
+  endTime?: string | null;
   materials: { materialId: string; quantity: number }[];
   harvestTonnes: number | null;
   notes: string | null;

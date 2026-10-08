@@ -387,7 +387,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="modal-backdrop">
+    <div className="modal-backdrop sub-modal">
       <div className="modal-content finance-modal animate-scale-up">
         {/* Modal Header */}
         <div className="modal-header">

@@ -45,6 +45,20 @@ export interface DeviceAssignment {
   notes?: string;
 }
 
+export interface ImplementAssignment {
+  id: string;
+  vehicleId: string;
+  implementId: string;
+  vehicleName?: string;
+  vehicleType?: string;
+  implementName?: string;
+  implementType?: string;
+  startedAt: string;
+  endedAt?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
 /**
  * Haakeriistade register
  */

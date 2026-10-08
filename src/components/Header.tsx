@@ -3,10 +3,8 @@ import {
   Layers,
   Tractor,
   MapPin,
-  Activity,
   BarChart3,
   CalendarDays,
-  Users,
   Sprout,
   Map as MapIcon,
   SquareKanban
@@ -18,28 +16,30 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
+export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure';
+
 interface HeaderProps {
-  fieldsCount: number;
-  totalAreaHa: number;
-  workedAreaHa: number;
-  activeVehiclesCount: number;
-  poiCount: number;
+  fieldsCount?: number;
+  totalAreaHa?: number;
+  workedAreaHa?: number;
+  activeVehiclesCount?: number;
+  poiCount?: number;
   partiesCount?: number;
   parties?: RelatedParty[];
   cropsCount?: number;
   varietiesCount?: number;
-  operatorFilter?: string[]; // tühi = kõik operaatorid
+  operatorFilter?: string[];
   onOperatorFilterChange?: (partyIds: string[]) => void;
-  selectedYear: number;
+  selectedYear?: number;
   activeSeason?: FarmingSeason;
-  onOpenSeasonManager: () => void;
-  onOpenFieldsRegister: () => void;
+  onOpenSeasonManager?: () => void;
+  onOpenFieldsRegister?: () => void;
   onOpenParties?: () => void;
   onOpenCrops?: () => void;
-  mainView?: 'map' | 'works';
-  onChangeMainView?: (view: 'map' | 'works') => void;
-  onOpenVehicles: () => void;
-  onOpenPoi: () => void;
+  mainView?: MainView;
+  onChangeMainView?: (view: MainView) => void;
+  onOpenVehicles?: () => void;
+  onOpenPoi?: () => void;
   onOpenAnalytics: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
@@ -51,27 +51,11 @@ interface HeaderProps {
 }
 
 export const Header: React.FC<HeaderProps> = ({
-  fieldsCount,
-  totalAreaHa,
-  workedAreaHa,
-  activeVehiclesCount,
-  poiCount,
-  partiesCount = 0,
   parties = [],
-  cropsCount = 0,
-  varietiesCount = 0,
   operatorFilter = [],
   onOperatorFilterChange,
-  selectedYear,
-  activeSeason,
-  onOpenSeasonManager,
-  onOpenFieldsRegister,
-  onOpenParties,
-  onOpenCrops,
   mainView = 'map',
   onChangeMainView,
-  onOpenVehicles,
-  onOpenPoi,
   onOpenAnalytics,
   theme,
   onToggleTheme,
@@ -81,119 +65,79 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUsers,
   onLogout
 }) => {
-  const overallProgress = totalAreaHa > 0 ? Math.round((workedAreaHa / totalAreaHa) * 100) : 0;
-  const isLocked = activeSeason?.isLocked ?? false;
-
   return (
     <header className="app-header">
       <div className="header-brand">
         <TerisLogo variant="horizontal" />
         {onChangeMainView && (
           <nav className="main-view-switch" aria-label="Põhivaade">
-            <button type="button" className={mainView === 'map' ? 'active' : ''} aria-current={mainView === 'map' ? 'page' : undefined} onClick={() => onChangeMainView('map')}>
+            <button
+              type="button"
+              className={mainView === 'map' ? 'active' : ''}
+              aria-current={mainView === 'map' ? 'page' : undefined}
+              onClick={() => onChangeMainView('map')}
+            >
               <MapIcon size={15} />
               <span>Kaart</span>
             </button>
-            <button type="button" className={mainView === 'works' ? 'active' : ''} aria-current={mainView === 'works' ? 'page' : undefined} onClick={() => onChangeMainView('works')}>
+            <button
+              type="button"
+              className={mainView === 'seasons' ? 'active' : ''}
+              aria-current={mainView === 'seasons' ? 'page' : undefined}
+              onClick={() => onChangeMainView('seasons')}
+            >
+              <CalendarDays size={15} />
+              <span>Hooajad</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'fields' ? 'active' : ''}
+              aria-current={mainView === 'fields' ? 'page' : undefined}
+              onClick={() => onChangeMainView('fields')}
+            >
+              <Layers size={15} />
+              <span>Põllud</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'crops' ? 'active' : ''}
+              aria-current={mainView === 'crops' ? 'page' : undefined}
+              onClick={() => onChangeMainView('crops')}
+            >
+              <Sprout size={15} />
+              <span>Kultuurid</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'works' ? 'active' : ''}
+              aria-current={mainView === 'works' ? 'page' : undefined}
+              onClick={() => onChangeMainView('works')}
+            >
               <SquareKanban size={15} />
               <span>Põllutööd</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'fleet' ? 'active' : ''}
+              aria-current={mainView === 'fleet' ? 'page' : undefined}
+              onClick={() => onChangeMainView('fleet')}
+            >
+              <Tractor size={15} />
+              <span>Tehnika</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'infrastructure' ? 'active' : ''}
+              aria-current={mainView === 'infrastructure' ? 'page' : undefined}
+              onClick={() => onChangeMainView('infrastructure')}
+            >
+              <MapPin size={15} />
+              <span>Taristu</span>
             </button>
           </nav>
         )}
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
-        )}
-      </div>
-
-      <div className="header-stats">
-        {/* Clickable Season Register Pill */}
-        <div
-          className={`stat-pill clickable season-stat-pill ${isLocked ? 'season-locked-pill' : ''}`}
-          onClick={onOpenSeasonManager}
-          title="Ava hooaja register ja elutsükli haldus"
-        >
-          <CalendarDays size={16} className={`stat-icon ${isLocked ? 'text-slate-400' : 'season-icon'}`} />
-          <div>
-            <div className="stat-label-with-year">
-              {isLocked ? (
-                <span className="stat-status-tag locked">Lukus</span>
-              ) : (
-                <span className="stat-status-tag active">Aktiivne</span>
-              )}
-            </div>
-            <div className="stat-value">
-              {activeSeason?.name || `Hooaeg ${selectedYear}`}
-            </div>
-          </div>
-        </div>
-
-        {/* Clickable Fields Register Pill with Season indicator */}
-        <div className="stat-pill clickable field-stat-pill" onClick={onOpenFieldsRegister} title="Ava põldude ja külvikorra register">
-          <Layers size={16} className="stat-icon fields-icon" />
-          <div>
-            <div className="stat-label-with-year">
-              <span>Põllud ({fieldsCount})</span>
-            </div>
-            <div className="stat-value">{totalAreaHa.toFixed(1)} <span className="unit">ha</span></div>
-          </div>
-        </div>
-
-        <div className="stat-pill" title="Teltonika järgi haritud pindala">
-          <Activity size={16} className="stat-icon work-icon" />
-          <div>
-            <div className="stat-label">Haritud ({overallProgress}%)</div>
-            <div className="stat-value">{workedAreaHa.toFixed(1)} <span className="unit">ha</span></div>
-          </div>
-          <div className="stat-progress-bar">
-            <div className="progress-fill" style={{ width: `${overallProgress}%` }}></div>
-          </div>
-        </div>
-
-        <div className="stat-pill clickable" onClick={onOpenVehicles} title="Aktiivne tehnika">
-          <Tractor size={16} className="stat-icon tech-icon" />
-          <div>
-            <div className="stat-label">Tehnika</div>
-            <div className="stat-value">{activeVehiclesCount} <span className="unit">aktiivne</span></div>
-          </div>
-        </div>
-
-        <div className="stat-pill clickable" onClick={onOpenPoi} title="Olulised asukohad">
-          <MapPin size={16} className="stat-icon poi-icon" />
-          <div>
-            <div className="stat-label">Taristu</div>
-            <div className="stat-value">{poiCount} <span className="unit">punkti</span></div>
-          </div>
-        </div>
-
-        {onOpenParties && (
-          <div
-            className="stat-pill clickable parties-stat-pill"
-            onClick={onOpenParties}
-            title="Ava seotud isikute register (maaomanikud, masinajuhid, partnerid)"
-          >
-            <Users size={16} className="stat-icon text-emerald" />
-            <div>
-              <div className="stat-label">Seotud isikud</div>
-              <div className="stat-value">{partiesCount ?? 0} <span className="unit">isikut</span></div>
-            </div>
-          </div>
-        )}
-
-        {onOpenCrops && (
-          <div
-            className="stat-pill clickable crops-stat-pill"
-            onClick={onOpenCrops}
-            title="Ava kultuuride ja sortide register"
-          >
-            <Sprout size={16} className="stat-icon text-amber" />
-            <div>
-              <div className="stat-label">Kultuurid & Sordid</div>
-              <div className="stat-value">
-                {cropsCount ?? 0} <span className="unit">kultuuri</span>
-                {varietiesCount ? ` (${varietiesCount} sorti)` : ''}
-              </div>
-            </div>
-          </div>
         )}
       </div>
 

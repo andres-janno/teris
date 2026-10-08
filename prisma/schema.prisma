@@ -7,7 +7,8 @@ datasource db {
 }
 
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-3.0.x", "darwin-arm64"]
 }
 
 // ============================================================================
@@ -322,6 +323,7 @@ model Vehicle {
   assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
   assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments   DeviceAssignment[]
+  implementAssignments ImplementAssignment[]
   workEntries         WorkEntry[]
   workEntryLines      WorkEntryLine[]
 
@@ -345,6 +347,7 @@ model Implement {
   vehicle          Vehicle?
   assignedDevice   TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments DeviceAssignment[]
+  implementAssignments ImplementAssignment[]
   workEntries      WorkEntry[]
   workEntryLines   WorkEntryLine[]
 
@@ -394,6 +397,22 @@ model DeviceAssignment {
   @@index([deviceId, startedAt])
   @@index([vehicleId, startedAt])
   @@map("device_assignments")
+}
+
+model ImplementAssignment {
+  id          String     @id @default(cuid())
+  vehicleId   String
+  vehicle     Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  implementId String
+  implement   Implement  @relation(fields: [implementId], references: [id], onDelete: Cascade)
+  startedAt   DateTime   @default(now())
+  endedAt     DateTime?
+  notes       String?
+  createdAt   DateTime   @default(now())
+
+  @@index([vehicleId, startedAt])
+  @@index([implementId, startedAt])
+  @@map("implement_assignments")
 }
 
 // ============================================================================
@@ -682,12 +701,15 @@ model WorkEntry {
   date                 DateTime
   workerId             String?       // seotud isik (roll Töötaja)
   areaHa               Float?
+  telemetryAreaHa      Float?        // Telemeetriast (GPS) arvutatud tehtud pindala (ha)
   occurrenceNo         Int?          // korduva töö mitmes kord
   vehicleId            String?
   implementId          String?
   equipmentHours       Float?        // masina ja haakeriista töötunnid (sisestatakse korraga)
   fuelLiters           Float?
   laborHours           Float?
+  startTime            String?       // alguskellaaeg (nt "08:00")
+  endTime              String?       // lõpukellaaeg (nt "16:30")
   notes                String?
   createdById          String?
   financeStatus        FinanceStatus @default(PENDING)

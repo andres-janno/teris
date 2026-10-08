@@ -1,15 +1,16 @@
 // src/components/CultivationControl.tsx
+// Masina sõidu taasesituse paneel kaardi allservas: olek ja mõõdikud, ajavahemiku valik ning mängija.
 import React, { useState, useEffect } from 'react';
-import { 
-  Play, 
-  Pause, 
-  RotateCcw,
-  Clock
-} from 'lucide-react';
+import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
+import { DateInput } from './DateInput';
+import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
   pass: CultivationPass;
+  /** Laaditud raja punktide arv (taasesituse seisust sõltumata) */
+  loadedPointCount?: number;
+  isLoading?: boolean;
   isPlaying: boolean;
   onTogglePlay: () => void;
   onReset: () => void;
@@ -25,31 +26,48 @@ interface CultivationControlProps {
   onStartTimeChange?: (timeStr: string) => void;
   telemetryHours?: number;
   onHoursChange?: (hours: number) => void;
+  simTimeMode?: 'rolling' | 'custom';
+  onSimTimeModeChange?: (mode: 'rolling' | 'custom') => void;
+  customDate?: string;
+  onCustomDateChange?: (date: string) => void;
+  customTime?: string;
+  onCustomTimeChange?: (time: string) => void;
+  durationHours?: number;
+  onDurationHoursChange?: (hours: number) => void;
+  currentImplement?: { id: string; name: string; workingWidthM: number; type?: string } | null;
+  availableImplements?: { id: string; name: string; workingWidthM: number }[];
+  lastActiveAt?: string;
+  onJumpToLastActive?: () => void;
 }
+
+const STANDARD_WIDTHS: { value: number; label?: string }[] = [
+  { value: 3 }, { value: 4 }, { value: 5.5 }, { value: 6 }, { value: 8 },
+  { value: 12, label: 'külvik' }, { value: 18 }, { value: 24, label: 'prits' }, { value: 36, label: 'suurprits' }
+];
+const ROLLING_HOURS = [1, 2, 4, 6, 12, 24];
+const DURATION_HOURS = [1, 2, 3, 4, 6, 8, 12];
+const MINUTE_STEPS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
+const SPEEDS = [1, 2, 5, 10];
 
 const toLocalTimeString = (iso?: string): string => {
   if (!iso) return '';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '';
-  const hh = String(d.getHours()).padStart(2, '0');
-  const mm = String(d.getMinutes()).padStart(2, '0');
-  return `${hh}:${mm}`;
+  return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
 const formatTimeDisplay = (iso?: string, withSeconds = false): string => {
   if (!iso) return '--:--';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '--:--';
-  return d.toLocaleTimeString('et-EE', {
-    hour: '2-digit',
-    minute: '2-digit',
-    second: withSeconds ? '2-digit' : undefined,
-    hour12: false
-  });
+  const hhmm = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return withSeconds ? `${hhmm}:${String(d.getSeconds()).padStart(2, '0')}` : hhmm;
 };
 
 export const CultivationControl: React.FC<CultivationControlProps> = ({
   pass,
+  loadedPointCount,
+  isLoading = false,
   isPlaying,
   onTogglePlay,
   onReset,
@@ -63,212 +81,323 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   fieldAreaHa,
   selectedStartTime,
   onStartTimeChange,
-  telemetryHours,
-  onHoursChange
+  telemetryHours = 2,
+  onHoursChange,
+  simTimeMode = 'rolling',
+  onSimTimeModeChange,
+  customDate = '',
+  onCustomDateChange,
+  customTime = '12:00',
+  onCustomTimeChange,
+  durationHours = 2,
+  onDurationHoursChange,
+  currentImplement,
+  availableImplements = [],
+  lastActiveAt,
+  onJumpToLastActive
 }) => {
-  const currentSpeedKmH = pass.points.length > 0 
-    ? pass.points[pass.points.length - 1].speedKmH 
-    : 0;
+  const lastPoint = pass.points.length > 0 ? pass.points[pass.points.length - 1] : null;
+  const currentSpeedKmH = lastPoint?.speedKmH ?? 0;
+  const isWorkingNow = lastPoint?.isWorking ?? false;
+  const currentTimestamp = lastPoint?.timestamp ?? pass.startTime;
+  const hasTrack = (loadedPointCount ?? pass.points.length) >= 2;
 
-  const isWorkingNow = pass.points.length > 0
-    ? pass.points[pass.points.length - 1].isWorking
-    : false;
-
-  const currentTimestamp = pass.points.length > 0
-    ? pass.points[pass.points.length - 1].timestamp
-    : pass.startTime;
-
-  const coverageOfField = (fieldAreaHa && fieldAreaHa > 0)
+  const coverageOfField = fieldAreaHa && fieldAreaHa > 0
     ? Math.min(100, Math.round((pass.workedAreaHa / fieldAreaHa) * 100))
-    : 0;
+    : null;
 
-  // Kohalik alguskellaaja sisend (nt "08:30")
+  // Taasesituse alguskellaaeg raja sees (nt "08:30")
   const defaultStartTime = toLocalTimeString(pass.startTime);
   const [localStartTime, setLocalStartTime] = useState<string>(selectedStartTime || defaultStartTime);
 
   useEffect(() => {
-    if (selectedStartTime) {
-      setLocalStartTime(selectedStartTime);
-    } else if (pass.startTime) {
-      setLocalStartTime(toLocalTimeString(pass.startTime));
-    }
+    if (selectedStartTime) setLocalStartTime(selectedStartTime);
+    else if (pass.startTime) setLocalStartTime(toLocalTimeString(pass.startTime));
   }, [selectedStartTime, pass.startTime]);
 
   const handleStartTimeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const val = e.target.value;
     setLocalStartTime(val);
-    if (val && onStartTimeChange) {
-      onStartTimeChange(val);
-    }
+    if (val && onStartTimeChange) onStartTimeChange(val);
   };
 
   const handleResetToOrigin = () => {
     const origin = toLocalTimeString(pass.startTime);
     setLocalStartTime(origin);
-    if (onStartTimeChange) {
-      onStartTimeChange(origin);
-    }
+    onStartTimeChange?.(origin);
   };
 
-  const isCustomStart = localStartTime && defaultStartTime && localStartTime !== defaultStartTime;
+  const isCustomStart = !!localStartTime && !!defaultStartTime && localStartTime !== defaultStartTime;
+
+  const customHour = (customTime.split(':')[0] || '12').padStart(2, '0');
+  const customMin = (customTime.split(':')[1] || '00').padStart(2, '0');
+  // Kui minut ei ole 5 min sammul (nt vana väärtus), näidatakse seda ikkagi valikus
+  const minuteOptions = MINUTE_STEPS.includes(customMin) ? MINUTE_STEPS : [...MINUTE_STEPS, customMin].sort();
+
+  const endTotalMin = Number(customHour) * 60 + Number(customMin) + durationHours * 60;
+  const customEndLabel = `${String(Math.floor(endTotalMin / 60) % 24).padStart(2, '0')}:${customMin}${endTotalMin >= 24 * 60 ? ' (järgmine päev)' : ''}`;
+
+  const otherImplements = availableImplements.filter((imp) => !currentImplement || imp.id !== currentImplement.id);
+  const widthIsListed = (currentImplement && currentImplement.workingWidthM === workingWidthM)
+    || otherImplements.some((imp) => imp.workingWidthM === workingWidthM)
+    || STANDARD_WIDTHS.some((w) => w.value === workingWidthM);
+
+  const statusText = !hasTrack
+    ? (isLoading ? 'Sõiduandmete laadimine…' : 'Sõiduandmed puuduvad')
+    : isWorkingNow
+      ? `Töötab · ${currentSpeedKmH.toFixed(1)} km/h`
+      : currentSpeedKmH > 0.5
+        ? `Sõidab · ${currentSpeedKmH.toFixed(1)} km/h`
+        : 'Seisab';
 
   return (
     <div className="cultivation-panel glass-card">
-      <div className="cultivation-top">
-        <div className="cultivation-title">
-          <div className="pulse-indicator">
-            <span className={`pulse-dot ${isWorkingNow ? 'dot-active' : 'dot-idle'}`}></span>
-          </div>
-          <div>
-            <div className="title-bold">
-              <span>Teltonika Harimise Telemeetria</span>
-              {targetFieldName && <span className="field-tag">&bull; {targetFieldName}</span>}
+      {/* 1. Masin, olek ja mõõdikud */}
+      <div className="cc-header">
+        <div className="cc-title">
+          <span className={`cc-status-dot ${isWorkingNow ? 'working' : ''}`} aria-hidden="true" />
+          <div className="cc-title-text">
+            <div className="cc-title-name">
+              {pass.vehicleName || 'Sõidu taasesitus'}
+              {targetFieldName && <span className="cc-title-field">· {targetFieldName}</span>}
             </div>
-            <div className="title-sub">
-              {isWorkingNow ? '🟢 Rippriist maas (Külv / harimine aktiivne)' : '⚪ Transpordiasend (Pööre või sõit)'}
-            </div>
+            <div className="cc-title-status">{statusText}</div>
           </div>
         </div>
 
-        {/* Live Mini Stats */}
-        <div className="cultivation-stats-row">
-          <div className="mini-stat">
-            <span className="stat-label">Haritud pindala:</span>
-            <strong className="stat-val">{pass.workedAreaHa.toFixed(2)} ha</strong>
-            {fieldAreaHa && <span className="stat-perc">({coverageOfField}%)</span>}
+        <div className="cc-stats">
+          <div className="cc-stat">
+            <span className="cc-label">Haritud ala</span>
+            <span className="cc-value">
+              {pass.workedAreaHa.toFixed(2)} ha
+              {coverageOfField !== null && <span className="cc-value-sub">{coverageOfField}%</span>}
+            </span>
           </div>
-
-          <div className="mini-stat">
-            <span className="stat-label">Läbisõit:</span>
-            <strong className="stat-val">{pass.distanceKm.toFixed(2)} km</strong>
+          <div className="cc-stat">
+            <span className="cc-label">Läbisõit</span>
+            <span className="cc-value">{pass.distanceKm.toFixed(2)} km</span>
           </div>
-
-          <div className="mini-stat">
-            <span className="stat-label">Hetkekiirus:</span>
-            <strong className="stat-val">{currentSpeedKmH.toFixed(1)} km/h</strong>
+          <div className="cc-stat">
+            <span className="cc-label">Kiirus</span>
+            <span className="cc-value">{currentSpeedKmH.toFixed(1)} km/h</span>
           </div>
-
-          <div className="mini-stat">
-            <span className="stat-label">Töölaius:</span>
-            <select 
-              value={workingWidthM} 
+          <label className="cc-stat">
+            <span className="cc-label">Töölaius</span>
+            <select
+              value={workingWidthM}
               onChange={(e) => onWidthChange(Number(e.target.value))}
-              className="width-select"
+              className="cc-select cc-select-width"
+              title={currentImplement ? `Haakeriist: ${currentImplement.name}` : 'Töölaius'}
             >
-              <option value={6}>6 m</option>
-              <option value={8}>8 m</option>
-              <option value={12}>12 m (Külvik)</option>
-              <option value={18}>18 m</option>
-              <option value={24}>24 m (Prits)</option>
-              <option value={36}>36 m (Suurprits)</option>
+              {currentImplement && (
+                <option value={currentImplement.workingWidthM}>
+                  {currentImplement.workingWidthM} m · {currentImplement.name}
+                </option>
+              )}
+              {otherImplements.map((imp) => (
+                <option key={imp.id} value={imp.workingWidthM}>{imp.workingWidthM} m · {imp.name}</option>
+              ))}
+              {!widthIsListed && <option value={workingWidthM}>{workingWidthM} m</option>}
+              {STANDARD_WIDTHS.map((w) => (
+                <option key={w.value} value={w.value}>{w.value} m{w.label ? ` · ${w.label}` : ''}</option>
+              ))}
             </select>
-          </div>
-
-          {onHoursChange && (
-            <div className="mini-stat">
-              <span className="stat-label">Ajalugu:</span>
-              <select
-                value={telemetryHours || 6}
-                onChange={(e) => onHoursChange(Number(e.target.value))}
-                className="width-select"
-                title="Laaditud GPS-ajaloo vahemik"
-              >
-                <option value={2}>2 h</option>
-                <option value={4}>4 h</option>
-                <option value={6}>6 h</option>
-                <option value={12}>12 h</option>
-                <option value={24}>24 h</option>
-              </select>
-            </div>
-          )}
+          </label>
         </div>
       </div>
 
-      {/* Scrubber & Player Controls */}
-      <div className="cultivation-timeline-row">
-        <button 
-          className="play-btn"
-          onClick={onTogglePlay}
-          title={isPlaying ? 'Paus' : 'Mängi marsruuti (alates valitud algusajast)'}
-        >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} className="play-icon-offset" />}
-        </button>
+      {/* 2. Ajavahemik */}
+      <div className="cc-period">
+        <Clock size={14} className="cc-period-icon" aria-hidden="true" />
+        {onSimTimeModeChange && (
+          <div className="cc-segmented" role="group" aria-label="Ajavahemiku režiim">
+            <button
+              type="button"
+              className={simTimeMode === 'rolling' ? 'active' : ''}
+              onClick={() => onSimTimeModeChange('rolling')}
+              title="Viimased tunnid praegusest hetkest tagasi"
+            >
+              Viimased tunnid
+            </button>
+            <button
+              type="button"
+              className={simTimeMode === 'custom' ? 'active' : ''}
+              onClick={() => onSimTimeModeChange('custom')}
+              title="Konkreetne kuupäev, kellaaeg ja kestus"
+            >
+              Kuupäev ja kell
+            </button>
+          </div>
+        )}
 
-        <button 
-          className="icon-btn-ghost"
+        {simTimeMode === 'custom' ? (
+          <div className="cc-period-controls">
+            <div className="cc-date">
+              <DateInput
+                value={customDate}
+                onChange={(val) => onCustomDateChange?.(val)}
+                className="cc-input"
+                popupPlacement="top"
+              />
+            </div>
+            <div className="cc-time" title="Alguskellaaeg (24 h)">
+              <select
+                value={customHour}
+                onChange={(e) => onCustomTimeChange?.(`${e.target.value}:${customMin}`)}
+                aria-label="Tund"
+              >
+                {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
+                  <option key={h} value={h}>{h}</option>
+                ))}
+              </select>
+              <span aria-hidden="true">:</span>
+              <select
+                value={customMin}
+                onChange={(e) => onCustomTimeChange?.(`${customHour}:${e.target.value}`)}
+                aria-label="Minut"
+              >
+                {minuteOptions.map((m) => (
+                  <option key={m} value={m}>{m}</option>
+                ))}
+              </select>
+            </div>
+            <select
+              value={durationHours}
+              onChange={(e) => onDurationHoursChange?.(Number(e.target.value))}
+              className="cc-select"
+              title="Kestus alguskellaajast edasi"
+            >
+              {DURATION_HOURS.map((h) => (
+                <option key={h} value={h}>+{h} h</option>
+              ))}
+            </select>
+          </div>
+        ) : (
+          <div className="cc-period-controls">
+            {onHoursChange && (
+              <select
+                value={telemetryHours}
+                onChange={(e) => onHoursChange(Number(e.target.value))}
+                className="cc-select"
+                title="Mitu tundi praegusest hetkest tagasi"
+              >
+                {ROLLING_HOURS.map((h) => (
+                  <option key={h} value={h}>{h === 1 ? 'Viimane 1 h' : `Viimased ${h} h`}</option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
+
+        {lastActiveAt && onJumpToLastActive && (
+          <button
+            type="button"
+            className="cc-link-btn"
+            onClick={onJumpToLastActive}
+            title="Ava masina viimase teadaoleva sõidu aeg"
+          >
+            <Zap size={13} aria-hidden="true" />
+            Viimane sõit {formatDate(lastActiveAt)} {formatTimeDisplay(lastActiveAt)}
+          </button>
+        )}
+      </div>
+
+      {/* 3. Mängija */}
+      <div className="cc-player">
+        <button
+          type="button"
+          className="cc-play"
+          onClick={onTogglePlay}
+          disabled={!hasTrack}
+          title={isPlaying ? 'Paus' : 'Mängi (alates valitud algusajast)'}
+          aria-label={isPlaying ? 'Paus' : 'Mängi'}
+        >
+          {isPlaying ? <Pause size={18} /> : <Play size={18} className="cc-play-icon" />}
+        </button>
+        <button
+          type="button"
+          className="cc-icon-btn"
           onClick={onReset}
-          title={isCustomStart ? 'Tagasi valitud alguskellaaja juurde (uuesti vajutus viib 0%-ni)' : 'Algusesse'}
+          disabled={!hasTrack}
+          title={isCustomStart ? 'Tagasi alguskellaaja juurde (uuesti vajutus viib algusesse)' : 'Algusesse'}
+          aria-label="Algusesse"
         >
           <RotateCcw size={16} />
         </button>
 
-        {/* Alguskellaaja valik / sisend */}
-        <div className="start-time-picker-badge" title="Määra alguskellaaeg, millest alates marsruuti mängima panna">
-          <Clock size={14} className="start-time-icon" />
-          <span className="start-time-label">Algus:</span>
-          <input 
-            type="time" 
-            step="60"
-            value={localStartTime}
-            onChange={handleStartTimeInputChange}
-            className="start-time-input"
-            title="Vali või sisesta kellaaeg, millest alates marsruuti mängima panna"
-          />
-          {isCustomStart && (
-            <button 
-              className="start-time-reset-btn" 
-              onClick={handleResetToOrigin}
-              title="Lähtesta marsruudi algsesse algusaega"
-            >
-              &times;
-            </button>
-          )}
-        </div>
+        {isLoading && !hasTrack ? (
+          <div className="cc-notice cc-notice-loading" role="status">
+            <Loader2 size={16} className="cc-spin" aria-hidden="true" />
+            <span>Sõiduandmete laadimine…</span>
+          </div>
+        ) : !hasTrack ? (
+          <div className="cc-notice" role="status">
+            <AlertCircle size={16} aria-hidden="true" />
+            <span>
+              {simTimeMode === 'custom'
+                ? `${formatDate(customDate)} kell ${customHour}:${customMin}–${customEndLabel} sõiduandmeid ei leitud.`
+                : `Viimase ${telemetryHours} h jooksul sõiduandmeid ei leitud.`}
+            </span>
+            {lastActiveAt && onJumpToLastActive && (
+              <button type="button" className="cc-link-btn" onClick={onJumpToLastActive}>
+                Vaata viimast sõitu
+              </button>
+            )}
+          </div>
+        ) : (
+          <>
+            <div className="cc-start" title="Alguskellaaeg raja sees (24 h), millest taasesitus algab">
+              <span className="cc-label">Algus</span>
+              <input
+                type="text"
+                maxLength={5}
+                placeholder="08:00"
+                value={localStartTime}
+                onChange={handleStartTimeInputChange}
+                className="cc-start-input"
+                aria-label="Taasesituse alguskellaaeg"
+              />
+              {isCustomStart && (
+                <button type="button" className="cc-start-reset" onClick={handleResetToOrigin} title="Raja algusesse" aria-label="Lähtesta alguskellaaeg">
+                  <X size={12} />
+                </button>
+              )}
+            </div>
 
-        {/* Marsruudi algusaeg sildi kujul */}
-        {pass.startTime && (
-          <span className="timeline-clock-label bound-start" title={`Marsruudi algus: ${pass.startTime}`}>
-            {formatTimeDisplay(pass.startTime)}
-          </span>
+            <div className="cc-timeline">
+              <span className="cc-time-bound" title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
+                {formatTimeDisplay(pass.startTime)}
+              </span>
+              <div className="cc-slider">
+                <div className="cc-slider-fill" style={{ width: `${progressPct}%` }} />
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  value={progressPct}
+                  onChange={(e) => onSeek(Number(e.target.value))}
+                  aria-label="Taasesituse asukoht"
+                />
+              </div>
+              <span className="cc-time-bound" title={`Raja lõpp: ${formatDate(pass.endTime)} ${formatTimeDisplay(pass.endTime)}`}>
+                {formatTimeDisplay(pass.endTime)}
+              </span>
+            </div>
+
+            <div className="cc-now" title="Taasesituse hetk ja edenemine">
+              <span className="cc-now-time">{formatTimeDisplay(currentTimestamp, true)}</span>
+              <span className="cc-now-pct">{Math.round(progressPct)}%</span>
+            </div>
+
+            <div className="cc-segmented cc-speed" role="group" aria-label="Taasesituse kiirus">
+              {SPEEDS.map((s) => (
+                <button key={s} type="button" className={playbackSpeed === s ? 'active' : ''} onClick={() => onSpeedChange(s)}>
+                  {s}×
+                </button>
+              ))}
+            </div>
+          </>
         )}
-
-        <div className="timeline-slider-wrapper">
-          <input 
-            type="range"
-            min="0"
-            max="100"
-            value={progressPct}
-            onChange={(e) => onSeek(Number(e.target.value))}
-            className="timeline-slider"
-          />
-          <div className="timeline-progress-bar" style={{ width: `${progressPct}%` }}></div>
-        </div>
-
-        {/* Marsruudi lõppaeg sildi kujul */}
-        {pass.endTime && (
-          <span className="timeline-clock-label bound-end" title={`Marsruudi lõpp: ${pass.endTime}`}>
-            {formatTimeDisplay(pass.endTime)}
-          </span>
-        )}
-
-        {/* Hetkeline taasesituse kellaaeg ja protsent */}
-        <div className="timeline-current-time-box" title="Hetkeline taasesituse kellaaeg ja progress">
-          <span className="current-clock-val">{formatTimeDisplay(currentTimestamp, true)}</span>
-          <span className="current-pct-val">{Math.round(progressPct)}%</span>
-        </div>
-
-        {/* Speed multiplier selector */}
-        <div className="speed-buttons">
-          {[1, 2, 5, 10].map((s) => (
-            <button 
-              key={s}
-              className={`speed-btn ${playbackSpeed === s ? 'active' : ''}`}
-              onClick={() => onSpeedChange(s)}
-            >
-              {s}x
-            </button>
-          ))}
-        </div>
       </div>
     </div>
   );

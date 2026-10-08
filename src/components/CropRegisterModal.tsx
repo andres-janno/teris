@@ -27,6 +27,7 @@ interface CropRegisterModalProps {
   selectedYear?: number;
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
   stacked?: boolean;
+  isFullPage?: boolean;
 }
 
 export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
@@ -37,7 +38,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   onDeleteCrop,
   masterFields = [],
   selectedYear = 2026,
-  stacked = false
+  stacked = false,
+  isFullPage = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
@@ -294,31 +296,13 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isEditingVariety]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const targetCropForVariety = crops.find((c) => c.id === varietyTargetCropId);
 
-  return (
-    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
-      <div className="modal-content glass-card field-register-modal animate-scale-up">
-        {/* Header - Identical to Field & Parties modals */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Sprout className="text-emerald" size={24} />
-            <div>
-              <h3>Kultuuride ja Sortide Register</h3>
-              <p className="modal-subtitle">
-                Põllukultuurid, sortide alamregistrid, külvinormid ja saagiootused ({stats.totalCrops} kultuuri, {stats.totalVarieties} sorti)
-              </p>
-            </div>
-          </div>
-          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          {/* Quick Stats Bar */}
+  const bodyContent = (
+    <div className="modal-body">
+      {/* Quick Stats Bar */}
           <div className="register-header-controls">
             <div className="register-stats-pills">
               <div className="reg-stat-pill">
@@ -959,6 +943,63 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             )}
           </div>
         </div>
+  );
+
+  if (isFullPage) {
+    return (
+      <div className="fullpage-board-view">
+        <main className="fullpage-board-main wide">
+          <div className="fullpage-board-header">
+            <div className="fullpage-title-wrap">
+              <Sprout className="text-emerald" size={26} />
+              <div>
+                <h2>Kultuurid</h2>
+                <p className="fullpage-subtitle">Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused</p>
+              </div>
+            </div>
+            {!isEditingCrop && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={startCreateCrop}
+              >
+                <Plus size={16} />
+                <span>Lisa uus kultuur</span>
+              </button>
+            )}
+          </div>
+          <div className="fullpage-board-body">
+            {bodyContent}
+          </div>
+          <div className="modal-footer" style={{ marginTop: 'auto', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)', padding: '12px 16px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+            </span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
+      <div className="modal-content glass-card field-register-modal animate-scale-up">
+        <div className="modal-header">
+          <div className="modal-title-group">
+            <Sprout className="text-emerald" size={24} />
+            <div>
+              <h3>Kultuuride ja Sortide Register</h3>
+              <p className="modal-subtitle">
+                Põllukultuurid, sortide alamregistrid, külvinormid ja saagiootused ({stats.totalCrops} kultuuri, {stats.totalVarieties} sorti)
+              </p>
+            </div>
+          </div>
+          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
+            <X size={20} />
+          </button>
+        </div>
+
+        {bodyContent}
 
         <div className="modal-footer">
           <div className="footer-left-info">

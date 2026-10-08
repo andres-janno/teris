@@ -45,6 +45,8 @@ interface PoiManagerModalProps {
     accessNotes?: string;
   } | null;
   initialCoords?: [number, number] | null;
+  isFullPage?: boolean;
+  embedded?: boolean;
 }
 
 const CATEGORY_META: Record<PoiCategory, { label: string; emoji: string }> = {
@@ -66,7 +68,9 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   onFocusPoi,
   onStartPickLocation,
   initialDraft,
-  initialCoords
+  initialCoords,
+  isFullPage = false,
+  embedded = false
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAdding, setIsAdding] = useState(false);
@@ -116,7 +120,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isAdding]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage && !embedded) return null;
 
   const filteredPois = selectedCategory === 'all'
     ? pois
@@ -207,23 +211,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     downloadAnchor.remove();
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card poi-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <MapPin className="text-emerald" size={24} />
-            <div>
-              <h3>Olulised asukohad ja taristu</h3>
-              <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
-            </div>
-          </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
+  const bodyContent = (
+    <div className="modal-body">
           {/* Action Bar */}
           <div className="poi-top-bar">
             {/* Category tabs */}
@@ -490,6 +479,54 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
             )}
           </div>
         </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="poi-embedded-view">
+        {bodyContent}
+      </div>
+    );
+  }
+
+  if (isFullPage) {
+    return (
+      <div className="fullpage-board-view">
+        <main className="fullpage-board-main wide">
+          <div className="fullpage-board-header">
+            <div className="fullpage-title-wrap">
+              <MapPin className="text-emerald" size={26} />
+              <div>
+                <h2>Taristu</h2>
+                <p className="fullpage-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
+              </div>
+            </div>
+          </div>
+          <div className="fullpage-board-body">
+            {bodyContent}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content glass-card poi-modal animate-scale-up">
+        <div className="modal-header">
+          <div className="modal-title-group">
+            <MapPin className="text-emerald" size={24} />
+            <div>
+              <h3>Olulised asukohad ja taristu</h3>
+              <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
+            </div>
+          </div>
+          <button className="icon-btn-ghost" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {bodyContent}
 
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Sulge</button>

@@ -1,14 +1,14 @@
 // src/services/api.ts
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import type { Vehicle, Implement, TeltonikaDevice } from '../types/fleet';
+import type { Vehicle, Implement, TeltonikaDevice, ImplementAssignment } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus } from '../types/fieldWork';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -198,7 +198,8 @@ export const api = {
     from?: string,
     to?: string
   ): Promise<{
-    points: { timestamp: string; lat: number; lng: number; altitude?: number; speedKmH: number; heading: number }[]
+    points: { timestamp: string; lat: number; lng: number; altitude?: number; speedKmH: number; heading: number }[];
+    implement?: { id: string; name: string; workingWidthM: number; type?: string } | null;
   }> {
     const q = new URLSearchParams();
     if (typeof target === 'string') {
@@ -261,6 +262,65 @@ export const api = {
       body: JSON.stringify({ implementId, vehicleId })
     });
     if (!res.ok) throw new Error('Failed to assign implement');
+    return res.json();
+  },
+
+  async getImplementAssignments(params?: { vehicleId?: string; implementId?: string }): Promise<ImplementAssignment[]> {
+    const query = new URLSearchParams();
+    if (params?.vehicleId) query.set('vehicleId', params.vehicleId);
+    if (params?.implementId) query.set('implementId', params.implementId);
+    const qs = query.toString() ? `?${query.toString()}` : '';
+    const res = await apiFetch(`/api/fleet/implement-assignments${qs}`);
+    if (!res.ok) throw new Error('Failed to fetch implement assignments');
+    return res.json();
+  },
+
+  async createImplementAssignment(data: {
+    vehicleId: string;
+    implementId: string;
+    startedAt?: string;
+    endedAt?: string | null;
+    notes?: string;
+  }): Promise<ImplementAssignment> {
+    const res = await apiFetch('/api/fleet/implement-assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to create implement assignment');
+    }
+    return res.json();
+  },
+
+  async updateImplementAssignment(
+    id: string,
+    data: {
+      vehicleId?: string;
+      implementId?: string;
+      startedAt?: string;
+      endedAt?: string | null;
+      notes?: string;
+    }
+  ): Promise<ImplementAssignment> {
+    const res = await apiFetch(`/api/fleet/implement-assignments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || 'Failed to update implement assignment');
+    }
+    return res.json();
+  },
+
+  async deleteImplementAssignment(id: string): Promise<any> {
+    const res = await apiFetch(`/api/fleet/implement-assignments/${id}`, {
+      method: 'DELETE'
+    });
+    if (!res.ok) throw new Error('Failed to delete implement assignment');
     return res.json();
   },
 
@@ -480,6 +540,15 @@ export const api = {
 
   async deleteWorkEntry(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/work-entries/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Kande kustutamine ebaõnnestus');
+  },
+
+  async getTelemetrySuggestions(fieldSeasonId: number, date: string, excludeEntryId?: string): Promise<TelemetrySuggestion[]> {
+    const q = new URLSearchParams({
+      fieldSeasonId: String(fieldSeasonId),
+      date,
+      ...(excludeEntryId ? { excludeEntryId } : {})
+    });
+    return jsonOrThrow(await apiFetch(`/api/field-works/telemetry-suggestions?${q.toString()}`), 'Telemeetria soovituste laadimine ebaõnnestus');
   },
 
   async getFinanceEntries(year: number, status?: FinanceStatus): Promise<FinanceEntry[]> {

@@ -1660,45 +1660,7 @@ body {
   line-height: 1.4;
 }
 
-/* Bottom Cultivation & Scrubber Panel */
-.cultivation-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(980px, 96vw);
-  z-index: 900;
-  padding: 12px 18px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.cultivation-top {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-}
-
-.cultivation-title {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.pulse-indicator {
-  display: flex;
-  align-items: center;
-}
-
-.pulse-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-}
-
+/* Pulseeriv olekutäpp (masinate jälgija) */
 .dot-active {
   background-color: var(--emerald-400);
   box-shadow: 0 0 10px var(--emerald-400);
@@ -1709,271 +1671,502 @@ body {
   background-color: var(--text-muted);
 }
 
-.title-bold {
-  font-size: 0.88rem;
+/* ==========================================================================
+   Sõidu taasesituse paneel (kaardi allservas)
+   Üks juhtnuppude kõrgus (--cc-h) ja kaks kirjasuurust: silt 0.68rem, sisu 0.82rem.
+   ========================================================================== */
+.cultivation-panel {
+  --cc-h: 32px;
+  position: absolute;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(1040px, calc(100vw - 32px));
+  z-index: 900;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+
+.cc-label {
+  font-size: 0.68rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+
+/* 1. Päis */
+.cc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cc-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.cc-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.cc-status-dot.working {
+  background: var(--emerald-400);
+  box-shadow: 0 0 0 4px rgba(16, 185, 129, 0.18);
+}
+
+.cc-title-name {
+  font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  white-space: nowrap;
 }
 
-.field-tag {
+.cc-title-field {
+  margin-left: 6px;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.cc-title-status {
+  font-size: 0.76rem;
+  color: var(--text-secondary);
+}
+
+.cc-stats {
+  display: flex;
+  align-items: flex-end;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.cc-stat {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.cc-value {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.cc-value-sub {
+  margin-left: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--emerald-600);
+}
+
+/* Ühtne valikukast ja sisestusväli */
+.cc-select,
+.cultivation-panel .cc-input,
+.cc-time {
+  height: var(--cc-h);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+  color: var(--input-color);
+  font: inherit;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.cc-select {
+  padding: 0 8px;
+  cursor: pointer;
+}
+
+.cc-select-width {
+  max-width: 220px;
+}
+
+.cc-select:focus,
+.cultivation-panel .cc-input:focus,
+.cc-time:focus-within {
+  outline: none;
+  border-color: var(--emerald-500);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
+}
+
+/* 2. Ajavahemik */
+.cc-period {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-card);
+}
+
+.cc-period-icon {
   color: var(--emerald-500);
+  flex-shrink: 0;
 }
 
-.title-sub {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-}
-
-.cultivation-stats-row {
+.cc-period-controls {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.mini-stat {
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+.cc-segmented {
+  display: inline-flex;
+  height: var(--cc-h);
+  padding: 2px;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--stat-bg);
 }
 
-.mini-stat .stat-label {
+.cc-segmented button {
+  padding: 0 12px;
+  border: none;
+  border-radius: calc(var(--radius-sm) - 2px);
+  background: transparent;
   color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
-.mini-stat .stat-val {
+.cc-segmented button:hover {
   color: var(--text-primary);
 }
 
-.mini-stat .stat-perc {
-  color: var(--emerald-500);
-  font-weight: 600;
+.cc-segmented button.active {
+  background: var(--emerald-600);
+  color: #ffffff;
 }
 
-.width-select {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  color: var(--input-color);
-  font-size: 0.75rem;
+.cc-date {
+  width: 136px;
+}
+
+.cultivation-panel .cc-input {
+  width: 100%;
+  padding: 0 32px 0 10px;
+}
+
+/* Kalender avaneb paneeli kohale (DateInput popupPlacement="top") */
+.date-picker-popup-top,
+.cultivation-panel .date-picker-popup {
+  top: auto;
+  bottom: calc(100% + 8px);
+}
+
+.cc-time {
+  display: inline-flex;
+  align-items: center;
+  padding: 0 4px;
+}
+
+.cc-time select {
+  height: 100%;
+  border: none;
+  background: transparent;
+  color: inherit;
+  font: inherit;
   font-weight: 600;
-  padding: 3px 6px;
-  border-radius: var(--radius-sm);
+  padding: 0 2px;
+  cursor: pointer;
   outline: none;
 }
 
-.cultivation-timeline-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+.cc-time span {
+  color: var(--text-secondary);
 }
 
-.play-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #15803d, #22c55e);
-  color: #ffffff;
-  border: none;
+.cc-link-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: var(--cc-h);
+  padding: 0 10px;
+  margin-left: auto;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--emerald-600);
+  font: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+.cc-link-btn:hover {
+  background: rgba(16, 185, 129, 0.1);
+  border-color: rgba(16, 185, 129, 0.3);
+}
+
+/* 3. Mängija */
+.cc-player {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+}
+
+.cc-play {
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 12px rgba(34, 197, 94, 0.4);
-  transition: transform 0.15s;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--emerald-600);
+  color: #ffffff;
+  cursor: pointer;
+  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
+  transition: transform 0.15s ease, background-color 0.15s ease;
 }
 
-.play-btn:hover {
-  transform: scale(1.08);
+.cc-play:hover:not(:disabled) {
+  background: var(--emerald-500);
+  transform: scale(1.05);
 }
 
-.play-icon-offset {
+.cc-play-icon {
   margin-left: 2px;
 }
 
-.timeline-slider-wrapper {
-  flex: 1;
-  position: relative;
+.cc-icon-btn {
   display: flex;
   align-items: center;
-}
-
-.timeline-slider {
-  width: 100%;
-  height: 6px;
-  -webkit-appearance: none;
-  appearance: none;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  outline: none;
+  justify-content: center;
+  width: var(--cc-h);
+  height: var(--cc-h);
+  flex-shrink: 0;
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--stat-bg);
+  color: var(--text-secondary);
   cursor: pointer;
 }
 
-.timeline-slider::-webkit-slider-thumb {
+.cc-icon-btn:hover:not(:disabled) {
+  color: var(--text-primary);
+}
+
+.cc-play:disabled,
+.cc-icon-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.cc-start {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--cc-h);
+  padding: 0 8px;
+  flex-shrink: 0;
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  background: var(--input-bg);
+}
+
+.cc-start:focus-within {
+  border-color: var(--emerald-500);
+}
+
+.cc-start-input {
+  width: 44px;
+  border: none;
+  outline: none;
+  background: transparent;
+  color: var(--input-color);
+  font: inherit;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.cc-start-reset {
+  display: flex;
+  padding: 2px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.cc-start-reset:hover {
+  color: #ef4444;
+}
+
+.cc-timeline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 120px;
+}
+
+.cc-time-bound {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.cc-slider {
+  position: relative;
+  flex: 1;
+  height: 6px;
+  border-radius: 3px;
+  background: var(--border-card);
+}
+
+.cc-slider-fill {
+  position: absolute;
+  inset: 0 auto 0 0;
+  border-radius: 3px;
+  background: var(--emerald-500);
+  pointer-events: none;
+}
+
+.cc-slider input[type='range'] {
+  position: absolute;
+  inset: -8px 0;
+  width: 100%;
+  height: 22px;
+  margin: 0;
+  background: transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+
+.cc-slider input[type='range']::-webkit-slider-thumb {
   -webkit-appearance: none;
   width: 16px;
   height: 16px;
   border-radius: 50%;
   background: #ffffff;
-  box-shadow: 0 0 8px rgba(0, 0, 0, 0.5);
-  cursor: pointer;
-  transition: transform 0.1s;
+  border: 3px solid var(--emerald-600);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-.timeline-slider::-webkit-slider-thumb:hover {
-  transform: scale(1.25);
+.cc-slider input[type='range']::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid var(--emerald-600);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
 }
 
-.timeline-progress-bar {
-  position: absolute;
-  left: 0;
-  height: 6px;
-  background: linear-gradient(90deg, #38bdf8, #22c55e);
-  border-radius: 3px;
-  pointer-events: none;
+.cc-now {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
 }
 
-.timeline-time-label {
-  font-size: 0.8rem;
+.cc-now-time {
+  font-size: 0.9rem;
   font-weight: 700;
-  color: #ffffff;
-  width: 36px;
-  text-align: right;
+  color: var(--text-primary);
 }
 
-.start-time-picker-badge {
+.cc-now-pct {
+  font-size: 0.74rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  min-width: 32px;
+}
+
+.cc-speed button {
+  padding: 0 9px;
+}
+
+/* Teated mängija real (laadimine / andmed puuduvad) */
+.cc-notice {
   display: flex;
   align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.06);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  padding: 3px 8px;
+  gap: 8px;
+  flex: 1;
+  min-height: var(--cc-h);
+  padding: 4px 4px 4px 12px;
+  border: 1px solid rgba(245, 158, 11, 0.4);
   border-radius: var(--radius-sm);
+  background: rgba(245, 158, 11, 0.1);
   color: var(--text-primary);
-  font-size: 0.76rem;
-  transition: all 0.2s ease;
+  font-weight: 500;
 }
 
-.start-time-picker-badge:hover,
-.start-time-picker-badge:focus-within {
-  border-color: var(--emerald-400);
-  background: rgba(34, 197, 94, 0.08);
-}
-
-.start-time-icon {
-  color: var(--emerald-400);
+.cc-notice > svg {
+  color: #d97706;
   flex-shrink: 0;
 }
 
-.start-time-label {
-  font-size: 0.72rem;
+.cc-notice-loading {
+  border-color: var(--border-card);
+  background: var(--stat-bg);
   color: var(--text-secondary);
-  font-weight: 600;
-  white-space: nowrap;
 }
 
-.start-time-input {
-  background: transparent;
-  border: none;
-  outline: none;
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-weight: 700;
-  font-family: inherit;
-  cursor: pointer;
-  padding: 0;
-  width: 58px;
+.cc-notice-loading > svg {
+  color: var(--emerald-500);
 }
 
-.start-time-input::-webkit-calendar-picker-indicator {
-  filter: invert(0.8) sepia(1) saturate(3) hue-rotate(90deg);
-  cursor: pointer;
-  opacity: 0.8;
-  padding: 0;
-  margin: 0;
+@keyframes ccSpin {
+  to { transform: rotate(360deg); }
 }
 
-.start-time-reset-btn {
-  background: transparent;
-  border: none;
-  color: var(--text-muted);
-  font-size: 1rem;
-  line-height: 1;
-  padding: 0 2px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 2px;
-  transition: color 0.15s;
+.cc-spin {
+  animation: ccSpin 0.9s linear infinite;
 }
 
-.start-time-reset-btn:hover {
-  color: #ef4444;
-}
+@media (max-width: 760px) {
+  .cultivation-panel {
+    bottom: 12px;
+    padding: 12px;
+  }
 
-.timeline-clock-label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  white-space: nowrap;
-  font-variant-numeric: tabular-nums;
-}
+  .cc-stats {
+    gap: 14px;
+  }
 
-.timeline-clock-label.bound-start {
-  color: var(--text-muted);
-}
+  .cc-player {
+    flex-wrap: wrap;
+  }
 
-.timeline-clock-label.bound-end {
-  color: var(--text-muted);
-}
+  .cc-timeline {
+    order: 10;
+    flex-basis: 100%;
+  }
 
-.timeline-current-time-box {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(255, 255, 255, 0.04);
-  padding: 2px 7px;
-  border-radius: var(--radius-sm);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  font-variant-numeric: tabular-nums;
-  white-space: nowrap;
-}
-
-.current-clock-val {
-  font-size: 0.78rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.current-pct-val {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--emerald-400);
-}
-
-.speed-buttons {
-  display: flex;
-  gap: 4px;
-}
-
-.speed-btn {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: var(--radius-sm);
-  color: var(--text-secondary);
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 3px 7px;
-  cursor: pointer;
-}
-
-.speed-btn.active {
-  background: rgba(34, 197, 94, 0.25);
-  border-color: rgba(34, 197, 94, 0.5);
-  color: #ffffff;
+  .cc-link-btn {
+    margin-left: 0;
+  }
 }
 
 /* Modals & Backdrops */
@@ -2885,6 +3078,11 @@ body {
   border-color: var(--emerald-500);
 }
 
+.form-input::-webkit-calendar-picker-indicator {
+  filter: invert(0.8);
+  cursor: pointer;
+}
+
 /* Kuupäeva väli eesti vormingus (DateInput) */
 .date-input {
   position: relative;
@@ -2926,17 +3124,134 @@ body {
   opacity: 0.6;
 }
 
-/* Brauseri kalendrivalija ankur: nähtamatu, aga showPicker() vajab renderdatud elementi */
-.date-input-picker {
+/* Eestikeelne kalendrivalija hüpikaken */
+.date-picker-popup {
   position: absolute;
-  right: 0;
-  bottom: 0;
-  width: 1px;
-  height: 1px;
-  opacity: 0;
-  pointer-events: none;
-  border: 0;
-  padding: 0;
+  top: calc(100% + 5px);
+  left: 0;
+  z-index: 3100;
+  width: 256px;
+  background: var(--bg-modal);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
+  padding: 10px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  user-select: none;
+}
+
+.date-picker-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 6px;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.date-picker-title {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.date-picker-nav {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+}
+
+.date-picker-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease;
+}
+
+.date-picker-nav-btn:hover {
+  background: var(--stat-bg);
+  color: var(--text-primary);
+}
+
+.date-picker-today-btn {
+  padding: 2px 7px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  border-radius: 4px;
+  border: 1px solid var(--border-card);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.date-picker-today-btn:hover {
+  background: var(--stat-bg);
+  color: var(--text-primary);
+  border-color: var(--emerald-500);
+}
+
+.date-picker-weekdays {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  text-align: center;
+}
+
+.date-picker-weekday {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+.date-picker-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+
+.date-picker-day {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  font-size: 0.76rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  cursor: pointer;
+  transition: background 0.1s ease, color 0.1s ease;
+}
+
+.date-picker-day:hover {
+  background: var(--stat-bg);
+}
+
+.date-picker-day.other {
+  color: var(--text-muted);
+  opacity: 0.45;
+}
+
+.date-picker-day.today {
+  font-weight: 800;
+  color: #1d4ed8;
+  box-shadow: inset 0 0 0 1px #3b82f6;
+}
+
+.date-picker-day.selected {
+  background: #16a34a !important;
+  color: #ffffff !important;
+  font-weight: 800;
 }
 
 /* Native <select> chrome adds its own height/padding on top of ours unless
@@ -4101,6 +4416,8 @@ input[type="number"],
 
 .modal-content.fleet-edit-modal .modal-body {
   overflow-y: auto;
+  min-height: 420px;
+  padding-bottom: 32px;
 }
 
 .modal-content.users-edit-modal {
@@ -6522,9 +6839,142 @@ a.history-pill:hover {
   cursor: pointer;
 }
 
+.main-view-switch button:hover:not(.active) {
+  background: var(--stat-bg-hover);
+  color: var(--text-primary);
+}
+
 .main-view-switch button.active {
   background: #16a34a;
   color: #ffffff;
+}
+
+/* ==========================================================================
+   Täissuuruses lehevaated (Hooajad, Põllud, Kultuurid, Tehnika, Taristu)
+   ========================================================================== */
+.fleet-board-view,
+.fullpage-board-view {
+  flex: 1;
+  height: calc(100vh - 64px);
+  display: flex;
+  min-height: 0;
+  background: var(--bg-dark);
+  overflow-y: auto;
+}
+
+.fleet-board-main,
+.fullpage-board-main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px 24px 32px 24px;
+  max-width: 1720px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.fullpage-board-main.wide {
+  max-width: 100%;
+}
+
+.fleet-board-header,
+.fullpage-board-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 4px;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.fleet-title-wrap,
+.fullpage-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.fullpage-title-wrap h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.fullpage-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary);
+}
+
+.fleet-board-body,
+.fullpage-board-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  flex: 1;
+}
+
+.fullpage-tabs {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  width: fit-content;
+}
+
+.fullpage-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: 0;
+  background: transparent;
+  color: var(--text-secondary);
+  font: inherit;
+  font-size: 0.86rem;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.fullpage-tab:hover {
+  color: var(--text-primary);
+  background: var(--stat-bg-hover);
+}
+
+.fullpage-tab.active {
+  background: #16a34a;
+  color: #ffffff;
+}
+
+.poi-embedded-view,
+.party-embedded-view {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fleet-title-wrap h2 {
+  margin: 0;
+  font-size: 1.3rem;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.01em;
+}
+
+.fleet-board-body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  min-height: 0;
 }
 
 /* ==========================================================================
@@ -7265,9 +7715,9 @@ a.history-pill:hover {
 .fw-card {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  min-width: 110px;
-  max-width: 170px;
+  gap: 3px;
+  min-width: 120px;
+  max-width: 180px;
   padding: 6px 9px;
   border-radius: 7px;
   border: 1px solid var(--border-card);
@@ -7287,7 +7737,7 @@ a.history-pill:hover {
 }
 
 .fw-card.done {
-  background: var(--stat-bg);
+  background: var(--bg-modal);
   color: var(--text-secondary);
 }
 
@@ -7311,6 +7761,36 @@ a.history-pill:hover {
 .fw-card-sub.repeat {
   color: #1d4ed8;
   font-weight: 600;
+}
+
+.fw-card-entries {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.fw-card-entry {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.fw-card-entry + .fw-card-entry {
+  padding-top: 3px;
+  border-top: 1px dashed var(--border-card);
+}
+
+.fw-card-entry-primary {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  line-height: 1.25;
+}
+
+.fw-card-entry-secondary {
+  font-size: 0.68rem;
+  color: var(--text-secondary);
+  line-height: 1.25;
 }
 
 .fw-status-dot {
@@ -7483,22 +7963,18 @@ a.history-pill:hover {
   color: #1d4ed8;
 }
 
-/* Parem paneel: valitud töö */
-.fw-panel {
-  width: 360px;
-  flex-shrink: 0;
-  display: flex;
-  flex-direction: column;
-  background: var(--bg-modal);
-  border-left: 1px solid var(--border-card);
+/* Valitud töö hüpikaken (modal) */
+.modal-content.fw-work-modal {
+  width: min(580px, 94vw);
+  max-height: 90vh;
 }
 
 .fw-panel-head {
-  padding: 14px 18px 12px 18px;
+  padding: 18px 22px 14px 22px;
   border-bottom: 1px solid var(--border-card);
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
 }
 
 .fw-panel-top {
@@ -7528,10 +8004,10 @@ a.history-pill:hover {
 .fw-panel-body {
   flex: 1;
   overflow-y: auto;
-  padding: 14px 18px;
+  padding: 16px 22px;
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 14px;
 }
 
 .fw-panel-status {
@@ -7699,10 +8175,10 @@ a.history-pill:hover {
 }
 
 .fw-panel-foot {
-  padding: 12px 18px;
+  padding: 14px 22px;
   border-top: 1px solid var(--border-card);
   display: flex;
-  gap: 8px;
+  gap: 10px;
   align-items: center;
 }
 
@@ -7712,7 +8188,7 @@ a.history-pill:hover {
 }
 
 .fw-panel-clear-wrap {
-  padding: 4px 18px 12px 18px;
+  padding: 0 22px 14px 22px;
   display: flex;
   justify-content: center;
 }
@@ -7774,6 +8250,148 @@ a.history-pill:hover {
   color: var(--text-primary);
 }
 
+/* Telemeetria soovitused kande dialoogis */
+.telemetry-loading-notice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  font-size: 0.78rem;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.08);
+  border-radius: 6px;
+}
+
+.telemetry-suggestions-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.08) 0%, rgba(5, 150, 105, 0.04) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  border-radius: 10px;
+}
+
+.telemetry-suggestions-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.telemetry-suggestions-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #059669;
+}
+
+.telemetry-pulse-icon {
+  color: #10b981;
+}
+
+.telemetry-suggestions-hint {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.telemetry-suggestions-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.telemetry-suggestion-pill {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--bg-surface, #ffffff);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  border-radius: 8px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  color: var(--text-primary);
+}
+
+.telemetry-suggestion-pill:hover {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: #10b981;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.15);
+}
+
+.telemetry-suggestion-pill.selected {
+  background: #ecfdf5;
+  border-color: #059669;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+}
+
+.telemetry-pill-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.telemetry-pill-vehicle {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.telemetry-pill-impl {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2563eb;
+  background: rgba(37, 99, 235, 0.08);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.telemetry-pill-time {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #047857;
+  background: rgba(16, 185, 129, 0.15);
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.telemetry-pill-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.telemetry-pill-worker {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+.telemetry-pill-action {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #059669;
+  background: rgba(16, 185, 129, 0.1);
+  padding: 2px 8px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.telemetry-suggestion-pill.selected .telemetry-pill-action {
+  background: #059669;
+  color: #ffffff;
+}
+
 .work-entry-grid {
   display: grid;
   gap: 10px;
@@ -7786,6 +8404,26 @@ a.history-pill:hover {
 
 .work-entry-grid.four {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px 110px;
+}
+
+.work-entry-grid.work-entry-top-grid {
+  grid-template-columns: 140px minmax(0, 1fr) 115px 115px 95px;
+}
+
+.work-entry-grid.work-entry-area-grid {
+  grid-template-columns: 140px 155px auto minmax(0, 1fr);
+}
+
+@media (max-width: 680px) {
+  .work-entry-grid.work-entry-top-grid,
+  .work-entry-grid.work-entry-area-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+select.time-select {
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 .work-entry-section {
@@ -7804,6 +8442,16 @@ a.history-pill:hover {
 .form-input.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+.form-input.readonly,
+.form-input:read-only {
+  background: var(--stat-bg);
+  cursor: default;
+  color: var(--text-primary);
+  font-weight: 700;
+  border-color: var(--border-subtle, rgba(0, 0, 0, 0.15));
+  user-select: none;
 }
 
 .work-entry-hint {
@@ -7868,6 +8516,65 @@ a.history-pill:hover {
 .work-entry-finish small {
   font-size: 0.72rem;
   color: var(--text-secondary);
+}
+
+.work-entry-area-presets {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  padding: 8px 10px;
+  background: var(--stat-bg);
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+  margin-top: 2px;
+}
+
+.work-entry-presets-label {
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-right: 2px;
+}
+
+.work-entry-presets-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.area-preset-btn {
+  appearance: none;
+  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
+  background: var(--card-bg, #ffffff);
+  color: var(--text-primary);
+  border-radius: 6px;
+  padding: 3px 9px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  line-height: 1.3;
+}
+
+.area-preset-btn:hover:not(:disabled) {
+  border-color: #10b981;
+  background: var(--stat-bg-hover);
+  color: #059669;
+}
+
+.area-preset-btn.active {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
+}
+
+.area-preset-btn:disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  border-style: dashed;
 }
 
 /* Töö lisamise aken */

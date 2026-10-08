@@ -10,6 +10,13 @@ export const formatDate = (iso?: string | null): string => {
   return m ? `${m[3]}.${m[2]}.${m[1]}` : iso;
 };
 
+/** ISO kuupäev ilma aastata → '15.08'; tühja väärtuse korral '–'. */
+export const formatDayMonth = (iso?: string | null): string => {
+  if (!iso) return '–';
+  const m = ISO_DATE.exec(iso);
+  return m ? `${m[3]}.${m[2]}` : iso;
+};
+
 /** Vahemik; sama aasta piires lühem kuju: '01.08–30.09.2026'. */
 export const formatDateRange = (start?: string | null, end?: string | null): string => {
   if (!start) return '–';

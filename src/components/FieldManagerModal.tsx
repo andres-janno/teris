@@ -49,6 +49,8 @@ interface FieldManagerModalProps {
   crops?: Crop[];
   onOpenCrops?: () => void;
   baseMap?: BaseMapLayerId;
+  isFullPage?: boolean;
+  onFocusFieldOnMap?: (field: MasterField) => void;
 }
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
@@ -68,7 +70,9 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onOpenParties,
   crops = [],
   onOpenCrops,
-  baseMap = 'maaamet-pohikaart'
+  baseMap = 'maaamet-pohikaart',
+  isFullPage = false,
+  onFocusFieldOnMap
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
@@ -376,7 +380,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
     }
   }, [selectedYear]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const startEdit = (field: MasterField) => {
     const currentRec = field.history.find(h => h.year === selectedYear) || {
@@ -632,26 +636,8 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
     link.remove();
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card field-register-modal animate-scale-up">
-        {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Layers className="text-emerald" size={24} />
-            <div>
-              <h3>Põldude register</h3>
-              <p className="modal-subtitle">
-                Aastatepõhine külvikord, PRIA pindalade muutused.
-              </p>
-            </div>
-          </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
+  const bodyContent = (
+    <div className="modal-body">
           {/* Top Row: Year Season Switcher & Global Stats */}
           <div className="register-header-controls">
             {/* Year Selector Tabs */}
@@ -1457,6 +1443,16 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                       })}
                       <td className="actions-col">
                         <div className="row-actions">
+                          {onFocusFieldOnMap && (
+                            <button
+                              type="button"
+                              className="icon-btn-ghost text-emerald"
+                              onClick={() => onFocusFieldOnMap(field)}
+                              title="Fookusta ja kuva põld kaardil"
+                            >
+                              <Crosshair size={15} />
+                            </button>
+                          )}
                           <button className="icon-btn-ghost" onClick={() => startEdit(field)} title="Muuda">
                             <Edit2 size={15} />
                           </button>
@@ -1492,28 +1488,80 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
             )}
           </div>
         </div>
+  );
+
+  const footerContent = (
+    <>
+      <span className="register-crop-footer-title">{selectedYear} kultuurid:</span>
+      {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+      {cropGroups.map((g) => (
+        <div key={g.kind} className={`register-crop-group ${g.kind}`}>
+          <span className="register-crop-group-title" title={g.title}>
+            {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
+          </span>
+          {g.rows.map((c) => (
+            <span
+              key={c.crop}
+              className="register-crop-stat"
+              style={{ '--crop-color': c.color } as React.CSSProperties}
+              title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}
+            >
+              <span>{c.crop}</span>
+              <strong>{c.areaHa.toFixed(2)} ha</strong>
+            </span>
+          ))}
+        </div>
+      ))}
+    </>
+  );
+
+  if (isFullPage) {
+    return (
+      <div className="fullpage-board-view">
+        <main className="fullpage-board-main wide">
+          <div className="fullpage-board-header">
+            <div className="fullpage-title-wrap">
+              <Layers className="text-emerald" size={26} />
+              <div>
+                <h2>Põllud</h2>
+                <p className="fullpage-subtitle">Põldude register, aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
+              </div>
+            </div>
+          </div>
+          <div className="fullpage-board-body">
+            {bodyContent}
+          </div>
+          <div className="register-crop-footer" style={{ marginTop: 'auto', padding: '12px 16px', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)' }}>
+            {footerContent}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content glass-card field-register-modal animate-scale-up">
+        {/* Header */}
+        <div className="modal-header">
+          <div className="modal-title-group">
+            <Layers className="text-emerald" size={24} />
+            <div>
+              <h3>Põldude register</h3>
+              <p className="modal-subtitle">
+                Aastatepõhine külvikord, PRIA pindalade muutused.
+              </p>
+            </div>
+          </div>
+          <button className="icon-btn-ghost" onClick={onClose}>
+            <X size={20} />
+          </button>
+        </div>
+
+        {bodyContent}
 
         <div className="modal-footer register-crop-footer">
-          <span className="register-crop-footer-title">{selectedYear} kultuurid:</span>
-          {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
-          {cropGroups.map((g) => (
-            <div key={g.kind} className={`register-crop-group ${g.kind}`}>
-              <span className="register-crop-group-title" title={g.title}>
-                {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
-              </span>
-              {g.rows.map((c) => (
-                <span
-                  key={c.crop}
-                  className="register-crop-stat"
-                  style={{ '--crop-color': c.color } as React.CSSProperties}
-                  title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}
-                >
-                  <span>{c.crop}</span>
-                  <strong>{c.areaHa.toFixed(2)} ha</strong>
-                </span>
-              ))}
-            </div>
-          ))}
+          {footerContent}
         </div>
       </div>
     </div>

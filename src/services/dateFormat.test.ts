@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDateRange, parseEtDate, formatTimeAgo } from './dateFormat';
+import { formatDate, formatDayMonth, formatDateRange, parseEtDate, formatTimeAgo } from './dateFormat';
 
 describe('formatDate', () => {
   it('vormindab ISO kuupäeva eesti kujule', () => {
@@ -9,6 +9,17 @@ describe('formatDate', () => {
   it('tühi väärtus → kriips', () => {
     expect(formatDate(null)).toBe('–');
     expect(formatDate('')).toBe('–');
+  });
+});
+
+describe('formatDayMonth', () => {
+  it('vormindab ISO kuupäeva päevaks ja kuuks ilma aastata', () => {
+    expect(formatDayMonth('2026-08-05')).toBe('05.08');
+    expect(formatDayMonth('2026-10-04T00:00:00.000Z')).toBe('04.10');
+  });
+  it('tühi väärtus → kriips', () => {
+    expect(formatDayMonth(null)).toBe('–');
+    expect(formatDayMonth('')).toBe('–');
   });
 });
 

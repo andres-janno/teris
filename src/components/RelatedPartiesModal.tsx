@@ -31,6 +31,8 @@ interface RelatedPartiesModalProps {
   selectedYear?: number;
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
   stacked?: boolean;
+  isFullPage?: boolean;
+  embedded?: boolean;
 }
 
 const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'OTHER'];
@@ -44,7 +46,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   masterFields = [],
   vehicles = [],
   selectedYear = 2026,
-  stacked = false
+  stacked = false,
+  isFullPage = false,
+  embedded = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
@@ -238,7 +242,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isEditing]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage && !embedded) return null;
 
   const editForm = isEditing && createPortal(
     <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
@@ -425,27 +429,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     document.body
   );
 
-  return (
-    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
-      <div className="modal-content glass-card field-register-modal parties-register-modal animate-scale-up">
-        {/* Header - Identical to FieldManagerModal */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Users className="text-emerald" size={24} />
-            <div>
-              <h3>Seotud isikute register</h3>
-              <p className="modal-subtitle">
-                Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid ({parties.length} isikut)
-              </p>
-            </div>
-          </div>
-          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
-            <X size={20} />
-          </button>
-        </div>
-
-        <div className="modal-body">
-          {/* Top Row: Quick Stats Bar (Identical pills to FieldManagerModal) */}
+  const bodyContent = (
+    <div className="modal-body">
+      {/* Top Row: Quick Stats Bar (Identical pills to FieldManagerModal) */}
           <div className="register-header-controls">
             <div className="register-stats-pills">
               <div className="reg-stat-pill">
@@ -653,6 +639,73 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             </div>
           )}
         </div>
+  );
+
+  if (embedded) {
+    return (
+      <div className="party-embedded-view">
+        {editForm}
+        {bodyContent}
+      </div>
+    );
+  }
+
+  if (isFullPage) {
+    return (
+      <div className="fullpage-board-view">
+        <main className="fullpage-board-main wide">
+          <div className="fullpage-board-header">
+            <div className="fullpage-title-wrap">
+              <Users className="text-emerald" size={26} />
+              <div>
+                <h2>Seotud isikud</h2>
+                <p className="fullpage-subtitle">Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid</p>
+              </div>
+            </div>
+            {!isEditing && (
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={startCreate}
+              >
+                <Plus size={16} />
+                <span>Lisa uus isik</span>
+              </button>
+            )}
+          </div>
+          <div className="fullpage-board-body">
+            {editForm}
+            {bodyContent}
+          </div>
+          <div className="modal-footer" style={{ marginTop: 'auto', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)', padding: '12px 16px' }}>
+            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+            </span>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
+      <div className="modal-content glass-card field-register-modal parties-register-modal animate-scale-up">
+        <div className="modal-header">
+          <div className="modal-title-group">
+            <Users className="text-emerald" size={24} />
+            <div>
+              <h3>Seotud isikute register</h3>
+              <p className="modal-subtitle">
+                Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid ({parties.length} isikut)
+              </p>
+            </div>
+          </div>
+          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
+            <X size={20} />
+          </button>
+        </div>
+
+        {bodyContent}
 
         {editForm}
 

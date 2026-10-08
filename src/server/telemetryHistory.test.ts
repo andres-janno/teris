@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { prisma, tsdb } from './db';
+import { getTelemetrySuggestionsForField } from './fieldWorks';
 
 // Kombaini seade oli pärast ümbertõstmist (04.10 16:00 UTC) vaikne kuni 07.10 hommikuni, mil masin
 // päriselt tööle hakkas. Live-andmetest sõltuvad kontrollid piiratakse selle vaikse aknaga.
@@ -90,6 +91,77 @@ describe('Device Assignment and Telemetry History', () => {
       const lastMeasurement = rows[0]?.max_time;
       expect(lastMeasurement).toBeDefined();
       expect(lastMeasurement.getTime()).toBeLessThan(kombainAssignment!.startedAt.getTime());
+    });
+
+    it('detects telemetry field sessions and suggests Suur Claas for field 450 on 2026-10-04', async () => {
+      if (!tsdb) return;
+      const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04');
+      expect(suggestions.length).toBeGreaterThanOrEqual(1);
+      const claasSuggestion = suggestions.find((s) => s.vehicleName === 'Suur Claas');
+      expect(claasSuggestion).toBeDefined();
+      expect(claasSuggestion?.startTime).toBe('15:45');
+      expect(claasSuggestion?.endTime).toBe('17:05');
+      expect(claasSuggestion?.durationHours).toBeGreaterThan(1);
+      expect(claasSuggestion?.pointCount).toBeGreaterThan(100);
+      expect(claasSuggestion?.implementName).toBe('Külvik');
+      expect(claasSuggestion?.implementId).toBe('imp-01');
+      expect(claasSuggestion?.workedAreaHa).toBeCloseTo(5.45, 1);
+    });
+
+    it('excludes telemetry suggestion when an overlapping workEntry exists on that date', async () => {
+      if (!tsdb) return;
+      const suggestionsBefore = await getTelemetrySuggestionsForField(450, '2026-10-04');
+      const target = suggestionsBefore.find((s) => s.vehicleName === 'Suur Claas');
+      if (!target) return;
+
+      const dummy = await prisma.workEntry.create({
+        data: {
+          fieldWorkId: 'cmuu5kxuh000tlqf39dxrftc8',
+          date: new Date('2026-10-04T00:00:00.000Z'),
+          vehicleId: target.vehicleId,
+          startTime: target.startTime,
+          endTime: target.endTime,
+          telemetryAreaHa: target.workedAreaHa
+        }
+      });
+
+      try {
+        expect(dummy.telemetryAreaHa).toBeCloseTo(5.45, 1);
+        const suggestionsWithDummy = await getTelemetrySuggestionsForField(450, '2026-10-04');
+        expect(suggestionsWithDummy.some((s) => s.vehicleId === target.vehicleId)).toBe(false);
+
+        const suggestionsExcluded = await getTelemetrySuggestionsForField(450, '2026-10-04', dummy.id);
+        expect(suggestionsExcluded.some((s) => s.vehicleId === target.vehicleId)).toBe(true);
+      } finally {
+        await prisma.workEntry.delete({ where: { id: dummy.id } });
+      }
+    });
+
+    it('returns workedAreaHa 0 and implementId null when no implement assignment matches the session timeframe', async () => {
+      if (!tsdb) return;
+      const asgn = await prisma.implementAssignment.findFirst({
+        where: { vehicleId: 'veh-1789925816295', implementId: 'imp-01' }
+      });
+      if (!asgn) return;
+
+      await prisma.implementAssignment.update({
+        where: { id: asgn.id },
+        data: { endedAt: new Date('2026-10-04T08:00:00.000Z') }
+      });
+
+      try {
+        const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04');
+        const claasSuggestion = suggestions.find((s) => s.vehicleName === 'Suur Claas');
+        expect(claasSuggestion).toBeDefined();
+        expect(claasSuggestion?.implementId).toBeNull();
+        expect(claasSuggestion?.implementName).toBeNull();
+        expect(claasSuggestion?.workedAreaHa).toBe(0);
+      } finally {
+        await prisma.implementAssignment.update({
+          where: { id: asgn.id },
+          data: { endedAt: asgn.endedAt }
+        });
+      }
     });
   }
 });

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, startTransition } from 'react';
 import confetti from 'canvas-confetti';
-import { Header } from './components/Header';
+import { Header, type MainView } from './components/Header';
 import { MapView } from './components/MapView';
 import { LayerControl } from './components/LayerControl';
 import { CultivationControl } from './components/CultivationControl';
@@ -27,9 +27,29 @@ import { enrichVehicles } from './services/fleet';
 import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
-import { isVehicleRecentlyActive } from './components/MapMarkers';
 import { api } from './services/api';
+import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
+
+function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
+  if (!dateStr) return null;
+  let isoDate = dateStr.trim();
+  if (/^\d{1,2}\.\d{1,2}\.\d{4}$/.test(isoDate)) {
+    const parsed = parseEtDate(isoDate);
+    if (parsed) isoDate = parsed;
+  }
+  const parts = isoDate.split('-');
+  if (parts.length !== 3) return null;
+  const y = Number(parts[0]);
+  const m = Number(parts[1]);
+  const d = Number(parts[2]);
+  const [hhStr, mmStr] = (timeStr || '00:00').split(':');
+  const hh = Number(hhStr) || 0;
+  const mm = Number(mmStr) || 0;
+  if (isNaN(y) || isNaN(m) || isNaN(d)) return null;
+  const date = new Date(y, m - 1, d, hh, mm, 0);
+  return isNaN(date.getTime()) ? null : date;
+}
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
 const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
@@ -44,6 +64,7 @@ const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').th
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
+const InfrastructureView = lazy(() => import('./components/InfrastructureView').then((m) => ({ default: m.InfrastructureView })));
 
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
 // (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
@@ -170,17 +191,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [seasons, setSeasons] = useState<FarmingSeason[]>([]);
 
   const [isSeasonManagerOpen, setIsSeasonManagerOpen] = useState(false);
-
-  // Active Season metadata
-  const activeSeason = React.useMemo(() => {
-    return seasons.find((s) => s.year === selectedYear) || {
-      id: `season-${selectedYear}`,
-      year: selectedYear,
-      name: `Hooaeg ${selectedYear}`,
-      status: selectedYear < 2026 ? 'closed' : 'active',
-      isLocked: selectedYear < 2026
-    } as FarmingSeason;
-  }, [seasons, selectedYear]);
 
   // 1. Põldude ja külvikorra master-register (andmebaasist)
   const [masterFields, setMasterFields] = useState<MasterField[]>([]);
@@ -372,7 +382,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);
   const [isFieldBookUploadOpen, setIsFieldBookUploadOpen] = useState(false);
-  const [isVehiclesOpen, setIsVehiclesOpen] = useState(false);
   const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
   const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   
@@ -429,16 +438,18 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
   const [isWorkRegisterOpen, setIsWorkRegisterOpen] = useState(false);
 
-  // Põhivaade: kaart või põllutööde tahvel (jäetakse meelde kasutaja kaupa)
+  // Põhivaade: kaart, hooajad, põllud, kultuurid, põllutööd, tehnika või taristu (jäetakse meelde kasutaja kaupa)
   const mainViewKey = `agrimap_main_view_${user.id}`;
-  const [mainView, setMainView] = useState<'map' | 'works'>(() => {
+  const [mainView, setMainView] = useState<MainView>(() => {
     try {
-      return localStorage.getItem(mainViewKey) === 'works' ? 'works' : 'map';
+      const v = localStorage.getItem(mainViewKey) as MainView;
+      const validViews: MainView[] = ['map', 'seasons', 'fields', 'crops', 'works', 'fleet', 'infrastructure'];
+      return validViews.includes(v) ? v : 'map';
     } catch {
       return 'map';
     }
   });
-  const changeMainView = (view: 'map' | 'works') => {
+  const changeMainView = (view: MainView) => {
     setMainView(view);
     try {
       localStorage.setItem(mainViewKey, view);
@@ -500,7 +511,24 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [progressPct, setProgressPct] = useState(75);
   const [workingWidthM, setWorkingWidthM] = useState(12);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
-  const [telemetryHours, setTelemetryHours] = useState<number>(6);
+  const [telemetryHours, setTelemetryHours] = useState<number>(2);
+  const [simTimeMode, setSimTimeMode] = useState<'rolling' | 'custom'>('rolling');
+  const [simCustomDate, setSimCustomDate] = useState<string>(() => {
+    const d = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+  });
+  const [simCustomTime, setSimCustomTime] = useState<string>(() => {
+    const d = new Date();
+    const hh = Math.max(0, d.getHours() - 2);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${pad(hh)}:00`;
+  });
+  const [simDurationHours, setSimDurationHours] = useState<number>(2);
+  // Taasesituse raja laadimine ja laaditud punktide arv (taasesituse seisust sõltumata)
+  const [isLoadingSimTrack, setIsLoadingSimTrack] = useState(false);
+  const [simTrackPointCount, setSimTrackPointCount] = useState(0);
+  const [detectedImplement, setDetectedImplement] = useState<{ id: string; name: string; workingWidthM: number; type?: string } | null>(null);
 
   const simulatorRef = useRef<TelemetrySimulator | null>(null);
 
@@ -566,6 +594,27 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       device
     };
   }, [simulatedVehicleId, rawVehicles, devices]);
+
+  const activeSimVehicle = useMemo(() => {
+    if (!simulatedVehicleId) return null;
+    return rawVehicles.find((veh) => veh.id === simulatedVehicleId) ?? null;
+  }, [simulatedVehicleId, rawVehicles]);
+
+  const handleJumpToLastActive = () => {
+    const lastActive = activeSimVehicle?.lastActiveAt || trackedTarget?.device?.lastUpdate;
+    if (!lastActive) return;
+    const d = new Date(lastActive);
+    if (isNaN(d.getTime())) return;
+    // Aken: 2 h enne viimast sõitu kuni 1 h pärast, algus ümardatud alla 5 minutile (minutivalik on 5 min sammuga)
+    const start = new Date(d.getTime() - 2 * 3600 * 1000);
+    start.setMinutes(Math.floor(start.getMinutes() / 5) * 5, 0, 0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    setSimCustomDate(`${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`);
+    setSimCustomTime(`${pad(start.getHours())}:${pad(start.getMinutes())}`);
+    setSimDurationHours(3);
+    setSimTimeMode('custom');
+  };
+
   // Laeb valitud masina GPS-ajaloo (või demoraja) ja taasesitab seda
   useEffect(() => {
     if (!trackedTarget) {
@@ -577,6 +626,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       setCultivationPass(EMPTY_CULTIVATION_PASS);
       setIsPlaying(false);
       setProgressPct(0);
+      setDetectedImplement(null);
+      setSimTrackPointCount(0);
+      setIsLoadingSimTrack(false);
       return;
     }
 
@@ -610,34 +662,123 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         });
       });
 
+      setSimTrackPointCount(pass.points.length);
+      setIsLoadingSimTrack(false);
+      if (pass.points.length < 2) {
+        // Andmeid pole: paneel peab nägema tühja läbisõitu, mitte eelmise masina/vahemiku oma
+        setCultivationPass(pass);
+        setSimulatedVehicleState(null);
+        return;
+      }
       if (selectedStartTime) {
         // Kui kasutaja on määranud kohandatud alguskellaaja, rakenda see
         sim.setPlaybackStartTime(selectedStartTime);
         setProgressPct(sim.getProgress());
+      } else {
+        // Näita kohe taasesituse algseisu (rada, pindala, vahemaa), mitte alles pärast Play vajutust
+        sim.emitCurrentState();
       }
     };
 
-    // Pärime piisavalt laia aknaga (nt 48h), et leida viimane reaalne töösõit
-    const hoursToFetch = Math.max(telemetryHours, 48);
-    api.getTelemetryHistory({
-      imei: currentImei ?? undefined,
-      vehicleId: currentVehicleId,
-      hours: hoursToFetch
-    })
+    // Tuleta haakeriist masina küljest esmalt (vaikimisi laiuseks)
+    const attachedToVeh = implementsList.find(
+      (i) => i.id === activeSimVehicle?.assignedImplementId || i.assignedVehicleId === currentVehicleId
+    );
+    if (attachedToVeh && attachedToVeh.workingWidthM > 0) {
+      setWorkingWidthM(attachedToVeh.workingWidthM);
+      setDetectedImplement({
+        id: attachedToVeh.id,
+        name: attachedToVeh.name,
+        workingWidthM: attachedToVeh.workingWidthM,
+        type: attachedToVeh.type
+      });
+    }
+
+    setIsLoadingSimTrack(true);
+    let queryParams: { imei?: string; vehicleId?: string; hours?: number; from?: string; to?: string };
+    if (simTimeMode === 'custom') {
+      const localStart = parseLocalDateTime(simCustomDate, simCustomTime);
+      if (!localStart) {
+        setIsLoadingSimTrack(false);
+        return;
+      }
+      const localEnd = new Date(localStart.getTime() + simDurationHours * 3600 * 1000);
+      queryParams = {
+        imei: currentImei ?? undefined,
+        vehicleId: currentVehicleId,
+        from: localStart.toISOString(),
+        to: localEnd.toISOString()
+      };
+    } else {
+      queryParams = {
+        imei: currentImei ?? undefined,
+        vehicleId: currentVehicleId,
+        hours: telemetryHours
+      };
+    }
+
+    api.getTelemetryHistory(queryParams)
       .then((res) => {
         if (!isMounted) return;
+        let effectiveWidth = workingWidthM;
+        if (res.implement && res.implement.workingWidthM > 0) {
+          effectiveWidth = res.implement.workingWidthM;
+          setWorkingWidthM(effectiveWidth);
+          setDetectedImplement(res.implement);
+        } else if (attachedToVeh && attachedToVeh.workingWidthM > 0) {
+          effectiveWidth = attachedToVeh.workingWidthM;
+          setWorkingWidthM(effectiveWidth);
+          setDetectedImplement({
+            id: attachedToVeh.id,
+            name: attachedToVeh.name,
+            workingWidthM: attachedToVeh.workingWidthM,
+            type: attachedToVeh.type
+          });
+        }
+
         if (res.points.length >= 2) {
-          // Harimisala ja vahemaa arvutab TelemetrySimulator taasesituse käigus järk-järgult
-          attachSimulator(historyToPass(res.points, currentVehicleId, currentVehicleName, workingWidthM));
+          attachSimulator(historyToPass(res.points, currentVehicleId, currentVehicleName, effectiveWidth));
           return;
         }
 
-        // Kui ajalugu oli tühi, kasuta demorada
-        attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, workingWidthM));
+        // Kui ajalugu oli tühi
+        if (!currentImei) {
+          attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, effectiveWidth));
+        } else {
+          attachSimulator({
+            id: `pass-${currentVehicleId}`,
+            vehicleId: currentVehicleId,
+            vehicleName: currentVehicleName,
+            operationType: 'Harimine',
+            startTime: '',
+            endTime: '',
+            workingWidthM: effectiveWidth,
+            points: [],
+            workedAreaHa: 0,
+            distanceKm: 0,
+            avgSpeedKmH: 0
+          });
+        }
       })
       .catch(() => {
         if (!isMounted) return;
-        attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, workingWidthM));
+        if (!currentImei) {
+          attachSimulator(createDemoCultivationPass(currentVehicleId, currentVehicleName, workingWidthM));
+        } else {
+          attachSimulator({
+            id: `pass-${currentVehicleId}`,
+            vehicleId: currentVehicleId,
+            vehicleName: currentVehicleName,
+            operationType: 'Harimine',
+            startTime: '',
+            endTime: '',
+            workingWidthM,
+            points: [],
+            workedAreaHa: 0,
+            distanceKm: 0,
+            avgSpeedKmH: 0
+          });
+        }
       });
 
     return () => {
@@ -645,7 +786,17 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       sim?.destroy();
       simulatorRef.current = null;
     };
-  }, [trackedTarget, telemetryHours, workingWidthM]);
+  }, [
+    trackedTarget,
+    activeSimVehicle,
+    implementsList,
+    simTimeMode,
+    telemetryHours,
+    simCustomDate,
+    simCustomTime,
+    simDurationHours,
+    workingWidthM
+  ]);
 
   // Põllutööde kiht: laeb kõigi masinate GPS-ajaloo ja arvutab valmis rajad.
   // Demorada siia ei lähe — ilma päris andmeteta masinal rada ei kuvata.
@@ -1047,7 +1198,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   const handleCancelPickLocation = () => {
     setIsAddPoiMode(false);
-    if (poiDraft) setIsPoiModalOpen(true);
+    if (poiDraft) {
+      changeMainView('infrastructure');
+    }
   };
 
   useEffect(() => {
@@ -1068,7 +1221,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     } else {
       setNewPoiCoords(coords);
     }
-    setIsPoiModalOpen(true);
+    changeMainView('infrastructure');
     setIsAddPoiMode(false);
   };
 
@@ -1349,36 +1502,18 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setIsSoilUploadOpen(false);
   };
 
-  // Totals for stats bar
+  // Total area for map year selector
   const totalAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.areaHa || 0), 0);
-  const workedAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.workedAreaHa || 0), 0);
-  const activeVehiclesCount = vehicles.filter((v) => isVehicleRecentlyActive(v, 5)).length;
 
   return (
     <div className="app-container">
       {/* Top Header */}
       <Header 
-        fieldsCount={fields.features.length}
-        totalAreaHa={totalAreaHa}
-        workedAreaHa={workedAreaHa}
-        activeVehiclesCount={activeVehiclesCount}
-        poiCount={pois.length}
-        partiesCount={parties.length}
         parties={parties}
-        cropsCount={crops.length}
-        varietiesCount={crops.reduce((sum, c) => sum + (c.varieties?.length || 0), 0)}
         operatorFilter={operatorFilter}
         onOperatorFilterChange={setOperatorFilter}
-        selectedYear={selectedYear}
-        activeSeason={activeSeason}
-        onOpenSeasonManager={() => setIsSeasonManagerOpen(true)}
-        onOpenFieldsRegister={() => setIsFieldsRegisterOpen(true)}
-        onOpenParties={() => setIsPartiesModalOpen(true)}
-        onOpenCrops={() => setIsCropsModalOpen(true)}
         mainView={mainView}
         onChangeMainView={changeMainView}
-        onOpenVehicles={() => setIsVehiclesOpen(true)}
-        onOpenPoi={() => setIsPoiModalOpen(true)}
         onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
@@ -1388,6 +1523,70 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenUsers={user.isAdmin ? () => setIsUsersAdminOpen(true) : undefined}
         onLogout={onLogout}
       />
+
+      {mainView === 'seasons' && (
+        <Suspense fallback={null}>
+          <SeasonManagerModal
+            isOpen={true}
+            isFullPage={true}
+            onClose={() => changeMainView('map')}
+            seasons={seasons}
+            masterFields={masterFields}
+            selectedYear={selectedYear}
+            onUpdateSeason={handleUpdateSeason}
+            onCloseSeason={handleCloseSeason}
+            onReopenSeason={handleReopenSeason}
+            onCreateSeason={handleCreateSeason}
+          />
+        </Suspense>
+      )}
+
+      {mainView === 'fields' && (
+        <Suspense fallback={null}>
+          <FieldManagerModal
+            isOpen={true}
+            isFullPage={true}
+            onClose={() => changeMainView('map')}
+            onFocusFieldOnMap={(field) => {
+              const foundFeature = fields.features.find((f) => String(f.properties.id) === String(field.id));
+              if (foundFeature) {
+                handleSelectField(foundFeature);
+              }
+              changeMainView('map');
+            }}
+            masterFields={operatorMasterFields}
+            selectedYear={selectedYear}
+            onSelectYear={setSelectedYear}
+            baseMap={visibility.baseMap}
+            onUpdateField={handleUpdateMasterField}
+            onDeleteField={handleDeleteMasterField}
+            onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
+            onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
+            onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
+            seasons={seasons}
+            onOpenSeasonManager={() => changeMainView('seasons')}
+            parties={parties}
+            onOpenParties={() => setIsPartiesModalOpen(true)}
+            crops={crops}
+            onOpenCrops={() => setIsCropsModalOpen(true)}
+          />
+        </Suspense>
+      )}
+
+      {mainView === 'crops' && (
+        <Suspense fallback={null}>
+          <CropRegisterModal
+            isOpen={true}
+            isFullPage={true}
+            onClose={() => changeMainView('map')}
+            crops={crops}
+            onSaveCrop={handleSaveCrop}
+            onDeleteCrop={handleDeleteCrop}
+            masterFields={operatorMasterFields}
+            selectedYear={selectedYear}
+          />
+        </Suspense>
+      )}
 
       {mainView === 'works' && (
         <Suspense fallback={null}>
@@ -1407,8 +1606,59 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </Suspense>
       )}
 
+      {mainView === 'fleet' && (
+        <VehicleTracker
+          isOpen={true}
+          isFullPage={true}
+          vehicles={rawVehicles}
+          implementsList={implementsList}
+          devices={devices}
+          enrichedVehicles={vehicles}
+          selectedVehicle={selectedVehicle}
+          onSelectVehicle={setSelectedVehicle}
+          onFocusVehicle={handleFocusVehicle}
+          onAssignDevice={handleAssignDevice}
+          onAssignImplement={handleAssignImplement}
+          onAddVehicle={handleAddVehicle}
+          onUpdateVehicle={handleUpdateVehicle}
+          onDeleteVehicle={handleDeleteVehicle}
+          onAddImplement={handleAddImplement}
+          onUpdateImplement={handleUpdateImplement}
+          onDeleteImplement={handleDeleteImplement}
+          onAddDevice={handleAddDevice}
+          onUpdateDevice={handleUpdateDevice}
+          onDeleteDevice={handleDeleteDevice}
+        />
+      )}
+
+      {mainView === 'infrastructure' && (
+        <Suspense fallback={null}>
+          <InfrastructureView
+            pois={pois}
+            onAddPoi={handleAddPoi}
+            onUpdatePoi={handleUpdatePoi}
+            onDeletePoi={handleDeletePoi}
+            onFocusPoi={(poi) => {
+              handleFocusPoi(poi);
+              changeMainView('map');
+            }}
+            onStartPickLocation={(draft) => {
+              handleStartPickLocation(draft);
+            }}
+            initialDraft={poiDraft}
+            initialCoords={newPoiCoords}
+            parties={parties}
+            onSaveParty={handleSaveParty}
+            onDeleteParty={handleDeleteParty}
+            masterFields={masterFields}
+            vehicles={vehicles}
+            selectedYear={selectedYear}
+          />
+        </Suspense>
+      )}
+
       {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
-      <div className="main-content" style={mainView === 'works' ? { display: 'none' } : undefined}>
+      <div className="main-content" style={mainView !== 'map' ? { display: 'none' } : undefined}>
         {dbError && (
           <div className="db-error-banner alert-box error" role="alert">
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.
@@ -1501,6 +1751,20 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onStartTimeChange={handleStartTimeChange}
             telemetryHours={telemetryHours}
             onHoursChange={setTelemetryHours}
+            loadedPointCount={simTrackPointCount}
+            isLoading={isLoadingSimTrack}
+            simTimeMode={simTimeMode}
+            onSimTimeModeChange={setSimTimeMode}
+            customDate={simCustomDate}
+            onCustomDateChange={setSimCustomDate}
+            customTime={simCustomTime}
+            onCustomTimeChange={setSimCustomTime}
+            durationHours={simDurationHours}
+            onDurationHoursChange={setSimDurationHours}
+            currentImplement={detectedImplement}
+            availableImplements={implementsList.map((i) => ({ id: i.id, name: i.name, workingWidthM: i.workingWidthM }))}
+            lastActiveAt={activeSimVehicle?.lastActiveAt || trackedTarget?.device?.lastUpdate}
+            onJumpToLastActive={handleJumpToLastActive}
           />
         )}
       </div>
@@ -1536,7 +1800,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           seasons={seasons}
           onOpenSeasonManager={() => {
             setIsFieldsRegisterOpen(false);
-            setIsSeasonManagerOpen(true);
+            changeMainView('seasons');
           }}
           parties={parties}
           onOpenParties={() => {
@@ -1582,28 +1846,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         />
       </DeferredMount>
 
-      <VehicleTracker 
-        isOpen={isVehiclesOpen}
-        onClose={() => setIsVehiclesOpen(false)}
-        vehicles={rawVehicles}
-        implementsList={implementsList}
-        devices={devices}
-        enrichedVehicles={vehicles}
-        selectedVehicle={selectedVehicle}
-        onSelectVehicle={setSelectedVehicle}
-        onFocusVehicle={handleFocusVehicle}
-        onAssignDevice={handleAssignDevice}
-        onAssignImplement={handleAssignImplement}
-        onAddVehicle={handleAddVehicle}
-        onUpdateVehicle={handleUpdateVehicle}
-        onDeleteVehicle={handleDeleteVehicle}
-        onAddImplement={handleAddImplement}
-        onUpdateImplement={handleUpdateImplement}
-        onDeleteImplement={handleDeleteImplement}
-        onAddDevice={handleAddDevice}
-        onUpdateDevice={handleUpdateDevice}
-        onDeleteDevice={handleDeleteDevice}
-      />
 
       <DeferredMount when={isPoiModalOpen}>
         <PoiManagerModal
@@ -1644,7 +1886,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           masterFields={masterFields}
           vehicles={vehicles}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen}
+          stacked={isFieldsRegisterOpen || mainView === 'fields'}
         />
       </DeferredMount>
 
@@ -1661,7 +1903,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onDeleteCrop={handleDeleteCrop}
           masterFields={operatorMasterFields}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen}
+          stacked={isFieldsRegisterOpen || mainView === 'fields'}
         />
       </DeferredMount>
 

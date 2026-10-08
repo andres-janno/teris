@@ -1,5 +1,5 @@
 // src/components/VehicleTracker.tsx
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -19,8 +19,12 @@ import {
   Info,
   Activity,
   Pencil,
-  FileText
+  FileText,
+  Filter,
+  History
 } from 'lucide-react';
+import { api } from '../services/api';
+import { DateInput } from './DateInput';
 import type {
   Vehicle,
   Implement,
@@ -28,12 +32,14 @@ import type {
   EnrichedVehicle,
   VehicleType,
   ImplementType,
-  DeviceConnectivity
+  DeviceConnectivity,
+  ImplementAssignment
 } from '../types/fleet';
 
 interface VehicleTrackerProps {
-  isOpen: boolean;
-  onClose: () => void;
+  isOpen?: boolean;
+  isFullPage?: boolean;
+  onClose?: () => void;
   vehicles: Vehicle[];
   implementsList: Implement[];
   devices: TeltonikaDevice[];
@@ -41,11 +47,11 @@ interface VehicleTrackerProps {
   selectedVehicle: EnrichedVehicle | null;
   onSelectVehicle: (vehicle: EnrichedVehicle) => void;
   onFocusVehicle: (vehicle: EnrichedVehicle) => void;
-  
+
   // Reassignment / Movement handlers
   onAssignDevice: (deviceId: string, vehicleId?: string, implementId?: string) => void;
   onAssignImplement: (implementId: string, vehicleId?: string) => void;
-  
+
   // CRUD
   onAddVehicle: (v: Omit<Vehicle, 'id'>) => void;
   onUpdateVehicle: (id: string, v: Omit<Vehicle, 'id'>) => void;
@@ -57,8 +63,85 @@ interface VehicleTrackerProps {
   onUpdateDevice: (id: string, dev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
   onDeleteDevice: (id: string) => void;
 }
+type TabType = 'vehicles' | 'implements' | 'devices' | 'history';
 
-type TabType = 'vehicles' | 'implements' | 'devices';
+function formatDateTime(isoString?: string): string {
+  if (!isoString) return '—';
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return '—';
+    const day = String(d.getDate()).padStart(2, '0');
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const year = d.getFullYear();
+    const hours = String(d.getHours()).padStart(2, '0');
+    const minutes = String(d.getMinutes()).padStart(2, '0');
+    return `${day}.${month}.${year} ${hours}:${minutes}`;
+  } catch {
+    return '—';
+  }
+}
+
+function formatDuration(startedAtIso: string, endedAtIso?: string): string {
+  try {
+    const start = new Date(startedAtIso).getTime();
+    const end = endedAtIso ? new Date(endedAtIso).getTime() : Date.now();
+    const diffMs = Math.max(0, end - start);
+    const diffMins = Math.round(diffMs / (60 * 1000));
+    const hours = Math.floor(diffMins / 60);
+    const mins = diffMins % 60;
+    const days = Math.floor(hours / 24);
+    const remHours = hours % 24;
+
+    if (days > 0) {
+      return `${days} p ${remHours} h`;
+    }
+    if (hours > 0) {
+      return `${hours} h ${mins} min`;
+    }
+    return `${mins} min`;
+  } catch {
+    return '—';
+  }
+}
+
+const TIME_OPTIONS: string[] = [];
+for (let h = 0; h < 24; h++) {
+  for (let m = 0; m < 60; m += 15) {
+    TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
+  }
+}
+
+function getTimeOptions(currentTime?: string): string[] {
+  if (!currentTime) return TIME_OPTIONS;
+  if (!TIME_OPTIONS.includes(currentTime)) {
+    return [...TIME_OPTIONS, currentTime].sort();
+  }
+  return TIME_OPTIONS;
+}
+
+function splitIsoToDateAndTime(isoString?: string): { date: string; time: string } {
+  if (!isoString) return { date: '', time: '' };
+  try {
+    const d = new Date(isoString);
+    if (isNaN(d.getTime())) return { date: '', time: '' };
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    return { date, time };
+  } catch {
+    return { date: '', time: '' };
+  }
+}
+
+function combineDateAndTimeToIso(dateStr: string, timeStr: string): string | null {
+  if (!dateStr) return null;
+  const time = timeStr || '00:00';
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const [hours, minutes] = time.split(':').map(Number);
+  const d = new Date(year, (month || 1) - 1, day || 1, hours || 0, minutes || 0, 0);
+  if (isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
 
 const IMPLEMENT_TYPE_LABELS: Record<ImplementType, string> = {
   seeder: 'Külvik',
@@ -135,7 +218,8 @@ const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
 };
 
 export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
-  isOpen,
+  isOpen = true,
+  isFullPage = false,
   onClose,
   vehicles,
   implementsList,
@@ -154,7 +238,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onDeleteImplement,
   onAddDevice,
   onUpdateDevice,
-  onDeleteDevice
+  onDeleteDevice,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('vehicles');
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -164,6 +248,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [editingVehicleId, setEditingVehicleId] = useState<string | null>(null);
   const [editingImplementId, setEditingImplementId] = useState<string | null>(null);
   const [editingDeviceId, setEditingDeviceId] = useState<string | null>(null);
+  const [editingAssignmentId, setEditingAssignmentId] = useState<string | null>(null);
 
   // Forms states
   // 1. Vehicle Form
@@ -213,6 +298,184 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     targetVehicleName: string;
   } | null>(null);
 
+  // 4. Implement Assignment History & Form State
+  const [implementAssignments, setImplementAssignments] = useState<ImplementAssignment[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyVehicleFilter, setHistoryVehicleFilter] = useState<string>('all');
+  const [historyImplementFilter, setHistoryImplementFilter] = useState<string>('all');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'ended'>('all');
+
+  const [assignVehicleId, setAssignVehicleId] = useState('');
+  const [assignImplementId, setAssignImplementId] = useState('');
+  const [assignStartDate, setAssignStartDate] = useState('');
+  const [assignStartTime, setAssignStartTime] = useState('08:00');
+  const [assignIsActive, setAssignIsActive] = useState(true);
+  const [assignEndDate, setAssignEndDate] = useState('');
+  const [assignEndTime, setAssignEndTime] = useState('17:00');
+  const [assignNotes, setAssignNotes] = useState('');
+  const [assignmentSubmitting, setAssignmentSubmitting] = useState(false);
+  const [assignmentError, setAssignmentError] = useState<string | null>(null);
+
+  const resetAssignmentForm = () => {
+    setEditingAssignmentId(null);
+    setAssignVehicleId(vehicles[0]?.id || '');
+    setAssignImplementId(implementsList[0]?.id || '');
+    const now = new Date();
+    const { date, time } = splitIsoToDateAndTime(now.toISOString());
+    setAssignStartDate(date);
+    setAssignStartTime(time || '08:00');
+    setAssignIsActive(true);
+    setAssignEndDate('');
+    setAssignEndTime('');
+    setAssignNotes('');
+    setAssignmentError(null);
+  };
+
+  const handleStartEditAssignment = (assignment: ImplementAssignment) => {
+    setEditingAssignmentId(assignment.id);
+    setAssignVehicleId(assignment.vehicleId);
+    setAssignImplementId(assignment.implementId);
+
+    const start = splitIsoToDateAndTime(assignment.startedAt);
+    setAssignStartDate(start.date);
+    setAssignStartTime(start.time || '08:00');
+
+    if (assignment.endedAt) {
+      setAssignIsActive(false);
+      const end = splitIsoToDateAndTime(assignment.endedAt);
+      setAssignEndDate(end.date);
+      setAssignEndTime(end.time || '17:00');
+    } else {
+      setAssignIsActive(true);
+      setAssignEndDate('');
+      setAssignEndTime('');
+    }
+
+    setAssignNotes(assignment.notes || '');
+    setAssignmentError(null);
+    setIsAddingNew(true);
+  };
+
+  const handleSaveAssignment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!assignVehicleId || !assignImplementId || !assignStartDate) {
+      setAssignmentError('Vali masin, haakeriist ja haakimise alguskuupäev.');
+      return;
+    }
+
+    const startedAtIso = combineDateAndTimeToIso(assignStartDate, assignStartTime);
+    if (!startedAtIso) {
+      setAssignmentError('Vigane haakimise alguskuupäev või kellaaeg.');
+      return;
+    }
+
+    let endedAtIso: string | null = null;
+    if (!assignIsActive) {
+      if (!assignEndDate) {
+        setAssignmentError('Määra lahti haakimise kuupäev või märgi kirje hetkel masina küljes olevaks.');
+        return;
+      }
+      endedAtIso = combineDateAndTimeToIso(assignEndDate, assignEndTime);
+      if (!endedAtIso) {
+        setAssignmentError('Vigane lahti haakimise kuupäev või kellaaeg.');
+        return;
+      }
+      if (new Date(endedAtIso).getTime() < new Date(startedAtIso).getTime()) {
+        setAssignmentError('Lahti haakimise aeg ei saa olla varasem kui haakimise algusaeg.');
+        return;
+      }
+    }
+
+    setAssignmentSubmitting(true);
+    setAssignmentError(null);
+
+    try {
+      if (editingAssignmentId) {
+        const updated = await api.updateImplementAssignment(editingAssignmentId, {
+          vehicleId: assignVehicleId,
+          implementId: assignImplementId,
+          startedAt: startedAtIso,
+          endedAt: endedAtIso,
+          notes: assignNotes.trim() || undefined
+        });
+
+        setImplementAssignments((prev) =>
+          prev.map((a) => (a.id === editingAssignmentId ? updated : a))
+        );
+      } else {
+        const created = await api.createImplementAssignment({
+          vehicleId: assignVehicleId,
+          implementId: assignImplementId,
+          startedAt: startedAtIso,
+          endedAt: endedAtIso,
+          notes: assignNotes.trim() || undefined
+        });
+
+        setImplementAssignments((prev) => [created, ...prev]);
+      }
+
+      if (assignIsActive) {
+        onAssignImplement(assignImplementId, assignVehicleId);
+      } else {
+        onAssignImplement(assignImplementId, undefined);
+      }
+
+      closeForm();
+      loadImplementAssignments();
+    } catch (err: any) {
+      console.error('Failed to save implement assignment:', err);
+      setAssignmentError(err.message || 'Salvestamine ebaõnnestus');
+    } finally {
+      setAssignmentSubmitting(false);
+    }
+  };
+
+  const loadImplementAssignments = useCallback(async () => {
+    setHistoryLoading(true);
+    try {
+      const data = await api.getImplementAssignments();
+      setImplementAssignments(data);
+    } catch (err) {
+      console.error('Error fetching implement assignments:', err);
+    } finally {
+      setHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen || isFullPage) {
+      loadImplementAssignments();
+    }
+  }, [isOpen, isFullPage, loadImplementAssignments]);
+
+  const filteredAssignments = useMemo(() => {
+    return implementAssignments.filter((a) => {
+      if (historyVehicleFilter !== 'all' && a.vehicleId !== historyVehicleFilter) return false;
+      if (historyImplementFilter !== 'all' && a.implementId !== historyImplementFilter) return false;
+      if (historyStatusFilter === 'active' && a.endedAt) return false;
+      if (historyStatusFilter === 'ended' && !a.endedAt) return false;
+      return true;
+    });
+  }, [implementAssignments, historyVehicleFilter, historyImplementFilter, historyStatusFilter]);
+
+  const handleDeleteAssignment = async (id: string) => {
+    if (!confirm('Kas soovid kindlasti selle haakimise kirje ajaloost kustutada?')) return;
+    try {
+      await api.deleteImplementAssignment(id);
+      setImplementAssignments((prev) => prev.filter((a) => a.id !== id));
+      loadImplementAssignments();
+    } catch (err) {
+      console.error('Failed to delete assignment:', err);
+    }
+  };
+
+  const handleDetachActiveAssignment = (implementId: string) => {
+    onAssignImplement(implementId, undefined);
+    setTimeout(() => {
+      loadImplementAssignments();
+    }, 400);
+  };
+
   // Esc sulgeb ainult lisamis-/muutmisvormi (register jääb avatuks).
   useEffect(() => {
     if (!isAddingNew) return;
@@ -222,19 +485,22 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         setEditingVehicleId(null);
         setEditingImplementId(null);
         setEditingDeviceId(null);
+        setEditingAssignmentId(null);
       }
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isAddingNew]);
 
-  if (!isOpen) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const closeForm = () => {
     setIsAddingNew(false);
     setEditingVehicleId(null);
     setEditingImplementId(null);
     setEditingDeviceId(null);
+    setEditingAssignmentId(null);
+    setAssignmentError(null);
   };
 
   // Tühjendab vormi väljad, et üleminek muutmisrežiimist uue kirje
@@ -275,7 +541,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const openAddForm = () => {
     if (activeTab === 'vehicles') resetVehicleForm();
     else if (activeTab === 'implements') resetImplementForm();
-    else resetDeviceForm();
+    else if (activeTab === 'devices') resetDeviceForm();
+    else if (activeTab === 'history') resetAssignmentForm();
     setIsAddingNew(true);
   };
 
@@ -407,111 +674,105 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setIsAddingNew(true);
   };
 
-  return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card vehicle-modal animate-scale-up">
-        {/* Header with Title and Tabs */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Tractor className="text-emerald" size={24} />
-            <div>
-              <h3>Masinapargi ja Seadmete Haldus</h3>
-              <p className="modal-subtitle">Eraldi registrid sõidukitele, haakeriistadele ja Teltonika GPS seadmetele</p>
-            </div>
-          </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
-            <X size={20} />
+  const bodyContent = (
+    <>
+      {/* Main Navigation Tabs */}
+      <div className="fleet-top-bar">
+        <div className="category-filter-tabs">
+          <button
+            className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('vehicles'); closeForm(); }}
+          >
+            <span>🚜 Sõidukid / Masinad</span>
+            <span className="count-pill">{vehicles.length}</span>
+          </button>
+
+          <button
+            className={`filter-tab ${activeTab === 'implements' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('implements'); closeForm(); }}
+          >
+            <span>🔧 Haakeriistad</span>
+            <span className="count-pill">{implementsList.length}</span>
+          </button>
+
+          <button
+            className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('devices'); closeForm(); }}
+          >
+            <span>📡 Teltonika GPS Seadmed</span>
+            <span className="count-pill">{devices.length}</span>
+          </button>
+
+          <button
+            className={`filter-tab ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('history'); closeForm(); loadImplementAssignments(); }}
+          >
+            <span>📜 Haakimise register</span>
+            <span className="count-pill">{implementAssignments.length}</span>
           </button>
         </div>
 
-        <div className="modal-body">
-          {/* Main Navigation Tabs */}
-          <div className="fleet-top-bar">
-            <div className="category-filter-tabs">
-              <button
-                className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('vehicles'); closeForm(); }}
-              >
-                <span>🚜 Sõidukid / Masinad</span>
-                <span className="count-pill">{vehicles.length}</span>
-              </button>
+        {!isAddingNew && (
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={openAddForm}
+          >
+            <Plus size={14} />
+            <span>
+              {activeTab === 'vehicles' ? 'Lisa uus masin' : (
+                activeTab === 'implements' ? 'Lisa uus haakeriist' : (
+                  activeTab === 'devices' ? 'Registreeri Teltonika seade' : 'Lisa haakimise kanne'
+                )
+              )}
+            </span>
+          </button>
+        )}
+      </div>
 
-              <button
-                className={`filter-tab ${activeTab === 'implements' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('implements'); closeForm(); }}
-              >
-                <span>🔧 Haakeriistad</span>
-                <span className="count-pill">{implementsList.length}</span>
-              </button>
-
-              <button
-                className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
-                onClick={() => { setActiveTab('devices'); closeForm(); }}
-              >
-                <span>📡 Teltonika GPS Seadmed</span>
-                <span className="count-pill">{devices.length}</span>
+      {/* ADD FORMS eraldi aknas registri peal (portal: registri aken on glass-card,
+              mille backdrop-filter piiraks muidu position: fixed tausta) */}
+      {isAddingNew && activeTab === 'vehicles' && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <form onSubmit={handleCreateVehicle} className="modal-content fleet-edit-modal animate-scale-up">
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <Tractor size={20} className="text-emerald" />
+                <h3>{editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'}</h3>
+              </div>
+              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                <X size={20} />
               </button>
             </div>
 
-            {!isAddingNew && (
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={openAddForm}
-              >
-                <Plus size={14} />
-                <span>
-                  {activeTab === 'vehicles' ? 'Lisa uus masin' : (
-                    activeTab === 'implements' ? 'Lisa uus haakeriist' : 'Registreeri Teltonika seade'
-                  )}
-                </span>
-              </button>
-            )}
-          </div>
-
-          {/* ADD FORMS eraldi aknas registri peal (portal: registri aken on glass-card,
-              mille backdrop-filter piiraks muidu position: fixed tausta) */}
-          {isAddingNew && activeTab === 'vehicles' && createPortal(
-            <div className="modal-backdrop sub-modal">
-            <form onSubmit={handleCreateVehicle} className="modal-content fleet-edit-modal animate-scale-up">
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  <Tractor size={20} className="text-emerald" />
-                  <h3>{editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'}</h3>
-                </div>
-                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
-                  <X size={20} />
-                </button>
-              </div>
-
-              <div className="modal-body">
+            <div className="modal-body">
 
               <div className="form-grid">
                 <div className="form-group">
                   <label>Masina nimi *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="nt John Deere 8R 410" 
-                    value={vName} 
-                    onChange={(e) => setVName(e.target.value)} 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    required
+                    placeholder="nt John Deere 8R 410"
+                    value={vName}
+                    onChange={(e) => setVName(e.target.value)}
+                    className="form-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Mudel / Mootorivõimsus</label>
-                  <input 
-                    type="text" 
-                    placeholder="nt 8R 410 AutoPowr (410 hj)" 
-                    value={vModel} 
-                    onChange={(e) => setVModel(e.target.value)} 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    placeholder="nt 8R 410 AutoPowr (410 hj)"
+                    value={vModel}
+                    onChange={(e) => setVModel(e.target.value)}
+                    className="form-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Masina tüüp ja värv</label>
                   <div className="input-split">
-                    <select 
-                      value={vType} 
+                    <select
+                      value={vType}
                       onChange={(e) => setVType(e.target.value as VehicleType)}
                       className="form-input"
                     >
@@ -519,11 +780,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <option key={t} value={t}>{VEHICLE_TYPE_LABELS[t]}</option>
                       ))}
                     </select>
-                    <input 
-                      type="color" 
-                      value={vColor} 
-                      onChange={(e) => setVColor(e.target.value)} 
-                      className="form-input" 
+                    <input
+                      type="color"
+                      value={vColor}
+                      onChange={(e) => setVColor(e.target.value)}
+                      className="form-input"
                       style={{ padding: '2px', height: '36px' }}
                       title="Kaardimarkeri värv"
                     />
@@ -532,26 +793,26 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <div className="form-group">
                   <label>Registrinumber & Juht</label>
                   <div className="input-split">
-                    <input 
-                      type="text" 
-                      placeholder="4821 TH" 
-                      value={vPlate} 
-                      onChange={(e) => setVPlate(e.target.value)} 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      placeholder="4821 TH"
+                      value={vPlate}
+                      onChange={(e) => setVPlate(e.target.value)}
+                      className="form-input"
                     />
-                    <input 
-                      type="text" 
-                      placeholder="Juhi nimi" 
-                      value={vDriver} 
-                      onChange={(e) => setVDriver(e.target.value)} 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      placeholder="Juhi nimi"
+                      value={vDriver}
+                      onChange={(e) => setVDriver(e.target.value)}
+                      className="form-input"
                     />
                   </div>
                 </div>
                 <div className="form-group">
                   <label>Paigalda Teltonika seade</label>
-                  <select 
-                    value={vSelectedDevId} 
+                  <select
+                    value={vSelectedDevId}
                     onChange={(e) => setVSelectedDevId(e.target.value)}
                     className="form-input"
                   >
@@ -565,8 +826,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
                 <div className="form-group">
                   <label>Haagi tööriist</label>
-                  <select 
-                    value={vSelectedImpId} 
+                  <select
+                    value={vSelectedImpId}
                     onChange={(e) => setVSelectedImpId(e.target.value)}
                     className="form-input"
                   >
@@ -588,67 +849,67 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
               </div>
 
-              </div>
+            </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
-              </div>
-            </form>
-            </div>,
-            document.body
-          )}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+              <button type="submit" className="btn btn-primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
 
-          {isAddingNew && activeTab === 'implements' && createPortal(
-            <div className="modal-backdrop sub-modal">
-            <form onSubmit={handleCreateImplement} className="modal-content fleet-edit-modal animate-scale-up">
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  <Wrench size={20} className="text-emerald" />
-                  <h3>{editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'}</h3>
-                </div>
-                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
-                  <X size={20} />
-                </button>
+      {isAddingNew && activeTab === 'implements' && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <form onSubmit={handleCreateImplement} className="modal-content fleet-edit-modal animate-scale-up">
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <Wrench size={20} className="text-emerald" />
+                <h3>{editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'}</h3>
               </div>
+              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="modal-body">
+            <div className="modal-body">
 
               <div className="form-grid">
                 <div className="form-group">
                   <label>Haakeriista nimi *</label>
-                  <input 
-                    type="text" 
-                    required 
-                    placeholder="nt Väderstad Tempo L 16" 
-                    value={impName} 
-                    onChange={(e) => setImpName(e.target.value)} 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    required
+                    placeholder="nt Väderstad Tempo L 16"
+                    value={impName}
+                    onChange={(e) => setImpName(e.target.value)}
+                    className="form-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Tootja & Mudel</label>
                   <div className="input-split">
-                    <input 
-                      type="text" 
-                      placeholder="Väderstad" 
-                      value={impManufacturer} 
-                      onChange={(e) => setImpManufacturer(e.target.value)} 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      placeholder="Väderstad"
+                      value={impManufacturer}
+                      onChange={(e) => setImpManufacturer(e.target.value)}
+                      className="form-input"
                     />
-                    <input 
-                      type="text" 
-                      placeholder="Tempo L 16" 
-                      value={impModel} 
-                      onChange={(e) => setImpModel(e.target.value)} 
-                      className="form-input" 
+                    <input
+                      type="text"
+                      placeholder="Tempo L 16"
+                      value={impModel}
+                      onChange={(e) => setImpModel(e.target.value)}
+                      className="form-input"
                     />
                   </div>
                 </div>
                 <div className="form-group">
                   <label>Haakeriista tüüp</label>
-                  <select 
-                    value={impType} 
+                  <select
+                    value={impType}
                     onChange={(e) => setImpType(e.target.value as ImplementType)}
                     className="form-input"
                   >
@@ -659,29 +920,29 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
                 <div className="form-group">
                   <label>Töölaius (meetrites) *</label>
-                  <input 
-                    type="number" 
-                    step="0.1" 
-                    required 
-                    value={impWidth} 
-                    onChange={(e) => setImpWidth(Number(e.target.value))} 
-                    className="form-input" 
+                  <input
+                    type="number"
+                    step="0.1"
+                    required
+                    value={impWidth}
+                    onChange={(e) => setImpWidth(Number(e.target.value))}
+                    className="form-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Seerianumber</label>
-                  <input 
-                    type="text" 
-                    placeholder="TPL16-88902" 
-                    value={impSerial} 
-                    onChange={(e) => setImpSerial(e.target.value)} 
-                    className="form-input" 
+                  <input
+                    type="text"
+                    placeholder="TPL16-88902"
+                    value={impSerial}
+                    onChange={(e) => setImpSerial(e.target.value)}
+                    className="form-input"
                   />
                 </div>
                 <div className="form-group">
                   <label>Haagi kohe masina taha</label>
-                  <select 
-                    value={impAssignedVehId} 
+                  <select
+                    value={impAssignedVehId}
                     onChange={(e) => setImpAssignedVehId(e.target.value)}
                     className="form-input"
                   >
@@ -701,31 +962,31 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
               </div>
 
-              </div>
+            </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
-              </div>
-            </form>
-            </div>,
-            document.body
-          )}
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+              <button type="submit" className="btn btn-primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
 
-          {isAddingNew && activeTab === 'devices' && createPortal(
-            <div className="modal-backdrop sub-modal">
-            <form onSubmit={handleCreateDevice} className="modal-content fleet-edit-modal animate-scale-up">
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  <Radio size={20} className="text-emerald" />
-                  <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri Teltonika seade'}</h3>
-                </div>
-                <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
-                  <X size={20} />
-                </button>
+      {isAddingNew && activeTab === 'devices' && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <form onSubmit={handleCreateDevice} className="modal-content fleet-edit-modal animate-scale-up">
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <Radio size={20} className="text-emerald" />
+                <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri Teltonika seade'}</h3>
               </div>
+              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="modal-body">
+            <div className="modal-body">
 
               <div className="form-group connectivity-type-picker">
                 <label>Seadme tüüp</label>
@@ -838,583 +1099,1067 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
               </div>
 
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
+              <button type="submit" className="btn btn-primary">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
+
+      {isAddingNew && activeTab === 'history' && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <form onSubmit={handleSaveAssignment} className="modal-content fleet-edit-modal animate-scale-up">
+            <div className="modal-header">
+              <div className="modal-title-group">
+                <Link size={20} className="text-emerald" />
+                <h3>{editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'}</h3>
               </div>
+              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+                <X size={20} />
+              </button>
+            </div>
 
-              <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-                <button type="submit" className="btn btn-primary">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
-              </div>
-            </form>
-            </div>,
-            document.body
-          )}
+            <div className="modal-body">
+              {assignmentError && (
+                <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
+                  {assignmentError}
+                </div>
+              )}
 
-          {/* TAB 1: SÕIDUKID / MASINAD */}
-          {activeTab === 'vehicles' && (
-            <div className="vehicle-grid">
-              {enrichedVehicles.map((v) => {
-                const isSelected = selectedVehicle && selectedVehicle.id === v.id;
-                const installedDevice = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
-                const attachedImplement = implementsList.find((imp) => imp.id === v.assignedImplementId || imp.assignedVehicleId === v.id);
-
-                return (
-                  <div 
-                    key={v.id} 
-                    className={`vehicle-card glass-card ${isSelected ? 'selected' : ''}`}
-                    onClick={() => onSelectVehicle(v)}
+              <div className="form-grid">
+                <div className="form-group">
+                  <label>Masin *</label>
+                  <select
+                    required
+                    value={assignVehicleId}
+                    onChange={(e) => setAssignVehicleId(e.target.value)}
+                    className="form-input"
                   >
-                    <div className="v-card-header">
-                      <div className="v-title-wrap">
-                        <div className="v-avatar" style={{ borderColor: v.color }}>
-                          <Tractor size={20} style={{ color: v.color }} />
-                        </div>
-                        <div>
-                          <h4 className="v-name">{v.name}</h4>
-                          <span className="v-model">{v.model} &bull; {v.registrationPlate || 'Reg. nr puudub'}</span>
-                        </div>
-                      </div>
+                    <option value="" disabled>Vali masin...</option>
+                    {vehicles.map((v) => (
+                      <option key={v.id} value={v.id}>
+                        {v.name} ({VEHICLE_TYPE_LABELS[v.type] || v.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-                      <div className="card-header-right">
-                        <span className={`status-badge status-${v.status}`}>
-                          {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
-                        </span>
-                        <div className="card-header-actions">
-                          <button
-                            className="icon-btn-ghost"
-                            title="Muuda masina andmeid"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              startEditVehicle(v);
-                            }}
-                          >
-                            <Pencil size={14} />
-                          </button>
-                          <button
-                            className="icon-btn-danger"
-                            title="Kustuta masin"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (confirm(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
-                                onDeleteVehicle(v.id);
-                              }
-                            }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
-                        </div>
+                <div className="form-group">
+                  <label>Haakeriist *</label>
+                  <select
+                    required
+                    value={assignImplementId}
+                    onChange={(e) => setAssignImplementId(e.target.value)}
+                    className="form-input"
+                  >
+                    <option value="" disabled>Vali haakeriist...</option>
+                    {implementsList.map((imp) => (
+                      <option key={imp.id} value={imp.id}>
+                        {imp.name} ({IMPLEMENT_TYPE_LABELS[imp.type as ImplementType] || imp.type})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group">
+                  <label>Haagitud (algusaeg) *</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px' }}>
+                    <DateInput
+                      value={assignStartDate}
+                      onChange={setAssignStartDate}
+                      className="form-input"
+                      required
+                    />
+                    <select
+                      className="form-input time-select"
+                      value={assignStartTime}
+                      onChange={(e) => setAssignStartTime(e.target.value)}
+                      required
+                    >
+                      {getTimeOptions(assignStartTime).map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ margin: 0 }}>Lahti haagitud (lõppaeg)</label>
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: assignIsActive ? '#10b981' : 'var(--text-secondary)' }}>
+                      <input
+                        type="checkbox"
+                        checked={assignIsActive}
+                        onChange={(e) => {
+                          const active = e.target.checked;
+                          setAssignIsActive(active);
+                          if (active) {
+                            setAssignEndDate('');
+                            setAssignEndTime('');
+                          } else {
+                            const now = new Date();
+                            const { date, time } = splitIsoToDateAndTime(now.toISOString());
+                            setAssignEndDate(date);
+                            setAssignEndTime(time || '17:00');
+                          }
+                        }}
+                      />
+                      <span>Hetkel küljes (aktiivne)</span>
+                    </label>
+                  </div>
+
+                  {assignIsActive ? (
+                    <div style={{
+                      padding: '8px 12px',
+                      background: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.25)',
+                      borderRadius: 'var(--radius-sm, 6px)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      gap: '8px',
+                      minHeight: '38px'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#10b981' }}>
+                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }}></span>
+                        <span>Aktiivne — masina taga (lõpp puudub)</span>
                       </div>
+                      <button
+                        type="button"
+                        className="btn btn-secondary btn-sm"
+                        style={{ fontSize: '11px', padding: '3px 8px', height: '24px', flexShrink: 0 }}
+                        onClick={() => {
+                          const now = new Date();
+                          const { date, time } = splitIsoToDateAndTime(now.toISOString());
+                          setAssignIsActive(false);
+                          setAssignEndDate(date);
+                          setAssignEndTime(time || '17:00');
+                        }}
+                      >
+                        Määra lahti haakimine
+                      </button>
                     </div>
-
-                    {/* Driver */}
-                    <div className="v-info-rows">
-                      <div className="v-info-item">
-                        <User size={14} className="text-muted" />
-                        <span>Juht: <strong>{v.driverName || 'Määramata'}</strong></span>
-                      </div>
-
-                      {/* Equipment Assignment Badges with Swap Actions */}
-                      <div className="v-equipment-badge-row">
-                        {/* Device Badge */}
-                        <div className="equipment-tag device-tag">
-                          <Radio size={12} className="text-blue" />
-                          <span className="tag-text">
-                            {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
-                          </span>
-                          <button 
-                            className="mini-swap-btn"
-                            title="Vaheta või eemalda Teltonika seade"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSwapModal({ type: 'device', targetVehicleId: v.id, targetVehicleName: v.name });
-                            }}
-                          >
-                            <RotateCcw size={11} />
-                            <span>Vaheta</span>
-                          </button>
-                        </div>
-
-                        {/* Implement Badge */}
-                        <div className="equipment-tag implement-tag">
-                          <Wrench size={12} className="text-emerald" />
-                          <span className="tag-text">
-                            {attachedImplement ? `${attachedImplement.name} (${attachedImplement.workingWidthM}m)` : 'Haakeriist puudub'}
-                          </span>
-                          <button 
-                            className="mini-swap-btn"
-                            title="Haagi teine tööriist või eemalda"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSwapModal({ type: 'implement', targetVehicleId: v.id, targetVehicleName: v.name });
-                            }}
-                          >
-                            <Link size={11} />
-                            <span>Haagi</span>
-                          </button>
-                        </div>
-                      </div>
+                  ) : (
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px' }}>
+                      <DateInput
+                        value={assignEndDate}
+                        onChange={setAssignEndDate}
+                        className="form-input"
+                        required={!assignIsActive}
+                      />
+                      <select
+                        className="form-input time-select"
+                        value={assignEndTime}
+                        onChange={(e) => setAssignEndTime(e.target.value)}
+                        required={!assignIsActive}
+                      >
+                        {getTimeOptions(assignEndTime).map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
                     </div>
+                  )}
+                </div>
 
-                    {/* Märkused */}
-                    {v.notes && (
-                      <div
-                        className="fleet-card-notes"
-                        title="Kliki märkuse muutmiseks"
+                <div className="form-group full-width">
+                  <label>Märkused</label>
+                  <AutoResizeTextarea
+                    placeholder="Lisa märkused, tööülesanne või lisainfo..."
+                    value={assignNotes}
+                    onChange={(e) => setAssignNotes(e.target.value)}
+                    className="form-input"
+                    rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="modal-footer">
+              <button type="button" className="btn btn-ghost" onClick={closeForm} disabled={assignmentSubmitting}>
+                Loobu
+              </button>
+              <button type="submit" className="btn btn-primary" disabled={assignmentSubmitting}>
+                {assignmentSubmitting ? 'Salvestan...' : (editingAssignmentId ? 'Salvesta muudatused' : 'Salvesta kanne')}
+              </button>
+            </div>
+          </form>
+        </div>,
+        document.body
+      )}
+
+      {/* TAB 1: SÕIDUKID / MASINAD */}
+      {activeTab === 'vehicles' && (
+        <div className="vehicle-grid">
+          {enrichedVehicles.map((v) => {
+            const isSelected = selectedVehicle && selectedVehicle.id === v.id;
+            const installedDevice = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
+            const attachedImplement = implementsList.find((imp) => imp.id === v.assignedImplementId || imp.assignedVehicleId === v.id);
+
+            return (
+              <div
+                key={v.id}
+                className={`vehicle-card glass-card ${isSelected ? 'selected' : ''}`}
+                onClick={() => onSelectVehicle(v)}
+              >
+                <div className="v-card-header">
+                  <div className="v-title-wrap">
+                    <div className="v-avatar" style={{ borderColor: v.color }}>
+                      <Tractor size={20} style={{ color: v.color }} />
+                    </div>
+                    <div>
+                      <h4 className="v-name">{v.name}</h4>
+                      <span className="v-model">{v.model} &bull; {v.registrationPlate || 'Reg. nr puudub'}</span>
+                    </div>
+                  </div>
+
+                  <div className="card-header-right">
+                    <span className={`status-badge status-${v.status}`}>
+                      {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
+                    </span>
+                    <div className="card-header-actions">
+                      <button
+                        className="icon-btn-ghost"
+                        title="Vaata selle masina haakimise ajalugu"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHistoryVehicleFilter(v.id);
+                          setHistoryImplementFilter('all');
+                          setHistoryStatusFilter('all');
+                          setActiveTab('history');
+                          loadImplementAssignments();
+                        }}
+                      >
+                        <History size={14} />
+                      </button>
+                      <button
+                        className="icon-btn-ghost"
+                        title="Muuda masina andmeid"
                         onClick={(e) => {
                           e.stopPropagation();
                           startEditVehicle(v);
                         }}
                       >
-                        <FileText size={13} />
-                        <span>{v.notes}</span>
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        className="icon-btn-danger"
+                        title="Kustuta masin"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
+                            onDeleteVehicle(v.id);
+                          }
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Driver */}
+                <div className="v-info-rows">
+                  <div className="v-info-item">
+                    <User size={14} className="text-muted" />
+                    <span>Juht: <strong>{v.driverName || 'Määramata'}</strong></span>
+                  </div>
+
+                  {/* Equipment Assignment Badges with Swap Actions */}
+                  <div className="v-equipment-badge-row">
+                    {/* Device Badge */}
+                    <div className="equipment-tag device-tag">
+                      <Radio size={12} className="text-blue" />
+                      <span className="tag-text">
+                        {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
+                      </span>
+                      <button
+                        className="mini-swap-btn"
+                        title="Vaheta või eemalda Teltonika seade"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSwapModal({ type: 'device', targetVehicleId: v.id, targetVehicleName: v.name });
+                        }}
+                      >
+                        <RotateCcw size={11} />
+                        <span>Vaheta</span>
+                      </button>
+                    </div>
+
+                    {/* Implement Badge */}
+                    <div className="equipment-tag implement-tag">
+                      <Wrench size={12} className="text-emerald" />
+                      <span className="tag-text">
+                        {attachedImplement ? `${attachedImplement.name} (${attachedImplement.workingWidthM}m)` : 'Haakeriist puudub'}
+                      </span>
+                      <button
+                        className="mini-swap-btn"
+                        title="Haagi teine tööriist või eemalda"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setSwapModal({ type: 'implement', targetVehicleId: v.id, targetVehicleName: v.name });
+                        }}
+                      >
+                        <Link size={11} />
+                        <span>Haagi</span>
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Märkused */}
+                {v.notes && (
+                  <div
+                    className="fleet-card-notes"
+                    title="Kliki märkuse muutmiseks"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditVehicle(v);
+                    }}
+                  >
+                    <FileText size={13} />
+                    <span>{v.notes}</span>
+                  </div>
+                )}
+
+                {/* Telemetry live gauges if device is installed */}
+                {installedDevice ? (
+                  <div className="v-gauges-grid">
+                    <div className="gauge-item">
+                      <Gauge size={14} className="text-blue" />
+                      <div className="gauge-text">
+                        <span className="gauge-lbl">Kiirus</span>
+                        <strong>{v.speedKmH.toFixed(1)} km/h</strong>
                       </div>
-                    )}
+                    </div>
 
-                    {/* Telemetry live gauges if device is installed */}
-                    {installedDevice ? (
-                      <div className="v-gauges-grid">
-                        <div className="gauge-item">
-                          <Gauge size={14} className="text-blue" />
-                          <div className="gauge-text">
-                            <span className="gauge-lbl">Kiirus</span>
-                            <strong>{v.speedKmH.toFixed(1)} km/h</strong>
-                          </div>
-                        </div>
-
-                        <div className="gauge-item">
-                          <Fuel size={14} className="text-amber" />
-                          <div className="gauge-text">
-                            <span className="gauge-lbl">Kütus</span>
-                            <strong>{v.telemetry.fuelLevelPct}%</strong>
-                          </div>
-                        </div>
-
-                        <div className="gauge-item">
-                          <Battery size={14} className="text-emerald" />
-                          <div className="gauge-text">
-                            <span className="gauge-lbl">Aku</span>
-                            <strong>{v.telemetry.batteryVoltage} V</strong>
-                          </div>
-                        </div>
-
-                        <div className="gauge-item">
-                          <Activity size={14} className="text-purple" />
-                          <div className="gauge-text">
-                            <span className="gauge-lbl">Pöörded</span>
-                            <strong>{v.telemetry.engineRpm || 0} rpm</strong>
-                          </div>
-                        </div>
+                    <div className="gauge-item">
+                      <Fuel size={14} className="text-amber" />
+                      <div className="gauge-text">
+                        <span className="gauge-lbl">Kütus</span>
+                        <strong>{v.telemetry.fuelLevelPct}%</strong>
                       </div>
-                    ) : (
-                      <div className="device-unassigned-notice">
-                        <Info size={14} className="text-muted" />
-                        <span>Teltonika GPS seade paigaldamata. Telemeetria puudub.</span>
-                      </div>
-                    )}
+                    </div>
 
-                    <div className="v-card-footer">
-                      <div className="teltonika-id">
-                        <span>🛰️ {installedDevice ? (installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.simNumber) : 'SIM puudub'}</span>
+                    <div className="gauge-item">
+                      <Battery size={14} className="text-emerald" />
+                      <div className="gauge-text">
+                        <span className="gauge-lbl">Aku</span>
+                        <strong>{v.telemetry.batteryVoltage} V</strong>
                       </div>
+                    </div>
 
-                      <div className="card-actions-group">
-                        <button
-                          className="btn btn-secondary btn-sm"
-                          disabled={!v.position}
-                          title={!v.position ? 'GPS asukoht puudub' : 'Näita kaardil'}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (v.position) {
-                              onFocusVehicle(v);
-                              onClose();
-                            }
-                          }}
-                        >
-                          <Crosshair size={13} />
-                          <span>Kaardile</span>
-                        </button>
+                    <div className="gauge-item">
+                      <Activity size={14} className="text-purple" />
+                      <div className="gauge-text">
+                        <span className="gauge-lbl">Pöörded</span>
+                        <strong>{v.telemetry.engineRpm || 0} rpm</strong>
                       </div>
                     </div>
                   </div>
-                );
-              })}
-            </div>
-          )}
-
-          {/* TAB 2: HAAKERIISTADE REGISTER */}
-          {activeTab === 'implements' && (
-            <div className="implements-grid">
-              {implementsList.map((imp) => {
-                const assignedVehicle = vehicles.find((v) => v.assignedImplementId === imp.id || imp.assignedVehicleId === v.id);
-                const attachedDevice = devices.find((d) => d.assignedImplementId === imp.id || imp.assignedDeviceId === d.id);
-
-                return (
-                  <div key={imp.id} className="implement-card glass-card">
-                    <div className="imp-card-header">
-                      <div className="imp-icon-wrap">
-                        <span>🔧</span>
-                      </div>
-                      <div className="imp-title-wrap">
-                        <h4 className="imp-name">{imp.name}</h4>
-                        <span className="imp-meta">{imp.manufacturer} &bull; {IMPLEMENT_TYPE_LABELS[imp.type]} &bull; {imp.workingWidthM}m</span>
-                      </div>
-                      <div className="card-header-actions">
-                        <button
-                          className="icon-btn-ghost"
-                          title="Muuda haakeriista andmeid"
-                          onClick={() => startEditImplement(imp)}
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          className="icon-btn-danger"
-                          title="Kustuta haakeriist"
-                          onClick={() => {
-                            if (confirm(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
-                              onDeleteImplement(imp.id);
-                            }
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="imp-status-box">
-                      {assignedVehicle ? (
-                        <div className="attached-status attached">
-                          <Tractor size={14} className="text-emerald" />
-                          <span>Haagitud masinale: <strong>{assignedVehicle.name}</strong></span>
-                        </div>
-                      ) : (
-                        <div className="attached-status warehouse">
-                          <span className="dot-idle"></span>
-                          <span>Vaba laos / Valmis haakimiseks</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {imp.serialNumber && (
-                      <div className="imp-serial-row">
-                        <span className="text-muted">Seerianumber:</span>
-                        <code>{imp.serialNumber}</code>
-                      </div>
-                    )}
-
-                    <div className="imp-serial-row">
-                      <span className="text-muted">Andur:</span>
-                      {attachedDevice ? (
-                        <span className="text-emerald" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-                          <Activity size={12} />
-                          {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
-                        </span>
-                      ) : (
-                        <span className="text-muted">Andur puudub</span>
-                      )}
-                    </div>
-
-                    {/* Märkused */}
-                    {imp.notes && (
-                      <div
-                        className="fleet-card-notes"
-                        title="Kliki märkuse muutmiseks"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditImplement(imp);
-                        }}
-                      >
-                        <FileText size={13} />
-                        <span>{imp.notes}</span>
-                      </div>
-                    )}
-
-                    <div className="imp-card-footer">
-                      <div className="imp-actions">
-                        <select
-                          className="form-input imp-assign-select"
-                          value={assignedVehicle ? assignedVehicle.id : ''}
-                          onChange={(e) => {
-                            const newVehId = e.target.value || undefined;
-                            onAssignImplement(imp.id, newVehId);
-                          }}
-                        >
-                          <option value="">-- Jäta lattu (vaba) --</option>
-                          {vehicles.map((v) => (
-                            <option key={v.id} value={v.id}>
-                              Haagi masinale: {v.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
+                ) : (
+                  <div className="device-unassigned-notice">
+                    <Info size={14} className="text-muted" />
+                    <span>Teltonika GPS seade paigaldamata. Telemeetria puudub.</span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+                )}
 
-          {/* TAB 3: TELTONIKA GPS SEADMETE REGISTER */}
-          {activeTab === 'devices' && (
-            <div className="devices-grid">
-              {devices.map((dev) => {
-                const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
-                const assignedImplement = implementsList.find((imp) => imp.assignedDeviceId === dev.id || dev.assignedImplementId === imp.id);
-                const isEyeSensor = dev.connectivityType === 'eye_sensor';
-                const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
+                <div className="v-card-footer">
+                  <div className="teltonika-id">
+                    <span>🛰️ {installedDevice ? (installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.simNumber) : 'SIM puudub'}</span>
+                  </div>
 
-                return (
-                  <div key={dev.id} className="device-card glass-card">
-                    <div className="dev-card-header">
-                      <div className="dev-icon-wrap">
-                        {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
-                      </div>
-                      <div className="dev-title-wrap">
-                        <div className="dev-header-line">
-                          <h4 className="dev-model">{dev.model}</h4>
-                          <span className={`status-badge status-${dev.status}`}>
-                            {(assignedVehicle || assignedImplement) ? 'Paigaldatud' : 'Riiulis'}
-                          </span>
-                        </div>
-                        <span className="dev-imei">
-                          {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
-                        </span>
-                      </div>
-                      <div className="card-header-actions">
-                        <button
-                          className="icon-btn-ghost"
-                          title="Muuda seadme andmeid"
-                          onClick={() => startEditDevice(dev)}
-                        >
-                          <Pencil size={14} />
-                        </button>
-                        <button
-                          className="icon-btn-danger"
-                          title="Kustuta seade"
-                          onClick={() => {
-                            if (confirm(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
-                              onDeleteDevice(dev.id);
-                            }
-                          }}
-                        >
-                          <Trash2 size={14} />
-                        </button>
-                      </div>
+                  <div className="card-actions-group">
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      disabled={!v.position}
+                      title={!v.position ? 'GPS asukoht puudub' : 'Näita kaardil'}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (v.position) {
+                          onFocusVehicle(v);
+                          onClose?.();
+                        }
+                      }}
+                    >
+                      <Crosshair size={13} />
+                      <span>Kaardile</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* TAB 2: HAAKERIISTADE REGISTER */}
+      {activeTab === 'implements' && (
+        <div className="implements-grid">
+          {implementsList.map((imp) => {
+            const assignedVehicle = vehicles.find((v) => v.assignedImplementId === imp.id || imp.assignedVehicleId === v.id);
+            const attachedDevice = devices.find((d) => d.assignedImplementId === imp.id || imp.assignedDeviceId === d.id);
+
+            return (
+              <div key={imp.id} className="implement-card glass-card">
+                <div className="imp-card-header">
+                  <div className="imp-icon-wrap">
+                    <span>🔧</span>
+                  </div>
+                  <div className="imp-title-wrap">
+                    <h4 className="imp-name">{imp.name}</h4>
+                    <span className="imp-meta">{imp.manufacturer} &bull; {IMPLEMENT_TYPE_LABELS[imp.type]} &bull; {imp.workingWidthM}m</span>
+                  </div>
+                  <div className="card-header-actions">
+                    <button
+                      className="icon-btn-ghost"
+                      title="Vaata selle haakeriista haakimise ajalugu"
+                      onClick={() => {
+                        setHistoryImplementFilter(imp.id);
+                        setHistoryVehicleFilter('all');
+                        setHistoryStatusFilter('all');
+                        setActiveTab('history');
+                        loadImplementAssignments();
+                      }}
+                    >
+                      <History size={14} />
+                    </button>
+                    <button
+                      className="icon-btn-ghost"
+                      title="Muuda haakeriista andmeid"
+                      onClick={() => startEditImplement(imp)}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="icon-btn-danger"
+                      title="Kustuta haakeriist"
+                      onClick={() => {
+                        if (confirm(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
+                          onDeleteImplement(imp.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="imp-status-box">
+                  {assignedVehicle ? (
+                    <div className="attached-status attached">
+                      <Tractor size={14} className="text-emerald" />
+                      <span>Haagitud masinale: <strong>{assignedVehicle.name}</strong></span>
                     </div>
-
-                    {isEyeSensor ? (
-                      <div className="dev-telemetry-summary">
-                        <div className="dev-telemetry-item">
-                          <span className="lbl">Aku tase:</span>
-                          <strong>{dev.batteryVoltage}%</strong>
-                        </div>
-                        {dev.eyeTemperatureC != null && (
-                          <div className="dev-telemetry-item">
-                            <span className="lbl">Temperatuur:</span>
-                            <strong>{dev.eyeTemperatureC}°C</strong>
-                          </div>
-                        )}
-                        {dev.eyeHumidityPercent != null && (
-                          <div className="dev-telemetry-item">
-                            <span className="lbl">Niiskus:</span>
-                            <strong>{dev.eyeHumidityPercent}%</strong>
-                          </div>
-                        )}
-                      </div>
-                    ) : (
-                      <div className="dev-telemetry-summary">
-                        <div className="dev-telemetry-item">
-                          <span className="lbl">Aku pinge:</span>
-                          <strong>{dev.batteryVoltage} V</strong>
-                        </div>
-                        <div className="dev-telemetry-item">
-                          <span className="lbl">Satelliite:</span>
-                          <strong>{dev.satelliteCount} SAT</strong>
-                        </div>
-                        <div className="dev-telemetry-item">
-                          <span className="lbl">Süüde:</span>
-                          <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
-                            {dev.ignition ? 'SEES' : 'VÄLJAS'}
-                          </strong>
-                        </div>
-                      </div>
-                    )}
-
-                    <div className="dev-assignment-box">
-                      <label className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
-                        Paigaldatud:
-                      </label>
-                      <select
-                        className="form-input dev-assign-select"
-                        value={targetValue}
-                        onChange={(e) => {
-                          const val = e.target.value;
-                          if (!val) { onAssignDevice(dev.id, undefined, undefined); return; }
-                          const [kind, targetId] = val.split(':');
-                          if (kind === 'veh') onAssignDevice(dev.id, targetId, undefined);
-                          else onAssignDevice(dev.id, undefined, targetId);
-                        }}
-                      >
-                        <option value="">-- Riiulis / Paigaldamata --</option>
-                        <optgroup label="🚜 Masinad">
-                          {vehicles.map((v) => (
-                            <option key={`veh:${v.id}`} value={`veh:${v.id}`}>
-                              {v.name} ({v.registrationPlate || 'nr puudub'})
-                            </option>
-                          ))}
-                        </optgroup>
-                        <optgroup label="🔧 Haakeriistad">
-                          {implementsList.map((imp) => (
-                            <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>
-                              {imp.name}
-                            </option>
-                          ))}
-                        </optgroup>
-                      </select>
+                  ) : (
+                    <div className="attached-status warehouse">
+                      <span className="dot-idle"></span>
+                      <span>Vaba laos / Valmis haakimiseks</span>
                     </div>
+                  )}
+                </div>
 
-                    {/* Märkused */}
-                    {dev.notes && (
-                      <div
-                        className="fleet-card-notes"
-                        title="Kliki märkuse muutmiseks"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          startEditDevice(dev);
-                        }}
-                      >
-                        <FileText size={13} />
-                        <span>{dev.notes}</span>
-                      </div>
-                    )}
+                {imp.serialNumber && (
+                  <div className="imp-serial-row">
+                    <span className="text-muted">Seerianumber:</span>
+                    <code>{imp.serialNumber}</code>
+                  </div>
+                )}
 
-                    <div className="dev-card-footer">
-                      <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                        {isEyeSensor ? 'Eye Sensor (BLE)' : `Firmware: ${dev.firmwareVersion || 'v03.28'}`}
+                <div className="imp-serial-row">
+                  <span className="text-muted">Andur:</span>
+                  {attachedDevice ? (
+                    <span className="text-emerald" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                      <Activity size={12} />
+                      {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
+                    </span>
+                  ) : (
+                    <span className="text-muted">Andur puudub</span>
+                  )}
+                </div>
+
+                {/* Märkused */}
+                {imp.notes && (
+                  <div
+                    className="fleet-card-notes"
+                    title="Kliki märkuse muutmiseks"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditImplement(imp);
+                    }}
+                  >
+                    <FileText size={13} />
+                    <span>{imp.notes}</span>
+                  </div>
+                )}
+
+                <div className="imp-card-footer">
+                  <div className="imp-actions">
+                    <select
+                      className="form-input imp-assign-select"
+                      value={assignedVehicle ? assignedVehicle.id : ''}
+                      onChange={(e) => {
+                        const newVehId = e.target.value || undefined;
+                        onAssignImplement(imp.id, newVehId);
+                        setTimeout(loadImplementAssignments, 400);
+                      }}
+                    >
+                      <option value="">-- Jäta lattu (vaba) --</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          Haagi masinale: {v.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* TAB 3: TELTONIKA GPS SEADMETE REGISTER */}
+      {activeTab === 'devices' && (
+        <div className="devices-grid">
+          {devices.map((dev) => {
+            const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
+            const assignedImplement = implementsList.find((imp) => imp.assignedDeviceId === dev.id || dev.assignedImplementId === imp.id);
+            const isEyeSensor = dev.connectivityType === 'eye_sensor';
+            const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
+
+            return (
+              <div key={dev.id} className="device-card glass-card">
+                <div className="dev-card-header">
+                  <div className="dev-icon-wrap">
+                    {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
+                  </div>
+                  <div className="dev-title-wrap">
+                    <div className="dev-header-line">
+                      <h4 className="dev-model">{dev.model}</h4>
+                      <span className={`status-badge status-${dev.status}`}>
+                        {(assignedVehicle || assignedImplement) ? 'Paigaldatud' : 'Riiulis'}
                       </span>
                     </div>
+                    <span className="dev-imei">
+                      {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
+                    </span>
                   </div>
-                );
-              })}
+                  <div className="card-header-actions">
+                    <button
+                      className="icon-btn-ghost"
+                      title="Muuda seadme andmeid"
+                      onClick={() => startEditDevice(dev)}
+                    >
+                      <Pencil size={14} />
+                    </button>
+                    <button
+                      className="icon-btn-danger"
+                      title="Kustuta seade"
+                      onClick={() => {
+                        if (confirm(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
+                          onDeleteDevice(dev.id);
+                        }
+                      }}
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                </div>
+
+                {isEyeSensor ? (
+                  <div className="dev-telemetry-summary">
+                    <div className="dev-telemetry-item">
+                      <span className="lbl">Aku tase:</span>
+                      <strong>{dev.batteryVoltage}%</strong>
+                    </div>
+                    {dev.eyeTemperatureC != null && (
+                      <div className="dev-telemetry-item">
+                        <span className="lbl">Temperatuur:</span>
+                        <strong>{dev.eyeTemperatureC}°C</strong>
+                      </div>
+                    )}
+                    {dev.eyeHumidityPercent != null && (
+                      <div className="dev-telemetry-item">
+                        <span className="lbl">Niiskus:</span>
+                        <strong>{dev.eyeHumidityPercent}%</strong>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="dev-telemetry-summary">
+                    <div className="dev-telemetry-item">
+                      <span className="lbl">Aku pinge:</span>
+                      <strong>{dev.batteryVoltage} V</strong>
+                    </div>
+                    <div className="dev-telemetry-item">
+                      <span className="lbl">Satelliite:</span>
+                      <strong>{dev.satelliteCount} SAT</strong>
+                    </div>
+                    <div className="dev-telemetry-item">
+                      <span className="lbl">Süüde:</span>
+                      <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
+                        {dev.ignition ? 'SEES' : 'VÄLJAS'}
+                      </strong>
+                    </div>
+                  </div>
+                )}
+
+                <div className="dev-assignment-box">
+                  <label className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                    Paigaldatud:
+                  </label>
+                  <select
+                    className="form-input dev-assign-select"
+                    value={targetValue}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) { onAssignDevice(dev.id, undefined, undefined); return; }
+                      const [kind, targetId] = val.split(':');
+                      if (kind === 'veh') onAssignDevice(dev.id, targetId, undefined);
+                      else onAssignDevice(dev.id, undefined, targetId);
+                    }}
+                  >
+                    <option value="">-- Riiulis / Paigaldamata --</option>
+                    <optgroup label="🚜 Masinad">
+                      {vehicles.map((v) => (
+                        <option key={`veh:${v.id}`} value={`veh:${v.id}`}>
+                          {v.name} ({v.registrationPlate || 'nr puudub'})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="🔧 Haakeriistad">
+                      {implementsList.map((imp) => (
+                        <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>
+                          {imp.name}
+                        </option>
+                      ))}
+                    </optgroup>
+                  </select>
+                </div>
+
+                {/* Märkused */}
+                {dev.notes && (
+                  <div
+                    className="fleet-card-notes"
+                    title="Kliki märkuse muutmiseks"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      startEditDevice(dev);
+                    }}
+                  >
+                    <FileText size={13} />
+                    <span>{dev.notes}</span>
+                  </div>
+                )}
+
+                <div className="dev-card-footer">
+                  <span className="text-muted" style={{ fontSize: '0.68rem' }}>
+                    {isEyeSensor ? 'Eye Sensor (BLE)' : `Firmware: ${dev.firmwareVersion || 'v03.28'}`}
+                  </span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
+      {activeTab === 'history' && (
+        <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Filter bar */}
+          <div className="history-filter-bar glass-card" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Filter size={15} className="text-muted" />
+              <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
+            </div>
+
+            <div style={{ minWidth: '180px' }}>
+              <select
+                className="form-input"
+                value={historyVehicleFilter}
+                onChange={(e) => setHistoryVehicleFilter(e.target.value)}
+                style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
+              >
+                <option value="all">Kõik masinad</option>
+                {vehicles.map((v) => (
+                  <option key={v.id} value={v.id}>{v.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ minWidth: '180px' }}>
+              <select
+                className="form-input"
+                value={historyImplementFilter}
+                onChange={(e) => setHistoryImplementFilter(e.target.value)}
+                style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
+              >
+                <option value="all">Kõik haakeriistad</option>
+                {implementsList.map((imp) => (
+                  <option key={imp.id} value={imp.id}>{imp.name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('all')}
+              >
+                Kõik ({implementAssignments.length})
+              </button>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'active' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('active')}
+              >
+                Aktiivsed ({implementAssignments.filter(a => !a.endedAt).length})
+              </button>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'ended' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('ended')}
+              >
+                Ajalugu ({implementAssignments.filter(a => !!a.endedAt).length})
+              </button>
+            </div>
+
+            {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all') && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setHistoryVehicleFilter('all');
+                  setHistoryImplementFilter('all');
+                  setHistoryStatusFilter('all');
+                }}
+                style={{ fontSize: '12px', marginLeft: 'auto' }}
+              >
+                Tühjenda filtrid
+              </button>
+            )}
+
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={loadImplementAssignments}
+              title="Värskenda registrit"
+              style={{ marginLeft: (historyVehicleFilter === 'all' && historyImplementFilter === 'all' && historyStatusFilter === 'all') ? 'auto' : undefined }}
+            >
+              <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
+              <span>Värskenda</span>
+            </button>
+          </div>
+
+          {/* Data Table */}
+          {historyLoading && implementAssignments.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+              Laen haakimise registri andmeid...
+            </div>
+          ) : filteredAssignments.length === 0 ? (
+            <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
+              <Wrench size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                Ühtegi haakimise kirjet ei leitud
+              </div>
+              <p style={{ fontSize: '13px', margin: 0 }}>
+                {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all')
+                  ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
+                  : 'Haakeriistade ja masinate sidumiste ajalugu salvestatakse siia automaatselt, kui masinapargis või töödes haakeriistu vahetatakse.'}
+              </p>
+            </div>
+          ) : (
+            <div className="register-table-wrap glass-card" style={{ overflowX: 'auto' }}>
+              <table className="register-table">
+                <thead>
+                  <tr>
+                    <th>Haakeriist</th>
+                    <th>Masin</th>
+                    <th>Haagitud (algus)</th>
+                    <th>Lahti haagitud (lõpp)</th>
+                    <th>Kestus</th>
+                    <th>Märkused</th>
+                    <th style={{ textAlign: 'right' }}>Tegevused</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAssignments.map((a) => {
+                    const isActive = !a.endedAt;
+                    const duration = formatDuration(a.startedAt, a.endedAt);
+                    return (
+                      <tr key={a.id} style={{ background: isActive ? 'rgba(16, 185, 129, 0.05)' : undefined }}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              background: 'rgba(234, 179, 8, 0.15)',
+                              color: '#eab308',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}>
+                              🔧
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.implementName || a.implementId}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.implementType || ''}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              color: '#10b981',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Tractor size={15} />
+                            </div>
+                            <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.vehicleName || a.vehicleId}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '13px', fontWeight: 500 }}>{formatDateTime(a.startedAt)}</div>
+                        </td>
+                        <td>
+                          {isActive ? (
+                            <span className="status-badge status-working" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                              Hetkel küljes (Aktiivne)
+                            </span>
+                          ) : (
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatDateTime(a.endedAt)}</div>
+                          )}
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', fontWeight: 500, color: isActive ? 'var(--color-primary)' : 'var(--text-muted)' }}>
+                            {duration}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: a.notes ? 'normal' : 'italic' }}>
+                            {a.notes || '—'}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {isActive && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                title="Haagi see riist masinalt lahti"
+                                onClick={() => handleDetachActiveAssignment(a.implementId)}
+                                style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
+                              >
+                                <Unlink size={12} />
+                                <span>Haagi lahti</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              title="Muuda haakimise kirjet"
+                              onClick={() => handleStartEditAssignment(a)}
+                              style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
+                            >
+                              <Pencil size={12} />
+                              <span>Muuda</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-btn-danger"
+                              title="Kustuta logikirje"
+                              onClick={() => handleDeleteAssignment(a.id)}
+                              style={{ width: '26px', height: '26px' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
             </div>
           )}
         </div>
+      )}
 
-        {/* Quick Swap Sub-Modal */}
-        {swapModal && createPortal(
-          <div className="modal-backdrop sub-modal">
-            <div className="modal-content glass-card swap-modal-card animate-scale-up">
-              <div className="modal-header">
-                <h4>
-                  {swapModal.type === 'device' ? '📡 Teltonika GPS Seadme Valik' : '🔧 Haakeriista Haakimine'}
-                </h4>
-                <button className="icon-btn-ghost" onClick={() => setSwapModal(null)}>
-                  <X size={18} />
-                </button>
-              </div>
+      {/* Quick Swap Sub-Modal */}
+      {swapModal && createPortal(
+        <div className="modal-backdrop sub-modal">
+          <div className="modal-content glass-card swap-modal-card animate-scale-up">
+            <div className="modal-header">
+              <h4>
+                {swapModal.type === 'device' ? '📡 Teltonika GPS Seadme Valik' : '🔧 Haakeriista Haakimine'}
+              </h4>
+              <button className="icon-btn-ghost" onClick={() => setSwapModal(null)}>
+                <X size={18} />
+              </button>
+            </div>
 
-              <div className="modal-body">
-                <p className="swap-modal-desc">
-                  Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'Teltonika GPS seade' : 'haakeriist'}:
-                </p>
+            <div className="modal-body">
+              <p className="swap-modal-desc">
+                Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'Teltonika GPS seade' : 'haakeriist'}:
+              </p>
 
-                {swapModal.type === 'device' ? (
-                  <div className="swap-options-list">
-                    <div 
-                      className="swap-option-item unassign-option"
-                      onClick={() => {
-                        // Unassign any device currently on this vehicle
-                        const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
-                        if (currentDev) onAssignDevice(currentDev.id, undefined);
-                        setSwapModal(null);
-                      }}
-                    >
-                      <Unlink size={16} className="text-rose" />
-                      <div>
-                        <strong>Eemalda GPS seade</strong>
-                        <p>Jäta masin ilma GPS telemeetriata</p>
-                      </div>
+              {swapModal.type === 'device' ? (
+                <div className="swap-options-list">
+                  <div
+                    className="swap-option-item unassign-option"
+                    onClick={() => {
+                      // Unassign any device currently on this vehicle
+                      const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
+                      if (currentDev) onAssignDevice(currentDev.id, undefined);
+                      setSwapModal(null);
+                    }}
+                  >
+                    <Unlink size={16} className="text-rose" />
+                    <div>
+                      <strong>Eemalda GPS seade</strong>
+                      <p>Jäta masin ilma GPS telemeetriata</p>
                     </div>
-
-                    {devices.map((d) => {
-                      const isCurrent = d.assignedVehicleId === swapModal.targetVehicleId;
-                      const otherVeh = vehicles.find(v => v.id === d.assignedVehicleId && v.id !== swapModal.targetVehicleId);
-
-                      return (
-                        <div 
-                          key={d.id} 
-                          className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
-                          onClick={() => {
-                            onAssignDevice(d.id, swapModal.targetVehicleId);
-                            setSwapModal(null);
-                          }}
-                        >
-                          {d.connectivityType === 'eye_sensor' ? <Activity size={16} className="text-emerald" /> : <Radio size={16} className="text-blue" />}
-                          <div className="option-info">
-                            <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
-                            <p>
-                              {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
-                                otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
-                              )}
-                            </p>
-                          </div>
-                          {isCurrent && <span className="active-pill">Aktiivne</span>}
-                        </div>
-                      );
-                    })}
                   </div>
-                ) : (
-                  <div className="swap-options-list">
-                    <div 
-                      className="swap-option-item unassign-option"
-                      onClick={() => {
-                        const currentImp = implementsList.find(i => i.assignedVehicleId === swapModal.targetVehicleId);
-                        if (currentImp) onAssignImplement(currentImp.id, undefined);
-                        setSwapModal(null);
-                      }}
-                    >
-                      <Unlink size={16} className="text-rose" />
-                      <div>
-                        <strong>Haagi lahti (Eemalda haakeriist)</strong>
-                        <p>Masin sõidab ilma haakeriistata</p>
+
+                  {devices.map((d) => {
+                    const isCurrent = d.assignedVehicleId === swapModal.targetVehicleId;
+                    const otherVeh = vehicles.find(v => v.id === d.assignedVehicleId && v.id !== swapModal.targetVehicleId);
+
+                    return (
+                      <div
+                        key={d.id}
+                        className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        onClick={() => {
+                          onAssignDevice(d.id, swapModal.targetVehicleId);
+                          setSwapModal(null);
+                        }}
+                      >
+                        {d.connectivityType === 'eye_sensor' ? <Activity size={16} className="text-emerald" /> : <Radio size={16} className="text-blue" />}
+                        <div className="option-info">
+                          <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
+                          <p>
+                            {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
+                              otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
+                            )}
+                          </p>
+                        </div>
+                        {isCurrent && <span className="active-pill">Aktiivne</span>}
                       </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="swap-options-list">
+                  <div
+                    className="swap-option-item unassign-option"
+                    onClick={() => {
+                      const currentImp = implementsList.find(i => i.assignedVehicleId === swapModal.targetVehicleId);
+                      if (currentImp) onAssignImplement(currentImp.id, undefined);
+                      setSwapModal(null);
+                      setTimeout(loadImplementAssignments, 400);
+                    }}
+                  >
+                    <Unlink size={16} className="text-rose" />
+                    <div>
+                      <strong>Haagi lahti (Eemalda haakeriist)</strong>
+                      <p>Masin sõidab ilma haakeriistata</p>
                     </div>
-
-                    {implementsList.map((imp) => {
-                      const isCurrent = imp.assignedVehicleId === swapModal.targetVehicleId;
-                      const otherVeh = vehicles.find(v => v.id === imp.assignedVehicleId && v.id !== swapModal.targetVehicleId);
-
-                      return (
-                        <div 
-                          key={imp.id} 
-                          className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
-                          onClick={() => {
-                            onAssignImplement(imp.id, swapModal.targetVehicleId);
-                            setSwapModal(null);
-                          }}
-                        >
-                          <Wrench size={16} className="text-emerald" />
-                          <div className="option-info">
-                            <strong>{imp.name} ({imp.workingWidthM}m töölaius)</strong>
-                            <p>
-                              {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
-                                otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
-                              )}
-                            </p>
-                          </div>
-                          {isCurrent && <span className="active-pill">Haagitud</span>}
-                        </div>
-                      );
-                    })}
                   </div>
-                )}
+
+                  {implementsList.map((imp) => {
+                    const isCurrent = imp.assignedVehicleId === swapModal.targetVehicleId;
+                    const otherVeh = vehicles.find(v => v.id === imp.assignedVehicleId && v.id !== swapModal.targetVehicleId);
+
+                    return (
+                      <div
+                        key={imp.id}
+                        className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        onClick={() => {
+                          onAssignImplement(imp.id, swapModal.targetVehicleId);
+                          setSwapModal(null);
+                          setTimeout(loadImplementAssignments, 400);
+                        }}
+                      >
+                        <Wrench size={16} className="text-emerald" />
+                        <div className="option-info">
+                          <strong>{imp.name} ({imp.workingWidthM}m töölaius)</strong>
+                          <p>
+                            {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
+                              otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
+                            )}
+                          </p>
+                        </div>
+                        {isCurrent && <span className="active-pill">Haagitud</span>}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+        , document.body)}
+    </>
+  );
+
+  if (isFullPage) {
+    return (
+      <div className="fleet-board-view">
+        <main className="fleet-board-main">
+          <div className="fleet-board-header">
+            <div className="fleet-title-wrap">
+              <Tractor className="text-emerald" size={26} />
+              <div>
+                <h2>Masinapark, haakeriistad ja muu tehnika</h2>
+                <p className="fleet-subtitle">Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus</p>
               </div>
             </div>
           </div>
-        , document.body)}
+          <div className="fleet-board-body">
+            {bodyContent}
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  return (
+    <div className="modal-backdrop">
+      <div className="modal-content glass-card vehicle-modal animate-scale-up">
+        {/* Header with Title and Tabs */}
+        <div className="modal-header">
+          <div className="modal-title-group">
+            <Tractor className="text-emerald" size={24} />
+            <div>
+              <h3>Masinapargi ja Seadmete Haldus</h3>
+              <p className="modal-subtitle">Eraldi registrid sõidukitele, haakeriistadele ja Teltonika GPS seadmetele</p>
+            </div>
+          </div>
+          {onClose && (
+            <button className="icon-btn-ghost" onClick={onClose}>
+              <X size={20} />
+            </button>
+          )}
+        </div>
+
+        <div className="modal-body">
+          {bodyContent}
+        </div>
 
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
+          {onClose && <button className="btn btn-ghost" onClick={onClose}>Sulge</button>}
         </div>
       </div>
     </div>
   );
 };
+
