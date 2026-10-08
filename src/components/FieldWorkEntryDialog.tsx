@@ -181,6 +181,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     setLaborHours(hStr);
     if (s.workedAreaHa != null) {
       setTelemetryAreaHa(fmt(s.workedAreaHa));
+      // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); 0 ha (haakeriist puudub) ei kirjuta üle
+      if (s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
     }
   };
 
@@ -236,6 +238,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     setRows(rows.filter((_, j) => j !== i));
   };
 
+  // Tehtud pindala muutmine (käsitsi või telemeetriast): kogu põllu täitumisel märgitakse töö lõpetatuks
+  const changeArea = (val: string) => {
+    setAreaHa(val);
+    if (!isRepeating && fieldAreaHa > 0) {
+      setFinish(doneBefore + (parseNum(val) ?? 0) >= fieldAreaHa - 0.01);
+    }
+  };
+
   const applyPercentage = (pct: number) => {
     if (fieldAreaHa <= 0) return;
     const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
@@ -253,10 +263,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     e.preventDefault();
     setError(null);
     if (!date) return setError('Kuupäev on kohustuslik');
+    if (!workerId) return setError('Vali töötaja');
+    if (!startTime || !endTime) return setError('Vali algus- ja lõpukellaaeg');
     if (equipmentHours.trim() && !vehicleId && !implementId) return setError('Vali masin ja/või haakeriist, mille töötunnid sisestasid');
-    if (startTime && !endTime) return setError('Vali ka lõpukellaaeg');
-    if (!startTime && endTime) return setError('Vali ka alguskellaaeg');
-    if (startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+    if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
       return setError('Lõpukellaaeg peab olema alguse omast suurem');
     }
     setBusy(true);
@@ -389,16 +399,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               <DateInput value={date} onChange={setDate} className="form-input" />
             </div>
             <div className="form-group">
-              <label htmlFor="we-worker">Töötaja</label>
-              <select id="we-worker" className="form-input" value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
+              <label htmlFor="we-worker">Töötaja *</label>
+              <select id="we-worker" className="form-input" required value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
                 <option value="">– valimata –</option>
                 {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="we-start-time">Algus</label>
+              <label htmlFor="we-start-time">Algus *</label>
               <select
                 id="we-start-time"
+                required
                 className="form-input time-select"
                 value={startTime}
                 onChange={(e) => handleStartTimeChange(e.target.value)}
@@ -410,9 +421,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="we-end-time">Lõpp</label>
+              <label htmlFor="we-end-time">Lõpp *</label>
               <select
                 id="we-end-time"
+                required
                 className="form-input time-select"
                 value={endTime}
                 onChange={(e) => handleEndTimeChange(e.target.value)}
@@ -513,12 +525,12 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                 <label htmlFor="we-area">Tehtud pindala, ha</label>
                 <input
                   id="we-area"
-                  className="form-input num readonly"
-                  readOnly
-                  tabIndex={-1}
+                  className="form-input num"
+                  inputMode="decimal"
                   value={areaHa}
+                  onChange={(e) => changeArea(e.target.value)}
                   placeholder="0,00"
-                  title="Vali allolevatest kiirvalikutest (10% - 100%)"
+                  title="Sisesta pindala või vali allolevatest kiirvalikutest (10% – 100%)"
                 />
               </div>
               <div className="form-group">
@@ -559,7 +571,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               )}
             </div>
 
-            {fieldAreaHa > 0 && (
+            {fieldAreaHa > 0 && (() => {
+              // Märgitakse protsent, mis on kogu põllu täitumisele (varasemad + see kanne) kõige lähemal
+              const totalPct = (totalAfter / fieldAreaHa) * 100;
+              const enabledPcts = AREA_PERCENTAGES.filter((pct) => pct === 100 || doneBefore < (fieldAreaHa * pct) / 100);
+              const nearestPct = areaNum > 0 && enabledPcts.length
+                ? enabledPcts.reduce((best, pct) => (Math.abs(pct - totalPct) < Math.abs(best - totalPct) ? pct : best))
+                : null;
+              return (
               <div className="work-entry-area-presets">
                 <span className="work-entry-presets-label">Põllust tehtud:</span>
                 <div className="work-entry-presets-buttons">
@@ -568,7 +587,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                     const needed = Math.max(0, targetTotal - doneBefore);
                     const roundedNeeded = Math.round(needed * 100) / 100;
                     const isExceeded = doneBefore >= targetTotal && pct < 100;
-                    const isSelected = areaNum > 0 && Math.abs(totalAfter - targetTotal) < 0.02;
+                    const isSelected = pct === nearestPct;
                     return (
                       <button
                         key={pct}
@@ -588,7 +607,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   })}
                 </div>
               </div>
-            )}
+              );
+            })()}
           </div>
 
           <div className="form-group">
