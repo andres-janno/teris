@@ -20,10 +20,42 @@ Värviskeem on loodud spetsiaalselt teraviljakasvatajate äratundmisvajadust ja 
 | Värv | HEX | RGB | Kasutusala ja Semantika |
 | :--- | :--- | :--- | :--- |
 | **Küps Viljakuld** | `#D9822B` | `rgb(217, 130, 43)` | Embleemi sisetera. Valminud saagi ja väärtuse sümbol. |
-| **Põlluroheline** | `#1B5E20` | `rgb(27, 94, 32)` | Embleemi väliskestad ja kõrred. Lopsakas oras ja põllumaa. |
+| **Orase roheline** | `#4C9A2A` | `rgb(76, 154, 42)` | Embleemi väliskestad ja kõrred. Tärkav ja võrsuv oras (vt p 2.1). Varem `#1B5E20`. |
 | **Metsaroheline / Muld** | `#143820` | `rgb(20, 56, 32)` | Tekst "TERIS". Loetav, kindel kontrast ja professionaalsus. |
 | **Särav Viljakuld (Hele)** | `#E5A93C` | `rgb(229, 169, 60)` | Alternatiivne heledam kuldne toon või gradientaktsent. |
 | **Antratsiitmuld (Tume)** | `#1F2937` | `rgb(31, 41, 55)` | Neutraalne tume taust või trükitekst. |
+
+### 2.1 Miks orase roheline on heledam kui tekst
+
+Varasem embleemi roheline (`#1B5E20`) ja teksti metsaroheline (`#143820`) olid peaaegu sama tumedad
+(kontrast omavahel **1,65 : 1**). Väikeses mõõdus (päis, favicon) sulasid märk ja tekst üheks tumedaks
+laiguks ning embleemi kujund ei eristunud. Seetõttu on embleemi roheline viidud heledamaks ja kergelt
+kollakamaks toonideks, tekst jääb tumedaks.
+
+**Põhjendus põllumajanduse maailmast:**
+
+- **Noor oras on hele.** Teravilja tärkamise ja võrsumise ajal (BBCH 10–29) on taimik hõre ja lehed
+  noored, mistõttu põld paistab heledama, kollakasrohelise toonina. Tumeroheline on hilisem, tihe ja
+  lopsakas taimik. Embleemi väliskestad tähistavad LOGO.md järgi just *tärkavat orast ja kasvu* —
+  hele, värske roheline vastab sellele täpsemalt kui peaaegu must roheline.
+- **Muld ja taim on põllul eri kihid.** Põldu ülalt vaadates moodustavad tume muld ja hele roheline
+  taimik selge kontrasti. Logos kannab sama rolli tume "mulla" tekst ja hele "orase" märk: kaks eraldi
+  kihti, mitte üks tume pind.
+- **Elujõulise taimiku keel täppisviljeluses.** Taimkatte indeksite (nt NDVI) kaartidel ja
+  satelliidipiltidel kujutatakse kasvavat, elujõulist taimikut erksates rohelistes toonides. Põllumehele
+  tähendab erk roheline "taim kasvab", tume pigem varju või mulda.
+- **Äratuntavus väljal.** Põllumajandustehnika ja -brändid kasutavad tunnusvärvina keskmise heledusega
+  küllastunud rohelisi, mitte peaaegu musti — need on kaugelt ja väikeses mõõdus paremini eristatavad.
+
+**Kontrastid (WCAG suhtelise heleduse järgi):**
+
+| Paar | Enne (`#1B5E20`) | Nüüd (`#4C9A2A`) | Märkus |
+| :--- | :---: | :---: | :--- |
+| Embleemi roheline ↔ tekst `#143820` | 1,65 : 1 | **3,69 : 1** | Märk ja tekst eristuvad selgelt |
+| Embleemi roheline ↔ valge taust | 7,87 : 1 | **3,52 : 1** | Üle graafikaelementide nõude 3 : 1 |
+| Embleemi roheline ↔ viljakuld `#D9822B` | — | 1,20 : 1 | Eristus põhineb toonil (roheline vs oranž), mitte heledusel |
+
+Veel heledamaid rohelisi (nt `#4CAF50`) ei kasutata, sest need langevad valgel taustal alla 3 : 1.
 
 ---
 
