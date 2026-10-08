@@ -6985,19 +6985,7 @@ a.history-pill:hover {
 }
 
 /* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
-.poi-embedded-view,
-.party-embedded-view {
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.fullpage-board-body > .poi-embedded-view,
-.fullpage-board-body > .party-embedded-view,
 .fullpage-board-body > .modal-body,
-.fullpage-board-body > .poi-embedded-view > .modal-body,
-.fullpage-board-body > .party-embedded-view > .modal-body,
 .fleet-board-body > .modal-body {
   flex: 1 1 auto;
   min-height: 0;

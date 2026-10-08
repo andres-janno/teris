@@ -64,7 +64,6 @@ const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').th
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
-const InfrastructureView = lazy(() => import('./components/InfrastructureView').then((m) => ({ default: m.InfrastructureView })));
 
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
 // (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
@@ -1615,7 +1614,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       {mainView === 'infrastructure' && (
         <Suspense fallback={null}>
-          <InfrastructureView
+          <PoiManagerModal
+            isOpen={true}
+            isFullPage={true}
+            onClose={() => changeMainView('map')}
             pois={pois}
             onAddPoi={handleAddPoi}
             onUpdatePoi={handleUpdatePoi}
@@ -1629,6 +1631,16 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             }}
             initialDraft={poiDraft}
             initialCoords={newPoiCoords}
+          />
+        </Suspense>
+      )}
+
+      {mainView === 'parties' && (
+        <Suspense fallback={null}>
+          <RelatedPartiesModal
+            isOpen={true}
+            isFullPage={true}
+            onClose={() => changeMainView('map')}
             parties={parties}
             onSaveParty={handleSaveParty}
             onDeleteParty={handleDeleteParty}

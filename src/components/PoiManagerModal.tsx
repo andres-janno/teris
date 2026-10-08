@@ -46,7 +46,6 @@ interface PoiManagerModalProps {
   } | null;
   initialCoords?: [number, number] | null;
   isFullPage?: boolean;
-  embedded?: boolean;
 }
 
 const CATEGORY_META: Record<PoiCategory, { label: string; emoji: string }> = {
@@ -70,7 +69,6 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   initialDraft,
   initialCoords,
   isFullPage = false,
-  embedded = false
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAdding, setIsAdding] = useState(false);
@@ -120,7 +118,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isAdding]);
 
-  if (!isOpen && !isFullPage && !embedded) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const filteredPois = selectedCategory === 'all'
     ? pois
@@ -480,14 +478,6 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           </div>
         </div>
   );
-
-  if (embedded) {
-    return (
-      <div className="poi-embedded-view">
-        {bodyContent}
-      </div>
-    );
-  }
 
   if (isFullPage) {
     return (

@@ -32,7 +32,6 @@ interface RelatedPartiesModalProps {
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
   stacked?: boolean;
   isFullPage?: boolean;
-  embedded?: boolean;
 }
 
 const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'OTHER'];
@@ -48,7 +47,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   selectedYear = 2026,
   stacked = false,
   isFullPage = false,
-  embedded = false
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
@@ -242,7 +240,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     return () => document.removeEventListener('keydown', onKeyDown);
   }, [isEditing]);
 
-  if (!isOpen && !isFullPage && !embedded) return null;
+  if (!isOpen && !isFullPage) return null;
 
   const editForm = isEditing && createPortal(
     <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
@@ -641,15 +639,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         </div>
   );
 
-  if (embedded) {
-    return (
-      <div className="party-embedded-view">
-        {editForm}
-        {bodyContent}
-      </div>
-    );
-  }
-
   if (isFullPage) {
     return (
       <div className="fullpage-board-view">
@@ -658,7 +647,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             <div className="fullpage-title-wrap">
               <Users className="text-emerald" size={26} />
               <div>
-                <h2>Seotud isikud</h2>
+                <h2>Isikud</h2>
                 <p className="fullpage-subtitle">Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid</p>
               </div>
             </div>

@@ -7,7 +7,8 @@ import {
   CalendarDays,
   Sprout,
   Map as MapIcon,
-  SquareKanban
+  SquareKanban,
+  Users
 } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
@@ -16,7 +17,7 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure';
+export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure' | 'parties';
 
 interface HeaderProps {
   fieldsCount?: number;
@@ -133,6 +134,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <MapPin size={15} />
               <span>Taristu</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'parties' ? 'active' : ''}
+              aria-current={mainView === 'parties' ? 'page' : undefined}
+              onClick={() => onChangeMainView('parties')}
+            >
+              <Users size={15} />
+              <span>Isikud</span>
             </button>
           </nav>
         )}
