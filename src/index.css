@@ -2530,6 +2530,22 @@ body {
   color: var(--text-secondary);
 }
 
+/* Taristu ja Isikute kaardid (Tehnika kaartide stiilis): emoji ikoonina, pikk tekst kahel real */
+.card-emoji-avatar {
+  font-size: 1.15rem;
+  line-height: 1;
+  border-color: var(--border-card);
+  flex-shrink: 0;
+}
+
+.card-info-text {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  color: var(--text-secondary);
+}
+
 .status-badge {
   font-size: 0.68rem;
   font-weight: 700;
@@ -3317,66 +3333,6 @@ input[type="number"],
   border-color: rgba(59, 130, 246, 0.25);
 }
 
-.poi-items-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 380px;
-  overflow-y: auto;
-}
-
-.poi-item-card {
-  padding: 12px 14px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-}
-
-.poi-item-main {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.poi-item-icon {
-  font-size: 1.5rem;
-  width: 40px;
-  height: 40px;
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.poi-item-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.poi-item-header h4 {
-  font-size: 0.88rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.poi-category-badge {
-  font-size: 0.65rem;
-  color: var(--text-secondary);
-  background: rgba(255, 255, 255, 0.06);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
-.poi-desc-line {
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
 .poi-meta-line {
   display: flex;
   gap: 10px;
@@ -3390,12 +3346,6 @@ input[type="number"],
 
 .meta-tag.note {
   color: var(--amber-400);
-}
-
-.poi-item-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* Analytics Modal */
@@ -4160,46 +4110,6 @@ input[type="number"],
   width: max-content;
   min-width: min(900px, 96vw);
   max-width: 96vw;
-}
-
-/* Seotud isikute tabel */
-.parties-table td {
-  vertical-align: middle;
-}
-
-/* Tegevused vasakule joondatud (kõrgem spetsiifilisus kui hilisemal .register-table .row-actions reeglil) */
-.register-table.parties-table .actions-col {
-  text-align: left;
-}
-
-.register-table.parties-table .row-actions {
-  justify-content: flex-start;
-}
-
-.parties-table .muted {
-  color: var(--text-muted);
-}
-
-.parties-table .party-type-tag {
-  font-size: 0.8rem;
-}
-
-.parties-table .party-notes {
-  max-width: 320px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.parties-table .party-contact-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  color: var(--text-primary);
-  text-decoration: none;
-}
-
-.parties-table .party-contact-link:hover {
-  color: var(--emerald-600);
 }
 
 .register-table .row-actions {
@@ -6527,13 +6437,6 @@ a.history-pill:hover {
   cursor: pointer;
 }
 
-
-
-
-
-
-
-
 /* ==========================================================================
    Tööde register (tööd, kultuuride mallid, kulumaterjalid)
    ========================================================================== */
@@ -7119,7 +7022,6 @@ a.history-pill:hover {
    väga madalal aknal kerib kogu leht */
 .fullpage-board-body .register-table-wrap,
 .fullpage-board-body .register-fields-list,
-.fullpage-board-body .poi-items-list,
 .fullpage-board-body .seasons-table-wrap {
   flex: 1 1 0;
   min-height: 220px;
@@ -7127,7 +7029,6 @@ a.history-pill:hover {
   overflow: auto;
 }
 
-.fullpage-board-body .poi-items-list,
 .fullpage-board-body .register-fields-list {
   padding-right: 2px;
 }
@@ -7472,7 +7373,6 @@ a.history-pill:hover {
   color: #dc2626;
 }
 
-
 .fw-crop-banner+.fw-crop-banner {
   border-left: 1px solid var(--border-card);
 }
@@ -7783,8 +7683,6 @@ a.history-pill:hover {
   color: var(--emerald-500);
   background: var(--btn-sec-hover);
 }
-
-
 
 .fw-field-sub {
   display: flex;

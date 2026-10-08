@@ -416,66 +416,91 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
             document.body
           )}
 
-          {/* List of POIs */}
-          <div className="poi-items-list">
-            {filteredPois.length === 0 ? (
-              <div className="empty-state">
-                <Info size={24} className="text-muted" />
-                <p>Selles kategoorias pole ühtegi asukohta lisatud.</p>
-              </div>
-            ) : (
-              filteredPois.map((p) => {
+          {/* Asukohad kaartidena (sama stiil nagu Tehnika lehel) */}
+          {filteredPois.length === 0 ? (
+            <div className="empty-state">
+              <Info size={24} className="text-muted" />
+              <p>Selles kategoorias pole ühtegi asukohta lisatud.</p>
+            </div>
+          ) : (
+            <div className="vehicle-grid">
+              {filteredPois.map((p) => {
                 const meta = CATEGORY_META[p.category] || CATEGORY_META.other;
                 return (
-                  <div key={p.id} className="poi-item-card glass-card">
-                    <div className="poi-item-main">
-                      <div className="poi-item-icon">
-                        <span>{meta.emoji}</span>
-                      </div>
-                      <div className="poi-item-info">
-                        <div className="poi-item-header">
-                          <h4>{p.name}</h4>
-                          <span className="poi-category-badge">{meta.label}</span>
+                  <div key={p.id} className="vehicle-card glass-card" onClick={() => handleStartEdit(p)}>
+                    <div className="v-card-header">
+                      <div className="v-title-wrap">
+                        <div className="v-avatar card-emoji-avatar">{meta.emoji}</div>
+                        <div>
+                          <h4 className="v-name">{p.name}</h4>
+                          <span className="v-model">{meta.label}</span>
                         </div>
-                        {p.description && <p className="poi-desc-line">{p.description}</p>}
+                      </div>
+                      <div className="card-header-actions">
+                        <button
+                          className="icon-btn-ghost"
+                          title="Näita kaardil"
+                          aria-label="Näita kaardil"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onFocusPoi(p);
+                            onClose();
+                          }}
+                        >
+                          <Crosshair size={14} />
+                        </button>
+                        <button
+                          className="icon-btn-ghost"
+                          title="Muuda andmeid või asukohta"
+                          aria-label="Muuda"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleStartEdit(p);
+                          }}
+                        >
+                          <Edit2 size={14} />
+                        </button>
+                        <button
+                          className="icon-btn-danger"
+                          title="Kustuta"
+                          aria-label="Kustuta"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (confirm(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
+                          }}
+                        >
+                          <Trash2 size={14} />
+                        </button>
                       </div>
                     </div>
 
-                    <div className="poi-item-actions">
-                      <button
-                        className="icon-btn-ghost"
-                        onClick={() => handleStartEdit(p)}
-                        title="Muuda andmeid või asukohta"
-                        aria-label="Muuda"
-                      >
-                        <Edit2 size={15} />
-                      </button>
-                      <button
-                        className="icon-btn-ghost"
-                        onClick={() => {
-                          onFocusPoi(p);
-                          onClose();
-                        }}
-                        title="Näita kaardil"
-                        aria-label="Näita kaardil"
-                      >
-                        <Crosshair size={15} />
-                      </button>
-                      <button
-                        className="icon-btn-danger"
-                        onClick={() => {
-                          if (confirm(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
-                        }}
-                        title="Kustuta"
-                      >
-                        <Trash2 size={15} />
-                      </button>
+                    <div className="v-info-rows">
+                      {p.description && <div className="v-info-item card-info-text">{p.description}</div>}
+                      {p.capacity && (
+                        <div className="v-info-item"><span className="text-muted">Mahutavus:</span> <strong>{p.capacity}</strong></div>
+                      )}
+                      {(p.contactPerson || p.phone) && (
+                        <div className="v-info-item">
+                          <span className="text-muted">Kontakt:</span>
+                          <strong>{p.contactPerson || '–'}</strong>
+                          {p.phone && (
+                            <a href={`tel:${p.phone}`} onClick={(e) => e.stopPropagation()}>{p.phone}</a>
+                          )}
+                        </div>
+                      )}
+                      {p.accessNotes && (
+                        <div className="v-info-item"><span className="text-muted">Ligipääs:</span> <span>{p.accessNotes}</span></div>
+                      )}
+                      <div className="v-info-item text-muted">
+                        <MapPin size={13} />
+                        <span>{p.position[0].toFixed(5)}, {p.position[1].toFixed(5)}</span>
+                      </div>
                     </div>
                   </div>
                 );
-              })
-            )}
-          </div>
+              })}
+            </div>
+          )}
         </div>
   );
 
