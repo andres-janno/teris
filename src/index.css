@@ -6825,11 +6825,27 @@ a.history-pill:hover {
 /* ==========================================================================
    Põhivaate lüliti (Kaart | Põllutööd)
    ========================================================================== */
+/* Menüü logo ja paremate nuppude vahelise vaba ruumi keskel; kitsal aknal keritav */
+.header-nav-slot {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  padding: 0 16px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.header-nav-slot::-webkit-scrollbar {
+  display: none;
+}
+
 .main-view-switch {
   display: flex;
+  flex-shrink: 0;
+  /* auto-veerised tsentreerivad; ruumipuudusel jääb algus nähtavaks ja keritavaks */
+  margin: 0 auto;
   gap: 2px;
   padding: 3px;
-  margin-left: 12px;
   background: var(--stat-bg);
   border: 1px solid var(--border-card);
   border-radius: 8px;

@@ -70,6 +70,10 @@ export const Header: React.FC<HeaderProps> = ({
     <header className="app-header">
       <div className="header-brand">
         <TerisLogo variant="horizontal" />
+      </div>
+
+      {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}
+      <div className="header-nav-slot">
         {onChangeMainView && (
           <nav className="main-view-switch" aria-label="Põhivaade">
             <button
