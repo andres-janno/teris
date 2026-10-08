@@ -10,11 +10,15 @@ import {
   Trash2,
   AlertCircle,
   Tag,
-  Sparkles
+  Sparkles,
+  Calendar,
+  Lock,
+  Download
 } from 'lucide-react';
 import type { Crop, CropVariety, CropGroup } from '../types/crop';
 import { CROP_GROUP_CONFIG } from '../types/crop';
 import type { MasterField } from '../types/fieldRegister';
+import type { FarmingSeason } from '../types/season';
 import { pickCropColor } from '../services/cropColors';
 
 interface CropRegisterModalProps {
@@ -28,6 +32,9 @@ interface CropRegisterModalProps {
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
   stacked?: boolean;
   isFullPage?: boolean;
+  // Hooaja valik nagu Põldude registris (ilma selleta näidatakse ainult valitud aasta andmeid)
+  seasons?: FarmingSeason[];
+  onSelectYear?: (year: number) => void;
 }
 
 export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
@@ -39,7 +46,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   masterFields = [],
   selectedYear = 2026,
   stacked = false,
-  isFullPage = false
+  isFullPage = false,
+  seasons = [],
+  onSelectYear
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
@@ -115,6 +124,42 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
       totalHectares: Math.round(totalHectares * 100) / 100
     };
   }, [crops, cropAcreageMap]);
+
+  // Hooaegade valik: sama vahemik nagu Põldude registris
+  const availableYearsList = useMemo(() => {
+    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
+    const maxYear = activeYear + 3;
+    const minYear = activeYear - 4;
+    const set = new Set<number>();
+    for (let y = maxYear; y >= minYear; y--) set.add(y);
+    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) set.add(s.year); });
+    masterFields.forEach((mf) => mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) set.add(h.year); }));
+    return Array.from(set).sort((a, b) => a - b);
+  }, [seasons, masterFields]);
+
+  const handleExportCsv = () => {
+    const headers = ['ID', 'Kultuur', 'Ladinakeelne nimi', 'Grupp', 'PRIA kood', 'Talivili', 'Külvinorm (kg/ha)', 'Saagiootus (t/ha)', `Külvipind ${selectedYear} (ha)`, 'Sordid'];
+    const rows = [...crops].sort((a, b) => a.name.localeCompare(b.name, 'et')).map((c) => [
+      `"${c.id}"`,
+      `"${c.name}"`,
+      `"${c.scientificName || ''}"`,
+      `"${CROP_GROUP_CONFIG[c.group]?.label || c.group}"`,
+      `"${c.priaCode || ''}"`,
+      c.isWinterCrop ? 'jah' : 'ei',
+      c.defaultSeedRateKgHa ?? '',
+      c.defaultYieldTonsHa ?? '',
+      (cropAcreageMap[c.id] || 0).toFixed(2),
+      `"${(c.varieties || []).map((v) => v.name).join('; ')}"`
+    ].join(','));
+
+    const csvContent = 'data:text/csv;charset=utf-8,\uFEFF' + [headers.join(','), ...rows].join('\n');
+    const link = document.createElement('a');
+    link.setAttribute('href', encodeURI(csvContent));
+    link.setAttribute('download', `agrimap_kultuuride_register_${selectedYear}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+  };
 
   // Filtered crops list
   const filteredCrops = useMemo(() => {
@@ -304,6 +349,46 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     <div className="modal-body">
       {/* Quick Stats Bar */}
           <div className="register-header-controls">
+            <div className="year-selector-group">
+              {onSelectYear && (
+                <>
+                  <span className="year-label">
+                    <Calendar size={15} className="text-blue" />
+                    <span>Hooaeg:</span>
+                  </span>
+                  <div className="year-tabs">
+                    {availableYearsList.map((yr) => {
+                      const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
+                      return (
+                        <button
+                          key={yr}
+                          className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                          onClick={() => onSelectYear(yr)}
+                          title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
+                        >
+                          <span>{yr}</span>
+                          {isLocked && <Lock size={10} className="tab-lock-icon" />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+              <div className="register-io-buttons">
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleExportCsv}
+                  title="Ekspordi kultuuride register CSV failina"
+                >
+                  <Download size={14} />
+                  <span>CSV Eksport</span>
+                </button>
+                <button className="btn btn-primary btn-sm" onClick={startCreateCrop}>
+                  <Plus size={14} />
+                  <span>Lisa uus kultuur</span>
+                </button>
+              </div>
+            </div>
             <div className="register-stats-pills">
               <div className="reg-stat-pill">
                 <span className="lbl">Kultuure kokku:</span>
@@ -361,12 +446,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               ))}
             </select>
 
-            <div className="actions-right">
-              <button className="btn btn-primary btn-sm" onClick={startCreateCrop}>
-                <Plus size={14} />
-                <span>Lisa uus kultuur</span>
-              </button>
-            </div>
           </div>
 
           {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
@@ -774,22 +853,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                     {/* Right: Actions */}
                     <div className="field-card-actions">
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => startCreateVariety(crop)}
-                        title="Lisa sellele kultuurile uus sort"
-                      >
-                        <Plus size={13} />
-                        <span>Lisa sort</span>
-                      </button>
-
-                      <button
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => startEditCrop(crop)}
-                        title="Muuda kultuuri andmeid"
-                      >
-                        <Edit2 size={13} />
-                        <span>Muuda</span>
+                      <button className="icon-btn-ghost" onClick={() => startEditCrop(crop)} title="Muuda">
+                        <Edit2 size={15} />
                       </button>
 
                       <button
@@ -957,16 +1022,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 <p className="fullpage-subtitle">Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused</p>
               </div>
             </div>
-            {!isEditingCrop && (
-              <button
-                type="button"
-                className="btn btn-primary"
-                onClick={startCreateCrop}
-              >
-                <Plus size={16} />
-                <span>Lisa uus kultuur</span>
-              </button>
-            )}
           </div>
           <div className="fullpage-board-body">
             {bodyContent}

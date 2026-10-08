@@ -1584,6 +1584,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onDeleteCrop={handleDeleteCrop}
             masterFields={operatorMasterFields}
             selectedYear={selectedYear}
+            seasons={seasons}
+            onSelectYear={setSelectedYear}
           />
         </Suspense>
       )}
