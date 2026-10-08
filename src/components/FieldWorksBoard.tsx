@@ -2,7 +2,7 @@
 // Read = hooaja põllud, veerud = Ettevalmistus → Külvatud → Hooldamine → Koristatud.
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Search, Plus, Lock, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
+import { Search, Plus, Lock, Calendar, SquareKanban, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
 import { matchCrop, isWinterCrop } from '../services/cropMatch';
 import { getCropColor } from '../services/cropColors';
@@ -639,22 +639,72 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   return (
     <div className="fw-board-view">
       <main className="fw-main">
+        <div className="fullpage-board-header">
+          <div className="fullpage-title-wrap">
+            <SquareKanban className="text-emerald" size={26} />
+            <div>
+              <h2>Põllutööd</h2>
+              <p className="fullpage-subtitle">Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine</p>
+            </div>
+          </div>
+        </div>
+
         <div className="fw-toolbar">
-          <h1>Põllutööd</h1>
+          {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}
+          <div className="year-selector-group">
+            <span className="year-label">
+              <Calendar size={15} className="text-blue" />
+              <span>Hooaeg:</span>
+            </span>
+            <div className="year-tabs">
+              {availableYears.map((y) => {
+                const isLocked = seasons.find((x) => x.year === y)?.isLocked ?? false;
+                return (
+                  <button
+                    key={y}
+                    type="button"
+                    className={`year-tab ${y === year ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                    onClick={() => onSelectYear(y)}
+                    title={`${y}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
+                  >
+                    <span>{y}</span>
+                    {isLocked && <Lock size={10} className="tab-lock-icon" />}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="register-io-buttons">
+              {!locked && withoutWorks.length > 0 && (
+                <button className="btn btn-secondary btn-sm" disabled={busy} onClick={() => applyTemplates(withoutWorks)}>
+                  <ListChecks size={14} />
+                  <span>Lisa mall põldudele ({withoutWorks.length})</span>
+                </button>
+              )}
+              <button type="button" className="btn btn-secondary btn-sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd, mallid ja kulumaterjalid">
+                <ListChecks size={14} />
+                <span>Tööde register</span>
+              </button>
+              {canManageFinance && (
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setFinanceEntryId(null);
+                    setIsFinanceOpen(true);
+                  }}
+                  title="Põllutööde finantsid ja kuluarvestus"
+                >
+                  <Euro size={14} />
+                  <span>Finantsid</span>
+                  {pendingFinanceCount > 0 && <span className="finance-tab-badge">{pendingFinanceCount}</span>}
+                </button>
+              )}
+            </div>
+          </div>
+
           <span className="fw-season-label">
             {allRows.length} põldu{locked && <><Lock size={12} /> lukus</>}
           </span>
-          <div className="fw-year-pills">
-            {availableYears.map((y) => {
-              const s = seasons.find((x) => x.year === y);
-              return (
-                <button key={y} type="button" className={y === year ? 'active' : ''} onClick={() => onSelectYear(y)}>
-                  {y}
-                  {s?.isLocked && <Lock size={10} />}
-                </button>
-              );
-            })}
-          </div>
           <div className="fw-toolbar-spacer" />
           <label className="fw-search">
             <Search size={14} />
@@ -673,31 +723,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />
             <span>Peida lõpetatud tööd</span>
           </label>
-          {!locked && withoutWorks.length > 0 && (
-            <button className="btn btn-secondary btn-sm" disabled={busy} onClick={() => applyTemplates(withoutWorks)}>
-              <ListChecks size={14} />
-              <span>Lisa mall põldudele ({withoutWorks.length})</span>
-            </button>
-          )}
-          <button type="button" className="btn btn-secondary btn-sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd, mallid ja kulumaterjalid">
-            <ListChecks size={14} />
-            <span>Tööde register</span>
-          </button>
-          {canManageFinance && (
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => {
-                setFinanceEntryId(null);
-                setIsFinanceOpen(true);
-              }}
-              title="Põllutööde finantsid ja kuluarvestus"
-            >
-              <Euro size={14} />
-              <span>Finantsid</span>
-              {pendingFinanceCount > 0 && <span className="finance-tab-badge">{pendingFinanceCount}</span>}
-            </button>
-          )}
         </div>
 
         <div className="fw-board" aria-busy={loading}>

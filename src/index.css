@@ -6940,7 +6940,8 @@ a.history-pill:hover {
   gap: 10px;
 }
 
-.fullpage-board-body .year-tabs {
+.fullpage-board-body .year-tabs,
+.fw-toolbar .year-tabs {
   gap: 4px;
   padding: 0;
   background: none;
@@ -6949,6 +6950,7 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .year-tab,
+.fw-toolbar .year-tab,
 .fullpage-board-body .filter-tab,
 .fleet-board-body .filter-tab {
   height: 30px;
@@ -6963,6 +6965,7 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .year-tab.active,
+.fw-toolbar .year-tab.active,
 .fullpage-board-body .filter-tab.active,
 .fleet-board-body .filter-tab.active,
 :root[data-theme="dark"] .fullpage-board-body .filter-tab.active,
@@ -7060,47 +7063,12 @@ a.history-pill:hover {
   flex-wrap: wrap;
 }
 
-.fw-toolbar h1 {
-  margin: 0;
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
 .fw-season-label {
   display: inline-flex;
   align-items: center;
   gap: 4px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-}
-
-.fw-year-pills {
-  display: flex;
-  gap: 4px;
-}
-
-.fw-year-pills button {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 6px;
-  border: 1px solid var(--border-card);
-  background: var(--stat-bg);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.fw-year-pills button.active {
-  background: #16a34a;
-  border-color: #15803d;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
 }
 
 .fw-toolbar-spacer {
