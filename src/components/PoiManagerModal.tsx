@@ -13,6 +13,7 @@ import {
   Edit2
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
+import { confirmDialog } from './ConfirmDialog';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -464,9 +465,9 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                           className="icon-btn-danger"
                           title="Kustuta"
                           aria-label="Kustuta"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            if (confirm(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
+                            if (await confirmDialog(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
                           }}
                         >
                           <Trash2 size={14} />

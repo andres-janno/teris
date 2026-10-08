@@ -19,6 +19,7 @@ import type { RelatedParty, PartyType, PartyRole } from '../types/party';
 import { PARTY_ROLE_CONFIG } from '../types/party';
 import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -552,7 +553,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                             if (party.ownedParcelsCount) parts.push(`${party.ownedParcelsCount} katastriüksusega (omanik)`);
                             if (party.poiContactsCount) parts.push(`${party.poiContactsCount} asukohaga (kontakt)`);
                             if (party.performedOperationsCount) parts.push(`${party.performedOperationsCount} põllutööga (teostaja)`);
-                            alert(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
+                            alertDialog(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
                           }}
                           title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}
                         >
@@ -562,9 +563,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                       ) : (
                         <button
                           className="icon-btn-danger"
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
-                            if (confirm(`Kas soovid kindlasti eemaldada isiku "${party.name}"?`)) {
+                            if (await confirmDialog(`Kas soovid kindlasti eemaldada isiku "${party.name}"?`)) {
                               onDeleteParty(party.id);
                             }
                           }}

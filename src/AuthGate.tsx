@@ -6,6 +6,7 @@ import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { SetPasswordPage } from './components/SetPasswordPage';
 import type { AuthUser } from './types/auth';
 import { api, setUnauthorizedHandler } from './services/api';
+import { alertDialog } from './components/ConfirmDialog';
 
 export const AuthGate: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
@@ -66,7 +67,7 @@ export const AuthGate: React.FC = () => {
       })
       .catch((err) => {
         // Väljalogimine ebaõnnestus — jäetakse sisse logituks, kasutajale teatatakse alert()-iga.
-        alert(err instanceof Error ? err.message : 'Väljalogimine ebaõnnestus');
+        alertDialog(err instanceof Error ? err.message : 'Väljalogimine ebaõnnestus');
       });
   };
 

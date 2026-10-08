@@ -16,6 +16,7 @@ import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
 import { FieldShapeModal } from './FieldShapeModal';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface Option {
   id: string;
@@ -207,7 +208,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     try {
       setFieldWorks(await api.getFieldWorks(year));
     } catch (err) {
-      alert(errorText(err));
+      alertDialog(errorText(err));
     } finally {
       setLoading(false);
     }
@@ -231,7 +232,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         setTemplates(t);
         setMaterials(m);
       })
-      .catch((err) => alert(errorText(err)));
+      .catch((err) => alertDialog(errorText(err)));
   }, []);
 
   const run = async (fn: () => Promise<unknown>) => {
@@ -240,7 +241,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       await fn();
       await reload();
     } catch (err) {
-      alert(errorText(err));
+      alertDialog(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -466,7 +467,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const workers = parties.filter((p) => p.roles.includes('DRIVER')).map((p) => ({ id: p.id, name: p.name }));
 
-  const applyTemplates = (list: Row[]) => {
+  const applyTemplates = async (list: Row[]) => {
     if (!list.length) return;
     let msg: string;
     if (list.length === 1) {
@@ -480,11 +481,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         msg = `Lisa ${list.length} põllule tööde plaan vastavatest mallidest?`;
       }
     }
-    if (!confirm(msg)) return;
+    if (!await confirmDialog(msg)) return;
     void run(() => api.applyWorkTemplate(list.map((r) => r.fieldSeasonId), 'CURRENT'));
   };
 
-  const applyNextTemplates = (list: Row[]) => {
+  const applyNextTemplates = async (list: Row[]) => {
     const valid = list.filter((r) => typeof r.nextRec?.fieldSeasonId === 'number' && !r.nextUndetermined);
     if (!valid.length) return;
     const fsIds = valid.map((r) => r.nextRec!.fieldSeasonId!);
@@ -501,16 +502,16 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         msg = `Lisa ${valid.length} põllu tööde plaan vastavatest mallidest?`;
       }
     }
-    if (!confirm(msg)) return;
+    if (!await confirmDialog(msg)) return;
     void run(() => api.applyWorkTemplate(fsIds, 'AUTUMN'));
   };
 
-  const deleteEntry = (e: WorkEntry) => {
-    if (!confirm(`Kas soovid kindlasti kustutada kande ${formatDate(e.date)}?`)) return;
+  const deleteEntry = async (e: WorkEntry) => {
+    if (!await confirmDialog(`Kas soovid kindlasti kustutada kande ${formatDate(e.date)}?`)) return;
     void run(() => api.deleteWorkEntry(e.id));
   };
-  const removeWork = (w: FieldWork) => {
-    if (!confirm(`Kas soovid kindlasti eemaldada töö "${w.workTypeName}" sellelt põllult?`)) return;
+  const removeWork = async (w: FieldWork) => {
+    if (!await confirmDialog(`Kas soovid kindlasti eemaldada töö "${w.workTypeName}" sellelt põllult?`)) return;
     void run(async () => {
       await api.deleteFieldWork(w.id);
       setSelectedId(null);
@@ -534,14 +535,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const hasNextEntries = (r: Row) =>
     r.nextWorks.some((w) => (w.entries?.length ?? 0) > 0);
 
-  const clearCurrentCropWorks = (r: Row) => {
+  const clearCurrentCropWorks = async (r: Row) => {
     if (hasCurrentEntries(r)) {
-      alert(`Põllu "${r.field.name}" kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
+      alertDialog(`Põllu "${r.field.name}" kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
       return;
     }
     const cropName = r.undetermined ? 'valimata kultuur' : r.rec.crop;
     const count = r.works.length;
-    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kultuuri "${cropName}" tööd (${count} tk)?`)) return;
+    if (!await confirmDialog(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kultuuri "${cropName}" tööd (${count} tk)?`)) return;
     void run(async () => {
       await api.clearFieldWorks(r.fieldSeasonId);
       if (selectedRow?.fieldSeasonId === r.fieldSeasonId && selected && r.works.some((w) => w.id === selected.id)) {
@@ -550,15 +551,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     });
   };
 
-  const clearNextCropWorks = (r: Row) => {
+  const clearNextCropWorks = async (r: Row) => {
     if (!r.nextRec?.fieldSeasonId) return;
     if (hasNextEntries(r)) {
-      alert(`Põllu "${r.field.name}" järgmise kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
+      alertDialog(`Põllu "${r.field.name}" järgmise kultuuri töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
       return;
     }
     const count = r.nextWorks.length;
     const nextName = r.nextCropName || 'järgmine kultuur';
-    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" järgmise kultuuri "${nextName}" sügistööd (${count} tk)?`)) return;
+    if (!await confirmDialog(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" järgmise kultuuri "${nextName}" sügistööd (${count} tk)?`)) return;
     void run(async () => {
       await api.clearFieldWorks(r.nextRec!.fieldSeasonId!, undefined, 'AUTUMN');
       if (selectedRow?.fieldSeasonId === r.fieldSeasonId && selected && r.nextWorks.some((w) => w.id === selected.id)) {
@@ -567,13 +568,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     });
   };
 
-  const clearFieldWorks = (r: Row) => {
+  const clearFieldWorks = async (r: Row) => {
     if (hasAnyEntries(r)) {
-      alert(`Põllu "${r.field.name}" töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
+      alertDialog(`Põllu "${r.field.name}" töödel on juba kandeid. Kandeid omavaid töid ei saa eemaldada.`);
       return;
     }
     const visibleCount = getRowVisibleWorks(r).length;
-    if (!confirm(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kõik tööd (${visibleCount} tk)?`)) return;
+    if (!await confirmDialog(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" kõik tööd (${visibleCount} tk)?`)) return;
     void run(async () => {
       await api.clearFieldWorks(r.fieldSeasonId, r.nextRec?.fieldSeasonId ?? null);
       if (selectedRow?.fieldSeasonId === r.fieldSeasonId) setSelectedId(null);

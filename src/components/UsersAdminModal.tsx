@@ -5,6 +5,7 @@ import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertC
 import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
+import { confirmDialog } from './ConfirmDialog';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -118,9 +119,9 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     } else if (mode.kind === 'reset') void run(() => api.resetUserPassword(mode.user.id, password));
   };
 
-  const sendLink = (u: AdminUser) => {
+  const sendLink = async (u: AdminUser) => {
     const kind = u.hasPassword ? 'parooli määramise lingi' : 'kutse';
-    if (!confirm(`Saata kasutajale "${u.username}" ${kind} aadressile ${u.email}?\n\nVarem saadetud lingid kaotavad kehtivuse.`)) return;
+    if (!await confirmDialog(`Saata kasutajale "${u.username}" ${kind} aadressile ${u.email}?\n\nVarem saadetud lingid kaotavad kehtivuse.`)) return;
     void run(async () => {
       const { emailSent } = await api.sendUserLink(u.id);
       return emailSent ? `Parooli link saadeti aadressile ${u.email}.` : 'E-kirja saatmine ebaõnnestus. Proovi hiljem uuesti.';
@@ -129,8 +130,8 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
   const toggleActive = (u: AdminUser) => void run(() => api.updateUser(u.id, { isActive: !u.isActive }));
 
-  const remove = (u: AdminUser) => {
-    if (confirm(`Kustutada kasutaja "${u.username}"${u.displayName ? ` (${u.displayName})` : ''} jäädavalt?\n\nKasutaja sessioonid ja saadetud lingid kaovad. Seda ei saa tagasi võtta.`)) void run(() => api.deleteUser(u.id));
+  const remove = async (u: AdminUser) => {
+    if (await confirmDialog(`Kustutada kasutaja "${u.username}"${u.displayName ? ` (${u.displayName})` : ''} jäädavalt?\n\nKasutaja sessioonid ja saadetud lingid kaovad. Seda ei saa tagasi võtta.`)) void run(() => api.deleteUser(u.id));
   };
 
   const formTitle =

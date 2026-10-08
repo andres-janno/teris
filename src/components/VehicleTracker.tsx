@@ -35,6 +35,7 @@ import type {
   DeviceConnectivity,
   ImplementAssignment
 } from '../types/fleet';
+import { confirmDialog } from './ConfirmDialog';
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
@@ -459,7 +460,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   }, [implementAssignments, historyVehicleFilter, historyImplementFilter, historyStatusFilter]);
 
   const handleDeleteAssignment = async (id: string) => {
-    if (!confirm('Kas soovid kindlasti selle haakimise kirje ajaloost kustutada?')) return;
+    if (!await confirmDialog('Kas soovid kindlasti selle haakimise kirje ajaloost kustutada?')) return;
     try {
       await api.deleteImplementAssignment(id);
       setImplementAssignments((prev) => prev.filter((a) => a.id !== id));
@@ -1348,9 +1349,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <button
                         className="icon-btn-danger"
                         title="Kustuta masin"
-                        onClick={(e) => {
+                        onClick={async (e) => {
                           e.stopPropagation();
-                          if (confirm(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
+                          if (await confirmDialog(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
                             onDeleteVehicle(v.id);
                           }
                         }}
@@ -1537,8 +1538,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <button
                       className="icon-btn-danger"
                       title="Kustuta haakeriist"
-                      onClick={() => {
-                        if (confirm(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
                           onDeleteImplement(imp.id);
                         }
                       }}
@@ -1659,8 +1660,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <button
                       className="icon-btn-danger"
                       title="Kustuta seade"
-                      onClick={() => {
-                        if (confirm(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
+                      onClick={async () => {
+                        if (await confirmDialog(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
                           onDeleteDevice(dev.id);
                         }
                       }}

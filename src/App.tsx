@@ -30,6 +30,7 @@ import { cleanTrack } from './services/trackCleaning';
 import { api } from './services/api';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
+import { alertDialog } from './components/ConfirmDialog';
 
 function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
@@ -1098,7 +1099,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setFocusedTarget({ coords: newPoi.position, zoom: 15 });
     api.savePoi(newPoi).catch((err) => {
       console.error('Error saving POI to DB:', err);
-      alert(`Asukoha "${newPoi.name}" salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.`);
+      alertDialog(`Asukoha "${newPoi.name}" salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.`);
     });
   };
 
@@ -1115,7 +1116,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
     api.savePoi({ id, ...updatedData }).catch((err) => {
       console.error('Error updating POI in DB:', err);
-      alert('Asukoha muudatuste salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.');
+      alertDialog('Asukoha muudatuste salvestamine ebaõnnestus. Muudatus kaob lehe värskendamisel.');
     });
   };
 

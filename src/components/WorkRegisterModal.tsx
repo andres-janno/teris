@@ -16,6 +16,7 @@ import {
   type WorkTemplateItem,
   type WorkType
 } from '../types/fieldWork';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -62,7 +63,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       setMaterials(m);
       setTemplates(t);
     } catch (err) {
-      alert(errorText(err));
+      alertDialog(errorText(err));
     }
   }, []);
 
@@ -76,7 +77,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       await fn();
       await reload();
     } catch (err) {
-      alert(errorText(err));
+      alertDialog(errorText(err));
     } finally {
       setBusy(false);
     }
@@ -92,8 +93,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       setWorkForm(null);
     });
   };
-  const deleteWork = (w: WorkType) => {
-    if (!confirm(`Kas soovid kindlasti kustutada töö "${w.name}" registrist?`)) return;
+  const deleteWork = async (w: WorkType) => {
+    if (!await confirmDialog(`Kas soovid kindlasti kustutada töö "${w.name}" registrist?`)) return;
     void run(() => api.deleteWorkType(w.id));
   };
 
@@ -107,8 +108,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       setMaterialForm(null);
     });
   };
-  const deleteMaterial = (m: Material) => {
-    if (!confirm(`Kas soovid kindlasti kustutada materjali "${m.name}"?`)) return;
+  const deleteMaterial = async (m: Material) => {
+    if (!await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`)) return;
     void run(() => api.deleteMaterial(m.id));
   };
 
@@ -140,8 +141,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   const shownItems = draftItems ?? (ownTemplate ?? fallbackGeneral)?.items ?? [];
   const dirty = draftItems !== null;
 
-  const selectTarget = (target: TemplateTarget) => {
-    if (dirty && !confirm('Mallis on salvestamata muudatusi. Kas loobud neist?')) return;
+  const selectTarget = async (target: TemplateTarget) => {
+    if (dirty && !await confirmDialog('Mallis on salvestamata muudatusi. Kas loobud neist?')) return;
     setDraftItems(null);
     setSelectedTarget(target);
   };
@@ -159,9 +160,9 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       [items[index], items[j]] = [items[j], items[index]];
       return items;
     });
-  const removeItem = (index: number) => {
+  const removeItem = async (index: number) => {
     const w = workTypeById.get(shownItems[index].workTypeId);
-    if (!confirm(`Kas soovid kindlasti eemaldada töö "${w?.name ?? ''}" mallist?`)) return;
+    if (!await confirmDialog(`Kas soovid kindlasti eemaldada töö "${w?.name ?? ''}" mallist?`)) return;
     editItems((items) => items.filter((_, i) => i !== index));
   };
   const addItem = () => {
@@ -188,11 +189,11 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       setDraftItems(null);
     });
   const createOwnTemplate = () => setDraftItems([...(fallbackGeneral?.items ?? [])]);
-  const deleteOwnTemplate = () => {
+  const deleteOwnTemplate = async () => {
     if (!selectedCrop) return;
     const existing = templates.find((t) => t.cropId === selectedCrop.id);
     if (!existing) return;
-    if (!confirm(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" erimalli? Edaspidi rakendatakse sellel kultuuril ${selectedCrop.isWinterCrop ? 'talivilja' : 'suvivilja'} üldmalli.`)) return;
+    if (!await confirmDialog(`Kas soovid kindlasti kustutada kultuuri "${selectedCrop.name}" erimalli? Edaspidi rakendatakse sellel kultuuril ${selectedCrop.isWinterCrop ? 'talivilja' : 'suvivilja'} üldmalli.`)) return;
     void run(async () => {
       await api.deleteWorkTemplate(existing.id);
       setDraftItems(null);

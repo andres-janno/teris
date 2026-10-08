@@ -20,6 +20,7 @@ import { CROP_GROUP_CONFIG } from '../types/crop';
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import { pickCropColor } from '../services/cropColors';
+import { confirmDialog } from './ConfirmDialog';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -311,8 +312,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setIsEditingVariety(false);
   };
 
-  const handleDeleteVariety = (crop: Crop, varietyId: string, varietyName: string) => {
-    if (confirm(`Kas soovid kindlasti eemaldada sordi "${varietyName}" kultuurilt "${crop.name}"?`)) {
+  const handleDeleteVariety = async (crop: Crop, varietyId: string, varietyName: string) => {
+    if (await confirmDialog(`Kas soovid kindlasti eemaldada sordi "${varietyName}" kultuurilt "${crop.name}"?`)) {
       const updatedVarieties = crop.varieties.filter((v) => v.id !== varietyId);
       onSaveCrop({
         ...crop,
@@ -859,8 +860,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                       <button
                         className="icon-btn-danger"
-                        onClick={() => {
-                          if (confirm(`Kas soovid kindlasti kustutada kultuuri "${crop.name}" ja kõik selle sordid?`)) {
+                        onClick={async () => {
+                          if (await confirmDialog(`Kas soovid kindlasti kustutada kultuuri "${crop.name}" ja kõik selle sordid?`)) {
                             onDeleteCrop(crop.id);
                           }
                         }}

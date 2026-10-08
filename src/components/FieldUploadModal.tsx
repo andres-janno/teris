@@ -11,6 +11,7 @@ import {
 import type { FieldCollection } from '../types/field';
 import type { RelatedParty } from '../types/party';
 import { parseShapefileZip } from '../services/shpParser';
+import { confirmDialog } from './ConfirmDialog';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -131,9 +132,9 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
     }
   };
 
-  const handleConfirmImport = () => {
+  const handleConfirmImport = async () => {
     if (parsedPreview) {
-      if (replaceExisting && !confirm('Valitud on „Asenda olemasolevad põllud“: registris kuvatakse pärast importi ainult faili põllud.\n\nJätkata?')) return;
+      if (replaceExisting && !await confirmDialog('Valitud on „Asenda olemasolevad põllud“: registris kuvatakse pärast importi ainult faili põllud.\n\nJätkata?')) return;
       onFieldsImported(parsedPreview, replaceExisting, operatorId || undefined, importYear);
       onClose();
     }

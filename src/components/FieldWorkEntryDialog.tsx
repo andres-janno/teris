@@ -6,6 +6,7 @@ import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import type { FieldWork, Material, WorkEntry, TelemetrySuggestion } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
+import { confirmDialog } from './ConfirmDialog';
 
 interface Option {
   id: string;
@@ -232,9 +233,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const areaNum = parseNum(areaHa) ?? 0;
   const totalAfter = doneBefore + areaNum;
 
-  const removeRow = (i: number) => {
+  const removeRow = async (i: number) => {
     const m = materialById.get(rows[i].materialId);
-    if (m && !confirm(`Kas soovid kindlasti eemaldada rea "${m.name}"?`)) return;
+    if (m && !await confirmDialog(`Kas soovid kindlasti eemaldada rea "${m.name}"?`)) return;
     setRows(rows.filter((_, j) => j !== i));
   };
 

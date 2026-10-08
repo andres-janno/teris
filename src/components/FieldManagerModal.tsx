@@ -26,6 +26,7 @@ import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -424,7 +425,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
     if (editingFieldId === null || editingFieldId === undefined) return;
 
     if (isEditSeasonLocked) {
-      alert(`Hooaeg ${editYear} on suletud ja arhiveeritud. Hooaja andmeid ega katastriüksuseid ei saa muuta.`);
+      alertDialog(`Hooaeg ${editYear} on suletud ja arhiveeritud. Hooaja andmeid ega katastriüksuseid ei saa muuta.`);
       return;
     }
 
@@ -461,7 +462,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
 
   const handleAddCadastralParcelToEdit = () => {
     if (isEditSeasonLocked) {
-      alert(`Hooaeg ${editYear} on suletud/lukustatud. Uute katastriüksuste lisamine on keelatud.`);
+      alertDialog(`Hooaeg ${editYear} on suletud/lukustatud. Uute katastriüksuste lisamine on keelatud.`);
       return;
     }
 
@@ -479,13 +480,13 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
     ]);
   };
 
-  const handleRemoveCadastralParcelFromEdit = (index: number) => {
+  const handleRemoveCadastralParcelFromEdit = async (index: number) => {
     if (isEditSeasonLocked) {
-      alert(`Hooaeg ${editYear} on suletud/lukustatud. Katastriüksuste kustutamine on keelatud!`);
+      alertDialog(`Hooaeg ${editYear} on suletud/lukustatud. Katastriüksuste kustutamine on keelatud!`);
       return;
     }
     const code = editCadastralParcels[index]?.cadastralCode?.trim();
-    if (!confirm(`Eemaldada katastriüksus${code ? ` ${code}` : ''} põllult ${editYear}. a hooajal?\n\nMuudatus jõustub salvestamisel.`)) return;
+    if (!await confirmDialog(`Eemaldada katastriüksus${code ? ` ${code}` : ''} põllult ${editYear}. a hooajal?\n\nMuudatus jõustub salvestamisel.`)) return;
     setEditCadastralParcels(editCadastralParcels.filter((_, i) => i !== index));
   };
 
@@ -1446,14 +1447,14 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                           </button>
                           <button
                             className="icon-btn-danger"
-                            onClick={() => {
+                            onClick={async () => {
                               const label = `${field.num ? `Nr ${field.num} ` : ''}${field.name}`;
                               const locked = lockedYearsOf(field);
                               if (locked.length > 0) {
-                                alert(`Põldu "${label}" ei saa kustutada: sellel on andmeid lukustatud hooaegades ${locked.join(', ')}.`);
+                                alertDialog(`Põldu "${label}" ei saa kustutada: sellel on andmeid lukustatud hooaegades ${locked.join(', ')}.`);
                                 return;
                               }
-                              if (confirm(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
+                              if (await confirmDialog(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
                             }}
                             title="Kustuta"
                           >
