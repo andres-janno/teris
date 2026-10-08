@@ -117,7 +117,8 @@ body {
   display: flex;
   flex-direction: column;
   height: 100vh;
-  width: 100vw;
+  /* 100% (mitte 100vw): 100vw sisaldab kerimisriba laiust ja lükkab parema serva aknast välja */
+  width: 100%;
   position: relative;
   overflow: hidden;
   background-color: var(--bg-dark);
@@ -6851,6 +6852,8 @@ a.history-pill:hover {
 
 /* ==========================================================================
    Täissuuruses lehevaated (Hooajad, Põllud, Kultuurid, Tehnika, Taristu)
+   Sama raam nagu Põllutööde tahvlil: leht täidab akna päise all, tööriistariba
+   murdub kitsal aknal, põhinimekiri/tabel täidab ülejäänud kõrguse ja kerib ise.
    ========================================================================== */
 .fleet-board-view,
 .fullpage-board-view {
@@ -6859,122 +6862,260 @@ a.history-pill:hover {
   display: flex;
   min-height: 0;
   background: var(--bg-dark);
-  overflow-y: auto;
+  overflow: hidden;
 }
 
 .fleet-board-main,
 .fullpage-board-main {
   flex: 1;
   min-width: 0;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 16px 24px 32px 24px;
-  max-width: 1720px;
-  margin: 0 auto;
+  gap: 12px;
+  padding: 14px 18px;
   width: 100%;
-}
-
-.fullpage-board-main.wide {
-  max-width: 100%;
 }
 
 .fleet-board-header,
 .fullpage-board-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  padding-bottom: 4px;
+  gap: 10px 16px;
   flex-wrap: wrap;
-  gap: 12px;
+}
+
+/* Päise viimane element (nupp või jaotised) paremasse serva */
+.fleet-board-header > :last-child:not(:first-child),
+.fullpage-board-header > :last-child:not(:first-child) {
+  margin-left: auto;
 }
 
 .fleet-title-wrap,
 .fullpage-title-wrap {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 10px;
+  min-width: 0;
 }
 
+.fleet-title-wrap > svg,
+.fullpage-title-wrap > svg {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+}
+
+.fleet-title-wrap h2,
 .fullpage-title-wrap h2 {
   margin: 0;
-  font-size: 1.3rem;
+  font-size: 1.2rem;
   font-weight: 800;
   color: var(--text-primary);
-  letter-spacing: -0.01em;
+  line-height: 1.25;
 }
 
+.fleet-subtitle,
 .fullpage-subtitle {
-  margin: 2px 0 0 0;
-  font-size: 0.82rem;
+  margin: 1px 0 0 0;
+  font-size: 0.8rem;
   color: var(--text-secondary);
 }
 
 .fleet-board-body,
 .fullpage-board-body {
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  flex: 1;
+  gap: 12px;
+  overflow: auto;
 }
 
+/* Loendurid jm lehe allservas (varem dialoogiakna jalus) */
+.fullpage-board-footer {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
+/* Jaotised (nt Taristu: punktid / seotud isikud) — samas stiilis nagu aastanupud */
 .fullpage-tabs {
   display: inline-flex;
   gap: 4px;
-  padding: 4px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-  width: fit-content;
 }
 
 .fullpage-tab {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 0.86rem;
-  font-weight: 600;
-  padding: 8px 16px;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border: 1px solid var(--border-card);
   border-radius: 6px;
+  background: var(--stat-bg);
+  color: var(--text-primary);
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
   cursor: pointer;
-  transition: all 0.15s ease;
+  white-space: nowrap;
 }
 
 .fullpage-tab:hover {
-  color: var(--text-primary);
   background: var(--stat-bg-hover);
 }
 
 .fullpage-tab.active {
   background: #16a34a;
+  border-color: #15803d;
   color: #ffffff;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
 }
 
+.fullpage-tab svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
 .poi-embedded-view,
 .party-embedded-view {
   width: 100%;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
 }
 
-.fleet-title-wrap h2 {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-}
-
-.fleet-board-body {
+.fullpage-board-body > .poi-embedded-view,
+.fullpage-board-body > .party-embedded-view,
+.fullpage-board-body > .modal-body,
+.fullpage-board-body > .poi-embedded-view > .modal-body,
+.fullpage-board-body > .party-embedded-view > .modal-body,
+.fleet-board-body > .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0;
+  overflow: visible;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  min-height: 0;
+  gap: 12px;
+}
+
+.fullpage-board-body .register-header-controls,
+.fullpage-board-body .register-actions-bar,
+.fullpage-board-body .poi-top-bar,
+.fleet-board-body .fleet-top-bar {
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
+/* Lehtede sisemised tööriistaribad: samad mõõdud nagu Põllutööde tahvlil */
+.fullpage-board-body .register-header-controls {
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  background: none;
+  border: none;
+  border-radius: 0;
+}
+
+.fullpage-board-body .register-actions-bar {
+  gap: 10px;
+}
+
+.fullpage-board-body .year-tabs {
+  gap: 4px;
+  padding: 0;
+  background: none;
+  border: none;
+  flex-wrap: wrap;
+}
+
+.fullpage-board-body .year-tab,
+.fullpage-board-body .filter-tab,
+.fleet-board-body .filter-tab {
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--border-card);
+  border-radius: 6px;
+  background: var(--stat-bg);
+  color: var(--text-primary);
+  font-size: 0.8rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.fullpage-board-body .year-tab.active,
+.fullpage-board-body .filter-tab.active,
+.fleet-board-body .filter-tab.active,
+:root[data-theme="dark"] .fullpage-board-body .filter-tab.active,
+:root[data-theme="dark"] .fleet-board-body .filter-tab.active {
+  background: #16a34a !important;
+  border-color: #15803d !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
+}
+
+.fullpage-board-body .search-box-wrap {
+  flex: 1 1 220px;
+  max-width: 420px;
+}
+
+.fullpage-board-body .search-box-wrap .search-input,
+.fullpage-board-body .register-actions-bar select.form-input {
+  height: 34px;
+  font-size: 0.8rem;
+}
+
+.fullpage-board-body .register-actions-bar .btn,
+.fullpage-board-body .poi-top-actions .btn,
+.fleet-board-body .fleet-top-bar .btn {
+  height: 34px;
+}
+
+/* Põldude lehe kultuuride kokkuvõte tabeli all */
+.fullpage-board-summary {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 8px;
+  flex-shrink: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+}
+
+.fullpage-board-summary .register-crop-footer-title,
+.fullpage-board-summary .register-crop-group-title {
+  font-size: 0.8rem;
+}
+
+.fullpage-board-summary .register-crop-group-title {
+  min-width: min(220px, 100%);
+}
+
+.fullpage-board-summary .register-crop-group-title strong {
+  font-size: 0.9rem;
+}
+
+/* Põhinimekiri / -tabel täidab ülejäänud kõrguse ja kerib ise (päis jääb paigale);
+   väga madalal aknal kerib kogu leht */
+.fullpage-board-body .register-table-wrap,
+.fullpage-board-body .register-fields-list,
+.fullpage-board-body .poi-items-list,
+.fullpage-board-body .seasons-table-wrap {
+  flex: 1 1 0;
+  min-height: 220px;
+  max-height: none;
+  overflow: auto;
+}
+
+.fullpage-board-body .poi-items-list,
+.fullpage-board-body .register-fields-list {
+  padding-right: 2px;
 }
 
 /* ==========================================================================

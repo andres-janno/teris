@@ -971,8 +971,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           <div className="fullpage-board-body">
             {bodyContent}
           </div>
-          <div className="modal-footer" style={{ marginTop: 'auto', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)', padding: '12px 16px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <div className="fullpage-board-footer">
+            <span>
               Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>

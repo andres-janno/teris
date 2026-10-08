@@ -677,8 +677,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             {editForm}
             {bodyContent}
           </div>
-          <div className="modal-footer" style={{ marginTop: 'auto', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)', padding: '12px 16px' }}>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+          <div className="fullpage-board-footer">
+            <span>
               Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>

@@ -1531,7 +1531,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
           <div className="fullpage-board-body">
             {bodyContent}
           </div>
-          <div className="register-crop-footer" style={{ marginTop: 'auto', padding: '12px 16px', background: 'var(--bg-modal)', borderRadius: '8px', border: '1px solid var(--border-card)' }}>
+          <div className="register-crop-footer fullpage-board-summary">
             {footerContent}
           </div>
         </main>
