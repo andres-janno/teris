@@ -7,7 +7,6 @@ import {
   Fuel,
   Battery,
   Gauge,
-  User,
   Wrench,
   Crosshair,
   Radio,
@@ -1362,13 +1361,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </div>
 
-                {/* Driver */}
                 <div className="v-info-rows">
-                  <div className="v-info-item">
-                    <User size={14} className="text-muted" />
-                    <span>Juht: <strong>{v.driverName || 'Määramata'}</strong></span>
-                  </div>
-
                   {/* Equipment Assignment Badges with Swap Actions */}
                   <div className="v-equipment-badge-row">
                     {/* Device Badge */}
