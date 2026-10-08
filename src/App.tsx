@@ -1526,13 +1526,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             isOpen={true}
             isFullPage={true}
             onClose={() => changeMainView('map')}
-            onFocusFieldOnMap={(field) => {
-              const foundFeature = fields.features.find((f) => String(f.properties.id) === String(field.id));
-              if (foundFeature) {
-                handleSelectField(foundFeature);
-              }
-              changeMainView('map');
-            }}
             masterFields={operatorMasterFields}
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}

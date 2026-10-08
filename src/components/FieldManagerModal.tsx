@@ -50,7 +50,6 @@ interface FieldManagerModalProps {
   onOpenCrops?: () => void;
   baseMap?: BaseMapLayerId;
   isFullPage?: boolean;
-  onFocusFieldOnMap?: (field: MasterField) => void;
 }
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
@@ -72,7 +71,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onOpenCrops,
   baseMap = 'maaamet-pohikaart',
   isFullPage = false,
-  onFocusFieldOnMap
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
@@ -1443,16 +1441,6 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                       })}
                       <td className="actions-col">
                         <div className="row-actions">
-                          {onFocusFieldOnMap && (
-                            <button
-                              type="button"
-                              className="icon-btn-ghost text-emerald"
-                              onClick={() => onFocusFieldOnMap(field)}
-                              title="Fookusta ja kuva põld kaardil"
-                            >
-                              <Crosshair size={15} />
-                            </button>
-                          )}
                           <button className="icon-btn-ghost" onClick={() => startEdit(field)} title="Muuda">
                             <Edit2 size={15} />
                           </button>
