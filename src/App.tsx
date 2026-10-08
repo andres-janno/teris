@@ -145,15 +145,14 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   }, []);
 
-  // Layer visibility state - default shows fields, active working machinery (< 5 min), and cultivation.
-  // Salvestatakse localStorage'i, et valik jääks meelde ka lehe värskendamisel
-  // (kuni kasutaja brauseri andmed käsitsi kustutab / hard reset teeb).
+  // Kihtide nähtavus. Lehe avamisel on alati sees ainult Põllud (kaart mahutatakse neile);
+  // brauseri mälust taastatakse ainult aluskaardi valik.
   const DEFAULT_VISIBILITY: LayerVisibility = {
     baseMap: 'maaamet-pohikaart',
     cadastre: false,
     fields: true,
-    vehicles: true, // Vaikimisi aktiivne: näitab masinaid, mis parasjagu töötavad / liiguvad (< 5 min)
-    cultivation: true,
+    vehicles: false,
+    cultivation: false,
     poi: false,
     fieldLabels: false,
     swathTrails: true,
@@ -164,10 +163,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     const saved = localStorage.getItem('agrimap_visibility');
     if (!saved) return DEFAULT_VISIBILITY;
     try {
-      const parsed = { ...DEFAULT_VISIBILITY, ...JSON.parse(saved) } as LayerVisibility;
+      const savedBaseMap = (JSON.parse(saved) as Partial<LayerVisibility>).baseMap;
       // Varem salvestatud, nüüdseks eemaldatud aluskaart (hübriid, hallkaart, OSM) → põhikaart.
-      if (!(parsed.baseMap in BASE_MAPS)) parsed.baseMap = DEFAULT_VISIBILITY.baseMap;
-      return parsed;
+      return savedBaseMap && savedBaseMap in BASE_MAPS ? { ...DEFAULT_VISIBILITY, baseMap: savedBaseMap } : DEFAULT_VISIBILITY;
     } catch {
       return DEFAULT_VISIBILITY;
     }
@@ -438,24 +436,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
   const [isWorkRegisterOpen, setIsWorkRegisterOpen] = useState(false);
 
-  // Põhivaade: kaart, hooajad, põllud, kultuurid, põllutööd, tehnika või taristu (jäetakse meelde kasutaja kaupa)
-  const mainViewKey = `agrimap_main_view_${user.id}`;
-  const [mainView, setMainView] = useState<MainView>(() => {
-    try {
-      const v = localStorage.getItem(mainViewKey) as MainView;
-      const validViews: MainView[] = ['map', 'seasons', 'fields', 'crops', 'works', 'fleet', 'infrastructure'];
-      return validViews.includes(v) ? v : 'map';
-    } catch {
-      return 'map';
-    }
-  });
+  // Põhivaade: hooajad, kaart, põllud, kultuurid, põllutööd, tehnika või taristu. Lehe avamisel alati kaart.
+  const [mainView, setMainView] = useState<MainView>('map');
   const changeMainView = (view: MainView) => {
     setMainView(view);
-    try {
-      localStorage.setItem(mainViewKey, view);
-    } catch {
-      // brauseri salvestus pole saadaval
-    }
     // Leaflet peab peidetud konteineri suuruse uuesti arvutama
     if (view === 'map') setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
   };

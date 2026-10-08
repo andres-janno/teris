@@ -73,21 +73,21 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="main-view-switch" aria-label="Põhivaade">
             <button
               type="button"
-              className={mainView === 'map' ? 'active' : ''}
-              aria-current={mainView === 'map' ? 'page' : undefined}
-              onClick={() => onChangeMainView('map')}
-            >
-              <MapIcon size={15} />
-              <span>Kaart</span>
-            </button>
-            <button
-              type="button"
               className={mainView === 'seasons' ? 'active' : ''}
               aria-current={mainView === 'seasons' ? 'page' : undefined}
               onClick={() => onChangeMainView('seasons')}
             >
               <CalendarDays size={15} />
               <span>Hooajad</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'map' ? 'active' : ''}
+              aria-current={mainView === 'map' ? 'page' : undefined}
+              onClick={() => onChangeMainView('map')}
+            >
+              <MapIcon size={15} />
+              <span>Kaart</span>
             </button>
             <button
               type="button"
@@ -136,9 +136,6 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
           </nav>
         )}
-        {onOperatorFilterChange && (
-          <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
-        )}
       </div>
 
       <div className="header-actions">
@@ -150,6 +147,10 @@ export const Header: React.FC<HeaderProps> = ({
           <BarChart3 size={16} />
           <span>Analüütika</span>
         </button>
+
+        {onOperatorFilterChange && (
+          <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
+        )}
 
         {currentUser && (
           <UserMenu
