@@ -170,7 +170,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   });
 
-  // Asukoha valimisel kaardilt on näha ainult olulised asukohad; eelmine kihtide valik
+  // Asukoha valimisel kaardilt on näha ainult kiht „Muud asukohad“; eelmine kihtide valik
   // hoitakse siin ja taastatakse, kui valik on tehtud või katkestatud.
   const visibilityBeforePickRef = useRef<LayerVisibility | null>(null);
 

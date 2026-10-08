@@ -347,7 +347,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     onChange={() => onToggleLayer('poi')}
                   />
                   <span className="layer-color-indicator poi-color"></span>
-                  <span className="layer-text">Olulised asukohad</span>
+                  <span className="layer-text">Muud asukohad</span>
                 </label>
                 <button
                   className="icon-toggle"

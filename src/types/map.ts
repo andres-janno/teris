@@ -21,7 +21,7 @@ export interface LayerVisibility {
   fields: boolean;          // PRIA põllud
   vehicles: boolean;        // Masinapark / tehnika
   cultivation: boolean;     // Põllutööd: masinate rajad ja haritud ala (Teltonika)
-  poi: boolean;             // Olulised asukohad (kuivati, vesi jne)
+  poi: boolean;             // Muud asukohad (kuivati, vesi jne)
   fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
   swathTrails: boolean;     // Töötrajektoori joonekesed
   soilSamples: boolean;     // Mullaproovide punktid

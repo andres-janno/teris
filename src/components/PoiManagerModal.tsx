@@ -532,7 +532,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           <div className="modal-title-group">
             <MapPin className="text-emerald" size={24} />
             <div>
-              <h3>Olulised asukohad ja taristu</h3>
+              <h3>Muud asukohad ja taristu</h3>
               <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
             </div>
           </div>
