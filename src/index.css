@@ -4316,8 +4316,38 @@ input[type="number"],
 
 .modal-content.fleet-edit-modal .modal-body {
   overflow-y: auto;
-  min-height: 420px;
+  overflow-x: hidden;
   padding-bottom: 32px;
+}
+
+/* Veerud ja väljad tohivad kahaneda alla sisu laiuse (pikad <select> valikud,
+   kõrvuti väljad), muidu venib vorm modaalist laiemaks ja tekib kerimisriba. */
+.modal-content.fleet-edit-modal .form-grid {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+}
+
+.modal-content.fleet-edit-modal .form-group,
+.modal-content.fleet-edit-modal .form-input {
+  min-width: 0;
+}
+
+.modal-content.fleet-edit-modal .form-group > .form-input,
+.modal-content.fleet-edit-modal .input-split > .form-input {
+  width: 100%;
+}
+
+.modal-content.fleet-edit-modal .input-split > .form-input {
+  flex: 1 1 0;
+}
+
+.modal-content.fleet-edit-modal .input-split > .form-input[type="color"] {
+  flex: 0 0 56px;
+}
+
+@media (max-width: 560px) {
+  .modal-content.fleet-edit-modal .form-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .modal-content.users-edit-modal {
