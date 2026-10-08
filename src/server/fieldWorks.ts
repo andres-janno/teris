@@ -1,7 +1,8 @@
 // src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, mallid, hooaja tööd, kanded, finantsid.
 // PRIA põlluraamatust (field_operations) täiesti lahus.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb } from './db.ts';
+import { prisma, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
 import * as turf from '@turf/turf';
@@ -47,6 +48,25 @@ const isoDate = (d: Date | null | undefined) => (d ? d.toISOString().split('T')[
 const decimalToNumber = (d: unknown): number | null => (d === null || d === undefined ? null : Number(d));
 
 // Finantse näevad finantsjuht ja admin.
+// Kustutada saab ainult kirje looja või admin. Tagastab true, kui keelduv vastus on saadetud.
+const deleteDenied = (req: IncomingMessage, res: ServerResponse, createdBy: string | null): boolean => {
+  if (canDelete(sessionUserOf(req), createdBy)) return false;
+  json(res, { error: DELETE_FORBIDDEN_MESSAGE }, 403);
+  return true;
+};
+
+// Massilisel eemaldamisel peavad kõik eemaldatavad tööd olema kasutaja enda loodud (admin võib kõiki)
+const bulkDeleteDenied = async (req: IncomingMessage, res: ServerResponse, where: Prisma.FieldWorkWhereInput): Promise<boolean> => {
+  const user = sessionUserOf(req);
+  if (user?.isAdmin) return false;
+  const others = await prisma.fieldWork.count({
+    where: { AND: [where, { OR: [{ createdBy: null }, { createdBy: { not: user?.username ?? '' } }] }] }
+  });
+  if (others === 0) return false;
+  json(res, { error: `${DELETE_FORBIDDEN_MESSAGE} Eemaldatavate seas on ${others} teise kasutaja loodud tööd.` }, 403);
+  return true;
+};
+
 const canSeeFinance = (req: IncomingMessage) => {
   const u = sessionUserOf(req) as { isAdmin?: boolean; isFinanceManager?: boolean } | null;
   return u?.isAdmin === true || u?.isFinanceManager === true;
@@ -804,6 +824,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Tööd ei leitud' }, 404);
       return true;
     }
+    if (deleteDenied(req, res, w.createdBy)) return true;
     if (w._count.templateItems || w._count.fieldWorks) {
       json(res, { error: `Töö on kasutusel ${w._count.templateItems} mallis ja ${w._count.fieldWorks} põllul. Eemalda need seosed või märgi töö mitteaktiivseks.` }, 409);
       return true;
@@ -844,6 +865,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/materials/') && method === 'DELETE') {
     const id = idOf('/api/materials/');
+    const material = await prisma.material.findUnique({ where: { id }, select: { createdBy: true } });
+    if (material && deleteDenied(req, res, material.createdBy)) return true;
     const used = await prisma.workEntryLine.count({ where: { materialId: id } });
     if (used) {
       json(res, { error: `Materjal on kasutusel ${used} kandes. Märgi see mitteaktiivseks.` }, 409);
@@ -910,6 +933,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Malli ei leitud' }, 404);
       return true;
     }
+    if (deleteDenied(req, res, t.createdBy)) return true;
     if (t.cropId === null) {
       json(res, { error: 'Üldmalli ei saa kustutada' }, 409);
       return true;
@@ -1128,6 +1152,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         json(res, { error: `Põllu sügistöödel on ${entriesCount} kannet. Töid ei saa eemaldada enne kannete kustutamist.` }, 409);
         return true;
       }
+      if (await bulkDeleteDenied(req, res, { fieldSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } })) return true;
       const { count } = await prisma.fieldWork.deleteMany({
         where: { fieldSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } }
       });
@@ -1142,6 +1167,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: `Põllu töödel on ${entriesCount} kannet. Töid ei saa eemaldada enne kannete kustutamist.` }, 409);
       return true;
     }
+    if (await bulkDeleteDenied(req, res, { fieldSeasonId })) return true;
     let totalCount = 0;
     const { count } = await prisma.fieldWork.deleteMany({
       where: { fieldSeasonId }
@@ -1159,8 +1185,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           where: { fieldWork: { fieldSeasonId: nextSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } } }
         });
         if (nextEntries === 0) {
+          // Järgmise hooaja sügistöödest eemaldatakse mitte-adminil ainult enda loodud
+          const user = sessionUserOf(req);
           const resNext = await prisma.fieldWork.deleteMany({
-            where: { fieldSeasonId: nextSeasonId, phase: { in: ['PREPARATION', 'SOWING'] } }
+            where: {
+              fieldSeasonId: nextSeasonId,
+              phase: { in: ['PREPARATION', 'SOWING'] },
+              ...(user?.isAdmin ? {} : { createdBy: user?.username ?? '' })
+            }
           });
           totalCount += resNext.count;
         }
@@ -1196,6 +1228,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/field-works/') && method === 'DELETE') {
     const id = idOf('/api/field-works/');
+    const fw = await prisma.fieldWork.findUnique({ where: { id }, select: { createdBy: true } });
+    if (fw && deleteDenied(req, res, fw.createdBy)) return true;
     const n = await prisma.workEntry.count({ where: { fieldWorkId: id } });
     if (n > 0) {
       json(res, { error: `Tööl on ${n} kannet. Kustuta enne kanded.` }, 409);
@@ -1284,6 +1318,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Kannet ei leitud' }, 404);
       return true;
     }
+    if (deleteDenied(req, res, e.createdBy)) return true;
     if (e.financeStatus !== 'PENDING' && !canSeeFinance(req)) {
       json(res, { error: 'Kinnitatud kannet saab kustutada ainult finantsjuht' }, 403);
       return true;

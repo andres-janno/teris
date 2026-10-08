@@ -1,6 +1,6 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb } from './db.ts';
+import { prisma, tsdb, runInAuditContext, setAuditUser, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
@@ -194,18 +194,31 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): 
 const IMPORT_FORBIDDEN = 'Andmete importimine on lubatud ainult adminile';
 const isAdmin = (req: IncomingMessage) => sessionUserOf(req)?.isAdmin === true;
 
+// Kustutada saab ainult kirje looja või admin. Tagastab true, kui keelduv vastus on saadetud.
+function denyDelete(req: IncomingMessage, res: ServerResponse, record: { createdBy: string | null } | null): boolean {
+  if (!record || canDelete(sessionUserOf(req), record.createdBy)) return false;
+  json(res, { error: DELETE_FORBIDDEN_MESSAGE }, 403);
+  return true;
+}
+
 export interface ApiOptions {
   allowedOrigins: string[];
   requireAuth: boolean;
 }
 
-export async function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
+export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
+  // Kirjete looja/muutja (createdBy/updatedBy) täidetakse selle päringu kasutaja järgi
+  return runInAuditContext(() => routeApiRequest(req, res, options));
+}
+
+async function routeApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
   const url = new URL(req.url || '/', `http://${req.headers.host || 'localhost'}`);
   const pathname = url.pathname;
   const method = req.method?.toUpperCase() || 'GET';
 
   try {
     if (await authGate(req, res, pathname, method, options)) return;
+    setAuditUser(sessionUserOf(req)?.username ?? null);
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
 
@@ -495,6 +508,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
       if (isNaN(fieldId)) {
         return json(res, { error: 'master-fields delete requires a numeric field id' }, 400);
       }
+      if (denyDelete(req, res, await prisma.field.findUnique({ where: { id: fieldId }, select: { createdBy: true } }))) return;
       await prisma.field.delete({ where: { id: fieldId } });
       return json(res, { success: true, id: idPart });
     }
@@ -568,6 +582,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/poi/') && method === 'DELETE') {
       const id = pathname.replace('/api/poi/', '');
+      if (denyDelete(req, res, await prisma.pointOfInterest.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.pointOfInterest.delete({ where: { id } });
       return json(res, { success: true, id });
     }
@@ -791,6 +806,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/fleet/vehicles/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/vehicles/', '');
+      if (denyDelete(req, res, await prisma.vehicle.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.implementAssignment.updateMany({
         where: { vehicleId: id, endedAt: null },
         data: { endedAt: new Date() }
@@ -835,6 +851,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/fleet/implements/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/implements/', '');
+      if (denyDelete(req, res, await prisma.implement.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.implementAssignment.updateMany({
         where: { implementId: id, endedAt: null },
         data: { endedAt: new Date() }
@@ -888,6 +905,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/fleet/devices/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/devices/', '');
+      if (denyDelete(req, res, await prisma.teltonikaDevice.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.vehicle.updateMany({
         where: { assignedDeviceId: id },
         data: { assignedDeviceId: null }
@@ -1036,6 +1054,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
     if (pathname.startsWith('/api/fleet/implement-assignments/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/implement-assignments/', '');
       const existing = await prisma.implementAssignment.findUnique({ where: { id } });
+      if (denyDelete(req, res, existing)) return;
       if (existing && !existing.endedAt) {
         await prisma.vehicle.updateMany({
           where: { id: existing.vehicleId, assignedImplementId: existing.implementId },
@@ -1357,6 +1376,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/parties/') && method === 'DELETE') {
       const id = pathname.replace('/api/parties/', '');
+      if (denyDelete(req, res, await prisma.relatedParty.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.relatedParty.delete({ where: { id } });
       return json(res, { success: true, id });
     }
@@ -1413,6 +1433,7 @@ export async function handleApiRequest(req: IncomingMessage, res: ServerResponse
 
     if (pathname.startsWith('/api/crops/') && method === 'DELETE') {
       const id = pathname.replace('/api/crops/', '');
+      if (denyDelete(req, res, await prisma.crop.findUnique({ where: { id }, select: { createdBy: true } }))) return;
       await prisma.crop.delete({ where: { id } });
       return json(res, { success: true, id });
     }

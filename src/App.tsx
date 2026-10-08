@@ -426,10 +426,18 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.saveParty(partyToSave).catch((err) => console.error('Error saving party to DB:', err));
   };
 
-  const handleDeleteParty = (partyId: string) => {
-    setParties((prev) => prev.filter((p) => p.id !== partyId));
-    api.deleteParty(partyId).catch((err) => console.error('Error deleting party from DB:', err));
+  // Kustutamine kinnitatakse serveris (looja või admin); ekraanilt eemaldatakse alles pärast õnnestumist
+  const deleteOnServer = async (request: () => Promise<unknown>, onDeleted: () => void) => {
+    try {
+      await request();
+      onDeleted();
+    } catch (err) {
+      alertDialog(err instanceof Error ? err.message : 'Kustutamine ebaõnnestus');
+    }
   };
+
+  const handleDeleteParty = (partyId: string) =>
+    deleteOnServer(() => api.deleteParty(partyId), () => setParties((prev) => prev.filter((p) => p.id !== partyId)));
 
   // Crops & Varieties Register state
   const [crops, setCrops] = useState<Crop[]>([]);
@@ -457,10 +465,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.saveCrop(cropToSave).catch((err) => console.error('Error saving crop to DB:', err));
   };
 
-  const handleDeleteCrop = (cropId: string) => {
-    setCrops((prev) => prev.filter((c) => c.id !== cropId));
-    api.deleteCrop(cropId).catch((err) => console.error('Error deleting crop from DB:', err));
-  };
+  const handleDeleteCrop = (cropId: string) =>
+    deleteOnServer(() => api.deleteCrop(cropId), () => setCrops((prev) => prev.filter((c) => c.id !== cropId)));
 
   // Theme state: light by default
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -1016,13 +1022,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.saveVehicle({ ...updates, id }).catch((err) => console.error('Error updating vehicle in DB:', err));
   };
 
-  const handleDeleteVehicle = (id: string) => {
-    setRawVehicles((prev) => prev.filter((v) => v.id !== id));
-    setDevices((prev) => prev.map((d) => d.assignedVehicleId === id ? { ...d, assignedVehicleId: undefined } : d));
-    setImplementsList((prev) => prev.map((i) => i.assignedVehicleId === id ? { ...i, assignedVehicleId: undefined } : i));
-    if (selectedVehicle && selectedVehicle.id === id) setSelectedVehicle(null);
-    api.deleteVehicle(id).catch((err) => console.error('Error deleting vehicle from DB:', err));
-  };
+  const handleDeleteVehicle = (id: string) =>
+    deleteOnServer(() => api.deleteVehicle(id), () => {
+      setRawVehicles((prev) => prev.filter((v) => v.id !== id));
+      setDevices((prev) => prev.map((d) => d.assignedVehicleId === id ? { ...d, assignedVehicleId: undefined } : d));
+      setImplementsList((prev) => prev.map((i) => i.assignedVehicleId === id ? { ...i, assignedVehicleId: undefined } : i));
+      setSelectedVehicle((cur) => (cur && cur.id === id ? null : cur));
+    });
 
   const handleAddImplement = (newImp: Omit<Implement, 'id'>) => {
     const imp: Implement = { ...newImp, id: `imp-${Date.now()}` };
@@ -1039,12 +1045,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.saveImplement({ ...updates, id }).catch((err) => console.error('Error updating implement in DB:', err));
   };
 
-  const handleDeleteImplement = (id: string) => {
-    setImplementsList((prev) => prev.filter((i) => i.id !== id));
-    setRawVehicles((prev) => prev.map((v) => v.assignedImplementId === id ? { ...v, assignedImplementId: undefined } : v));
-    setDevices((prev) => prev.map((d) => d.assignedImplementId === id ? { ...d, assignedImplementId: undefined } : d));
-    api.deleteImplement(id).catch((err) => console.error('Error deleting implement from DB:', err));
-  };
+  const handleDeleteImplement = (id: string) =>
+    deleteOnServer(() => api.deleteImplement(id), () => {
+      setImplementsList((prev) => prev.filter((i) => i.id !== id));
+      setRawVehicles((prev) => prev.map((v) => v.assignedImplementId === id ? { ...v, assignedImplementId: undefined } : v));
+      setDevices((prev) => prev.map((d) => d.assignedImplementId === id ? { ...d, assignedImplementId: undefined } : d));
+    });
 
   const handleAddDevice = (newDev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
     const dev: TeltonikaDevice = {
@@ -1074,12 +1080,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   };
 
-  const handleDeleteDevice = (id: string) => {
-    setDevices((prev) => prev.filter((d) => d.id !== id));
-    setRawVehicles((prev) => prev.map((v) => v.assignedDeviceId === id ? { ...v, assignedDeviceId: undefined } : v));
-    setImplementsList((prev) => prev.map((i) => i.assignedDeviceId === id ? { ...i, assignedDeviceId: undefined } : i));
-    api.deleteDevice(id).catch((err) => console.error('Error deleting device from DB:', err));
-  };
+  const handleDeleteDevice = (id: string) =>
+    deleteOnServer(() => api.deleteDevice(id), () => {
+      setDevices((prev) => prev.filter((d) => d.id !== id));
+      setRawVehicles((prev) => prev.map((v) => v.assignedDeviceId === id ? { ...v, assignedDeviceId: undefined } : v));
+      setImplementsList((prev) => prev.map((i) => i.assignedDeviceId === id ? { ...i, assignedDeviceId: undefined } : i));
+    });
 
   // POI actions
   const handleAddPoi = (newPoiData: Omit<PointOfInterest, 'id' | 'createdAt'>) => {
@@ -1120,16 +1126,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     });
   };
 
-  const handleDeletePoi = (id: string) => {
-    setPois((prev) => {
-      const updatedList = prev.filter((p) => p.id !== id);
-      return updatedList;
+  const handleDeletePoi = (id: string) =>
+    deleteOnServer(() => api.deletePoi(id), () => {
+      setPois((prev) => prev.filter((p) => p.id !== id));
+      setSelectedPoi((cur) => (cur && cur.id === id ? null : cur));
     });
-    if (selectedPoi && selectedPoi.id === id) {
-      setSelectedPoi(null);
-    }
-    api.deletePoi(id).catch((err) => console.error('Error deleting POI from DB:', err));
-  };
 
   const handleFocusPoi = (poi: PointOfInterest) => {
     setSelectedPoi(poi);
@@ -1273,13 +1274,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setSelectedYear(newYear);
   };
 
-  const handleDeleteMasterField = (fieldId: number | string) => {
-    setMasterFields((prev) => prev.filter((f) => f.id !== fieldId && String(f.id) !== String(fieldId)));
-    if (selectedFieldId === String(fieldId)) {
-      setSelectedFieldId(null);
-    }
-    api.deleteMasterField(fieldId).catch((err) => console.error('Error deleting field from DB:', err));
-  };
+  const handleDeleteMasterField = (fieldId: number | string) =>
+    deleteOnServer(() => api.deleteMasterField(fieldId), () => {
+      setMasterFields((prev) => prev.filter((f) => f.id !== fieldId && String(f.id) !== String(fieldId)));
+      setSelectedFieldId((cur) => (cur === String(fieldId) ? null : cur));
+    });
 
   // Season Management Handlers
   const handleUpdateSeason = (updated: FarmingSeason) => {

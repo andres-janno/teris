@@ -35,7 +35,7 @@ import type {
   DeviceConnectivity,
   ImplementAssignment
 } from '../types/fleet';
-import { confirmDialog } from './ConfirmDialog';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
@@ -466,7 +466,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       setImplementAssignments((prev) => prev.filter((a) => a.id !== id));
       loadImplementAssignments();
     } catch (err) {
-      console.error('Failed to delete assignment:', err);
+      alertDialog(err instanceof Error ? err.message : 'Haakimise kirje kustutamine ebaõnnestus');
     }
   };
 

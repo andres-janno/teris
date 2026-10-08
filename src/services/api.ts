@@ -160,7 +160,7 @@ export const api = {
     const res = await apiFetch(`/api/master-fields/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error(`Failed to delete field ${id}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Põllu kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -233,7 +233,7 @@ export const api = {
     const res = await apiFetch(`/api/fleet/vehicles/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete vehicle');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Masina kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -251,7 +251,7 @@ export const api = {
     const res = await apiFetch(`/api/fleet/implements/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete implement');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Haakeriista kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -320,7 +320,7 @@ export const api = {
     const res = await apiFetch(`/api/fleet/implement-assignments/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete implement assignment');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Haakimise kirje kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -338,7 +338,7 @@ export const api = {
     const res = await apiFetch(`/api/fleet/devices/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete device');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seadme kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -372,7 +372,7 @@ export const api = {
     const res = await apiFetch(`/api/poi/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete POI');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Asukoha kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -396,7 +396,7 @@ export const api = {
     const res = await apiFetch(`/api/parties/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete party');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Isiku kustutamine ebaõnnestus'));
     return res.json();
   },
 
@@ -420,7 +420,7 @@ export const api = {
     const res = await apiFetch(`/api/crops/${id}`, {
       method: 'DELETE'
     });
-    if (!res.ok) throw new Error('Failed to delete crop');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kultuuri kustutamine ebaõnnestus'));
     return res.json();
   },
 

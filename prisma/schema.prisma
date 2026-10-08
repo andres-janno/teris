@@ -83,9 +83,9 @@ enum PartyType {
 
 enum PartyRole {
   LANDOWNER
-  DRIVER    // kuvatakse "Töötaja"
+  DRIVER // kuvatakse "Töötaja"
   OPERATOR
-  OTHER     // "Muu seotud isik" (täpsustus märkustes)
+  OTHER // "Muu seotud isik" (täpsustus märkustes)
 }
 
 // ============================================================================
@@ -93,11 +93,11 @@ enum PartyRole {
 // ============================================================================
 
 model Season {
-  id                   Int           @id @default(autoincrement())
-  year                 Int           @unique
+  id                   Int          @id @default(autoincrement())
+  year                 Int          @unique
   name                 String
-  status               SeasonStatus  @default(PLANNING)
-  isLocked             Boolean       @default(false)
+  status               SeasonStatus @default(PLANNING)
+  isLocked             Boolean      @default(false)
   preparationStartDate DateTime?
   seedingStartDate     DateTime?
   harvestStartDate     DateTime?
@@ -109,10 +109,12 @@ model Season {
   targetYieldTons      Float?
   actualYieldTons      Float?
   notes                String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
+  createdAt            DateTime     @default(now())
+  updatedAt            DateTime     @updatedAt
+  createdBy            String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy            String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldSeasons         FieldSeason[]
+  fieldSeasons FieldSeason[]
 
   @@map("seasons")
 }
@@ -122,14 +124,16 @@ model Season {
 // ============================================================================
 
 model CadastralParcel {
-  id             Int                  @id @default(autoincrement())
-  cadastralCode  String               @unique // Katastritunnus (nt "89201:001:0100")
-  name           String?              // Katastriüksuse nimi / lähiaadress
-  notes          String?
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  id            Int      @id @default(autoincrement())
+  cadastralCode String   @unique // Katastritunnus (nt "89201:001:0100")
+  name          String? // Katastriüksuse nimi / lähiaadress
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  seasonLinks    FieldCadastralParcel[]
+  seasonLinks FieldCadastralParcel[]
 
   @@map("cadastral_parcels")
 }
@@ -139,20 +143,22 @@ model CadastralParcel {
 // ============================================================================
 
 model Field {
-  id             Int                    @id @default(autoincrement())
-  num            String                 // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x") — võib massiivi siseselt korduda eri operaatoritel
-  name           String                 // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
-  fieldCode      String                 // PRIA massiivi number (nt "60844249726") — võib korduda, kui massiiv on jagatud mitme operaatori vahel
-  cadastralCode  String?                // Peamine katastritunnus (tagasiühilduvuse jaoks)
-  soilType       String?                // Mullastik (nt "Leostunud liivsavi (LP)")
-  drainageSystem Boolean                @default(false)
-  operatorId     String?                // Põllu operaator (seotud isikute registrist)
+  id             Int      @id @default(autoincrement())
+  num            String // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x") — võib massiivi siseselt korduda eri operaatoritel
+  name           String // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
+  fieldCode      String // PRIA massiivi number (nt "60844249726") — võib korduda, kui massiiv on jagatud mitme operaatori vahel
+  cadastralCode  String? // Peamine katastritunnus (tagasiühilduvuse jaoks)
+  soilType       String? // Mullastik (nt "Leostunud liivsavi (LP)")
+  drainageSystem Boolean  @default(false)
+  operatorId     String? // Põllu operaator (seotud isikute registrist)
   notes          String?
-  createdAt      DateTime               @default(now())
-  updatedAt      DateTime               @updatedAt
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  createdBy      String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy      String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldSeasons   FieldSeason[]
-  operator       RelatedParty?          @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  fieldSeasons FieldSeason[]
+  operator     RelatedParty? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
 
   // Massiivinumber + põllunumber võivad korduda (nt kui operaator vahetub),
   // aga sama operaator ei saa sama massiivi+põllu numbrit kaks korda omada.
@@ -166,39 +172,41 @@ model Field {
 // ============================================================================
 
 model FieldSeason {
-  id                  Int          @id @default(autoincrement())
+  id                  Int         @id @default(autoincrement())
   fieldId             Int
   seasonId            Int?
   year                Int
-  areaHa              Float        // Selle hooaja haritav pindala
-  eligibleAreaHa      Float?       // PRIA toetusõiguslik pindala
-  areaChangeReason    String?      // Pindala muutuse põhjus (nt võsastumine, kraavihooldus)
+  areaHa              Float // Selle hooaja haritav pindala
+  eligibleAreaHa      Float? // PRIA toetusõiguslik pindala
+  areaChangeReason    String? // Pindala muutuse põhjus (nt võsastumine, kraavihooldus)
   crop                String
   cropVariety         String?
-  cropColor           String       @default("#eab308")
+  cropColor           String      @default("#eab308")
   cropId              String?
   varietyId           String?
   targetYieldTonsHa   Float?
   actualYieldTonsHa   Float?
-  workedAreaHa        Float        @default(0)
-  workProgress        Float        @default(0)
-  status              FieldStatus  @default(NOT_STARTED)
+  workedAreaHa        Float       @default(0)
+  workProgress        Float       @default(0)
+  status              FieldStatus @default(NOT_STARTED)
   seedingDate         DateTime?
   harvestDate         DateTime?
-  boundaryPointsCount Int?         // Geomeetria tippude/punktide arv
-  perimeterM          Float?       // Ümbermõõt meetrites
+  boundaryPointsCount Int? // Geomeetria tippude/punktide arv
+  perimeterM          Float? // Ümbermõõt meetrites
   notes               String?
-  geometry            Json         // GeoJSON Polygon | MultiPolygon
-  createdAt           DateTime     @default(now())
-  updatedAt           DateTime     @updatedAt
+  geometry            Json // GeoJSON Polygon | MultiPolygon
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  field               Field        @relation(fields: [fieldId], references: [id], onDelete: Cascade)
-  season              Season?      @relation(fields: [seasonId], references: [id], onDelete: SetNull)
-  cadastralParcels    FieldCadastralParcel[]
-  cropEntity          Crop?        @relation(fields: [cropId], references: [id], onDelete: SetNull)
-  varietyEntity       CropVariety? @relation(fields: [varietyId], references: [id], onDelete: SetNull)
-  operations          FieldOperation[]
-  fieldWorks          FieldWork[]
+  field            Field                  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  season           Season?                @relation(fields: [seasonId], references: [id], onDelete: SetNull)
+  cadastralParcels FieldCadastralParcel[]
+  cropEntity       Crop?                  @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  varietyEntity    CropVariety?           @relation(fields: [varietyId], references: [id], onDelete: SetNull)
+  operations       FieldOperation[]
+  fieldWorks       FieldWork[]
 
   @@unique([fieldId, year])
   @@index([fieldId])
@@ -220,49 +228,53 @@ model FieldSeason {
 // ============================================================================
 
 model RelatedParty {
-  id              String                  @id @default(cuid())
-  name            String                  // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
-  type            PartyType               @default(PERSON)
-  code            String?                 // Isikukood või registrikood
-  vatNumber       String?                 // KMKR number
-  roles           PartyRole[]             // Rollid süsteemis
-  phone           String?                 // Telefon
-  email           String?                 // E-post
-  address         String?                 // Postiaadress / asukoht
-  bankAccount     String?                 // IBAN arveldusarve (rendimakseteks / maamaksuks)
-  notes           String?                 // Märkused
-  createdAt       DateTime                @default(now())
-  updatedAt       DateTime                @updatedAt
+  id          String      @id @default(cuid())
+  name        String // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
+  type        PartyType   @default(PERSON)
+  code        String? // Isikukood või registrikood
+  vatNumber   String? // KMKR number
+  roles       PartyRole[] // Rollid süsteemis
+  phone       String? // Telefon
+  email       String? // E-post
+  address     String? // Postiaadress / asukoht
+  bankAccount String? // IBAN arveldusarve (rendimakseteks / maamaksuks)
+  notes       String? // Märkused
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  createdBy   String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy   String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  cadastralParcels FieldCadastralParcel[]
-  vehicles         Vehicle[]
-  poiContacts      PointOfInterest[]
-  fieldsAsOperator Field[]
+  cadastralParcels    FieldCadastralParcel[]
+  vehicles            Vehicle[]
+  poiContacts         PointOfInterest[]
+  fieldsAsOperator    Field[]
   performedOperations FieldOperation[]
-  workEntries      WorkEntry[]
+  workEntries         WorkEntry[]
 
   @@map("related_parties")
 }
 
 model FieldCadastralParcel {
-  id                Int             @id @default(autoincrement())
+  id                Int           @id @default(autoincrement())
   fieldSeasonId     Int
   cadastralParcelId Int
-  fieldAreaHa       Float           // Hektarid sellest katastriüksusest sellel hooajal
-  ownershipType     OwnershipType   @default(OWNED) // Oma maa vs Rent sellel hooajal
-  ownerName         String?         // Omaniku nimi sellel hooajal
-  ownerPartyId      String?         // Seos seotud isikute registriga
-  landTaxEurHa      Float?          // Selle hooaja maamaks hektari kohta (€/ha)
-  landTaxEurYear    Float?          // Selle hooaja maamaks kokku (€/a)
-  rentFeeEurHa      Float?          // Selle hooaja renditasu hektari kohta (€/ha)
-  rentFeeEurYear    Float?          // Selle hooaja renditasu kokku (€/a)
+  fieldAreaHa       Float // Hektarid sellest katastriüksusest sellel hooajal
+  ownershipType     OwnershipType @default(OWNED) // Oma maa vs Rent sellel hooajal
+  ownerName         String? // Omaniku nimi sellel hooajal
+  ownerPartyId      String? // Seos seotud isikute registriga
+  landTaxEurHa      Float? // Selle hooaja maamaks hektari kohta (€/ha)
+  landTaxEurYear    Float? // Selle hooaja maamaks kokku (€/a)
+  rentFeeEurHa      Float? // Selle hooaja renditasu hektari kohta (€/ha)
+  rentFeeEurYear    Float? // Selle hooaja renditasu kokku (€/a)
   notes             String?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+  createdBy         String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy         String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldSeason       FieldSeason     @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
-  cadastralParcel   CadastralParcel @relation(fields: [cadastralParcelId], references: [id], onDelete: Cascade)
-  ownerParty        RelatedParty?   @relation(fields: [ownerPartyId], references: [id], onDelete: SetNull)
+  fieldSeason     FieldSeason     @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  cadastralParcel CadastralParcel @relation(fields: [cadastralParcelId], references: [id], onDelete: Cascade)
+  ownerParty      RelatedParty?   @relation(fields: [ownerPartyId], references: [id], onDelete: SetNull)
 
   @@unique([fieldSeasonId, cadastralParcelId])
   @@index([fieldSeasonId])
@@ -276,7 +288,7 @@ model FieldCadastralParcel {
 // ============================================================================
 
 model PointOfInterest {
-  id             String        @id @default(cuid())
+  id             String      @id @default(cuid())
   name           String
   category       PoiCategory
   latitude       Float
@@ -287,10 +299,12 @@ model PointOfInterest {
   contactPartyId String?
   phone          String?
   accessNotes    String?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+  createdBy      String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy      String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  contactParty   RelatedParty? @relation(fields: [contactPartyId], references: [id], onDelete: SetNull)
+  contactParty RelatedParty? @relation(fields: [contactPartyId], references: [id], onDelete: SetNull)
 
   @@index([contactPartyId])
   @@map("points_of_interest")
@@ -301,55 +315,59 @@ model PointOfInterest {
 // ============================================================================
 
 model Vehicle {
-  id                  String           @id @default(cuid())
+  id                  String      @id @default(cuid())
   name                String
   type                VehicleType
   model               String
   regNumber           String?
-  workingWidthM       Float            @default(6.0)
-  color               String           @default("#10b981")
+  workingWidthM       Float       @default(6.0)
+  color               String      @default("#10b981")
   fuelCapacityL       Float?
-  assignedDriverId    String?          // Seotud isiku ID (töötaja / masinajuht)
-  assignedImplementId String?          @unique
-  assignedDeviceId    String?          @unique
+  assignedDriverId    String? // Seotud isiku ID (töötaja / masinajuht)
+  assignedImplementId String?     @unique
+  assignedDeviceId    String?     @unique
   lastLatitude        Float?
   lastLongitude       Float?
   lastActiveAt        DateTime?
   notes               String?
-  createdAt           DateTime         @default(now())
-  updatedAt           DateTime         @updatedAt
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  assignedDriver      RelatedParty?    @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
-  assignedImplement   Implement?       @relation(fields: [assignedImplementId], references: [id])
-  assignedDevice      TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
-  deviceAssignments   DeviceAssignment[]
+  assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  assignedImplement    Implement?            @relation(fields: [assignedImplementId], references: [id])
+  assignedDevice       TeltonikaDevice?      @relation(fields: [assignedDeviceId], references: [id])
+  deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
-  workEntries         WorkEntry[]
-  workEntryLines      WorkEntryLine[]
+  workEntries          WorkEntry[]
+  workEntryLines       WorkEntryLine[]
 
   @@index([assignedDriverId])
   @@map("vehicles")
 }
 
 model Implement {
-  id               String           @id @default(cuid())
+  id               String        @id @default(cuid())
   name             String
   type             ImplementType
   workingWidthM    Float
   manufacturer     String?
   model            String?
   year             Int?
-  assignedDeviceId String?          @unique
+  assignedDeviceId String?       @unique
   notes            String?
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  vehicle          Vehicle?
-  assignedDevice   TeltonikaDevice? @relation(fields: [assignedDeviceId], references: [id])
-  deviceAssignments DeviceAssignment[]
+  vehicle              Vehicle?
+  assignedDevice       TeltonikaDevice?      @relation(fields: [assignedDeviceId], references: [id])
+  deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
-  workEntries      WorkEntry[]
-  workEntryLines   WorkEntryLine[]
+  workEntries          WorkEntry[]
+  workEntryLines       WorkEntryLine[]
 
   @@map("implements")
 }
@@ -362,8 +380,8 @@ enum DeviceConnectivity {
 model TeltonikaDevice {
   id               String             @id @default(cuid())
   connectivityType DeviceConnectivity @default(CELLULAR)
-  imei             String?            @unique  // Kohustuslik ainult CELLULAR seadmetel
-  macAddress       String?            @unique  // Kohustuslik ainult EYE_SENSOR seadmetel
+  imei             String?            @unique // Kohustuslik ainult CELLULAR seadmetel
+  macAddress       String?            @unique // Kohustuslik ainult EYE_SENSOR seadmetel
   model            String
   simNumber        String?
   firmware         String?
@@ -371,10 +389,12 @@ model TeltonikaDevice {
   notes            String?
   createdAt        DateTime           @default(now())
   updatedAt        DateTime           @updatedAt
+  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  vehicle          Vehicle?
-  implement        Implement?
-  assignments      DeviceAssignment[]
+  vehicle     Vehicle?
+  implement   Implement?
+  assignments DeviceAssignment[]
 
   @@map("teltonika_devices")
 }
@@ -393,6 +413,9 @@ model DeviceAssignment {
   lastLongitude Float?
   notes         String?
   createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @default(now()) @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   @@index([deviceId, startedAt])
   @@index([vehicleId, startedAt])
@@ -400,15 +423,18 @@ model DeviceAssignment {
 }
 
 model ImplementAssignment {
-  id          String     @id @default(cuid())
+  id          String    @id @default(cuid())
   vehicleId   String
-  vehicle     Vehicle    @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
+  vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   implementId String
-  implement   Implement  @relation(fields: [implementId], references: [id], onDelete: Cascade)
-  startedAt   DateTime   @default(now())
+  implement   Implement @relation(fields: [implementId], references: [id], onDelete: Cascade)
+  startedAt   DateTime  @default(now())
   endedAt     DateTime?
   notes       String?
-  createdAt   DateTime   @default(now())
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @default(now()) @updatedAt
+  createdBy   String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy   String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   @@index([vehicleId, startedAt])
   @@index([implementId, startedAt])
@@ -420,55 +446,59 @@ model ImplementAssignment {
 // ============================================================================
 
 enum CropGroup {
-  CEREAL          // Teravili (nisu, oder, kaer, rukis)
-  OILSEED         // Õlikultuur (raps, rüps)
-  LEGUME          // Kaunvili / Liblikõieline (hernes, uba)
-  FORAGE_GRASS    // Söödakultuur / Rohumaa (ristik, timut, karjamaa)
-  FALLOW          // Kesa (mustkesa, rohekesa)
-  OTHER           // Muu kultuur
+  CEREAL // Teravili (nisu, oder, kaer, rukis)
+  OILSEED // Õlikultuur (raps, rüps)
+  LEGUME // Kaunvili / Liblikõieline (hernes, uba)
+  FORAGE_GRASS // Söödakultuur / Rohumaa (ristik, timut, karjamaa)
+  FALLOW // Kesa (mustkesa, rohekesa)
+  OTHER // Muu kultuur
 }
 
 model Crop {
-  id                    String        @id
-  name                  String        @unique
-  scientificName        String?
-  group                 CropGroup     @default(CEREAL)
-  color                 String        @default("#eab308")
-  icon                  String?
-  priaCode              String?
-  defaultSeedRateKgHa   Float?
-  defaultYieldTonsHa    Float?
-  description           String?
-  isWinterCrop          Boolean       @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
-  createdAt             DateTime      @default(now())
-  updatedAt             DateTime      @updatedAt
+  id                  String    @id
+  name                String    @unique
+  scientificName      String?
+  group               CropGroup @default(CEREAL)
+  color               String    @default("#eab308")
+  icon                String?
+  priaCode            String?
+  defaultSeedRateKgHa Float?
+  defaultYieldTonsHa  Float?
+  description         String?
+  isWinterCrop        Boolean   @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  varieties             CropVariety[]
-  fieldSeasons          FieldSeason[]
-  workTemplates         WorkTemplate[]
+  varieties     CropVariety[]
+  fieldSeasons  FieldSeason[]
+  workTemplates WorkTemplate[]
 
   @@map("crops")
 }
 
 model CropVariety {
-  id                      String        @id
+  id                      String   @id
   cropId                  String
   name                    String
-  breeder                 String?       // Aretaja / esindaja (nt Saaten-Union, KWS)
-  maturityDays            String?       // Valmimisaeg / kasvuaeg
-  winterHardiness         String?       // Talvekindlus
-  recommendedSeedRateKgHa Float?        // Soovituslik külvinorm kg/ha
-  potentialYieldTonsHa    Float?        // Saagipotentsiaal t/ha
-  qualityClass            String?       // Kvaliteediklass (nt Toiduvili E, I, söödavili)
+  breeder                 String? // Aretaja / esindaja (nt Saaten-Union, KWS)
+  maturityDays            String? // Valmimisaeg / kasvuaeg
+  winterHardiness         String? // Talvekindlus
+  recommendedSeedRateKgHa Float? // Soovituslik külvinorm kg/ha
+  potentialYieldTonsHa    Float? // Saagipotentsiaal t/ha
+  qualityClass            String? // Kvaliteediklass (nt Toiduvili E, I, söödavili)
   notes                   String?
-  isActive                Boolean       @default(true)
-  createdAt               DateTime      @default(now())
-  updatedAt               DateTime      @updatedAt
+  isActive                Boolean  @default(true)
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  createdBy               String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy               String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  crop                    Crop          @relation(fields: [cropId], references: [id], onDelete: Cascade)
-  fieldSeasons            FieldSeason[]
+  crop         Crop          @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  fieldSeasons FieldSeason[]
 
-  materials     Material[]
+  materials Material[]
 
   @@unique([cropId, name])
   @@index([cropId])
@@ -482,22 +512,24 @@ model CropVariety {
 model SoilSample {
   id              Int      @id @default(autoincrement())
   sampleNumber    String   @unique // Labori proovinumber ("proovNr") - kordusimpordil kasutatav võti
-  fieldCode       String   // PRIA massiivi number ("xy_id") - tekstivõrdlusega seotud Field.fieldCode'iga, mitte range FK (massiiv võib kuuluda mitmele Field kirjele)
-  year            Int      // Proovivõtu aasta ("aasta")
+  fieldCode       String // PRIA massiivi number ("xy_id") - tekstivõrdlusega seotud Field.fieldCode'iga, mitte range FK (massiiv võib kuuluda mitmele Field kirjele)
+  year            Int // Proovivõtu aasta ("aasta")
   lat             Float
   lng             Float
   ph              Float?
-  phosphorus      Float?   // Fosfor (P)
-  potassium       Float?   // Kaalium (K)
-  calcium         Float?   // Kaltsium (Ca)
-  magnesium       Float?   // Magneesium (Mg)
-  copper          Float?   // Vask (Cu)
-  manganese       Float?   // Mangaan (Mn)
-  boron           Float?   // Boor (B)
-  organicCarbon   Float?   // Orgaanilise süsiniku sisaldus (Corg)
-  limeRequirement Float?   // Lubjatarve t/ha
+  phosphorus      Float? // Fosfor (P)
+  potassium       Float? // Kaalium (K)
+  calcium         Float? // Kaltsium (Ca)
+  magnesium       Float? // Magneesium (Mg)
+  copper          Float? // Vask (Cu)
+  manganese       Float? // Mangaan (Mn)
+  boron           Float? // Boor (B)
+  organicCarbon   Float? // Orgaanilise süsiniku sisaldus (Corg)
+  limeRequirement Float? // Lubjatarve t/ha
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
+  createdBy       String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy       String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   @@index([fieldCode])
   @@index([year])
@@ -511,19 +543,22 @@ model SoilSample {
 model FieldOperation {
   id            Int       @id @default(autoincrement())
   fieldSeasonId Int
-  type          String    // PRIA "Tegevus": "Väetamine", "Kündmine", ...
+  type          String // PRIA "Tegevus": "Väetamine", "Kündmine", ...
   dateFrom      DateTime
   dateTo        DateTime? // vahemiku lõpp; tühi, kui üks päev
   areaHa        Float?
-  method        String?   // "Paisklaotamine", "Pritsimine", "Põhikultuur"
-  performerId   String?   // teostaja seotud isikute registrist
+  method        String? // "Paisklaotamine", "Pritsimine", "Põhikultuur"
+  performerId   String? // teostaja seotud isikute registrist
   notes         String?
   sortOrder     Int
   createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @default(now()) @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldSeason   FieldSeason             @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
-  performer     RelatedParty?           @relation(fields: [performerId], references: [id], onDelete: SetNull)
-  products      FieldOperationProduct[]
+  fieldSeason FieldSeason             @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  performer   RelatedParty?           @relation(fields: [performerId], references: [id], onDelete: SetNull)
+  products    FieldOperationProduct[]
 
   @@index([fieldSeasonId])
   @@index([performerId])
@@ -545,7 +580,7 @@ model FieldOperationProduct {
   activeIngredient String?
   sortOrder        Int
 
-  operation        FieldOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
+  operation FieldOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
 
   @@index([operationId])
   @@map("field_operation_products")
@@ -559,14 +594,14 @@ model FieldOperationProduct {
 
 enum WorkPhase {
   PREPARATION // ettevalmistus
-  SOWING      // külv
-  CARE        // hooldus
-  HARVEST     // koristus
+  SOWING // külv
+  CARE // hooldus
+  HARVEST // koristus
 }
 
 enum WorkRepeatMode {
-  ONCE     // ühekordne
-  UP_TO    // kuni maxRepeats korda
+  ONCE // ühekordne
+  UP_TO // kuni maxRepeats korda
   INTERVAL // iga intervalDays päeva järel
 }
 
@@ -577,18 +612,18 @@ enum FieldWorkStatus {
 }
 
 enum WorkEntryLineKind {
-  LABOR     // tööaeg (h)
-  MACHINE   // masin (h)
+  LABOR // tööaeg (h)
+  MACHINE // masin (h)
   IMPLEMENT // haakeriist (h, sama mis masinal)
-  FUEL      // kütus (l)
-  MATERIAL  // kulumaterjal
-  HARVEST   // saak (t) — tulu
+  FUEL // kütus (l)
+  MATERIAL // kulumaterjal
+  HARVEST // saak (t) — tulu
 }
 
 enum FinanceStatus {
-  PENDING   // ootab finantsjuhti
+  PENDING // ootab finantsjuhti
   CONFIRMED // kinnitatud
-  CHANGED   // kogust muudeti pärast kinnitamist — kinnita uuesti
+  CHANGED // kogust muudeti pärast kinnitamist — kinnita uuesti
 }
 
 enum MaterialCategory {
@@ -610,6 +645,8 @@ model WorkType {
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   templateItems WorkTemplateItem[]
   fieldWorks    FieldWork[]
@@ -621,15 +658,17 @@ model Material {
   id            String           @id @default(cuid())
   name          String
   category      MaterialCategory
-  unit          String           // kg, l, t, tk
-  cropVarietyId String?          // seemne puhul sort
+  unit          String // kg, l, t, tk
+  cropVarietyId String? // seemne puhul sort
   isActive      Boolean          @default(true)
   notes         String?
   createdAt     DateTime         @default(now())
   updatedAt     DateTime         @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  cropVariety   CropVariety?     @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
-  entryLines    WorkEntryLine[]
+  cropVariety CropVariety?    @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
+  entryLines  WorkEntryLine[]
 
   @@unique([category, name])
   @@index([cropVarietyId])
@@ -643,9 +682,11 @@ model WorkTemplate {
   isWinter  Boolean  @default(false)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  createdBy String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  crop      Crop?              @relation(fields: [cropId], references: [id], onDelete: Cascade)
-  items     WorkTemplateItem[]
+  crop  Crop?              @relation(fields: [cropId], references: [id], onDelete: Cascade)
+  items WorkTemplateItem[]
 
   @@unique([cropId, isWinter])
   @@map("work_templates")
@@ -657,10 +698,10 @@ model WorkTemplateItem {
   workTypeId    String
   sortOrder     Int     @default(0)
   typicalTiming String? // nt "apr–mai", "eelmine sügis"
-  plannedCount  Int?    // korduva töö plaanitud kordi (tühi = töö liigi järgi)
+  plannedCount  Int? // korduva töö plaanitud kordi (tühi = töö liigi järgi)
 
-  template      WorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
-  workType      WorkType     @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
+  template WorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  workType WorkType     @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
 
   @@unique([templateId, workTypeId])
   @@index([workTypeId])
@@ -674,7 +715,7 @@ model FieldWork {
   workTypeId    String
   phase         WorkPhase
   sortOrder     Int             @default(0)
-  plannedText   String?         // nt "okt 2026"
+  plannedText   String? // nt "okt 2026"
   plannedCount  Int             @default(1)
   status        FieldWorkStatus @default(PLANNED)
   finishedAt    DateTime?
@@ -683,11 +724,13 @@ model FieldWork {
   notes         String?
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldSeason   FieldSeason     @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
-  workType      WorkType        @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
-  finishedBy    User?           @relation("FieldWorkFinishedBy", fields: [finishedById], references: [id], onDelete: SetNull)
-  entries       WorkEntry[]
+  fieldSeason FieldSeason @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  workType    WorkType    @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
+  finishedBy  User?       @relation("FieldWorkFinishedBy", fields: [finishedById], references: [id], onDelete: SetNull)
+  entries     WorkEntry[]
 
   @@unique([fieldSeasonId, workTypeId])
   @@index([workTypeId])
@@ -699,17 +742,17 @@ model WorkEntry {
   id                   String        @id @default(cuid())
   fieldWorkId          String
   date                 DateTime
-  workerId             String?       // seotud isik (roll Töötaja)
+  workerId             String? // seotud isik (roll Töötaja)
   areaHa               Float?
-  telemetryAreaHa      Float?        // Telemeetriast (GPS) arvutatud tehtud pindala (ha)
-  occurrenceNo         Int?          // korduva töö mitmes kord
+  telemetryAreaHa      Float? // Telemeetriast (GPS) arvutatud tehtud pindala (ha)
+  occurrenceNo         Int? // korduva töö mitmes kord
   vehicleId            String?
   implementId          String?
-  equipmentHours       Float?        // masina ja haakeriista töötunnid (sisestatakse korraga)
+  equipmentHours       Float? // masina ja haakeriista töötunnid (sisestatakse korraga)
   fuelLiters           Float?
   laborHours           Float?
-  startTime            String?       // alguskellaaeg (nt "08:00")
-  endTime              String?       // lõpukellaaeg (nt "16:30")
+  startTime            String? // alguskellaaeg (nt "08:00")
+  endTime              String? // lõpukellaaeg (nt "16:30")
   notes                String?
   createdById          String?
   financeStatus        FinanceStatus @default(PENDING)
@@ -718,14 +761,16 @@ model WorkEntry {
   financeNotes         String?
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
+  createdBy            String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy            String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  fieldWork            FieldWork     @relation(fields: [fieldWorkId], references: [id], onDelete: Cascade)
-  worker               RelatedParty? @relation(fields: [workerId], references: [id], onDelete: SetNull)
-  vehicle              Vehicle?      @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-  implement            Implement?    @relation(fields: [implementId], references: [id], onDelete: SetNull)
-  createdBy            User?         @relation("WorkEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
-  financeConfirmedBy   User?         @relation("WorkEntryConfirmedBy", fields: [financeConfirmedById], references: [id], onDelete: SetNull)
-  lines                WorkEntryLine[]
+  fieldWork          FieldWork       @relation(fields: [fieldWorkId], references: [id], onDelete: Cascade)
+  worker             RelatedParty?   @relation(fields: [workerId], references: [id], onDelete: SetNull)
+  vehicle            Vehicle?        @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  implement          Implement?      @relation(fields: [implementId], references: [id], onDelete: SetNull)
+  createdByUser      User?           @relation("WorkEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
+  financeConfirmedBy User?           @relation("WorkEntryConfirmedBy", fields: [financeConfirmedById], references: [id], onDelete: SetNull)
+  lines              WorkEntryLine[]
 
   @@index([fieldWorkId])
   @@index([financeStatus])
@@ -741,17 +786,17 @@ model WorkEntryLine {
   vehicleId         String?
   implementId       String?
   materialId        String?
-  label             String            // nimi salvestamise hetkel
+  label             String // nimi salvestamise hetkel
   quantity          Float
   unit              String
   unitPrice         Decimal?          @db.Decimal(12, 4)
-  confirmedQuantity Float?            // kogus viimasel kinnitamisel (muudatuse näitamiseks)
+  confirmedQuantity Float? // kogus viimasel kinnitamisel (muudatuse näitamiseks)
   sortOrder         Int               @default(0)
 
-  entry             WorkEntry         @relation(fields: [entryId], references: [id], onDelete: Cascade)
-  vehicle           Vehicle?          @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
-  implement         Implement?        @relation(fields: [implementId], references: [id], onDelete: SetNull)
-  material          Material?         @relation(fields: [materialId], references: [id], onDelete: Restrict)
+  entry     WorkEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
+  vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
+  implement Implement? @relation(fields: [implementId], references: [id], onDelete: SetNull)
+  material  Material?  @relation(fields: [materialId], references: [id], onDelete: Restrict)
 
   @@index([entryId])
   @@index([materialId])
@@ -763,24 +808,26 @@ model WorkEntryLine {
 // ============================================================================
 
 model User {
-  id           String    @id @default(cuid())
-  username     String    @unique // väiketähtedega
-  passwordHash String
-  displayName  String?
-  email        String?   @unique
-  isActive     Boolean   @default(true)
+  id                 String    @id @default(cuid())
+  username           String    @unique // väiketähtedega
+  passwordHash       String
+  displayName        String?
+  email              String?   @unique
+  isActive           Boolean   @default(true)
   isAdmin            Boolean   @default(false)
   mustChangePassword Boolean   @default(false)
   isFinanceManager   Boolean   @default(false) // finantsjuht: kannete ühiku kulud, kinnitamine, põldude tulemus
-  lastLoginAt  DateTime?
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  lastLoginAt        DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+  createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  sessions     Session[]
-  passwordTokens PasswordToken[]
-  finishedFieldWorks  FieldWork[] @relation("FieldWorkFinishedBy")
-  createdWorkEntries  WorkEntry[] @relation("WorkEntryCreatedBy")
-  confirmedWorkEntries WorkEntry[] @relation("WorkEntryConfirmedBy")
+  sessions             Session[]
+  passwordTokens       PasswordToken[]
+  finishedFieldWorks   FieldWork[]     @relation("FieldWorkFinishedBy")
+  createdWorkEntries   WorkEntry[]     @relation("WorkEntryCreatedBy")
+  confirmedWorkEntries WorkEntry[]     @relation("WorkEntryConfirmedBy")
 
   @@map("users")
 }
@@ -794,7 +841,7 @@ model Session {
   userAgent  String?
   createdAt  DateTime @default(now())
 
-  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("sessions")
@@ -803,15 +850,14 @@ model Session {
 model PasswordToken {
   id        Int       @id @default(autoincrement())
   userId    String
-  purpose   String    // 'INVITE' | 'RESET'
+  purpose   String // 'INVITE' | 'RESET'
   tokenHash String    @unique // SHA-256 toortokenist (toortoken ainult e-kirjas)
   expiresAt DateTime
   usedAt    DateTime?
   createdAt DateTime  @default(now())
 
-  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("password_tokens")
 }
-
