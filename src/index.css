@@ -3889,13 +3889,18 @@ input[type="number"],
   font-size: 0.8rem;
 }
 
+/* Päis samas stiilis nagu hooaegade tabelis (.seasons-table th); toon läbipaistmatu,
+   et kleepuva päise alt read läbi ei paistaks */
 .register-table th {
   position: sticky;
   top: 0;
   z-index: 2;
-  background: var(--bg-modal);
+  background: linear-gradient(var(--stat-bg), var(--stat-bg)), var(--bg-modal);
   text-align: left;
+  font-size: 0.68rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
   color: var(--text-secondary);
   padding: 8px 10px;
   border-bottom: 1px solid var(--border-card);
@@ -4142,7 +4147,6 @@ input[type="number"],
 
 .register-table th.actions-col {
   z-index: 3;
-  font-size: 0.72rem;
 }
 
 .register-table th.actions-col,
@@ -5176,7 +5180,7 @@ input[type="number"],
   text-transform: uppercase;
   letter-spacing: 0.02em;
   color: var(--text-secondary);
-  background: var(--stat-bg);
+  background: linear-gradient(var(--stat-bg), var(--stat-bg)), var(--bg-modal);
   padding: 8px 8px;
   border-bottom: 1px solid var(--border-card);
   white-space: nowrap;
