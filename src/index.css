@@ -7063,14 +7063,6 @@ a.history-pill:hover {
   flex-wrap: wrap;
 }
 
-.fw-season-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-}
-
 .fw-toolbar-spacer {
   flex: 1;
 }

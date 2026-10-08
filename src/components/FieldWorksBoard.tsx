@@ -702,9 +702,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             </div>
           </div>
 
-          <span className="fw-season-label">
-            {allRows.length} põldu{locked && <><Lock size={12} /> lukus</>}
-          </span>
+          <div className="register-stats-pills">
+            <div className="reg-stat-pill">
+              <span className="lbl">Põlde:</span>
+              <strong>{allRows.length} tk</strong>
+              {locked && <span className="sub-val"><Lock size={11} /> lukus</span>}
+            </div>
+          </div>
           <div className="fw-toolbar-spacer" />
           <label className="fw-search">
             <Search size={14} />
