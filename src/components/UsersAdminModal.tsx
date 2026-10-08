@@ -152,9 +152,15 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             <Users className="text-emerald" size={22} />
             <h3>Kasutajad</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose}>
-            <X size={20} />
-          </button>
+          <div className="users-admin-header-actions">
+            <button type="button" className="btn btn-primary btn-sm" onClick={() => openForm({ kind: 'add' })}>
+              <UserPlus size={15} />
+              <span>Lisa kasutaja</span>
+            </button>
+            <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge">
+              <X size={20} />
+            </button>
+          </div>
         </div>
 
         <div className="modal-body">
@@ -168,12 +174,6 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             <div className="alert-box">{notice}</div>
           )}
 
-          <div className="users-admin-toolbar">
-            <button type="button" className="btn btn-primary" onClick={() => openForm({ kind: 'add' })}>
-              <UserPlus size={16} />
-              <span>Lisa kasutaja</span>
-            </button>
-          </div>
           <div className="users-admin-table-wrap">
             <table className="users-admin-table">
               <thead>
@@ -192,10 +192,15 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   const self = u.id === currentUserId;
                   return (
                     <tr key={u.id} className={u.isActive ? '' : 'inactive'}>
-                      <td>{u.displayName ?? '–'}</td>
+                      <td className="users-admin-wrap">{u.displayName ?? '–'}</td>
                       <td>{u.username}</td>
-                      <td>{u.email ?? '–'}</td>
-                      <td>{[u.isAdmin ? 'Admin' : 'Kasutaja', u.isFinanceManager ? 'Finantsjuht' : null].filter(Boolean).join('<br>')}</td>
+                      <td className="users-admin-wrap">{u.email ?? '–'}</td>
+                      <td>
+                        <span className="users-admin-roles">
+                          <span>{u.isAdmin ? 'Admin' : 'Kasutaja'}</span>
+                          {u.isFinanceManager && <span>Finantsjuht</span>}
+                        </span>
+                      </td>
                       <td>
                         {!u.isActive ? (
                           <span className="user-status-pill status-inactive">
