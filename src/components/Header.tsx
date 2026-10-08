@@ -115,6 +115,15 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               type="button"
+              className={mainView === 'materials' ? 'active' : ''}
+              aria-current={mainView === 'materials' ? 'page' : undefined}
+              onClick={() => onChangeMainView('materials')}
+            >
+              <Package size={15} />
+              <span>Materjalid</span>
+            </button>
+            <button
+              type="button"
               className={mainView === 'works' ? 'active' : ''}
               aria-current={mainView === 'works' ? 'page' : undefined}
               onClick={() => onChangeMainView('works')}
@@ -148,15 +157,6 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Users size={15} />
               <span>Isikud</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'materials' ? 'active' : ''}
-              aria-current={mainView === 'materials' ? 'page' : undefined}
-              onClick={() => onChangeMainView('materials')}
-            >
-              <Package size={15} />
-              <span>Materjalid</span>
             </button>
           </nav>
         )}
