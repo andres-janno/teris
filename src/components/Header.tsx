@@ -66,9 +66,10 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="app-header">
-      <div className="header-brand">
+      {/* Logo klõps laeb lehe uuesti algolekusse (nagu uues brauseris avamine) */}
+      <a href="/" className="header-brand" title="Ava TERIS algusest">
         <TerisLogo variant="horizontal" />
-      </div>
+      </a>
 
       {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}
       <div className="header-nav-slot">
