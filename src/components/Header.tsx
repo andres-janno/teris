@@ -3,7 +3,6 @@ import {
   Layers,
   Tractor,
   MapPin,
-  BarChart3,
   CalendarDays,
   Sprout,
   Map as MapIcon,
@@ -42,7 +41,6 @@ interface HeaderProps {
   onChangeMainView?: (view: MainView) => void;
   onOpenVehicles?: () => void;
   onOpenPoi?: () => void;
-  onOpenAnalytics: () => void;
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   dbConnected?: boolean;
@@ -58,7 +56,6 @@ export const Header: React.FC<HeaderProps> = ({
   onOperatorFilterChange,
   mainView = 'map',
   onChangeMainView,
-  onOpenAnalytics,
   theme,
   onToggleTheme,
   dbConnected = false,
@@ -163,14 +160,6 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       <div className="header-actions">
-        <button
-          className="btn btn-secondary"
-          onClick={onOpenAnalytics}
-          title="Vaata tootlikkuse ja kütuse kokkuvõtet"
-        >
-          <BarChart3 size={16} />
-          <span>Analüütika</span>
-        </button>
 
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />

@@ -58,7 +58,6 @@ const FieldUploadModal = lazy(() => import('./components/FieldUploadModal').then
 const SoilSampleUploadModal = lazy(() => import('./components/SoilSampleUploadModal').then((m) => ({ default: m.SoilSampleUploadModal })));
 const FieldBookUploadModal = lazy(() => import('./components/FieldBookUploadModal').then((m) => ({ default: m.FieldBookUploadModal })));
 const PoiManagerModal = lazy(() => import('./components/PoiManagerModal').then((m) => ({ default: m.PoiManagerModal })));
-const AnalyticsModal = lazy(() => import('./components/AnalyticsModal').then((m) => ({ default: m.AnalyticsModal })));
 const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
 const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
 const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
@@ -382,7 +381,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);
   const [isFieldBookUploadOpen, setIsFieldBookUploadOpen] = useState(false);
   const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
-  const [isAnalyticsOpen, setIsAnalyticsOpen] = useState(false);
   
   // POI adding/picking mode
   const [isAddPoiMode, setIsAddPoiMode] = useState(false);
@@ -1494,7 +1492,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOperatorFilterChange={setOperatorFilter}
         mainView={mainView}
         onChangeMainView={changeMainView}
-        onOpenAnalytics={() => setIsAnalyticsOpen(true)}
         theme={theme}
         onToggleTheme={handleToggleTheme}
         dbConnected={dbConnected}
@@ -1838,7 +1835,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         />
       </DeferredMount>
 
-
       <DeferredMount when={isPoiModalOpen}>
         <PoiManagerModal
           isOpen={isPoiModalOpen}
@@ -1855,16 +1851,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onStartPickLocation={handleStartPickLocation}
           initialDraft={poiDraft}
           initialCoords={newPoiCoords}
-        />
-      </DeferredMount>
-
-      <DeferredMount when={isAnalyticsOpen}>
-        <AnalyticsModal
-          isOpen={isAnalyticsOpen}
-          onClose={() => setIsAnalyticsOpen(false)}
-          fields={fields}
-          vehicles={vehicles}
-          cultivationPass={cultivationPass}
         />
       </DeferredMount>
 

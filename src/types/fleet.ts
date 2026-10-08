@@ -125,7 +125,7 @@ export interface TeltonikaDevice {
 }
 
 /**
- * Liitandmetega sõiduk kaardi ja analüütika jaoks (Vehicle + Device Telemetry + Implement)
+ * Liitandmetega sõiduk kaardi ja vaadete jaoks (Vehicle + Device Telemetry + Implement)
  */
 export interface EnrichedVehicle extends Vehicle {
   status: VehicleStatus;
