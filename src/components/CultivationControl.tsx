@@ -19,7 +19,6 @@ interface CultivationControlProps {
   playbackSpeed: number;
   onSpeedChange: (speed: number) => void;
   workingWidthM: number;
-  onWidthChange: (width: number) => void;
   targetFieldName?: string;
   fieldAreaHa?: number;
   selectedStartTime?: string;
@@ -35,15 +34,10 @@ interface CultivationControlProps {
   durationHours?: number;
   onDurationHoursChange?: (hours: number) => void;
   currentImplement?: { id: string; name: string; workingWidthM: number; type?: string } | null;
-  availableImplements?: { id: string; name: string; workingWidthM: number }[];
   lastActiveAt?: string;
   onJumpToLastActive?: () => void;
 }
 
-const STANDARD_WIDTHS: { value: number; label?: string }[] = [
-  { value: 3 }, { value: 4 }, { value: 5.5 }, { value: 6 }, { value: 8 },
-  { value: 12, label: 'külvik' }, { value: 18 }, { value: 24, label: 'prits' }, { value: 36, label: 'suurprits' }
-];
 const ROLLING_HOURS = [1, 2, 4, 6, 12, 24];
 const DURATION_HOURS = [1, 2, 3, 4, 6, 8, 12];
 const MINUTE_STEPS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
@@ -76,7 +70,6 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   playbackSpeed,
   onSpeedChange,
   workingWidthM,
-  onWidthChange,
   targetFieldName,
   fieldAreaHa,
   selectedStartTime,
@@ -92,7 +85,6 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   durationHours = 2,
   onDurationHoursChange,
   currentImplement,
-  availableImplements = [],
   lastActiveAt,
   onJumpToLastActive
 }) => {
@@ -137,11 +129,6 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   const endTotalMin = Number(customHour) * 60 + Number(customMin) + durationHours * 60;
   const customEndLabel = `${String(Math.floor(endTotalMin / 60) % 24).padStart(2, '0')}:${customMin}${endTotalMin >= 24 * 60 ? ' (järgmine päev)' : ''}`;
 
-  const otherImplements = availableImplements.filter((imp) => !currentImplement || imp.id !== currentImplement.id);
-  const widthIsListed = (currentImplement && currentImplement.workingWidthM === workingWidthM)
-    || otherImplements.some((imp) => imp.workingWidthM === workingWidthM)
-    || STANDARD_WIDTHS.some((w) => w.value === workingWidthM);
-
   const statusText = !hasTrack
     ? (isLoading ? 'Sõiduandmete laadimine…' : 'Sõiduandmed puuduvad')
     : isWorkingNow
@@ -181,28 +168,13 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
             <span className="cc-label">Kiirus</span>
             <span className="cc-value">{currentSpeedKmH.toFixed(1)} km/h</span>
           </div>
-          <label className="cc-stat">
+          <div className="cc-stat" title={currentImplement ? `Haakeriist: ${currentImplement.name}` : 'Haakeriista pole määratud'}>
             <span className="cc-label">Töölaius</span>
-            <select
-              value={workingWidthM}
-              onChange={(e) => onWidthChange(Number(e.target.value))}
-              className="cc-select cc-select-width"
-              title={currentImplement ? `Haakeriist: ${currentImplement.name}` : 'Töölaius'}
-            >
-              {currentImplement && (
-                <option value={currentImplement.workingWidthM}>
-                  {currentImplement.workingWidthM} m · {currentImplement.name}
-                </option>
-              )}
-              {otherImplements.map((imp) => (
-                <option key={imp.id} value={imp.workingWidthM}>{imp.workingWidthM} m · {imp.name}</option>
-              ))}
-              {!widthIsListed && <option value={workingWidthM}>{workingWidthM} m</option>}
-              {STANDARD_WIDTHS.map((w) => (
-                <option key={w.value} value={w.value}>{w.value} m{w.label ? ` · ${w.label}` : ''}</option>
-              ))}
-            </select>
-          </label>
+            <span className="cc-value">
+              {workingWidthM} m
+              {currentImplement && <span className="cc-value-sub cc-value-impl">{currentImplement.name}</span>}
+            </span>
+          </div>
         </div>
       </div>
 

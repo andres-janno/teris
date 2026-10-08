@@ -877,10 +877,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     setPlaybackSpeed(speed);
   };
 
-  const handleWidthChange = (width: number) => {
-    setWorkingWidthM(width);
-  };
-
   // Field selection & focus
   const handleSelectField = (field: FieldFeature | null) => {
     setSelectedFieldId(field ? String(field.properties.id || field.id) : null);
@@ -1732,7 +1728,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             playbackSpeed={playbackSpeed}
             onSpeedChange={handleSpeedChange}
             workingWidthM={workingWidthM}
-            onWidthChange={handleWidthChange}
             selectedStartTime={selectedStartTime}
             onStartTimeChange={handleStartTimeChange}
             telemetryHours={telemetryHours}
@@ -1748,7 +1743,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             durationHours={simDurationHours}
             onDurationHoursChange={setSimDurationHours}
             currentImplement={detectedImplement}
-            availableImplements={implementsList.map((i) => ({ id: i.id, name: i.name, workingWidthM: i.workingWidthM }))}
             lastActiveAt={activeSimVehicle?.lastActiveAt || trackedTarget?.device?.lastUpdate}
             onJumpToLastActive={handleJumpToLastActive}
           />

@@ -1795,8 +1795,14 @@ body {
   cursor: pointer;
 }
 
-.cc-select-width {
-  max-width: 220px;
+/* Haakeriista nimi töölaiuse kõrval (pikk nimi lõigatakse) */
+.cc-value-impl {
+  display: inline-block;
+  max-width: 160px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+  color: var(--text-secondary);
 }
 
 .cc-select:focus,
