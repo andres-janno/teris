@@ -93,9 +93,19 @@ describe('Device Assignment and Telemetry History', () => {
       expect(lastMeasurement.getTime()).toBeLessThan(kombainAssignment!.startedAt.getTime());
     });
 
+    // Päris kasutaja võib olla selle sõidu kohta juba kande teinud (see peidab soovituse).
+    // Testid jätavad sellise kande arvutusest välja; kasutaja kannet ei muudeta.
+    const findRealClaasEntryId = async (): Promise<string | null> => {
+      const e = await prisma.workEntry.findFirst({
+        where: { date: new Date('2026-10-04T00:00:00.000Z'), vehicleId: 'veh-1789925816295' },
+        select: { id: true }
+      });
+      return e?.id ?? null;
+    };
+
     it('detects telemetry field sessions and suggests Suur Claas for field 450 on 2026-10-04', async () => {
       if (!tsdb) return;
-      const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04');
+      const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04', await findRealClaasEntryId());
       expect(suggestions.length).toBeGreaterThanOrEqual(1);
       const claasSuggestion = suggestions.find((s) => s.vehicleName === 'Suur Claas');
       expect(claasSuggestion).toBeDefined();
@@ -110,6 +120,8 @@ describe('Device Assignment and Telemetry History', () => {
 
     it('excludes telemetry suggestion when an overlapping workEntry exists on that date', async () => {
       if (!tsdb) return;
+      // Väljajätmist saab kontrollida ainult siis, kui päris kannet pole (üks välistatav kanne korraga)
+      if (await findRealClaasEntryId()) return;
       const suggestionsBefore = await getTelemetrySuggestionsForField(450, '2026-10-04');
       const target = suggestionsBefore.find((s) => s.vehicleName === 'Suur Claas');
       if (!target) return;
@@ -150,7 +162,7 @@ describe('Device Assignment and Telemetry History', () => {
       });
 
       try {
-        const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04');
+        const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04', await findRealClaasEntryId());
         const claasSuggestion = suggestions.find((s) => s.vehicleName === 'Suur Claas');
         expect(claasSuggestion).toBeDefined();
         expect(claasSuggestion?.implementId).toBeNull();
