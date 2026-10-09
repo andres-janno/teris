@@ -348,12 +348,12 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                           <button
                             type="button"
                             className="btn btn-secondary btn-sm"
-                            title="Eemalda seade masinalt / haakeriistalt"
+                            title="Seo seade masinast / haakeriistast lahti"
                             onClick={() => onDetach(a.deviceId)}
                             style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
                           >
                             <Unlink size={12} />
-                            <span>Eemalda</span>
+                            <span>Seo lahti</span>
                           </button>
                         )}
                         <button
