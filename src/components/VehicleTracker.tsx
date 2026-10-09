@@ -431,7 +431,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [assignImplementId, setAssignImplementId] = useState('');
   const [assignStartDate, setAssignStartDate] = useState('');
   const [assignStartTime, setAssignStartTime] = useState('08:00');
-  const [assignIsActive, setAssignIsActive] = useState(true);
   const [assignEndDate, setAssignEndDate] = useState('');
   const [assignEndTime, setAssignEndTime] = useState('17:00');
   const [assignNotes, setAssignNotes] = useState('');
@@ -446,7 +445,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     const { date, time } = splitIsoToDateAndTime(now.toISOString());
     setAssignStartDate(date);
     setAssignStartTime(time || '08:00');
-    setAssignIsActive(true);
     setAssignEndDate('');
     setAssignEndTime('');
     setAssignNotes('');
@@ -463,12 +461,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setAssignStartTime(start.time || '08:00');
 
     if (assignment.endedAt) {
-      setAssignIsActive(false);
       const end = splitIsoToDateAndTime(assignment.endedAt);
       setAssignEndDate(end.date);
       setAssignEndTime(end.time || '17:00');
     } else {
-      setAssignIsActive(true);
       setAssignEndDate('');
       setAssignEndTime('');
     }
@@ -491,12 +487,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       return;
     }
 
+    // Tühi lõppkuupäev = haakeriist on praegu masina küljes
     let endedAtIso: string | null = null;
-    if (!assignIsActive) {
-      if (!assignEndDate) {
-        setAssignmentError('Määra lahti haakimise kuupäev või märgi kirje hetkel masina küljes olevaks.');
-        return;
-      }
+    if (assignEndDate) {
       endedAtIso = combineDateAndTimeToIso(assignEndDate, assignEndTime);
       if (!endedAtIso) {
         setAssignmentError('Vigane lahti haakimise kuupäev või kellaaeg.');
@@ -1327,7 +1320,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 <div className="form-group">
                   <label>Haagitud (algusaeg) *</label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px' }}>
+                  <div className="assign-datetime">
                     <DateInput
                       value={assignStartDate}
                       onChange={setAssignStartDate}
@@ -1348,81 +1341,38 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
 
                 <div className="form-group">
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                    <label style={{ margin: 0 }}>Lahti haagitud (lõppaeg)</label>
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', cursor: 'pointer', fontSize: '12px', fontWeight: 500, color: assignIsActive ? '#10b981' : 'var(--text-secondary)' }}>
-                      <input
-                        type="checkbox"
-                        checked={assignIsActive}
-                        onChange={(e) => {
-                          const active = e.target.checked;
-                          setAssignIsActive(active);
-                          if (active) {
-                            setAssignEndDate('');
-                            setAssignEndTime('');
-                          } else {
-                            const now = new Date();
-                            const { date, time } = splitIsoToDateAndTime(now.toISOString());
-                            setAssignEndDate(date);
-                            setAssignEndTime(time || '17:00');
-                          }
-                        }}
-                      />
-                      <span>Hetkel küljes (aktiivne)</span>
-                    </label>
+                  <label>Lahti haagitud (lõppaeg)</label>
+                  <div className="assign-datetime">
+                    <DateInput
+                      value={assignEndDate}
+                      onChange={(date) => {
+                        setAssignEndDate(date);
+                        if (!date) setAssignEndTime('');
+                        else if (!assignEndTime) setAssignEndTime('17:00');
+                      }}
+                      className="form-input"
+                    />
+                    <select
+                      className="form-input time-select"
+                      value={assignEndTime}
+                      onChange={(e) => setAssignEndTime(e.target.value)}
+                      disabled={!assignEndDate}
+                    >
+                      {!assignEndDate && <option value="">--:--</option>}
+                      {getTimeOptions(assignEndTime || undefined).map((t) => (
+                        <option key={t} value={t}>{t}</option>
+                      ))}
+                    </select>
                   </div>
-
-                  {assignIsActive ? (
-                    <div style={{
-                      padding: '8px 12px',
-                      background: 'rgba(16, 185, 129, 0.1)',
-                      border: '1px solid rgba(16, 185, 129, 0.25)',
-                      borderRadius: 'var(--radius-sm, 6px)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'space-between',
-                      gap: '8px',
-                      minHeight: '38px'
-                    }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px', color: '#10b981' }}>
-                        <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', flexShrink: 0 }}></span>
-                        <span>Aktiivne — masina taga (lõpp puudub)</span>
-                      </div>
-                      <button
-                        type="button"
-                        className="btn btn-secondary btn-sm"
-                        style={{ fontSize: '11px', padding: '3px 8px', height: '24px', flexShrink: 0 }}
-                        onClick={() => {
-                          const now = new Date();
-                          const { date, time } = splitIsoToDateAndTime(now.toISOString());
-                          setAssignIsActive(false);
-                          setAssignEndDate(date);
-                          setAssignEndTime(time || '17:00');
-                        }}
-                      >
-                        Määra lahti haakimine
+                  <span className="assign-hint">
+                    {assignEndDate ? (
+                      <button type="button" className="assign-hint-link" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
+                        Tühjenda lõppaeg (haakeriist on praegu küljes)
                       </button>
-                    </div>
-                  ) : (
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 120px', gap: '8px' }}>
-                      <DateInput
-                        value={assignEndDate}
-                        onChange={setAssignEndDate}
-                        className="form-input"
-                        required={!assignIsActive}
-                      />
-                      <select
-                        className="form-input time-select"
-                        value={assignEndTime}
-                        onChange={(e) => setAssignEndTime(e.target.value)}
-                        required={!assignIsActive}
-                      >
-                        {getTimeOptions(assignEndTime).map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
+                    ) : (
+                      <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
+                    )}
+                  </span>
                 </div>
 
                 <div className="form-group full-width">
@@ -2119,13 +2069,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             )}
                             <button
                               type="button"
-                              className="btn btn-secondary btn-sm"
+                              className="icon-btn-ghost"
                               title="Muuda haakimise kirjet"
                               onClick={() => handleStartEditAssignment(a)}
-                              style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
+                              style={{ width: '26px', height: '26px' }}
                             >
-                              <Pencil size={12} />
-                              <span>Muuda</span>
+                              <Pencil size={14} />
                             </button>
                             <button
                               type="button"

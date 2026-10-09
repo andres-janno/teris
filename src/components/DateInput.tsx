@@ -1,5 +1,6 @@
 // src/components/DateInput.tsx — kuupäeva väli eesti vormingus (pp.kk.aaaa) ja eestikeelse kalendrivalijaga.
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate, parseEtDate } from '../services/dateFormat';
 
@@ -39,6 +40,10 @@ export const DateInput: React.FC<DateInputProps> = ({
   const [invalid, setInvalid] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
+  const popupRef = useRef<HTMLDivElement>(null);
+  // Kalender kuvatakse body all fikseeritud asendis, et modaali kerimisala seda ei lõikaks
+  // ega vormi paigutust ei nihutaks.
+  const [popupStyle, setPopupStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
 
   // Kalendri vaade (aasta ja kuu)
   const [viewDate, setViewDate] = useState(() => {
@@ -70,7 +75,8 @@ export const DateInput: React.FC<DateInputProps> = ({
   useEffect(() => {
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
-      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+      const target = e.target as Node;
+      if (containerRef.current && !containerRef.current.contains(target) && !popupRef.current?.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -85,6 +91,39 @@ export const DateInput: React.FC<DateInputProps> = ({
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('keydown', handleKeyDown);
     };
+  }, [isOpen]);
+
+  // Kalendri asukoht välja suhtes: eelistatud pool, ruumi puudumisel vastaspool; ekraani piires
+  useLayoutEffect(() => {
+    if (!isOpen) return;
+    const place = () => {
+      const anchor = containerRef.current?.getBoundingClientRect();
+      const popup = popupRef.current;
+      if (!anchor || !popup) return;
+      const gap = 5;
+      const margin = 8;
+      const h = popup.offsetHeight;
+      const w = popup.offsetWidth;
+      const spaceBelow = window.innerHeight - anchor.bottom - gap - margin;
+      const spaceAbove = anchor.top - gap - margin;
+      const above = popupPlacement === 'top'
+        ? spaceAbove >= h || spaceAbove > spaceBelow
+        : spaceBelow < h && spaceAbove > spaceBelow;
+      const top = above ? Math.max(margin, anchor.top - gap - h) : Math.min(anchor.bottom + gap, window.innerHeight - margin - h);
+      const left = Math.min(Math.max(margin, anchor.left), window.innerWidth - margin - w);
+      setPopupStyle({ position: 'fixed', top, left, bottom: 'auto', zIndex: 4000 });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [isOpen, popupPlacement, viewDate]);
+
+  useEffect(() => {
+    if (!isOpen) setPopupStyle({ visibility: 'hidden' });
   }, [isOpen]);
 
   const commit = (raw: string) => {
@@ -236,9 +275,11 @@ export const DateInput: React.FC<DateInputProps> = ({
         <CalendarDays size={15} />
       </button>
 
-      {isOpen && (
+      {isOpen && createPortal(
         <div
-          className={`date-picker-popup animate-scale-up ${popupPlacement === 'top' ? 'date-picker-popup-top' : ''}`}
+          ref={popupRef}
+          style={popupStyle}
+          className="date-picker-popup animate-scale-up"
           role="dialog"
           aria-label="Kuupäeva valija"
         >
@@ -294,7 +335,8 @@ export const DateInput: React.FC<DateInputProps> = ({
               </button>
             ))}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
