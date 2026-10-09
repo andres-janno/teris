@@ -22,6 +22,8 @@ export interface Vehicle {
   name: string;
   model: string;
   type: VehicleType;
+  category?: string;              // Masina liik (vabatekst)
+  powerKw?: number;               // Mootorivõimsus kW
   registrationPlate?: string;
   driverName?: string;
   color: string;
@@ -68,6 +70,7 @@ export interface Implement {
   manufacturer: string;
   model: string;
   type: ImplementType;
+  category?: string;              // Haakeriista liik (vabatekst, eraldi masinate liikidest)
   workingWidthM: number;          // Töölaius meetrites (nt 12m)
   offsetM?: number;              // Külgnihe
   year?: number;

@@ -201,6 +201,17 @@ function denyDelete(req: IncomingMessage, res: ServerResponse, record: { created
   return true;
 }
 
+// Liigi vabatekst: tühikud kärbitud, tühi → null
+function cleanCategory(value: unknown): string | null {
+  const s = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
+  return s || null;
+}
+
+function toPositiveNumber(value: unknown): number | null {
+  const n = typeof value === 'string' ? Number(value.replace(',', '.')) : Number(value);
+  return value != null && value !== '' && Number.isFinite(n) && n > 0 ? n : null;
+}
+
 export interface ApiOptions {
   allowedOrigins: string[];
   requireAuth: boolean;
@@ -604,7 +615,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         id: v.id,
         name: v.name,
         type: v.type.toLowerCase(),
+        category: v.category ?? undefined,
         model: v.model,
+        powerKw: v.powerKw ?? undefined,
         registrationPlate: v.regNumber ?? undefined,
         color: v.color,
         driverName: v.assignedDriver?.name,
@@ -621,6 +634,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         id: i.id,
         name: i.name,
         type: i.type.toLowerCase(),
+        category: i.category ?? undefined,
         model: i.model ?? '',
         manufacturer: i.manufacturer ?? '',
         workingWidthM: i.workingWidthM,
@@ -771,7 +785,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const vData: any = {
         name: v.name,
         type: (v.type || 'tractor').toUpperCase() as any,
+        category: cleanCategory(v.category),
         model: v.model,
+        powerKw: toPositiveNumber(v.powerKw),
         regNumber: v.registrationPlate || v.regNumber || null,
         color: v.color || '#10b981',
         notes: v.notes ?? null
@@ -820,6 +836,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const iData: any = {
         name: i.name,
         type: (i.type || 'other').toUpperCase() as any,
+        category: cleanCategory(i.category),
         workingWidthM: i.workingWidthM,
         manufacturer: i.manufacturer || null,
         model: i.model || null,

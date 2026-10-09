@@ -318,7 +318,9 @@ model Vehicle {
   id                  String      @id @default(cuid())
   name                String
   type                VehicleType
+  category            String? // Masina liik (vabatekst, isetäienev olemasolevatest)
   model               String
+  powerKw             Float? // Mootorivõimsus kW
   regNumber           String?
   workingWidthM       Float       @default(6.0)
   color               String      @default("#10b981")
@@ -351,6 +353,7 @@ model Implement {
   id               String        @id @default(cuid())
   name             String
   type             ImplementType
+  category         String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
   workingWidthM    Float
   manufacturer     String?
   model            String?

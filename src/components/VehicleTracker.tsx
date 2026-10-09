@@ -167,6 +167,49 @@ const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   atv: 'ATV / Maastur'
 };
 
+// Andmebaasis juba olevad liigid (tõstutundetult unikaalsed, tähestiku järjekorras)
+function distinctCategories(items: { category?: string }[]): string[] {
+  const byKey = new Map<string, string>();
+  for (const item of items) {
+    const c = item.category?.trim();
+    if (c && !byKey.has(c.toLocaleLowerCase('et'))) byKey.set(c.toLocaleLowerCase('et'), c);
+  }
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b, 'et'));
+}
+
+// Kui sisestatud liik kattub olemasolevaga (tõstutundetult), kasutatakse olemasoleva kirjapilti
+function normalizeCategory(value: string, existing: string[]): string | undefined {
+  const s = value.trim().replace(/\s+/g, ' ');
+  if (!s) return undefined;
+  return existing.find((c) => c.toLocaleLowerCase('et') === s.toLocaleLowerCase('et')) ?? s;
+}
+
+interface CategoryInputProps {
+  id: string;
+  value: string;
+  onChange: (value: string) => void;
+  options: string[];
+  placeholder?: string;
+}
+
+// Isetäienev liigi väli: pakub olemasolevaid liike, aga lubab sisestada ka uue
+const CategoryInput: React.FC<CategoryInputProps> = ({ id, value, onChange, options, placeholder }) => (
+  <>
+    <input
+      type="text"
+      list={id}
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="form-input"
+      autoComplete="off"
+    />
+    <datalist id={id}>
+      {options.map((c) => <option key={c} value={c} />)}
+    </datalist>
+  </>
+);
+
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
 }
@@ -255,6 +298,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vName, setVName] = useState('');
   const [vModel, setVModel] = useState('');
   const [vType, setVType] = useState<VehicleType>('tractor');
+  const [vCategory, setVCategory] = useState('');
+  const [vPowerKw, setVPowerKw] = useState('');
   const [vPlate, setVPlate] = useState('');
   const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
@@ -267,10 +312,15 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impManufacturer, setImpManufacturer] = useState('');
   const [impModel, setImpModel] = useState('');
   const [impType, setImpType] = useState<ImplementType>('cultivator');
+  const [impCategory, setImpCategory] = useState('');
   const [impWidth, setImpWidth] = useState(8.0);
   const [impSerial, setImpSerial] = useState('');
   const [impAssignedVehId, setImpAssignedVehId] = useState('');
   const [impNotes, setImpNotes] = useState('');
+
+  // Masinate ja haakeriistade liigid on eraldi nimekirjad
+  const vehicleCategories = useMemo(() => distinctCategories(vehicles), [vehicles]);
+  const implementCategories = useMemo(() => distinctCategories(implementsList), [implementsList]);
 
   // 3. Teltonika Form
   const [devConnectivity, setDevConnectivity] = useState<DeviceConnectivity>('cellular');
@@ -509,6 +559,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVName('');
     setVModel('');
     setVType('tractor');
+    setVCategory('');
+    setVPowerKw('');
     setVPlate('');
     setVDriver('');
     setVColor('#22c55e');
@@ -522,6 +574,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpManufacturer('');
     setImpModel('');
     setImpType('cultivator');
+    setImpCategory('');
     setImpWidth(8.0);
     setImpSerial('');
     setImpAssignedVehId('');
@@ -554,6 +607,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       name: vName.trim(),
       model: vModel.trim() || 'Teadmata mudel',
       type: vType,
+      category: normalizeCategory(vCategory, vehicleCategories),
+      powerKw: Number(vPowerKw.replace(',', '.')) > 0 ? Number(vPowerKw.replace(',', '.')) : undefined,
       registrationPlate: vPlate.trim() || undefined,
       driverName: vDriver.trim() || undefined,
       color: vColor,
@@ -581,6 +636,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       manufacturer: impManufacturer.trim() || 'Tootja',
       model: impModel.trim() || impName.trim(),
       type: impType,
+      category: normalizeCategory(impCategory, implementCategories),
       workingWidthM: Number(impWidth) || 6.0,
       serialNumber: impSerial.trim() || undefined,
       assignedVehicleId: impAssignedVehId || undefined,
@@ -639,6 +695,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVName(v.name);
     setVModel(v.model);
     setVType(v.type);
+    setVCategory(v.category || '');
+    setVPowerKw(v.powerKw != null ? String(v.powerKw) : '');
     setVPlate(v.registrationPlate || '');
     setVDriver(v.driverName || '');
     setVColor(v.color);
@@ -654,6 +712,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpManufacturer(imp.manufacturer);
     setImpModel(imp.model);
     setImpType(imp.type);
+    setImpCategory(imp.category || '');
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
     setImpAssignedVehId(imp.assignedVehicleId || '');
@@ -759,12 +818,35 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   />
                 </div>
                 <div className="form-group">
-                  <label>Mudel / Mootorivõimsus</label>
+                  <label>Liik</label>
+                  <CategoryInput
+                    id="vehicle-category-options"
+                    value={vCategory}
+                    onChange={setVCategory}
+                    options={vehicleCategories}
+                    placeholder="Vali olemasolev või sisesta uus"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Mudel</label>
                   <input
                     type="text"
-                    placeholder="nt 8R 410 AutoPowr (410 hj)"
+                    placeholder="nt 8R 410 AutoPowr"
                     value={vModel}
                     onChange={(e) => setVModel(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Võimsus (kW)</label>
+                  <input
+                    type="number"
+                    min="0"
+                    step="any"
+                    inputMode="decimal"
+                    placeholder="nt 302"
+                    value={vPowerKw}
+                    onChange={(e) => setVPowerKw(e.target.value)}
                     className="form-input"
                   />
                 </div>
@@ -885,6 +967,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     value={impName}
                     onChange={(e) => setImpName(e.target.value)}
                     className="form-input"
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Liik</label>
+                  <CategoryInput
+                    id="implement-category-options"
+                    value={impCategory}
+                    onChange={setImpCategory}
+                    options={implementCategories}
+                    placeholder="Vali olemasolev või sisesta uus"
                   />
                 </div>
                 <div className="form-group">
@@ -1312,7 +1404,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                     <div>
                       <h4 className="v-name">{v.name}</h4>
-                      <span className="v-model">{v.model} &bull; {v.registrationPlate || 'Reg. nr puudub'}</span>
+                      <span className="v-model">{[v.category, v.model, v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
                     </div>
                   </div>
 
@@ -1505,7 +1597,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                   <div className="imp-title-wrap">
                     <h4 className="imp-name">{imp.name}</h4>
-                    <span className="imp-meta">{imp.manufacturer} &bull; {IMPLEMENT_TYPE_LABELS[imp.type]} &bull; {imp.workingWidthM}m</span>
+                    <span className="imp-meta">{[imp.category, imp.manufacturer, IMPLEMENT_TYPE_LABELS[imp.type], `${imp.workingWidthM}m`].filter(Boolean).join(' • ')}</span>
                   </div>
                   <div className="card-header-actions">
                     <button
