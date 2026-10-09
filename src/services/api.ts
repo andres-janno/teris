@@ -192,6 +192,18 @@ export const api = {
     return res.json();
   },
 
+  /** Satiladu Sentinel-2 päevapiltide kuupäevad (AAAA-KK-PP, uusim ees); bbox = [lõuna, lääs, põhi, ida] */
+  async getSatelliteDates(from: string, to: string, cloudFreeBbox?: [number, number, number, number]): Promise<string[]> {
+    const params = new URLSearchParams({ from, to });
+    if (cloudFreeBbox) {
+      params.set('cloudFree', '1');
+      params.set('bbox', cloudFreeBbox.map((v) => v.toFixed(5)).join(','));
+    }
+    const res = await apiFetch(`/api/satellite/dates?${params}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Satelliidipiltide loend pole saadaval'));
+    return (await res.json()).dates;
+  },
+
   async getTelemetryHistory(
     target: string | { imei?: string; vehicleId?: string; hours?: number; from?: string; to?: string },
     hours = 6,

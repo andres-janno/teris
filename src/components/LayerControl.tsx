@@ -358,6 +358,26 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 </button>
               </div>
 
+              {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
+              <div className="layer-item">
+                <label className="layer-label">
+                  <input
+                    type="checkbox"
+                    checked={visibility.satellite}
+                    onChange={() => onToggleLayer('satellite')}
+                  />
+                  <span className="layer-color-indicator satellite-color"></span>
+                  <span className="layer-text">Satelliidipilt</span>
+                </label>
+                <button
+                  className="icon-toggle"
+                  onClick={() => onToggleLayer('satellite')}
+                  title={visibility.satellite ? 'Peida' : 'Näita'}
+                >
+                  {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
+              </div>
+
               {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
               <div className="layer-item">
                 <label className="layer-label">

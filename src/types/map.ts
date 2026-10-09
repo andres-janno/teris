@@ -26,6 +26,7 @@ export interface LayerVisibility {
   swathTrails: boolean;     // Töötrajektoori joonekesed
   soilSamples: boolean;     // Mullaproovide punktid
   weatherRadar: boolean;    // Sajuradar (Keskkonnaagentuur, KAIA)
+  satellite: boolean;       // Satelliidipilt (Maa- ja Ruumiamet, Satiladu: Sentinel-2)
 }
 
 export type VehicleDisplayFilter = 'active' | 'all';

@@ -18,6 +18,8 @@ import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
+import { createSatelliteLayer, type SatelliteProductId } from '../services/satelliteLayer';
+import { SatellitePanel } from './SatellitePanel';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -92,6 +94,11 @@ export const MapView: React.FC<MapViewProps> = ({
   const [radarFrames, setRadarFrames] = useState<{ time: string; imageUrl: string }[]>([]);
   const [radarFrameIdx, setRadarFrameIdx] = useState(0);
   const [radarError, setRadarError] = useState<string | null>(null);
+  const satelliteLayerRef = useRef<L.GridLayer | null>(null);
+  const [satelliteProduct, setSatelliteProduct] = useState<SatelliteProductId>('rgb');
+  const [satelliteDate, setSatelliteDate] = useState<string | null>(null);
+  // Kaardi eksemplar satelliidipaneelile (kaardivaade pilvevaba otsingu jaoks)
+  const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const soilSampleLayerGroupRef = useRef<L.LayerGroup | null>(null);
 
@@ -199,10 +206,12 @@ export const MapView: React.FC<MapViewProps> = ({
     }
 
     mapInstanceRef.current = map;
+    setMapInstance(map);
 
     return () => {
       map.remove();
       mapInstanceRef.current = null;
+      setMapInstance(null);
     };
   }, []);
 
@@ -294,6 +303,13 @@ export const MapView: React.FC<MapViewProps> = ({
       return feature.properties.cropColor || getCropColor(feature.properties.crop);
     };
 
+    // Satelliidipildi peal näidatakse põlde peaaegu ainult piirjoontena, et pilt jääks nähtavaks
+    const fillOpacityFor = (isSelected: boolean, matchesFilter: boolean, hover = false): number => {
+      if (visibility.satellite) return hover || isSelected ? 0.15 : 0;
+      if (hover) return 0.85;
+      return isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12);
+    };
+
     const geoJsonLayer = L.geoJSON(fields as any, {
       style: (feature: any) => {
         const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
@@ -304,7 +320,7 @@ export const MapView: React.FC<MapViewProps> = ({
           weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0),
           opacity: matchesFilter ? 0.95 : 0.35,
           fillColor: getFillColor(feature),
-          fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12)
+          fillOpacity: fillOpacityFor(!!isSelected, matchesFilter)
         };
       },
       onEachFeature: (feature: any, layer: L.Layer) => {
@@ -342,14 +358,14 @@ export const MapView: React.FC<MapViewProps> = ({
           },
           mouseover: (e) => {
             const l = e.target;
-            l.setStyle({ fillOpacity: 0.85, weight: 3 });
+            l.setStyle({ fillOpacity: fillOpacityFor(false, true, true), weight: 3 });
           },
           mouseout: (e) => {
             const l = e.target;
             const isSelected = selectedField && selectedField.properties.id === feature.properties.id;
             const matchesFilter = !selectedCropFilter || feature.properties.crop === selectedCropFilter;
             l.setStyle({
-              fillOpacity: isSelected ? 0.8 : (matchesFilter ? 0.65 : 0.12),
+              fillOpacity: fillOpacityFor(!!isSelected, matchesFilter),
               weight: isSelected ? 3.5 : (matchesFilter ? 2.0 : 1.0)
             });
           }
@@ -359,7 +375,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
     geoJsonLayer.addTo(map);
     fieldsLayerGroupRef.current = geoJsonLayer;
-  }, [fields, visibility.fields, visibility.fieldLabels, visibility.soilSamples, selectedField, selectedCropFilter, latestByFieldCode, getFieldMetricAverage, soilMetric]);
+  }, [fields, visibility.fields, visibility.fieldLabels, visibility.soilSamples, visibility.satellite, selectedField, selectedCropFilter, latestByFieldCode, getFieldMetricAverage, soilMetric]);
 
   // 4. Render Machinery / Vehicles Layer (Respects vehicleFilter: active vs all)
   const displayedVehicles = React.useMemo(() => {
@@ -561,6 +577,15 @@ export const MapView: React.FC<MapViewProps> = ({
       clearInterval(timer);
     };
   }, [visibility.weatherRadar]);
+
+  // 5c2. Satelliidipilt (Satiladu Sentinel-2): kiht vahetatakse toote või kuupäeva muutumisel
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    satelliteLayerRef.current?.remove();
+    satelliteLayerRef.current = null;
+    if (!map || !visibility.satellite || !satelliteDate) return;
+    satelliteLayerRef.current = createSatelliteLayer(satelliteProduct, satelliteDate).addTo(map);
+  }, [visibility.satellite, satelliteProduct, satelliteDate]);
 
   // 5d. Sajuradari animatsioon: kaadrid järjest, viimane (hetkeseis) püsib kauem
   useEffect(() => {
@@ -822,6 +847,16 @@ export const MapView: React.FC<MapViewProps> = ({
             <span className="radar-legend-unit">mm/h</span>
           </div>
         </div>
+      )}
+
+      {visibility.satellite && (
+        <SatellitePanel
+          map={mapInstance}
+          product={satelliteProduct}
+          onSelectProduct={setSatelliteProduct}
+          date={satelliteDate}
+          onSelectDate={setSatelliteDate}
+        />
       )}
 
       {/* Add POI Banner */}

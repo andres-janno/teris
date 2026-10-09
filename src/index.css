@@ -643,6 +643,100 @@ body {
   background: #1e6fff;
 }
 
+.satellite-color {
+  background: linear-gradient(135deg, #2b7c4c, #c9d292 50%, #8f6b3a);
+}
+
+/* Satelliidipildi juhtpaneel (Satiladu) */
+.satellite-panel {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: min(340px, calc(100vw - 32px));
+  padding: 8px 10px;
+  z-index: 800;
+  border-radius: var(--radius-sm);
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.satellite-panel-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.satellite-panel-source {
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+.satellite-product-row {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 4px;
+}
+.satellite-product-row .basemap-btn {
+  justify-content: center;
+}
+.satellite-date-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.satellite-date-row .form-input {
+  padding: 4px 6px;
+  font-size: 0.75rem;
+  min-width: 0;
+}
+.satellite-date-select {
+  flex: 1;
+}
+.satellite-period-select {
+  flex: 0 0 auto;
+  width: auto;
+}
+.satellite-date-row .icon-btn-ghost:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+.satellite-cloudfree {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.satellite-panel-note {
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+.satellite-panel-note.error {
+  color: var(--rose-500);
+}
+.satellite-ndvi-bar {
+  height: 8px;
+  border-radius: 2px;
+}
+.satellite-ndvi-labels {
+  position: relative;
+  height: 12px;
+  font-size: 0.62rem;
+}
+.satellite-ndvi-labels span {
+  position: absolute;
+  top: 1px;
+  transform: translateX(-50%);
+}
+.satellite-ndvi-labels span:first-child {
+  transform: none;
+}
+.satellite-ndvi-labels span:last-child {
+  transform: translateX(-100%);
+}
+
 /* Map Navigation & Fit-All Toolbar */
 .map-nav-toolbar {
   position: absolute;
