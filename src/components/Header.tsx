@@ -17,7 +17,8 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export type MainView = 'map' | 'seasons' | 'fields' | 'crops' | 'works' | 'fleet' | 'infrastructure' | 'parties' | 'materials';
+export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'works', 'fleet', 'infrastructure', 'parties', 'materials'] as const;
+export type MainView = typeof MAIN_VIEWS[number];
 
 interface HeaderProps {
   fieldsCount?: number;
@@ -66,8 +67,8 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   return (
     <header className="app-header">
-      {/* Logo klõps laeb lehe uuesti algolekusse (nagu uues brauseris avamine) */}
-      <a href="/" className="header-brand" title="Ava TERIS algusest">
+      {/* Logo klõps laeb lehe uuesti algolekusse (kaardivaade, nagu uues brauseris avamine) */}
+      <a href="/" className="header-brand" title="Ava TERIS algusest" onClick={() => onChangeMainView?.('map')}>
         <TerisLogo variant="horizontal" />
       </a>
 

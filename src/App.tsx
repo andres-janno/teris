@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, startTransition } from 'react';
 import confetti from 'canvas-confetti';
-import { Header, type MainView } from './components/Header';
+import { Header, MAIN_VIEWS, type MainView } from './components/Header';
 import { MapView } from './components/MapView';
 import { LayerControl } from './components/LayerControl';
 import { CultivationControl } from './components/CultivationControl';
@@ -443,10 +443,24 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isCropsModalOpen, setIsCropsModalOpen] = useState(false);
   const [isWorkRegisterOpen, setIsWorkRegisterOpen] = useState(false);
 
-  // Põhivaade: hooajad, kaart, põllud, kultuurid, põllutööd, tehnika või taristu. Lehe avamisel alati kaart.
-  const [mainView, setMainView] = useState<MainView>('map');
+  // Põhivaade (ülamenüü valik): jäetakse meelde kasutaja kaupa (selles brauseris), et lehe
+  // värskendamine avaks sama vaate. Logo klõps lähtestab valiku kaardile.
+  const mainViewKey = `agrimap_main_view_${user.id}`;
+  const [mainView, setMainView] = useState<MainView>(() => {
+    try {
+      const saved = localStorage.getItem(mainViewKey);
+      return saved && (MAIN_VIEWS as readonly string[]).includes(saved) ? (saved as MainView) : 'map';
+    } catch {
+      return 'map';
+    }
+  });
   const changeMainView = (view: MainView) => {
     setMainView(view);
+    try {
+      localStorage.setItem(mainViewKey, view);
+    } catch {
+      // brauseri salvestus pole saadaval — valik kehtib ainult selle seansi ajal
+    }
     // Leaflet peab peidetud konteineri suuruse uuesti arvutama
     if (view === 'map') setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
   };
