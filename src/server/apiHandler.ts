@@ -212,6 +212,15 @@ function toPositiveNumber(value: unknown): number | null {
   return value != null && value !== '' && Number.isFinite(n) && n > 0 ? n : null;
 }
 
+// Kuupäev ilma kellaajata (@db.Date): 'YYYY-MM-DD' ↔ Date (UTC südaöö)
+function dateOnlyIn(value: unknown): Date | null {
+  return typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value) ? new Date(`${value}T00:00:00.000Z`) : null;
+}
+
+function dateOnlyOut(value: Date | null): string | undefined {
+  return value ? value.toISOString().slice(0, 10) : undefined;
+}
+
 // Soetusmaksumus ja amortisatsioon (masinad ja haakeriistad). Meetod andmebaasis suurtähtedega.
 const DEPRECIATION_METHODS = ['LINEAR', 'DECLINING'];
 
@@ -220,14 +229,16 @@ function depreciationIn(body: any) {
   const rate = toPositiveNumber(body.depreciationRate);
   return {
     acquisitionCost: toPositiveNumber(body.acquisitionCost),
+    acquisitionDate: dateOnlyIn(body.acquisitionDate),
     depreciationRate: rate != null && rate <= 100 ? rate : null,
     depreciationMethod: DEPRECIATION_METHODS.includes(method) ? method : null
   };
 }
 
-function depreciationOut(row: { acquisitionCost: number | null; depreciationRate: number | null; depreciationMethod: string | null }) {
+function depreciationOut(row: { acquisitionCost: number | null; acquisitionDate: Date | null; depreciationRate: number | null; depreciationMethod: string | null }) {
   return {
     acquisitionCost: row.acquisitionCost ?? undefined,
+    acquisitionDate: dateOnlyOut(row.acquisitionDate),
     depreciationRate: row.depreciationRate ?? undefined,
     depreciationMethod: row.depreciationMethod?.toLowerCase() ?? undefined
   };
@@ -735,6 +746,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           model: d.model,
           simNumber: d.simNumber ?? '',
           firmwareVersion: d.firmware ?? undefined,
+          acquisitionDate: dateOnlyOut(d.acquisitionDate),
           status,
           notes: (d as any).notes ?? undefined,
           lastUpdate: lastUpdate ?? ''
@@ -907,6 +919,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         model: d.model,
         simNumber: d.simNumber || null,
         firmware: d.firmwareVersion || null,
+        acquisitionDate: dateOnlyIn(d.acquisitionDate),
         status: (d.status || 'offline').toUpperCase() as any,
         notes: d.notes ?? null
       };

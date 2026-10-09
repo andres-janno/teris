@@ -224,6 +224,8 @@ const DEPRECIATION_METHOD_LABELS: Record<DepreciationMethod, string> = {
 };
 
 interface DepreciationFieldsProps {
+  date: string;
+  onDateChange: (value: string) => void;
   cost: string;
   onCostChange: (value: string) => void;
   rate: string;
@@ -233,8 +235,12 @@ interface DepreciationFieldsProps {
 }
 
 // Soetusmaksumus ja amortisatsioon — sama plokk masina ja haakeriista vormis
-const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ cost, onCostChange, rate, onRateChange, method, onMethodChange }) => (
+const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateChange, cost, onCostChange, rate, onRateChange, method, onMethodChange }) => (
   <>
+    <div className="form-group">
+      <label>Soetamise kuupäev</label>
+      <DateInput value={date} onChange={onDateChange} className="form-input" />
+    </div>
     <div className="form-group">
       <label>Soetusmaksumus (€)</label>
       <input
@@ -369,6 +375,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vCategory, setVCategory] = useState('');
   const [vPowerKw, setVPowerKw] = useState('');
   const [vCost, setVCost] = useState('');
+  const [vAcqDate, setVAcqDate] = useState('');
   const [vDepRate, setVDepRate] = useState('');
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
   const [vPlate, setVPlate] = useState('');
@@ -384,6 +391,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impType, setImpType] = useState<ImplementType>('cultivator');
   const [impCategory, setImpCategory] = useState('');
   const [impCost, setImpCost] = useState('');
+  const [impAcqDate, setImpAcqDate] = useState('');
   const [impDepRate, setImpDepRate] = useState('');
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
   const [impWidth, setImpWidth] = useState(8.0);
@@ -404,6 +412,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // tüüpi seadet saab paigaldada kas masinasse või haakeriista külge.
   const [devAssignedTarget, setDevAssignedTarget] = useState('');
   const [devNotes, setDevNotes] = useState('');
+  const [devAcqDate, setDevAcqDate] = useState('');
 
   const handleConnectivityChange = (next: DeviceConnectivity) => {
     setDevConnectivity(next);
@@ -623,6 +632,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVCategory('');
     setVPowerKw('');
     setVCost('');
+    setVAcqDate('');
     setVDepRate('');
     setVDepMethod('');
     setVPlate('');
@@ -639,6 +649,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpType('cultivator');
     setImpCategory('');
     setImpCost('');
+    setImpAcqDate('');
     setImpDepRate('');
     setImpDepMethod('');
     setImpWidth(8.0);
@@ -654,6 +665,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevMac('');
     setDevAssignedTarget('');
     setDevNotes('');
+    setDevAcqDate('');
   };
 
   const openAddForm = () => {
@@ -675,6 +687,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       category: normalizeCategory(vCategory, vehicleCategories),
       powerKw: parsePositive(vPowerKw),
       acquisitionCost: parsePositive(vCost),
+      acquisitionDate: vAcqDate || undefined,
       depreciationRate: parsePositive(vDepRate),
       depreciationMethod: vDepMethod || undefined,
       registrationPlate: vPlate.trim() || undefined,
@@ -705,6 +718,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       type: impType,
       category: normalizeCategory(impCategory, implementCategories),
       acquisitionCost: parsePositive(impCost),
+      acquisitionDate: impAcqDate || undefined,
       depreciationRate: parsePositive(impDepRate),
       depreciationMethod: impDepMethod || undefined,
       workingWidthM: Number(impWidth) || 6.0,
@@ -745,6 +759,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       hydraulicActive: false,
       satelliteCount: devConnectivity === 'eye_sensor' ? 0 : 16,
       hdop: devConnectivity === 'eye_sensor' ? 0 : 0.8,
+      acquisitionDate: devAcqDate || undefined,
       notes: devNotes.trim() || undefined
     };
     if (editingDeviceId) {
@@ -767,6 +782,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVCategory(v.category || '');
     setVPowerKw(v.powerKw != null ? String(v.powerKw) : '');
     setVCost(v.acquisitionCost != null ? String(v.acquisitionCost) : '');
+    setVAcqDate(v.acquisitionDate || '');
     setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
     setVDepMethod(v.depreciationMethod || '');
     setVPlate(v.registrationPlate || '');
@@ -785,6 +801,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpType(imp.type);
     setImpCategory(imp.category || '');
     setImpCost(imp.acquisitionCost != null ? String(imp.acquisitionCost) : '');
+    setImpAcqDate(imp.acquisitionDate || '');
     setImpDepRate(imp.depreciationRate != null ? String(imp.depreciationRate) : '');
     setImpDepMethod(imp.depreciationMethod || '');
     setImpWidth(imp.workingWidthM);
@@ -802,6 +819,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevMac(dev.macAddress || '');
     setDevAssignedTarget(dev.assignedVehicleId ? `veh:${dev.assignedVehicleId}` : (dev.assignedImplementId ? `imp:${dev.assignedImplementId}` : ''));
     setDevNotes(dev.notes || '');
+    setDevAcqDate(dev.acquisitionDate || '');
     setEditingDeviceId(dev.id);
     setIsAddingNew(true);
   };
@@ -980,6 +998,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </select>
                 </div>
                 <DepreciationFields
+                  date={vAcqDate}
+                  onDateChange={setVAcqDate}
                   cost={vCost}
                   onCostChange={setVCost}
                   rate={vDepRate}
@@ -1098,6 +1118,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   />
                 </div>
                 <DepreciationFields
+                  date={impAcqDate}
+                  onDateChange={setImpAcqDate}
                   cost={impCost}
                   onCostChange={setImpCost}
                   rate={impDepRate}
@@ -1241,6 +1263,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       ))}
                     </optgroup>
                   </select>
+                </div>
+                <div className="form-group">
+                  <label>Soetamise kuupäev</label>
+                  <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
                 </div>
                 <div className="form-group full-width">
                   <label>Märkused</label>

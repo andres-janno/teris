@@ -28,6 +28,7 @@ export interface Vehicle {
   category?: string;              // Masina liik (vabatekst)
   powerKw?: number;               // Mootorivõimsus kW
   acquisitionCost?: number;       // Soetusmaksumus (€)
+  acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
   depreciationMethod?: DepreciationMethod;
   registrationPlate?: string;
@@ -78,6 +79,7 @@ export interface Implement {
   type: ImplementType;
   category?: string;              // Haakeriista liik (vabatekst, eraldi masinate liikidest)
   acquisitionCost?: number;       // Soetusmaksumus (€)
+  acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
   depreciationMethod?: DepreciationMethod;
   workingWidthM: number;          // Töölaius meetrites (nt 12m)
@@ -105,6 +107,7 @@ export interface TeltonikaDevice {
   macAddress?: string;            // Kohustuslik ainult 'eye_sensor' tüübil
   model: string;                 // nt FMB640, FMC650 või vabatekst Eye sensori mudel
   firmwareVersion?: string;
+  acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   assignedVehicleId?: string;    // Millisesse masinasse paigaldatud (kui on paigaldatud)
   assignedImplementId?: string;  // Millise haakeriista külge paigaldatud (kui on paigaldatud)
   notes?: string;

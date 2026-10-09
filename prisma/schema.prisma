@@ -322,6 +322,7 @@ model Vehicle {
   model               String
   powerKw             Float? // Mootorivõimsus kW
   acquisitionCost     Float? // Soetusmaksumus (€)
+  acquisitionDate     DateTime?   @db.Date // Soetamise kuupäev
   depreciationRate    Float? // Amortisatsioonimäär (% aastas)
   depreciationMethod  String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   regNumber           String?
@@ -359,6 +360,7 @@ model Implement {
   category           String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
   workingWidthM      Float
   acquisitionCost    Float? // Soetusmaksumus (€)
+  acquisitionDate    DateTime?     @db.Date // Soetamise kuupäev
   depreciationRate   Float? // Amortisatsioonimäär (% aastas)
   depreciationMethod String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   manufacturer       String?
@@ -394,6 +396,7 @@ model TeltonikaDevice {
   model            String
   simNumber        String?
   firmware         String?
+  acquisitionDate  DateTime?          @db.Date // Soetamise kuupäev
   status           DeviceStatus       @default(OFFLINE)
   notes            String?
   createdAt        DateTime           @default(now())
