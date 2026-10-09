@@ -1120,6 +1120,14 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         where: { deviceId, endedAt: null }
       });
 
+      // Sama sidumine on juba aktiivne (nt masina vormi salvestamine seadet muutmata):
+      // ajalugu ei poolitata uueks kirjeks.
+      const sameTarget = activeAssignment && (
+        (vehicleId && activeAssignment.vehicleId === vehicleId && !activeAssignment.implementId) ||
+        (!vehicleId && implementId && activeAssignment.implementId === implementId && !activeAssignment.vehicleId)
+      );
+      if (sameTarget) return json(res, { success: true });
+
       let lastLat: number | null = null;
       let lastLng: number | null = null;
 
