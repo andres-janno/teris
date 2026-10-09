@@ -658,27 +658,15 @@ export async function getTelemetrySuggestionsForField(
       },
       orderBy: { startedAt: 'desc' },
       include: {
-        vehicle: { include: { assignedDriver: true, assignedImplement: true } },
+        vehicle: { include: { assignedDriver: true } },
         implement: true
       }
     });
 
-    let vehicle = asgn?.vehicle ?? null;
-    let implement = asgn?.implement ?? vehicle?.assignedImplement ?? null;
-    let worker = vehicle?.assignedDriver ?? null;
-
-    if (!vehicle) {
-      const devRecord = await prisma.teltonikaDevice.findFirst({
-        where: { imei: s.device },
-        include: {
-          vehicle: { include: { assignedDriver: true, assignedImplement: true } },
-          implement: true
-        }
-      });
-      vehicle = devRecord?.vehicle ?? null;
-      implement = devRecord?.implement ?? vehicle?.assignedImplement ?? null;
-      worker = vehicle?.assignedDriver ?? null;
-    }
+    // Seade ↔ masin/haakeriist tuleb ainult seadmete seoste registrist
+    const vehicle = asgn?.vehicle ?? null;
+    let implement = asgn?.implement ?? null;
+    const worker = vehicle?.assignedDriver ?? null;
 
     // Kui telemeetria enda andmetest ei tule välja, milline haakeriist oli masina küljes,
     // siis leiame selle haakeriista masina ja haakeriista seose tabelist (ImplementAssignment),

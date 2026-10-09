@@ -1,7 +1,7 @@
 // src/services/api.ts
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import type { Vehicle, Implement, TeltonikaDevice, ImplementAssignment } from '../types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -180,7 +180,7 @@ export const api = {
     return res.json();
   },
 
-  async getFleet(): Promise<{ vehicles: Vehicle[]; implements: Implement[]; devices: TeltonikaDevice[] }> {
+  async getFleet(): Promise<{ vehicles: Vehicle[]; implements: Implement[]; devices: TelemetryDevice[] }> {
     const res = await apiFetch('/api/fleet');
     if (!res.ok) throw new Error('Failed to fetch fleet');
     return res.json();
@@ -324,7 +324,39 @@ export const api = {
     return res.json();
   },
 
-  async saveDevice(device: TeltonikaDevice): Promise<any> {
+  async getDeviceAssignments(): Promise<DeviceAssignment[]> {
+    const res = await apiFetch('/api/fleet/device-assignments');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seadmete seoste registri laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async createDeviceAssignment(data: DeviceAssignmentInput): Promise<DeviceAssignment> {
+    const res = await apiFetch('/api/fleet/device-assignments', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seose kirje salvestamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async updateDeviceAssignment(id: string, data: DeviceAssignmentInput): Promise<DeviceAssignment> {
+    const res = await apiFetch(`/api/fleet/device-assignments/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seose kirje salvestamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async deleteDeviceAssignment(id: string): Promise<any> {
+    const res = await apiFetch(`/api/fleet/device-assignments/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seose kirje kustutamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async saveDevice(device: TelemetryDevice): Promise<any> {
     const res = await apiFetch('/api/fleet/devices', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },

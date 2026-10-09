@@ -1,5 +1,5 @@
 // src/services/fleet.ts
-import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from '../types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, EnrichedVehicle } from '../types/fleet';
 
 /**
  * Ühendab 3 eraldi registrit täielikuks kaardi ja simulatsiooni vaateks
@@ -7,10 +7,10 @@ import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from '../ty
 export function enrichVehicles(
   vehicles: Vehicle[],
   implementsList: Implement[],
-  devices: TeltonikaDevice[]
+  devices: TelemetryDevice[]
 ): EnrichedVehicle[] {
   return vehicles.map((v) => {
-    // Leia paigaldatud Teltonika seade
+    // Leia paigaldatud telemeetriaseade
     const device = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
     
     // Leia haagitud tööriist

@@ -39,7 +39,7 @@ export interface FieldProperties extends BaseFieldProperties {
   varietyId?: string | null;  // Sordi ID
   cropColor?: string;         // Visuaalne värv kaardil
   year?: number;              // Hooeaasta aasta
-  workedAreaHa?: number;      // Haritud pindala (arvutatud Teltonika järgi)
+  workedAreaHa?: number;      // Haritud pindala (arvutatud telemeetria järgi)
   workProgress?: number;      // 0 - 100%
   status?: 'not_started' | 'in_progress' | 'completed';
 }

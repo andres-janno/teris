@@ -35,22 +35,36 @@ export interface Vehicle {
   driverName?: string;
   color: string;
   year?: number;
-  assignedDeviceId?: string;      // Seotud Teltonika seadme ID
+  assignedDeviceId?: string;      // Seotud telemeetriaseadme ID (seoste registrist)
   assignedImplementId?: string;   // Seotud Haakeriista ID
   lastKnownPosition?: [number, number]; // Viimane teadaolev asukoht enne seadme eemaldamist
   lastActiveAt?: string;                // Viimane liikumise / telemeetria aeg
   notes?: string;
 }
 
+/** Telemeetriaseadmete seoste registri kirje: seade on seotud masina VÕI haakeriistaga. */
 export interface DeviceAssignment {
   id: string;
+  deviceId: string;
+  deviceModel?: string;
+  deviceIdentifier?: string;      // IMEI (mobiilne seade) või MAC (Eye sensor)
+  deviceConnectivity?: DeviceConnectivity;
+  vehicleId?: string;
+  vehicleName?: string;
+  implementId?: string;
+  implementName?: string;
+  startedAt: string;
+  endedAt?: string;
+  notes?: string;
+  createdAt?: string;
+}
+
+export interface DeviceAssignmentInput {
   deviceId: string;
   vehicleId?: string;
   implementId?: string;
   startedAt: string;
-  endedAt?: string;
-  lastLatitude?: number;
-  lastLongitude?: number;
+  endedAt: string | null;
   notes?: string;
 }
 
@@ -95,11 +109,11 @@ export interface Implement {
 export type DeviceConnectivity = 'cellular' | 'eye_sensor';
 
 /**
- * Teltonika GPS ja Telemeetria seadmete register.
+ * Telemeetriaseadmete (GPS-jälgurid ja andurid) register.
  * Kaks sidususe tüüpi: 'cellular' (IMEI + SIM, paigaldatakse masinasse)
  * ja 'eye_sensor' (MAC-aadress, BLE-andur haakeriista küljes).
  */
-export interface TeltonikaDevice {
+export interface TelemetryDevice {
   id: string;
   connectivityType: DeviceConnectivity;
   imei?: string;                 // Kohustuslik ainult 'cellular' tüübil

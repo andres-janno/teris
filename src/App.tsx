@@ -15,7 +15,7 @@ import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
 import { generateFieldCollectionForYear } from './types/fieldRegister';
-import type { Vehicle, Implement, TeltonikaDevice, EnrichedVehicle } from './types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, EnrichedVehicle } from './types/fleet';
 import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
@@ -260,8 +260,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // 2. Haakeriistade register
   const [implementsList, setImplementsList] = useState<Implement[]>([]);
 
-  // 3. Teltonika GPS seadmete register
-  const [devices, setDevices] = useState<TeltonikaDevice[]>([]);
+  // 3. Telemeetriaseadmete register
+  const [devices, setDevices] = useState<TelemetryDevice[]>([]);
 
   // Simulaatoris aktiivne sõiduki ID (kui on sisse lülitatud)
   const [simulatedVehicleId, setSimulatedVehicleId] = useState<string | null>(null);
@@ -960,16 +960,30 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.assignDevice(deviceId, vehicleId, implementId).catch((err) => console.error('Error assigning device in DB:', err));
   };
 
-  // Haakimise register on haakimise ainus tõeallikas: pärast registri otsest muutmist
-  // loetakse masinate ja haakeriistade haakimise olek serverist uuesti.
-  const refreshHitches = () => {
+  // Haakimise ja seadmete seoste registrid on seoste ainus tõeallikas: pärast registri otsest
+  // muutmist loetakse masinate, haakeriistade ja seadmete seosed serverist uuesti.
+  const refreshLinks = () => {
     api.getFleet().then((fleet) => {
       if (!fleet) return;
-      const vehHitch = new Map<string, string | undefined>(fleet.vehicles?.map((v: Vehicle) => [v.id, v.assignedImplementId]));
-      const impHitch = new Map<string, string | undefined>(fleet.implements?.map((i: Implement) => [i.id, i.assignedVehicleId]));
-      setRawVehicles((prev) => prev.map((v) => ({ ...v, assignedImplementId: vehHitch.get(v.id) })));
-      setImplementsList((prev) => prev.map((i) => ({ ...i, assignedVehicleId: impHitch.get(i.id) })));
-    }).catch((err) => console.error('Error refreshing hitches:', err));
+      const vehById = new Map(fleet.vehicles?.map((v) => [v.id, v]));
+      const impById = new Map(fleet.implements?.map((i) => [i.id, i]));
+      const devById = new Map(fleet.devices?.map((d) => [d.id, d]));
+      setRawVehicles((prev) => prev.map((v) => ({
+        ...v,
+        assignedImplementId: vehById.get(v.id)?.assignedImplementId,
+        assignedDeviceId: vehById.get(v.id)?.assignedDeviceId
+      })));
+      setImplementsList((prev) => prev.map((i) => ({
+        ...i,
+        assignedVehicleId: impById.get(i.id)?.assignedVehicleId,
+        assignedDeviceId: impById.get(i.id)?.assignedDeviceId
+      })));
+      setDevices((prev) => prev.map((d) => ({
+        ...d,
+        assignedVehicleId: devById.get(d.id)?.assignedVehicleId,
+        assignedImplementId: devById.get(d.id)?.assignedImplementId
+      })));
+    }).catch((err) => console.error('Error refreshing links:', err));
   };
 
   const handleAssignImplement = (implementId: string, vehicleId?: string) => {
@@ -1004,21 +1018,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const handleAddVehicle = (newV: Omit<Vehicle, 'id'>) => {
     const v: Vehicle = { ...newV, id: `veh-${Date.now()}` };
     setRawVehicles((prev) => [...prev, v]);
-    if (newV.assignedDeviceId) {
-      handleAssignDevice(newV.assignedDeviceId, v.id);
-    }
     api.saveVehicle(v).catch((err) => console.error('Error saving vehicle to DB:', err));
   };
 
   const handleUpdateVehicle = (id: string, updates: Omit<Vehicle, 'id'>) => {
     setRawVehicles((prev) => prev.map((v) => (v.id === id ? { ...v, ...updates } : v)));
-
-    if (updates.assignedDeviceId) {
-      handleAssignDevice(updates.assignedDeviceId, id);
-    } else {
-      const currentDeviceId = devices.find((d) => d.assignedVehicleId === id)?.id;
-      if (currentDeviceId) handleAssignDevice(currentDeviceId, undefined);
-    }
 
     api.saveVehicle({ ...updates, id }).catch((err) => console.error('Error updating vehicle in DB:', err));
   };
@@ -1049,8 +1053,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       setDevices((prev) => prev.map((d) => d.assignedImplementId === id ? { ...d, assignedImplementId: undefined } : d));
     });
 
-  const handleAddDevice = (newDev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
-    const dev: TeltonikaDevice = {
+  const handleAddDevice = (newDev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
+    const dev: TelemetryDevice = {
       ...newDev,
       id: `tel-${Date.now()}`,
       position: [58.1402, 25.8030],
@@ -1060,17 +1064,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       lastUpdate: new Date().toISOString()
     };
     setDevices((prev) => [...prev, dev]);
-    if (newDev.assignedVehicleId) {
-      handleAssignDevice(dev.id, newDev.assignedVehicleId);
-    } else if (newDev.assignedImplementId) {
-      handleAssignDevice(dev.id, undefined, newDev.assignedImplementId);
-    }
     api.saveDevice(dev).catch((err) => console.error('Error saving device to DB:', err));
   };
 
-  const handleUpdateDevice = (id: string, updates: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
+  const handleUpdateDevice = (id: string, updates: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
     setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, ...updates } : d)));
-    handleAssignDevice(id, updates.assignedVehicleId || undefined, updates.assignedImplementId || undefined);
     const current = devices.find((d) => d.id === id);
     if (current) {
       api.saveDevice({ ...current, ...updates }).catch((err) => console.error('Error updating device in DB:', err));
@@ -1591,7 +1589,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onFocusVehicle={handleFocusVehicle}
           onAssignDevice={handleAssignDevice}
           onAssignImplement={handleAssignImplement}
-          onHitchRegisterChanged={refreshHitches}
+          onRegisterChanged={refreshLinks}
           onAddVehicle={handleAddVehicle}
           onUpdateVehicle={handleUpdateVehicle}
           onDeleteVehicle={handleDeleteVehicle}

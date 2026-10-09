@@ -1,7 +1,7 @@
 # TERIS
 
 Teraviljakasvataja abirakendus: PRIA põllud ja külvikord, masinapark ja
-Teltonika telemeetria, mullaproovid, põlluraamat, seotud isikud.
+masinate telemeetria, mullaproovid, põlluraamat, seotud isikud.
 
 ## Arhitektuur
 

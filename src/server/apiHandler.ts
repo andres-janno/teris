@@ -33,7 +33,7 @@ function coalesceValue(row: RawMeasurementRow): boolean | number | string | null
   return null;
 }
 
-// Mobiilsed (cellular) Teltonika seadmed raporteerivad otse oma IMEI all,
+// Mobiilsed (cellular) telemeetriaseadmed raporteerivad otse oma IMEI all,
 // measurement='data' ridadena (üks rida välja kohta).
 async function fetchCellularTelemetry(imeis: string[]): Promise<Map<string, LiveFields>> {
   const result = new Map<string, LiveFields>();
@@ -64,7 +64,7 @@ async function fetchCellularTelemetry(imeis: string[]): Promise<Map<string, Live
 }
 
 // Eye sensorid ei raporteeri iseseisvalt — nad on nähtavad mõne mobiilse
-// Teltonika seadme (gateway) alt kuni 3 "pesa" kaudu (eye1/eye2/eye3),
+// telemeetriaseadme (gateway) alt kuni 3 "pesa" kaudu (eye1/eye2/eye3),
 // kus field='mac' ütleb, milline füüsiline sensor hetkel selles pesas on.
 // Kuna me ei tea ette, milline gateway+pesa kombinatsioon millisele MAC-ile
 // vastab, loeme kõik pesad ja otsime vastet meid huvitavate MAC-ide seas.
@@ -113,7 +113,7 @@ type HistoryRow = {
 
 // Toore GPS-jälje ajalugu ühe mobiilse seadme kohta (kasutusel harimise
 // taasesituse paneelis) — pivotib measurement='data' read ajatempli järgi
-// üheks JSON-objektiks per pakett, kuna Teltonika saadab kõik väljad
+// üheks JSON-objektiks per pakett, kuna seade saadab kõik väljad
 // (lat/lng/kiirus/suund) sama ajatempliga korraga.
 async function fetchDeviceHistory(imei: string, hours: number, from?: string | null, to?: string | null): Promise<HistoryRow[]> {
   if (!tsdb) return [];
@@ -260,6 +260,75 @@ async function activeHitches() {
     byImplement.set(r.implementId, r.vehicleId);
   }
   return { byVehicle, byImplement };
+}
+
+// Hetkel kehtivad seadmete seosed seadmete seoste registrist (ainus tõeallikas).
+// Kattuvate kirjete korral loeb iga seadme, masina ja haakeriista puhul viimasena alanud kirje.
+async function activeDeviceLinks() {
+  const now = new Date();
+  const rows = await prisma.deviceAssignment.findMany({
+    where: { startedAt: { lte: now }, OR: [{ endedAt: null }, { endedAt: { gt: now } }] },
+    orderBy: { startedAt: 'desc' }
+  });
+  const byDevice = new Map<string, { vehicleId?: string; implementId?: string }>();
+  const byVehicle = new Map<string, string>();
+  const byImplement = new Map<string, string>();
+  for (const r of rows) {
+    if (byDevice.has(r.deviceId)) continue;
+    if (r.vehicleId && !byVehicle.has(r.vehicleId)) {
+      byVehicle.set(r.vehicleId, r.deviceId);
+      byDevice.set(r.deviceId, { vehicleId: r.vehicleId });
+    } else if (r.implementId && !byImplement.has(r.implementId)) {
+      byImplement.set(r.implementId, r.deviceId);
+      byDevice.set(r.deviceId, { implementId: r.implementId });
+    }
+  }
+  return { byDevice, byVehicle, byImplement };
+}
+
+const DEVICE_ASSIGNMENT_INCLUDE = {
+  device: { select: { id: true, model: true, imei: true, macAddress: true, connectivityType: true } },
+  vehicle: { select: { id: true, name: true } },
+  implement: { select: { id: true, name: true } }
+} as const;
+
+function formatDeviceAssignment(a: any) {
+  return {
+    id: a.id,
+    deviceId: a.deviceId,
+    deviceModel: a.device?.model,
+    deviceIdentifier: a.device?.imei ?? a.device?.macAddress ?? undefined,
+    deviceConnectivity: a.device?.connectivityType?.toLowerCase(),
+    vehicleId: a.vehicleId ?? undefined,
+    vehicleName: a.vehicle?.name,
+    implementId: a.implementId ?? undefined,
+    implementName: a.implement?.name,
+    startedAt: a.startedAt.toISOString(),
+    endedAt: a.endedAt ? a.endedAt.toISOString() : undefined,
+    notes: a.notes ?? undefined,
+    createdAt: a.createdAt.toISOString()
+  };
+}
+
+// Registri kirje sisend: seade + täpselt üks sihtmärk (masin VÕI haakeriist), algus ≤ lõpp
+function parseDeviceAssignmentBody(body: any): { data?: any; error?: string } {
+  const { deviceId, vehicleId, implementId, startedAt, endedAt, notes } = body;
+  if (!deviceId) return { error: 'Vali seade.' };
+  if (!vehicleId === !implementId) return { error: 'Vali kas masin või haakeriist (üks neist).' };
+  const start = startedAt ? new Date(startedAt) : new Date();
+  const end = endedAt ? new Date(endedAt) : null;
+  if (isNaN(start.getTime()) || (end && isNaN(end.getTime()))) return { error: 'Vigane kuupäev või kellaaeg.' };
+  if (end && end < start) return { error: 'Lõppaeg ei saa olla varasem kui algusaeg.' };
+  return {
+    data: {
+      deviceId,
+      vehicleId: vehicleId || null,
+      implementId: implementId || null,
+      startedAt: start,
+      endedAt: end,
+      notes: typeof notes === 'string' && notes.trim() ? notes.trim() : null
+    }
+  };
 }
 
 export interface ApiOptions {
@@ -650,16 +719,17 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     // 5. Fleet (Vehicles, Implements, Devices)
     if (pathname === '/api/fleet' && method === 'GET') {
-      const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches] = await Promise.all([
+      const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches, deviceLinks] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
         }),
         prisma.implement.findMany(),
-        prisma.teltonikaDevice.findMany(),
+        prisma.telemetryDevice.findMany(),
         prisma.deviceAssignment.findMany({
           where: { endedAt: null }
         }),
-        activeHitches()
+        activeHitches(),
+        activeDeviceLinks()
       ]);
 
       const vehicles = rawVehicles.map((v) => ({
@@ -673,7 +743,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         registrationPlate: v.regNumber ?? undefined,
         color: v.color,
         driverName: v.assignedDriver?.name,
-        assignedDeviceId: v.assignedDeviceId ?? undefined,
+        assignedDeviceId: deviceLinks.byVehicle.get(v.id),
         assignedImplementId: hitches.byVehicle.get(v.id),
         lastKnownPosition: (v.lastLatitude != null && v.lastLongitude != null)
           ? [v.lastLatitude, v.lastLongitude] as [number, number]
@@ -692,7 +762,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         manufacturer: i.manufacturer ?? '',
         workingWidthM: i.workingWidthM,
         year: i.year ?? undefined,
-        assignedDeviceId: i.assignedDeviceId ?? undefined,
+        assignedDeviceId: deviceLinks.byImplement.get(i.id),
         assignedVehicleId: hitches.byImplement.get(i.id),
         notes: i.notes ?? undefined
       }));
@@ -747,6 +817,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           simNumber: d.simNumber ?? '',
           firmwareVersion: d.firmware ?? undefined,
           acquisitionDate: dateOnlyOut(d.acquisitionDate),
+          assignedVehicleId: deviceLinks.byDevice.get(d.id)?.vehicleId,
+          assignedImplementId: deviceLinks.byDevice.get(d.id)?.implementId,
           status,
           notes: (d as any).notes ?? undefined,
           lastUpdate: lastUpdate ?? ''
@@ -839,9 +911,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         color: v.color || '#10b981',
         notes: v.notes ?? null
       };
-      if (v.assignedDeviceId) {
-        vData.assignedDevice = { connect: { id: v.assignedDeviceId } };
-      }
 
       const saved = await prisma.vehicle.upsert({
         where: { id: v.id || `veh-${Date.now()}` },
@@ -878,7 +947,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         manufacturer: i.manufacturer || null,
         model: i.model || null,
         year: i.year ?? null,
-        assignedDeviceId: i.assignedDeviceId || null,
         notes: i.notes ?? null
       };
 
@@ -924,7 +992,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         notes: d.notes ?? null
       };
 
-      const saved = await prisma.teltonikaDevice.upsert({
+      const saved = await prisma.telemetryDevice.upsert({
         where: { id: d.id || `tel-${Date.now()}` },
         update: dData,
         create: {
@@ -933,35 +1001,14 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         }
       });
 
-      // assignedVehicleId/assignedImplementId are virtual fields derived
-      // from Vehicle.assignedDeviceId / Implement.assignedDeviceId
-      if (d.assignedVehicleId) {
-        await prisma.vehicle.update({
-          where: { id: d.assignedVehicleId },
-          data: { assignedDeviceId: saved.id }
-        });
-      }
-      if (d.assignedImplementId) {
-        await prisma.implement.update({
-          where: { id: d.assignedImplementId },
-          data: { assignedDeviceId: saved.id }
-        });
-      }
+      // Paigaldamine ei käi seadme vormi kaudu: see on ainult seadmete seoste registris
       return json(res, saved);
     }
 
     if (pathname.startsWith('/api/fleet/devices/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/devices/', '');
-      if (denyDelete(req, res, await prisma.teltonikaDevice.findUnique({ where: { id }, select: { createdBy: true } }))) return;
-      await prisma.vehicle.updateMany({
-        where: { assignedDeviceId: id },
-        data: { assignedDeviceId: null }
-      });
-      await prisma.implement.updateMany({
-        where: { assignedDeviceId: id },
-        data: { assignedDeviceId: null }
-      });
-      await prisma.teltonikaDevice.delete({ where: { id } });
+      if (denyDelete(req, res, await prisma.telemetryDevice.findUnique({ where: { id }, select: { createdBy: true } }))) return;
+      await prisma.telemetryDevice.delete({ where: { id } });
       return json(res, { success: true, id });
     }
 
@@ -1087,11 +1134,45 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       return json(res, { success: true, id });
     }
 
+    // Telemeetriaseadmete seoste register
+    if (pathname === '/api/fleet/device-assignments' && method === 'GET') {
+      const rows = await prisma.deviceAssignment.findMany({
+        include: DEVICE_ASSIGNMENT_INCLUDE,
+        orderBy: { startedAt: 'desc' },
+        take: 500
+      });
+      return json(res, rows.map(formatDeviceAssignment));
+    }
+
+    if (pathname === '/api/fleet/device-assignments' && method === 'POST') {
+      const { data, error } = parseDeviceAssignmentBody(await parseBody(req));
+      if (error) return json(res, { error }, 400);
+      const created = await prisma.deviceAssignment.create({ data, include: DEVICE_ASSIGNMENT_INCLUDE });
+      return json(res, formatDeviceAssignment(created));
+    }
+
+    if (pathname.startsWith('/api/fleet/device-assignments/') && (method === 'PUT' || method === 'PATCH')) {
+      const id = pathname.replace('/api/fleet/device-assignments/', '');
+      const { data, error } = parseDeviceAssignmentBody(await parseBody(req));
+      if (error) return json(res, { error }, 400);
+      const updated = await prisma.deviceAssignment.update({ where: { id }, data, include: DEVICE_ASSIGNMENT_INCLUDE });
+      return json(res, formatDeviceAssignment(updated));
+    }
+
+    if (pathname.startsWith('/api/fleet/device-assignments/') && method === 'DELETE') {
+      const id = pathname.replace('/api/fleet/device-assignments/', '');
+      const existing = await prisma.deviceAssignment.findUnique({ where: { id } });
+      if (denyDelete(req, res, existing)) return;
+      await prisma.deviceAssignment.delete({ where: { id } });
+      return json(res, { success: true, id });
+    }
+
+    // Kaardi „Vaheta“ / seadmekaardi paigalduse valik: kirje tehakse seadmete seoste registrisse.
+    // Seade on korraga seotud ühe masina VÕI haakeriistaga.
     if (pathname === '/api/fleet/devices/assign' && method === 'POST') {
-      // A device attaches to at most one target (a vehicle OR an implement) at a time.
       const { deviceId, vehicleId, implementId } = await parseBody(req);
 
-      const device = await prisma.teltonikaDevice.findUnique({
+      const device = await prisma.telemetryDevice.findUnique({
         where: { id: deviceId }
       });
 
@@ -1143,20 +1224,15 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         }
       }
 
-      await prisma.vehicle.updateMany({
-        where: { assignedDeviceId: deviceId },
-        data: { assignedDeviceId: null }
-      });
-      await prisma.implement.updateMany({
-        where: { assignedDeviceId: deviceId },
-        data: { assignedDeviceId: null }
-      });
+      // Sihtmasinal/-haakeriistal saab korraga olla üks seade: lõpeta selle teise seadme seos
+      if (vehicleId || implementId) {
+        await prisma.deviceAssignment.updateMany({
+          where: vehicleId ? { vehicleId, endedAt: null } : { implementId, endedAt: null },
+          data: { endedAt: now }
+        });
+      }
 
       if (vehicleId) {
-        await prisma.vehicle.update({
-          where: { id: vehicleId },
-          data: { assignedDeviceId: deviceId }
-        });
         await prisma.deviceAssignment.create({
           data: {
             deviceId,
@@ -1165,10 +1241,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           }
         });
       } else if (implementId) {
-        await prisma.implement.update({
-          where: { id: implementId },
-          data: { assignedDeviceId: deviceId }
-        });
         await prisma.deviceAssignment.create({
           data: {
             deviceId,
@@ -1227,18 +1299,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         start = new Date(end.getTime() - Math.max(1, hours) * 3600 * 1000);
       }
 
-      let vehicle: any = null;
       let targetDevice: any = null;
 
       if (vehicleId) {
-        vehicle = await prisma.vehicle.findUnique({
-          where: { id: vehicleId },
-          include: {
-            assignedDevice: true,
-            assignedImplement: true
-          }
-        });
-
         // Otsi seadme seoseid antud masinale
         const assignments = await prisma.deviceAssignment.findMany({
           where: { vehicleId },
@@ -1259,9 +1322,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           // Piira aken selle masinaga seotuse perioodiga, et teise masina sõidud ei lekiks
           if (matching.startedAt > start) start = matching.startedAt;
           if (matching.endedAt && matching.endedAt < end) end = matching.endedAt;
-        } else if (vehicle?.assignedDevice?.imei) {
-          imei = vehicle.assignedDevice.imei;
-          targetDevice = vehicle.assignedDevice;
         } else if (assignments.length > 0 && !fromParam) {
           // Kui päriti jooksvat aega ilma from-ita, aga masinal pole selles aknas aktiivset seadet
           // (kõik seosed lõppesid minevikus), siis selle jooksva akna kohta punkte pole.

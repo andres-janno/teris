@@ -76,7 +76,7 @@ export function canDelete(user: { username: string; isAdmin: boolean } | null, c
 
 export const DELETE_FORBIDDEN_MESSAGE = 'Seda kirjet saab kustutada ainult kirje looja või admin-rolliga kasutaja.';
 
-// telemetry_tsdb (TimescaleDB) hoiab Teltonika GPS + Eye sensori telemeetriat ühes
+// telemetry_tsdb (TimescaleDB) hoiab GPS-jälgurite + Eye sensorite telemeetriat ühes
 // laias mõõtmiste tabelis (mitte Prisma mudelina — $queryRaw teise ühendusega).
 export const tsdb = process.env.TSDB_DATABASE_URL
   ? new PrismaClient({ datasources: { db: { url: process.env.TSDB_DATABASE_URL } } })

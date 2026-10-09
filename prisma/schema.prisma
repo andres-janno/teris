@@ -343,7 +343,7 @@ model Vehicle {
 
   assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   assignedImplement    Implement?            @relation(fields: [assignedImplementId], references: [id])
-  assignedDevice       TeltonikaDevice?      @relation(fields: [assignedDeviceId], references: [id])
+  assignedDevice       TelemetryDevice?      @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
@@ -374,7 +374,7 @@ model Implement {
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   vehicle              Vehicle?
-  assignedDevice       TeltonikaDevice?      @relation(fields: [assignedDeviceId], references: [id])
+  assignedDevice       TelemetryDevice?      @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
@@ -388,7 +388,7 @@ enum DeviceConnectivity {
   EYE_SENSOR
 }
 
-model TeltonikaDevice {
+model TelemetryDevice {
   id               String             @id @default(cuid())
   connectivityType DeviceConnectivity @default(CELLULAR)
   imei             String?            @unique // Kohustuslik ainult CELLULAR seadmetel
@@ -408,13 +408,13 @@ model TeltonikaDevice {
   implement   Implement?
   assignments DeviceAssignment[]
 
-  @@map("teltonika_devices")
+  @@map("telemetry_devices")
 }
 
 model DeviceAssignment {
   id            String          @id @default(cuid())
   deviceId      String
-  device        TeltonikaDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device        TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   vehicleId     String?
   vehicle       Vehicle?        @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   implementId   String?

@@ -24,10 +24,13 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
+import { DeviceAssignmentRegister } from './DeviceAssignmentRegister';
+import { formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime, combineDateAndTimeToIso } from './fleetDateTime';
 import type {
   Vehicle,
   Implement,
-  TeltonikaDevice,
+  TelemetryDevice,
+  DeviceAssignment,
   EnrichedVehicle,
   VehicleType,
   ImplementType,
@@ -43,7 +46,7 @@ interface VehicleTrackerProps {
   onClose?: () => void;
   vehicles: Vehicle[];
   implementsList: Implement[];
-  devices: TeltonikaDevice[];
+  devices: TelemetryDevice[];
   enrichedVehicles: EnrichedVehicle[];
   selectedVehicle: EnrichedVehicle | null;
   onSelectVehicle: (vehicle: EnrichedVehicle) => void;
@@ -52,7 +55,7 @@ interface VehicleTrackerProps {
   // Reassignment / Movement handlers
   onAssignDevice: (deviceId: string, vehicleId?: string, implementId?: string) => void;
   onAssignImplement: (implementId: string, vehicleId?: string) => void;
-  onHitchRegisterChanged: () => void;   // haakimise registrit muudeti otse → värskenda kaartide haakimise olekut
+  onRegisterChanged: () => void;   // haakimise või seadmete seoste registrit muudeti → värskenda kaartide seoseid
 
   // CRUD
   onAddVehicle: (v: Omit<Vehicle, 'id'>) => void;
@@ -61,89 +64,11 @@ interface VehicleTrackerProps {
   onAddImplement: (imp: Omit<Implement, 'id'>) => void;
   onUpdateImplement: (id: string, imp: Omit<Implement, 'id'>) => void;
   onDeleteImplement: (id: string) => void;
-  onAddDevice: (dev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
-  onUpdateDevice: (id: string, dev: Omit<TeltonikaDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
+  onAddDevice: (dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
+  onUpdateDevice: (id: string, dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
   onDeleteDevice: (id: string) => void;
 }
-type TabType = 'vehicles' | 'implements' | 'devices' | 'history';
-
-function formatDateTime(isoString?: string): string {
-  if (!isoString) return '—';
-  try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return '—';
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    const hours = String(d.getHours()).padStart(2, '0');
-    const minutes = String(d.getMinutes()).padStart(2, '0');
-    return `${day}.${month}.${year} ${hours}:${minutes}`;
-  } catch {
-    return '—';
-  }
-}
-
-function formatDuration(startedAtIso: string, endedAtIso?: string): string {
-  try {
-    const start = new Date(startedAtIso).getTime();
-    const end = endedAtIso ? new Date(endedAtIso).getTime() : Date.now();
-    const diffMs = Math.max(0, end - start);
-    const diffMins = Math.round(diffMs / (60 * 1000));
-    const hours = Math.floor(diffMins / 60);
-    const mins = diffMins % 60;
-    const days = Math.floor(hours / 24);
-    const remHours = hours % 24;
-
-    if (days > 0) {
-      return `${days} p ${remHours} h`;
-    }
-    if (hours > 0) {
-      return `${hours} h ${mins} min`;
-    }
-    return `${mins} min`;
-  } catch {
-    return '—';
-  }
-}
-
-const TIME_OPTIONS: string[] = [];
-for (let h = 0; h < 24; h++) {
-  for (let m = 0; m < 60; m += 15) {
-    TIME_OPTIONS.push(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`);
-  }
-}
-
-function getTimeOptions(currentTime?: string): string[] {
-  if (!currentTime) return TIME_OPTIONS;
-  if (!TIME_OPTIONS.includes(currentTime)) {
-    return [...TIME_OPTIONS, currentTime].sort();
-  }
-  return TIME_OPTIONS;
-}
-
-function splitIsoToDateAndTime(isoString?: string): { date: string; time: string } {
-  if (!isoString) return { date: '', time: '' };
-  try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return { date: '', time: '' };
-    const pad = (n: number) => String(n).padStart(2, '0');
-    const date = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
-    const time = `${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    return { date, time };
-  } catch {
-    return { date: '', time: '' };
-  }
-}
-
-function combineDateAndTimeToIso(dateStr: string, timeStr: string): string | null {
-  if (!dateStr) return null;
-  const time = timeStr || '00:00';
-  const [year, month, day] = dateStr.split('-').map(Number);
-  const [hours, minutes] = time.split(':').map(Number);
-  const d = new Date(year, (month || 1) - 1, day || 1, hours || 0, minutes || 0, 0);
-  if (isNaN(d.getTime())) return null;
-  return d.toISOString();
-}
+type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory';
 
 const IMPLEMENT_TYPE_LABELS: Record<ImplementType, string> = {
   seeder: 'Külvik',
@@ -346,7 +271,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onFocusVehicle,
   onAssignDevice,
   onAssignImplement,
-  onHitchRegisterChanged,
+  onRegisterChanged,
   onAddVehicle,
   onUpdateVehicle,
   onDeleteVehicle,
@@ -381,7 +306,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vPlate, setVPlate] = useState('');
   const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
-  const [vSelectedDevId, setVSelectedDevId] = useState('');
   const [vNotes, setVNotes] = useState('');
 
   // 2. Implement Form
@@ -402,21 +326,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const vehicleCategories = useMemo(() => distinctCategories(vehicles), [vehicles]);
   const implementCategories = useMemo(() => distinctCategories(implementsList), [implementsList]);
 
-  // 3. Teltonika Form
+  // 3. Telemeetriaseadme vorm
   const [devConnectivity, setDevConnectivity] = useState<DeviceConnectivity>('cellular');
-  const [devModel, setDevModel] = useState('FMC650 4G LTE');
+  const [devModel, setDevModel] = useState('');
   const [devImei, setDevImei] = useState('');
   const [devSim, setDevSim] = useState('');
   const [devMac, setDevMac] = useState('');
   // Kombineeritud sihtmärgi valik: '' | `veh:<id>` | `imp:<id>` — mõlemat
   // tüüpi seadet saab paigaldada kas masinasse või haakeriista külge.
-  const [devAssignedTarget, setDevAssignedTarget] = useState('');
   const [devNotes, setDevNotes] = useState('');
   const [devAcqDate, setDevAcqDate] = useState('');
 
   const handleConnectivityChange = (next: DeviceConnectivity) => {
     setDevConnectivity(next);
-    setDevModel(next === 'eye_sensor' ? 'Teltonika EYE Sensor' : 'FMC650 4G LTE');
+    setDevModel('');
     setDevImei('');
     setDevSim('');
     setDevMac('');
@@ -538,7 +461,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         setImplementAssignments((prev) => [created, ...prev]);
       }
 
-      onHitchRegisterChanged();
+      onRegisterChanged();
       closeForm();
       loadImplementAssignments();
     } catch (err: any) {
@@ -567,6 +490,33 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     }
   }, [isOpen, isFullPage, loadImplementAssignments]);
 
+  // Telemeetriaseadmete seoste register
+  const [deviceAssignments, setDeviceAssignments] = useState<DeviceAssignment[]>([]);
+  const [deviceHistoryLoading, setDeviceHistoryLoading] = useState(false);
+
+  const loadDeviceAssignments = useCallback(async () => {
+    setDeviceHistoryLoading(true);
+    try {
+      setDeviceAssignments(await api.getDeviceAssignments());
+    } catch (err) {
+      console.error('Error fetching device assignments:', err);
+    } finally {
+      setDeviceHistoryLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (isOpen || isFullPage) {
+      loadDeviceAssignments();
+    }
+  }, [isOpen, isFullPage, loadDeviceAssignments]);
+
+  // Kaardilt seadme paigaldamine/vahetamine/eemaldamine → kirje seoste registrisse
+  const assignDevice = (deviceId: string, vehicleId?: string, implementId?: string) => {
+    onAssignDevice(deviceId, vehicleId, implementId);
+    setTimeout(loadDeviceAssignments, 400);
+  };
+
   const filteredAssignments = useMemo(() => {
     return implementAssignments.filter((a) => {
       if (historyVehicleFilter !== 'all' && a.vehicleId !== historyVehicleFilter) return false;
@@ -582,7 +532,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     try {
       await api.deleteImplementAssignment(id);
       setImplementAssignments((prev) => prev.filter((a) => a.id !== id));
-      onHitchRegisterChanged();
+      onRegisterChanged();
       loadImplementAssignments();
     } catch (err) {
       alertDialog(err instanceof Error ? err.message : 'Haakimise kirje kustutamine ebaõnnestus');
@@ -638,7 +588,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVPlate('');
     setVDriver('');
     setVColor('#22c55e');
-    setVSelectedDevId('');
     setVNotes('');
   };
 
@@ -659,11 +608,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
   const resetDeviceForm = () => {
     setDevConnectivity('cellular');
-    setDevModel('FMC650 4G LTE');
+    setDevModel('');
     setDevImei('');
     setDevSim('');
     setDevMac('');
-    setDevAssignedTarget('');
     setDevNotes('');
     setDevAcqDate('');
   };
@@ -693,7 +641,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       registrationPlate: vPlate.trim() || undefined,
       driverName: vDriver.trim() || undefined,
       color: vColor,
-      assignedDeviceId: vSelectedDevId || undefined,
       notes: vNotes.trim() || undefined
     };
     if (editingVehicleId) {
@@ -743,16 +690,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     if (devConnectivity === 'cellular' && !devImei.trim()) return;
     if (devConnectivity === 'eye_sensor' && !devMac.trim()) return;
 
-    const [targetKind, targetId] = devAssignedTarget ? devAssignedTarget.split(':') : [undefined, undefined];
-
     const payload = {
       connectivityType: devConnectivity,
-      model: devModel.trim() || (devConnectivity === 'eye_sensor' ? 'Teltonika EYE Sensor' : 'FMC650 4G LTE'),
+      model: devModel.trim() || (devConnectivity === 'eye_sensor' ? 'EYE sensor' : 'GPS-jälgur'),
       imei: devConnectivity === 'cellular' ? devImei.trim() : undefined,
       simNumber: devConnectivity === 'cellular' ? (devSim.trim() || '+372 5...') : undefined,
       macAddress: devConnectivity === 'eye_sensor' ? devMac.trim().toUpperCase() : undefined,
-      assignedVehicleId: targetKind === 'veh' ? targetId : undefined,
-      assignedImplementId: targetKind === 'imp' ? targetId : undefined,
       batteryVoltage: devConnectivity === 'eye_sensor' ? 3.0 : 27.5,
       fuelLevelPct: 100,
       ignition: false,
@@ -771,7 +714,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevImei('');
     setDevSim('');
     setDevMac('');
-    setDevAssignedTarget('');
     setDevNotes('');
   };
 
@@ -788,7 +730,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVPlate(v.registrationPlate || '');
     setVDriver(v.driverName || '');
     setVColor(v.color);
-    setVSelectedDevId(v.assignedDeviceId || '');
     setVNotes(v.notes || '');
     setEditingVehicleId(v.id);
     setIsAddingNew(true);
@@ -811,13 +752,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setIsAddingNew(true);
   };
 
-  const startEditDevice = (dev: TeltonikaDevice) => {
+  const startEditDevice = (dev: TelemetryDevice) => {
     setDevConnectivity(dev.connectivityType);
     setDevModel(dev.model);
     setDevImei(dev.imei || '');
     setDevSim(dev.simNumber || '');
     setDevMac(dev.macAddress || '');
-    setDevAssignedTarget(dev.assignedVehicleId ? `veh:${dev.assignedVehicleId}` : (dev.assignedImplementId ? `imp:${dev.assignedImplementId}` : ''));
     setDevNotes(dev.notes || '');
     setDevAcqDate(dev.acquisitionDate || '');
     setEditingDeviceId(dev.id);
@@ -849,7 +789,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
             onClick={() => { setActiveTab('devices'); closeForm(); }}
           >
-            <span>📡 Teltonika GPS Seadmed</span>
+            <span>📡 Telemeetriaseadmed</span>
             <span className="count-pill">{devices.length}</span>
           </button>
 
@@ -859,6 +799,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           >
             <span>📜 Haakimise register</span>
             <span className="count-pill">{implementAssignments.length}</span>
+          </button>
+
+          <button
+            className={`filter-tab ${activeTab === 'deviceHistory' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('deviceHistory'); closeForm(); loadDeviceAssignments(); }}
+          >
+            <span>🔗 Seadmete seosed</span>
+            <span className="count-pill">{deviceAssignments.length}</span>
           </button>
         </div>
 
@@ -871,7 +819,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span>
               {activeTab === 'vehicles' ? 'Lisa uus masin' : (
                 activeTab === 'implements' ? 'Lisa uus haakeriist' : (
-                  activeTab === 'devices' ? 'Registreeri Teltonika seade' : 'Lisa haakimise kanne'
+                  activeTab === 'devices' ? 'Registreeri telemeetriaseade' : (
+                    activeTab === 'deviceHistory' ? 'Lisa seadme seose kanne' : 'Lisa haakimise kanne'
+                  )
                 )
               )}
             </span>
@@ -981,21 +931,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       className="form-input"
                     />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>Paigalda Teltonika seade</label>
-                  <select
-                    value={vSelectedDevId}
-                    onChange={(e) => setVSelectedDevId(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="">-- Ilma seadmeta / Paigalda hiljem --</option>
-                    {devices.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.model} ({d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}) {d.assignedVehicleId ? `[Hetkel masinas]` : `[Vaba laos]`}
-                      </option>
-                    ))}
-                  </select>
                 </div>
                 <DepreciationFields
                   date={vAcqDate}
@@ -1154,7 +1089,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <div className="modal-header">
               <div className="modal-title-group">
                 <Radio size={20} className="text-emerald" />
-                <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri Teltonika seade'}</h3>
+                <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'}</h3>
               </div>
               <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
                 <X size={20} />
@@ -1225,7 +1160,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <label>Seadme mudel</label>
                       <input
                         type="text"
-                        placeholder="Teltonika EYE Sensor"
+                        placeholder="nt Teltonika EYE Sensor"
                         value={devModel}
                         onChange={(e) => setDevModel(e.target.value)}
                         className="form-input"
@@ -1244,26 +1179,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                   </>
                 )}
-                <div className="form-group">
-                  <label>Paigalda kohe</label>
-                  <select
-                    value={devAssignedTarget}
-                    onChange={(e) => setDevAssignedTarget(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="">-- Jäta riiulisse / Vabaks --</option>
-                    <optgroup label="🚜 Masinad">
-                      {vehicles.map((v) => (
-                        <option key={`veh:${v.id}`} value={`veh:${v.id}`}>{v.name} ({v.registrationPlate || 'nr puudub'})</option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="🔧 Haakeriistad">
-                      {implementsList.map((imp) => (
-                        <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>{imp.name}</option>
-                      ))}
-                    </optgroup>
-                  </select>
-                </div>
                 <div className="form-group">
                   <label>Soetamise kuupäev</label>
                   <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
@@ -1508,7 +1423,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       </span>
                       <button
                         className="mini-swap-btn"
-                        title="Vaheta või eemalda Teltonika seade"
+                        title="Vaheta või eemalda telemeetriaseade"
                         onClick={(e) => {
                           e.stopPropagation();
                           setSwapModal({ type: 'device', targetVehicleId: v.id, targetVehicleName: v.name });
@@ -1593,12 +1508,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 ) : (
                   <div className="device-unassigned-notice">
                     <Info size={14} className="text-muted" />
-                    <span>Teltonika GPS seade paigaldamata. Telemeetria puudub.</span>
+                    <span>Telemeetriaseade paigaldamata. Telemeetria puudub.</span>
                   </div>
                 )}
 
                 <div className="v-card-footer">
-                  <div className="teltonika-id">
+                  <div className="telemetry-device-id">
                     <span>🛰️ {installedDevice ? (installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.simNumber) : 'SIM puudub'}</span>
                   </div>
 
@@ -1752,7 +1667,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         </div>
       )}
 
-      {/* TAB 3: TELTONIKA GPS SEADMETE REGISTER */}
+      {/* TAB 3: TELEMEETRIASEADMETE REGISTER */}
       {activeTab === 'devices' && (
         <div className="devices-grid">
           {devices.map((dev) => {
@@ -1847,10 +1762,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     value={targetValue}
                     onChange={(e) => {
                       const val = e.target.value;
-                      if (!val) { onAssignDevice(dev.id, undefined, undefined); return; }
+                      if (!val) { assignDevice(dev.id, undefined, undefined); return; }
                       const [kind, targetId] = val.split(':');
-                      if (kind === 'veh') onAssignDevice(dev.id, targetId, undefined);
-                      else onAssignDevice(dev.id, undefined, targetId);
+                      if (kind === 'veh') assignDevice(dev.id, targetId, undefined);
+                      else assignDevice(dev.id, undefined, targetId);
                     }}
                   >
                     <option value="">-- Riiulis / Paigaldamata --</option>
@@ -1895,6 +1810,23 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             );
           })}
         </div>
+      )}
+
+      {/* TAB 5: TELEMEETRIASEADMETE SEOSTE REGISTER */}
+      {activeTab === 'deviceHistory' && (
+        <DeviceAssignmentRegister
+          vehicles={vehicles}
+          implementsList={implementsList}
+          devices={devices}
+          assignments={deviceAssignments}
+          loading={deviceHistoryLoading}
+          onReload={loadDeviceAssignments}
+          formOpen={isAddingNew}
+          onOpenForm={() => setIsAddingNew(true)}
+          onCloseForm={closeForm}
+          onChanged={() => { onRegisterChanged(); loadDeviceAssignments(); }}
+          onDetach={(deviceId) => assignDevice(deviceId, undefined, undefined)}
+        />
       )}
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
@@ -2129,7 +2061,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           <div className="modal-content glass-card swap-modal-card animate-scale-up">
             <div className="modal-header">
               <h4>
-                {swapModal.type === 'device' ? '📡 Teltonika GPS Seadme Valik' : '🔧 Haakeriista Haakimine'}
+                {swapModal.type === 'device' ? '📡 Telemeetriaseadme valik' : '🔧 Haakeriista Haakimine'}
               </h4>
               <button className="icon-btn-ghost" onClick={() => setSwapModal(null)}>
                 <X size={18} />
@@ -2138,7 +2070,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
             <div className="modal-body">
               <p className="swap-modal-desc">
-                Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'Teltonika GPS seade' : 'haakeriist'}:
+                Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'telemeetriaseade' : 'haakeriist'}:
               </p>
 
               {swapModal.type === 'device' ? (
@@ -2148,13 +2080,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     onClick={() => {
                       // Unassign any device currently on this vehicle
                       const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
-                      if (currentDev) onAssignDevice(currentDev.id, undefined);
+                      if (currentDev) assignDevice(currentDev.id, undefined);
                       setSwapModal(null);
                     }}
                   >
                     <Unlink size={16} className="text-rose" />
                     <div>
-                      <strong>Eemalda GPS seade</strong>
+                      <strong>Eemalda telemeetriaseade</strong>
                       <p>Jäta masin ilma GPS telemeetriata</p>
                     </div>
                   </div>
@@ -2168,7 +2100,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         key={d.id}
                         className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
                         onClick={() => {
-                          onAssignDevice(d.id, swapModal.targetVehicleId);
+                          assignDevice(d.id, swapModal.targetVehicleId);
                           setSwapModal(null);
                         }}
                       >
@@ -2270,7 +2202,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <Tractor className="text-emerald" size={24} />
             <div>
               <h3>Masinapargi ja Seadmete Haldus</h3>
-              <p className="modal-subtitle">Eraldi registrid sõidukitele, haakeriistadele ja Teltonika GPS seadmetele</p>
+              <p className="modal-subtitle">Eraldi registrid sõidukitele, haakeriistadele, telemeetriaseadmetele ning haakimise ja seadmete seostele</p>
             </div>
           </div>
           {onClose && (

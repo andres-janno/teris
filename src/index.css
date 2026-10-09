@@ -2635,7 +2635,7 @@ body {
   padding-top: 8px;
 }
 
-.teltonika-id {
+.telemetry-device-id {
   font-size: 0.68rem;
   color: var(--text-muted);
   display: flex;
