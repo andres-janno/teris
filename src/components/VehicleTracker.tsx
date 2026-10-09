@@ -31,6 +31,7 @@ import type {
   EnrichedVehicle,
   VehicleType,
   ImplementType,
+  DepreciationMethod,
   DeviceConnectivity,
   ImplementAssignment
 } from '../types/fleet';
@@ -210,6 +211,71 @@ const CategoryInput: React.FC<CategoryInputProps> = ({ id, value, onChange, opti
   </>
 );
 
+// Vormi numbriväli (koma lubatud) → positiivne arv või undefined
+function parsePositive(value: string): number | undefined {
+  const n = Number(value.replace(',', '.').trim());
+  return value.trim() && Number.isFinite(n) && n > 0 ? n : undefined;
+}
+
+const DEPRECIATION_METHOD_LABELS: Record<DepreciationMethod, string> = {
+  linear: 'Lineaarne',
+  declining: 'Degressiivne (jääkväärtusest)'
+};
+
+interface DepreciationFieldsProps {
+  cost: string;
+  onCostChange: (value: string) => void;
+  rate: string;
+  onRateChange: (value: string) => void;
+  method: DepreciationMethod | '';
+  onMethodChange: (value: DepreciationMethod | '') => void;
+}
+
+// Soetusmaksumus ja amortisatsioon — sama plokk masina ja haakeriista vormis
+const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ cost, onCostChange, rate, onRateChange, method, onMethodChange }) => (
+  <>
+    <div className="form-group">
+      <label>Soetusmaksumus (€)</label>
+      <input
+        type="number"
+        min="0"
+        step="any"
+        inputMode="decimal"
+        placeholder="nt 185000"
+        value={cost}
+        onChange={(e) => onCostChange(e.target.value)}
+        className="form-input"
+      />
+    </div>
+    <div className="form-group">
+      <label>Amortisatsiooni meetod & määr (% aastas)</label>
+      <div className="input-split">
+        <select
+          value={method}
+          onChange={(e) => onMethodChange(e.target.value as DepreciationMethod | '')}
+          className="form-input"
+        >
+          <option value="">-- Määramata --</option>
+          {(Object.keys(DEPRECIATION_METHOD_LABELS) as DepreciationMethod[]).map((m) => (
+            <option key={m} value={m}>{DEPRECIATION_METHOD_LABELS[m]}</option>
+          ))}
+        </select>
+        <input
+          type="number"
+          min="0"
+          max="100"
+          step="any"
+          inputMode="decimal"
+          placeholder="nt 20"
+          value={rate}
+          onChange={(e) => onRateChange(e.target.value)}
+          className="form-input"
+        />
+      </div>
+    </div>
+  </>
+);
+
 interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   value: string;
 }
@@ -300,6 +366,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vType, setVType] = useState<VehicleType>('tractor');
   const [vCategory, setVCategory] = useState('');
   const [vPowerKw, setVPowerKw] = useState('');
+  const [vCost, setVCost] = useState('');
+  const [vDepRate, setVDepRate] = useState('');
+  const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
   const [vPlate, setVPlate] = useState('');
   const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
@@ -313,6 +382,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impModel, setImpModel] = useState('');
   const [impType, setImpType] = useState<ImplementType>('cultivator');
   const [impCategory, setImpCategory] = useState('');
+  const [impCost, setImpCost] = useState('');
+  const [impDepRate, setImpDepRate] = useState('');
+  const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
   const [impWidth, setImpWidth] = useState(8.0);
   const [impSerial, setImpSerial] = useState('');
   const [impAssignedVehId, setImpAssignedVehId] = useState('');
@@ -561,6 +633,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVType('tractor');
     setVCategory('');
     setVPowerKw('');
+    setVCost('');
+    setVDepRate('');
+    setVDepMethod('');
     setVPlate('');
     setVDriver('');
     setVColor('#22c55e');
@@ -575,6 +650,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpModel('');
     setImpType('cultivator');
     setImpCategory('');
+    setImpCost('');
+    setImpDepRate('');
+    setImpDepMethod('');
     setImpWidth(8.0);
     setImpSerial('');
     setImpAssignedVehId('');
@@ -608,7 +686,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       model: vModel.trim() || 'Teadmata mudel',
       type: vType,
       category: normalizeCategory(vCategory, vehicleCategories),
-      powerKw: Number(vPowerKw.replace(',', '.')) > 0 ? Number(vPowerKw.replace(',', '.')) : undefined,
+      powerKw: parsePositive(vPowerKw),
+      acquisitionCost: parsePositive(vCost),
+      depreciationRate: parsePositive(vDepRate),
+      depreciationMethod: vDepMethod || undefined,
       registrationPlate: vPlate.trim() || undefined,
       driverName: vDriver.trim() || undefined,
       color: vColor,
@@ -637,6 +718,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       model: impModel.trim() || impName.trim(),
       type: impType,
       category: normalizeCategory(impCategory, implementCategories),
+      acquisitionCost: parsePositive(impCost),
+      depreciationRate: parsePositive(impDepRate),
+      depreciationMethod: impDepMethod || undefined,
       workingWidthM: Number(impWidth) || 6.0,
       serialNumber: impSerial.trim() || undefined,
       assignedVehicleId: impAssignedVehId || undefined,
@@ -697,6 +781,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVType(v.type);
     setVCategory(v.category || '');
     setVPowerKw(v.powerKw != null ? String(v.powerKw) : '');
+    setVCost(v.acquisitionCost != null ? String(v.acquisitionCost) : '');
+    setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
+    setVDepMethod(v.depreciationMethod || '');
     setVPlate(v.registrationPlate || '');
     setVDriver(v.driverName || '');
     setVColor(v.color);
@@ -713,6 +800,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpModel(imp.model);
     setImpType(imp.type);
     setImpCategory(imp.category || '');
+    setImpCost(imp.acquisitionCost != null ? String(imp.acquisitionCost) : '');
+    setImpDepRate(imp.depreciationRate != null ? String(imp.depreciationRate) : '');
+    setImpDepMethod(imp.depreciationMethod || '');
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
     setImpAssignedVehId(imp.assignedVehicleId || '');
@@ -921,6 +1011,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     ))}
                   </select>
                 </div>
+                <DepreciationFields
+                  cost={vCost}
+                  onCostChange={setVCost}
+                  rate={vDepRate}
+                  onRateChange={setVDepRate}
+                  method={vDepMethod}
+                  onMethodChange={setVDepMethod}
+                />
                 <div className="form-group full-width">
                   <label>Märkused</label>
                   <AutoResizeTextarea
@@ -1044,6 +1142,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     ))}
                   </select>
                 </div>
+                <DepreciationFields
+                  cost={impCost}
+                  onCostChange={setImpCost}
+                  rate={impDepRate}
+                  onRateChange={setImpDepRate}
+                  method={impDepMethod}
+                  onMethodChange={setImpDepMethod}
+                />
                 <div className="form-group full-width">
                   <label>Märkused</label>
                   <AutoResizeTextarea

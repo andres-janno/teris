@@ -212,6 +212,27 @@ function toPositiveNumber(value: unknown): number | null {
   return value != null && value !== '' && Number.isFinite(n) && n > 0 ? n : null;
 }
 
+// Soetusmaksumus ja amortisatsioon (masinad ja haakeriistad). Meetod andmebaasis suurtähtedega.
+const DEPRECIATION_METHODS = ['LINEAR', 'DECLINING'];
+
+function depreciationIn(body: any) {
+  const method = typeof body.depreciationMethod === 'string' ? body.depreciationMethod.toUpperCase() : '';
+  const rate = toPositiveNumber(body.depreciationRate);
+  return {
+    acquisitionCost: toPositiveNumber(body.acquisitionCost),
+    depreciationRate: rate != null && rate <= 100 ? rate : null,
+    depreciationMethod: DEPRECIATION_METHODS.includes(method) ? method : null
+  };
+}
+
+function depreciationOut(row: { acquisitionCost: number | null; depreciationRate: number | null; depreciationMethod: string | null }) {
+  return {
+    acquisitionCost: row.acquisitionCost ?? undefined,
+    depreciationRate: row.depreciationRate ?? undefined,
+    depreciationMethod: row.depreciationMethod?.toLowerCase() ?? undefined
+  };
+}
+
 export interface ApiOptions {
   allowedOrigins: string[];
   requireAuth: boolean;
@@ -618,6 +639,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         category: v.category ?? undefined,
         model: v.model,
         powerKw: v.powerKw ?? undefined,
+        ...depreciationOut(v),
         registrationPlate: v.regNumber ?? undefined,
         color: v.color,
         driverName: v.assignedDriver?.name,
@@ -635,6 +657,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         name: i.name,
         type: i.type.toLowerCase(),
         category: i.category ?? undefined,
+        ...depreciationOut(i),
         model: i.model ?? '',
         manufacturer: i.manufacturer ?? '',
         workingWidthM: i.workingWidthM,
@@ -788,6 +811,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         category: cleanCategory(v.category),
         model: v.model,
         powerKw: toPositiveNumber(v.powerKw),
+        ...depreciationIn(v),
         regNumber: v.registrationPlate || v.regNumber || null,
         color: v.color || '#10b981',
         notes: v.notes ?? null
@@ -837,6 +861,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         name: i.name,
         type: (i.type || 'other').toUpperCase() as any,
         category: cleanCategory(i.category),
+        ...depreciationIn(i),
         workingWidthM: i.workingWidthM,
         manufacturer: i.manufacturer || null,
         model: i.model || null,

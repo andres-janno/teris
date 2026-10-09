@@ -17,6 +17,9 @@ export type ImplementType =
 /**
  * Sõiduki / Masina register
  */
+/** Amortisatsioonimeetod: lineaarne (soetusmaksumusest) või degressiivne (jääkväärtusest). */
+export type DepreciationMethod = 'linear' | 'declining';
+
 export interface Vehicle {
   id: string;
   name: string;
@@ -24,6 +27,9 @@ export interface Vehicle {
   type: VehicleType;
   category?: string;              // Masina liik (vabatekst)
   powerKw?: number;               // Mootorivõimsus kW
+  acquisitionCost?: number;       // Soetusmaksumus (€)
+  depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
+  depreciationMethod?: DepreciationMethod;
   registrationPlate?: string;
   driverName?: string;
   color: string;
@@ -71,6 +77,9 @@ export interface Implement {
   model: string;
   type: ImplementType;
   category?: string;              // Haakeriista liik (vabatekst, eraldi masinate liikidest)
+  acquisitionCost?: number;       // Soetusmaksumus (€)
+  depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
+  depreciationMethod?: DepreciationMethod;
   workingWidthM: number;          // Töölaius meetrites (nt 12m)
   offsetM?: number;              // Külgnihe
   year?: number;

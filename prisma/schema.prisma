@@ -321,6 +321,9 @@ model Vehicle {
   category            String? // Masina liik (vabatekst, isetäienev olemasolevatest)
   model               String
   powerKw             Float? // Mootorivõimsus kW
+  acquisitionCost     Float? // Soetusmaksumus (€)
+  depreciationRate    Float? // Amortisatsioonimäär (% aastas)
+  depreciationMethod  String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   regNumber           String?
   workingWidthM       Float       @default(6.0)
   color               String      @default("#10b981")
@@ -350,20 +353,23 @@ model Vehicle {
 }
 
 model Implement {
-  id               String        @id @default(cuid())
-  name             String
-  type             ImplementType
-  category         String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
-  workingWidthM    Float
-  manufacturer     String?
-  model            String?
-  year             Int?
-  assignedDeviceId String?       @unique
-  notes            String?
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
-  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  id                 String        @id @default(cuid())
+  name               String
+  type               ImplementType
+  category           String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
+  workingWidthM      Float
+  acquisitionCost    Float? // Soetusmaksumus (€)
+  depreciationRate   Float? // Amortisatsioonimäär (% aastas)
+  depreciationMethod String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
+  manufacturer       String?
+  model              String?
+  year               Int?
+  assignedDeviceId   String?       @unique
+  notes              String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+  createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   vehicle              Vehicle?
   assignedDevice       TeltonikaDevice?      @relation(fields: [assignedDeviceId], references: [id])
