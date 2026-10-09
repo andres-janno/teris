@@ -773,7 +773,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
             onClick={() => { setActiveTab('vehicles'); closeForm(); }}
           >
-            <span>🚜 Sõidukid / Masinad</span>
+            <span>🚜 Masinad</span>
             <span className="count-pill">{vehicles.length}</span>
           </button>
 
@@ -786,19 +786,19 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           </button>
 
           <button
-            className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('devices'); closeForm(); }}
-          >
-            <span>📡 Telemeetriaseadmed</span>
-            <span className="count-pill">{devices.length}</span>
-          </button>
-
-          <button
             className={`filter-tab ${activeTab === 'history' ? 'active' : ''}`}
             onClick={() => { setActiveTab('history'); closeForm(); loadImplementAssignments(); }}
           >
-            <span>📜 Haakimise register</span>
+            <span>📜 Haakimiste register</span>
             <span className="count-pill">{implementAssignments.length}</span>
+          </button>
+
+          <button
+            className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('devices'); closeForm(); }}
+          >
+            <span>📡 Telemeetria seadmed</span>
+            <span className="count-pill">{devices.length}</span>
           </button>
 
           <button
@@ -2202,7 +2202,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <Tractor className="text-emerald" size={24} />
             <div>
               <h3>Masinapargi ja Seadmete Haldus</h3>
-              <p className="modal-subtitle">Eraldi registrid sõidukitele, haakeriistadele, telemeetriaseadmetele ning haakimise ja seadmete seostele</p>
+              <p className="modal-subtitle">Eraldi registrid masinatele, haakeriistadele, haakimistele, telemeetria seadmetele ja seadmete seostele</p>
             </div>
           </div>
           {onClose && (
