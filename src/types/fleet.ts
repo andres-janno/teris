@@ -23,6 +23,7 @@ export type DepreciationMethod = 'linear' | 'declining';
 export interface Vehicle {
   id: string;
   name: string;
+  manufacturer?: string;          // Tootja
   model: string;
   type: VehicleType;
   category?: string;              // Masina liik (vabatekst)

@@ -319,6 +319,7 @@ model Vehicle {
   name                String
   type                VehicleType
   category            String? // Masina liik (vabatekst, isetäienev olemasolevatest)
+  manufacturer        String? // Tootja
   model               String
   powerKw             Float? // Mootorivõimsus kW
   acquisitionCost     Float? // Soetusmaksumus (€)

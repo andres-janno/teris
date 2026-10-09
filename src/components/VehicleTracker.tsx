@@ -280,6 +280,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // Forms states
   // 1. Vehicle Form
   const [vName, setVName] = useState('');
+  const [vManufacturer, setVManufacturer] = useState('');
   const [vModel, setVModel] = useState('');
   const [vType, setVType] = useState<VehicleType>('tractor');
   const [vCategory, setVCategory] = useState('');
@@ -562,6 +563,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // lisamisele (või vastupidi) ei jätaks eelmise kirje väärtusi alles.
   const resetVehicleForm = () => {
     setVName('');
+    setVManufacturer('');
     setVModel('');
     setVType('tractor');
     setVCategory('');
@@ -615,7 +617,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     if (!vName.trim()) return;
     const payload = {
       name: vName.trim(),
-      model: vModel.trim() || 'Teadmata mudel',
+      manufacturer: vManufacturer.trim() || undefined,
+      model: vModel.trim(),
       type: vType,
       category: normalizeCategory(vCategory, vehicleCategories),
       powerKw: parsePositive(vPowerKw),
@@ -636,6 +639,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     }
     closeForm();
     setVName('');
+    setVManufacturer('');
     setVModel('');
     setVPlate('');
     setVSerial('');
@@ -647,8 +651,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     if (!impName.trim()) return;
     const payload = {
       name: impName.trim(),
-      manufacturer: impManufacturer.trim() || 'Tootja',
-      model: impModel.trim() || impName.trim(),
+      manufacturer: impManufacturer.trim(),
+      model: impModel.trim(),
       // Tüüpi vormis pole (asendab liik); olemasoleval kirjel jääb see muutmata
       type: implementsList.find((i) => i.id === editingImplementId)?.type ?? 'other',
       category: normalizeCategory(impCategory, implementCategories),
@@ -707,6 +711,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
   const startEditVehicle = (v: Vehicle) => {
     setVName(v.name);
+    setVManufacturer(v.manufacturer || '');
     setVModel(v.model);
     setVType(v.type);
     setVCategory(v.category || '');
@@ -857,14 +862,23 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   />
                 </div>
                 <div className="form-group">
-                  <label>Mudel</label>
-                  <input
-                    type="text"
-                    placeholder="nt 8R 410 AutoPowr"
-                    value={vModel}
-                    onChange={(e) => setVModel(e.target.value)}
-                    className="form-input"
-                  />
+                  <label>Tootja & Mudel</label>
+                  <div className="input-split">
+                    <input
+                      type="text"
+                      placeholder="John Deere"
+                      value={vManufacturer}
+                      onChange={(e) => setVManufacturer(e.target.value)}
+                      className="form-input"
+                    />
+                    <input
+                      type="text"
+                      placeholder="8R 410"
+                      value={vModel}
+                      onChange={(e) => setVModel(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
                 </div>
                 <div className="form-group">
                   <label>Võimsus (kW)</label>
@@ -1018,7 +1032,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Töölaius (meetrites) *</label>
+                  <label>Töölaius (m) *</label>
                   <input
                     type="number"
                     step="0.1"
@@ -1349,7 +1363,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                     <div>
                       <h4 className="v-name">{v.name}</h4>
-                      <span className="v-model">{[v.category, v.model, v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
+                      <span className="v-model">{[v.category, [v.manufacturer, v.model].filter(Boolean).join(' '), v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
                     </div>
                   </div>
 
