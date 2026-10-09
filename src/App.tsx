@@ -960,6 +960,18 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     api.assignDevice(deviceId, vehicleId, implementId).catch((err) => console.error('Error assigning device in DB:', err));
   };
 
+  // Haakimise register on haakimise ainus tõeallikas: pärast registri otsest muutmist
+  // loetakse masinate ja haakeriistade haakimise olek serverist uuesti.
+  const refreshHitches = () => {
+    api.getFleet().then((fleet) => {
+      if (!fleet) return;
+      const vehHitch = new Map<string, string | undefined>(fleet.vehicles?.map((v: Vehicle) => [v.id, v.assignedImplementId]));
+      const impHitch = new Map<string, string | undefined>(fleet.implements?.map((i: Implement) => [i.id, i.assignedVehicleId]));
+      setRawVehicles((prev) => prev.map((v) => ({ ...v, assignedImplementId: vehHitch.get(v.id) })));
+      setImplementsList((prev) => prev.map((i) => ({ ...i, assignedVehicleId: impHitch.get(i.id) })));
+    }).catch((err) => console.error('Error refreshing hitches:', err));
+  };
+
   const handleAssignImplement = (implementId: string, vehicleId?: string) => {
     setImplementsList((prevImps) => {
       return prevImps.map((imp) => {
@@ -995,9 +1007,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (newV.assignedDeviceId) {
       handleAssignDevice(newV.assignedDeviceId, v.id);
     }
-    if (newV.assignedImplementId) {
-      handleAssignImplement(newV.assignedImplementId, v.id);
-    }
     api.saveVehicle(v).catch((err) => console.error('Error saving vehicle to DB:', err));
   };
 
@@ -1009,13 +1018,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     } else {
       const currentDeviceId = devices.find((d) => d.assignedVehicleId === id)?.id;
       if (currentDeviceId) handleAssignDevice(currentDeviceId, undefined);
-    }
-
-    if (updates.assignedImplementId) {
-      handleAssignImplement(updates.assignedImplementId, id);
-    } else {
-      const currentImplementId = implementsList.find((i) => i.assignedVehicleId === id)?.id;
-      if (currentImplementId) handleAssignImplement(currentImplementId, undefined);
     }
 
     api.saveVehicle({ ...updates, id }).catch((err) => console.error('Error updating vehicle in DB:', err));
@@ -1032,15 +1034,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const handleAddImplement = (newImp: Omit<Implement, 'id'>) => {
     const imp: Implement = { ...newImp, id: `imp-${Date.now()}` };
     setImplementsList((prev) => [...prev, imp]);
-    if (newImp.assignedVehicleId) {
-      handleAssignImplement(imp.id, newImp.assignedVehicleId);
-    }
     api.saveImplement(imp).catch((err) => console.error('Error saving implement to DB:', err));
   };
 
   const handleUpdateImplement = (id: string, updates: Omit<Implement, 'id'>) => {
     setImplementsList((prev) => prev.map((i) => (i.id === id ? { ...i, ...updates } : i)));
-    handleAssignImplement(id, updates.assignedVehicleId || undefined);
     api.saveImplement({ ...updates, id }).catch((err) => console.error('Error updating implement in DB:', err));
   };
 
@@ -1593,6 +1591,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onFocusVehicle={handleFocusVehicle}
           onAssignDevice={handleAssignDevice}
           onAssignImplement={handleAssignImplement}
+          onHitchRegisterChanged={refreshHitches}
           onAddVehicle={handleAddVehicle}
           onUpdateVehicle={handleUpdateVehicle}
           onDeleteVehicle={handleDeleteVehicle}

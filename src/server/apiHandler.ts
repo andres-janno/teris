@@ -233,6 +233,24 @@ function depreciationOut(row: { acquisitionCost: number | null; depreciationRate
   };
 }
 
+// Hetkel kehtivad haakimised haakimise registrist (ainus tõeallikas). Kui register sisaldab
+// kattuvaid kirjeid, loeb iga masina ja haakeriista puhul viimasena alanud kirje.
+async function activeHitches() {
+  const now = new Date();
+  const rows = await prisma.implementAssignment.findMany({
+    where: { startedAt: { lte: now }, OR: [{ endedAt: null }, { endedAt: { gt: now } }] },
+    orderBy: { startedAt: 'desc' }
+  });
+  const byVehicle = new Map<string, string>();
+  const byImplement = new Map<string, string>();
+  for (const r of rows) {
+    if (byVehicle.has(r.vehicleId) || byImplement.has(r.implementId)) continue;
+    byVehicle.set(r.vehicleId, r.implementId);
+    byImplement.set(r.implementId, r.vehicleId);
+  }
+  return { byVehicle, byImplement };
+}
+
 export interface ApiOptions {
   allowedOrigins: string[];
   requireAuth: boolean;
@@ -621,7 +639,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     // 5. Fleet (Vehicles, Implements, Devices)
     if (pathname === '/api/fleet' && method === 'GET') {
-      const [rawVehicles, rawImplements, rawDevices, activeAssignments] = await Promise.all([
+      const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
         }),
@@ -629,7 +647,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         prisma.teltonikaDevice.findMany(),
         prisma.deviceAssignment.findMany({
           where: { endedAt: null }
-        })
+        }),
+        activeHitches()
       ]);
 
       const vehicles = rawVehicles.map((v) => ({
@@ -644,7 +663,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         color: v.color,
         driverName: v.assignedDriver?.name,
         assignedDeviceId: v.assignedDeviceId ?? undefined,
-        assignedImplementId: v.assignedImplementId ?? undefined,
+        assignedImplementId: hitches.byVehicle.get(v.id),
         lastKnownPosition: (v.lastLatitude != null && v.lastLongitude != null)
           ? [v.lastLatitude, v.lastLongitude] as [number, number]
           : undefined,
@@ -663,6 +682,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         workingWidthM: i.workingWidthM,
         year: i.year ?? undefined,
         assignedDeviceId: i.assignedDeviceId ?? undefined,
+        assignedVehicleId: hitches.byImplement.get(i.id),
         notes: i.notes ?? undefined
       }));
 
@@ -778,19 +798,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         });
       }
 
-      await prisma.vehicle.updateMany({
-        where: { assignedImplementId: implementId },
-        data: { assignedImplementId: null }
-      });
-
       if (vehicleId) {
         await prisma.implementAssignment.updateMany({
           where: { vehicleId, endedAt: null },
           data: { endedAt: now }
-        });
-        await prisma.vehicle.update({
-          where: { id: vehicleId },
-          data: { assignedImplementId: implementId }
         });
         await prisma.implementAssignment.create({
           data: {
@@ -819,9 +830,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       if (v.assignedDeviceId) {
         vData.assignedDevice = { connect: { id: v.assignedDeviceId } };
       }
-      if (v.assignedImplementId) {
-        vData.assignedImplement = { connect: { id: v.assignedImplementId } };
-      }
 
       const saved = await prisma.vehicle.upsert({
         where: { id: v.id || `veh-${Date.now()}` },
@@ -832,15 +840,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         }
       });
 
-      if (v.assignedImplementId) {
-        await recordImplementAssignment(v.assignedImplementId, saved.id);
-      } else if (v.id) {
-        await prisma.implementAssignment.updateMany({
-          where: { vehicleId: saved.id, endedAt: null },
-          data: { endedAt: new Date() }
-        });
-      }
-
+      // Haakimine ei käi masina vormi kaudu: see on ainult haakimise registris
       return json(res, saved);
     }
 
@@ -879,15 +879,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         }
       });
 
-      // assignedVehicleId is a virtual field derived from Vehicle.assignedImplementId
-      if (i.assignedVehicleId) {
-        await recordImplementAssignment(saved.id, i.assignedVehicleId);
-      } else if (i.id) {
-        await prisma.implementAssignment.updateMany({
-          where: { implementId: saved.id, endedAt: null },
-          data: { endedAt: new Date() }
-        });
-      }
+      // Haakimine ei käi haakeriista vormi kaudu: see on ainult haakimise registris
       return json(res, saved);
     }
 
@@ -960,9 +952,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       return json(res, { success: true, id });
     }
 
-    // assignedImplementId/assignedDeviceId are @unique on Vehicle, so any
-    // vehicle currently holding this implement/device must be cleared
-    // before it can be attached to a different (or no) vehicle.
+    // Kaardi „Haagi“/„Vaheta“/lahtihaakimine: kirje tehakse haakimise registrisse
     if (pathname === '/api/fleet/implements/assign' && method === 'POST') {
       const { implementId, vehicleId, notes } = await parseBody(req);
       await recordImplementAssignment(implementId, vehicleId, notes);
@@ -1061,23 +1051,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         }
       });
 
-      // Synchronize active attachment on vehicle if needed
-      if (updated.endedAt) {
-        await prisma.vehicle.updateMany({
-          where: { id: updated.vehicleId, assignedImplementId: updated.implementId },
-          data: { assignedImplementId: null }
-        });
-      } else {
-        await prisma.vehicle.updateMany({
-          where: { assignedImplementId: updated.implementId },
-          data: { assignedImplementId: null }
-        });
-        await prisma.vehicle.update({
-          where: { id: updated.vehicleId },
-          data: { assignedImplementId: updated.implementId }
-        });
-      }
-
       return json(res, {
         id: updated.id,
         vehicleId: updated.vehicleId,
@@ -1097,12 +1070,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const id = pathname.replace('/api/fleet/implement-assignments/', '');
       const existing = await prisma.implementAssignment.findUnique({ where: { id } });
       if (denyDelete(req, res, existing)) return;
-      if (existing && !existing.endedAt) {
-        await prisma.vehicle.updateMany({
-          where: { id: existing.vehicleId, assignedImplementId: existing.implementId },
-          data: { assignedImplementId: null }
-        });
-      }
       await prisma.implementAssignment.delete({ where: { id } });
       return json(res, { success: true, id });
     }
@@ -1316,17 +1283,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         });
         if (impAsgn?.implement) {
           resolvedImplement = impAsgn.implement;
-        }
-      }
-
-      // 3) Kui seoste tabelist ei leidnud, vaata mis haakeriist on masinale praegu haagitud:
-      if (!resolvedImplement && vehicle) {
-        if (vehicle.assignedImplement) {
-          resolvedImplement = vehicle.assignedImplement;
-        } else if (vehicle.assignedImplementId) {
-          resolvedImplement = await prisma.implement.findUnique({
-            where: { id: vehicle.assignedImplementId }
-          });
         }
       }
 

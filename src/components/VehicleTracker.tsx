@@ -52,6 +52,7 @@ interface VehicleTrackerProps {
   // Reassignment / Movement handlers
   onAssignDevice: (deviceId: string, vehicleId?: string, implementId?: string) => void;
   onAssignImplement: (implementId: string, vehicleId?: string) => void;
+  onHitchRegisterChanged: () => void;   // haakimise registrit muudeti otse → värskenda kaartide haakimise olekut
 
   // CRUD
   onAddVehicle: (v: Omit<Vehicle, 'id'>) => void;
@@ -339,6 +340,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onFocusVehicle,
   onAssignDevice,
   onAssignImplement,
+  onHitchRegisterChanged,
   onAddVehicle,
   onUpdateVehicle,
   onDeleteVehicle,
@@ -373,7 +375,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
   const [vSelectedDevId, setVSelectedDevId] = useState('');
-  const [vSelectedImpId, setVSelectedImpId] = useState('');
   const [vNotes, setVNotes] = useState('');
 
   // 2. Implement Form
@@ -387,7 +388,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
   const [impWidth, setImpWidth] = useState(8.0);
   const [impSerial, setImpSerial] = useState('');
-  const [impAssignedVehId, setImpAssignedVehId] = useState('');
   const [impNotes, setImpNotes] = useState('');
 
   // Masinate ja haakeriistade liigid on eraldi nimekirjad
@@ -536,12 +536,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         setImplementAssignments((prev) => [created, ...prev]);
       }
 
-      if (assignIsActive) {
-        onAssignImplement(assignImplementId, assignVehicleId);
-      } else {
-        onAssignImplement(assignImplementId, undefined);
-      }
-
+      onHitchRegisterChanged();
       closeForm();
       loadImplementAssignments();
     } catch (err: any) {
@@ -585,6 +580,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     try {
       await api.deleteImplementAssignment(id);
       setImplementAssignments((prev) => prev.filter((a) => a.id !== id));
+      onHitchRegisterChanged();
       loadImplementAssignments();
     } catch (err) {
       alertDialog(err instanceof Error ? err.message : 'Haakimise kirje kustutamine ebaõnnestus');
@@ -640,7 +636,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDriver('');
     setVColor('#22c55e');
     setVSelectedDevId('');
-    setVSelectedImpId('');
     setVNotes('');
   };
 
@@ -655,7 +650,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod('');
     setImpWidth(8.0);
     setImpSerial('');
-    setImpAssignedVehId('');
     setImpNotes('');
   };
 
@@ -694,7 +688,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       driverName: vDriver.trim() || undefined,
       color: vColor,
       assignedDeviceId: vSelectedDevId || undefined,
-      assignedImplementId: vSelectedImpId || undefined,
       notes: vNotes.trim() || undefined
     };
     if (editingVehicleId) {
@@ -723,7 +716,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       depreciationMethod: impDepMethod || undefined,
       workingWidthM: Number(impWidth) || 6.0,
       serialNumber: impSerial.trim() || undefined,
-      assignedVehicleId: impAssignedVehId || undefined,
       isActive: false,
       notes: impNotes.trim() || undefined
     };
@@ -788,7 +780,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDriver(v.driverName || '');
     setVColor(v.color);
     setVSelectedDevId(v.assignedDeviceId || '');
-    setVSelectedImpId(v.assignedImplementId || '');
     setVNotes(v.notes || '');
     setEditingVehicleId(v.id);
     setIsAddingNew(true);
@@ -805,7 +796,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod(imp.depreciationMethod || '');
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
-    setImpAssignedVehId(imp.assignedVehicleId || '');
     setImpNotes(imp.notes || '');
     setEditingImplementId(imp.id);
     setIsAddingNew(true);
@@ -996,21 +986,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     ))}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label>Haagi tööriist</label>
-                  <select
-                    value={vSelectedImpId}
-                    onChange={(e) => setVSelectedImpId(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="">-- Ilma haakeriistata --</option>
-                    {implementsList.map((imp) => (
-                      <option key={imp.id} value={imp.id}>
-                        {imp.name} ({imp.workingWidthM}m) {imp.assignedVehicleId ? `[Haagitud]` : `[Vaba laos]`}
-                      </option>
-                    ))}
-                  </select>
-                </div>
                 <DepreciationFields
                   cost={vCost}
                   onCostChange={setVCost}
@@ -1128,19 +1103,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     onChange={(e) => setImpSerial(e.target.value)}
                     className="form-input"
                   />
-                </div>
-                <div className="form-group">
-                  <label>Haagi kohe masina taha</label>
-                  <select
-                    value={impAssignedVehId}
-                    onChange={(e) => setImpAssignedVehId(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="">-- Jäta lattu / Vabaks --</option>
-                    {vehicles.map((v) => (
-                      <option key={v.id} value={v.id}>{v.name} ({v.registrationPlate || 'nr puudub'})</option>
-                    ))}
-                  </select>
                 </div>
                 <DepreciationFields
                   cost={impCost}
