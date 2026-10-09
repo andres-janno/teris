@@ -201,8 +201,8 @@ function denyDelete(req: IncomingMessage, res: ServerResponse, record: { created
   return true;
 }
 
-// Liigi vabatekst: tühikud kärbitud, tühi → null
-function cleanCategory(value: unknown): string | null {
+// Vabatekst (liik, VIN / seerianumber): tühikud kärbitud, tühi → null
+function cleanText(value: unknown): string | null {
   const s = typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
   return s || null;
 }
@@ -741,6 +741,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         powerKw: v.powerKw ?? undefined,
         ...depreciationOut(v),
         registrationPlate: v.regNumber ?? undefined,
+        serialNumber: v.serialNumber ?? undefined,
         color: v.color,
         driverName: v.assignedDriver?.name,
         assignedDeviceId: deviceLinks.byVehicle.get(v.id),
@@ -760,6 +761,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         ...depreciationOut(i),
         model: i.model ?? '',
         manufacturer: i.manufacturer ?? '',
+        serialNumber: i.serialNumber ?? undefined,
         workingWidthM: i.workingWidthM,
         year: i.year ?? undefined,
         assignedDeviceId: deviceLinks.byImplement.get(i.id),
@@ -903,11 +905,12 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const vData: any = {
         name: v.name,
         type: (v.type || 'tractor').toUpperCase() as any,
-        category: cleanCategory(v.category),
+        category: cleanText(v.category),
         model: v.model,
         powerKw: toPositiveNumber(v.powerKw),
         ...depreciationIn(v),
         regNumber: v.registrationPlate || v.regNumber || null,
+        serialNumber: cleanText(v.serialNumber),
         color: v.color || '#10b981',
         notes: v.notes ?? null
       };
@@ -940,12 +943,12 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const i = await parseBody(req);
       const iData: any = {
         name: i.name,
-        type: (i.type || 'other').toUpperCase() as any,
-        category: cleanCategory(i.category),
+        category: cleanText(i.category),
         ...depreciationIn(i),
         workingWidthM: i.workingWidthM,
         manufacturer: i.manufacturer || null,
         model: i.model || null,
+        serialNumber: cleanText(i.serialNumber),
         year: i.year ?? null,
         notes: i.notes ?? null
       };
@@ -955,6 +958,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         update: iData,
         create: {
           id: i.id || `imp-${Date.now()}`,
+          // Tüüpi vormis enam pole (asendab vabatekstiline liik); veerg on kohustuslik
+          type: 'OTHER',
           ...iData
         }
       });
@@ -1031,7 +1036,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         where,
         include: {
           vehicle: { select: { id: true, name: true, type: true } },
-          implement: { select: { id: true, name: true, type: true } }
+          implement: { select: { id: true, name: true, category: true } }
         },
         orderBy: { startedAt: 'desc' },
         take: 200
@@ -1044,7 +1049,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         vehicleName: a.vehicle?.name,
         vehicleType: a.vehicle?.type?.toLowerCase(),
         implementName: a.implement?.name,
-        implementType: a.implement?.type?.toLowerCase(),
+        implementCategory: a.implement?.category ?? undefined,
         startedAt: a.startedAt.toISOString(),
         endedAt: a.endedAt ? a.endedAt.toISOString() : undefined,
         notes: a.notes ?? undefined,
@@ -1070,7 +1075,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         },
         include: {
           vehicle: { select: { id: true, name: true, type: true } },
-          implement: { select: { id: true, name: true, type: true } }
+          implement: { select: { id: true, name: true, category: true } }
         }
       });
       return json(res, {
@@ -1080,7 +1085,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         vehicleName: created.vehicle?.name,
         vehicleType: created.vehicle?.type?.toLowerCase(),
         implementName: created.implement?.name,
-        implementType: created.implement?.type?.toLowerCase(),
+        implementCategory: created.implement?.category ?? undefined,
         startedAt: created.startedAt.toISOString(),
         endedAt: created.endedAt ? created.endedAt.toISOString() : undefined,
         notes: created.notes ?? undefined,
@@ -1107,7 +1112,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         data: updateData,
         include: {
           vehicle: { select: { id: true, name: true, type: true } },
-          implement: { select: { id: true, name: true, type: true } }
+          implement: { select: { id: true, name: true, category: true } }
         }
       });
 
@@ -1118,7 +1123,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         vehicleName: updated.vehicle?.name,
         vehicleType: updated.vehicle?.type?.toLowerCase(),
         implementName: updated.implement?.name,
-        implementType: updated.implement?.type?.toLowerCase(),
+        implementCategory: updated.implement?.category ?? undefined,
         startedAt: updated.startedAt.toISOString(),
         endedAt: updated.endedAt ? updated.endedAt.toISOString() : undefined,
         notes: updated.notes ?? undefined,

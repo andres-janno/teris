@@ -33,7 +33,6 @@ import type {
   DeviceAssignment,
   EnrichedVehicle,
   VehicleType,
-  ImplementType,
   DepreciationMethod,
   DeviceConnectivity,
   ImplementAssignment
@@ -69,20 +68,6 @@ interface VehicleTrackerProps {
   onDeleteDevice: (id: string) => void;
 }
 type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory';
-
-const IMPLEMENT_TYPE_LABELS: Record<ImplementType, string> = {
-  seeder: 'Külvik',
-  cultivator: 'Kultivaator / Randaal',
-  disc_harrow: 'Ketasäke',
-  plow: 'Ader',
-  sprayer: 'Pritsipoom',
-  header: 'Heeder',
-  fertilizer_spreader: 'Väetiselaotur',
-  trailer: 'Haagis',
-  roller: 'Põllurull',
-  mower: 'Niiduk',
-  other: 'Muu seade'
-};
 
 const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   tractor: 'Traktor',
@@ -304,6 +289,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vDepRate, setVDepRate] = useState('');
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
   const [vPlate, setVPlate] = useState('');
+  const [vSerial, setVSerial] = useState('');
   const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
   const [vNotes, setVNotes] = useState('');
@@ -312,7 +298,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impName, setImpName] = useState('');
   const [impManufacturer, setImpManufacturer] = useState('');
   const [impModel, setImpModel] = useState('');
-  const [impType, setImpType] = useState<ImplementType>('cultivator');
   const [impCategory, setImpCategory] = useState('');
   const [impCost, setImpCost] = useState('');
   const [impAcqDate, setImpAcqDate] = useState('');
@@ -586,6 +571,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDepRate('');
     setVDepMethod('');
     setVPlate('');
+    setVSerial('');
     setVDriver('');
     setVColor('#22c55e');
     setVNotes('');
@@ -595,7 +581,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpName('');
     setImpManufacturer('');
     setImpModel('');
-    setImpType('cultivator');
     setImpCategory('');
     setImpCost('');
     setImpAcqDate('');
@@ -639,6 +624,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       depreciationRate: parsePositive(vDepRate),
       depreciationMethod: vDepMethod || undefined,
       registrationPlate: vPlate.trim() || undefined,
+      serialNumber: vSerial.trim() || undefined,
       driverName: vDriver.trim() || undefined,
       color: vColor,
       notes: vNotes.trim() || undefined
@@ -652,6 +638,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVName('');
     setVModel('');
     setVPlate('');
+    setVSerial('');
     setVNotes('');
   };
 
@@ -662,7 +649,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       name: impName.trim(),
       manufacturer: impManufacturer.trim() || 'Tootja',
       model: impModel.trim() || impName.trim(),
-      type: impType,
+      // Tüüpi vormis pole (asendab liik); olemasoleval kirjel jääb see muutmata
+      type: implementsList.find((i) => i.id === editingImplementId)?.type ?? 'other',
       category: normalizeCategory(impCategory, implementCategories),
       acquisitionCost: parsePositive(impCost),
       acquisitionDate: impAcqDate || undefined,
@@ -728,6 +716,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
     setVDepMethod(v.depreciationMethod || '');
     setVPlate(v.registrationPlate || '');
+    setVSerial(v.serialNumber || '');
     setVDriver(v.driverName || '');
     setVColor(v.color);
     setVNotes(v.notes || '');
@@ -739,7 +728,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpName(imp.name);
     setImpManufacturer(imp.manufacturer);
     setImpModel(imp.model);
-    setImpType(imp.type);
     setImpCategory(imp.category || '');
     setImpCost(imp.acquisitionCost != null ? String(imp.acquisitionCost) : '');
     setImpAcqDate(imp.acquisitionDate || '');
@@ -932,6 +920,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     />
                   </div>
                 </div>
+                <div className="form-group">
+                  <label>VIN / Seerianumber</label>
+                  <input
+                    type="text"
+                    placeholder="nt 1RW8R410JKD012345"
+                    value={vSerial}
+                    onChange={(e) => setVSerial(e.target.value)}
+                    className="form-input"
+                  />
+                </div>
                 <DepreciationFields
                   date={vAcqDate}
                   onDateChange={setVAcqDate}
@@ -1020,18 +1018,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Haakeriista tüüp</label>
-                  <select
-                    value={impType}
-                    onChange={(e) => setImpType(e.target.value as ImplementType)}
-                    className="form-input"
-                  >
-                    {(Object.keys(IMPLEMENT_TYPE_LABELS) as ImplementType[]).map((t) => (
-                      <option key={t} value={t}>{IMPLEMENT_TYPE_LABELS[t]}</option>
-                    ))}
-                  </select>
-                </div>
-                <div className="form-group">
                   <label>Töölaius (meetrites) *</label>
                   <input
                     type="number"
@@ -1043,10 +1029,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   />
                 </div>
                 <div className="form-group">
-                  <label>Seerianumber</label>
+                  <label>VIN / Seerianumber</label>
                   <input
                     type="text"
-                    placeholder="TPL16-88902"
+                    placeholder="nt TPL16-88902"
                     value={impSerial}
                     onChange={(e) => setImpSerial(e.target.value)}
                     className="form-input"
@@ -1253,7 +1239,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <option value="" disabled>Vali haakeriist...</option>
                     {implementsList.map((imp) => (
                       <option key={imp.id} value={imp.id}>
-                        {imp.name} ({IMPLEMENT_TYPE_LABELS[imp.type as ImplementType] || imp.type})
+                        {imp.name}{imp.category ? ` (${imp.category})` : ''}
                       </option>
                     ))}
                   </select>
@@ -1556,7 +1542,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                   <div className="imp-title-wrap">
                     <h4 className="imp-name">{imp.name}</h4>
-                    <span className="imp-meta">{[imp.category, imp.manufacturer, IMPLEMENT_TYPE_LABELS[imp.type], `${imp.workingWidthM}m`].filter(Boolean).join(' • ')}</span>
+                    <span className="imp-meta">{[imp.category, imp.manufacturer, `${imp.workingWidthM}m`].filter(Boolean).join(' • ')}</span>
                   </div>
                   <div className="card-header-actions">
                     <button
@@ -1609,7 +1595,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 {imp.serialNumber && (
                   <div className="imp-serial-row">
-                    <span className="text-muted">Seerianumber:</span>
+                    <span className="text-muted">VIN / Seerianumber:</span>
                     <code>{imp.serialNumber}</code>
                   </div>
                 )}
@@ -1967,7 +1953,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             </div>
                             <div>
                               <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.implementName || a.implementId}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.implementType || ''}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.implementCategory || ''}</div>
                             </div>
                           </div>
                         </td>

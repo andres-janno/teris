@@ -32,6 +32,7 @@ export interface Vehicle {
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
   depreciationMethod?: DepreciationMethod;
   registrationPlate?: string;
+  serialNumber?: string;          // VIN / seerianumber
   driverName?: string;
   color: string;
   year?: number;
@@ -75,7 +76,7 @@ export interface ImplementAssignment {
   vehicleName?: string;
   vehicleType?: string;
   implementName?: string;
-  implementType?: string;
+  implementCategory?: string;
   startedAt: string;
   endedAt?: string;
   notes?: string;

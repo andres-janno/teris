@@ -326,6 +326,7 @@ model Vehicle {
   depreciationRate    Float? // Amortisatsioonimäär (% aastas)
   depreciationMethod  String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   regNumber           String?
+  serialNumber        String? // VIN / seerianumber
   workingWidthM       Float       @default(6.0)
   color               String      @default("#10b981")
   fuelCapacityL       Float?
@@ -365,6 +366,7 @@ model Implement {
   depreciationMethod String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   manufacturer       String?
   model              String?
+  serialNumber       String? // VIN / seerianumber
   year               Int?
   assignedDeviceId   String?       @unique
   notes              String?
