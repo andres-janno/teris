@@ -1,14 +1,14 @@
 // src/components/SatellitePanel.tsx
 // Satelliidipildi kihi juhtpaneel kaardil: toode (RGB / NRG / NDVI), periood, kuupäev ja pilvevaba filter.
-// Kuupäevad tulevad Satiladust. Pilvevaba filter (Satiladu hinnang, ligikaudne) kehtib kaardil nähtavate põldude ala kohta (nende ümbris,
-// piiratud kaardivaatega); kui vaates põlde pole, siis kogu kaardivaate kohta.
-import React, { useEffect, useMemo, useState } from 'react';
+// Kuupäevad tulevad Satiladust. Pilvevaba filter on oma pilvekontroll (server, vt satelliteClouds.ts)
+// kaardil nähtavate põldude pikslitel; kui vaates põlde pole, siis kogu kaardivaate kohta.
+import React, { useEffect, useState } from 'react';
 import type L from 'leaflet';
 import * as turf from '@turf/turf';
-import type { FieldCollection } from '../types/field';
-import { NDVI_CLASSES } from '../services/ndvi';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
+import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, type SatelliteProductId } from '../services/satelliteLayer';
 
 const FIRST_YEAR = 2015;
@@ -20,6 +20,13 @@ const NDVI_LEGEND_TICKS = [
   { label: '0,5', pos: 55.6 },
   { label: '0,9', pos: 100 }
 ];
+// Sama mis serveris (satelliteClouds.ts): andmeid ≥ 90% põldudest, pilves ≤ 10%
+const CLEAR_MIN_COVERAGE = 0.9;
+const CLEAR_MAX_CLOUD = 0.1;
+
+type CloudStat = { date: string; coverage: number; cloud: number };
+type Polygons = number[][][][];
+type CheckArea = { key: string; polygons: Polygons; fieldCount: number };
 
 function isoDate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -41,31 +48,35 @@ function formatDate(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
-type Bbox = [number, number, number, number]; // [lõuna, lääs, põhi, ida]
+const round6 = (v: number) => Math.round(v * 1e6) / 1e6;
 
 /**
- * Satiladu pilvevaba otsingu ala: kaardivaates nähtavate põldude ümbris (kaardivaatega lõigatud),
- * kui vaates põlde pole, siis kaardivaade. Piiratud Eestiga.
+ * Pilvekontrolli ala: kaardivaates nähtavad põllud (hulknurgad); kui neid pole, siis kaardivaate
+ * ristkülik (Eestiga piiratud). key muutub ainult siis, kui ala sisu muutub.
  */
-function cloudFreeArea(map: L.Map, fieldBoxes: Bbox[]): { bbox: Bbox; fieldCount: number } {
+function cloudCheckArea(map: L.Map, fields: FieldCollection): CheckArea | null {
   const b = map.getBounds();
-  const view: Bbox = [
-    Math.max(b.getSouth(), 57.3),
-    Math.max(b.getWest(), 21.5),
-    Math.min(b.getNorth(), 59.9),
-    Math.min(b.getEast(), 28.3)
-  ];
-  const visible = fieldBoxes.filter((f) => f[0] < view[2] && f[2] > view[0] && f[1] < view[3] && f[3] > view[1]);
-  if (!visible.length) return { bbox: view, fieldCount: 0 };
-  return {
-    bbox: [
-      Math.max(view[0], Math.min(...visible.map((f) => f[0]))),
-      Math.max(view[1], Math.min(...visible.map((f) => f[1]))),
-      Math.min(view[2], Math.max(...visible.map((f) => f[2]))),
-      Math.min(view[3], Math.max(...visible.map((f) => f[3])))
-    ],
-    fieldCount: visible.length
-  };
+  const s = Math.max(b.getSouth(), 57.3), w = Math.max(b.getWest(), 21.5);
+  const n = Math.min(b.getNorth(), 59.9), e = Math.min(b.getEast(), 28.3);
+  if (s >= n || w >= e) return null;
+  const visible = fields.features.filter((f) => {
+    try {
+      const [fw, fs, fe, fn] = turf.bbox(f);
+      return fs < n && fn > s && fw < e && fe > w;
+    } catch {
+      return false;
+    }
+  });
+  if (visible.length) {
+    const polygons = visible.flatMap((f) =>
+      (f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates)
+        .map((poly) => poly.map((ring) => ring.map((p) => [round6(p[0]), round6(p[1])])))
+    );
+    const ids = visible.map((f) => String(f.properties.id)).sort().join(',');
+    return { key: `fields:${ids}`, polygons, fieldCount: visible.length };
+  }
+  const ring = [[w, s], [e, s], [e, n], [w, n], [w, s]].map((p) => [round6(p[0]), round6(p[1])]);
+  return { key: `view:${[s, w, n, e].map((v) => v.toFixed(2)).join(',')}`, polygons: [[ring]], fieldCount: 0 };
 }
 
 interface SatellitePanelProps {
@@ -80,62 +91,47 @@ interface SatellitePanelProps {
 export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, product, onSelectProduct, date, onSelectDate }) => {
   const [period, setPeriod] = useState(RECENT);
   const [cloudFree, setCloudFree] = useState(true);
-  const [dates, setDates] = useState<string[]>([]);
+  const [allDates, setAllDates] = useState<string[]>([]);
+  const [cloudStats, setCloudStats] = useState<CloudStat[]>([]);
+  const [progress, setProgress] = useState<{ checked: number; total: number } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  // Kaardivaate muutumisel (pilvevaba filter) loetakse loend uuesti
-  const [viewKey, setViewKey] = useState(0);
-  // Mitme põllu kohal pilvevaba otsing tehti (0 = kogu kaardivaade)
-  const [areaFieldCount, setAreaFieldCount] = useState(0);
+  const [area, setArea] = useState<CheckArea | null>(null);
 
-  const fieldBoxes = useMemo<Bbox[]>(
-    () => fields.features.flatMap((f) => {
-      try {
-        const [w, s, e, n] = turf.bbox(f);
-        return Number.isFinite(w) ? [[s, w, n, e] as Bbox] : [];
-      } catch {
-        return [];
-      }
-    }),
-    [fields]
-  );
-
+  // Pilvekontrolli ala: arvutatakse kaardi liigutamisel ja põldude muutumisel; sama sisuga ala ei käivita uut päringut
   useEffect(() => {
-    if (!map || !cloudFree) return;
+    if (!map) return;
+    const update = () => {
+      const next = cloudCheckArea(map, fields);
+      setArea((prev) => (prev?.key === next?.key ? prev : next));
+    };
+    update();
     let timer: number;
     const onMove = () => {
       clearTimeout(timer);
-      timer = window.setTimeout(() => setViewKey((k) => k + 1), 600);
+      timer = window.setTimeout(update, 600);
     };
     map.on('moveend', onMove);
     return () => {
       clearTimeout(timer);
       map.off('moveend', onMove);
     };
-  }, [map, cloudFree]);
+  }, [map, fields]);
 
+  // Kõik perioodi pildipäevad (filtrita)
   useEffect(() => {
-    if (!map) return;
+    if (cloudFree) return;
     let cancelled = false;
     const [from, to] = periodRange(period);
-    const area = cloudFree ? cloudFreeArea(map, fieldBoxes) : null;
-    const bbox = area?.bbox;
-    setAreaFieldCount(area?.fieldCount ?? 0);
-    if (bbox && (bbox[0] >= bbox[2] || bbox[1] >= bbox[3])) {
-      setDates([]);
-      setError('Kaardivaade on väljaspool Eestit');
-      return;
-    }
     setLoading(true);
-    api.getSatelliteDates(from, to, bbox)
+    setError(null);
+    api.getSatelliteDates(from, to)
       .then((list) => {
-        if (cancelled) return;
-        setDates(list);
-        setError(null);
+        if (!cancelled) setAllDates(list);
       })
       .catch((err) => {
         if (cancelled) return;
-        setDates([]);
+        setAllDates([]);
         setError(err instanceof Error ? err.message : 'Satelliidipiltide loend pole saadaval');
       })
       .finally(() => {
@@ -144,22 +140,65 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, pro
     return () => {
       cancelled = true;
     };
-  }, [map, period, cloudFree, viewKey, fieldBoxes]);
+  }, [period, cloudFree]);
 
-  // Valitud kuupäev jääb alles, kui see on uues loendis; muidu võetakse uusim
+  // Pilvevabad päevad: server kontrollib päevi järjest (uusim ees); korratakse, kuni kõik on kontrollitud
   useEffect(() => {
-    if (loading) return;
-    if (!dates.length) {
-      if (!error) onSelectDate(null);
+    if (!cloudFree) return;
+    setCloudStats([]);
+    setProgress(null);
+    if (!area) {
+      setLoading(false);
+      setError('Kaardivaade on väljaspool Eestit');
       return;
     }
-    if (!date || !dates.includes(date)) onSelectDate(dates[0]);
+    let cancelled = false;
+    const [from, to] = periodRange(period);
+    setError(null);
+    setLoading(true);
+    const run = async () => {
+      try {
+        for (;;) {
+          const res = await api.checkSatelliteClouds(from, to, area.polygons);
+          if (cancelled) return;
+          setCloudStats(res.stats);
+          setProgress({ checked: res.stats.length, total: res.total });
+          if (res.stats.length >= res.total) break;
+          await new Promise((r) => setTimeout(r, 200));
+          if (cancelled) return;
+        }
+      } catch (err) {
+        if (!cancelled) setError(err instanceof Error ? err.message : 'Pilvisuse kontroll ebaõnnestus');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    };
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [period, cloudFree, area]);
+
+  const clearStats = cloudStats.filter((s) => s.coverage >= CLEAR_MIN_COVERAGE && s.cloud <= CLEAR_MAX_CLOUD);
+  const cloudByDate = new Map(clearStats.map((s) => [s.date, s.cloud]));
+  const dates = cloudFree ? clearStats.map((s) => s.date) : allDates;
+  const datesKey = dates.join(',');
+
+  // Valitud kuupäev jääb alles, kui see on loendis; muidu võetakse uusim. Kontrolli ajal valitakse
+  // esimene leitud päev, kuid kasutaja valikut ei muudeta enne, kui kontroll on lõppenud.
+  useEffect(() => {
+    if (!dates.length) {
+      if (!loading && !error) onSelectDate(null);
+      return;
+    }
+    if (!date || (!loading && !dates.includes(date))) onSelectDate(dates[0]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dates, loading]);
+  }, [datesKey, loading]);
 
   const idx = date ? dates.indexOf(date) : -1;
   const years: string[] = [];
   for (let y = new Date().getFullYear(); y >= FIRST_YEAR; y--) years.push(String(y));
+  const fieldCount = area?.fieldCount ?? 0;
 
   return (
     <div className="satellite-panel glass-card">
@@ -202,10 +241,16 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, pro
           disabled={!dates.length}
           aria-label="Pildi kuupäev"
         >
-          {!dates.length && <option value="">{loading ? 'Laadimine…' : 'Pilte pole'}</option>}
-          {dates.map((d) => (
-            <option key={d} value={d}>{formatDate(d)}</option>
-          ))}
+          {!dates.length && <option value="">{loading ? 'Otsin…' : 'Pilte pole'}</option>}
+          {date && dates.length > 0 && !dates.includes(date) && <option value={date}>{formatDate(date)}</option>}
+          {dates.map((d) => {
+            const cloud = cloudByDate.get(d);
+            return (
+              <option key={d} value={d}>
+                {formatDate(d)}{cloud !== undefined ? ` · pilves ${Math.round(cloud * 100)}%` : ''}
+              </option>
+            );
+          })}
         </select>
         <button
           type="button"
@@ -233,28 +278,33 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, pro
         <input type="checkbox" checked={cloudFree} onChange={() => setCloudFree((v) => !v)} />
         <span>
           Ainult pilvevabad päevad{' '}
-          {areaFieldCount > 0
-            ? `nähtavate põldude kohal (${areaFieldCount})`
-            : 'kaardivaate alal'}
-          <span className="satellite-cloudfree-hint"> — Satiladu hinnang</span>
+          {fieldCount > 0 ? `nähtavatel põldudel (${fieldCount})` : 'kaardivaate alal'}
         </span>
       </label>
+
+      {cloudFree && progress && progress.checked < progress.total && (
+        <div className="satellite-progress" title="Esimesel korral laaditakse iga päeva pilt; edaspidi on tulemus kohe olemas">
+          <div className="satellite-progress-bar">
+            <div style={{ width: `${(progress.checked / Math.max(1, progress.total)) * 100}%` }} />
+          </div>
+          <span>Kontrollin pilvisust: {progress.checked} / {progress.total} päeva</span>
+        </div>
+      )}
 
       {error ? (
         <div className="satellite-panel-note error">{error}</div>
       ) : !loading && !dates.length ? (
         <div className="satellite-panel-note">
           {cloudFree
-            ? `Selle perioodi jooksul polnud ${areaFieldCount > 0 ? 'nähtavate põldude ala' : 'kaardivaade'} ühelgi päeval tervenisti pilvevaba — suumi lähemale (vähem põlde korraga) või lülita filter välja.`
+            ? `Selle perioodi jooksul polnud ${fieldCount > 0 ? 'nähtavad põllud' : 'kaardivaade'} ühelgi päeval pilvevaba — suumi lähemale (vähem põlde korraga) või lülita filter välja.`
             : 'Selle perioodi kohta pilte pole.'}
         </div>
-      ) : !cloudFree ? (
-        <div className="satellite-panel-note">Pilves või lennuribast välja jäänud alad on pildil tühjad või valged.</div>
-      ) : (
+      ) : cloudFree ? (
         <div className="satellite-panel-note">
-          Satiladu pilvevaba hinnang on ligikaudne — sinna jääb ka õhukese pilve või uduga päevi. Põllul klõpsates
-          näed, kui suur osa põllust oli sel päeval tegelikult pilves.
+          Pilvevaba = pildil on ≥ 90% {fieldCount > 0 ? 'põldudest' : 'alast'} ja sellest pilves või udus ≤ 10%.
         </div>
+      ) : (
+        <div className="satellite-panel-note">Pilves või lennuribast välja jäänud alad on pildil tühjad või valged.</div>
       )}
 
       {product === 'ndvi' && (

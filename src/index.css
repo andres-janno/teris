@@ -709,8 +709,22 @@ body {
   gap: 6px;
   cursor: pointer;
 }
-.satellite-cloudfree-hint {
-  color: var(--text-muted);
+.satellite-progress {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  font-size: 0.68rem;
+}
+.satellite-progress-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: var(--stat-bg);
+  overflow: hidden;
+}
+.satellite-progress-bar > div {
+  height: 100%;
+  background: var(--emerald-500);
+  transition: width 0.3s;
 }
 .satellite-panel-note {
   font-size: 0.68rem;

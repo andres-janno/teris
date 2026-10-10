@@ -8,6 +8,7 @@ import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
+import { checkFieldClouds, validateCloudCheckPolygons } from './satelliteClouds.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -1289,15 +1290,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     // 5a2. Satelliidipildid: Satiladu (Maa- ja Ruumiamet) Sentinel-2 päevapiltide kuupäevad
     if (pathname === '/api/satellite/dates' && method === 'GET') {
-      const bboxParam = url.searchParams.get('bbox');
-      const bbox = bboxParam ? bboxParam.split(',').map(Number) : null;
-      const query: SatiladuQuery = {
-        from: url.searchParams.get('from') ?? '',
-        to: url.searchParams.get('to') ?? '',
-        cloudFree: url.searchParams.get('cloudFree') === '1',
-        bbox: bbox && bbox.length === 4 ? (bbox as SatiladuQuery['bbox']) : undefined
-      };
-      if (bboxParam && !query.bbox) return json(res, { error: 'Vigane ala (bbox)' }, 400);
+      const query: SatiladuQuery = { from: url.searchParams.get('from') ?? '', to: url.searchParams.get('to') ?? '' };
       const invalid = validateSatiladuQuery(query);
       if (invalid) return json(res, { error: invalid }, 400);
       try {
@@ -1305,6 +1298,20 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       } catch (err) {
         console.error('Satiladu päring ebaõnnestus:', err);
         return json(res, { error: 'Satiladu kuupäevade loend pole hetkel saadaval' }, 502);
+      }
+    }
+
+    // 5a3. Pilvisus põldude kohal perioodi päevadel (oma pilvekontroll, vt satelliteClouds.ts)
+    if (pathname === '/api/satellite/cloud-check' && method === 'POST') {
+      const body = await parseBody(req, 4 * 1024 * 1024);
+      const query: SatiladuQuery = { from: String(body?.from ?? ''), to: String(body?.to ?? '') };
+      const invalid = validateSatiladuQuery(query) ?? validateCloudCheckPolygons(body?.polygons);
+      if (invalid) return json(res, { error: invalid }, 400);
+      try {
+        return json(res, await checkFieldClouds(query.from, query.to, body.polygons));
+      } catch (err) {
+        console.error('Pilvekontroll ebaõnnestus:', err);
+        return json(res, { error: 'Pilvisuse kontroll pole hetkel võimalik' }, 502);
       }
     }
 

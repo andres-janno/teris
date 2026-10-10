@@ -17,18 +17,14 @@ describe('parseSatiladuDates', () => {
 });
 
 describe('validateSatiladuQuery', () => {
-  const base = { from: '2026-01-01', to: '2026-10-09', cloudFree: false };
+  const base = { from: '2026-01-01', to: '2026-10-09' };
 
   it('lubab korrektse päringu', () => {
     expect(validateSatiladuQuery(base)).toBeNull();
-    expect(validateSatiladuQuery({ ...base, cloudFree: true, bbox: [58.35, 26.65, 58.4, 26.75] })).toBeNull();
   });
 
-  it('keelab vigased kuupäevad ja ala', () => {
+  it('keelab vigased kuupäevad', () => {
     expect(validateSatiladuQuery({ ...base, from: '2026-1-1' })).not.toBeNull();
     expect(validateSatiladuQuery({ ...base, from: '2026-10-10' })).not.toBeNull();
-    expect(validateSatiladuQuery({ ...base, cloudFree: true })).not.toBeNull();
-    expect(validateSatiladuQuery({ ...base, bbox: [58.4, 26.65, 58.35, 26.75] })).not.toBeNull();
-    expect(validateSatiladuQuery({ ...base, bbox: [40, 10, 41, 11] })).not.toBeNull();
   });
 });
