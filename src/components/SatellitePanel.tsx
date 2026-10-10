@@ -86,9 +86,20 @@ interface SatellitePanelProps {
   onSelectProduct: (product: SatelliteProductId) => void;
   date: string | null;
   onSelectDate: (date: string | null) => void;
+  fieldsOnly: boolean;
+  onToggleFieldsOnly: () => void;
 }
 
-export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, product, onSelectProduct, date, onSelectDate }) => {
+export const SatellitePanel: React.FC<SatellitePanelProps> = ({
+  map,
+  fields,
+  product,
+  onSelectProduct,
+  date,
+  onSelectDate,
+  fieldsOnly,
+  onToggleFieldsOnly
+}) => {
   const [period, setPeriod] = useState(RECENT);
   const [cloudFree, setCloudFree] = useState(true);
   const [allDates, setAllDates] = useState<string[]>([]);
@@ -273,6 +284,11 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, pro
           ))}
         </select>
       </div>
+
+      <label className="satellite-cloudfree" title="Põldudest väljapoole jäävaid kaardiplaate ei laadita — kiirem ja selgem">
+        <input type="checkbox" checked={fieldsOnly} onChange={onToggleFieldsOnly} />
+        <span>Näita pilti ainult põldudel</span>
+      </label>
 
       <label className="satellite-cloudfree">
         <input type="checkbox" checked={cloudFree} onChange={() => setCloudFree((v) => !v)} />

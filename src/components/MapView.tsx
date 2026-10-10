@@ -18,7 +18,7 @@ import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
-import { createSatelliteLayer, type SatelliteProductId } from '../services/satelliteLayer';
+import { createSatelliteLayer, type ClipField, type SatelliteProductId } from '../services/satelliteLayer';
 import { SatellitePanel } from './SatellitePanel';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
@@ -103,6 +103,17 @@ export const MapView: React.FC<MapViewProps> = ({
   const [radarFrameIdx, setRadarFrameIdx] = useState(0);
   const [radarError, setRadarError] = useState<string | null>(null);
   const satelliteLayerRef = useRef<L.GridLayer | null>(null);
+  // Satelliidipilt ainult põldude piirides (põldudeta plaate ei laadita)
+  const [satelliteFieldsOnly, setSatelliteFieldsOnly] = useState(true);
+  const satelliteClipFields = React.useMemo<ClipField[]>(
+    () => fields.features.flatMap((f) => {
+      const polygons = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
+      const outer = polygons.flatMap((p) => p[0] ?? []);
+      if (!outer.length) return [];
+      return [{ bounds: L.latLngBounds(outer.map(([lng, lat]) => L.latLng(lat, lng))), polygons }];
+    }),
+    [fields]
+  );
   // Kaardi eksemplar satelliidipaneelile (kaardivaade pilvevaba otsingu jaoks)
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -590,8 +601,12 @@ export const MapView: React.FC<MapViewProps> = ({
     satelliteLayerRef.current?.remove();
     satelliteLayerRef.current = null;
     if (!map || !visibility.satellite || !satelliteDate) return;
-    satelliteLayerRef.current = createSatelliteLayer(satelliteProduct, satelliteDate).addTo(map);
-  }, [visibility.satellite, satelliteProduct, satelliteDate]);
+    satelliteLayerRef.current = createSatelliteLayer(
+      satelliteProduct,
+      satelliteDate,
+      satelliteFieldsOnly ? satelliteClipFields : undefined
+    ).addTo(map);
+  }, [visibility.satellite, satelliteProduct, satelliteDate, satelliteFieldsOnly, satelliteClipFields]);
 
   // 5d. Sajuradari animatsioon: kaadrid järjest, viimane (hetkeseis) püsib kauem
   useEffect(() => {
@@ -863,6 +878,8 @@ export const MapView: React.FC<MapViewProps> = ({
           onSelectProduct={onSelectSatelliteProduct}
           date={satelliteDate}
           onSelectDate={onSelectSatelliteDate}
+          fieldsOnly={satelliteFieldsOnly}
+          onToggleFieldsOnly={() => setSatelliteFieldsOnly((v) => !v)}
         />
       )}
 

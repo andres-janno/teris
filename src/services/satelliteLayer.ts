@@ -50,9 +50,46 @@ export function satelliteWmsUrl(product: SatelliteProductId, date: string, bbox:
   return `https://teenus.maaamet.ee/ows/wms-sentinel-2-${product}?${params}`;
 }
 
+/** Põld lõikamiseks: ümbris (WGS84) ja rõngad [pikkus, laius] */
+export interface ClipField {
+  bounds: L.LatLngBounds;
+  /** Üks või mitu hulknurka (MultiPolygon), igaühes välisrõngas ja augud */
+  polygons: number[][][][];
+}
+
 interface SatelliteLayerOptions extends L.GridLayerOptions {
   product: SatelliteProductId;
   date: string;
+  /** Kui antud, näidatakse pilti ainult nende põldude sees ja põldudeta plaate ei küsita */
+  clipFields?: ClipField[];
+}
+
+/** Põldude mask plaadi lõuendil: valge põldude sees, läbipaistev mujal */
+function fieldMask(map: L.Map, coords: L.Coords, size: L.Point, dpr: number, fields: ClipField[]): HTMLCanvasElement {
+  const mask = document.createElement('canvas');
+  mask.width = size.x * dpr;
+  mask.height = size.y * dpr;
+  const ctx = mask.getContext('2d');
+  if (!ctx) return mask;
+  ctx.fillStyle = '#fff';
+  const ox = coords.x * size.x, oy = coords.y * size.y;
+  for (const f of fields) {
+    for (const poly of f.polygons) {
+      ctx.beginPath();
+      for (const ring of poly) {
+        ring.forEach(([lng, lat], k) => {
+          const p = map.project(L.latLng(lat, lng), coords.z);
+          const x = (p.x - ox) * dpr, y = (p.y - oy) * dpr;
+          if (k === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.closePath();
+      }
+      // Iga hulknurk eraldi: augud jäävad välja, kattuvad põllud ei tühista teineteist
+      ctx.fill('evenodd');
+    }
+  }
+  return mask;
 }
 
 const SatelliteGridLayer = L.GridLayer.extend({
@@ -63,6 +100,19 @@ const SatelliteGridLayer = L.GridLayer.extend({
     tile.width = size.x * dpr;
     tile.height = size.y * dpr;
     const map = (this as unknown as { _map: L.Map })._map;
+
+    // Ainult põldudel: plaat, kuhu ükski põld ei ulatu, jääb tühjaks ja WMS-ist midagi ei küsita
+    let tileFields: ClipField[] | null = null;
+    if (this.options.clipFields) {
+      const nw = map.unproject(L.point(coords.x * size.x, coords.y * size.y), coords.z);
+      const se = map.unproject(L.point((coords.x + 1) * size.x, (coords.y + 1) * size.y), coords.z);
+      const tileBounds = L.latLngBounds(se, nw);
+      tileFields = this.options.clipFields.filter((f) => f.bounds.intersects(tileBounds));
+      if (!tileFields.length) {
+        setTimeout(() => done(undefined, tile), 0);
+        return tile;
+      }
+    }
 
     // Plaadi ruudustiku punktid: sihtpiksel (lõuendil) ja L-EST97 koordinaat
     const dest: [number, number][][] = [];
@@ -113,6 +163,11 @@ const SatelliteGridLayer = L.GridLayer.extend({
           ctx.restore();
         }
       }
+      if (tileFields) {
+        ctx.globalCompositeOperation = 'destination-in';
+        ctx.drawImage(fieldMask(map, coords, size, dpr, tileFields), 0, 0);
+        ctx.globalCompositeOperation = 'source-over';
+      }
       done(undefined, tile);
     };
     img.onerror = () => done(new Error('Satelliidipildi plaati ei saanud laadida'), tile);
@@ -121,10 +176,11 @@ const SatelliteGridLayer = L.GridLayer.extend({
   }
 });
 
-export function createSatelliteLayer(product: SatelliteProductId, date: string): L.GridLayer {
+export function createSatelliteLayer(product: SatelliteProductId, date: string, clipFields?: ClipField[]): L.GridLayer {
   return new (SatelliteGridLayer as unknown as new (o: SatelliteLayerOptions) => L.GridLayer)({
     product,
     date,
+    clipFields,
     bounds: SATELLITE_BOUNDS,
     minZoom: 6,
     maxZoom: 20,
