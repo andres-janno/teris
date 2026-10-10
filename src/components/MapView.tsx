@@ -55,6 +55,10 @@ interface MapViewProps {
   vehicleFilter?: VehicleDisplayFilter;
   soilSamples?: SoilSample[];
   soilMetric?: SoilSampleMetricKey;
+  satelliteProduct: SatelliteProductId;
+  onSelectSatelliteProduct: (product: SatelliteProductId) => void;
+  satelliteDate: string | null;
+  onSelectSatelliteDate: (date: string | null) => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -76,7 +80,11 @@ export const MapView: React.FC<MapViewProps> = ({
   selectedCropFilter,
   vehicleFilter = 'active',
   soilSamples = [],
-  soilMetric = 'ph'
+  soilMetric = 'ph',
+  satelliteProduct,
+  onSelectSatelliteProduct,
+  satelliteDate,
+  onSelectSatelliteDate
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -95,8 +103,6 @@ export const MapView: React.FC<MapViewProps> = ({
   const [radarFrameIdx, setRadarFrameIdx] = useState(0);
   const [radarError, setRadarError] = useState<string | null>(null);
   const satelliteLayerRef = useRef<L.GridLayer | null>(null);
-  const [satelliteProduct, setSatelliteProduct] = useState<SatelliteProductId>('rgb');
-  const [satelliteDate, setSatelliteDate] = useState<string | null>(null);
   // Kaardi eksemplar satelliidipaneelile (kaardivaade pilvevaba otsingu jaoks)
   const [mapInstance, setMapInstance] = useState<L.Map | null>(null);
   const poiLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -852,10 +858,11 @@ export const MapView: React.FC<MapViewProps> = ({
       {visibility.satellite && (
         <SatellitePanel
           map={mapInstance}
+          fields={fields}
           product={satelliteProduct}
-          onSelectProduct={setSatelliteProduct}
+          onSelectProduct={onSelectSatelliteProduct}
           date={satelliteDate}
-          onSelectDate={setSatelliteDate}
+          onSelectDate={onSelectSatelliteDate}
         />
       )}
 

@@ -709,6 +709,9 @@ body {
   gap: 6px;
   cursor: pointer;
 }
+.satellite-cloudfree-hint {
+  color: var(--text-muted);
+}
 .satellite-panel-note {
   font-size: 0.68rem;
   line-height: 1.35;
@@ -735,6 +738,67 @@ body {
 }
 .satellite-ndvi-labels span:last-child {
   transform: translateX(-100%);
+}
+
+.satellite-ndvi-classes,
+.field-ndvi-classes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 10px;
+  font-size: 0.68rem;
+}
+.satellite-ndvi-classes i,
+.field-ndvi-classes i {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  margin-right: 4px;
+  vertical-align: baseline;
+}
+
+/* Põllu aknas: NDVI kokkuvõte */
+.field-ndvi {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.field-ndvi-main {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.field-ndvi-value {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+.field-ndvi-caption {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.field-ndvi-bar {
+  display: flex;
+  height: 10px;
+  border-radius: 3px;
+  overflow: hidden;
+  background: var(--stat-bg);
+}
+.field-ndvi-classes {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+.field-ndvi-classes strong {
+  color: var(--text-primary);
+}
+.field-ndvi-note {
+  margin: 0;
+  font-size: 0.7rem;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+.field-ndvi-note.warn {
+  color: var(--amber-500);
 }
 
 /* Map Navigation & Fit-All Toolbar */

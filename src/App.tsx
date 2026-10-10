@@ -11,6 +11,7 @@ import { ChangePasswordModal } from './components/ChangePasswordModal';
 
 import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId } from './types/map';
+import type { SatelliteProductId } from './services/satelliteLayer';
 import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
@@ -328,6 +329,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Mullaproovid (soil samples)
   const [soilSamples, setSoilSamples] = useState<SoilSample[]>([]);
   const [soilMetric, setSoilMetric] = useState<SoilSampleMetricKey>('ph');
+  // Satelliidipilt (Satiladu): toode ja kuupäev; kuupäeva järgi arvutatakse ka põllu aknas NDVI
+  const [satelliteProduct, setSatelliteProduct] = useState<SatelliteProductId>('rgb');
+  const [satelliteDate, setSatelliteDate] = useState<string | null>(null);
 
   // Laadi andmed otse PostgreSQL teris_db andmebaasist
   useEffect(() => {
@@ -1692,6 +1696,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           vehicleFilter="all"
           soilSamples={soilSamples}
           soilMetric={soilMetric}
+          satelliteProduct={satelliteProduct}
+          onSelectSatelliteProduct={setSatelliteProduct}
+          satelliteDate={satelliteDate}
+          onSelectSatelliteDate={setSatelliteDate}
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
@@ -1716,6 +1724,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             masterField={masterFields.find((f) => String(f.id) === String(selectedField.properties.id)) ?? null}
             seasons={seasons}
             soilSamples={soilSamples}
+            satelliteDate={visibility.satellite ? satelliteDate : null}
             onClose={handleCloseFieldDetails}
             onFocusField={handleFocusField}
           />

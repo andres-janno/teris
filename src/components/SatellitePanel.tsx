@@ -1,8 +1,12 @@
 // src/components/SatellitePanel.tsx
 // Satelliidipildi kihi juhtpaneel kaardil: toode (RGB / NRG / NDVI), periood, kuupäev ja pilvevaba filter.
-// Kuupäevad tulevad Satiladust; pilvevaba filter kehtib parasjagu nähtava kaardivaate kohta.
-import React, { useEffect, useState } from 'react';
+// Kuupäevad tulevad Satiladust. Pilvevaba filter (Satiladu hinnang, ligikaudne) kehtib kaardil nähtavate põldude ala kohta (nende ümbris,
+// piiratud kaardivaatega); kui vaates põlde pole, siis kogu kaardivaate kohta.
+import React, { useEffect, useMemo, useState } from 'react';
 import type L from 'leaflet';
+import * as turf from '@turf/turf';
+import type { FieldCollection } from '../types/field';
+import { NDVI_CLASSES } from '../services/ndvi';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { api } from '../services/api';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, type SatelliteProductId } from '../services/satelliteLayer';
@@ -12,8 +16,8 @@ const RECENT = 'recent';
 // NDVI väärtused legendiribal (vt NDVI_LEGEND_GRADIENT: 0 … 0,9)
 const NDVI_LEGEND_TICKS = [
   { label: '0', pos: 0 },
-  { label: '0,1', pos: 11 },
-  { label: '0,5', pos: 55 },
+  { label: '0,25', pos: 27.8 },
+  { label: '0,5', pos: 55.6 },
   { label: '0,9', pos: 100 }
 ];
 
@@ -37,26 +41,43 @@ function formatDate(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
-/** Kaardivaade Satiladu pilvevaba otsingu alaks: [lõuna, lääs, põhi, ida], piiratud Eestiga */
-function viewBbox(map: L.Map): [number, number, number, number] {
+type Bbox = [number, number, number, number]; // [lõuna, lääs, põhi, ida]
+
+/**
+ * Satiladu pilvevaba otsingu ala: kaardivaates nähtavate põldude ümbris (kaardivaatega lõigatud),
+ * kui vaates põlde pole, siis kaardivaade. Piiratud Eestiga.
+ */
+function cloudFreeArea(map: L.Map, fieldBoxes: Bbox[]): { bbox: Bbox; fieldCount: number } {
   const b = map.getBounds();
-  return [
+  const view: Bbox = [
     Math.max(b.getSouth(), 57.3),
     Math.max(b.getWest(), 21.5),
     Math.min(b.getNorth(), 59.9),
     Math.min(b.getEast(), 28.3)
   ];
+  const visible = fieldBoxes.filter((f) => f[0] < view[2] && f[2] > view[0] && f[1] < view[3] && f[3] > view[1]);
+  if (!visible.length) return { bbox: view, fieldCount: 0 };
+  return {
+    bbox: [
+      Math.max(view[0], Math.min(...visible.map((f) => f[0]))),
+      Math.max(view[1], Math.min(...visible.map((f) => f[1]))),
+      Math.min(view[2], Math.max(...visible.map((f) => f[2]))),
+      Math.min(view[3], Math.max(...visible.map((f) => f[3])))
+    ],
+    fieldCount: visible.length
+  };
 }
 
 interface SatellitePanelProps {
   map: L.Map | null;
+  fields: FieldCollection;
   product: SatelliteProductId;
   onSelectProduct: (product: SatelliteProductId) => void;
   date: string | null;
   onSelectDate: (date: string | null) => void;
 }
 
-export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, onSelectProduct, date, onSelectDate }) => {
+export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, fields, product, onSelectProduct, date, onSelectDate }) => {
   const [period, setPeriod] = useState(RECENT);
   const [cloudFree, setCloudFree] = useState(true);
   const [dates, setDates] = useState<string[]>([]);
@@ -64,6 +85,20 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
   const [error, setError] = useState<string | null>(null);
   // Kaardivaate muutumisel (pilvevaba filter) loetakse loend uuesti
   const [viewKey, setViewKey] = useState(0);
+  // Mitme põllu kohal pilvevaba otsing tehti (0 = kogu kaardivaade)
+  const [areaFieldCount, setAreaFieldCount] = useState(0);
+
+  const fieldBoxes = useMemo<Bbox[]>(
+    () => fields.features.flatMap((f) => {
+      try {
+        const [w, s, e, n] = turf.bbox(f);
+        return Number.isFinite(w) ? [[s, w, n, e] as Bbox] : [];
+      } catch {
+        return [];
+      }
+    }),
+    [fields]
+  );
 
   useEffect(() => {
     if (!map || !cloudFree) return;
@@ -83,7 +118,9 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
     if (!map) return;
     let cancelled = false;
     const [from, to] = periodRange(period);
-    const bbox = cloudFree ? viewBbox(map) : undefined;
+    const area = cloudFree ? cloudFreeArea(map, fieldBoxes) : null;
+    const bbox = area?.bbox;
+    setAreaFieldCount(area?.fieldCount ?? 0);
     if (bbox && (bbox[0] >= bbox[2] || bbox[1] >= bbox[3])) {
       setDates([]);
       setError('Kaardivaade on väljaspool Eestit');
@@ -107,7 +144,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
     return () => {
       cancelled = true;
     };
-  }, [map, period, cloudFree, viewKey]);
+  }, [map, period, cloudFree, viewKey, fieldBoxes]);
 
   // Valitud kuupäev jääb alles, kui see on uues loendis; muidu võetakse uusim
   useEffect(() => {
@@ -194,7 +231,13 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
 
       <label className="satellite-cloudfree">
         <input type="checkbox" checked={cloudFree} onChange={() => setCloudFree((v) => !v)} />
-        <span>Ainult pilvevabad päevad kaardivaate alal</span>
+        <span>
+          Ainult pilvevabad päevad{' '}
+          {areaFieldCount > 0
+            ? `nähtavate põldude kohal (${areaFieldCount})`
+            : 'kaardivaate alal'}
+          <span className="satellite-cloudfree-hint"> — Satiladu hinnang</span>
+        </span>
       </label>
 
       {error ? (
@@ -202,12 +245,17 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
       ) : !loading && !dates.length ? (
         <div className="satellite-panel-note">
           {cloudFree
-            ? 'Selle perioodi jooksul polnud kogu kaardivaade ühelgi päeval pilvevaba — suumi lähemale või lülita filter välja.'
+            ? `Selle perioodi jooksul polnud ${areaFieldCount > 0 ? 'nähtavate põldude ala' : 'kaardivaade'} ühelgi päeval tervenisti pilvevaba — suumi lähemale (vähem põlde korraga) või lülita filter välja.`
             : 'Selle perioodi kohta pilte pole.'}
         </div>
       ) : !cloudFree ? (
         <div className="satellite-panel-note">Pilves või lennuribast välja jäänud alad on pildil tühjad või valged.</div>
-      ) : null}
+      ) : (
+        <div className="satellite-panel-note">
+          Satiladu pilvevaba hinnang on ligikaudne — sinna jääb ka õhukese pilve või uduga päevi. Põllul klõpsates
+          näed, kui suur osa põllust oli sel päeval tegelikult pilves.
+        </div>
+      )}
 
       {product === 'ndvi' && (
         <div className="satellite-ndvi-legend">
@@ -216,6 +264,18 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({ map, product, on
             {NDVI_LEGEND_TICKS.map((t) => (
               <span key={t.label} style={{ left: `${t.pos}%` }}>{t.label}</span>
             ))}
+          </div>
+          <div className="satellite-ndvi-classes">
+            {NDVI_CLASSES.map((c, i) => (
+              <span key={c.key}>
+                <i style={{ backgroundColor: c.color }} />
+                {i === 0 ? '< 0,25' : i === 1 ? '0,25–0,5' : '> 0,5'} {c.label.toLowerCase()}
+              </span>
+            ))}
+          </div>
+          <div className="satellite-panel-note">
+            Mida rohelisem, seda tihedam elus taimkate. Augustis–septembris on punane enamasti koristatud või
+            haritud põld, kevadel hõre oras. Klõpsa põllul, et näha selle päeva keskmist NDVI-d.
           </div>
         </div>
       )}

@@ -22,6 +22,7 @@ import { getFieldFeatureForYear } from '../types/fieldRegister';
 import { getGeometryCoordinatesList, getGeometryPerimeterMeters } from '../services/geometryEngine';
 import { FieldOperationsSection } from './FieldOperationsSection';
 import { SoilSamplesSection } from './SoilSamplesSection';
+import { FieldNdviSection } from './FieldNdviSection';
 import type { SoilSample } from '../types/soilSample';
 
 interface FieldDetailsDrawerProps {
@@ -29,6 +30,8 @@ interface FieldDetailsDrawerProps {
   masterField?: MasterField | null; // kõigi aastate andmed akna hooajavaliku jaoks
   seasons?: FarmingSeason[];
   soilSamples?: SoilSample[];
+  /** Kaardil valitud satelliidipildi kuupäev (kui kiht on sees) — põllu NDVI selle päeva pildist */
+  satelliteDate?: string | null;
   onClose: () => void;
   onFocusField: (field: FieldFeature) => void;
 }
@@ -38,6 +41,7 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
   masterField = null,
   seasons = [],
   soilSamples = [],
+  satelliteDate = null,
   onClose,
   onFocusField
 }) => {
@@ -366,6 +370,8 @@ export const FieldDetailsDrawer: React.FC<FieldDetailsDrawerProps> = ({
             )}
           </div>
         </div>
+
+        {satelliteDate && <FieldNdviSection geometry={shown.geometry} date={satelliteDate} />}
 
         <SoilSamplesSection geometry={shown.geometry} samples={soilSamples} />
 

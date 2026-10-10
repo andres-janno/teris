@@ -20,9 +20,9 @@ export const SATELLITE_PRODUCTS: Record<SatelliteProductId, { label: string; tit
   ndvi: { label: 'NDVI', title: 'Taimkatteindeks: roheline = tihe ja elujõuline taimkate, punane/tume = paljas maa, vesi, ehitised' }
 };
 
-/** NDVI legend (värvid Satiladu WMS-i legendipildilt) */
+/** NDVI legend 0 … 0,9: sama tükiti lineaarne skaala mis WMS-il (vt ndvi.ts) */
 export const NDVI_LEGEND_GRADIENT =
-  'linear-gradient(to right, #0a0532 0%, #8f012d 11%, #ad002c 11%, #f2cf95 55%, #ffeea9 55%, #5e9a64 85%, #2b7c4c 100%)';
+  'linear-gradient(to right, rgb(0,5,50) 0%, rgb(170,0,44) 11.1%, rgb(255,238,169) 55.6%, rgb(1,105,61) 100%)';
 
 export const SATELLITE_ATTRIBUTION =
   'Satelliidipilt: <a href="https://esthub.maaruum.ee/est/satiladu-p1.html" target="_blank" rel="noopener">Maa- ja Ruumiamet, Satiladu</a> (Copernicus Sentinel-2)';
@@ -32,7 +32,7 @@ const SATELLITE_BOUNDS = L.latLngBounds([56.72, 20.77], [59.99, 29.9]);
 const GRID = 4;
 const MAX_SOURCE_PX = 1024;
 
-function wmsUrl(product: SatelliteProductId, date: string, bbox: [number, number, number, number], width: number, height: number): string {
+export function satelliteWmsUrl(product: SatelliteProductId, date: string, bbox: [number, number, number, number], width: number, height: number): string {
   const params = new URLSearchParams({
     date,
     service: 'WMS',
@@ -116,7 +116,7 @@ const SatelliteGridLayer = L.GridLayer.extend({
       done(undefined, tile);
     };
     img.onerror = () => done(new Error('Satelliidipildi plaati ei saanud laadida'), tile);
-    img.src = wmsUrl(this.options.product, this.options.date, [minX, minY, maxX, maxY], srcW, srcH);
+    img.src = satelliteWmsUrl(this.options.product, this.options.date, [minX, minY, maxX, maxY], srcW, srcH);
     return tile;
   }
 });
