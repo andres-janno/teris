@@ -63,6 +63,18 @@ function formatDate(iso: string): string {
   return `${d}.${m}.${y}`;
 }
 
+// Sentinel-2 lendab Eesti kohalt üle päikesega sünkroonsel orbiidil alati u 09:30–09:45 UTC
+// (Copernicuse kataloogi järgi); täpset aega Satiladu ei anna, seega näidatakse vahemikku Eesti ajas.
+const PASS_UTC_FROM: [number, number] = [9, 30];
+const PASS_UTC_TO: [number, number] = [9, 45];
+const tallinnTime = new Intl.DateTimeFormat('et-EE', { timeZone: 'Europe/Tallinn', hour: '2-digit', minute: '2-digit' });
+
+function passTimeRange(iso: string): string {
+  const [y, m, d] = iso.split('-').map(Number);
+  const at = ([h, min]: [number, number]) => tallinnTime.format(new Date(Date.UTC(y, m - 1, d, h, min)));
+  return `${at(PASS_UTC_FROM)}–${at(PASS_UTC_TO)}`;
+}
+
 const round6 = (v: number) => Math.round(v * 1e6) / 1e6;
 
 /**
@@ -303,6 +315,12 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           ))}
         </select>
       </div>
+
+      {date && (
+        <div className="satellite-panel-note" title="Sentinel-2 lendab Eesti kohalt üle alati keskpäeva paiku; sama koha kohta tuleb pilt keskmiselt iga 2–3 päeva järel">
+          Pildistatud {formatDate(date)} umbes kell {passTimeRange(date)}
+        </div>
+      )}
 
       <label className="satellite-cloudfree" title="Põldudest väljapoole jäävaid kaardiplaate ei laadita — kiirem ja selgem">
         <input type="checkbox" checked={fieldsOnly} onChange={onToggleFieldsOnly} />
