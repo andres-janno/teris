@@ -12,17 +12,22 @@ const EPSG3301_DEF = '+proj=lcc +lat_1=59.33333333333334 +lat_2=58 +lat_0=57.517
 proj4.defs('EPSG:3301', EPSG3301_DEF);
 const toLest = proj4('EPSG:4326', 'EPSG:3301');
 
-export type SatelliteProductId = 'rgb' | 'nrg' | 'ndvi';
+export type SatelliteProductId = 'rgb' | 'nrg' | 'ndvi' | 'ndpi';
 
 export const SATELLITE_PRODUCTS: Record<SatelliteProductId, { label: string; title: string }> = {
   rgb: { label: 'RGB', title: 'Tavavärvid — nagu inimsilm näeb' },
   nrg: { label: 'NRG', title: 'Valevärvid (lähiinfrapuna, punane, roheline): elujõuline taimkate on erkpunane' },
-  ndvi: { label: 'NDVI', title: 'Taimkatteindeks: roheline = tihe ja elujõuline taimkate, punane/tume = paljas maa, vesi, ehitised' }
+  ndvi: { label: 'NDVI', title: 'Taimkatteindeks: roheline = tihe ja elujõuline taimkate, punane/tume = paljas maa, vesi, ehitised' },
+  ndpi: { label: 'NDPI', title: 'Veekogude indeks: kollane = vesi või väga märg maa, sinine = kuiv maa ja taimkate' }
 };
 
 /** NDVI legend 0 … 0,9: sama tükiti lineaarne skaala mis WMS-il (vt ndvi.ts) */
 export const NDVI_LEGEND_GRADIENT =
   'linear-gradient(to right, rgb(0,5,50) 0%, rgb(170,0,44) 11.1%, rgb(255,238,169) 55.6%, rgb(1,105,61) 100%)';
+
+/** NDPI legend −1 … 0,5: WMS-i legendi järgi (GetLegendGraphic) */
+export const NDPI_LEGEND_GRADIENT =
+  'linear-gradient(to right, rgb(5,5,80) 0%, rgb(5,5,205) 66.7%, rgb(250,230,40) 100%)';
 
 export const SATELLITE_ATTRIBUTION =
   'Satelliidipilt: <a href="https://esthub.maaruum.ee/est/satiladu-p1.html" target="_blank" rel="noopener">Maa- ja Ruumiamet, Satiladu</a> (Copernicus Sentinel-2)';

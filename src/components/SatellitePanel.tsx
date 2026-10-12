@@ -1,15 +1,16 @@
 // src/components/SatellitePanel.tsx
-// Satelliidipildi kihi juhtpaneel kaardil: toode (RGB / NRG / NDVI), periood, kuupäev ja pilvevaba filter.
+// Satelliidipildi kihi juhtpaneel (kaardikihtide kasti all): toode (RGB / NRG / NDVI / NDPI), periood, kuupäev ja pilvevaba filter.
 // Kuupäevad tulevad Satiladust. Pilvevaba filter on oma pilvekontroll (server, vt satelliteClouds.ts)
 // kaardil nähtavate põldude pikslitel; kui vaates põlde pole, siis kogu kaardivaate kohta.
 import React, { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import type L from 'leaflet';
 import * as turf from '@turf/turf';
 import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
-import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, type SatelliteProductId } from '../services/satelliteLayer';
+import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, type SatelliteProductId } from '../services/satelliteLayer';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -19,6 +20,12 @@ const NDVI_LEGEND_TICKS = [
   { label: '0,25', pos: 27.8 },
   { label: '0,5', pos: 55.6 },
   { label: '0,9', pos: 100 }
+];
+// NDPI väärtused legendiribal (vt NDPI_LEGEND_GRADIENT: −1 … 0,5)
+const NDPI_LEGEND_TICKS = [
+  { label: '−1', pos: 0 },
+  { label: '0', pos: 66.7 },
+  { label: '0,5', pos: 100 }
 ];
 // Sama mis serveris (satelliteClouds.ts): andmeid ≥ 90% põldudest, pilves ≤ 10%
 const CLEAR_MIN_COVERAGE = 0.9;
@@ -88,6 +95,8 @@ interface SatellitePanelProps {
   onSelectDate: (date: string | null) => void;
   fieldsOnly: boolean;
   onToggleFieldsOnly: () => void;
+  /** Kuhu paneel joonistatakse (kaardikihtide kasti alla); kui puudub, siis kaardi peale */
+  host?: HTMLElement | null;
 }
 
 export const SatellitePanel: React.FC<SatellitePanelProps> = ({
@@ -98,7 +107,8 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   date,
   onSelectDate,
   fieldsOnly,
-  onToggleFieldsOnly
+  onToggleFieldsOnly,
+  host
 }) => {
   const [period, setPeriod] = useState(RECENT);
   const [cloudFree, setCloudFree] = useState(true);
@@ -211,7 +221,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   for (let y = new Date().getFullYear(); y >= FIRST_YEAR; y--) years.push(String(y));
   const fieldCount = area?.fieldCount ?? 0;
 
-  return (
+  const panel = (
     <div className="satellite-panel glass-card">
       <div className="satellite-panel-title">
         Satelliidipilt
@@ -345,6 +355,23 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           </div>
         </div>
       )}
+
+      {product === 'ndpi' && (
+        <div className="satellite-ndvi-legend">
+          <div className="satellite-ndvi-bar" style={{ backgroundImage: NDPI_LEGEND_GRADIENT }} />
+          <div className="satellite-ndvi-labels">
+            {NDPI_LEGEND_TICKS.map((t) => (
+              <span key={t.label} style={{ left: `${t.pos}%` }}>{t.label}</span>
+            ))}
+          </div>
+          <div className="satellite-panel-note">
+            Mida kollasem, seda märjem: vesi, üleujutus või liigniiske koht põllul. Tumesinine on kuiv maa ja
+            tihe taimkate.
+          </div>
+        </div>
+      )}
     </div>
   );
+
+  return host ? createPortal(panel, host) : panel;
 };

@@ -649,12 +649,8 @@ body {
 
 /* Satelliidipildi juhtpaneel (Satiladu) */
 .satellite-panel {
-  position: absolute;
-  bottom: 60px;
-  left: 50%;
-  transform: translateX(-50%);
-  width: min(340px, calc(100vw - 32px));
-  padding: 8px 10px;
+  width: 100%;
+  padding: 10px 12px;
   z-index: 800;
   border-radius: var(--radius-sm);
   font-size: 0.72rem;
@@ -676,7 +672,7 @@ body {
 }
 .satellite-product-row {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   gap: 4px;
 }
 .satellite-product-row .basemap-btn {
@@ -895,13 +891,32 @@ body {
   gap: 14px;
 }
 
-/* Layer Control Panel */
-.layer-control-panel {
+/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel */
+.map-top-right-stack {
   position: absolute;
   top: 16px;
   right: 16px;
-  width: 280px;
+  width: 300px;
+  max-width: calc(100vw - 32px);
   z-index: 900;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  pointer-events: none;
+  max-height: calc(100% - 32px);
+  overflow-y: auto;
+}
+.map-top-right-stack > * {
+  pointer-events: auto;
+}
+.map-top-right-stack > :empty {
+  display: none;
+}
+
+/* Layer Control Panel */
+.layer-control-panel {
+  width: 100%;
+  flex: 0 0 auto;
   padding: 14px;
   transition: all 0.2s ease;
 }

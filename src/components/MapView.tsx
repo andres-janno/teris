@@ -59,6 +59,8 @@ interface MapViewProps {
   onSelectSatelliteProduct: (product: SatelliteProductId) => void;
   satelliteDate: string | null;
   onSelectSatelliteDate: (date: string | null) => void;
+  /** Satelliidipildi paneeli koht (kaardikihtide kasti all) */
+  satellitePanelHost?: HTMLElement | null;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -84,7 +86,8 @@ export const MapView: React.FC<MapViewProps> = ({
   satelliteProduct,
   onSelectSatelliteProduct,
   satelliteDate,
-  onSelectSatelliteDate
+  onSelectSatelliteDate,
+  satellitePanelHost
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -880,6 +883,7 @@ export const MapView: React.FC<MapViewProps> = ({
           onSelectDate={onSelectSatelliteDate}
           fieldsOnly={satelliteFieldsOnly}
           onToggleFieldsOnly={() => setSatelliteFieldsOnly((v) => !v)}
+          host={satellitePanelHost}
         />
       )}
 

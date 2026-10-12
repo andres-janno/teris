@@ -332,6 +332,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Satelliidipilt (Satiladu): toode ja kuupäev; kuupäeva järgi arvutatakse ka põllu aknas NDVI
   const [satelliteProduct, setSatelliteProduct] = useState<SatelliteProductId>('rgb');
   const [satelliteDate, setSatelliteDate] = useState<string | null>(null);
+  const [satellitePanelHost, setSatellitePanelHost] = useState<HTMLDivElement | null>(null);
 
   // Laadi andmed otse PostgreSQL teris_db andmebaasist
   useEffect(() => {
@@ -1700,6 +1701,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onSelectSatelliteProduct={setSatelliteProduct}
           satelliteDate={satelliteDate}
           onSelectSatelliteDate={setSatelliteDate}
+          satellitePanelHost={satellitePanelHost}
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
@@ -1730,24 +1732,27 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           />
         )}
 
-        {/* Floating Layer Controller (Top Right) */}
-        <LayerControl 
-          visibility={visibility}
-          onToggleLayer={handleToggleLayer}
-          onSelectBaseMap={handleSelectBaseMap}
-          onFitAll={handleFitAll}
-          soilSampleCount={soilSamples.length}
-          soilFieldCount={new Set(soilSamples.map((s) => s.fieldCode)).size}
-          soilMetric={soilMetric}
-          onSelectSoilMetric={setSoilMetric}
-          vehicles={vehicles}
-          simulatedVehicleId={simulatedVehicleId}
-          onToggleVehicleSimulator={handleToggleVehicleSimulator}
-          trackVehicleIds={trackVehicleIds}
-          isLoadingVehicleTracks={isLoadingVehicleTracks}
-          hiddenTrackVehicleIds={hiddenTrackVehicleIds}
-          onToggleTrackVisibility={handleToggleTrackVisibility}
-        />
+        {/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel (MapView portaal) */}
+        <div className="map-top-right-stack">
+          <LayerControl
+            visibility={visibility}
+            onToggleLayer={handleToggleLayer}
+            onSelectBaseMap={handleSelectBaseMap}
+            onFitAll={handleFitAll}
+            soilSampleCount={soilSamples.length}
+            soilFieldCount={new Set(soilSamples.map((s) => s.fieldCode)).size}
+            soilMetric={soilMetric}
+            onSelectSoilMetric={setSoilMetric}
+            vehicles={vehicles}
+            simulatedVehicleId={simulatedVehicleId}
+            onToggleVehicleSimulator={handleToggleVehicleSimulator}
+            trackVehicleIds={trackVehicleIds}
+            isLoadingVehicleTracks={isLoadingVehicleTracks}
+            hiddenTrackVehicleIds={hiddenTrackVehicleIds}
+            onToggleTrackVisibility={handleToggleTrackVisibility}
+          />
+          <div ref={setSatellitePanelHost} />
+        </div>
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
         {visibility.cultivation && simulatedVehicleId && (
