@@ -1,5 +1,5 @@
 // src/components/SatellitePanel.tsx
-// Satelliidipildi kihi juhtpaneel (kaardikihtide kasti all): toode (RGB / NDVI / NRG / DNP), periood, kuupäev ja pilvevaba filter.
+// Satelliidipildi kihi juhtpaneel (kaardikihtide kasti all): toode (RGB / NDVI / NRG / NDPI / DNP), periood, kuupäev ja pilvevaba filter.
 // Kuupäevad tulevad Satiladust. Pilvevaba filter on oma pilvekontroll (server, vt satelliteClouds.ts)
 // kaardil nähtavate põldude pikslitel; kui vaates põlde pole, siis kogu kaardivaate kohta.
 import React, { useEffect, useState } from 'react';
@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
-import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
+import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -20,6 +20,20 @@ const NDVI_LEGEND_TICKS = [
   { label: '0,25', pos: 27.8 },
   { label: '0,5', pos: 55.6 },
   { label: '0,9', pos: 100 }
+];
+// NDPI värvid pildil (mõõdetud Satiladu pildilt 13.08.2025, võrreldes sama koha RGB pildiga)
+const NDPI_CLASSES = [
+  { color: 'rgb(222,202,57)', label: 'Paljas haritud muld (künd, külvieelne põld)' },
+  { color: 'rgb(160,146,96)', label: 'Kõrs, koristatud põld' },
+  { color: 'rgb(89,81,141)', label: 'Taimkate (põllukultuur, rohumaa)' },
+  { color: 'rgb(59,54,158)', label: 'Mets' },
+  { color: 'rgb(0,0,133)', label: 'Vesi' }
+];
+// NDPI väärtused legendiribal (vt NDPI_LEGEND_GRADIENT: −1 … 0,5)
+const NDPI_LEGEND_TICKS = [
+  { label: '−1', pos: 0 },
+  { label: '0', pos: 66.7 },
+  { label: '0,5', pos: 100 }
 ];
 // Sama mis serveris (satelliteClouds.ts): andmeid ≥ 90% põldudest, pilves ≤ 10%
 const CLEAR_MIN_COVERAGE = 0.9;
@@ -351,6 +365,30 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </div>
       )}
 
+      {product === 'ndpi' && (
+        <div className="satellite-ndvi-legend">
+          <div className="satellite-ndvi-bar" style={{ backgroundImage: NDPI_LEGEND_GRADIENT }} />
+          <div className="satellite-ndvi-labels">
+            {NDPI_LEGEND_TICKS.map((t) => (
+              <span key={t.label} style={{ left: `${t.pos}%` }}>{t.label}</span>
+            ))}
+          </div>
+          <div className="satellite-color-legend">
+            {NDPI_CLASSES.map((c) => (
+              <span key={c.label}>
+                <i style={{ backgroundColor: c.color }} />
+                {c.label}
+              </span>
+            ))}
+          </div>
+          <div className="satellite-panel-note">
+            Veekogude indeks: vesi on alla nulli (tumesinine), taimkate madal, paljas muld kõrge. Mida
+            kollasem põld, seda vähem on sellel taimi — hea künni, külvieelse põllu ja tühjade laikude
+            leidmiseks.
+          </div>
+        </div>
+      )}
+
       {colorLegend && (
         <div className="satellite-ndvi-legend">
           <div className="satellite-color-legend">
@@ -364,7 +402,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           <div className="satellite-panel-note">
             {product === 'nrg'
               ? 'Lähi-infrapuna on punane kanal: taimed peegeldavad seda tugevalt, seega mida erksam punane, seda elujõulisem taimkate. Kahvatu või tumepunane põld kasvuajal viitab kehvemale kasvule.'
-              : 'Punane kanal = NDVI (taimkate), roheline = lähi-infrapuna (biomass), sinine = NDPI (niiskus). Kollasel põllul on nii taimkate kui biomass suured; lilla toon tähendab niisket mulda ja vähest taimkatet.'}
+              : 'Punane kanal = NDVI (taimkate), roheline = lähi-infrapuna (biomass), sinine = NDPI (paljas muld). Kollasel põllul on nii taimkate kui biomass suured; lilla toon tähendab paljast mulda.'}
           </div>
         </div>
       )}

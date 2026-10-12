@@ -672,11 +672,14 @@ body {
 }
 .satellite-product-row {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, 1fr);
   gap: 4px;
 }
 .satellite-product-row .basemap-btn {
   justify-content: center;
+  padding-left: 2px;
+  padding-right: 2px;
+  min-width: 0;
 }
 .satellite-date-row {
   display: flex;

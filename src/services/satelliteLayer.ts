@@ -12,13 +12,14 @@ const EPSG3301_DEF = '+proj=lcc +lat_1=59.33333333333334 +lat_2=58 +lat_0=57.517
 proj4.defs('EPSG:3301', EPSG3301_DEF);
 const toLest = proj4('EPSG:4326', 'EPSG:3301');
 
-export type SatelliteProductId = 'rgb' | 'nrg' | 'ndvi' | 'dnp';
+export type SatelliteProductId = 'rgb' | 'nrg' | 'ndvi' | 'ndpi' | 'dnp';
 
 export const SATELLITE_PRODUCTS: Record<SatelliteProductId, { label: string; title: string }> = {
   rgb: { label: 'RGB', title: 'Tavavärvid — nagu inimsilm näeb' },
   ndvi: { label: 'NDVI', title: 'Taimkatteindeks: roheline = tihe ja elujõuline taimkate, punane/tume = paljas maa, vesi, ehitised' },
   nrg: { label: 'NRG', title: 'Valevärvid (lähiinfrapuna, punane, roheline): elujõuline taimkate on erkpunane' },
-  dnp: { label: 'DNP', title: 'Koondpilt NDVI + lähi-infrapuna + NDPI (veekogude indeks): taimkate, biomass ja niiskus ühel pildil' }
+  ndpi: { label: 'NDPI', title: 'Veekogude indeks: tumesinine = vesi, sinine = taimkate ja mets, kollane = paljas muld' },
+  dnp: { label: 'DNP', title: 'Koondpilt NDVI + lähi-infrapuna + NDPI (veekogude indeks): taimkate, biomass ja paljas muld ühel pildil' }
 };
 
 /**
@@ -37,8 +38,8 @@ export const SATELLITE_COLOR_LEGENDS: Partial<Record<SatelliteProductId, { color
     { color: 'rgb(254,244,67)', label: 'Lopsakas taimkate, palju biomassi' },
     { color: 'rgb(253,136,64)', label: 'Taimkate, hõredam või kuivem' },
     { color: 'rgb(252,67,43)', label: 'Mets, tume taimkate' },
-    { color: 'rgb(223,62,228)', label: 'Niiske või äsja haritud muld, hõre taimkate' },
-    { color: 'rgb(79,69,144)', label: 'Paljas kuiv muld, kõrs' },
+    { color: 'rgb(223,62,228)', label: 'Paljas haritud muld (künd, külvieelne põld)' },
+    { color: 'rgb(79,69,144)', label: 'Kõrs, koristatud põld' },
     { color: 'rgb(0,6,0)', label: 'Vesi' },
     { color: 'rgb(40,253,9)', label: 'Pilv' }
   ]
@@ -47,6 +48,10 @@ export const SATELLITE_COLOR_LEGENDS: Partial<Record<SatelliteProductId, { color
 /** NDVI legend 0 … 0,9: sama tükiti lineaarne skaala mis WMS-il (vt ndvi.ts) */
 export const NDVI_LEGEND_GRADIENT =
   'linear-gradient(to right, rgb(0,5,50) 0%, rgb(170,0,44) 11.1%, rgb(255,238,169) 55.6%, rgb(1,105,61) 100%)';
+
+/** NDPI legend −1 … 0,5: WMS-i legendi järgi (GetLegendGraphic) */
+export const NDPI_LEGEND_GRADIENT =
+  'linear-gradient(to right, rgb(5,5,80) 0%, rgb(5,5,205) 66.7%, rgb(250,230,40) 100%)';
 
 export const SATELLITE_ATTRIBUTION =
   'Satelliidipilt: <a href="https://esthub.maaruum.ee/est/satiladu-p1.html" target="_blank" rel="noopener">Maa- ja Ruumiamet, Satiladu</a> (Copernicus Sentinel-2)';
