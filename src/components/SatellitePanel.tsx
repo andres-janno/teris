@@ -1,5 +1,5 @@
 // src/components/SatellitePanel.tsx
-// Satelliidipildi kihi juhtpaneel (kaardikihtide kasti all): toode (RGB / NRG / NDVI / DNP), periood, kuupäev ja pilvevaba filter.
+// Satelliidipildi kihi juhtpaneel (kaardikihtide kasti all): toode (RGB / NDVI / NRG / DNP), periood, kuupäev ja pilvevaba filter.
 // Kuupäevad tulevad Satiladust. Pilvevaba filter on oma pilvekontroll (server, vt satelliteClouds.ts)
 // kaardil nähtavate põldude pikslitel; kui vaates põlde pole, siis kogu kaardivaate kohta.
 import React, { useEffect, useState } from 'react';
@@ -10,7 +10,7 @@ import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
-import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, type SatelliteProductId } from '../services/satelliteLayer';
+import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -214,6 +214,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   const years: string[] = [];
   for (let y = new Date().getFullYear(); y >= FIRST_YEAR; y--) years.push(String(y));
   const fieldCount = area?.fieldCount ?? 0;
+  const colorLegend = SATELLITE_COLOR_LEGENDS[product];
 
   const panel = (
     <div className="satellite-panel glass-card">
@@ -350,10 +351,21 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </div>
       )}
 
-      {product === 'dnp' && (
-        <div className="satellite-panel-note">
-          DNP koondpilt: punane = NDVI (taimkate), roheline = lähi-infrapuna (biomass), sinine = NDPI (vesi ja
-          niiskus). Kollakas on lopsakas taimkate, sinine vesi või märg ala.
+      {colorLegend && (
+        <div className="satellite-ndvi-legend">
+          <div className="satellite-color-legend">
+            {colorLegend.map((c) => (
+              <span key={c.label}>
+                <i style={{ backgroundColor: c.color }} />
+                {c.label}
+              </span>
+            ))}
+          </div>
+          <div className="satellite-panel-note">
+            {product === 'nrg'
+              ? 'Lähi-infrapuna on punane kanal: taimed peegeldavad seda tugevalt, seega mida erksam punane, seda elujõulisem taimkate. Kahvatu või tumepunane põld kasvuajal viitab kehvemale kasvule.'
+              : 'Punane kanal = NDVI (taimkate), roheline = lähi-infrapuna (biomass), sinine = NDPI (niiskus). Kollasel põllul on nii taimkate kui biomass suured; lilla toon tähendab niisket mulda ja vähest taimkatet.'}
+          </div>
         </div>
       )}
     </div>

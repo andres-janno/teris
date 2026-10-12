@@ -16,9 +16,32 @@ export type SatelliteProductId = 'rgb' | 'nrg' | 'ndvi' | 'dnp';
 
 export const SATELLITE_PRODUCTS: Record<SatelliteProductId, { label: string; title: string }> = {
   rgb: { label: 'RGB', title: 'Tavavärvid — nagu inimsilm näeb' },
-  nrg: { label: 'NRG', title: 'Valevärvid (lähiinfrapuna, punane, roheline): elujõuline taimkate on erkpunane' },
   ndvi: { label: 'NDVI', title: 'Taimkatteindeks: roheline = tihe ja elujõuline taimkate, punane/tume = paljas maa, vesi, ehitised' },
+  nrg: { label: 'NRG', title: 'Valevärvid (lähiinfrapuna, punane, roheline): elujõuline taimkate on erkpunane' },
   dnp: { label: 'DNP', title: 'Koondpilt NDVI + lähi-infrapuna + NDPI (veekogude indeks): taimkate, biomass ja niiskus ühel pildil' }
+};
+
+/**
+ * Valevärvipiltide (NRG, DNP) värvide tähendus. Värvid on mõõdetud Satiladu piltidelt
+ * (13.08.2025, Võrtsjärve idakallas), võrreldes sama koha RGB ja NDVI pildiga.
+ */
+export const SATELLITE_COLOR_LEGENDS: Partial<Record<SatelliteProductId, { color: string; label: string }[]>> = {
+  nrg: [
+    { color: 'rgb(240,60,100)', label: 'Tihe elujõuline taimkate — kasvav kultuur, rohumaa' },
+    { color: 'rgb(130,35,60)', label: 'Mets' },
+    { color: 'rgb(115,177,146)', label: 'Paljas muld, kõrs, koristatud põld' },
+    { color: 'rgb(11,70,73)', label: 'Vesi' },
+    { color: 'rgb(245,245,245)', label: 'Pilv' }
+  ],
+  dnp: [
+    { color: 'rgb(254,244,67)', label: 'Lopsakas taimkate, palju biomassi' },
+    { color: 'rgb(253,136,64)', label: 'Taimkate, hõredam või kuivem' },
+    { color: 'rgb(252,67,43)', label: 'Mets, tume taimkate' },
+    { color: 'rgb(223,62,228)', label: 'Niiske või äsja haritud muld, hõre taimkate' },
+    { color: 'rgb(79,69,144)', label: 'Paljas kuiv muld, kõrs' },
+    { color: 'rgb(0,6,0)', label: 'Vesi' },
+    { color: 'rgb(40,253,9)', label: 'Pilv' }
+  ]
 };
 
 /** NDVI legend 0 … 0,9: sama tükiti lineaarne skaala mis WMS-il (vt ndvi.ts) */
