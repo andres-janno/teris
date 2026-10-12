@@ -682,20 +682,23 @@ body {
   min-width: 0;
 }
 .satellite-date-row {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
 }
+/* Alumine rida: esitusnupp ja periood; periood lõpeb samal joonel ülemise rea noolega */
+.satellite-date-row.satellite-play-row {
+  grid-template-columns: auto minmax(0, 1fr);
+}
 .satellite-date-row .form-input {
   padding: 4px 6px;
+  padding-right: 24px;
+  background-position: right 8px center;
   font-size: 0.75rem;
+  width: 100%;
   min-width: 0;
-}
-.satellite-date-select {
-  flex: 1;
-}
-.satellite-period-select {
-  flex: 1;
+  box-sizing: border-box;
 }
 .satellite-play-btn {
   display: inline-flex;

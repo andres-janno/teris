@@ -336,7 +336,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </button>
       </div>
 
-      <div className="satellite-date-row">
+      <div className="satellite-date-row satellite-play-row">
         <button
           type="button"
           className={`icon-btn-ghost satellite-play-btn ${playing ? 'active' : ''}`}
