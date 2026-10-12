@@ -29,6 +29,8 @@ const AUTO_FIT_LAYERS = ['fields', 'cultivation', 'soilSamples', 'vehicles', 'po
 // Mandri-Eesti ja saared (sajuradari sisselülitamisel kuvatakse kogu Eesti)
 const ESTONIA_BOUNDS = L.latLngBounds([57.5, 21.7], [59.75, 28.25]);
 
+const SATELLITE_LOAD_TIMEOUT_MS = 10_000;
+
 interface MapViewProps {
   visibility: LayerVisibility;
   fields: FieldCollection;
@@ -108,6 +110,8 @@ export const MapView: React.FC<MapViewProps> = ({
   const satelliteLayerRef = useRef<L.GridLayer | null>(null);
   // Satelliidipilt ainult põldude piirides (põldudeta plaate ei laadita)
   const [satelliteFieldsOnly, setSatelliteFieldsOnly] = useState(true);
+  // Viimati täielikult laaditud satelliidipilt kujul "toode|kuupäev" (animatsioon ootab selle järel)
+  const [satelliteLoaded, setSatelliteLoaded] = useState<string | null>(null);
   const satelliteClipFields = React.useMemo<ClipField[]>(
     () => fields.features.flatMap((f) => {
       const polygons = f.geometry.type === 'Polygon' ? [f.geometry.coordinates] : f.geometry.coordinates;
@@ -598,17 +602,42 @@ export const MapView: React.FC<MapViewProps> = ({
     };
   }, [visibility.weatherRadar]);
 
-  // 5c2. Satelliidipilt (Satiladu Sentinel-2): kiht vahetatakse toote või kuupäeva muutumisel
+  // 5c2. Satelliidipilt (Satiladu Sentinel-2): kiht vahetatakse toote või kuupäeva muutumisel.
+  // Eelmine kiht jääb kaardile, kuni uus on laaditud — kuupäevade läbimängimisel pilt ei vilgu.
   useEffect(() => {
     const map = mapInstanceRef.current;
-    satelliteLayerRef.current?.remove();
+    const prev = satelliteLayerRef.current;
     satelliteLayerRef.current = null;
-    if (!map || !visibility.satellite || !satelliteDate) return;
-    satelliteLayerRef.current = createSatelliteLayer(
+    if (!map || !visibility.satellite || !satelliteDate) {
+      prev?.remove();
+      setSatelliteLoaded(null);
+      return;
+    }
+    const layer = createSatelliteLayer(
       satelliteProduct,
       satelliteDate,
       satelliteFieldsOnly ? satelliteClipFields : undefined
-    ).addTo(map);
+    );
+    satelliteLayerRef.current = layer;
+    let finished = false;
+    const finish = () => {
+      if (finished) return;
+      finished = true;
+      prev?.remove();
+      setSatelliteLoaded(`${satelliteProduct}|${satelliteDate}`);
+    };
+    layer.once('load', finish);
+    // Kui mõni plaat jääb rippuma, ei jää vana pilt ega animatsioon igaveseks ootama
+    const timer = window.setTimeout(finish, SATELLITE_LOAD_TIMEOUT_MS);
+    layer.addTo(map);
+    return () => {
+      clearTimeout(timer);
+      layer.off('load', finish);
+      if (!finished) {
+        finished = true;
+        prev?.remove();
+      }
+    };
   }, [visibility.satellite, satelliteProduct, satelliteDate, satelliteFieldsOnly, satelliteClipFields]);
 
   // 5d. Sajuradari animatsioon: kaadrid järjest, viimane (hetkeseis) püsib kauem
@@ -884,6 +913,7 @@ export const MapView: React.FC<MapViewProps> = ({
           fieldsOnly={satelliteFieldsOnly}
           onToggleFieldsOnly={() => setSatelliteFieldsOnly((v) => !v)}
           host={satellitePanelHost}
+          loaded={satelliteLoaded === `${satelliteProduct}|${satelliteDate}`}
         />
       )}
 

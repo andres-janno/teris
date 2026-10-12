@@ -6,7 +6,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import type L from 'leaflet';
 import * as turf from '@turf/turf';
-import { ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Loader2, Pause, Play } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
@@ -75,6 +75,10 @@ function passTimeRange(iso: string): string {
   return `${at(PASS_UTC_FROM)}–${at(PASS_UTC_TO)}`;
 }
 
+// Animatsioon: iga kaader püsib pärast laadimist nii kaua; uusim pilt kauem enne algusesse naasmist
+const PLAY_FRAME_MS = 900;
+const PLAY_LAST_FRAME_MS = 2500;
+
 const round6 = (v: number) => Math.round(v * 1e6) / 1e6;
 
 /**
@@ -117,6 +121,8 @@ interface SatellitePanelProps {
   onToggleFieldsOnly: () => void;
   /** Kuhu paneel joonistatakse (kaardikihtide kasti alla); kui puudub, siis kaardi peale */
   host?: HTMLElement | null;
+  /** Kas valitud kuupäeva pilt on kaardil täielikult laaditud */
+  loaded?: boolean;
 }
 
 export const SatellitePanel: React.FC<SatellitePanelProps> = ({
@@ -128,7 +134,8 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   onSelectDate,
   fieldsOnly,
   onToggleFieldsOnly,
-  host
+  host,
+  loaded = false
 }) => {
   const [period, setPeriod] = useState(RECENT);
   const [cloudFree, setCloudFree] = useState(true);
@@ -138,6 +145,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [area, setArea] = useState<CheckArea | null>(null);
+  const [playing, setPlaying] = useState(false);
 
   // Pilvekontrolli ala: arvutatakse kaardi liigutamisel ja põldude muutumisel; sama sisuga ala ei käivita uut päringut
   useEffect(() => {
@@ -237,6 +245,29 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   }, [datesKey, loading]);
 
   const idx = date ? dates.indexOf(date) : -1;
+
+  // Animatsioon vanimast uusimani (loend on uusim ees); järgmisele päevale liigutakse alles siis,
+  // kui praegune pilt on laaditud. Pärast uusimat alustatakse uuesti vanimast.
+  useEffect(() => {
+    if (!playing) return;
+    if (dates.length < 2) {
+      setPlaying(false);
+      return;
+    }
+    if (!loaded || idx < 0) return;
+    const timer = window.setTimeout(
+      () => onSelectDate(idx === 0 ? dates[dates.length - 1] : dates[idx - 1]),
+      idx === 0 ? PLAY_LAST_FRAME_MS : PLAY_FRAME_MS
+    );
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [playing, loaded, date, datesKey]);
+
+  const togglePlay = () => {
+    // Uusimalt pildilt alustades minnakse kohe perioodi algusesse
+    if (!playing && idx === 0 && dates.length > 1) onSelectDate(dates[dates.length - 1]);
+    setPlaying((v) => !v);
+  };
   const years: string[] = [];
   for (let y = new Date().getFullYear(); y >= FIRST_YEAR; y--) years.push(String(y));
   const fieldCount = area?.fieldCount ?? 0;
@@ -302,6 +333,16 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           onClick={() => onSelectDate(dates[idx - 1])}
         >
           <ChevronRight size={16} />
+        </button>
+        <button
+          type="button"
+          className={`icon-btn-ghost ${playing ? 'active' : ''}`}
+          title={playing ? 'Peata' : 'Mängi pildid läbi vanimast uusimani'}
+          aria-pressed={playing}
+          disabled={dates.length < 2}
+          onClick={togglePlay}
+        >
+          {playing ? <Pause size={16} /> : <Play size={16} />}
         </button>
         <select
           className="form-input satellite-period-select"
