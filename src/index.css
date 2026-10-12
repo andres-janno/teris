@@ -695,8 +695,15 @@ body {
   flex: 1;
 }
 .satellite-period-select {
-  flex: 0 0 auto;
-  width: auto;
+  flex: 1;
+}
+.satellite-play-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 8px;
 }
 .satellite-date-row .icon-btn-ghost:disabled {
   opacity: 0.35;

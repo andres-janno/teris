@@ -334,15 +334,19 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         >
           <ChevronRight size={16} />
         </button>
+      </div>
+
+      <div className="satellite-date-row">
         <button
           type="button"
-          className={`icon-btn-ghost ${playing ? 'active' : ''}`}
+          className={`icon-btn-ghost satellite-play-btn ${playing ? 'active' : ''}`}
           title={playing ? 'Peata' : 'Mängi pildid läbi vanimast uusimani'}
           aria-pressed={playing}
           disabled={dates.length < 2}
           onClick={togglePlay}
         >
           {playing ? <Pause size={16} /> : <Play size={16} />}
+          <span>{playing ? 'Peata' : 'Esita'}</span>
         </button>
         <select
           className="form-input satellite-period-select"
