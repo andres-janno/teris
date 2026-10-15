@@ -60,10 +60,20 @@ async function findUser(name: string | undefined) {
 
 async function resolveTenantId(rest: string[]): Promise<string> {
   const idx = rest.indexOf('--tenant');
-  if (idx >= 0 && rest[idx + 1]) return rest[idx + 1];
-  const tenants = await prisma.tenant.findMany({ select: { id: true } });
-  if (tenants.length === 1) return tenants[0].id;
-  throw new Error('Mitu ettevõtet — anna --tenant <id>');
+  let id: string;
+  if (idx >= 0) {
+    const value = rest[idx + 1];
+    if (!value || value.startsWith('--')) throw new Error('--tenant vajab väärtust');
+    id = value;
+  } else {
+    const tenants = await prisma.tenant.findMany({ select: { id: true } });
+    if (tenants.length !== 1) throw new Error('Mitu ettevõtet — anna --tenant <id>');
+    id = tenants[0].id;
+  }
+  const tenant = await prisma.tenant.findUnique({ where: { id } });
+  if (!tenant) throw new Error(`Ettevõtet "${id}" pole`);
+  if (tenant.status !== 'ACTIVE') throw new Error(`Ettevõte "${id}" ei ole aktiivne`);
+  return id;
 }
 
 async function main(): Promise<void> {
@@ -82,8 +92,9 @@ async function main(): Promise<void> {
       const email = emailRaw === null ? null : normalizeEmail(emailRaw);
       if (emailRaw !== null && !email) throw new Error('Vigane e-posti aadress');
       if (email && (await prisma.user.findUnique({ where: { email } }))) throw new Error('E-post on juba kasutusel');
+      const tenantId = await resolveTenantId(rest);
       const passwordHash = await hashPassword(await askNewPassword());
-      await prisma.user.create({ data: { username, passwordHash, displayName, email, tenantId: await resolveTenantId(rest) } });
+      await prisma.user.create({ data: { username, passwordHash, displayName, email, tenantId } });
       console.log(`Kasutaja "${username}" loodud.`);
       break;
     }

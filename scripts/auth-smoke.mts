@@ -13,6 +13,7 @@ const LINKUSER = '_smokelink';
 const TEMP_PASS = 'Ajutine-parool-123';
 const NEW_PASS = 'Uus-parool-12345';
 const TEST_USERS = [USER, ADMIN, NEWUSER, LINKUSER, '_smokemuu'];
+if (!process.env.PLATFORM_DATABASE_URL) throw new Error('PLATFORM_DATABASE_URL puudub');
 const prisma = new PrismaClient({ datasources: { db: { url: process.env.PLATFORM_DATABASE_URL } } });
 let failures = 0;
 
