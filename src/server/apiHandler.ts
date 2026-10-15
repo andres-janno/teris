@@ -8,6 +8,7 @@ import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
+import { applyLicenseGate, licenseOf, hasModule } from './licenseGate.ts';
 import { checkFieldClouds, validateCloudCheckPolygons } from './satelliteClouds.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
@@ -352,6 +353,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
     setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);
+    if (sessionUser && (await applyLicenseGate(req, res, pathname, method, sessionUser.tenantId))) return;
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
 
@@ -722,6 +724,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     // 5. Fleet (Vehicles, Implements, Devices)
     if (pathname === '/api/fleet' && method === 'GET') {
+      // Ilma telemeetria moodulita: tsdb päringuid pole, seadmeid ei anta, masinate asukoht ja aktiivsus on tühi
+      const telemetry = hasModule(licenseOf(req), 'TELEMETRY');
       const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches, deviceLinks] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
@@ -750,10 +754,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         driverName: v.assignedDriver?.name,
         assignedDeviceId: deviceLinks.byVehicle.get(v.id),
         assignedImplementId: hitches.byVehicle.get(v.id),
-        lastKnownPosition: (v.lastLatitude != null && v.lastLongitude != null)
+        lastKnownPosition: !telemetry ? null : (v.lastLatitude != null && v.lastLongitude != null)
           ? [v.lastLatitude, v.lastLongitude] as [number, number]
           : undefined,
-        lastActiveAt: v.lastActiveAt ? v.lastActiveAt.toISOString() : undefined,
+        lastActiveAt: !telemetry ? null : v.lastActiveAt ? v.lastActiveAt.toISOString() : undefined,
         notes: (v as any).notes ?? undefined
       }));
 
@@ -781,13 +785,13 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         .map((d) => d.macAddress as string);
 
       const [cellularTelemetry, eyeTelemetry] = await Promise.all([
-        fetchCellularTelemetry(cellularImeis),
-        fetchEyeTelemetry(eyeMacs)
+        telemetry ? fetchCellularTelemetry(cellularImeis) : new Map<string, any>(),
+        telemetry ? fetchEyeTelemetry(eyeMacs) : new Map<string, any>()
       ]);
 
       const now = Date.now();
 
-      const devices = rawDevices.map((d) => {
+      const devices = (telemetry ? rawDevices : []).map((d) => {
         const assignment = activeAssignments.find((a) => a.deviceId === d.id);
         const isEye = d.connectivityType === 'EYE_SENSOR';
         const live = isEye
