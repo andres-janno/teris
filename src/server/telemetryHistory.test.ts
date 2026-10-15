@@ -113,8 +113,10 @@ describe('Device Assignment and Telemetry History', () => {
       expect(claasSuggestion?.endTime).toBe('17:05');
       expect(claasSuggestion?.durationHours).toBeGreaterThan(1);
       expect(claasSuggestion?.pointCount).toBeGreaterThan(100);
-      expect(claasSuggestion?.implementName).toBe('Külvik');
       expect(claasSuggestion?.implementId).toBe('imp-01');
+      // Haakeseadme nime saab kasutaja muuta, seega võrreldakse seda andmebaasis oleva nimega
+      const implement = await prisma.implement.findUnique({ where: { id: 'imp-01' }, select: { name: true } });
+      expect(claasSuggestion?.implementName).toBe(implement?.name);
       expect(claasSuggestion?.workedAreaHa).toBeCloseTo(5.45, 1);
     });
 
