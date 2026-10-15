@@ -269,7 +269,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onDeleteDevice,
   telemetryEnabled = true,
 }) => {
-  const [activeTab, setActiveTab] = useState<TabType>('vehicles');
+  const [selectedTab, setActiveTab] = useState<TabType>('vehicles');
+  // Ilma telemeetriamoodulita seadmete tabid puuduvad → langeb tagasi masinate tabile
+  const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'deviceHistory') ? 'vehicles' : selectedTab;
   const [isAddingNew, setIsAddingNew] = useState(false);
 
   // Kui mõni neist on seatud, käitub aktiivse vahekaardi vorm muutmisrežiimis
@@ -483,6 +485,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [deviceHistoryLoading, setDeviceHistoryLoading] = useState(false);
 
   const loadDeviceAssignments = useCallback(async () => {
+    if (!telemetryEnabled) return;
     setDeviceHistoryLoading(true);
     try {
       setDeviceAssignments(await api.getDeviceAssignments());
@@ -491,7 +494,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     } finally {
       setDeviceHistoryLoading(false);
     }
-  }, []);
+  }, [telemetryEnabled]);
 
   useEffect(() => {
     if (isOpen || isFullPage) {
@@ -501,6 +504,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
   // Kaardilt seadme paigaldamine/vahetamine/eemaldamine → kirje seoste registrisse
   const assignDevice = (deviceId: string, vehicleId?: string, implementId?: string) => {
+    if (!telemetryEnabled) return;
     onAssignDevice(deviceId, vehicleId, implementId);
     setTimeout(loadDeviceAssignments, 400);
   };
@@ -1422,6 +1426,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   {/* Equipment Assignment Badges with Swap Actions */}
                   <div className="v-equipment-badge-row">
                     {/* Device Badge */}
+                    {telemetryEnabled && (
                     <div className="equipment-tag device-tag">
                       <Radio size={12} className="text-blue" />
                       <span className="tag-text">
@@ -1439,6 +1444,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <span>Vaheta</span>
                       </button>
                     </div>
+                    )}
 
                     {/* Implement Badge */}
                     <div className="equipment-tag implement-tag">

@@ -198,7 +198,7 @@ export const api = {
     // Ilma telemeetria moodulita saadab server asukoha ja viimase aktiivsuse null-ina; klient kasutab undefined
     return {
       ...data,
-      vehicles: data.vehicles.map((v: Vehicle) => ({
+      vehicles: (data.vehicles ?? []).map((v: Vehicle) => ({
         ...v,
         lastKnownPosition: v.lastKnownPosition ?? undefined,
         lastActiveAt: v.lastActiveAt ?? undefined
