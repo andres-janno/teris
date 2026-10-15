@@ -15,7 +15,7 @@
 - Arendus ja toodang kasutavad **sama andmebaasi**; käsud käivitatakse serveris: `ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && <käsk>'`. Kohalikus Macis `npm`/`npx` ei tööta. Git kohalikult.
 - Rollid: rakendus `teris_app` (RLS), autentimine/platvorm `authDb()` = `teris_platform` (BYPASSRLS), skeem `MIGRATE_DATABASE_URL` / PG* muutujad = `teris` (omanik). `.env` URL-id lõpevad `?schema=public` — psql jaoks kasuta PG* muutujaid, mitte URL-e. Saladusi ei trükita.
 - Enne skeemimuudatust `pg_dump` varukoopia `~/backups/` (kaust 700, failid 600). `prisma db push` võib Claude Code'i automaatrežiimis keelatud olla — siis annab kasutaja selle ise terminalis.
-- Moodulid (enum `LicenseModule`): `TELEMETRY`, `SATELLITE`, `WEATHER_RADAR`. Põhimoodul (sh finants ja mullaproovid) on alati sees.
+- Moodulid (enum `LicenseModule`): `TELEMETRY`, `SATELLITE`, `WEATHER`. Põhimoodul (sh finants ja mullaproovid) on alati sees.
 - Aegunud litsents (`validUntil < täna`, kuupäev Europe/Tallinn ajavööndis): ainult lugemine. Kasutaja saab sisse logida, vaadata, välja logida ja oma parooli vahetada. Litsentsi puudumisel: ainult lugemine ja ükski moodul (fail-closed).
 - Veateated (täpselt): aegunud — `Litsents on aegunud — andmed on ainult lugemiseks` (HTTP 403, `code: 'LICENSE_READ_ONLY'`); moodul puudub — `See moodul ei kuulu teie litsentsi` (HTTP 403, `code: 'MODULE_NOT_LICENSED'`).
 - Hoiatus 14 päeva enne aegumist, ainult ettevõtte adminile.
@@ -56,7 +56,7 @@
 enum LicenseModule {
   TELEMETRY
   SATELLITE
-  WEATHER_RADAR
+  WEATHER
 }
 
 // Ettevõtte litsents — teenusepakkuja andmed (ilma RLS-ita, loetakse authDb() kaudu)
@@ -105,7 +105,7 @@ git commit -m "Litsents: TenantLicense mudel ja LicenseModule enum"
 **Interfaces:**
 - Consumes: `authDb()` (`./db.ts`), Prisma `tenantLicense` (Task 1)
 - Produces:
-  - `type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER_RADAR'`; `const LICENSE_MODULES: readonly LicenseModule[]`
+  - `type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER'`; `const LICENSE_MODULES: readonly LicenseModule[]`
   - `interface LicenseState { readOnly: boolean; validUntil: string | null; expiresSoon: boolean; modules: LicenseModule[] }`
   - `tallinnToday(now: Date): string` — `YYYY-MM-DD` Europe/Tallinn ajavööndis
   - `licenseState(license: { validUntil: Date; modules: string[] } | null, today: string): LicenseState`
@@ -170,8 +170,8 @@ describe('moduleForRoute', () => {
     ['/api/field-works/telemetry-suggestions', 'TELEMETRY'],
     ['/api/satellite/dates', 'SATELLITE'],
     ['/api/satellite/cloud-check', 'SATELLITE'],
-    ['/api/weather/radar', 'WEATHER_RADAR'],
-    ['/api/weather/radar.png', 'WEATHER_RADAR']
+    ['/api/weather/radar', 'WEATHER'],
+    ['/api/weather/radar.png', 'WEATHER']
   ])('%s → %s', (path, mod) => expect(moduleForRoute(path)).toBe(mod));
 
   it.each(['/api/fleet', '/api/fleet/vehicles', '/api/fleet/implements', '/api/fleet/implement-assignments', '/api/seasons', '/api/fleetdevices'])(
@@ -201,7 +201,7 @@ describe('loadLicenseState (andmebaas)', () => {
     expect(await loadLicenseState(T)).toEqual({ readOnly: true, validUntil: null, expiresSoon: false, modules: [] });
     await authDb().tenantLicense.create({ data: { tenantId: T, validUntil: d('2099-12-31'), modules: [...LICENSE_MODULES] } });
     const s = await loadLicenseState(T, new Date('2026-10-15T10:00:00Z'));
-    expect(s).toEqual({ readOnly: false, validUntil: '2099-12-31', expiresSoon: false, modules: ['TELEMETRY', 'SATELLITE', 'WEATHER_RADAR'] });
+    expect(s).toEqual({ readOnly: false, validUntil: '2099-12-31', expiresSoon: false, modules: ['TELEMETRY', 'SATELLITE', 'WEATHER'] });
   });
 });
 ```
@@ -219,8 +219,8 @@ Run: `npx vitest run src/server/license.test.ts`. Expected: FAIL — `Cannot fin
 // Põhimoodul (põllud, tööd, finants, mullaproovid jm) on alati sees.
 import { authDb } from './db.ts';
 
-export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER_RADAR';
-export const LICENSE_MODULES: readonly LicenseModule[] = ['TELEMETRY', 'SATELLITE', 'WEATHER_RADAR'];
+export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER';
+export const LICENSE_MODULES: readonly LicenseModule[] = ['TELEMETRY', 'SATELLITE', 'WEATHER'];
 export const EXPIRY_WARNING_DAYS = 14;
 export const LICENSE_READ_ONLY_MESSAGE = 'Litsents on aegunud — andmed on ainult lugemiseks';
 export const MODULE_NOT_LICENSED_MESSAGE = 'See moodul ei kuulu teie litsentsi';
@@ -263,7 +263,7 @@ const MODULE_ROUTES: { module: LicenseModule; exact: string[]; prefixes: string[
     prefixes: ['/api/fleet/devices/', '/api/fleet/device-assignments/', '/api/telemetry/']
   },
   { module: 'SATELLITE', exact: [], prefixes: ['/api/satellite/'] },
-  { module: 'WEATHER_RADAR', exact: [], prefixes: ['/api/weather/'] }
+  { module: 'WEATHER', exact: [], prefixes: ['/api/weather/'] }
 ];
 
 export function moduleForRoute(pathname: string): LicenseModule | null {
@@ -319,7 +319,7 @@ git commit -m "Litsentsi olek, mooduli teekonnad ja ainult lugemise reegel (lice
 // src/server/tenantCli.ts
 // Ettevõtete ja litsentside haldus käsurealt (kuni teenusepakkuja keskkonnani):
 //   npm run tenant -- list
-//   npm run tenant -- license <ettevõtte-id> --until YYYY-MM-DD --modules TELEMETRY,SATELLITE,WEATHER_RADAR
+//   npm run tenant -- license <ettevõtte-id> --until YYYY-MM-DD --modules TELEMETRY,SATELLITE,WEATHER
 // --modules "" eemaldab kõik lisamoodulid.
 import { authDb } from './db';
 import { LICENSE_MODULES, type LicenseModule } from './license';
@@ -392,9 +392,9 @@ main()
 - [ ] **Step 2: Ehita ja sea Loisu Agro litsents**
 
 ```bash
-ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json && npm run build:server && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER_RADAR && npm run tenant -- list'
+ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx tsc --noEmit -p tsconfig.app.json && npm run build:server && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER && npm run tenant -- list'
 ```
-Expected: `Litsents: tenant-loisu-agro kuni 2099-12-31 [TELEMETRY, SATELLITE, WEATHER_RADAR]` ja list-rida samaga.
+Expected: `Litsents: tenant-loisu-agro kuni 2099-12-31 [TELEMETRY, SATELLITE, WEATHER]` ja list-rida samaga.
 
 - [ ] **Step 3: Veakäitumine**
 
@@ -405,7 +405,7 @@ Expected: `Ettevõtet "nope" pole`, `Vigane kuupäev`, `Tundmatu moodul: FOO`; l
 
 Tühja moodulite loendi kontroll (ja taastamine):
 ```bash
-ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules "" && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER_RADAR && npm run tenant -- list'
+ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules "" && npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER && npm run tenant -- list'
 ```
 Expected: esimene rida `[—]`, lõpuks list kõigi moodulitega.
 
@@ -441,7 +441,7 @@ import { describe, it, expect } from 'vitest';
 import { decideLicense, hasModule } from './licenseGate';
 import type { LicenseState } from './license';
 
-const full: LicenseState = { readOnly: false, validUntil: '2099-12-31', expiresSoon: false, modules: ['TELEMETRY', 'SATELLITE', 'WEATHER_RADAR'] };
+const full: LicenseState = { readOnly: false, validUntil: '2099-12-31', expiresSoon: false, modules: ['TELEMETRY', 'SATELLITE', 'WEATHER'] };
 const basic: LicenseState = { ...full, modules: [] };
 const expired: LicenseState = { ...full, readOnly: true };
 
@@ -576,7 +576,7 @@ git commit -m "Litsentsivärav API-s (moodulid, ainult lugemine); /api/fleet ilm
 
 **Interfaces:**
 - Consumes: `loadLicenseState`, `LicenseState` (Task 2), `authDb()`
-- Produces (klient ja server): `AuthUser` saab väljad `tenantName: string` ja `license: { readOnly: boolean; validUntil: string | null; expiresSoon: boolean; modules: LicenseModule[] }`; `src/types/auth.ts` ekspordib `type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER_RADAR'` ja `interface AuthLicense`.
+- Produces (klient ja server): `AuthUser` saab väljad `tenantName: string` ja `license: { readOnly: boolean; validUntil: string | null; expiresSoon: boolean; modules: LicenseModule[] }`; `src/types/auth.ts` ekspordib `type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER'` ja `interface AuthLicense`.
 
 - [ ] **Step 1: Server**
 
@@ -604,7 +604,7 @@ Login (`json(res, { user: toAuthUser(user) })`) → `json(res, { user: await aut
 - [ ] **Step 2: Kliendi tüübid** (`src/types/auth.ts`)
 
 ```ts
-export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER_RADAR';
+export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER';
 
 export interface AuthLicense {
   readOnly: boolean; // aegunud litsents: andmed ainult lugemiseks
@@ -757,7 +757,7 @@ export function LicenseBanner({ user }: { user: AuthUser }) {
 
 Run: `npx vitest run src/services/license.test.ts && npx tsc --noEmit -p tsconfig.app.json && npm test`. Expected: PASS.
 
-Käsitsi (arendusserver serveris + SSH tunnel, kasutaja kinnitusel): `npm run tenant -- license tenant-loisu-agro --until 2026-01-01` → logi sisse → riba „Litsents aegus 01.01.2026…“; proovi salvestada hooaeg → teade „Litsents on aegunud — andmed on ainult lugemiseks“. **Taasta kohe:** `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER_RADAR`.
+Käsitsi (arendusserver serveris + SSH tunnel, kasutaja kinnitusel): `npm run tenant -- license tenant-loisu-agro --until 2026-01-01` → logi sisse → riba „Litsents aegus 01.01.2026…“; proovi salvestada hooaeg → teade „Litsents on aegunud — andmed on ainult lugemiseks“. **Taasta kohe:** `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER`.
 
 - [ ] **Step 7: Commit**
 
@@ -783,14 +783,14 @@ git commit -m "Litsentsi ülariba ja litsentsivea teade kliendis"
 const modules = useMemo(() => ({
   telemetry: hasModule(user, 'TELEMETRY'),
   satellite: hasModule(user, 'SATELLITE'),
-  weatherRadar: hasModule(user, 'WEATHER_RADAR')
+  weather: hasModule(user, 'WEATHER')
 }), [user]);
 ```
 Anna `modules` (või vajalikud tõeväärtused eraldi propidena, vastavalt olemasolevale propimustrile) `LayerControl`-ile, `MapView`-le, `VehicleTracker`-ile, `FieldDetailsDrawer`-ile ja `FieldWorkEntryDialog`-ile (vaata, kus need App-is renderdatakse; kui dialoog renderdatakse sügavamal, anna prop läbi vahekomponendi).
 
 - [ ] **Step 2: Peida**
 
-- **Ilmaradar** (`!weatherRadar`): `LayerControl` radari rida ei renderdu; `MapView` radari efekt ei käivitu (lisa tingimus efekti algusesse koos `visibility.weatherRadar`-iga) ja legend ei renderdu. `App.tsx` `visibility.weatherRadar` algväärtus (rida ~161) jääb, aga efekt ei tee päringut.
+- **Ilmaradar** (`!weather`): `LayerControl` radari rida ei renderdu; `MapView` radari efekt ei käivitu (lisa tingimus efekti algusesse koos `visibility.weatherRadar`-iga) ja legend ei renderdu. `App.tsx` `visibility.weatherRadar` algväärtus (rida ~161) jääb, aga efekt ei tee päringut.
 - **Satelliit** (`!satellite`): `LayerControl` satelliidi rida ei renderdu; `MapView` satelliidi kiht ja `SatellitePanel` ei renderdu; `FieldDetailsDrawer`-is `FieldNdviSection` ei renderdu.
 - **Telemeetria** (`!telemetry`): `VehicleTracker` tabid `devices` ja `deviceHistory` (nupud ja sisu) ei renderdu; kui aktiivne tab on nende seas, lülita `vehicles`-ile. `LayerControl` masinapargi live-kihi lüliti, masinate rajad/simulaator ja `CultivationControl` (App ~1737-1757) ei renderdu. `FieldWorkEntryDialog` ei tee `api.getTelemetrySuggestions` päringut ega näita soovituste plokki. Masinate ja haakeriistade tabid jäävad.
 
@@ -800,7 +800,7 @@ Anna `modules` (või vajalikud tõeväärtused eraldi propidena, vastavalt olema
 
 Run: `npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build` (serveris; `build` ei taaskäivita teenust). Expected: PASS.
 
-Käsitsi (arendusserver + SSH tunnel): `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules ""` → logi välja ja sisse → kaardikihtides pole satelliiti ega radarit, Tehnika vaates pole seadmete tabe, tööde kande dialoogis pole telemeetriasoovitusi; põllud ja masinad töötavad. **Taasta kohe:** `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER_RADAR` ja kontrolli, et kõik on tagasi.
+Käsitsi (arendusserver + SSH tunnel): `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules ""` → logi välja ja sisse → kaardikihtides pole satelliiti ega radarit, Tehnika vaates pole seadmete tabe, tööde kande dialoogis pole telemeetriasoovitusi; põllud ja masinad töötavad. **Taasta kohe:** `npm run tenant -- license tenant-loisu-agro --until 2099-12-31 --modules TELEMETRY,SATELLITE,WEATHER` ja kontrolli, et kõik on tagasi.
 
 - [ ] **Step 4: Commit**
 

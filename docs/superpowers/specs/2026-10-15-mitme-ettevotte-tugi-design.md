@@ -28,7 +28,7 @@ eraldi andmebaas ettevõtte kohta.
 | Kataloogid | Teenusepakkuja hallatav algkataloog (kultuurid, sordid, tööliigid, töömallid), kopeeritakse uuele ettevõttele loomisel; materjale ei kopeerita |
 | Litsents | Kehtivusaeg + moodulid |
 | Aegunud litsents | Ainult lugemine (sisselogimine ja vaatamine lubatud, muutmine mitte) |
-| Moodulid | Põhimoodul (sh finants ja mullaproovid) alati; litsentsitavad: `TELEMETRY`, `SATELLITE`, `WEATHER_RADAR` |
+| Moodulid | Põhimoodul (sh finants ja mullaproovid) alati; litsentsitavad: `TELEMETRY`, `SATELLITE`, `WEATHER` |
 | Kasutajatugi | Ettevõtte andmeid näeb teenusepakkuja ainult ettevõtte admini antud ajutise loaga, ainult lugemiseks, logitult |
 | Seadmed | Ettevõte registreerib ise (IMEI Luhni kontroll + globaalne unikaalsus); andmed nähtavad alates registreerimisest; vaidlused lahendab teenusepakkuja |
 | Olemasolevad andmed | Kõik praegused andmed → ettevõte **Loisu Agro OÜ**; olemasolev `RelatedParty` „Loisu Agro OÜ“ on selle esimene operaator, teised praegused operaatorid jäävad lisaoperaatoriteks |
@@ -41,7 +41,7 @@ eraldi andmebaas ettevõtte kohta.
   `primaryPartyId` (ettevõtte enda `RelatedParty`, roll `OPERATOR`), `createdAt`, `updatedAt`.
 - `TenantLicense` — `tenantId` (unikaalne, üks kehtiv kirje ettevõtte kohta),
   `validUntil` (`@db.Date`), `modules` (enum `LicenseModule[]`: `TELEMETRY`, `SATELLITE`,
-  `WEATHER_RADAR`), `updatedAt`, `updatedBy`.
+  `WEATHER`), `updatedAt`, `updatedBy`.
 - `PlatformUser` — teenusepakkuja kasutajad, eraldi `User` tabelist: `username`, `passwordHash`,
   `totpSecret` (krüpteeritult), `isActive`, `lastLoginAt`.
 - `PlatformSession` — nagu `Session`, aga `PlatformUser` jaoks; eraldi küpsis.
@@ -136,7 +136,7 @@ puudutavad ainult `User`, `Session`, `PasswordToken` tabeleid.
   - `TELEMETRY` — sõidukite jälgimine, seadmed ja nende määramine, taasesitus, kannete
     telemeetriasoovitused;
   - `SATELLITE` — satelliidipildid, indeksid, pilvisus;
-  - `WEATHER_RADAR` — radarikiht.
+  - `WEATHER` — radarikiht.
   Andmed jäävad alles; mooduli taaslubamisel on need jälle nähtavad.
 - `GET /api/auth/me` vastus saab lisaks: `tenant: { name }`, `readOnly`,
   `licenseValidUntil`, `modules`, `supportView` (kas tegu on tugivaatega).
