@@ -2,8 +2,8 @@
 // Prisma kliendid. `new PrismaClient()` laeb projekti .env-i, mistõttu
 // TSDB_DATABASE_URL loetakse alles pärast põhikliendi loomist.
 import { Prisma, PrismaClient } from '@prisma/client';
-import { currentUsername, currentTenantId } from './requestContext.ts';
-import { scopeTenantArgs } from './tenantScope.ts';
+import { currentUsername, currentTenantId, requireTenantId, isInTenantTransaction, runInTenantTransactionFlag } from './requestContext.ts';
+import { scopeTenantArgs, TENANT_MODELS } from './tenantScope.ts';
 export { runInRequestContext, setRequestUser, runAsTenant, currentUsername, currentTenantId, requireTenantId } from './requestContext.ts';
 
 // Mudelid, millel on looja/muutja väljad (createdBy, updatedBy)
@@ -18,7 +18,10 @@ const withCreator = (data: Data, username: string): Data => ({ createdBy: userna
 const withUpdater = (data: Data, username: string): Data => ({ ...data, updatedBy: username });
 
 // Täidab looja ja muutja automaatselt kõigil kirjutamistel (ka tehingute sees)
-export const prisma = new PrismaClient().$extends({
+const base = new PrismaClient();
+const setTenant = (tenantId: string) => base.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+
+export const prisma = base.$extends({
   name: 'audit-user',
   query: {
     $allModels: {
@@ -60,7 +63,32 @@ export const prisma = new PrismaClient().$extends({
         }
       }
     }
+    })
+  .$extends({
+    name: 'tenant-rls',
+    query: {
+      $allModels: {
+        // Iga ettevõttepõhine päring käib tehingus, mille esimene lause seab app.tenant_id (RLS).
+        // Interaktiivse tehingu (tenantTransaction) sees on see juba seatud.
+        async $allOperations({ model, args, query }) {
+          if (!TENANT_MODELS.has(model) || isInTenantTransaction()) return query(args);
+          const [, result] = await base.$transaction([setTenant(requireTenantId()), query(args)]);
+          return result;
+        }
+      }
+    }
   });
+
+type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+/** Interaktiivne tehing ettevõtte kontekstis — kasuta prisma.$transaction(async ...) asemel. */
+export function tenantTransaction<T>(fn: (tx: TxClient) => Promise<T>, options?: { timeout?: number; maxWait?: number }): Promise<T> {
+  const tenantId = requireTenantId();
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`SELECT set_config('app.tenant_id', ${tenantId}, true)`;
+    return runInTenantTransactionFlag(() => fn(tx));
+  }, options);
+}
 
 // Autentimine (sisselogimine, sessioon, paroolilingid) toimub enne, kui päringul on ettevõtte
 // kontekst. teris_platform roll möödub RLS-ist — kasuta AINULT authGate.ts ja passwordTokens.ts sees.

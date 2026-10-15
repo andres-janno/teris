@@ -1,7 +1,7 @@
 // src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, mallid, hooaja tööd, kanded, finantsid.
 // PRIA põlluraamatust (field_operations) täiesti lahus.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
@@ -119,7 +119,7 @@ let seedChecked = false;
 async function ensureSeed(): Promise<void> {
   if (seedChecked) return;
   if ((await prisma.workType.count()) === 0) {
-    await prisma.$transaction(async (tx) => {
+    await tenantTransaction(async (tx) => {
       const ids = new Map<string, string>();
       for (const [i, w] of SEED_WORK_TYPES.entries()) {
         const created = await tx.workType.create({
@@ -896,7 +896,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const isWinter = b?.isWinter === true;
     const items: any[] = Array.isArray(b?.items) ? b.items : [];
 
-    const saved = await prisma.$transaction(async (tx) => {
+    const saved = await tenantTransaction(async (tx) => {
       const template =
         (await tx.workTemplate.findFirst({ where: { cropId, isWinter } })) ?? (await tx.workTemplate.create({ data: { cropId, isWinter } }));
       await tx.workTemplateItem.deleteMany({ where: { templateId: template.id } });
@@ -1282,7 +1282,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
-    const saved = await prisma.$transaction(async (tx) => {
+    const saved = await tenantTransaction(async (tx) => {
       await tx.workEntryLine.deleteMany({ where: { entryId: id } });
       return tx.workEntry.update({
         where: { id },
@@ -1401,7 +1401,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         json(res, { error: 'Igal real peab olema ühiku kulu' }, 400);
         return true;
       }
-      await prisma.$transaction(async (tx) => {
+      await tenantTransaction(async (tx) => {
         for (const l of lines) {
           await tx.workEntryLine.update({
             where: { id: l.id },

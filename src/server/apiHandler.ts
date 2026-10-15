@@ -1,6 +1,6 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { prisma, tenantTransaction, tsdb, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
@@ -1619,7 +1619,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
       const toDate = (d: string | null | undefined) => (d ? new Date(d) : null);
 
-      const result = await prisma.$transaction(
+      const result = await tenantTransaction(
         async (tx) => {
           let imported = 0;
           let operations = 0;
