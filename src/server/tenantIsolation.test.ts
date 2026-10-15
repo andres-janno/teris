@@ -19,7 +19,7 @@ beforeAll(async () => {
 
 afterAll(async () => {
   for (const t of [A, B]) {
-    await runAsTenant(t, async () => await prisma.crop.deleteMany({})).catch(() => {});
+    await runAsTenant(t, async () => await prisma.crop.deleteMany({})).catch((e) => console.error('Testi puhastus ebaõnnestus', t, e));
   }
   await authDb().tenant.deleteMany({ where: { id: { in: [A, B] } } });
 });
@@ -32,6 +32,32 @@ describe('ettevõtete eraldus', () => {
           `SELECT count(*) AS n FROM "${tableOf(model)}" WHERE tenant_id <> $1`, A);
         expect(n, model).toBe(0n);
       }
+    }));
+  });
+
+  it('kõigil ettevõttepõhistel tabelitel on sunnitud RLS ja tenant_isolation poliitika', async () => {
+    await runAsTenant(A, async () => await tenantTransaction(async (tx) => {
+      for (const model of TENANT_MODELS) {
+        const table = tableOf(model);
+        const [cls] = await tx.$queryRawUnsafe<{ relrowsecurity: boolean; relforcerowsecurity: boolean }[]>(
+          'SELECT relrowsecurity, relforcerowsecurity FROM pg_class WHERE oid = to_regclass($1)', `public."${table}"`);
+        expect(cls?.relrowsecurity, `${table}: RLS sisse lülitamata`).toBe(true);
+        expect(cls?.relforcerowsecurity, `${table}: FORCE RLS puudub`).toBe(true);
+        const pol = await tx.$queryRawUnsafe<{ qual: string | null; with_check: string | null }[]>(
+          `SELECT qual, with_check FROM pg_policies WHERE schemaname = 'public' AND tablename = $1 AND policyname = 'tenant_isolation'`, table);
+        expect(pol, `${table}: tenant_isolation poliitika puudub`).toHaveLength(1);
+        expect(pol[0].qual, `${table}: USING ei viita app.tenant_id-le`).toContain("current_setting('app.tenant_id'");
+        expect(pol[0].with_check, `${table}: WITH CHECK ei viita app.tenant_id-le`).toContain("current_setting('app.tenant_id'");
+      }
+    }));
+  });
+
+  it('rakenduse roll ei saa RLS-i mööda minna', async () => {
+    await runAsTenant(A, async () => await tenantTransaction(async (tx) => {
+      const [r] = await tx.$queryRawUnsafe<{ rolbypassrls: boolean; rolsuper: boolean }[]>(
+        'SELECT rolbypassrls, rolsuper FROM pg_roles WHERE rolname = current_user');
+      expect(r.rolbypassrls).toBe(false);
+      expect(r.rolsuper).toBe(false);
     }));
   });
 
@@ -49,11 +75,18 @@ describe('ettevõtete eraldus', () => {
     });
   });
 
+  it('RLS üksi peidab B kirje A eest (toorpäring), B näeb seda', async () => {
+    const count = (t: string) => runAsTenant(t, async () => await tenantTransaction(async (tx) =>
+      (await tx.$queryRawUnsafe<{ n: bigint }[]>('SELECT count(*) AS n FROM crops WHERE id = $1', bCropId))[0].n));
+    expect(await count(A)).toBe(0n);
+    expect(await count(B)).toBe(1n);
+  });
+
   it('A ei saa B kirjet muuta ega kustutada', async () => {
     await runAsTenant(A, async () => {
       expect((await prisma.crop.updateMany({ where: { id: bCropId }, data: { name: 'häkitud' } })).count).toBe(0);
       expect((await prisma.crop.deleteMany({ where: { id: bCropId } })).count).toBe(0);
-      await expect(prisma.crop.update({ where: { id: bCropId }, data: { name: 'häkitud' } })).rejects.toThrow();
+      await expect(prisma.crop.update({ where: { id: bCropId }, data: { name: 'häkitud' } })).rejects.toMatchObject({ code: 'P2025' });
     });
     const b = await runAsTenant(B, async () => await prisma.crop.findUnique({ where: { id: bCropId } }));
     expect(b?.name).toBe('B kaer');
