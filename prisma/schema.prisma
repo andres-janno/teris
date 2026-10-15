@@ -95,8 +95,8 @@ enum PartyRole {
 
 model Season {
   id                   Int          @id @default(autoincrement())
-  tenantId             String?      @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
-  year                 Int          @unique
+  tenantId             String       @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  year                 Int
   name                 String
   status               SeasonStatus @default(PLANNING)
   isLocked             Boolean      @default(false)
@@ -118,6 +118,8 @@ model Season {
 
   fieldSeasons FieldSeason[]
 
+  @@unique([tenantId, year])
+  @@index([tenantId])
   @@map("seasons")
 }
 
@@ -127,8 +129,8 @@ model Season {
 
 model CadastralParcel {
   id            Int      @id @default(autoincrement())
-  tenantId      String?  @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
-  cadastralCode String   @unique // Katastritunnus (nt "89201:001:0100")
+  tenantId      String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  cadastralCode String // Katastritunnus (nt "89201:001:0100")
   name          String? // Katastriüksuse nimi / lähiaadress
   notes         String?
   createdAt     DateTime @default(now())
@@ -138,6 +140,8 @@ model CadastralParcel {
 
   seasonLinks FieldCadastralParcel[]
 
+  @@unique([tenantId, cadastralCode])
+  @@index([tenantId])
   @@map("cadastral_parcels")
 }
 
@@ -147,7 +151,7 @@ model CadastralParcel {
 
 model Field {
   id             Int      @id @default(autoincrement())
-  tenantId       String?  @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId       String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   num            String // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x") — võib massiivi siseselt korduda eri operaatoritel
   name           String // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
   fieldCode      String // PRIA massiivi number (nt "60844249726") — võib korduda, kui massiiv on jagatud mitme operaatori vahel
@@ -164,10 +168,11 @@ model Field {
   fieldSeasons FieldSeason[]
   operator     RelatedParty? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
 
+  @@unique([tenantId, fieldCode, num, operatorId])
   // Massiivinumber + põllunumber võivad korduda (nt kui operaator vahetub),
   // aga sama operaator ei saa sama massiivi+põllu numbrit kaks korda omada.
-  @@unique([fieldCode, num, operatorId])
   @@index([operatorId])
+  @@index([tenantId])
   @@map("fields")
 }
 
@@ -177,7 +182,7 @@ model Field {
 
 model FieldSeason {
   id                  Int         @id @default(autoincrement())
-  tenantId            String?     @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId            String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldId             Int
   seasonId            Int?
   year                Int
@@ -219,6 +224,7 @@ model FieldSeason {
   @@index([year])
   @@index([cropId])
   @@index([varietyId])
+  @@index([tenantId])
   @@map("field_seasons")
 }
 
@@ -234,7 +240,7 @@ model FieldSeason {
 
 model RelatedParty {
   id          String      @id @default(cuid())
-  tenantId    String?     @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId    String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   name        String // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
   type        PartyType   @default(PERSON)
   code        String? // Isikukood või registrikood
@@ -257,12 +263,13 @@ model RelatedParty {
   performedOperations FieldOperation[]
   workEntries         WorkEntry[]
 
+  @@index([tenantId])
   @@map("related_parties")
 }
 
 model FieldCadastralParcel {
   id                Int           @id @default(autoincrement())
-  tenantId          String?       @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId          String        @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldSeasonId     Int
   cadastralParcelId Int
   fieldAreaHa       Float // Hektarid sellest katastriüksusest sellel hooajal
@@ -287,6 +294,7 @@ model FieldCadastralParcel {
   @@index([fieldSeasonId])
   @@index([cadastralParcelId])
   @@index([ownerPartyId])
+  @@index([tenantId])
   @@map("field_cadastral_parcels")
 }
 
@@ -296,7 +304,7 @@ model FieldCadastralParcel {
 
 model PointOfInterest {
   id             String      @id @default(cuid())
-  tenantId       String?     @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId       String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   name           String
   category       PoiCategory
   latitude       Float
@@ -315,6 +323,7 @@ model PointOfInterest {
   contactParty RelatedParty? @relation(fields: [contactPartyId], references: [id], onDelete: SetNull)
 
   @@index([contactPartyId])
+  @@index([tenantId])
   @@map("points_of_interest")
 }
 
@@ -324,7 +333,7 @@ model PointOfInterest {
 
 model Vehicle {
   id                  String      @id @default(cuid())
-  tenantId            String?     @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId            String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   name                String
   type                VehicleType
   category            String? // Masina liik (vabatekst, isetäienev olemasolevatest)
@@ -361,12 +370,13 @@ model Vehicle {
   workEntryLines       WorkEntryLine[]
 
   @@index([assignedDriverId])
+  @@index([tenantId])
   @@map("vehicles")
 }
 
 model Implement {
   id                 String        @id @default(cuid())
-  tenantId           String?       @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId           String        @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   name               String
   type               ImplementType
   category           String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
@@ -393,6 +403,7 @@ model Implement {
   workEntries          WorkEntry[]
   workEntryLines       WorkEntryLine[]
 
+  @@index([tenantId])
   @@map("implements")
 }
 
@@ -403,7 +414,7 @@ enum DeviceConnectivity {
 
 model TelemetryDevice {
   id               String             @id @default(cuid())
-  tenantId         String?            @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId         String             @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   connectivityType DeviceConnectivity @default(CELLULAR)
   imei             String?            @unique // Kohustuslik ainult CELLULAR seadmetel
   macAddress       String?            @unique // Kohustuslik ainult EYE_SENSOR seadmetel
@@ -422,12 +433,13 @@ model TelemetryDevice {
   implement   Implement?
   assignments DeviceAssignment[]
 
+  @@index([tenantId])
   @@map("telemetry_devices")
 }
 
 model DeviceAssignment {
   id            String          @id @default(cuid())
-  tenantId      String?         @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId      String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   deviceId      String
   device        TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   vehicleId     String?
@@ -446,12 +458,13 @@ model DeviceAssignment {
 
   @@index([deviceId, startedAt])
   @@index([vehicleId, startedAt])
+  @@index([tenantId])
   @@map("device_assignments")
 }
 
 model ImplementAssignment {
   id          String    @id @default(cuid())
-  tenantId    String?   @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId    String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   vehicleId   String
   vehicle     Vehicle   @relation(fields: [vehicleId], references: [id], onDelete: Cascade)
   implementId String
@@ -466,6 +479,7 @@ model ImplementAssignment {
 
   @@index([vehicleId, startedAt])
   @@index([implementId, startedAt])
+  @@index([tenantId])
   @@map("implement_assignments")
 }
 
@@ -484,8 +498,8 @@ enum CropGroup {
 
 model Crop {
   id                  String    @id
-  tenantId            String?   @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
-  name                String    @unique
+  tenantId            String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name                String
   scientificName      String?
   group               CropGroup @default(CEREAL)
   color               String    @default("#eab308")
@@ -504,12 +518,14 @@ model Crop {
   fieldSeasons  FieldSeason[]
   workTemplates WorkTemplate[]
 
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("crops")
 }
 
 model CropVariety {
   id                      String   @id
-  tenantId                String?  @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId                String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   cropId                  String
   name                    String
   breeder                 String? // Aretaja / esindaja (nt Saaten-Union, KWS)
@@ -532,6 +548,7 @@ model CropVariety {
 
   @@unique([cropId, name])
   @@index([cropId])
+  @@index([tenantId])
   @@map("crop_varieties")
 }
 
@@ -541,8 +558,8 @@ model CropVariety {
 
 model SoilSample {
   id              Int      @id @default(autoincrement())
-  tenantId        String?  @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
-  sampleNumber    String   @unique // Labori proovinumber ("proovNr") - kordusimpordil kasutatav võti
+  tenantId        String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  sampleNumber    String // Labori proovinumber ("proovNr") - kordusimpordil kasutatav võti
   fieldCode       String // PRIA massiivi number ("xy_id") - tekstivõrdlusega seotud Field.fieldCode'iga, mitte range FK (massiiv võib kuuluda mitmele Field kirjele)
   year            Int // Proovivõtu aasta ("aasta")
   lat             Float
@@ -562,8 +579,10 @@ model SoilSample {
   createdBy       String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy       String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
+  @@unique([tenantId, sampleNumber])
   @@index([fieldCode])
   @@index([year])
+  @@index([tenantId])
   @@map("soil_samples")
 }
 
@@ -573,7 +592,7 @@ model SoilSample {
 
 model FieldOperation {
   id            Int       @id @default(autoincrement())
-  tenantId      String?   @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId      String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldSeasonId Int
   type          String // PRIA "Tegevus": "Väetamine", "Kündmine", ...
   dateFrom      DateTime
@@ -594,12 +613,13 @@ model FieldOperation {
 
   @@index([fieldSeasonId])
   @@index([performerId])
+  @@index([tenantId])
   @@map("field_operations")
 }
 
 model FieldOperationProduct {
   id               Int     @id @default(autoincrement())
-  tenantId         String? @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId         String  @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   operationId      Int
   category         String? // "Register/Materjal"
   name             String? // toode, sort või umbrohi
@@ -616,6 +636,7 @@ model FieldOperationProduct {
   operation FieldOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
 
   @@index([operationId])
+  @@index([tenantId])
   @@map("field_operation_products")
 }
 
@@ -668,8 +689,8 @@ enum MaterialCategory {
 
 model WorkType {
   id            String         @id @default(cuid())
-  tenantId      String?        @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
-  name          String         @unique
+  tenantId      String         @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name          String
   phase         WorkPhase
   repeatMode    WorkRepeatMode @default(ONCE)
   maxRepeats    Int?
@@ -685,12 +706,14 @@ model WorkType {
   templateItems WorkTemplateItem[]
   fieldWorks    FieldWork[]
 
+  @@unique([tenantId, name])
+  @@index([tenantId])
   @@map("work_types")
 }
 
 model Material {
   id            String           @id @default(cuid())
-  tenantId      String?          @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId      String           @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   name          String
   category      MaterialCategory
   unit          String // kg, l, t, tk
@@ -705,15 +728,16 @@ model Material {
   cropVariety CropVariety?    @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
   entryLines  WorkEntryLine[]
 
-  @@unique([category, name])
+  @@unique([tenantId, category, name])
   @@index([cropVarietyId])
+  @@index([tenantId])
   @@map("materials")
 }
 
 // cropId = null → üldmall (isWinter = false → Kevadkülvi mall, isWinter = true → Sügiskülvi mall)
 model WorkTemplate {
   id        String   @id @default(cuid())
-  tenantId  String?  @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId  String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   cropId    String?
   isWinter  Boolean  @default(false)
   createdAt DateTime @default(now())
@@ -724,13 +748,14 @@ model WorkTemplate {
   crop  Crop?              @relation(fields: [cropId], references: [id], onDelete: Cascade)
   items WorkTemplateItem[]
 
-  @@unique([cropId, isWinter])
+  @@unique([tenantId, cropId, isWinter])
+  @@index([tenantId])
   @@map("work_templates")
 }
 
 model WorkTemplateItem {
   id            String  @id @default(cuid())
-  tenantId      String? @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId      String  @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   templateId    String
   workTypeId    String
   sortOrder     Int     @default(0)
@@ -742,13 +767,14 @@ model WorkTemplateItem {
 
   @@unique([templateId, workTypeId])
   @@index([workTypeId])
+  @@index([tenantId])
   @@map("work_template_items")
 }
 
 // Hooaja põllu töö (kopeeritakse mallist kultuuri valimisel; lisatav/eemaldatav)
 model FieldWork {
   id            String          @id @default(cuid())
-  tenantId      String?         @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId      String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldSeasonId Int
   workTypeId    String
   phase         WorkPhase
@@ -772,13 +798,14 @@ model FieldWork {
 
   @@unique([fieldSeasonId, workTypeId])
   @@index([workTypeId])
+  @@index([tenantId])
   @@map("field_works")
 }
 
 // Kanne = üks tööpäev/tööosa; töötaja sisestab ainult kogused
 model WorkEntry {
   id                   String        @id @default(cuid())
-  tenantId             String?       @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId             String        @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldWorkId          String
   date                 DateTime
   workerId             String? // seotud isik (roll Töötaja)
@@ -814,13 +841,14 @@ model WorkEntry {
   @@index([fieldWorkId])
   @@index([financeStatus])
   @@index([workerId])
+  @@index([tenantId])
   @@map("work_entries")
 }
 
 // Kande finantsrida: kogus töötajalt, ühiku kulu/hind finantsjuhilt (ERP-st käsitsi)
 model WorkEntryLine {
   id                String            @id @default(cuid())
-  tenantId          String?           @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId          String            @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   entryId           String
   kind              WorkEntryLineKind
   vehicleId         String?
@@ -840,6 +868,7 @@ model WorkEntryLine {
 
   @@index([entryId])
   @@index([materialId])
+  @@index([tenantId])
   @@map("work_entry_lines")
 }
 
@@ -849,7 +878,7 @@ model WorkEntryLine {
 
 model User {
   id                 String    @id @default(cuid())
-  tenantId           String?   @map("tenant_id") // Ettevõte (Task 6 muudab kohustuslikuks)
+  tenantId           String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   username           String    @unique // väiketähtedega
   passwordHash       String
   displayName        String?
@@ -870,6 +899,7 @@ model User {
   createdWorkEntries   WorkEntry[]     @relation("WorkEntryCreatedBy")
   confirmedWorkEntries WorkEntry[]     @relation("WorkEntryConfirmedBy")
 
+  @@index([tenantId])
   @@map("users")
 }
 

@@ -107,7 +107,7 @@ async function currentSession(req: IncomingMessage, res: ServerResponse): Promis
       res.appendHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
     }
   }
-  return { user: { ...session.user, tenantId: session.user.tenantId! }, sessionId: session.id };
+  return { user: session.user, sessionId: session.id };
 }
 
 async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -140,7 +140,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
     return;
   }
 
-  const tenant = await authDb().tenant.findUnique({ where: { id: user.tenantId! }, select: { status: true } });
+  const tenant = await authDb().tenant.findUnique({ where: { id: user.tenantId }, select: { status: true } });
   if (tenant?.status !== 'ACTIVE') {
     keys.forEach((k) => limiter.registerFailure(k));
     json(res, { error: 'Vale kasutajanimi või parool' }, 401);
@@ -168,7 +168,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
   });
   await authDb().user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
-  json(res, { user: toAuthUser({ ...user, tenantId: user.tenantId! }) });
+  json(res, { user: toAuthUser(user) });
 }
 
 // "Unustasid parooli": vastus on alati sama, et kontode olemasolu ei saaks välja uurida.

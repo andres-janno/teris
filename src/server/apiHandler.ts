@@ -1,6 +1,6 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb, runInRequestContext, setRequestUser, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { prisma, tsdb, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
@@ -166,7 +166,7 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): 
     if (!cadastralCode) continue;
     const parcelName = String(l?.parcelName ?? '').trim() || null;
     const parcel = await prisma.cadastralParcel.upsert({
-      where: { cadastralCode },
+      where: { tenantId_cadastralCode: { tenantId: requireTenantId(), cadastralCode } },
       update: parcelName ? { name: parcelName } : {},
       create: { cadastralCode, name: parcelName }
     });
@@ -411,7 +411,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const body = await parseBody(req);
       const statusUpper = (body.status || 'planning').toUpperCase();
       const saved = await prisma.season.upsert({
-        where: { year: Number(body.year) },
+        where: { tenantId_year: { tenantId: requireTenantId(), year: Number(body.year) } },
         update: {
           name: body.name,
           status: statusUpper as any,
@@ -566,7 +566,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         if (item.history && Array.isArray(item.history)) {
           for (const h of item.history) {
             const statusUpper = (h.status || 'not_started').toUpperCase();
-            const season = await prisma.season.findUnique({ where: { year: Number(h.year) } });
+            const season = await prisma.season.findUnique({ where: { tenantId_year: { tenantId: requireTenantId(), year: Number(h.year) } } });
             const seasonId = season?.id ?? null;
             // Kultuuri muutus → põllutööde mall (vt fieldWorks.ts applyCropTemplate)
             const previousSeason = await prisma.fieldSeason.findUnique({
@@ -1569,7 +1569,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       let count = 0;
       for (const s of list) {
         await prisma.soilSample.upsert({
-          where: { sampleNumber: s.sampleNumber },
+          where: { tenantId_sampleNumber: { tenantId: requireTenantId(), sampleNumber: s.sampleNumber } },
           update: {
             fieldCode: s.fieldCode,
             year: Number(s.year),
