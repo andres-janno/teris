@@ -2,7 +2,8 @@
 // Prisma kliendid. `new PrismaClient()` laeb projekti .env-i, mistõttu
 // TSDB_DATABASE_URL loetakse alles pärast põhikliendi loomist.
 import { Prisma, PrismaClient } from '@prisma/client';
-import { currentUsername } from './requestContext.ts';
+import { currentUsername, currentTenantId } from './requestContext.ts';
+import { scopeTenantArgs } from './tenantScope.ts';
 export { runInRequestContext, setRequestUser, runAsTenant, currentUsername, currentTenantId, requireTenantId } from './requestContext.ts';
 
 // Mudelid, millel on looja/muutja väljad (createdBy, updatedBy)
@@ -49,7 +50,17 @@ export const prisma = new PrismaClient().$extends({
       }
     }
   }
-});
+})
+  .$extends({
+    name: 'tenant-scope',
+    query: {
+      $allModels: {
+        async $allOperations({ model, operation, args, query }) {
+          return query(scopeTenantArgs(model, operation, args as Data, currentTenantId()) as typeof args);
+        }
+      }
+    }
+  });
 
 /** Kas kasutaja tohib kirjet kustutada: admin alati, teised ainult enda loodud kirjeid. */
 export function canDelete(user: { username: string; isAdmin: boolean } | null, createdBy: string | null | undefined): boolean {
