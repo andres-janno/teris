@@ -4,6 +4,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import type { ApiOptions } from './apiHandler.ts';
 import { authDb } from './db.ts';
+import { loadLicenseState } from './license.ts';
 import { json, parseBody, hasRequestBody } from './http.ts';
 import {
   SESSION_COOKIE,
@@ -43,14 +44,23 @@ type DbUser = {
 };
 export type SessionUser = DbUser;
 
-const toAuthUser = (u: DbUser) => ({
-  id: u.id,
-  username: u.username,
-  displayName: u.displayName ?? null,
-  isAdmin: u.isAdmin,
-  isFinanceManager: u.isFinanceManager,
-  mustChangePassword: u.mustChangePassword
-});
+// Kasutaja avalik vaade koos ettevõtte nime ja litsentsiga (klient näitab ülariba ja lukustab nupud).
+async function authUserPayload(u: DbUser) {
+  const [tenant, license] = await Promise.all([
+    authDb().tenant.findUnique({ where: { id: u.tenantId }, select: { name: true } }),
+    loadLicenseState(u.tenantId)
+  ]);
+  return {
+    id: u.id,
+    username: u.username,
+    displayName: u.displayName ?? null,
+    isAdmin: u.isAdmin,
+    isFinanceManager: u.isFinanceManager,
+    mustChangePassword: u.mustChangePassword,
+    tenantName: tenant?.name ?? '',
+    license
+  };
+}
 
 // Sessiooni kasutaja päringu kohta — hilisemad käsitlejad (nt adminUsers.ts) loevad
 // selle siit, et sessiooni ei peaks teist korda andmebaasist otsima.
@@ -168,7 +178,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<v
   });
   await authDb().user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
   res.setHeader('Set-Cookie', sessionCookie(token, SESSION_TTL_MS / 1000, isSecure(req)));
-  json(res, { user: toAuthUser(user) });
+  json(res, { user: await authUserPayload(user) });
 }
 
 // "Unustasid parooli": vastus on alati sama, et kontode olemasolu ei saaks välja uurida.
@@ -299,7 +309,7 @@ export async function authGate(
   }
 
   if (pathname === '/api/auth/me' && method === 'GET') {
-    if (current) json(res, { user: toAuthUser(current.user) });
+    if (current) json(res, { user: await authUserPayload(current.user) });
     else json(res, { error: 'Sisselogimine on vajalik' }, 401);
     return true;
   }
