@@ -6,7 +6,7 @@ import { Prisma } from '@prisma/client';
 import { MissingTenantError } from './requestContext.ts';
 
 // Teenusepakkuja tabelid (ilma RLS-ita, loetakse authDb() kaudu) — ei kuulu ettevõtte päringufiltri alla
-const PLATFORM_MODELS: ReadonlySet<string> = new Set(['TenantLicense']);
+export const PLATFORM_MODELS: ReadonlySet<string> = new Set(['TenantLicense']);
 
 export const TENANT_MODELS: ReadonlySet<string> = new Set(
   Prisma.dmmf.datamodel.models

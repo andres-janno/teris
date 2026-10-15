@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { scopeTenantArgs, TENANT_MODELS } from './tenantScope';
+import { Prisma } from '@prisma/client';
+import { scopeTenantArgs, TENANT_MODELS, PLATFORM_MODELS } from './tenantScope';
 import { MissingTenantError } from './requestContext';
 
 describe('scopeTenantArgs', () => {
@@ -8,7 +9,13 @@ describe('scopeTenantArgs', () => {
     expect(TENANT_MODELS.has('User')).toBe(true);
     expect(TENANT_MODELS.has('Session')).toBe(false);
     expect(TENANT_MODELS.has('Tenant')).toBe(false);
+    expect(TENANT_MODELS.has('TenantLicense')).toBe(false);
     expect(TENANT_MODELS.size).toBe(25);
+  });
+
+  it('platvormimudelid eksisteerivad skeemis (kirjavea ei jäta mudelit ettevõttefiltri alla)', () => {
+    const names = new Set(Prisma.dmmf.datamodel.models.map((m) => m.name));
+    for (const model of PLATFORM_MODELS) expect(names.has(model), model).toBe(true);
   });
 
   it('lisab lugemistele, muutmistele ja kustutamistele where.tenantId', () => {
