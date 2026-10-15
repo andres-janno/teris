@@ -13,6 +13,12 @@ describe('hasModule', () => {
     expect(hasModule(user(lic()), 'SATELLITE')).toBe(false);
     expect(hasModule(null, 'SATELLITE')).toBe(false);
   });
+  it('litsentsita kasutaja (vana server) — kõik moodulid nähtaval', () => {
+    const legacy = { ...user(lic()), license: undefined } as unknown as AuthUser;
+    expect(hasModule(legacy, 'TELEMETRY')).toBe(true);
+    expect(hasModule(legacy, 'SATELLITE')).toBe(true);
+    expect(licenseBannerText(legacy.license, true)).toBeNull();
+  });
 });
 
 describe('licenseBannerText', () => {

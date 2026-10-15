@@ -138,8 +138,9 @@ puudutavad ainult `User`, `Session`, `PasswordToken` tabeleid.
   - `SATELLITE` — satelliidipildid, indeksid, pilvisus;
   - `WEATHER` — radarikiht.
   Andmed jäävad alles; mooduli taaslubamisel on need jälle nähtavad.
-- `GET /api/auth/me` vastus saab lisaks: `tenant: { name }`, `readOnly`,
-  `licenseValidUntil`, `modules`, `supportView` (kas tegu on tugivaatega).
+- `GET /api/auth/me` kasutajaobjekt saab lisaks: `tenantName` ja
+  `license: { readOnly, validUntil, expiresSoon, modules }`
+  (`supportView` lisandub etapis 5).
 
 ### 3.4 Kasutajaliides
 

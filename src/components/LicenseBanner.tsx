@@ -6,7 +6,7 @@ export function LicenseBanner({ user }: { user: AuthUser }) {
   const text = licenseBannerText(user.license, user.isAdmin);
   if (!text) return null;
   return (
-    <div className={`license-banner ${user.license.readOnly ? 'expired' : 'warning'}`} role="status">
+    <div className={`license-banner ${user.license?.readOnly ? 'expired' : 'warning'}`} role="status">
       {text}
     </div>
   );

@@ -15,6 +15,7 @@
 - Arendus ja toodang kasutavad **sama andmebaasi**; käsud käivitatakse serveris: `ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && <käsk>'`. Kohalikus Macis `npm`/`npx` ei tööta. Git kohalikult.
 - Rollid: rakendus `teris_app` (RLS), autentimine/platvorm `authDb()` = `teris_platform` (BYPASSRLS), skeem `MIGRATE_DATABASE_URL` / PG* muutujad = `teris` (omanik). `.env` URL-id lõpevad `?schema=public` — psql jaoks kasuta PG* muutujaid, mitte URL-e. Saladusi ei trükita.
 - Enne skeemimuudatust `pg_dump` varukoopia `~/backups/` (kaust 700, failid 600). `prisma db push` võib Claude Code'i automaatrežiimis keelatud olla — siis annab kasutaja selle ise terminalis.
+- `npm run build` ainult release'i ajal — live-kaustas ehitamine muudab kohe seda, mida töötav server serveerib.
 - Moodulid (enum `LicenseModule`): `TELEMETRY`, `SATELLITE`, `WEATHER`. Põhimoodul (sh finants ja mullaproovid) on alati sees.
 - Aegunud litsents (`validUntil < täna`, kuupäev Europe/Tallinn ajavööndis): ainult lugemine. Kasutaja saab sisse logida, vaadata, välja logida ja oma parooli vahetada. Litsentsi puudumisel: ainult lugemine ja ükski moodul (fail-closed).
 - Veateated (täpselt): aegunud — `Litsents on aegunud — andmed on ainult lugemiseks` (HTTP 403, `code: 'LICENSE_READ_ONLY'`); moodul puudub — `See moodul ei kuulu teie litsentsi` (HTTP 403, `code: 'MODULE_NOT_LICENSED'`).
@@ -826,3 +827,12 @@ git commit -m "Litsentsita moodulid peidetud (telemeetria, satelliit, ilmaradar)
 - Litsentsi muutmine kasutajaliidesest (etapp 3, teenusepakkuja keskkond); seni käsurida.
 - Muutmisnuppude peitmine aegunud litsentsi korral (kasutaja otsus: riba + serveri keeld piisab).
 - Etapi 1 „Enne teise päris ettevõtte lisamist“ nimekiri kehtib edasi.
+
+Enne etappi 3 / hiljem:
+
+- GET /api/field-works kirjutab (fieldSeason.update) ka aegunud litsentsiga — liigutada GET-ist välja või jätta readOnly korral vahele.
+- teris_app õigused tenant_licenses/tenants tabelitel karmistada (REVOKE).
+- Litsentsi ülariba tumeda teema värvid.
+- tenantName kuvamine UI-s.
+- Automaatsete POST-ide kontroll aegunud litsentsiga testettevõttel.
+- Litsentsipäringu vahemälu mitme ettevõtte korral.
