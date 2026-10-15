@@ -13,7 +13,7 @@ const LINKUSER = '_smokelink';
 const TEMP_PASS = 'Ajutine-parool-123';
 const NEW_PASS = 'Uus-parool-12345';
 const TEST_USERS = [USER, ADMIN, NEWUSER, LINKUSER, '_smokemuu'];
-const prisma = new PrismaClient();
+const prisma = new PrismaClient({ datasources: { db: { url: process.env.PLATFORM_DATABASE_URL } } });
 let failures = 0;
 
 function check(name: string, ok: boolean, detail = '') {
@@ -40,8 +40,8 @@ async function loginAs(username: string, password: string) {
 
 try {
   await prisma.user.deleteMany({ where: { username: { in: TEST_USERS } } });
-  await prisma.user.create({ data: { username: USER, passwordHash: await hashPassword(PASS) } });
-  await prisma.user.create({ data: { username: ADMIN, passwordHash: await hashPassword(PASS), isAdmin: true, email: '_smokeadmin@example.invalid' } });
+  await prisma.user.create({ data: { username: USER, tenantId: 'tenant-loisu-agro', passwordHash: await hashPassword(PASS) } });
+  await prisma.user.create({ data: { username: ADMIN, tenantId: 'tenant-loisu-agro', passwordHash: await hashPassword(PASS), isAdmin: true, email: '_smokeadmin@example.invalid' } });
 
   check('status ilma sessioonita → 401', (await fetch(BASE + '/api/status')).status === 401);
   check('vale parool → 401', (await post('/api/auth/login', { username: USER, password: 'vale-parool-1' })).status === 401);
@@ -100,7 +100,7 @@ try {
   check('pärast väljalogimist → 401', (await fetch(BASE + '/api/auth/me', { headers: { Cookie: cookie } })).status === 401);
 
   // Parooli link: token luuakse otse DB-sse (testis e-kirju ei saadeta).
-  const linkUser = await prisma.user.create({ data: { username: LINKUSER, email: '_smokelink@example.invalid', passwordHash: '' } });
+  const linkUser = await prisma.user.create({ data: { username: LINKUSER, tenantId: 'tenant-loisu-agro', email: '_smokelink@example.invalid', passwordHash: '' } });
   const rawToken = 'smoke-token-' + Date.now();
   await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'INVITE', tokenHash: hashToken(rawToken), expiresAt: new Date(Date.now() + 3600_000) } });
   await prisma.passwordToken.create({ data: { userId: linkUser.id, purpose: 'RESET', tokenHash: hashToken(rawToken + '-old'), expiresAt: new Date(Date.now() - 1000) } });

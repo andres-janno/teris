@@ -1,11 +1,14 @@
 // src/server/userCli.ts
-// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress]
+// Kasutajate haldus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress] [--tenant <id>]
 // Parool küsitakse varjatult (terminalis) või loetakse stdin'i ridadest (toru kaudu).
 import readline from 'node:readline';
-import { prisma } from './db';
+import { authDb } from './db';
 import { hashPassword, validateNewPassword } from './auth';
 import { checkAdminChange } from './adminRules';
 import { normalizeEmail } from './mail';
+
+// Käsurida töötab platvormirolliga (möödub RLS-ist): ettevõte antakse selgelt.
+const prisma = authDb();
 
 const queued: string[] = [];
 let waiting: ((line: string) => void) | null = null;
@@ -55,6 +58,14 @@ async function findUser(name: string | undefined) {
   return user;
 }
 
+async function resolveTenantId(rest: string[]): Promise<string> {
+  const idx = rest.indexOf('--tenant');
+  if (idx >= 0 && rest[idx + 1]) return rest[idx + 1];
+  const tenants = await prisma.tenant.findMany({ select: { id: true } });
+  if (tenants.length === 1) return tenants[0].id;
+  throw new Error('Mitu ettevõtet — anna --tenant <id>');
+}
+
 async function main(): Promise<void> {
   const [command, name, ...rest] = process.argv.slice(2);
   const displayIdx = rest.indexOf('--display');
@@ -64,7 +75,7 @@ async function main(): Promise<void> {
 
   switch (command) {
     case 'add': {
-      if (!name) throw new Error('Kasutus: add <nimi> [--display "Nimi"] [--email aadress]');
+      if (!name) throw new Error('Kasutus: add <nimi> [--display "Nimi"] [--email aadress] [--tenant <id>]');
       const username = name.toLowerCase();
       if (username.length > 64) throw new Error('Kasutajanimi on liiga pikk (maksimaalselt 64 märki)');
       if (await prisma.user.findUnique({ where: { username } })) throw new Error(`Kasutaja "${username}" on juba olemas`);
@@ -72,7 +83,7 @@ async function main(): Promise<void> {
       if (emailRaw !== null && !email) throw new Error('Vigane e-posti aadress');
       if (email && (await prisma.user.findUnique({ where: { email } }))) throw new Error('E-post on juba kasutusel');
       const passwordHash = await hashPassword(await askNewPassword());
-      await prisma.user.create({ data: { username, passwordHash, displayName, email } });
+      await prisma.user.create({ data: { username, passwordHash, displayName, email, tenantId: await resolveTenantId(rest) } });
       console.log(`Kasutaja "${username}" loodud.`);
       break;
     }
@@ -97,7 +108,7 @@ async function main(): Promise<void> {
       const user = await findUser(name);
       const makeAdmin = command === 'admin';
       if (!makeAdmin) {
-        const activeAdmins = await prisma.user.count({ where: { isActive: true, isAdmin: true } });
+        const activeAdmins = await prisma.user.count({ where: { tenantId: user.tenantId, isActive: true, isAdmin: true } });
         const problem = checkAdminChange('', user, { kind: 'update', isAdmin: false }, activeAdmins);
         if (problem) throw new Error(problem);
       }
@@ -126,6 +137,7 @@ async function main(): Promise<void> {
           : (latestSession ?? u.lastLoginAt ?? null);
         console.log([
           u.username.padEnd(20),
+          u.tenantId.padEnd(20),
           (u.displayName ?? '').padEnd(24),
           (u.email ?? '').padEnd(30),
           u.isActive ? 'aktiivne' : 'keelatud',
@@ -139,7 +151,7 @@ async function main(): Promise<void> {
       break;
     }
     default:
-      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress]');
+      throw new Error('Kasutus: npm run user -- <add|passwd|disable|enable|admin|unadmin|list|logout> [nimi] [--display "Nimi"] [--email aadress] [--tenant <id>]');
   }
 }
 
