@@ -17,9 +17,20 @@ export function setUnauthorizedHandler(fn: (() => void) | null): void {
   unauthorizedHandler = fn;
 }
 
+let licenseErrorHandler: ((message: string) => void) | null = null;
+
+// Kutsutakse, kui server keeldub litsentsi tõttu (aegunud litsents või litsentsita moodul).
+export function setLicenseErrorHandler(fn: ((message: string) => void) | null): void {
+  licenseErrorHandler = fn;
+}
+
 async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(input, { credentials: 'same-origin', ...init });
   if (res.status === 401 && !input.startsWith('/api/auth/')) unauthorizedHandler?.();
+  if (res.status === 403 && licenseErrorHandler) {
+    const data = await res.clone().json().catch(() => null);
+    if (data?.code === 'LICENSE_READ_ONLY' || data?.code === 'MODULE_NOT_LICENSED') licenseErrorHandler(String(data.error));
+  }
   return res;
 }
 

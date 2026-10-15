@@ -28,7 +28,8 @@ import { enrichVehicles } from './services/fleet';
 import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
-import { api } from './services/api';
+import { api, setLicenseErrorHandler } from './services/api';
+import { LicenseBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
@@ -214,6 +215,17 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
   // päisestatistikas, põldude ja kultuuride registris ainult nende
   // operaatoritega põlde. Tühi = kõik. Viimane valik jäetakse meelde kasutaja kaupa (selles brauseris).
+  // Serveri litsentsikeeld: üks teade korraga, mitte iga päringu kohta
+  const licenseAlertOpenRef = useRef(false);
+  useEffect(() => {
+    setLicenseErrorHandler((message) => {
+      if (licenseAlertOpenRef.current) return;
+      licenseAlertOpenRef.current = true;
+      alertDialog(message).finally(() => { licenseAlertOpenRef.current = false; });
+    });
+    return () => setLicenseErrorHandler(null);
+  }, []);
+
   const operatorFilterKey = `agrimap_operator_filter_${user.id}`;
   const [operatorFilter, setOperatorFilter] = useState<string[]>(() => {
     try {
@@ -1504,6 +1516,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   return (
     <div className="app-container">
+      <LicenseBanner user={user} />
       {/* Top Header */}
       <Header 
         parties={parties}
