@@ -885,7 +885,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           }}
                         >
                           <div className="fw-crop-banner-main">
-                            <span className="fw-crop-dot" />
                             <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
                           </div>
                           {!locked && row.works.length > 0 && !hasCurrentEntries(row) && (
@@ -917,7 +916,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             }}
                           >
                             <div className="fw-crop-banner-main">
-                              <span className="fw-crop-dot next" />
                               <span className="fw-crop-name">{row.nextCropName}</span>
                             </div>
                             {!locked && row.nextWorks.length > 0 && !hasNextEntries(row) && row.nextRec?.fieldSeasonId && (

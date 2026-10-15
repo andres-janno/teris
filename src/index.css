@@ -7600,18 +7600,6 @@ a.history-pill:hover {
   font-size: 0.73rem;
 }
 
-.fw-crop-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--crop-color, #94a3b8);
-  flex-shrink: 0;
-}
-
-.fw-crop-dot.next {
-  background: var(--next-crop-color, #94a3b8);
-}
-
 .fw-crop-name {
   font-weight: 700;
   color: var(--text-primary);
