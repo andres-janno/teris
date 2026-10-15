@@ -5,9 +5,12 @@
 import { Prisma } from '@prisma/client';
 import { MissingTenantError } from './requestContext.ts';
 
+// Teenusepakkuja tabelid (ilma RLS-ita, loetakse authDb() kaudu) — ei kuulu ettevõtte päringufiltri alla
+const PLATFORM_MODELS: ReadonlySet<string> = new Set(['TenantLicense']);
+
 export const TENANT_MODELS: ReadonlySet<string> = new Set(
   Prisma.dmmf.datamodel.models
-    .filter((m) => m.fields.some((f) => f.name === 'tenantId' && f.kind === 'scalar'))
+    .filter((m) => m.fields.some((f) => f.name === 'tenantId' && f.kind === 'scalar') && !PLATFORM_MODELS.has(m.name))
     .map((m) => m.name)
 );
 

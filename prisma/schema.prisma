@@ -952,3 +952,24 @@ model Tenant {
 
   @@map("tenants")
 }
+
+// ============================================================================
+// ETTEVÕTTE LITSENTS
+// ============================================================================
+enum LicenseModule {
+  TELEMETRY
+  SATELLITE
+  WEATHER
+}
+
+// Ettevõtte litsents — teenusepakkuja andmed (ilma RLS-ita, loetakse authDb() kaudu)
+model TenantLicense {
+  id         String          @id @default(cuid())
+  tenantId   String          @unique
+  validUntil DateTime        @db.Date // Viimane kehtiv päev (Europe/Tallinn)
+  modules    LicenseModule[] // Litsentsitud lisamoodulid; põhimoodul on alati sees
+  updatedAt  DateTime        @updatedAt
+  updatedBy  String? // Kes viimati muutis (teenusepakkuja kasutaja või "cli")
+
+  @@map("tenant_licenses")
+}
