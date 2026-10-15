@@ -66,6 +66,7 @@ interface VehicleTrackerProps {
   onAddDevice: (dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
   onUpdateDevice: (id: string, dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
   onDeleteDevice: (id: string) => void;
+  telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
 }
 type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory';
 
@@ -266,6 +267,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onAddDevice,
   onUpdateDevice,
   onDeleteDevice,
+  telemetryEnabled = true,
 }) => {
   const [activeTab, setActiveTab] = useState<TabType>('vehicles');
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -786,6 +788,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span className="count-pill">{implementAssignments.length}</span>
           </button>
 
+          {telemetryEnabled && (
           <button
             className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
             onClick={() => { setActiveTab('devices'); closeForm(); }}
@@ -793,7 +796,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span>📡 Telemeetria seadmed</span>
             <span className="count-pill">{devices.length}</span>
           </button>
+          )}
 
+          {telemetryEnabled && (
           <button
             className={`filter-tab ${activeTab === 'deviceHistory' ? 'active' : ''}`}
             onClick={() => { setActiveTab('deviceHistory'); closeForm(); loadDeviceAssignments(); }}
@@ -801,6 +806,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span>🔗 Seadmete seosed</span>
             <span className="count-pill">{deviceAssignments.length}</span>
           </button>
+          )}
         </div>
 
         {!isAddingNew && (
@@ -1668,7 +1674,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       )}
 
       {/* TAB 3: TELEMEETRIASEADMETE REGISTER */}
-      {activeTab === 'devices' && (
+      {telemetryEnabled && activeTab === 'devices' && (
         <div className="devices-grid">
           {devices.map((dev) => {
             const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
@@ -1813,7 +1819,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       )}
 
       {/* TAB 5: TELEMEETRIASEADMETE SEOSTE REGISTER */}
-      {activeTab === 'deviceHistory' && (
+      {telemetryEnabled && activeTab === 'deviceHistory' && (
         <DeviceAssignmentRegister
           vehicles={vehicles}
           implementsList={implementsList}

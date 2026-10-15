@@ -35,6 +35,7 @@ interface FieldWorksBoardProps {
   implementsList: Option[];
   onOpenWorkRegister: () => void;
   canManageFinance?: boolean;
+  telemetryEnabled?: boolean;
 }
 
 type KindFilter = 'all' | 'winter' | 'spring' | 'none';
@@ -160,7 +161,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   vehicles,
   implementsList,
   onOpenWorkRegister,
-  canManageFinance = false
+  canManageFinance = false,
+  telemetryEnabled = true
 }) => {
   const [fieldWorks, setFieldWorks] = useState<FieldWork[]>([]);
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
@@ -1345,6 +1347,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             vehicles={vehicles}
             implementsList={implementsList}
             materials={materials}
+            telemetryEnabled={telemetryEnabled}
             onClose={() => setEntryDialog(null)}
             onSaved={() => {
               setEntryDialog(null);

@@ -25,6 +25,7 @@ import type { Crop } from './types/crop';
 import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
 import { enrichVehicles } from './services/fleet';
+import { hasModule } from './services/license';
 import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
@@ -162,7 +163,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     weatherRadar: false,
     satellite: false
   };
-  const [visibility, setVisibility] = useState<LayerVisibility>(() => {
+  const [rawVisibility, setVisibility] = useState<LayerVisibility>(() => {
     const saved = localStorage.getItem('agrimap_visibility');
     if (!saved) return DEFAULT_VISIBILITY;
     try {
@@ -180,8 +181,22 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (visibilityBeforePickRef.current) return; // ajutist valikut ei salvestata
-    localStorage.setItem('agrimap_visibility', JSON.stringify(visibility));
-  }, [visibility]);
+    localStorage.setItem('agrimap_visibility', JSON.stringify(rawVisibility));
+  }, [rawVisibility]);
+
+  // Litsentsita moodulite kihid on kaardil ja mujal alati väljas (kasutaja valik jääb salvestatud kujul alles)
+  const modules = useMemo(() => ({
+    telemetry: hasModule(user, 'TELEMETRY'),
+    satellite: hasModule(user, 'SATELLITE'),
+    weather: hasModule(user, 'WEATHER')
+  }), [user]);
+  const visibility = useMemo<LayerVisibility>(() => ({
+    ...rawVisibility,
+    vehicles: rawVisibility.vehicles && modules.telemetry,
+    cultivation: rawVisibility.cultivation && modules.telemetry,
+    satellite: rawVisibility.satellite && modules.satellite,
+    weatherRadar: rawVisibility.weatherRadar && modules.weather
+  }), [rawVisibility, modules]);
 
   // Masinapargi kuvamise filter: 'active' (ainult töötavad < 5 min) või 'all' (kõik masinad)
 
@@ -1181,7 +1196,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     // Taristu leht katab kaardi: asukoha valimiseks tuleb kaart nähtavaks teha.
     changeMainView('map');
     if (!visibilityBeforePickRef.current) {
-      visibilityBeforePickRef.current = visibility;
+      visibilityBeforePickRef.current = rawVisibility;
       setVisibility((prev) => ({
         ...prev,
         cadastre: false,
@@ -1606,6 +1621,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
             onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
             canManageFinance={user.isAdmin || user.isFinanceManager}
+            telemetryEnabled={modules.telemetry}
           />
         </Suspense>
       )}
@@ -1633,6 +1649,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onAddDevice={handleAddDevice}
           onUpdateDevice={handleUpdateDevice}
           onDeleteDevice={handleDeleteDevice}
+          telemetryEnabled={modules.telemetry}
         />
       )}
 
@@ -1763,12 +1780,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             isLoadingVehicleTracks={isLoadingVehicleTracks}
             hiddenTrackVehicleIds={hiddenTrackVehicleIds}
             onToggleTrackVisibility={handleToggleTrackVisibility}
+            modules={modules}
           />
           <div ref={setSatellitePanelHost} />
         </div>
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}
-        {visibility.cultivation && simulatedVehicleId && (
+        {modules.telemetry && visibility.cultivation && simulatedVehicleId && (
           <CultivationControl 
             pass={cultivationPass}
             isPlaying={isPlaying}

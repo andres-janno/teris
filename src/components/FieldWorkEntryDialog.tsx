@@ -24,6 +24,7 @@ interface FieldWorkEntryDialogProps {
   materials: Material[];
   onClose: () => void;
   onSaved: () => void;
+  telemetryEnabled?: boolean; // false: telemeetria moodul pole litsentsis → soovitusi ei küsita
 }
 
 const todayIso = () => new Date().toISOString().split('T')[0];
@@ -65,7 +66,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   implementsList,
   materials,
   onClose,
-  onSaved
+  onSaved,
+  telemetryEnabled = true
 }) => {
   const isRepeating = work.repeatMode !== 'ONCE';
   const isHarvest = work.phase === 'HARVEST';
@@ -149,7 +151,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   useEffect(() => {
     let isMounted = true;
-    if (!work.fieldSeasonId || !date) {
+    if (!telemetryEnabled || !work.fieldSeasonId || !date) {
       setTelemetrySuggestions([]);
       return;
     }
@@ -168,7 +170,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     return () => {
       isMounted = false;
     };
-  }, [work.fieldSeasonId, date, entry?.id]);
+  }, [telemetryEnabled, work.fieldSeasonId, date, entry?.id]);
 
   const applySuggestion = (s: TelemetrySuggestion) => {
     setSelectedSuggestionId(s.id);

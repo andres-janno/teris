@@ -194,7 +194,16 @@ export const api = {
   async getFleet(): Promise<{ vehicles: Vehicle[]; implements: Implement[]; devices: TelemetryDevice[] }> {
     const res = await apiFetch('/api/fleet');
     if (!res.ok) throw new Error('Failed to fetch fleet');
-    return res.json();
+    const data = await res.json();
+    // Ilma telemeetria moodulita saadab server asukoha ja viimase aktiivsuse null-ina; klient kasutab undefined
+    return {
+      ...data,
+      vehicles: data.vehicles.map((v: Vehicle) => ({
+        ...v,
+        lastKnownPosition: v.lastKnownPosition ?? undefined,
+        lastActiveAt: v.lastActiveAt ?? undefined
+      }))
+    };
   },
 
   async getWeatherRadar(): Promise<{ bounds: [[number, number], [number, number]]; frames: { time: string; imageUrl: string }[] }> {

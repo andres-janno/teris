@@ -35,6 +35,9 @@ interface LayerControlProps {
   isLoadingVehicleTracks?: boolean;
   hiddenTrackVehicleIds?: Set<string>;
   onToggleTrackVisibility?: (vehicleId: string) => void;
+
+  // Litsentsi moodulid: puuduva mooduli kihi rida ei näidata
+  modules?: { telemetry: boolean; satellite: boolean; weather: boolean };
 }
 
 export const LayerControl: React.FC<LayerControlProps> = ({
@@ -52,7 +55,8 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   trackVehicleIds,
   isLoadingVehicleTracks = false,
   hiddenTrackVehicleIds,
-  onToggleTrackVisibility
+  onToggleTrackVisibility,
+  modules = { telemetry: true, satellite: true, weather: true }
 }) => {
   const [isOpen, setIsOpen] = useState(true);
 
@@ -156,6 +160,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
 
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
+              {modules.telemetry && (
               <div className="layer-field-box">
                 <div className="layer-item">
                   <label className="layer-label">
@@ -248,6 +253,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   </div>
                 )}
               </div>
+              )}
 
               {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
               <div className="layer-field-box">
@@ -317,6 +323,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
 
               {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
+              {modules.telemetry && (
               <div className="layer-field-box">
                 <div className="layer-item">
                   <label className="layer-label">
@@ -337,6 +344,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   </button>
                 </div>
               </div>
+              )}
 
               {/* POI / Infrastructure */}
               <div className="layer-item">
@@ -359,6 +367,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
 
               {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
+              {modules.satellite && (
               <div className="layer-item">
                 <label className="layer-label">
                   <input
@@ -377,8 +386,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
+              )}
 
               {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
+              {modules.weather && (
               <div className="layer-item">
                 <label className="layer-label">
                   <input
@@ -397,6 +408,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
+              )}
             </div>
           </div>
 
