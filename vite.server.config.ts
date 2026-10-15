@@ -10,7 +10,8 @@ export default defineConfig({
     rolldownOptions: {
       input: {
         prod: 'src/server/prod.ts',
-        userCli: 'src/server/userCli.ts'
+        userCli: 'src/server/userCli.ts',
+        tenantCli: 'src/server/tenantCli.ts'
       },
       output: {
         entryFileNames: '[name].js',
