@@ -18,8 +18,11 @@ function argValue(args: string[], flag: string): string | undefined {
 }
 
 function parseDate(s: string): Date {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(Date.parse(s))) throw new Error(`Vigane kuupäev "${s}" (YYYY-MM-DD)`);
-  return new Date(`${s}T00:00:00.000Z`);
+  const d = new Date(`${s}T00:00:00.000Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s) || Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s) {
+    throw new Error(`Vigane kuupäev "${s}" (YYYY-MM-DD)`);
+  }
+  return d;
 }
 
 function parseModules(s: string): LicenseModule[] {
