@@ -1,5 +1,5 @@
 // src/server/passwordTokens.ts — ühekordsed parooli määramise lingid (kutse ja lähtestus).
-import { prisma } from './db.ts';
+import { authDb } from './db.ts';
 import { generateSessionToken, hashToken } from './auth.ts';
 import { APP_BASE_URL, MAIL_FROM, buildPasswordLinkMail, sendMail } from './mail.ts';
 
@@ -16,8 +16,8 @@ export function tokenExpiry(purpose: TokenPurpose, now: Date = new Date()): Date
 
 export async function issuePasswordToken(userId: string, purpose: TokenPurpose): Promise<string> {
   const raw = generateSessionToken();
-  await prisma.passwordToken.deleteMany({ where: { userId, usedAt: null } });
-  await prisma.passwordToken.create({
+  await authDb().passwordToken.deleteMany({ where: { userId, usedAt: null } });
+  await authDb().passwordToken.create({
     data: { userId, purpose, tokenHash: hashToken(raw), expiresAt: tokenExpiry(purpose) }
   });
   return raw;
@@ -25,7 +25,7 @@ export async function issuePasswordToken(userId: string, purpose: TokenPurpose):
 
 export async function findValidToken(rawToken: string) {
   if (!rawToken || rawToken.length > 200) return null;
-  const token = await prisma.passwordToken.findUnique({
+  const token = await authDb().passwordToken.findUnique({
     where: { tokenHash: hashToken(rawToken) },
     include: { user: { select: { id: true, username: true, isActive: true } } }
   });
@@ -37,7 +37,7 @@ export async function findValidToken(rawToken: string) {
 // kustuta kasutaja muud tokenid ja kõik sessioonid. Tagastab false, kui token oli
 // juba kasutusel/kadunud (nt paralleelne päring jõudis ette).
 export async function consumeTokenAndSetPassword(tokenId: number, userId: string, passwordHash: string): Promise<boolean> {
-  return prisma.$transaction(async (tx) => {
+  return authDb().$transaction(async (tx) => {
     const { count } = await tx.passwordToken.updateMany({
       where: { id: tokenId, usedAt: null },
       data: { usedAt: new Date() }

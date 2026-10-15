@@ -62,6 +62,18 @@ export const prisma = new PrismaClient().$extends({
     }
   });
 
+// Autentimine (sisselogimine, sessioon, paroolilingid) toimub enne, kui päringul on ettevõtte
+// kontekst. teris_platform roll möödub RLS-ist — kasuta AINULT authGate.ts ja passwordTokens.ts sees.
+let authClient: PrismaClient | null = null;
+export function authDb(): PrismaClient {
+  if (!authClient) {
+    const url = process.env.PLATFORM_DATABASE_URL;
+    if (!url) throw new Error('PLATFORM_DATABASE_URL puudub');
+    authClient = new PrismaClient({ datasources: { db: { url } } });
+  }
+  return authClient;
+}
+
 /** Kas kasutaja tohib kirjet kustutada: admin alati, teised ainult enda loodud kirjeid. */
 export function canDelete(user: { username: string; isAdmin: boolean } | null, createdBy: string | null | undefined): boolean {
   if (!user) return false;

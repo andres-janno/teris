@@ -338,9 +338,6 @@ export interface ApiOptions {
   requireAuth: boolean;
 }
 
-// Task 5 asendab sessiooni kasutaja ettevõttega ja eemaldab selle konstandi
-const TEMP_SINGLE_TENANT_ID = 'tenant-loisu-agro';
-
 export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
   // Kirjete looja/muutja (createdBy/updatedBy) täidetakse selle päringu kasutaja järgi
   return runInRequestContext(() => routeApiRequest(req, res, options));
@@ -354,7 +351,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
   try {
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
-    setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: TEMP_SINGLE_TENANT_ID } : null);
+    setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
 
