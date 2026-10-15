@@ -1,13 +1,14 @@
 import { describe, it, expect } from 'vitest';
-import { prisma, tsdb } from './db';
+import { prisma, tsdb, runAsTenant } from './db';
 import { getTelemetrySuggestionsForField } from './fieldWorks';
 
 // Kombaini seade oli pärast ümbertõstmist (04.10 16:00 UTC) vaikne kuni 07.10 hommikuni, mil masin
 // päriselt tööle hakkas. Live-andmetest sõltuvad kontrollid piiratakse selle vaikse aknaga.
+const LOISU = 'tenant-loisu-agro';
 const KOMBAIN_QUIET_UNTIL = new Date('2026-10-07T00:00:00.000Z');
 
 describe('Device Assignment and Telemetry History', () => {
-  it('loads vehicle lastKnownPosition from db', async () => {
+  it('loads vehicle lastKnownPosition from db', () => runAsTenant(LOISU, async () => {
     const claas = await prisma.vehicle.findUnique({
       where: { id: 'veh-1789925816295' }
     });
@@ -16,28 +17,28 @@ describe('Device Assignment and Telemetry History', () => {
     expect(claas?.lastLatitude).toBeCloseTo(58.1378716, 5);
     expect(claas?.lastLongitude).toBeCloseTo(25.881495, 5);
     expect(claas?.lastActiveAt).not.toBeNull();
-  });
+  }));
 
-  it('has assignment history for Suur Claas (12:00 - 19:00 local / 09:00 - 16:00 UTC)', async () => {
+  it('has assignment history for Suur Claas (12:00 - 19:00 local / 09:00 - 16:00 UTC)', () => runAsTenant(LOISU, async () => {
     const claasAssignment = await prisma.deviceAssignment.findFirst({
       where: { vehicleId: 'veh-1789925816295' }
     });
     expect(claasAssignment).not.toBeNull();
     expect(claasAssignment?.startedAt.toISOString()).toBe('2026-10-04T09:00:00.000Z');
     expect(claasAssignment?.endedAt?.toISOString()).toBe('2026-10-04T16:00:00.000Z');
-  });
+  }));
 
-  it('has active assignment for Kombain starting at 19:00 local (16:00 UTC)', async () => {
+  it('has active assignment for Kombain starting at 19:00 local (16:00 UTC)', () => runAsTenant(LOISU, async () => {
     const kombainAssignment = await prisma.deviceAssignment.findFirst({
       where: { vehicleId: 'veh-1791133380519', endedAt: null }
     });
     expect(kombainAssignment).not.toBeNull();
     expect(kombainAssignment?.startedAt.toISOString()).toBe('2026-10-04T16:00:00.000Z');
     expect(kombainAssignment?.endedAt).toBeNull();
-  });
+  }));
 
   if (tsdb) {
-    it('returns Claas GPS points within its assignment interval', async () => {
+    it('returns Claas GPS points within its assignment interval', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       const claasAssignment = await prisma.deviceAssignment.findFirst({
         where: { vehicleId: 'veh-1789925816295' },
@@ -56,9 +57,9 @@ describe('Device Assignment and Telemetry History', () => {
           AND time <= ${to}
       `;
       expect(Number(rows[0].count)).toBeGreaterThan(100);
-    });
+    }));
 
-    it('returns 0 points for Kombain after 16:00 UTC so it does not falsely replay Claas daytime work', async () => {
+    it('returns 0 points for Kombain after 16:00 UTC so it does not falsely replay Claas daytime work', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       const kombainAssignment = await prisma.deviceAssignment.findFirst({
         where: { vehicleId: 'veh-1791133380519', endedAt: null },
@@ -76,9 +77,9 @@ describe('Device Assignment and Telemetry History', () => {
           AND time < ${KOMBAIN_QUIET_UNTIL}
       `;
       expect(Number(rows[0].count)).toBe(0);
-    });
+    }));
 
-    it('confirms last measurement in tsdb occurred before Kombain assignment started', async () => {
+    it('confirms last measurement in tsdb occurred before Kombain assignment started', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       const kombainAssignment = await prisma.deviceAssignment.findFirst({
         where: { vehicleId: 'veh-1791133380519', endedAt: null },
@@ -91,7 +92,7 @@ describe('Device Assignment and Telemetry History', () => {
       const lastMeasurement = rows[0]?.max_time;
       expect(lastMeasurement).toBeDefined();
       expect(lastMeasurement.getTime()).toBeLessThan(kombainAssignment!.startedAt.getTime());
-    });
+    }));
 
     // Päris kasutaja võib olla selle sõidu kohta juba kande teinud (see peidab soovituse).
     // Testid jätavad sellise kande arvutusest välja; kasutaja kannet ei muudeta.
@@ -103,7 +104,7 @@ describe('Device Assignment and Telemetry History', () => {
       return e?.id ?? null;
     };
 
-    it('detects telemetry field sessions and suggests Suur Claas for field 450 on 2026-10-04', async () => {
+    it('detects telemetry field sessions and suggests Suur Claas for field 450 on 2026-10-04', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       const suggestions = await getTelemetrySuggestionsForField(450, '2026-10-04', await findRealClaasEntryId());
       expect(suggestions.length).toBeGreaterThanOrEqual(1);
@@ -118,9 +119,9 @@ describe('Device Assignment and Telemetry History', () => {
       const implement = await prisma.implement.findUnique({ where: { id: 'imp-01' }, select: { name: true } });
       expect(claasSuggestion?.implementName).toBe(implement?.name);
       expect(claasSuggestion?.workedAreaHa).toBeCloseTo(5.45, 1);
-    });
+    }));
 
-    it('excludes telemetry suggestion when an overlapping workEntry exists on that date', async () => {
+    it('excludes telemetry suggestion when an overlapping workEntry exists on that date', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       // Väljajätmist saab kontrollida ainult siis, kui päris kannet pole (üks välistatav kanne korraga)
       if (await findRealClaasEntryId()) return;
@@ -149,9 +150,9 @@ describe('Device Assignment and Telemetry History', () => {
       } finally {
         await prisma.workEntry.delete({ where: { id: dummy.id } });
       }
-    });
+    }));
 
-    it('returns workedAreaHa 0 and implementId null when no implement assignment matches the session timeframe', async () => {
+    it('returns workedAreaHa 0 and implementId null when no implement assignment matches the session timeframe', () => runAsTenant(LOISU, async () => {
       if (!tsdb) return;
       const asgn = await prisma.implementAssignment.findFirst({
         where: { vehicleId: 'veh-1789925816295', implementId: 'imp-01' }
@@ -176,6 +177,6 @@ describe('Device Assignment and Telemetry History', () => {
           data: { endedAt: asgn.endedAt }
         });
       }
-    });
+    }));
   }
 });

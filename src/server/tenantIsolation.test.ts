@@ -1,0 +1,86 @@
+// Ettevõtete eraldus: kaks ajutist ettevõtet (A, B) live-andmebaasis; kustutatakse testi lõpus.
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Prisma } from '@prisma/client';
+import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
+import { TENANT_MODELS } from './tenantScope';
+import { MissingTenantError } from './requestContext';
+
+const A = `test-tenant-a-${process.pid}`;
+const B = `test-tenant-b-${process.pid}`;
+const LOISU = 'tenant-loisu-agro';
+const tableOf = (model: string) => Prisma.dmmf.datamodel.models.find((m) => m.name === model)!.dbName!;
+let bCropId = '';
+
+beforeAll(async () => {
+  await authDb().tenant.createMany({ data: [{ id: A, name: 'Test A' }, { id: B, name: 'Test B' }] });
+  bCropId = await runAsTenant(B, async () => (await prisma.crop.create({ data: { id: `crop-${B}`, name: 'B kaer' } })).id);
+  await runAsTenant(A, async () => await prisma.crop.create({ data: { id: `crop-${A}`, name: 'A kaer' } }));
+});
+
+afterAll(async () => {
+  for (const t of [A, B]) {
+    await runAsTenant(t, async () => await prisma.crop.deleteMany({})).catch(() => {});
+  }
+  await authDb().tenant.deleteMany({ where: { id: { in: [A, B] } } });
+});
+
+describe('ettevõtete eraldus', () => {
+  it('uus ettevõte näeb kõiki ettevõttepõhiseid tabeleid tühjana (RLS, toorpäring)', async () => {
+    await runAsTenant(A, async () => await tenantTransaction(async (tx) => {
+      for (const model of TENANT_MODELS) {
+        const [{ n }] = await tx.$queryRawUnsafe<{ n: bigint }[]>(
+          `SELECT count(*) AS n FROM "${tableOf(model)}" WHERE tenant_id <> $1`, A);
+        expect(n, model).toBe(0n);
+      }
+    }));
+  });
+
+  it('Loisu Agro näeb oma andmeid', async () => {
+    await runAsTenant(LOISU, async () => {
+      expect(await prisma.field.count()).toBeGreaterThan(0);
+      expect(await prisma.crop.count({ where: { id: bCropId } })).toBe(0);
+    });
+  });
+
+  it('A ei leia B kirjet ka ID järgi', async () => {
+    await runAsTenant(A, async () => {
+      expect(await prisma.crop.findUnique({ where: { id: bCropId } })).toBeNull();
+      expect(await prisma.crop.findMany()).toHaveLength(1);
+    });
+  });
+
+  it('A ei saa B kirjet muuta ega kustutada', async () => {
+    await runAsTenant(A, async () => {
+      expect((await prisma.crop.updateMany({ where: { id: bCropId }, data: { name: 'häkitud' } })).count).toBe(0);
+      expect((await prisma.crop.deleteMany({ where: { id: bCropId } })).count).toBe(0);
+      await expect(prisma.crop.update({ where: { id: bCropId }, data: { name: 'häkitud' } })).rejects.toThrow();
+    });
+    const b = await runAsTenant(B, async () => await prisma.crop.findUnique({ where: { id: bCropId } }));
+    expect(b?.name).toBe('B kaer');
+  });
+
+  it('RLS keelab kirjutada teise ettevõtte ID-ga ka toorpäringuga', async () => {
+    await runAsTenant(A, async () => {
+      await expect(tenantTransaction(async (tx) =>
+        await tx.$executeRawUnsafe(`INSERT INTO crops (id, name, tenant_id, "updatedAt") VALUES ('x-${A}', 'x', $1, now())`, B)
+      )).rejects.toThrow(/row-level security/);
+    });
+  });
+
+  it('pesastatud loomine saab ettevõtte andmebaasi vaikeväärtusest', async () => {
+    await runAsTenant(A, async () => {
+      const crop = await prisma.crop.create({
+        data: { id: `nested-${A}`, name: 'Pesastatud', varieties: { create: [{ id: `var-${A}`, name: 'Sort 1' }] } },
+        include: { varieties: true }
+      });
+      const raw = await tenantTransaction(async (tx) => await tx.$queryRawUnsafe<{ tenant_id: string }[]>(
+        'SELECT tenant_id FROM crop_varieties WHERE "cropId" = $1', crop.id));
+      expect(raw.map((r) => r.tenant_id)).toEqual([A]);
+      await prisma.cropVariety.deleteMany({ where: { cropId: crop.id } });
+    });
+  });
+
+  it('ilma ettevõtteta päring viskab', async () => {
+    await expect(prisma.field.findMany()).rejects.toThrow(MissingTenantError);
+  });
+});
