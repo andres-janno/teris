@@ -1,26 +1,9 @@
 // src/server/db.ts
 // Prisma kliendid. `new PrismaClient()` laeb projekti .env-i, mistõttu
 // TSDB_DATABASE_URL loetakse alles pärast põhikliendi loomist.
-import { AsyncLocalStorage } from 'async_hooks';
 import { Prisma, PrismaClient } from '@prisma/client';
-
-// Päringu kasutaja (kasutajatunnus), kelle nimel kirjeid luuakse/muudetakse.
-// API päring töödeldakse runInAuditContext() sees ja kasutaja määratakse pärast autentimist
-// setAuditUser()-iga; väljaspool (nt CLI) on see tühi.
-const auditContext = new AsyncLocalStorage<{ username: string | null }>();
-
-export function runInAuditContext<T>(fn: () => Promise<T>): Promise<T> {
-  return auditContext.run({ username: null }, fn);
-}
-
-export function setAuditUser(username: string | null): void {
-  const store = auditContext.getStore();
-  if (store) store.username = username;
-}
-
-export function currentUsername(): string | null {
-  return auditContext.getStore()?.username ?? null;
-}
+import { currentUsername } from './requestContext.ts';
+export { runInRequestContext, setRequestUser, runAsTenant, currentUsername, currentTenantId, requireTenantId } from './requestContext.ts';
 
 // Mudelid, millel on looja/muutja väljad (createdBy, updatedBy)
 const AUDITED_MODELS = new Set(
