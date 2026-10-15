@@ -973,7 +973,7 @@ Käsitsi: logi sisse aadressil https://teris.ee, kontrolli kaarti, tööde tahvl
 - [ ] **Step 3: Tagasipööramine (ainult vea korral)**
 
 ```bash
-ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && sudo systemctl stop teris && pg_restore --clean --if-exists -d "$MIGRATE_DATABASE_URL" ~/backups/<teris-...-enne-tenant.dump> && git checkout <commit enne Task 1> -- . && <taasta .env DATABASE_URL rollile teris> && npm run build && sudo systemctl start teris'
+ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && sudo systemctl stop teris && pg_restore --clean --if-exists -d "${MIGRATE_DATABASE_URL%%\?*}" ~/backups/teris-2026-10-15-1748-enne-tenant.dump && git checkout <commit enne Task 1> -- . && cp .env.bak-before-teris-app .env && chmod 600 .env && npm run build && sudo systemctl start teris'
 ```
 
 - [ ] **Step 4: Commit ja push**
@@ -991,3 +991,14 @@ git push
 - `DeviceOwnership`, IMEI registreerimine, TimescaleDB päringute piiramine (etapp 4). **Kuni selleni näeb iga ettevõte telemeetriat IMEI järgi** — etapp 1 ei tohi minna päris teise ettevõtte kasutusse enne etappi 4.
 - Tugiligipääs (etapp 5).
 - Teadaolev piirang: välisvõtmed ei sisalda `tenant_id`-d, seega saab teoreetiliselt viidata teise ettevõtte rea ID-le (RLS peidab viidatud rea; andmeid ei leki). Komposiit-välisvõtmed (`tenant_id, id`) on eraldi otsus.
+
+Enne teise päris ettevõtte lisamist (etapp 3) kohustuslik:
+
+- peatatud ettevõtte sessioonid: `currentSession` (authGate.ts) peab kontrollima `Tenant.status` ja tagastama null, kui ei ole ACTIVE;
+- eraldustest muutmise/kustutamise kohta iga `TENANT_MODELS` mudeli kohta (praegu ainult Crop);
+- ettevõtteülesed välisvõtmed (komposiit-FK `(tenant_id, id)` või rakenduse kontroll) — FK-kontroll ja kaskaad mööduvad RLS-ist, Int-ID-d on ära arvatavad;
+- `tenant_id` välisvõti `tenants(id)`-le andmebaasi tasemel;
+- `teris_app` õiguste karmistamine `sessions`/`password_tokens`/`tenants` tabelitel;
+- `fieldWorks.ts` `seedChecked` on protsessipõhine — asendada ettevõttepõhise kataloogi kopeerimisega;
+- upsert ettevõttepõhise unikaalvõtmega võib põrkuda teise ettevõtte reaga (viga, mitte leke);
+- JSDoc `tenantTransaction`-ile: callback'is kasuta ainult `tx`-i.
