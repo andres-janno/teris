@@ -166,3 +166,24 @@ describe('ettevõtteülesed viited', () => {
     expect(rows.map((r) => r.t).sort()).toEqual(expected);
   });
 });
+
+describe('muutmine ja kustutamine iga mudeli kohta', () => {
+  // Tehing pööratakse alati tagasi — ka siis, kui RLS peaks katki olema, ei kustu ühtki rida.
+  class Rollback extends Error {}
+  it('A ei muuda ega kustuta ühtki Loisu rida üheski ettevõttepõhises tabelis', async () => {
+    const counts: Record<string, { updated: number; deleted: number }> = {};
+    await runAsTenant(A, async () => {
+      await tenantTransaction(async (tx) => {
+        for (const model of TENANT_MODELS) {
+          const t = tableOf(model);
+          const updated = await tx.$executeRawUnsafe(`UPDATE "${t}" SET tenant_id = tenant_id WHERE tenant_id = $1`, LOISU);
+          const deleted = await tx.$executeRawUnsafe(`DELETE FROM "${t}" WHERE tenant_id = $1`, LOISU);
+          counts[model] = { updated, deleted };
+        }
+        throw new Rollback();
+      }).catch((e) => { if (!(e instanceof Rollback)) throw e; });
+    });
+    for (const [model, c] of Object.entries(counts)) expect(c, model).toEqual({ updated: 0, deleted: 0 });
+    expect(Object.keys(counts)).toHaveLength(TENANT_MODELS.size);
+  });
+});
