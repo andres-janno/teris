@@ -166,10 +166,13 @@ async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED', platformUse
 
 async function resendInvite(id: string, body: any, platformUser: { id: string }) {
   const db = authDb();
-  if (!(await db.tenant.findUnique({ where: { id }, select: { id: true } }))) throw new HttpError(404, NOT_FOUND);
+  const tenant = await db.tenant.findUnique({ where: { id }, select: { status: true } });
+  if (!tenant) throw new HttpError(404, NOT_FOUND);
+  if (tenant.status !== 'ACTIVE') throw new HttpError(400, 'Ettevõte on peatatud');
   const username = normalizeUsername(body?.username);
   const user = username ? await db.user.findFirst({ where: { username, tenantId: id } }) : null;
   if (!user) throw new HttpError(400, 'Kasutajat ei leitud');
+  if (!user.isActive) throw new HttpError(400, 'Kasutaja on keelatud');
   if (user.passwordHash !== '') throw new HttpError(400, 'Kasutajal on parool juba määratud');
   if (!user.email) throw new HttpError(400, 'Kasutajal puudub e-posti aadress');
   const sent = await sendPasswordLink({ id: user.id, username: user.username, displayName: user.displayName, email: user.email }, 'INVITE');

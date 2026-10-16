@@ -204,6 +204,25 @@ describe('platvormi API', () => {
     expect(await authDb().platformAuditLog.count({ where: { targetTenantId: newId, action: 'INVITE_RESEND' } })).toBe(1);
   });
 
+  it('kutse uuesti: peatatud ettevõte ja keelatud kasutaja', async () => {
+    await authDb().tenant.update({ where: { id: newId }, data: { status: 'SUSPENDED' } });
+    try {
+      const sus = await call('POST', `/api/platform/tenants/${newId}/resend-invite`, { username: ADM });
+      expect(sus.status).toBe(400);
+      expect(sus.data.error).toBe('Ettevõte on peatatud');
+    } finally {
+      await authDb().tenant.update({ where: { id: newId }, data: { status: 'ACTIVE' } });
+    }
+    await authDb().user.updateMany({ where: { username: ADM }, data: { isActive: false } });
+    try {
+      const off = await call('POST', `/api/platform/tenants/${newId}/resend-invite`, { username: ADM });
+      expect(off.status).toBe(400);
+      expect(off.data.error).toBe('Kasutaja on keelatud');
+    } finally {
+      await authDb().user.updateMany({ where: { username: ADM }, data: { isActive: true } });
+    }
+  });
+
   it('peatamine ja aktiveerimine', async () => {
     const user = await authDb().user.findUnique({ where: { username: ADM } });
     const token = generateSessionToken();

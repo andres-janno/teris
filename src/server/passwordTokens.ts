@@ -23,13 +23,20 @@ export async function issuePasswordToken(userId: string, purpose: TokenPurpose):
   return raw;
 }
 
+export async function isTenantActive(tenantId: string): Promise<boolean> {
+  const tenant = await authDb().tenant.findUnique({ where: { id: tenantId }, select: { status: true } });
+  return tenant?.status === 'ACTIVE';
+}
+
 export async function findValidToken(rawToken: string) {
   if (!rawToken || rawToken.length > 200) return null;
   const token = await authDb().passwordToken.findUnique({
     where: { tokenHash: hashToken(rawToken) },
-    include: { user: { select: { id: true, username: true, isActive: true } } }
+    include: { user: { select: { id: true, username: true, isActive: true, tenantId: true } } }
   });
   if (!token || token.usedAt || token.expiresAt.getTime() < Date.now() || !token.user.isActive) return null;
+  // Peatatud (või puuduva) ettevõtte kasutaja link ei kehti.
+  if (!(await isTenantActive(token.user.tenantId))) return null;
   return { id: token.id, purpose: token.purpose as TokenPurpose, user: token.user };
 }
 

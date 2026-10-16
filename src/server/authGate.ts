@@ -22,7 +22,7 @@ import {
   allowedDuringForcedPasswordChange
 } from './auth.ts';
 import { normalizeEmail } from './mail.ts';
-import { findValidToken, consumeTokenAndSetPassword, sendPasswordLink } from './passwordTokens.ts';
+import { findValidToken, consumeTokenAndSetPassword, sendPasswordLink, isTenantActive } from './passwordTokens.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
 const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
@@ -209,7 +209,7 @@ async function handleForgot(req: IncomingMessage, res: ServerResponse): Promise<
   if (login) {
     const email = normalizeEmail(login);
     const user = await authDb().user.findFirst({ where: email ? { email } : { username: login } });
-    if (user && user.isActive && user.email) {
+    if (user && user.isActive && user.email && (await isTenantActive(user.tenantId))) {
       const targetEmail = user.email;
       // Vastus ei tohi oodata kirja saatmist — muidu reedaks vastuse ajastus, kas
       // konto on olemas. Kutsutud (parool määramata) kasutajale saadetakse taas
