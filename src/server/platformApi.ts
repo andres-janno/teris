@@ -1,7 +1,7 @@
 // src/server/platformApi.ts — teenusepakkuja API: ettevõtted, litsentsid, peatamine, kutse, logi.
 // Ettevõtte andmeid näidatakse ainult koondarvudena (groupBy / count), mitte ridadena.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { Prisma } from '@prisma/client';
+import { Prisma, CropGroup, WorkPhase, WorkRepeatMode } from '@prisma/client';
 import { authDb } from './db.ts';
 import { json, parseBody, hasRequestBody } from './http.ts';
 import { handlePlatformAuth, platformUserOf } from './platformAuth.ts';
@@ -212,6 +212,336 @@ async function readBody(req: IncomingMessage): Promise<any> {
   }
 }
 
+// ---- Algkataloog (platvormi tabelid, ilma tenantId-ta) ----
+
+type PlatformUser = { id: string; username: string };
+type FieldSpec = { k: string; t: 'name' | 'text' | 'color' | 'float' | 'int' | 'bool' | 'enum'; max?: number; nullable?: boolean; values?: string[]; label: string };
+
+const CROP_FIELDS: FieldSpec[] = [
+  { k: 'name', t: 'name', label: 'Nimi' },
+  { k: 'scientificName', t: 'text', max: 200, nullable: true, label: 'Ladinakeelne nimi' },
+  { k: 'group', t: 'enum', values: Object.values(CropGroup), label: 'Kultuurirühm' },
+  { k: 'color', t: 'color', label: 'Värv' },
+  { k: 'icon', t: 'text', max: 100, nullable: true, label: 'Ikoon' },
+  { k: 'priaCode', t: 'text', max: 50, nullable: true, label: 'PRIA kood' },
+  { k: 'defaultSeedRateKgHa', t: 'float', nullable: true, label: 'Külvinorm' },
+  { k: 'defaultYieldTonsHa', t: 'float', nullable: true, label: 'Saagikus' },
+  { k: 'description', t: 'text', max: 2000, nullable: true, label: 'Kirjeldus' },
+  { k: 'isWinterCrop', t: 'bool', label: 'Talikultuur' }
+];
+const VARIETY_FIELDS: FieldSpec[] = [
+  { k: 'name', t: 'name', label: 'Nimi' },
+  { k: 'breeder', t: 'text', max: 200, nullable: true, label: 'Aretaja' },
+  { k: 'maturityDays', t: 'text', max: 100, nullable: true, label: 'Valmimisaeg' },
+  { k: 'winterHardiness', t: 'text', max: 100, nullable: true, label: 'Talvekindlus' },
+  { k: 'recommendedSeedRateKgHa', t: 'float', nullable: true, label: 'Soovitatav külvinorm' },
+  { k: 'potentialYieldTonsHa', t: 'float', nullable: true, label: 'Potentsiaalne saagikus' },
+  { k: 'qualityClass', t: 'text', max: 100, nullable: true, label: 'Kvaliteediklass' },
+  { k: 'notes', t: 'text', max: 2000, nullable: true, label: 'Märkused' },
+  { k: 'isActive', t: 'bool', label: 'Aktiivne' }
+];
+const WORK_TYPE_FIELDS: FieldSpec[] = [
+  { k: 'name', t: 'name', label: 'Nimi' },
+  { k: 'phase', t: 'enum', values: Object.values(WorkPhase), label: 'Tööfaas' },
+  { k: 'repeatMode', t: 'enum', values: Object.values(WorkRepeatMode), label: 'Kordumisviis' },
+  { k: 'maxRepeats', t: 'int', nullable: true, label: 'Kordumiste arv' },
+  { k: 'intervalDays', t: 'int', nullable: true, label: 'Intervall päevades' },
+  { k: 'usesMaterials', t: 'bool', label: 'Kasutab materjale' },
+  { k: 'sortOrder', t: 'int', label: 'Järjekord' },
+  { k: 'isActive', t: 'bool', label: 'Aktiivne' }
+];
+
+// Kontrollib ja kärbib sisendi; `partial` korral loetakse ainult antud väljad, muidu nõutakse `required` väljad.
+function parseFields(body: any, spec: FieldSpec[], required: string[], partial: boolean): Record<string, unknown> {
+  const out: Record<string, unknown> = {};
+  for (const f of spec) {
+    const present = body && typeof body === 'object' && f.k in body && body[f.k] !== undefined;
+    if (!present) {
+      if (!partial && required.includes(f.k)) throw new HttpError(400, `${f.label} on kohustuslik`);
+      continue;
+    }
+    const v = body[f.k];
+    if (v === null) {
+      if (!f.nullable) throw new HttpError(400, `${f.label} on kohustuslik`);
+      out[f.k] = null;
+      continue;
+    }
+    switch (f.t) {
+      case 'name': {
+        const s = str(v, 100);
+        if (!s || s.length > 100) throw new HttpError(400, `${f.label} peab olema 1–100 märki`);
+        out[f.k] = s;
+        break;
+      }
+      case 'text': {
+        const s = str(v, f.max!);
+        if (s.length > f.max!) throw new HttpError(400, `${f.label} on liiga pikk (kuni ${f.max} märki)`);
+        out[f.k] = s || null;
+        break;
+      }
+      case 'color':
+        if (typeof v !== 'string' || !/^#[0-9a-fA-F]{6}$/.test(v.trim())) throw new HttpError(400, `${f.label} peab olema kujul #rrggbb`);
+        out[f.k] = v.trim().toLowerCase();
+        break;
+      case 'float':
+        if (typeof v !== 'number' || !Number.isFinite(v) || v < 0) throw new HttpError(400, `${f.label} peab olema arv ≥ 0`);
+        out[f.k] = v;
+        break;
+      case 'int':
+        if (typeof v !== 'number' || !Number.isInteger(v) || v < 0 || v > 1_000_000) throw new HttpError(400, `${f.label} peab olema täisarv ≥ 0`);
+        out[f.k] = v;
+        break;
+      case 'bool':
+        if (typeof v !== 'boolean') throw new HttpError(400, `${f.label}: oodatud jah/ei`);
+        out[f.k] = v;
+        break;
+      case 'enum':
+        if (typeof v !== 'string' || !f.values!.includes(v)) throw new HttpError(400, `${f.label}: vigane väärtus`);
+        out[f.k] = v;
+        break;
+    }
+  }
+  return out;
+}
+
+function decodeId(raw: string, message: string): string {
+  try {
+    return decodeURIComponent(raw);
+  } catch {
+    throw new HttpError(404, message);
+  }
+}
+
+const CROP_NOT_FOUND = 'Kultuuri ei leitud';
+const VARIETY_NOT_FOUND = 'Sorti ei leitud';
+const WORK_TYPE_NOT_FOUND = 'Tööliiki ei leitud';
+const WORK_TYPE_IN_USE = 'Tööliiki kasutatakse mallis';
+const DUPLICATE_NAME: Record<string, string> = {
+  crop: 'Sellise nimega kultuur on juba olemas',
+  variety: 'Sellise nimega sort on juba olemas',
+  workType: 'Sellise nimega tööliik on juba olemas'
+};
+
+type CatalogEntity = 'crop' | 'variety' | 'workType' | 'template';
+type Tx = Prisma.TransactionClient;
+
+// Käivitab muudatuse tehingus koos auditilogiga; Prisma vead tõlgitakse HTTP-vigadeks.
+async function catalogMutation<T>(
+  pu: PlatformUser,
+  entity: CatalogEntity,
+  op: 'create' | 'update' | 'delete' | 'replace',
+  fn: (tx: Tx) => Promise<{ id: string; name: string; result: T }>
+): Promise<T> {
+  try {
+    return await authDb().$transaction(async (tx) => {
+      const { id, name, result } = await fn(tx);
+      await tx.platformAuditLog.create({
+        data: { action: 'CATALOG_UPDATE', platformUserId: pu.id, targetTenantId: null, details: { entity, op, id, name } }
+      });
+      return result;
+    });
+  } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002' && DUPLICATE_NAME[entity]) throw new HttpError(409, DUPLICATE_NAME[entity]);
+      if (err.code === 'P2003' && entity === 'workType') throw new HttpError(409, WORK_TYPE_IN_USE);
+    }
+    throw err;
+  }
+}
+
+async function getCatalog() {
+  const db = authDb();
+  const [crops, workTypes, templates] = await Promise.all([
+    db.catalogCrop.findMany({ orderBy: { name: 'asc' }, include: { varieties: { orderBy: { name: 'asc' } } } }),
+    db.catalogWorkType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
+    db.catalogWorkTemplate.findMany({
+      include: { crop: { select: { name: true } }, items: { orderBy: { sortOrder: 'asc' }, include: { workType: { select: { name: true } } } } }
+    })
+  ]);
+  const tpl = templates.map((t) => ({
+    id: t.id,
+    catalogCropId: t.catalogCropId,
+    cropName: t.crop?.name ?? null,
+    isWinter: t.isWinter,
+    items: t.items.map((i) => ({
+      id: i.id,
+      catalogWorkTypeId: i.catalogWorkTypeId,
+      workTypeName: i.workType.name,
+      sortOrder: i.sortOrder,
+      typicalTiming: i.typicalTiming,
+      plannedCount: i.plannedCount
+    }))
+  }));
+  tpl.sort((a, b) => (a.cropName ?? '').localeCompare(b.cropName ?? '', 'et') || Number(a.isWinter) - Number(b.isWinter));
+  return { crops, workTypes, templates: tpl };
+}
+
+async function replaceTemplate(body: any, pu: PlatformUser) {
+  const cropId = body?.catalogCropId ?? null;
+  if (cropId !== null && typeof cropId !== 'string') throw new HttpError(400, 'Vigane kultuur');
+  if (typeof body?.isWinter !== 'boolean') throw new HttpError(400, 'Suve/talve valik puudub');
+  const isWinter: boolean = body.isWinter;
+  if (!Array.isArray(body?.items) || body.items.length > 200) throw new HttpError(400, 'Mallirea loend puudub või on liiga pikk');
+  const items = body.items.map((raw: any) => {
+    const id = typeof raw?.catalogWorkTypeId === 'string' ? raw.catalogWorkTypeId : '';
+    if (!id) throw new HttpError(400, 'Tööliik puudub');
+    const opts = parseFields(
+      raw,
+      [
+        { k: 'typicalTiming', t: 'text', max: 100, nullable: true, label: 'Tüüpiline aeg' },
+        { k: 'plannedCount', t: 'int', nullable: true, label: 'Planeeritud kordi' }
+      ],
+      [],
+      true
+    );
+    return { catalogWorkTypeId: id, typicalTiming: (opts.typicalTiming as string | null | undefined) ?? null, plannedCount: (opts.plannedCount as number | null | undefined) ?? null };
+  });
+  if (new Set(items.map((i: { catalogWorkTypeId: string }) => i.catalogWorkTypeId)).size !== items.length) {
+    throw new HttpError(400, 'Sama tööliik on mallis mitu korda');
+  }
+  return catalogMutation(pu, 'template', items.length ? 'replace' : 'delete', async (tx) => {
+    let cropName: string | null = null;
+    if (cropId !== null) {
+      const crop = await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { name: true } });
+      if (!crop) throw new HttpError(404, CROP_NOT_FOUND);
+      cropName = crop.name;
+    }
+    const found = await tx.catalogWorkType.count({ where: { id: { in: items.map((i: { catalogWorkTypeId: string }) => i.catalogWorkTypeId) } } });
+    if (found !== items.length) throw new HttpError(404, WORK_TYPE_NOT_FOUND);
+    // NULL catalogCropId korral unikaalsusindeks ei kehti, seepärast otsime üldmalli ise
+    const existing = await tx.catalogWorkTemplate.findFirst({ where: { catalogCropId: cropId, isWinter } });
+    const name = `${cropName ?? 'Üldmall'} (${isWinter ? 'talv' : 'suvi'})`;
+    if (!items.length) {
+      if (existing) await tx.catalogWorkTemplate.delete({ where: { id: existing.id } });
+      return { id: existing?.id ?? '', name, result: { success: true, templateId: null as string | null } };
+    }
+    const tpl = existing ?? (await tx.catalogWorkTemplate.create({ data: { catalogCropId: cropId, isWinter } }));
+    await tx.catalogWorkTemplateItem.deleteMany({ where: { templateId: tpl.id } });
+    await tx.catalogWorkTemplateItem.createMany({
+      data: items.map((i: { catalogWorkTypeId: string; typicalTiming: string | null; plannedCount: number | null }, idx: number) => ({ ...i, templateId: tpl.id, sortOrder: idx }))
+    });
+    return { id: tpl.id, name, result: { success: true, templateId: tpl.id as string | null } };
+  });
+}
+
+const CATALOG_CROP_ROUTE = /^\/api\/platform\/catalog\/crops(?:\/([^/]+)(?:\/(varieties)(?:\/([^/]+))?)?)?$/;
+const CATALOG_WORK_TYPE_ROUTE = /^\/api\/platform\/catalog\/work-types(?:\/([^/]+))?$/;
+
+// Tagastab true, kui päring käsitleti.
+async function routeCatalog(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, pu: PlatformUser): Promise<boolean> {
+  if (pathname === '/api/platform/catalog') {
+    if (method !== 'GET') return false;
+    json(res, await getCatalog());
+    return true;
+  }
+  if (pathname === '/api/platform/catalog/templates') {
+    if (method !== 'PUT') return false;
+    json(res, await replaceTemplate(await readBody(req), pu));
+    return true;
+  }
+
+  const c = CATALOG_CROP_ROUTE.exec(pathname);
+  if (c) {
+    const cropId = c[1] ? decodeId(c[1], CROP_NOT_FOUND) : null;
+    if (!cropId) {
+      if (method !== 'POST') return false;
+      const data = parseFields(await readBody(req), CROP_FIELDS, ['name'], false);
+      const crop = await catalogMutation(pu, 'crop', 'create', async (tx) => {
+        const row = await tx.catalogCrop.create({ data: data as Prisma.CatalogCropCreateInput });
+        return { id: row.id, name: row.name, result: row };
+      });
+      json(res, crop, 201);
+      return true;
+    }
+    if (!c[2]) {
+      if (method === 'PATCH') {
+        const data = parseFields(await readBody(req), CROP_FIELDS, [], true);
+        json(res, await catalogMutation(pu, 'crop', 'update', async (tx) => {
+          if (!(await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { id: true } }))) throw new HttpError(404, CROP_NOT_FOUND);
+          const row = await tx.catalogCrop.update({ where: { id: cropId }, data: data as Prisma.CatalogCropUpdateInput });
+          return { id: row.id, name: row.name, result: row };
+        }));
+        return true;
+      }
+      if (method === 'DELETE') {
+        json(res, await catalogMutation(pu, 'crop', 'delete', async (tx) => {
+          const row = await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { id: true, name: true } });
+          if (!row) throw new HttpError(404, CROP_NOT_FOUND);
+          await tx.catalogCrop.delete({ where: { id: cropId } }); // sordid ja erimallid kaovad cascade'iga
+          return { id: row.id, name: row.name, result: { success: true } };
+        }));
+        return true;
+      }
+      return false;
+    }
+    const varietyId = c[3] ? decodeId(c[3], VARIETY_NOT_FOUND) : null;
+    if (!varietyId) {
+      if (method !== 'POST') return false;
+      const data = parseFields(await readBody(req), VARIETY_FIELDS, ['name'], false);
+      json(res, await catalogMutation(pu, 'variety', 'create', async (tx) => {
+        if (!(await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { id: true } }))) throw new HttpError(404, CROP_NOT_FOUND);
+        const row = await tx.catalogCropVariety.create({ data: { ...(data as { name: string }), catalogCropId: cropId } });
+        return { id: row.id, name: row.name, result: row };
+      }), 201);
+      return true;
+    }
+    if (method === 'PATCH') {
+      const data = parseFields(await readBody(req), VARIETY_FIELDS, [], true);
+      json(res, await catalogMutation(pu, 'variety', 'update', async (tx) => {
+        if (!(await tx.catalogCropVariety.findFirst({ where: { id: varietyId, catalogCropId: cropId }, select: { id: true } }))) throw new HttpError(404, VARIETY_NOT_FOUND);
+        const row = await tx.catalogCropVariety.update({ where: { id: varietyId }, data });
+        return { id: row.id, name: row.name, result: row };
+      }));
+      return true;
+    }
+    if (method === 'DELETE') {
+      json(res, await catalogMutation(pu, 'variety', 'delete', async (tx) => {
+        const row = await tx.catalogCropVariety.findFirst({ where: { id: varietyId, catalogCropId: cropId }, select: { id: true, name: true } });
+        if (!row) throw new HttpError(404, VARIETY_NOT_FOUND);
+        await tx.catalogCropVariety.delete({ where: { id: varietyId } });
+        return { id: row.id, name: row.name, result: { success: true } };
+      }));
+      return true;
+    }
+    return false;
+  }
+
+  const w = CATALOG_WORK_TYPE_ROUTE.exec(pathname);
+  if (w) {
+    const id = w[1] ? decodeId(w[1], WORK_TYPE_NOT_FOUND) : null;
+    if (!id) {
+      if (method !== 'POST') return false;
+      const data = parseFields(await readBody(req), WORK_TYPE_FIELDS, ['name', 'phase'], false);
+      json(res, await catalogMutation(pu, 'workType', 'create', async (tx) => {
+        const row = await tx.catalogWorkType.create({ data: data as Prisma.CatalogWorkTypeCreateInput });
+        return { id: row.id, name: row.name, result: row };
+      }), 201);
+      return true;
+    }
+    if (method === 'PATCH') {
+      const data = parseFields(await readBody(req), WORK_TYPE_FIELDS, [], true);
+      json(res, await catalogMutation(pu, 'workType', 'update', async (tx) => {
+        if (!(await tx.catalogWorkType.findUnique({ where: { id }, select: { id: true } }))) throw new HttpError(404, WORK_TYPE_NOT_FOUND);
+        const row = await tx.catalogWorkType.update({ where: { id }, data: data as Prisma.CatalogWorkTypeUpdateInput });
+        return { id: row.id, name: row.name, result: row };
+      }));
+      return true;
+    }
+    if (method === 'DELETE') {
+      json(res, await catalogMutation(pu, 'workType', 'delete', async (tx) => {
+        const row = await tx.catalogWorkType.findUnique({ where: { id }, select: { id: true, name: true } });
+        if (!row) throw new HttpError(404, WORK_TYPE_NOT_FOUND);
+        if (await tx.catalogWorkTemplateItem.count({ where: { catalogWorkTypeId: id } })) throw new HttpError(409, WORK_TYPE_IN_USE);
+        await tx.catalogWorkType.delete({ where: { id } });
+        return { id: row.id, name: row.name, result: { success: true } };
+      }));
+      return true;
+    }
+    return false;
+  }
+  return false;
+}
+
 async function route(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL) {
   const pu = platformUserOf(req)!;
 
@@ -220,6 +550,7 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
     if (method === 'POST') return json(res, await createTenant(await readBody(req), pu), 201);
   }
   if (pathname === '/api/platform/audit' && method === 'GET') return json(res, await listAudit(url));
+  if (pathname.startsWith('/api/platform/catalog') && (await routeCatalog(req, res, pathname, method, pu))) return;
 
   const m = TENANT_ROUTE.exec(pathname);
   if (m) {
