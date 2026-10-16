@@ -1019,3 +1019,91 @@ model PlatformAuditLog {
   @@index([createdAt])
   @@map("platform_audit_log")
 }
+
+// ============================================================================
+// ALGKATALOOG — teenusepakkuja hallatav; kopeeritakse uuele ettevõttele loomisel
+// (platvormi tabelid: ainult authDb(), teris_app ei näe)
+// ============================================================================
+model CatalogCrop {
+  id                  String    @id @default(cuid())
+  name                String    @unique
+  scientificName      String?
+  group               CropGroup @default(CEREAL)
+  color               String    @default("#eab308")
+  icon                String?
+  priaCode            String?
+  defaultSeedRateKgHa Float?
+  defaultYieldTonsHa  Float?
+  description         String?
+  isWinterCrop        Boolean   @default(false)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  varieties CatalogCropVariety[]
+  templates CatalogWorkTemplate[]
+
+  @@map("catalog_crops")
+}
+
+model CatalogCropVariety {
+  id                      String      @id @default(cuid())
+  catalogCropId           String
+  name                    String
+  breeder                 String?
+  maturityDays            String?
+  winterHardiness         String?
+  recommendedSeedRateKgHa Float?
+  potentialYieldTonsHa    Float?
+  qualityClass            String?
+  notes                   String?
+  isActive                Boolean     @default(true)
+
+  crop CatalogCrop @relation(fields: [catalogCropId], references: [id], onDelete: Cascade)
+
+  @@unique([catalogCropId, name])
+  @@map("catalog_crop_varieties")
+}
+
+model CatalogWorkType {
+  id            String         @id @default(cuid())
+  name          String         @unique
+  phase         WorkPhase
+  repeatMode    WorkRepeatMode @default(ONCE)
+  maxRepeats    Int?
+  intervalDays  Int?
+  usesMaterials Boolean        @default(false)
+  sortOrder     Int            @default(0)
+  isActive      Boolean        @default(true)
+
+  templateItems CatalogWorkTemplateItem[]
+
+  @@map("catalog_work_types")
+}
+
+model CatalogWorkTemplate {
+  id            String       @id @default(cuid())
+  catalogCropId String? // null = üldmall (suvi/tali)
+  isWinter      Boolean      @default(false)
+
+  crop  CatalogCrop?              @relation(fields: [catalogCropId], references: [id], onDelete: Cascade)
+  items CatalogWorkTemplateItem[]
+
+  // NB: NULL catalogCropId korral Postgres ei pea ridu duplikaatideks — üldmallide unikaalsust kontrollib API (Task 5)
+  @@unique([catalogCropId, isWinter])
+  @@map("catalog_work_templates")
+}
+
+model CatalogWorkTemplateItem {
+  id                String              @id @default(cuid())
+  templateId        String
+  catalogWorkTypeId String
+  sortOrder         Int                 @default(0)
+  typicalTiming     String?
+  plannedCount      Int?
+
+  template CatalogWorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  workType CatalogWorkType     @relation(fields: [catalogWorkTypeId], references: [id], onDelete: Restrict)
+
+  @@unique([templateId, catalogWorkTypeId])
+  @@map("catalog_work_template_items")
+}
