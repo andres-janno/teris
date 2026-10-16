@@ -138,6 +138,27 @@ describe('ettevõtteülesed viited', () => {
     });
   });
 
+  it('A ei saa oma rida ümber viia Loisu reale (UPDATE)', async () => {
+    const loisuField = await runAsTenant(LOISU, async () => await prisma.field.findFirst({ select: { id: true } }));
+    await runAsTenant(A, async () => {
+      const f = await prisma.field.create({ data: { num: 't', name: 't', fieldCode: 't' } });
+      try {
+        const fs = await prisma.fieldSeason.create({ data: { fieldId: f.id, year: 2099, areaHa: 1, crop: 'test', geometry: {} } });
+        await expect(prisma.fieldSeason.update({ where: { id: fs.id }, data: { fieldId: loisuField!.id } }))
+          .rejects.toThrow(/teise ettevõtte/);
+      } finally {
+        await prisma.fieldSeason.deleteMany({});
+        await prisma.field.deleteMany({});
+      }
+    });
+  });
+
+  it('platvormi roll (RLS-ita) ei saa luua ettevõtteülest viidet', async () => {
+    const loisuField = await runAsTenant(LOISU, async () => await prisma.field.findFirst({ select: { id: true } }));
+    await expect(authDb().fieldSeason.create({ data: { tenantId: A, fieldId: loisuField!.id, year: 2099, areaHa: 1, crop: 'test', geometry: {} } }))
+      .rejects.toThrow(/teise ettevõtte/);
+  });
+
   it('igal ettevõttesisesel relatsioonil on triger', async () => {
     const expected = tenantRelations().map((r) => `${r.table}.tenant_fk_${r.column}`).sort();
     const rows = await authDb().$queryRawUnsafe<{ t: string }[]>(

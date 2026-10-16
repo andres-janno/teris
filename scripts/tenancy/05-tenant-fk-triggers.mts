@@ -8,14 +8,14 @@ import { tenantRelations } from '../../src/server/tenantRelations.ts';
 
 // Tavaline RAISE EXCEPTION (P0001): 23503 maskeeriks Prisma kasutajale nähtava teate.
 const FUNCTION_SQL = `
-CREATE OR REPLACE FUNCTION tenant_fk_check() RETURNS trigger LANGUAGE plpgsql AS $$
+CREATE OR REPLACE FUNCTION tenant_fk_check() RETURNS trigger LANGUAGE plpgsql SET search_path = public AS $$
 DECLARE
-  fk_val text;
+  is_null boolean;
   parent_tenant text;
 BEGIN
-  EXECUTE format('SELECT ($1).%I::text', TG_ARGV[1]) INTO fk_val USING NEW;
-  IF fk_val IS NULL THEN RETURN NEW; END IF;
-  EXECUTE format('SELECT tenant_id FROM %I WHERE %I::text = $1', TG_ARGV[0], TG_ARGV[2]) INTO parent_tenant USING fk_val;
+  EXECUTE format('SELECT ($1).%I IS NULL', TG_ARGV[1]) INTO is_null USING NEW;
+  IF is_null THEN RETURN NEW; END IF;
+  EXECUTE format('SELECT tenant_id FROM %I.%I WHERE %I = ($1).%I', TG_TABLE_SCHEMA, TG_ARGV[0], TG_ARGV[2], TG_ARGV[1]) INTO parent_tenant USING NEW;
   IF parent_tenant IS DISTINCT FROM NEW.tenant_id THEN
     RAISE EXCEPTION 'Viide teise ettevõtte kirjele (%.% → %)', TG_TABLE_NAME, TG_ARGV[1], TG_ARGV[0];
   END IF;
@@ -29,11 +29,19 @@ async function main() {
   try {
     await db.$executeRawUnsafe(FUNCTION_SQL);
     const rels = tenantRelations();
+    // Eemalda trigerid, mida skeem enam ei vaja (nt kustutatud relatsioon)
+    const wanted = new Set(rels.map((r) => `${r.table}.tenant_fk_${r.column}`));
+    const existing = await db.$queryRawUnsafe<{ tbl: string; trg: string }[]>(
+      `SELECT c.relname AS tbl, tg.tgname AS trg FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid ` +
+      `WHERE tg.tgname LIKE 'tenant_fk\\_%' AND NOT tg.tgisinternal`);
+    for (const e of existing) {
+      if (!wanted.has(`${e.tbl}.${e.trg}`)) await db.$executeRawUnsafe(`DROP TRIGGER "${e.trg}" ON "${e.tbl}"`);
+    }
     for (const r of rels) {
       const name = `tenant_fk_${r.column}`;
       await db.$executeRawUnsafe(`DROP TRIGGER IF EXISTS "${name}" ON "${r.table}"`);
       await db.$executeRawUnsafe(
-        `CREATE TRIGGER "${name}" BEFORE INSERT OR UPDATE OF "${r.column}" ON "${r.table}" ` +
+        `CREATE TRIGGER "${name}" BEFORE INSERT OR UPDATE OF "${r.column}", tenant_id ON "${r.table}" ` +
         `FOR EACH ROW EXECUTE FUNCTION tenant_fk_check('${r.parentTable}', '${r.column}', '${r.parentColumn}')`);
     }
     console.log(`OK: ${rels.length} trigerit`);
