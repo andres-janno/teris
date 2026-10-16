@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { handleApiRequest } from './apiHandler';
 import { serveStatic } from './static';
+import { isPlatformHost } from './platformHost';
 
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
@@ -19,7 +20,10 @@ const server = http.createServer(async (req, res) => {
     if ((req.url ?? '').startsWith('/api')) {
       await handleApiRequest(req, res, API_OPTIONS);
     } else {
-      await serveStatic(req, res, DIST_DIR);
+      const platform = isPlatformHost(req);
+      await serveStatic(req, res, DIST_DIR, platform
+        ? { spaEntry: 'admin.html', blocked: ['index.html'] }
+        : { spaEntry: 'index.html', blocked: ['admin.html'] });
     }
   } catch (err) {
     console.error('[server]', err);

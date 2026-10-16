@@ -42,13 +42,28 @@ async function isFile(p: string): Promise<boolean> {
   }
 }
 
-export async function serveStatic(req: IncomingMessage, res: ServerResponse, distDir: string): Promise<void> {
+export interface StaticOptions {
+  /** SPA tagavarafail (vaikimisi index.html). */
+  spaEntry?: string;
+  /** Failid (distDir-i suhtes), mida otse ei serveerita (404) ega SPA-tagavarana ei kasutata. */
+  blocked?: string[];
+}
+
+export async function serveStatic(
+  req: IncomingMessage,
+  res: ServerResponse,
+  distDir: string,
+  options: StaticOptions = {}
+): Promise<void> {
   const method = req.method?.toUpperCase() || 'GET';
   if (method !== 'GET' && method !== 'HEAD') {
     res.statusCode = 405;
     res.end();
     return;
   }
+
+  const spaEntry = options.spaEntry ?? 'index.html';
+  const blocked = new Set((options.blocked ?? []).map((n) => n.toLowerCase()));
 
   const target = resolveStaticPath(distDir, req.url || '/');
   if (!target) {
@@ -57,16 +72,22 @@ export async function serveStatic(req: IncomingMessage, res: ServerResponse, dis
     return;
   }
 
+  const targetRel = path.relative(path.resolve(distDir), target).split(path.sep).join('/');
+  if (blocked.has(targetRel.toLowerCase())) {
+    res.statusCode = 404;
+    res.end('Not found');
+    return;
+  }
+
   let file = target;
   if (!(await isFile(file))) {
-    const rel = path.relative(path.resolve(distDir), target).split(path.sep).join('/');
-    // Puuduv räsiga fail on päris 404; muu tee → SPA index.html.
-    if (rel.startsWith('assets/')) {
+    // Puuduv räsiga fail on päris 404; muu tee → SPA sisenemispunkt.
+    if (targetRel.startsWith('assets/')) {
       res.statusCode = 404;
       res.end('Not found');
       return;
     }
-    file = path.join(distDir, 'index.html');
+    file = path.join(distDir, spaEntry);
   }
 
   const body = await readFile(file);
