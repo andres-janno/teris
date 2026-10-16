@@ -50,6 +50,26 @@ export interface AuditEntry {
   platformUsername: string | null;
 }
 
+export interface DeviceRow {
+  id: string;
+  tenantId: string;
+  tenantName: string;
+  connectivityType: 'CELLULAR' | 'EYE_SENSOR' | string;
+  imei: string | null;
+  macAddress: string | null;
+  model: string;
+  createdAt: string;
+  ownership: { validFrom: string } | null;
+}
+
+export interface DeviceRegistration {
+  tenantName: string;
+  kind: 'IMEI' | 'MAC';
+  identifier: string;
+  validFrom: string;
+  validTo: string | null;
+}
+
 export interface NewTenantInput {
   name: string;
   registryCode?: string;
@@ -223,6 +243,9 @@ export const platformApi = {
   deleteWorkType: (id: string) => request<unknown>('DELETE', `/catalog/work-types/${enc(id)}`),
   saveTemplate: (catalogCropId: string | null, isWinter: boolean, items: TemplateItemInput[]) =>
     request<unknown>('PUT', '/catalog/templates', { catalogCropId, isWinter, items }),
+  listDevices: () => request<DeviceRow[]>('GET', '/devices'),
+  listDeviceRegistrations: (limit = 50) => request<DeviceRegistration[]>('GET', `/devices/registrations?limit=${limit}`),
+  releaseDevice: (id: string) => request<unknown>('POST', `/devices/${enc(id)}/release`, {}),
   listAudit: (tenantId?: string, limit = 100) =>
     request<AuditEntry[]>('GET', `/audit?limit=${limit}${tenantId ? `&tenantId=${enc(tenantId)}` : ''}`)
 };

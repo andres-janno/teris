@@ -449,3 +449,113 @@ describe('platvormi API: catalog (algkataloog)', () => {
     expect(await db.catalogWorkTemplate.count()).toBe(base.templates);
   });
 });
+
+describe('seadmed teenusepakkuja keskkonnas', () => {
+  const DA = `zz-dev-a-${PID}`;
+  const DB2 = `zz-dev-b-${PID}`;
+  const IMEI = '352912076543214';
+  const DEV_ID = `zz-dev-${PID}`;
+  const TOKEN_B = `zz-dev-token-b-${PID}`;
+  const ORIGIN = 'http://localhost:test';
+
+  async function tenantCall(token: string, method: string, url: string, body: unknown) {
+    const raw = JSON.stringify(body);
+    const req = Object.assign(Readable.from([Buffer.from(raw)]), {
+      method, url,
+      headers: {
+        host: 'localhost', origin: ORIGIN, cookie: `teris_session=${token}`,
+        'content-type': 'application/json', 'content-length': String(Buffer.byteLength(raw))
+      },
+      socket: {}
+    }) as unknown as IncomingMessage;
+    const { res, out } = fakeRes();
+    await handleApiRequest(req, res, { allowedOrigins: [ORIGIN], requireAuth: true, platformAllowedOrigins: [] });
+    return { status: out.status, json: out.body ? JSON.parse(out.body) : null };
+  }
+
+  beforeAll(async () => {
+    const db = authDb();
+    if (await db.telemetryDevice.count({ where: { imei: IMEI } })) throw new Error('Test-IMEI on juba kasutusel');
+    await db.tenant.createMany({ data: [{ id: DA, name: `Dev A ${PID}` }, { id: DB2, name: `Dev B ${PID}` }] });
+    await db.tenantLicense.createMany({
+      data: [DA, DB2].map((t) => ({ tenantId: t, validUntil: new Date('2099-12-31'), modules: ['TELEMETRY' as const] }))
+    });
+    const u = await db.user.create({ data: { tenantId: DB2, username: `zz-dev-admin-${PID}`, passwordHash: 'x', isAdmin: true } });
+    await db.session.create({ data: { userId: u.id, tokenHash: hashToken(TOKEN_B), expiresAt: new Date(Date.now() + 3600_000) } });
+    await db.telemetryDevice.create({
+      data: { id: DEV_ID, tenantId: DA, connectivityType: 'CELLULAR', imei: IMEI, model: 'ZZ-T', notes: 'algne' }
+    });
+    await db.deviceOwnership.create({ data: { tenantId: DA, kind: 'IMEI', identifier: IMEI, deviceId: DEV_ID } });
+  });
+
+  afterAll(async () => {
+    const db = authDb();
+    const ids = [DA, DB2];
+    const log = (l: string) => (e: unknown) => console.error(`[platformApi.test] puhastus (${l})`, e);
+    await db.deviceOwnership.deleteMany({ where: { tenantId: { in: ids } } }).catch(log('omandiread'));
+    await db.telemetryDevice.deleteMany({ where: { tenantId: { in: ids } } }).catch(log('seadmed'));
+    await db.session.deleteMany({ where: { user: { tenantId: { in: ids } } } }).catch(log('sessioonid'));
+    await db.user.deleteMany({ where: { tenantId: { in: ids } } }).catch(log('kasutajad'));
+    await db.tenantLicense.deleteMany({ where: { tenantId: { in: ids } } }).catch(log('litsentsid'));
+    await db.platformAuditLog.deleteMany({ where: { targetTenantId: { in: ids } } }).catch(log('logi'));
+    await db.tenant.deleteMany({ where: { id: { in: ids } } }).catch(log('ettevõtted'));
+  });
+
+  it('ilma sessioonita 401', async () => {
+    expect((await call('GET', '/api/platform/devices', undefined, { cookie: '' })).status).toBe(401);
+    expect((await call('POST', `/api/platform/devices/${DEV_ID}/release`, {}, { cookie: '' })).status).toBe(401);
+  });
+
+  it('GET devices sisaldab seadet õige ettevõtte nimega', async () => {
+    const r = await call('GET', '/api/platform/devices');
+    expect(r.status).toBe(200);
+    const d = r.data.find((x: any) => x.id === DEV_ID);
+    expect(d).toMatchObject({ tenantId: DA, tenantName: `Dev A ${PID}`, imei: IMEI, macAddress: null, model: 'ZZ-T', connectivityType: 'CELLULAR' });
+    expect(d.ownership.validFrom).toBeTruthy();
+  });
+
+  it('GET registrations: uuemad ees, limiit', async () => {
+    const r = await call('GET', '/api/platform/devices/registrations?limit=1');
+    expect(r.status).toBe(200);
+    expect(r.data.length).toBeLessThanOrEqual(1);
+    const all = await call('GET', '/api/platform/devices/registrations');
+    const row = all.data.find((x: any) => x.identifier === IMEI);
+    expect(row).toMatchObject({ tenantName: `Dev A ${PID}`, kind: 'IMEI', validTo: null });
+    const times = all.data.map((x: any) => Date.parse(x.validFrom));
+    expect(times).toEqual([...times].sort((a, b) => b - a));
+  });
+
+  it('release: tundmatu seade 404; seadmel ilma tunnuseta 400', async () => {
+    expect((await call('POST', '/api/platform/devices/ei-ole/release', {})).status).toBe(404);
+    expect((await call('POST', '/api/platform/devices/%E0%A4%A/release', {})).status).toBe(404);
+  });
+
+  it('release vabastab tunnuse; teine ettevõte saab sama IMEI registreerida', async () => {
+    const before = await tenantCall(TOKEN_B, 'POST', '/api/fleet/devices', { id: `zz-dev-b-${PID}`, connectivityType: 'cellular', model: 'T', imei: IMEI });
+    expect(before.status).toBe(409);
+
+    const r = await call('POST', `/api/platform/devices/${DEV_ID}/release`, {});
+    expect(r.status).toBe(200);
+
+    const db = authDb();
+    const dev = await db.telemetryDevice.findUnique({ where: { id: DEV_ID } });
+    expect(dev!.imei).toBeNull();
+    expect(dev!.macAddress).toBeNull();
+    expect(dev!.notes).toMatch(/^algne\nVabastatud teenusepakkuja poolt \d{2}\.\d{2}\.\d{4}$/);
+    const own = await db.deviceOwnership.findMany({ where: { tenantId: DA, identifier: IMEI } });
+    expect(own).toHaveLength(1);
+    expect(own[0].validTo).not.toBeNull();
+    const logs = await db.platformAuditLog.findMany({ where: { action: 'DEVICE_RELEASE', targetTenantId: DA } });
+    expect(logs).toHaveLength(1);
+    expect(logs[0].platformUserId).toBe(platformUserId);
+    expect(logs[0].details).toEqual({ kind: 'IMEI', identifier: IMEI });
+
+    // seade pole enam loendis; teine release -> 400 (pole vabastatavat)
+    const list = await call('GET', '/api/platform/devices');
+    expect(list.data.find((x: any) => x.id === DEV_ID)).toBeUndefined();
+    expect((await call('POST', `/api/platform/devices/${DEV_ID}/release`, {})).status).toBe(400);
+
+    const after = await tenantCall(TOKEN_B, 'POST', '/api/fleet/devices', { id: `zz-dev-b-${PID}`, connectivityType: 'cellular', model: 'T', imei: IMEI });
+    expect(after.status).toBe(200);
+  });
+});

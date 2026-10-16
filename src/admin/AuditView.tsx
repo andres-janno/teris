@@ -9,6 +9,7 @@ const ACTIONS: Record<string, string> = {
   TENANT_ACTIVATE: 'Ettevõte taasaktiveeritud',
   INVITE_RESEND: 'Kutse saadetud uuesti',
   CATALOG_UPDATE: 'Algkataloogi muudatus',
+  DEVICE_RELEASE: 'Seade vabastatud',
   LOGIN: 'Sisselogimine',
   PLATFORM_USER_ADD: 'Platvormi kasutaja lisatud',
   PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud'
@@ -29,6 +30,8 @@ function detailsText(e: AuditEntry): string {
     case 'PLATFORM_USER_ADD':
     case 'PLATFORM_USER_RESET_TOTP':
       return String(d.username ?? '');
+    case 'DEVICE_RELEASE':
+      return `${d.kind ?? ''} ${d.identifier ?? ''}`.trim();
     case 'CATALOG_UPDATE':
       return `${CATALOG_ENTITY[d.entity] ?? d.entity ?? ''} ${CATALOG_OP[d.op] ?? d.op ?? ''}: ${d.name ?? ''}`;
     default:

@@ -12,6 +12,8 @@ import { normalizeUsername, USERNAME_ERROR } from './adminRules.ts';
 import { normalizeEmail } from './mail.ts';
 import type { ApiOptions } from './apiHandler.ts';
 
+type PlatformUser = { id: string; username: string };
+
 class HttpError extends Error {
   status: number;
   constructor(status: number, message: string) {
@@ -21,6 +23,8 @@ class HttpError extends Error {
 }
 
 const NOT_FOUND = 'Ettevõtet ei leitud';
+const DEVICE_NOT_FOUND = 'Seadet ei leitud';
+const DEVICE_RELEASE_ROUTE = /^\/api\/platform\/devices\/([^/]+)\/release$/;
 const TENANT_ROUTE = /^\/api\/platform\/tenants\/([^/]+)(?:\/(license|suspend|activate|resend-invite))?$/;
 
 function str(v: unknown, max: number): string {
@@ -207,6 +211,84 @@ async function listAudit(url: URL) {
   }));
 }
 
+// ---- Seadmed: kõik registreeritud tunnusega seadmed, viimased omandiperioodid, vabastamine ----
+
+async function listDevices() {
+  const db = authDb();
+  const devices = await db.telemetryDevice.findMany({
+    where: { OR: [{ imei: { not: null } }, { macAddress: { not: null } }] },
+    orderBy: { createdAt: 'desc' }
+  });
+  const tenantIds = [...new Set(devices.map((d) => d.tenantId))];
+  const [tenants, owns] = await Promise.all([
+    db.tenant.findMany({ where: { id: { in: tenantIds } }, select: { id: true, name: true } }),
+    db.deviceOwnership.findMany({
+      where: { tenantId: { in: tenantIds }, validTo: null, identifier: { in: devices.flatMap((d) => [d.imei, d.macAddress]).filter((x): x is string => !!x) } },
+      orderBy: { validFrom: 'desc' }
+    })
+  ]);
+  const names = new Map(tenants.map((t) => [t.id, t.name]));
+  return devices.map((d) => {
+    const own = owns.find((o) => o.tenantId === d.tenantId && (o.identifier === d.imei || o.identifier === d.macAddress));
+    return {
+      id: d.id,
+      tenantId: d.tenantId,
+      tenantName: names.get(d.tenantId) ?? d.tenantId,
+      connectivityType: d.connectivityType,
+      imei: d.imei,
+      macAddress: d.macAddress,
+      model: d.model,
+      createdAt: d.createdAt,
+      ownership: own ? { validFrom: own.validFrom } : null
+    };
+  });
+}
+
+async function listRegistrations(url: URL) {
+  const raw = Number.parseInt(url.searchParams.get('limit') ?? '', 10);
+  const limit = Number.isFinite(raw) && raw > 0 ? Math.min(raw, 200) : 50;
+  const db = authDb();
+  const rows = await db.deviceOwnership.findMany({ orderBy: [{ validFrom: 'desc' }, { id: 'desc' }], take: limit });
+  const names = new Map(
+    (await db.tenant.findMany({ where: { id: { in: [...new Set(rows.map((r) => r.tenantId))] } }, select: { id: true, name: true } })).map((t) => [t.id, t.name])
+  );
+  return rows.map((r) => ({
+    tenantName: names.get(r.tenantId) ?? r.tenantId,
+    kind: r.kind,
+    identifier: r.identifier,
+    validFrom: r.validFrom,
+    validTo: r.validTo
+  }));
+}
+
+// Vabastab seadme IMEI/MAC: tunnus tühjendatakse, omandiperiood suletakse, uus omanik saab seadme registreerida.
+async function releaseDevice(id: string, pu: PlatformUser) {
+  await authDb().$transaction(async (tx) => {
+    const dev = await tx.telemetryDevice.findUnique({ where: { id } });
+    if (!dev) throw new HttpError(404, DEVICE_NOT_FOUND);
+    const released: { kind: 'IMEI' | 'MAC'; identifier: string }[] = [];
+    if (dev.imei) released.push({ kind: 'IMEI', identifier: dev.imei });
+    if (dev.macAddress) released.push({ kind: 'MAC', identifier: dev.macAddress });
+    if (!released.length) throw new HttpError(400, 'Seadmel pole vabastatavat tunnust');
+    const [y, m, d] = tallinnToday(new Date()).split('-');
+    const note = `Vabastatud teenusepakkuja poolt ${d}.${m}.${y}`;
+    await tx.telemetryDevice.update({
+      where: { id },
+      data: { imei: null, macAddress: null, notes: dev.notes ? `${dev.notes}\n${note}` : note }
+    });
+    const now = new Date();
+    for (const r of released) {
+      await tx.deviceOwnership.updateMany({
+        where: { tenantId: dev.tenantId, kind: r.kind, identifier: r.identifier, validTo: null },
+        data: { validTo: now, updatedBy: pu.username }
+      });
+      await tx.platformAuditLog.create({
+        data: { action: 'DEVICE_RELEASE', platformUserId: pu.id, targetTenantId: dev.tenantId, details: { kind: r.kind, identifier: r.identifier } }
+      });
+    }
+  });
+}
+
 async function readBody(req: IncomingMessage): Promise<any> {
   if (!hasRequestBody(req)) return {};
   try {
@@ -218,7 +300,6 @@ async function readBody(req: IncomingMessage): Promise<any> {
 
 // ---- Algkataloog (platvormi tabelid, ilma tenantId-ta) ----
 
-type PlatformUser = { id: string; username: string };
 type FieldSpec = { k: string; t: 'name' | 'text' | 'color' | 'float' | 'int' | 'bool' | 'enum'; max?: number; nullable?: boolean; values?: string[]; label: string };
 
 const CROP_FIELDS: FieldSpec[] = [
@@ -555,6 +636,13 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
     if (method === 'POST') return json(res, await createTenant(await readBody(req), pu), 201);
   }
   if (pathname === '/api/platform/audit' && method === 'GET') return json(res, await listAudit(url));
+  if (pathname === '/api/platform/devices' && method === 'GET') return json(res, await listDevices());
+  if (pathname === '/api/platform/devices/registrations' && method === 'GET') return json(res, await listRegistrations(url));
+  const dr = DEVICE_RELEASE_ROUTE.exec(pathname);
+  if (dr && method === 'POST') {
+    await releaseDevice(decodeId(dr[1], DEVICE_NOT_FOUND), pu);
+    return json(res, { success: true });
+  }
   if (pathname.startsWith('/api/platform/catalog') && (await routeCatalog(req, res, pathname, method, pu))) return;
 
   const m = TENANT_ROUTE.exec(pathname);
