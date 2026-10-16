@@ -11,7 +11,8 @@ export default defineConfig({
       input: {
         prod: 'src/server/prod.ts',
         userCli: 'src/server/userCli.ts',
-        tenantCli: 'src/server/tenantCli.ts'
+        tenantCli: 'src/server/tenantCli.ts',
+        platformCli: 'src/server/platformCli.ts'
       },
       output: {
         entryFileNames: '[name].js',
