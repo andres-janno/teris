@@ -24,8 +24,6 @@ const REPEAT_MODES = ['ONCE', 'UP_TO', 'INTERVAL'] as const;
 const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
 const MAX_BODY_BYTES = 256 * 1024;
 
-type Phase = (typeof PHASES)[number];
-
 const text = (v: unknown, max = 500): string | null => {
   const s = String(v ?? '').trim().slice(0, max);
   return s || null;
@@ -75,104 +73,6 @@ const canSeeFinance = (req: IncomingMessage) => {
 const FINANCE_FORBIDDEN = 'Finantsandmed on nähtavad ainult finantsjuhile ja adminile';
 
 // ---------------------------------------------------------------------------
-// Algandmed: tööde register ja üldmall (lisatakse, kui register on tühi)
-// ---------------------------------------------------------------------------
-
-const SEED_WORK_TYPES: { name: string; phase: Phase; repeatMode?: 'ONCE' | 'UP_TO' | 'INTERVAL'; maxRepeats?: number; intervalDays?: number; usesMaterials?: boolean }[] = [
-  { name: 'Kõrrekoorimine', phase: 'PREPARATION' },
-  { name: 'Künd', phase: 'PREPARATION' },
-  { name: 'Kivikoristus', phase: 'PREPARATION' },
-  { name: 'Randaalimine', phase: 'PREPARATION' },
-  { name: 'Libistamine', phase: 'PREPARATION' },
-  { name: 'Rullimine', phase: 'PREPARATION' },
-  { name: 'Umbrohutõrje (enne külvi)', phase: 'PREPARATION', usesMaterials: true },
-  { name: 'Külv', phase: 'SOWING', usesMaterials: true },
-  { name: 'Väetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 3, usesMaterials: true },
-  { name: 'Taimekaitse', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 4, usesMaterials: true },
-  { name: 'Leheväetamine', phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 2, usesMaterials: true },
-  { name: 'Koristus', phase: 'HARVEST' }
-];
-
-const SEED_SPRING_TEMPLATE: { name: string; timing: string; count?: number }[] = [
-  { name: 'Künd', timing: 'sügis / aprill' },
-  { name: 'Libistamine', timing: 'aprill' },
-  { name: 'Randaalimine', timing: 'aprill – mai' },
-  { name: 'Külv', timing: 'aprill – mai', count: 1 },
-  { name: 'Väetamine', timing: 'aprill – mai', count: 2 },
-  { name: 'Taimekaitse', timing: 'mai – juuni', count: 2 },
-  { name: 'Leheväetamine', timing: 'mai', count: 1 },
-  { name: 'Seire', timing: 'mai – juuni' },
-  { name: 'Koristus', timing: 'august – september', count: 1 }
-];
-
-const SEED_AUTUMN_TEMPLATE: { name: string; timing: string; count?: number }[] = [
-  { name: 'Künd', timing: 'juuli – august' },
-  { name: 'Randaalimine', timing: 'august' },
-  { name: 'Külv', timing: 'august – september', count: 1 },
-  { name: 'Taimekaitse', timing: 'sügis (sept–okt) / kevad (mai–juuni)', count: 3 },
-  { name: 'Väetamine', timing: 'sügis (aug–sept) / kevad (apr–mai)', count: 3 },
-  { name: 'Leheväetamine', timing: 'mai', count: 1 },
-  { name: 'Seire', timing: 'aprill – mai' },
-  { name: 'Koristus', timing: 'juuli – august', count: 1 }
-];
-
-let seedChecked = false;
-async function ensureSeed(): Promise<void> {
-  if (seedChecked) return;
-  if ((await prisma.workType.count()) === 0) {
-    await tenantTransaction(async (tx) => {
-      const ids = new Map<string, string>();
-      for (const [i, w] of SEED_WORK_TYPES.entries()) {
-        const created = await tx.workType.create({
-          data: {
-            name: w.name,
-            phase: w.phase,
-            repeatMode: w.repeatMode ?? 'ONCE',
-            maxRepeats: w.maxRepeats ?? null,
-            intervalDays: w.intervalDays ?? null,
-            usesMaterials: w.usesMaterials ?? false,
-            sortOrder: i
-          }
-        });
-        ids.set(w.name, created.id);
-      }
-      const spring = await tx.workTemplate.create({ data: { cropId: null, isWinter: false } });
-      for (const [i, t] of SEED_SPRING_TEMPLATE.entries()) {
-        await tx.workTemplateItem.create({
-          data: { templateId: spring.id, workTypeId: ids.get(t.name)!, sortOrder: i, typicalTiming: t.timing, plannedCount: t.count ?? null }
-        });
-      }
-      const autumn = await tx.workTemplate.create({ data: { cropId: null, isWinter: true } });
-      for (const [i, t] of SEED_AUTUMN_TEMPLATE.entries()) {
-        await tx.workTemplateItem.create({
-          data: { templateId: autumn.id, workTypeId: ids.get(t.name)!, sortOrder: i, typicalTiming: t.timing, plannedCount: t.count ?? null }
-        });
-      }
-    });
-  } else {
-    const types = await prisma.workType.findMany();
-    const ids = new Map(types.map((w) => [w.name, w.id]));
-    const ensureGeneral = async (isWinter: boolean, items: typeof SEED_SPRING_TEMPLATE) => {
-      let t = await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter } });
-      if (!t) {
-        t = await prisma.workTemplate.create({ data: { cropId: null, isWinter } });
-        for (const [i, it] of items.entries()) {
-          const typeId = ids.get(it.name);
-          if (typeId) {
-            await prisma.workTemplateItem.create({
-              data: { templateId: t.id, workTypeId: typeId, sortOrder: i, typicalTiming: it.timing, plannedCount: it.count ?? null }
-            });
-          }
-        }
-      }
-    };
-    await ensureGeneral(false, SEED_SPRING_TEMPLATE);
-    await ensureGeneral(true, SEED_AUTUMN_TEMPLATE);
-  }
-  seedChecked = true;
-}
-
-// ---------------------------------------------------------------------------
 // Mall → hooaja põllu tööd (üldmall või kultuuri erimall)
 // ---------------------------------------------------------------------------
 
@@ -180,7 +80,6 @@ async function ensureSeed(): Promise<void> {
 // - Talivili: lisatakse AINULT CARE ja HARVEST (ettevalmistus ja külv tehti eelmisel sügisel).
 // - Suvivili: lisatakse PREPARATION, SOWING, CARE, HARVEST.
 export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
-  await ensureSeed();
   const fs = await prisma.fieldSeason.findUnique({
     where: { id: fieldSeasonId },
     select: { id: true, fieldId: true, year: true, crop: true, season: { select: { isLocked: true } } }
@@ -254,7 +153,6 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
 //   hooldus ja koristus saagiaastasse (näha järgmise aasta hooldus- ja koristusveergudes).
 // - Suviviljal: lisatakse sügisesse AINULT PREPARATION (sügisene ettevalmistus; külv, hooldus ja koristus on järgmise aasta töödes).
 export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<void> {
-  await ensureSeed();
   const nextFs = await prisma.fieldSeason.findUnique({
     where: { id: nextFieldSeasonId },
     select: { id: true, fieldId: true, year: true, crop: true, season: { select: { isLocked: true } } }
@@ -769,7 +667,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
   // --- Tööde register ---
   if (pathname === '/api/work-types' && method === 'GET') {
-    await ensureSeed();
     const rows = await prisma.workType.findMany({
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { templateItems: true, fieldWorks: true } } }
@@ -868,7 +765,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
   // --- Mallid (üldmallid + kultuuride erimallid) ---
   if (pathname === '/api/work-templates' && method === 'GET') {
-    await ensureSeed();
     const templates = await prisma.workTemplate.findMany({
       include: { items: { orderBy: { sortOrder: 'asc' } } }
     });
@@ -891,7 +787,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     return true;
   }
   if (pathname === '/api/work-templates' && method === 'PUT') {
-    await ensureSeed();
     const b = await parseBody(req, MAX_BODY_BYTES);
     const cropId = text(b?.cropId, 64);
     const isWinter = b?.isWinter === true;
