@@ -221,7 +221,12 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
 
   const m = TENANT_ROUTE.exec(pathname);
   if (m) {
-    const id = decodeURIComponent(m[1]);
+    let id: string;
+    try {
+      id = decodeURIComponent(m[1]);
+    } catch {
+      throw new HttpError(404, NOT_FOUND);
+    }
     const action = m[2];
     if (!action && method === 'GET') {
       const [summary] = await tenantSummaries(id);

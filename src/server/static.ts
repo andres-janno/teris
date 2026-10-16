@@ -88,6 +88,11 @@ export async function serveStatic(
       return;
     }
     file = path.join(distDir, spaEntry);
+    if (!(await isFile(file))) {
+      res.statusCode = 404;
+      res.end('Not found');
+      return;
+    }
   }
 
   const body = await readFile(file);

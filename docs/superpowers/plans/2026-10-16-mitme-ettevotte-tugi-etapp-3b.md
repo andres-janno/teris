@@ -362,7 +362,7 @@ Esimese päris platvormi kasutaja loob **kasutaja ise** pärast release'i (Task 
 - Consumes: `authDb()`, `verifyPassword`, `hashToken`, `generateSessionToken`, `parseCookies`, `createLoginLimiter`, `checkMutationRequest`, `clientIpFrom` (`./auth.ts`); `verifyTotp`, `decryptTotpSecret` (Task 2); `json`, `parseBody`, `hasRequestBody` (`./http.ts`)
 - Produces:
   - `isPlatformHost(req: IncomingMessage): boolean` (`platformHost.ts`) — `Host` päis (ilma pordita, väiketähtedega) võrdub `process.env.PLATFORM_HOST ?? 'admin.teris.ee'`
-  - `PLATFORM_COOKIE = 'teris_platform_session'`
+  - `PLATFORM_COOKIE = '__Host-teris_platform_session'`
   - `handlePlatformAuth(req, res, pathname, method, options: { allowedOrigins: string[] }): Promise<boolean>` — `/api/platform/auth/login|logout|me`; muul juhul laeb sessiooni ja jätab `platformUserOf(req)`; tagastab `true`, kui vastus on saadetud (sh 401 sessioonita)
   - `platformUserOf(req: IncomingMessage): { id: string; username: string } | null`
   - `ApiOptions` saab välja `platformAllowedOrigins: string[]` ja `platformOnAnyHost?: boolean` (arendus)
@@ -371,7 +371,7 @@ Esimese päris platvormi kasutaja loob **kasutaja ise** pärast release'i (Task 
 
 Testi abiks loo minimaalne võlts-req/res (vt `adminUsers.test.ts` mustrit): `req` on `Readable` keha + `headers` (`host: 'admin.teris.ee'`, `origin: 'https://admin.teris.ee'`, `content-type: 'application/json'`, `cookie`), `method`, `url`, `socket: { remoteAddress: '127.0.0.1' }`; `res` kogub `statusCode`, päised (`setHeader`/`appendHeader`) ja keha.
 Testid (`beforeAll`: loo `authDb()` kaudu platvormi kasutaja `zz-plat-<pid>` teadaoleva parooli ja teadaoleva TOTP saladusega `GEZDGNBVGY3TQOJQGEZDGNBVGY3TQOJQ`, krüpteeritud testivõtmega — testis sea `process.env.PLATFORM_TOTP_KEY = 'c'.repeat(64)` **enne** moodulite importi või loe võtit funktsioonis igal kutsel; `afterAll`: kustuta kasutaja, sessioonid, logiread):
-1. õige parool + õige kood → 200, `Set-Cookie` sisaldab `teris_platform_session=`, `HttpOnly`, `SameSite=Strict`, `Max-Age=43200`; `/api/platform/auth/me` selle küpsisega → 200 `{ user: { username } }`.
+1. õige parool + õige kood → 200, `Set-Cookie` sisaldab `__Host-teris_platform_session=`, `HttpOnly`, `SameSite=Strict`, `Max-Age=43200`; `/api/platform/auth/me` selle küpsisega → 200 `{ user: { username } }`.
 2. sama koodi teistkordne kasutamine (uus login samas sammus) → 401 `Vale kasutajanimi, parool või kood`.
 3. vale kood → 401 sama tekstiga; vale parool → 401 sama tekstiga; olematu kasutaja → 401.
 4. `origin: 'https://teris.ee'` POST login → 403.
@@ -404,7 +404,7 @@ import { json, parseBody, hasRequestBody } from './http.ts';
 import { verifyPassword, hashPassword, generateSessionToken, hashToken, parseCookies, createLoginLimiter, checkMutationRequest, clientIpFrom } from './auth.ts';
 import { verifyTotp, decryptTotpSecret } from './totp.ts';
 
-export const PLATFORM_COOKIE = 'teris_platform_session';
+export const PLATFORM_COOKIE = '__Host-teris_platform_session';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const LOGIN_ERROR = 'Vale kasutajanimi, parool või kood';
 const limiter = createLoginLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
@@ -604,7 +604,15 @@ git commit -m "Staatilised failid hosti järgi: admin.teris.ee serveerib admin.h
 
 ### Task 8: Apache, TLS, release ja esimene platvormi kasutaja (kasutaja kinnitusel)
 
-- [ ] **Step 1: Apache vhost** (`sudo`, kasutaja kinnitusel)
+- [ ] **Step 1: Release**
+
+`ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run release'`; `systemctl is-active teris`; `journalctl -u teris -n 30 --no-pager`; `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts` → „KÕIK KORRAS“.
+
+- [ ] **Step 2: Kontroll (teris.ee)**
+
+- https://teris.ee töötab nagu enne; `curl -s https://teris.ee/api/platform/tenants` → 404.
+
+- [ ] **Step 3: Apache vhost ja TLS** (`sudo`, kasutaja kinnitusel)
 
 `/etc/apache2/sites-available/admin.teris.ee.conf` — sama mis `teris.ee.conf`, aga `ServerName admin.teris.ee`, ilma `ServerAlias`-eta, logid `admin.teris.ee_*.log`, `:80` suunab `https://admin.teris.ee/`. Esialgu ainult `:80` plokk (certbot lisab `:443`):
 ```apache
@@ -620,19 +628,15 @@ git commit -m "Staatilised failid hosti järgi: admin.teris.ee serveerib admin.h
 ```
 ```bash
 sudo a2ensite admin.teris.ee && sudo apachectl configtest && sudo systemctl reload apache2
-sudo certbot --apache -d admin.teris.ee --redirect --non-interactive --agree-tos -m <kasutaja e-post — küsi kasutajalt>
+sudo certbot --apache -d admin.teris.ee --redirect --non-interactive --agree-tos
 ```
-Pärast certbot'i kontrolli `:443` plokis `RequestHeader set X-Forwarded-Proto "https"` (lisa, kui puudub) ja `sudo apachectl configtest && sudo systemctl reload apache2`.
-
-- [ ] **Step 2: Release**
-
-`ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run release'`; `systemctl is-active teris`; `journalctl -u teris -n 30 --no-pager`; `BASE=http://127.0.0.1:8820 npx tsx scripts/auth-smoke.mts` → „KÕIK KORRAS“.
-
-- [ ] **Step 3: Kontroll**
-
-- `curl -sI https://admin.teris.ee/` → 200, `text/html`; sisu viitab `admin`-i assetile.
-- `curl -s https://admin.teris.ee/api/platform/auth/me` → 401; `curl -s https://admin.teris.ee/api/seasons` → 404; `curl -s https://teris.ee/api/platform/tenants` → 404.
-- https://teris.ee töötab nagu enne.
+Olemasolevat Let's Encrypt kontot kasutatakse uuesti (e-posti ei küsita). Pärast certbot'i lisa `:443` plokki:
+```apache
+RequestHeader set X-Forwarded-Proto "https"
+Header always set Strict-Transport-Security "max-age=31536000"
+Header always set Content-Security-Policy "frame-ancestors 'none'"
+```
+Seejärel `sudo apachectl -S | grep admin`, `sudo apachectl configtest && sudo systemctl reload apache2`. Kontrolli https://admin.teris.ee/ (200, `text/html`, `/api/platform/auth/me` → 401, `/api/seasons` → 404).
 
 - [ ] **Step 4: Esimene platvormi kasutaja (kasutaja ise terminalis)**
 

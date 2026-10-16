@@ -85,7 +85,7 @@ describe('teenusepakkuja sisselogimine', () => {
     const r = await login({ code: code() });
     expect(r.out.status).toBe(200);
     const sc = String(r.out.headers['set-cookie']);
-    expect(sc).toContain('teris_platform_session=');
+    expect(sc).toContain('__Host-teris_platform_session=');
     expect(sc).toContain('HttpOnly');
     expect(sc).toContain('SameSite=Strict');
     expect(sc).toContain('Max-Age=43200');

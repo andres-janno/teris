@@ -14,7 +14,7 @@ import {
 } from './auth.ts';
 import { verifyTotp, decryptTotpSecret } from './totp.ts';
 
-export const PLATFORM_COOKIE = 'teris_platform_session';
+export const PLATFORM_COOKIE = '__Host-teris_platform_session';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 const LOGIN_ERROR = 'Vale kasutajanimi, parool või kood';
 const limiter = createLoginLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
@@ -28,7 +28,8 @@ export const platformUserOf = (req: IncomingMessage) => users.get(req) ?? null;
 const cookie = (token: string, maxAgeSec: number) =>
   `${PLATFORM_COOKIE}=${token}; Path=/; HttpOnly; Secure; SameSite=Strict; Max-Age=${maxAgeSec}`;
 
-const loginFailed = (res: ServerResponse, keys: string[]) => {
+const loginFailed = (res: ServerResponse, keys: string[], username: string, ip: string) => {
+  console.warn('[Platform] Ebaõnnestunud sisselogimine', { username, ip });
   for (const k of keys) limiter.registerFailure(k);
   json(res, { error: LOGIN_ERROR }, 401);
   return true;
@@ -54,6 +55,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<b
   const ip = clientIpFrom(req.headers['x-forwarded-for'], req.socket?.remoteAddress);
   const keys = [`pu:${username}`, `pip:${ip}`];
   if (keys.some((k) => limiter.isBlocked(k))) {
+    console.warn('[Platform] Ebaõnnestunud sisselogimine', { username, ip, reason: 'liiga palju katseid (429)' });
     json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
     return true;
   }
@@ -61,23 +63,23 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<b
   const db = authDb();
   const user = username ? await db.platformUser.findUnique({ where: { username } }) : null;
   const passwordOk = await verifyPassword(password, user?.passwordHash ?? (await getDummyHash()));
-  if (!user || !user.isActive || !passwordOk) return loginFailed(res, keys);
+  if (!user || !user.isActive || !passwordOk) return loginFailed(res, keys, username, ip);
 
   let step: number | null;
   try {
     step = verifyTotp(decryptTotpSecret(user.totpSecretEnc, key), code, new Date(), user.totpLastStep);
   } catch (err) {
     console.error('[platformAuth] TOTP saladuse dekrüpteerimine ebaõnnestus', (err as Error).message);
-    return loginFailed(res, keys);
+    return loginFailed(res, keys, username, ip);
   }
-  if (step === null) return loginFailed(res, keys);
+  if (step === null) return loginFailed(res, keys, username, ip);
 
   // Atomaarne: paralleelne või korduv sama koodi kasutus ei saa kahte sessiooni
   const upd = await db.platformUser.updateMany({
     where: { id: user.id, totpLastStep: { lt: step } },
     data: { totpLastStep: step, lastLoginAt: new Date() }
   });
-  if (upd.count === 0) return loginFailed(res, keys);
+  if (upd.count === 0) return loginFailed(res, keys, username, ip);
 
   for (const k of keys) limiter.reset(k);
   const token = generateSessionToken();
@@ -91,7 +93,7 @@ async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<b
     }
   });
   await db.platformSession.deleteMany({ where: { expiresAt: { lt: new Date() } } }).catch(() => {});
-  await db.platformAuditLog.create({ data: { platformUserId: user.id, action: 'LOGIN' } }).catch((err) => {
+  await db.platformAuditLog.create({ data: { platformUserId: user.id, action: 'LOGIN', details: { ip, userAgent: typeof ua === 'string' ? ua.slice(0, 300) : null } } }).catch((err) => {
     console.error('[platformAuth] auditilogi viga', (err as Error).message);
   });
   res.setHeader('Set-Cookie', cookie(token, Math.floor(SESSION_TTL_MS / 1000)));

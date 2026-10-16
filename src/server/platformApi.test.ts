@@ -79,7 +79,7 @@ beforeAll(async () => {
   await authDb().platformSession.create({
     data: { platformUserId, tokenHash: hashToken(token), expiresAt: new Date(Date.now() + 3600_000) }
   });
-  cookie = `teris_platform_session=${token}`;
+  cookie = `__Host-teris_platform_session=${token}`;
 });
 
 afterAll(async () => {
@@ -223,6 +223,7 @@ describe('platvormi API', () => {
       { username: ADM, displayName: null, email: `${ADM}@example.invalid`, isAdmin: true, isActive: true, lastLoginAt: null, hasPassword: false }
     ]);
     expect((await call('GET', '/api/platform/tenants/puudub')).status).toBe(404);
+    expect((await call('GET', '/api/platform/tenants/%E0')).status).toBe(404);
   });
 
   it('logi', async () => {

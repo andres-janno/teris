@@ -90,6 +90,10 @@ describe('serveStatic hosti järgi', () => {
     expect((await get('/admin.html', 'teris.ee', TENANT)).status).toBe(404);
   });
 
+  it('puuduv SPA sisenemispunkt → 404 (mitte 500)', async () => {
+    expect(await get('/', 'admin.teris.ee', { spaEntry: 'puudub.html', blocked: [] })).toEqual({ status: 404, body: 'Not found' });
+  });
+
   it('assetid on mõlemal hostil lubatud', async () => {
     expect((await get('/assets/app-abc.js', 'admin.teris.ee', PLATFORM)).status).toBe(200);
     expect((await get('/assets/app-abc.js', 'teris.ee', TENANT)).status).toBe(200);
