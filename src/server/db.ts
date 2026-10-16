@@ -81,7 +81,11 @@ export const prisma = base.$extends({
 
 type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
-/** Interaktiivne tehing ettevõtte kontekstis — kasuta prisma.$transaction(async ...) asemel. */
+/**
+ * Interaktiivne tehing ettevõtte kontekstis — kasuta prisma.$transaction(async ...) asemel.
+ * Callback'is kasuta AINULT `tx`-i: globaalne `prisma` käiks teise ühendusega tehingust väljas
+ * ja RLS-i seade puuduks (tulemus oleks vaikselt tühi).
+ */
 export function tenantTransaction<T>(fn: (tx: TxClient) => Promise<T>, options?: { timeout?: number; maxWait?: number }): Promise<T> {
   const tenantId = requireTenantId();
   return prisma.$transaction(async (tx) => {

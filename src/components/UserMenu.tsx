@@ -71,6 +71,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
           <div className="user-menu-info">
             <div className="user-menu-info-name">{user.displayName || user.username}</div>
             <div className="user-menu-info-login">Kasutajanimi: {user.username}</div>
+            {user.tenantName && <div className="user-menu-info-login">Ettevõte: {user.tenantName}</div>}
           </div>
 
           <button type="button" role="menuitem" className="user-menu-item" onClick={run(onChangePassword)}>

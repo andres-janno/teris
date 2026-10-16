@@ -227,9 +227,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     return Array.from(yearSet).sort((a, b) => a - b);
   }, [seasons, masterFields]);
 
-  // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
-  // päisestatistikas, põldude ja kultuuride registris ainult nende
-  // operaatoritega põlde. Tühi = kõik. Viimane valik jäetakse meelde kasutaja kaupa (selles brauseris).
   // Serveri litsentsikeeld: üks teade korraga, mitte iga päringu kohta
   const licenseAlertOpenRef = useRef(false);
   useEffect(() => {
@@ -241,6 +238,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     return () => setLicenseErrorHandler(null);
   }, []);
 
+  // Operaatori (harija) filter — kui valitud, näidatakse kaardil,
+  // päisestatistikas, põldude ja kultuuride registris ainult nende
+  // operaatoritega põlde. Tühi = kõik. Viimane valik jäetakse meelde kasutaja kaupa (selles brauseris).
   const operatorFilterKey = `agrimap_operator_filter_${user.id}`;
   const [operatorFilter, setOperatorFilter] = useState<string[]>(() => {
     try {

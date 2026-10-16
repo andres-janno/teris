@@ -9858,3 +9858,11 @@ select.time-select {
 }
 .license-banner.expired { background: #fee2e2; color: #991b1b; }
 .license-banner.warning { background: #fef3c7; color: #92400e; }
+[data-theme='dark'] .license-banner.expired {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fca5a5;
+}
+[data-theme='dark'] .license-banner.warning {
+  background: rgba(245, 158, 11, 0.18);
+  color: #fcd34d;
+}
