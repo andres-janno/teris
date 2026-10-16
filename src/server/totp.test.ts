@@ -39,6 +39,11 @@ describe('verifyTotp', () => {
     expect(verifyTotp(RFC_SECRET, 'abc', now, 0)).toBeNull();
     expect(verifyTotp(RFC_SECRET, totpCode(RFC_SECRET, step), now, step)).toBeNull();
   });
+  it('ei viska kunagi, kui kood ei ole string (JSON-sisend)', () => {
+    expect(verifyTotp(RFC_SECRET, 123456 as unknown as string, now, 0)).toBeNull();
+    expect(verifyTotp(RFC_SECRET, ['123456'] as unknown as string, now, 0)).toBeNull();
+    expect(verifyTotp(RFC_SECRET, null as unknown as string, now, 0)).toBeNull();
+  });
 });
 
 describe('saladus', () => {
@@ -56,5 +61,22 @@ describe('saladus', () => {
     expect(enc).not.toContain('GEZDGNBV');
     expect(decryptTotpSecret(enc, key)).toBe('GEZDGNBV');
     expect(() => decryptTotpSecret(enc, 'b'.repeat(64))).toThrow();
+  });
+  it('dekrüpteerimine viskab manipuleeritud või vigase vormingu korral', () => {
+    const key = 'a'.repeat(64);
+    const [iv, tag, ct] = encryptTotpSecret('GEZDGNBV', key).split('.');
+    const ctBytes = Buffer.from(ct, 'base64url');
+    ctBytes[0] ^= 0x01;
+    expect(() => decryptTotpSecret([iv, tag, ctBytes.toString('base64url')].join('.'), key)).toThrow();
+    const shortTag = Buffer.from(tag, 'base64url').subarray(0, 8).toString('base64url');
+    expect(() => decryptTotpSecret([iv, shortTag, ct].join('.'), key)).toThrow();
+    expect(() => decryptTotpSecret('abc', key)).toThrow();
+  });
+});
+
+describe('base32 tühi sisend', () => {
+  it('viskab tühja või ainult tühikutest koosneva sisendi korral', () => {
+    expect(() => base32Decode('')).toThrow();
+    expect(() => base32Decode('   ')).toThrow();
   });
 });

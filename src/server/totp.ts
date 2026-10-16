@@ -34,6 +34,7 @@ export function base32Decode(s: string): Buffer {
       bits -= 8;
     }
   }
+  if (out.length === 0) throw new Error('Vigane base32: tühi sisend');
   return Buffer.from(out);
 }
 
@@ -51,7 +52,7 @@ export function totpCode(secretBase32: string, step: number): string {
 
 /** Aktsepteeritud samm või null. Sammud <= lastStep on juba kasutatud (korduskasutuse vastu). */
 export function verifyTotp(secretBase32: string, code: string, now: Date, lastStep: number): number | null {
-  if (!/^\d{6}$/.test(code)) return null;
+  if (typeof code !== 'string' || !/^\d{6}$/.test(code)) return null;
   const current = totpStep(now);
   for (let s = current - WINDOW; s <= current + WINDOW; s++) {
     if (s <= lastStep) continue;
@@ -78,8 +79,11 @@ export function encryptTotpSecret(secret: string, keyHex: string): string {
 }
 
 export function decryptTotpSecret(enc: string, keyHex: string): string {
-  const [iv, tag, ct] = enc.split('.').map((p) => Buffer.from(p, 'base64url'));
-  const decipher = createDecipheriv('aes-256-gcm', keyOf(keyHex), iv);
+  const parts = enc.split('.');
+  if (parts.length !== 3) throw new Error('Vigane krüpteeritud TOTP saladus');
+  const [iv, tag, ct] = parts.map((p) => Buffer.from(p, 'base64url'));
+  if (iv.length !== 12 || tag.length !== 16) throw new Error('Vigane krüpteeritud TOTP saladus');
+  const decipher = createDecipheriv('aes-256-gcm', keyOf(keyHex), iv, { authTagLength: 16 });
   decipher.setAuthTag(tag);
   return Buffer.concat([decipher.update(ct), decipher.final()]).toString('utf8');
 }
