@@ -29,7 +29,7 @@ import { hasModule } from './services/license';
 import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
-import { api, setLicenseErrorHandler } from './services/api';
+import { api, setLicenseErrorHandler, isLicenseError } from './services/api';
 import { LicenseBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
@@ -1114,7 +1114,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     try {
       await api.saveDevice(dev);
     } catch (err) {
-      alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
+      if (!isLicenseError(err)) alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
       return false;
     }
     setDevices((prev) => [...prev, dev]);
@@ -1127,7 +1127,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       try {
         await api.saveDevice({ ...current, ...updates });
       } catch (err) {
-        alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
+        if (!isLicenseError(err)) alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
         return false;
       }
     }

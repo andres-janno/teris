@@ -325,6 +325,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // Kombineeritud sihtmärgi valik: '' | `veh:<id>` | `imp:<id>` — mõlemat
   // tüüpi seadet saab paigaldada kas masinasse või haakeriista külge.
   const [devNotes, setDevNotes] = useState('');
+  const [devSaving, setDevSaving] = useState(false);
   const [devAcqDate, setDevAcqDate] = useState('');
 
   const handleConnectivityChange = (next: DeviceConnectivity) => {
@@ -703,9 +704,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       acquisitionDate: devAcqDate || undefined,
       notes: devNotes.trim() || undefined
     };
-    const saved = editingDeviceId
-      ? await onUpdateDevice(editingDeviceId, payload)
-      : await onAddDevice(payload);
+    if (devSaving) return;
+    setDevSaving(true);
+    let saved = false;
+    try {
+      saved = editingDeviceId
+        ? await onUpdateDevice(editingDeviceId, payload)
+        : await onAddDevice(payload);
+    } finally {
+      setDevSaving(false);
+    }
     if (!saved) return; // viga on kuvatud; vorm jääb avatuks parandamiseks
     closeForm();
     setDevImei('');
@@ -1210,7 +1218,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
             <div className="modal-footer">
               <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-              <button type="submit" className="btn btn-primary">{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
+              <button type="submit" className="btn btn-primary" disabled={devSaving}>{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
             </div>
           </form>
         </div>,

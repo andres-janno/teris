@@ -39,6 +39,22 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   return typeof data?.error === 'string' ? data.error : fallback;
 }
 
+// Viga koos HTTP staatuse ja serveri veakoodiga (nt LICENSE_READ_ONLY).
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.status = status;
+    this.code = code;
+  }
+}
+
+// Litsentsivea dialoogi näitab juba apiFetch; kutsuja ei tohi sama teadet uuesti näidata.
+export function isLicenseError(err: unknown): boolean {
+  return err instanceof ApiError && (err.code === 'LICENSE_READ_ONLY' || err.code === 'MODULE_NOT_LICENSED');
+}
+
 export const api = {
   async getMe(): Promise<AuthUser> {
     const res = await apiFetch('/api/auth/me');
@@ -407,7 +423,10 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(device)
     });
-    if (!res.ok) throw new Error(await errorMessage(res, 'Seadme salvestamine ebaõnnestus'));
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new ApiError(typeof data?.error === 'string' ? data.error : 'Seadme salvestamine ebaõnnestus', res.status, typeof data?.code === 'string' ? data.code : undefined);
+    }
     return res.json();
   },
 
