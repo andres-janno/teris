@@ -2,6 +2,7 @@
 // PRIA põlluraamatust (field_operations) täiesti lahus.
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { fetchFieldGpsPackets, type FieldGpsRow } from './telemetryAccess.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
@@ -444,20 +445,9 @@ export async function getTelemetrySuggestionsForField(
   nextDay.setUTCDate(nextDay.getUTCDate() + 1);
   const endUtc = new Date(Date.UTC(nextDay.getUTCFullYear(), nextDay.getUTCMonth(), nextDay.getUTCDate(), 2, 0, 0));
 
-  let rows: { device: string; time: Date; fields: { latitude?: number; longitude?: number } }[] = [];
+  let rows: FieldGpsRow[] = [];
   try {
-    rows = await tsdb.$queryRaw<{ device: string; time: Date; fields: { latitude?: number; longitude?: number } }[]>`
-      SELECT device, time,
-        jsonb_object_agg(field, COALESCE(value_double, value_int::double precision, value_bigint::double precision)) AS fields
-      FROM measurements
-      WHERE measurement = 'data'
-        AND field IN ('latitude', 'longitude')
-        AND time >= ${startUtc}
-        AND time <= ${endUtc}
-      GROUP BY device, time
-      HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
-      ORDER BY device, time ASC
-    `;
+    rows = await fetchFieldGpsPackets(startUtc, endUtc);
   } catch (err) {
     console.error('telemetry suggestions query failed:', err);
     return [];

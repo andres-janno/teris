@@ -1,11 +1,11 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tenantTransaction, tsdb, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
-import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
+import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
 import { applyLicenseGate, licenseOf, hasModule } from './licenseGate.ts';
@@ -16,151 +16,6 @@ import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdent
 import { syncOwnership } from './deviceOwnership.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
-
-type RawMeasurementRow = {
-  device: string;
-  measurement: string;
-  field: string;
-  value_bool: boolean | null;
-  value_int: number | null;
-  value_bigint: bigint | null;
-  value_double: number | null;
-  value_text: string | null;
-  time: Date;
-};
-
-type LiveFields = Record<string, boolean | number | string> & { lastUpdate: string };
-
-function coalesceValue(row: RawMeasurementRow): boolean | number | string | null {
-  if (row.value_bool !== null) return row.value_bool;
-  if (row.value_int !== null) return row.value_int;
-  if (row.value_bigint !== null) return Number(row.value_bigint);
-  if (row.value_double !== null) return row.value_double;
-  if (row.value_text !== null) return row.value_text;
-  return null;
-}
-
-// Mobiilsed (cellular) telemeetriaseadmed raporteerivad otse oma IMEI all,
-// measurement='data' ridadena (üks rida välja kohta).
-async function fetchCellularTelemetry(imeis: string[]): Promise<Map<string, LiveFields>> {
-  const result = new Map<string, LiveFields>();
-  if (!tsdb || imeis.length === 0) return result;
-
-  try {
-    const rows = await tsdb.$queryRaw<RawMeasurementRow[]>`
-      SELECT DISTINCT ON (device, field)
-        device, measurement, field, value_bool, value_int, value_bigint, value_double, value_text, time
-      FROM measurements
-      WHERE measurement = 'data' AND device = ANY(${imeis}::text[])
-      ORDER BY device, field, time DESC
-    `;
-
-    for (const row of rows) {
-      const entry = (result.get(row.device) ?? { lastUpdate: '' }) as LiveFields;
-      const value = coalesceValue(row);
-      if (value !== null) entry[row.field] = value;
-      const t = row.time.toISOString();
-      if (!entry.lastUpdate || t > entry.lastUpdate) entry.lastUpdate = t;
-      result.set(row.device, entry);
-    }
-  } catch (err) {
-    console.error('telemetry_tsdb: cellular telemetry query failed:', err);
-  }
-
-  return result;
-}
-
-// Eye sensorid ei raporteeri iseseisvalt — nad on nähtavad mõne mobiilse
-// telemeetriaseadme (gateway) alt kuni 3 "pesa" kaudu (eye1/eye2/eye3),
-// kus field='mac' ütleb, milline füüsiline sensor hetkel selles pesas on.
-// Kuna me ei tea ette, milline gateway+pesa kombinatsioon millisele MAC-ile
-// vastab, loeme kõik pesad ja otsime vastet meid huvitavate MAC-ide seas.
-async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<string, LiveFields>> {
-  const result = new Map<string, LiveFields>();
-  if (!tsdb || macAddresses.length === 0) return result;
-
-  try {
-    const rows = await tsdb.$queryRaw<RawMeasurementRow[]>`
-      SELECT DISTINCT ON (device, measurement, field)
-        device, measurement, field, value_bool, value_int, value_bigint, value_double, value_text, time
-      FROM measurements
-      WHERE measurement IN ('eye1', 'eye2', 'eye3')
-      ORDER BY device, measurement, field, time DESC
-    `;
-
-    const slots = new Map<string, LiveFields>();
-    for (const row of rows) {
-      const slotKey = `${row.device}:${row.measurement}`;
-      const entry = (slots.get(slotKey) ?? { lastUpdate: '' }) as LiveFields;
-      const value = coalesceValue(row);
-      if (value !== null) entry[row.field] = value;
-      const t = row.time.toISOString();
-      if (!entry.lastUpdate || t > entry.lastUpdate) entry.lastUpdate = t;
-      slots.set(slotKey, entry);
-    }
-
-    const wanted = new Set(macAddresses.map((m) => m.toUpperCase()));
-    for (const entry of slots.values()) {
-      const mac = typeof entry.mac === 'string' ? entry.mac.toUpperCase() : null;
-      if (mac && wanted.has(mac)) {
-        result.set(mac, entry);
-      }
-    }
-  } catch (err) {
-    console.error('telemetry_tsdb: eye sensor telemetry query failed:', err);
-  }
-
-  return result;
-}
-
-type HistoryRow = {
-  time: Date;
-  fields: Record<string, number>;
-};
-
-// Toore GPS-jälje ajalugu ühe mobiilse seadme kohta (kasutusel harimise
-// taasesituse paneelis) — pivotib measurement='data' read ajatempli järgi
-// üheks JSON-objektiks per pakett, kuna seade saadab kõik väljad
-// (lat/lng/kiirus/suund) sama ajatempliga korraga.
-async function fetchDeviceHistory(imei: string, hours: number, from?: string | null, to?: string | null): Promise<HistoryRow[]> {
-  if (!tsdb) return [];
-  try {
-    // Seotud seadme puhul piirab akent nii seotuse vahemik kui ka valitud tundide arv.
-    // Kui pakette on rohkem kui HISTORY_MAX_POINTS, hõrendatakse neid ühtlaselt üle kogu akna
-    // (mitte ei võeta viimaseid N), et sagedase saatmise korral ei kahaneks aken paarile minutile.
-    const { start, end } = resolveHistoryWindow(hours, from, to);
-    return await tsdb.$queryRaw<HistoryRow[]>`
-      WITH packets AS (
-        SELECT time,
-          jsonb_object_agg(
-            field,
-            COALESCE(value_double, value_int::double precision, value_bigint::double precision)
-          ) AS fields
-        FROM measurements
-        WHERE device = ${imei}
-          AND measurement = 'data'
-          AND field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
-          AND time >= ${start}
-          AND time <= ${end}
-        GROUP BY time
-        HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
-      ),
-      numbered AS (
-        SELECT time, fields,
-          row_number() OVER (ORDER BY time) AS rn,
-          count(*) OVER () AS cnt
-        FROM packets
-      )
-      SELECT time, fields FROM numbered
-      WHERE (rn - 1) % GREATEST(1, CEIL(cnt / ${HISTORY_MAX_POINTS}::numeric))::bigint = 0
-        OR rn = cnt
-      ORDER BY time ASC
-    `;
-  } catch (err) {
-    console.error('telemetry_tsdb: device history query failed:', err);
-    return [];
-  }
-}
 
 // Asendab hooaja katastriüksuste seosed kliendi saadetud nimekirjaga; tundmatu tunnus lisatakse registrisse.
 async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): Promise<void> {
