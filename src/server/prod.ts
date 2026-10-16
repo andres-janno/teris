@@ -10,7 +10,8 @@ const HOST = '127.0.0.1';
 const DIST_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../dist');
 const API_OPTIONS = {
   allowedOrigins: ['https://teris.ee', 'https://www.teris.ee'],
-  requireAuth: true
+  requireAuth: true,
+  platformAllowedOrigins: ['https://admin.teris.ee']
 };
 
 const server = http.createServer(async (req, res) => {

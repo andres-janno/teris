@@ -10,6 +10,8 @@ import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
 import { applyLicenseGate, licenseOf, hasModule } from './licenseGate.ts';
 import { checkFieldClouds, validateCloudCheckPolygons } from './satelliteClouds.ts';
+import { isPlatformHost } from './platformHost.ts';
+import { handlePlatformRequest } from './platformAuth.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -337,6 +339,8 @@ function parseDeviceAssignmentBody(body: any): { data?: any; error?: string } {
 export interface ApiOptions {
   allowedOrigins: string[];
   requireAuth: boolean;
+  platformAllowedOrigins: string[];
+  platformOnAnyHost?: boolean; // arendus: platvormi API ka muul hostil (localhost)
 }
 
 export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
@@ -350,6 +354,12 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
   const method = req.method?.toUpperCase() || 'GET';
 
   try {
+    // Platvormi host ei näe kunagi ettevõtte API-t; ettevõtte host ei näe platvormi API-t
+    if (isPlatformHost(req) || (options.platformOnAnyHost && pathname.startsWith('/api/platform/'))) {
+      await handlePlatformRequest(req, res, pathname, method, options);
+      return;
+    }
+    if (pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
     setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);

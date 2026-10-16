@@ -7,7 +7,9 @@ import { handleApiRequest } from './apiHandler.ts';
 const DEV_OPTIONS = {
   allowedOrigins: ['https://teris.ee', 'https://www.teris.ee', 'http://localhost:5173', 'http://127.0.0.1:5173'],
   // Basic Auth on kadunud — arendusserver kasutab sama sisselogimist/sessiooni nõuet mis toodang.
-  requireAuth: true
+  requireAuth: true,
+  platformAllowedOrigins: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+  platformOnAnyHost: true
 };
 
 export function dbApiPlugin(): Plugin {
