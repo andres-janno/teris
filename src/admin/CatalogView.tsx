@@ -578,7 +578,7 @@ function TemplatesTab({ data, reload }: { data: CatalogData; reload: () => void 
   // Valiku või serveriandmete muutudes laetakse redaktor uuesti
   useEffect(() => {
     setItems(itemsOf(current));
-  }, [current]);
+  }, [current, cropId, isWinter]);
 
   // Teade ja viga nullitakse ainult valiku vahetamisel, mitte pärast salvestust
   useEffect(() => {
