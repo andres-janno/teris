@@ -455,6 +455,7 @@ model DeviceOwnership {
   validTo    DateTime? // null = kehtib
   createdAt  DateTime             @default(now())
   createdBy  String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy  String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   @@index([tenantId])
   @@index([kind, identifier])

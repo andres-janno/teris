@@ -202,3 +202,19 @@ describe('muutmine ja kustutamine iga mudeli kohta', () => {
     expect(leaked).toEqual([]);
   });
 });
+
+describe('seadme omandi audit', () => {
+  it('täidab createdBy ja updatedBy kasutajakontekstist', async () => {
+    await runAsTenant(A, async () => {
+      const row = await prisma.deviceOwnership.create({ data: { kind: 'IMEI', identifier: '490154203237518' } });
+      try {
+        expect(row.createdBy).toBe('testuser');
+        expect(row.updatedBy).toBe('testuser');
+        const upd = await prisma.deviceOwnership.update({ where: { id: row.id }, data: { validTo: new Date() } });
+        expect(upd.updatedBy).toBe('testuser');
+      } finally {
+        await prisma.deviceOwnership.deleteMany({});
+      }
+    }, 'testuser');
+  });
+});
