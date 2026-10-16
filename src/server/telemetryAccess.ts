@@ -66,22 +66,25 @@ export async function allOwnershipWindows(kind: 'IMEI' | 'MAC'): Promise<Map<str
   return toWindowMap(kind, rows);
 }
 
-/** Omandiperioodide lõige vahemikuga [from, to]: järjestatud, kattuvad/külgnevad liidetud, tühjad välja jäetud. */
-export function clampWindow(windows: OwnershipWindow[], from: Date, to: Date): { from: Date; to: Date }[] {
-  const clipped = windows
-    .map((w) => ({
-      from: w.from > from ? w.from : from,
-      to: w.to && w.to < to ? w.to : to
-    }))
-    .filter((w) => w.from <= w.to)
+export type Segment = { from: Date; to: Date; toInclusive: boolean };
+
+/**
+ * Omandiperioodide lõige vahemikuga [from, to]: omandiperiood on poollõigatud [validFrom, validTo),
+ * päringuakna lõpp (`to`) on kaasa arvatud. Tulemus on järjestatud, kattuvad/külgnevad liidetud, tühjad välja jäetud.
+ */
+export function clampWindow(windows: OwnershipWindow[], from: Date, to: Date): Segment[] {
+  const clipped: Segment[] = windows
+    .map((w): Segment => (w.to && w.to <= to ? { from: w.from > from ? w.from : from, to: w.to, toInclusive: false } : { from: w.from > from ? w.from : from, to, toInclusive: true }))
+    .filter((w) => w.from < w.to || (w.toInclusive && w.from.getTime() === w.to.getTime()))
     .sort((a, b) => a.from.getTime() - b.from.getTime());
-  const merged: { from: Date; to: Date }[] = [];
+  const merged: Segment[] = [];
   for (const w of clipped) {
     const last = merged[merged.length - 1];
     if (last && w.from <= last.to) {
-      if (w.to > last.to) last.to = w.to;
+      if (w.to > last.to) { last.to = w.to; last.toInclusive = w.toInclusive; }
+      else if (w.to.getTime() === last.to.getTime()) last.toInclusive = last.toInclusive || w.toInclusive;
     } else {
-      merged.push({ from: w.from, to: w.to });
+      merged.push({ ...w });
     }
   }
   return merged;
@@ -127,7 +130,7 @@ export async function fetchCellularTelemetry(imeis: string[]): Promise<Map<strin
         m.device, m.measurement, m.field, m.value_bool, m.value_int, m.value_bigint, m.value_double, m.value_text, m.time
       FROM measurements m
       JOIN unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS w(device, valid_from, valid_to)
-        ON m.device = w.device AND m.time >= w.valid_from AND m.time <= w.valid_to
+        ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
       WHERE m.measurement = 'data'
       ORDER BY m.device, m.field, m.time DESC
     `;
@@ -151,7 +154,7 @@ export async function fetchCellularTelemetry(imeis: string[]): Promise<Map<strin
 // telemeetriaseadme (gateway) alt kuni 3 "pesa" kaudu (eye1/eye2/eye3),
 // kus field='mac' ütleb, milline füüsiline sensor hetkel selles pesas on.
 // Pesa loetakse meie omaks ainult siis, kui selle viimane 'mac' väärtus on meie MAC ja
-// kirje jääb MAC-i omandiperioodi sisse. Tagastatakse ainult selle pesa väljad, mis on kirjutatud
+// kirje jääb MAC-i omandiperioodi [validFrom, validTo) sisse. Tagastatakse ainult sensori väljad ('mac', 'eye_*'; gateway asukohta mitte), mis on kirjutatud
 // pärast pesa eelmist (teise) MAC-i — gateway enda andmeid ega võõra sensori ridu ei lisandu.
 export async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<string, LiveFields>> {
   const result = new Map<string, LiveFields>();
@@ -161,35 +164,46 @@ export async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<str
     const windows = pickWindows(await ownershipWindows('MAC', macAddresses), 'MAC', macAddresses);
     const { ids, froms, tos } = flatten(windows);
     if (ids.length === 0) return result;
+    const minFrom = froms.reduce((a, b) => (a < b ? a : b));
 
-    const rows = await tsdb.$queryRaw<(RawMeasurementRow & { slot_mac: string })[]>`
+    // 1) Pesad, mille viimane MAC on meie ja jääb omandiperioodi sisse (+ pesa eelmise teise MAC-i aeg).
+    const slotRows = await tsdb.$queryRaw<{ device: string; measurement: string; mac: string; valid_from: string; valid_to: string; other_time: string }[]>`
       WITH w AS (
         SELECT upper(mac) AS mac, valid_from, valid_to
         FROM unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS x(mac, valid_from, valid_to)
       ),
-      latest_mac AS (
-        SELECT DISTINCT ON (device, measurement) device, measurement, upper(value_text) AS mac, time
+      mac_rows AS (
+        SELECT device, measurement, upper(value_text) AS mac, time
         FROM measurements
-        WHERE measurement IN ('eye1', 'eye2', 'eye3') AND field = 'mac'
-        ORDER BY device, measurement, time DESC
+        WHERE measurement IN ('eye1', 'eye2', 'eye3') AND field = 'mac' AND time >= ${minFrom}::timestamptz
       ),
-      slots AS (
-        SELECT lm.device, lm.measurement, lm.mac, w.valid_from, w.valid_to,
-          COALESCE((
-            SELECT max(o.time) FROM measurements o
-            WHERE o.device = lm.device AND o.measurement = lm.measurement
-              AND o.field = 'mac' AND upper(o.value_text) IS DISTINCT FROM lm.mac
-          ), '-infinity'::timestamptz) AS other_time
-        FROM latest_mac lm
-        JOIN w ON w.mac = lm.mac AND lm.time >= w.valid_from AND lm.time <= w.valid_to
+      latest_mac AS (
+        SELECT DISTINCT ON (device, measurement) device, measurement, mac, time
+        FROM mac_rows
+        ORDER BY device, measurement, time DESC
       )
+      SELECT lm.device, lm.measurement, lm.mac, w.valid_from::text AS valid_from, w.valid_to::text AS valid_to,
+        COALESCE((
+          SELECT max(o.time) FROM mac_rows o
+          WHERE o.device = lm.device AND o.measurement = lm.measurement AND o.mac IS DISTINCT FROM lm.mac
+        ), '-infinity'::timestamptz)::text AS other_time
+      FROM latest_mac lm
+      JOIN w ON w.mac = lm.mac AND lm.time >= w.valid_from AND lm.time < w.valid_to
+    `;
+    if (slotRows.length === 0) return result;
+
+    // 2) Ainult nende pesade sensoriväljad (mitte gateway asukoht) omandiperioodi ja pesa viimase MAC-i vahetuse piires.
+    const rows = await tsdb.$queryRaw<(RawMeasurementRow & { slot_mac: string })[]>`
       SELECT DISTINCT ON (m.device, m.measurement, m.field)
         s.mac AS slot_mac,
         m.device, m.measurement, m.field, m.value_bool, m.value_int, m.value_bigint, m.value_double, m.value_text, m.time
-      FROM measurements m
-      JOIN slots s ON m.device = s.device AND m.measurement = s.measurement
-        AND m.time >= s.valid_from AND m.time <= s.valid_to AND m.time > s.other_time
-      WHERE m.measurement IN ('eye1', 'eye2', 'eye3')
+      FROM unnest(${slotRows.map((r) => r.device)}::text[], ${slotRows.map((r) => r.measurement)}::text[], ${slotRows.map((r) => r.mac)}::text[],
+          ${slotRows.map((r) => r.valid_from)}::timestamptz[], ${slotRows.map((r) => r.valid_to)}::timestamptz[], ${slotRows.map((r) => r.other_time)}::timestamptz[])
+        AS s(device, measurement, mac, valid_from, valid_to, other_time)
+      JOIN measurements m ON m.device = s.device AND m.measurement = s.measurement
+        AND m.time >= s.valid_from AND m.time < s.valid_to AND m.time > s.other_time
+      WHERE m.time >= ${minFrom}::timestamptz
+        AND (m.field = 'mac' OR starts_with(m.field, 'eye_'))
       ORDER BY m.device, m.measurement, m.field, m.time DESC
     `;
 
@@ -204,7 +218,10 @@ export async function fetchEyeTelemetry(macAddresses: string[]): Promise<Map<str
       slots.set(slotKey, slot);
     }
 
-    for (const { mac, entry } of slots.values()) result.set(mac, entry);
+    for (const { mac, entry } of slots.values()) {
+      const prev = result.get(mac);
+      if (!prev || entry.lastUpdate > prev.lastUpdate) result.set(mac, entry);
+    }
   } catch (err) {
     console.error('telemetry_tsdb: eye sensor telemetry query failed:', err);
   }
@@ -227,6 +244,9 @@ export async function fetchDeviceHistory(imei: string, hours: number, from?: str
     if (segments.length === 0) return [];
     const froms = segments.map((s) => s.from.toISOString());
     const tos = segments.map((s) => s.to.toISOString());
+    const incl = segments.map((s) => s.toInclusive);
+    const lo = segments[0].from;
+    const hi = segments[segments.length - 1].to;
     return await tsdb.$queryRaw<HistoryRow[]>`
       WITH packets AS (
         SELECT m.time,
@@ -235,9 +255,10 @@ export async function fetchDeviceHistory(imei: string, hours: number, from?: str
             COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision)
           ) AS fields
         FROM measurements m
-        JOIN unnest(${froms}::timestamptz[], ${tos}::timestamptz[]) AS s(seg_from, seg_to)
-          ON m.time >= s.seg_from AND m.time <= s.seg_to
+        JOIN unnest(${froms}::timestamptz[], ${tos}::timestamptz[], ${incl}::boolean[]) AS s(seg_from, seg_to, seg_incl)
+          ON m.time >= s.seg_from AND (m.time < s.seg_to OR (s.seg_incl AND m.time = s.seg_to))
         WHERE m.device = ${imei}
+          AND m.time >= ${lo} AND m.time <= ${hi}
           AND m.measurement = 'data'
           AND m.field IN ('latitude', 'longitude', 'angle', 'speed', 'speed_avl_kmh', 'altitude')
         GROUP BY m.time
@@ -273,7 +294,7 @@ export async function fetchFieldGpsPackets(startUtc: Date, endUtc: Date): Promis
       jsonb_object_agg(m.field, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision)) AS fields
     FROM measurements m
     JOIN unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS w(device, valid_from, valid_to)
-      ON m.device = w.device AND m.time >= w.valid_from AND m.time <= w.valid_to
+      ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
     WHERE m.measurement = 'data'
       AND m.field IN ('latitude', 'longitude')
       AND m.time >= ${startUtc}
