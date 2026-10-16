@@ -1100,7 +1100,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       setDevices((prev) => prev.map((d) => d.assignedImplementId === id ? { ...d, assignedImplementId: undefined } : d));
     });
 
-  const handleAddDevice = (newDev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
+  // Seade salvestatakse enne serveris; viga (IMEI/MAC 400, hõivatud seade 409) näidatakse kasutajale ja vorm jääb avatuks.
+  const handleAddDevice = async (newDev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>): Promise<boolean> => {
     const dev: TelemetryDevice = {
       ...newDev,
       id: `tel-${Date.now()}`,
@@ -1110,16 +1111,28 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       status: 'offline',
       lastUpdate: new Date().toISOString()
     };
+    try {
+      await api.saveDevice(dev);
+    } catch (err) {
+      alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
+      return false;
+    }
     setDevices((prev) => [...prev, dev]);
-    api.saveDevice(dev).catch((err) => console.error('Error saving device to DB:', err));
+    return true;
   };
 
-  const handleUpdateDevice = (id: string, updates: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => {
-    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, ...updates } : d)));
+  const handleUpdateDevice = async (id: string, updates: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>): Promise<boolean> => {
     const current = devices.find((d) => d.id === id);
     if (current) {
-      api.saveDevice({ ...current, ...updates }).catch((err) => console.error('Error updating device in DB:', err));
+      try {
+        await api.saveDevice({ ...current, ...updates });
+      } catch (err) {
+        alertDialog(err instanceof Error ? err.message : 'Seadme salvestamine ebaõnnestus');
+        return false;
+      }
     }
+    setDevices((prev) => prev.map((d) => (d.id === id ? { ...d, ...updates } : d)));
+    return true;
   };
 
   const handleDeleteDevice = (id: string) =>

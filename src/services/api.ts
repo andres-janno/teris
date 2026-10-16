@@ -407,7 +407,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(device)
     });
-    if (!res.ok) throw new Error('Failed to save device');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Seadme salvestamine ebaõnnestus'));
     return res.json();
   },
 

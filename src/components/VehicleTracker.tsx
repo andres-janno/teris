@@ -63,8 +63,8 @@ interface VehicleTrackerProps {
   onAddImplement: (imp: Omit<Implement, 'id'>) => void;
   onUpdateImplement: (id: string, imp: Omit<Implement, 'id'>) => void;
   onDeleteImplement: (id: string) => void;
-  onAddDevice: (dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
-  onUpdateDevice: (id: string, dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => void;
+  onAddDevice: (dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => Promise<boolean>;
+  onUpdateDevice: (id: string, dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => Promise<boolean>;
   onDeleteDevice: (id: string) => void;
   telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
 }
@@ -683,7 +683,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpNotes('');
   };
 
-  const handleCreateDevice = (e: React.FormEvent) => {
+  const handleCreateDevice = async (e: React.FormEvent) => {
     e.preventDefault();
     if (devConnectivity === 'cellular' && !devImei.trim()) return;
     if (devConnectivity === 'eye_sensor' && !devMac.trim()) return;
@@ -703,11 +703,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       acquisitionDate: devAcqDate || undefined,
       notes: devNotes.trim() || undefined
     };
-    if (editingDeviceId) {
-      onUpdateDevice(editingDeviceId, payload);
-    } else {
-      onAddDevice(payload);
-    }
+    const saved = editingDeviceId
+      ? await onUpdateDevice(editingDeviceId, payload)
+      : await onAddDevice(payload);
+    if (!saved) return; // viga on kuvatud; vorm jääb avatuks parandamiseks
     closeForm();
     setDevImei('');
     setDevSim('');
@@ -1150,8 +1149,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         placeholder="861234058812001"
                         value={devImei}
                         onChange={(e) => setDevImei(e.target.value)}
+                        inputMode="numeric"
+                        maxLength={15}
                         className="form-input"
                       />
+                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>15 numbrit</small>
                     </div>
                     <div className="form-group">
                       <label>SIM kaardi number</label>
@@ -1186,6 +1188,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         onChange={(e) => setDevMac(e.target.value)}
                         className="form-input"
                       />
+                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>nt AA:BB:CC:DD:EE:FF</small>
                     </div>
                   </>
                 )}
