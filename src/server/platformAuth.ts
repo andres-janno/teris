@@ -13,7 +13,6 @@ import {
   clientIpFrom
 } from './auth.ts';
 import { verifyTotp, decryptTotpSecret } from './totp.ts';
-import type { ApiOptions } from './apiHandler.ts';
 
 export const PLATFORM_COOKIE = 'teris_platform_session';
 const SESSION_TTL_MS = 12 * 60 * 60 * 1000;
@@ -154,18 +153,4 @@ export async function handlePlatformAuth(
     return true;
   }
   return false;
-}
-
-// Ajutine: Task 5 viib selle faili platformApi.ts.
-export async function handlePlatformRequest(
-  req: IncomingMessage,
-  res: ServerResponse,
-  pathname: string,
-  method: string,
-  _url: URL,
-  options: ApiOptions
-): Promise<void> {
-  if (!pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);
-  if (await handlePlatformAuth(req, res, pathname, method, { allowedOrigins: options.platformAllowedOrigins })) return;
-  json(res, { error: 'Not found' }, 404);
 }

@@ -5,6 +5,13 @@ import { authDb } from './db.ts';
 
 export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER';
 export const LICENSE_MODULES: readonly LicenseModule[] = ['TELEMETRY', 'SATELLITE', 'WEATHER'];
+/** Range YYYY-MM-DD ja päris kuupäev (round-trip kontroll); vigase korral null. */
+export function parseLicenseDate(s: string): Date | null {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(s)) return null;
+  const d = new Date(`${s}T00:00:00.000Z`);
+  return Number.isNaN(d.getTime()) || d.toISOString().slice(0, 10) !== s ? null : d;
+}
+
 export const EXPIRY_WARNING_DAYS = 14;
 export const LICENSE_READ_ONLY_MESSAGE = 'Litsents on aegunud — andmed on ainult lugemiseks';
 export const MODULE_NOT_LICENSED_MESSAGE = 'See moodul ei kuulu teie litsentsi';

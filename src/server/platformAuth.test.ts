@@ -5,7 +5,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { authDb } from './db';
 import { hashPassword } from './auth';
 import { encryptTotpSecret, totpCode, totpStep } from './totp';
-import { handlePlatformAuth, handlePlatformRequest, platformUserOf } from './platformAuth';
+import { handlePlatformAuth, platformUserOf } from './platformAuth';
+import { handlePlatformRequest } from './platformApi';
 import { isPlatformHost } from './platformHost';
 
 const KEY = 'c'.repeat(64);

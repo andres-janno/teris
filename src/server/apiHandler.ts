@@ -11,7 +11,7 @@ import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './s
 import { applyLicenseGate, licenseOf, hasModule } from './licenseGate.ts';
 import { checkFieldClouds, validateCloudCheckPolygons } from './satelliteClouds.ts';
 import { isPlatformHost } from './platformHost.ts';
-import { handlePlatformRequest } from './platformAuth.ts';
+import { handlePlatformRequest } from './platformApi.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
