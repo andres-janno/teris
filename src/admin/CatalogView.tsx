@@ -17,7 +17,11 @@ import {
 
 type Tab = 'crops' | 'workTypes' | 'templates';
 
-const numOrNull = (s: string): number | null => (s.trim() === '' ? null : Number(s.replace(',', '.')));
+const numOrNull = (s: string): number | null => {
+  if (s.trim() === '') return null;
+  const n = Number(s.replace(',', '.'));
+  return Number.isNaN(n) ? null : n;
+};
 const textOrNull = (s: string): string | null => (s.trim() === '' ? null : s.trim());
 const numStr = (n: number | null | undefined): string => (n === null || n === undefined ? '' : String(n));
 const yesNo = (b: boolean) => (b ? 'Jah' : 'Ei');
@@ -574,9 +578,13 @@ function TemplatesTab({ data, reload }: { data: CatalogData; reload: () => void 
   // Valiku või serveriandmete muutudes laetakse redaktor uuesti
   useEffect(() => {
     setItems(itemsOf(current));
+  }, [current]);
+
+  // Teade ja viga nullitakse ainult valiku vahetamisel, mitte pärast salvestust
+  useEffect(() => {
     setNotice('');
     setError('');
-  }, [current, cropId, isWinter]);
+  }, [cropId, isWinter]);
 
   const used = new Set(items.map((i) => i.catalogWorkTypeId));
   const available = data.workTypes.filter((w) => !used.has(w.id));
