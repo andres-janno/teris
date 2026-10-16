@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import { TENANT_MODELS } from './tenantScope';
 import { MissingTenantError } from './requestContext';
+import { tenantRelations } from './tenantRelations';
 
 const A = `test-tenant-a-${process.pid}`;
 const B = `test-tenant-b-${process.pid}`;
@@ -124,5 +125,23 @@ describe('platvormi tabelid rakenduse rollile', () => {
       await expect(tenantTransaction(async (tx) => tx.$queryRawUnsafe(`SELECT 1 FROM "${table}" LIMIT 1`)))
         .rejects.toThrow(/permission denied/);
     });
+  });
+});
+
+describe('ettevõtteülesed viited', () => {
+  it('A ei saa luua rida, mis viitab Loisu reale', async () => {
+    const loisuField = await runAsTenant(LOISU, async () => await prisma.field.findFirst({ select: { id: true } }));
+    expect(loisuField).not.toBeNull();
+    await runAsTenant(A, async () => {
+      await expect(prisma.fieldSeason.create({ data: { fieldId: loisuField!.id, year: 2099, areaHa: 1, crop: 'test', geometry: {} } }))
+        .rejects.toThrow(/teise ettevõtte/);
+    });
+  });
+
+  it('igal ettevõttesisesel relatsioonil on triger', async () => {
+    const expected = tenantRelations().map((r) => `${r.table}.tenant_fk_${r.column}`).sort();
+    const rows = await authDb().$queryRawUnsafe<{ t: string }[]>(
+      `SELECT c.relname || '.' || tg.tgname AS t FROM pg_trigger tg JOIN pg_class c ON c.oid = tg.tgrelid WHERE tg.tgname LIKE 'tenant_fk_%' AND NOT tg.tgisinternal`);
+    expect(rows.map((r) => r.t).sort()).toEqual(expected);
   });
 });
