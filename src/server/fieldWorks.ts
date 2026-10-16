@@ -5,6 +5,7 @@ import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } 
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
+import { licenseOf } from './licenseGate.ts';
 import * as turf from '@turf/turf';
 import {
   buildEntryLines,
@@ -960,14 +961,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           select: { crop: true, cropColor: true, cropVariety: true }
         });
         if (prevSeason && isWinterCrop(prevSeason.crop, crops)) {
-          await prisma.fieldSeason.update({
-            where: { id: fs.id },
-            data: {
-              crop: prevSeason.crop,
-              cropColor: prevSeason.cropColor,
-              cropVariety: prevSeason.cropVariety
-            }
-          });
+          // Aegunud litsentsiga ei kirjutata — vastuses näidatakse päritud kultuuri siiski
+          if (!licenseOf(req)?.readOnly) {
+            await prisma.fieldSeason.update({
+              where: { id: fs.id },
+              data: {
+                crop: prevSeason.crop,
+                cropColor: prevSeason.cropColor,
+                cropVariety: prevSeason.cropVariety
+              }
+            });
+          }
           fs.crop = prevSeason.crop;
         }
       }
