@@ -24,16 +24,7 @@ const USER_FIELDS = {
   isFinanceManager: true,
   mustChangePassword: true,
   lastLoginAt: true,
-  createdAt: true,
-  sessions: {
-    select: {
-      lastSeenAt: true
-    },
-    orderBy: {
-      lastSeenAt: 'desc'
-    },
-    take: 1
-  }
+  createdAt: true
 } as const;
 
 type UserRow = {
@@ -48,13 +39,11 @@ type UserRow = {
   mustChangePassword: boolean;
   lastLoginAt: Date | null;
   createdAt: Date;
-  sessions?: { lastSeenAt: Date }[];
 };
 
 // Paroolirässi ei saadeta kunagi välja — ainult teave, kas parool on määratud.
 // "Viimati sees" võtab arvesse nii viimase sisselogimise kui ka viimase aktiivse sessiooni tegevuse.
-const toPublic = ({ passwordHash, sessions, ...rest }: UserRow) => {
-  const latestSession = sessions?.[0]?.lastSeenAt ?? null;
+const toPublic = ({ passwordHash, ...rest }: UserRow, latestSession: Date | null) => {
   const lastSeenAt = latestSession && rest.lastLoginAt
     ? (latestSession > rest.lastLoginAt ? latestSession : rest.lastLoginAt)
     : (latestSession ?? rest.lastLoginAt ?? null);
@@ -66,6 +55,18 @@ const toPublic = ({ passwordHash, sessions, ...rest }: UserRow) => {
     lastSeenAt
   };
 };
+
+// Sessioonid on platvormi tabel (teris_app ei näe seda): viimane tegevus loetakse platvormirolliga,
+// ainult ettevõtte piires juba leitud kasutajate kohta.
+async function lastSeenByUser(ids: string[]): Promise<Map<string, Date | null>> {
+  if (ids.length === 0) return new Map();
+  const rows = await authDb().session.groupBy({
+    by: ['userId'],
+    where: { userId: { in: ids } },
+    _max: { lastSeenAt: true }
+  });
+  return new Map(rows.map((r) => [r.userId, r._max.lastSeenAt]));
+}
 
 const activeAdminCount = () => prisma.user.count({ where: { isActive: true, isAdmin: true } });
 
@@ -98,7 +99,8 @@ export async function handleAdminUsers(
 
   if (parts.length === 0 && method === 'GET') {
     const users = await prisma.user.findMany({ select: USER_FIELDS, orderBy: { username: 'asc' } });
-    json(res, { users: users.map(toPublic) });
+    const seen = await lastSeenByUser(users.map((u) => u.id));
+    json(res, { users: users.map((u) => toPublic(u, seen.get(u.id) ?? null)) });
     return true;
   }
 
@@ -139,7 +141,7 @@ export async function handleAdminUsers(
         password === null
           ? await sendPasswordLink({ id: created.id, username, displayName: created.displayName, email }, 'INVITE')
           : false;
-      json(res, { user: toPublic(created), emailSent }, 201);
+      json(res, { user: toPublic(created, null), emailSent }, 201);
     } catch (err) {
       const target = uniqueTarget(err);
       if (target === null) throw err;
@@ -251,7 +253,8 @@ export async function handleAdminUsers(
     if ('email' in data && data.email !== target.email) {
       await authDb().passwordToken.deleteMany({ where: { userId: target.id, usedAt: null } });
     }
-    json(res, { user: toPublic(user) });
+    const seen = await lastSeenByUser([user.id]);
+    json(res, { user: toPublic(user, seen.get(user.id) ?? null) });
   } catch (err) {
     if (uniqueTarget(err) === null) throw err;
     json(res, { error: EMAIL_TAKEN }, 409);

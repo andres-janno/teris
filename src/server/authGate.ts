@@ -70,6 +70,11 @@ export function sessionUserOf(req: IncomingMessage): SessionUser | null {
   return sessionUsers.get(req) ?? null;
 }
 
+/** Ainult testidele: seab päringu sessioonikasutaja ilma sisselogimiseta. */
+export function setSessionUserForTest(req: IncomingMessage, user: DbUser | null): void {
+  sessionUsers.set(req, user);
+}
+
 // Vale kasutajanime korral kontrollitakse parooli selle vastu, et vastuse aeg ei
 // paljastaks, kas kasutaja on olemas.
 let dummyHash: Promise<string> | null = null;

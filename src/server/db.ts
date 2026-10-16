@@ -95,7 +95,8 @@ export function tenantTransaction<T>(fn: (tx: TxClient) => Promise<T>, options?:
 }
 
 // Autentimine (sisselogimine, sessioon, paroolilingid) toimub enne, kui päringul on ettevõtte
-// kontekst. teris_platform roll möödub RLS-ist — kasuta AINULT authGate.ts ja passwordTokens.ts sees.
+// kontekst. teris_platform roll möödub RLS-ist — kasuta AINULT: authGate.ts, passwordTokens.ts,
+// adminUsers.ts (sessioonid/tokenid ettevõtte piires leitud kasutajatele), license.ts, käsureatööriistad ja testid.
 let authClient: PrismaClient | null = null;
 export function authDb(): PrismaClient {
   if (!authClient) {

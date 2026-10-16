@@ -186,4 +186,19 @@ describe('muutmine ja kustutamine iga mudeli kohta', () => {
     for (const [model, c] of Object.entries(counts)) expect(c, model).toEqual({ updated: 0, deleted: 0 });
     expect(Object.keys(counts)).toHaveLength(TENANT_MODELS.size);
   });
+
+  it('tabelitel ilma tenant_id veeruta pole teris_app rollil mingeid õigusi (platvormi tabelid)', async () => {
+    const rows = await authDb().$queryRawUnsafe<{ table_name: string }[]>(`
+      SELECT t.table_name FROM information_schema.tables t
+      WHERE t.table_schema = 'public' AND t.table_type = 'BASE TABLE'
+        AND NOT EXISTS (SELECT 1 FROM information_schema.columns c
+          WHERE c.table_schema = 'public' AND c.table_name = t.table_name AND c.column_name = 'tenant_id')`);
+    const platform = rows.map((r) => r.table_name).filter((n) => n !== '_prisma_migrations');
+    expect(platform.length).toBeGreaterThan(0);
+    const grants = await authDb().$queryRawUnsafe<{ table_name: string }[]>(`
+      SELECT DISTINCT table_name FROM information_schema.role_table_grants
+      WHERE table_schema = 'public' AND grantee = 'teris_app'`);
+    const leaked = grants.map((g) => g.table_name).filter((n) => platform.includes(n));
+    expect(leaked).toEqual([]);
+  });
 });

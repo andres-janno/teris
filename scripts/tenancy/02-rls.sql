@@ -23,3 +23,7 @@ GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO teris_app
 GRANT USAGE, SELECT ON ALL SEQUENCES IN SCHEMA public TO teris_app, teris_platform;
 ALTER DEFAULT PRIVILEGES FOR ROLE teris IN SCHEMA public GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO teris_app, teris_platform;
 ALTER DEFAULT PRIVILEGES FOR ROLE teris IN SCHEMA public GRANT USAGE, SELECT ON SEQUENCES TO teris_app, teris_platform;
+
+-- Platvormi tabelid on ainult teris_platform rollile (sama mis 04-privileges.sql): ülaltoodud
+-- "ON ALL TABLES" GRANT annaks need teris_app-ile uuesti, seega võta õigused tagasi.
+REVOKE ALL ON tenants, tenant_licenses, sessions, password_tokens FROM teris_app;
