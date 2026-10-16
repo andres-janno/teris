@@ -97,11 +97,21 @@ function sessionToken(req: IncomingMessage): string | undefined {
   return cookies[SESSION_COOKIE];
 }
 
+/** Kehtiv sessioon tokeni räsi järgi: sessioon pole aegunud, kasutaja ja tema ettevõte on aktiivsed. */
+export async function findActiveSession(tokenHash: string) {
+  const session = await authDb().session.findUnique({ where: { tokenHash }, include: { user: true } });
+  if (!session || session.expiresAt.getTime() < Date.now() || !session.user.isActive) return null;
+  const tenant = await authDb().tenant.findUnique({ where: { id: session.user.tenantId }, select: { status: true } });
+  if (tenant?.status !== 'ACTIVE') return null;
+  return { user: session.user, session };
+}
+
 async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string } | null> {
   const token = sessionToken(req);
   if (!token) return null;
-  const session = await authDb().session.findUnique({ where: { tokenHash: hashToken(token) }, include: { user: true } });
-  if (!session || session.expiresAt.getTime() < Date.now() || !session.user.isActive) return null;
+  const found = await findActiveSession(hashToken(token));
+  if (!found) return null;
+  const { session } = found;
   if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
     const now = new Date();
     // updateMany, mitte update: kui sessioon on vahepeal (nt paroolivahetusest) kustunud,
