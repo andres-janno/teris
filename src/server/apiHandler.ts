@@ -12,6 +12,8 @@ import { applyLicenseGate, licenseOf, hasModule } from './licenseGate.ts';
 import { checkFieldClouds, validateCloudCheckPolygons } from './satelliteClouds.ts';
 import { isPlatformHost } from './platformHost.ts';
 import { handlePlatformRequest } from './platformApi.ts';
+import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdentifiers.ts';
+import { syncOwnership } from './deviceOwnership.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -1004,10 +1006,21 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/fleet/devices' && method === 'POST') {
       const d = await parseBody(req);
+      const connectivityType = (d.connectivityType || 'cellular').toUpperCase();
+      // Tunnus kontrollitakse ja normaliseeritakse; teise tüübi tunnus jääb tühjaks
+      let imei: string | null = null;
+      let macAddress: string | null = null;
+      if (connectivityType === 'EYE_SENSOR') {
+        macAddress = normalizeMac(d.macAddress);
+        if (!macAddress) return json(res, { error: MAC_ERROR }, 400);
+      } else {
+        imei = validateImei(d.imei);
+        if (!imei) return json(res, { error: IMEI_ERROR }, 400);
+      }
       const dData: any = {
-        connectivityType: (d.connectivityType || 'cellular').toUpperCase() as any,
-        imei: d.imei || null,
-        macAddress: d.macAddress || null,
+        connectivityType: connectivityType as any,
+        imei,
+        macAddress,
         model: d.model,
         simNumber: d.simNumber || null,
         firmware: d.firmwareVersion || null,
@@ -1015,15 +1028,28 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         status: (d.status || 'offline').toUpperCase() as any,
         notes: d.notes ?? null
       };
+      const deviceId = d.id || `tel-${Date.now()}`;
 
-      const saved = await prisma.telemetryDevice.upsert({
-        where: { id: d.id || `tel-${Date.now()}` },
-        update: dData,
-        create: {
-          id: d.id || `tel-${Date.now()}`,
-          ...dData
+      let saved;
+      try {
+        saved = await tenantTransaction(async (tx) => {
+          const before = await tx.telemetryDevice.findUnique({ where: { id: deviceId }, select: { imei: true, macAddress: true } });
+          const row = await tx.telemetryDevice.upsert({
+            where: { id: deviceId },
+            update: dData,
+            create: { id: deviceId, ...dData }
+          });
+          await syncOwnership(tx, before, row);
+          return row;
+        });
+      } catch (e: any) {
+        // Globaalne unikaalsus: teise ettevõtte seade on RLS-i tõttu nähtamatu, kuid indeks tabab; omanikku ei avaldata.
+        // meta.target on selle draiveriga tühi, seega eristada imei/mac/id konflikti ei saa — kõik annavad sama vastuse.
+        if (e?.code === 'P2002') {
+          return json(res, { error: 'Seade on juba registreeritud — võtke ühendust kasutajatoega' }, 409);
         }
-      });
+        throw e;
+      }
 
       // Paigaldamine ei käi seadme vormi kaudu: see on ainult seadmete seoste registris
       return json(res, saved);
@@ -1032,7 +1058,11 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname.startsWith('/api/fleet/devices/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/devices/', '');
       if (denyDelete(req, res, await prisma.telemetryDevice.findUnique({ where: { id }, select: { createdBy: true } }))) return;
-      await prisma.telemetryDevice.delete({ where: { id } });
+      await tenantTransaction(async (tx) => {
+        const before = await tx.telemetryDevice.findUnique({ where: { id }, select: { imei: true, macAddress: true } });
+        await tx.telemetryDevice.delete({ where: { id } });
+        await syncOwnership(tx, before, null);
+      });
       return json(res, { success: true, id });
     }
 

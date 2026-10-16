@@ -79,7 +79,7 @@ export const prisma = base.$extends({
     }
   });
 
-type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+export type TxClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
 
 /**
  * Interaktiivne tehing ettevõtte kontekstis — kasuta prisma.$transaction(async ...) asemel.
