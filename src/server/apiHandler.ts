@@ -356,7 +356,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
   try {
     // Platvormi host ei näe kunagi ettevõtte API-t; ettevõtte host ei näe platvormi API-t
     if (isPlatformHost(req) || (options.platformOnAnyHost && pathname.startsWith('/api/platform/'))) {
-      await handlePlatformRequest(req, res, pathname, method, options);
+      await handlePlatformRequest(req, res, pathname, method, url, options);
       return;
     }
     if (pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);

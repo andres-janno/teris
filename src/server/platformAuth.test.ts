@@ -56,6 +56,7 @@ async function call(method: string, path: string, body?: unknown, extra: Record<
 }
 
 const cookieOf = (out: { headers: Record<string, string | string[]> }) => String(out.headers['set-cookie']).split(';')[0];
+const resetStep = () => authDb().platformUser.update({ where: { id: userId }, data: { totpLastStep: 0 } });
 const code = (offset = 0) => totpCode(SECRET, totpStep(new Date()) + offset);
 const login = (over: Record<string, unknown> = {}, extra: Record<string, string> = {}) =>
   call('POST', '/api/platform/auth/login', { username: USERNAME, password: PASSWORD, code: code(), ...over }, extra);
@@ -80,7 +81,7 @@ afterAll(async () => {
 
 describe('teenusepakkuja sisselogimine', () => {
   it('õige parool + kood: 200, küpsis, me töötab; logout kustutab sessiooni', async () => {
-    const r = await login({ code: code(-1) });
+    const r = await login({ code: code() });
     expect(r.out.status).toBe(200);
     const sc = String(r.out.headers['set-cookie']);
     expect(sc).toContain('teris_platform_session=');
@@ -108,6 +109,7 @@ describe('teenusepakkuja sisselogimine', () => {
 
   it('sama koodi teistkordne kasutamine -> 401', async () => {
     const c = code(1);
+    await resetStep();
     const a = await login({ code: c });
     expect(a.out.status).toBe(200);
     const b = await login({ code: c });
@@ -116,10 +118,46 @@ describe('teenusepakkuja sisselogimine', () => {
   });
 
   it('vale kood, vale parool, olematu kasutaja -> 401 sama tekstiga', async () => {
+    await resetStep();
     for (const over of [{ code: '000000' }, { password: 'vale-parool-123' }, { username: 'zz-olematu-kasutaja' }]) {
+      await resetStep();
       const r = await login(over);
       expect(r.out.status).toBe(401);
       expect(JSON.parse(r.out.body).error).toBe(ERR);
+    }
+    await resetStep();
+    expect((await login()).out.status).toBe(200); // positiivne kontroll
+  });
+
+  it('mitteaktiivne kasutaja -> 401', async () => {
+    await authDb().platformUser.update({ where: { id: userId }, data: { totpLastStep: 0, isActive: false } });
+    try {
+      const r = await login();
+      expect(r.out.status).toBe(401);
+      expect(JSON.parse(r.out.body).error).toBe(ERR);
+    } finally {
+      await authDb().platformUser.update({ where: { id: userId }, data: { isActive: true } });
+    }
+  });
+
+  it('aegunud sessioon -> me 401', async () => {
+    await resetStep();
+    const r = await login();
+    expect(r.out.status).toBe(200);
+    const cookie = cookieOf(r.out);
+    await authDb().platformSession.updateMany({ where: { platformUserId: userId }, data: { expiresAt: new Date(Date.now() - 1000) } });
+    expect((await call('GET', '/api/platform/auth/me', undefined, { cookie })).out.status).toBe(401);
+  });
+
+  it('vigane PLATFORM_TOTP_KEY -> 500 ja piiraja ei kasva', async () => {
+    process.env.PLATFORM_TOTP_KEY = 'xyz';
+    try {
+      await resetStep();
+      const r = await login();
+      expect(r.out.status).toBe(500);
+      expect(JSON.parse(r.out.body).error).toBe('Platvorm pole seadistatud');
+    } finally {
+      process.env.PLATFORM_TOTP_KEY = KEY;
     }
   });
 
@@ -129,12 +167,12 @@ describe('teenusepakkuja sisselogimine', () => {
   });
 
   it('handlePlatformRequest: tundmatu tee sessiooniga -> 404', async () => {
-    await authDb().platformUser.update({ where: { id: userId }, data: { totpLastStep: 0 } });
+    await resetStep();
     const l = await login({ code: code() });
     expect(l.out.status).toBe(200);
     const req = fakeReq('GET', '/api/platform/unknown', undefined, { cookie: cookieOf(l.out) });
     const { res, out } = fakeRes();
-    await handlePlatformRequest(req, res, '/api/platform/unknown', 'GET', { allowedOrigins: [], platformAllowedOrigins: OPTS.allowedOrigins } as any);
+    await handlePlatformRequest(req, res, '/api/platform/unknown', 'GET', new URL('http://x/api/platform/unknown'), { allowedOrigins: [], platformAllowedOrigins: OPTS.allowedOrigins } as any);
     expect(out.status).toBe(404);
   });
 });

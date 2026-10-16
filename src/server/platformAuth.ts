@@ -37,8 +37,8 @@ const loginFailed = (res: ServerResponse, keys: string[]) => {
 
 async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<boolean> {
   const key = process.env.PLATFORM_TOTP_KEY;
-  if (!key) {
-    console.error('[platformAuth] PLATFORM_TOTP_KEY puudub');
+  if (!key || !/^[0-9a-fA-F]{64}$/.test(key)) {
+    console.error('[platformAuth] PLATFORM_TOTP_KEY puudub või on vales vormingus');
     json(res, { error: 'Platvorm pole seadistatud' }, 500);
     return true;
   }
@@ -118,6 +118,7 @@ export async function handlePlatformAuth(
   method: string,
   options: { allowedOrigins: string[] }
 ): Promise<boolean> {
+  res.setHeader('Cache-Control', 'no-store');
   const check = checkMutationRequest(
     {
       method,
@@ -161,6 +162,7 @@ export async function handlePlatformRequest(
   res: ServerResponse,
   pathname: string,
   method: string,
+  _url: URL,
   options: ApiOptions
 ): Promise<void> {
   if (!pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);
