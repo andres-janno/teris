@@ -14,6 +14,9 @@ const ACTIONS: Record<string, string> = {
   PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud'
 };
 
+const CATALOG_ENTITY: Record<string, string> = { crop: 'Kultuur', variety: 'Sort', workType: 'Tööliik', template: 'Mall' };
+const CATALOG_OP: Record<string, string> = { create: 'lisatud', update: 'muudetud', delete: 'kustutatud', replace: 'asendatud' };
+
 function detailsText(e: AuditEntry): string {
   const d = (e.details ?? {}) as Record<string, any>;
   switch (e.action) {
@@ -26,6 +29,8 @@ function detailsText(e: AuditEntry): string {
     case 'PLATFORM_USER_ADD':
     case 'PLATFORM_USER_RESET_TOTP':
       return String(d.username ?? '');
+    case 'CATALOG_UPDATE':
+      return `${CATALOG_ENTITY[d.entity] ?? d.entity ?? ''} ${CATALOG_OP[d.op] ?? d.op ?? ''}: ${d.name ?? ''}`;
     default:
       return '';
   }

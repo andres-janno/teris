@@ -109,7 +109,8 @@ async function createTenant(body: any, platformUser: { id: string; username: str
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       const target = String(err.meta?.target ?? '');
-      throw new HttpError(409, target.includes('email') ? 'E-posti aadress on juba kasutusel' : 'Kasutajanimi on juba kasutusel');
+      if (target.includes('username')) throw new HttpError(409, 'Kasutajanimi on juba kasutusel');
+      if (target.includes('email')) throw new HttpError(409, 'E-posti aadress on juba kasutusel');
     }
     throw err;
   }
@@ -345,6 +346,7 @@ async function catalogMutation<T>(
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
+      if (err.code === 'P2002' && entity === 'template') throw new HttpError(409, 'Mall on samal ajal muudetud — proovi uuesti');
       if (err.code === 'P2002' && DUPLICATE_NAME[entity]) throw new HttpError(409, DUPLICATE_NAME[entity]);
       if (err.code === 'P2003' && entity === 'workType') throw new HttpError(409, WORK_TYPE_IN_USE);
     }

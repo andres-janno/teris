@@ -4,6 +4,8 @@
 import { randomUUID } from 'node:crypto';
 import type { Prisma } from '@prisma/client';
 
+const CATALOG_CHANGED = 'Algkataloog muutus kopeerimise ajal';
+
 export async function copyCatalogToTenant(tx: Prisma.TransactionClient, tenantId: string) {
   const crops = await tx.catalogCrop.findMany({ include: { varieties: true }, orderBy: { name: 'asc' } });
   const workTypes = await tx.catalogWorkType.findMany({ orderBy: { sortOrder: 'asc' } });
@@ -44,13 +46,15 @@ export async function copyCatalogToTenant(tx: Prisma.TransactionClient, tenantId
   }
   let items = 0;
   for (const t of templates) {
-    const created = await tx.workTemplate.create({
-      data: { tenantId, cropId: t.catalogCropId ? cropIds.get(t.catalogCropId)! : null, isWinter: t.isWinter }
-    });
+    const cropId = t.catalogCropId ? cropIds.get(t.catalogCropId) : null;
+    if (cropId === undefined) throw new Error(CATALOG_CHANGED);
+    const created = await tx.workTemplate.create({ data: { tenantId, cropId, isWinter: t.isWinter } });
     for (const it of t.items) {
+      const workTypeId = typeIds.get(it.catalogWorkTypeId);
+      if (workTypeId === undefined) throw new Error(CATALOG_CHANGED);
       await tx.workTemplateItem.create({
         data: {
-          tenantId, templateId: created.id, workTypeId: typeIds.get(it.catalogWorkTypeId)!,
+          tenantId, templateId: created.id, workTypeId,
           sortOrder: it.sortOrder, typicalTiming: it.typicalTiming, plannedCount: it.plannedCount
         }
       });
