@@ -117,3 +117,12 @@ describe('ettevõtete eraldus', () => {
     await expect(prisma.field.findMany()).rejects.toThrow(MissingTenantError);
   });
 });
+
+describe('platvormi tabelid rakenduse rollile', () => {
+  it.each(['tenants', 'tenant_licenses', 'sessions', 'password_tokens'])('%s pole teris_app-ile loetav', async (table) => {
+    await runAsTenant(LOISU, async () => {
+      await expect(tenantTransaction(async (tx) => tx.$queryRawUnsafe(`SELECT 1 FROM "${table}" LIMIT 1`)))
+        .rejects.toThrow(/permission denied/);
+    });
+  });
+});

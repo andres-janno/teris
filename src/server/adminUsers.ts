@@ -1,6 +1,6 @@
 // src/server/adminUsers.ts — /api/admin/users* (ainult adminile).
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma } from './db.ts';
+import { prisma, authDb } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { hashPassword, validateNewPassword } from './auth.ts';
 import { sessionUserOf } from './authGate.ts';
@@ -191,9 +191,10 @@ export async function handleAdminUsers(
       where: { id: target.id },
       data: { passwordHash: await hashPassword(password), mustChangePassword: true }
     });
-    await prisma.session.deleteMany({ where: { userId: target.id } });
+    // Sessioonid ja tokenid on platvormi tabelid (teris_app ei näe neid); kasutaja on leitud ettevõtte piires.
+    await authDb().session.deleteMany({ where: { userId: target.id } });
     // Ajutine parool teeb varasemad kutse/lähtestuslingid kehtetuks.
-    await prisma.passwordToken.deleteMany({ where: { userId: target.id } });
+    await authDb().passwordToken.deleteMany({ where: { userId: target.id } });
     json(res, { success: true });
     return true;
   }
@@ -244,11 +245,11 @@ export async function handleAdminUsers(
 
   try {
     const user = await prisma.user.update({ where: { id: target.id }, data, select: USER_FIELDS });
-    if (data.isActive === false) await prisma.session.deleteMany({ where: { userId: target.id } });
+    if (data.isActive === false) await authDb().session.deleteMany({ where: { userId: target.id } });
     // E-posti muutmisel (sh eemaldamisel) kaotavad vanad kutse/lähtestuslingid
     // kehtivuse — need viitasid eelmisele aadressile või pole enam saadetavad.
     if ('email' in data && data.email !== target.email) {
-      await prisma.passwordToken.deleteMany({ where: { userId: target.id, usedAt: null } });
+      await authDb().passwordToken.deleteMany({ where: { userId: target.id, usedAt: null } });
     }
     json(res, { user: toPublic(user) });
   } catch (err) {
