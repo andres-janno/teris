@@ -973,3 +973,49 @@ model TenantLicense {
 
   @@map("tenant_licenses")
 }
+
+// ============================================================================
+// TEENUSEPAKKUJA (PLATVORM) — loetakse ainult authDb() kaudu, teris_app ei näe
+// ============================================================================
+model PlatformUser {
+  id            String            @id @default(cuid())
+  username      String            @unique // väiketähtedega
+  passwordHash  String
+  totpSecretEnc String // AES-256-GCM krüpteeritud base32 saladus (PLATFORM_TOTP_KEY)
+  totpLastStep  Int               @default(0) // viimati aktsepteeritud TOTP samm (korduskasutuse vastu)
+  isActive      Boolean           @default(true)
+  lastLoginAt   DateTime?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  sessions PlatformSession[]
+
+  @@map("platform_users")
+}
+
+model PlatformSession {
+  id             String       @id @default(cuid())
+  platformUserId String
+  tokenHash      String       @unique // SHA-256 küpsise tokenist
+  expiresAt      DateTime
+  userAgent      String?
+  createdAt      DateTime     @default(now())
+
+  platformUser PlatformUser @relation(fields: [platformUserId], references: [id], onDelete: Cascade)
+
+  @@index([platformUserId])
+  @@map("platform_sessions")
+}
+
+model PlatformAuditLog {
+  id             String   @id @default(cuid())
+  platformUserId String? // null = käsurida
+  action         String // nt TENANT_CREATE, LICENSE_UPDATE, TENANT_SUSPEND, TENANT_ACTIVATE, INVITE_RESEND, LOGIN
+  targetTenantId String? // mitte "tenantId" — muidu satuks mudel TENANT_MODELS-i
+  details        Json?
+  createdAt      DateTime @default(now())
+
+  @@index([targetTenantId])
+  @@index([createdAt])
+  @@map("platform_audit_log")
+}
