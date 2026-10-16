@@ -8,6 +8,7 @@ const ACTIONS: Record<string, string> = {
   TENANT_SUSPEND: 'Ettevõte peatatud',
   TENANT_ACTIVATE: 'Ettevõte taasaktiveeritud',
   INVITE_RESEND: 'Kutse saadetud uuesti',
+  CATALOG_UPDATE: 'Algkataloogi muudatus',
   LOGIN: 'Sisselogimine',
   PLATFORM_USER_ADD: 'Platvormi kasutaja lisatud',
   PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud'
