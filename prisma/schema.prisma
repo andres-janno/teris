@@ -437,6 +437,30 @@ model TelemetryDevice {
   @@map("telemetry_devices")
 }
 
+enum DeviceIdentifierKind {
+  IMEI
+  MAC
+}
+
+// Telemeetriaseadme omandiperiood: ettevõte näeb TimescaleDB andmeid ainult nende
+// IMEI/MAC-ide ja ajavahemike kohta. Ilma välisvõtmeta seadmele — ajalugu säilib ka
+// seadme kustutamisel või ümbernimetamisel.
+model DeviceOwnership {
+  id         String               @id @default(cuid())
+  tenantId   String               @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  kind       DeviceIdentifierKind
+  identifier String // IMEI (15 numbrit) või MAC (AA:BB:CC:DD:EE:FF)
+  deviceId   String? // TelemetryDevice.id loomise hetkel (teave, mitte välisvõti)
+  validFrom  DateTime             @default(now())
+  validTo    DateTime? // null = kehtib
+  createdAt  DateTime             @default(now())
+  createdBy  String? // looja kasutajatunnus (täidetakse automaatselt)
+
+  @@index([tenantId])
+  @@index([kind, identifier])
+  @@map("device_ownerships")
+}
+
 model DeviceAssignment {
   id            String          @id @default(cuid())
   tenantId      String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
