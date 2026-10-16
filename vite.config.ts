@@ -22,6 +22,12 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(gitCommit())
   },
+  build: {
+    // Kaks lehte: tenant'i rakendus ja teenusepakkuja (admin.html). Vite 8 kasutab rolldown'i.
+    rolldownOptions: {
+      input: { main: 'index.html', admin: 'admin.html' }
+    }
+  },
   server: {
     // Ainult localhost — arendus käib kohapeal (nt SSH tunneli kaudu), avalikku
     // ligipääsu pole. Toodang jookseb eraldi (vt src/server/prod.ts, teris.service).
