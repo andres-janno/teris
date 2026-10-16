@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { authDb } from './db.ts';
 import { json, parseBody, hasRequestBody } from './http.ts';
 import { handlePlatformAuth, platformUserOf } from './platformAuth.ts';
+import { copyCatalogToTenant } from './catalog.ts';
 import { LICENSE_MODULES, licenseState, tallinnToday, loadLicenseState, parseLicenseDate, type LicenseModule } from './license.ts';
 import { sendPasswordLink } from './passwordTokens.ts';
 import { normalizeUsername, USERNAME_ERROR } from './adminRules.ts';
@@ -91,6 +92,7 @@ async function createTenant(body: any, platformUser: { id: string; username: str
       await tx.tenantLicense.create({
         data: { tenantId: t.id, validUntil, modules, updatedBy: platformUser.username }
       });
+      const catalog = await copyCatalogToTenant(tx, t.id);
       const user = await tx.user.create({
         data: { tenantId: t.id, username, displayName, email, passwordHash: '', isAdmin: true }
       });
@@ -99,11 +101,11 @@ async function createTenant(body: any, platformUser: { id: string; username: str
           action: 'TENANT_CREATE',
           platformUserId: platformUser.id,
           targetTenantId: t.id,
-          details: { name, adminUsername: username, validUntil: isoDay(validUntil), modules }
+          details: { name, adminUsername: username, validUntil: isoDay(validUntil), modules, catalog }
         }
       });
-      return { id: t.id, user };
-    });
+      return { id: t.id, user, catalog };
+    }, { timeout: 30000 });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       const target = String(err.meta?.target ?? '');
@@ -117,7 +119,7 @@ async function createTenant(body: any, platformUser: { id: string; username: str
   } catch (err) {
     console.error('[platformApi] kutse saatmine ebaõnnestus', (err as Error).message);
   }
-  return { id: result.id, inviteSent };
+  return { id: result.id, inviteSent, catalog: result.catalog };
 }
 
 async function updateLicense(id: string, body: any, platformUser: { id: string; username: string }) {

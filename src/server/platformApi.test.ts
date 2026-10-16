@@ -92,6 +92,11 @@ afterAll(async () => {
   for (const t of byName) ids.push(t.id);
   for (const id of new Set(ids)) {
     const where = { tenantId: id };
+    await step('work_template_items', () => db.workTemplateItem.deleteMany({ where }));
+    await step('work_templates', () => db.workTemplate.deleteMany({ where }));
+    await step('work_types', () => db.workType.deleteMany({ where }));
+    await step('crop_varieties', () => db.cropVariety.deleteMany({ where }));
+    await step('crops', () => db.crop.deleteMany({ where }));
     await step('password_tokens', () => db.passwordToken.deleteMany({ where: { user: where } }));
     await step('sessions', () => db.session.deleteMany({ where: { user: where } }));
     await step('users', () => db.user.deleteMany({ where }));
@@ -152,6 +157,12 @@ describe('platvormi API', () => {
     expect(await db.passwordToken.count({ where: { userId: user!.id, purpose: 'INVITE' } })).toBe(1);
     const log = await db.platformAuditLog.findFirst({ where: { targetTenantId: newId, action: 'TENANT_CREATE' } });
     expect(log?.platformUserId).toBe(platformUserId);
+    // Algkataloogi koopia
+    const [cc, cw, ct] = await Promise.all([db.catalogCrop.count(), db.catalogWorkType.count(), db.catalogWorkTemplate.count()]);
+    expect(r.data.catalog).toMatchObject({ crops: cc, workTypes: cw, templates: ct });
+    expect(await runAsTenant(newId, async () => prisma.crop.count())).toBe(cc);
+    expect(await runAsTenant(newId, async () => prisma.workType.count())).toBe(cw);
+    expect(await runAsTenant(newId, async () => prisma.workTemplate.count())).toBe(ct);
   });
 
   it('eraldus teistest ettevõtetest', async () => {
