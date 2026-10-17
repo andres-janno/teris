@@ -78,7 +78,7 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token })
     });
-    if (!res.ok) throw new Error(await errorMessage(res, 'Tugivaate link on aegunud või juba kasutatud'));
+    if (!res.ok) throw new ApiError(await errorMessage(res, 'Tugivaate link on aegunud või juba kasutatud'), res.status);
     return (await res.json()).user;
   },
 
