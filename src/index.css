@@ -6330,35 +6330,170 @@ a.history-pill:hover {
   justify-content: flex-end;
 }
 
-/* Sisselogimine */
+/* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
 .login-page {
+  --login-ink: #3a2a17;
+  --login-ink-soft: #6b5434;
+  --login-line: rgba(140, 100, 45, 0.28);
+  position: relative;
   min-height: 100vh;
+  min-height: 100dvh;
+  display: flex;
+  align-items: center;
+  padding: 24px 16px;
+  overflow: hidden;
+  background: #2a1d0e;
+  isolation: isolate;
+}
+
+.login-backdrop {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.login-backdrop-photo {
+  position: absolute;
+  inset: -3%;
+  background-size: cover;
+  background-position: 62% center;
+  transform-origin: 70% 45%;
+  animation: login-drift 38s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+.login-backdrop-sun {
+  position: absolute;
+  left: -12%;
+  top: -22%;
+  width: 60vmax;
+  height: 60vmax;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 226, 150, 0.55) 0%, rgba(255, 196, 100, 0.18) 35%, rgba(255, 190, 90, 0) 65%);
+  mix-blend-mode: screen;
+  animation: login-sun 9s ease-in-out infinite alternate;
+}
+
+.login-backdrop-shade {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(40, 26, 10, 0.38) 0%, rgba(40, 26, 10, 0.14) 45%, rgba(40, 26, 10, 0) 70%),
+    linear-gradient(0deg, rgba(30, 20, 8, 0.35) 0%, rgba(30, 20, 8, 0) 40%);
+}
+
+.login-dust {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  mix-blend-mode: screen;
+}
+
+@keyframes login-drift {
+  0% { transform: scale(1.04) translate3d(0, 0, 0) rotate(0deg); }
+  50% { transform: scale(1.08) translate3d(-1%, 0.6%, 0) rotate(0.25deg); }
+  100% { transform: scale(1.06) translate3d(-1.8%, -0.4%, 0) rotate(-0.15deg); }
+}
+
+@keyframes login-sun {
+  0% { opacity: 0.7; transform: scale(1); }
+  100% { opacity: 1; transform: scale(1.06); }
+}
+
+@keyframes login-rise {
+  from { opacity: 0; transform: translateY(14px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.login-column {
+  width: min(380px, 100%);
+  margin-left: max(0px, calc(33.333vw - 190px - 16px));
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  padding: 16px;
-  background: var(--bg-dark);
+  animation: login-rise 0.7s ease-out both;
 }
 
 .login-copyright {
   margin-top: 16px;
   font-size: 0.75rem;
-  color: var(--text-muted);
+  color: rgba(255, 244, 222, 0.85);
+  text-shadow: 0 1px 6px rgba(40, 25, 5, 0.6);
 }
 
 .login-card {
-  width: min(380px, 100%);
-  padding: 28px;
+  width: 100%;
+  padding: 30px 28px;
   display: flex;
   flex-direction: column;
   gap: 14px;
+}
+
+.login-page .login-card.glass-card {
+  background: linear-gradient(160deg, rgba(255, 249, 235, 0.88) 0%, rgba(250, 236, 205, 0.8) 100%);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  border: 1px solid rgba(255, 240, 205, 0.7);
+  box-shadow: 0 24px 60px -18px rgba(60, 35, 5, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.6);
+  color: var(--login-ink);
+}
+
+.login-page .login-card label,
+.login-page .login-forgot-box {
+  color: var(--login-ink-soft);
+}
+
+.login-page .login-card .form-input {
+  background: rgba(255, 253, 247, 0.85);
+  border-color: var(--login-line);
+  color: var(--login-ink);
+  padding: 9px 12px;
+  font-size: 0.85rem;
+}
+
+.login-page .login-card .form-input:focus {
+  border-color: #c98a2e;
+  box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.18);
+}
+
+.login-page .login-card .btn-primary {
+  background: linear-gradient(135deg, #3f8a22, #5aa832);
+  box-shadow: 0 6px 18px rgba(76, 154, 42, 0.35);
+}
+
+.login-page .login-card .btn-primary:hover {
+  background: linear-gradient(135deg, #357a1c, #4c9a2a);
+}
+
+.login-page .login-card .alert-box:not(.error) {
+  background: rgba(217, 130, 43, 0.12);
+  color: var(--login-ink);
+  border: 1px solid rgba(217, 130, 43, 0.3);
+}
+
+.login-page .login-forgot-link {
+  color: var(--login-ink-soft);
 }
 
 .login-brand {
   display: flex;
   justify-content: center;
   margin-bottom: 6px;
+}
+
+@media (max-width: 760px) {
+  .login-page { justify-content: center; }
+  .login-column { margin-left: 0; }
+  .login-backdrop-photo { background-position: 70% center; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .login-backdrop-photo,
+  .login-backdrop-sun,
+  .login-column { animation: none; }
 }
 
 .auth-loading {

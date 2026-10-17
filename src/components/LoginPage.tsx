@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { LogIn, AlertCircle } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
+import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
@@ -36,82 +37,85 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
 
   return (
     <div className="login-page">
-      <form className="login-card glass-card" onSubmit={submit}>
-        <div className="login-brand">
-          <TerisLogo variant="vertical" />
-        </div>
-
-        {notice && !error && <div className="alert-box">{notice}</div>}
-        {error && (
-          <div className="alert-box error">
-            <AlertCircle size={16} />
-            <span>{error}</span>
+      <LoginBackdrop />
+      <div className="login-column">
+        <form className="login-card glass-card" onSubmit={submit}>
+          <div className="login-brand">
+            <TerisLogo variant="vertical" />
           </div>
-        )}
 
-        <div className="form-group">
-          <label htmlFor="login-username">Kasutajanimi</label>
-          <input
-            id="login-username"
-            className="form-input"
-            autoComplete="username"
-            autoFocus
-            required
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
-        </div>
-        <div className="form-group">
-          <label htmlFor="login-password">Parool</label>
-          <input
-            id="login-password"
-            type="password"
-            className="form-input"
-            autoComplete="current-password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-        <button type="submit" className="btn btn-primary btn-full" disabled={busy}>
-          <LogIn size={16} />
-          <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
-        </button>
-        <button type="button" className="login-forgot-link" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
-          Unustasid parooli?
-        </button>
-        {forgotOpen && (
-          <div className="login-forgot-box">
-            {forgotSent ? (
-              <div className="alert-box">Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
-            ) : (
-              <>
-                <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
-                <div className="login-forgot-row">
-                  <input id="forgot-login" className="form-input" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
-                  <button
-                    type="button"
-                    className="btn btn-secondary"
-                    disabled={!forgotLogin.trim()}
-                    onClick={async () => {
-                      setError(null);
-                      try {
-                        await api.forgotPassword(forgotLogin.trim());
-                        setForgotSent(true);
-                      } catch (err) {
-                        setError(err instanceof Error ? err.message : 'Päring ebaõnnestus');
-                      }
-                    }}
-                  >
-                    Saada link
-                  </button>
-                </div>
-              </>
-            )}
+          {notice && !error && <div className="alert-box">{notice}</div>}
+          {error && (
+            <div className="alert-box error">
+              <AlertCircle size={16} />
+              <span>{error}</span>
+            </div>
+          )}
+
+          <div className="form-group">
+            <label htmlFor="login-username">Kasutajanimi</label>
+            <input
+              id="login-username"
+              className="form-input"
+              autoComplete="username"
+              autoFocus
+              required
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+            />
           </div>
-        )}
-      </form>
-      <p className="login-copyright">{COPYRIGHT_TEXT}</p>
+          <div className="form-group">
+            <label htmlFor="login-password">Parool</label>
+            <input
+              id="login-password"
+              type="password"
+              className="form-input"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+            />
+          </div>
+          <button type="submit" className="btn btn-primary btn-full" disabled={busy}>
+            <LogIn size={16} />
+            <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
+          </button>
+          <button type="button" className="login-forgot-link" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
+            Unustasid parooli?
+          </button>
+          {forgotOpen && (
+            <div className="login-forgot-box">
+              {forgotSent ? (
+                <div className="alert-box">Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
+              ) : (
+                <>
+                  <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
+                  <div className="login-forgot-row">
+                    <input id="forgot-login" className="form-input" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      disabled={!forgotLogin.trim()}
+                      onClick={async () => {
+                        setError(null);
+                        try {
+                          await api.forgotPassword(forgotLogin.trim());
+                          setForgotSent(true);
+                        } catch (err) {
+                          setError(err instanceof Error ? err.message : 'Päring ebaõnnestus');
+                        }
+                      }}
+                    >
+                      Saada link
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </form>
+        <p className="login-copyright">{COPYRIGHT_TEXT}</p>
+      </div>
     </div>
   );
 };
