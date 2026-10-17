@@ -42,3 +42,21 @@
 .admin-template-add select { max-width: 320px; }
 .alert-box.success { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: rgba(16, 185, 129, 0.4); }
 .alert-box.info { background: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.35); }
+.admin-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }
+.admin-card-head h2 { margin: 0; }
+.admin-badge.neutral { background: rgba(100, 116, 139, 0.15); color: var(--text-secondary); }
+.admin-split { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.admin-field { display: flex; flex-direction: column; gap: 8px; }
+.admin-field-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 700; color: var(--text-secondary); }
+.admin-field-value { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin-top: 4px; }
+.admin-hint { font-size: 0.8rem; line-height: 1.45; color: var(--text-muted); margin: 6px 0 0; }
+.admin-support-link { margin-top: 14px; }
+.admin-license-grid { display: grid; grid-template-columns: minmax(180px, 240px) 1fr; gap: 16px 32px; align-items: start; }
+.admin-license-grid .admin-checks { min-height: 42px; align-items: center; }
+@media (max-width: 640px) { .admin-license-grid { grid-template-columns: 1fr; } }
+.admin-card-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-card); }
+.admin-date { position: relative; display: flex; align-items: center; }
+.admin-date .form-input { padding-right: 40px; width: 100%; }
+.admin-date-btn { position: absolute; right: 6px; display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.admin-date-btn:hover { background: rgba(127, 127, 127, 0.12); color: var(--text-primary); }
+.admin-date-picker { position: absolute; right: 6px; bottom: 0; width: 30px; height: 1px; opacity: 0; pointer-events: none; border: 0; padding: 0; }

@@ -5,6 +5,7 @@ import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
+import { EtDateInput } from './EtDateInput.tsx';
 
 export function TenantDetail({ id, initialNotice, onBack }: { id: string; initialNotice?: string; onBack: () => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -120,36 +121,48 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
           </div>
 
           <div className="glass-card admin-card">
-            <h2>Kasutajatugi</h2>
+            <div className="admin-card-head">
+              <h2>Kasutajatugi</h2>
+              <span className={`admin-badge ${tenant.supportGrant ? 'ok' : 'neutral'}`}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</span>
+            </div>
             {tenant.supportGrant ? (
-              <>
-                <p>Kasutajatugi: ligipääs kehtib kuni {formatTallinn(tenant.supportGrant.validUntil)}</p>
+              <div className="admin-split">
+                <div>
+                  <div className="admin-field-label">Ligipääs kehtib kuni</div>
+                  <div className="admin-field-value">{formatTallinn(tenant.supportGrant.validUntil)}</div>
+                  <div className="admin-hint">Tugivaade avaneb uues aknas ainult lugemiseks. Iga sisenemine logitakse ettevõtte poolel.</div>
+                </div>
                 <div className="admin-actions">
                   <button type="button" className="btn btn-primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</button>
                 </div>
-                {supportUrl && (
-                  <p>
-                    <a href={supportUrl} target="_blank" rel="noopener noreferrer">Ava tugivaade</a>
-                    <span className="admin-muted"> — Link kehtib 60 sekundit</span>
-                  </p>
-                )}
-              </>
+              </div>
             ) : (
-              <p className="admin-muted">Ettevõte pole kasutajatoele ligipääsu andnud.</p>
+              <p className="admin-hint">Ettevõte pole kasutajatoele ligipääsu andnud. Luba antakse ettevõtte admini poolt teris.ee-s (Kasutajad → Kasutajatoe ligipääs).</p>
+            )}
+            {supportUrl && (
+              <div className="alert-box info admin-support-link">
+                <a href={supportUrl} target="_blank" rel="noopener noreferrer">Ava tugivaade</a>
+                <span> — brauser blokeeris uue akna. Link kehtib 60 sekundit.</span>
+              </div>
             )}
           </div>
 
-          <form className="glass-card admin-card admin-form" onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
-            <h2>Litsents</h2>
-            <div className="form-group">
-              <label htmlFor="td-until">Kehtib kuni</label>
-              <input id="td-until" className="form-input" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} required style={{ maxWidth: 220 }} />
+          <form className="glass-card admin-card" onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
+            <div className="admin-card-head">
+              <h2>Litsents</h2>
+              <LicenseCell license={tenant.license} />
             </div>
-            <div className="form-group">
-              <span>Moodulid</span>
-              <ModuleChecks value={modules} onChange={setModules} />
+            <div className="admin-license-grid">
+              <div className="admin-field">
+                <label className="admin-field-label" htmlFor="td-until">Kehtib kuni</label>
+                <EtDateInput id="td-until" value={validUntil} onChange={setValidUntil} required />
+              </div>
+              <div className="admin-field">
+                <span className="admin-field-label">Moodulid</span>
+                <ModuleChecks value={modules} onChange={setModules} />
+              </div>
             </div>
-            <div className="admin-actions">
+            <div className="admin-card-foot">
               <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta litsents</button>
             </div>
           </form>

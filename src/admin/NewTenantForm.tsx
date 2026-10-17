@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { MODULES, platformApi, type LicenseModule } from './platformApi.ts';
+import { EtDateInput } from './EtDateInput.tsx';
 
 export function ModuleChecks({ value, onChange }: { value: LicenseModule[]; onChange: (v: LicenseModule[]) => void }) {
   return (
@@ -82,7 +83,7 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
         </div>
         <div className="form-group">
           <label htmlFor="nt-until">Litsents kuni *</label>
-          <input id="nt-until" className="form-input" type="date" value={validUntil} onChange={(e) => setValidUntil(e.target.value)} required />
+          <EtDateInput id="nt-until" value={validUntil} onChange={setValidUntil} required />
         </div>
       </div>
       <div className="form-group">
