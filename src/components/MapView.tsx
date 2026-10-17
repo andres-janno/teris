@@ -92,6 +92,11 @@ export const MapView: React.FC<MapViewProps> = ({
   satellitePanelHost
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  // Kaart on teiste vaadete ajal peidus (display: none, suurus 0×0). Peidetud kaardile Leaflet
+  // õiget vaadet arvutada ei saa — mahutamine/fookus jäetakse ootele ja tehakse nähtavaks muutumisel.
+  const isMapVisible = () => (mapContainerRef.current?.clientWidth ?? 0) > 0 && (mapContainerRef.current?.clientHeight ?? 0) > 0;
+  const pendingFitAllRef = useRef(false);
+  const pendingFocusRef = useRef<typeof focusedTarget>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
   // Layer refs
@@ -218,7 +223,9 @@ export const MapView: React.FC<MapViewProps> = ({
       pois
     });
 
-    if (initialBounds) {
+    if (initialBounds && !isMapVisible()) {
+      pendingFitAllRef.current = true;
+    } else if (initialBounds) {
       map.fitBounds(initialBounds, { padding: [25, 25], maxZoom: 18, animate: false });
       // Also ensure fitBounds after container layout settles
       setTimeout(() => {
@@ -759,6 +766,14 @@ export const MapView: React.FC<MapViewProps> = ({
   useEffect(() => {
     const map = mapInstanceRef.current;
     if (!map || !focusedTarget) return;
+    if (!isMapVisible()) {
+      pendingFocusRef.current = focusedTarget;
+      pendingFitAllRef.current = false; // hilisem fookus on tähtsam kui varasem „mahuta kõik“
+      return;
+    }
+    pendingFocusRef.current = null;
+    // Kaart võis just nähtavaks saada (nt põllu avamine registrist) — uuenda suurust enne liikumist
+    map.invalidateSize();
 
     if (focusedTarget.bounds) {
       map.fitBounds(focusedTarget.bounds, {
@@ -803,6 +818,13 @@ export const MapView: React.FC<MapViewProps> = ({
   const handleFitAllBounds = useCallback(() => {
     const map = mapInstanceRef.current;
     if (!map) return;
+    if (!isMapVisible()) {
+      pendingFitAllRef.current = true;
+      pendingFocusRef.current = null;
+      return;
+    }
+    pendingFitAllRef.current = false;
+    map.invalidateSize();
 
     const bounds = getVisibleElementsBounds(fitBoundsDataRef.current);
 
@@ -814,6 +836,29 @@ export const MapView: React.FC<MapViewProps> = ({
         duration: 0.8
       });
     }
+  }, []);
+
+  // Kaart muutus nähtavaks või muutis suurust: uuenda Leafleti suurust ja tee ootel mahutamine/fookus
+  useEffect(() => {
+    const el = mapContainerRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(() => {
+      const map = mapInstanceRef.current;
+      if (!map || !isMapVisible()) return;
+      map.invalidateSize();
+      const focus = pendingFocusRef.current;
+      if (focus) {
+        pendingFocusRef.current = null;
+        if (focus.bounds) map.fitBounds(focus.bounds, { padding: [35, 35], maxZoom: 18, animate: false });
+        else map.setView(focus.coords, focus.zoom || 16, { animate: false });
+      } else if (pendingFitAllRef.current) {
+        pendingFitAllRef.current = false;
+        const bounds = getVisibleElementsBounds(fitBoundsDataRef.current);
+        if (bounds) map.fitBounds(bounds, { padding: [25, 25], maxZoom: 18, animate: false });
+      }
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
   }, []);
 
   const prevFitBoundsTriggerRef = useRef<number>(0);
