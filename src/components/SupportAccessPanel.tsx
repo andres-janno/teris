@@ -11,7 +11,7 @@ const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '7d', label: '7 päeva' }
 ];
 
-export const SupportAccessPanel: React.FC = () => {
+export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly = false }) => {
   const [grants, setGrants] = useState<SupportGrant[]>([]);
   const [log, setLog] = useState<SupportAccessEntry[]>([]);
   const [error, setError] = useState<string | null>(null);
@@ -61,20 +61,22 @@ export const SupportAccessPanel: React.FC = () => {
       {active ? (
         <p style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
           <span>Ligipääs kehtib kuni {formatDateTimeTallinn(active.validUntil)}</span>
-          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
-            Tühista
-          </button>
+          {!readOnly && (
+            <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
+              Tühista
+            </button>
+          )}
         </p>
       ) : (
         <>
           <p>Kasutajatugi saab teie keskkonda vaadata ainult lugemiseks. Iga sisenemine logitakse siia.</p>
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          {!readOnly && <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {DURATIONS.map((d) => (
               <button key={d.value} type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>
                 {d.label}
               </button>
             ))}
-          </div>
+          </div>}
         </>
       )}
 

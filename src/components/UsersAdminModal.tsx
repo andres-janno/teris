@@ -12,6 +12,8 @@ interface UsersAdminModalProps {
   isOpen: boolean;
   onClose: () => void;
   currentUserId: string;
+  /** Tugivaade: ainult lugemine, muutvad toimingud peidetud. */
+  readOnly?: boolean;
 }
 
 type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; user: AdminUser } | { kind: 'reset'; user: AdminUser };
@@ -19,7 +21,7 @@ type Mode = { kind: 'list' } | { kind: 'add' } | { kind: 'edit'; user: AdminUser
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 
-export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClose, currentUserId }) => {
+export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClose, currentUserId, readOnly = false }) => {
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [mode, setMode] = useState<Mode>({ kind: 'list' });
   const [error, setError] = useState<string | null>(null);
@@ -155,10 +157,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             <h3>Kasutajad</h3>
           </div>
           <div className="users-admin-header-actions">
-            <button type="button" className="btn btn-primary btn-sm" onClick={() => openForm({ kind: 'add' })}>
-              <UserPlus size={15} />
-              <span>Lisa kasutaja</span>
-            </button>
+            {!readOnly && (
+              <button type="button" className="btn btn-primary btn-sm" onClick={() => openForm({ kind: 'add' })}>
+                <UserPlus size={15} />
+                <span>Lisa kasutaja</span>
+              </button>
+            )}
             <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge">
               <X size={20} />
             </button>
@@ -229,10 +233,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       <td className="users-admin-date">{formatDateTime(u.lastSeenAt ?? u.lastLoginAt)}</td>
                       <td className="users-admin-actions-cell">
                         <div className="users-admin-actions">
+                          {!readOnly && (
                           <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
                             <Pencil size={15} />
                           </button>
-                          {!self && (
+                          )}
+                          {!readOnly && !self && (
                             <>
                               {u.email && u.isActive && (
                                 <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
@@ -259,7 +265,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             </table>
           </div>
 
-          <SupportAccessPanel />
+          <SupportAccessPanel readOnly={readOnly} />
         </div>
 
         <div className="modal-footer">

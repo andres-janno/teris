@@ -1961,7 +1961,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
       <DeferredMount when={isUsersAdminOpen}>
-        <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} />
+        <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} readOnly={!!user.supportView} />
       </DeferredMount>
     </div>
   );
