@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
+import { SupportAccessPanel } from './SupportAccessPanel';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -257,6 +258,8 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
               </tbody>
             </table>
           </div>
+
+          <SupportAccessPanel />
         </div>
 
         <div className="modal-footer">

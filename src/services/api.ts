@@ -7,7 +7,7 @@ import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
-import type { AuthUser, AdminUser } from '../types/auth';
+import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -153,6 +153,34 @@ export const api = {
       body: JSON.stringify({ token, password })
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Parooli määramine ebaõnnestus'));
+    return res.json();
+  },
+
+  async listSupportGrants(): Promise<SupportGrant[]> {
+    const res = await apiFetch('/api/support-grants');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Kasutajatoe lubade laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async createSupportGrant(duration: '1h' | '24h' | '7d'): Promise<SupportGrant> {
+    const res = await apiFetch('/api/support-grants', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ duration })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ligipääsu andmine ebaõnnestus'));
+    return res.json();
+  },
+
+  async revokeSupportGrant(id: string): Promise<SupportGrant> {
+    const res = await apiFetch(`/api/support-grants/${encodeURIComponent(id)}/revoke`, { method: 'POST' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ligipääsu tühistamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async listSupportAccessLog(): Promise<SupportAccessEntry[]> {
+    const res = await apiFetch('/api/support-access-log');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sisenemiste logi laadimine ebaõnnestus'));
     return res.json();
   },
 

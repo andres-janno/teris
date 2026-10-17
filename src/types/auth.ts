@@ -33,3 +33,20 @@ export interface AdminUser {
   lastSeenAt?: string | null;
   createdAt: string;
 }
+
+/** Ettevõtte admini antud kasutajatoe ligipääsu luba. */
+export interface SupportGrant {
+  id: string;
+  validUntil: string;
+  revokedAt: string | null;
+  createdAt: string;
+  grantedBy: { username: string; displayName: string | null };
+  active: boolean;
+}
+
+/** Kasutajatoe sisenemise kirje. */
+export interface SupportAccessEntry {
+  startedAt: string;
+  platformUsername: string;
+  grantId: string;
+}

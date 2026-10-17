@@ -36,6 +36,19 @@ export const formatDateTime = (iso?: string | null): string => {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
+/** ISO aeg → '15.08.2026 14:05' Eesti ajas (Europe/Tallinn), sõltumata brauseri ajavööndist. */
+export const formatDateTimeTallinn = (iso?: string | null): string => {
+  if (!iso) return '–';
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return iso;
+  const parts = new Intl.DateTimeFormat('et-EE', {
+    timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit', day: '2-digit',
+    hour: '2-digit', minute: '2-digit', hourCycle: 'h23'
+  }).formatToParts(d);
+  const g = (t: string) => parts.find((p) => p.type === t)?.value ?? '';
+  return `${g('day')}.${g('month')}.${g('year')} ${g('hour')}:${g('minute')}`;
+};
+
 /**
  * Kasutaja sisestatud eesti kuupäev → ISO 'YYYY-MM-DD'.
  * Lubab '5.9.2026', '05.09.2026', '5/9/2026', '5-9-2026' ja '05092026'.
