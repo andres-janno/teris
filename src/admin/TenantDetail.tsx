@@ -9,6 +9,7 @@ import { formatHa, formatTallinn } from './format.ts';
 export function TenantDetail({ id, initialNotice, onBack }: { id: string; initialNotice?: string; onBack: () => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
   const [error, setError] = useState('');
+  const [supportUrl, setSupportUrl] = useState<string | null>(null);
   const [notice, setNotice] = useState(initialNotice ?? '');
   const [busy, setBusy] = useState(false);
   const [validUntil, setValidUntil] = useState('');
@@ -69,11 +70,25 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
       return r.inviteSent ? `Kutse saadeti uuesti kasutajale ${username}.` : 'Kutset ei õnnestunud saata.';
     });
 
-  const openSupport = () =>
-    run(async () => {
-      const { url } = await platformApi.openSupportSession(id);
-      window.open(url, '_blank', 'noopener');
+  const openSupport = () => {
+    // Aken avatakse klõpsu käigus sünkroonselt (enne päringut), muidu blokeerib brauser hüpikakna.
+    const w = window.open('', '_blank');
+    setSupportUrl(null);
+    void run(async () => {
+      try {
+        const { url } = await platformApi.openSupportSession(id);
+        if (w) {
+          w.opener = null;
+          w.location.href = url;
+        } else {
+          setSupportUrl(url);
+        }
+      } catch (err) {
+        w?.close();
+        throw err;
+      }
     });
+  };
 
   return (
     <div>
@@ -112,6 +127,12 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
                 <div className="admin-actions">
                   <button type="button" className="btn btn-primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</button>
                 </div>
+                {supportUrl && (
+                  <p>
+                    <a href={supportUrl} target="_blank" rel="noopener noreferrer">Ava tugivaade</a>
+                    <span className="admin-muted"> — Link kehtib 60 sekundit</span>
+                  </p>
+                )}
               </>
             ) : (
               <p className="admin-muted">Ettevõte pole kasutajatoele ligipääsu andnud.</p>
