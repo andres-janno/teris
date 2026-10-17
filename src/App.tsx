@@ -150,7 +150,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   }, []);
 
   // Kihtide nähtavus. Lehe avamisel on alati sees ainult Põllud (kaart mahutatakse neile);
-  // brauseri mälust taastatakse ainult aluskaardi valik.
+  // brauseri mälust taastatakse aluskaardi valik ning põllu- ja massiivinumbrite valik.
   const DEFAULT_VISIBILITY: LayerVisibility = {
     baseMap: 'maaamet-pohikaart',
     cadastre: false,
@@ -159,6 +159,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     cultivation: false,
     poi: false,
     fieldLabels: false,
+    blockLabels: false,
     swathTrails: true,
     soilSamples: false,
     weatherRadar: false,
@@ -168,9 +169,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     const saved = localStorage.getItem('agrimap_visibility');
     if (!saved) return DEFAULT_VISIBILITY;
     try {
-      const savedBaseMap = (JSON.parse(saved) as Partial<LayerVisibility>).baseMap;
-      // Varem salvestatud, nüüdseks eemaldatud aluskaart (hübriid, hallkaart, OSM) → põhikaart.
-      return savedBaseMap && savedBaseMap in BASE_MAPS ? { ...DEFAULT_VISIBILITY, baseMap: savedBaseMap } : DEFAULT_VISIBILITY;
+      const parsed = JSON.parse(saved) as Partial<LayerVisibility>;
+      const savedBaseMap = parsed.baseMap;
+      return {
+        ...DEFAULT_VISIBILITY,
+        // Varem salvestatud, nüüdseks eemaldatud aluskaart (hübriid, hallkaart, OSM) → põhikaart.
+        baseMap: savedBaseMap && savedBaseMap in BASE_MAPS ? savedBaseMap : DEFAULT_VISIBILITY.baseMap,
+        fieldLabels: parsed.fieldLabels === true,
+        blockLabels: parsed.blockLabels === true
+      };
     } catch {
       return DEFAULT_VISIBILITY;
     }
@@ -1208,6 +1215,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         vehicles: false,
         cultivation: false,
         fieldLabels: false,
+        blockLabels: false,
         swathTrails: false,
         soilSamples: false,
         weatherRadar: false,

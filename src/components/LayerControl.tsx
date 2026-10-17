@@ -157,6 +157,27 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     {visibility.fields ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
+
+                {visibility.fields && (
+                  <div className="layer-sub-options">
+                    <label className="soil-metric-radio-item">
+                      <input
+                        type="checkbox"
+                        checked={visibility.fieldLabels}
+                        onChange={() => onToggleLayer('fieldLabels')}
+                      />
+                      <span>Põllunumbrid</span>
+                    </label>
+                    <label className="soil-metric-radio-item">
+                      <input
+                        type="checkbox"
+                        checked={visibility.blockLabels}
+                        onChange={() => onToggleLayer('blockLabels')}
+                      />
+                      <span>Massiivi numbrid</span>
+                    </label>
+                  </div>
+                )}
               </div>
 
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}

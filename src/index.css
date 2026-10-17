@@ -3826,6 +3826,38 @@ input[type="number"],
   display: none !important;
 }
 
+/* Põllunumbrid kaardil (Põllud → Põllunumbrid): number põllu sisemises keskpunktis */
+.field-number-label {
+  background: none;
+  border: none;
+}
+
+.field-number-label span {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  white-space: nowrap;
+  font-size: 0.8rem;
+  font-weight: 800;
+  line-height: 1;
+  color: #0f172a;
+  text-shadow: 0 0 3px #fff, 0 0 3px #fff, 0 0 2px #fff;
+  pointer-events: none;
+}
+
+.block-number-label span {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #7c2d12;
+}
+
+.block-number-label.with-field-number span {
+  transform: translate(-50%, 55%);
+}
+
+.field-numbers-hidden .field-number-label {
+  display: none;
+}
+
 .field-map-label strong {
   font-size: 0.76rem;
   display: block;

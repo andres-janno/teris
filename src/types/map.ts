@@ -22,7 +22,8 @@ export interface LayerVisibility {
   vehicles: boolean;        // Masinapark / tehnika
   cultivation: boolean;     // Põllutööd: masinate rajad ja haritud ala (telemeetria)
   poi: boolean;             // Muud asukohad (kuivati, vesi jne)
-  fieldLabels: boolean;     // Põldude nimed/numbrid kaardil
+  fieldLabels: boolean;     // Põllunumbrid põllu keskel (Põllud → Põllunumbrid)
+  blockLabels: boolean;     // Massiivi numbrid massiivi keskel (Põllud → Massiivi numbrid)
   swathTrails: boolean;     // Töötrajektoori joonekesed
   soilSamples: boolean;     // Mullaproovide punktid
   weatherRadar: boolean;    // Sajuradar (Keskkonnaagentuur, KAIA)

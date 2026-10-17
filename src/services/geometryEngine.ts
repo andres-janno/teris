@@ -306,3 +306,122 @@ export function getGeometryAreaHa(geometry?: Polygon | MultiPolygon | null): num
 }
 
 
+
+/**
+ * Põllu sildi asukoht [lat, lng]: suurima osapolügooni ligipääsmatuse poolus (polylabel) —
+ * punkt, mis on servadest kõige kaugemal, nii et number jääb ka L- ja U-kujulisel põllul põllu sisse.
+ * Pikkuskraadid skaleeritakse cos(laiuskraad) järgi, et kaugused oleks ligikaudu meetrilised.
+ */
+export function getGeometryLabelPoint(geometry?: Polygon | MultiPolygon | null): [number, number] | null {
+  if (!geometry || !geometry.coordinates?.length) return null;
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  let best: Position[][] | null = null;
+  let bestArea = -1;
+  for (const poly of polygons) {
+    if (!poly[0]?.length) continue;
+    const area = Math.abs(ringSignedArea(poly[0]));
+    if (area > bestArea) { bestArea = area; best = poly; }
+  }
+  if (!best) return null;
+
+  const k = Math.cos((best[0][0][1] * Math.PI) / 180) || 1;
+  const rings = best.map((ring) => ring.map(([lng, lat]) => [lng * k, lat] as [number, number]));
+  const [x, y] = polylabel(rings, 1e-6);
+  return [y, x / k];
+}
+
+/**
+ * Massiivi sildi asukoht [lat, lng]: massiivi põldude ühend ja selle suurima osa ligipääsmatuse poolus.
+ * Kui ühendamine ebaõnnestub, kasutatakse kõiki osapolügoone koos (suurim neist).
+ */
+export function getGeometriesLabelPoint(geometries: (Polygon | MultiPolygon)[]): [number, number] | null {
+  const valid = geometries.filter((g) => g?.coordinates?.length);
+  if (!valid.length) return null;
+  if (valid.length > 1) {
+    try {
+      const merged = turf.union(turf.featureCollection(valid.map((g) => turf.feature(g))));
+      if (merged) return getGeometryLabelPoint(merged.geometry);
+    } catch {
+      // vigane geomeetria — allpool ilma ühendamiseta
+    }
+  }
+  const all: Position[][][] = valid.flatMap((g) => (g.type === 'Polygon' ? [g.coordinates] : g.coordinates));
+  return getGeometryLabelPoint({ type: 'MultiPolygon', coordinates: all });
+}
+
+function ringSignedArea(ring: Position[]): number {
+  let sum = 0;
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    sum += (ring[j][0] - ring[i][0]) * (ring[j][1] + ring[i][1]);
+  }
+  return sum / 2;
+}
+
+// Punkti märgiga kaugus polügooni servast (positiivne sees, negatiivne väljas)
+function pointToPolygonDist(x: number, y: number, rings: [number, number][][]): number {
+  let inside = false;
+  let minSq = Infinity;
+  for (const ring of rings) {
+    for (let i = 0, len = ring.length, j = len - 1; i < len; j = i++) {
+      const [ax, ay] = ring[i];
+      const [bx, by] = ring[j];
+      if ((ay > y) !== (by > y) && x < ((bx - ax) * (y - ay)) / (by - ay) + ax) inside = !inside;
+      let px = bx, py = by, dx = ax - bx, dy = ay - by;
+      if (dx !== 0 || dy !== 0) {
+        const t = ((x - bx) * dx + (y - by) * dy) / (dx * dx + dy * dy);
+        if (t > 1) { px = ax; py = ay; } else if (t > 0) { px += dx * t; py += dy * t; }
+      }
+      dx = x - px; dy = y - py;
+      minSq = Math.min(minSq, dx * dx + dy * dy);
+    }
+  }
+  return (inside ? 1 : -1) * Math.sqrt(minSq);
+}
+
+// Mapboxi polylabel-algoritm (ruutvõrgu jagamine, parim-esimesena otsing)
+function polylabel(rings: [number, number][][], precision: number): [number, number] {
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const [x, y] of rings[0]) {
+    minX = Math.min(minX, x); minY = Math.min(minY, y);
+    maxX = Math.max(maxX, x); maxY = Math.max(maxY, y);
+  }
+  const width = maxX - minX, height = maxY - minY;
+  const cellSize = Math.min(width, height);
+  if (cellSize === 0) return [minX, minY];
+
+  type Cell = { x: number; y: number; h: number; d: number; max: number };
+  const cell = (x: number, y: number, h: number): Cell => {
+    const d = pointToPolygonDist(x, y, rings);
+    return { x, y, h, d, max: d + h * Math.SQRT2 };
+  };
+
+  // Raskuskese algkandidaadiks
+  let area = 0, cx = 0, cy = 0;
+  const outer = rings[0];
+  for (let i = 0, len = outer.length, j = len - 1; i < len; j = i++) {
+    const [ax, ay] = outer[i], [bx, by] = outer[j];
+    const f = ax * by - bx * ay;
+    cx += (ax + bx) * f; cy += (ay + by) * f; area += f * 3;
+  }
+  let best = area !== 0 ? cell(cx / area, cy / area, 0) : cell(outer[0][0], outer[0][1], 0);
+  const bbox = cell(minX + width / 2, minY + height / 2, 0);
+  if (bbox.d > best.d) best = bbox;
+
+  const queue: Cell[] = [];
+  const h = cellSize / 2;
+  for (let x = minX; x < maxX; x += cellSize) {
+    for (let y = minY; y < maxY; y += cellSize) queue.push(cell(x + h, y + h, h));
+  }
+
+  let guard = 0;
+  while (queue.length && guard++ < 10000) {
+    let idx = 0;
+    for (let i = 1; i < queue.length; i++) if (queue[i].max > queue[idx].max) idx = i;
+    const c = queue.splice(idx, 1)[0];
+    if (c.d > best.d) best = c;
+    if (c.max - best.d <= precision) continue;
+    const ch = c.h / 2;
+    queue.push(cell(c.x - ch, c.y - ch, ch), cell(c.x + ch, c.y - ch, ch), cell(c.x - ch, c.y + ch, ch), cell(c.x + ch, c.y + ch, ch));
+  }
+  return [best.x, best.y];
+}

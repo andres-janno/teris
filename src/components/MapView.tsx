@@ -13,7 +13,7 @@ import { getSoilMetricColor, getSoilMetricValue, SOIL_METRIC_CONFIG } from '../t
 import { BASE_MAPS, MAAAMET_CADASTRE_WMS } from '../services/maaAmetLayers';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { createVehicleIcon, createPoiIcon, isVehicleRecentlyActive } from './MapMarkers';
-import { getVisibleElementsBounds, getBoundingBox } from '../services/geometryEngine';
+import { getVisibleElementsBounds, getBoundingBox, getGeometryLabelPoint, getGeometriesLabelPoint } from '../services/geometryEngine';
 import { getCropColor } from '../services/cropColors';
 import { formatTimeAgo } from '../services/dateFormat';
 import { api } from '../services/api';
@@ -30,6 +30,11 @@ const AUTO_FIT_LAYERS = ['fields', 'cultivation', 'soilSamples', 'vehicles', 'po
 const ESTONIA_BOUNDS = L.latLngBounds([57.5, 21.7], [59.75, 28.25]);
 
 const SATELLITE_LOAD_TIMEOUT_MS = 10_000;
+// Põllu- ja massiivinumbreid näidatakse alates sellest suurendusest (väiksemal kattuksid need üksteisega)
+const FIELD_NUMBER_MIN_ZOOM = 12;
+
+const escapeHtml = (text: string) =>
+  text.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!);
 
 interface MapViewProps {
   visibility: LayerVisibility;
@@ -103,6 +108,7 @@ export const MapView: React.FC<MapViewProps> = ({
   const baseMapLayerRef = useRef<L.TileLayer | null>(null);
   const cadastreLayerRef = useRef<L.TileLayer.WMS | null>(null);
   const fieldsLayerGroupRef = useRef<L.GeoJSON | null>(null);
+  const fieldNumbersLayerRef = useRef<L.LayerGroup | null>(null);
   const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const vehicleTracksLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -358,7 +364,7 @@ export const MapView: React.FC<MapViewProps> = ({
         const props = feature.properties;
         const cropColor = getFillColor(feature);
 
-        // Tooltip label on field: permanent only if fieldLabels layer is explicitly turned on
+        // Hõljumisel põllu andmed (põllunumbrid kuvatakse eraldi kihina)
         layer.bindTooltip(`
           <div class="field-map-label">
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 2px;">
@@ -376,9 +382,8 @@ export const MapView: React.FC<MapViewProps> = ({
             })() : ''}
           </div>
         `, {
-          permanent: !!visibility.fieldLabels,
-          sticky: !visibility.fieldLabels,
-          direction: visibility.fieldLabels ? 'center' : 'auto',
+          sticky: true,
+          direction: 'auto',
           className: 'custom-field-tooltip'
         });
 
@@ -406,7 +411,66 @@ export const MapView: React.FC<MapViewProps> = ({
 
     geoJsonLayer.addTo(map);
     fieldsLayerGroupRef.current = geoJsonLayer;
-  }, [fields, visibility.fields, visibility.fieldLabels, visibility.soilSamples, visibility.satellite, selectedField, selectedCropFilter, latestByFieldCode, getFieldMetricAverage, soilMetric]);
+  }, [fields, visibility.fields, visibility.soilSamples, visibility.satellite, selectedField, selectedCropFilter, latestByFieldCode, getFieldMetricAverage, soilMetric]);
+
+  // 3b. Põllu- ja massiivinumbrid (Põllud → Põllunumbrid / Massiivi numbrid). Väikse suurenduse korral peidus.
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map) return;
+
+    if (fieldNumbersLayerRef.current) {
+      map.removeLayer(fieldNumbersLayerRef.current);
+      fieldNumbersLayerRef.current = null;
+    }
+    const showFieldNums = visibility.fieldLabels;
+    const showBlockNums = visibility.blockLabels;
+    if (!visibility.fields || (!showFieldNums && !showBlockNums) || !fields?.features.length) return;
+
+    const group = L.layerGroup();
+    const addLabel = (point: [number, number], text: string, className: string) =>
+      L.marker(point, {
+        icon: L.divIcon({ className, html: `<span>${escapeHtml(text)}</span>`, iconSize: [0, 0] }),
+        interactive: false,
+        keyboard: false
+      }).addTo(group);
+
+    if (showFieldNums) {
+      for (const feature of fields.features) {
+        const num = feature.properties.num;
+        const point = num ? getGeometryLabelPoint(feature.geometry) : null;
+        if (point) addLabel(point, String(num), 'field-number-label');
+      }
+    }
+
+    if (showBlockNums) {
+      const byBlock = new Map<string, FieldFeature['geometry'][]>();
+      for (const feature of fields.features) {
+        const code = feature.properties.fieldCode;
+        if (!code) continue;
+        const list = byBlock.get(code);
+        if (list) list.push(feature.geometry);
+        else byBlock.set(code, [feature.geometry]);
+      }
+      // Kui ka põllunumbrid on sees, nihutatakse massiivi number veidi allapoole, et need ei kattuks
+      const className = `field-number-label block-number-label${showFieldNums ? ' with-field-number' : ''}`;
+      for (const [code, geometries] of byBlock) {
+        const point = getGeometriesLabelPoint(geometries);
+        if (point) addLabel(point, code, className);
+      }
+    }
+
+    group.addTo(map);
+    fieldNumbersLayerRef.current = group;
+
+    const container = map.getContainer();
+    const syncZoom = () => container.classList.toggle('field-numbers-hidden', map.getZoom() < FIELD_NUMBER_MIN_ZOOM);
+    syncZoom();
+    map.on('zoomend', syncZoom);
+    return () => {
+      map.off('zoomend', syncZoom);
+      container.classList.remove('field-numbers-hidden');
+    };
+  }, [fields, visibility.fields, visibility.fieldLabels, visibility.blockLabels]);
 
   // 4. Render Machinery / Vehicles Layer (Respects vehicleFilter: active vs all)
   const displayedVehicles = React.useMemo(() => {
