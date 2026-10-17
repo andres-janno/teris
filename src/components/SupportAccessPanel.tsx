@@ -45,11 +45,15 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
   const active = grants.find((g) => g.active) ?? null;
 
   return (
-    <section className="support-access-panel" style={{ marginTop: 24 }}>
-      <h4 style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-        <LifeBuoy size={18} />
-        <span>Kasutajatoe ligipääs</span>
-      </h4>
+    <section className="support-panel">
+      <div className="support-panel-head">
+        <span className="support-panel-icon"><LifeBuoy size={18} /></span>
+        <div className="support-panel-titles">
+          <h4 className="support-panel-title">Kasutajatoe ligipääs</h4>
+          <p className="support-panel-desc">Kasutajatugi saab teie keskkonda vaadata ainult lugemiseks. Iga sisenemine logitakse.</p>
+        </div>
+        <span className={`support-panel-status${active ? ' is-active' : ''}`}>{active ? 'Lubatud' : 'Suletud'}</span>
+      </div>
 
       {error && (
         <div className="alert-box error">
@@ -59,35 +63,41 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
       )}
 
       {active ? (
-        <p style={{ display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-          <span>Ligipääs kehtib kuni {formatDateTimeTallinn(active.validUntil)}</span>
+        <div className="support-panel-row">
+          <span className="support-panel-until">Ligipääs kehtib kuni <strong>{formatDateTimeTallinn(active.validUntil)}</strong></span>
           {!readOnly && (
-            <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
+            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
               Tühista
             </button>
           )}
-        </p>
+        </div>
       ) : (
-        <>
-          <p>Kasutajatugi saab teie keskkonda vaadata ainult lugemiseks. Iga sisenemine logitakse siia.</p>
-          {!readOnly && <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-            {DURATIONS.map((d) => (
-              <button key={d.value} type="button" className="btn btn-primary btn-sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>
-                {d.label}
-              </button>
-            ))}
-          </div>}
-        </>
+        !readOnly && (
+          <div className="support-panel-row">
+            <span className="support-panel-label">Anna ligipääs:</span>
+            <div className="support-panel-actions">
+              {DURATIONS.map((d) => (
+                <button key={d.value} type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>
+                  {d.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {log.length > 0 && (
-        <ul style={{ marginTop: 16, paddingLeft: 18 }}>
-          {log.map((e, i) => (
-            <li key={`${e.grantId}-${e.startedAt}-${i}`}>
-              {formatDateTimeTallinn(e.startedAt)} — kasutajatugi ({e.platformUsername})
-            </li>
-          ))}
-        </ul>
+        <div className="support-panel-log">
+          <div className="section-title">Sisenemised</div>
+          <ul>
+            {log.map((e, i) => (
+              <li key={`${e.grantId}-${e.startedAt}-${i}`}>
+                <span>{formatDateTimeTallinn(e.startedAt)}</span>
+                <span className="support-panel-who">kasutajatugi ({e.platformUsername})</span>
+              </li>
+            ))}
+          </ul>
+        </div>
       )}
     </section>
   );
