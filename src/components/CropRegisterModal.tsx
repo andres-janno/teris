@@ -21,6 +21,7 @@ import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
+import { seasonSelectorYears } from '../types/season';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -126,17 +127,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     };
   }, [crops, cropAcreageMap]);
 
-  // Hooaegade valik: sama vahemik nagu Põldude registris
-  const availableYearsList = useMemo(() => {
-    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
-    const maxYear = activeYear + 3;
-    const minYear = activeYear - 4;
-    const set = new Set<number>();
-    for (let y = maxYear; y >= minYear; y--) set.add(y);
-    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) set.add(s.year); });
-    masterFields.forEach((mf) => mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) set.add(h.year); }));
-    return Array.from(set).sort((a, b) => a - b);
-  }, [seasons, masterFields]);
+  // Hooaegade valik: sama reegel nagu Põldude registris
+  const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
 
   const handleExportCsv = () => {
     const headers = ['ID', 'Kultuur', 'Ladinakeelne nimi', 'Grupp', 'PRIA kood', 'Talivili', 'Külvinorm (kg/ha)', 'Saagiootus (t/ha)', `Külvipind ${selectedYear} (ha)`, 'Sordid'];

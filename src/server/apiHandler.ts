@@ -16,6 +16,7 @@ import { isPlatformHost } from './platformHost.ts';
 import { handlePlatformRequest } from './platformApi.ts';
 import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdentifiers.ts';
 import { syncOwnership } from './deviceOwnership.ts';
+import { ensureSeasons } from './seasons.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -202,6 +203,16 @@ export interface ApiOptions {
   platformOnAnyHost?: boolean; // arendus: platvormi API ka muul hostil (localhost)
 }
 
+const toSeasonDto = (s: { id: number; year: number; name: string; isLocked: boolean; closedAt: Date | null; closedBy: string | null; notes: string | null }) => ({
+  id: s.id,
+  year: s.year,
+  name: s.name,
+  isLocked: s.isLocked,
+  closedAt: s.closedAt?.toISOString() ?? null,
+  closedBy: s.closedBy,
+  notes: s.notes
+});
+
 export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
   // Kirjete looja/muutja (createdBy/updatedBy) täidetakse selle päringu kasutaja järgi
   return runInRequestContext(() => routeApiRequest(req, res, options));
@@ -259,67 +270,29 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const dbSeasons = await prisma.season.findMany({
         orderBy: { year: 'desc' }
       });
-      const mapped = dbSeasons.map((s) => ({
-        id: s.id,
-        year: s.year,
-        name: s.name,
-        status: s.status.toLowerCase(),
-        isLocked: s.isLocked,
-        preparationStartDate: s.preparationStartDate?.toISOString().split('T')[0] ?? null,
-        seedingStartDate: s.seedingStartDate?.toISOString().split('T')[0] ?? null,
-        harvestStartDate: s.harvestStartDate?.toISOString().split('T')[0] ?? null,
-        harvestEndDate: s.harvestEndDate?.toISOString().split('T')[0] ?? null,
-        closedAt: s.closedAt?.toISOString().split('T')[0] ?? null,
-        closedBy: s.closedBy,
-        totalAreaHa: s.totalAreaHa,
-        fieldsCount: s.fieldsCount,
-        targetYieldTons: s.targetYieldTons,
-        actualYieldTons: s.actualYieldTons,
-        notes: s.notes
-      }));
-      return json(res, mapped);
+      return json(res, dbSeasons.map(toSeasonDto));
     }
 
     if (pathname === '/api/seasons' && method === 'POST') {
       const body = await parseBody(req);
-      const statusUpper = (body.status || 'planning').toUpperCase();
+      const year = Number(body.year);
+      if (!Number.isInteger(year) || year < 1990 || year > 2100) return json(res, { error: 'Vigane hooaja aasta' }, 400);
+      const name = typeof body.name === 'string' && body.name.trim() ? body.name.trim() : `Hooaeg ${year}`;
+      const notes = typeof body.notes === 'string' && body.notes.trim() ? body.notes : null;
+      const isLocked = Boolean(body.isLocked);
+      const existing = await prisma.season.findUnique({ where: { tenantId_year: { tenantId: requireTenantId(), year } } });
+      // Sulgemise aeg ja sulgeja pannakse serveris (lukustamisel), avamisel need eemaldatakse
+      const lockFields = isLocked
+        ? existing?.isLocked
+          ? {}
+          : { closedAt: new Date(), closedBy: sessionUserOf(req)?.username ?? null }
+        : { closedAt: null, closedBy: null };
       const saved = await prisma.season.upsert({
-        where: { tenantId_year: { tenantId: requireTenantId(), year: Number(body.year) } },
-        update: {
-          name: body.name,
-          status: statusUpper as any,
-          isLocked: Boolean(body.isLocked),
-          preparationStartDate: body.preparationStartDate ? new Date(body.preparationStartDate) : null,
-          seedingStartDate: body.seedingStartDate ? new Date(body.seedingStartDate) : null,
-          harvestStartDate: body.harvestStartDate ? new Date(body.harvestStartDate) : null,
-          harvestEndDate: body.harvestEndDate ? new Date(body.harvestEndDate) : null,
-          closedAt: body.closedAt ? new Date(body.closedAt) : null,
-          closedBy: body.closedBy ?? null,
-          totalAreaHa: body.totalAreaHa != null ? Number(body.totalAreaHa) : null,
-          fieldsCount: body.fieldsCount != null ? Number(body.fieldsCount) : null,
-          targetYieldTons: body.targetYieldTons != null ? Number(body.targetYieldTons) : null,
-          actualYieldTons: body.actualYieldTons != null ? Number(body.actualYieldTons) : null,
-          notes: body.notes ?? null
-        },
-        create: {
-          year: Number(body.year),
-          name: body.name,
-          status: statusUpper as any,
-          isLocked: Boolean(body.isLocked),
-          preparationStartDate: body.preparationStartDate ? new Date(body.preparationStartDate) : null,
-          seedingStartDate: body.seedingStartDate ? new Date(body.seedingStartDate) : null,
-          harvestStartDate: body.harvestStartDate ? new Date(body.harvestStartDate) : null,
-          harvestEndDate: body.harvestEndDate ? new Date(body.harvestEndDate) : null,
-          closedAt: body.closedAt ? new Date(body.closedAt) : null,
-          closedBy: body.closedBy ?? null,
-          totalAreaHa: body.totalAreaHa != null ? Number(body.totalAreaHa) : null,
-          fieldsCount: body.fieldsCount != null ? Number(body.fieldsCount) : null,
-          targetYieldTons: body.targetYieldTons != null ? Number(body.targetYieldTons) : null,
-          actualYieldTons: body.actualYieldTons != null ? Number(body.actualYieldTons) : null,
-          notes: body.notes ?? null
-        }
+        where: { tenantId_year: { tenantId: requireTenantId(), year } },
+        update: { name, notes, isLocked, ...lockFields },
+        create: { year, name, notes, isLocked, ...lockFields }
       });
-      return json(res, saved);
+      return json(res, toSeasonDto(saved));
     }
 
     // 3. Master Fields (Fields + FieldSeasons)
@@ -439,8 +412,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         if (item.history && Array.isArray(item.history)) {
           for (const h of item.history) {
             const statusUpper = (h.status || 'not_started').toUpperCase();
-            const season = await prisma.season.findUnique({ where: { tenantId_year: { tenantId: requireTenantId(), year: Number(h.year) } } });
-            const seasonId = season?.id ?? null;
+            // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
+            const seasonId = (await ensureSeasons([h.year])).get(Number(h.year)) ?? null;
             // Kultuuri muutus → põllutööde mall (vt fieldWorks.ts applyCropTemplate)
             const previousSeason = await prisma.fieldSeason.findUnique({
               where: { fieldId_year: { fieldId: upsertedField.id, year: Number(h.year) } },
@@ -1469,6 +1442,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const samples = await parseBody(req);
       const list = Array.isArray(samples) ? samples : [samples];
+      await ensureSeasons(list.map((x) => x?.year));
       let count = 0;
       for (const s of list) {
         await prisma.soilSample.upsert({
@@ -1528,6 +1502,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           let operations = 0;
           let products = 0;
           const skipped: { fieldCode: string; num: string; season: number }[] = [];
+          const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
 
           for (const f of fieldsIn) {
             const field = await tx.field.findFirst({
@@ -1541,6 +1516,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             if (!fieldSeason) {
               skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season });
               continue;
+            }
+            const seasonId = seasonIds.get(Number(f.season));
+            if (seasonId && fieldSeason.seasonId !== seasonId) {
+              await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: { seasonId } });
             }
 
             // Põlluraamatut rakenduses käsitsi ei muudeta — import asendab

@@ -34,6 +34,7 @@ import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
+import { seasonSelectorYears, activeSeasonYear } from './types/season';
 
 function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
   if (!dateStr) return null;
@@ -211,21 +212,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // 1. Põldude ja külvikorra master-register (andmebaasist)
   const [masterFields, setMasterFields] = useState<MasterField[]>([]);
 
-  // Dynamic available years list: activeYear + 3 to activeYear - 4
-  const availableYears = React.useMemo(() => {
-    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
-    const maxYear = activeYear + 3;
-    const minYear = activeYear - 4;
-    const yearSet = new Set<number>();
-    for (let y = maxYear; y >= minYear; y--) {
-      yearSet.add(y);
-    }
-    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) yearSet.add(s.year); });
-    masterFields.forEach((mf) => {
-      mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) yearSet.add(h.year); });
-    });
-    return Array.from(yearSet).sort((a, b) => a - b);
-  }, [seasons, masterFields]);
+  // Hooaja valik: vaikimisi hooaeg −4 … +3, ainult hooaegade tabelis olevad aastad
+  const availableYears = React.useMemo(() => seasonSelectorYears(seasons), [seasons]);
 
   // Serveri litsentsikeeld: üks teade korraga, mitte iga päringu kohta
   const licenseAlertOpenRef = useRef(false);
@@ -382,7 +370,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
           if (!isMounted) return;
           if (dbFields && dbFields.length > 0) setMasterFields(dbFields);
-          if (dbSeasons && dbSeasons.length > 0) setSeasons(dbSeasons);
+          if (dbSeasons && dbSeasons.length > 0) {
+            setSeasons(dbSeasons);
+            setSelectedYear(activeSeasonYear(dbSeasons));
+          }
           if (dbFleet) {
             if (dbFleet.vehicles?.length) setRawVehicles(dbFleet.vehicles);
             if (dbFleet.implements?.length) setImplementsList(dbFleet.implements);
@@ -1339,47 +1330,28 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     });
 
   // Season Management Handlers
-  const handleUpdateSeason = (updated: FarmingSeason) => {
-    setSeasons((prev) => prev.map((s) => s.year === updated.year ? updated : s));
-    api.saveSeason(updated).catch((err) => console.error('Error updating season in DB:', err));
+  // Import võib luua puuduva hooaja; sulgemise aja ja sulgeja paneb server — laeme hooajad uuesti.
+  const refreshSeasons = () =>
+    api.getSeasons().then(setSeasons).catch((err) => console.error('Hooaegade laadimine ebaõnnestus:', err));
+
+  const saveSeasonAndRefresh = (season: FarmingSeason) => {
+    setSeasons((prev) => prev.map((s) => (s.year === season.year ? season : s)));
+    api
+      .saveSeason(season)
+      .then(refreshSeasons)
+      .catch((err) => console.error('Hooaja salvestamine ebaõnnestus:', err));
   };
 
+  const handleUpdateSeason = (updated: FarmingSeason) => saveSeasonAndRefresh(updated);
+
   const handleCloseSeason = (year: number) => {
-    const today = new Date().toISOString().split('T')[0];
-    setSeasons((prev) =>
-      prev.map((s) => {
-        if (s.year === year) {
-          const updated: FarmingSeason = {
-            ...s,
-            status: 'closed',
-            isLocked: true,
-            harvestEndDate: s.harvestEndDate || today,
-            closedAt: today,
-            closedBy: 'Rein Janno'
-          };
-          api.saveSeason(updated).catch((err) => console.error('Error closing season in DB:', err));
-          return updated;
-        }
-        return s;
-      })
-    );
+    const s = seasons.find((x) => x.year === year);
+    if (s) saveSeasonAndRefresh({ ...s, isLocked: true });
   };
 
   const handleReopenSeason = (year: number) => {
-    setSeasons((prev) =>
-      prev.map((s) => {
-        if (s.year === year) {
-          const updated: FarmingSeason = {
-            ...s,
-            status: 'active',
-            isLocked: false
-          };
-          api.saveSeason(updated).catch((err) => console.error('Error reopening season in DB:', err));
-          return updated;
-        }
-        return s;
-      })
-    );
+    const s = seasons.find((x) => x.year === year);
+    if (s) saveSeasonAndRefresh({ ...s, isLocked: false, closedAt: null, closedBy: null });
   };
 
   const handleCreateSeason = (newSeason: FarmingSeason) => {
@@ -1388,7 +1360,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       return [newSeason, ...filtered].sort((a, b) => b.year - a.year);
     });
     handleAddNewSeasonToAll(newSeason.year);
-    api.saveSeason(newSeason).catch((err) => console.error('Error creating season in DB:', err));
+    api.saveSeason(newSeason).then(refreshSeasons).catch((err) => console.error('Error creating season in DB:', err));
   };
 
   // Kultuuri värv peab olema läbiv üle aastate — kasutame alati Kultuuride
@@ -1506,6 +1478,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       });
     }
 
+    void refreshSeasons();
     setIsUploadOpen(false);
     setSelectedYear(importYear);
 
@@ -1535,6 +1508,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       return Array.from(byKey.values());
     });
 
+    void refreshSeasons();
     setVisibility((prev) => ({ ...prev, soilSamples: true }));
     setIsSoilUploadOpen(false);
   };
@@ -1902,6 +1876,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onClose={() => setIsFieldBookUploadOpen(false)}
           onImported={() => {
             api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude uuendamine ebaõnnestus:', err));
+            void refreshSeasons();
           }}
           masterFields={masterFields}
           parties={parties}

@@ -20,7 +20,7 @@ import {
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import { isCropUndetermined } from '../types/season';
+import { isCropUndetermined, seasonSelectorYears } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -132,21 +132,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
   // Add new year season modal
 
-  // Dynamic available years (+3 forward and -4 history around active season).
-  // Kaugemaid tühje hooaegu (nt DB-s ette loodud, aga veel deklareerimata
-  // aastad) ei näidata, isegi kui need eksisteerivad.
-  const availableYearsList = useMemo(() => {
-    const activeYear = seasons.find((s) => s.status === 'active')?.year || 2026;
-    const maxYear = activeYear + 3;
-    const minYear = activeYear - 4;
-    const set = new Set<number>();
-    for (let y = maxYear; y >= minYear; y--) {
-      set.add(y);
-    }
-    seasons.forEach((s) => { if (s.year <= maxYear && s.year >= minYear) set.add(s.year); });
-    masterFields.forEach((mf) => mf.history.forEach((h) => { if (h.year <= maxYear && h.year >= minYear) set.add(h.year); }));
-    return Array.from(set).sort((a, b) => a - b);
-  }, [seasons, masterFields]);
+  // Hooaja valik: vaikimisi hooaeg −4 … +3, ainult hooaegade tabelis olevad aastad
+  const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
 
   // Ainult põllud, millel on TÄPSELT valitud aasta kirje — vältimaks, et
   // registrisse jäänud, aga sel aastal (nt PRIA impordis) mitte

@@ -1,34 +1,36 @@
 // src/types/season.ts
 
-export type SeasonStatus = 'planning' | 'active' | 'harvesting' | 'closed';
-
 /**
- * Põllumajandusliku hooaja master-kirje
- * Hooaeg algab põldude ettevalmistuse ja külvamisega ning lõpeb koristamisega.
- * Kui koristus on lõppenud, suletakse hooaeg muudatusteks (isLocked = true).
+ * Põllumajandusliku hooaja master-kirje: aasta, nimi ja märkmed.
+ * Lukus hooaeg (isLocked) on muudatusteks suletud; sulgemise aja ja sulgeja paneb server.
  */
 export interface FarmingSeason {
-  id: string | number;           // Hooaja unikaalne ID (nt 'season-2026' või 2026)
-  year: number;                  // Hooaja aasta (nt 2026, 2025, 2024, 2023, 2027)
-  name: string;                  // Hooaja nimi (nt "Hooaeg 2026" või "2025/2026 hooaeg")
-  status: SeasonStatus;          // 'planning' | 'active' | 'harvesting' | 'closed'
-  isLocked: boolean;             // Kui true, on hooaeg muudatusteks suletud (arhiveeritud / read-only)
-  
-  // Hooaja elutsükli kuupäevad
-  preparationStartDate?: string | null; // Põldude ettevalmistuse algus (sügiskünd / kevadine mullaharimine)
-  seedingStartDate?: string | null;     // Külvide algus
-  harvestStartDate?: string | null;     // Koristuse algus
-  harvestEndDate?: string | null;       // Koristuse lõpp
-  closedAt?: string | null;             // Millal hooaeg ametlikult suleti
-  closedBy?: string | null;             // Kes sulges (nt 'Rein Janno')
-  
-  // Hooaja agrotehnilised ja finantsilised koondandmed
-  totalAreaHa?: number | null;          // Hooaja põllupind kokku
-  fieldsCount?: number | null;          // Põldude arv
-  targetYieldTons?: number | null;      // Plaaniline kogusaak (tonnides)
-  actualYieldTons?: number | null;      // Tegelik koristatud kogusaak (tonnides)
-  notes?: string | null;                // Hooaja kokkuvõte / märkmed (ilm, kvaliteet, PRIA toetused)
+  id: string | number;
+  year: number;                  // Hooaja aasta (nt 2026)
+  name: string;                  // Hooaja nimi (nt "Hooaeg 2026")
+  isLocked: boolean;             // Kui true, on hooaeg muudatusteks suletud
+  closedAt?: string | null;      // Millal hooaeg suleti (ISO)
+  closedBy?: string | null;      // Kes sulges (kasutajatunnus)
+  notes?: string | null;         // Hooaja märkmed
 }
+
+/** Vaikimisi hooaeg: jooksev aasta, kui see hooaeg on olemas, muidu lähim olemasolev (võrdsel kaugusel varasem). */
+export const activeSeasonYear = (seasons: Pick<FarmingSeason, 'year'>[], currentYear = new Date().getFullYear()): number => {
+  if (seasons.length === 0) return currentYear;
+  return seasons
+    .map((s) => s.year)
+    .reduce((best, y) => {
+      const d = Math.abs(y - currentYear);
+      const bd = Math.abs(best - currentYear);
+      return d < bd || (d === bd && y < best) ? y : best;
+    });
+};
+
+/** Hooaja valiku aastad: vahemik vaikimisi hooaeg −4 … +3, ainult hooaegade tabelis olevad aastad (kasvavas järjekorras). */
+export const seasonSelectorYears = (seasons: Pick<FarmingSeason, 'year'>[], currentYear = new Date().getFullYear()): number[] => {
+  const active = activeSeasonYear(seasons, currentYear);
+  return [...new Set(seasons.map((s) => s.year))].filter((y) => y >= active - 4 && y <= active + 3).sort((a, b) => a - b);
+};
 
 /**
  * Registris kuvatav olek, tuletatud põldude kultuuridest (mitte käsitsi valitud).

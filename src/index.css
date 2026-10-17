@@ -4501,7 +4501,7 @@ input[type="number"],
 }
 
 .modal-content.season-edit-modal {
-  width: min(720px, 96vw);
+  width: min(560px, 96vw);
   max-height: 92vh;
   display: flex;
   flex-direction: column;
@@ -5288,7 +5288,7 @@ input[type="number"],
 
 .season-form-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+  grid-template-columns: 160px 1fr;
   gap: 12px;
 }
 
@@ -10203,3 +10203,7 @@ select.time-select {
 .help-content ol { margin: 0 0 8px; padding-left: 20px; }
 .help-content li { margin: 2px 0; }
 .help-content a { color: var(--emerald-500); text-decoration: underline; }
+
+@media (max-width: 520px) {
+  .season-form-grid { grid-template-columns: 1fr; }
+}

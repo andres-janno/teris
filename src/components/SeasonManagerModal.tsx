@@ -12,15 +12,11 @@ import {
 } from 'lucide-react';
 import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
-import { formatDate, formatDateRange } from '../services/dateFormat';
-import { DateInput } from './DateInput';
+import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
-
-const formatPerHa = (tons?: number | null, areaHa?: number | null) =>
-  tons != null && areaHa ? formatNum(tons / areaHa, 2) : '–';
 
 interface SeasonManagerModalProps {
   isOpen: boolean;
@@ -54,11 +50,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   // Form State
   const [formYear, setFormYear] = useState<number>(2027);
   const [formName, setFormName] = useState<string>('Hooaeg 2027');
-  const [formPrepDate, setFormPrepDate] = useState<string>('');
-  const [formSeedDate, setFormSeedDate] = useState<string>('');
-  const [formHarvestStartDate, setFormHarvestStartDate] = useState<string>('');
-  const [formHarvestEndDate, setFormHarvestEndDate] = useState<string>('');
-  const [formTargetYield, setFormTargetYield] = useState<string>('');
   const [formNotes, setFormNotes] = useState<string>('');
 
   // Esc sulgeb ainult muutmisakna (register jääb avatuks).
@@ -108,11 +99,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
     const nextYear = Math.max(...seasons.map(s => s.year), 2026) + 1;
     setFormYear(nextYear);
     setFormName(`Hooaeg ${nextYear}`);
-    setFormPrepDate(`${nextYear - 1}-08-20`);
-    setFormSeedDate(`${nextYear - 1}-09-05`);
-    setFormHarvestStartDate(`${nextYear}-08-01`);
-    setFormHarvestEndDate(`${nextYear}-09-30`);
-    setFormTargetYield('1800');
     setFormNotes('');
     setEditingYear(null);
     setIsAdding(true);
@@ -121,11 +107,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const handleStartEdit = (s: FarmingSeason) => {
     setFormYear(s.year);
     setFormName(s.name);
-    setFormPrepDate(s.preparationStartDate || '');
-    setFormSeedDate(s.seedingStartDate || '');
-    setFormHarvestStartDate(s.harvestStartDate || '');
-    setFormHarvestEndDate(s.harvestEndDate || '');
-    setFormTargetYield(s.targetYieldTons ? String(s.targetYieldTons) : '');
     setFormNotes(s.notes || '');
     setEditingYear(s.year);
     setIsAdding(true);
@@ -139,12 +120,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         const updated: FarmingSeason = {
           ...existing,
           name: formName,
-          preparationStartDate: formPrepDate || undefined,
-          seedingStartDate: formSeedDate || undefined,
-          harvestStartDate: formHarvestStartDate || undefined,
-          harvestEndDate: formHarvestEndDate || undefined,
-          targetYieldTons: formTargetYield ? Number(formTargetYield) : undefined,
-          notes: formNotes || undefined
+          notes: formNotes || null
         };
         onUpdateSeason(updated);
       }
@@ -153,14 +129,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         id: `season-${formYear}`,
         year: formYear,
         name: formName,
-        status: 'planning',
         isLocked: false,
-        preparationStartDate: formPrepDate || undefined,
-        seedingStartDate: formSeedDate || undefined,
-        harvestStartDate: formHarvestStartDate || undefined,
-        harvestEndDate: formHarvestEndDate || undefined,
-        targetYieldTons: formTargetYield ? Number(formTargetYield) : undefined,
-        notes: formNotes || undefined
+        notes: formNotes || null
       };
       onCreateSeason(newSeason);
     }
@@ -228,57 +198,10 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   />
                 </div>
 
-                <div className="form-group">
-                  <label>Saagiootus (tonnides kokku)</label>
-                  <input
-                    type="number"
-                    placeholder="nt 1800"
-                    value={formTargetYield}
-                    onChange={(e) => setFormTargetYield(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>🚜 Ettevalmistuse algus</label>
-                  <DateInput
-                    value={formPrepDate}
-                    onChange={setFormPrepDate}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>🌱 Külvide algus</label>
-                  <DateInput
-                    value={formSeedDate}
-                    onChange={setFormSeedDate}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>🌾 Koristuse algus</label>
-                  <DateInput
-                    value={formHarvestStartDate}
-                    onChange={setFormHarvestStartDate}
-                    className="form-input"
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label>🏁 Koristuse lõpp (Hooaja lõpp)</label>
-                  <DateInput
-                    value={formHarvestEndDate}
-                    onChange={setFormHarvestEndDate}
-                    className="form-input"
-                  />
-                </div>
-
                 <div className="form-group full-width">
-                  <label>Hooaja märkmed & kokkuvõte</label>
+                  <label>Hooaja märkmed</label>
                   <textarea
-                    rows={2}
+                    rows={3}
                     placeholder="Ilmastikuolud, saagikokkuvõte, PRIA toetuste koodid..."
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
@@ -314,25 +237,14 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 <tr>
                   <th>Hooaeg</th>
                   <th>Olek</th>
-                  <th>Ettevalmistus</th>
-                  <th>Külv</th>
-                  <th>Koristus</th>
                   <th className="num">Pindala, ha</th>
                   <th className="num">Põlde</th>
-                  <th className="num">Saagiootus, t</th>
-                  <th className="num">Ootus, t/ha</th>
-                  <th className="num">Koristatud, t</th>
-                  <th className="num">Tegelik, t/ha</th>
                   <th><span className="sr-only">Tegevused</span></th>
                 </tr>
               </thead>
               <tbody>
-                {sortedSeasons.map((season, i) => {
+                {sortedSeasons.map((season) => {
                   const isCurrent = season.year === selectedYear;
-                  const prev = sortedSeasons[i + 1];
-                  const delta = season.targetYieldTons != null && prev?.targetYieldTons != null
-                    ? season.targetYieldTons - prev.targetYieldTons
-                    : null;
                   const notesOpen = expandedYears.has(season.year);
                   const totals = fieldTotalsByYear.get(season.year);
                   const areaHa = totals?.areaHa ?? null;
@@ -364,26 +276,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                           {meta.label}
                         </span>
                       </td>
-                      <td className="mono">{formatDate(season.preparationStartDate)}</td>
-                      <td className="mono">{formatDate(season.seedingStartDate)}</td>
-                      <td className="mono">{formatDateRange(season.harvestStartDate, season.harvestEndDate)}</td>
                       <td className="num mono">{formatNum(areaHa, 1)}</td>
                       <td className="num mono">{formatNum(totals?.count ?? null, 0)}</td>
-                      <td className="num mono">
-                        {formatNum(season.targetYieldTons, 0)}
-                        {delta != null && (
-                          <div className={`season-delta ${delta < 0 ? 'down' : 'up'}`}>
-                            Δ {delta < 0 ? '−' : '+'}{formatNum(Math.abs(delta), 0)}
-                          </div>
-                        )}
-                      </td>
-                      <td className="num mono muted">{formatPerHa(season.targetYieldTons, areaHa)}</td>
-                      <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
-                        {formatNum(season.actualYieldTons, 0)}
-                      </td>
-                      <td className={`num mono ${season.actualYieldTons != null ? 'actual' : 'muted'}`}>
-                        {formatPerHa(season.actualYieldTons, areaHa)}
-                      </td>
                       <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
                         <button
                           type="button"
@@ -398,7 +292,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                             type="button"
                             className="icon-btn-ghost"
                             onClick={() => onReopenSeason(season.year)}
-                            title={`Hooaeg on lukus${season.closedAt ? ` (suletud ${formatDate(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''} – klõpsa avamiseks`}
+                            title={`Hooaeg on lukus${season.closedAt ? ` (suletud ${formatDateTimeTallinn(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''} – klõpsa avamiseks`}
                           >
                             <Lock size={15} />
                           </button>
@@ -416,7 +310,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                     </tr>
                     {notesOpen && season.notes && (
                       <tr className={`${rowClass} has-notes season-notes-row`} onClick={() => toggleNotes(season.year)}>
-                        <td colSpan={12}>
+                        <td colSpan={5}>
                           <div className="season-cell-notes">
                             <Info size={13} />
                             <span>{season.notes}</span>
@@ -431,7 +325,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
             </table>
           </div>
           <p className="seasons-table-hint">
-            Märkusega real (<Info size={11} />) näitab klõps märkust. Δ = saagiootuse muutus eelmise hooajaga võrreldes. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
+            Märkusega real (<Info size={11} />) näitab klõps märkust. Pindala ja põldude arv tulevad põldude andmetest. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>
     </>
   );
@@ -445,7 +339,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               <CalendarDays className="text-emerald" size={26} />
               <div>
                 <h2>Hooajad</h2>
-                <p className="fullpage-subtitle">Hooaegade register, elutsükkel, saagiootused ja koristuse staatused</p>
+                <p className="fullpage-subtitle">Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt.</p>
               </div>
             </div>
             {!isAdding && (
@@ -472,9 +366,9 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               <CalendarDays size={20} />
             </div>
             <div>
-              <h3>Hooaegade register & elutsükkel</h3>
+              <h3>Hooaegade register</h3>
               <p className="modal-subtitle">
-                Hooaeg hõlmab ettevalmistust, külvi ja koristust. Koristuse järel suletakse hooaeg muudatusteks.
+                Lukus hooaeg on muudatusteks suletud. Importimisel luuakse puuduv hooaeg automaatselt.
               </p>
             </div>
           </div>

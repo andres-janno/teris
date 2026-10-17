@@ -16,13 +16,6 @@ generator client {
 // ENUMS
 // ============================================================================
 
-enum SeasonStatus {
-  PLANNING
-  ACTIVE
-  HARVESTING
-  CLOSED
-}
-
 enum FieldStatus {
   NOT_STARTED
   IN_PROGRESS
@@ -98,18 +91,9 @@ model Season {
   tenantId             String       @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   year                 Int
   name                 String
-  status               SeasonStatus @default(PLANNING)
   isLocked             Boolean      @default(false)
-  preparationStartDate DateTime?
-  seedingStartDate     DateTime?
-  harvestStartDate     DateTime?
-  harvestEndDate       DateTime?
   closedAt             DateTime?
   closedBy             String?
-  totalAreaHa          Float?
-  fieldsCount          Int?
-  targetYieldTons      Float?
-  actualYieldTons      Float?
   notes                String?
   createdAt            DateTime     @default(now())
   updatedAt            DateTime     @updatedAt
