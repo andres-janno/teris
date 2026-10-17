@@ -183,6 +183,11 @@ async function handleSupportLogin(req: IncomingMessage, res: ServerResponse): Pr
     json(res, { error: SUPPORT_LINK_ERROR }, 400);
     return;
   }
+  // Päringus olnud vana tugisessiooni rida koristatakse (parim katse), et see ei jääks aegumiseni alles.
+  const oldSupport = supportToken(req);
+  if (oldSupport && hashToken(oldSupport) !== hashToken(exchanged.token)) {
+    await authDb().supportSession.deleteMany({ where: { sessionTokenHash: hashToken(oldSupport) } }).catch(() => {});
+  }
   res.setHeader('Set-Cookie', supportCookie(exchanged.token, (exchanged.expiresAt.getTime() - Date.now()) / 1000, isSecure(req)));
   json(res, { user: await authUserPayload(found.user) });
 }

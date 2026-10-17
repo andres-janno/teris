@@ -60,6 +60,11 @@ async function login(token: string) {
   return { r, cookie: r.status === 200 ? cookieOf(r.cookies) : '' };
 }
 
+async function login0(cookie: string, token: string) {
+  const r = await call(cookie, 'POST', '/api/auth/support-login', { token });
+  return { r, cookie: r.status === 200 ? cookieOf(r.cookies) : '' };
+}
+
 beforeAll(async () => {
   await authDb().tenant.createMany({ data: [{ id: T, name: 'Test SS' }, { id: T_SUSP, name: 'Test SS susp', status: 'SUSPENDED' as any }] });
   await authDb().tenantLicense.createMany({
@@ -185,6 +190,25 @@ describe('tugisessioon', () => {
     const me = await call(`teris_session=${tok}; ${cookie}`, 'GET', '/api/auth/me');
     expect(me.json.user.supportView).toBeUndefined();
     expect(me.json.user.username).toBe(u!.username);
+  });
+
+  it('edukas vahetus kustutab päringus oleva vana tugisessiooni rea', async () => {
+    const { cookie: oldCookie } = await login(await newHandoff());
+    const oldHash = hashToken(oldCookie.split('=')[1]);
+    expect(await authDb().supportSession.findUnique({ where: { sessionTokenHash: oldHash } })).not.toBeNull();
+    const { r, cookie: newCookie } = await login0(oldCookie, await newHandoff());
+    expect(r.status).toBe(200);
+    expect(newCookie).not.toBe(oldCookie);
+    expect(await authDb().supportSession.findUnique({ where: { sessionTokenHash: oldHash } })).toBeNull();
+    expect(await authDb().supportSession.findUnique({ where: { sessionTokenHash: hashToken(newCookie.split('=')[1]) } })).not.toBeNull();
+  });
+
+  it('ebaõnnestunud vahetus jätab vana tugisessiooni alles', async () => {
+    const { cookie: oldCookie } = await login(await newHandoff());
+    const oldHash = hashToken(oldCookie.split('=')[1]);
+    const r = await call(oldCookie, 'POST', '/api/auth/support-login', { token: 'tundmatu' });
+    expect(r.status).toBe(400);
+    expect(await authDb().supportSession.findUnique({ where: { sessionTokenHash: oldHash } })).not.toBeNull();
   });
 
   it('kehtiv tavasessioon -> support-login 409', async () => {
@@ -352,8 +376,10 @@ describe('tugivaade ei pääse ühelegi muutvale teekonnale', () => {
       for (const line of lines) {
         const methods = [...line.matchAll(MUTATING_RE)].map((x) => x[1]);
         if (methods.length === 0) continue;
-        if (file in COMPOSED_ROUTE_COUNTS) { composed++; continue; }
         const lit = /pathname( ===|\.startsWith\() ?'(\/api\/[^']*)'/.exec(line);
+        // Koostatud teekondadega failis loetakse literaal-teekonnaga read ikkagi loendi vastu
+        // (uus literaal-marsruut peab olema loendis); ülejäänud read lähevad COMPOSED_ROUTE_COUNTS alla.
+        if (file in COMPOSED_ROUTE_COUNTS && !lit) { composed++; continue; }
         if (!lit) { noLiteral++; continue; }
         for (const m of methods) {
           const path = lit[2];
