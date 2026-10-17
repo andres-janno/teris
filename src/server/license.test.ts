@@ -70,6 +70,13 @@ describe('isAllowedWhenReadOnly', () => {
   it('muudatused on keelatud', () => {
     for (const m of ['POST', 'PUT', 'PATCH', 'DELETE']) expect(isAllowedWhenReadOnly('/api/seasons', m)).toBe(false);
   });
+  it('kasutajatoe loa tühistamine on lubatud, muu mitte', () => {
+    expect(isAllowedWhenReadOnly('/api/support-grants/abc123/revoke', 'POST')).toBe(true);
+    expect(isAllowedWhenReadOnly('/api/support-grants/abc123/revoke', 'DELETE')).toBe(false);
+    expect(isAllowedWhenReadOnly('/api/support-grants', 'POST')).toBe(false);
+    expect(isAllowedWhenReadOnly('/api/support-grants//revoke', 'POST')).toBe(false);
+    expect(isAllowedWhenReadOnly('/api/support-grants/a/b/revoke', 'POST')).toBe(false);
+  });
 });
 
 describe('loadLicenseState (andmebaas)', () => {

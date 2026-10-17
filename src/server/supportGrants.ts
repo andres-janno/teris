@@ -77,18 +77,31 @@ export async function handleSupportGrants(
       json(res, { error: 'Vigane kestus' }, 400);
       return true;
     }
-    const created = await tenantTransaction((tx) =>
-      tx.supportGrant.create({
-        data: { grantedByUserId: actor.id, validUntil: new Date(Date.now() + ms) },
+    const created = await tenantTransaction(async (tx) => {
+      const now = new Date();
+      // Korraga on kehtiv ainult üks luba (vastab kasutajaliidesele)
+      if (await tx.supportGrant.count({ where: { revokedAt: null, validUntil: { gt: now } } }) > 0) return null;
+      return tx.supportGrant.create({
+        data: { grantedByUserId: actor.id, validUntil: new Date(now.getTime() + ms) },
         select: GRANT_SELECT
-      })
-    );
+      });
+    });
+    if (!created) {
+      json(res, { error: 'Kasutajatoel on juba kehtiv ligipääs' }, 409);
+      return true;
+    }
     json(res, toPublic(created), 201);
     return true;
   }
 
   if (isGrants && parts.length === 2 && parts[1] === 'revoke' && method === 'POST') {
-    const id = decodeURIComponent(parts[0]);
+    let id: string;
+    try {
+      id = decodeURIComponent(parts[0]);
+    } catch {
+      json(res, { error: 'Luba ei leitud' }, 404);
+      return true;
+    }
     const result = await tenantTransaction(async (tx) => {
       const grant = await tx.supportGrant.findUnique({ where: { id }, select: GRANT_SELECT });
       if (!grant) return null;
