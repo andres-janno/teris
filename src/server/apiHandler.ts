@@ -5,6 +5,7 @@ import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
+import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
@@ -224,6 +225,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (sessionUser && (await applyLicenseGate(req, res, pathname, method, sessionUser.tenantId, sessionUser.supportView === true))) return;
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleSupportGrants(req, res, pathname, method)) return;
+    if (await handleHelpRead(res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
 
     // 1. Health check / status

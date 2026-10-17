@@ -1094,6 +1094,17 @@ model SupportSession {
   @@map("support_sessions")
 }
 
+// Platvormi tabel (authDb): kasutajajuhendid; võtmed on koodis (src/help/helpRegistry.ts)
+model HelpArticle {
+  key       String   @id
+  html      String
+  updatedBy String? // platvormi kasutajanimi
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("help_articles")
+}
+
 // ============================================================================
 // ALGKATALOOG — teenusepakkuja hallatav; kopeeritakse uuele ettevõttele loomisel
 // (platvormi tabelid: ainult authDb(), teris_app ei näe)

@@ -198,6 +198,8 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   return typeof data?.error === 'string' ? data.error : fallback;
 }
 
+export type HelpArticleRow = { key: string; html: string; updatedAt: string; updatedBy: string | null };
+
 async function request<T>(method: string, path: string, body?: unknown, fallback = 'Päring ebaõnnestus'): Promise<T> {
   const res = await fetch(`/api/platform${path}`, {
     method,
@@ -248,6 +250,8 @@ export const platformApi = {
   listDevices: () => request<DeviceRow[]>('GET', '/devices'),
   listDeviceRegistrations: (limit = 50) => request<DeviceRegistration[]>('GET', `/devices/registrations?limit=${limit}`),
   releaseDevice: (id: string) => request<unknown>('POST', `/devices/${enc(id)}/release`, {}),
+  listHelp: () => request<HelpArticleRow[]>('GET', '/help'),
+  saveHelp: (key: string, html: string) => request<{ success: true; deleted: boolean }>('PUT', `/help/${enc(key)}`, { html }, 'Juhendi salvestamine ebaõnnestus'),
   listAudit: (tenantId?: string, limit = 100) =>
     request<AuditEntry[]>('GET', `/audit?limit=${limit}${tenantId ? `&tenantId=${enc(tenantId)}` : ''}`)
 };

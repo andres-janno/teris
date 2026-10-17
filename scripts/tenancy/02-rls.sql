@@ -27,4 +27,4 @@ ALTER DEFAULT PRIVILEGES FOR ROLE teris IN SCHEMA public GRANT USAGE, SELECT ON 
 
 -- Platvormi tabelid on ainult teris_platform rollile (sama mis 04-privileges.sql): ülaltoodud
 -- "ON ALL TABLES" GRANT annaks need teris_app-ile uuesti, seega võta õigused tagasi.
-REVOKE ALL ON tenants, tenant_licenses, sessions, password_tokens, platform_users, platform_sessions, platform_audit_log, catalog_crops, catalog_crop_varieties, catalog_work_types, catalog_work_templates, catalog_work_template_items, support_sessions FROM teris_app;
+REVOKE ALL ON tenants, tenant_licenses, sessions, password_tokens, platform_users, platform_sessions, platform_audit_log, catalog_crops, catalog_crop_varieties, catalog_work_types, catalog_work_templates, catalog_work_template_items, support_sessions, help_articles FROM teris_app;

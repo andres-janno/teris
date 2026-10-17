@@ -56,3 +56,33 @@
 .admin-license-grid .admin-checks label { font-size: 0.9rem; color: var(--text-primary); }
 @media (max-width: 640px) { .admin-license-grid { grid-template-columns: 1fr; } }
 .admin-card-foot { display: flex; justify-content: flex-end; gap: 8px; margin-top: 16px; padding-top: 14px; border-top: 1px solid var(--border-card); }
+/* Juhendid */
+.admin-help { display: grid; grid-template-columns: minmax(260px, 340px) 1fr; gap: 16px; align-items: start; }
+@media (max-width: 860px) { .admin-help { grid-template-columns: 1fr; } }
+.admin-help-list { display: flex; flex-direction: column; gap: 10px; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; }
+.admin-help-filters { display: flex; gap: 6px; flex-wrap: wrap; }
+.admin-help-filters .btn.active { outline: 2px solid var(--accent, #10b981); }
+.admin-help-group { display: flex; flex-direction: column; gap: 2px; margin-top: 6px; }
+.admin-help-group > .admin-field-label { margin-bottom: 4px; }
+.admin-help-item { display: flex; align-items: flex-start; gap: 10px; width: 100%; padding: 8px 10px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: var(--text-primary); text-align: left; cursor: pointer; font: inherit; }
+.admin-help-item:hover { background: rgba(127, 127, 127, 0.08); }
+.admin-help-item.is-selected { background: rgba(16, 185, 129, 0.1); border-color: rgba(16, 185, 129, 0.35); }
+.admin-help-dot { flex: none; width: 8px; height: 8px; margin-top: 6px; border-radius: 50%; border: 1.5px solid var(--text-muted); }
+.admin-help-dot.filled { background: #10b981; border-color: #10b981; }
+.admin-help-dot.orphan { background: #f59e0b; border-color: #f59e0b; }
+.admin-help-item-text { display: flex; flex-direction: column; min-width: 0; }
+.admin-help-item-label { font-size: 0.85rem; font-weight: 600; }
+.admin-help-item-where { font-size: 0.72rem; color: var(--text-muted); }
+.admin-help-editor h2 { margin: 0 0 2px; }
+.admin-help-updated { font-size: 0.75rem; }
+.admin-help-preview { padding: 12px; border: 1px dashed var(--border-card); border-radius: 8px; }
+.admin-help-editor .admin-card-foot { align-items: center; }
+.admin-help-editor .admin-card-foot .admin-muted { margin-right: auto; font-size: 0.8rem; }
+.admin-rte { border: 1px solid var(--border-card); border-radius: 10px; overflow: hidden; background: var(--input-bg, transparent); }
+.admin-rte-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 6px; border-bottom: 1px solid var(--border-card); background: rgba(127, 127, 127, 0.06); }
+.admin-rte-tool { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; border: none; border-radius: 6px; background: transparent; color: var(--text-secondary); cursor: pointer; }
+.admin-rte-tool:hover { background: rgba(127, 127, 127, 0.14); color: var(--text-primary); }
+.admin-rte-sep { width: 1px; height: 18px; margin: 0 4px; background: var(--border-card); }
+.admin-rte-area { min-height: 220px; max-height: 60vh; overflow-y: auto; padding: 14px 16px; outline: none; color: var(--text-primary); }
+.admin-rte-area:focus { box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.35); }
+.admin-rte-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }

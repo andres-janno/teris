@@ -7,8 +7,9 @@ import { TenantDetail } from './TenantDetail.tsx';
 import { AuditView } from './AuditView.tsx';
 import { CatalogView } from './CatalogView.tsx';
 import { DevicesView } from './DevicesView.tsx';
+import { HelpView } from './HelpView.tsx';
 
-type View = { kind: 'tenants' } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' };
+type View = { kind: 'tenants' } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'help' };
 
 export function AdminApp() {
   const [user, setUser] = useState<string | null>(null);
@@ -46,7 +47,7 @@ export function AdminApp() {
         </div>
       </header>
       <nav className="admin-nav">
-        <button type="button" className={`btn btn-secondary ${view.kind !== 'audit' && view.kind !== 'catalog' && view.kind !== 'devices' ? 'active' : ''}`} onClick={() => setView({ kind: 'tenants' })}>
+        <button type="button" className={`btn btn-secondary ${view.kind !== 'audit' && view.kind !== 'catalog' && view.kind !== 'devices' && view.kind !== 'help' ? 'active' : ''}`} onClick={() => setView({ kind: 'tenants' })}>
           Ettevõtted
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'catalog' ? 'active' : ''}`} onClick={() => setView({ kind: 'catalog' })}>
@@ -54,6 +55,9 @@ export function AdminApp() {
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'devices' ? 'active' : ''}`} onClick={() => setView({ kind: 'devices' })}>
           Seadmed
+        </button>
+        <button type="button" className={`btn btn-secondary ${view.kind === 'help' ? 'active' : ''}`} onClick={() => setView({ kind: 'help' })}>
+          Juhendid
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'audit' ? 'active' : ''}`} onClick={() => setView({ kind: 'audit' })}>
           Logi
@@ -66,6 +70,7 @@ export function AdminApp() {
       {view.kind === 'detail' && <TenantDetail key={view.id} id={view.id} initialNotice={view.notice} onBack={() => setView({ kind: 'tenants' })} />}
       {view.kind === 'catalog' && <CatalogView />}
       {view.kind === 'devices' && <DevicesView />}
+      {view.kind === 'help' && <HelpView />}
       {view.kind === 'audit' && (
         <div className="glass-card admin-card">
           <h2>Logi</h2>

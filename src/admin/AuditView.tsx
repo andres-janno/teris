@@ -9,6 +9,7 @@ const ACTIONS: Record<string, string> = {
   TENANT_ACTIVATE: 'Ettevõte taasaktiveeritud',
   INVITE_RESEND: 'Kutse saadetud uuesti',
   CATALOG_UPDATE: 'Algkataloogi muudatus',
+  HELP_UPDATE: 'Juhend muudetud',
   DEVICE_RELEASE: 'Seade vabastatud',
   LOGIN: 'Sisselogimine',
   SUPPORT_SESSION_START: 'Tugivaade avatud',
@@ -33,6 +34,8 @@ function detailsText(e: AuditEntry): string {
       return String(d.username ?? '');
     case 'DEVICE_RELEASE':
       return `${d.kind ?? ''} ${d.identifier ?? ''}`.trim();
+    case 'HELP_UPDATE':
+      return `${d.key ?? ''}${d.op === 'delete' ? ' (kustutatud)' : ''}`;
     case 'CATALOG_UPDATE':
       return `${CATALOG_ENTITY[d.entity] ?? d.entity ?? ''} ${CATALOG_OP[d.op] ?? d.op ?? ''}: ${d.name ?? ''}`;
     default:

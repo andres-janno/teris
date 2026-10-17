@@ -13,6 +13,7 @@ import { normalizeEmail, APP_BASE_URL } from './mail.ts';
 import type { ApiOptions } from './apiHandler.ts';
 import { randomBytes } from 'crypto';
 import { hashToken } from './auth.ts';
+import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
 
@@ -680,6 +681,12 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
     return json(res, { success: true });
   }
   if (pathname.startsWith('/api/platform/catalog') && (await routeCatalog(req, res, pathname, method, pu))) return;
+  if (pathname === '/api/platform/help' && method === 'GET') return json(res, await listHelpArticles());
+  const hr = HELP_PLATFORM_ROUTE.exec(pathname);
+  if (hr && method === 'PUT') {
+    const key = decodeId(hr[1], HELP_KEY_ERROR);
+    return sendHelpResult(res, await saveHelpArticle(key, (await readBody(req))?.html, pu));
+  }
 
   const m = TENANT_ROUTE.exec(pathname);
   if (m) {
