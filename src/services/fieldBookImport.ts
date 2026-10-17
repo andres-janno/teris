@@ -36,7 +36,7 @@ export function buildFieldBookImport(
     if (!s) {
       rows.push({
         sheetName: result.sheetName, fieldCode: null, num: null, season: null, fieldName: null,
-        matched: false, operationsCount: 0, productsCount: 0, unmatchedPerformers: [],
+        matched: false, operationsCount: 0, existingOperationsCount: 0, productsCount: 0, unmatchedPerformers: [],
         seasonLocked: false, error: result.error
       });
       continue;
@@ -74,6 +74,7 @@ export function buildFieldBookImport(
       fieldName: field?.name ?? null,
       matched: Boolean(field),
       operationsCount: operations.length,
+      existingOperationsCount: field?.history.find((h) => h.year === s.season)?.operationsCount ?? 0,
       productsCount: operations.reduce((n, o) => n + o.products.length, 0),
       unmatchedPerformers: [...unmatched],
       seasonLocked: ctx.seasons.find((x) => x.year === s.season)?.isLocked ?? false,

@@ -112,6 +112,7 @@ export interface FieldBookPreviewRow {
   fieldName: string | null;       // registri nimi, kui sobitus
   matched: boolean;
   operationsCount: number;
+  existingOperationsCount: number; // registris sel hooajakirjel juba olevad tegevused (import asendab need)
   productsCount: number;
   unmatchedPerformers: string[];
   seasonLocked: boolean;

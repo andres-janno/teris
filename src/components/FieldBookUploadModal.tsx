@@ -68,8 +68,9 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
 
   const handleConfirm = async () => {
     if (!built || built.payload.fields.length === 0) return;
-    const n = built.payload.fields.length;
-    if (!await confirmDialog(`Import asendab ${n} põllu hooajakirje olemasolevad põlluraamatu tegevused failis olevatega.\n\nVarasemad tegevused nendel kirjetel kustutatakse. Jätkata?`)) return;
+    // Küsi kinnitust ainult siis, kui mõnel sobitunud hooajakirjel on juba tegevusi, mis asendatakse
+    const n = built.rows.filter((r) => r.matched && r.existingOperationsCount > 0).length;
+    if (n > 0 && !await confirmDialog(`Import asendab ${n} põllu hooajakirje olemasolevad põlluraamatu tegevused failis olevatega.\n\nVarasemad tegevused nendel kirjetel kustutatakse. Jätkata?`)) return;
     setIsSaving(true);
     setError(null);
     try {

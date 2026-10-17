@@ -55,6 +55,13 @@ describe('buildFieldBookImport', () => {
     expect(rows[0]).toMatchObject({ sheetName: '2', matched: true, fieldName: 'Kodu', operationsCount: 3, productsCount: 1, seasonLocked: true, error: null });
   });
 
+  it('olemasolevate tegevuste arv tuleb registri hooajakirjelt (puudub → 0)', () => {
+    expect(rows[0].existingOperationsCount).toBe(0);
+    const withOps = [{ ...masterFields[0], history: [{ year: 2025, operationsCount: 4 }] }] as unknown as MasterField[];
+    const r = buildFieldBookImport(results, { masterFields: withOps, parties: PARTIES, seasons: SEASONS, operatorId: 'op-1' });
+    expect(r.rows[0].existingOperationsCount).toBe(4);
+  });
+
   it('loetleb sobitamata teostajad ühekordselt', () => {
     expect(rows[0].unmatchedPerformers).toEqual(['Tundmatu Isik']);
   });
