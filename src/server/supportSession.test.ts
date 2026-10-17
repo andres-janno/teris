@@ -1,0 +1,199 @@
+// Tugisessioon ettevõtte rakenduses: ühekordne üleandmislink, ainult lugemine, loa tühistamine.
+import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { Readable } from 'stream';
+import type { IncomingMessage, ServerResponse } from 'http';
+import { authDb } from './db';
+import { handleApiRequest } from './apiHandler';
+import { hashToken } from './auth';
+
+const T = `test-ss-t-${process.pid}`;
+const T_SUSP = `test-ss-s-${process.pid}`;
+const ORIGIN = 'http://localhost:test';
+const READ_ONLY = 'Tugivaade on ainult lugemiseks';
+const LINK_ERR = 'Tugivaate link on aegunud või juba kasutatud';
+const PU = `ss-support-${process.pid}`;
+
+function fakeRes() {
+  const out = { status: 0, body: '', cookies: [] as string[] };
+  const res = {
+    statusCode: 200,
+    setHeader(k: string, v: string | string[]) { if (k.toLowerCase() === 'set-cookie') out.cookies = ([] as string[]).concat(v); },
+    appendHeader(k: string, v: string | string[]) { if (k.toLowerCase() === 'set-cookie') out.cookies.push(...([] as string[]).concat(v)); },
+    writeHead(code: number) { out.status = code; },
+    end(chunk?: string) { out.body += chunk ?? ''; out.status = (res as any).statusCode; }
+  } as unknown as ServerResponse;
+  return { res, out };
+}
+
+async function call(cookie: string | null, method: string, url: string, body?: unknown) {
+  const raw = body === undefined ? '' : JSON.stringify(body);
+  const headers: Record<string, string> = {
+    host: 'localhost', origin: ORIGIN, 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(raw))
+  };
+  if (cookie) headers.cookie = cookie;
+  const req = Object.assign(Readable.from(raw ? [Buffer.from(raw)] : []), { method, url, headers, socket: {} }) as unknown as IncomingMessage;
+  const { res, out } = fakeRes();
+  await handleApiRequest(req, res, { allowedOrigins: [ORIGIN], requireAuth: true, platformAllowedOrigins: [] });
+  return { status: out.status, json: out.body ? JSON.parse(out.body) : null, cookies: out.cookies };
+}
+
+let grantId = '';
+let platformUserId = '';
+let n = 0;
+async function newHandoff(opts: { expiresInMs?: number; tenant?: string; grant?: string } = {}) {
+  const token = `ss-handoff-${process.pid}-${++n}`;
+  await authDb().supportSession.create({
+    data: {
+      targetTenantId: opts.tenant ?? T, supportGrantId: opts.grant ?? grantId, platformUserId,
+      handoffTokenHash: hashToken(token), handoffExpiresAt: new Date(Date.now() + (opts.expiresInMs ?? 60_000))
+    }
+  });
+  return token;
+}
+const cookieOf = (cookies: string[]) => cookies.find((c) => c.startsWith('teris_support_session='))!.split(';')[0];
+
+async function login(token: string) {
+  const r = await call(null, 'POST', '/api/auth/support-login', { token });
+  return { r, cookie: r.status === 200 ? cookieOf(r.cookies) : '' };
+}
+
+beforeAll(async () => {
+  await authDb().tenant.createMany({ data: [{ id: T, name: 'Test SS' }, { id: T_SUSP, name: 'Test SS susp', status: 'SUSPENDED' as any }] });
+  await authDb().tenantLicense.createMany({
+    data: [T, T_SUSP].map((t) => ({ tenantId: t, validUntil: new Date('2099-12-31'), modules: ['TELEMETRY', 'SATELLITE', 'WEATHER'] as any }))
+  });
+  const admin = await authDb().user.create({ data: { tenantId: T, username: `ss-admin-${process.pid}`, passwordHash: 'x', isAdmin: true } });
+  const adminS = await authDb().user.create({ data: { tenantId: T_SUSP, username: `ss-sadmin-${process.pid}`, passwordHash: 'x', isAdmin: true } });
+  const g = await authDb().supportGrant.create({ data: { tenantId: T, grantedByUserId: admin.id, validUntil: new Date(Date.now() + 3600_000) } });
+  grantId = g.id;
+  const gs = await authDb().supportGrant.create({ data: { tenantId: T_SUSP, grantedByUserId: adminS.id, validUntil: new Date(Date.now() + 3600_000) } });
+  (globalThis as any).__ssSuspGrant = gs.id;
+  const pu = await authDb().platformUser.create({ data: { username: PU, passwordHash: 'x', totpSecretEnc: 'x' } });
+  platformUserId = pu.id;
+});
+
+afterAll(async () => {
+  const ids = [T, T_SUSP];
+  await authDb().supportSession.deleteMany({ where: { targetTenantId: { in: ids } } }).catch((e) => console.error('Puhastus: tugisessioonid', e));
+  await authDb().supportAccessLog.deleteMany({ where: { tenantId: { in: ids } } }).catch((e) => console.error('Puhastus: logi', e));
+  await authDb().supportGrant.deleteMany({ where: { tenantId: { in: ids } } }).catch((e) => console.error('Puhastus: load', e));
+  await authDb().season.deleteMany({ where: { tenantId: { in: ids } } }).catch((e) => console.error('Puhastus: hooajad', e));
+  await authDb().session.deleteMany({ where: { user: { tenantId: { in: ids } } } }).catch((e) => console.error('Puhastus: sessioonid', e));
+  await authDb().user.deleteMany({ where: { tenantId: { in: ids } } }).catch((e) => console.error('Puhastus: kasutajad', e));
+  await authDb().platformUser.deleteMany({ where: { username: PU } }).catch((e) => console.error('Puhastus: platvormi kasutaja', e));
+  await authDb().tenantLicense.deleteMany({ where: { tenantId: { in: ids } } }).catch((e) => console.error('Puhastus: litsentsid', e));
+  await authDb().tenant.deleteMany({ where: { id: { in: ids } } }).catch((e) => console.error('Puhastus: ettevõtted', e));
+});
+
+describe('tugisessioon', () => {
+  it('kehtiv token -> 200, küpsis, logi, handoff tühjendatud; kordus -> 400', async () => {
+    const token = await newHandoff();
+    const { r } = await login(token);
+    expect(r.status).toBe(200);
+    expect(r.json.user.supportView).toBe(true);
+    expect(r.json.user.username).toBe('kasutajatugi');
+    expect(new Date(r.json.user.supportValidUntil).getTime()).toBeGreaterThan(Date.now());
+    const c = r.cookies.find((x) => x.startsWith('teris_support_session='))!;
+    expect(c).toContain('HttpOnly');
+    expect(c).toContain('SameSite=Lax');
+    expect(c).toContain('Path=/');
+    expect(c).toMatch(/Max-Age=\d+/);
+    const rows = await authDb().supportSession.findMany({ where: { targetTenantId: T, sessionTokenHash: { not: null } } });
+    expect(rows.length).toBeGreaterThan(0);
+    expect(rows.every((s) => s.handoffTokenHash === null)).toBe(true);
+    const logs = await authDb().supportAccessLog.findMany({ where: { tenantId: T } });
+    expect(logs.length).toBeGreaterThan(0);
+    expect(logs[0].platformUsername).toBe(PU);
+    expect(logs[0].supportGrantId).toBe(grantId);
+    const again = await call(null, 'POST', '/api/auth/support-login', { token });
+    expect(again.status).toBe(400);
+    expect(again.json.error).toBe(LINK_ERR);
+  });
+
+  it('aegunud üleandmistoken -> 400; tundmatu token -> 400; ilma tokenita -> 400', async () => {
+    const token = await newHandoff({ expiresInMs: -1000 });
+    expect((await call(null, 'POST', '/api/auth/support-login', { token })).status).toBe(400);
+    expect((await call(null, 'POST', '/api/auth/support-login', { token: 'tundmatu' })).status).toBe(400);
+    expect((await call(null, 'POST', '/api/auth/support-login', {})).status).toBe(400);
+  });
+
+  it('peatatud ettevõte -> 400 ja token jääb kasutamata', async () => {
+    const token = await newHandoff({ tenant: T_SUSP, grant: (globalThis as any).__ssSuspGrant });
+    const r = await call(null, 'POST', '/api/auth/support-login', { token });
+    expect(r.status).toBe(400);
+    expect(r.json.error).toBe(LINK_ERR);
+  });
+
+  it('tühistatud luba -> exchange 400', async () => {
+    const g = await authDb().supportGrant.create({ data: { tenantId: T, grantedByUserId: (await authDb().user.findFirst({ where: { tenantId: T } }))!.id, validUntil: new Date(Date.now() + 3600_000), revokedAt: new Date() } });
+    const token = await newHandoff({ grant: g.id });
+    expect((await call(null, 'POST', '/api/auth/support-login', { token })).status).toBe(400);
+  });
+
+  it('tugiküpsisega GET andmed + me; kirjutamine 403; parool 403', async () => {
+    const { cookie } = await login(await newHandoff());
+    expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(200);
+    const me = await call(cookie, 'GET', '/api/auth/me');
+    expect(me.status).toBe(200);
+    expect(me.json.user.supportView).toBe(true);
+    expect(me.json.user.isAdmin).toBe(true);
+    expect(me.json.user.displayName).toBe('Kasutajatugi');
+    expect((await call(cookie, 'GET', '/api/admin/users')).status).toBe(200);
+    const post = await call(cookie, 'POST', '/api/seasons', { year: 2099, name: 'x' });
+    expect(post.status).toBe(403);
+    expect(post.json.code).toBe('SUPPORT_READ_ONLY');
+    expect(post.json.error).toBe(READ_ONLY);
+    for (const url of ['/api/auth/password', '/api/auth/forgot', '/api/auth/set-password', '/api/auth/token']) {
+      const r = await call(cookie, 'POST', url, { currentPassword: 'a', newPassword: 'b', login: 'a', token: 'a', password: 'a' });
+      expect(r.status).toBe(403);
+      expect(r.json.error).toBe(READ_ONLY);
+    }
+    // loa tühistamine tugivaatest ei ole lubatud
+    const rev = await call(cookie, 'POST', `/api/support-grants/${grantId}/revoke`);
+    expect(rev.status).toBe(403);
+    expect(rev.json.code).toBe('SUPPORT_READ_ONLY');
+    expect(await authDb().season.count({ where: { tenantId: T } })).toBe(0);
+  });
+
+  it('ei näe teise ettevõtte andmeid', async () => {
+    const { cookie } = await login(await newHandoff());
+    const status = await call(cookie, 'GET', '/api/status');
+    expect(status.status).toBe(200);
+    expect(status.json.counts.fields).toBe(0);
+    const mf = await call(cookie, 'GET', '/api/master-fields');
+    expect(mf.status).toBe(200);
+  });
+
+  it('tavaline sessioon on eelistatud tugiküpsise ees', async () => {
+    const { cookie } = await login(await newHandoff());
+    const u = await authDb().user.findFirst({ where: { tenantId: T } });
+    const tok = `ss-normal-${process.pid}`;
+    await authDb().session.create({ data: { userId: u!.id, tokenHash: hashToken(tok), expiresAt: new Date(Date.now() + 3600_000) } });
+    const me = await call(`teris_session=${tok}; ${cookie}`, 'GET', '/api/auth/me');
+    expect(me.json.user.supportView).toBeUndefined();
+    expect(me.json.user.username).toBe(u!.username);
+  });
+
+  it('sessiooni lõpp ei ületa loa lõppu', async () => {
+    const { r } = await login(await newHandoff());
+    const until = new Date(r.json.user.supportValidUntil).getTime();
+    const g = await authDb().supportGrant.findUnique({ where: { id: grantId } });
+    expect(until).toBeLessThanOrEqual(g!.validUntil.getTime());
+  });
+
+  it('logout kustutab küpsise ja sessiooni', async () => {
+    const { cookie } = await login(await newHandoff());
+    const out = await call(cookie, 'POST', '/api/auth/logout');
+    expect(out.status).toBe(200);
+    expect(out.cookies.some((c) => c.startsWith('teris_support_session=;') && c.includes('Max-Age=0'))).toBe(true);
+    expect((await call(cookie, 'GET', '/api/auth/me')).status).toBe(401);
+    expect(await authDb().supportSession.count({ where: { sessionTokenHash: hashToken(cookie.split('=')[1]) } })).toBe(0);
+  });
+
+  it('loa tühistamine -> järgmine päring 401', async () => {
+    const { cookie } = await login(await newHandoff());
+    expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(200);
+    await authDb().supportGrant.update({ where: { id: grantId }, data: { revokedAt: new Date() } });
+    expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(401);
+  });
+});

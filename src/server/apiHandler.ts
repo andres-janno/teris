@@ -221,7 +221,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
     setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);
-    if (sessionUser && (await applyLicenseGate(req, res, pathname, method, sessionUser.tenantId))) return;
+    if (sessionUser && (await applyLicenseGate(req, res, pathname, method, sessionUser.tenantId, sessionUser.supportView === true))) return;
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleSupportGrants(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;

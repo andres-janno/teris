@@ -68,7 +68,7 @@ export function moduleForRoute(pathname: string): LicenseModule | null {
 const READ_ONLY_POSTS = new Set(['/api/satellite/cloud-check']);
 
 // Kasutajatoe loa tühistamine ainult vähendab ligipääsu, seega on lubatud ka aegunud litsentsi korral
-const SUPPORT_REVOKE = /^\/api\/support-grants\/[^/]+\/revoke$/;
+export const SUPPORT_REVOKE = /^\/api\/support-grants\/[^/]+\/revoke$/;
 
 export function isAllowedWhenReadOnly(pathname: string, method: string): boolean {
   if (method === 'GET' || method === 'HEAD') return true;

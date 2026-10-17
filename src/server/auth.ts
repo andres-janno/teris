@@ -78,6 +78,18 @@ export function clearSessionCookie(secure: boolean = true): string {
   return `${SESSION_COOKIE}=; Path=/; HttpOnly${sec}; SameSite=Lax; Max-Age=0`;
 }
 
+export const SUPPORT_COOKIE = 'teris_support_session';
+
+export function supportCookie(token: string, maxAgeSec: number, secure: boolean = true): string {
+  const sec = secure ? '; Secure' : '';
+  return `${SUPPORT_COOKIE}=${token}; Path=/; HttpOnly${sec}; SameSite=Lax; Max-Age=${Math.floor(maxAgeSec)}`;
+}
+
+export function clearSupportCookie(secure: boolean = true): string {
+  const sec = secure ? '; Secure' : '';
+  return `${SUPPORT_COOKIE}=; Path=/; HttpOnly${sec}; SameSite=Lax; Max-Age=0`;
+}
+
 export function createLoginLimiter(opts: { max: number; windowMs: number }, now: () => number = () => Date.now()) {
   const failures = new Map<string, number[]>();
   const recent = (key: string) => (failures.get(key) ?? []).filter((t) => now() - t < opts.windowMs);

@@ -16,12 +16,17 @@ import {
   parseCookies,
   sessionCookie,
   clearSessionCookie,
+  SUPPORT_COOKIE,
+  supportCookie,
+  clearSupportCookie,
   createLoginLimiter,
   checkMutationRequest,
   clientIpFrom,
   allowedDuringForcedPasswordChange
 } from './auth.ts';
 import { normalizeEmail } from './mail.ts';
+import { findSupportSession, exchangeHandoff, SUPPORT_LINK_ERROR } from './supportSession.ts';
+import { SUPPORT_READ_ONLY_MESSAGE } from './licenseGate.ts';
 import { findValidToken, consumeTokenAndSetPassword, sendPasswordLink, isTenantActive } from './passwordTokens.ts';
 
 const SESSION_TTL_MS = 14 * 24 * 60 * 60 * 1000;
@@ -29,6 +34,7 @@ const TOUCH_INTERVAL_MS = 5 * 60 * 1000;
 const MAX_AUTH_BODY_BYTES = 16 * 1024;
 const MAX_USERNAME_LENGTH = 64;
 const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
+const supportLimiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
 const forgotLimiter = createLoginLimiter({ max: 5, windowMs: 15 * 60 * 1000 });
 
 type DbUser = {
@@ -41,6 +47,9 @@ type DbUser = {
   isFinanceManager: boolean;
   mustChangePassword: boolean;
   tenantId: string;
+  // Ainult sünteetilisel tugikasutajal (vt supportSession.ts)
+  supportView?: boolean;
+  supportValidUntil?: Date;
 };
 export type SessionUser = DbUser;
 
@@ -58,7 +67,8 @@ async function authUserPayload(u: DbUser) {
     isFinanceManager: u.isFinanceManager,
     mustChangePassword: u.mustChangePassword,
     tenantName: tenant?.name ?? '',
-    license
+    license,
+    ...(u.supportView ? { supportView: true, supportValidUntil: u.supportValidUntil?.toISOString() ?? null } : {})
   };
 }
 
@@ -111,11 +121,23 @@ export async function findActiveSession(tokenHash: string) {
   return { user: session.user, session };
 }
 
-async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string } | null> {
-  const token = sessionToken(req);
+function supportToken(req: IncomingMessage): string | undefined {
+  return parseCookies(req.headers.cookie)[SUPPORT_COOKIE] || undefined;
+}
+
+// Tugisessioon: sünteetiline admin ainult lugemiseks (tavaline sessioon on eelistatud).
+async function currentSupportSession(req: IncomingMessage): Promise<{ user: DbUser; sessionId: string; support: true } | null> {
+  const token = supportToken(req);
   if (!token) return null;
+  const found = await findSupportSession(hashToken(token));
+  return found ? { user: found.user, sessionId: found.sessionId, support: true } : null;
+}
+
+async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string; support?: true } | null> {
+  const token = sessionToken(req);
+  if (!token) return currentSupportSession(req);
   const found = await findActiveSession(hashToken(token));
-  if (!found) return null;
+  if (!found) return currentSupportSession(req);
   const { session } = found;
   if (Date.now() - session.lastSeenAt.getTime() > TOUCH_INTERVAL_MS) {
     const now = new Date();
@@ -133,6 +155,30 @@ async function currentSession(req: IncomingMessage, res: ServerResponse): Promis
     }
   }
   return { user: session.user, sessionId: session.id };
+}
+
+// Üleandmislingi vahetus: ühekordne token -> tugisessiooni küpsis.
+async function handleSupportLogin(req: IncomingMessage, res: ServerResponse): Promise<void> {
+  const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
+  const key = `sup:${clientIp(req)}`;
+  if (supportLimiter.isBlocked(key)) {
+    json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
+    return;
+  }
+  const token = typeof body?.token === 'string' ? body.token.slice(0, 256) : '';
+  const exchanged = await exchangeHandoff(token);
+  if (!exchanged) {
+    supportLimiter.registerFailure(key);
+    json(res, { error: SUPPORT_LINK_ERROR }, 400);
+    return;
+  }
+  const found = await findSupportSession(hashToken(exchanged.token));
+  if (!found) {
+    json(res, { error: SUPPORT_LINK_ERROR }, 400);
+    return;
+  }
+  res.setHeader('Set-Cookie', supportCookie(exchanged.token, (exchanged.expiresAt.getTime() - Date.now()) / 1000, isSecure(req)));
+  json(res, { user: await authUserPayload(found.user) });
 }
 
 async function handleLogin(req: IncomingMessage, res: ServerResponse): Promise<void> {
@@ -293,11 +339,32 @@ export async function authGate(
     return true;
   }
 
+  if (pathname === '/api/auth/support-login' && method === 'POST') {
+    await handleSupportLogin(req, res);
+    return true;
+  }
+
   if (pathname === '/api/auth/logout' && method === 'POST') {
     const token = sessionToken(req);
     if (token) await authDb().session.deleteMany({ where: { tokenHash: hashToken(token) } });
-    res.setHeader('Set-Cookie', clearSessionCookie(isSecure(req)));
+    const cookies = [clearSessionCookie(isSecure(req))];
+    const sToken = supportToken(req);
+    if (sToken) {
+      await authDb().supportSession.deleteMany({ where: { sessionTokenHash: hashToken(sToken) } });
+      cookies.push(clearSupportCookie(isSecure(req)));
+    }
+    res.setHeader('Set-Cookie', cookies);
     json(res, { success: true });
+    return true;
+  }
+
+  // Tugivaatega ei saa paroolivoogusid kasutada.
+  if (
+    method === 'POST' &&
+    ['/api/auth/forgot', '/api/auth/token', '/api/auth/set-password'].includes(pathname) &&
+    (await currentSupportSession(req))
+  ) {
+    json(res, { error: SUPPORT_READ_ONLY_MESSAGE, code: 'SUPPORT_READ_ONLY' }, 403);
     return true;
   }
 
@@ -332,6 +399,10 @@ export async function authGate(
   if (pathname === '/api/auth/password' && method === 'POST') {
     if (!current) {
       json(res, { error: 'Sisselogimine on vajalik' }, 401);
+      return true;
+    }
+    if (current.support) {
+      json(res, { error: SUPPORT_READ_ONLY_MESSAGE, code: 'SUPPORT_READ_ONLY' }, 403);
       return true;
     }
     const body = await parseBody(req, MAX_AUTH_BODY_BYTES);
