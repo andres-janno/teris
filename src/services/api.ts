@@ -29,7 +29,7 @@ async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   if (res.status === 401 && !input.startsWith('/api/auth/')) unauthorizedHandler?.();
   if (res.status === 403 && licenseErrorHandler) {
     const data = await res.clone().json().catch(() => null);
-    if (data?.code === 'LICENSE_READ_ONLY' || data?.code === 'MODULE_NOT_LICENSED') licenseErrorHandler(String(data.error));
+    if (data?.code === 'LICENSE_READ_ONLY' || data?.code === 'MODULE_NOT_LICENSED' || data?.code === 'SUPPORT_READ_ONLY') licenseErrorHandler(String(data.error));
   }
   return res;
 }
@@ -50,9 +50,9 @@ export class ApiError extends Error {
   }
 }
 
-// Litsentsivea dialoogi näitab juba apiFetch; kutsuja ei tohi sama teadet uuesti näidata.
+// Litsentsi- või tugivaate vea dialoogi näitab juba apiFetch; kutsuja ei tohi sama teadet uuesti näidata.
 export function isLicenseError(err: unknown): boolean {
-  return err instanceof ApiError && (err.code === 'LICENSE_READ_ONLY' || err.code === 'MODULE_NOT_LICENSED');
+  return err instanceof ApiError && (err.code === 'LICENSE_READ_ONLY' || err.code === 'MODULE_NOT_LICENSED' || err.code === 'SUPPORT_READ_ONLY');
 }
 
 export const api = {
@@ -69,6 +69,16 @@ export const api = {
       body: JSON.stringify({ username, password })
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Sisselogimine ebaõnnestus'));
+    return (await res.json()).user;
+  },
+
+  async supportLogin(token: string): Promise<AuthUser> {
+    const res = await apiFetch('/api/auth/support-login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Tugivaate link on aegunud või juba kasutatud'));
     return (await res.json()).user;
   },
 

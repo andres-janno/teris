@@ -30,7 +30,7 @@ import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimu
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
 import { api, setLicenseErrorHandler, isLicenseError } from './services/api';
-import { LicenseBanner } from './components/LicenseBanner';
+import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
@@ -1544,6 +1544,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   return (
     <div className="app-container">
+      <SupportBanner user={user} onLogout={onLogout} />
       <LicenseBanner user={user} />
       {/* Top Header */}
       <Header 

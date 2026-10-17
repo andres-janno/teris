@@ -11,6 +11,7 @@ const ACTIONS: Record<string, string> = {
   CATALOG_UPDATE: 'Algkataloogi muudatus',
   DEVICE_RELEASE: 'Seade vabastatud',
   LOGIN: 'Sisselogimine',
+  SUPPORT_SESSION_START: 'Tugivaade avatud',
   PLATFORM_USER_ADD: 'Platvormi kasutaja lisatud',
   PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud'
 };

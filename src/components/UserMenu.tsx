@@ -74,10 +74,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             {user.tenantName && <div className="user-menu-info-login">Ettevõte: {user.tenantName}</div>}
           </div>
 
-          <button type="button" role="menuitem" className="user-menu-item" onClick={run(onChangePassword)}>
-            <KeyRound size={15} />
-            <span>Muuda parooli</span>
-          </button>
+          {!user.supportView && (
+            <button type="button" role="menuitem" className="user-menu-item" onClick={run(onChangePassword)}>
+              <KeyRound size={15} />
+              <span>Muuda parooli</span>
+            </button>
+          )}
           {user.isAdmin && onOpenUsers && (
             <button type="button" role="menuitem" className="user-menu-item" onClick={run(onOpenUsers)}>
               <Users size={15} />

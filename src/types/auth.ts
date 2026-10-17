@@ -17,6 +17,8 @@ export interface AuthUser {
   mustChangePassword: boolean;
   tenantName: string;
   license: AuthLicense;
+  supportView?: boolean; // kasutajatoe ainult lugemise vaade
+  supportValidUntil?: string | null; // tugivaate sessiooni lõpp (ISO)
 }
 
 export interface AdminUser {

@@ -69,6 +69,12 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
       return r.inviteSent ? `Kutse saadeti uuesti kasutajale ${username}.` : 'Kutset ei õnnestunud saata.';
     });
 
+  const openSupport = () =>
+    run(async () => {
+      const { url } = await platformApi.openSupportSession(id);
+      window.open(url, '_blank', 'noopener');
+    });
+
   return (
     <div>
       <div className="admin-toolbar">
@@ -96,6 +102,20 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
               <div><span>Pindala (ha)</span>{formatHa(tenant.areaHa)}</div>
               <div><span>Viimane sisselogimine</span>{formatTallinn(tenant.lastLoginAt)}</div>
             </div>
+          </div>
+
+          <div className="glass-card admin-card">
+            <h2>Kasutajatugi</h2>
+            {tenant.supportGrant ? (
+              <>
+                <p>Kasutajatugi: ligipääs kehtib kuni {formatTallinn(tenant.supportGrant.validUntil)}</p>
+                <div className="admin-actions">
+                  <button type="button" className="btn btn-primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</button>
+                </div>
+              </>
+            ) : (
+              <p className="admin-muted">Ettevõte pole kasutajatoele ligipääsu andnud.</p>
+            )}
           </div>
 
           <form className="glass-card admin-card admin-form" onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>

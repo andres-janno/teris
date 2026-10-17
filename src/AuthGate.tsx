@@ -8,6 +8,13 @@ import type { AuthUser } from './types/auth';
 import { api, setUnauthorizedHandler } from './services/api';
 import { alertDialog } from './components/ConfirmDialog';
 
+// /tugi#<token> — kasutajatoe üleandmislink. Token loetakse ja fragment eemaldatakse kohe
+// (enne päringut), et token ei jääks aadressiribale ega ajalukku.
+const supportToken: string | null =
+  window.location.pathname === '/tugi' && window.location.hash.length > 1 ? window.location.hash.slice(1) : null;
+if (window.location.pathname === '/tugi') window.history.replaceState(null, '', '/');
+let supportLoginStarted = false;
+
 export const AuthGate: React.FC = () => {
   const [user, setUser] = useState<AuthUser | null>(null);
   const [checking, setChecking] = useState(true);
@@ -32,6 +39,23 @@ export const AuthGate: React.FC = () => {
       setUser(null);
       setNotice('Sessioon aegus, logi uuesti sisse');
     });
+    if (supportToken !== null && !supportLoginStarted) {
+      // Tugivaate link: kasuta üleandmistokenit, tavalist sessiooni ei kontrollita.
+      supportLoginStarted = true;
+      api
+        .supportLogin(supportToken)
+        .then((u) => {
+          setNotice(null);
+          setUser(u);
+        })
+        .catch((err) => {
+          setUser(null);
+          setNotice(err instanceof Error ? err.message : 'Tugivaate link on aegunud või juba kasutatud');
+        })
+        .finally(() => setChecking(false));
+      return () => setUnauthorizedHandler(null);
+    }
+    if (supportLoginStarted) return () => setUnauthorizedHandler(null); // StrictMode kordus
     api
       .getMe()
       .then(setUser)

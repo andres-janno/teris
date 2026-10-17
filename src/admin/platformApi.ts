@@ -39,6 +39,7 @@ export interface TenantUser {
 
 export interface TenantDetailData extends TenantSummary {
   users: TenantUser[];
+  supportGrant: { validUntil: string } | null; // ettevõtte admini antud kehtiv kasutajatoe luba
 }
 
 export interface AuditEntry {
@@ -229,6 +230,7 @@ export const platformApi = {
   activate: (id: string) => request<unknown>('POST', `/tenants/${enc(id)}/activate`, {}),
   resendInvite: (id: string, username: string) =>
     request<{ inviteSent: boolean }>('POST', `/tenants/${enc(id)}/resend-invite`, { username }),
+  openSupportSession: (id: string) => request<{ url: string }>('POST', `/tenants/${enc(id)}/support-session`, {}),
   getCatalog: () => request<CatalogData>('GET', '/catalog'),
   createCrop: (input: CropInput) => request<CatalogCrop>('POST', '/catalog/crops', input),
   updateCrop: (id: string, input: Partial<CropInput>) => request<CatalogCrop>('PATCH', `/catalog/crops/${enc(id)}`, input),

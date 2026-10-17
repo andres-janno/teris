@@ -9858,6 +9858,12 @@ select.time-select {
 }
 .license-banner.expired { background: #fee2e2; color: #991b1b; }
 .license-banner.warning { background: #fef3c7; color: #92400e; }
+.license-banner.support-banner { background: #dbeafe; color: #1e40af; }
+.support-banner-end { margin-left: 12px; padding: 2px 10px; font-size: 0.8rem; }
+[data-theme='dark'] .license-banner.support-banner {
+  background: rgba(59, 130, 246, 0.2);
+  color: #93c5fd;
+}
 [data-theme='dark'] .license-banner.expired {
   background: rgba(239, 68, 68, 0.18);
   color: #fca5a5;
