@@ -559,3 +559,80 @@ describe('seadmed teenusepakkuja keskkonnas', () => {
     expect(after.status).toBe(200);
   });
 });
+
+describe('tugivaate avamine (üleandmistoken)', () => {
+  const SUP_TENANT = `zz-sup-t-${PID}`;
+  const SUP_SUSP = `zz-sup-s-${PID}`;
+  const SUP_USER = `zz-sup-u-${PID}`;
+  const SUP_USER2 = `zz-sup-v-${PID}`;
+  const BASE = (process.env.APP_BASE_URL || 'https://teris.ee').replace(/\/+$/, '');
+
+  beforeAll(async () => {
+    const db = authDb();
+    await db.tenant.create({ data: { id: SUP_TENANT, name: `Tugi ${PID}` } });
+    await db.tenant.create({ data: { id: SUP_SUSP, name: `Tugi peatatud ${PID}`, status: 'SUSPENDED' } });
+    await db.user.create({ data: { id: SUP_USER, tenantId: SUP_TENANT, username: `zz-sup-a-${PID}`, displayName: 'A', passwordHash: '', isAdmin: true } });
+    await db.user.create({ data: { id: SUP_USER2, tenantId: SUP_SUSP, username: `zz-sup-b-${PID}`, displayName: 'B', passwordHash: '', isAdmin: true } });
+  });
+
+  afterAll(async () => {
+    const db = authDb();
+    for (const id of [SUP_TENANT, SUP_SUSP]) {
+      await db.supportSession.deleteMany({ where: { targetTenantId: id } }).catch(() => {});
+      await db.supportGrant.deleteMany({ where: { tenantId: id } }).catch(() => {});
+      await db.platformAuditLog.deleteMany({ where: { targetTenantId: id } }).catch(() => {});
+      await db.user.deleteMany({ where: { tenantId: id } }).catch(() => {});
+      await db.tenant.deleteMany({ where: { id } }).catch(() => {});
+    }
+  });
+
+  it('ilma loata: detailis supportGrant null, avamine 400', async () => {
+    const d = await call('GET', `/api/platform/tenants/${SUP_TENANT}`);
+    expect(d.status).toBe(200);
+    expect(d.data.supportGrant).toBeNull();
+    const r = await call('POST', `/api/platform/tenants/${SUP_TENANT}/support-session`, {});
+    expect(r.status).toBe(400);
+    expect(r.data.error).toBe('Ettevõte pole kasutajatoele ligipääsu andnud');
+  });
+
+  it('kehtiva loaga loob räsitud üleandmistokeni ja auditirea', async () => {
+    const db = authDb();
+    const soon = new Date(Date.now() + 3600_000);
+    const later = new Date(Date.now() + 86400_000);
+    await db.supportGrant.create({ data: { tenantId: SUP_TENANT, grantedByUserId: SUP_USER, validUntil: soon } });
+    await db.supportGrant.create({ data: { tenantId: SUP_TENANT, grantedByUserId: SUP_USER, validUntil: new Date(Date.now() + 7 * 86400_000), revokedAt: new Date() } });
+    const best = await db.supportGrant.create({ data: { tenantId: SUP_TENANT, grantedByUserId: SUP_USER, validUntil: later } });
+
+    const d = await call('GET', `/api/platform/tenants/${SUP_TENANT}`);
+    expect(Date.parse(d.data.supportGrant.validUntil)).toBe(later.getTime());
+
+    const before = Date.now();
+    const r = await call('POST', `/api/platform/tenants/${SUP_TENANT}/support-session`, {});
+    expect(r.status).toBe(200);
+    expect(r.data.url.startsWith(`${BASE}/tugi#`)).toBe(true);
+    const token = r.data.url.slice(`${BASE}/tugi#`.length);
+    expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
+
+    const rows = await db.supportSession.findMany({ where: { targetTenantId: SUP_TENANT } });
+    expect(rows).toHaveLength(1);
+    expect(rows[0].handoffTokenHash).not.toBe(token);
+    expect(rows[0].handoffTokenHash).toBe(hashToken(token));
+    expect(rows[0].supportGrantId).toBe(best.id);
+    expect(rows[0].platformUserId).toBe(platformUserId);
+    const ttl = rows[0].handoffExpiresAt.getTime() - before;
+    expect(ttl).toBeGreaterThan(55_000);
+    expect(ttl).toBeLessThanOrEqual(61_000);
+
+    const logs = await db.platformAuditLog.findMany({ where: { action: 'SUPPORT_SESSION_START', targetTenantId: SUP_TENANT } });
+    expect(logs).toHaveLength(1);
+    expect(logs[0].details).toEqual({ supportGrantId: best.id });
+    expect(JSON.stringify(logs[0])).not.toContain(token);
+  });
+
+  it('peatatud ettevõte: 400', async () => {
+    await authDb().supportGrant.create({ data: { tenantId: SUP_SUSP, grantedByUserId: SUP_USER2, validUntil: new Date(Date.now() + 3600_000) } });
+    const r = await call('POST', `/api/platform/tenants/${SUP_SUSP}/support-session`, {});
+    expect(r.status).toBe(400);
+    expect(r.data.error).toBe('Ettevõte on peatatud');
+  });
+});

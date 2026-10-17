@@ -9,8 +9,10 @@ import { copyCatalogToTenant } from './catalog.ts';
 import { LICENSE_MODULES, licenseState, tallinnToday, loadLicenseState, parseLicenseDate, type LicenseModule } from './license.ts';
 import { sendPasswordLink } from './passwordTokens.ts';
 import { normalizeUsername, USERNAME_ERROR } from './adminRules.ts';
-import { normalizeEmail } from './mail.ts';
+import { normalizeEmail, APP_BASE_URL } from './mail.ts';
 import type { ApiOptions } from './apiHandler.ts';
+import { randomBytes } from 'crypto';
+import { hashToken } from './auth.ts';
 
 type PlatformUser = { id: string; username: string };
 
@@ -25,7 +27,7 @@ class HttpError extends Error {
 const NOT_FOUND = 'Ettevõtet ei leitud';
 const DEVICE_NOT_FOUND = 'Seadet ei leitud';
 const DEVICE_RELEASE_ROUTE = /^\/api\/platform\/devices\/([^/]+)\/release$/;
-const TENANT_ROUTE = /^\/api\/platform\/tenants\/([^/]+)(?:\/(license|suspend|activate|resend-invite))?$/;
+const TENANT_ROUTE = /^\/api\/platform\/tenants\/([^/]+)(?:\/(license|suspend|activate|resend-invite|support-session))?$/;
 
 function str(v: unknown, max: number): string {
   return typeof v === 'string' ? v.trim().slice(0, max + 1) : '';
@@ -185,6 +187,40 @@ async function resendInvite(id: string, body: any, platformUser: { id: string })
     data: { action: 'INVITE_RESEND', platformUserId: platformUser.id, targetTenantId: id, details: { username: user.username, sent } }
   });
   return { inviteSent: sent };
+}
+
+// Kehtiv tugiluba: tühistamata ja mitte aegunud; pikima kehtivusega
+async function activeSupportGrant(tenantId: string) {
+  return authDb().supportGrant.findFirst({
+    where: { tenantId, revokedAt: null, validUntil: { gt: new Date() } },
+    orderBy: { validUntil: 'desc' }
+  });
+}
+
+// Ühekordne 60 s üleandmistoken: andmebaasi läheb ainult räsi, toores token ainult URL-i fragmenti
+async function startSupportSession(id: string, platformUser: { id: string }) {
+  const db = authDb();
+  const tenant = await db.tenant.findUnique({ where: { id }, select: { status: true } });
+  if (!tenant) throw new HttpError(404, NOT_FOUND);
+  if (tenant.status !== 'ACTIVE') throw new HttpError(400, 'Ettevõte on peatatud');
+  const grant = await activeSupportGrant(id);
+  if (!grant) throw new HttpError(400, 'Ettevõte pole kasutajatoele ligipääsu andnud');
+  const token = randomBytes(32).toString('base64url');
+  await db.$transaction(async (tx) => {
+    await tx.supportSession.create({
+      data: {
+        targetTenantId: id,
+        supportGrantId: grant.id,
+        platformUserId: platformUser.id,
+        handoffTokenHash: hashToken(token),
+        handoffExpiresAt: new Date(Date.now() + 60_000)
+      }
+    });
+    await tx.platformAuditLog.create({
+      data: { action: 'SUPPORT_SESSION_START', platformUserId: platformUser.id, targetTenantId: id, details: { supportGrantId: grant.id } }
+    });
+  });
+  return { url: `${APP_BASE_URL}/tugi#${token}` };
 }
 
 async function listAudit(url: URL) {
@@ -658,8 +694,10 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
       const [summary] = await tenantSummaries(id);
       if (!summary) throw new HttpError(404, NOT_FOUND);
       const users = await authDb().user.findMany({ where: { tenantId: id }, orderBy: { username: 'asc' } });
+      const grant = await activeSupportGrant(id);
       return json(res, {
         ...summary,
+        supportGrant: grant ? { validUntil: grant.validUntil } : null,
         users: users.map((u) => ({
           username: u.username,
           displayName: u.displayName,
@@ -683,6 +721,7 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
       await setStatus(id, 'ACTIVE', pu);
       return json(res, { success: true });
     }
+    if (action === 'support-session' && method === 'POST') return json(res, await startSupportSession(id, pu));
     if (action === 'resend-invite' && method === 'POST') return json(res, await resendInvite(id, await readBody(req), pu));
   }
   json(res, { error: 'Not found' }, 404);
