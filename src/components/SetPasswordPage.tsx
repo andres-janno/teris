@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { KeyRound, AlertCircle, Check } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
 import { LoginBackdrop } from './LoginBackdrop';
+import { COPYRIGHT_TEXT } from '../copyright';
 import { api } from '../services/api';
 
 interface SetPasswordPageProps {
@@ -88,6 +89,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
             </>
           )}
         </form>
+        <p className="login-copyright">{COPYRIGHT_TEXT}</p>
       </div>
     </div>
   );
