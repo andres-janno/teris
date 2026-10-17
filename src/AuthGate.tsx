@@ -43,6 +43,7 @@ export const AuthGate: React.FC = () => {
   useEffect(() => {
     setUnauthorizedHandler(() => {
       setUser(null);
+      setBanner(null);
       setNotice(supportViewRef.current ? 'Tugivaade lõppes. Ava uus link teenusepakkuja keskkonnast.' : 'Sessioon aegus, logi uuesti sisse');
     });
     if (supportToken !== null && !supportLoginStarted) {
