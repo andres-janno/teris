@@ -280,14 +280,27 @@ const MUTATING_ROUTES: Array<[string, string]> = [
   ['POST', '/api/auth/forgot'], ['POST', '/api/auth/token'],
   ['POST', '/api/auth/set-password'], ['POST', '/api/auth/password']
 ];
-// Lubatud erandid: logout (lõpetab sessiooni), login ja support-login (avalikud, ei muuda ettevõtte andmeid),
-// cloud-check (isAllowedWhenReadOnly)
-const SUPPORT_ALLOWED_MUTATIONS = ['/api/auth/logout', '/api/auth/login', '/api/auth/support-login', '/api/satellite/cloud-check'];
+// Lubatud erandid (meetod + tee): logout (lõpetab sessiooni), login ja support-login (avalikud, ei muuda
+// ettevõtte andmeid), cloud-check (isAllowedWhenReadOnly)
+const SUPPORT_ALLOWED_MUTATIONS = [
+  'POST /api/auth/logout', 'POST /api/auth/login', 'POST /api/auth/support-login', 'POST /api/satellite/cloud-check'
+];
 // Muutvate marsruudi-lausete arv failis, kus teekond koostatakse (adminUsers, supportGrants) ehk ei ole literaal
 const COMPOSED_ROUTE_COUNTS: Record<string, number> = { 'adminUsers.ts': 5, 'supportGrants.ts': 2 };
-const MUTATING_RE = /method === '(POST|PUT|PATCH|DELETE)'/;
+// Failid, kus muutval real peab olema tuvastatav literaal-teekond; erandid failis (mitmerealine tingimus):
+// authGate.ts: parooli-voogude blokk (`method === 'POST' &&` + teekondade massiiv järgmisel real)
+const NO_LITERAL_PATH_LINES: Record<string, number> = { 'authGate.ts': 1 };
+const MUTATING_RE = /method === '(POST|PUT|PATCH|DELETE)'/g;
 
 describe('tugivaade ei pääse ühelegi muutvale teekonnale', () => {
+  const digest = async () => JSON.stringify({
+    seasons: await authDb().season.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } }),
+    fields: await authDb().field.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } }),
+    fieldWorks: await authDb().fieldWork.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } }),
+    workEntries: await authDb().workEntry.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } }),
+    users: await authDb().user.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } }),
+    supportGrants: await authDb().supportGrant.findMany({ where: { tenantId: T }, orderBy: { id: 'asc' } })
+  });
   const countTables = async () => ({
     seasons: await authDb().season.count({ where: { tenantId: T } }),
     fields: await authDb().field.count({ where: { tenantId: T } }),
@@ -299,39 +312,59 @@ describe('tugivaade ei pääse ühelegi muutvale teekonnale', () => {
 
   it('iga muutev teekond -> 403 ja andmed muutumata', async () => {
     await authDb().supportGrant.update({ where: { id: grantId }, data: { revokedAt: null } });
-    const { cookie } = await login(await newHandoff());
-    expect(cookie).not.toBe('');
-    const before = await countTables();
-    for (const [m, url] of MUTATING_ROUTES) {
-      const r = await call(cookie, m, url, { year: 2099, name: 'x', currentPassword: 'a', newPassword: 'b', login: 'a', token: 'a', password: 'a' });
-      expect(r.status, `${m} ${url}`).toBe(403);
-      expect(r.json?.error, `${m} ${url}`).toBe(READ_ONLY);
+    const season = await authDb().season.create({ data: { tenantId: T, year: 2098, name: 'SS sweep' } });
+    const field = await authDb().field.create({ data: { tenantId: T, num: '7', name: 'SS sweep', fieldCode: 'ss-sweep' } as any });
+    try {
+      const { cookie } = await login(await newHandoff());
+      expect(cookie).not.toBe('');
+      const before = await countTables();
+      const digestBefore = await digest();
+      for (const [m, url] of MUTATING_ROUTES) {
+        const r = await call(cookie, m, url, { year: 2099, name: 'x', currentPassword: 'a', newPassword: 'b', login: 'a', token: 'a', password: 'a' });
+        expect(r.status, `${m} ${url}`).toBe(403);
+        expect(r.json?.error, `${m} ${url}`).toBe(READ_ONLY);
+      }
+      // cloud-check on isAllowedWhenReadOnly erand: tugivaates ei lükata tagasi (vigane keha -> 400, mitte 403)
+      expect((await call(cookie, 'POST', '/api/satellite/cloud-check', {})).status).toBe(400);
+      // avalik login valede andmetega: 401 ega tekita uut sessiooni
+      const sessionsBefore = await authDb().session.count({ where: { user: { tenantId: T } } });
+      const lg = await call(cookie, 'POST', '/api/auth/login', { username: `ss-admin-${process.pid}`, password: 'vale-parool' });
+      expect(lg.status).toBe(401);
+      expect(await authDb().session.count({ where: { user: { tenantId: T } } })).toBe(sessionsBefore);
+      expect(await countTables()).toEqual(before);
+      expect(await digest()).toBe(digestBefore);
+      // logout viimasena
+      expect((await call(cookie, 'POST', '/api/auth/logout')).status).toBe(200);
+    } finally {
+      await authDb().field.delete({ where: { id: field.id } });
+      await authDb().season.delete({ where: { id: season.id } });
     }
-    // cloud-check on isAllowedWhenReadOnly erand: tugivaates ei lükata tagasi (vigane keha -> 400, mitte 403)
-    expect((await call(cookie, 'POST', '/api/satellite/cloud-check', {})).status).toBe(400);
-    expect(await countTables()).toEqual(before);
-    // logout viimasena
-    expect((await call(cookie, 'POST', '/api/auth/logout')).status).toBe(200);
   });
 
   it('valve: iga serveri muutev teekond on loendis', () => {
     const dir = fileURLToPath(new URL('.', import.meta.url));
-    const known = [...MUTATING_ROUTES.map(([, u]) => u), ...SUPPORT_ALLOWED_MUTATIONS];
+    const known = [...MUTATING_ROUTES.map(([m, u]) => `${m} ${u}`), ...SUPPORT_ALLOWED_MUTATIONS];
     const missing: string[] = [];
     for (const file of ['apiHandler.ts', 'fieldWorks.ts', 'adminUsers.ts', 'supportGrants.ts', 'authGate.ts']) {
       const lines = readFileSync(dir + file, 'utf8').split('\n');
       let composed = 0;
+      let noLiteral = 0;
       for (const line of lines) {
-        if (!MUTATING_RE.test(line) && !/method === 'PATCH' \|\| method === 'DELETE'/.test(line)) continue;
-        const lit = /pathname (===|\.startsWith\() ?'(\/api\/[^']*)'/.exec(line);
-        if (lit) {
+        const methods = [...line.matchAll(MUTATING_RE)].map((x) => x[1]);
+        if (methods.length === 0) continue;
+        if (file in COMPOSED_ROUTE_COUNTS) { composed++; continue; }
+        const lit = /pathname( ===|\.startsWith\() ?'(\/api\/[^']*)'/.exec(line);
+        if (!lit) { noLiteral++; continue; }
+        for (const m of methods) {
           const path = lit[2];
-          const ok = lit[1] === '===' ? known.includes(path) : known.some((k) => k.startsWith(path));
-          if (!ok) missing.push(`${file}: ${path}`);
-        } else if (file in COMPOSED_ROUTE_COUNTS) composed++;
+          const ok = lit[1] === ' ===' ? known.includes(`${m} ${path}`) : known.some((k) => k.startsWith(`${m} ${path}`));
+          if (!ok) missing.push(`${file}: ${m} ${path}`);
+        }
       }
       if (file in COMPOSED_ROUTE_COUNTS) {
         expect(composed, `${file} muutvate marsruutide arv muutunud: uuenda loendit ja COMPOSED_ROUTE_COUNTS`).toBe(COMPOSED_ROUTE_COUNTS[file]);
+      } else {
+        expect(noLiteral, `${file}: muutval real puudub tuvastatav teekond; uuenda NO_LITERAL_PATH_LINES`).toBe(NO_LITERAL_PATH_LINES[file] ?? 0);
       }
     }
     expect(missing, 'Muutvad teekonnad puuduvad MUTATING_ROUTES loendist').toEqual([]);
