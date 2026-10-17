@@ -1,6 +1,8 @@
 // Tugisessioon ettevõtte rakenduses: ühekordne üleandmislink, ainult lugemine, loa tühistamine.
 import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { Readable } from 'stream';
+import { readFileSync } from 'fs';
+import { fileURLToPath } from 'url';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { authDb } from './db';
 import { handleApiRequest } from './apiHandler';
@@ -245,5 +247,93 @@ describe('tugisessioon', () => {
     expect((await authDb().fieldSeason.findUnique({ where: { id: cur.id } }))!.crop).not.toBe('');
     await authDb().fieldSeason.deleteMany({ where: { fieldId: field.id } });
     await authDb().field.delete({ where: { id: field.id } });
+  });
+});
+
+// Kõik ettevõtte API muutvad teekonnad (koostatud apiHandler.ts, fieldWorks.ts, adminUsers.ts,
+// supportGrants.ts ja authGate.ts põhjal). Parameetriga teekondadel on näite-id.
+// Uue muutva marsruudi lisamisel peab siia lisama ka rea (vt valvetest all).
+const MUTATING_ROUTES: Array<[string, string]> = [
+  ['POST', '/api/seasons'], ['PUT', '/api/seasons/1'], ['PATCH', '/api/seasons/1'], ['DELETE', '/api/seasons/1'],
+  ['POST', '/api/master-fields'], ['DELETE', '/api/master-fields/x1'],
+  ['POST', '/api/poi'], ['DELETE', '/api/poi/x1'],
+  ['POST', '/api/fleet/vehicles'], ['DELETE', '/api/fleet/vehicles/x1'],
+  ['POST', '/api/fleet/implements'], ['DELETE', '/api/fleet/implements/x1'], ['POST', '/api/fleet/implements/assign'],
+  ['POST', '/api/fleet/devices'], ['DELETE', '/api/fleet/devices/x1'], ['POST', '/api/fleet/devices/assign'],
+  ['POST', '/api/fleet/implement-assignments'], ['PUT', '/api/fleet/implement-assignments/x1'],
+  ['PATCH', '/api/fleet/implement-assignments/x1'], ['DELETE', '/api/fleet/implement-assignments/x1'],
+  ['POST', '/api/fleet/device-assignments'], ['PUT', '/api/fleet/device-assignments/x1'],
+  ['PATCH', '/api/fleet/device-assignments/x1'], ['DELETE', '/api/fleet/device-assignments/x1'],
+  ['POST', '/api/parties'], ['DELETE', '/api/parties/x1'],
+  ['POST', '/api/crops'], ['DELETE', '/api/crops/x1'],
+  ['POST', '/api/soil-samples/import'], ['POST', '/api/field-operations/import'],
+  ['POST', '/api/work-types'], ['DELETE', '/api/work-types/x1'],
+  ['POST', '/api/materials'], ['DELETE', '/api/materials/x1'],
+  ['PUT', '/api/work-templates'], ['DELETE', '/api/work-templates/x1'],
+  ['POST', '/api/field-works'], ['POST', '/api/field-works/apply-template'], ['POST', '/api/field-works/clear'],
+  ['PATCH', '/api/field-works/x1'], ['DELETE', '/api/field-works/x1'],
+  ['POST', '/api/work-entries'], ['PUT', '/api/work-entries/x1'], ['DELETE', '/api/work-entries/x1'],
+  ['PATCH', '/api/finance/entries/x1'],
+  ['POST', '/api/admin/users'], ['PATCH', '/api/admin/users/x1'], ['DELETE', '/api/admin/users/x1'],
+  ['POST', '/api/admin/users/x1/password'], ['POST', '/api/admin/users/x1/send-link'],
+  ['POST', '/api/support-grants'], ['POST', '/api/support-grants/x1/revoke'],
+  ['POST', '/api/auth/forgot'], ['POST', '/api/auth/token'],
+  ['POST', '/api/auth/set-password'], ['POST', '/api/auth/password']
+];
+// Lubatud erandid: logout (lõpetab sessiooni), login ja support-login (avalikud, ei muuda ettevõtte andmeid),
+// cloud-check (isAllowedWhenReadOnly)
+const SUPPORT_ALLOWED_MUTATIONS = ['/api/auth/logout', '/api/auth/login', '/api/auth/support-login', '/api/satellite/cloud-check'];
+// Muutvate marsruudi-lausete arv failis, kus teekond koostatakse (adminUsers, supportGrants) ehk ei ole literaal
+const COMPOSED_ROUTE_COUNTS: Record<string, number> = { 'adminUsers.ts': 5, 'supportGrants.ts': 2 };
+const MUTATING_RE = /method === '(POST|PUT|PATCH|DELETE)'/;
+
+describe('tugivaade ei pääse ühelegi muutvale teekonnale', () => {
+  const countTables = async () => ({
+    seasons: await authDb().season.count({ where: { tenantId: T } }),
+    fields: await authDb().field.count({ where: { tenantId: T } }),
+    fieldWorks: await authDb().fieldWork.count({ where: { tenantId: T } }),
+    workEntries: await authDb().workEntry.count({ where: { tenantId: T } }),
+    users: await authDb().user.count({ where: { tenantId: T } }),
+    supportGrants: await authDb().supportGrant.count({ where: { tenantId: T } })
+  });
+
+  it('iga muutev teekond -> 403 ja andmed muutumata', async () => {
+    await authDb().supportGrant.update({ where: { id: grantId }, data: { revokedAt: null } });
+    const { cookie } = await login(await newHandoff());
+    expect(cookie).not.toBe('');
+    const before = await countTables();
+    for (const [m, url] of MUTATING_ROUTES) {
+      const r = await call(cookie, m, url, { year: 2099, name: 'x', currentPassword: 'a', newPassword: 'b', login: 'a', token: 'a', password: 'a' });
+      expect(r.status, `${m} ${url}`).toBe(403);
+      expect(r.json?.error, `${m} ${url}`).toBe(READ_ONLY);
+    }
+    // cloud-check on isAllowedWhenReadOnly erand: tugivaates ei lükata tagasi (vigane keha -> 400, mitte 403)
+    expect((await call(cookie, 'POST', '/api/satellite/cloud-check', {})).status).toBe(400);
+    expect(await countTables()).toEqual(before);
+    // logout viimasena
+    expect((await call(cookie, 'POST', '/api/auth/logout')).status).toBe(200);
+  });
+
+  it('valve: iga serveri muutev teekond on loendis', () => {
+    const dir = fileURLToPath(new URL('.', import.meta.url));
+    const known = [...MUTATING_ROUTES.map(([, u]) => u), ...SUPPORT_ALLOWED_MUTATIONS];
+    const missing: string[] = [];
+    for (const file of ['apiHandler.ts', 'fieldWorks.ts', 'adminUsers.ts', 'supportGrants.ts', 'authGate.ts']) {
+      const lines = readFileSync(dir + file, 'utf8').split('\n');
+      let composed = 0;
+      for (const line of lines) {
+        if (!MUTATING_RE.test(line) && !/method === 'PATCH' \|\| method === 'DELETE'/.test(line)) continue;
+        const lit = /pathname (===|\.startsWith\() ?'(\/api\/[^']*)'/.exec(line);
+        if (lit) {
+          const path = lit[2];
+          const ok = lit[1] === '===' ? known.includes(path) : known.some((k) => k.startsWith(path));
+          if (!ok) missing.push(`${file}: ${path}`);
+        } else if (file in COMPOSED_ROUTE_COUNTS) composed++;
+      }
+      if (file in COMPOSED_ROUTE_COUNTS) {
+        expect(composed, `${file} muutvate marsruutide arv muutunud: uuenda loendit ja COMPOSED_ROUTE_COUNTS`).toBe(COMPOSED_ROUTE_COUNTS[file]);
+      }
+    }
+    expect(missing, 'Muutvad teekonnad puuduvad MUTATING_ROUTES loendist').toEqual([]);
   });
 });
