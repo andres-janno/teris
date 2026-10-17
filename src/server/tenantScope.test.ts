@@ -10,7 +10,7 @@ describe('scopeTenantArgs', () => {
     expect(TENANT_MODELS.has('Session')).toBe(false);
     expect(TENANT_MODELS.has('Tenant')).toBe(false);
     expect(TENANT_MODELS.has('TenantLicense')).toBe(false);
-    expect(TENANT_MODELS.size).toBe(26);
+    expect(TENANT_MODELS.size).toBe(28);
   });
 
   it('platvormimudelid eksisteerivad skeemis (kirjavea ei jäta mudelit ettevõttefiltri alla)', () => {

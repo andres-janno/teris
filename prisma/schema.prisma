@@ -923,6 +923,7 @@ model User {
   finishedFieldWorks   FieldWork[]     @relation("FieldWorkFinishedBy")
   createdWorkEntries   WorkEntry[]     @relation("WorkEntryCreatedBy")
   confirmedWorkEntries WorkEntry[]     @relation("WorkEntryConfirmedBy")
+  supportGrants        SupportGrant[]  @relation("SupportGrantGrantedBy")
 
   @@index([tenantId])
   @@map("users")
@@ -941,6 +942,38 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+// Ettevõtte admini antud ajutine luba kasutajatoele (ainult lugemiseks)
+model SupportGrant {
+  id              String    @id @default(cuid())
+  tenantId        String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  grantedByUserId String
+  validUntil      DateTime
+  revokedAt       DateTime?
+  createdAt       DateTime  @default(now())
+  createdBy       String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy       String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  grantedBy User               @relation("SupportGrantGrantedBy", fields: [grantedByUserId], references: [id], onDelete: Cascade)
+  accesses  SupportAccessLog[]
+
+  @@index([tenantId])
+  @@map("support_grants")
+}
+
+// Kasutajatoe sisenemine ettevõtte keskkonda (ettevõtte adminile nähtav)
+model SupportAccessLog {
+  id               String       @id @default(cuid())
+  tenantId         String       @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  supportGrantId   String
+  platformUsername String // teenusepakkuja kasutajanimi sisenemise hetkel
+  startedAt        DateTime     @default(now())
+
+  grant SupportGrant @relation(fields: [supportGrantId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@map("support_access_log")
 }
 
 model PasswordToken {
@@ -1043,6 +1076,22 @@ model PlatformAuditLog {
   @@index([targetTenantId])
   @@index([createdAt])
   @@map("platform_audit_log")
+}
+
+// Platvormi tabel (authDb): ühekordne üleandmistoken ja tugisessioon
+model SupportSession {
+  id               String    @id @default(cuid())
+  targetTenantId   String // mitte "tenantId" — muidu satuks mudel TENANT_MODELS-i
+  supportGrantId   String
+  platformUserId   String
+  handoffTokenHash String?   @unique // kustutatakse (null) pärast vahetamist
+  handoffExpiresAt DateTime
+  sessionTokenHash String?   @unique // tekib vahetamisel
+  expiresAt        DateTime? // tugisessiooni lõpp
+  createdAt        DateTime  @default(now())
+
+  @@index([supportGrantId])
+  @@map("support_sessions")
 }
 
 // ============================================================================
