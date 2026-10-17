@@ -664,66 +664,58 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                 })}
               </div>
               <div className="register-io-buttons">
-                <span className="help-hint-group">
-                  <button
-                    className="btn btn-secondary btn-sm"
-                    onClick={handleExportCsv}
-                    title="Ekspordi tabel CSV failina"
-                  >
-                    <Download size={14} />
-                    <span>CSV Eksport</span>
-                  </button>
-                  <HelpHint helpKey="fields.register.export-csv" />
-                </span>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleExportCsv}
+                  title="Ekspordi tabel CSV failina"
+                >
+                  <Download size={14} />
+                  <span>CSV Eksport</span>
+                  <HelpHint helpKey="fields.register.export-csv" inline />
+                </button>
 
                 {onOpenSoilUpload && (
-                  <span className="help-hint-group">
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        onClose();
-                        onOpenSoilUpload();
-                      }}
-                      title="Impordi mullaproovide punktid Shapefile ZIP-ist"
-                    >
-                      <Plus size={14} />
-                      <span>Impordi mullaproovid</span>
-                    </button>
-                    <HelpHint helpKey="fields.register.import-soil-samples" />
-                  </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenSoilUpload();
+                    }}
+                    title="Impordi mullaproovide punktid Shapefile ZIP-ist"
+                  >
+                    <Plus size={14} />
+                    <span>Impordi mullaproovid</span>
+                    <HelpHint helpKey="fields.register.import-soil-samples" inline />
+                  </button>
                 )}
 
                 {onOpenFieldBookUpload && (
-                  <span className="help-hint-group">
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        onClose();
-                        onOpenFieldBookUpload();
-                      }}
-                      title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
-                    >
-                      <Plus size={14} />
-                      <span>Impordi põlluraamat</span>
-                    </button>
-                    <HelpHint helpKey="fields.register.import-field-book" />
-                  </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenFieldBookUpload();
+                    }}
+                    title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
+                  >
+                    <Plus size={14} />
+                    <span>Impordi põlluraamat</span>
+                    <HelpHint helpKey="fields.register.import-field-book" inline />
+                  </button>
                 )}
 
                 {onOpenUpload && (
-                  <span className="help-hint-group">
-                    <button
-                      className="btn btn-secondary btn-sm"
-                      onClick={() => {
-                        onClose();
-                        onOpenUpload();
-                      }}
-                    >
-                      <Plus size={14} />
-                      <span>Impordi PRIA ZIP</span>
-                    </button>
-                    <HelpHint helpKey="fields.register.import-pria-zip" />
-                  </span>
+                  <button
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => {
+                      onClose();
+                      onOpenUpload();
+                    }}
+                  >
+                    <Plus size={14} />
+                    <span>Impordi PRIA ZIP</span>
+                    <HelpHint helpKey="fields.register.import-pria-zip" inline />
+                  </button>
                 )}
               </div>
             </div>

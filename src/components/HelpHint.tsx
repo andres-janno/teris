@@ -12,13 +12,14 @@ const CLOSE_DELAY = 200;
 const POPUP_WIDTH = 320;
 const MARGIN = 8;
 
-export const HelpHint: React.FC<{ helpKey: HelpKey }> = ({ helpKey }) => {
+/** inline: ikoon on teise nupu sees (span rolliga button, klõps ei käivita välimist nuppu) */
+export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ helpKey, inline = false }) => {
   const html = useHelpArticle(helpKey);
   const safe = useMemo(() => (html ? sanitizeHelp(html) : ''), [html]);
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
-  const btnRef = useRef<HTMLButtonElement>(null);
+  const btnRef = useRef<HTMLElement>(null);
   const popRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
 
@@ -74,28 +75,51 @@ export const HelpHint: React.FC<{ helpKey: HelpKey }> = ({ helpKey }) => {
   const hoverOpen = (e: React.PointerEvent) => e.pointerType === 'mouse' && !pinned && schedule(true, OPEN_DELAY);
   const hoverClose = (e: React.PointerEvent) => e.pointerType === 'mouse' && !pinned && schedule(false, CLOSE_DELAY);
 
+  const toggle = () => {
+    window.clearTimeout(timer.current);
+    if (pinned) close();
+    else {
+      setPinned(true);
+      setOpen(true);
+    }
+  };
+  const triggerProps = {
+    className: `help-hint-btn${open ? ' is-open' : ''}`,
+    'aria-label': `Juhend: ${HELP_SPOTS[helpKey].label}`,
+    'aria-expanded': open,
+    onPointerEnter: hoverOpen,
+    onPointerLeave: hoverClose,
+    onClick: (e: React.MouseEvent) => {
+      // ära lase klõpsul jõuda välimise nupuni (inline) ega selle vanemateni
+      e.stopPropagation();
+      e.preventDefault();
+      toggle();
+    }
+  };
+
   return (
     <>
-      <button
-        ref={btnRef}
-        type="button"
-        className={`help-hint-btn${open ? ' is-open' : ''}`}
-        aria-label={`Juhend: ${HELP_SPOTS[helpKey].label}`}
-        aria-expanded={open}
-        onPointerEnter={hoverOpen}
-        onPointerLeave={hoverClose}
-        onClick={(e) => {
-          e.stopPropagation();
-          window.clearTimeout(timer.current);
-          if (pinned) close();
-          else {
-            setPinned(true);
-            setOpen(true);
-          }
-        }}
-      >
-        <CircleHelp size={15} />
-      </button>
+      {inline ? (
+        <span
+          ref={btnRef as React.RefObject<HTMLSpanElement>}
+          role="button"
+          tabIndex={0}
+          {...triggerProps}
+          className={`${triggerProps.className} help-hint-inline`}
+          onKeyDown={(e) => {
+            if (e.key !== 'Enter' && e.key !== ' ') return;
+            e.preventDefault();
+            e.stopPropagation();
+            toggle();
+          }}
+        >
+          <CircleHelp size={15} />
+        </span>
+      ) : (
+        <button ref={btnRef as React.RefObject<HTMLButtonElement>} type="button" {...triggerProps}>
+          <CircleHelp size={15} />
+        </button>
+      )}
       {open &&
         createPortal(
           <div

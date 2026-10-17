@@ -10130,12 +10130,6 @@ select.time-select {
 }
 
 /* Juhendi küsimärk (HelpHint) — tekst admin.teris.ee „Juhendid“ vaatest */
-.help-hint-group {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-}
-
 .help-hint-btn {
   display: inline-flex;
   align-items: center;
@@ -10157,6 +10151,13 @@ select.time-select {
   color: var(--emerald-500);
   background: rgba(34, 197, 94, 0.12);
   outline: none;
+}
+
+/* Nupu sees: väiksem, nupu tekstiga samal joonel */
+.help-hint-btn.help-hint-inline {
+  width: 20px;
+  height: 20px;
+  margin: -2px -4px -2px 2px;
 }
 
 .help-hint-popup {
