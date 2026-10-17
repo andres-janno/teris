@@ -87,6 +87,7 @@ async function main(): Promise<void> {
     case 'add': {
       if (!name) throw new Error('Kasutus: add <nimi> [--display "Nimi"] [--email aadress] [--tenant <id>]');
       const username = name.toLowerCase();
+      if (username === 'kasutajatugi') throw new Error('Kasutajanimi on reserveeritud');
       if (username.length > 64) throw new Error('Kasutajanimi on liiga pikk (maksimaalselt 64 märki)');
       if (await prisma.user.findUnique({ where: { username } })) throw new Error(`Kasutaja "${username}" on juba olemas`);
       const email = emailRaw === null ? null : normalizeEmail(emailRaw);

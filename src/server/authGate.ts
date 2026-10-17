@@ -165,6 +165,12 @@ async function handleSupportLogin(req: IncomingMessage, res: ServerResponse): Pr
     json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
     return;
   }
+  // Kehtiv tavasessioon: ei kirjuta seda vaikimisi tugivaatega üle.
+  const normalToken = sessionToken(req);
+  if (normalToken && (await findActiveSession(hashToken(normalToken)))) {
+    json(res, { error: 'Logi enne tugivaate avamist tavakasutajana välja' }, 409);
+    return;
+  }
   const token = typeof body?.token === 'string' ? body.token.slice(0, 256) : '';
   const exchanged = await exchangeHandoff(token);
   if (!exchanged) {
@@ -358,7 +364,8 @@ export async function authGate(
     return true;
   }
 
-  // Tugivaatega ei saa paroolivoogusid kasutada.
+  // Tugivaatega ei saa paroolivoogusid kasutada. Teadlikult range: keelame ka siis, kui
+  // brauseris on lisaks kehtiv tavasessioon (need teekonnad on avalikud ja sessioonist sõltumatud).
   if (
     method === 'POST' &&
     ['/api/auth/forgot', '/api/auth/token', '/api/auth/set-password'].includes(pathname) &&

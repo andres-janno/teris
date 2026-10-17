@@ -44,7 +44,9 @@ export async function applyLicenseGate(
   supportView = false
 ): Promise<boolean> {
   const state = await loadLicenseState(tenantId);
-  states.set(req, state);
+  // Tugivaates käsitletakse litsentsi alati kui ainult lugemiseks (nt GET-päringute kõrvalkirjutused jäävad ära);
+  // ainult serveri sisene olek, kliendi litsentsi vastust see ei muuda.
+  states.set(req, supportView ? { ...state, readOnly: true } : state);
   const denial = decideLicense(state, pathname, method, supportView);
   if (!denial) return false;
   json(res, denial.body, denial.status);

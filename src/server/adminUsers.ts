@@ -111,6 +111,10 @@ export async function handleAdminUsers(
       json(res, { error: USERNAME_ERROR }, 400);
       return true;
     }
+    if (username === 'kasutajatugi') {
+      json(res, { error: 'Kasutajanimi on reserveeritud' }, 400);
+      return true;
+    }
     const email = normalizeEmail(body?.email);
     if (!email) {
       json(res, { error: EMAIL_ERROR }, 400);

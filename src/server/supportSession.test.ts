@@ -1,5 +1,5 @@
 // Tugisessioon ettevõtte rakenduses: ühekordne üleandmislink, ainult lugemine, loa tühistamine.
-import { describe, it, expect, beforeAll, afterAll } from 'vitest';
+import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest';
 import { Readable } from 'stream';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { authDb } from './db';
@@ -38,6 +38,7 @@ async function call(cookie: string | null, method: string, url: string, body?: u
 }
 
 let grantId = '';
+let suspGrantId = '';
 let platformUserId = '';
 let n = 0;
 async function newHandoff(opts: { expiresInMs?: number; tenant?: string; grant?: string } = {}) {
@@ -67,7 +68,7 @@ beforeAll(async () => {
   const g = await authDb().supportGrant.create({ data: { tenantId: T, grantedByUserId: admin.id, validUntil: new Date(Date.now() + 3600_000) } });
   grantId = g.id;
   const gs = await authDb().supportGrant.create({ data: { tenantId: T_SUSP, grantedByUserId: adminS.id, validUntil: new Date(Date.now() + 3600_000) } });
-  (globalThis as any).__ssSuspGrant = gs.id;
+  suspGrantId = gs.id;
   const pu = await authDb().platformUser.create({ data: { username: PU, passwordHash: 'x', totpSecretEnc: 'x' } });
   platformUserId = pu.id;
 });
@@ -86,6 +87,11 @@ afterAll(async () => {
 });
 
 describe('tugisessioon', () => {
+  // Eelmine test võib olla peamise loa tühistanud
+  beforeEach(async () => {
+    await authDb().supportGrant.update({ where: { id: grantId }, data: { revokedAt: null } });
+  });
+
   it('kehtiv token -> 200, küpsis, logi, handoff tühjendatud; kordus -> 400', async () => {
     const token = await newHandoff();
     const { r } = await login(token);
@@ -118,7 +124,7 @@ describe('tugisessioon', () => {
   });
 
   it('peatatud ettevõte -> 400 ja token jääb kasutamata', async () => {
-    const token = await newHandoff({ tenant: T_SUSP, grant: (globalThis as any).__ssSuspGrant });
+    const token = await newHandoff({ tenant: T_SUSP, grant: suspGrantId });
     const r = await call(null, 'POST', '/api/auth/support-login', { token });
     expect(r.status).toBe(400);
     expect(r.json.error).toBe(LINK_ERR);
@@ -152,6 +158,11 @@ describe('tugisessioon', () => {
     const rev = await call(cookie, 'POST', `/api/support-grants/${grantId}/revoke`);
     expect(rev.status).toBe(403);
     expect(rev.json.code).toBe('SUPPORT_READ_ONLY');
+    for (const m of ['PUT', 'PATCH', 'DELETE']) {
+      const r = await call(cookie, m, '/api/seasons/1', {});
+      expect(r.status).toBe(403);
+      expect(r.json.code).toBe('SUPPORT_READ_ONLY');
+    }
     expect(await authDb().season.count({ where: { tenantId: T } })).toBe(0);
   });
 
@@ -174,6 +185,15 @@ describe('tugisessioon', () => {
     expect(me.json.user.username).toBe(u!.username);
   });
 
+  it('kehtiv tavasessioon -> support-login 409', async () => {
+    const u = await authDb().user.findFirst({ where: { tenantId: T } });
+    const tok = `ss-409-${process.pid}`;
+    await authDb().session.create({ data: { userId: u!.id, tokenHash: hashToken(tok), expiresAt: new Date(Date.now() + 3600_000) } });
+    const r = await call(`teris_session=${tok}`, 'POST', '/api/auth/support-login', { token: await newHandoff() });
+    expect(r.status).toBe(409);
+    expect(r.cookies.length).toBe(0);
+  });
+
   it('sessiooni lõpp ei ületa loa lõppu', async () => {
     const { r } = await login(await newHandoff());
     const until = new Date(r.json.user.supportValidUntil).getTime();
@@ -186,6 +206,7 @@ describe('tugisessioon', () => {
     const out = await call(cookie, 'POST', '/api/auth/logout');
     expect(out.status).toBe(200);
     expect(out.cookies.some((c) => c.startsWith('teris_support_session=;') && c.includes('Max-Age=0'))).toBe(true);
+    expect(out.cookies.some((c) => c.startsWith('teris_session=;') && c.includes('Max-Age=0'))).toBe(true);
     expect((await call(cookie, 'GET', '/api/auth/me')).status).toBe(401);
     expect(await authDb().supportSession.count({ where: { sessionTokenHash: hashToken(cookie.split('=')[1]) } })).toBe(0);
   });
@@ -195,5 +216,34 @@ describe('tugisessioon', () => {
     expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(200);
     await authDb().supportGrant.update({ where: { id: grantId }, data: { revokedAt: new Date() } });
     expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(401);
+  });
+
+  it('mitteaktiivne platvormi kasutaja: vahetus 400; kehtiv sessioon -> 401', async () => {
+    const { cookie } = await login(await newHandoff());
+    expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(200);
+    const pending = await newHandoff();
+    await authDb().platformUser.update({ where: { id: platformUserId }, data: { isActive: false } });
+    expect((await call(null, 'POST', '/api/auth/support-login', { token: pending })).status).toBe(400);
+    expect((await call(cookie, 'GET', '/api/seasons')).status).toBe(401);
+    await authDb().platformUser.update({ where: { id: platformUserId }, data: { isActive: true } });
+  });
+
+  it('GET /api/field-works ei kirjuta tugivaates; tavaliselt kirjutab', async () => {
+    const u = await authDb().user.findFirst({ where: { tenantId: T } });
+    const year = new Date().getFullYear();
+    const field = await authDb().field.create({ data: { tenantId: T, num: '1', name: 'SS', fieldCode: 'ss1' } as any });
+    const mk = (y: number, crop: string) => authDb().fieldSeason.create({ data: { tenantId: T, fieldId: field.id, year: y, crop, areaHa: 1, geometry: {} } as any });
+    const prev = await mk(year - 1, 'Talinisu');
+    const cur = await mk(year, '');
+    void prev;
+    const { cookie } = await login(await newHandoff());
+    await call(cookie, 'GET', `/api/field-works?year=${year}`);
+    expect((await authDb().fieldSeason.findUnique({ where: { id: cur.id } }))!.crop).toBe('');
+    const tok = `ss-fw-${process.pid}`;
+    await authDb().session.create({ data: { userId: u!.id, tokenHash: hashToken(tok), expiresAt: new Date(Date.now() + 3600_000) } });
+    await call(`teris_session=${tok}`, 'GET', `/api/field-works?year=${year}`);
+    expect((await authDb().fieldSeason.findUnique({ where: { id: cur.id } }))!.crop).not.toBe('');
+    await authDb().fieldSeason.deleteMany({ where: { fieldId: field.id } });
+    await authDb().field.delete({ where: { id: field.id } });
   });
 });

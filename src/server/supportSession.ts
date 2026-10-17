@@ -30,6 +30,8 @@ export async function findSupportSession(tokenHash: string): Promise<{ user: Sup
   if (!grant || grant.revokedAt !== null || grant.validUntil.getTime() <= Date.now() || grant.tenantId !== s.targetTenantId) return null;
   const tenant = await authDb().tenant.findUnique({ where: { id: s.targetTenantId }, select: { status: true } });
   if (tenant?.status !== 'ACTIVE') return null;
+  const pu = await authDb().platformUser.findUnique({ where: { id: s.platformUserId }, select: { isActive: true } });
+  if (!pu?.isActive) return null;
   return {
     sessionId: s.id,
     user: {
@@ -59,7 +61,7 @@ export async function exchangeHandoff(handoffToken: string): Promise<{ token: st
 
   // Aegunud kasutamata üleandmised — parim katse, ei tohi sisenemist katkestada.
   try {
-    await authDb().supportSession.deleteMany({ where: { sessionTokenHash: null, handoffExpiresAt: { lt: now } } });
+    await authDb().supportSession.deleteMany({ where: { OR: [{ sessionTokenHash: null, handoffExpiresAt: { lt: now } }, { expiresAt: { lt: now } }] } });
   } catch (err) {
     console.error('[Tugi] Aegunud üleandmiste koristus ebaõnnestus:', err);
   }
