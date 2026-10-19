@@ -73,11 +73,10 @@ export const CONTENT_ET: LandingContent = {
   ],
   faqTitle: 'Korduma kippuvad küsimused',
   faq: [
+    { q: 'Kuidas andmed Terisesse saavad?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
-    { q: 'Kuidas põllud Terisesse saavad?', a: 'Põllud imporditakse PRIA põllumassiivide shp-failist.' },
-    { q: 'Milliseid masinaid saab jälgida?', a: 'Masinaid jälgitakse neile paigaldatud telemeetriaseadmete abil — nii traktoreid kui haakeriistu. Küsi meilt, kas sinu seade sobib või milline seade valida.' },
-    { q: 'Kas Teris töötab telefonis?', a: 'Teris on veebirakendus ja avaneb brauseris nii arvutis, tahvlis kui telefonis.' },
+    { q: 'Millist tehnikat saab jälgida?', a: 'Masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme.' },
     { q: 'Mis Teris maksab?', a: 'Momendil on Teris veel arendamisel ning kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
