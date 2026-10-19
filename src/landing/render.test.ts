@@ -9,7 +9,7 @@ describe('renderLandingBody', () => {
   const html = renderLandingBody(c);
   it('sisaldab ilma JS-ita kõiki sektsioone ja ühte h1-te', () => {
     expect(html.match(/<h1[\s>]/g)?.length).toBe(1);
-    for (const t of [c.hero.headline, c.featuresTitle, c.audienceTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(escapeHtml(t));
+    for (const t of [c.hero.headline, c.hero.previewTitle, c.featuresTitle, c.audienceTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(escapeHtml(t));
     for (const f of c.features) expect(html).toContain(escapeHtml(f.title));
     for (const q of c.faq) expect(html).toContain(escapeHtml(q.q));
   });

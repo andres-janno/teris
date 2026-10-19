@@ -14,7 +14,7 @@ export interface LandingContent {
   ogImage: string;
   organization: { name: string; email: string };
   nav: { features: string; audience: string; faq: string; login: string; cta: string };
-  hero: { headline: string; lead: string; cta: string; imageAlt: string; image: string };
+  hero: { headline: string; lead: string; cta: string; previewTitle: string; imageAlt: string; image: string };
   featuresTitle: string;
   features: { id: string; title: string; text: string }[];
   audienceTitle: string;
@@ -51,6 +51,7 @@ export const CONTENT_ET: LandingContent = {
     headline: 'Põllud, masinad ja põlluraamat ühel kaardil',
     lead: 'Teris koondab teraviljakasvataja igapäevase info — PRIA põllud, külvikorra, masinate liikumise ja tehtud tööd — ühte veebirakendusse, mis töötab kontoris ja põllul.',
     cta: 'Tunnen huvi',
+    previewTitle: 'Selline näeb Teris välja',
     imageAlt: 'Terise kaardivaade: põllud Maa-ameti aluskaardil, külvikord värvidega ja masinate asukohad',
     image: '/landing/hero.svg'
   },

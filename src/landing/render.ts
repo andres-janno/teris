@@ -96,12 +96,24 @@ export function renderLandingBody(c: LandingContent): string {
   return `${header(c, true)}
 <main>
   <section class="lp-hero" aria-labelledby="hero-title">
+    <div class="lp-hero-backdrop" aria-hidden="true">
+      <div class="lp-hero-photo"></div>
+      <div class="lp-hero-sun"></div>
+      <div class="lp-hero-shade"></div>
+      <canvas class="lp-dust"></canvas>
+    </div>
     <div class="lp-hero-text">
       <h1 id="hero-title">${e(c.hero.headline)}</h1>
       <p class="lp-lead">${e(c.hero.lead)}</p>
       <a class="lp-btn lp-btn-primary lp-btn-lg" href="#interest" data-cta="hero">${e(c.hero.cta)}</a>
     </div>
-    <img class="lp-hero-image" src="${e(c.hero.image)}" alt="${e(c.hero.imageAlt)}" width="1200" height="750" />
+  </section>
+
+  <section id="preview" class="lp-section" aria-labelledby="preview-title">
+    <h2 id="preview-title">${e(c.hero.previewTitle)}</h2>
+    <div class="lp-card lp-preview-card">
+      <img class="lp-preview-image" src="${e(c.hero.image)}" alt="${e(c.hero.imageAlt)}" width="1200" height="750" loading="lazy" />
+    </div>
   </section>
 
   <section id="features" class="lp-section" aria-labelledby="features-title">

@@ -1,5 +1,10 @@
-// src/landing/landing.ts — landing'u beacon (vaatamine, CTA klõpsud) ja „Tunnen huvi“ vorm.
+// src/landing/landing.ts — landing'u beacon (vaatamine, CTA klõpsud), „Tunnen huvi“ vorm ja hero tolmukübemed.
 // Ilma Reactita, et leht jääks kergeks; sisu on HTML-is juba olemas.
+import { startDust } from './dust.ts';
+
+const dust = document.querySelector<HTMLCanvasElement>('.lp-dust');
+if (dust) startDust(dust);
+
 const params = new URLSearchParams(location.search);
 const utm = { utmSource: params.get('utm_source'), utmMedium: params.get('utm_medium'), utmCampaign: params.get('utm_campaign') };
 const openedAt = Date.now();
