@@ -3,6 +3,7 @@ import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { dbApiPlugin } from './src/server/dbApiPlugin.ts';
+import { landingHtmlPlugin } from './src/landing/landingHtmlPlugin.ts';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
@@ -17,15 +18,15 @@ function gitCommit(): string {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), dbApiPlugin()],
+  plugins: [react(), dbApiPlugin(), landingHtmlPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(gitCommit())
   },
   build: {
-    // Kaks lehte: tenant'i rakendus ja teenusepakkuja (admin.html). Vite 8 kasutab rolldown'i.
+    // Neli lehte: tenant'i rakendus, teenusepakkuja (admin.html), avalik landing ja privaatsusteade. Vite 8 kasutab rolldown'i.
     rolldownOptions: {
-      input: { main: 'index.html', admin: 'admin.html' }
+      input: { main: 'index.html', admin: 'admin.html', landing: 'landing.html', privacy: 'privacy.html' }
     }
   },
   server: {
