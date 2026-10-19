@@ -94,6 +94,7 @@
 .admin-stat span { font-size: 0.72rem; text-transform: uppercase; color: var(--text-secondary); }
 .admin-stat strong { font-size: 1.4rem; }
 .admin-stat small { color: var(--text-secondary); }
+.admin-stat p { margin: 6px 0 0; font-size: 0.75rem; line-height: 1.4; color: var(--text-secondary); }
 .admin-card h3 { font-size: 0.9rem; margin: 16px 0 8px; }
 .admin-two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
 .admin-interest-message { max-width: 320px; white-space: pre-wrap; }

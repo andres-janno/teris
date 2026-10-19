@@ -46,7 +46,7 @@ export async function landingStats(from: string, to: string): Promise<LandingSta
       GROUP BY 1, 2 ORDER BY 3 DESC`,
     db.$queryRaw<{ viewed: bigint; clicked: bigint; submitted: bigint }[]>`
       SELECT count(DISTINCT ("visitorHash", ${day})) FILTER (WHERE "event" = 'view') AS viewed,
-             count(DISTINCT ("visitorHash", ${day})) FILTER (WHERE "event" = 'cta_click') AS clicked,
+             count(DISTINCT ("visitorHash", ${day})) FILTER (WHERE "event" = 'cta_click' AND "target" <> 'header-login') AS clicked,
              count(DISTINCT ("visitorHash", ${day})) FILTER (WHERE "event" = 'form_submit') AS submitted
       FROM landing_events WHERE ${humanViews}`
   ]);

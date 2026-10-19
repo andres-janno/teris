@@ -15,6 +15,8 @@ beforeAll(async () => {
       { ...base, ts: at('2099-01-01T08:01:00Z'), source: 'beacon', event: 'view', visitorClass: 'human', visitorHash: 'a000000000000001', referrerHost: 'google.com' },
       { ...base, ts: at('2099-01-01T09:00:00Z'), source: 'beacon', event: 'view', visitorClass: 'human', visitorHash: 'a000000000000002', device: 'mobile' },
       { ...base, ts: at('2099-01-01T09:01:00Z'), source: 'beacon', event: 'cta_click', target: 'hero', visitorClass: 'human', visitorHash: 'a000000000000002' },
+      // „Logi sisse“ klõps ei ole huvi märk ega lähe lehtrisse
+      { ...base, ts: at('2099-01-01T08:02:00Z'), source: 'beacon', event: 'cta_click', target: 'header-login', visitorClass: 'human', visitorHash: 'a000000000000001' },
       { ...base, ts: at('2099-01-01T09:02:00Z'), source: 'beacon', event: 'form_submit', visitorClass: 'human', visitorHash: 'a000000000000002' },
       // Tallinna päeva piir: 22:30 UTC = 00:30 Tallinnas (UTC+2) järgmisel päeval
       { ...base, ts: at('2099-01-01T22:30:00Z'), source: 'beacon', event: 'view', visitorClass: 'human', visitorHash: 'a000000000000003' },

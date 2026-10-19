@@ -44,10 +44,28 @@ export function LandingStatsView() {
       {stats && (
         <>
           <div className="admin-stat-row">
-            <div className="admin-stat"><span>Külastajad</span><strong>{totalVisitors}</strong></div>
-            <div className="admin-stat"><span>Vaatamised</span><strong>{totalViews}</strong></div>
-            <div className="admin-stat"><span>„Tunnen huvi“ klõps</span><strong>{stats.funnel.clicked}</strong><small>{pct(stats.funnel.clicked, stats.funnel.viewed)}</small></div>
-            <div className="admin-stat"><span>Saadetud vorm</span><strong>{stats.funnel.submitted}</strong><small>{pct(stats.funnel.submitted, stats.funnel.viewed)}</small></div>
+            <div className="admin-stat">
+              <span>Külastajad</span>
+              <strong>{totalVisitors}</strong>
+              <p>Unikaalsed inimesed päeva kaupa (brauser + IP päevase räsina), kelle brauseris leht päriselt avanes. Robotid ei lähe arvesse. Sama inimene eri päevadel loetakse mitu korda.</p>
+            </div>
+            <div className="admin-stat">
+              <span>Vaatamised</span>
+              <strong>{totalViews}</strong>
+              <p>Kõik inimeste lehe avamised (avaleht ja privaatsusleht), sh korduvad avamised ja värskendused.</p>
+            </div>
+            <div className="admin-stat">
+              <span>„Tunnen huvi“ klõps</span>
+              <strong>{stats.funnel.clicked}</strong>
+              <small>{pct(stats.funnel.clicked, stats.funnel.viewed)} külastajatest</small>
+              <p>Külastajad, kes vajutasid vähemalt korra mõnda „Tunnen huvi“ nuppu (päis, hero, sammud, jalus). „Logi sisse“ klõpse ei arvestata.</p>
+            </div>
+            <div className="admin-stat">
+              <span>Saadetud vorm</span>
+              <strong>{stats.funnel.submitted}</strong>
+              <small>{pct(stats.funnel.submitted, stats.funnel.viewed)} külastajatest</small>
+              <p>Külastajad, kelle „Tunnen huvi“ vormi saatmine õnnestus. Päris päringud on vaates „Huvilised“; spämmifiltri kinni peetud saatmised võivad siin olla, aga seal mitte.</p>
+            </div>
           </div>
 
           <h3>Päevad</h3>
