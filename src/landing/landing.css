@@ -1,4 +1,12 @@
 /* src/landing/landing.css — avaliku landing'u ja privaatsuslehe stiil (ilma Reactita). */
+/* Fondid serveeritakse oma serverist (@fontsource), mitte Google Fontsist. */
+@import '@fontsource/outfit/500.css';
+@import '@fontsource/outfit/700.css';
+@import '@fontsource/outfit/800.css';
+@import '@fontsource/plus-jakarta-sans/400.css';
+@import '@fontsource/plus-jakarta-sans/500.css';
+@import '@fontsource/plus-jakarta-sans/600.css';
+@import '@fontsource/plus-jakarta-sans/700.css';
 :root {
   --lp-bg: #f7f8f5;
   --lp-surface: #ffffff;

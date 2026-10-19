@@ -17,6 +17,8 @@
     "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris"
   },
   "dependencies": {
+    "@fontsource/outfit": "^5.3.0",
+    "@fontsource/plus-jakarta-sans": "^5.3.0",
     "@prisma/client": "^6.19.3",
     "@turf/turf": "^7.4.0",
     "canvas-confetti": "^1.9.4",
