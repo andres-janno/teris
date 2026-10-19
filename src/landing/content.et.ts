@@ -117,7 +117,8 @@ export const CONTENT_ET: LandingContent = {
       {
         title: 'Sinu õigused',
         paragraphs: [
-          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.'
+          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.',
+          'Kui leiad, et rikume sinu õigusi, võid pöörduda Andmekaitse Inspektsiooni poole (www.aki.ee).'
         ]
       }
     ]
