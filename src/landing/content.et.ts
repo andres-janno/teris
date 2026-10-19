@@ -43,52 +43,44 @@ export const CONTENT_ET: LandingContent = {
   name: 'Teris',
   title: 'Teris — teraviljakasvataja põllud, masinad ja põlluraamat ühel kaardil',
   description:
-    'Teris on Eesti teraviljakasvatajale mõeldud veebirakendus: PRIA põllud ja külvikord, masinapargi GPS-telemeetria, põllutööde planeerimine, põlluraamat, mullaproovid, ilmaradar ja satelliidipildid ühes kohas.',
+    'Teris on põllumajanduse info haldamiseks mõeldud veebirakendus.',
   ogImage: '/og-teris.png',
   organization: { name: 'VentCap OÜ', email: 'info@teris.ee' },
   nav: { features: 'Võimalused', audience: 'Kellele', faq: 'KKK', login: 'Logi sisse', cta: 'Tunnen huvi' },
   hero: {
-    headline: 'Põllud, masinad ja põlluraamat ühel kaardil',
-    lead: 'Teris koondab teraviljakasvataja igapäevase info — PRIA põllud, külvikorra, masinate liikumise ja tehtud tööd — ühte veebirakendusse, mis töötab kontoris ja põllul.',
-    cta: 'Tunnen huvi',
-    previewTitle: 'Selline näeb Teris välja',
-    imageAlt: 'Terise kaardivaade: põllud Maa-ameti aluskaardil, külvikord värvidega ja masinate asukohad',
-    image: '/landing/hero.svg'
+    headline: 'Põllumajanduse infosüsteem',
+    lead: 'Teris koondab põllumajanduse igapäevase info ühte veebirakendusse. Rakenduse keskseks südameks on põldude kaart.',
+    cta: 'Tunnen huvi'
   },
   featuresTitle: 'Mida Teris teeb',
   features: [
-    { id: 'fields', title: 'PRIA põllud ja külvikord', text: 'Impordi põllud PRIA SHP-failist, vaata külvikorda hooaegade kaupa ja põlluplokke Maa-ameti aluskaartidel.' },
-    { id: 'fleet', title: 'Masinapark ja GPS-telemeetria', text: 'Traktorite ja haakeriistade asukoht ning liikumise ajalugu kaardil telemeetriaseadmete abil, harimise jäljed põllu kaupa.' },
-    { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd kultuuri ja töömallide järgi, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
-    { id: 'field-book', title: 'Põlluraamat', text: 'Impordi olemasolev põlluraamat ja pea tööde, väetiste ja taimekaitse arvestust ühes kohas.' },
-    { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused ja vaata neid põllu juures.' },
+    { id: 'fields', title: 'Põllud ja külvikord', text: 'Impordi põllud PRIA shp-failist, vaata külvikorda hooaegade kaupa ja põllumasiive Maa-ameti aluskaartidel.' },
+    { id: 'fleet', title: 'Tehnika ja telemeetria', text: 'Tehnika ja haakeriistade asukoht ning liikumise/kasutamise jälgiminee ja ajalugu.' },
+    { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd kultuuri ja mallide järgi, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
+    { id: 'field-book', title: 'Kuluarvestus', text: 'Pea kuluarvestust tööde, väetiste ja taimekaitse üle ühes kohas.' },
+    { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused METK mullaportaali shp-failist ja vaata tulemusi otse põldudel.' },
     { id: 'satellite', title: 'Satelliidipildid ja NDVI', text: 'Sentinel-2 satelliidipiltide põhjal taimiku seisund (NDVI) põllu kaupa, pilvisuse kontrolliga.' },
-    { id: 'weather', title: 'Ilmaradar', text: 'Sademete radar otse põllukaardil, et tööd paremini ajastada.' },
-    { id: 'team', title: 'Meeskond ja partnerid', text: 'Mitu kasutajat rollidega, seotud isikute register ning ajutine ainult lugemiseks ligipääs nõustajale.' }
-  ],
-  audienceTitle: 'Kellele',
-  audience: [
-    { title: 'Teraviljakasvatajad', text: 'Väikesest pereettevõttest suure tootjani — kõik põllud, masinad ja tööd ühes vaates.' },
-    { title: 'Nõustajad ja teenusepakkujad', text: 'Kliendi loal ajutine ligipääs tema andmetele, ilma paroole jagamata.' }
+    { id: 'weather', title: 'Ilmaradar', text: 'Sademete radar põllukaardist lähtudes, et töid paremini ajastada.' },
+    { id: 'team', title: 'Peakasutaja ja operaatorid', text: 'Peakasutaja on üks ettevõte, operaatorid aga seotud ettevõtted. Rollipõhised kasutajakontod.' }
   ],
   stepsTitle: 'Kuidas alustada',
   steps: [
     { title: 'Anna teada', text: 'Täida „Tunnen huvi“ vorm — see ei kohusta sind millekski.' },
     { title: 'Seadistame koos', text: 'Loome sinu ettevõtte keskkonna ja impordime põllud PRIA andmetest.' },
-    { title: 'Alusta', text: 'Logi sisse ja kutsu meeskond — Teris töötab brauseris, eraldi programmi pole vaja paigaldada.' }
+    { title: 'Alusta', text: 'Logi sisse ja alusta — Teris töötab brauseris, eraldi programmi pole vaja paigaldada.' }
   ],
   faqTitle: 'Korduma kippuvad küsimused',
   faq: [
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
-    { q: 'Kuidas põllud Terisesse saavad?', a: 'Põllud imporditakse PRIA põllumassiivide SHP-failist. Hiljem saab põlde ka käsitsi muuta.' },
+    { q: 'Kuidas põllud Terisesse saavad?', a: 'Põllud imporditakse PRIA põllumassiivide shp-failist.' },
     { q: 'Milliseid masinaid saab jälgida?', a: 'Masinaid jälgitakse neile paigaldatud telemeetriaseadmete abil — nii traktoreid kui haakeriistu. Küsi meilt, kas sinu seade sobib või milline seade valida.' },
     { q: 'Kas Teris töötab telefonis?', a: 'Teris on veebirakendus ja avaneb brauseris nii arvutis, tahvlis kui telefonis.' },
-    { q: 'Mis Teris maksab?', a: 'Hind sõltub ettevõtte suurusest ja vajalikest moodulitest. Anna „Tunnen huvi“ vormiga teada ja räägime läbi.' }
+    { q: 'Mis Teris maksab?', a: 'Momendil on Teris veel arendamisel ning kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
     title: 'Anna teada, kui Teris sind huvitab — võtame ühendust',
-    lead: 'Kohustusteta. Räägime läbi, mida su ettevõte vajab, ja näitame Terist sinu põldude peal.',
+    lead: 'Räägime läbi, mida su ettevõte vajab, ja näitame Terist sinu põldude peal.',
     labels: { name: 'Nimi', email: 'E-post', company: 'Ettevõte', phone: 'Telefon', areaHa: 'Põllupind (ha)', message: 'Mis sind huvitab?' },
     submit: 'Tunnen huvi',
     sending: 'Saadan…',

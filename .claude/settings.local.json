@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Skill(update-config)",
+      "Skill(update-config:*)",
+      "Bash(ssh -o BatchMode=yes debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run release*)",
+      "Bash(ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npm run release*)"
+    ]
+  }
+}
