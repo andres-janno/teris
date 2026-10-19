@@ -9,7 +9,9 @@ describe('renderLandingBody', () => {
   const html = renderLandingBody(c);
   it('sisaldab ilma JS-ita kõiki sektsioone ja ühte h1-te', () => {
     expect(html.match(/<h1[\s>]/g)?.length).toBe(1);
-    for (const t of [c.hero.headline, c.hero.previewTitle, c.featuresTitle, c.audienceTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(escapeHtml(t));
+    for (const t of [c.hero.headline, c.featuresTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(escapeHtml(t));
+    if (c.preview) expect(html).toContain(escapeHtml(c.preview.title));
+    if (c.audience) expect(html).toContain(escapeHtml(c.audience.title));
     for (const f of c.features) expect(html).toContain(escapeHtml(f.title));
     for (const q of c.faq) expect(html).toContain(escapeHtml(q.q));
   });
@@ -18,6 +20,24 @@ describe('renderLandingBody', () => {
     expect(html).toContain('href="/login"');
     expect(html).toContain('name="website"'); // honeypot
     for (const t of ['header', 'hero', 'steps', 'footer']) expect(html).toContain(`data-cta="${t}"`);
+  });
+});
+
+describe('valikulised sektsioonid', () => {
+  it('eelvaade ja „Kellele“ renderdatakse ainult siis, kui sisu on olemas', () => {
+    const without = renderLandingBody({ ...c, preview: undefined, audience: undefined });
+    expect(without).not.toContain('id="preview"');
+    expect(without).not.toContain('id="audience"');
+    expect(without).not.toContain('href="#audience"');
+    const withBoth = renderLandingBody({
+      ...c,
+      preview: { title: 'Eelvaade', imageAlt: 'Kaart', image: '/landing/hero.svg' },
+      audience: { title: 'Kellele', items: [{ title: 'Kasvatajad', text: 'Tekst' }] }
+    });
+    expect(withBoth).toContain('id="preview"');
+    expect(withBoth).toContain('src="/landing/hero.svg"');
+    expect(withBoth).toContain('id="audience"');
+    expect(withBoth).toContain('href="#audience"');
   });
 });
 

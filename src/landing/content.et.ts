@@ -14,11 +14,13 @@ export interface LandingContent {
   ogImage: string;
   organization: { name: string; email: string };
   nav: { features: string; audience: string; faq: string; login: string; cta: string };
-  hero: { headline: string; lead: string; cta: string; previewTitle: string; imageAlt: string; image: string };
+  hero: { headline: string; lead: string; cta: string };
+  // Valikuline: rakenduse eelvaate pilt hero all (puudumisel sektsiooni ei näidata)
+  preview?: { title: string; imageAlt: string; image: string };
   featuresTitle: string;
   features: { id: string; title: string; text: string }[];
-  audienceTitle: string;
-  audience: { title: string; text: string }[];
+  // Valikuline: „Kellele“ sektsioon (puudumisel sektsiooni ega menüülinki ei näidata)
+  audience?: { title: string; items: { title: string; text: string }[] };
   stepsTitle: string;
   steps: { title: string; text: string }[];
   faqTitle: string;
@@ -55,7 +57,7 @@ export const CONTENT_ET: LandingContent = {
   featuresTitle: 'Mida Teris teeb',
   features: [
     { id: 'fields', title: 'Põllud ja külvikord', text: 'Impordi põllud PRIA shp-failist, vaata külvikorda hooaegade kaupa ja põllumasiive Maa-ameti aluskaartidel.' },
-    { id: 'fleet', title: 'Tehnika ja telemeetria', text: 'Tehnika ja haakeriistade asukoht ning liikumise/kasutamise jälgiminee ja ajalugu.' },
+    { id: 'fleet', title: 'Tehnika ja telemeetria', text: 'Tehnika ja haakeriistade asukoht ning liikumise/kasutamise jälgimine ja ajalugu.' },
     { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd kultuuri ja mallide järgi, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
     { id: 'field-book', title: 'Kuluarvestus', text: 'Pea kuluarvestust tööde, väetiste ja taimekaitse üle ühes kohas.' },
     { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused METK mullaportaali shp-failist ja vaata tulemusi otse põldudel.' },

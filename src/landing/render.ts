@@ -70,7 +70,7 @@ function header(c: LandingContent, home: boolean): string {
   <a class="lp-brand" href="/" aria-label="${e(c.name)}"><img src="/teris-horizontal-color.svg" alt="${e(c.name)}" width="132" height="32" /></a>
   <nav class="lp-nav" aria-label="Peamenüü">
     <a href="${a('#features')}">${e(c.nav.features)}</a>
-    <a href="${a('#audience')}">${e(c.nav.audience)}</a>
+    ${c.audience ? `<a href="${a('#audience')}">${e(c.nav.audience)}</a>` : ''}
     <a href="${a('#faq')}">${e(c.nav.faq)}</a>
   </nav>
   <div class="lp-header-actions">
@@ -109,13 +109,14 @@ export function renderLandingBody(c: LandingContent): string {
     </div>
   </section>
 
+${c.preview ? `
   <section id="preview" class="lp-section" aria-labelledby="preview-title">
-    <h2 id="preview-title">${e(c.hero.previewTitle)}</h2>
+    <h2 id="preview-title">${e(c.preview.title)}</h2>
     <div class="lp-card lp-preview-card">
-      <img class="lp-preview-image" src="${e(c.hero.image)}" alt="${e(c.hero.imageAlt)}" width="1200" height="750" loading="lazy" />
+      <img class="lp-preview-image" src="${e(c.preview.image)}" alt="${e(c.preview.imageAlt)}" width="1200" height="750" loading="lazy" />
     </div>
   </section>
-
+` : ''}
   <section id="features" class="lp-section" aria-labelledby="features-title">
     <h2 id="features-title">${e(c.featuresTitle)}</h2>
     <div class="lp-grid">
@@ -123,13 +124,14 @@ export function renderLandingBody(c: LandingContent): string {
     </div>
   </section>
 
+${c.audience ? `
   <section id="audience" class="lp-section" aria-labelledby="audience-title">
-    <h2 id="audience-title">${e(c.audienceTitle)}</h2>
+    <h2 id="audience-title">${e(c.audience.title)}</h2>
     <div class="lp-grid lp-grid-2">
-      ${c.audience.map((x) => `<article class="lp-card"><h3>${e(x.title)}</h3><p>${e(x.text)}</p></article>`).join('\n      ')}
+      ${c.audience.items.map((x) => `<article class="lp-card"><h3>${e(x.title)}</h3><p>${e(x.text)}</p></article>`).join('\n      ')}
     </div>
   </section>
-
+` : ''}
   <section id="steps" class="lp-section" aria-labelledby="steps-title">
     <h2 id="steps-title">${e(c.stepsTitle)}</h2>
     <ol class="lp-steps">
@@ -189,10 +191,7 @@ export function renderLlmsTxt(c: LandingContent): string {
     '',
     ...c.features.map((f) => `- **${f.title}**: ${f.text}`),
     '',
-    `## ${c.audienceTitle}`,
-    '',
-    ...c.audience.map((a) => `- **${a.title}**: ${a.text}`),
-    '',
+    ...(c.audience ? [`## ${c.audience.title}`, '', ...c.audience.items.map((a) => `- **${a.title}**: ${a.text}`), ''] : []),
     `## ${c.faqTitle}`,
     '',
     ...c.faq.flatMap((f) => [`### ${f.q}`, '', f.a, '']),
