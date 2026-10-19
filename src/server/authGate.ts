@@ -133,6 +133,14 @@ async function currentSupportSession(req: IncomingMessage): Promise<{ user: DbUs
   return found ? { user: found.user, sessionId: found.sessionId, support: true } : null;
 }
 
+/** Kas päringul on kehtiv tava- või tugisessioon (avalehe valik: rakendus või landing). Ei uuenda sessiooni. */
+export async function hasValidSession(req: IncomingMessage): Promise<boolean> {
+  const token = sessionToken(req);
+  if (token && (await findActiveSession(hashToken(token)))) return true;
+  const support = supportToken(req);
+  return !!(support && (await findSupportSession(hashToken(support))));
+}
+
 async function currentSession(req: IncomingMessage, res: ServerResponse): Promise<{ user: DbUser; sessionId: string; support?: true } | null> {
   const token = sessionToken(req);
   if (!token) return currentSupportSession(req);

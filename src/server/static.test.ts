@@ -3,7 +3,7 @@ import path from 'node:path';
 import os from 'node:os';
 import { mkdtemp, mkdir, writeFile, rm } from 'node:fs/promises';
 import type { IncomingMessage, ServerResponse } from 'http';
-import { resolveStaticPath, cacheControlFor, serveStatic } from './static';
+import { resolveStaticPath, cacheControlFor, serveStatic, serveFile } from './static';
 
 const DIST = path.resolve('/srv/app/dist');
 
@@ -97,5 +97,37 @@ describe('serveStatic hosti järgi', () => {
   it('assetid on mõlemal hostil lubatud', async () => {
     expect((await get('/assets/app-abc.js', 'admin.teris.ee', PLATFORM)).status).toBe(200);
     expect((await get('/assets/app-abc.js', 'teris.ee', TENANT)).status).toBe(200);
+  });
+});
+
+describe('serveFile', () => {
+  let dir: string;
+  beforeAll(async () => {
+    dir = await mkdtemp(path.join(os.tmpdir(), 'teris-servefile-'));
+    await writeFile(path.join(dir, 'landing.html'), 'LANDING');
+    await writeFile(path.join(dir, 'robots.txt'), 'User-agent: *');
+  });
+  afterAll(async () => {
+    await rm(dir, { recursive: true, force: true });
+  });
+  const run = async (method: string, rel: string) => {
+    const out = { status: 0, body: '', headers: {} as Record<string, unknown> };
+    const res = {
+      statusCode: 200,
+      setHeader(k: string, v: unknown) { out.headers[k.toLowerCase()] = v; },
+      end(b?: Buffer | string) { out.status = (res as any).statusCode; out.body = b ? b.toString() : ''; }
+    } as unknown as ServerResponse;
+    await serveFile({ method } as IncomingMessage, res, dir, rel);
+    return out;
+  };
+  it('serveerib nimetatud faili õige tüübiga', async () => {
+    const r = await run('GET', 'landing.html');
+    expect(r).toMatchObject({ status: 200, body: 'LANDING' });
+    expect(r.headers['content-type']).toBe('text/html; charset=utf-8');
+    expect((await run('GET', 'robots.txt')).headers['content-type']).toBe('text/plain; charset=utf-8');
+  });
+  it('puuduv fail → 404, POST → 405', async () => {
+    expect((await run('GET', 'missing.html')).status).toBe(404);
+    expect((await run('POST', 'landing.html')).status).toBe(405);
   });
 });

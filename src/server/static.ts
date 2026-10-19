@@ -45,6 +45,34 @@ async function isFile(p: string): Promise<boolean> {
   }
 }
 
+async function send(req: IncomingMessage, res: ServerResponse, distDir: string, file: string): Promise<void> {
+  const method = req.method?.toUpperCase() || 'GET';
+  const body = await readFile(file);
+  const rel = path.relative(path.resolve(distDir), file).split(path.sep).join('/');
+  res.statusCode = 200;
+  res.setHeader('Content-Type', MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream');
+  res.setHeader('Cache-Control', cacheControlFor(rel));
+  res.setHeader('Content-Length', body.length);
+  res.end(method === 'HEAD' ? undefined : body);
+}
+
+/** Serveerib distDir-i suhtes nimetatud faili (landing'u marsruudid); puuduv → 404. */
+export async function serveFile(req: IncomingMessage, res: ServerResponse, distDir: string, relPath: string): Promise<void> {
+  const method = req.method?.toUpperCase() || 'GET';
+  if (method !== 'GET' && method !== 'HEAD') {
+    res.statusCode = 405;
+    res.end();
+    return;
+  }
+  const file = resolveStaticPath(distDir, `/${relPath}`);
+  if (!file || !(await isFile(file))) {
+    res.statusCode = 404;
+    res.end('Not found');
+    return;
+  }
+  await send(req, res, distDir, file);
+}
+
 export interface StaticOptions {
   /** SPA tagavarafail (vaikimisi index.html). */
   spaEntry?: string;
@@ -98,11 +126,5 @@ export async function serveStatic(
     }
   }
 
-  const body = await readFile(file);
-  const rel = path.relative(path.resolve(distDir), file).split(path.sep).join('/');
-  res.statusCode = 200;
-  res.setHeader('Content-Type', MIME[path.extname(file).toLowerCase()] ?? 'application/octet-stream');
-  res.setHeader('Cache-Control', cacheControlFor(rel));
-  res.setHeader('Content-Length', body.length);
-  res.end(method === 'HEAD' ? undefined : body);
+  await send(req, res, distDir, file);
 }

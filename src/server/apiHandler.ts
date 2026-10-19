@@ -3,6 +3,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
+import { handleLandingApi } from './landing/landingApi.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
 import { handleHelpRead } from './helpArticles.ts';
@@ -230,6 +231,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       return;
     }
     if (pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);
+    if (await handleLandingApi(req, res, pathname, method, options.allowedOrigins)) return;
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
     setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);
