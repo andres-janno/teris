@@ -51,10 +51,10 @@ export const CONTENT_ET: LandingContent = {
   nav: { features: 'Võimalused', audience: 'Kellele', faq: 'KKK', login: 'Logi sisse', cta: 'Tunnen huvi' },
   hero: {
     headline: 'Põllumajanduse infosüsteem',
-    lead: 'Teris koondab põllumajanduse igapäevase info ühte veebirakendusse. Rakenduse keskseks südameks on põldude kaart.',
+    lead: 'Teris koondab põllumajanduse igapäevase info ühte veebirakendusse. Rakenduse keskseks ankruks on erinevate kihtidega kaart.',
     cta: 'Tunnen huvi'
   },
-  featuresTitle: 'Mida Teris teeb',
+  featuresTitle: 'Mida TERIS teeb',
   features: [
     { id: 'fields', title: 'Põllud ja külvikord', text: 'Impordi põllud PRIA shp-failist, vaata külvikorda hooaegade kaupa ja põllumasiive Maa-ameti aluskaartidel.' },
     { id: 'fleet', title: 'Tehnika ja telemeetria', text: 'Tehnika ja haakeriistade asukoht ning liikumise/kasutamise jälgimine ja ajalugu.' },
@@ -76,8 +76,8 @@ export const CONTENT_ET: LandingContent = {
     { q: 'Kuidas andmed Terisesse saavad?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
-    { q: 'Millist tehnikat saab jälgida?', a: 'Masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme.' },
-    { q: 'Mis Teris maksab?', a: 'Momendil on Teris veel arendamisel ning kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
+    { q: 'Millist tehnikat saab jälgida?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tootjate portaalid.' },
+    { q: 'Mis Teris maksab?', a: 'Momendil on Teris veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
     title: 'Anna teada, kui Teris sind huvitab — võtame ühendust',
