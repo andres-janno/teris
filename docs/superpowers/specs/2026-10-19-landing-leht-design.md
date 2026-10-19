@@ -20,42 +20,48 @@ registreerumine, automaatne vastuskiri huvilisele, geo-asukoht.
 |---|---|
 | Eesmärk | Avalik turundusleht + eraldi sisselogimine |
 | Tehniline lähenemine | Eraldi staatiline `landing.html` (Vite'i kolmas sisend, ilma Reactita); server valib `/` puhul sessiooni järgi rakenduse või landing'u |
-| Sisselogimine | Kolib aadressile `/logi-sisse` (olemasolev `LoginPage`) |
+| Sisselogimine | Kolib aadressile `/login` (olemasolev `LoginPage`) |
 | Mõõtmine | Oma serveris: serveri logi + brauseri beacon; ilma küpsisteta, IP-d ei salvestata |
 | Peamine tegevus | Kohustustevaba „Tunnen huvi“ vorm (mitte „Küsi pakkumist“); hindu lehel ei näidata |
 | Keel | Eesti keel; tekstid eraldi sisufailis, et `/en` lisada hiljem |
 | Sisu | Claude kirjutab mustandi rakenduse tegelike võimaluste põhjal, kasutaja toimetab |
 | Ekraanipildid | Ainult demo-tenandist sünteetiliste andmetega — päris ettevõtete andmeid avalikule lehele ei panda |
+| Identifikaatorid | URL-id, HTML `id`/`class`, CSS, sündmuste ja staatuste nimed ning muud koodi identifikaatorid on inglise keeles; kommentaarid ja kasutajale nähtav tekst eesti keeles |
 
 ## 1. Marsruutimine
 
 | Tee | Kehtiv sessioon | Sessiooni pole |
 |---|---|---|
 | `/` | rakendus (`index.html`) | landing (`landing.html`) |
-| `/logi-sisse` | 302 → `/` | rakendus → `LoginPage` |
-| `/privaatsus` | privaatsusteade (staatiline, landing'u stiilis) | sama |
-| `/tugi`, `/parool` | nagu praegu (SPA) | nagu praegu |
+| `/login` | 302 → `/` | rakendus → `LoginPage` |
+| `/privacy` | privaatsusteade (staatiline, landing'u stiilis) | sama |
+| `/support`, `/set-password` | SPA (endised `/tugi`, `/parool`) | sama |
+| `/tugi`, `/parool` | vana alias, töötab edasi (juba saadetud lingid) | sama |
 | `/robots.txt`, `/sitemap.xml`, `/llms.txt` | staatilised failid | sama |
 | muu SPA tee | rakendus | rakendus (näitab `LoginPage`) |
 
-- Sessiooni kontroll `/` ja `/logi-sisse` puhul: sessiooniküpsise räsi otsitakse andmebaasist sama
+- Sessiooni kontroll `/` ja `/login` puhul: sessiooniküpsise räsi otsitakse andmebaasist sama
   loogikaga mis `authGate.ts`-is (eraldatakse eksporditav funktsioon `hasValidSession(req)`).
   Tugivaate küpsis loetakse samuti kehtivaks sessiooniks.
 - `admin.teris.ee` (platvormi host) ei muutu; landing'ut seal ei serveerita.
-- `landing.html` ja `privaatsus.html` on platvormi hostil blokeeritud, `admin.html` landing'u hostil
+- `landing.html` ja `privacy.html` on platvormi hostil blokeeritud, `admin.html` landing'u hostil
   jääb blokeerituks nagu praegu.
-- Klient: pärast sisselogimist `/logi-sisse` lehel `history.replaceState(null, '', '/')`; pärast
-  väljalogimist ja 401 käsitlejas `replaceState(null, '', '/logi-sisse')`, et värskendamine jääks
+- Klient: pärast sisselogimist `/login` lehel `history.replaceState(null, '', '/')`; pärast
+  väljalogimist ja 401 käsitlejas `replaceState(null, '', '/login')`, et värskendamine jääks
   sisselogimise vaatesse.
 - Arendusserver (`npm run dev`): `dbApiPlugin.ts` teeb sama `/` otsuse, et landing'ut saaks proovida.
+- Olemasolevad eestikeelsed teed nimetatakse ümber: tugivaate link `/tugi#<token>` → `/support#<token>`
+  (`platformApi.ts`), parooli määramise link `/parool#<token>` → `/set-password#<token>`
+  (`passwordTokens.ts`); `AuthGate.tsx` tunneb ära mõlemad, vanad teed jäävad aliasteks, et juba
+  saadetud lingid töötaksid.
 - `index.html` saab `<meta name="robots" content="noindex">` — rakenduse kest ei satu otsingusse.
 
 ## 2. Lehe struktuur ja sisu
 
 Üks leht, ankrulingid. Sektsioonid:
 
-1. **Päis** — logo, ankrud (Võimalused · Kellele · KKK), nupud „Logi sisse“ (`/logi-sisse`) ja
-   **„Tunnen huvi“** (`#huvi`).
+1. **Päis** — logo, ankrud (Võimalused · Kellele · KKK), nupud „Logi sisse“ (`/login`) ja
+   **„Tunnen huvi“** (`#interest`).
 2. **Hero** — üks lause, mis Teris on; ekraanipilt kaardivaatest; „Tunnen huvi“.
 3. **Võimalused** — 6–8 kaarti: PRIA põllud ja külvikord, masinapark ja GPS-telemeetria,
    põllutööde tahvel, põlluraamat (koos impordiga), mullaproovid, ilmaradar ja satelliidipildid,
@@ -64,9 +70,9 @@ registreerumine, automaatne vastuskiri huvilisele, geo-asukoht.
 5. **Kuidas alustada** — 3 sammu: anna teada → seadistame põllud PRIA andmetest → alusta.
 6. **KKK** — 5–8 küsimust (andmete asukoht ja turvalisus, PRIA andmed, sobivad masinad, hind,
    mobiil). `<details>`/`<summary>`.
-7. **„Tunnen huvi“ vorm** (`id="huvi"`), pealkiri nt „Anna teada, kui Teris sind huvitab —
+7. **„Tunnen huvi“ vorm** (`id="interest"`), pealkiri nt „Anna teada, kui Teris sind huvitab —
    võtame ühendust“.
-8. **Jalus** — `COPYRIGHT_TEXT` (© VentCap OÜ), kontakt, link `/privaatsus`.
+8. **Jalus** — `COPYRIGHT_TEXT` (© VentCap OÜ), kontakt, link `/privacy`.
 
 - Kujundus: rakenduse värvid ja fondid (Outfit / Plus Jakarta Sans), hele ja tume teema
   (`prefers-color-scheme`), mobiilivaade, tekst valitav.
@@ -77,7 +83,7 @@ registreerumine, automaatne vastuskiri huvilisele, geo-asukoht.
 
 ### 3.1 Andmeallikad
 
-1. **Serveri logi** — iga päring teedele `/` (landing'u variant), `/privaatsus`, `/llms.txt`,
+1. **Serveri logi** — iga päring teedele `/` (landing'u variant), `/privacy`, `/llms.txt`,
    `/robots.txt`, `/sitemap.xml` → üks `hit` sündmus. Näeb ka roboteid, mis JS-i ei käivita.
 2. **Beacon** — `src/landing/landing.ts` saadab `navigator.sendBeacon('/api/landing/event', …)`:
    `view` (lehe laadimisel), `cta_click` (koos nupu tunnusega, nt `header`, `hero`, `footer`),
@@ -160,7 +166,7 @@ Ligipääs: ainult platvormi administraatorid (olemasolev `platformAuth`).
 | põllupind (ha) | ei | 0–100 000 |
 | „Mis sind huvitab?“ | ei | 2000 |
 
-Vormi all: „Kasutame andmeid ainult sinuga ühenduse võtmiseks“ + link `/privaatsus`.
+Vormi all: „Kasutame andmeid ainult sinuga ühenduse võtmiseks“ + link `/privacy`.
 Nõusoleku linnukest pole (õiguslik alus: päringule vastamine).
 
 ### 4.2 Otspunkt `POST /api/landing/interest`
@@ -204,10 +210,10 @@ Kirjas privaatsuslehel.
   kirjeldus, `featureList`, `operatingSystem: Web`, `inLanguage: et`), `Organization`
   (VentCap OÜ, logo, kontakt), `FAQPage` (samast sisufailist mis lehel nähtav KKK).
 - **`/llms.txt`** — Markdown: mis Teris on, kellele, peamised võimalused, kuidas huvi märkida,
-  lingid (`/`, `/#huvi`, `/privaatsus`). Genereeritakse `content.et.ts`-ist.
-- **`/robots.txt`** — `User-agent: *` `Allow: /`; `Disallow: /api/`, `/logi-sisse`, `/tugi`,
-  `/parool`; AI-roomajaid ei blokeerita; `Sitemap: https://teris.ee/sitemap.xml`.
-- **`/sitemap.xml`** — `/`, `/privaatsus`.
+  lingid (`/`, `/#interest`, `/privacy`). Genereeritakse `content.et.ts`-ist.
+- **`/robots.txt`** — `User-agent: *` `Allow: /`; `Disallow: /api/`, `/login`, `/support`,
+  `/set-password`, `/tugi`, `/parool`; AI-roomajaid ei blokeerita; `Sitemap: https://teris.ee/sitemap.xml`.
+- **`/sitemap.xml`** — `/`, `/privacy`.
 - **Meta:** `<title>` ja `description` teenuse kirjeldusena, `canonical`, `<html lang="et">`,
   Open Graph + Twitter-kaart, jagamispilt 1200×630 (`public/og-teris.png`).
   `hreflang` lisandub koos `/en`-iga.
@@ -216,8 +222,8 @@ Kirjas privaatsuslehel.
 
 Uued:
 
-- `landing.html`, `privaatsus.html` — Vite'i sisendid (`vite.config.ts`: `main`, `admin`,
-  `landing`, `privaatsus`).
+- `landing.html`, `privacy.html` — Vite'i sisendid (`vite.config.ts`: `main`, `admin`,
+  `landing`, `privacy`).
 - `src/landing/content.et.ts` — kogu tekst; `src/landing/render.ts` — HTML-i, JSON-LD ja
   `llms.txt` genereerimine sisust; `src/landing/landingHtmlPlugin.ts` — Vite'i plugin, mis
   süstib genereeritud HTML-i ehitusel ja arendusserveris ning kirjutab `dist/llms.txt`,
@@ -232,7 +238,8 @@ Uued:
 Muudetavad: `src/server/prod.ts`, `src/server/dbApiPlugin.ts`, `src/server/static.ts`
 (MIME `.txt`, `.xml`), `src/server/apiHandler.ts` (avalikud `/api/landing/*` enne sessiooni
 nõuet), `src/server/authGate.ts` (`hasValidSession`), `src/AuthGate.tsx`, `index.html`,
-`src/admin/AdminApp.tsx` (uued vaated menüüs).
+`src/admin/AdminApp.tsx` (uued vaated menüüs), `src/server/platformApi.ts` ja
+`src/server/passwordTokens.ts` (lingid `/support`, `/set-password`), `README.md` (teed).
 
 ## 7. Vigade käsitlus
 
@@ -247,7 +254,7 @@ nõuet), `src/server/authGate.ts` (`hasValidSession`), `src/AuthGate.tsx`, `inde
 
 - `botDetect`: AI-, otsingu-, muud robotid ja inimese brauserid (Chrome, Safari, Firefox, mobiil).
 - `visitorHash`: stabiilne sama soola korral, erinev soola vahetusel, ei sisalda IP-d.
-- `landingRoute`: sessiooniga `/` → `index.html`; ilma → `landing.html`; `/logi-sisse` sessiooniga
+- `landingRoute`: sessiooniga `/` → `index.html`; ilma → `landing.html`; `/login` sessiooniga
   → 302; platvormi hostil landing'ut pole; `hit` logitakse ainult landing'u teedel.
 - Beacon: tundmatu sündmus / liiga suur keha → 400; lubatud → salvestus õigete väljadega;
   `referrerHost` ainult domeen; kiiruspiirang.
