@@ -1176,3 +1176,55 @@ model CatalogWorkTemplateItem {
   @@unique([templateId, catalogWorkTypeId])
   @@map("catalog_work_template_items")
 }
+
+// ============================================================================
+// LANDING-LEHT — platvormi tabelid (ilma RLS-ita, ainult authDb())
+// ============================================================================
+
+// Landing'u külastuste mõõtmine. IP-d ei salvestata; visitorHash vahetub iga päev.
+model LandingEvent {
+  id           BigInt   @id @default(autoincrement())
+  ts           DateTime @default(now())
+  source       String // 'server' | 'beacon'
+  event        String // 'hit' | 'view' | 'cta_click' | 'form_submit'
+  target       String? // cta_click nupu tunnus
+  path         String
+  visitorClass String // 'human' | 'ai_bot' | 'search_bot' | 'other_bot'
+  botName      String?
+  referrerHost String?
+  utmSource    String?
+  utmMedium    String?
+  utmCampaign  String?
+  device       String // 'desktop' | 'mobile' | 'tablet'
+  visitorHash  String   @db.Char(16)
+
+  @@index([ts])
+  @@map("landing_events")
+}
+
+enum InterestStatus {
+  NEW
+  CONTACTED
+  CLOSED
+}
+
+// „Tunnen huvi“ vormi päringud. IP-d ei salvestata.
+model InterestRequest {
+  id           String         @id @default(cuid())
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  name         String
+  email        String
+  company      String?
+  phone        String?
+  areaHa       Float?
+  message      String?
+  status       InterestStatus @default(NEW)
+  notes        String?
+  closedAt     DateTime?
+  utmSource    String?
+  referrerHost String?
+
+  @@index([status])
+  @@map("interest_requests")
+}
