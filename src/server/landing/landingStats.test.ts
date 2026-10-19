@@ -16,6 +16,8 @@ beforeAll(async () => {
       { ...base, ts: at('2099-01-01T09:00:00Z'), source: 'beacon', event: 'view', visitorClass: 'human', visitorHash: 'a000000000000002', device: 'mobile' },
       { ...base, ts: at('2099-01-01T09:01:00Z'), source: 'beacon', event: 'cta_click', target: 'hero', visitorClass: 'human', visitorHash: 'a000000000000002' },
       { ...base, ts: at('2099-01-01T09:02:00Z'), source: 'beacon', event: 'form_submit', visitorClass: 'human', visitorHash: 'a000000000000002' },
+      // Tallinna päeva piir: 22:30 UTC = 00:30 Tallinnas (UTC+2) järgmisel päeval
+      { ...base, ts: at('2099-01-01T22:30:00Z'), source: 'beacon', event: 'view', visitorClass: 'human', visitorHash: 'a000000000000003' },
       // robotid
       { ...base, ts: at('2099-01-01T10:00:00Z'), source: 'server', event: 'hit', visitorClass: 'ai_bot', botName: 'GPTBot', visitorHash: 'b000000000000001' },
       { ...base, path: '/llms.txt', ts: at('2099-01-01T10:01:00Z'), source: 'server', event: 'hit', visitorClass: 'ai_bot', botName: 'GPTBot', visitorHash: 'b000000000000001' },
@@ -40,10 +42,10 @@ describe('parseDay', () => {
 describe('landingStats', () => {
   it('päevad, allikad, seadmed, robotid ja lehter', async () => {
     const s = await landingStats('2099-01-01', '2099-01-31');
-    expect(s.daily).toEqual([{ day: '2099-01-01', visitors: 2, views: 3 }]);
-    expect(s.sources).toEqual(expect.arrayContaining([{ source: 'google.com', visitors: 1 }, { source: 'otse', visitors: 1 }]));
-    expect(s.devices).toEqual(expect.arrayContaining([{ device: 'desktop', visitors: 1 }, { device: 'mobile', visitors: 1 }]));
+    expect(s.daily).toEqual([{ day: '2099-01-01', visitors: 2, views: 3 }, { day: '2099-01-02', visitors: 1, views: 1 }]);
+    expect(s.sources).toEqual(expect.arrayContaining([{ source: 'google.com', visitors: 1 }, { source: 'otse', visitors: 2 }]));
+    expect(s.devices).toEqual(expect.arrayContaining([{ device: 'desktop', visitors: 2 }, { device: 'mobile', visitors: 1 }]));
     expect(s.bots).toEqual([{ visitorClass: 'ai_bot', botName: 'GPTBot', hits: 2, llmsTxtHits: 1, llmsTxtLastSeen: '2099-01-01T10:01:00.000Z', lastSeen: '2099-01-01T10:01:00.000Z' }]);
-    expect(s.funnel).toEqual({ viewed: 2, clicked: 1, submitted: 1 });
+    expect(s.funnel).toEqual({ viewed: 3, clicked: 1, submitted: 1 });
   });
 });

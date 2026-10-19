@@ -23,7 +23,8 @@ const n = (v: unknown) => Number(v ?? 0);
 
 export async function landingStats(from: string, to: string): Promise<LandingStats> {
   const db = authDb();
-  const day = Prisma.sql`("ts" AT TIME ZONE 'Europe/Tallinn')::date`;
+  // ts on timestamp ilma ajavööndita, väärtused UTC-s: kõigepealt UTC-ks, siis Tallinna ajaks.
+  const day = Prisma.sql`(("ts" AT TIME ZONE 'UTC') AT TIME ZONE 'Europe/Tallinn')::date`;
   const inRange = Prisma.sql`${day} BETWEEN ${from}::date AND ${to}::date`;
   const humanViews = Prisma.sql`"source" = 'beacon' AND "visitorClass" = 'human' AND ${inRange}`;
 
