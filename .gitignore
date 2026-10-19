@@ -34,3 +34,6 @@ dist-ssr
 
 # Serveri ehitus
 dist-server
+
+# Claude Code kohalikud seaded
+.claude/settings.local.json
