@@ -135,7 +135,7 @@ REVOKE ALL ON SEQUENCE landing_events_id_seq FROM teris_app;
 Run: `srv 'npx prisma validate && npx prisma generate'`
 Expected: `The schema at prisma/schema.prisma is valid` ja `Generated Prisma Client`.
 
-> NB: `prisma db push` live-andmebaasi on Task 12 osa (kasutaja). Testid alates Task 6-st vajavad tabeleid — enne Task 6 testide käivitamist küsi kasutajalt luba ja lase tal teha: varukoopia → `npx prisma db push` → `psql "$MIGRATE_DATABASE_URL" -f scripts/tenancy/04-privileges.sql` (vt Task 12 sammud 1–2).
+> NB: `prisma db push` live-andmebaasi on Task 12 osa (kasutaja). Testid alates Task 6-st vajavad tabeleid — enne Task 6 testide käivitamist küsi kasutajalt luba ja lase tal teha: varukoopia → `npx prisma db push` → `psql "${MIGRATE_DATABASE_URL%%\?*}" -f scripts/tenancy/04-privileges.sql` (vt Task 12 sammud 1–2).
 
 - [ ] **Step 4: Commit**
 
@@ -2746,14 +2746,16 @@ git commit -m "Admin: Landing statistika ja Huvilised vaated"
 
 - [ ] **Step 1: Varukoopia ja skeem (kasutaja, kui Task 1 juures veel tegemata)**
 
+Skeemi push ja õiguste skript (`04-privileges.sql`) on juba 2026-10-19 live-andmebaasis rakendatud; jäänud on ainult kontroll.
+
 ```bash
 cd /home/debian/teris && set -a && . ./.env && set +a
-pg_dump "$MIGRATE_DATABASE_URL" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump
+pg_dump "${MIGRATE_DATABASE_URL%%\?*}" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump
 npx prisma db push && npx prisma generate
-psql "$MIGRATE_DATABASE_URL" -v ON_ERROR_STOP=1 -f scripts/tenancy/04-privileges.sql
+psql "${MIGRATE_DATABASE_URL%%\?*}" -v ON_ERROR_STOP=1 -f scripts/tenancy/04-privileges.sql
 ```
 
-Kontroll: `psql "$DATABASE_URL" -c 'select count(*) from landing_events'` → `permission denied` (teris_app ei näe); `psql "$PLATFORM_DATABASE_URL" -c 'select count(*) from landing_events'` → `0`.
+Kontroll: `psql "${DATABASE_URL%%\?*}" -c 'select count(*) from landing_events'` → `permission denied` (teris_app ei näe); `psql "${PLATFORM_DATABASE_URL%%\?*}" -c 'select count(*) from landing_events'` → `0`.
 
 - [ ] **Step 2: `.env`**
 

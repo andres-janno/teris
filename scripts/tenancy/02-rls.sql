@@ -1,4 +1,4 @@
--- Käivita tabelite omanikuna: psql "$MIGRATE_DATABASE_URL" -f scripts/tenancy/02-rls.sql
+-- Käivita tabelite omanikuna: psql "${MIGRATE_DATABASE_URL%%\?*}" -f scripts/tenancy/02-rls.sql
 -- Korduvkäivitatav. Prisma db push ei halda poliitikaid ega muuda neid.
 DO $$
 DECLARE t text;
