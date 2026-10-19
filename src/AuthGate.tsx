@@ -8,11 +8,13 @@ import type { AuthUser } from './types/auth';
 import { api, ApiError, setUnauthorizedHandler } from './services/api';
 import { alertDialog } from './components/ConfirmDialog';
 
-// /tugi#<token> — kasutajatoe üleandmislink. Token loetakse ja fragment eemaldatakse kohe
+// /support#<token> — kasutajatoe üleandmislink (vana alias /tugi). Token loetakse ja fragment eemaldatakse kohe
 // (enne päringut), et token ei jääks aadressiribale ega ajalukku.
-const supportToken: string | null =
-  window.location.pathname === '/tugi' && window.location.hash.length > 1 ? window.location.hash.slice(1) : null;
-if (window.location.pathname === '/tugi') window.history.replaceState(null, '', '/');
+const SUPPORT_PATHS = ['/support', '/tugi'];
+const SET_PASSWORD_PATHS = ['/set-password', '/parool'];
+const isSupportPath = SUPPORT_PATHS.includes(window.location.pathname);
+const supportToken: string | null = isSupportPath && window.location.hash.length > 1 ? window.location.hash.slice(1) : null;
+if (isSupportPath) window.history.replaceState(null, '', '/');
 let supportLoginStarted = false;
 const SUPPORT_409_NOTICE = 'Selles brauseris on juba tavakasutaja sessioon. Logi välja ja ava tugivaate link uuesti (või kasuta privaatakent).';
 
@@ -26,12 +28,12 @@ export const AuthGate: React.FC = () => {
   // Tugivaate lingi 409: sisse jäädakse tavakasutajana, teade jääb rakenduses nähtavale.
   const [banner, setBanner] = useState<string | null>(null);
 
-  // /parool#<token> — e-kirja link parooli määramiseks.
+  // /set-password#<token> (vana alias /parool) — e-kirja link parooli määramiseks.
   const [linkToken, setLinkToken] = useState<string | null>(() =>
-    window.location.pathname === '/parool' && window.location.hash.length > 1 ? window.location.hash.slice(1) : null
+    SET_PASSWORD_PATHS.includes(window.location.pathname) && window.location.hash.length > 1 ? window.location.hash.slice(1) : null
   );
   const leaveLinkPage = (message?: string) => {
-    window.history.replaceState(null, '', '/');
+    window.history.replaceState(null, '', '/login');
     setLinkToken(null);
     if (message) {
       // Parooli määramine lõpetas kõik selle kasutaja sessioonid — näita sisselogimist.
@@ -40,8 +42,14 @@ export const AuthGate: React.FC = () => {
     }
   };
 
+  // Sisselogimata olek elab aadressil /login, et värskendamine ei viiks landing'ule
+  const showLogin = () => {
+    if (window.location.pathname !== '/login') window.history.replaceState(null, '', '/login');
+  };
+
   useEffect(() => {
     setUnauthorizedHandler(() => {
+      showLogin();
       setUser(null);
       setBanner(null);
       setNotice(supportViewRef.current ? 'Tugivaade lõppes. Ava uus link teenusepakkuja keskkonnast.' : 'Sessioon aegus, logi uuesti sisse');
@@ -78,7 +86,10 @@ export const AuthGate: React.FC = () => {
     api
       .getMe()
       .then(setUser)
-      .catch(() => setUser(null))
+      .catch(() => {
+        showLogin();
+        setUser(null);
+      })
       .finally(() => setChecking(false));
     return () => setUnauthorizedHandler(null);
   }, []);
@@ -94,6 +105,7 @@ export const AuthGate: React.FC = () => {
       <LoginPage
         notice={notice}
         onLoggedIn={(u) => {
+          if (window.location.pathname === '/login') window.history.replaceState(null, '', '/');
           setNotice(null);
           setUser(u);
         }}
@@ -105,6 +117,7 @@ export const AuthGate: React.FC = () => {
     api
       .logout()
       .then(() => {
+        showLogin();
         setNotice(null);
         setBanner(null);
         setUser(null);

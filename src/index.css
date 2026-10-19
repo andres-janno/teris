@@ -6453,6 +6453,13 @@ a.history-pill:hover {
   animation: login-rise 0.7s ease-out both;
 }
 
+.login-home-link {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  text-decoration: none;
+}
+.login-home-link:hover { color: var(--text-primary); }
+
 .login-copyright {
   margin-top: 16px;
   font-size: 0.75rem;

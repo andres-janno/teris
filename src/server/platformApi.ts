@@ -221,7 +221,7 @@ async function startSupportSession(id: string, platformUser: { id: string }) {
       data: { action: 'SUPPORT_SESSION_START', platformUserId: platformUser.id, targetTenantId: id, details: { supportGrantId: grant.id } }
     });
   });
-  return { url: `${APP_BASE_URL}/tugi#${token}` };
+  return { url: `${APP_BASE_URL}/support#${token}` };
 }
 
 async function listAudit(url: URL) {

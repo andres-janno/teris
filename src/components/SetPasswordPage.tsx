@@ -1,4 +1,4 @@
-// src/components/SetPasswordPage.tsx — parooli määramine e-kirja lingiga (/parool#token).
+// src/components/SetPasswordPage.tsx — parooli määramine e-kirja lingiga (/set-password#token).
 import React, { useEffect, useState } from 'react';
 import { KeyRound, AlertCircle, Check } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';

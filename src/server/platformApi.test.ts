@@ -609,8 +609,8 @@ describe('tugivaate avamine (üleandmistoken)', () => {
     const before = Date.now();
     const r = await call('POST', `/api/platform/tenants/${SUP_TENANT}/support-session`, {});
     expect(r.status).toBe(200);
-    expect(r.data.url.startsWith(`${BASE}/tugi#`)).toBe(true);
-    const token = r.data.url.slice(`${BASE}/tugi#`.length);
+    expect(r.data.url.startsWith(`${BASE}/support#`)).toBe(true);
+    const token = r.data.url.slice(`${BASE}/support#`.length);
     expect(token).toMatch(/^[A-Za-z0-9_-]{43}$/);
 
     const rows = await db.supportSession.findMany({ where: { targetTenantId: SUP_TENANT } });

@@ -21,7 +21,7 @@ describe('normalizeEmail', () => {
 });
 
 describe('buildPasswordLinkMail', () => {
-  const base = { to: 'mari@x.ee', from: 'noreply@teris.ee', link: 'https://teris.ee/parool#abc', username: 'mari', displayName: 'Mari Maasikas' };
+  const base = { to: 'mari@x.ee', from: 'noreply@teris.ee', link: 'https://teris.ee/set-password#abc', username: 'mari', displayName: 'Mari Maasikas' };
   it('kutse: päised, MIME-teema ja link', () => {
     const msg = buildPasswordLinkMail({ ...base, purpose: 'INVITE' });
     const [head, ...bodyParts] = msg.split('\n\n');
@@ -30,7 +30,7 @@ describe('buildPasswordLinkMail', () => {
     expect(head).toContain('From: TERIS <noreply@teris.ee>');
     expect(head).toContain(`Subject: =?UTF-8?B?${Buffer.from('Kutse TERIS rakendusse').toString('base64')}?=`);
     expect(head).toContain('Content-Type: text/plain; charset=UTF-8');
-    expect(body).toContain('https://teris.ee/parool#abc');
+    expect(body).toContain('https://teris.ee/set-password#abc');
     expect(body).toContain('kasutajanimega mari');
     expect(body).toContain('7 päeva');
   });

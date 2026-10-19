@@ -66,7 +66,7 @@ export async function sendPasswordLink(
     to: user.email,
     from: MAIL_FROM,
     purpose,
-    link: `${APP_BASE_URL}/parool#${raw}`,
+    link: `${APP_BASE_URL}/set-password#${raw}`,
     username: user.username,
     displayName: user.displayName
   });

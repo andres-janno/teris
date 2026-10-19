@@ -8,12 +8,16 @@ masinate telemeetria, mullaproovid, põlluraamat, seotud isikud.
     Brauser ──HTTPS──> Apache (teris.ee)
                          └─> 127.0.0.1:8820  teris.service (node dist-server/prod.js)
                                ├─ /api/*  API + sisselogimine (src/server/apiHandler.ts, authGate.ts)
+                               ├─ /, /privacy, /llms.txt, robots.txt, sitemap.xml  avalik landing (src/server/landing/, src/landing/)
                                └─ muu     dist/ (React + Vite)
                              PostgreSQL: teris_db (Prisma), telemetry_tsdb (telemeetria)
 
 - Kasutajaliides: React 19 + TypeScript + Vite, kaart Leaflet.
 - Server: `node:http` ilma raamistikuta, Prisma 6. Sama API käsitleja töötab ka
   `npm run dev` puhul (Vite'i plugin `src/server/dbApiPlugin.ts`).
+- Avaleht: `/` ilma sessioonita näitab avalikku landing'ut, sisselogimine on aadressil
+  `/login`; sessiooniga `/` avab rakenduse. Kasutajatoe link on `/support#<token>`
+  ja parooli määramise link `/set-password#<token>` (vanad `/tugi`, `/parool` töötavad aliastena).
 - Sisselogimine: kasutajad ja sessioonid andmebaasis (`users`, `sessions`),
   `HttpOnly` küpsis, paroolid `scrypt`.
 
@@ -23,6 +27,11 @@ Kood elab serveris `/home/debian/teris` (git remote `git.5dvision.ee:andresj/ter
 haru `master`). Live (`teris.service`) jookseb **ehitatud** koodist (`dist/`, `dist-server/`),
 seega faili muutmine live'i ei muuda — muudatus jõuab kasutajani alles `npm run release`
 järel.
+
+### Landing
+
+`.env` muutuja `LANDING_NOTIFY_EMAIL` on huvivormi teavituse saaja. Landing'u tekstid on
+failis `src/landing/content.et.ts`.
 
 ### Muudatuse tsükkel
 
