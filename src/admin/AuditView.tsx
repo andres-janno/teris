@@ -14,7 +14,9 @@ const ACTIONS: Record<string, string> = {
   LOGIN: 'Sisselogimine',
   SUPPORT_SESSION_START: 'Tugivaade avatud',
   PLATFORM_USER_ADD: 'Platvormi kasutaja lisatud',
-  PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud'
+  PLATFORM_USER_RESET_TOTP: 'Platvormi kasutaja TOTP lähtestatud',
+  INTEREST_UPDATE: 'Huvilise staatus muudetud',
+  INTEREST_DELETE: 'Huviline kustutatud'
 };
 
 const CATALOG_ENTITY: Record<string, string> = { crop: 'Kultuur', variety: 'Sort', workType: 'Tööliik', template: 'Mall' };
@@ -38,6 +40,8 @@ function detailsText(e: AuditEntry): string {
       return `${d.key ?? ''}${d.op === 'delete' ? ' (kustutatud)' : ''}`;
     case 'CATALOG_UPDATE':
       return `${CATALOG_ENTITY[d.entity] ?? d.entity ?? ''} ${CATALOG_OP[d.op] ?? d.op ?? ''}: ${d.name ?? ''}`;
+    case 'INTEREST_UPDATE':
+      return String(d.status ?? '');
     default:
       return '';
   }

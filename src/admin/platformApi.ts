@@ -200,6 +200,36 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
 
 export type HelpArticleRow = { key: string; html: string; updatedAt: string; updatedBy: string | null };
 
+export interface LandingStats {
+  from: string;
+  to: string;
+  daily: { day: string; visitors: number; views: number }[];
+  sources: { source: string; visitors: number }[];
+  devices: { device: string; visitors: number }[];
+  bots: { visitorClass: string; botName: string; hits: number; llmsTxtHits: number; llmsTxtLastSeen: string | null; lastSeen: string }[];
+  funnel: { viewed: number; clicked: number; submitted: number };
+}
+
+export type InterestStatus = 'NEW' | 'CONTACTED' | 'CLOSED';
+export const INTEREST_STATUS_LABELS: Record<InterestStatus, string> = { NEW: 'Uus', CONTACTED: 'Võetud ühendust', CLOSED: 'Suletud' };
+
+export interface InterestRow {
+  id: string;
+  createdAt: string;
+  updatedAt: string;
+  name: string;
+  email: string;
+  company: string | null;
+  phone: string | null;
+  areaHa: number | null;
+  message: string | null;
+  status: InterestStatus;
+  notes: string | null;
+  closedAt: string | null;
+  utmSource: string | null;
+  referrerHost: string | null;
+}
+
 async function request<T>(method: string, path: string, body?: unknown, fallback = 'Päring ebaõnnestus'): Promise<T> {
   const res = await fetch(`/api/platform${path}`, {
     method,
@@ -253,5 +283,9 @@ export const platformApi = {
   listHelp: () => request<HelpArticleRow[]>('GET', '/help'),
   saveHelp: (key: string, html: string) => request<{ success: true; deleted: boolean }>('PUT', `/help/${enc(key)}`, { html }, 'Juhendi salvestamine ebaõnnestus'),
   listAudit: (tenantId?: string, limit = 100) =>
-    request<AuditEntry[]>('GET', `/audit?limit=${limit}${tenantId ? `&tenantId=${enc(tenantId)}` : ''}`)
+    request<AuditEntry[]>('GET', `/audit?limit=${limit}${tenantId ? `&tenantId=${enc(tenantId)}` : ''}`),
+  landingStats: (from: string, to: string) => request<LandingStats>('GET', `/landing/stats?from=${enc(from)}&to=${enc(to)}`),
+  listInterest: (status?: InterestStatus) => request<InterestRow[]>('GET', `/interest${status ? `?status=${status}` : ''}`),
+  updateInterest: (id: string, patch: { status?: InterestStatus; notes?: string | null }) => request<InterestRow>('PATCH', `/interest/${enc(id)}`, patch),
+  deleteInterest: (id: string) => request<unknown>('DELETE', `/interest/${enc(id)}`)
 };

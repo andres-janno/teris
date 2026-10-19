@@ -86,3 +86,14 @@
 .admin-rte-area { min-height: 220px; max-height: 60vh; overflow-y: auto; padding: 14px 16px; outline: none; color: var(--text-primary); }
 .admin-rte-area:focus { box-shadow: inset 0 0 0 2px rgba(16, 185, 129, 0.35); }
 .admin-rte-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }
+
+.admin-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
+.admin-filter-row .form-input { width: auto; }
+.admin-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
+.admin-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1px solid var(--border-card); border-radius: 10px; }
+.admin-stat span { font-size: 0.72rem; text-transform: uppercase; color: var(--text-secondary); }
+.admin-stat strong { font-size: 1.4rem; }
+.admin-stat small { color: var(--text-secondary); }
+.admin-card h3 { font-size: 0.9rem; margin: 16px 0 8px; }
+.admin-two-col { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.admin-interest-message { max-width: 320px; white-space: pre-wrap; }

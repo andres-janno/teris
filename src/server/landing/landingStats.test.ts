@@ -43,7 +43,7 @@ describe('landingStats', () => {
     expect(s.daily).toEqual([{ day: '2099-01-01', visitors: 2, views: 3 }]);
     expect(s.sources).toEqual(expect.arrayContaining([{ source: 'google.com', visitors: 1 }, { source: 'otse', visitors: 1 }]));
     expect(s.devices).toEqual(expect.arrayContaining([{ device: 'desktop', visitors: 1 }, { device: 'mobile', visitors: 1 }]));
-    expect(s.bots).toEqual([{ visitorClass: 'ai_bot', botName: 'GPTBot', hits: 2, llmsTxtHits: 1, lastSeen: '2099-01-01T10:01:00.000Z' }]);
+    expect(s.bots).toEqual([{ visitorClass: 'ai_bot', botName: 'GPTBot', hits: 2, llmsTxtHits: 1, llmsTxtLastSeen: '2099-01-01T10:01:00.000Z', lastSeen: '2099-01-01T10:01:00.000Z' }]);
     expect(s.funnel).toEqual({ viewed: 2, clicked: 1, submitted: 1 });
   });
 });

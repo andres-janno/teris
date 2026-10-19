@@ -9,7 +9,7 @@ export type LandingStats = {
   daily: { day: string; visitors: number; views: number }[];
   sources: { source: string; visitors: number }[];
   devices: { device: string; visitors: number }[];
-  bots: { visitorClass: string; botName: string; hits: number; llmsTxtHits: number; lastSeen: string }[];
+  bots: { visitorClass: string; botName: string; hits: number; llmsTxtHits: number; llmsTxtLastSeen: string | null; lastSeen: string }[];
   funnel: { viewed: number; clicked: number; submitted: number };
 };
 
@@ -37,9 +37,10 @@ export async function landingStats(from: string, to: string): Promise<LandingSta
     db.$queryRaw<{ device: string; visitors: bigint }[]>`
       SELECT "device", count(DISTINCT ("visitorHash", ${day})) AS visitors
       FROM landing_events WHERE "event" = 'view' AND ${humanViews} GROUP BY 1 ORDER BY 2 DESC`,
-    db.$queryRaw<{ visitorClass: string; botName: string; hits: bigint; llmsTxtHits: bigint; lastSeen: Date }[]>`
+    db.$queryRaw<{ visitorClass: string; botName: string; hits: bigint; llmsTxtHits: bigint; llmsTxtLastSeen: Date | null; lastSeen: Date }[]>`
       SELECT "visitorClass", coalesce("botName", 'muu') AS "botName", count(*) AS hits,
-             count(*) FILTER (WHERE "path" = '/llms.txt') AS "llmsTxtHits", max("ts") AS "lastSeen"
+             count(*) FILTER (WHERE "path" = '/llms.txt') AS "llmsTxtHits",
+             max("ts") FILTER (WHERE "path" = '/llms.txt') AS "llmsTxtLastSeen", max("ts") AS "lastSeen"
       FROM landing_events WHERE "source" = 'server' AND "visitorClass" <> 'human' AND ${inRange}
       GROUP BY 1, 2 ORDER BY 3 DESC`,
     db.$queryRaw<{ viewed: bigint; clicked: bigint; submitted: bigint }[]>`
@@ -55,7 +56,7 @@ export async function landingStats(from: string, to: string): Promise<LandingSta
     daily: daily.map((r) => ({ day: r.day, visitors: n(r.visitors), views: n(r.views) })),
     sources: sources.map((r) => ({ source: r.source, visitors: n(r.visitors) })),
     devices: devices.map((r) => ({ device: r.device, visitors: n(r.visitors) })),
-    bots: bots.map((r) => ({ visitorClass: r.visitorClass, botName: r.botName, hits: n(r.hits), llmsTxtHits: n(r.llmsTxtHits), lastSeen: r.lastSeen.toISOString() })),
+    bots: bots.map((r) => ({ visitorClass: r.visitorClass, botName: r.botName, hits: n(r.hits), llmsTxtHits: n(r.llmsTxtHits), llmsTxtLastSeen: r.llmsTxtLastSeen?.toISOString() ?? null, lastSeen: r.lastSeen.toISOString() })),
     funnel: { viewed: n(funnel[0]?.viewed), clicked: n(funnel[0]?.clicked), submitted: n(funnel[0]?.submitted) }
   };
 }
