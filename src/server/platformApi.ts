@@ -13,6 +13,8 @@ import { normalizeEmail, APP_BASE_URL } from './mail.ts';
 import type { ApiOptions } from './apiHandler.ts';
 import { randomBytes } from 'crypto';
 import { hashToken } from './auth.ts';
+import { landingStats, parseDay } from './landing/landingStats.ts';
+import { listInterest, parseInterestPatch, updateInterest, deleteInterest } from './landing/interestAdmin.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
@@ -28,6 +30,8 @@ class HttpError extends Error {
 const NOT_FOUND = 'Ettevõtet ei leitud';
 const DEVICE_NOT_FOUND = 'Seadet ei leitud';
 const DEVICE_RELEASE_ROUTE = /^\/api\/platform\/devices\/([^/]+)\/release$/;
+const INTEREST_ROUTE = /^\/api\/platform\/interest\/([^/]+)$/;
+const INTEREST_NOT_FOUND = 'Huvilist ei leitud';
 const TENANT_ROUTE = /^\/api\/platform\/tenants\/([^/]+)(?:\/(license|suspend|activate|resend-invite|support-session))?$/;
 
 function str(v: unknown, max: number): string {
@@ -686,6 +690,28 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
   if (hr && method === 'PUT') {
     const key = decodeId(hr[1], HELP_KEY_ERROR);
     return sendHelpResult(res, await saveHelpArticle(key, (await readBody(req))?.html, pu));
+  }
+  if (pathname === '/api/platform/landing/stats' && method === 'GET') {
+    const from = parseDay(url.searchParams.get('from'));
+    const to = parseDay(url.searchParams.get('to'));
+    if (!from || !to || from > to) throw new HttpError(400, 'Vigane periood (YYYY-MM-DD)');
+    return json(res, await landingStats(from, to));
+  }
+  if (pathname === '/api/platform/interest' && method === 'GET') return json(res, await listInterest(url.searchParams.get('status')));
+  const ir = INTEREST_ROUTE.exec(pathname);
+  if (ir) {
+    const id = decodeId(ir[1], INTEREST_NOT_FOUND);
+    if (method === 'PATCH') {
+      const p = parseInterestPatch(await readBody(req));
+      if (!p.ok) throw new HttpError(400, p.error);
+      const row = await updateInterest(id, p.data, pu.id);
+      if (!row) throw new HttpError(404, INTEREST_NOT_FOUND);
+      return json(res, row);
+    }
+    if (method === 'DELETE') {
+      if (!(await deleteInterest(id, pu.id))) throw new HttpError(404, INTEREST_NOT_FOUND);
+      return json(res, { success: true });
+    }
   }
 
   const m = TENANT_ROUTE.exec(pathname);
