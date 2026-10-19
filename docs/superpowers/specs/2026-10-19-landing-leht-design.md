@@ -199,7 +199,8 @@ Muudatused logitakse olemasolevasse platvormi auditisse.
 
 ### 4.6 Säilitamine
 
-Igapäevane puhastus kustutab `CLOSED` päringud, mille `closedAt` on vanem kui 24 kuud.
+Igapäevane puhastus kustutab `CLOSED` päringud, mille `closedAt` on vanem kui 24 kuud, ning
+`NEW`/`CONTACTED` päringud, mida pole 24 kuud käsitletud (`updatedAt`).
 Kirjas privaatsuslehel.
 
 ## 5. AI- ja otsinguvalmidus

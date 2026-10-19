@@ -94,9 +94,18 @@ const monthsBefore = (now: Date, months: number) => {
 
 export async function purgeOldLandingData(now: Date = new Date()): Promise<{ events: number; interest: number }> {
   const db = authDb();
+  const interestCutoff = monthsBefore(now, INTEREST_RETENTION_MONTHS);
   const [events, interest] = await Promise.all([
     db.landingEvent.deleteMany({ where: { ts: { lt: monthsBefore(now, EVENT_RETENTION_MONTHS) } } }),
-    db.interestRequest.deleteMany({ where: { status: 'CLOSED', closedAt: { lt: monthsBefore(now, INTEREST_RETENTION_MONTHS) } } })
+    // Suletud: 24 kuud pärast sulgemist; uus/võetud ühendust: 24 kuud pärast viimast käsitlemist
+    db.interestRequest.deleteMany({
+      where: {
+        OR: [
+          { status: 'CLOSED', closedAt: { lt: interestCutoff } },
+          { status: { in: ['NEW', 'CONTACTED'] }, updatedAt: { lt: interestCutoff } }
+        ]
+      }
+    })
   ]);
   return { events: events.count, interest: interest.count };
 }

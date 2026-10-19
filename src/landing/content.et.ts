@@ -52,12 +52,12 @@ export const CONTENT_ET: LandingContent = {
     lead: 'Teris koondab teraviljakasvataja igapäevase info — PRIA põllud, külvikorra, masinate liikumise ja tehtud tööd — ühte veebirakendusse, mis töötab kontoris ja põllul.',
     cta: 'Tunnen huvi',
     imageAlt: 'Terise kaardivaade: põllud Maa-ameti aluskaardil, külvikord värvidega ja masinate asukohad',
-    image: '/landing/hero.webp'
+    image: '/landing/hero.svg'
   },
   featuresTitle: 'Mida Teris teeb',
   features: [
     { id: 'fields', title: 'PRIA põllud ja külvikord', text: 'Impordi põllud PRIA SHP-failist, vaata külvikorda hooaegade kaupa ja põlluplokke Maa-ameti aluskaartidel.' },
-    { id: 'fleet', title: 'Masinapark ja GPS-telemeetria', text: 'Traktorite ja haakeriistade asukoht ning liikumise ajalugu kaardil (Teltonika seadmed), harimise jäljed põllu kaupa.' },
+    { id: 'fleet', title: 'Masinapark ja GPS-telemeetria', text: 'Traktorite ja haakeriistade asukoht ning liikumise ajalugu kaardil telemeetriaseadmete abil, harimise jäljed põllu kaupa.' },
     { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd kultuuri ja töömallide järgi, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
     { id: 'field-book', title: 'Põlluraamat', text: 'Impordi olemasolev põlluraamat ja pea tööde, väetiste ja taimekaitse arvestust ühes kohas.' },
     { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused ja vaata neid põllu juures.' },
@@ -81,7 +81,7 @@ export const CONTENT_ET: LandingContent = {
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
     { q: 'Kuidas põllud Terisesse saavad?', a: 'Põllud imporditakse PRIA põllumassiivide SHP-failist. Hiljem saab põlde ka käsitsi muuta.' },
-    { q: 'Milliseid masinaid saab jälgida?', a: 'Teris toetab Teltonika GPS-seadmeid ja EYE Sensor andureid. Küsi meilt, kui sul on muu seade.' },
+    { q: 'Milliseid masinaid saab jälgida?', a: 'Masinaid jälgitakse neile paigaldatud telemeetriaseadmete abil — nii traktoreid kui haakeriistu. Küsi meilt, kas sinu seade sobib või milline seade valida.' },
     { q: 'Kas Teris töötab telefonis?', a: 'Teris on veebirakendus ja avaneb brauseris nii arvutis, tahvlis kui telefonis.' },
     { q: 'Mis Teris maksab?', a: 'Hind sõltub ettevõtte suurusest ja vajalikest moodulitest. Anna „Tunnen huvi“ vormiga teada ja räägime läbi.' }
   ],
@@ -105,7 +105,7 @@ export const CONTENT_ET: LandingContent = {
         title: '„Tunnen huvi“ vorm',
         paragraphs: [
           'Vormi kaudu saadetud andmeid (nimi, e-post ning soovi korral ettevõte, telefon, põllupind ja sõnum) kasutame ainult sinuga ühenduse võtmiseks ja Terise tutvustamiseks. Õiguslik alus on sinu päringule vastamine.',
-          'Kui kliendisuhet ei teki, kustutame päringu hiljemalt 24 kuud pärast selle lõpetamist. Võid igal ajal paluda oma andmed kustutada, kirjutades info@teris.ee.'
+          'Kui kliendisuhet ei teki, kustutame päringu hiljemalt 24 kuud pärast selle viimast käsitlemist. Päringu teavitus jõuab ka meie e-postkasti; ka see kustutatakse sinu soovil.'
         ]
       },
       {
@@ -113,6 +113,17 @@ export const CONTENT_ET: LandingContent = {
         paragraphs: [
           'Loendame lehe külastusi oma serveris ilma küpsisteta ja kolmandate osapoolteta. IP-aadresse ei salvestata; unikaalsete külastajate loendamiseks kasutame igapäevaselt vahetuvat räsi, mille abil ei saa sind eri päevadel ära tunda.',
           'Statistikat hoitakse 13 kuud.'
+        ]
+      },
+      {
+        title: 'Andmete asukoht',
+        paragraphs: ['Andmed asuvad Eestis asuvas serveris ning neid ei edastata kolmandatele osapooltele. Lehe fondid ja pildid laaditakse samuti meie oma serverist.']
+      },
+      {
+        title: 'Sinu õigused',
+        paragraphs: [
+          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.',
+          'Kui leiad, et rikume sinu õigusi, võid pöörduda Andmekaitse Inspektsiooni poole (www.aki.ee).'
         ]
       }
     ]

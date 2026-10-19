@@ -72,4 +72,27 @@ describe('purgeOldLandingData', () => {
     expect(result.events).toBeGreaterThanOrEqual(1);
     expect((await rows()).length).toBe(before - 1);
   });
+
+  it('kustutab üle 24 kuu käsitlemata ja suletud huvilised, värsked jäävad alles', async () => {
+    const email = (s: string) => `${TAG}-${s}@example.com`;
+    const old = new Date('2020-01-01T00:00:00Z');
+    const fresh = new Date('2026-09-01T00:00:00Z');
+    const db = authDb().interestRequest;
+    await db.createMany({
+      data: [
+        { name: 'A', email: email('new-old'), status: 'NEW', createdAt: old, updatedAt: old },
+        { name: 'B', email: email('contacted-old'), status: 'CONTACTED', createdAt: old, updatedAt: old },
+        { name: 'C', email: email('closed-old'), status: 'CLOSED', createdAt: old, updatedAt: fresh, closedAt: old },
+        { name: 'D', email: email('new-fresh'), status: 'NEW', createdAt: old, updatedAt: fresh },
+        { name: 'E', email: email('closed-fresh'), status: 'CLOSED', createdAt: old, updatedAt: old, closedAt: fresh }
+      ]
+    });
+    try {
+      await purgeOldLandingData(new Date('2026-10-19T00:00:00Z'));
+      const left = (await db.findMany({ where: { email: { startsWith: TAG } } })).map((r) => r.name).sort();
+      expect(left).toEqual(['D', 'E']);
+    } finally {
+      await db.deleteMany({ where: { email: { startsWith: TAG } } });
+    }
+  });
 });
