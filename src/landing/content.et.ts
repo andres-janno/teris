@@ -43,7 +43,7 @@ export const CONTENT_ET: LandingContent = {
   lang: 'et',
   siteUrl: 'https://teris.ee',
   name: 'Teris',
-  title: 'Teris — teraviljakasvataja põllud, masinad ja põlluraamat ühel kaardil',
+  title: 'Teris — põllumajanduse infosüsteem',
   description:
     'Teris on põllumajanduse info haldamiseks mõeldud veebirakendus.',
   ogImage: '/og-teris.png',
@@ -62,7 +62,7 @@ export const CONTENT_ET: LandingContent = {
     { id: 'field-book', title: 'Kuluarvestus', text: 'Pea kuluarvestust tööde, väetiste ja taimekaitse üle ühes kohas.' },
     { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused METK mullaportaali shp-failist ja vaata tulemusi otse põldudel.' },
     { id: 'satellite', title: 'Satelliidipildid ja NDVI', text: 'Sentinel-2 satelliidipiltide põhjal taimiku seisund (NDVI) põllu kaupa, pilvisuse kontrolliga.' },
-    { id: 'weather', title: 'Ilmaradar', text: 'Sademete radar põllukaardist lähtudes, et töid paremini ajastada.' },
+    { id: 'weather', title: 'Ilmaradar', text: 'Sademete radar sinu põldudest lähtudes, et töid paremini ajastada.' },
     { id: 'team', title: 'Peakasutaja ja operaatorid', text: 'Peakasutaja on üks ettevõte, operaatorid aga seotud ettevõtted. Rollipõhised kasutajakontod.' }
   ],
   stepsTitle: 'Kuidas alustada',
@@ -82,7 +82,7 @@ export const CONTENT_ET: LandingContent = {
   ],
   interest: {
     title: 'Anna teada, kui Teris sind huvitab — võtame ühendust',
-    lead: 'Räägime läbi, mida su ettevõte vajab, ja näitame Terist sinu põldude peal.',
+    lead: 'Räägime läbi, mida su ettevõte vajab ja näitame Terist sinu enda põldude peal.',
     labels: { name: 'Nimi', email: 'E-post', company: 'Ettevõte', phone: 'Telefon', areaHa: 'Põllupind (ha)', message: 'Mis sind huvitab?' },
     submit: 'Tunnen huvi',
     sending: 'Saadan…',
@@ -117,8 +117,7 @@ export const CONTENT_ET: LandingContent = {
       {
         title: 'Sinu õigused',
         paragraphs: [
-          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.',
-          'Kui leiad, et rikume sinu õigusi, võid pöörduda Andmekaitse Inspektsiooni poole (www.aki.ee).'
+          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.'
         ]
       }
     ]
