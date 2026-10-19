@@ -42,16 +42,16 @@ export interface LandingContent {
 export const CONTENT_ET: LandingContent = {
   lang: 'et',
   siteUrl: 'https://teris.ee',
-  name: 'Teris',
-  title: 'Teris — põllumajanduse infosüsteem',
+  name: 'TERIS',
+  title: 'TERIS — põllumajanduse infosüsteem',
   description:
-    'Teris on põllumajanduse info haldamiseks mõeldud veebirakendus.',
+    'TERIS on põllumajanduse info haldamiseks mõeldud veebirakendus.',
   ogImage: '/og-teris.png',
   organization: { name: 'VentCap OÜ', email: 'info@teris.ee' },
   nav: { features: 'Võimalused', audience: 'Kellele', faq: 'KKK', login: 'Logi sisse', cta: 'Tunnen huvi' },
   hero: {
     headline: 'Põllumajanduse infosüsteem',
-    lead: 'Teris koondab põllumajanduse igapäevase info ühte veebirakendusse. Rakenduse keskseks ankruks on erinevate kihtidega kaart.',
+    lead: 'TERIS koondab põllumajanduse igapäevase info ühte veebirakendusse. Rakenduse keskseks ankruks on erinevate kihtidega kaart.',
     cta: 'Tunnen huvi'
   },
   featuresTitle: 'Mida TERIS teeb',
@@ -69,19 +69,19 @@ export const CONTENT_ET: LandingContent = {
   steps: [
     { title: 'Anna teada', text: 'Täida „Tunnen huvi“ vorm — see ei kohusta sind millekski.' },
     { title: 'Seadistame koos', text: 'Loome sinu ettevõtte keskkonna ja impordime põllud PRIA andmetest.' },
-    { title: 'Alusta', text: 'Logi sisse ja alusta — Teris töötab brauseris, eraldi programmi pole vaja paigaldada.' }
+    { title: 'Alusta', text: 'Logi sisse ja alusta — TERIS töötab brauseris, eraldi programmi pole vaja paigaldada.' }
   ],
   faqTitle: 'Korduma kippuvad küsimused',
   faq: [
-    { q: 'Kuidas andmed Terisesse saavad?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
+    { q: 'Kuidas andmed TERIS-esse saavad?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
     { q: 'Millist tehnikat saab jälgida?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tootjate portaalid.' },
-    { q: 'Mis Teris maksab?', a: 'Momendil on Teris veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
+    { q: 'Mis TERIS maksab?', a: 'Momendil on TERIS veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
-    title: 'Anna teada, kui Teris sind huvitab — võtame ühendust',
-    lead: 'Räägime läbi, mida su ettevõte vajab ja näitame Terist sinu enda põldude peal.',
+    title: 'Anna teada, kui TERIS sind huvitab — võtame ühendust',
+    lead: 'Räägime läbi, mida su ettevõte vajab ja näitame TERIS-t sinu enda põldude peal.',
     labels: { name: 'Nimi', email: 'E-post', company: 'Ettevõte', phone: 'Telefon', areaHa: 'Põllupind (ha)', message: 'Mis sind huvitab?' },
     submit: 'Tunnen huvi',
     sending: 'Saadan…',
@@ -98,7 +98,7 @@ export const CONTENT_ET: LandingContent = {
       {
         title: '„Tunnen huvi“ vorm',
         paragraphs: [
-          'Vormi kaudu saadetud andmeid (nimi, e-post ning soovi korral ettevõte, telefon, põllupind ja sõnum) kasutame ainult sinuga ühenduse võtmiseks ja Terise tutvustamiseks. Õiguslik alus on sinu päringule vastamine.',
+          'Vormi kaudu saadetud andmeid (nimi, e-post ning soovi korral ettevõte, telefon, põllupind ja sõnum) kasutame ainult sinuga ühenduse võtmiseks ja TERIS-e tutvustamiseks. Õiguslik alus on sinu päringule vastamine.',
           'Kui kliendisuhet ei teki, kustutame päringu hiljemalt 24 kuud pärast selle viimast käsitlemist. Päringu teavitus jõuab ka meie e-postkasti; ka see kustutatakse sinu soovil.'
         ]
       },

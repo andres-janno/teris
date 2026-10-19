@@ -6470,6 +6470,7 @@ a.history-pill:hover {
   transition: background 0.15s ease;
 }
 .login-home-link:hover { background: rgba(40, 26, 10, 0.45); }
+.login-brand-word { font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 800; padding-right: 0.12em; }
 
 .login-copyright {
   margin-top: 16px;

@@ -114,7 +114,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
             </div>
           )}
         </form>
-        <a className="login-home-link" href="/">← Tutvu Terisega avalehel</a>
+        <a className="login-home-link" href="/">← Tutvu <em className="login-brand-word">TERIS</em>-ega avalehel</a>
         <p className="login-copyright">{COPYRIGHT_TEXT}</p>
       </div>
     </div>

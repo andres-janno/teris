@@ -6,6 +6,10 @@ export function escapeHtml(s: string): string {
   return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 const e = escapeHtml;
+
+// Kaubamärk „TERIS“ lehe tekstis paksu kaldkirjana nagu logos (ainult tekstisisus, mitte atribuutides).
+export const brandText = (s: string): string => escapeHtml(s).replace(/TERIS/g, '<em class="lp-brand-word">TERIS</em>');
+const t = brandText;
 const abs = (c: LandingContent, p: string) => `${c.siteUrl}${p}`;
 
 export function buildJsonLd(c: LandingContent): object[] {
@@ -103,51 +107,51 @@ export function renderLandingBody(c: LandingContent): string {
       <canvas class="lp-dust"></canvas>
     </div>
     <div class="lp-hero-text">
-      <h1 id="hero-title">${e(c.hero.headline)}</h1>
-      <p class="lp-lead">${e(c.hero.lead)}</p>
+      <h1 id="hero-title">${t(c.hero.headline)}</h1>
+      <p class="lp-lead">${t(c.hero.lead)}</p>
       <a class="lp-btn lp-btn-primary lp-btn-lg" href="#interest" data-cta="hero">${e(c.hero.cta)}</a>
     </div>
   </section>
 
 ${c.preview ? `
   <section id="preview" class="lp-section" aria-labelledby="preview-title">
-    <h2 id="preview-title">${e(c.preview.title)}</h2>
+    <h2 id="preview-title">${t(c.preview.title)}</h2>
     <div class="lp-card lp-preview-card">
       <img class="lp-preview-image" src="${e(c.preview.image)}" alt="${e(c.preview.imageAlt)}" width="1200" height="750" loading="lazy" />
     </div>
   </section>
 ` : ''}
   <section id="features" class="lp-section" aria-labelledby="features-title">
-    <h2 id="features-title">${e(c.featuresTitle)}</h2>
+    <h2 id="features-title">${t(c.featuresTitle)}</h2>
     <div class="lp-grid">
-      ${c.features.map((f) => `<article class="lp-card" id="feature-${e(f.id)}"><h3>${e(f.title)}</h3><p>${e(f.text)}</p></article>`).join('\n      ')}
+      ${c.features.map((f) => `<article class="lp-card" id="feature-${e(f.id)}"><h3>${t(f.title)}</h3><p>${t(f.text)}</p></article>`).join('\n      ')}
     </div>
   </section>
 
 ${c.audience ? `
   <section id="audience" class="lp-section" aria-labelledby="audience-title">
-    <h2 id="audience-title">${e(c.audience.title)}</h2>
+    <h2 id="audience-title">${t(c.audience.title)}</h2>
     <div class="lp-grid lp-grid-2">
-      ${c.audience.items.map((x) => `<article class="lp-card"><h3>${e(x.title)}</h3><p>${e(x.text)}</p></article>`).join('\n      ')}
+      ${c.audience.items.map((x) => `<article class="lp-card"><h3>${t(x.title)}</h3><p>${t(x.text)}</p></article>`).join('\n      ')}
     </div>
   </section>
 ` : ''}
   <section id="steps" class="lp-section" aria-labelledby="steps-title">
-    <h2 id="steps-title">${e(c.stepsTitle)}</h2>
+    <h2 id="steps-title">${t(c.stepsTitle)}</h2>
     <ol class="lp-steps">
-      ${c.steps.map((s) => `<li><h3>${e(s.title)}</h3><p>${e(s.text)}</p></li>`).join('\n      ')}
+      ${c.steps.map((s) => `<li><h3>${t(s.title)}</h3><p>${t(s.text)}</p></li>`).join('\n      ')}
     </ol>
     <a class="lp-btn lp-btn-primary" href="#interest" data-cta="steps">${e(c.nav.cta)}</a>
   </section>
 
   <section id="faq" class="lp-section" aria-labelledby="faq-title">
-    <h2 id="faq-title">${e(c.faqTitle)}</h2>
-    ${c.faq.map((f) => `<details class="lp-faq"><summary>${e(f.q)}</summary><p>${e(f.a)}</p></details>`).join('\n    ')}
+    <h2 id="faq-title">${t(c.faqTitle)}</h2>
+    ${c.faq.map((f) => `<details class="lp-faq"><summary>${t(f.q)}</summary><p>${t(f.a)}</p></details>`).join('\n    ')}
   </section>
 
   <section id="interest" class="lp-section lp-interest" aria-labelledby="interest-title">
-    <h2 id="interest-title">${e(c.interest.title)}</h2>
-    <p class="lp-lead">${e(c.interest.lead)}</p>
+    <h2 id="interest-title">${t(c.interest.title)}</h2>
+    <p class="lp-lead">${t(c.interest.lead)}</p>
     <form id="interest-form" class="lp-form" novalidate data-sending="${e(c.interest.sending)}" data-success="${e(c.interest.success)}" data-error="${e(c.interest.error)}">
       ${field('name', L.name + ' *', 'required maxlength="100" autocomplete="name"')}
       ${field('email', L.email + ' *', 'type="email" required maxlength="254" autocomplete="email"')}
@@ -156,7 +160,7 @@ ${c.audience ? `
       ${field('areaHa', L.areaHa, 'inputmode="decimal" maxlength="10"')}
       <div class="lp-field lp-field-wide"><label for="interest-message">${e(L.message)}</label><textarea id="interest-message" name="message" maxlength="2000" rows="4"></textarea></div>
       <div class="lp-hp" aria-hidden="true"><label for="interest-website">Veebileht</label><input id="interest-website" name="website" tabindex="-1" autocomplete="off" /></div>
-      <p class="lp-note lp-field-wide">${e(c.interest.privacyNote)} <a href="/privacy">${e(c.footer.privacy)}</a></p>
+      <p class="lp-note lp-field-wide">${t(c.interest.privacyNote)} <a href="/privacy">${e(c.footer.privacy)}</a></p>
       <div class="lp-form-status lp-field-wide" role="status" aria-live="polite"></div>
       <button type="submit" class="lp-btn lp-btn-primary lp-btn-lg">${e(c.interest.submit)}</button>
     </form>
@@ -172,9 +176,9 @@ export function renderPrivacyHead(c: LandingContent): string {
 export function renderPrivacyBody(c: LandingContent): string {
   return `${header(c, false)}
 <main class="lp-section lp-prose">
-  <h1>${e(c.privacy.title)}</h1>
+  <h1>${t(c.privacy.title)}</h1>
   <p class="lp-note">Uuendatud ${e(c.privacy.updated)}</p>
-  ${c.privacy.sections.map((s) => `<h2>${e(s.title)}</h2>\n  ${s.paragraphs.map((p) => `<p>${e(p)}</p>`).join('\n  ')}`).join('\n  ')}
+  ${c.privacy.sections.map((s) => `<h2>${t(s.title)}</h2>\n  ${s.paragraphs.map((p) => `<p>${t(p)}</p>`).join('\n  ')}`).join('\n  ')}
 </main>
 ${footer(c)}`;
 }

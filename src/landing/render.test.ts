@@ -1,7 +1,7 @@
 // src/landing/render.test.ts
 import { describe, it, expect } from 'vitest';
 import { CONTENT_ET } from './content.et.ts';
-import { renderLandingHead, renderLandingBody, renderPrivacyBody, renderLlmsTxt, renderRobotsTxt, renderSitemap, buildJsonLd, escapeHtml } from './render.ts';
+import { brandText, renderLandingHead, renderLandingBody, renderPrivacyBody, renderLlmsTxt, renderRobotsTxt, renderSitemap, buildJsonLd, escapeHtml } from './render.ts';
 
 const c = CONTENT_ET;
 
@@ -9,17 +9,28 @@ describe('renderLandingBody', () => {
   const html = renderLandingBody(c);
   it('sisaldab ilma JS-ita kõiki sektsioone ja ühte h1-te', () => {
     expect(html.match(/<h1[\s>]/g)?.length).toBe(1);
-    for (const t of [c.hero.headline, c.featuresTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(escapeHtml(t));
-    if (c.preview) expect(html).toContain(escapeHtml(c.preview.title));
-    if (c.audience) expect(html).toContain(escapeHtml(c.audience.title));
-    for (const f of c.features) expect(html).toContain(escapeHtml(f.title));
-    for (const q of c.faq) expect(html).toContain(escapeHtml(q.q));
+    for (const t of [c.hero.headline, c.featuresTitle, c.stepsTitle, c.faqTitle, c.interest.title]) expect(html).toContain(brandText(t));
+    if (c.preview) expect(html).toContain(brandText(c.preview.title));
+    if (c.audience) expect(html).toContain(brandText(c.audience.title));
+    for (const f of c.features) expect(html).toContain(brandText(f.title));
+    for (const q of c.faq) expect(html).toContain(brandText(q.q));
   });
   it('vorm, ankrud ja CTA märgised', () => {
     expect(html).toContain('id="interest"');
     expect(html).toContain('href="/login"');
     expect(html).toContain('name="website"'); // honeypot
     for (const t of ['header', 'hero', 'steps', 'footer']) expect(html).toContain(`data-cta="${t}"`);
+  });
+});
+
+describe('brandText', () => {
+  it('TERIS kaldkirjas, ülejäänu turvaliselt kodeeritud', () => {
+    expect(brandText('Mida TERIS teeb <b>')).toBe('Mida <em class="lp-brand-word">TERIS</em> teeb &lt;b&gt;');
+    expect(brandText('TERIS-esse')).toBe('<em class="lp-brand-word">TERIS</em>-esse');
+  });
+  it('atribuutides jääb TERIS tavatekstiks', () => {
+    const html = renderLandingBody(c);
+    expect(html).not.toMatch(/="[^"]*<em/);
   });
 });
 
@@ -74,11 +85,11 @@ describe('masinloetavad failid', () => {
   });
   it('llms.txt sisaldab kõiki võimalusi ja linke', () => {
     const t = renderLlmsTxt(c);
-    expect(t.startsWith('# Teris\n')).toBe(true);
+    expect(t.startsWith(`# ${c.name}\n`)).toBe(true);
     for (const f of c.features) expect(t).toContain(f.title);
     expect(t).toContain('https://teris.ee/#interest');
   });
   it('privaatsusleht', () => {
-    expect(renderPrivacyBody(c)).toContain(escapeHtml(c.privacy.title));
+    expect(renderPrivacyBody(c)).toContain(brandText(c.privacy.title));
   });
 });
