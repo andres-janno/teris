@@ -76,8 +76,9 @@ export const CONTENT_ET: LandingContent = {
     { q: 'Kust tulevad baasandmed?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
-    { q: 'Kuidas tehnikat jälgitakse?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tootjate portaalid.' },
-    { q: 'Mis maksab?', a: 'Momendil on TERIS veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
+    { q: 'Kuhu andmed edasi liidestatakse?', a: 'Lähimas tulevikus on plaan põllutööde tahvel liidestada PRIA e-põlluraamatuga.' },
+    { q: 'Kuidas tehnikat jälgitakse?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tehnika tootjate portaalid.' },
+    { q: 'Mis see maksab?', a: 'Momendil on TERIS veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
     title: 'Anna teada, kui TERIS sind huvitab — võtame ühendust',
