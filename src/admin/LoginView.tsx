@@ -25,7 +25,7 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
 
   return (
     <form className="glass-card admin-login admin-form" onSubmit={submit}>
-      <h1>Teris — teenusepakkuja</h1>
+      <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
       {error && <div className="alert-box error">{error}</div>}
       <div className="form-group">
         <label htmlFor="pl-user">Kasutajanimi</label>

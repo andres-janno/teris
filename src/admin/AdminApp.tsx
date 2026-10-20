@@ -40,7 +40,7 @@ export function AdminApp() {
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <h1>Teris — teenusepakkuja</h1>
+        <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
         <div className="admin-header-right">
           <span>{user}</span>
           <button type="button" className="btn btn-secondary btn-sm" onClick={() => void logout()}>

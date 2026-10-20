@@ -2,6 +2,8 @@
 .admin-shell { min-height: 100vh; padding: 16px 24px 48px; max-width: 1300px; margin: 0 auto; }
 .admin-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; margin-bottom: 20px; }
 .admin-header h1 { font-size: 1.3rem; margin: 0; }
+/* Kaubamärk nagu logos: paks kaldkiri */
+.admin-brand-word { font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 800; padding-right: 0.12em; }
 .admin-header-right { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
 .admin-nav { display: flex; gap: 8px; margin-bottom: 16px; }
 .admin-nav .btn.active { outline: 2px solid var(--accent, #10b981); }
