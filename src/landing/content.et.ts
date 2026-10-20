@@ -68,21 +68,21 @@ export const CONTENT_ET: LandingContent = {
   stepsTitle: 'Kuidas alustada',
   steps: [
     { title: 'Anna teada', text: 'Täida „Tunnen huvi“ vorm — see ei kohusta sind millekski.' },
-    { title: 'Seadistame koos', text: 'Loome sinu ettevõtte keskkonna ja impordime põllud PRIA andmetest.' },
+    { title: 'Seadistame koos', text: 'Loome sinu ettevõtte keskkonna ja impordime baasandmed.' },
     { title: 'Alusta', text: 'Logi sisse ja alusta — TERIS töötab brauseris, eraldi programmi pole vaja paigaldada.' }
   ],
   faqTitle: 'Korduma kippuvad küsimused',
   faq: [
-    { q: 'Kuidas andmed TERIS-esse saavad?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
+    { q: 'Kust tulevad baasandmed?', a: 'Andmed imporditakse nii palju kui võimalik välistest registritest, näiteks PRIA põllumassiivide või METK mullaproovide shp-failidest.' },
     { q: 'Kus minu andmeid hoitakse?', a: 'Andmed asuvad Eestis asuvas serveris. Iga ettevõtte andmed on teistest eraldatud ning teised ettevõtted neid ei näe.' },
     { q: 'Kas teenusepakkuja näeb minu andmeid?', a: 'Ainult siis, kui sinu ettevõtte admin annab selleks ajutise loa. Ligipääs on ainult lugemiseks ja iga sisenemine on sulle nähtav.' },
-    { q: 'Millist tehnikat saab jälgida?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tootjate portaalid.' },
-    { q: 'Mis TERIS maksab?', a: 'Momendil on TERIS veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
+    { q: 'Kuidas tehnikat jälgitakse?', a: 'Vanemaid masinaid jälgitakse neile lisaks paigaldatud telemeetriaseadmete abil, haakeriistad annavad infot samuti lisaseadmega, aga seda läbi masinale paigaldatud nn peaseadme. Uuema tehnika jälgimiseks on plaan liidestada tootjate portaalid.' },
+    { q: 'Mis maksab?', a: 'Momendil on TERIS veel arendamisel ning tasuta kasutatav kindlates nn testettevõtetes. Anna „Tunnen huvi“ vormiga teada, kui oled ka huvitatud testimisest.' }
   ],
   interest: {
     title: 'Anna teada, kui TERIS sind huvitab — võtame ühendust',
-    lead: 'Räägime läbi, mida su ettevõte vajab ja näitame TERIS-t sinu enda põldude peal.',
-    labels: { name: 'Nimi', email: 'E-post', company: 'Ettevõte', phone: 'Telefon', areaHa: 'Põllupind (ha)', message: 'Mis sind huvitab?' },
+    lead: 'Räägime läbi, mida su ettevõte vajab ja näitame rakendust sinu enda põldude peal.',
+    labels: { name: 'Nimi', email: 'E-post', company: 'Ettevõte', phone: 'Telefon', areaHa: 'Põllupind (ha)', message: 'Mis sind täpsemalt huvitab?' },
     submit: 'Tunnen huvi',
     sending: 'Saadan…',
     privacyNote: 'Kasutame andmeid ainult sinuga ühenduse võtmiseks.',
