@@ -175,6 +175,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     });
   }, [crops, searchQuery]);
 
+  // Kuvatud kultuuride pind kokku (sama summa, mis veergude päistes)
+  const filteredHectares = useMemo(
+    () => filteredCrops.reduce((sum, c) => sum + (cropAcreageMap[c.id] || 0), 0),
+    [filteredCrops, cropAcreageMap]
+  );
+
   // Handlers for Crop Form
   const startCreateCrop = (group: CropGroup = 'CEREAL') => {
     setEditCropId(null);
@@ -400,6 +406,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </button>
               )}
             </div>
+            <span className="crop-total-area" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
+              Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>
+            </span>
           </div>
 
           {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
