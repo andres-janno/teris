@@ -3983,21 +3983,38 @@ input[type="number"],
   flex-direction: column;
 }
 
-/* Põldude registri jalus: valitud hooaja kultuuride pindalad */
-.modal-footer.register-crop-footer {
-  justify-content: flex-start;
+/* Põldude registri kultuuride kokkuvõte (tabeli kohal): valitud hooaja kultuuride pindalad */
+.register-crop-summary {
+  display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  align-items: center;
+  gap: 6px 8px;
+  flex-shrink: 0;
+  max-height: 30vh;
+  overflow-y: auto;
+  margin-bottom: 14px;
+  padding: 10px 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
 }
 
-.register-crop-footer-title {
+.register-crop-summary-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+
+.register-crop-summary-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text-secondary);
   margin-right: 4px;
 }
 
-.register-crop-footer .muted {
+.register-crop-summary .muted {
   font-size: 0.92rem;
   color: var(--text-muted);
 }
@@ -4039,7 +4056,27 @@ input[type="number"],
   background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
   box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
   font-size: 0.92rem;
+  font-family: inherit;
   color: var(--text-primary);
+  border: none;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
+}
+
+.register-crop-stat:hover {
+  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
+}
+
+.register-crop-stat.active {
+  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8), 0 0 0 2px var(--crop-color, #94a3b8);
+}
+
+.register-crop-stat.dimmed {
+  opacity: 0.5;
+}
+
+.register-crop-stat.dimmed:hover {
+  opacity: 0.85;
 }
 
 :root {
@@ -4465,10 +4502,6 @@ input[type="number"],
   gap: 12px;
   margin-bottom: 14px;
   flex-wrap: wrap;
-}
-
-.crop-filter-select {
-  max-width: 200px;
 }
 
 /* Add Year Banner */
@@ -6101,6 +6134,29 @@ input[type="number"],
   border-left: 3px solid var(--blue-500);
 }
 
+.reg-stat-pill.is-filter {
+  font-family: inherit;
+  color: inherit;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.reg-stat-pill.is-filter:hover:not(:disabled) {
+  border-color: var(--text-muted);
+}
+
+.reg-stat-pill.is-filter:disabled {
+  cursor: default;
+}
+
+.reg-stat-pill.tenure-owned.active {
+  box-shadow: 0 0 0 2px var(--emerald-500);
+}
+
+.reg-stat-pill.tenure-rented.active {
+  box-shadow: 0 0 0 2px var(--blue-500);
+}
+
 .reg-stat-pill .sub-val {
   font-size: 0.68rem;
   margin-left: 4px;
@@ -7423,31 +7479,21 @@ a.history-pill:hover {
   height: 34px;
 }
 
-/* Põldude lehe kultuuride kokkuvõte tabeli all */
-.fullpage-board-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
-  flex-shrink: 0;
-  max-height: 30vh;
-  overflow-y: auto;
-  padding: 10px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
+/* Põldude lehe kultuuride kokkuvõte */
+.fullpage-board-body .register-crop-summary {
+  margin-bottom: 0;
 }
 
-.fullpage-board-summary .register-crop-footer-title,
-.fullpage-board-summary .register-crop-group-title {
+.fullpage-board-body .register-crop-summary-title,
+.fullpage-board-body .register-crop-group-title {
   font-size: 0.8rem;
 }
 
-.fullpage-board-summary .register-crop-group-title {
+.fullpage-board-body .register-crop-group-title {
   min-width: min(220px, 100%);
 }
 
-.fullpage-board-summary .register-crop-group-title strong {
+.fullpage-board-body .register-crop-group-title strong {
   font-size: 0.9rem;
 }
 

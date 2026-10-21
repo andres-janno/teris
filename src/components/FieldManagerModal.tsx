@@ -77,7 +77,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
   const [tenureFilter, setTenureFilter] = useState<'all' | 'OWNED' | 'RENTED'>('all');
-  const [operatorFilterLocal, setOperatorFilterLocal] = useState('all');
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
 
   // Current season & locked status
@@ -187,6 +186,12 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
     };
   }, [fieldsForSelectedYear, selectedYear]);
 
+// Kultuuride kokkuvõtte võti (sama, mille järgi kokkuvõtte kiibil klikates filtreeritakse).
+function cropSummaryKey(cropText: string): string {
+  if (isCropUndetermined(cropText)) return 'Määramata';
+  return cropText.split('(')[0].trim() || 'Määramata';
+}
+
 function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?: string | null; name: string }): number {
   const numA = (a.num ?? '').trim();
   const numB = (b.num ?? '').trim();
@@ -213,7 +218,8 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
         const q = searchQuery.toLowerCase();
 
         const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
-        const hasOwned = parcels.some(p => p.ownershipType === 'OWNED');
+        // Kataster-taseme omandi andmeteta põld loetakse oma maaks (nagu kokkuvõttes)
+        const hasOwned = parcels.length === 0 || parcels.some(p => p.ownershipType === 'OWNED');
         const hasRented = parcels.some(p => p.ownershipType === 'RENTED');
 
         const matchesSearch =
@@ -225,43 +231,22 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
           parcels.some(p => p.cadastralCode.toLowerCase().includes(q) || p.ownerName.toLowerCase().includes(q)) ||
           cropName.toLowerCase().includes(q);
 
-        const matchesCrop = cropFilter === 'all' || cropName.toLowerCase().includes(cropFilter.toLowerCase());
+        // Kultuuri ja omandivormi filtrid käivad valitud hooaja kokkuvõtte kohta
+        const matchesCrop = cropFilter === 'all' || (!!yearRecord && cropSummaryKey(yearRecord.crop) === cropFilter);
 
         const matchesTenure =
           tenureFilter === 'all' ||
-          (tenureFilter === 'OWNED' && hasOwned) ||
-          (tenureFilter === 'RENTED' && hasRented);
-
-        const matchesOperator = operatorFilterLocal === 'all' || f.operatorId === operatorFilterLocal;
+          (!!yearRecord && ((tenureFilter === 'OWNED' && hasOwned) || (tenureFilter === 'RENTED' && hasRented)));
 
         // Ainult põllud, millel on tabeli perioodis (valitud hooaeg ±2) vähemalt üks kirje.
         const inPeriod = f.history.some((h) => tableYears.includes(h.year));
 
-        return inPeriod && matchesSearch && matchesCrop && matchesTenure && matchesOperator;
+        return inPeriod && matchesSearch && matchesCrop && matchesTenure;
       })
       .sort(compareFieldNumbers);
-  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, operatorFilterLocal, tableYears]);
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, tableYears]);
 
-  // Registris olevate põldude operaatorid (operaatori filtri valikud).
-  const operatorsList = useMemo(() => {
-    const byId = new Map<string, string>();
-    masterFields.forEach((f) => {
-      if (f.operatorId) byId.set(f.operatorId, f.operatorName || f.operatorId);
-    });
-    return Array.from(byId, ([id, name]) => ({ id, name })).sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  }, [masterFields]);
-
-  // Crops breakdown for selected year
-  const cropsList = useMemo(() => {
-    const cropsSet = new Set<string>();
-    fieldsForSelectedYear.forEach((f) => {
-      const rec = f.history.find(h => h.year === selectedYear);
-      if (rec && rec.crop) cropsSet.add(rec.crop.split('(')[0].trim());
-    });
-    return Array.from(cropsSet);
-  }, [fieldsForSelectedYear, selectedYear]);
-
-  // Valitud hooaja pindalad kultuuride lõikes (jaluses), suurimast väiksemani.
+  // Valitud hooaja pindalad kultuuride lõikes (tabeli kohal), suurimast väiksemani.
   // Grupeeritud kultuuride registri talivilja tunnuse järgi: sügiskülv (eelmine sügis) / kevadkülv.
   const cropGroups = useMemo(() => {
     type Row = { crop: string; color: string; areaHa: number; count: number };
@@ -271,7 +256,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
       const rec = f.history.find((h) => h.year === selectedYear);
       if (!rec) return;
       const undetermined = isCropUndetermined(rec.crop);
-      const crop = undetermined ? 'Määramata' : rec.crop.split('(')[0].trim() || 'Määramata';
+      const crop = cropSummaryKey(rec.crop);
       const registryCrop = undetermined ? undefined : findRegistryCrop(rec.crop);
       const kind: Kind = undetermined ? 'undetermined' : !registryCrop ? 'unknown' : registryCrop.isWinterCrop ? 'winter' : 'spring';
       const map = byKind[kind];
@@ -623,6 +608,43 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
     link.remove();
   };
 
+  const cropSummaryContent = (
+    <>
+      <div className="register-crop-summary-head">
+        <span className="register-crop-summary-title">{selectedYear} kultuurid:</span>
+        <div className="reg-stat-pill">
+          <span className="lbl">Põlde:</span>
+          <strong>{fieldsForSelectedYear.length} tk</strong>
+        </div>
+        <div className="reg-stat-pill highlight">
+          <span className="lbl">Kogupind:</span>
+          <strong>{totalAreaHa.toFixed(2)} ha</strong>
+        </div>
+      </div>
+      {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+      {cropGroups.map((g) => (
+        <div key={g.kind} className={`register-crop-group ${g.kind}`}>
+          <span className="register-crop-group-title" title={g.title}>
+            {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
+          </span>
+          {g.rows.map((c) => (
+            <button
+              type="button"
+              key={c.crop}
+              className={`register-crop-stat${cropFilter === c.crop ? ' active' : ''}${cropFilter !== 'all' && cropFilter !== c.crop ? ' dimmed' : ''}`}
+              style={{ '--crop-color': c.color } as React.CSSProperties}
+              onClick={() => setCropFilter(cropFilter === c.crop ? 'all' : c.crop)}
+              title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
+            >
+              <span>{c.crop}</span>
+              <strong>{c.areaHa.toFixed(2)} ha</strong>
+            </button>
+          ))}
+        </div>
+      ))}
+    </>
+  );
+
   const bodyContent = (
     <div className="modal-body">
           {/* Top Row: Year Season Switcher & Global Stats */}
@@ -709,24 +731,27 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
 
             {/* Quick Stats & Financial Bar */}
             <div className="register-stats-pills">
-              <div className="reg-stat-pill">
-                <span className="lbl">Põlde:</span>
-                <strong>{fieldsForSelectedYear.length} tk</strong>
-              </div>
-              <div className="reg-stat-pill highlight">
-                <span className="lbl">Kogupind:</span>
-                <strong>{totalAreaHa.toFixed(2)} ha</strong>
-              </div>
-              <div className="reg-stat-pill tenure-owned">
+              <button
+                type="button"
+                className={`reg-stat-pill tenure-owned is-filter${tenureFilter === 'OWNED' ? ' active' : ''}`}
+                onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
+                title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
+              >
                 <span className="lbl">🏛️ Oma maa:</span>
                 <strong>{financialSummary.ownedHa} ha</strong>
                 <span className="sub-val text-emerald">({financialSummary.totalTax} €/a maamaks)</span>
-              </div>
-              <div className="reg-stat-pill tenure-rented">
+              </button>
+              <button
+                type="button"
+                className={`reg-stat-pill tenure-rented is-filter${tenureFilter === 'RENTED' ? ' active' : ''}`}
+                onClick={() => setTenureFilter(tenureFilter === 'RENTED' ? 'all' : 'RENTED')}
+                disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
+                title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
+              >
                 <span className="lbl">🤝 Rendimaa:</span>
                 <strong>{financialSummary.rentedHa} ha</strong>
                 <span className="sub-val text-blue">({financialSummary.totalRent} €/a rent)</span>
-              </div>
+              </button>
             </div>
           </div>
 
@@ -750,7 +775,12 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
             </div>
           )}
 
-          {/* Search, Filter & Actions Row */}
+          {/* Valitud hooaja kultuuride kokkuvõte; kiibil klikk filtreerib tabeli */}
+          <div className="register-crop-summary">
+            {cropSummaryContent}
+          </div>
+
+          {/* Search & Actions Row */}
           <div className="register-actions-bar">
             <div className="search-box-wrap">
               <Search size={16} className="search-icon" />
@@ -768,41 +798,19 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
               )}
             </div>
 
-            {/* Operator filter (registri sees, lisaks päise operaatorivalikule) */}
-            <select
-              className="form-input filter-select"
-              value={operatorFilterLocal}
-              onChange={(e) => setOperatorFilterLocal(e.target.value)}
-            >
-              <option value="all">Kõik operaatorid ({operatorsList.length})</option>
-              {operatorsList.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
-
-            {/* Crop filter */}
-            <select
-              className="form-input crop-filter-select"
-              value={cropFilter}
-              onChange={(e) => setCropFilter(e.target.value)}
-            >
-              <option value="all">Kõik kultuurid ({cropsList.length})</option>
-              {cropsList.map((c) => (
-                <option key={c} value={c}>{c}</option>
-              ))}
-            </select>
-
-            {/* Tenure filter */}
-            <select
-              className="form-input filter-select"
-              value={tenureFilter}
-              onChange={(e) => setTenureFilter(e.target.value as any)}
-            >
-              <option value="all">Kõik omandivormid</option>
-              <option value="OWNED">🏛️ Ainult Oma maa ({financialSummary.ownedHa} ha)</option>
-              <option value="RENTED">🤝 Ainult Rendimaa ({financialSummary.rentedHa} ha)</option>
-            </select>
-
+            {(cropFilter !== 'all' || tenureFilter !== 'all') && (
+              <button
+                type="button"
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setCropFilter('all');
+                  setTenureFilter('all');
+                }}
+              >
+                <X size={14} />
+                <span>Eemalda filtrid</span>
+              </button>
+            )}
           </div>
 
           {/* Põllu muutmine eraldi aknas registri peal (portal: registri aken on glass-card,
@@ -1464,36 +1472,11 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
               <div className="empty-register-state glass-card">
                 <AlertCircle size={28} className="text-amber" />
                 <h4>Otsingule vastavaid põlde ei leitud</h4>
-                <p>Proovi muuta otsingusõna või vali teine kultuuri-/omandifilter.</p>
+                <p>Proovi muuta otsingusõna või eemalda kultuuri-/omandifilter.</p>
               </div>
             )}
           </div>
         </div>
-  );
-
-  const footerContent = (
-    <>
-      <span className="register-crop-footer-title">{selectedYear} kultuurid:</span>
-      {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
-      {cropGroups.map((g) => (
-        <div key={g.kind} className={`register-crop-group ${g.kind}`}>
-          <span className="register-crop-group-title" title={g.title}>
-            {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
-          </span>
-          {g.rows.map((c) => (
-            <span
-              key={c.crop}
-              className="register-crop-stat"
-              style={{ '--crop-color': c.color } as React.CSSProperties}
-              title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu)`}
-            >
-              <span>{c.crop}</span>
-              <strong>{c.areaHa.toFixed(2)} ha</strong>
-            </span>
-          ))}
-        </div>
-      ))}
-    </>
   );
 
   if (isFullPage) {
@@ -1511,9 +1494,6 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
           </div>
           <div className="fullpage-board-body">
             {bodyContent}
-          </div>
-          <div className="register-crop-footer fullpage-board-summary">
-            {footerContent}
           </div>
         </main>
       </div>
@@ -1540,10 +1520,6 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
         </div>
 
         {bodyContent}
-
-        <div className="modal-footer register-crop-footer">
-          {footerContent}
-        </div>
       </div>
     </div>
   );
