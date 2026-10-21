@@ -3,6 +3,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { fetchFieldGpsPackets, type FieldGpsRow } from './telemetryAccess.ts';
+import { coverageAreaHa } from './coverageArea.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
@@ -593,15 +594,7 @@ export async function getTelemetrySuggestionsForField(
 
     if (widthM && widthM > 0 && s.points.length >= 2) {
       try {
-        const line = turf.lineString(s.points.map((p) => [p.lng, p.lat]));
-        const buffered = turf.buffer(line, (widthM / 2) / 1000, { units: 'kilometers', steps: 4 });
-        if (buffered) {
-          const fieldFeature = turf.feature(poly);
-          const intersected = turf.intersect(turf.featureCollection([fieldFeature, buffered]));
-          if (intersected) {
-            workedAreaHa = Math.round((turf.area(intersected) / 10000) * 100) / 100;
-          }
-        }
+        workedAreaHa = coverageAreaHa(s.points, poly, widthM);
       } catch (err) {
         console.warn('Could not calculate telemetry worked area:', err);
       }
