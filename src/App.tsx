@@ -15,7 +15,7 @@ import type { SatelliteProductId } from './services/satelliteLayer';
 import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
-import { generateFieldCollectionForYear } from './types/fieldRegister';
+import { generateFieldCollectionForYear, getFieldFeatureForYear } from './types/fieldRegister';
 import type { Vehicle, Implement, TelemetryDevice, EnrichedVehicle } from './types/fleet';
 import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
@@ -945,6 +945,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   const handleCloseFieldDetails = React.useCallback(() => setSelectedFieldId(null), []);
 
+  // Põllu infoaken põldude registrist (registri valitud hooaja andmetega)
+  const [registerDetailFieldId, setRegisterDetailFieldId] = useState<number | string | null>(null);
+  const registerDetailMasterField = React.useMemo(
+    () => (registerDetailFieldId === null ? null : masterFields.find((f) => String(f.id) === String(registerDetailFieldId)) ?? null),
+    [masterFields, registerDetailFieldId]
+  );
+  const handleCloseRegisterFieldDetails = React.useCallback(() => setRegisterDetailFieldId(null), []);
+  const handleFocusFieldFromRegister = (field: FieldFeature) => {
+    setIsFieldsRegisterOpen(false);
+    changeMainView('map');
+    setSelectedFieldId(null);
+    // kaart peab enne fookustamist nähtavaks saama (Leaflet arvutab suuruse uuesti)
+    setTimeout(() => handleFocusField(field), 50);
+  };
+
   // Vehicle focus
   const handleFocusVehicle = (vehicle: EnrichedVehicle) => {
     setSelectedVehicle(vehicle);
@@ -1582,6 +1597,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenParties={() => setIsPartiesModalOpen(true)}
             crops={crops}
             onOpenCrops={() => setIsCropsModalOpen(true)}
+            onOpenFieldDetails={setRegisterDetailFieldId}
           />
         </Suspense>
       )}
@@ -1856,8 +1872,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             // Register jääb avatuks (pooleli muudatused säilivad); kultuuride register avaneb peale.
             setIsCropsModalOpen(true);
           }}
+          onOpenFieldDetails={setRegisterDetailFieldId}
         />
       </DeferredMount>
+
+      {/* Põllu infoaken registrist (registri peal) */}
+      {registerDetailMasterField && (
+        <FieldDetailsDrawer
+          field={getFieldFeatureForYear(registerDetailMasterField, selectedYear)}
+          masterField={registerDetailMasterField}
+          seasons={seasons}
+          soilSamples={soilSamples}
+          onClose={handleCloseRegisterFieldDetails}
+          onFocusField={handleFocusFieldFromRegister}
+        />
+      )}
 
       <DeferredMount when={isUploadOpen}>
         <FieldUploadModal

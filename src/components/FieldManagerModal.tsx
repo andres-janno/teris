@@ -52,6 +52,8 @@ interface FieldManagerModalProps {
   onOpenCrops?: () => void;
   baseMap?: BaseMapLayerId;
   isFullPage?: boolean;
+  /** Avab põllu infoakna (sama mis kaardil põllule klikates) */
+  onOpenFieldDetails?: (fieldId: number | string) => void;
 }
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
@@ -73,6 +75,7 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onOpenCrops,
   baseMap = 'maaamet-pohikaart',
   isFullPage = false,
+  onOpenFieldDetails,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [cropFilter, setCropFilter] = useState('all');
@@ -1333,6 +1336,16 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
                         <div className="field-title-line">
                           {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
                           <span className="field-name">{field.name}</span>
+                          {onOpenFieldDetails && (
+                            <button
+                              type="button"
+                              className="icon-btn-ghost field-info-btn"
+                              onClick={() => onOpenFieldDetails(field.id)}
+                              title="Ava põllu info"
+                            >
+                              <Info size={15} />
+                            </button>
+                          )}
                         </div>
                         <div className="field-sub-tags">
                           <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>

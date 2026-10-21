@@ -4189,6 +4189,15 @@ input[type="number"],
   gap: 8px;
 }
 
+.register-table .name-cell .field-info-btn {
+  padding: 3px;
+  color: var(--text-muted);
+}
+
+.register-table .name-cell .field-info-btn:hover {
+  color: var(--emerald-500);
+}
+
 .register-table .name-cell .field-sub-tags {
   margin-top: 4px;
 }
