@@ -447,7 +447,7 @@ export async function getTelemetrySuggestionsForField(
 
   let rows: FieldGpsRow[] = [];
   try {
-    rows = await fetchFieldGpsPackets(startUtc, endUtc);
+    rows = await fetchFieldGpsPackets(startUtc, endUtc, bbox);
   } catch (err) {
     console.error('telemetry suggestions query failed:', err);
     return [];
@@ -505,9 +505,11 @@ export async function getTelemetrySuggestionsForField(
 
   if (rawSessions.length === 0) return [];
 
-  // Kontrolli olemasolevaid kandeid sellel kuupäeval
+  // Kontrolli olemasolevaid kandeid sellel kuupäeval ja SELLEL põllul — teise põllu kanne
+  // (eriti ilma kellaaegadeta) ei tohi sama masina siinseid sõite peita.
   const existingEntries = await prisma.workEntry.findMany({
     where: {
+      fieldWork: { fieldSeasonId },
       date: {
         gte: new Date(dateStr + 'T00:00:00.000Z'),
         lte: new Date(dateStr + 'T23:59:59.999Z')

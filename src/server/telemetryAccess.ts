@@ -283,24 +283,45 @@ export async function fetchDeviceHistory(imei: string, hours: number, from?: str
 
 export type FieldGpsRow = { device: string; time: Date; fields: { latitude?: number; longitude?: number } };
 
-/** GPS-paketid [startUtc, endUtc] jooksul ainult ettevõtte seadmete omandiperioodide piires (põllutööde soovitused). */
-export async function fetchFieldGpsPackets(startUtc: Date, endUtc: Date): Promise<FieldGpsRow[]> {
+/**
+ * GPS-paketid [startUtc, endUtc] jooksul ainult ettevõtte seadmete omandiperioodide piires (põllutööde soovitused).
+ * bbox = [minLng, minLat, maxLng, maxLat]: punktid filtreeritakse põllu ümbritseva ristküliku järgi juba päringus,
+ * muidu tuleks kogu päeva kõigi seadmete punktid koondada ja üle võrgu tuua.
+ */
+export async function fetchFieldGpsPackets(
+  startUtc: Date,
+  endUtc: Date,
+  bbox: [number, number, number, number]
+): Promise<FieldGpsRow[]> {
   if (!tsdb) return [];
   const all = await allOwnershipWindows('IMEI');
   const { ids, froms, tos } = flatten(all);
   if (ids.length === 0) return [];
+  const [minLng, minLat, maxLng, maxLat] = bbox;
   return tsdb.$queryRaw<FieldGpsRow[]>`
-    SELECT m.device, m.time,
-      jsonb_object_agg(m.field, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision)) AS fields
-    FROM measurements m
-    JOIN unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS w(device, valid_from, valid_to)
-      ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
-    WHERE m.measurement = 'data'
-      AND m.field IN ('latitude', 'longitude')
-      AND m.time >= ${startUtc}
-      AND m.time <= ${endUtc}
-    GROUP BY m.device, m.time
-    HAVING bool_or(m.field = 'latitude') AND bool_or(m.field = 'longitude')
-    ORDER BY m.device, m.time ASC
+    WITH w AS (
+      SELECT * FROM unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS w(device, valid_from, valid_to)
+    ),
+    lat AS (
+      SELECT m.device, m.time, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
+      WHERE m.measurement = 'data' AND m.field = 'latitude'
+        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
+    ),
+    lng AS (
+      SELECT m.device, m.time, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
+      WHERE m.measurement = 'data' AND m.field = 'longitude'
+        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
+    )
+    SELECT DISTINCT ON (lat.device, lat.time) lat.device, lat.time,
+      jsonb_build_object('latitude', lat.v, 'longitude', lng.v) AS fields
+    FROM lat
+    JOIN lng ON lng.device = lat.device AND lng.time = lat.time
+    WHERE lat.v BETWEEN ${minLat} AND ${maxLat}
+      AND lng.v BETWEEN ${minLng} AND ${maxLng}
+    ORDER BY lat.device, lat.time ASC
   `;
 }
