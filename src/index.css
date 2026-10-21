@@ -4035,15 +4035,22 @@ input[type="number"],
 }
 
 .register-crop-group-title {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   font-size: 0.92rem;
   font-weight: 600;
   color: var(--text-secondary);
   min-width: 270px;
+  margin-right: 8px;
 }
 
+/* Pindalad paremale joondatud, et ridade numbrid oleks kohakuti */
 .register-crop-group-title strong {
+  margin-left: auto;
   font-size: 1.05rem;
   font-weight: 800;
+  font-variant-numeric: tabular-nums;
 }
 
 .register-crop-group.winter .register-crop-group-title strong {
@@ -7489,7 +7496,7 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .register-crop-group-title {
-  min-width: min(220px, 100%);
+  min-width: min(240px, 100%);
 }
 
 .fullpage-board-body .register-crop-group-title strong {
