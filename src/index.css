@@ -6412,64 +6412,30 @@ a.history-pill:hover {
   font-style: italic;
 }
 
-.crop-varieties-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 2px;
-  padding: 2px 6px 2px 2px;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--text-secondary);
-  font-size: 0.76rem;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.crop-varieties-toggle:hover,
-.crop-register-table tr.expanded .crop-varieties-toggle {
-  color: var(--emerald-500);
-  border-color: var(--emerald-500);
-}
-
-.crop-register-table tr.expanded td {
+/* Sordid kultuuri all: sama värvitriip, nimi nihkega, kultuuri ja sortide vahel joont pole */
+.crop-register-table tr.crop-row.has-varieties td,
+.crop-register-table tr.variety-row:not(.last) td {
   border-bottom-color: transparent;
 }
 
-.crop-register-table .crop-varieties-row td {
-  white-space: normal;
-  background: var(--stat-bg);
-  padding: 4px 10px 10px 16px;
+.crop-register-table tr.variety-row td {
+  padding-top: 3px;
+  padding-bottom: 3px;
+  font-size: 0.76rem;
 }
 
-.crop-variety-list {
-  list-style: none;
-  margin: 0 0 8px;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
+.crop-register-table tr.variety-row.last td {
+  padding-bottom: 8px;
 }
 
-.crop-variety-list li {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 8px;
-  padding: 5px 0;
-  border-bottom: 1px solid var(--border-card);
+.crop-register-table .variety-name-cell {
+  box-shadow: inset 4px 0 0 var(--crop-color);
+  padding-left: 28px;
 }
 
-.crop-variety-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-}
-
-.crop-varieties-empty {
-  font-size: 0.74rem;
-  font-style: italic;
-  color: var(--text-muted);
-  padding: 6px 0 8px;
+.crop-register-table .variety-name {
+  font-weight: 600;
+  color: var(--text-primary);
 }
 
 /* ==========================================================================

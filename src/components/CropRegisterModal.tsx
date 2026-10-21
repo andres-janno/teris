@@ -12,9 +12,7 @@ import {
   Sparkles,
   Calendar,
   Lock,
-  Download,
-  ChevronDown,
-  ChevronRight
+  Download
 } from 'lucide-react';
 import type { Crop, CropVariety, CropGroup } from '../types/crop';
 import { CROP_GROUP_CONFIG } from '../types/crop';
@@ -63,15 +61,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
-  // Lahti klõpsatud kultuurid (sortide alamregister rea all)
-  const [expandedCropIds, setExpandedCropIds] = useState<Set<string>>(new Set());
-  const toggleExpanded = (cropId: string) =>
-    setExpandedCropIds((prev) => {
-      const next = new Set(prev);
-      if (next.has(cropId)) next.delete(cropId);
-      else next.add(cropId);
-      return next;
-    });
 
   // Crop Editing State
   const [isEditingCrop, setIsEditingCrop] = useState(false);
@@ -795,8 +784,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                         <thead>
                           <tr>
                             <th>Kultuur</th>
-                            <th className="num-col">{selectedYear}. a pind</th>
-                            <th>Sordid</th>
+                            <th className="num-col">Pind</th>
+                            <th className="num-col">Külvinorm</th>
+                            <th className="num-col">Saagiootus</th>
                             <th className="actions-col"><span className="sr-only">Tegevused</span></th>
                           </tr>
                         </thead>
@@ -804,20 +794,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                           {blockCrops.map((crop) => {
                             const groupCfg = CROP_GROUP_CONFIG[crop.group] || CROP_GROUP_CONFIG.OTHER;
                             const acreageHa = cropAcreageMap[crop.id] || 0;
-                            const isExpanded = expandedCropIds.has(crop.id);
-                            const meta = [
-                              crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : null,
-                              crop.defaultYieldTonsHa ? `${crop.defaultYieldTonsHa} t/ha` : null
-                            ].filter(Boolean).join(' · ');
+                            const cropStyle = { '--crop-color': crop.color } as React.CSSProperties;
 
                             return (
                               <React.Fragment key={crop.id}>
-                                <tr className={isExpanded ? 'expanded' : ''}>
-                                  <td
-                                    className="name-cell crop-name-cell"
-                                    style={{ '--crop-color': crop.color } as React.CSSProperties}
-                                    title={crop.description || undefined}
-                                  >
+                                <tr className={`crop-row ${crop.varieties.length > 0 ? 'has-varieties' : ''}`}>
+                                  <td className="name-cell crop-name-cell" style={cropStyle} title={crop.description || undefined}>
                                     <div className="field-title-line">
                                       <span className="field-name">{crop.name}</span>
                                     </div>
@@ -829,24 +811,25 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                       {crop.priaCode && <span className="field-code-badge" title="PRIA toetuse kultuurikood">{crop.priaCode}</span>}
                                       {showGroupTag && <span className="sub-tag">{groupCfg.icon} {groupCfg.label}</span>}
                                     </div>
-                                    {meta && <div className="cell-sub">{meta}</div>}
                                   </td>
                                   <td className={`num-col ${acreageHa > 0 ? '' : 'muted'}`}>
                                     {acreageHa > 0 ? <strong>{acreageHa.toFixed(2)} ha</strong> : '–'}
                                   </td>
-                                  <td>
-                                    <button
-                                      type="button"
-                                      className="crop-varieties-toggle"
-                                      onClick={() => toggleExpanded(crop.id)}
-                                      title={isExpanded ? 'Peida sordid' : 'Näita sorte'}
-                                    >
-                                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                                      <span>{crop.varieties.length}</span>
-                                    </button>
+                                  <td className={`num-col ${crop.defaultSeedRateKgHa ? '' : 'muted'}`}>
+                                    {crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : '–'}
+                                  </td>
+                                  <td className={`num-col ${crop.defaultYieldTonsHa ? '' : 'muted'}`}>
+                                    {crop.defaultYieldTonsHa ? `${crop.defaultYieldTonsHa} t/ha` : '–'}
                                   </td>
                                   <td className="actions-col">
                                     <div className="row-actions">
+                                      <button
+                                        className="icon-btn-ghost"
+                                        onClick={() => startCreateVariety(crop)}
+                                        title={`Lisa uus sort kultuurile "${crop.name}"`}
+                                      >
+                                        <Plus size={14} />
+                                      </button>
                                       <button className="icon-btn-ghost" onClick={() => startEditCrop(crop)} title="Muuda">
                                         <Edit2 size={14} />
                                       </button>
@@ -865,63 +848,51 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                   </td>
                                 </tr>
 
-                                {isExpanded && (
-                                  <tr className="crop-varieties-row">
-                                    <td colSpan={4}>
-                                      {crop.varieties.length > 0 ? (
-                                        <ul className="crop-variety-list">
-                                          {crop.varieties.map((variety) => {
-                                            const details = [
-                                              variety.breeder,
-                                              variety.maturityDays,
-                                              variety.winterHardiness && `talvekindlus: ${variety.winterHardiness}`,
-                                              variety.recommendedSeedRateKgHa && `${variety.recommendedSeedRateKgHa} kg/ha`,
-                                              variety.potentialYieldTonsHa && `${variety.potentialYieldTonsHa} t/ha`,
-                                              variety.qualityClass
-                                            ].filter(Boolean).join(' · ');
-                                            return (
-                                              <li key={variety.id} title={variety.notes || undefined}>
-                                                <div className="crop-variety-text">
-                                                  <strong>{variety.name}</strong>
-                                                  {details && <span className="cell-sub">{details}</span>}
-                                                </div>
-                                                <div className="row-actions">
-                                                  <button
-                                                    type="button"
-                                                    className="icon-btn-ghost"
-                                                    onClick={() => startEditVariety(crop, variety)}
-                                                    title="Muuda sordi andmeid"
-                                                  >
-                                                    <Edit2 size={12} />
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    className="icon-btn-danger"
-                                                    onClick={() => handleDeleteVariety(crop, variety.id, variety.name)}
-                                                    title="Kustuta sort"
-                                                  >
-                                                    <Trash2 size={12} />
-                                                  </button>
-                                                </div>
-                                              </li>
-                                            );
-                                          })}
-                                        </ul>
-                                      ) : (
-                                        <div className="crop-varieties-empty">Sorte pole veel registreeritud.</div>
-                                      )}
-                                      <button
-                                        type="button"
-                                        className="btn btn-secondary btn-xs"
-                                        onClick={() => startCreateVariety(crop)}
-                                        title={`Lisa uus sort kultuurile "${crop.name}"`}
-                                      >
-                                        <Plus size={11} />
-                                        <span>Lisa sort</span>
-                                      </button>
-                                    </td>
-                                  </tr>
-                                )}
+                                {/* Sordid kohe kultuuri all, nihkega */}
+                                {crop.varieties.map((variety, vIdx) => {
+                                  const details = [
+                                    variety.breeder,
+                                    variety.maturityDays,
+                                    variety.winterHardiness && `talvekindlus: ${variety.winterHardiness}`,
+                                    variety.qualityClass
+                                  ].filter(Boolean).join(' · ');
+                                  const isLast = vIdx === crop.varieties.length - 1;
+                                  return (
+                                    <tr key={variety.id} className={`variety-row ${isLast ? 'last' : ''}`}>
+                                      <td className="name-cell variety-name-cell" style={cropStyle} title={variety.notes || undefined}>
+                                        <span className="variety-name">{variety.name}</span>
+                                        {details && <div className="cell-sub">{details}</div>}
+                                      </td>
+                                      <td />
+                                      <td className={`num-col ${variety.recommendedSeedRateKgHa ? '' : 'muted'}`}>
+                                        {variety.recommendedSeedRateKgHa ? `${variety.recommendedSeedRateKgHa} kg/ha` : '–'}
+                                      </td>
+                                      <td className={`num-col ${variety.potentialYieldTonsHa ? '' : 'muted'}`}>
+                                        {variety.potentialYieldTonsHa ? `${variety.potentialYieldTonsHa} t/ha` : '–'}
+                                      </td>
+                                      <td className="actions-col">
+                                        <div className="row-actions">
+                                          <button
+                                            type="button"
+                                            className="icon-btn-ghost"
+                                            onClick={() => startEditVariety(crop, variety)}
+                                            title="Muuda sordi andmeid"
+                                          >
+                                            <Edit2 size={12} />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            className="icon-btn-danger"
+                                            onClick={() => handleDeleteVariety(crop, variety.id, variety.name)}
+                                            title="Kustuta sort"
+                                          >
+                                            <Trash2 size={12} />
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })}
                               </React.Fragment>
                             );
                           })}
