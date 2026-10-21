@@ -610,38 +610,59 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
 
   const cropSummaryContent = (
     <>
-      <div className="register-crop-summary-head">
-        <span className="register-crop-summary-title">{selectedYear} kultuurid:</span>
-        <div className="reg-stat-pill">
-          <span className="lbl">Põlde:</span>
-          <strong>{fieldsForSelectedYear.length} tk</strong>
-        </div>
-        <div className="reg-stat-pill highlight">
-          <span className="lbl">Kogupind:</span>
-          <strong>{totalAreaHa.toFixed(2)} ha</strong>
+      <div className="register-crop-summary-groups">
+        {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+        {cropGroups.map((g) => (
+          <div key={g.kind} className={`register-crop-group ${g.kind}`}>
+            <span className="register-crop-group-title" title={g.title}>
+              {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
+            </span>
+            {g.rows.map((c) => (
+              <button
+                type="button"
+                key={c.crop}
+                className={`register-crop-stat${cropFilter === c.crop ? ' active' : ''}${cropFilter !== 'all' && cropFilter !== c.crop ? ' dimmed' : ''}`}
+                style={{ '--crop-color': c.color } as React.CSSProperties}
+                onClick={() => setCropFilter(cropFilter === c.crop ? 'all' : c.crop)}
+                title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
+              >
+                <span>{c.crop}</span>
+                <strong>{c.areaHa.toFixed(2)} ha</strong>
+              </button>
+            ))}
+          </div>
+        ))}
+        <div className="register-crop-group total">
+          <span className="register-crop-group-title">
+            Σ Kogupind: <strong>{totalAreaHa.toFixed(2)} ha</strong>
+          </span>
+          <span className="muted">{fieldsForSelectedYear.length} põldu</span>
         </div>
       </div>
-      {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
-      {cropGroups.map((g) => (
-        <div key={g.kind} className={`register-crop-group ${g.kind}`}>
-          <span className="register-crop-group-title" title={g.title}>
-            {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
-          </span>
-          {g.rows.map((c) => (
-            <button
-              type="button"
-              key={c.crop}
-              className={`register-crop-stat${cropFilter === c.crop ? ' active' : ''}${cropFilter !== 'all' && cropFilter !== c.crop ? ' dimmed' : ''}`}
-              style={{ '--crop-color': c.color } as React.CSSProperties}
-              onClick={() => setCropFilter(cropFilter === c.crop ? 'all' : c.crop)}
-              title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
-            >
-              <span>{c.crop}</span>
-              <strong>{c.areaHa.toFixed(2)} ha</strong>
-            </button>
-          ))}
-        </div>
-      ))}
+      {/* Omandivormid paremal üksteise all; klikk filtreerib tabeli */}
+      <div className="register-crop-summary-tenure">
+        <button
+          type="button"
+          className={`reg-stat-pill tenure-owned is-filter${tenureFilter === 'OWNED' ? ' active' : ''}`}
+          onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
+          title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
+        >
+          <span className="lbl">🏛️ Oma maa:</span>
+          <strong>{financialSummary.ownedHa} ha</strong>
+          <span className="sub-val text-emerald">({financialSummary.totalTax} €/a maamaks)</span>
+        </button>
+        <button
+          type="button"
+          className={`reg-stat-pill tenure-rented is-filter${tenureFilter === 'RENTED' ? ' active' : ''}`}
+          onClick={() => setTenureFilter(tenureFilter === 'RENTED' ? 'all' : 'RENTED')}
+          disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
+          title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
+        >
+          <span className="lbl">🤝 Rendimaa:</span>
+          <strong>{financialSummary.rentedHa} ha</strong>
+          <span className="sub-val text-blue">({financialSummary.totalRent} €/a rent)</span>
+        </button>
+      </div>
     </>
   );
 
@@ -729,30 +750,6 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
               </div>
             </div>
 
-            {/* Quick Stats & Financial Bar */}
-            <div className="register-stats-pills">
-              <button
-                type="button"
-                className={`reg-stat-pill tenure-owned is-filter${tenureFilter === 'OWNED' ? ' active' : ''}`}
-                onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
-                title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
-              >
-                <span className="lbl">🏛️ Oma maa:</span>
-                <strong>{financialSummary.ownedHa} ha</strong>
-                <span className="sub-val text-emerald">({financialSummary.totalTax} €/a maamaks)</span>
-              </button>
-              <button
-                type="button"
-                className={`reg-stat-pill tenure-rented is-filter${tenureFilter === 'RENTED' ? ' active' : ''}`}
-                onClick={() => setTenureFilter(tenureFilter === 'RENTED' ? 'all' : 'RENTED')}
-                disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
-                title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
-              >
-                <span className="lbl">🤝 Rendimaa:</span>
-                <strong>{financialSummary.rentedHa} ha</strong>
-                <span className="sub-val text-blue">({financialSummary.totalRent} €/a rent)</span>
-              </button>
-            </div>
           </div>
 
           {/* Locked Season Alert Banner */}

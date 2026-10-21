@@ -3987,8 +3987,8 @@ input[type="number"],
 .register-crop-summary {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
-  gap: 6px 8px;
+  align-items: flex-start;
+  gap: 10px 16px;
   flex-shrink: 0;
   max-height: 30vh;
   overflow-y: auto;
@@ -3999,19 +3999,26 @@ input[type="number"],
   border-radius: var(--radius-md);
 }
 
-.register-crop-summary-head {
+.register-crop-summary-groups {
   display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1 1 480px;
+  min-width: 0;
 }
 
-.register-crop-summary-title {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  margin-right: 4px;
+/* Oma maa / rendimaa paremal üksteise all, ühelaiused */
+.register-crop-summary-tenure {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.register-crop-group.total {
+  padding-top: 6px;
+  border-top: 1px solid var(--border-card);
 }
 
 .register-crop-summary .muted {
@@ -4457,13 +4464,6 @@ input[type="number"],
   border-color: #15803d !important;
   color: #ffffff !important;
   box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
-}
-
-.register-stats-pills {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
 }
 
 .reg-stat-pill {
@@ -7484,7 +7484,6 @@ a.history-pill:hover {
   margin-bottom: 0;
 }
 
-.fullpage-board-body .register-crop-summary-title,
 .fullpage-board-body .register-crop-group-title {
   font-size: 0.8rem;
 }
