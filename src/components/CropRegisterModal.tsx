@@ -60,7 +60,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   onSelectYear
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [groupFilter, setGroupFilter] = useState<string>('ALL');
 
   // Crop Editing State
   const [isEditingCrop, setIsEditingCrop] = useState(false);
@@ -124,20 +123,10 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   }, [masterFields, crops, selectedYear]);
 
   // Overall Statistics
-  const stats = useMemo(() => {
-    let totalVarieties = 0;
-    let totalHectares = 0;
-    crops.forEach((c) => {
-      totalVarieties += c.varieties?.length || 0;
-      totalHectares += cropAcreageMap[c.id] || 0;
-    });
-
-    return {
-      totalCrops: crops.length,
-      totalVarieties,
-      totalHectares: Math.round(totalHectares * 100) / 100
-    };
-  }, [crops, cropAcreageMap]);
+  const stats = useMemo(() => ({
+    totalCrops: crops.length,
+    totalVarieties: crops.reduce((sum, c) => sum + (c.varieties?.length || 0), 0)
+  }), [crops]);
 
   // Hooaegade valik: sama reegel nagu Põldude registris
   const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
@@ -182,11 +171,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             (v.qualityClass && v.qualityClass.toLowerCase().includes(q))
         );
 
-      const matchesGroup = groupFilter === 'ALL' || crop.group === groupFilter;
-
-      return matchesSearch && matchesGroup;
+      return matchesSearch;
     });
-  }, [crops, searchQuery, groupFilter]);
+  }, [crops, searchQuery]);
 
   // Handlers for Crop Form
   const startCreateCrop = (group: CropGroup = 'CEREAL') => {
@@ -394,32 +381,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </button>
               </div>
             </div>
-            <div className="register-stats-pills">
-              <div className="reg-stat-pill">
-                <span className="lbl">Kultuure kokku:</span>
-                <strong>{stats.totalCrops} tk</strong>
-              </div>
-
-              <div className="reg-stat-pill highlight">
-                <span className="lbl">🌾 Registreeritud sorte:</span>
-                <strong>{stats.totalVarieties} tk</strong>
-                <span className="sub-val text-emerald">(alamregistrites)</span>
-              </div>
-
-              <div className="reg-stat-pill tenure-owned">
-                <span className="lbl">{selectedYear}. a külvipind kokku:</span>
-                <strong>{stats.totalHectares} ha</strong>
-                <span className="sub-val text-blue">(põldude registrist)</span>
-              </div>
-
-              <div className="reg-stat-pill tenure-rented">
-                <span className="lbl">Kultuurigruppe:</span>
-                <strong>{Object.keys(CROP_GROUP_CONFIG).length} gruppi</strong>
-              </div>
-            </div>
           </div>
 
-          {/* Search, Filter & Actions Toolbar */}
+          {/* Otsing */}
           <div className="register-actions-bar">
             <div className="search-box-wrap">
               <Search size={16} className="search-icon" />
@@ -436,21 +400,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </button>
               )}
             </div>
-
-            {/* Group Filter */}
-            <select
-              className="form-input filter-select"
-              value={groupFilter}
-              onChange={(e) => setGroupFilter(e.target.value)}
-            >
-              <option value="ALL">Kõik grupid ({crops.length})</option>
-              {Object.entries(CROP_GROUP_CONFIG).map(([grp, cfg]) => (
-                <option key={grp} value={grp}>
-                  {cfg.icon} {cfg.label} ({crops.filter((c) => c.group === grp).length})
-                </option>
-              ))}
-            </select>
-
           </div>
 
           {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
@@ -909,7 +858,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     </div>
                   ) : (
                     <div className="crop-group-empty">
-                      {searchQuery || groupFilter !== 'ALL' ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}
+                      {searchQuery ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}
                     </div>
                   )}
                 </section>
