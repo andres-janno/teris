@@ -113,6 +113,11 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
         );
         const key = match ? match.id : cropName;
         map[key] = (map[key] || 0) + (yearRec.areaHa || 0);
+        // Sordi pind: võti kultuuri id + sordinimi väiketähtedega
+        if (match && yearRec.cropVariety) {
+          const vKey = `${match.id}|${yearRec.cropVariety.toLowerCase().trim()}`;
+          map[vKey] = (map[vKey] || 0) + (yearRec.areaHa || 0);
+        }
       }
     });
     return map;
@@ -857,13 +862,16 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                     variety.qualityClass
                                   ].filter(Boolean).join(' · ');
                                   const isLast = vIdx === crop.varieties.length - 1;
+                                  const varietyHa = cropAcreageMap[`${crop.id}|${variety.name.toLowerCase().trim()}`] || 0;
                                   return (
                                     <tr key={variety.id} className={`variety-row ${isLast ? 'last' : ''}`}>
                                       <td className="name-cell variety-name-cell" style={cropStyle} title={variety.notes || undefined}>
                                         <span className="variety-name">{variety.name}</span>
                                         {details && <div className="cell-sub">{details}</div>}
                                       </td>
-                                      <td />
+                                      <td className={`num-col ${varietyHa > 0 ? '' : 'muted'}`}>
+                                        {varietyHa > 0 ? `${varietyHa.toFixed(2)} ha` : '–'}
+                                      </td>
                                       <td className={`num-col ${variety.recommendedSeedRateKgHa ? '' : 'muted'}`}>
                                         {variety.recommendedSeedRateKgHa ? `${variety.recommendedSeedRateKgHa} kg/ha` : '–'}
                                       </td>
