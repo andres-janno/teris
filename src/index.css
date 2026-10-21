@@ -6408,14 +6408,6 @@ a.history-pill:hover {
   padding-left: 12px;
 }
 
-.crop-register-table .crop-color-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: var(--crop-color);
-  flex-shrink: 0;
-}
-
 .crop-register-table .crop-icon {
   font-size: 1rem;
   line-height: 1;

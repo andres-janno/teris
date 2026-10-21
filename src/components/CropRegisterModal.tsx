@@ -819,7 +819,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                     title={crop.description || undefined}
                                   >
                                     <div className="field-title-line">
-                                      <span className="crop-color-dot" title="Kaardivärv" />
                                       <span className="crop-icon">{crop.icon || '🌾'}</span>
                                       <span className="field-name">{crop.name}</span>
                                     </div>
