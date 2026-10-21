@@ -47,7 +47,7 @@ export const CONTENT_ET: LandingContent = {
   description:
     'TERIS on põllumajanduse info haldamiseks mõeldud veebirakendus.',
   ogImage: '/og-teris.png',
-  organization: { name: 'VentCap OÜ', email: 'info@teris.ee' },
+  organization: { name: 'VentCap OÜ', email: 'huvi@teris.ee' },
   nav: { features: 'Võimalused', audience: 'Kellele', faq: 'KKK', login: 'Logi sisse', cta: 'Tunnen huvi' },
   hero: {
     headline: 'Põllumajanduse infosüsteem',
@@ -95,7 +95,7 @@ export const CONTENT_ET: LandingContent = {
     title: 'Privaatsusteade',
     updated: '19.10.2026',
     sections: [
-      { title: 'Vastutav töötleja', paragraphs: ['VentCap OÜ, e-post info@teris.ee.'] },
+      { title: 'Vastutav töötleja', paragraphs: ['VentCap OÜ, e-post huvi@teris.ee.'] },
       {
         title: '„Tunnen huvi“ vorm',
         paragraphs: [
@@ -117,7 +117,7 @@ export const CONTENT_ET: LandingContent = {
       {
         title: 'Sinu õigused',
         paragraphs: [
-          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks info@teris.ee — vastame hiljemalt ühe kuu jooksul.',
+          'Sul on õigus tutvuda oma andmetega, neid parandada, nõuda nende kustutamist või töötlemise piiramist ning esitada töötlemisele vastuväiteid. Kirjuta selleks huvi@teris.ee — vastame hiljemalt ühe kuu jooksul.',
           'Kui leiad, et rikume sinu õigusi, võid pöörduda Andmekaitse Inspektsiooni poole (www.aki.ee).'
         ]
       }
