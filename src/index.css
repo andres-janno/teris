@@ -6304,16 +6304,36 @@ a.history-pill:hover {
 }
 
 /* Kultuuride register: neli veergu (teraviljad, õlikultuurid, kaunviljad, muud) */
+/* Veerud täidavad akna ülejäänud kõrguse; iga veeru tabel kerib eraldi */
 .crop-group-columns {
+  flex: 1 1 auto;
+  min-height: 0;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: minmax(0, 1fr);
   gap: 12px;
-  align-items: start;
+}
+
+.crop-group-columns .crop-group-block {
+  min-height: 0;
+}
+
+.crop-group-columns .register-table-wrap,
+.crop-group-columns .crop-group-empty {
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: none;
 }
 
 @media (max-width: 1400px) {
   .crop-group-columns {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: none;
+    align-items: start;
+  }
+
+  .crop-group-columns .register-table-wrap {
+    max-height: 62vh;
   }
 }
 
@@ -6375,6 +6395,7 @@ a.history-pill:hover {
 
 .crop-group-empty {
   padding: 20px 12px;
+  background: var(--bg-modal);
   text-align: center;
   font-size: 0.78rem;
   color: var(--text-muted);
