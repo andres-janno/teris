@@ -8,12 +8,13 @@ import {
   Plus,
   Edit2,
   Trash2,
-  AlertCircle,
   Tag,
   Sparkles,
   Calendar,
   Lock,
-  Download
+  Download,
+  ChevronDown,
+  ChevronRight
 } from 'lucide-react';
 import type { Crop, CropVariety, CropGroup } from '../types/crop';
 import { CROP_GROUP_CONFIG } from '../types/crop';
@@ -39,6 +40,14 @@ interface CropRegisterModalProps {
   onSelectYear?: (year: number) => void;
 }
 
+// Vaate veerud: kolm põhigruppi eraldi, ülejäänud grupid veerus „Muud“
+const cropBlocks: { key: string; label: string; icon: string; groups: CropGroup[] }[] = [
+  { key: 'cereal', label: 'Teraviljad', icon: '🌾', groups: ['CEREAL'] },
+  { key: 'oilseed', label: 'Õlikultuurid', icon: '🌼', groups: ['OILSEED'] },
+  { key: 'legume', label: 'Kaunviljad', icon: '🌱', groups: ['LEGUME'] },
+  { key: 'other', label: 'Muud', icon: '🪴', groups: ['OTHER', 'FORAGE_GRASS', 'FALLOW'] }
+];
+
 export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   isOpen,
   onClose,
@@ -54,6 +63,15 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [groupFilter, setGroupFilter] = useState<string>('ALL');
+  // Lahti klõpsatud kultuurid (sortide alamregister rea all)
+  const [expandedCropIds, setExpandedCropIds] = useState<Set<string>>(new Set());
+  const toggleExpanded = (cropId: string) =>
+    setExpandedCropIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(cropId)) next.delete(cropId);
+      else next.add(cropId);
+      return next;
+    });
 
   // Crop Editing State
   const [isEditingCrop, setIsEditingCrop] = useState(false);
@@ -177,11 +195,11 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   }, [crops, searchQuery, groupFilter]);
 
   // Handlers for Crop Form
-  const startCreateCrop = () => {
+  const startCreateCrop = (group: CropGroup = 'CEREAL') => {
     setEditCropId(null);
     setEditCropName('');
     setEditCropScientific('');
-    setEditCropGroup('CEREAL');
+    setEditCropGroup(group);
     setEditCropColor(pickCropColor(false, crops.map((c) => c.color)));
     setEditCropAutoColor(true);
     setEditCropIcon('🌾');
@@ -376,7 +394,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   <Download size={14} />
                   <span>CSV Eksport</span>
                 </button>
-                <button className="btn btn-primary btn-sm" onClick={startCreateCrop}>
+                <button className="btn btn-primary btn-sm" onClick={() => startCreateCrop()}>
                   <Plus size={14} />
                   <span>Lisa uus kultuur</span>
                 </button>
@@ -742,263 +760,184 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             document.body
           )}
 
-          {/* Master Crops List */}
-          <div className="register-fields-list">
-            {filteredCrops.map((crop, idx) => {
-              const groupCfg = CROP_GROUP_CONFIG[crop.group] || CROP_GROUP_CONFIG.OTHER;
-              const acreageHa = cropAcreageMap[crop.id] || 0;
+          {/* Kultuurid neljas veerus (teraviljad, õlikultuurid, kaunviljad, muud);
+              sortide alamregister avaneb kultuuri rea alla */}
+          <div className="crop-group-columns">
+            {cropBlocks.map((block) => {
+              const blockCrops = filteredCrops
+                .filter((c) => block.groups.includes(c.group))
+                .sort((a, b) => a.name.localeCompare(b.name, 'et'));
+              const blockHa = blockCrops.reduce((sum, c) => sum + (cropAcreageMap[c.id] || 0), 0);
+              const showGroupTag = block.groups.length > 1;
 
               return (
-                <div
-                  key={crop.id}
-                  className="master-field-card glass-card"
-                  style={{ borderLeft: `4px solid ${crop.color}` }}
-                >
-                  <div className="field-card-main-row">
-                    {/* Left Info Col */}
-                    <div className="field-info-col">
-                      <div className="field-title-line">
-                        <span className="field-id-badge">#{idx + 1}</span>
-                        <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>{crop.icon || '🌾'}</span>
-                        <h4 className="field-name">{crop.name}</h4>
-
-                        {crop.scientificName && (
-                          <span style={{ fontStyle: 'italic', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-                            ({crop.scientificName})
-                          </span>
-                        )}
-
-                        <span
-                          className="field-num-badge"
-                          style={{
-                            backgroundColor: groupCfg.bgColor,
-                            color: groupCfg.color,
-                            borderColor: `${groupCfg.color}40`
-                          }}
-                        >
-                          {groupCfg.icon} {groupCfg.label}
-                        </span>
-
-                        {crop.priaCode && (
-                          <span className="field-code-badge" title="PRIA toetuse kultuurikood">
-                            PRIA: {crop.priaCode}
-                          </span>
-                        )}
-
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            fontSize: '0.72rem',
-                            padding: '2px 8px',
-                            borderRadius: '4px',
-                            backgroundColor: `${crop.color}20`,
-                            color: crop.color,
-                            border: `1px solid ${crop.color}40`,
-                            fontWeight: 600
-                          }}
-                        >
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: crop.color }}></span>
-                          Kaardivärv
-                        </span>
-                      </div>
-
-                      {/* Technical metadata tags */}
-                      <div className="field-sub-tags">
-                        <span className={`sub-tag ${crop.isWinterCrop ? 'winter-tag' : 'spring-tag'}`}>
-                          {crop.isWinterCrop ? '❄️ Talivili (sügiskülv)' : '☀️ Suvivili / kevadkülv'}
-                        </span>
-                        {crop.defaultSeedRateKgHa && (
-                          <span className="sub-tag soil-tag">
-                            🌱 Külvinorm: {crop.defaultSeedRateKgHa} kg/ha
-                          </span>
-                        )}
-                        {crop.defaultYieldTonsHa && (
-                          <span className="sub-tag owner-tag">
-                            ⚖️ Oodatav saak: {crop.defaultYieldTonsHa} t/ha
-                          </span>
-                        )}
-                        <span className="sub-tag rent-tag">
-                          🏷️ {crop.varieties.length} registreeritud sorti
-                        </span>
-                      </div>
-
-                      {crop.description && (
-                        <div className="field-change-reason-line">
-                          <span>💬 {crop.description}</span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Middle: Active Season Acreage */}
-                    <div className="field-active-season-col">
-                      <div className="season-area-box">
-                        <span className="season-year-label">{selectedYear}. a külvipind:</span>
-                        <strong className="season-ha-val" style={{ color: acreageHa > 0 ? crop.color : undefined }}>
-                          {acreageHa.toFixed(2)} ha
-                        </strong>
-                        <span className="eligible-ha-sub">
-                          {acreageHa > 0 ? `${selectedYear}. a külvikorras` : 'Sel hooajal ei külvata'}
-                        </span>
-                      </div>
-                    </div>
-
-                    {/* Right: Actions */}
-                    <div className="field-card-actions">
-                      <button className="icon-btn-ghost" onClick={() => startEditCrop(crop)} title="Muuda">
-                        <Edit2 size={15} />
-                      </button>
-
-                      <button
-                        className="icon-btn-danger"
-                        onClick={async () => {
-                          if (await confirmDialog(`Kas soovid kindlasti kustutada kultuuri "${crop.name}" ja kõik selle sordid?`)) {
-                            onDeleteCrop(crop.id);
-                          }
-                        }}
-                        title="Kustuta kultuur registrist"
-                      >
-                        <Trash2 size={14} />
-                      </button>
-                    </div>
+                <section key={block.key} className="crop-group-block">
+                  <div className="crop-group-block-header">
+                    <h4>
+                      <span>{block.icon}</span>
+                      <span>{block.label}</span>
+                      <span className="crop-group-count">{blockCrops.length}</span>
+                    </h4>
+                    {blockHa > 0 && <span className="crop-group-ha">{blockHa.toFixed(2)} ha</span>}
+                    <button
+                      type="button"
+                      className="icon-btn-ghost"
+                      onClick={() => startCreateCrop(block.groups[0])}
+                      title={`Lisa uus kultuur: ${block.label}`}
+                    >
+                      <Plus size={15} />
+                    </button>
                   </div>
 
-                  {/* Row 2: Varieties Sub-Register Table */}
-                  <div className="field-history-row" style={{ flexDirection: 'column', alignItems: 'flex-start', gap: '8px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
-                      <span className="history-label" style={{ fontWeight: 700, color: 'var(--text-primary)' }}>
-                        <Tag size={13} className="text-emerald" />
-                        Sortide alamregister ({crop.varieties.length} tk):
-                      </span>
-                      <button
-                        className="btn btn-secondary btn-xs"
-                        onClick={() => startCreateVariety(crop)}
-                        title={`Lisa uus sort kultuurile "${crop.name}"`}
-                      >
-                        <Plus size={11} />
-                        <span>Lisa sort</span>
-                      </button>
-                    </div>
+                  {blockCrops.length > 0 ? (
+                    <div className="register-table-wrap">
+                      <table className="register-table crop-register-table">
+                        <thead>
+                          <tr>
+                            <th>Kultuur</th>
+                            <th className="num-col">{selectedYear}. a pind</th>
+                            <th>Sordid</th>
+                            <th className="actions-col"><span className="sr-only">Tegevused</span></th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {blockCrops.map((crop) => {
+                            const groupCfg = CROP_GROUP_CONFIG[crop.group] || CROP_GROUP_CONFIG.OTHER;
+                            const acreageHa = cropAcreageMap[crop.id] || 0;
+                            const isExpanded = expandedCropIds.has(crop.id);
+                            const meta = [
+                              crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : null,
+                              crop.defaultYieldTonsHa ? `${crop.defaultYieldTonsHa} t/ha` : null
+                            ].filter(Boolean).join(' · ');
 
-                    {crop.varieties.length > 0 ? (
-                      <div className="varieties-table-wrap">
-                        <table className="varieties-table">
-                          <thead>
-                            <tr>
-                              <th>Sort</th>
-                              <th>Aretaja / Esindaja</th>
-                              <th>Valmimisaeg</th>
-                              <th>Talvekindlus</th>
-                              <th style={{ textAlign: 'right' }}>Külvinorm</th>
-                              <th style={{ textAlign: 'right' }}>Saagipotentsiaal</th>
-                              <th>Kvaliteediklass</th>
-                              <th>Märkused</th>
-                              <th style={{ textAlign: 'right' }}>Toimingud</th>
-                            </tr>
-                          </thead>
-                          <tbody>
-                            {crop.varieties.map((variety) => (
-                              <tr key={variety.id}>
-                                <td className="variety-name-cell">
-                                  <strong>{variety.name}</strong>
-                                </td>
-                                <td>
-                                  {variety.breeder ? (
-                                    <span className="variety-breeder-cell">{variety.breeder}</span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {variety.maturityDays ? (
-                                    <span className="variety-badge-sm variety-badge-maturity">
-                                      ⏱️ {variety.maturityDays}
-                                    </span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {variety.winterHardiness ? (
-                                    <span className="variety-winter-text">
-                                      {variety.winterHardiness.includes('Väga hea') ? '❄️ ' : ''}
-                                      {variety.winterHardiness}
-                                    </span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td style={{ textAlign: 'right' }}>
-                                  {variety.recommendedSeedRateKgHa ? (
-                                    <span className="variety-seed-rate">{variety.recommendedSeedRateKgHa} kg/ha</span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td style={{ textAlign: 'right' }}>
-                                  {variety.potentialYieldTonsHa ? (
-                                    <span className="variety-badge-sm variety-badge-yield">
-                                      {variety.potentialYieldTonsHa} t/ha
-                                    </span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td>
-                                  {variety.qualityClass ? (
-                                    <span className="variety-badge-sm variety-badge-quality">
-                                      {variety.qualityClass}
-                                    </span>
-                                  ) : (
-                                    <span className="variety-empty-cell">—</span>
-                                  )}
-                                </td>
-                                <td className="variety-notes-cell">
-                                  {variety.notes || <span className="variety-empty-cell">—</span>}
-                                </td>
-                                <td>
-                                  <div className="variety-table-actions">
+                            return (
+                              <React.Fragment key={crop.id}>
+                                <tr className={isExpanded ? 'expanded' : ''}>
+                                  <td
+                                    className="name-cell crop-name-cell"
+                                    style={{ '--crop-color': crop.color } as React.CSSProperties}
+                                    title={crop.description || undefined}
+                                  >
+                                    <div className="field-title-line">
+                                      <span className="crop-color-dot" title="Kaardivärv" />
+                                      <span className="crop-icon">{crop.icon || '🌾'}</span>
+                                      <span className="field-name">{crop.name}</span>
+                                    </div>
+                                    {crop.scientificName && <div className="cell-sub crop-latin">{crop.scientificName}</div>}
+                                    <div className="field-sub-tags">
+                                      <span className={`sub-tag ${crop.isWinterCrop ? 'winter-tag' : 'spring-tag'}`}>
+                                        {crop.isWinterCrop ? '❄️ Talivili' : '☀️ Suvivili'}
+                                      </span>
+                                      {crop.priaCode && <span className="field-code-badge" title="PRIA toetuse kultuurikood">{crop.priaCode}</span>}
+                                      {showGroupTag && <span className="sub-tag">{groupCfg.icon} {groupCfg.label}</span>}
+                                    </div>
+                                    {meta && <div className="cell-sub">{meta}</div>}
+                                  </td>
+                                  <td className={`num-col ${acreageHa > 0 ? '' : 'muted'}`}>
+                                    {acreageHa > 0 ? <strong>{acreageHa.toFixed(2)} ha</strong> : '–'}
+                                  </td>
+                                  <td>
                                     <button
                                       type="button"
-                                      className="icon-btn-ghost"
-                                      onClick={() => startEditVariety(crop, variety)}
-                                      title="Muuda sordi andmeid"
+                                      className="crop-varieties-toggle"
+                                      onClick={() => toggleExpanded(crop.id)}
+                                      title={isExpanded ? 'Peida sordid' : 'Näita sorte'}
                                     >
-                                      <Edit2 size={12} />
+                                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                                      <span>{crop.varieties.length}</span>
                                     </button>
-                                    <button
-                                      type="button"
-                                      className="icon-btn-danger"
-                                      onClick={() => handleDeleteVariety(crop, variety.id, variety.name)}
-                                      title="Kustuta sort"
-                                    >
-                                      <Trash2 size={12} />
-                                    </button>
-                                  </div>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: '0.74rem', color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>
-                        Sorte pole veel registreeritud. Klõpsa nupule "+ Lisa sort", et lisada sellele kultuurile sorte.
-                      </div>
-                    )}
-                  </div>
-                </div>
+                                  </td>
+                                  <td className="actions-col">
+                                    <div className="row-actions">
+                                      <button className="icon-btn-ghost" onClick={() => startEditCrop(crop)} title="Muuda">
+                                        <Edit2 size={14} />
+                                      </button>
+                                      <button
+                                        className="icon-btn-danger"
+                                        onClick={async () => {
+                                          if (await confirmDialog(`Kas soovid kindlasti kustutada kultuuri "${crop.name}" ja kõik selle sordid?`)) {
+                                            onDeleteCrop(crop.id);
+                                          }
+                                        }}
+                                        title="Kustuta kultuur registrist"
+                                      >
+                                        <Trash2 size={14} />
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+
+                                {isExpanded && (
+                                  <tr className="crop-varieties-row">
+                                    <td colSpan={4}>
+                                      {crop.varieties.length > 0 ? (
+                                        <ul className="crop-variety-list">
+                                          {crop.varieties.map((variety) => {
+                                            const details = [
+                                              variety.breeder,
+                                              variety.maturityDays,
+                                              variety.winterHardiness && `talvekindlus: ${variety.winterHardiness}`,
+                                              variety.recommendedSeedRateKgHa && `${variety.recommendedSeedRateKgHa} kg/ha`,
+                                              variety.potentialYieldTonsHa && `${variety.potentialYieldTonsHa} t/ha`,
+                                              variety.qualityClass
+                                            ].filter(Boolean).join(' · ');
+                                            return (
+                                              <li key={variety.id} title={variety.notes || undefined}>
+                                                <div className="crop-variety-text">
+                                                  <strong>{variety.name}</strong>
+                                                  {details && <span className="cell-sub">{details}</span>}
+                                                </div>
+                                                <div className="row-actions">
+                                                  <button
+                                                    type="button"
+                                                    className="icon-btn-ghost"
+                                                    onClick={() => startEditVariety(crop, variety)}
+                                                    title="Muuda sordi andmeid"
+                                                  >
+                                                    <Edit2 size={12} />
+                                                  </button>
+                                                  <button
+                                                    type="button"
+                                                    className="icon-btn-danger"
+                                                    onClick={() => handleDeleteVariety(crop, variety.id, variety.name)}
+                                                    title="Kustuta sort"
+                                                  >
+                                                    <Trash2 size={12} />
+                                                  </button>
+                                                </div>
+                                              </li>
+                                            );
+                                          })}
+                                        </ul>
+                                      ) : (
+                                        <div className="crop-varieties-empty">Sorte pole veel registreeritud.</div>
+                                      )}
+                                      <button
+                                        type="button"
+                                        className="btn btn-secondary btn-xs"
+                                        onClick={() => startCreateVariety(crop)}
+                                        title={`Lisa uus sort kultuurile "${crop.name}"`}
+                                      >
+                                        <Plus size={11} />
+                                        <span>Lisa sort</span>
+                                      </button>
+                                    </td>
+                                  </tr>
+                                )}
+                              </React.Fragment>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <div className="crop-group-empty">
+                      {searchQuery || groupFilter !== 'ALL' ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}
+                    </div>
+                  )}
+                </section>
               );
             })}
-
-            {filteredCrops.length === 0 && (
-              <div className="empty-register-state glass-card" style={{ padding: '32px', textAlign: 'center' }}>
-                <AlertCircle size={28} className="text-amber" style={{ margin: '0 auto 8px auto' }} />
-                <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Otsingule vastavaid kultuure ei leitud</h4>
-                <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine kultuurigrupp.</p>
-              </div>
-            )}
           </div>
         </div>
   );
