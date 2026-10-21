@@ -1422,7 +1422,33 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           data: { cropColor: saved.color }
         });
       }
-      return json(res, saved);
+      // Sordid tulevad kultuuriga koos täisnimekirjana: puuduvad kustutatakse (viited sordile → NULL), ülejäänud upsert.
+      if (Array.isArray(crop.varieties)) {
+        const varieties = crop.varieties.filter((v: any) => v?.id && v?.name?.trim());
+        await prisma.cropVariety.deleteMany({
+          where: { cropId: saved.id, id: { notIn: varieties.map((v: any) => v.id) } }
+        });
+        for (const v of varieties) {
+          const data = {
+            name: v.name.trim(),
+            breeder: v.breeder ?? null,
+            maturityDays: v.maturityDays ?? null,
+            winterHardiness: v.winterHardiness ?? null,
+            recommendedSeedRateKgHa: v.recommendedSeedRateKgHa ? Number(v.recommendedSeedRateKgHa) : null,
+            potentialYieldTonsHa: v.potentialYieldTonsHa ? Number(v.potentialYieldTonsHa) : null,
+            qualityClass: v.qualityClass ?? null,
+            notes: v.notes ?? null,
+            isActive: v.isActive !== false
+          };
+          await prisma.cropVariety.upsert({
+            where: { id: v.id },
+            update: data,
+            create: { id: v.id, cropId: saved.id, ...data }
+          });
+        }
+      }
+      const withVarieties = await prisma.crop.findUnique({ where: { id: saved.id }, include: { varieties: true } });
+      return json(res, withVarieties ?? saved);
     }
 
     if (pathname.startsWith('/api/crops/') && method === 'DELETE') {
