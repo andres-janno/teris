@@ -256,7 +256,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   // Esc sulgeb muutmisakna
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key !== 'Escape') return;
+      e.stopPropagation(); // ei jõua window'ni — alusvaade (nt põllu täisvaade) jääb avatuks
+      onClose();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);

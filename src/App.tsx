@@ -56,8 +56,6 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 }
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
-// Tühi sulgemine (kui põllu täisvaate peal on muutmisdialoog avatud)
-const noop = () => {};
 const FieldFullView = lazy(() => import('./components/FieldFullView').then((m) => ({ default: m.FieldFullView })));
 const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
 const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
@@ -974,7 +972,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     [masterFields, registerDetailFieldId]
   );
   const handleCloseRegisterFieldDetails = React.useCallback(() => setRegisterDetailFieldId(null), []);
-  // Täisvaatest avatud põllu muutmise dialoog; lahtioleku ajal täisvaade Esc-ile ei sulgu
+  // Täisvaatest avatud põllu muutmise dialoog (Esc sulgeb ainult dialoogi, vt FieldEditDialog)
   const [editFieldId, setEditFieldId] = useState<number | null>(null);
   const editFieldMaster = React.useMemo(
     () => (editFieldId === null ? null : masterFields.find((f) => String(f.id) === String(editFieldId)) ?? null),
@@ -1814,7 +1812,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
               soilSamples={soilSamples}
               satelliteDate={visibility.satellite ? satelliteDate : null}
               canEdit={false}
-              onClose={editFieldId === null ? handleCloseFieldDetails : noop}
+              onClose={handleCloseFieldDetails}
               onFocusField={handleFocusField}
               onEditField={setEditFieldId}
             />
@@ -1920,7 +1918,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             seasons={seasons}
             soilSamples={soilSamples}
             canEdit={false}
-            onClose={editFieldId === null ? handleCloseRegisterFieldDetails : noop}
+            elevated={isFieldsRegisterOpen}
+            onClose={handleCloseRegisterFieldDetails}
             onFocusField={handleFocusFieldFromRegister}
             onEditField={setEditFieldId}
           />
