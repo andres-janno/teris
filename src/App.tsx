@@ -548,6 +548,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
   const [telemetryHours, setTelemetryHours] = useState<number>(2);
   const [simTimeMode, setSimTimeMode] = useState<'rolling' | 'custom'>('rolling');
+  // Suurendamisel loetakse taasesituse rada uuesti ("Viimased tunnid" aken lõpeb siis uuesti praegusel hetkel)
+  const [simReloadKey, setSimReloadKey] = useState(0);
   const [simCustomDate, setSimCustomDate] = useState<string>(() => {
     const d = new Date();
     const pad = (n: number) => String(n).padStart(2, '0');
@@ -830,7 +832,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     simCustomDate,
     simCustomTime,
     simDurationHours,
-    workingWidthM
+    workingWidthM,
+    simReloadKey
   ]);
 
   // Põllutööde kiht: laeb kõigi masinate GPS-ajaloo ja arvutab valmis rajad.
@@ -909,6 +912,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   };
 
   const handleReset = () => {
+    if (simTimeMode === 'rolling') {
+      setIsPlaying(false);
+      setSimReloadKey((k) => k + 1);
+      return;
+    }
     if (!simulatorRef.current) return;
     simulatorRef.current.reset();
     setIsPlaying(false);

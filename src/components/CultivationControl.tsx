@@ -290,9 +290,11 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           type="button"
           className="cc-icon-btn"
           onClick={onReset}
-          disabled={!hasTrack}
-          title={isCustomStart ? 'Tagasi alguskellaaja juurde (uuesti vajutus viib algusesse)' : 'Algusesse'}
-          aria-label="Algusesse"
+          disabled={!hasTrack && simTimeMode !== 'rolling'}
+          title={simTimeMode === 'rolling'
+            ? 'Värskenda: loe viimased andmed ja alusta algusest'
+            : isCustomStart ? 'Tagasi alguskellaaja juurde (uuesti vajutus viib algusesse)' : 'Algusesse'}
+          aria-label={simTimeMode === 'rolling' ? 'Värskenda' : 'Algusesse'}
         >
           <RotateCcw size={16} />
         </button>
