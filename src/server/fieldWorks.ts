@@ -396,6 +396,14 @@ const toStored = (l: any): StoredLine => ({
   quantity: l.quantity,
   unit: l.unit,
   sortOrder: l.sortOrder,
+  ratePerHa: l.ratePerHa ?? null,
+  priaRegister: l.priaRegister ?? null,
+  priaKind: l.priaKind ?? null,
+  priaSpec: l.priaSpec ?? null,
+  activeIngredient: l.activeIngredient ?? null,
+  nKgHa: l.nKgHa ?? null,
+  pKgHa: l.pKgHa ?? null,
+  kKgHa: l.kKgHa ?? null,
   unitPrice: decimalToNumber(l.unitPrice),
   confirmedQuantity: l.confirmedQuantity
 });

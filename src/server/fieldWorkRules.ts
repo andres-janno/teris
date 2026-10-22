@@ -1,9 +1,10 @@
 // src/server/fieldWorkRules.ts — põllutööde registri reeglid (andmebaasist sõltumatud, testitavad).
+import { EMPTY_PRIA_ATTRS, type PriaAttrs } from '../services/pria.ts';
 
 export type LineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST' | 'OBSERVATION';
 export type FinanceStatus = 'PENDING' | 'CONFIRMED' | 'CHANGED';
 
-export interface LineDraft {
+export interface LineDraft extends PriaAttrs {
   kind: LineKind;
   vehicleId: string | null;
   implementId: string | null;
@@ -12,6 +13,7 @@ export interface LineDraft {
   quantity: number;
   unit: string;
   sortOrder: number;
+  ratePerHa: number | null; // kogus ha kohta (PRIA)
 }
 
 export interface StoredLine extends LineDraft {
@@ -26,8 +28,10 @@ export interface EntryQuantities {
   implement?: { id: string; name: string } | null;
   equipmentHours?: number | null; // masina ja haakeriista töötunnid sisestatakse korraga
   fuelLiters?: number | null;
-  materials?: { id: string; name: string; unit: string; quantity: number }[];
-  harvestTonnes?: number | null;
+  materials?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs> }[];
+  harvestTonnes?: number | null; // lihtne saak (vana vorm)
+  harvest?: { tonnes: number; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null } | null;
+  observations?: { label: string; quantity: number; unit: string; priaRegister: string | null }[];
 }
 
 const positive = (v: number | null | undefined): v is number => typeof v === 'number' && Number.isFinite(v) && v > 0;
@@ -69,8 +73,8 @@ export function isWinterCrop(cropText: string | null | undefined, crops?: { name
 // sest neile pannakse erinev ühiku kulu.
 export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   const lines: LineDraft[] = [];
-  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'materialId'> & Partial<LineDraft>) =>
-    lines.push({ vehicleId: null, implementId: null, materialId: null, ...l, sortOrder: lines.length });
+  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'materialId' | 'ratePerHa' | keyof PriaAttrs> & Partial<LineDraft>) =>
+    lines.push({ vehicleId: null, implementId: null, materialId: null, ratePerHa: null, ...EMPTY_PRIA_ATTRS, ...l, sortOrder: lines.length });
 
   if (positive(q.laborHours)) push({ kind: 'LABOR', label: q.workerName || 'Tööaeg', quantity: q.laborHours, unit: 'h' });
   if (positive(q.equipmentHours)) {
@@ -79,14 +83,25 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   }
   if (positive(q.fuelLiters)) push({ kind: 'FUEL', label: 'Kütus', quantity: q.fuelLiters, unit: 'l' });
   for (const m of q.materials ?? []) {
-    if (positive(m.quantity)) push({ kind: 'MATERIAL', materialId: m.id, label: m.name, quantity: m.quantity, unit: m.unit });
+    if (positive(m.quantity)) {
+      push({ kind: 'MATERIAL', materialId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
+    }
   }
-  if (positive(q.harvestTonnes)) push({ kind: 'HARVEST', label: 'Saak', quantity: q.harvestTonnes, unit: 't' });
+  if (q.harvest && positive(q.harvest.tonnes)) {
+    push({ kind: 'HARVEST', label: 'Saak', quantity: q.harvest.tonnes, unit: 't', ratePerHa: q.harvest.ratePerHa, priaKind: q.harvest.priaKind, priaSpec: q.harvest.priaSpec });
+  } else if (positive(q.harvestTonnes)) {
+    push({ kind: 'HARVEST', label: 'Saak', quantity: q.harvestTonnes, unit: 't' });
+  }
+  // Seire leid salvestatakse ka koguseta (nt "Muu oluline sündmus")
+  for (const o of q.observations ?? []) {
+    if (o.label.trim()) push({ kind: 'OBSERVATION', label: o.label.trim(), quantity: o.quantity, unit: o.unit, priaRegister: o.priaRegister });
+  }
   return lines;
 }
 
-const lineKey = (l: Pick<LineDraft, 'kind' | 'vehicleId' | 'implementId' | 'materialId'>) =>
-  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.materialId ?? ''}`;
+// Materjalita read (vaatlused) eristatakse nime järgi
+const lineKey = (l: Pick<LineDraft, 'kind' | 'vehicleId' | 'implementId' | 'materialId' | 'label'>) =>
+  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.materialId ?? ''}:${l.kind === 'OBSERVATION' ? l.label : ''}`;
 
 // Kande muutmisel säilitatakse sama rea ühiku kulu. Kinnitatud kande koguse muutus → CHANGED
 // (kinnita uuesti); confirmedQuantity jätab alles kinnitamise hetke koguse.
@@ -102,16 +117,18 @@ export function mergeLines(
   });
   if (status === 'PENDING') return { lines, financeStatus: 'PENDING' };
 
+  const priced = (l: { kind: LineKind }) => l.kind !== 'OBSERVATION';
   const newKeys = new Set(lines.map(lineKey));
   const changed =
-    oldLines.some((l) => !newKeys.has(lineKey(l))) ||
-    lines.some((l) => l.confirmedQuantity === null || l.confirmedQuantity !== l.quantity);
+    oldLines.filter(priced).some((l) => !newKeys.has(lineKey(l))) ||
+    lines.filter(priced).some((l) => l.confirmedQuantity === null || l.confirmedQuantity !== l.quantity);
   return { lines, financeStatus: changed ? 'CHANGED' : status };
 }
 
-// Kinnitada saab, kui igal real on ühiku kulu (ka 0 on lubatud).
-export function canConfirm(lines: Pick<StoredLine, 'unitPrice'>[]): boolean {
-  return lines.length > 0 && lines.every((l) => l.unitPrice !== null && Number.isFinite(l.unitPrice));
+// Kinnitada saab, kui igal hinnastataval real on ühiku kulu (ka 0 on lubatud). Vaatlustel hinda pole.
+export function canConfirm(lines: (Pick<StoredLine, 'unitPrice'> & { kind?: LineKind })[]): boolean {
+  const priced = lines.filter((l) => l.kind !== 'OBSERVATION');
+  return priced.length > 0 && priced.every((l) => l.unitPrice !== null && Number.isFinite(l.unitPrice));
 }
 
 export interface FieldResult {

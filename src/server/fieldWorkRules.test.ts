@@ -62,10 +62,34 @@ describe('buildEntryLines', () => {
   it('koristuse saak on HARVEST rida', () => {
     expect(buildEntryLines({ harvestTonnes: 198.4 })).toMatchObject([{ kind: 'HARVEST', quantity: 198.4, unit: 't' }]);
   });
+  it('materjalirida kannab PRIA atribuute ja normi', () => {
+    const [l] = buildEntryLines({
+      materials: [{ id: 'm1', name: 'Tombo WG', unit: 'kg', quantity: 0.36, ratePerHa: 0.15, pria: { priaRegister: 'Taimekaitsevahendid registrist', priaKind: 'Herbitsiid' } }]
+    });
+    expect(l).toMatchObject({ kind: 'MATERIAL', quantity: 0.36, ratePerHa: 0.15, priaKind: 'Herbitsiid', activeIngredient: null });
+  });
+  it('saak koos saagi ja kultuuri tüübiga', () => {
+    expect(buildEntryLines({ harvest: { tonnes: 9.68, ratePerHa: 4, priaKind: 'Terad', priaSpec: 'Põhikultuur' } })).toMatchObject([
+      { kind: 'HARVEST', quantity: 9.68, unit: 't', ratePerHa: 4, priaKind: 'Terad', priaSpec: 'Põhikultuur' }
+    ]);
+  });
+  it('seire leiud on OBSERVATION read, ka koguseta', () => {
+    const lines = buildEntryLines({
+      observations: [
+        { label: 'Põldsinep', quantity: 7, unit: 'taime/m2', priaRegister: 'Umbrohud' },
+        { label: 'Muu oluline sündmus', quantity: 0, unit: '', priaRegister: 'Sündmused' }
+      ]
+    });
+    expect(lines.map((l) => [l.kind, l.label, l.quantity])).toEqual([
+      ['OBSERVATION', 'Põldsinep', 7],
+      ['OBSERVATION', 'Muu oluline sündmus', 0]
+    ]);
+  });
 });
 
 const stored = (kind: StoredLine['kind'], quantity: number, unitPrice: number | null, confirmedQuantity: number | null): StoredLine => ({
-  kind, quantity, unitPrice, confirmedQuantity, vehicleId: null, implementId: null, materialId: null, label: kind, unit: 'h', sortOrder: 0
+  kind, quantity, unitPrice, confirmedQuantity, vehicleId: null, implementId: null, materialId: null, label: kind, unit: 'h', sortOrder: 0,
+  ratePerHa: null, priaRegister: null, priaKind: null, priaSpec: null, activeIngredient: null, nKgHa: null, pKgHa: null, kKgHa: null
 });
 
 describe('mergeLines', () => {
@@ -87,6 +111,15 @@ describe('mergeLines', () => {
     const r = mergeLines([stored('LABOR', 8, 12, 8), stored('FUEL', 50, 1.5, 50)], buildEntryLines({ laborHours: 8 }), 'CONFIRMED');
     expect(r.financeStatus).toBe('CHANGED');
   });
+  it('mitu materjalita vaatlust ei liitu üheks võtmeks', () => {
+    const drafts = buildEntryLines({
+      observations: [
+        { label: 'A', quantity: 1, unit: 'taime/m2', priaRegister: 'Umbrohud' },
+        { label: 'B', quantity: 2, unit: 'taime/m2', priaRegister: 'Umbrohud' }
+      ]
+    });
+    expect(mergeLines([], drafts, 'PENDING').lines).toHaveLength(2);
+  });
 });
 
 describe('canConfirm / summarizeLines', () => {
@@ -105,6 +138,10 @@ describe('canConfirm / summarizeLines', () => {
       { kind: 'HARVEST', quantity: 10, unitPrice: 200 }
     ]);
     expect(r).toEqual({ labor: 150, equipment: 250, fuel: 120, materials: 100, costTotal: 620, revenue: 2000, profit: 1380 });
+  });
+  it('vaatlused ei mõjuta finantsi ega kinnitamist', () => {
+    expect(summarizeLines([{ kind: 'OBSERVATION', quantity: 7, unitPrice: null }]).costTotal).toBe(0);
+    expect(canConfirm([{ unitPrice: 1, kind: 'LABOR' }, { unitPrice: null, kind: 'OBSERVATION' }])).toBe(true);
   });
 });
 
