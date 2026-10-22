@@ -199,7 +199,6 @@ model FieldSeason {
   cadastralParcels FieldCadastralParcel[]
   cropEntity       Crop?                  @relation(fields: [cropId], references: [id], onDelete: SetNull)
   varietyEntity    CropVariety?           @relation(fields: [varietyId], references: [id], onDelete: SetNull)
-  operations       FieldOperation[]
   fieldWorks       FieldWork[]
 
   @@unique([fieldId, year])
@@ -244,7 +243,6 @@ model RelatedParty {
   vehicles            Vehicle[]
   poiContacts         PointOfInterest[]
   fieldsAsOperator    Field[]
-  performedOperations FieldOperation[]
   workEntries         WorkEntry[]
   plannedFieldWorks   FieldWork[]            @relation("FieldWorkPlannedWorker")
 
@@ -594,60 +592,6 @@ model SoilSample {
   @@index([year])
   @@index([tenantId])
   @@map("soil_samples")
-}
-
-// ============================================================================
-// 9. PÕLLURAAMAT (FIELD OPERATIONS) — e-PRIA põlluraamatu väljavõtte import
-// ============================================================================
-
-model FieldOperation {
-  id            Int       @id @default(autoincrement())
-  tenantId      String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  fieldSeasonId Int
-  type          String // PRIA "Tegevus": "Väetamine", "Kündmine", ...
-  dateFrom      DateTime
-  dateTo        DateTime? // vahemiku lõpp; tühi, kui üks päev
-  areaHa        Float?
-  method        String? // "Paisklaotamine", "Pritsimine", "Põhikultuur"
-  performerId   String? // teostaja seotud isikute registrist
-  notes         String?
-  sortOrder     Int
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @default(now()) @updatedAt
-  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
-
-  fieldSeason FieldSeason             @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
-  performer   RelatedParty?           @relation(fields: [performerId], references: [id], onDelete: SetNull)
-  products    FieldOperationProduct[]
-
-  @@index([fieldSeasonId])
-  @@index([performerId])
-  @@index([tenantId])
-  @@map("field_operations")
-}
-
-model FieldOperationProduct {
-  id               Int     @id @default(autoincrement())
-  tenantId         String  @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  operationId      Int
-  category         String? // "Register/Materjal"
-  name             String? // toode, sort või umbrohi
-  kind             String? // "Liik/tüüp"
-  spec             String? // "Täpsustus"
-  amount           Float?
-  unit             String?
-  nKgHa            Float?
-  pKgHa            Float?
-  kKgHa            Float?
-  activeIngredient String?
-  sortOrder        Int
-
-  operation FieldOperation @relation(fields: [operationId], references: [id], onDelete: Cascade)
-
-  @@index([operationId])
-  @@index([tenantId])
-  @@map("field_operation_products")
 }
 
 // ============================================================================

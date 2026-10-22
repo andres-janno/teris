@@ -29,7 +29,6 @@ export interface RelatedParty {
   assignedVehiclesCount?: number; // Mitu masinat talle määratud
   poiContactsCount?: number;      // Mitu POI-punkti kontaktisikuna
   operatorFieldsCount?: number;   // Mitu põldu operaatorina (harijana)
-  performedOperationsCount?: number; // Mitu põllutööd teostajana (põlluraamatust)
   usageCount?: number;            // Kõigi eelnevate loenduste summa — kui > 0, ei tohi kustutada
 }
 

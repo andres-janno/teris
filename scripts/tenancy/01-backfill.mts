@@ -7,8 +7,7 @@ const TENANT_NAME = 'Loisu Agro OÜ';
 const TABLES = [
   'seasons', 'cadastral_parcels', 'fields', 'field_seasons', 'related_parties', 'field_cadastral_parcels',
   'points_of_interest', 'vehicles', 'implements', 'telemetry_devices', 'device_assignments',
-  'implement_assignments', 'crops', 'crop_varieties', 'soil_samples', 'field_operations',
-  'field_operation_products', 'work_types', 'materials', 'work_templates', 'work_template_items',
+  'implement_assignments', 'crops', 'crop_varieties', 'soil_samples', 'work_types', 'materials', 'work_templates', 'work_template_items',
   'field_works', 'work_entries', 'work_entry_lines', 'users'
 ];
 

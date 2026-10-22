@@ -1313,8 +1313,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
               vehicles: true,
               cadastralParcels: true,
               poiContacts: true,
-              fieldsAsOperator: true,
-              performedOperations: true
+              fieldsAsOperator: true
             }
           }
         }
@@ -1329,8 +1328,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         ownedParcelsCount: _count.cadastralParcels,
         poiContactsCount: _count.poiContacts,
         operatorFieldsCount: _count.fieldsAsOperator,
-        performedOperationsCount: _count.performedOperations,
-        usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator + _count.performedOperations
+        usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator
       }));
 
       return json(res, mapped);
