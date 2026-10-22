@@ -6,7 +6,7 @@ import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import type { FieldWork, Material, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
-import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, type PriaRow, type HarvestRow } from './PriaLinesEditor';
+import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 interface Option {
   id: string;
@@ -152,9 +152,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
       return { ratePerHa: fmt(entry.harvest?.ratePerHa, 3), total: fmt(tonnes, 3), priaKind: entry.harvest?.priaKind ?? '', priaSpec: entry.harvest?.priaSpec ?? '' };
     }
     const plan = work.lines.find((l) => l.kind === 'HARVEST');
-    const area = work.plannedAreaHa ?? fieldAreaHa;
-    const total = plan?.ratePerHa != null && area > 0 ? Math.round(plan.ratePerHa * area * 1000) / 1000 : null;
-    return { ratePerHa: fmt(plan?.ratePerHa, 3), total: fmt(total, 3), priaKind: plan?.priaKind ?? '', priaSpec: plan?.priaSpec ?? '' };
+    return recomputeHarvestTotal(
+      { ratePerHa: fmt(plan?.ratePerHa, 3), total: '', priaKind: plan?.priaKind ?? '', priaSpec: plan?.priaSpec ?? '' },
+      work.plannedAreaHa ?? fieldAreaHa
+    );
   });
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
   const [busy, setBusy] = useState(false);
@@ -253,8 +254,16 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const totalAfter = doneBefore + areaNum;
 
   // Tehtud pindala muutmine (käsitsi või telemeetriast): kogu põllu täitumisel märgitakse töö lõpetatuks
-  const changeArea = (val: string) => {
+  // Kande pindala muutmine (käsitsi, kiirvalik, telemeetria): read ja saak arvutatakse normist uuesti
+  const setArea = (val: string) => {
     setAreaHa(val);
+    const area = parseNum(val) ?? fieldAreaHa;
+    setRows((rs) => recomputeTotals(rs, area));
+    setHarvest((h) => recomputeHarvestTotal(h, area));
+  };
+
+  const changeArea = (val: string) => {
+    setArea(val);
     if (fieldAreaHa > 0) {
       setFinish(doneBefore + (parseNum(val) ?? 0) >= fieldAreaHa - 0.01);
     }
@@ -265,7 +274,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
     const needed = Math.max(0, targetTotal - doneBefore);
     const roundedNeeded = Math.round(needed * 100) / 100;
-    setAreaHa(fmt(roundedNeeded));
+    setArea(fmt(roundedNeeded));
     if (pct === 100 || targetTotal >= fieldAreaHa - 0.01) {
       setFinish(true);
     } else {

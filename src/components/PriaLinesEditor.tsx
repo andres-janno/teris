@@ -44,6 +44,18 @@ export const rowPria = (r: PriaRow) => ({
   activeIngredient: r.activeIngredient || null, nKgHa: parseNum(r.nKgHa), pKgHa: parseNum(r.pKgHa), kKgHa: parseNum(r.kKgHa)
 });
 
+// Pindala muutumisel arvutatakse kogus kokku uuesti normist (kg/ha on PRIA lähteväärtus); normita rida jätab koguse alles
+export const recomputeTotals = (rows: PriaRow[], areaHa: number | null): PriaRow[] =>
+  rows.map((r) => {
+    const rate = parseNum(r.ratePerHa);
+    return rate == null ? r : { ...r, total: fmt(totalFromRate(rate, areaHa)) };
+  });
+
+export const recomputeHarvestTotal = (h: HarvestRow, areaHa: number | null): HarvestRow => {
+  const rate = parseNum(h.ratePerHa);
+  return rate == null ? h : { ...h, total: fmt(totalFromRate(rate, areaHa)) };
+};
+
 export const rowToPlanLine = (r: PriaRow): FieldWorkPlanLine | null =>
   r.label.trim() ? { kind: 'MATERIAL', materialId: r.materialId || null, label: r.label.trim(), unit: r.unit, ratePerHa: parseNum(r.ratePerHa), ...rowPria(r) } : null;
 
@@ -167,6 +179,10 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
 // Seire koguse sisend hoiab teksti eraldi, et komaga arvu (nt "2,") saaks sisestada
 const ObservationQuantity: React.FC<{ value: number; unit: string; onChange: (n: number) => void }> = ({ value, unit, onChange }) => {
   const [text, setText] = React.useState(fmt(value));
+  // Väärtus muutus väljastpoolt (nt eelmise rea eemaldamisel nihkuvad read indeksi võtmega): sünkrooni tekst
+  React.useEffect(() => {
+    setText((t) => ((parseNum(t) ?? 0) === value ? t : fmt(value)));
+  }, [value]);
   return (
     <input className="form-input num" aria-label="Kogus" inputMode="decimal" placeholder={unit || 'kogus'} value={text}
       onChange={(e) => { setText(e.target.value); onChange(parseNum(e.target.value) ?? 0); }} />
