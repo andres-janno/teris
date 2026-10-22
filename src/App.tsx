@@ -887,6 +887,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
+    // Masinapargi sisselülitamisel loetakse seadmete viimased asukohad serverist uuesti
+    if (key === 'vehicles' && !visibility.vehicles) {
+      api.getFleet().then((fleet) => {
+        if (fleet?.devices?.length) setDevices(fleet.devices);
+      }).catch((err) => console.error('Error refreshing vehicle positions:', err));
+    }
     setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 

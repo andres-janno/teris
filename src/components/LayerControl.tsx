@@ -180,6 +180,97 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 )}
               </div>
 
+              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
+              <div className="layer-field-box">
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.soilSamples}
+                      onChange={() => onToggleLayer('soilSamples')}
+                    />
+                    <span className="layer-color-indicator soil-color"></span>
+                    <span className="layer-text">Mullaproovid</span>
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('soilSamples')}
+                    title={visibility.soilSamples ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+
+                {visibility.soilSamples && onSelectSoilMetric && (
+                  <div className="layer-sub-options">
+                    <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                    <div className="vehicle-filter-subgroup">
+                      <div className="soil-metric-radio-list">
+                        {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
+                          <label key={key} className="soil-metric-radio-item">
+                            <input
+                              type="radio"
+                              name="soil-metric"
+                              value={key}
+                              checked={soilMetric === key}
+                              onChange={() => onSelectSoilMetric(key)}
+                            />
+                            <span>{SOIL_METRIC_CONFIG[key].label}</span>
+                          </label>
+                        ))}
+                      </div>
+  
+                      <div className="soil-legend-list">
+                        {isAgeMetric ? (
+                          <div className="soil-legend-gradient">
+                            <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
+                            <div className="soil-legend-gradient-labels">
+                              <span>0 a</span>
+                              <span>&gt; {AGE_MAX_YEARS} a</span>
+                            </div>
+                          </div>
+                        ) : (
+                          soilLegendItems.map((item) => (
+                            <div key={item.label} className="soil-legend-item">
+                              <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
+                              <span className="soil-legend-label">{item.label}</span>
+                            </div>
+                          ))
+                        )}
+                        <div className="soil-legend-item">
+                          <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
+                          <span className="soil-legend-label">Andmed puuduvad</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
+              {modules.telemetry && (
+              <div className="layer-field-box">
+                <div className="layer-item">
+                  <label className="layer-label">
+                    <input
+                      type="checkbox"
+                      checked={visibility.vehicles}
+                      onChange={() => onToggleLayer('vehicles')}
+                    />
+                    <span className="layer-color-indicator tech-color"></span>
+                    <span className="layer-text">Masinapark</span>
+                  </label>
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('vehicles')}
+                    title={visibility.vehicles ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+              </div>
+              )}
+
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
               {modules.telemetry && (
               <div className="layer-field-box">
@@ -276,97 +367,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               </div>
               )}
 
-              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
-              <div className="layer-field-box">
-                <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.soilSamples}
-                      onChange={() => onToggleLayer('soilSamples')}
-                    />
-                    <span className="layer-color-indicator soil-color"></span>
-                    <span className="layer-text">Mullaproovid</span>
-                  </label>
-                  <button
-                    className="icon-toggle"
-                    onClick={() => onToggleLayer('soilSamples')}
-                    title={visibility.soilSamples ? 'Peida' : 'Näita'}
-                  >
-                    {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                </div>
-
-                {visibility.soilSamples && onSelectSoilMetric && (
-                  <div className="layer-sub-options">
-                    <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
-                    <div className="vehicle-filter-subgroup">
-                      <div className="soil-metric-radio-list">
-                        {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                          <label key={key} className="soil-metric-radio-item">
-                            <input
-                              type="radio"
-                              name="soil-metric"
-                              value={key}
-                              checked={soilMetric === key}
-                              onChange={() => onSelectSoilMetric(key)}
-                            />
-                            <span>{SOIL_METRIC_CONFIG[key].label}</span>
-                          </label>
-                        ))}
-                      </div>
-  
-                      <div className="soil-legend-list">
-                        {isAgeMetric ? (
-                          <div className="soil-legend-gradient">
-                            <div className="soil-legend-gradient-bar" style={{ backgroundImage: ageGradientCss }}></div>
-                            <div className="soil-legend-gradient-labels">
-                              <span>0 a</span>
-                              <span>&gt; {AGE_MAX_YEARS} a</span>
-                            </div>
-                          </div>
-                        ) : (
-                          soilLegendItems.map((item) => (
-                            <div key={item.label} className="soil-legend-item">
-                              <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
-                              <span className="soil-legend-label">{item.label}</span>
-                            </div>
-                          ))
-                        )}
-                        <div className="soil-legend-item">
-                          <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
-                          <span className="soil-legend-label">Andmed puuduvad</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
-              {modules.telemetry && (
-              <div className="layer-field-box">
-                <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.vehicles}
-                      onChange={() => onToggleLayer('vehicles')}
-                    />
-                    <span className="layer-color-indicator tech-color"></span>
-                    <span className="layer-text">Masinapark</span>
-                  </label>
-                  <button
-                    className="icon-toggle"
-                    onClick={() => onToggleLayer('vehicles')}
-                    title={visibility.vehicles ? 'Peida' : 'Näita'}
-                  >
-                    {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
-                </div>
-              </div>
-              )}
-
               {/* POI / Infrastructure */}
               <div className="layer-item">
                 <label className="layer-label">
@@ -387,28 +387,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 </button>
               </div>
 
-              {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
-              {modules.satellite && (
-              <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.satellite}
-                    onChange={() => onToggleLayer('satellite')}
-                  />
-                  <span className="layer-color-indicator satellite-color"></span>
-                  <span className="layer-text">Satelliidipilt</span>
-                </label>
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('satellite')}
-                  title={visibility.satellite ? 'Peida' : 'Näita'}
-                >
-                  {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
-              )}
-
               {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
               {modules.weather && (
               <div className="layer-item">
@@ -427,6 +405,28 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   title={visibility.weatherRadar ? 'Peida' : 'Näita'}
                 >
                   {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
+                </button>
+              </div>
+              )}
+
+              {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
+              {modules.satellite && (
+              <div className="layer-item">
+                <label className="layer-label">
+                  <input
+                    type="checkbox"
+                    checked={visibility.satellite}
+                    onChange={() => onToggleLayer('satellite')}
+                  />
+                  <span className="layer-color-indicator satellite-color"></span>
+                  <span className="layer-text">Satelliidipilt</span>
+                </label>
+                <button
+                  className="icon-toggle"
+                  onClick={() => onToggleLayer('satellite')}
+                  title={visibility.satellite ? 'Peida' : 'Näita'}
+                >
+                  {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
                 </button>
               </div>
               )}
