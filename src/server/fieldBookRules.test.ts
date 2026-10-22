@@ -36,6 +36,12 @@ describe('findMatchingWork', () => {
     expect(findMatchingWork(o, [a, b, c], new Set())?.id).toBe('c');
     expect(findMatchingWork(o, [a], new Set())).toBeNull();
   });
+  it('taimekaitse rida ilma nimetatud toodeteta sobitub kuupäeva ja tegevuse järgi', () => {
+    const tkv = 'Taimekaitsevahendi kasutamine';
+    const o = op({ type: tkv, dateFrom: '2026-05-26', products: [] });
+    expect(findMatchingWork(o, [work({ activity: tkv, plannedFrom: '2026-05-24', productKeys: [] })], new Set())?.id).toBe('w1');
+    expect(findMatchingWork(o, [work({ activity: tkv, plannedFrom: '2026-05-23', productKeys: [] })], new Set())).toBeNull();
+  });
 });
 
 describe('operationLines', () => {

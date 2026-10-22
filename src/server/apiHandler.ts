@@ -1530,6 +1530,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           let imported = 0, created = 0, complemented = 0;
           const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
+          // Lukus hooajad impordi aastate järgi (hooajakirje seos võib puududa või viidata teisele aastale)
+          const lockedIds = new Set(
+            (await tx.season.findMany({ where: { id: { in: [...seasonIds.values()] }, isLocked: true }, select: { id: true } })).map((s) => s.id)
+          );
 
           for (const f of fieldsIn) {
             const field = await tx.field.findFirst({ where: { fieldCode: String(f.fieldCode), num: String(f.num), operatorId } });
@@ -1540,7 +1544,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
                 })
               : null;
             if (!fieldSeason) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'põldu ei leitud' }); continue; }
-            if (fieldSeason.season?.isLocked) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'hooaeg on lukus' }); continue; }
+            if (lockedIds.has(seasonIds.get(Number(f.season))!) || fieldSeason.season?.isLocked) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'hooaeg on lukus' }); continue; }
             const seasonId = seasonIds.get(Number(f.season));
             if (seasonId && fieldSeason.seasonId !== seasonId) {
               await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: { seasonId } });

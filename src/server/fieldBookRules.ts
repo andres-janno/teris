@@ -28,7 +28,8 @@ export function findMatchingWork(
   let best: { work: ExistingWork; gap: number } | null = null;
   for (const w of works) {
     if (w.activity !== op.type || taken.has(w.id)) continue;
-    if (PRODUCT_MATCH_ACTIVITIES.has(op.type) && !w.productKeys.some((k) => opKeys.has(k))) continue;
+    // Nimetatud toodeteta reas otsustavad tegevus ja kuupäev (muidu tekiks korduval impordil duplikaat)
+    if (PRODUCT_MATCH_ACTIVITIES.has(op.type) && opKeys.size > 0 && !w.productKeys.some((k) => opKeys.has(k))) continue;
     const ranges = [...(w.plannedFrom ? [{ from: w.plannedFrom, to: w.plannedTo }] : []), ...w.entries];
     if (!ranges.length) continue;
     const gap = Math.min(...ranges.map((r) => daysApart(range, r)));
