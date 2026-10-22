@@ -16,7 +16,7 @@
   `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && <käsk>'`
 - Andmebaasi ühendus käsureal: `set -a && . ./.env && set +a` ja siis `psql "${MIGRATE_DATABASE_URL%%\?*}"` (tabelite omanik). Ettevõtte andmete päringuks lisa esimeseks käsuks `-c "select set_config('app.tenant_id','tenant-loisu-agro',false)"` (RLS). Paroole ei kirjutata faili.
 - Varukoopia enne iga andmeid muutvat sammu (skeem, migratsioon, üleviimine):
-  `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && pg_dump "${MIGRATE_DATABASE_URL%%\?*}" -Fc -f ~/db_backups/teris_db_$(date +%Y%m%d_%H%M%S).dump && ls -t ~/db_backups | head -1'`
+  `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && pg_dump "${PLATFORM_DATABASE_URL%%\?*}" -Fc -f ~/backups/teris-$(date +%F-%H%M).dump && ls -t ~/backups | head -1'`
 - Skeemimuudatus: `npx prisma db push` ja `npx prisma generate`. Uue ettevõttepõhise tabeli puhul lisa see `scripts/tenancy/02-rls.sql` loendisse ja käivita `psql "${MIGRATE_DATABASE_URL%%\?*}" -f scripts/tenancy/02-rls.sql` ning `MIGRATE_DATABASE_URL=… npx tsx scripts/tenancy/05-tenant-fk-triggers.mts` (vt faili päis).
 - Tüübikontroll: `npx tsc --noEmit -p tsconfig.app.json`. Testid: `npx vitest run <fail>`; kõik: `npm test`.
 - Iga ülesande lõpus: commit (ainult nimetatud failid, `git add <failid>`) ja `npm run release` (tüübikontroll + testid + build + teenuse taaskäivitus). Commit-sõnum eesti keeles, lõpus rida `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>`.

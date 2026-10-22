@@ -1,6 +1,6 @@
 // src/server/fieldWorkRules.ts — põllutööde registri reeglid (andmebaasist sõltumatud, testitavad).
 
-export type LineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST';
+export type LineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST' | 'OBSERVATION';
 export type FinanceStatus = 'PENDING' | 'CONFIRMED' | 'CHANGED';
 
 export interface LineDraft {

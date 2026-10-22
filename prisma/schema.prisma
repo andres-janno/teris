@@ -246,6 +246,7 @@ model RelatedParty {
   fieldsAsOperator    Field[]
   performedOperations FieldOperation[]
   workEntries         WorkEntry[]
+  plannedFieldWorks   FieldWork[]            @relation("FieldWorkPlannedWorker")
 
   @@index([tenantId])
   @@map("related_parties")
@@ -681,12 +682,18 @@ enum WorkEntryLineKind {
   FUEL // kütus (l)
   MATERIAL // kulumaterjal
   HARVEST // saak (t) — tulu
+  OBSERVATION // seire leid (ei osale finantsis)
 }
 
 enum FinanceStatus {
   PENDING // ootab finantsjuhti
   CONFIRMED // kinnitatud
   CHANGED // kogust muudeti pärast kinnitamist — kinnita uuesti
+}
+
+enum WorkSource {
+  MANUAL // Terises loodud (käsitsi või mallist)
+  PRIA_IMPORT // PRIA põlluraamatu väljavõtte impordist
 }
 
 enum MaterialCategory {
@@ -705,6 +712,7 @@ model WorkType {
   maxRepeats    Int?
   intervalDays  Int?
   usesMaterials Boolean        @default(false) // kandes küsitakse kulumaterjale
+  priaCode      String? // PRIA e-põlluraamatu tegevus, nt "Taimekaitsevahendi kasutamine"
   sortOrder     Int            @default(0)
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())
@@ -716,6 +724,7 @@ model WorkType {
   fieldWorks    FieldWork[]
 
   @@unique([tenantId, name])
+  @@unique([tenantId, priaCode])
   @@index([tenantId])
   @@map("work_types")
 }
@@ -734,8 +743,9 @@ model Material {
   createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  cropVariety CropVariety?    @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
-  entryLines  WorkEntryLine[]
+  cropVariety    CropVariety?    @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
+  entryLines     WorkEntryLine[]
+  fieldWorkLines FieldWorkLine[]
 
   @@unique([tenantId, category, name])
   @@index([cropVarietyId])
@@ -795,6 +805,12 @@ model FieldWork {
   finishedById  String?
   fromTemplate  Boolean         @default(false)
   notes         String?
+  plannedDateFrom DateTime? // planeeritud algus (PRIA "Kuupäev")
+  plannedDateTo   DateTime? // planeeritud lõpp; tühi = üks päev
+  plannedAreaHa   Float? // planeeritud pindala; tühi = põllu pindala
+  method          String? // väetamisviis jms: "Paisklaotamine", "Pritsimine"
+  plannedWorkerId String? // planeeritud teostaja (taimekaitse)
+  source          WorkSource @default(MANUAL)
   createdAt     DateTime        @default(now())
   updatedAt     DateTime        @updatedAt
   createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
@@ -804,11 +820,42 @@ model FieldWork {
   workType    WorkType    @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
   finishedBy  User?       @relation("FieldWorkFinishedBy", fields: [finishedById], references: [id], onDelete: SetNull)
   entries     WorkEntry[]
+  plannedWorker RelatedParty?   @relation("FieldWorkPlannedWorker", fields: [plannedWorkerId], references: [id], onDelete: SetNull)
+  lines         FieldWorkLine[]
 
-  @@unique([fieldSeasonId, workTypeId])
+  @@index([fieldSeasonId, workTypeId]) // sama tüüpi töid võib põllul olla mitu
+  @@index([plannedWorkerId])
   @@index([workTypeId])
   @@index([tenantId])
   @@map("field_works")
+}
+
+// Töö plaani rida: planeeritud materjal (norm ha kohta) või saak
+model FieldWorkLine {
+  id               String            @id @default(cuid())
+  tenantId         String            @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  fieldWorkId      String
+  kind             WorkEntryLineKind // MATERIAL | HARVEST
+  materialId       String?
+  label            String
+  ratePerHa        Float? // kogus ha kohta
+  unit             String // kg, l, t, g, tk
+  priaRegister     String? // "Väetis registrist", "Eesti sordiregister", "Märgaja/kleepaine", ...
+  priaKind         String? // "Herbitsiid", "NPK väetis", "Suvinisu"; saagil saagi tüüp ("Terad")
+  priaSpec         String? // seemne kategooria ("C1"); saagil kultuuri tüüp ("Põhikultuur")
+  activeIngredient String? // toimeaine
+  nKgHa            Float?
+  pKgHa            Float?
+  kKgHa            Float?
+  sortOrder        Int               @default(0)
+
+  fieldWork FieldWork @relation(fields: [fieldWorkId], references: [id], onDelete: Cascade)
+  material  Material? @relation(fields: [materialId], references: [id], onDelete: Restrict)
+
+  @@index([fieldWorkId])
+  @@index([materialId])
+  @@index([tenantId])
+  @@map("field_work_lines")
 }
 
 // Kanne = üks tööpäev/tööosa; töötaja sisestab ainult kogused
@@ -829,6 +876,9 @@ model WorkEntry {
   startTime            String? // alguskellaaeg (nt "08:00")
   endTime              String? // lõpukellaaeg (nt "16:30")
   notes                String?
+  dateTo               DateTime? // vahemiku lõpp (PRIA "27.04.2026 - 30.04.2026"); tühi = üks päev
+  method               String? // tegelik viis (väetamisviis jms)
+  source               WorkSource    @default(MANUAL)
   createdById          String?
   financeStatus        FinanceStatus @default(PENDING)
   financeConfirmedAt   DateTime?
@@ -868,6 +918,14 @@ model WorkEntryLine {
   unit              String
   unitPrice         Decimal?          @db.Decimal(12, 4)
   confirmedQuantity Float? // kogus viimasel kinnitamisel (muudatuse näitamiseks)
+  ratePerHa         Float? // kogus ha kohta
+  priaRegister      String? // vt FieldWorkLine; seirel seire liik ("Umbrohud")
+  priaKind          String?
+  priaSpec          String?
+  activeIngredient  String?
+  nKgHa             Float?
+  pKgHa             Float?
+  kKgHa             Float?
   sortOrder         Int               @default(0)
 
   entry     WorkEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
@@ -1141,6 +1199,7 @@ model CatalogWorkType {
   maxRepeats    Int?
   intervalDays  Int?
   usesMaterials Boolean        @default(false)
+  priaCode      String?        @unique // PRIA e-põlluraamatu tegevus
   sortOrder     Int            @default(0)
   isActive      Boolean        @default(true)
 
