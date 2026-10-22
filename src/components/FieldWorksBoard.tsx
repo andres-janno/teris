@@ -112,11 +112,12 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
       <span className="fw-card-title">
         <StatusIcon status={work.status} />
         <span title={work.priaName}>{work.workTypeName}</span>
-        {work.method && <small style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{work.method}</small>}
         {donePct !== null && (
           <span className="fw-card-pct" title={`${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha tehtud`}>{donePct}%</span>
         )}
       </span>
+      {/* Viis (nt väetamisviis) eraldi real, et pealkiri ei läheks kaardist laiemaks */}
+      {work.method && <span className="fw-card-method">{work.method}</span>}
       {n > 0 ? (
         <span className="fw-card-entries">
           {sortedEntries.map((e) => {

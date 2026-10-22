@@ -8473,6 +8473,11 @@ a.history-pill:hover {
   font-weight: 700;
 }
 
+.fw-card-method {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
 .fw-card-pct {
   margin-left: 2px;
   padding: 0 5px;
