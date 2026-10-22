@@ -12,10 +12,10 @@ export interface HelpSpot {
 }
 
 export const HELP_SPOTS = {
-  'fields.register.export-csv': { area: 'Põllud', label: 'CSV eksport', where: 'Põldude register → tööriistariba' },
-  'fields.register.import-soil-samples': { area: 'Põllud', label: 'Impordi mullaproovid', where: 'Põldude register → tööriistariba' },
-  'fields.register.import-field-book': { area: 'Põllud', label: 'Impordi põlluraamat', where: 'Põldude register → tööriistariba' },
-  'fields.register.import-pria-zip': { area: 'Põllud', label: 'Impordi PRIA ZIP', where: 'Põldude register → tööriistariba' }
+  'fields.register.export-csv': { area: 'Külvikord', label: 'CSV eksport', where: 'Külvikord → tööriistariba' },
+  'fields.register.import-soil-samples': { area: 'Külvikord', label: 'Impordi mullaproovid', where: 'Külvikord → tööriistariba' },
+  'fields.register.import-field-book': { area: 'Külvikord', label: 'Impordi põlluraamat', where: 'Külvikord → tööriistariba' },
+  'fields.register.import-pria-zip': { area: 'Külvikord', label: 'Impordi PRIA ZIP', where: 'Külvikord → tööriistariba' }
 } as const satisfies Record<string, HelpSpot>;
 
 export type HelpKey = keyof typeof HELP_SPOTS;

@@ -57,6 +57,7 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 }
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
+const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
 const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
 const FieldUploadModal = lazy(() => import('./components/FieldUploadModal').then((m) => ({ default: m.FieldUploadModal })));
 const SoilSampleUploadModal = lazy(() => import('./components/SoilSampleUploadModal').then((m) => ({ default: m.SoilSampleUploadModal })));
@@ -1584,6 +1585,18 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       {mainView === 'fields' && (
         <Suspense fallback={null}>
+          <FieldsTableView
+            masterFields={operatorMasterFields}
+            selectedYear={selectedYear}
+            onSelectYear={setSelectedYear}
+            seasons={seasons}
+            onOpenFieldDetails={setRegisterDetailFieldId}
+          />
+        </Suspense>
+      )}
+
+      {mainView === 'rotation' && (
+        <Suspense fallback={null}>
           <FieldManagerModal
             isOpen={true}
             isFullPage={true}
@@ -1956,7 +1969,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           masterFields={masterFields}
           vehicles={vehicles}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'fields'}
+          stacked={isFieldsRegisterOpen || mainView === 'rotation'}
         />
       </DeferredMount>
 
@@ -1973,7 +1986,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onDeleteCrop={handleDeleteCrop}
           masterFields={operatorMasterFields}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'fields'}
+          stacked={isFieldsRegisterOpen || mainView === 'rotation'}
         />
       </DeferredMount>
 

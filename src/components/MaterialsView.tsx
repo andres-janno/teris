@@ -82,7 +82,7 @@ export const MaterialsView: React.FC = () => {
           <div className="fullpage-title-wrap">
             <Package className="text-emerald" size={26} />
             <div>
-              <h2>Materjalid</h2>
+              <h2>Kulumaterjalid</h2>
               <p className="fullpage-subtitle">Kulumaterjalide register: seemned, väetised, taimekaitsevahendid ja muu, mida kannetes kasutatakse</p>
             </div>
           </div>

@@ -140,3 +140,19 @@ export function generateFieldCollectionForYear(masterFields: MasterField[], sele
   };
 }
 
+/**
+ * Põldude järjestus PRIA põllu numbri järgi (numbriliselt), numbrita põllud lõpus nime järgi
+ */
+export function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?: string | null; name: string }): number {
+  const numA = (a.num ?? '').trim();
+  const numB = (b.num ?? '').trim();
+  if (numA && numB) {
+    const cmp = numA.localeCompare(numB, 'et', { numeric: true, sensitivity: 'base' });
+    if (cmp !== 0) return cmp;
+  } else if (numA && !numB) {
+    return -1;
+  } else if (!numA && numB) {
+    return 1;
+  }
+  return a.name.localeCompare(b.name, 'et');
+}

@@ -16,9 +16,11 @@ import {
   Landmark,
   Compass,
   ExternalLink,
-  Info
+  Info,
+  Repeat
 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
+import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import { isCropUndetermined, seasonSelectorYears } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
@@ -193,20 +195,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 function cropSummaryKey(cropText: string): string {
   if (isCropUndetermined(cropText)) return 'Määramata';
   return cropText.split('(')[0].trim() || 'Määramata';
-}
-
-function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?: string | null; name: string }): number {
-  const numA = (a.num ?? '').trim();
-  const numB = (b.num ?? '').trim();
-  if (numA && numB) {
-    const cmp = numA.localeCompare(numB, 'et', { numeric: true, sensitivity: 'base' });
-    if (cmp !== 0) return cmp;
-  } else if (numA && !numB) {
-    return -1;
-  } else if (!numA && numB) {
-    return 1;
-  }
-  return a.name.localeCompare(b.name, 'et');
 }
 
   // Tabeli aastaveerud: valitud hooaeg −2 … +2 (alati 5 veergu), vanemad vasakul.
@@ -1495,10 +1483,10 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
         <main className="fullpage-board-main wide">
           <div className="fullpage-board-header">
             <div className="fullpage-title-wrap">
-              <Layers className="text-emerald" size={26} />
+              <Repeat className="text-emerald" size={26} />
               <div>
-                <h2>Põllud</h2>
-                <p className="fullpage-subtitle">Põldude register, aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
+                <h2>Külvikord</h2>
+                <p className="fullpage-subtitle">Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
               </div>
             </div>
           </div>

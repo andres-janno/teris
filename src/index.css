@@ -4217,6 +4217,78 @@ input[type="number"],
   margin-top: 2px;
 }
 
+/* Põldude üldandmete tabel (Põllud vaade) */
+.fields-table .sticky-name {
+  width: 240px;
+  min-width: 240px;
+  max-width: 240px;
+  box-shadow: inset -1px 0 0 var(--border-card);
+}
+
+.fields-table .wrap-cell {
+  white-space: normal;
+  min-width: 140px;
+  max-width: 220px;
+}
+
+.fields-table .cell-sub-inline {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+}
+
+.fields-table-crop {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.fields-table-crop::before {
+  content: '';
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  background: var(--crop-color, var(--text-muted));
+  flex-shrink: 0;
+}
+
+.tenure-badge {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  background: var(--stat-bg);
+  color: var(--text-secondary);
+}
+
+.tenure-badge.owned {
+  background: color-mix(in srgb, var(--emerald-500) 14%, transparent);
+  color: var(--emerald-500);
+}
+
+.tenure-badge.rented {
+  background: color-mix(in srgb, var(--blue-500) 14%, transparent);
+  color: var(--blue-500);
+}
+
+.tenure-badge.mixed {
+  background: color-mix(in srgb, var(--amber-500) 14%, transparent);
+  color: var(--amber-500);
+}
+
+.fields-table tfoot td {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  background: linear-gradient(var(--stat-bg), var(--stat-bg)), var(--bg-modal);
+  border-top: 1px solid var(--border-card);
+  border-bottom: none;
+}
+
+.fields-table tfoot td.sticky-name {
+  z-index: 3;
+}
+
 .register-table th.year-col {
   cursor: pointer;
   text-align: left;

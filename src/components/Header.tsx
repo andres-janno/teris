@@ -8,7 +8,8 @@ import {
   Map as MapIcon,
   SquareKanban,
   Users,
-  Package
+  Package,
+  Repeat
 } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
@@ -17,7 +18,7 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'works', 'fleet', 'infrastructure', 'parties', 'materials'] as const;
+export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'materials'] as const;
 export type MainView = typeof MAIN_VIEWS[number];
 
 interface HeaderProps {
@@ -114,12 +115,12 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               type="button"
-              className={mainView === 'materials' ? 'active' : ''}
-              aria-current={mainView === 'materials' ? 'page' : undefined}
-              onClick={() => onChangeMainView('materials')}
+              className={mainView === 'rotation' ? 'active' : ''}
+              aria-current={mainView === 'rotation' ? 'page' : undefined}
+              onClick={() => onChangeMainView('rotation')}
             >
-              <Package size={15} />
-              <span>Materjalid</span>
+              <Repeat size={15} />
+              <span>Külvikord</span>
             </button>
             <button
               type="button"
@@ -129,6 +130,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <SquareKanban size={15} />
               <span>Põllutööd</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'materials' ? 'active' : ''}
+              aria-current={mainView === 'materials' ? 'page' : undefined}
+              onClick={() => onChangeMainView('materials')}
+            >
+              <Package size={15} />
+              <span>Kulumaterjalid</span>
             </button>
             <button
               type="button"
