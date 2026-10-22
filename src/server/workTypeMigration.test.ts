@@ -20,4 +20,8 @@ describe('splitRepeatedWork', () => {
     expect(splitRepeatedWork({ plannedCount: 1, entries: [{ id: 'a', occurrenceNo: 1 }, { id: 'b', occurrenceNo: 2 }] }))
       .toEqual([{ entryIds: ['a'] }, { entryIds: ['b'] }]);
   });
+  it('occurrenceNo 0 käitub nagu puuduv number', () => {
+    expect(splitRepeatedWork({ plannedCount: 1, entries: [{ id: 'a', occurrenceNo: 0 }] }))
+      .toEqual([{ entryIds: ['a'] }]);
+  });
 });

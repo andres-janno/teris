@@ -35,7 +35,7 @@ async function migrateTenant(tx: Prisma.TransactionClient, tenantId: string) {
     const works = await tx.fieldWork.findMany({ where: { workTypeId: old.id }, include: { entries: { select: { id: true, occurrenceNo: true } } } });
     for (const w of works) {
       const method = old.name === 'Leheväetamine' ? 'Pritsimine' : w.method;
-      await tx.fieldWork.update({ where: { id: w.id }, data: { workTypeId: targetId, phase: w.phase, method, plannedCount: 1 } });
+      await tx.fieldWork.update({ where: { id: w.id }, data: { workTypeId: targetId, phase: w.phase, method } });
       stats.worksMoved++;
     }
     const items = await tx.workTemplateItem.findMany({ where: { workTypeId: old.id } });
