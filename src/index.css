@@ -1725,6 +1725,17 @@ body {
   border-left: 1px solid var(--border-card);
 }
 
+/* Põllu üldandmete paneel (FieldOverviewPanel) — sama vahedega veerg nagu .field-detail-col */
+.field-overview {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.field-overview>.detail-section {
+  margin-top: 0;
+}
+
 .field-detail-footer {
   padding: 12px 22px;
   border-top: 1px solid var(--border-card);
