@@ -20,6 +20,7 @@ import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
 import type { RelatedParty } from './types/party';
+import type { FieldWork, WorkEntry, WorkType, Material } from './types/fieldWork';
 import type { Crop } from './types/crop';
 import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
@@ -57,6 +58,8 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
 const FieldFullView = lazy(() => import('./components/FieldFullView').then((m) => ({ default: m.FieldFullView })));
+const FieldWorkPlanDialog = lazy(() => import('./components/FieldWorkPlanDialog').then((m) => ({ default: m.FieldWorkPlanDialog })));
+const FieldWorkEntryDialog = lazy(() => import('./components/FieldWorkEntryDialog').then((m) => ({ default: m.FieldWorkEntryDialog })));
 const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
 const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
 const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
@@ -979,6 +982,32 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     [masterFields, editFieldId]
   );
   const closeEditField = React.useCallback(() => setEditFieldId(null), []);
+  // Täisvaatest avatud töö (plaani) ja kande dialoogid; salvestamisel laeb täisvaade tööd uuesti
+  const [planDialog, setPlanDialog] = useState<{ fieldSeasonId: number; fieldLabel: string; fieldAreaHa: number; work: FieldWork | null } | null>(null);
+  const [entryDialog, setEntryDialog] = useState<{ fieldLabel: string; fieldAreaHa: number; work: FieldWork; entry: WorkEntry | null } | null>(null);
+  const [fullViewReloadKey, setFullViewReloadKey] = useState(0);
+  const [workRefs, setWorkRefs] = useState<{ workTypes: WorkType[]; materials: Material[] } | null>(null);
+  const workRefsLoading = useRef(false);
+  const ensureWorkRefs = React.useCallback(() => {
+    if (workRefs || workRefsLoading.current) return;
+    workRefsLoading.current = true;
+    Promise.all([api.getWorkTypes(), api.getMaterials()])
+      .then(([workTypes, materials]) => setWorkRefs({ workTypes, materials }))
+      .catch((err) => {
+        console.error('Tööliikide/kulumaterjalide laadimine ebaõnnestus:', err);
+        setPlanDialog(null);
+        setEntryDialog(null);
+      })
+      .finally(() => { workRefsLoading.current = false; });
+  }, [workRefs]);
+  const openPlanDialog = React.useCallback((ctx: NonNullable<typeof planDialog>) => { ensureWorkRefs(); setPlanDialog(ctx); }, [ensureWorkRefs]);
+  const openEntryDialog = React.useCallback((ctx: NonNullable<typeof entryDialog>) => { ensureWorkRefs(); setEntryDialog(ctx); }, [ensureWorkRefs]);
+  const closePlanDialog = React.useCallback(() => setPlanDialog(null), []);
+  const closeEntryDialog = React.useCallback(() => setEntryDialog(null), []);
+  const workDialogWorkers = React.useMemo(
+    () => parties.filter((p) => p.roles.includes('DRIVER')).map((p) => ({ id: p.id, name: p.name })),
+    [parties]
+  );
   const handleFocusFieldFromRegister = (field: FieldFeature) => {
     setIsFieldsRegisterOpen(false);
     changeMainView('map');
@@ -1811,10 +1840,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
               seasons={seasons}
               soilSamples={soilSamples}
               satelliteDate={visibility.satellite ? satelliteDate : null}
-              canEdit={false}
+              canEdit={true}
+              reloadKey={fullViewReloadKey}
               onClose={handleCloseFieldDetails}
               onFocusField={handleFocusField}
               onEditField={setEditFieldId}
+              onEditWork={openPlanDialog}
+              onEditEntry={openEntryDialog}
             />
           </Suspense>
         )}
@@ -1917,11 +1949,14 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             masterField={registerDetailMasterField}
             seasons={seasons}
             soilSamples={soilSamples}
-            canEdit={false}
+            canEdit={true}
+            reloadKey={fullViewReloadKey}
             elevated={isFieldsRegisterOpen}
             onClose={handleCloseRegisterFieldDetails}
             onFocusField={handleFocusFieldFromRegister}
             onEditField={setEditFieldId}
+            onEditWork={openPlanDialog}
+            onEditEntry={openEntryDialog}
           />
         </Suspense>
       )}
@@ -1939,6 +1974,48 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenCrops={() => setIsCropsModalOpen(true)}
             onUpdateField={handleUpdateMasterField}
             onClose={closeEditField}
+          />
+        </Suspense>
+      )}
+
+      {/* Töö (plaani) lisamine/muutmine täisvaatest */}
+      {planDialog && workRefs && (
+        <Suspense fallback={null}>
+          <FieldWorkPlanDialog
+            fieldSeasonId={planDialog.fieldSeasonId}
+            fieldLabel={planDialog.fieldLabel}
+            fieldAreaHa={planDialog.fieldAreaHa}
+            work={planDialog.work}
+            workTypes={workRefs.workTypes}
+            materials={workRefs.materials}
+            workers={workDialogWorkers}
+            onClose={closePlanDialog}
+            onSaved={() => {
+              setPlanDialog(null);
+              setFullViewReloadKey((k) => k + 1);
+            }}
+          />
+        </Suspense>
+      )}
+
+      {/* Kande lisamine/muutmine täisvaatest */}
+      {entryDialog && workRefs && (
+        <Suspense fallback={null}>
+          <FieldWorkEntryDialog
+            work={entryDialog.work}
+            entry={entryDialog.entry}
+            fieldLabel={entryDialog.fieldLabel}
+            fieldAreaHa={entryDialog.fieldAreaHa}
+            workers={workDialogWorkers}
+            vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
+            implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
+            materials={workRefs.materials}
+            telemetryEnabled={modules.telemetry}
+            onClose={closeEntryDialog}
+            onSaved={() => {
+              setEntryDialog(null);
+              setFullViewReloadKey((k) => k + 1);
+            }}
           />
         </Suspense>
       )}

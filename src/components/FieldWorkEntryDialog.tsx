@@ -1,12 +1,12 @@
 // src/components/FieldWorkEntryDialog.tsx — kande lisamine/muutmine: töötaja sisestab ainult kogused.
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Trash2, Info, Radio, Clock } from 'lucide-react';
+import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
-import type { FieldWork, Material, WorkEntry, TelemetrySuggestion } from '../types/fieldWork';
-import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
-import { confirmDialog } from './ConfirmDialog';
+import type { FieldWork, Material, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
+import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
+import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 interface Option {
   id: string;
@@ -69,14 +69,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   onSaved,
   telemetryEnabled = true
 }) => {
-  const isRepeating = work.repeatMode !== 'ONCE';
-  const isHarvest = work.phase === 'HARVEST';
+  const activity = work.priaCode ?? '';
+  // PRIA tegevuseta (vana) töö puhul jääb saagi tunnuseks koristusfaas
+  const isHarvest = activity ? activity === PRIA_ACTIVITY.HARVEST : work.phase === 'HARVEST';
+  const imported = entry?.source === 'PRIA_IMPORT'; // imporditud kandel pole kellaaegu ega alati töötajat
   const others = work.entries.filter((e) => e.id !== entry?.id);
   const doneBefore = others.reduce((s, e) => s + (e.areaHa ?? 0), 0);
-  const nextOccurrence = Math.max(0, ...others.map((e) => e.occurrenceNo ?? 0)) + 1;
 
-  const [date, setDate] = useState(entry?.date ?? todayIso());
-  const [workerId, setWorkerId] = useState(entry?.workerId ?? (workers.length === 1 ? workers[0].id : ''));
+  const [date, setDate] = useState(entry?.date ?? work.plannedDateFrom ?? todayIso());
+  const [dateTo, setDateTo] = useState(entry?.dateTo ?? (entry ? '' : work.plannedDateTo ?? ''));
+  const [method, setMethod] = useState(entry?.method ?? work.method ?? '');
+  const [workerId, setWorkerId] = useState(entry?.workerId ?? (entry ? '' : work.plannedWorkerId ?? (workers.length === 1 ? workers[0].id : '')));
   const [startTime, setStartTime] = useState(entry?.startTime ?? '');
   const [endTime, setEndTime] = useState(entry?.endTime ?? '');
   const [laborHours, setLaborHours] = useState(fmt(entry?.laborHours));
@@ -131,17 +134,29 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [implementId, setImplementId] = useState(entry?.implementId ?? '');
   const [equipmentHours, setEquipmentHours] = useState(fmt(entry?.equipmentHours));
   const [fuelLiters, setFuelLiters] = useState(fmt(entry?.fuelLiters, 1));
-  const [areaHa, setAreaHa] = useState(fmt(entry?.areaHa));
+  const [areaHa, setAreaHa] = useState(fmt(entry ? entry.areaHa : work.plannedAreaHa ?? null));
   const [telemetryAreaHa, setTelemetryAreaHa] = useState(fmt(entry?.telemetryAreaHa));
-  const [occurrenceNo, setOccurrenceNo] = useState(String(entry?.occurrenceNo ?? (isRepeating ? nextOccurrence : '')));
-  const [harvestTonnes, setHarvestTonnes] = useState(fmt(entry?.harvestTonnes, 3));
   const [notes, setNotes] = useState(entry?.notes ?? '');
-  const initialTotal = doneBefore + (parseNum(fmt(entry?.areaHa)) ?? 0);
-  const initial100 = !isRepeating && fieldAreaHa > 0 && initialTotal >= fieldAreaHa - 0.01;
+  const initialTotal = doneBefore + (parseNum(fmt(entry ? entry.areaHa : work.plannedAreaHa ?? null)) ?? 0);
+  const initial100 = fieldAreaHa > 0 && initialTotal >= fieldAreaHa - 0.01;
   const [finish, setFinish] = useState(initial100);
-  const [rows, setRows] = useState<{ materialId: string; quantity: string }[]>(
-    entry?.materials.map((m) => ({ materialId: m.materialId, quantity: fmt(m.quantity, 3) })) ?? []
+  // Materjalid: olemasolevast kandest või uue kande puhul töö plaanist (norm ha kohta → kogus kokku)
+  const [rows, setRows] = useState<PriaRow[]>(() =>
+    entry
+      ? entry.materials.map((m) => planLineToRow(m, entry.areaHa ?? fieldAreaHa))
+      : work.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, work.plannedAreaHa ?? fieldAreaHa))
   );
+  const [harvest, setHarvest] = useState<HarvestRow>(() => {
+    if (entry) {
+      const tonnes = entry.harvest?.tonnes ?? entry.harvestTonnes;
+      return { ratePerHa: fmt(entry.harvest?.ratePerHa, 3), total: fmt(tonnes, 3), priaKind: entry.harvest?.priaKind ?? '', priaSpec: entry.harvest?.priaSpec ?? '' };
+    }
+    const plan = work.lines.find((l) => l.kind === 'HARVEST');
+    const area = work.plannedAreaHa ?? fieldAreaHa;
+    const total = plan?.ratePerHa != null && area > 0 ? Math.round(plan.ratePerHa * area * 1000) / 1000 : null;
+    return { ratePerHa: fmt(plan?.ratePerHa, 3), total: fmt(total, 3), priaKind: plan?.priaKind ?? '', priaSpec: plan?.priaSpec ?? '' };
+  });
+  const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -211,13 +226,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   const workerOptions = useMemo(() => {
     const list = [...workers];
+    // Kande töötaja, keda pole loendis (nt PRIA impordist), jääb valikusse
+    if (entry?.workerId && entry.workerName && !list.some((w) => w.id === entry.workerId)) {
+      list.push({ id: entry.workerId, name: entry.workerName });
+    }
     for (const s of telemetrySuggestions) {
       if (s.workerId && s.workerName && !list.some((w) => w.id === s.workerId)) {
         list.push({ id: s.workerId, name: s.workerName });
       }
     }
     return list;
-  }, [workers, telemetrySuggestions]);
+  }, [workers, telemetrySuggestions, entry?.workerId, entry?.workerName]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -230,21 +249,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     return () => document.removeEventListener('keydown', onKey, true);
   }, [onClose]);
 
-  const activeMaterials = useMemo(() => materials.filter((m) => m.isActive || rows.some((r) => r.materialId === m.id)), [materials, rows]);
-  const materialById = useMemo(() => new Map(materials.map((m) => [m.id, m])), [materials]);
   const areaNum = parseNum(areaHa) ?? 0;
   const totalAfter = doneBefore + areaNum;
-
-  const removeRow = async (i: number) => {
-    const m = materialById.get(rows[i].materialId);
-    if (m && !await confirmDialog(`Kas soovid kindlasti eemaldada rea "${m.name}"?`)) return;
-    setRows(rows.filter((_, j) => j !== i));
-  };
 
   // Tehtud pindala muutmine (käsitsi või telemeetriast): kogu põllu täitumisel märgitakse töö lõpetatuks
   const changeArea = (val: string) => {
     setAreaHa(val);
-    if (!isRepeating && fieldAreaHa > 0) {
+    if (fieldAreaHa > 0) {
       setFinish(doneBefore + (parseNum(val) ?? 0) >= fieldAreaHa - 0.01);
     }
   };
@@ -266,18 +277,24 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     e.preventDefault();
     setError(null);
     if (!date) return setError('Kuupäev on kohustuslik');
-    if (!workerId) return setError('Vali töötaja');
-    if (!startTime || !endTime) return setError('Vali algus- ja lõpukellaaeg');
+    if (dateTo && dateTo < date) return setError('Lõpu kuupäev ei saa olla enne algust');
+    if (activity === PRIA_ACTIVITY.PLANT_PROTECTION && !workerId) return setError('Taimekaitsetöö teostaja on kohustuslik');
+    if (!workerId && !imported) return setError('Vali töötaja');
+    if ((!startTime || !endTime) && !imported) return setError('Vali algus- ja lõpukellaaeg');
     if (equipmentHours.trim() && !vehicleId && !implementId) return setError('Vali masin ja/või haakeriist, mille töötunnid sisestasid');
-    if (timeToMinutes(endTime) <= timeToMinutes(startTime)) {
+    if (startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
       return setError('Lõpukellaaeg peab olema alguse omast suurem');
     }
+    // Kandel peab materjal olema Kulumaterjalide registris (plaanis on vabatekst lubatud)
+    if (rows.some((r) => !r.materialId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
     setBusy(true);
     try {
       await api.saveWorkEntry(
         {
           fieldWorkId: work.id,
           date,
+          dateTo: dateTo || null,
+          method: method || null,
           workerId: workerId || null,
           laborHours: parseNum(laborHours),
           startTime: startTime || null,
@@ -288,11 +305,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           fuelLiters: parseNum(fuelLiters),
           areaHa: parseNum(areaHa),
           telemetryAreaHa: parseNum(telemetryAreaHa),
-          occurrenceNo: isRepeating ? parseNum(occurrenceNo) : null,
           materials: rows
-            .map((r) => ({ materialId: r.materialId, quantity: parseNum(r.quantity) ?? 0 }))
+            .map((r) => ({ materialId: r.materialId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
             .filter((r) => r.materialId && r.quantity > 0),
-          harvestTonnes: isHarvest ? parseNum(harvestTonnes) : null,
+          harvest: isHarvest && parseNum(harvest.total) != null
+            ? { tonnes: parseNum(harvest.total)!, ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
+            : null,
+          harvestTonnes: null,
+          observations: observations.filter((o) => o.label.trim()),
           notes: notes.trim() || null,
           finish
         },
@@ -320,13 +340,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
         </div>
 
         <div className="modal-body work-entry-body">
-          {(others.length > 0 || !isRepeating) && (
+          {(others.length > 0 || fieldAreaHa > 0) && (
             <div className="work-entry-progress">
               <div className="work-entry-progress-head">
                 <strong>Varasemad kanded: {others.length}</strong>
-                {!isRepeating && fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
+                {fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
               </div>
-              {!isRepeating && fieldAreaHa > 0 && (
+              {fieldAreaHa > 0 && (
                 <div className="work-progress-bar"><div style={{ width: `${Math.min(100, (doneBefore / fieldAreaHa) * 100)}%` }} /></div>
               )}
             </div>
@@ -398,21 +418,35 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
           <div className="work-entry-grid work-entry-top-grid">
             <div className="form-group">
-              <label>Kuupäev *</label>
-              <DateInput value={date} onChange={setDate} className="form-input" />
+              <label htmlFor="we-date">Kuupäev *</label>
+              <DateInput id="we-date" value={date} onChange={setDate} className="form-input" />
             </div>
             <div className="form-group">
-              <label htmlFor="we-worker">Töötaja *</label>
-              <select id="we-worker" className="form-input" required value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
+              <label htmlFor="we-date-to">Lõpp (kui mitu päeva)</label>
+              <DateInput id="we-date-to" value={dateTo} onChange={setDateTo} className="form-input" />
+            </div>
+            {activity === PRIA_ACTIVITY.FERTILIZING && (
+              <div className="form-group">
+                <label htmlFor="we-method">Väetamisviis</label>
+                <select id="we-method" className="form-input" value={method} onChange={(e) => setMethod(e.target.value)}>
+                  <option value="">– vali –</option>
+                  {FERTILIZING_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
+                  {method && !(FERTILIZING_METHODS as readonly string[]).includes(method) && <option value={method}>{method}</option>}
+                </select>
+              </div>
+            )}
+            <div className="form-group">
+              <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
+              <select id="we-worker" className="form-input" required={!imported} value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
                 <option value="">– valimata –</option>
                 {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="we-start-time">Algus *</label>
+              <label htmlFor="we-start-time">Algus{imported ? '' : ' *'}</label>
               <select
                 id="we-start-time"
-                required
+                required={!imported}
                 className="form-input time-select"
                 value={startTime}
                 onChange={(e) => handleStartTimeChange(e.target.value)}
@@ -424,10 +458,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </select>
             </div>
             <div className="form-group">
-              <label htmlFor="we-end-time">Lõpp *</label>
+              <label htmlFor="we-end-time">Lõpp{imported ? '' : ' *'}</label>
               <select
                 id="we-end-time"
-                required
+                required={!imported}
                 className="form-input time-select"
                 value={endTime}
                 onChange={(e) => handleEndTimeChange(e.target.value)}
@@ -483,42 +517,22 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
           {(work.usesMaterials || rows.length > 0) && (
             <section className="work-entry-section">
-              <h4>Kulumaterjalid</h4>
-              {rows.map((r, i) => (
-                <div key={i} className="work-entry-material-row">
-                  <select
-                    className="form-input"
-                    aria-label="Materjal"
-                    value={r.materialId}
-                    onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, materialId: e.target.value } : x)))}
-                  >
-                    <option value="">– vali materjal –</option>
-                    {activeMaterials.map((m) => (
-                      <option key={m.id} value={m.id}>{MATERIAL_CATEGORY_LABEL[m.category]}: {m.name}</option>
-                    ))}
-                  </select>
-                  <input
-                    className="form-input num"
-                    aria-label="Kogus"
-                    inputMode="decimal"
-                    placeholder="Kogus"
-                    value={r.quantity}
-                    onChange={(e) => setRows(rows.map((x, j) => (j === i ? { ...x, quantity: e.target.value } : x)))}
-                  />
-                  <span className="work-entry-unit">{materialById.get(r.materialId)?.unit ?? ''}</span>
-                  <button type="button" className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => removeRow(i)}>
-                    <Trash2 size={14} />
-                  </button>
-                </div>
-              ))}
-              {activeMaterials.length === 0 ? (
-                <p className="work-entry-hint">Kulumaterjalide register on tühi. Lisa materjalid tööde registris.</p>
-              ) : (
-                <button type="button" className="btn btn-ghost btn-sm work-entry-add" onClick={() => setRows([...rows, { materialId: '', quantity: '' }])}>
-                  <Plus size={13} />
-                  <span>Lisa materjal</span>
-                </button>
-              )}
+              <h4>Materjalid</h4>
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+            </section>
+          )}
+
+          {isHarvest && (
+            <section className="work-entry-section">
+              <h4>Saak</h4>
+              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+            </section>
+          )}
+
+          {activity === PRIA_ACTIVITY.MONITORING && (
+            <section className="work-entry-section">
+              <h4>Seire leiud</h4>
+              <ObservationsEditor rows={observations} onChange={setObservations} />
             </section>
           )}
 
@@ -557,19 +571,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   }
                 />
               </div>
-              {isRepeating && (
-                <div className="form-group">
-                  <label htmlFor="we-occ">Mitmes kord</label>
-                  <input id="we-occ" className="form-input num" inputMode="numeric" value={occurrenceNo} onChange={(e) => setOccurrenceNo(e.target.value)} />
-                </div>
-              )}
-              {isHarvest && (
-                <div className="form-group">
-                  <label htmlFor="we-harvest">Saak, t</label>
-                  <input id="we-harvest" className="form-input num" inputMode="decimal" value={harvestTonnes} onChange={(e) => setHarvestTonnes(e.target.value)} />
-                </div>
-              )}
-              {!isRepeating && fieldAreaHa > 0 && (
+              {fieldAreaHa > 0 && (
                 <p className="work-entry-hint align-end">Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
               )}
             </div>

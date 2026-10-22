@@ -10551,7 +10551,7 @@ select.time-select {
 }
 
 /* Põllu täisvaade (FieldFullView) — päise (.app-header) all kogu ekraanil */
-.field-full-view { position: fixed; inset: 64px 0 0 0; z-index: 900; background: var(--bg-modal); color: var(--text-primary); display: flex; flex-direction: column; overflow: hidden; }
+.field-full-view { position: fixed; inset: 64px 0 0 0; z-index: 950; /* kaardi nurgapaneelide (900) kohal, päise (1000) all */ background: var(--bg-modal); color: var(--text-primary); display: flex; flex-direction: column; overflow: hidden; }
 /* Põlluregistri modaali (.modal-backdrop 2000) peal; alammodaalid (.sub-modal 2500) jäävad selle peale. Tavaliselt 900, et päise rippmenüüd jääksid peale. */
 .field-full-view.elevated { z-index: 2100; }
 .ffv-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border-card); }
@@ -10598,3 +10598,9 @@ select.time-select {
   .ffv-right { order: 1; overflow: visible; }
   .ffv-header { flex-wrap: wrap; padding: 10px 16px; }
 }
+
+/* PRIA materjali-, saagi- ja seireread töö plaani ja kande vormis */
+.pria-lines { display: flex; flex-direction: column; gap: 6px; }
+.pria-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.pria-line .form-input { flex: 1 1 140px; min-width: 0; }
+.pria-line .form-input.num { flex: 0 1 90px; }
