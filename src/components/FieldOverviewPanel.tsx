@@ -12,12 +12,34 @@ import {
   Compass,
   Layers
 } from 'lucide-react';
+import type { Polygon, MultiPolygon } from 'geojson';
 import type { FieldFeature } from '../types/field';
 import type { FieldCadastralLink } from '../types/cadastre';
 import type { SoilSample } from '../types/soilSample';
 import { getGeometryCoordinatesList, getGeometryPerimeterMeters } from '../services/geometryEngine';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { FieldNdviSection } from './FieldNdviSection';
+
+// Väike põllu piirikaart: polügoon normaliseeritud kasti viewBox 0 0 100 100 (laiuskraadi järgi korrigeeritud)
+const FieldOutline: React.FC<{ geometry: Polygon | MultiPolygon; color?: string }> = ({ geometry, color = '#22c55e' }) => {
+  const polygons = geometry.type === 'Polygon' ? [geometry.coordinates] : geometry.coordinates;
+  const pts = polygons.flat(2);
+  if (pts.length < 3) return null;
+  const lats = pts.map((p) => p[1]);
+  const midLat = (Math.min(...lats) + Math.max(...lats)) / 2;
+  const kx = Math.cos((midLat * Math.PI) / 180);
+  const xs = pts.map((p) => p[0] * kx);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...lats), maxY = Math.max(...lats);
+  const size = Math.max(maxX - minX, maxY - minY) || 1;
+  const offX = (size - (maxX - minX)) / 2, offY = (size - (maxY - minY)) / 2;
+  const toPt = (p: number[]) => `${(4 + ((p[0] * kx - minX + offX) / size) * 92).toFixed(2)},${(4 + ((maxY - p[1] + offY) / size) * 92).toFixed(2)}`;
+  const d = polygons.map((poly) => poly.map((ring) => `M${ring.map(toPt).join('L')}Z`).join('')).join('');
+  return (
+    <svg className="field-outline" viewBox="0 0 100 100" role="img" aria-label="Põllu piirid">
+      <path d={d} fill={color} fillOpacity={0.25} stroke={color} strokeWidth={1.5} fillRule="evenodd" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+};
 
 interface FieldOverviewPanelProps {
   shown: FieldFeature;
@@ -42,6 +64,8 @@ export const FieldOverviewPanel: React.FC<FieldOverviewPanelProps> = ({ shown, s
 
   return (
     <div className="field-overview">
+      <FieldOutline geometry={shown.geometry} color={props.cropColor || '#22c55e'} />
+
       {/* Main stats card */}
       <div className="field-stats-grid">
         <div className="field-stat-item">

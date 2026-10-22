@@ -4,7 +4,6 @@ import { Header, MAIN_VIEWS, type MainView } from './components/Header';
 import { MapView } from './components/MapView';
 import { LayerControl } from './components/LayerControl';
 import { CultivationControl } from './components/CultivationControl';
-import { FieldDetailsDrawer } from './components/FieldDetailsDrawer';
 import { VehicleTracker } from './components/VehicleTracker';
 import { MapYearSelector } from './components/MapYearSelector';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
@@ -57,6 +56,10 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 }
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
+// Tühi sulgemine (kui põllu täisvaate peal on muutmisdialoog avatud)
+const noop = () => {};
+const FieldFullView = lazy(() => import('./components/FieldFullView').then((m) => ({ default: m.FieldFullView })));
+const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
 const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
 const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
 const FieldUploadModal = lazy(() => import('./components/FieldUploadModal').then((m) => ({ default: m.FieldUploadModal })));
@@ -971,6 +974,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     [masterFields, registerDetailFieldId]
   );
   const handleCloseRegisterFieldDetails = React.useCallback(() => setRegisterDetailFieldId(null), []);
+  // Täisvaatest avatud põllu muutmise dialoog; lahtioleku ajal täisvaade Esc-ile ei sulgu
+  const [editFieldId, setEditFieldId] = useState<number | null>(null);
+  const editFieldMaster = React.useMemo(
+    () => (editFieldId === null ? null : masterFields.find((f) => String(f.id) === String(editFieldId)) ?? null),
+    [masterFields, editFieldId]
+  );
+  const closeEditField = React.useCallback(() => setEditFieldId(null), []);
   const handleFocusFieldFromRegister = (field: FieldFeature) => {
     setIsFieldsRegisterOpen(false);
     changeMainView('map');
@@ -1796,15 +1806,19 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
         {/* Valitud põllu info keskmises aknas */}
         {selectedField && (
-          <FieldDetailsDrawer
-            field={selectedField}
-            masterField={masterFields.find((f) => String(f.id) === String(selectedField.properties.id)) ?? null}
-            seasons={seasons}
-            soilSamples={soilSamples}
-            satelliteDate={visibility.satellite ? satelliteDate : null}
-            onClose={handleCloseFieldDetails}
-            onFocusField={handleFocusField}
-          />
+          <Suspense fallback={null}>
+            <FieldFullView
+              field={selectedField}
+              masterField={masterFields.find((f) => String(f.id) === String(selectedField.properties.id)) ?? null}
+              seasons={seasons}
+              soilSamples={soilSamples}
+              satelliteDate={visibility.satellite ? satelliteDate : null}
+              canEdit={false}
+              onClose={editFieldId === null ? handleCloseFieldDetails : noop}
+              onFocusField={handleFocusField}
+              onEditField={setEditFieldId}
+            />
+          </Suspense>
         )}
 
         {/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel (MapView portaal) */}
@@ -1899,14 +1913,35 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       {/* Põllu infoaken registrist (registri peal) */}
       {registerDetailMasterField && (
-        <FieldDetailsDrawer
-          field={getFieldFeatureForYear(registerDetailMasterField, selectedYear)}
-          masterField={registerDetailMasterField}
-          seasons={seasons}
-          soilSamples={soilSamples}
-          onClose={handleCloseRegisterFieldDetails}
-          onFocusField={handleFocusFieldFromRegister}
-        />
+        <Suspense fallback={null}>
+          <FieldFullView
+            field={getFieldFeatureForYear(registerDetailMasterField, selectedYear)}
+            masterField={registerDetailMasterField}
+            seasons={seasons}
+            soilSamples={soilSamples}
+            canEdit={false}
+            onClose={editFieldId === null ? handleCloseRegisterFieldDetails : noop}
+            onFocusField={handleFocusFieldFromRegister}
+            onEditField={setEditFieldId}
+          />
+        </Suspense>
+      )}
+
+      {/* Põllu muutmine täisvaatest ("Muuda põldu") */}
+      {editFieldMaster && (
+        <Suspense fallback={null}>
+          <FieldEditDialog
+            field={editFieldMaster}
+            selectedYear={selectedYear}
+            seasons={seasons}
+            parties={parties}
+            onOpenParties={() => setIsPartiesModalOpen(true)}
+            crops={crops}
+            onOpenCrops={() => setIsCropsModalOpen(true)}
+            onUpdateField={handleUpdateMasterField}
+            onClose={closeEditField}
+          />
+        </Suspense>
       )}
 
       <DeferredMount when={isUploadOpen}>
