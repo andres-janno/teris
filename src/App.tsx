@@ -543,6 +543,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Telemetry Simulator
   const [isPlaying, setIsPlaying] = useState(false);
   const [playbackSpeed, setPlaybackSpeed] = useState(2);
+  // Uus simulaator (nt raja uuesti laadimisel) võtab üle kasutaja valitud kiiruse
+  const playbackSpeedRef = useRef(playbackSpeed);
+  playbackSpeedRef.current = playbackSpeed;
   const [progressPct, setProgressPct] = useState(75);
   const [workingWidthM, setWorkingWidthM] = useState(12);
   const [selectedStartTime, setSelectedStartTime] = useState<string>('');
@@ -679,6 +682,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       if (!isMounted) return;
       sim = new TelemetrySimulator(pass);
       simulatorRef.current = sim;
+      sim.setPlaybackSpeed(playbackSpeedRef.current);
 
       sim.setOnUpdate((updatedPass, activePos, heading, speed, isWorking) => {
         const progress = sim!.getProgress();
