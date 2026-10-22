@@ -1,11 +1,16 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
 import React, { useMemo, useState } from 'react';
-import { Layers, Calendar, Search, X, Lock, Download, Info, AlertCircle } from 'lucide-react';
+import { Layers, Calendar, Search, X, Lock, Download, Info, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FieldCadastralLink } from '../types/cadastre';
 import type { FarmingSeason } from '../types/season';
 import { isCropUndetermined, seasonSelectorYears } from '../types/season';
+import type { RelatedParty } from '../types/party';
+import type { Crop } from '../types/crop';
+import { FieldEditDialog } from './FieldEditDialog';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { HelpHint } from './HelpHint';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -14,6 +19,15 @@ interface FieldsTableViewProps {
   seasons?: FarmingSeason[];
   /** Avab põllu infoakna (sama mis kaardil põllule klikates) */
   onOpenFieldDetails?: (fieldId: number | string) => void;
+  onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
+  onDeleteField: (fieldId: number | string) => void;
+  onOpenUpload?: () => void; // puudub mitteadminil (import ainult adminile)
+  onOpenSoilUpload?: () => void;
+  onOpenFieldBookUpload?: () => void;
+  parties?: RelatedParty[];
+  onOpenParties?: () => void;
+  crops?: Crop[];
+  onOpenCrops?: () => void;
 }
 
 type TenureKind = 'owned' | 'rented' | 'mixed' | 'unknown';
@@ -68,9 +82,21 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   selectedYear,
   onSelectYear,
   seasons = [],
-  onOpenFieldDetails
+  onOpenFieldDetails,
+  onUpdateField,
+  onDeleteField,
+  onOpenUpload,
+  onOpenSoilUpload,
+  onOpenFieldBookUpload,
+  parties = [],
+  onOpenParties,
+  crops = [],
+  onOpenCrops
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
+  const editingField = editingFieldId === null ? null : masterFields.find((f) => f.id === editingFieldId) ?? null;
+  const closeEdit = React.useCallback(() => setEditingFieldId(null), []);
   const [tenureFilter, setTenureFilter] = useState<TenureFilter>('all');
 
   const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
@@ -145,6 +171,23 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
     URL.revokeObjectURL(url);
   };
 
+  // Lukustatud hooajad, milles põllul on andmeid — selliseid põlde ei kustutata
+  // (kustutamine eemaldaks ka arhiveeritud aastate kirjed).
+  const lockedYearsOf = (field: MasterField): number[] =>
+    [...new Set(field.history.map((h) => h.year))]
+      .filter((y) => seasons.some((s) => s.year === y && s.isLocked))
+      .sort((a, b) => a - b);
+
+  const handleDelete = async (field: MasterField) => {
+    const label = `${field.num ? `Nr ${field.num} ` : ''}${field.name}`;
+    const locked = lockedYearsOf(field);
+    if (locked.length > 0) {
+      alertDialog(`Põldu "${label}" ei saa kustutada: sellel on andmeid lukustatud hooaegades ${locked.join(', ')}.`);
+      return;
+    }
+    if (await confirmDialog(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
+  };
+
   const tenureFilters: TenureFilter[] = ['all', 'owned', 'rented', 'mixed', 'unknown'];
 
   return (
@@ -189,6 +232,40 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <Download size={14} />
                     <span>CSV Eksport</span>
                   </button>
+                  {onOpenSoilUpload && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={onOpenSoilUpload}
+                      title="Impordi mullaproovide punktid Shapefile ZIP-ist"
+                    >
+                      <Plus size={14} />
+                      <span>Impordi mullaproovid</span>
+                      <HelpHint helpKey="fields.register.import-soil-samples" inline />
+                    </button>
+                  )}
+
+                  {onOpenFieldBookUpload && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={onOpenFieldBookUpload}
+                      title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
+                    >
+                      <Plus size={14} />
+                      <span>Impordi põlluraamat</span>
+                      <HelpHint helpKey="fields.register.import-field-book" inline />
+                    </button>
+                  )}
+
+                  {onOpenUpload && (
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={onOpenUpload}
+                    >
+                      <Plus size={14} />
+                      <span>Impordi PRIA ZIP</span>
+                      <HelpHint helpKey="fields.register.import-pria-zip" inline />
+                    </button>
+                  )}
                 </div>
               </div>
             </div>
@@ -240,6 +317,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <th>Mullastik</th>
                     <th>Drenaaž</th>
                     <th>Operaator</th>
+                    <th className="actions-col"><span className="sr-only">Tegevused</span></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -299,6 +377,16 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                         <td className="wrap-cell">{field.soilType || <span className="muted">–</span>}</td>
                         <td>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</td>
                         <td>{field.operatorName || <span className="muted">–</span>}</td>
+                        <td className="actions-col">
+                          <div className="row-actions">
+                            <button className="icon-btn-ghost" onClick={() => setEditingFieldId(field.id)} title="Muuda">
+                              <Edit2 size={15} />
+                            </button>
+                            <button className="icon-btn-danger" onClick={() => handleDelete(field)} title="Kustuta">
+                              <Trash2 size={15} />
+                            </button>
+                          </div>
+                        </td>
                       </tr>
                     );
                   })}
@@ -321,16 +409,31 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <td></td>
                       <td></td>
                       <td></td>
+                      <td className="actions-col"></td>
                     </tr>
                   </tfoot>
                 )}
               </table>
 
+              {editingField && (
+                <FieldEditDialog
+                  field={editingField}
+                  selectedYear={selectedYear}
+                  seasons={seasons}
+                  parties={parties}
+                  onOpenParties={onOpenParties}
+                  crops={crops}
+                  onOpenCrops={onOpenCrops}
+                  onUpdateField={onUpdateField}
+                  onClose={closeEdit}
+                />
+              )}
+
               {filteredRows.length === 0 && (
                 <div className="empty-register-state glass-card">
                   <AlertCircle size={28} className="text-amber" />
                   <h4>{rows.length === 0 ? `Hooajal ${selectedYear} pole põlde` : 'Otsingule vastavaid põlde ei leitud'}</h4>
-                  <p>{rows.length === 0 ? 'Vali teine hooaeg või impordi põllud Külvikorra vaates.' : 'Proovi muuta otsingusõna või omandisuhte filtrit.'}</p>
+                  <p>{rows.length === 0 ? 'Vali teine hooaeg või impordi põllud PRIA ZIP-failist.' : 'Proovi muuta otsingusõna või omandisuhte filtrit.'}</p>
                 </div>
               )}
             </div>

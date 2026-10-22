@@ -1591,6 +1591,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onSelectYear={setSelectedYear}
             seasons={seasons}
             onOpenFieldDetails={setRegisterDetailFieldId}
+            onUpdateField={handleUpdateMasterField}
+            onDeleteField={handleDeleteMasterField}
+            onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
+            onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
+            onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
+            parties={parties}
+            onOpenParties={() => setIsPartiesModalOpen(true)}
+            crops={crops}
+            onOpenCrops={() => setIsCropsModalOpen(true)}
           />
         </Suspense>
       )}
@@ -1606,16 +1615,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onSelectYear={setSelectedYear}
             baseMap={visibility.baseMap}
             onUpdateField={handleUpdateMasterField}
-            onDeleteField={handleDeleteMasterField}
-            onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
-            onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
-            onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
             seasons={seasons}
             onOpenSeasonManager={() => changeMainView('seasons')}
-            parties={parties}
-            onOpenParties={() => setIsPartiesModalOpen(true)}
             crops={crops}
-            onOpenCrops={() => setIsCropsModalOpen(true)}
             onOpenFieldDetails={setRegisterDetailFieldId}
           />
         </Suspense>
@@ -1873,24 +1875,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onSelectYear={setSelectedYear}
           baseMap={visibility.baseMap}
           onUpdateField={handleUpdateMasterField}
-          onDeleteField={handleDeleteMasterField}
-          onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
-          onOpenSoilUpload={user.isAdmin ? () => setIsSoilUploadOpen(true) : undefined}
-          onOpenFieldBookUpload={user.isAdmin ? () => setIsFieldBookUploadOpen(true) : undefined}
           seasons={seasons}
           onOpenSeasonManager={() => {
             setIsFieldsRegisterOpen(false);
             changeMainView('seasons');
           }}
-          parties={parties}
-          onOpenParties={() => {
-            setIsPartiesModalOpen(true);
-          }}
           crops={crops}
-          onOpenCrops={() => {
-            // Register jääb avatuks (pooleli muudatused säilivad); kultuuride register avaneb peale.
-            setIsCropsModalOpen(true);
-          }}
           onOpenFieldDetails={setRegisterDetailFieldId}
         />
       </DeferredMount>
@@ -1969,7 +1959,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           masterFields={masterFields}
           vehicles={vehicles}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'rotation'}
+          stacked={isFieldsRegisterOpen || mainView === 'fields'}
         />
       </DeferredMount>
 
@@ -1986,7 +1976,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onDeleteCrop={handleDeleteCrop}
           masterFields={operatorMasterFields}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'rotation'}
+          stacked={isFieldsRegisterOpen || mainView === 'fields'}
         />
       </DeferredMount>
 
