@@ -575,7 +575,7 @@ export const api = {
   },
 
   async importFieldBook(payload: FieldBookImportPayload): Promise<FieldBookImportResult> {
-    const res = await apiFetch('/api/field-operations/import', {
+    const res = await apiFetch('/api/field-book/import', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)

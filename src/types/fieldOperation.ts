@@ -75,9 +75,9 @@ export interface FieldBookImportPayload {
 export interface FieldBookImportResult {
   success: boolean;
   imported: number;
-  operations: number;
-  products: number;
-  skipped: { fieldCode: string; num: string; season: number }[];
+  created: number;      // uued tööd + kanded
+  complemented: number; // olemasolevad tööd, mida täiendati
+  skipped: { fieldCode: string; num: string; season: number; reason: string }[];
 }
 
 export interface FieldOperationProductDto extends ParsedProduct {
@@ -112,7 +112,7 @@ export interface FieldBookPreviewRow {
   fieldName: string | null;       // registri nimi, kui sobitus
   matched: boolean;
   operationsCount: number;
-  existingOperationsCount: number; // registris sel hooajakirjel juba olevad tegevused (import asendab need)
+  existingWorksCount: number; // Terises sel hooajal juba olevad tööd (import sobitab, ei kustuta)
   productsCount: number;
   unmatchedPerformers: string[];
   seasonLocked: boolean;

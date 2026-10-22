@@ -18,6 +18,7 @@ import { handlePlatformRequest } from './platformApi.ts';
 import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdentifiers.ts';
 import { syncOwnership } from './deviceOwnership.ts';
 import { ensureSeasons } from './seasons.ts';
+import { importFieldSeasonOperations } from './fieldBookImport.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -304,7 +305,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           fieldSeasons: {
             orderBy: { year: 'desc' },
             include: {
-              _count: { select: { operations: true } },
+              _count: { select: { operations: true, fieldWorks: true } },
               cadastralParcels: { include: { cadastralParcel: true }, orderBy: { id: 'asc' } }
             }
           },
@@ -334,6 +335,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
           operationsCount: fs._count.operations,
+          worksCount: fs._count.fieldWorks,
           cadastralParcels: fs.cadastralParcels.map((link) => ({
             cadastralCode: link.cadastralParcel.cadastralCode,
             parcelName: link.cadastralParcel.name ?? undefined,
@@ -1515,79 +1517,40 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     }
 
     // 9. Põlluraamat (e-PRIA väljavõtte import)
-    if (pathname === '/api/field-operations/import' && method === 'POST') {
+    if (pathname === '/api/field-book/import' && method === 'POST') {
       if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const body = await parseBody(req);
       const operatorId: string | undefined = body?.operatorId;
       const fieldsIn: any[] = Array.isArray(body?.fields) ? body.fields : [];
       if (!operatorId) return json(res, { error: 'operatorId on kohustuslik' }, 400);
-
-      const toDate = (d: string | null | undefined) => (d ? new Date(d) : null);
+      const userId = sessionUserOf(req)?.id ?? null;
 
       const result = await tenantTransaction(
         async (tx) => {
-          let imported = 0;
-          let operations = 0;
-          let products = 0;
-          const skipped: { fieldCode: string; num: string; season: number }[] = [];
+          let imported = 0, created = 0, complemented = 0;
+          const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
 
           for (const f of fieldsIn) {
-            const field = await tx.field.findFirst({
-              where: { fieldCode: String(f.fieldCode), num: String(f.num), operatorId }
-            });
+            const field = await tx.field.findFirst({ where: { fieldCode: String(f.fieldCode), num: String(f.num), operatorId } });
             const fieldSeason = field
               ? await tx.fieldSeason.findUnique({
-                  where: { fieldId_year: { fieldId: field.id, year: Number(f.season) } }
+                  where: { fieldId_year: { fieldId: field.id, year: Number(f.season) } },
+                  include: { season: { select: { isLocked: true } } }
                 })
               : null;
-            if (!fieldSeason) {
-              skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season });
-              continue;
-            }
+            if (!fieldSeason) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'põldu ei leitud' }); continue; }
+            if (fieldSeason.season?.isLocked) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'hooaeg on lukus' }); continue; }
             const seasonId = seasonIds.get(Number(f.season));
             if (seasonId && fieldSeason.seasonId !== seasonId) {
               await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: { seasonId } });
             }
 
-            // Põlluraamatut rakenduses käsitsi ei muudeta — import asendab
-            // selle hooajakirje tegevused täielikult.
-            await tx.fieldOperation.deleteMany({ where: { fieldSeasonId: fieldSeason.id } });
-
-            const ops: any[] = Array.isArray(f.operations) ? f.operations : [];
-            for (const [i, op] of ops.entries()) {
-              const prods: any[] = Array.isArray(op.products) ? op.products : [];
-              await tx.fieldOperation.create({
-                data: {
-                  fieldSeasonId: fieldSeason.id,
-                  type: String(op.type),
-                  dateFrom: new Date(op.dateFrom),
-                  dateTo: toDate(op.dateTo),
-                  areaHa: op.areaHa ?? null,
-                  method: op.method ?? null,
-                  performerId: op.performerId ?? null,
-                  notes: op.notes ?? null,
-                  sortOrder: i,
-                  products: {
-                    create: prods.map((p, j) => ({
-                      category: p.category ?? null,
-                      name: p.name ?? null,
-                      kind: p.kind ?? null,
-                      spec: p.spec ?? null,
-                      amount: p.amount ?? null,
-                      unit: p.unit ?? null,
-                      nKgHa: p.nKgHa ?? null,
-                      pKgHa: p.pKgHa ?? null,
-                      kKgHa: p.kKgHa ?? null,
-                      activeIngredient: p.activeIngredient ?? null,
-                      sortOrder: j
-                    }))
-                  }
-                }
-              });
-              operations++;
-              products += prods.length;
-            }
+            const r = await importFieldSeasonOperations(tx, fieldSeason.id, Array.isArray(f.operations) ? f.operations : [], {
+              userId, fieldAreaHa: fieldSeason.areaHa
+            });
+            created += r.created;
+            complemented += r.complemented;
 
             // Tühi väärtus failis ei kustuta olemasolevat.
             const seasonUpdate: Record<string, unknown> = {};
@@ -1595,17 +1558,13 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             if (f.actualYieldTonsHa != null) seasonUpdate.actualYieldTonsHa = Number(f.actualYieldTonsHa);
             if (f.seedingDate) seasonUpdate.seedingDate = new Date(f.seedingDate);
             if (f.harvestDate) seasonUpdate.harvestDate = new Date(f.harvestDate);
-            if (Object.keys(seasonUpdate).length > 0) {
-              await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: seasonUpdate });
-            }
+            if (Object.keys(seasonUpdate).length > 0) await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: seasonUpdate });
             imported++;
           }
-
-          return { imported, operations, products, skipped };
+          return { imported, created, complemented, skipped };
         },
-        { timeout: 60000 }
+        { timeout: 120000 }
       );
-
       return json(res, { success: true, ...result });
     }
 

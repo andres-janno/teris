@@ -8,7 +8,7 @@ import type { FieldBookSheetResult } from '../types/fieldOperation';
 import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
-import { confirmDialog } from './ConfirmDialog';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -68,15 +68,19 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
 
   const handleConfirm = async () => {
     if (!built || built.payload.fields.length === 0) return;
-    // Küsi kinnitust ainult siis, kui mõnel sobitunud hooajakirjel on juba tegevusi, mis asendatakse
-    const n = built.rows.filter((r) => r.matched && r.existingOperationsCount > 0).length;
-    if (n > 0 && !await confirmDialog(`Import asendab ${n} põllu hooajakirje olemasolevad põlluraamatu tegevused failis olevatega.\n\nVarasemad tegevused nendel kirjetel kustutatakse. Jätkata?`)) return;
+    // Küsi kinnitust ainult siis, kui mõnel sobitunud hooajakirjel on juba töid, millega sobitatakse
+    const n = built.rows.filter((r) => r.matched && r.existingWorksCount > 0).length;
+    if (n > 0 && !await confirmDialog(`${n} põllul on sel hooajal juba töid.\n\nOlemasolevad tööd jäävad alles; sama tegevus ±2 päeva sees seotakse, muud lisatakse uute töödena. Jätkata?`)) return;
     setIsSaving(true);
     setError(null);
     try {
-      await api.importFieldBook(built.payload);
+      const r = await api.importFieldBook(built.payload);
       onImported();
       onClose();
+      const skippedText = r.skipped.length
+        ? `\n\nVahele jäetud:\n${r.skipped.map((x) => `Nr ${x.num} (${x.season}): ${x.reason}`).join('\n')}`
+        : '';
+      void alertDialog(`Imporditud ${r.imported} põldu: ${r.created} uut tööd, ${r.complemented} täiendatud${skippedText}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import ebaõnnestus.');
     } finally {
@@ -177,7 +181,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                   {lockedSeasons.length > 0 && (
                     <div className="alert-box">
                       <Lock size={16} />
-                      <span>Hooaeg {lockedSeasons.join(', ')} on lukus — import lisab arhiiviandmed.</span>
+                      <span>Hooaeg {lockedSeasons.join(', ')} on lukus — nende põldude tööd jäetakse vahele.</span>
                     </div>
                   )}
 
@@ -203,7 +207,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                             {row.error
                               ? `Viga: ${row.error}`
                               : row.matched
-                                ? `${row.fieldCode} · ${row.operationsCount} tegevust · ${row.productsCount} toodet`
+                                ? `${row.fieldCode} · ${row.operationsCount} tegevust · ${row.productsCount} toodet · olemas ${row.existingWorksCount} tööd`
                                 : `${row.fieldCode} · põldu selle operaatori ja hooajaga ei leitud — jäetakse vahele`}
                           </span>
                         </div>

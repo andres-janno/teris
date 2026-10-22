@@ -1,7 +1,7 @@
 // src/server/fieldBookRules.ts — PRIA põlluraamatu rea sidumine Terise tööga ja rea tooted → read.
 // Puhtad funktsioonid (andmebaasita), kasutab fieldBookImport.ts.
-import type { FieldBookImportOperation } from '../types/fieldOperation';
-import type { MaterialCategory } from '../types/fieldWork';
+import type { FieldBookImportOperation } from '../types/fieldOperation.ts';
+import type { MaterialCategory } from '../types/fieldWork.ts';
 import { PRIA_ACTIVITY, baseUnit, daysApart, materialCategoryFor, nameKey, type PriaAttrs } from '../services/pria.ts';
 
 export const MATCH_TOLERANCE_DAYS = 2;

@@ -55,11 +55,11 @@ describe('buildFieldBookImport', () => {
     expect(rows[0]).toMatchObject({ sheetName: '2', matched: true, fieldName: 'Kodu', operationsCount: 3, productsCount: 1, seasonLocked: true, error: null });
   });
 
-  it('olemasolevate tegevuste arv tuleb registri hooajakirjelt (puudub → 0)', () => {
-    expect(rows[0].existingOperationsCount).toBe(0);
-    const withOps = [{ ...masterFields[0], history: [{ year: 2025, operationsCount: 4 }] }] as unknown as MasterField[];
-    const r = buildFieldBookImport(results, { masterFields: withOps, parties: PARTIES, seasons: SEASONS, operatorId: 'op-1' });
-    expect(r.rows[0].existingOperationsCount).toBe(4);
+  it('olemasolevate tööde arv tuleb registri hooajakirjelt (puudub → 0)', () => {
+    expect(rows[0].existingWorksCount).toBe(0);
+    const withWorks = [{ ...masterFields[0], history: [{ year: 2025, worksCount: 4 }] }] as unknown as MasterField[];
+    const r = buildFieldBookImport(results, { masterFields: withWorks, parties: PARTIES, seasons: SEASONS, operatorId: 'op-1' });
+    expect(r.rows[0].existingWorksCount).toBe(4);
   });
 
   it('loetleb sobitamata teostajad ühekordselt', () => {
@@ -78,6 +78,15 @@ describe('buildFieldBookImport', () => {
     expect(f).toMatchObject({ fieldCode: '61044415735', num: '2', season: 2025, actualYieldTonsHa: 3.5, seedingDate: '2024-09-26' });
     expect(f.operations.map((o) => o.performerId)).toEqual(['p-mari', null, null]);
     expect(f.operations[0].products[0].name).toBe('Tombo WG');
+  });
+
+  it('registrist leidmata teostaja nimi lisatakse märkustesse', () => {
+    const ops = payload.fields[0].operations;
+    expect(ops[0].notes).toBeNull();
+    expect(ops[1].notes).toBe('Teostaja: Tundmatu Isik');
+    const withNote = sheet({ operations: [{ ...sheet().operations[1], notes: 'Tuuline' }] });
+    const r = buildFieldBookImport([{ sheetName: '2', sheet: withNote, error: null }], { masterFields, parties: PARTIES, seasons: SEASONS, operatorId: 'op-1' });
+    expect(r.payload.fields[0].operations[0].notes).toBe('Tuuline\nTeostaja: Tundmatu Isik');
   });
 
   it('teise operaatori sama massiivi+numbriga põld ei sobitu', () => {

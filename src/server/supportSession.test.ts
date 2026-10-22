@@ -290,7 +290,7 @@ const MUTATING_ROUTES: Array<[string, string]> = [
   ['PATCH', '/api/fleet/device-assignments/x1'], ['DELETE', '/api/fleet/device-assignments/x1'],
   ['POST', '/api/parties'], ['DELETE', '/api/parties/x1'],
   ['POST', '/api/crops'], ['DELETE', '/api/crops/x1'],
-  ['POST', '/api/soil-samples/import'], ['POST', '/api/field-operations/import'],
+  ['POST', '/api/soil-samples/import'], ['POST', '/api/field-book/import'],
   ['POST', '/api/work-types'], ['DELETE', '/api/work-types/x1'],
   ['POST', '/api/materials'], ['DELETE', '/api/materials/x1'],
   ['PUT', '/api/work-templates'], ['DELETE', '/api/work-templates/x1'],
