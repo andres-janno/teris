@@ -177,3 +177,18 @@ export function filterTemplatePhasesForAutumn(nextIsWinter: boolean, phase: Work
   return phase === 'PREPARATION';
 }
 
+
+// Malli rakendamine: iga malli rea kohta plannedCount (vaikimisi 1) tööd, millest on maha arvatud
+// selle tüübi juba olemasolevad tööd hooaja põllul. Iga töö = üks kord.
+export function templateWorksToCreate(items: { workTypeId: string; plannedCount: number | null }[], existingCounts: Map<string, number>): string[] {
+  const left = new Map(existingCounts);
+  const out: string[] = [];
+  for (const it of items) {
+    for (let i = 0; i < Math.max(1, it.plannedCount ?? 1); i++) {
+      const have = left.get(it.workTypeId) ?? 0;
+      if (have > 0) left.set(it.workTypeId, have - 1);
+      else out.push(it.workTypeId);
+    }
+  }
+  return out;
+}

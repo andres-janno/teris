@@ -40,7 +40,9 @@ const LINE_KIND_INFO: Record<WorkEntryLineKind, { label: string; icon: React.FC<
   IMPLEMENT: { label: 'Haakeriist', icon: Wrench, color: '#475569', bg: '#f1f5f9', defaultUnitHint: '€/h' },
   FUEL: { label: 'Kütus', icon: Fuel, color: '#ea580c', bg: '#ffedd5', defaultUnitHint: '€/l' },
   MATERIAL: { label: 'Kulumaterjal', icon: Package, color: '#16a34a', bg: '#dcfce7', defaultUnitHint: '€/ühik' },
-  HARVEST: { label: 'Saagitulu', icon: Wheat, color: '#059669', bg: '#ecfdf5', defaultUnitHint: '€/t' }
+  HARVEST: { label: 'Saagitulu', icon: Wheat, color: '#059669', bg: '#ecfdf5', defaultUnitHint: '€/t' },
+  // Seire leid (hinnata, finantsridades ei kuvata)
+  OBSERVATION: { label: 'Seire leid', icon: Package, color: '#64748b', bg: '#f1f5f9', defaultUnitHint: '' }
 };
 
 const STATUS_LABELS: Record<FinanceStatus, { label: string; className: string }> = {

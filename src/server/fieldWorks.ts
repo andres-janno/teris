@@ -17,9 +17,12 @@ import {
   matchCrop,
   mergeLines,
   summarizeLines,
+  templateWorksToCreate,
   type FinanceStatus,
   type StoredLine
 } from './fieldWorkRules.ts';
+import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
+import { type PriaAttrs } from '../services/pria.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
 const REPEAT_MODES = ['ONCE', 'UP_TO', 'INTERVAL'] as const;
@@ -47,6 +50,10 @@ const dateOnly = (v: unknown): Date | null => {
 };
 const isoDate = (d: Date | null | undefined) => (d ? d.toISOString().split('T')[0] : null);
 const decimalToNumber = (d: unknown): number | null => (d === null || d === undefined ? null : Number(d));
+const priaAttrsIn = (p: any): PriaAttrs => ({
+  priaRegister: text(p?.priaRegister, 120), priaKind: text(p?.priaKind, 120), priaSpec: text(p?.priaSpec, 120),
+  activeIngredient: text(p?.activeIngredient, 200), nKgHa: num(p?.nKgHa), pKgHa: num(p?.pKgHa), kKgHa: num(p?.kKgHa)
+});
 
 // Finantse näevad finantsjuht ja admin.
 // Kustutada saab ainult kirje looja või admin. Tagastab true, kui keelduv vastus on saadetud.
@@ -123,30 +130,20 @@ export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
     }
   }
 
-  const existing = new Set(
-    (await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId)
-  );
-
-  const items = [...template.items].sort((a, b) => a.sortOrder - b.sortOrder);
-  for (const item of items) {
-    const wt = item.workType;
-    if (!wt || !wt.isActive || existing.has(wt.id)) continue;
-
+  const existingCounts = new Map<string, number>();
+  for (const w of await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })) {
+    existingCounts.set(w.workTypeId, (existingCounts.get(w.workTypeId) ?? 0) + 1);
+  }
+  const items = [...template.items]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
     // Taliviljal käesoleval koristusaastal kevadist ettevalmistust ja külvi ei tehta!
-    if (isWinter && (wt.phase === 'PREPARATION' || wt.phase === 'SOWING')) continue;
-
+    .filter((it) => it.workType?.isActive && !(isWinter && (it.workType.phase === 'PREPARATION' || it.workType.phase === 'SOWING')));
+  const byType = new Map(items.map((it) => [it.workTypeId, it]));
+  for (const workTypeId of templateWorksToCreate(items, existingCounts)) {
+    const item = byType.get(workTypeId)!;
     await prisma.fieldWork.create({
-      data: {
-        fieldSeasonId,
-        workTypeId: wt.id,
-        phase: wt.phase,
-        sortOrder: item.sortOrder,
-        plannedText: item.typicalTiming,
-        plannedCount: (item.plannedCount ?? (wt.repeatMode === 'UP_TO' ? wt.maxRepeats : 1)) ?? 1,
-        fromTemplate: true
-      }
+      data: { fieldSeasonId, workTypeId, phase: item.workType.phase, sortOrder: item.sortOrder, plannedText: item.typicalTiming, plannedCount: 1, fromTemplate: true }
     });
-    existing.add(wt.id);
   }
 }
 
@@ -195,31 +192,29 @@ export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<vo
     });
   }
 
-  const existing = new Set(
-    (await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFieldSeasonId }, select: { workTypeId: true } })).map((w) => w.workTypeId)
-  );
-
-  const items = [...template.items].sort((a, b) => a.sortOrder - b.sortOrder);
-  for (const item of items) {
-    const wt = item.workType;
-    if (!wt || !wt.isActive || existing.has(wt.id)) continue;
-
+  const existingCounts = new Map<string, number>();
+  for (const w of await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFieldSeasonId }, select: { workTypeId: true } })) {
+    existingCounts.set(w.workTypeId, (existingCounts.get(w.workTypeId) ?? 0) + 1);
+  }
+  const items = [...template.items]
+    .sort((a, b) => a.sortOrder - b.sortOrder)
     // Suviviljal lisatakse sügisesse AINULT PREPARATION tööd (külv, hooldus ja koristus on järgmise aasta töödes)
-    if (!isWinter && wt.phase !== 'PREPARATION') continue;
-
-    const isAutumnPhase = wt.phase === 'PREPARATION' || wt.phase === 'SOWING';
+    .filter((it) => it.workType?.isActive && (isWinter || it.workType.phase === 'PREPARATION'));
+  const byType = new Map(items.map((it) => [it.workTypeId, it]));
+  for (const workTypeId of templateWorksToCreate(items, existingCounts)) {
+    const item = byType.get(workTypeId)!;
+    const isAutumnPhase = item.workType.phase === 'PREPARATION' || item.workType.phase === 'SOWING';
     await prisma.fieldWork.create({
       data: {
         fieldSeasonId: nextFieldSeasonId,
-        workTypeId: wt.id,
-        phase: wt.phase,
+        workTypeId,
+        phase: item.workType.phase,
         sortOrder: item.sortOrder,
         plannedText: isAutumnPhase ? (item.typicalTiming ?? `Sügis ${nextFs.year - 1}`) : item.typicalTiming,
-        plannedCount: (item.plannedCount ?? (wt.repeatMode === 'UP_TO' ? wt.maxRepeats : 1)) ?? 1,
+        plannedCount: 1,
         fromTemplate: true
       }
     });
-    existing.add(wt.id);
   }
 }
 
@@ -236,7 +231,7 @@ async function resolveEntryInput(body: any) {
     vehicleId ? prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true, name: true } }) : null,
     implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null
   ]);
-  const materialsIn: { materialId?: unknown; quantity?: unknown }[] = Array.isArray(body?.materials) ? body.materials : [];
+  const materialsIn: { materialId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.materials) ? body.materials : [];
   const materialIds = materialsIn.map((m) => String(m.materialId ?? '')).filter(Boolean);
   const materialRows = materialIds.length
     ? await prisma.material.findMany({ where: { id: { in: materialIds } }, select: { id: true, name: true, unit: true } })
@@ -246,9 +241,11 @@ async function resolveEntryInput(body: any) {
     .map((m) => {
       const row = byId.get(String(m.materialId ?? ''));
       const quantity = num(m.quantity);
-      return row && quantity !== null ? { ...row, quantity } : null;
+      return row && quantity !== null
+        ? { ...row, quantity, ratePerHa: num(m.ratePerHa), pria: priaAttrsIn(m.pria) }
+        : null;
     })
-    .filter((m): m is { id: string; name: string; unit: string; quantity: number } => m !== null);
+    .filter((m): m is { id: string; name: string; unit: string; quantity: number; ratePerHa: number | null; pria: PriaAttrs } => m !== null);
 
   const equipmentHours = num(body?.equipmentHours);
   const fuelLiters = num(body?.fuelLiters);
@@ -256,6 +253,13 @@ async function resolveEntryInput(body: any) {
   const startTime = text(body?.startTime, 10);
   const endTime = text(body?.endTime, 10);
   const harvestTonnes = num(body?.harvestTonnes);
+  const h = body?.harvest;
+  const harvest = h && num(h.tonnes) !== null
+    ? { tonnes: num(h.tonnes)!, ratePerHa: num(h.ratePerHa), priaKind: text(h.priaKind, 80), priaSpec: text(h.priaSpec, 80) }
+    : null;
+  const observations = (Array.isArray(body?.observations) ? body.observations : [])
+    .map((o: any) => ({ label: text(o?.label, 200) ?? '', quantity: num(o?.quantity) ?? 0, unit: text(o?.unit, 40) ?? '', priaRegister: text(o?.priaRegister, 80) }))
+    .filter((o: { label: string }) => o.label);
   const drafts = buildEntryLines({
     laborHours,
     workerName: worker ? `Tööaeg · ${worker.name}` : null,
@@ -264,15 +268,18 @@ async function resolveEntryInput(body: any) {
     equipmentHours,
     fuelLiters,
     materials,
-    harvestTonnes
+    harvestTonnes,
+    harvest,
+    observations
   });
   return {
     data: {
       date: dateOnly(body?.date),
+      dateTo: dateOnly(body?.dateTo),
+      method: text(body?.method, 80),
       workerId: worker?.id ?? null,
       areaHa: num(body?.areaHa),
       telemetryAreaHa: num(body?.telemetryAreaHa),
-      occurrenceNo: int(body?.occurrenceNo),
       vehicleId: vehicle?.id ?? null,
       implementId: implement?.id ?? null,
       equipmentHours,
@@ -284,58 +291,6 @@ async function resolveEntryInput(body: any) {
     },
     drafts
   };
-}
-
-// Töö olek kannete järgi (lõpetatud töö jääb lõpetatuks, kuni see avatakse).
-// Lõpetamise kuupäev võetakse kande kuupäevast (mitte serveri süsteemi kellast).
-// Kui 100% pindalast on tehtud, märgitakse töö automaatselt lõpetatuks.
-async function syncFieldWorkStatus(fieldWorkId: string, finish: boolean, userId: string | null) {
-  const work = await prisma.fieldWork.findUnique({
-    where: { id: fieldWorkId },
-    select: {
-      status: true,
-      fieldSeason: { select: { areaHa: true } },
-      workType: { select: { repeatMode: true } },
-      _count: { select: { entries: true } }
-    }
-  });
-  if (!work) return;
-
-  const agg = await prisma.workEntry.aggregate({
-    where: { fieldWorkId },
-    _sum: { areaHa: true }
-  });
-  const totalDoneArea = agg._sum.areaHa ?? 0;
-  const fieldArea = work.fieldSeason?.areaHa ?? 0;
-  const repeatMode = work.workType?.repeatMode;
-  const is100Percent = repeatMode === 'ONCE' && fieldArea > 0 && totalDoneArea >= (fieldArea - 0.01);
-
-  if (finish || is100Percent) {
-    const latestEntry = await prisma.workEntry.findFirst({
-      where: { fieldWorkId },
-      orderBy: { date: 'desc' },
-      select: { date: true }
-    });
-    await prisma.fieldWork.update({
-      where: { id: fieldWorkId },
-      data: {
-        status: 'DONE',
-        finishedAt: latestEntry?.date ?? new Date(),
-        finishedById: userId
-      }
-    });
-  } else {
-    // Kui pindala on alla 100% ja finish pole märgitud, on töö pooleli (või planeeritud kui kandeid pole)
-    const n = await prisma.workEntry.count({ where: { fieldWorkId } });
-    await prisma.fieldWork.update({
-      where: { id: fieldWorkId },
-      data: {
-        status: n > 0 ? 'IN_PROGRESS' : 'PLANNED',
-        finishedAt: null,
-        finishedById: null
-      }
-    });
-  }
 }
 
 const ENTRY_INCLUDE = {
@@ -351,6 +306,9 @@ function entryDto(e: any, withFinance: boolean) {
     id: e.id,
     fieldWorkId: e.fieldWorkId,
     date: isoDate(e.date),
+    dateTo: isoDate(e.dateTo),
+    method: e.method ?? null,
+    source: e.source,
     workerId: e.workerId,
     workerName: e.worker?.name ?? null,
     areaHa: e.areaHa,
@@ -365,15 +323,21 @@ function entryDto(e: any, withFinance: boolean) {
     laborHours: e.laborHours,
     startTime: e.startTime ?? null,
     endTime: e.endTime ?? null,
-    materials: lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ materialId: l.materialId, name: l.label, unit: l.unit, quantity: l.quantity })),
+    materials: lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({
+      materialId: l.materialId, name: l.label, unit: l.unit, quantity: l.quantity, ratePerHa: l.ratePerHa,
+      priaRegister: l.priaRegister, priaKind: l.priaKind, priaSpec: l.priaSpec, activeIngredient: l.activeIngredient,
+      nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa
+    })),
     harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity ?? null,
+    harvest: (() => { const l = lines.find((x) => x.kind === 'HARVEST'); return l ? { tonnes: l.quantity, ratePerHa: l.ratePerHa, priaKind: l.priaKind, priaSpec: l.priaSpec } : null; })(),
+    observations: lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ label: l.label, quantity: l.quantity, unit: l.unit, priaRegister: l.priaRegister })),
     notes: e.notes,
     financeStatus: e.financeStatus,
     ...(withFinance
       ? {
           financeNotes: e.financeNotes,
           financeConfirmedAt: e.financeConfirmedAt?.toISOString() ?? null,
-          lines: lines.map((l) => ({
+          lines: lines.filter((l) => l.kind !== 'OBSERVATION').map((l) => ({
             id: l.id,
             kind: l.kind,
             label: l.label,
@@ -384,6 +348,67 @@ function entryDto(e: any, withFinance: boolean) {
           }))
         }
       : {})
+  };
+}
+
+// Töö plaani sisend (POST ja PATCH). Read asendatakse tervikuna, kui `lines` on kehas.
+async function planInput(b: any) {
+  const data: Record<string, unknown> = {};
+  if ('plannedText' in b) data.plannedText = text(b.plannedText, 80);
+  if ('plannedDateFrom' in b) data.plannedDateFrom = dateOnly(b.plannedDateFrom);
+  if ('plannedDateTo' in b) data.plannedDateTo = dateOnly(b.plannedDateTo);
+  if ('plannedAreaHa' in b) data.plannedAreaHa = num(b.plannedAreaHa);
+  if ('method' in b) data.method = text(b.method, 80);
+  if ('plannedWorkerId' in b) data.plannedWorkerId = text(b.plannedWorkerId, 64);
+  if ('notes' in b) data.notes = text(b.notes, 2000);
+  const lines = Array.isArray(b?.lines)
+    ? b.lines.map((l: any, i: number) => ({
+        kind: l?.kind === 'HARVEST' ? 'HARVEST' : 'MATERIAL',
+        materialId: text(l?.materialId, 64),
+        label: text(l?.label, 200) ?? '',
+        unit: text(l?.unit, 20) ?? '',
+        ratePerHa: num(l?.ratePerHa),
+        ...priaAttrsIn(l),
+        sortOrder: i
+      })).filter((l: { label: string }) => l.label)
+    : null;
+  return { data, lines };
+}
+
+const FIELD_WORK_INCLUDE = {
+  workType: true,
+  plannedWorker: { select: { name: true } },
+  lines: { orderBy: { sortOrder: 'asc' as const } },
+  entries: { orderBy: { date: 'desc' as const }, include: ENTRY_INCLUDE }
+};
+
+export function fieldWorkDto(w: any, withFinance: boolean) {
+  return {
+    id: w.id,
+    fieldSeasonId: w.fieldSeasonId,
+    workTypeId: w.workTypeId,
+    workTypeName: w.workType.name,
+    priaCode: w.workType.priaCode ?? null,
+    phase: w.phase,
+    repeatMode: 'ONCE' as const,
+    intervalDays: null,
+    usesMaterials: w.workType.usesMaterials,
+    sortOrder: w.sortOrder,
+    plannedText: w.plannedText,
+    plannedCount: 1,
+    plannedDateFrom: isoDate(w.plannedDateFrom),
+    plannedDateTo: isoDate(w.plannedDateTo),
+    plannedAreaHa: w.plannedAreaHa ?? null,
+    method: w.method ?? null,
+    plannedWorkerId: w.plannedWorkerId ?? null,
+    plannedWorkerName: w.plannedWorker?.name ?? null,
+    source: w.source,
+    lines: (w.lines ?? []).map(({ fieldWorkId: _f, tenantId: _t, sortOrder: _s, ...l }: any) => l),
+    status: w.status,
+    finishedAt: isoDate(w.finishedAt),
+    fromTemplate: w.fromTemplate,
+    notes: w.notes,
+    entries: (w.entries ?? []).map((e: any) => entryDto(e, withFinance))
   };
 }
 
@@ -868,11 +893,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const rows = await prisma.fieldWork.findMany({
       where: { fieldSeason: { year } },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
-      include: {
-        workType: true,
-        fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } },
-        entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE }
-      }
+      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } } }
     });
 
     // Järgmise aasta taliviljade ja suviviljade sügistööd (teostatakse selle aasta sügisel)
@@ -899,33 +920,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         fieldSeasonId: { in: nextAutumnSeasonIds }
       },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
-      include: {
-        workType: true,
-        fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } },
-        entries: { orderBy: { date: 'desc' }, include: ENTRY_INCLUDE }
-      }
+      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } } }
     }) : [];
 
     const worksDto: any[] = rows.map((w) => {
       const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
       const isAutumnPhase = isWinter && (w.phase === 'PREPARATION' || w.phase === 'SOWING');
       return {
-        id: w.id,
-        fieldSeasonId: w.fieldSeasonId,
-        workTypeId: w.workTypeId,
-        workTypeName: w.workType.name,
-        phase: w.phase,
-        repeatMode: w.workType.repeatMode,
-        intervalDays: w.workType.intervalDays,
-        usesMaterials: w.workType.usesMaterials,
-        sortOrder: w.sortOrder,
-        plannedText: w.plannedText,
-        plannedCount: w.plannedCount,
-        status: w.status,
-        finishedAt: isoDate(w.finishedAt),
-        fromTemplate: w.fromTemplate,
-        notes: w.notes,
-        entries: w.entries.map((e) => entryDto(e, finance)),
+        ...fieldWorkDto(w, finance),
         carriedOverFromYear: isAutumnPhase ? year - 1 : null,
         carriedOverToYear: null,
         seasonYear: year,
@@ -939,22 +941,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       if (!isWinter && w.phase !== 'PREPARATION') continue;
       const isAutumnPhase = w.phase === 'PREPARATION' || w.phase === 'SOWING';
       worksDto.push({
-        id: w.id,
-        fieldSeasonId: w.fieldSeasonId,
-        workTypeId: w.workTypeId,
-        workTypeName: w.workType.name,
-        phase: w.phase,
-        repeatMode: w.workType.repeatMode,
-        intervalDays: w.workType.intervalDays,
-        usesMaterials: w.workType.usesMaterials,
-        sortOrder: w.sortOrder,
+        ...fieldWorkDto(w, finance),
         plannedText: isAutumnPhase ? (w.plannedText ?? `Sügis ${year}`) : w.plannedText,
-        plannedCount: w.plannedCount,
-        status: w.status,
-        finishedAt: isoDate(w.finishedAt),
-        fromTemplate: w.fromTemplate,
-        notes: w.notes,
-        entries: w.entries.map((e) => entryDto(e, finance)),
         carriedOverFromYear: null,
         carriedOverToYear: year + 1,
         seasonYear: year + 1,
@@ -976,22 +964,20 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     const preferredSortOrder = int(b?.sortOrder);
     const last = await prisma.fieldWork.findFirst({ where: { fieldSeasonId }, orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } });
-    try {
-      const saved = await prisma.fieldWork.create({
-        data: {
-          fieldSeasonId,
-          workTypeId: workType.id,
-          phase: workType.phase,
-          sortOrder: preferredSortOrder !== null ? preferredSortOrder : (last?.sortOrder ?? -1) + 1,
-          plannedText: text(b?.plannedText, 80),
-          plannedCount: Math.max(1, int(b?.plannedCount) ?? workType.maxRepeats ?? 1)
-        }
-      });
-      json(res, saved);
-    } catch (err: any) {
-      if (err?.code === 'P2002') json(res, { error: 'See töö on põllul juba olemas' }, 409);
-      else throw err;
-    }
+    const { data: plan, lines } = await planInput(b);
+    const saved = await prisma.fieldWork.create({
+      data: {
+        ...(plan as object),
+        fieldSeasonId,
+        workTypeId: workType.id,
+        phase: workType.phase,
+        sortOrder: preferredSortOrder !== null ? preferredSortOrder : (last?.sortOrder ?? -1) + 1,
+        plannedCount: 1,
+        ...(lines ? { lines: { create: lines } } : {})
+      } as Prisma.FieldWorkUncheckedCreateInput,
+      include: FIELD_WORK_INCLUDE
+    });
+    json(res, fieldWorkDto(saved, canSeeFinance(req)));
     return true;
   }
   if (pathname === '/api/field-works/apply-template' && method === 'POST') {
@@ -1086,9 +1072,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/field-works/');
     const b = await parseBody(req, MAX_BODY_BYTES);
     const data: Record<string, unknown> = {};
-    if ('plannedText' in b) data.plannedText = text(b.plannedText, 80);
-    if ('plannedCount' in b) data.plannedCount = Math.max(1, int(b.plannedCount) ?? 1);
-    if ('notes' in b) data.notes = text(b.notes, 2000);
+    const { data: plan, lines } = await planInput(b);
+    Object.assign(data, plan);
+    if (lines) {
+      await prisma.fieldWorkLine.deleteMany({ where: { fieldWorkId: id } });
+      if (lines.length) await prisma.fieldWorkLine.createMany({ data: lines.map((l: object) => ({ ...l, fieldWorkId: id })) });
+    }
     if (b?.status === 'DONE') {
       const latestEntry = await prisma.workEntry.findFirst({
         where: { fieldWorkId: id },
@@ -1098,6 +1087,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       Object.assign(data, { status: 'DONE', finishedAt: latestEntry?.date ?? new Date(), finishedById: userId });
     }
     await prisma.fieldWork.update({ where: { id }, data });
+    // Plaanitud pindala muutus võib töö lõpetada või uuesti avada
+    if ('plannedAreaHa' in b && !b?.status) await syncFieldWorkStatus(id, false, userId, prisma);
     // Lõpetatud töö avamine: olek kannete järgi.
     if (b?.status === 'REOPEN') {
       const n = await prisma.workEntry.count({ where: { fieldWorkId: id } });
@@ -1160,7 +1151,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       data: { ...data, date: data.date, fieldWorkId: work.id, createdById: userId, lines: { create: drafts } },
       include: ENTRY_INCLUDE
     });
-    await syncFieldWorkStatus(work.id, b?.finish === true, userId);
+    await syncFieldWorkStatus(work.id, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
     return true;
   }
@@ -1187,7 +1178,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         include: ENTRY_INCLUDE
       });
     });
-    await syncFieldWorkStatus(old.fieldWorkId, b?.finish === true, userId);
+    await syncFieldWorkStatus(old.fieldWorkId, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
     return true;
   }
@@ -1204,7 +1195,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     await prisma.workEntry.delete({ where: { id } });
-    await syncFieldWorkStatus(e.fieldWorkId, false, userId);
+    await syncFieldWorkStatus(e.fieldWorkId, false, userId, prisma);
     json(res, { success: true, id });
     return true;
   }

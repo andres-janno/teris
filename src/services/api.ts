@@ -8,7 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion } from '../types/fieldWork';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -642,15 +642,15 @@ export const api = {
     return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}`), 'Põllutööde laadimine ebaõnnestus');
   },
 
-  async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; sortOrder?: number | null; plannedText?: string | null; plannedCount?: number | null }): Promise<void> {
-    await jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
+  async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; sortOrder?: number | null } & FieldWorkPlanInput): Promise<FieldWork> {
+    return jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
   },
 
   async applyWorkTemplate(fieldSeasonIds: number[], mode: 'CURRENT' | 'AUTUMN' = 'CURRENT'): Promise<void> {
     await jsonOrThrow(await apiFetch('/api/field-works/apply-template', jsonInit('POST', { fieldSeasonIds, mode })), 'Malli lisamine ebaõnnestus');
   },
 
-  async updateFieldWork(id: string, data: { plannedText?: string | null; plannedCount?: number; notes?: string | null; status?: 'DONE' | 'REOPEN' }): Promise<void> {
+  async updateFieldWork(id: string, data: FieldWorkPlanInput & { status?: 'DONE' | 'REOPEN' }): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, jsonInit('PATCH', data)), 'Töö muutmine ebaõnnestus');
   },
 

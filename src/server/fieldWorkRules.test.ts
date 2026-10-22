@@ -8,6 +8,7 @@ import {
   matchCrop,
   mergeLines,
   summarizeLines,
+  templateWorksToCreate,
   type StoredLine
 } from './fieldWorkRules';
 
@@ -175,3 +176,11 @@ describe('filterTemplatePhases (malli tööde filtreerimine hooaja ja vilja tü�
   });
 });
 
+
+describe('templateWorksToCreate', () => {
+  it('loob malli kordi miinus olemasolevad sama tüübi tööd', () => {
+    const items = [{ workTypeId: 'tkv', plannedCount: 3 }, { workTypeId: 'kund', plannedCount: null }];
+    expect(templateWorksToCreate(items, new Map([['tkv', 1]]))).toEqual(['tkv', 'tkv', 'kund']);
+    expect(templateWorksToCreate(items, new Map([['tkv', 5], ['kund', 1]]))).toEqual([]);
+  });
+});

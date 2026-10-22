@@ -5,7 +5,15 @@ export type WorkRepeatMode = 'ONCE' | 'UP_TO' | 'INTERVAL';
 export type FieldWorkStatus = 'PLANNED' | 'IN_PROGRESS' | 'DONE';
 export type FinanceStatus = 'PENDING' | 'CONFIRMED' | 'CHANGED';
 export type MaterialCategory = 'SEED' | 'FERTILIZER' | 'PLANT_PROTECTION' | 'OTHER';
-export type WorkEntryLineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST';
+export type WorkEntryLineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST' | 'OBSERVATION';
+export type WorkSource = 'MANUAL' | 'PRIA_IMPORT';
+
+// PRIA e-põlluraamatu atribuudid materjali/saagi real
+export interface PriaLineFields { ratePerHa: number | null; priaRegister: string | null; priaKind: string | null; priaSpec: string | null; activeIngredient: string | null; nKgHa: number | null; pKgHa: number | null; kKgHa: number | null }
+// Töö plaani rida (plaanitud materjal või saak)
+export interface FieldWorkPlanLine extends PriaLineFields { id?: string; kind: 'MATERIAL' | 'HARVEST'; materialId: string | null; label: string; unit: string }
+export interface WorkEntryObservation { label: string; quantity: number; unit: string; priaRegister: string | null }
+export interface WorkEntryHarvest { tonnes: number; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null }
 
 export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'];
 
@@ -33,6 +41,7 @@ export interface WorkType {
   usesMaterials: boolean;
   sortOrder: number;
   isActive: boolean;
+  priaCode: string | null;
   templateCount?: number;
   fieldWorkCount?: number;
 }
@@ -67,7 +76,7 @@ export interface WorkTemplate {
   items: WorkTemplateItem[];
 }
 
-export interface WorkEntryMaterial {
+export interface WorkEntryMaterial extends Partial<PriaLineFields> {
   materialId: string;
   name: string;
   unit: string;
@@ -88,6 +97,9 @@ export interface WorkEntry {
   id: string;
   fieldWorkId: string;
   date: string; // ISO YYYY-MM-DD
+  dateTo: string | null;
+  method: string | null;
+  source: WorkSource;
   workerId: string | null;
   workerName: string | null;
   areaHa: number | null;
@@ -104,6 +116,8 @@ export interface WorkEntry {
   endTime: string | null;
   materials: WorkEntryMaterial[];
   harvestTonnes: number | null;
+  harvest: WorkEntryHarvest | null;
+  observations: WorkEntryObservation[];
   notes: string | null;
   financeStatus: FinanceStatus;
   // ainult finantsjuhile/adminile:
@@ -117,6 +131,7 @@ export interface FieldWork {
   fieldSeasonId: number;
   workTypeId: string;
   workTypeName: string;
+  priaCode: string | null;
   phase: WorkPhase;
   repeatMode: WorkRepeatMode;
   intervalDays: number | null;
@@ -124,6 +139,14 @@ export interface FieldWork {
   sortOrder: number;
   plannedText: string | null;
   plannedCount: number;
+  plannedDateFrom: string | null;
+  plannedDateTo: string | null;
+  plannedAreaHa: number | null;
+  method: string | null;
+  plannedWorkerId: string | null;
+  plannedWorkerName: string | null;
+  source: WorkSource;
+  lines: FieldWorkPlanLine[];
   status: FieldWorkStatus;
   finishedAt: string | null;
   fromTemplate: boolean;
@@ -133,6 +156,12 @@ export interface FieldWork {
   carriedOverToYear?: number | null;
   seasonYear?: number | null;
   isNextSeasonWinterSowing?: boolean;
+}
+
+// Töö plaani sisend (lisamine ja muutmine); `lines` asendab plaaniread tervikuna
+export interface FieldWorkPlanInput {
+  plannedText?: string | null; plannedDateFrom?: string | null; plannedDateTo?: string | null; plannedAreaHa?: number | null;
+  method?: string | null; plannedWorkerId?: string | null; notes?: string | null; lines?: FieldWorkPlanLine[];
 }
 
 export interface TelemetrySuggestion {
@@ -154,10 +183,12 @@ export interface TelemetrySuggestion {
 export interface WorkEntryInput {
   fieldWorkId: string;
   date: string;
+  dateTo?: string | null;
+  method?: string | null;
   workerId: string | null;
   areaHa: number | null;
   telemetryAreaHa?: number | null;
-  occurrenceNo: number | null;
+  occurrenceNo?: number | null;
   vehicleId: string | null;
   implementId: string | null;
   equipmentHours: number | null;
@@ -165,8 +196,10 @@ export interface WorkEntryInput {
   laborHours: number | null;
   startTime?: string | null;
   endTime?: string | null;
-  materials: { materialId: string; quantity: number }[];
+  materials: { materialId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
   harvestTonnes: number | null;
+  harvest?: WorkEntryHarvest | null;
+  observations?: WorkEntryObservation[];
   notes: string | null;
   finish: boolean;
 }

@@ -1186,23 +1186,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         }}
                       />
                     </label>
-                    {selected.repeatMode !== 'ONCE' && (
-                      <label>
-                        <span>Plaanitud kordi</span>
-                        <input
-                          key={`${selected.id}-count`}
-                          className="form-input"
-                          type="number"
-                          min={1}
-                          defaultValue={selected.plannedCount}
-                          disabled={locked}
-                          onBlur={(e) => {
-                            const v = Math.max(1, Number(e.target.value) || 1);
-                            if (v !== selected.plannedCount) void run(() => api.updateFieldWork(selected.id, { plannedCount: v }));
-                          }}
-                        />
-                      </label>
-                    )}
                   </div>
 
                   {selected.repeatMode === 'ONCE' && activeArea > 0 && (() => {
