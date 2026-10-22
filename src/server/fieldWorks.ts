@@ -1,5 +1,5 @@
 // src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, mallid, hooaja tööd, kanded, finantsid.
-// PRIA põlluraamatust (field_operations) täiesti lahus.
+// Põllutööd on PRIA e-põlluraamatu allikas: töö = plaan, kanne = tegelik; PRIA import loob/seob töid.
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { fetchFieldGpsPackets, type FieldGpsRow } from './telemetryAccess.ts';

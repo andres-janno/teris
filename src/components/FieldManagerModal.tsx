@@ -245,7 +245,6 @@ function cropSummaryKey(cropText: string): string {
   // Miks lahtri kultuuri ei saa otse muuta (null = saab).
   const cropEditBlockReason = (field: MasterField, rec: FieldYearlyRecord | undefined, year: number): string | null => {
     if (seasons.some((s) => s.year === year && s.isLocked)) return 'Hooaeg on lukus';
-    if (rec && (rec.operationsCount ?? 0) > 0) return 'Põlluraamatus on selle aasta tegevused';
     if (!rec && field.history.length === 0) return 'Põllul pole ühegi aasta andmeid';
     return null;
   };

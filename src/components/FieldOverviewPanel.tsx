@@ -1,5 +1,5 @@
 // src/components/FieldOverviewPanel.tsx — põllu üldandmed (statistika, katastrid, piirid, mullaproovid, NDVI, märkmed).
-// Tõstetud FieldDetailsDrawer'ist; kasutab FieldFullView vasak veerg.
+// Kasutab FieldFullView vasak veerg.
 import React, { useState } from 'react';
 import {
   ExternalLink,

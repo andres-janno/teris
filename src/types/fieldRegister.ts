@@ -14,7 +14,6 @@ export interface FieldYearlyRecord {
   crop: string;                 // Põllukultuur (nt Talinisu, Suvioder, Taliraps)
   cropVariety?: string | null;  // Sordinimi (nt 'Skagen', 'Planet', 'Mercedes')
   cropColor: string;            // Värvikood kaardil (nt #eab308)
-  operationsCount?: number;     // Põlluraamatu tegevuste arv sel aastal (ainult lugemiseks)
   worksCount?: number;          // Terise tööde arv sel aastal (ainult lugemiseks)
   targetYieldTonsHa?: number | null; // Plaaniline saagikus (t/ha)
   actualYieldTonsHa?: number | null; // Tegelik koristatud saagikus (t/ha)

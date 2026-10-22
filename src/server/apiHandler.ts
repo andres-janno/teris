@@ -305,7 +305,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           fieldSeasons: {
             orderBy: { year: 'desc' },
             include: {
-              _count: { select: { operations: true, fieldWorks: true } },
+              _count: { select: { fieldWorks: true } },
               cadastralParcels: { include: { cadastralParcel: true }, orderBy: { id: 'asc' } }
             }
           },
@@ -334,7 +334,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           crop: fs.crop,
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
-          operationsCount: fs._count.operations,
           worksCount: fs._count.fieldWorks,
           cadastralParcels: fs.cadastralParcels.map((link) => ({
             cadastralCode: link.cadastralParcel.cadastralCode,
@@ -1575,41 +1574,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         { timeout: 120000 }
       );
       return json(res, { success: true, ...result });
-    }
-
-    if (pathname === '/api/field-operations' && method === 'GET') {
-      const fieldId = Number(url.searchParams.get('fieldId'));
-      const year = Number(url.searchParams.get('year'));
-      if (!fieldId || !year) return json(res, { error: 'fieldId ja year on kohustuslikud' }, 400);
-
-      const fieldSeason = await prisma.fieldSeason.findUnique({
-        where: { fieldId_year: { fieldId, year } }
-      });
-      if (!fieldSeason) {
-        return json(res, { targetYieldTonsHa: null, actualYieldTonsHa: null, operations: [] });
-      }
-
-      const ops = await prisma.fieldOperation.findMany({
-        where: { fieldSeasonId: fieldSeason.id },
-        orderBy: [{ dateFrom: 'asc' }, { sortOrder: 'asc' }],
-        include: {
-          products: { orderBy: { sortOrder: 'asc' } },
-          performer: { select: { name: true } }
-        }
-      });
-
-      const day = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
-      return json(res, {
-        targetYieldTonsHa: fieldSeason.targetYieldTonsHa,
-        actualYieldTonsHa: fieldSeason.actualYieldTonsHa,
-        operations: ops.map(({ performer, fieldSeasonId: _fs, performerId: _p, createdAt: _c, ...o }) => ({
-          ...o,
-          dateFrom: day(o.dateFrom),
-          dateTo: day(o.dateTo),
-          performerName: performer?.name ?? null,
-          products: o.products.map(({ operationId: _op, ...p }) => p)
-        }))
-      });
     }
 
     return json(res, { error: 'Not found' }, 404);

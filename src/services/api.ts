@@ -6,7 +6,7 @@ import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
-import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
+import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 
@@ -584,12 +584,6 @@ export const api = {
       const err = await res.json().catch(() => ({}));
       throw new Error(err.error || 'Põlluraamatu import ebaõnnestus');
     }
-    return res.json();
-  },
-
-  async getFieldOperations(fieldId: number | string, year: number): Promise<FieldOperationsResponse> {
-    const res = await apiFetch(`/api/field-operations?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`);
-    if (!res.ok) throw new Error('Põllutööde laadimine ebaõnnestus');
     return res.json();
   },
 

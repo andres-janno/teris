@@ -83,30 +83,6 @@ export interface FieldBookImportResult {
   skipped: { fieldCode: string; num: string; season: number; reason: string }[];
 }
 
-export interface FieldOperationProductDto extends ParsedProduct {
-  id: number;
-  sortOrder: number;
-}
-
-export interface FieldOperationDto {
-  id: number;
-  type: string;
-  dateFrom: string;
-  dateTo: string | null;
-  areaHa: number | null;
-  method: string | null;
-  notes: string | null;
-  performerName: string | null;
-  sortOrder: number;
-  products: FieldOperationProductDto[];
-}
-
-export interface FieldOperationsResponse {
-  targetYieldTonsHa: number | null;
-  actualYieldTonsHa: number | null;
-  operations: FieldOperationDto[];
-}
-
 export interface FieldBookPreviewRow {
   sheetName: string;
   fieldCode: string | null;

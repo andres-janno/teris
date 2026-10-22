@@ -1,5 +1,5 @@
 // src/components/FieldFullView.tsx — põllu täisvaade: päis + hooaeg, vasakul üldandmed, paremal tööde ajajoon.
-// Asendab FieldDetailsDrawer'i. Kaart jääb taha alles; sulgemine ✕ või Esc.
+// Kaart jääb taha alles; sulgemine ✕ või Esc.
 import React, { useEffect, useState } from 'react';
 import { X, Crosshair, Lock, Pencil, CalendarDays } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
