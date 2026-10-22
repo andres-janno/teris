@@ -233,3 +233,11 @@ export interface FieldResult {
   revenue: number;
   profit: number;
 }
+
+export interface FieldSeasonWorks {
+  fieldSeasonId: number | null;
+  areaHa: number;
+  targetYieldTonsHa: number | null;
+  actualYieldTonsHa: number | null;
+  works: FieldWork[];
+}

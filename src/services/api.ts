@@ -8,7 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult, FieldOperationsResponse } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput } from '../types/fieldWork';
+import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -638,6 +638,9 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/work-templates/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Malli kustutamine ebaõnnestus');
   },
 
+  async getFieldSeasonWorks(fieldId: number | string, year: number): Promise<FieldSeasonWorks> {
+    return jsonOrThrow(await apiFetch(`/api/field-season-works?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`), 'Põllu tööde laadimine ebaõnnestus');
+  },
   async getFieldWorks(year: number): Promise<FieldWork[]> {
     return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}`), 'Põllutööde laadimine ebaõnnestus');
   },

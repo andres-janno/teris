@@ -845,6 +845,35 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     return true;
   }
 
+  // Ühe põllu ühe hooaja tööd (põllu täisvaade)
+  if (pathname === '/api/field-season-works' && method === 'GET') {
+    const fieldId = int(url.searchParams.get('fieldId'));
+    const year = int(url.searchParams.get('year'));
+    if (!fieldId || !year) {
+      json(res, { error: 'fieldId ja year on kohustuslikud' }, 400);
+      return true;
+    }
+    const fs = await prisma.fieldSeason.findUnique({ where: { fieldId_year: { fieldId, year } } });
+    if (!fs) {
+      json(res, { fieldSeasonId: null, areaHa: 0, targetYieldTonsHa: null, actualYieldTonsHa: null, works: [] });
+      return true;
+    }
+    const works = await prisma.fieldWork.findMany({
+      where: { fieldSeasonId: fs.id },
+      orderBy: [{ plannedDateFrom: 'asc' }, { sortOrder: 'asc' }],
+      include: FIELD_WORK_INCLUDE
+    });
+    const finance = canSeeFinance(req);
+    json(res, {
+      fieldSeasonId: fs.id,
+      areaHa: fs.areaHa,
+      targetYieldTonsHa: fs.targetYieldTonsHa,
+      actualYieldTonsHa: fs.actualYieldTonsHa,
+      works: works.map((w) => fieldWorkDto(w, finance))
+    });
+    return true;
+  }
+
   // --- Hooaja põllu tööd ---
   if (pathname === '/api/field-works' && method === 'GET') {
     const year = int(url.searchParams.get('year'));
@@ -1074,10 +1103,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const data: Record<string, unknown> = {};
     const { data: plan, lines } = await planInput(b);
     Object.assign(data, plan);
-    if (lines) {
-      await prisma.fieldWorkLine.deleteMany({ where: { fieldWorkId: id } });
-      if (lines.length) await prisma.fieldWorkLine.createMany({ data: lines.map((l: object) => ({ ...l, fieldWorkId: id })) });
-    }
     if (b?.status === 'DONE') {
       const latestEntry = await prisma.workEntry.findFirst({
         where: { fieldWorkId: id },
@@ -1086,7 +1111,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       });
       Object.assign(data, { status: 'DONE', finishedAt: latestEntry?.date ?? new Date(), finishedById: userId });
     }
-    await prisma.fieldWork.update({ where: { id }, data });
+    // Plaaniridade asendus ja töö uuendus ühes tehingus: ebaõnnestunud lisamine ei kustuta vanu ridu
+    await tenantTransaction(async (tx) => {
+      if (lines) {
+        await tx.fieldWorkLine.deleteMany({ where: { fieldWorkId: id } });
+        if (lines.length) await tx.fieldWorkLine.createMany({ data: lines.map((l: object) => ({ ...l, fieldWorkId: id })) });
+      }
+      await tx.fieldWork.update({ where: { id }, data });
+    });
     // Plaanitud pindala muutus võib töö lõpetada või uuesti avada
     if ('plannedAreaHa' in b && !b?.status) await syncFieldWorkStatus(id, false, userId, prisma);
     // Lõpetatud töö avamine: olek kannete järgi.
