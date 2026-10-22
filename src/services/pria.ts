@@ -1,6 +1,6 @@
 // src/services/pria.ts — PRIA e-põlluraamatu klassifikaatorid ja puhtad abifunktsioonid
 // (kasutavad nii klient kui server). Väärtused on PRIA andmed ja jäävad eesti keelde.
-import type { MaterialCategory, WorkPhase } from '../types/fieldWork';
+import type { MaterialCategory, WorkPhase } from '../types/fieldWork.ts';
 
 export interface PriaActivity {
   name: string;
