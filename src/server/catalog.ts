@@ -38,7 +38,7 @@ export async function copyCatalogToTenant(tx: Prisma.TransactionClient, tenantId
   for (const w of workTypes) {
     const created = await tx.workType.create({
       data: {
-        tenantId, name: w.name, phase: w.phase, repeatMode: w.repeatMode, maxRepeats: w.maxRepeats,
+        tenantId, name: w.name, priaCode: w.priaCode, phase: w.phase, repeatMode: w.repeatMode, maxRepeats: w.maxRepeats,
         intervalDays: w.intervalDays, usesMaterials: w.usesMaterials, sortOrder: w.sortOrder, isActive: w.isActive
       }
     });

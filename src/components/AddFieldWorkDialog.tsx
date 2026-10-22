@@ -1,8 +1,9 @@
-// src/components/AddFieldWorkDialog.tsx — põllu plaanitud tööde haldamine (lisamine ja eemaldamine).
+// src/components/AddFieldWorkDialog.tsx — põllule tööde lisamine (sama tegevust võib lisada mitu korda; eemaldamine tahvli töö paneelist).
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Check, Pencil } from 'lucide-react';
 import { api } from '../services/api';
+import { PRIA_ACTIVITIES } from '../services/pria';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType, type WorkTemplateItem } from '../types/fieldWork';
 
 interface AddFieldWorkDialogProps {
@@ -31,21 +32,16 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
   onSaved
 }) => {
   const [toAdd, setToAdd] = useState<Set<string>>(new Set());
-  const [toRemove, setToRemove] = useState<Set<string>>(new Set());
   const [plannedText, setPlannedText] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Kaardistus olemasolevatest töödest põllul
-  const existingMap = useMemo(() => {
-    const map = new Map<string, FieldWork>();
-    for (const w of existing) {
-      map.set(w.workTypeId, w);
-    }
+  // Sama tegevust võib põllul olla mitu tööd (iga töö = üks kord); olemasolevate arv on ainult vihje
+  const existingCount = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const w of existing) map.set(w.workTypeId, (map.get(w.workTypeId) ?? 0) + 1);
     return map;
   }, [existing]);
-
-  const existingIds = useMemo(() => new Set(existing.map((w) => w.workTypeId)), [existing]);
 
   const templateItemsMap = useMemo(() => {
     const map = new Map<string, WorkTemplateItem>();
@@ -55,19 +51,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
     return map;
   }, [templateItems]);
 
-  const getWorkSortKey = (w: WorkType): number => {
-    // 1. Kui töö on põllul olemas: kasuta põllu töö järjekorranumbrit (sama järjekord nagu tahvlil)
-    const existingWork = existingMap.get(w.id);
-    if (existingWork !== undefined) {
-      return existingWork.sortOrder;
-    }
-    // 2. Kui töö on kultuuri mallis: kasuta malli elemendi järjekorranumbrit
-    const templateItem = templateItemsMap.get(w.id);
-    if (templateItem !== undefined) {
-      return templateItem.sortOrder;
-    }
-    // 3. Kui tööd pole mallis ega põllul: paiguta mallitööde järele registri järjekorras
-    return 10000 + (w.sortOrder ?? 0);
+  // PRIA tegevuste järjekord; PRIA-koodita tüübid lõppu
+  const priaIndex = (w: WorkType): number => {
+    const i = PRIA_ACTIVITIES.findIndex((p) => p.name === w.priaCode);
+    return i < 0 ? PRIA_ACTIVITIES.length : i;
   };
 
   useEffect(() => {
@@ -82,39 +69,23 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
   }, [onClose]);
 
   const toggle = (workTypeId: string) => {
-    const existingWork = existingMap.get(workTypeId);
-    if (existingWork) {
-      // Kui tööl on reaalsed kanded või lõpetatud staatus, ei saa eemaldada
-      if ((existingWork.entries?.length ?? 0) > 0 || existingWork.status === 'DONE') {
-        return;
-      }
-      // Olemasoleva plaanitud töö eemaldamise ümberlülitus
-      setToRemove((prev) => {
-        const next = new Set(prev);
-        if (next.has(workTypeId)) next.delete(workTypeId);
-        else next.add(workTypeId);
-        return next;
-      });
-    } else {
-      // Uue töö lisamise ümberlülitus
-      setToAdd((prev) => {
-        const next = new Set(prev);
-        if (next.has(workTypeId)) next.delete(workTypeId);
-        else next.add(workTypeId);
-        return next;
-      });
-    }
+    setToAdd((prev) => {
+      const next = new Set(prev);
+      if (next.has(workTypeId)) next.delete(workTypeId);
+      else next.add(workTypeId);
+      return next;
+    });
   };
 
   const save = async () => {
-    if (toAdd.size === 0 && toRemove.size === 0) {
+    if (toAdd.size === 0) {
       onClose();
       return;
     }
     setBusy(true);
     setError(null);
     try {
-      // 1. Lisa uued valitud tööd (säilitades malli sortOrderi)
+      // Lisa valitud tööd (säilitades malli sortOrderi)
       for (const id of toAdd) {
         await api.addFieldWork({
           fieldSeasonId,
@@ -122,13 +93,6 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
           sortOrder: templateItemsMap.get(id)?.sortOrder,
           plannedText: plannedText.trim() || null
         });
-      }
-      // 2. Kustuta eemaldamiseks märgitud tööd (ainult ilma kanneteta)
-      for (const id of toRemove) {
-        const work = existingMap.get(id);
-        if (work && (!work.entries || work.entries.length === 0)) {
-          await api.deleteFieldWork(work.id);
-        }
       }
       onSaved();
     } catch (err) {
@@ -144,13 +108,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
     ? [initialPhase, ...basePhases.filter((p) => p !== initialPhase)]
     : basePhases;
 
-  const totalChanges = toAdd.size + toRemove.size;
-  const summaryText = totalChanges === 0
-    ? 'Vali töid lisamiseks või eemaldamiseks'
-    : [
-        toAdd.size > 0 ? `+${toAdd.size} lisatakse` : null,
-        toRemove.size > 0 ? `-${toRemove.size} eemaldatakse` : null
-      ].filter(Boolean).join(', ');
+  const summaryText = toAdd.size === 0 ? 'Vali põllule lisatavad tööd' : `+${toAdd.size} lisatakse`;
 
   return createPortal(
     <div className="modal-backdrop sub-modal">
@@ -159,7 +117,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
           <div className="modal-title-group">
             <Pencil size={20} className="text-emerald" />
             <div>
-              <h3>Põllu plaanitud tööd</h3>
+              <h3>Lisa põllule töid</h3>
               <p className="modal-subtitle">{fieldLabel}</p>
             </div>
           </div>
@@ -170,8 +128,8 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
         <div className="modal-body add-work-body">
           {phases.map((phase) => {
             const list = workTypes
-              .filter((w) => w.phase === phase && (w.isActive || existingIds.has(w.id)))
-              .sort((a, b) => getWorkSortKey(a) - getWorkSortKey(b) || (a.name || '').localeCompare(b.name || ''));
+              .filter((w) => w.phase === phase && w.isActive)
+              .sort((a, b) => priaIndex(a) - priaIndex(b) || (a.name || '').localeCompare(b.name || ''));
             if (list.length === 0) return null;
             return (
               <section key={phase} className="add-work-phase">
@@ -179,54 +137,36 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                   {WORK_PHASE_META[phase].label.toUpperCase()}
                 </span>
                 {list.map((w) => {
-                  const existingWork = existingMap.get(w.id);
-                  const already = Boolean(existingWork);
-                  const hasEntries = existingWork ? (existingWork.entries?.length ?? 0) > 0 || existingWork.status === 'DONE' : false;
-                  const isRemoving = toRemove.has(w.id);
+                  const count = existingCount.get(w.id) ?? 0;
                   const isAdding = toAdd.has(w.id);
+                  const inTemplate = templateWorkTypeIds.has(w.id);
 
                   let optionClass = 'add-work-option';
                   let tagClass = 'add-work-tag';
-                  let tagText = '';
-
-                  if (already) {
-                    if (hasEntries) {
-                      optionClass += ' disabled';
-                      tagText = existingWork?.status === 'DONE' ? 'Lõpetatud' : `Tehtud kanded (${existingWork?.entries?.length ?? 0})`;
-                    } else if (isRemoving) {
-                      optionClass += ' to-remove';
-                      tagClass += ' to-remove';
-                      tagText = 'Eemaldatakse';
-                    } else {
-                      optionClass += ' on-field';
-                      tagClass += ' on-field';
-                      tagText = templateWorkTypeIds.has(w.id) ? 'Mallis (aktiivne)' : 'Põllul olemas';
-                    }
+                  let tagText: string;
+                  if (isAdding) {
+                    optionClass += ' picked';
+                    tagClass += ' to-add';
+                    tagText = count > 0 ? `Lisatakse (põllul juba ${count})` : 'Lisatakse';
+                  } else if (count > 0) {
+                    tagClass += ' on-field';
+                    tagText = `põllul juba ${count}`;
                   } else {
-                    if (isAdding) {
-                      optionClass += ' picked';
-                      tagClass += ' to-add';
-                      tagText = 'Lisatakse';
-                    } else {
-                      tagText = templateWorkTypeIds.has(w.id) ? 'Mallist eemaldatud' : 'Pole mallis';
-                      tagClass += templateWorkTypeIds.has(w.id) ? ' removed' : ' extra';
-                    }
+                    tagText = inTemplate ? 'Mallis' : 'Pole mallis';
+                    tagClass += inTemplate ? ' on-field' : ' extra';
                   }
-
-                  const isChecked = (already && !isRemoving) || isAdding;
 
                   return (
                     <button
                       key={w.id}
                       type="button"
                       className={optionClass}
-                      disabled={hasEntries}
-                      aria-pressed={isChecked}
-                      title={hasEntries ? 'Kannetega tööd ei saa eemaldada' : already ? (isRemoving ? 'Kliki, et jätta töö alles' : 'Kliki, et eemaldada töö plaanist') : (isAdding ? 'Kliki, et tühistada lisamine' : 'Kliki, et lisada töö plaanile')}
+                      aria-pressed={isAdding}
+                      title={isAdding ? 'Kliki, et tühistada lisamine' : 'Kliki, et lisada töö plaanile'}
                       onClick={() => toggle(w.id)}
                     >
-                      <span className={`add-work-check ${isChecked ? 'on' : ''} ${isRemoving ? 'removing' : ''}`}>
-                        {isRemoving ? <X size={12} strokeWidth={3} /> : (isChecked && <Check size={11} strokeWidth={3.4} />)}
+                      <span className={`add-work-check ${isAdding ? 'on' : ''}`}>
+                        {isAdding && <Check size={11} strokeWidth={3.4} />}
                       </span>
                       <span className="add-work-name">{w.name}</span>
                       <span className={tagClass}>{tagText}</span>
@@ -251,10 +191,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
             <button
               type="button"
               className="btn btn-primary"
-              disabled={busy || totalChanges === 0}
+              disabled={busy || toAdd.size === 0}
               onClick={() => void save()}
             >
-              {busy ? 'Salvestan...' : 'Salvesta muudatused'}
+              {busy ? 'Salvestan...' : 'Lisa tööd'}
             </button>
           </div>
         </div>

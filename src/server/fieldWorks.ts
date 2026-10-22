@@ -25,7 +25,6 @@ import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
-const REPEAT_MODES = ['ONCE', 'UP_TO', 'INTERVAL'] as const;
 const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
 const MAX_BODY_BYTES = 256 * 1024;
 
@@ -696,7 +695,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const b = await parseBody(req, MAX_BODY_BYTES);
     const name = text(b?.name, 120);
     const phase = oneOf(b?.phase, PHASES);
-    const repeatMode = oneOf(b?.repeatMode, REPEAT_MODES) ?? 'ONCE';
     if (!name || !phase) {
       json(res, { error: 'Töö nimi ja faas on kohustuslikud' }, 400);
       return true;
@@ -704,9 +702,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const data = {
       name,
       phase,
-      repeatMode,
-      maxRepeats: repeatMode === 'UP_TO' ? int(b?.maxRepeats) : null,
-      intervalDays: repeatMode === 'INTERVAL' ? int(b?.intervalDays) : null,
+      // iga töö on üks kord; sama tegevust võib põllul olla mitu tööd
+      repeatMode: 'ONCE' as const,
+      maxRepeats: null,
+      intervalDays: null,
+      // priaCode jääb muutmisel samaks (kehast seda ei võeta)
       usesMaterials: b?.usesMaterials === true,
       sortOrder: int(b?.sortOrder) ?? 0,
       isActive: b?.isActive !== false

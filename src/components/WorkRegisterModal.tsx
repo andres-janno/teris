@@ -11,7 +11,6 @@ import {
   NEW_MATERIAL,
   type Material,
   type WorkPhase,
-  type WorkRepeatMode,
   type WorkTemplate,
   type WorkTemplateItem,
   type WorkType
@@ -28,9 +27,6 @@ interface WorkRegisterModalProps {
 type Tab = 'works' | 'templates' | 'materials';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
-
-export const repeatLabel = (w: Pick<WorkType, 'repeatMode' | 'maxRepeats' | 'intervalDays'>) =>
-  w.repeatMode === 'UP_TO' ? `Kuni ${w.maxRepeats ?? 1} korda` : w.repeatMode === 'INTERVAL' ? `Iga ${w.intervalDays ?? 14} päeva järel` : 'Ühekordne';
 
 // Mida kandes küsitakse (töötaja sisestab ainult kogused).
 const entryInputs = (w: WorkType) => [
@@ -166,7 +162,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         workTypeId: w.id,
         sortOrder: items.length,
         typicalTiming: null,
-        plannedCount: w.repeatMode === 'UP_TO' ? w.maxRepeats : null
+        plannedCount: 1
       });
       return items;
     });
@@ -231,19 +227,13 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         <div className="modal-body work-register-body">
           {tab === 'works' && (
             <>
-              <div className="work-register-toolbar">
-                <button className="btn btn-primary btn-sm" onClick={() => setWorkForm({ phase: 'PREPARATION', repeatMode: 'ONCE', usesMaterials: false, isActive: true, sortOrder: workTypes.length })}>
-                  <Plus size={14} />
-                  <span>Lisa töö</span>
-                </button>
-              </div>
+              {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
               <div className="register-table-wrap">
                 <table className="register-table work-register-table">
                   <thead>
                     <tr>
                       <th>Töö</th>
                       <th>Faas</th>
-                      <th>Kordumine</th>
                       <th>Kandes küsitakse (kogused)</th>
                       <th className="num">Mallides</th>
                       <th className="num">Põldudel</th>
@@ -260,7 +250,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                             {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                           </td>
                           <td><PhaseBadge phase={w.phase} /></td>
-                          <td>{repeatLabel(w)}</td>
                           <td>
                             <div className="field-sub-tags">
                               {entryInputs(w).map((i) => <span key={i} className="sub-tag">{i}</span>)}
@@ -406,23 +395,18 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                             disabled={readOnly}
                             onChange={(e) => editItems((items) => { items[index] = { ...items[index], typicalTiming: e.target.value || null }; return items; })}
                           />
-                          {w && w.repeatMode !== 'ONCE' ? (
-                            <label className="work-template-count">
-                              <span>{w.repeatMode === 'INTERVAL' ? `iga ${w.intervalDays} p` : 'kordi'}</span>
-                              {w.repeatMode === 'UP_TO' && (
-                                <input
-                                  className="form-input"
-                                  type="number"
-                                  min={1}
-                                  value={it.plannedCount ?? w.maxRepeats ?? 1}
-                                  disabled={readOnly}
-                                  onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
-                                />
-                              )}
-                            </label>
-                          ) : (
-                            <span className="work-template-count muted">ühekordne</span>
-                          )}
+                          {/* kordi = mitu eraldi tööd luuakse põllule malli rakendamisel */}
+                          <label className="work-template-count">
+                            <span>kordi</span>
+                            <input
+                              className="form-input"
+                              type="number"
+                              min={1}
+                              value={it.plannedCount ?? 1}
+                              disabled={readOnly}
+                              onChange={(e) => editItems((items) => { items[index] = { ...items[index], plannedCount: Number(e.target.value) || 1 }; return items; })}
+                            />
+                          </label>
                           {!readOnly && (
                             <button type="button" className="icon-btn-danger" title="Eemalda mallist" aria-label="Eemalda mallist" onClick={() => removeItem(index)}>
                               <Trash2 size={15} />
@@ -512,15 +496,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
             <div className="modal-header">
               <div className="modal-title-group">
                 <Edit2 size={20} className="text-emerald" />
-                <h3>{workForm.id ? `Muuda tööd: ${workForm.name}` : 'Lisa töö'}</h3>
+                <h3>Muuda tööd: {workForm.name}</h3>
               </div>
               <button type="button" className="icon-btn-ghost" onClick={() => setWorkForm(null)} title="Sulge"><X size={20} /></button>
             </div>
             <div className="modal-body">
               <div className="form-grid">
                 <div className="form-group full-width">
-                  <label htmlFor="wt-name">Nimi *</label>
-                  <input id="wt-name" className="form-input" required value={workForm.name ?? ''} onChange={(e) => setWorkForm({ ...workForm, name: e.target.value })} />
+                  <label htmlFor="wt-name">PRIA tegevus</label>
+                  <input id="wt-name" className="form-input" readOnly value={workForm.name ?? ''} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="wt-phase">Faas</label>
@@ -528,26 +512,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                     {WORK_PHASES.map((p) => <option key={p} value={p}>{WORK_PHASE_META[p].label}</option>)}
                   </select>
                 </div>
-                <div className="form-group">
-                  <label htmlFor="wt-repeat">Kordumine</label>
-                  <select id="wt-repeat" className="form-input" value={workForm.repeatMode} onChange={(e) => setWorkForm({ ...workForm, repeatMode: e.target.value as WorkRepeatMode })}>
-                    <option value="ONCE">Ühekordne</option>
-                    <option value="UP_TO">Kuni N korda</option>
-                    <option value="INTERVAL">Iga N päeva järel</option>
-                  </select>
-                </div>
-                {workForm.repeatMode === 'UP_TO' && (
-                  <div className="form-group">
-                    <label htmlFor="wt-max">Kordi kuni</label>
-                    <input id="wt-max" className="form-input" type="number" min={1} value={workForm.maxRepeats ?? 2} onChange={(e) => setWorkForm({ ...workForm, maxRepeats: Number(e.target.value) || 1 })} />
-                  </div>
-                )}
-                {workForm.repeatMode === 'INTERVAL' && (
-                  <div className="form-group">
-                    <label htmlFor="wt-int">Päevade vahe</label>
-                    <input id="wt-int" className="form-input" type="number" min={1} value={workForm.intervalDays ?? 14} onChange={(e) => setWorkForm({ ...workForm, intervalDays: Number(e.target.value) || 1 })} />
-                  </div>
-                )}
                 <label className="users-admin-checkbox full-width">
                   <input type="checkbox" checked={workForm.usesMaterials ?? false} onChange={(e) => setWorkForm({ ...workForm, usesMaterials: e.target.checked })} />
                   <span>Kandes küsitakse kulumaterjale (seeme, väetis, taimekaitsevahend)</span>

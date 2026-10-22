@@ -159,7 +159,8 @@ export interface CatalogData {
 
 export type CropInput = Omit<CatalogCrop, 'id' | 'varieties'>;
 export type VarietyInput = Omit<CatalogVariety, 'id' | 'catalogCropId'>;
-export type WorkTypeInput = Omit<CatalogWorkType, 'id'>;
+// kordumist ei sisestata: iga töö on üks kord
+export type WorkTypeInput = Omit<CatalogWorkType, 'id' | 'repeatMode' | 'maxRepeats' | 'intervalDays'>;
 export interface TemplateItemInput {
   catalogWorkTypeId: string;
   typicalTiming: string | null;

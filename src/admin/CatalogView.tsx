@@ -2,7 +2,6 @@ import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   CROP_GROUP_LABELS,
   PHASE_LABELS,
-  REPEAT_LABELS,
   platformApi,
   type CatalogCrop,
   type CatalogData,
@@ -11,8 +10,7 @@ import {
   type CatalogWorkType,
   type CropGroup,
   type TemplateItemInput,
-  type WorkPhase,
-  type WorkRepeatMode
+  type WorkPhase
 } from './platformApi.ts';
 
 type Tab = 'crops' | 'workTypes' | 'templates';
@@ -378,9 +376,6 @@ function CropsTab({ data, reload }: { data: CatalogData; reload: () => void }) {
 interface WorkTypeDraft {
   name: string;
   phase: WorkPhase;
-  repeatMode: WorkRepeatMode;
-  maxRepeats: string;
-  intervalDays: string;
   usesMaterials: boolean;
   sortOrder: string;
   isActive: boolean;
@@ -390,9 +385,6 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
   const [d, setD] = useState<WorkTypeDraft>({
     name: wt?.name ?? '',
     phase: wt?.phase ?? 'CARE',
-    repeatMode: wt?.repeatMode ?? 'ONCE',
-    maxRepeats: numStr(wt?.maxRepeats),
-    intervalDays: numStr(wt?.intervalDays),
     usesMaterials: wt?.usesMaterials ?? false,
     sortOrder: String(wt?.sortOrder ?? nextOrder),
     isActive: wt?.isActive ?? true
@@ -408,9 +400,6 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
     const input = {
       name: d.name.trim(),
       phase: d.phase,
-      repeatMode: d.repeatMode,
-      maxRepeats: d.repeatMode === 'UP_TO' ? numOrNull(d.maxRepeats) : null,
-      intervalDays: d.repeatMode === 'INTERVAL' ? numOrNull(d.intervalDays) : null,
       usesMaterials: d.usesMaterials,
       sortOrder: numOrNull(d.sortOrder) ?? 0,
       isActive: d.isActive
@@ -441,23 +430,6 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
             ))}
           </select>
         </Field>
-        <Field id="wt-repeat" label="Kordus">
-          <select id="wt-repeat" className="form-input" value={d.repeatMode} onChange={(e) => set('repeatMode', e.target.value as WorkRepeatMode)}>
-            {(Object.keys(REPEAT_LABELS) as WorkRepeatMode[]).map((r) => (
-              <option key={r} value={r}>{REPEAT_LABELS[r]}</option>
-            ))}
-          </select>
-        </Field>
-        {d.repeatMode === 'UP_TO' && (
-          <Field id="wt-max" label="Kordi kuni">
-            <input id="wt-max" className="form-input" type="number" min="0" step="1" value={d.maxRepeats} onChange={(e) => set('maxRepeats', e.target.value)} />
-          </Field>
-        )}
-        {d.repeatMode === 'INTERVAL' && (
-          <Field id="wt-int" label="Intervall (päeva)">
-            <input id="wt-int" className="form-input" type="number" min="0" step="1" value={d.intervalDays} onChange={(e) => set('intervalDays', e.target.value)} />
-          </Field>
-        )}
         <Field id="wt-order" label="Järjekord">
           <input id="wt-order" className="form-input" type="number" min="0" step="1" value={d.sortOrder} onChange={(e) => set('sortOrder', e.target.value)} />
         </Field>
@@ -472,12 +444,6 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
       </div>
     </form>
   );
-}
-
-function repeatText(w: CatalogWorkType): string {
-  if (w.repeatMode === 'UP_TO') return `${REPEAT_LABELS.UP_TO}${w.maxRepeats !== null ? ` (${w.maxRepeats})` : ''}`;
-  if (w.repeatMode === 'INTERVAL') return `${REPEAT_LABELS.INTERVAL}${w.intervalDays !== null ? ` (${w.intervalDays} p)` : ''}`;
-  return REPEAT_LABELS.ONCE;
 }
 
 function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void }) {
@@ -519,14 +485,13 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
       <div className="admin-table-wrap">
         <table className="admin-table">
           <thead>
-            <tr><th>Nimi</th><th>Faas</th><th>Kordus</th><th>Kulumaterjalid</th><th>Järjekord</th><th>Aktiivne</th><th /></tr>
+            <tr><th>Nimi</th><th>Faas</th><th>Kulumaterjalid</th><th>Järjekord</th><th>Aktiivne</th><th /></tr>
           </thead>
           <tbody>
             {data.workTypes.map((w) => (
               <tr key={w.id}>
                 <td>{w.name}</td>
                 <td>{PHASE_LABELS[w.phase] ?? w.phase}</td>
-                <td>{repeatText(w)}</td>
                 <td>{yesNo(w.usesMaterials)}</td>
                 <td>{w.sortOrder}</td>
                 <td>{yesNo(w.isActive)}</td>
@@ -536,7 +501,7 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
                 </td>
               </tr>
             ))}
-            {data.workTypes.length === 0 && <tr><td colSpan={7} className="admin-muted">Tööliike pole</td></tr>}
+            {data.workTypes.length === 0 && <tr><td colSpan={6} className="admin-muted">Tööliike pole</td></tr>}
           </tbody>
         </table>
       </div>

@@ -47,6 +47,13 @@ describe('copyCatalogToTenant', () => {
         const copy = crops.find((x) => x.name === c.name);
         expect(copy?.isWinterCrop).toBe(c.isWinterCrop);
       }
+      // PRIA tegevuse kood kopeeritakse tööliigile
+      const catTypes = await tx.catalogWorkType.findMany();
+      expect(catTypes.some((w) => w.priaCode)).toBe(true);
+      for (const w of catTypes) {
+        const copy = types.find((x) => x.name === w.name);
+        expect(copy?.priaCode).toBe(w.priaCode);
+      }
     });
   });
 

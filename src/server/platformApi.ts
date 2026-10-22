@@ -1,7 +1,7 @@
 // src/server/platformApi.ts — teenusepakkuja API: ettevõtted, litsentsid, peatamine, kutse, logi.
 // Ettevõtte andmeid näidatakse ainult koondarvudena (groupBy / count), mitte ridadena.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { Prisma, CropGroup, WorkPhase, WorkRepeatMode } from '@prisma/client';
+import { Prisma, CropGroup, WorkPhase } from '@prisma/client';
 import { authDb } from './db.ts';
 import { json, parseBody, hasRequestBody } from './http.ts';
 import { handlePlatformAuth, platformUserOf } from './platformAuth.ts';
@@ -369,9 +369,6 @@ const VARIETY_FIELDS: FieldSpec[] = [
 const WORK_TYPE_FIELDS: FieldSpec[] = [
   { k: 'name', t: 'name', label: 'Nimi' },
   { k: 'phase', t: 'enum', values: Object.values(WorkPhase), label: 'Tööfaas' },
-  { k: 'repeatMode', t: 'enum', values: Object.values(WorkRepeatMode), label: 'Kordumisviis' },
-  { k: 'maxRepeats', t: 'int', nullable: true, label: 'Kordumiste arv' },
-  { k: 'intervalDays', t: 'int', nullable: true, label: 'Intervall päevades' },
   { k: 'usesMaterials', t: 'bool', label: 'Kasutab materjale' },
   { k: 'sortOrder', t: 'int', label: 'Järjekord' },
   { k: 'isActive', t: 'bool', label: 'Aktiivne' }

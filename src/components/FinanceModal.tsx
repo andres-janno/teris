@@ -545,7 +545,6 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         <div className="finance-entry-card-body">
                           <div className="finance-entry-work-name">
                             <span>{e.workTypeName}</span>
-                            {e.occurrenceNo ? <span className="finance-occurrence">({e.occurrenceNo}. kord)</span> : null}
                           </div>
                           <div className="finance-entry-meta">
                             <span>{formatDate(e.date)}</span>

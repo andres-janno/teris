@@ -13,6 +13,7 @@ import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
 import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
+import { FieldWorkPlanDialog } from './FieldWorkPlanDialog';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
 import { FieldShapeModal } from './FieldShapeModal';
@@ -87,9 +88,9 @@ const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
 
 const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void }> = ({ work, fieldAreaHa, selected, onSelect }) => {
   const n = work.entries.length;
-  // Tehtud osa põllust (korduvatel töödel on loendur, protsenti ei näidata)
+  // Tehtud osa põllust
   const doneHa = work.entries.reduce((sum, e) => sum + (e.areaHa ?? 0), 0);
-  const donePct = work.repeatMode === 'ONCE' && fieldAreaHa > 0 && doneHa > 0
+  const donePct = fieldAreaHa > 0 && doneHa > 0
     ? Math.min(100, Math.round((doneHa / fieldAreaHa) * 100))
     : null;
 
@@ -111,6 +112,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
       <span className="fw-card-title">
         <StatusIcon status={work.status} />
         <span>{work.workTypeName}</span>
+        {work.method && <small style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{work.method}</small>}
         {donePct !== null && (
           <span className="fw-card-pct" title={`${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha tehtud`}>{donePct}%</span>
         )}
@@ -138,12 +140,12 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
           })}
         </span>
       ) : (
-        <span className={`fw-card-sub ${work.repeatMode !== 'ONCE' ? 'repeat' : ''}`}>
+        <span className="fw-card-sub">
           {work.carriedOverFromYear
             ? `Külvatud sügisel ${work.carriedOverFromYear}`
             : work.status === 'DONE'
             ? (work.finishedAt ? `Lõpetatud ${formatDayMonth(work.finishedAt)}` : 'Lõpetatud')
-            : (work.repeatMode !== 'ONCE' ? `↻ 0/${work.plannedCount}` : (work.plannedText || 'planeerimata'))}
+            : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || 'planeerimata')}
         </span>
       )}
     </button>
@@ -175,6 +177,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [hideDone, setHideDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
+  const [planDialog, setPlanDialog] = useState<FieldWork | null>(null);
   const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean } | null>(null);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [financeEntryId, setFinanceEntryId] = useState<string | null>(null);
@@ -186,7 +189,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   };
 
   useEffect(() => {
-    if (!selectedId || entryDialog || isFinanceOpen) return;
+    if (!selectedId || entryDialog || planDialog || isFinanceOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         setSelectedId(null);
@@ -194,7 +197,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, entryDialog, isFinanceOpen]);
+  }, [selectedId, entryDialog, planDialog, isFinanceOpen]);
 
   const pendingFinanceCount = useMemo(() => {
     return fieldWorks
@@ -961,7 +964,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               )}
                               {renderCards(row, 'PREPARATION')}
                               {!locked && !row.undetermined && row.works.length > 0 && (
-                                <button type="button" className="fw-add" aria-label="Muuda või lisa töid" title="Muuda või lisa ettevalmistustöid" onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
+                                <button type="button" className="fw-add" aria-label="Lisa töid" title="Lisa ettevalmistustöid" onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
                                   <Pencil size={13} />
                                 </button>
                               )}
@@ -974,8 +977,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                 <button
                                   type="button"
                                   className="fw-add"
-                                  aria-label="Muuda või lisa külvitöid"
-                                  title="Muuda või lisa külvitöö"
+                                  aria-label="Lisa külvitöid"
+                                  title="Lisa külvitöö"
                                   onClick={() => setAddDialog({ row, phase: 'SOWING' })}
                                 >
                                   <Pencil size={13} />
@@ -1020,7 +1023,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           {!sownDone(row) && visibleWorks(row, 'CARE').length === 0 && !row.undetermined && !row.isWinter}
                           {renderCards(row, 'CARE')}
                           {!locked && !row.undetermined && (row.works.length > 0 || row.isWinter) && (
-                            <button type="button" className="fw-add" aria-label="Muuda või lisa töid" title="Muuda või lisa hooldustöid" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
+                            <button type="button" className="fw-add" aria-label="Lisa töid" title="Lisa hooldustöid" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
                               <Pencil size={13} />
                             </button>
                           )}
@@ -1033,8 +1036,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <button
                               type="button"
                               className="fw-add"
-                              aria-label="Muuda või lisa koristustöid"
-                              title="Muuda või lisa koristustöö"
+                              aria-label="Lisa koristustöid"
+                              title="Lisa koristustöö"
                               onClick={() => setAddDialog({ row, phase: 'HARVEST' })}
                             >
                               <Pencil size={13} />
@@ -1062,8 +1065,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                 <button
                                   type="button"
                                   className="fw-add"
-                                  aria-label="Muuda või lisa sügistöid"
-                                  title="Muuda või lisa sügise ettevalmistustöö (nt künd)"
+                                  aria-label="Lisa sügistöid"
+                                  title="Lisa sügise ettevalmistustöö (nt künd)"
                                   onClick={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true })}
                                 >
                                   <Pencil size={13} />
@@ -1079,8 +1082,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                   <button
                                     type="button"
                                     className="fw-add"
-                                    aria-label="Muuda või lisa sügiskülv"
-                                    title="Muuda või lisa sügiskülv"
+                                    aria-label="Lisa sügiskülv"
+                                    title="Lisa sügiskülv"
                                     onClick={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true })}
                                   >
                                     <Pencil size={13} />
@@ -1188,7 +1191,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </label>
                   </div>
 
-                  {selected.repeatMode === 'ONCE' && activeArea > 0 && (() => {
+                  {!locked && (
+                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPlanDialog(selected)}>
+                      <Pencil size={14} />
+                      <span>Muuda plaani</span>
+                    </button>
+                  )}
+
+                  {activeArea > 0 && (() => {
                     const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
                     const pct = Math.min(100, Math.round((done / activeArea) * 100));
                     return (
@@ -1211,7 +1221,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       <div className="fw-entry-head">
                         <strong>
                           {formatDate(e.date)}
-                          {e.occurrenceNo ? ` · ${e.occurrenceNo}. kord` : ''}
                           {e.startTime && e.endTime ? ` · ${e.startTime}–${e.endTime}` : ''}
                         </strong>
                         <span>
@@ -1334,6 +1343,30 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             onClose={() => setEntryDialog(null)}
             onSaved={() => {
               setEntryDialog(null);
+              void reload();
+            }}
+          />
+        );
+      })()}
+
+      {planDialog && selectedRow && (() => {
+        const isNext = planDialog.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === planDialog.fieldSeasonId);
+        const activeLabel = isNext
+          ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1})`
+          : fieldLabel(selectedRow);
+        const activeArea = isNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
+        return (
+          <FieldWorkPlanDialog
+            fieldSeasonId={planDialog.fieldSeasonId}
+            fieldLabel={activeLabel}
+            fieldAreaHa={activeArea}
+            work={planDialog}
+            workTypes={workTypes}
+            materials={materials}
+            workers={workers}
+            onClose={() => setPlanDialog(null)}
+            onSaved={() => {
+              setPlanDialog(null);
               void reload();
             }}
           />

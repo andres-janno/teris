@@ -346,17 +346,17 @@ describe('platvormi API: catalog (algkataloog)', () => {
   it('tööliik: loomine, valideerimine, muutmine', async () => {
     const bad = await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö`, phase: 'FOO' });
     expect(bad.status).toBe(400);
-    expect((await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö`, phase: 'CARE', repeatMode: 'FOO' })).status).toBe(400);
     expect((await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö` })).status).toBe(400);
     const r = await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö`, phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 3, usesMaterials: true });
     expect(r.status).toBe(201);
     wtId = r.data.id;
-    expect(r.data).toMatchObject({ phase: 'CARE', repeatMode: 'UP_TO', maxRepeats: 3, usesMaterials: true });
+    // kordumise välju ei võeta vastu: iga töö on üks kord
+    expect(r.data).toMatchObject({ phase: 'CARE', repeatMode: 'ONCE', maxRepeats: null, usesMaterials: true });
     const dup = await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö`, phase: 'CARE' });
     expect(dup.status).toBe(409);
-    const p = await call('PATCH', `/api/platform/catalog/work-types/${wtId}`, { phase: 'HARVEST', maxRepeats: null });
+    const p = await call('PATCH', `/api/platform/catalog/work-types/${wtId}`, { phase: 'HARVEST', usesMaterials: false });
     expect(p.status).toBe(200);
-    expect(p.data).toMatchObject({ phase: 'HARVEST', maxRepeats: null });
+    expect(p.data).toMatchObject({ phase: 'HARVEST', usesMaterials: false });
     expect((await call('PATCH', `/api/platform/catalog/work-types/${wtId}`, { phase: 'FOO' })).status).toBe(400);
     expect((await call('PATCH', '/api/platform/catalog/work-types/puudub', { sortOrder: 1 })).status).toBe(404);
   });
