@@ -104,7 +104,7 @@ export const FieldWorkPlanDialog: React.FC<FieldWorkPlanDialogProps> = ({ fieldS
               <label htmlFor="wp-type">Tegevus *</label>
               <select id="wp-type" className="form-input" value={workTypeId} disabled={!!work} onChange={(e) => setWorkTypeId(e.target.value)}>
                 <option value="">– vali –</option>
-                {ordered.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                {ordered.map((w) => <option key={w.id} value={w.id}>{w.shortName?.trim() ? `${w.shortName.trim()} (${w.name})` : w.name}</option>)}
               </select>
             </div>
             <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} className="form-input" /></div>

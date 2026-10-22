@@ -66,7 +66,7 @@ const WorkItem: React.FC<{ work: FieldWork; canEdit: boolean; onEditWork: () => 
   return (
     <article className={`fwt-work ${work.status.toLowerCase()}`} style={{ borderLeftColor: meta.color }}>
       <header className="fwt-work-head">
-        <span className="fwt-work-title">{work.workTypeName}{work.method ? <small> · {work.method}</small> : null}</span>
+        <span className="fwt-work-title" title={work.priaName}>{work.workTypeName}{work.method ? <small> · {work.method}</small> : null}</span>
         <span className={`fwt-status ${work.status.toLowerCase()}`}>{STATUS_LABEL[work.status]}</span>
         {canEdit && (
           <span className="fwt-actions">

@@ -34,6 +34,7 @@ export const MATERIAL_CATEGORY_LABEL: Record<MaterialCategory, string> = {
 export interface WorkType {
   id: string;
   name: string;
+  shortName: string | null;
   phase: WorkPhase;
   repeatMode: WorkRepeatMode;
   maxRepeats: number | null;
@@ -131,6 +132,7 @@ export interface FieldWork {
   fieldSeasonId: number;
   workTypeId: string;
   workTypeName: string;
+  priaName: string;
   priaCode: string | null;
   phase: WorkPhase;
   repeatMode: WorkRepeatMode;

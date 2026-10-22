@@ -23,6 +23,7 @@ import {
 } from './fieldWorkRules.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
+import { workTypeDisplayName } from '../services/workTypeName.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
 const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
@@ -386,7 +387,8 @@ export function fieldWorkDto(w: any, withFinance: boolean) {
     id: w.id,
     fieldSeasonId: w.fieldSeasonId,
     workTypeId: w.workTypeId,
-    workTypeName: w.workType.name,
+    workTypeName: workTypeDisplayName(w.workType),
+    priaName: w.workType.name,
     priaCode: w.workType.priaCode ?? null,
     phase: w.phase,
     repeatMode: 'ONCE' as const,
@@ -701,6 +703,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     const data = {
       name,
+      shortName: text(b?.shortName, 60) || null,
       phase,
       // iga töö on üks kord; sama tegevust võib põllul olla mitu tööd
       repeatMode: 'ONCE' as const,
@@ -1283,7 +1286,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           ...ENTRY_INCLUDE,
           fieldWork: {
             select: {
-              workType: { select: { name: true } },
+              workType: { select: { name: true, shortName: true } },
               fieldSeason: { select: { id: true, year: true, crop: true, areaHa: true, field: { select: { num: true, name: true } } } }
             }
           }
@@ -1291,7 +1294,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       });
       json(res, rows.map((e) => ({
         ...entryDto(e, true),
-        workTypeName: e.fieldWork.workType.name,
+        workTypeName: workTypeDisplayName(e.fieldWork.workType),
         fieldSeasonId: e.fieldWork.fieldSeason.id,
         year: e.fieldWork.fieldSeason.year,
         crop: e.fieldWork.fieldSeason.crop,

@@ -111,7 +111,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
     >
       <span className="fw-card-title">
         <StatusIcon status={work.status} />
-        <span>{work.workTypeName}</span>
+        <span title={work.priaName}>{work.workTypeName}</span>
         {work.method && <small style={{ fontWeight: 400, color: 'var(--text-secondary)' }}>{work.method}</small>}
         {donePct !== null && (
           <span className="fw-card-pct" title={`${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha tehtud`}>{donePct}%</span>
@@ -1141,7 +1141,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       <X size={18} />
                     </button>
                   </div>
-                  <h2>{selected.workTypeName}</h2>
+                  <h2 title={selected.priaName}>{selected.workTypeName}</h2>
                   <div className="fw-panel-field">{activeLabel}</div>
                 </div>
 

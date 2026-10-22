@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Check, Pencil } from 'lucide-react';
 import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
+import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType, type WorkTemplateItem } from '../types/fieldWork';
 
 interface AddFieldWorkDialogProps {
@@ -168,7 +169,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                       <span className={`add-work-check ${isAdding ? 'on' : ''}`}>
                         {isAdding && <Check size={11} strokeWidth={3.4} />}
                       </span>
-                      <span className="add-work-name">{w.name}</span>
+                      <span className="add-work-name" title={w.name}>
+                        {workTypeDisplayName(w)}
+                        {w.shortName?.trim() && <small style={{ display: 'block', fontWeight: 400, color: 'var(--text-secondary)' }}>{w.name}</small>}
+                      </span>
                       <span className={tagClass}>{tagText}</span>
                     </button>
                   );

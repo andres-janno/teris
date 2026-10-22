@@ -657,6 +657,7 @@ model WorkType {
   intervalDays  Int?
   usesMaterials Boolean        @default(false) // kandes küsitakse kulumaterjale
   priaCode      String? // PRIA e-põlluraamatu tegevus, nt "Taimekaitsevahendi kasutamine"
+  shortName     String? // ettevõtte lühinimi; kui täidetud, kuvatakse tööde ja põllu vaates PRIA nime asemel
   sortOrder     Int            @default(0)
   isActive      Boolean        @default(true)
   createdAt     DateTime       @default(now())

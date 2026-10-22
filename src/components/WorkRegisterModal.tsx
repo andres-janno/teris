@@ -3,6 +3,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, ListChecks, Plus, Edit2, Trash2, ChevronUp, ChevronDown, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
+import { workTypeDisplayName } from '../services/workTypeName';
 import type { Crop } from '../types/crop';
 import {
   WORK_PHASES,
@@ -232,7 +233,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                 <table className="register-table work-register-table">
                   <thead>
                     <tr>
-                      <th>Töö</th>
+                      <th>PRIA tegevus</th>
+                      <th>Lühinimi</th>
                       <th>Faas</th>
                       <th>Kandes küsitakse (kogused)</th>
                       <th className="num">Mallides</th>
@@ -249,6 +251,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                             {w.name}
                             {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                           </td>
+                          <td>{w.shortName?.trim() || '–'}</td>
                           <td><PhaseBadge phase={w.phase} /></td>
                           <td>
                             <div className="field-sub-tags">
@@ -387,7 +390,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                               <button type="button" className="icon-btn-ghost-xs" aria-label="Liiguta alla" disabled={i === rows.length - 1} onClick={() => moveItem(index, 1)}><ChevronDown size={14} /></button>
                             </span>
                           )}
-                          <span className="work-template-name" title={w?.name}>{w?.name}</span>
+                          <span className="work-template-name" title={w?.name}>{w ? workTypeDisplayName(w) : ""}</span>
                           <input
                             className="form-input"
                             placeholder="Tavapärane aeg, nt apr–mai"
@@ -505,6 +508,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                 <div className="form-group full-width">
                   <label htmlFor="wt-name">PRIA tegevus</label>
                   <input id="wt-name" className="form-input" readOnly value={workForm.name ?? ''} />
+                </div>
+                <div className="form-group full-width">
+                  <label htmlFor="wt-short">Lühinimi</label>
+                  <input id="wt-short" className="form-input" maxLength={60} placeholder="nt Umbrohutõrje" value={workForm.shortName ?? ''} onChange={(e) => setWorkForm({ ...workForm, shortName: e.target.value })} />
                 </div>
                 <div className="form-group">
                   <label htmlFor="wt-phase">Faas</label>
