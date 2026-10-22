@@ -1103,6 +1103,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const data: Record<string, unknown> = {};
     const { data: plan, lines } = await planInput(b);
     Object.assign(data, plan);
+    const before = await prisma.fieldWork.findUnique({ where: { id }, select: { status: true, plannedAreaHa: true } });
     if (b?.status === 'DONE') {
       const latestEntry = await prisma.workEntry.findFirst({
         where: { fieldWorkId: id },
@@ -1119,8 +1120,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
       await tx.fieldWork.update({ where: { id }, data });
     });
-    // Plaanitud pindala muutus võib töö lõpetada või uuesti avada
-    if ('plannedAreaHa' in b && !b?.status) await syncFieldWorkStatus(id, false, userId, prisma);
+    // Plaanitud pindala tegelik muutus võib töö lõpetada; lõpetatud tööd ei avata automaatselt (ainult REOPEN)
+    const areaChanged = 'plannedAreaHa' in data && (data.plannedAreaHa ?? null) !== (before?.plannedAreaHa ?? null);
+    if (areaChanged && !b?.status && before?.status !== 'DONE') await syncFieldWorkStatus(id, false, userId, prisma);
     // Lõpetatud töö avamine: olek kannete järgi.
     if (b?.status === 'REOPEN') {
       const n = await prisma.workEntry.count({ where: { fieldWorkId: id } });

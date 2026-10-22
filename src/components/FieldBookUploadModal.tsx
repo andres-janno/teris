@@ -80,7 +80,11 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
       const skippedText = r.skipped.length
         ? `\n\nVahele jäetud:\n${r.skipped.map((x) => `Nr ${x.num} (${x.season}): ${x.reason}`).join('\n')}`
         : '';
-      void alertDialog(`Imporditud ${r.imported} põldu: ${r.created} uut tööd, ${r.complemented} täiendatud${skippedText}`);
+      const parts = [`${r.created} uut tööd`, `${r.complemented} täiendatud`];
+      if (r.entriesAdded) parts.push(`neist ${r.entriesAdded} tööle lisati kanne`);
+      if (r.linked) parts.push(`${r.linked} juba olemas`);
+      if (r.unknown) parts.push(`${r.unknown} tundmatu tegevusega rida vahele jäetud`);
+      void alertDialog(`Imporditud ${r.imported} põldu: ${parts.join(', ')}${skippedText}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import ebaõnnestus.');
     } finally {

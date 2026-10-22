@@ -76,7 +76,10 @@ export interface FieldBookImportResult {
   success: boolean;
   imported: number;
   created: number;      // uued tööd + kanded
-  complemented: number; // olemasolevad tööd, mida täiendati
+  complemented: number; // olemasolevad tööd, mida täiendati (plaaniväljad, plaaniread või kanne)
+  linked: number;       // olemasolevad tööd, mis sobisid, aga midagi ei muutunud
+  entriesAdded: number; // kanneteta sobinud töödele lisatud kanded
+  unknown: number;      // tundmatu tegevusega read — vahele jäetud
   skipped: { fieldCode: string; num: string; season: number; reason: string }[];
 }
 

@@ -9,7 +9,7 @@ const op = (p: Partial<FieldBookImportOperation>): FieldBookImportOperation => (
   type: 'Kündmine', dateFrom: '2026-04-27', dateTo: null, areaHa: 2.42, method: null, performerId: null, notes: null, products: [], ...p
 });
 const work = (p: Partial<ExistingWork>): ExistingWork => ({
-  id: 'w1', activity: 'Kündmine', plannedFrom: null, plannedTo: null, entries: [], productKeys: [], ...p
+  id: 'w1', activity: 'Kündmine', plannedFrom: null, plannedTo: null, entries: [], productKeys: [], fromTemplate: false, ...p
 });
 
 describe('findMatchingWork', () => {
@@ -18,9 +18,26 @@ describe('findMatchingWork', () => {
     expect(findMatchingWork(op({ dateFrom: '2026-04-27', dateTo: '2026-04-30' }), [w], new Set())?.id).toBe('w1');
     expect(findMatchingWork(op({ dateFrom: '2026-04-27', dateTo: '2026-04-29' }), [w], new Set())).toBeNull();
   });
-  it('plaani kuupäev arvestatakse, plaanita ja kanneteta töö ei sobi', () => {
+  it('plaani kuupäev arvestatakse', () => {
     expect(findMatchingWork(op({}), [work({ plannedFrom: '2026-04-28', plannedTo: null })], new Set())?.id).toBe('w1');
-    expect(findMatchingWork(op({}), [work({})], new Set())).toBeNull();
+  });
+  it('kuupäevata ja kanneteta (mallist) töö sobib, kui kuupäevaga sobivat pole', () => {
+    expect(findMatchingWork(op({}), [work({ fromTemplate: true })], new Set())?.id).toBe('w1');
+    // mallist töö eelistatakse, muidu järjekorras esimene
+    const a = work({ id: 'a' });
+    const b = work({ id: 'b', fromTemplate: true });
+    expect(findMatchingWork(op({}), [a, b], new Set())?.id).toBe('b');
+    expect(findMatchingWork(op({}), [a, work({ id: 'c' })], new Set())?.id).toBe('a');
+  });
+  it('kuupäevaga sobiv töö võidab kuupäevata töö', () => {
+    const undated = work({ id: 'u', fromTemplate: true });
+    const dated = work({ id: 'd', plannedFrom: '2026-04-28' });
+    expect(findMatchingWork(op({}), [undated, dated], new Set())?.id).toBe('d');
+  });
+  it('seotud kuupäevata tööd ei kasutata uuesti; kaugel kuupäevaga töö pole kuupäevata', () => {
+    expect(findMatchingWork(op({}), [work({ fromTemplate: true })], new Set(['w1']))).toBeNull();
+    expect(findMatchingWork(op({}), [work({ plannedFrom: '2026-06-01' })], new Set())).toBeNull();
+    expect(findMatchingWork(op({}), [work({ entries: [{ from: '2026-06-01', to: null }] })], new Set())).toBeNull();
   });
   it('teine tegevus või juba seotud töö ei sobi', () => {
     const w = work({ plannedFrom: '2026-04-27' });
@@ -35,6 +52,14 @@ describe('findMatchingWork', () => {
     const c = work({ id: 'c', activity: tkv, plannedFrom: '2026-05-26', productKeys: ['tombo wg'] });
     expect(findMatchingWork(o, [a, b, c], new Set())?.id).toBe('c');
     expect(findMatchingWork(o, [a], new Set())).toBeNull();
+  });
+  it('taimekaitse rida toodetega sobib toodeteta tööga', () => {
+    const tkv = 'Taimekaitsevahendi kasutamine';
+    const o = op({ type: tkv, dateFrom: '2026-05-26', products: [prod({ name: 'Tombo WG' })] });
+    expect(findMatchingWork(o, [work({ activity: tkv, plannedFrom: '2026-05-26', productKeys: [] })], new Set())?.id).toBe('w1');
+    expect(findMatchingWork(o, [work({ activity: tkv, fromTemplate: true, productKeys: [] })], new Set())?.id).toBe('w1');
+    // kuupäevata töö teise tootega ei sobi
+    expect(findMatchingWork(o, [work({ activity: tkv, fromTemplate: true, productKeys: ['moxa'] })], new Set())).toBeNull();
   });
   it('taimekaitse rida ilma nimetatud toodeteta sobitub kuupäeva ja tegevuse järgi', () => {
     const tkv = 'Taimekaitsevahendi kasutamine';

@@ -2570,9 +2570,11 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>" && npm run release'
 - [ ] **Step 2: Varukoopia + üleviimine kõigile**
 
 ```bash
-ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && for t in $(psql "${MIGRATE_DATABASE_URL%%\?*}" -At -c "select distinct tenant_id from field_operations"); do npx tsx scripts/pria-to-field-works.mts --tenant "$t" --dry-run; done'
+ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && for t in $(psql "${MIGRATE_DATABASE_URL%%\?*}" -At -c "select distinct tenant_id from field_operations"); do npx tsx scripts/pria-to-field-works.mts --tenant "$t" --include-locked --dry-run; done'
 ```
-Kontrolli kokkuvõtet (iga põld: PRIA ridade arv = uued + täiendatud), siis sama ilma `--dry-run`. Kontroll: iga ettevõtte `field_operations` arv ≤ `field_works where source = 'PRIA_IMPORT'` arv + täiendatud.
+`--include-locked` on kohustuslik: muidu jäävad lukustatud hooaegade read (nt ettevõttel `cmvcnemqb0036lqxyy8vzgvj4` kõik 2025 read) üle viimata ja kustuksid Step 5-ga. Kontrolli iga ettevõtte lõpukokkuvõtet (`Kokku (...)` rida ja `Kontroll: ... OK`), siis sama ilma `--dry-run` (ikka `--include-locked`).
+
+**Eeltingimus enne Step 3 ja Step 5 (peatu, kui ei kehti):** iga ettevõtte kohta päris käivituse kokkuvõttes `field_operations` ridade arv == uued + täiendatud + seotud muutmata, **tundmatu tegevus = 0** ja **lukus vahele jäetud = 0**. Kui mõni ettevõte seda ei täida, ära jätka koodi ega tabelite eemaldusega — teata kasutajale.
 
 - [ ] **Step 3: Koodi eemaldus** — kustuta failid ja tüübid Files-loendi järgi; `grep -rn "fieldOperation\|FieldOperation\|field-operations\|operationsCount" src` peab andma ainult parseri tüübid (`ParsedOperation`, `FieldBookImport*`). Uuenda `helpRegistry.ts` põllu vaate tekst (täisvaade, tööd ja kanded, PRIA import). `npx tsc --noEmit -p tsconfig.app.json && npm test`.
 

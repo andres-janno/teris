@@ -296,6 +296,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     }
     // Kandel peab materjal olema Kulumaterjalide registris (plaanis on vabatekst lubatud)
     if (rows.some((r) => !r.materialId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
+    // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
+    const noQuantity = rows.find((r) => r.materialId && !((parseNum(r.total) ?? 0) > 0));
+    if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || materials.find((m) => m.id === noQuantity.materialId)?.name || 'toode'}`);
     setBusy(true);
     try {
       await api.saveWorkEntry(

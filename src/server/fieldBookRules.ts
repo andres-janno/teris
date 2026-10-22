@@ -16,6 +16,7 @@ export interface ExistingWork {
   plannedTo: string | null;
   entries: { from: string; to: string | null }[];
   productKeys: string[]; // plaani- ja kanderidade materjalide nameKey
+  fromTemplate: boolean; // töö tuli kultuuri mallist (sageli ainult plannedText, kuupäevata)
 }
 
 export function findMatchingWork(
@@ -26,16 +27,22 @@ export function findMatchingWork(
   const range = { from: op.dateFrom, to: op.dateTo };
   const opKeys = new Set(op.products.map((p) => nameKey(p.name)).filter(Boolean));
   let best: { work: ExistingWork; gap: number } | null = null;
+  let undated: ExistingWork | null = null;
   for (const w of works) {
     if (w.activity !== op.type || taken.has(w.id)) continue;
-    // Nimetatud toodeteta reas otsustavad tegevus ja kuupäev (muidu tekiks korduval impordil duplikaat)
-    if (PRODUCT_MATCH_ACTIVITIES.has(op.type) && opKeys.size > 0 && !w.productKeys.some((k) => opKeys.has(k))) continue;
+    // Ühine toode nõutakse ainult siis, kui nii real kui tööl on tooted
+    // (nimetatud toodeteta reas otsustavad tegevus ja kuupäev — muidu tekiks korduval impordil duplikaat)
+    if (PRODUCT_MATCH_ACTIVITIES.has(op.type) && opKeys.size > 0 && w.productKeys.length > 0 && !w.productKeys.some((k) => opKeys.has(k))) continue;
     const ranges = [...(w.plannedFrom ? [{ from: w.plannedFrom, to: w.plannedTo }] : []), ...w.entries];
-    if (!ranges.length) continue;
+    if (!ranges.length) {
+      // Kuupäevata ja kanneteta töö (nt mallist) — varuvariant; mallist töö eelistatakse, muidu järjekorras esimene
+      if (!undated || (w.fromTemplate && !undated.fromTemplate)) undated = w;
+      continue;
+    }
     const gap = Math.min(...ranges.map((r) => daysApart(range, r)));
     if (gap <= MATCH_TOLERANCE_DAYS && (!best || gap < best.gap)) best = { work: w, gap };
   }
-  return best?.work ?? null;
+  return best?.work ?? undated;
 }
 
 export interface OperationLine extends PriaAttrs {

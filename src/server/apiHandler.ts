@@ -18,7 +18,7 @@ import { handlePlatformRequest } from './platformApi.ts';
 import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdentifiers.ts';
 import { syncOwnership } from './deviceOwnership.ts';
 import { ensureSeasons } from './seasons.ts';
-import { importFieldSeasonOperations } from './fieldBookImport.ts';
+import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -1527,7 +1527,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
       const result = await tenantTransaction(
         async (tx) => {
-          let imported = 0, created = 0, complemented = 0;
+          let imported = 0, created = 0, complemented = 0, linked = 0, entriesAdded = 0, unknown = 0;
+          let types: PriaWorkTypes | null = null; // PRIA töötüübid laaditakse üks kord impordi kohta
           const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
           // Lukus hooajad impordi aastate järgi (hooajakirje seos võib puududa või viidata teisele aastale)
@@ -1550,11 +1551,15 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
               await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: { seasonId } });
             }
 
+            types ??= await ensurePriaWorkTypes(tx);
             const r = await importFieldSeasonOperations(tx, fieldSeason.id, Array.isArray(f.operations) ? f.operations : [], {
-              userId, fieldAreaHa: fieldSeason.areaHa
+              userId, fieldAreaHa: fieldSeason.areaHa, types
             });
             created += r.created;
             complemented += r.complemented;
+            linked += r.linked;
+            entriesAdded += r.entriesAdded;
+            unknown += r.unknown;
 
             // Tühi väärtus failis ei kustuta olemasolevat.
             const seasonUpdate: Record<string, unknown> = {};
@@ -1565,7 +1570,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             if (Object.keys(seasonUpdate).length > 0) await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: seasonUpdate });
             imported++;
           }
-          return { imported, created, complemented, skipped };
+          return { imported, created, complemented, linked, entriesAdded, unknown, skipped };
         },
         { timeout: 120000 }
       );
