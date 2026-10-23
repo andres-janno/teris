@@ -80,6 +80,7 @@ export interface FieldBookImportResult {
   linked: number;       // olemasolevad tööd, mis sobisid, aga midagi ei muutunud
   entriesAdded: number; // kanneteta sobinud töödele lisatud kanded
   unknown: number;      // tundmatu tegevusega read — vahele jäetud
+  movedToNext: number;  // koristuse järel tehtud sügistööd, mis imporditi järgmise hooaja alla
   skipped: { fieldCode: string; num: string; season: number; reason: string }[];
 }
 

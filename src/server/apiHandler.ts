@@ -19,6 +19,7 @@ import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdent
 import { syncOwnership } from './deviceOwnership.ts';
 import { ensureSeasons } from './seasons.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
+import { splitPostHarvestOperations } from './fieldBookRules.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -1524,7 +1525,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
       const result = await tenantTransaction(
         async (tx) => {
-          let imported = 0, created = 0, complemented = 0, linked = 0, entriesAdded = 0, unknown = 0;
+          let imported = 0, created = 0, complemented = 0, linked = 0, entriesAdded = 0, unknown = 0, movedToNext = 0;
           let types: PriaWorkTypes | null = null; // PRIA töötüübid laaditakse üks kord impordi kohta
           const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
@@ -1549,7 +1550,32 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             }
 
             types ??= await ensurePriaWorkTypes(tx);
-            const r = await importFieldSeasonOperations(tx, fieldSeason.id, Array.isArray(f.operations) ? f.operations : [], {
+            const ops = Array.isArray(f.operations) ? f.operations : [];
+            // PRIA: koristuse järel tehtud sügistööd kuuluvad järgmise aasta põllu hooajale (kui see on olemas ja lukus pole)
+            const nextYear = Number(f.season) + 1;
+            const nextSeason = await tx.fieldSeason.findUnique({
+              where: { fieldId_year: { fieldId: fieldSeason.fieldId, year: nextYear } },
+              include: { season: { select: { isLocked: true } } }
+            });
+            const split = splitPostHarvestOperations(ops, nextSeason?.crop ?? null);
+            let currentOps = split.current;
+            if (nextSeason && split.next.length) {
+              const nextLocked = !!nextSeason.season?.isLocked
+                || !!(await tx.season.findFirst({ where: { year: nextYear, isLocked: true }, select: { id: true } }));
+              if (nextLocked) {
+                currentOps = ops;
+                skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: `${split.next.length} tööd jäid hooajale ${f.season}, sest ${nextYear} on lukus` });
+              } else {
+                const rn = await importFieldSeasonOperations(tx, nextSeason.id, split.next, { userId, fieldAreaHa: nextSeason.areaHa, types });
+                created += rn.created;
+                complemented += rn.complemented;
+                linked += rn.linked;
+                entriesAdded += rn.entriesAdded;
+                unknown += rn.unknown;
+                movedToNext += split.next.length;
+              }
+            }
+            const r = await importFieldSeasonOperations(tx, fieldSeason.id, currentOps, {
               userId, fieldAreaHa: fieldSeason.areaHa, types
             });
             created += r.created;
@@ -1567,7 +1593,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             if (Object.keys(seasonUpdate).length > 0) await tx.fieldSeason.update({ where: { id: fieldSeason.id }, data: seasonUpdate });
             imported++;
           }
-          return { imported, created, complemented, linked, entriesAdded, unknown, skipped };
+          return { imported, created, complemented, linked, entriesAdded, unknown, movedToNext, skipped };
         },
         { timeout: 120000 }
       );

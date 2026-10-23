@@ -1,7 +1,7 @@
 // src/server/fieldBookRules.ts — PRIA põlluraamatu rea sidumine Terise tööga ja rea tooted → read.
 // Puhtad funktsioonid (andmebaasita), kasutab fieldBookImport.ts.
 import type { FieldBookImportOperation } from '../types/fieldOperation.ts';
-import type { MaterialCategory } from '../types/fieldWork.ts';
+import type { MaterialCategory, WorkPhase } from '../types/fieldWork.ts';
 import { PRIA_ACTIVITY, baseUnit, daysApart, materialCategoryFor, nameKey, type PriaAttrs } from '../services/pria.ts';
 
 export const MATCH_TOLERANCE_DAYS = 2;
@@ -71,4 +71,42 @@ export function operationLines(op: FieldBookImportOperation): OperationLine[] {
     }
   }
   return out;
+}
+
+// PRIA: aastal Y tehtud tööd, mis puudutavad järgmise aasta saaki, kuuluvad hooajale Y+1.
+// Külvi liik sobib järgmise hooaja kultuuriga, kui kultuuri nimi sisaldab liiki või liik kultuuri esimest sõna
+// ("Talioder" ~ "Talioder allakülvita"). Liigita külv loetakse sobivaks.
+export function sowingKindMatchesCrop(kind: string | null, crop: string): boolean {
+  const k = nameKey(kind);
+  if (!k) return true;
+  const c = nameKey(crop);
+  const first = c.split(' ')[0];
+  return c.includes(k) || (!!first && k.includes(first));
+}
+
+// Viimase saagikoristuse järel tehtud tööd (v.a koristus) → järgmine hooaeg; vahekultuuri külv (liik ei sobi
+// järgmise kultuuriga) jääb. Faas: külv → SOWING; enne sügiskülvi PREPARATION, alates sellest CARE.
+export function splitPostHarvestOperations(
+  ops: FieldBookImportOperation[],
+  nextCrop: string | null
+): { current: FieldBookImportOperation[]; next: (FieldBookImportOperation & { phase: WorkPhase })[] } {
+  const harvests = ops.filter((o) => o.type === PRIA_ACTIVITY.HARVEST).map((o) => o.dateFrom);
+  if (nextCrop == null || !harvests.length) return { current: ops, next: [] };
+  const harvestDate = harvests.reduce((a, b) => (b > a ? b : a));
+  const moves = (o: FieldBookImportOperation) => {
+    if (o.type === PRIA_ACTIVITY.HARVEST || !(o.dateFrom > harvestDate)) return false;
+    if (o.type !== PRIA_ACTIVITY.SOWING) return true;
+    const kinds = o.products.map((p) => p.kind).filter((k): k is string => !!nameKey(k));
+    return !kinds.length || kinds.some((k) => sowingKindMatchesCrop(k, nextCrop));
+  };
+  const current: FieldBookImportOperation[] = [];
+  const moved: FieldBookImportOperation[] = [];
+  for (const o of ops) (moves(o) ? moved : current).push(o);
+  const sowings = moved.filter((o) => o.type === PRIA_ACTIVITY.SOWING).map((o) => o.dateFrom);
+  const firstSowing = sowings.length ? sowings.reduce((a, b) => (b < a ? b : a)) : null;
+  const next = moved.map((o) => ({
+    ...o,
+    phase: (o.type === PRIA_ACTIVITY.SOWING ? 'SOWING' : firstSowing && o.dateFrom >= firstSowing ? 'CARE' : 'PREPARATION') as WorkPhase
+  }));
+  return { current, next };
 }

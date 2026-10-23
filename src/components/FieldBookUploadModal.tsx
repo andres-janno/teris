@@ -83,6 +83,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
       const parts = [`${r.created} uut tööd`, `${r.complemented} täiendatud`];
       if (r.entriesAdded) parts.push(`neist ${r.entriesAdded} tööle lisati kanne`);
       if (r.linked) parts.push(`${r.linked} juba olemas`);
+      if (r.movedToNext) parts.push(`${r.movedToNext} sügistööd järgmise hooaja alla`);
       if (r.unknown) parts.push(`${r.unknown} tundmatu tegevusega rida vahele jäetud`);
       void alertDialog(`Imporditud ${r.imported} põldu: ${parts.join(', ')}${skippedText}`);
     } catch (err) {

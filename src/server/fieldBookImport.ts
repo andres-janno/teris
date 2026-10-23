@@ -90,7 +90,7 @@ export interface FieldSeasonImportResult {
 export async function importFieldSeasonOperations(
   client: ImportClient,
   fieldSeasonId: number,
-  ops: FieldBookImportOperation[],
+  ops: (FieldBookImportOperation & { phase?: WorkPhase })[], // phase: uue töö faas (nt järgmise hooaja alla viidud sügistöö)
   opts: { userId: string | null; fieldAreaHa: number; types?: PriaWorkTypes }
 ): Promise<FieldSeasonImportResult> {
   const tx = client as Tx;
@@ -162,7 +162,7 @@ export async function importFieldSeasonOperations(
     }
     const work = await tx.fieldWork.create({
       data: {
-        fieldSeasonId, workTypeId: type.id, phase: type.phase, sortOrder: sortOrder++, plannedCount: 1, source: 'PRIA_IMPORT',
+        fieldSeasonId, workTypeId: type.id, phase: op.phase ?? type.phase, sortOrder: sortOrder++, plannedCount: 1, source: 'PRIA_IMPORT',
         plannedDateFrom: asDate(op.dateFrom), plannedDateTo: asDate(op.dateTo), plannedAreaHa: op.areaHa,
         method: op.type === 'Saagikoristus' ? null : op.method, plannedWorkerId: op.performerId, notes: op.notes,
         lines: { create: planLines },

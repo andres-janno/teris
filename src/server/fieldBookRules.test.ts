@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { findMatchingWork, operationLines, type ExistingWork } from './fieldBookRules';
+import { findMatchingWork, operationLines, sowingKindMatchesCrop, splitPostHarvestOperations, type ExistingWork } from './fieldBookRules';
 import type { FieldBookImportOperation, ParsedProduct } from '../types/fieldOperation';
 
 const prod = (p: Partial<ParsedProduct>): ParsedProduct => ({
@@ -94,5 +94,57 @@ describe('operationLines', () => {
   });
   it('nimetu toode jäetakse vahele (v.a saak)', () => {
     expect(operationLines(op({ type: 'Väetamine', products: [prod({ amount: 1, unit: 'kg/ha' })] }))).toEqual([]);
+  });
+});
+
+describe('splitPostHarvestOperations', () => {
+  const harvest = op({ type: 'Saagikoristus', dateFrom: '2026-08-26' });
+  const sow = (kind: string | null, dateFrom = '2026-09-09') =>
+    op({ type: 'Külvamine/istutamine', dateFrom, products: [prod({ name: 'Loona', kind, spec: 'C2' })] });
+
+  it('Nr 5: koristuse järel tehtud tööd järgmise hooaja alla, faasid külvi järgi', () => {
+    const before = op({ type: 'Kündmine', dateFrom: '2026-04-20' });
+    const ops = [before, harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-07' }), op({ type: 'Väetamine', dateFrom: '2026-09-08' }), sow('Talioder')];
+    const r = splitPostHarvestOperations(ops, 'Talioder allakülvita');
+    expect(r.current.map((o) => o.type)).toEqual(['Kündmine', 'Saagikoristus']);
+    expect(r.next.map((o) => [o.type, o.phase])).toEqual([
+      ['Randaalimine', 'PREPARATION'], ['Väetamine', 'PREPARATION'], ['Külvamine/istutamine', 'SOWING']
+    ]);
+  });
+  it('vahekultuuri külv jääb hooajale', () => {
+    const r = splitPostHarvestOperations([harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-01' }), sow('Valge sinep')], 'Talioder allakülvita');
+    expect(r.current.map((o) => o.type)).toEqual(['Saagikoristus', 'Külvamine/istutamine']);
+    expect(r.next.map((o) => [o.type, o.phase])).toEqual([['Randaalimine', 'PREPARATION']]);
+  });
+  it('liigita külv liigub', () => {
+    const r = splitPostHarvestOperations([harvest, sow(null)], 'Talioder allakülvita');
+    expect(r.next.map((o) => o.phase)).toEqual(['SOWING']);
+  });
+  it('järgmise hooaja põlluta või koristuseta ei liigu midagi', () => {
+    const ops = [harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-07' })];
+    expect(splitPostHarvestOperations(ops, null)).toEqual({ current: ops, next: [] });
+    const noHarvest = [op({ type: 'Randaalimine', dateFrom: '2026-09-07' })];
+    expect(splitPostHarvestOperations(noHarvest, 'Talioder')).toEqual({ current: noHarvest, next: [] });
+  });
+  it('sügiskülvi järel tehtud töö on hooldus', () => {
+    const r = splitPostHarvestOperations([harvest, sow('Talioder'), op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-10-01' })], 'Talioder allakülvita');
+    expect(r.next.map((o) => [o.type, o.phase])).toEqual([['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']]);
+  });
+  it('koristus ise ei liigu, ka viimane; koristuse päeval ja enne tehtud tööd jäävad', () => {
+    const early = op({ type: 'Saagikoristus', dateFrom: '2026-08-10' });
+    const sameDay = op({ type: 'Kündmine', dateFrom: '2026-08-26' });
+    const r = splitPostHarvestOperations([early, sameDay, harvest], 'Talioder');
+    expect(r.current).toHaveLength(3);
+    expect(r.next).toEqual([]);
+  });
+});
+
+describe('sowingKindMatchesCrop', () => {
+  it('liik kultuuri nimes või kultuuri esimene sõna liigis', () => {
+    expect(sowingKindMatchesCrop('Talioder', 'Talioder allakülvita')).toBe(true);
+    expect(sowingKindMatchesCrop('talioder', '  TALIODER   allakülvita')).toBe(true);
+    expect(sowingKindMatchesCrop('Talinisu (pehme)', 'Talinisu')).toBe(true);
+    expect(sowingKindMatchesCrop('Valge sinep', 'Talioder allakülvita')).toBe(false);
+    expect(sowingKindMatchesCrop(null, 'Talioder')).toBe(true);
   });
 });
