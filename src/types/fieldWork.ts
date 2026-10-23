@@ -56,6 +56,8 @@ export interface Material {
   isActive: boolean;
   notes: string | null;
   usageCount?: number;
+  plannedQty?: number | null; // hooaja planeeritud kogus (ainult ?year= päringul)
+  usedQty?: number | null; // hooaja kasutatud kogus
 }
 
 // Uue kulumaterjali vaikeväärtused

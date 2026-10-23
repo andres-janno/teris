@@ -1776,7 +1776,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       {mainView === 'materials' && (
         <Suspense fallback={null}>
-          <MaterialsView />
+          <MaterialsView selectedYear={selectedYear} onSelectYear={setSelectedYear} seasons={seasons} />
         </Suspense>
       )}
 

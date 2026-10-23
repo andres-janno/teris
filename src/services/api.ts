@@ -600,8 +600,8 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/work-types/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö kustutamine ebaõnnestus');
   },
 
-  async getMaterials(): Promise<Material[]> {
-    return jsonOrThrow(await apiFetch('/api/materials'), 'Materjalide laadimine ebaõnnestus');
+  async getMaterials(year?: number): Promise<Material[]> {
+    return jsonOrThrow(await apiFetch(year ? `/api/materials?year=${year}` : '/api/materials'), 'Materjalide laadimine ebaõnnestus');
   },
 
   async saveMaterial(m: Partial<Material>): Promise<Material> {

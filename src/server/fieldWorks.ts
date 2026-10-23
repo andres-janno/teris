@@ -21,6 +21,7 @@ import {
   type FinanceStatus,
   type StoredLine
 } from './fieldWorkRules.ts';
+import { materialSeasonTotals } from './materialUsage.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
@@ -747,7 +748,33 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { entryLines: true } } }
     });
-    json(res, rows.map(({ _count, createdAt, updatedAt, ...m }) => ({ ...m, usageCount: _count.entryLines })));
+    const year = int(url.searchParams.get('year'));
+    let totals: ReturnType<typeof materialSeasonTotals> | null = null;
+    if (year) {
+      // Hooaja kogused: plaaniread (kõik hooaja tööd, ka tehtud) ja kanderead
+      const [planRows, entryRows] = await Promise.all([
+        prisma.fieldWorkLine.findMany({
+          where: { kind: 'MATERIAL', materialId: { not: null }, fieldWork: { fieldSeason: { year } } },
+          select: { materialId: true, ratePerHa: true, fieldWork: { select: { plannedAreaHa: true, fieldSeason: { select: { areaHa: true } } } } }
+        }),
+        prisma.workEntryLine.findMany({
+          where: { kind: 'MATERIAL', materialId: { not: null }, entry: { fieldWork: { fieldSeason: { year } } } },
+          select: { materialId: true, quantity: true }
+        })
+      ]);
+      totals = materialSeasonTotals(
+        planRows.map((l) => ({ materialId: l.materialId, ratePerHa: l.ratePerHa, areaHa: l.fieldWork.plannedAreaHa ?? l.fieldWork.fieldSeason.areaHa })),
+        entryRows
+      );
+    }
+    json(
+      res,
+      rows.map(({ _count, createdAt, updatedAt, ...m }) => ({
+        ...m,
+        usageCount: _count.entryLines,
+        ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {})
+      }))
+    );
     return true;
   }
   if (pathname === '/api/materials' && method === 'POST') {

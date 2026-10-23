@@ -1,9 +1,11 @@
 // src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, X, Plus, Download, Edit2, Trash2 } from 'lucide-react';
+import { Package, Search, X, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { MaterialFormDialog } from './MaterialFormDialog';
+import type { FarmingSeason } from '../types/season';
+import { seasonSelectorYears } from '../types/season';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
 
@@ -11,7 +13,18 @@ type ActiveFilter = 'all' | 'active' | 'inactive';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
-export const MaterialsView: React.FC = () => {
+const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
+const hasQty = (m: Material) => !!(m.plannedQty || m.usedQty);
+const diffQty = (m: Material) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;
+
+interface MaterialsViewProps {
+  selectedYear: number;
+  onSelectYear: (year: number) => void;
+  seasons: FarmingSeason[];
+}
+
+export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSelectYear, seasons }) => {
+  const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<MaterialCategory | 'all'>('all');
@@ -21,13 +34,13 @@ export const MaterialsView: React.FC = () => {
 
   const reload = useCallback(async () => {
     try {
-      setMaterials(await api.getMaterials());
+      setMaterials(await api.getMaterials(selectedYear));
     } catch (err) {
       alertDialog(errorText(err));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [selectedYear]);
 
   useEffect(() => {
     void reload();
@@ -54,12 +67,15 @@ export const MaterialsView: React.FC = () => {
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Materjal', 'Liik', 'Ühik', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Materjal', 'Liik', 'Ühik', 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
       `"${m.name}"`,
       `"${MATERIAL_CATEGORY_LABEL[m.category]}"`,
       `"${m.unit}"`,
+      m.plannedQty ?? 0,
+      m.usedQty ?? 0,
+      diffQty(m),
       m.isActive ? 'jah' : 'ei',
       m.usageCount ?? 0,
       `"${m.notes ?? ''}"`
@@ -90,6 +106,26 @@ export const MaterialsView: React.FC = () => {
           <div className="modal-body">
             <div className="register-header-controls">
               <div className="year-selector-group">
+                <span className="year-label">
+                  <Calendar size={15} className="text-blue" />
+                  <span>Hooaeg:</span>
+                </span>
+                <div className="year-tabs">
+                  {availableYearsList.map((yr) => {
+                    const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
+                    return (
+                      <button
+                        key={yr}
+                        className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
+                        onClick={() => onSelectYear(yr)}
+                        title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
+                      >
+                        <span>{yr}</span>
+                        {isLocked && <Lock size={10} className="tab-lock-icon" />}
+                      </button>
+                    );
+                  })}
+                </div>
                 <div className="category-filter-tabs">
                   <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
                     Kõik ({materials.length})
@@ -144,6 +180,9 @@ export const MaterialsView: React.FC = () => {
                     <th>Materjal</th>
                     <th>Liik</th>
                     <th>Ühik</th>
+                    <th className="num">Planeeritud</th>
+                    <th className="num">Kasutatud</th>
+                    <th className="num" title="Planeeritud miinus kasutatud; negatiivne = ülekulu">Ala/ülekulu</th>
                     <th className="num">Kandeid</th>
                     <th>Märkus</th>
                     <th className="actions-col"><span className="sr-only">Tegevused</span></th>
@@ -152,7 +191,7 @@ export const MaterialsView: React.FC = () => {
                 <tbody>
                   {!loading && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={6} className="muted">
+                      <td colSpan={9} className="muted">
                         {materials.length === 0
                           ? 'Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.'
                           : 'Otsingule vastavaid materjale ei leitud.'}
@@ -167,6 +206,9 @@ export const MaterialsView: React.FC = () => {
                       </td>
                       <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
                       <td>{m.unit}</td>
+                      <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>
+                      <td className="num">{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</td>
+                      <td className={`num ${diffQty(m) < 0 ? 'material-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
                       <td className="num">{m.usageCount ?? 0}</td>
                       <td className="muted">{m.notes ?? ''}</td>
                       <td className="actions-col">

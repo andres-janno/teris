@@ -10624,3 +10624,8 @@ select.time-select {
   .pria-grid .form-input.num { flex: 0 1 90px; }
   .pria-grid-head { display: none; }
 }
+
+.material-overuse {
+  color: #dc2626;
+  font-weight: 600;
+}
