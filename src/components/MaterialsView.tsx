@@ -9,8 +9,6 @@ import { seasonSelectorYears } from '../types/season';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
 
-type ActiveFilter = 'all' | 'active' | 'inactive';
-
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
@@ -28,7 +26,6 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [category, setCategory] = useState<MaterialCategory | 'all'>('all');
-  const [activeFilter, setActiveFilter] = useState<ActiveFilter>('all');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<Partial<Material> | null>(null);
 
@@ -50,10 +47,9 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
     const q = search.trim().toLowerCase();
     return materials
       .filter((m) => category === 'all' || m.category === category)
-      .filter((m) => activeFilter === 'all' || (activeFilter === 'active' ? m.isActive : !m.isActive))
       .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  }, [materials, category, activeFilter, search]);
+  }, [materials, category, search]);
 
 
   const remove = async (m: Material) => {
@@ -126,17 +122,6 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                     );
                   })}
                 </div>
-                <div className="category-filter-tabs">
-                  <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
-                    Kõik ({materials.length})
-                  </button>
-                  {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => (
-                    <button key={c} type="button" className={`filter-tab ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)}>
-                      <span>{MATERIAL_CATEGORY_LABEL[c]}</span>
-                      <span className="count-pill">{materials.filter((m) => m.category === c).length}</span>
-                    </button>
-                  ))}
-                </div>
                 <div className="register-io-buttons">
                   <button className="btn btn-secondary btn-sm" onClick={exportCsv} title="Ekspordi materjalide register CSV failina">
                     <Download size={14} />
@@ -166,11 +151,19 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                   </button>
                 )}
               </div>
-              <select className="form-input filter-select" value={activeFilter} onChange={(e) => setActiveFilter(e.target.value as ActiveFilter)}>
-                <option value="all">Kõik olekud</option>
-                <option value="active">Ainult aktiivsed</option>
-                <option value="inactive">Ainult mitteaktiivsed</option>
-              </select>
+              <div className="category-filter-tabs">
+                <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
+                  Kõik ({materials.length})
+                </button>
+                {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => {
+                  const count = materials.filter((m) => m.category === c).length;
+                  return (
+                    <button key={c} type="button" className={`filter-tab ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)} disabled={count === 0}>
+                      {MATERIAL_CATEGORY_LABEL[c]} ({count})
+                    </button>
+                  );
+                })}
+              </div>
             </div>
 
             <div className="register-table-wrap">

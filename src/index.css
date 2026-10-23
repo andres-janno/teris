@@ -10625,6 +10625,12 @@ select.time-select {
   .pria-grid-head { display: none; }
 }
 
+.materials-table th.num,
+.materials-table td.num {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
 .material-overuse {
   color: #dc2626;
   font-weight: 600;
