@@ -14,8 +14,8 @@ describe('materialSeasonTotals', () => {
         { materialId: 'a', quantity: 500 }
       ]
     );
-    expect(m.get('a')).toEqual({ plannedQty: 2200, usedQty: 1500.26 });
-    expect(m.get('b')).toEqual({ plannedQty: 4.5, usedQty: 0 });
+    expect(m.get('a')).toEqual({ plannedQty: 2200, usedQty: 1500.26, entryCount: 2 });
+    expect(m.get('b')).toEqual({ plannedQty: 4.5, usedQty: 0, entryCount: 0 });
   });
   it('null norm annab 0 ja materjalita read jäetakse välja', () => {
     const m = materialSeasonTotals(
@@ -24,6 +24,6 @@ describe('materialSeasonTotals', () => {
     );
     expect(m.has('a')).toBe(false);
     expect(m.size).toBe(1);
-    expect(m.get('c')).toEqual({ plannedQty: 0, usedQty: 2 });
+    expect(m.get('c')).toEqual({ plannedQty: 0, usedQty: 2, entryCount: 1 });
   });
 });

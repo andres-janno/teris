@@ -11,6 +11,7 @@ export interface EntryLineInput {
 export interface MaterialTotals {
   plannedQty: number;
   usedQty: number;
+  entryCount: number; // hooaja kanderidade arv selle materjaliga
 }
 
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
@@ -19,7 +20,7 @@ export function materialSeasonTotals(planLines: PlanLineInput[], entryLines: Ent
   const raw = new Map<string, MaterialTotals>();
   const slot = (id: string) => {
     let t = raw.get(id);
-    if (!t) raw.set(id, (t = { plannedQty: 0, usedQty: 0 }));
+    if (!t) raw.set(id, (t = { plannedQty: 0, usedQty: 0, entryCount: 0 }));
     return t;
   };
   for (const l of planLines) {
@@ -28,9 +29,11 @@ export function materialSeasonTotals(planLines: PlanLineInput[], entryLines: Ent
   }
   for (const l of entryLines) {
     if (!l.materialId) continue;
-    slot(l.materialId).usedQty += l.quantity;
+    const t = slot(l.materialId);
+    t.usedQty += l.quantity;
+    t.entryCount++;
   }
   const out = new Map<string, MaterialTotals>();
-  for (const [id, t] of raw) out.set(id, { plannedQty: round2(t.plannedQty), usedQty: round2(t.usedQty) });
+  for (const [id, t] of raw) out.set(id, { plannedQty: round2(t.plannedQty), usedQty: round2(t.usedQty), entryCount: t.entryCount });
   return out;
 }

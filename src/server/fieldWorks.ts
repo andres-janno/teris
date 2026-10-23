@@ -771,7 +771,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       res,
       rows.map(({ _count, createdAt, updatedAt, ...m }) => ({
         ...m,
-        usageCount: _count.entryLines,
+        // valitud hooaja korral kannete arv selle hooaja kohta, muidu kõik kanded
+        usageCount: totals ? (totals.get(m.id)?.entryCount ?? 0) : _count.entryLines,
         ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {})
       }))
     );
