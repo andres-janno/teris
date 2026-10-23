@@ -7829,7 +7829,7 @@ a.history-pill:hover {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  overflow-x: hidden;
+  overflow-x: auto;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
@@ -7837,8 +7837,35 @@ a.history-pill:hover {
 
 .fw-grid {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
+  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
   width: 100%;
+}
+
+/* Tahvel on 9 veeruga lai: kitsal ekraanil keritakse horisontaalselt, põllu veerg jääb paigale */
+.fw-head,
+.fw-group-header,
+.fw-row-container {
+  min-width: 1085px;
+}
+
+.fw-head-section:first-child,
+.fw-head-cell:first-child {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--bg-modal);
+  box-shadow: 1px 0 0 var(--border-card);
+}
+
+.fw-row-container .fw-field {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+}
+
+.fw-group-header .fw-group-toggle {
+  position: sticky;
+  left: 14px;
 }
 
 .fw-head {
@@ -7865,6 +7892,15 @@ a.history-pill:hover {
 
 .fw-head-section+.fw-head-section {
   border-left: 1px solid var(--border-card);
+}
+
+.fw-head-section.prev {
+  background: color-mix(in srgb, #64748b 10%, var(--bg-modal));
+  color: #475569;
+}
+
+:root[data-theme="dark"] .fw-head-section.prev {
+  color: #cbd5e1;
 }
 
 .fw-head-section.current {
@@ -7940,6 +7976,18 @@ a.history-pill:hover {
   color: #9a5b00;
 }
 
+.fw-head-cell.milestone.prev-sow {
+  background: rgba(100, 116, 139, 0.1);
+}
+
+.fw-head-cell.milestone.prev-sow strong {
+  color: #475569;
+}
+
+:root[data-theme="dark"] .fw-head-cell.milestone.prev-sow strong {
+  color: #cbd5e1;
+}
+
 .fw-head-cell.milestone.autumn-sow {
   background: rgba(2, 132, 199, 0.08);
 }
@@ -7955,7 +8003,7 @@ a.history-pill:hover {
 /* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
 .fw-row-container {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
+  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
   grid-template-rows: auto 1fr;
   border-bottom: 1px solid var(--border-card);
 }
@@ -8405,6 +8453,26 @@ a.history-pill:hover {
 
 .fw-cell.milestone.harvest {
   background: rgba(245, 158, 11, 0.06);
+}
+
+.fw-cell.prev {
+  background: rgba(100, 116, 139, 0.04);
+}
+
+.fw-cell.milestone.prev-sow {
+  background: rgba(100, 116, 139, 0.08);
+}
+
+.fw-cell.milestone.prev-sow.done {
+  background: rgba(100, 116, 139, 0.15);
+}
+
+:root[data-theme="dark"] .fw-cell.milestone.prev-sow {
+  background: rgba(148, 163, 184, 0.12);
+}
+
+:root[data-theme="dark"] .fw-cell.milestone.prev-sow.done {
+  background: rgba(148, 163, 184, 0.2);
 }
 
 .fw-cell.milestone.autumn-sow {
