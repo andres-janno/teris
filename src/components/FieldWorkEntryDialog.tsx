@@ -498,56 +498,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             </div>
           </div>
 
-          <section className="work-entry-section">
-            <h4>Masin ja haakeriist</h4>
-            <div className="work-entry-grid four">
-              <div className="form-group">
-                <label htmlFor="we-vehicle">Masin</label>
-                <select id="we-vehicle" className="form-input" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-                  <option value="">– pole –</option>
-                  {vehicleOptions.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-impl">Haakeriist</label>
-                <select id="we-impl" className="form-input" value={implementId} onChange={(e) => setImplementId(e.target.value)}>
-                  <option value="">– pole –</option>
-                  {implementOptions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-eqh">Töötunnid</label>
-                <input id="we-eqh" className="form-input num" inputMode="decimal" value={equipmentHours} onChange={(e) => setEquipmentHours(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-fuel">Kütus, l</label>
-                <input id="we-fuel" className="form-input num" inputMode="decimal" value={fuelLiters} onChange={(e) => setFuelLiters(e.target.value)} />
-              </div>
-            </div>
-            <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
-          </section>
-
-          {(work.usesMaterials || rows.length > 0) && (
-            <section className="work-entry-section">
-              <h4>Materjalid</h4>
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
-            </section>
-          )}
-
-          {isHarvest && (
-            <section className="work-entry-section">
-              <h4>Saak</h4>
-              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
-            </section>
-          )}
-
-          {activity === PRIA_ACTIVITY.MONITORING && (
-            <section className="work-entry-section">
-              <h4>Seire leiud</h4>
-              <ObservationsEditor rows={observations} onChange={setObservations} />
-            </section>
-          )}
-
+          {/* Tehtud pindala enne masinat ja materjale: materjalide kogused arvutatakse selle pealt */}
           <div className="work-entry-section">
             <div className="work-entry-grid work-entry-area-grid">
               <div className="form-group">
@@ -627,6 +578,56 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               );
             })()}
           </div>
+
+          <section className="work-entry-section">
+            <h4>Masin ja haakeriist</h4>
+            <div className="work-entry-grid four">
+              <div className="form-group">
+                <label htmlFor="we-vehicle">Masin</label>
+                <select id="we-vehicle" className="form-input" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
+                  <option value="">– pole –</option>
+                  {vehicleOptions.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-impl">Haakeriist</label>
+                <select id="we-impl" className="form-input" value={implementId} onChange={(e) => setImplementId(e.target.value)}>
+                  <option value="">– pole –</option>
+                  {implementOptions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
+                </select>
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-eqh">Töötunnid</label>
+                <input id="we-eqh" className="form-input num" inputMode="decimal" value={equipmentHours} onChange={(e) => setEquipmentHours(e.target.value)} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-fuel">Kütus, l</label>
+                <input id="we-fuel" className="form-input num" inputMode="decimal" value={fuelLiters} onChange={(e) => setFuelLiters(e.target.value)} />
+              </div>
+            </div>
+            <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
+          </section>
+
+          {(work.usesMaterials || rows.length > 0) && (
+            <section className="work-entry-section">
+              <h4>Materjalid</h4>
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+            </section>
+          )}
+
+          {isHarvest && (
+            <section className="work-entry-section">
+              <h4>Saak</h4>
+              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+            </section>
+          )}
+
+          {activity === PRIA_ACTIVITY.MONITORING && (
+            <section className="work-entry-section">
+              <h4>Seire leiud</h4>
+              <ObservationsEditor rows={observations} onChange={setObservations} />
+            </section>
+          )}
 
           <div className="form-group">
             <label htmlFor="we-notes">Märkus</label>
