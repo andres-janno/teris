@@ -42,8 +42,6 @@ export const MaterialsView: React.FC = () => {
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
   }, [materials, category, activeFilter, search]);
 
-  const usedCount = materials.filter((m) => (m.usageCount ?? 0) > 0).length;
-  const activeCount = materials.filter((m) => m.isActive).length;
 
   const remove = async (m: Material) => {
     if (!(await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`))) return;
@@ -112,20 +110,6 @@ export const MaterialsView: React.FC = () => {
                     <Plus size={14} />
                     <span>Lisa materjal</span>
                   </button>
-                </div>
-              </div>
-              <div className="register-stats-pills">
-                <div className="reg-stat-pill">
-                  <span className="lbl">Materjale:</span>
-                  <strong>{materials.length} tk</strong>
-                </div>
-                <div className="reg-stat-pill highlight">
-                  <span className="lbl">Aktiivseid:</span>
-                  <strong>{activeCount} tk</strong>
-                </div>
-                <div className="reg-stat-pill">
-                  <span className="lbl">Kannetes kasutusel:</span>
-                  <strong>{usedCount} tk</strong>
                 </div>
               </div>
             </div>
