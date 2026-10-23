@@ -89,7 +89,7 @@ async function main() {
         for (const w of moving) {
           const phase: WorkPhase = sowingTypeIds.has(w.workTypeId)
             ? 'SOWING'
-            : firstSowing != null && time(w.plannedDateFrom)! >= firstSowing ? 'CARE' : 'PREPARATION';
+            : firstSowing != null && time(w.plannedDateFrom)! > firstSowing ? 'CARE' : 'PREPARATION';
           await tx.fieldWork.update({ where: { id: w.id }, data: { fieldSeasonId: next.id, phase } });
           const ti = templates.findIndex((t) => t.workTypeId === w.workTypeId);
           if (ti >= 0) {

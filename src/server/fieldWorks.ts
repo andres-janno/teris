@@ -25,6 +25,7 @@ import { materialSeasonTotals } from './materialUsage.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
+import { boardWorkDate } from '../services/fieldWorksBoardColumns.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
 const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
@@ -997,11 +998,21 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
     for (const w of nextAutumnRows) {
       const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
-      // Suviviljal kuulub sügisesse ainult ettevalmistus (külv, hooldus ja koristus on järgmisel aastal)
-      if (!isWinter && w.phase !== 'PREPARATION') continue;
+      const dto = fieldWorkDto(w, finance);
+      // Dateeritud töö (varaseim kanne, muidu plaani algus) kuulub sügisesse, kui see on aastal Y (iga faas,
+      // nt järgmise kultuuri sügishooldus). Kuupäevata: talivili ettevalmistus+külv, suvivili ettevalmistus,
+      // hooldus ainult "Sügis …" plaaniga.
+      const date = boardWorkDate(dto);
+      if (date) {
+        if (w.phase === 'HARVEST' || Number(date.slice(0, 4)) > year) continue;
+      } else {
+        const autumnText = (w.plannedText ?? '').toLowerCase().includes('ügis');
+        const undatedAutumn = w.phase === 'PREPARATION' || (isWinter && w.phase === 'SOWING') || (w.phase === 'CARE' && autumnText);
+        if (!undatedAutumn) continue;
+      }
       const isAutumnPhase = w.phase === 'PREPARATION' || w.phase === 'SOWING';
       worksDto.push({
-        ...fieldWorkDto(w, finance),
+        ...dto,
         plannedText: isAutumnPhase ? (w.plannedText ?? `Sügis ${year}`) : w.plannedText,
         carriedOverFromYear: null,
         carriedOverToYear: year + 1,

@@ -126,6 +126,15 @@ describe('splitPostHarvestOperations', () => {
     const noHarvest = [op({ type: 'Randaalimine', dateFrom: '2026-09-07' })];
     expect(splitPostHarvestOperations(noHarvest, 'Talioder')).toEqual({ current: noHarvest, next: [] });
   });
+  it('sügiskülviga samal päeval tehtud töö on ettevalmistus, hilisem hooldus', () => {
+    const r = splitPostHarvestOperations([
+      harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-09' }), op({ type: 'Väetamine', dateFrom: '2026-09-09' }), sow('Talioder'),
+      op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-09-10' })
+    ], 'Talioder allakülvita');
+    expect(r.next.map((o) => [o.type, o.phase])).toEqual([
+      ['Randaalimine', 'PREPARATION'], ['Väetamine', 'PREPARATION'], ['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']
+    ]);
+  });
   it('sügiskülvi järel tehtud töö on hooldus', () => {
     const r = splitPostHarvestOperations([harvest, sow('Talioder'), op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-10-01' })], 'Talioder allakülvita');
     expect(r.next.map((o) => [o.type, o.phase])).toEqual([['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']]);

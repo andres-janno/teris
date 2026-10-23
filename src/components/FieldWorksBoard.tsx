@@ -1,5 +1,6 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
+// Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Plus, Lock, Calendar, SquareKanban, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
@@ -18,7 +19,7 @@ import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
 import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { boardColumn, type BoardColumn } from './fieldWorksBoardColumns';
+import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 
 interface Option {
   id: string;
@@ -61,6 +62,8 @@ interface Row {
   nextUndetermined: boolean;
   nextWorks: FieldWork[];
   allNextWorks: FieldWork[];
+  columns: Map<string, BoardColumn>; // käesoleva hooaja tööde veerud
+  nextColumns: Map<string, AutumnColumn>; // järgmise hooaja sügistööde veerud
 }
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -178,7 +181,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
   const [planDialog, setPlanDialog] = useState<FieldWork | null>(null);
-  const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean } | null>(null);
+  const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean; plannedText?: string } | null>(null);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [financeEntryId, setFinanceEntryId] = useState<string | null>(null);
   const [shapeView, setShapeView] = useState<{ field: MasterField; record: FieldYearlyRecord } | null>(null);
@@ -286,7 +289,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         const allNextWorks = nextRec?.fieldSeasonId
           ? (byFs.get(nextRec.fieldSeasonId) ?? []).sort((a, b) => a.sortOrder - b.sortOrder)
           : [];
-        const nextWorks = allNextWorks.filter((w) => w.phase === 'PREPARATION' || w.phase === 'SOWING');
+        // Server saadab järgmisest hooajast ainult selle aasta sügistööd
+        const nextWorks = allNextWorks.filter((w) => w.phase !== 'HARVEST');
 
         return {
           fieldSeasonId: rec.fieldSeasonId,
@@ -306,7 +310,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           nextIsWinter,
           nextUndetermined,
           nextWorks,
-          allNextWorks
+          allNextWorks,
+          columns: boardColumns(works, year, isWinter),
+          nextColumns: autumnColumns(nextWorks)
         };
       })
       .filter((r): r is Row => r !== null)
@@ -389,7 +395,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [rows, year]);
 
   // Käesoleva hooaja tööd tahvli veeru kaupa (eelmise aasta sügistööd eraldi veergudes)
-  const columnWorks = (r: Row, col: BoardColumn) => r.works.filter((w) => boardColumn(w, year, r.isWinter) === col);
+  const columnWorks = (r: Row, col: BoardColumn) => r.works.filter((w) => r.columns.get(w.id) === col);
   const visibleWorks = (r: Row, col: BoardColumn) => columnWorks(r, col).filter((w) => !hideDone || w.status !== 'DONE');
 
   const rowNeedsWorks = (r: Row) => {
@@ -602,13 +608,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const prevMilestoneCount = () =>
     `${prevWinterRows.filter(prevSownDone).length} / ${prevWinterRows.length} talivilja`;
 
-  const countNextPhase = (phase: WorkPhase) => {
-    const ws = allRows.flatMap((r) => r.nextWorks.filter((w) => w.phase === phase));
-    return `${ws.length} tööd · ${ws.filter((w) => w.status === 'DONE').length} tehtud`;
+  // Järgmise hooaja sügistööd sügisploki veeru kaupa
+  const nextColumnWorks = (r: Row, col: AutumnColumn) => r.nextWorks.filter((w) => r.nextColumns.get(w.id) === col);
+  const countNextPhase = (col: AutumnColumn) => {
+    const ws = allRows.flatMap((r) => nextColumnWorks(r, col));
+    return `${ws.length} tööd · ${ws.filter((w) => w.status === 'DONE').length} lõpetatud`;
   };
   const nextWinterRows = allRows.filter((r) => r.nextIsWinter);
-  const nextMilestoneCount = (phase: WorkPhase) =>
-    `${nextWinterRows.filter((r) => r.nextWorks.some((w) => w.phase === phase && w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
+  const nextMilestoneCount = () =>
+    `${nextWinterRows.filter((r) => nextColumnWorks(r, 'SOWING').some((w) => w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
 
   const renderCards = (row: Row, col: BoardColumn) =>
     visibleWorks(row, col).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />);
@@ -622,16 +630,16 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     ));
   };
 
-  const visibleNextWorks = (r: Row, phase: WorkPhase) =>
-    r.nextWorks.filter((w) => w.phase === phase && (!hideDone || w.status !== 'DONE'));
+  const visibleNextWorks = (r: Row, col: AutumnColumn) =>
+    nextColumnWorks(r, col).filter((w) => !hideDone || w.status !== 'DONE');
 
-  const renderNextCards = (row: Row, phase: WorkPhase) =>
-    visibleNextWorks(row, phase).map((w) => (
+  const renderNextCards = (row: Row, col: AutumnColumn) =>
+    visibleNextWorks(row, col).map((w) => (
       <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
     ));
 
-  const renderNextMilestone = (row: Row, phase: WorkPhase) => {
-    const ws = row.nextWorks.filter((w) => w.phase === phase);
+  const renderNextMilestone = (row: Row) => {
+    const ws = nextColumnWorks(row, 'SOWING');
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
       <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
@@ -647,7 +655,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   };
 
   const nextSownDone = (row: Row) => {
-    return row.nextWorks.some((w) => w.phase === 'SOWING' && w.status === 'DONE');
+    return nextColumnWorks(row, 'SOWING').some((w) => w.status === 'DONE');
   };
 
   return (
@@ -747,13 +755,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           <div className="fw-head">
             <div className="fw-grid fw-head-top">
               <div className="fw-head-section">PÕLD</div>
-              <div className="fw-head-section prev" style={{ gridColumn: '2 / 4' }}>
+              <div className="fw-head-section prev" style={{ gridColumn: '2 / 5' }}>
                 <span>EELMINE AASTA {year - 1}</span>
               </div>
-              <div className="fw-head-section current" style={{ gridColumn: '4 / 8' }}>
+              <div className="fw-head-section current" style={{ gridColumn: '5 / 9' }}>
                 <span>KÄESOLEV AASTA {year}</span>
               </div>
-              <div className="fw-head-section next" style={{ gridColumn: '8 / 10' }}>
+              <div className="fw-head-section next" style={{ gridColumn: '9 / 12' }}>
                 <span>JÄRGMINE AASTA {year + 1}</span>
               </div>
             </div>
@@ -768,6 +776,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               <div className="fw-head-cell milestone prev-sow">
                 <strong><Sprout size={14} /> Sügiskülv</strong>
                 <small>{prevMilestoneCount()}</small>
+              </div>
+              <div className="fw-head-cell phase">
+                <strong>Sügishooldus</strong>
+                <small>{countPhase('PREV_CARE')}</small>
               </div>
               <div className="fw-head-cell phase">
                 <strong>Ettevalmistus</strong>
@@ -787,11 +799,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               </div>
               <div className="fw-head-cell phase">
                 <strong>Ettevalmistus</strong>
-                <small>{countNextPhase('PREPARATION')}</small>
+                <small>{countNextPhase('PREP')}</small>
               </div>
               <div className="fw-head-cell milestone autumn-sow">
                 <strong><Sprout size={14} /> Sügiskülv</strong>
-                <small>{nextMilestoneCount('SOWING')}</small>
+                <small>{nextMilestoneCount()}</small>
+              </div>
+              <div className="fw-head-cell phase">
+                <strong>Sügishooldus</strong>
+                <small>{countNextPhase('CARE')}</small>
               </div>
             </div>
           </div>
@@ -899,11 +915,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           </div>
                         </div>
 
-                        {/* Rida 1: Käesoleva hooaja kultuuri päis (eelmise aasta sügis + käesolev aasta, Cols 2-7) */}
+                        {/* Rida 1: Käesoleva hooaja kultuuri päis (eelmise aasta sügis + käesolev aasta, Cols 2-8) */}
                         <div
                           className="fw-crop-banner current"
                           style={{
-                            gridColumn: '2 / 8',
+                            gridColumn: '2 / 9',
                             gridRow: '1 / 2',
                             ...(color ? ({ '--crop-color': color } as React.CSSProperties) : {})
                           }}
@@ -929,12 +945,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           )}
                         </div>
 
-                        {/* Rida 1: Järgmise kultuuri päis (Cols 8-9) */}
+                        {/* Rida 1: Järgmise kultuuri päis (Cols 9-11) */}
                         {!row.nextUndetermined ? (
                           <div
                             className="fw-crop-banner next"
                             style={{
-                              gridColumn: '8 / 10',
+                              gridColumn: '9 / 12',
                               gridRow: '1 / 2',
                               ...(nextColor ? ({ '--next-crop-color': nextColor } as React.CSSProperties) : {})
                             }}
@@ -960,29 +976,29 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             )}
                           </div>
                         ) : (
-                          <div className="fw-crop-banner next undetermined" style={{ gridColumn: '8 / 10', gridRow: '1 / 2' }}>
+                          <div className="fw-crop-banner next undetermined" style={{ gridColumn: '9 / 12', gridRow: '1 / 2' }}>
                             <span className="fw-crop-name muted">Järgmine kultuur määramata</span>
                           </div>
                         )}
 
-                        {/* Rida 2: Eelmise aasta sügistööd (Cols 2-3) */}
+                        {/* Rida 2: Eelmise aasta sügistööd (Cols 2-4) */}
                         {/* Col 2: Eelmise aasta ettevalmistus (nt sügiskünd) */}
                         <div className="fw-cell prev" style={{ gridColumn: '2 / 3', gridRow: '2 / 3' }}>
                           {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
                           {renderCards(row, 'PREV_PREPARATION')}
                           {!locked && !row.undetermined && (row.works.length > 0 || row.isWinter) && (
-                            <button type="button" className="fw-add" aria-label="Lisa töid" title={`Lisa ${year - 1}. a sügise ettevalmistustöö (nt künd)`} onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
+                            <button type="button" className="fw-add" aria-label="Lisa töid" title={`Lisa ${year - 1}. a sügise ettevalmistustöö (nt künd)`} onClick={() => setAddDialog({ row, phase: 'PREPARATION', plannedText: `Sügis ${year - 1}` })}>
                               <Pencil size={13} />
                             </button>
                           )}
                         </div>
 
-                        {/* Col 3: Eelmise aasta sügiskülv (ja sügisene hooldus pärast külvi) */}
+                        {/* Col 3: Eelmise aasta sügiskülv */}
                         {row.isWinter ? (
                           <div className={`fw-cell milestone prev-sow ${prevSownDone(row) ? 'done' : ''}`} style={{ gridColumn: '3 / 4', gridRow: '2 / 3' }}>
                             {renderMilestone(row, 'PREV_SOWING')}
                             {!locked && !row.undetermined && (
-                              <button type="button" className="fw-add" aria-label="Lisa sügiskülv" title={`Lisa ${year - 1}. a sügiskülv`} onClick={() => setAddDialog({ row, phase: 'SOWING' })}>
+                              <button type="button" className="fw-add" aria-label="Lisa sügiskülv" title={`Lisa ${year - 1}. a sügiskülv`} onClick={() => setAddDialog({ row, phase: 'SOWING', plannedText: `Sügis ${year - 1}` })}>
                                 <Pencil size={13} />
                               </button>
                             )}
@@ -995,9 +1011,19 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           </div>
                         )}
 
-                        {/* Rida 2: Käesoleva aasta tööd (Cols 4-7) */}
-                        {/* Col 4: Ettevalmistus */}
-                        <div className="fw-cell" style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
+                        {/* Col 4: Eelmise aasta sügishooldus (pärast sügiskülvi, nt herbitsiid taliviljal) */}
+                        <div className="fw-cell prev" style={{ gridColumn: '4 / 5', gridRow: '2 / 3' }}>
+                          {renderCards(row, 'PREV_CARE')}
+                          {!locked && !row.undetermined && (row.works.length > 0 || row.isWinter) && (
+                            <button type="button" className="fw-add" aria-label="Lisa sügishooldustöid" title={`Lisa ${year - 1}. a sügishooldustöö (nt herbitsiid)`} onClick={() => setAddDialog({ row, phase: 'CARE', plannedText: `Sügis ${year - 1}` })}>
+                              <Pencil size={13} />
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Rida 2: Käesoleva aasta tööd (Cols 5-8) */}
+                        {/* Col 5: Ettevalmistus */}
+                        <div className="fw-cell" style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}>
                           {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
                           {!row.undetermined && row.works.length === 0 && !row.isWinter && !locked && (
                             <button
@@ -1017,15 +1043,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           )}
                         </div>
 
-                        {/* Col 5: Kevadkülv (talivili on külvatud eelmisel sügisel) */}
+                        {/* Col 6: Kevadkülv (talivili on külvatud eelmisel sügisel) */}
                         {row.isWinter && columnWorks(row, 'SOWING').length === 0 ? (
-                          <div className="fw-cell fw-cell-no-sow" style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}>
+                          <div className="fw-cell fw-cell-no-sow" style={{ gridColumn: '6 / 7', gridRow: '2 / 3' }}>
                             <span className="fw-muted" title={`Talivili – külv ${year - 1}. a sügisel`}>—</span>
                           </div>
                         ) : (
                           <div
                             className={`fw-cell milestone sow ${columnWorks(row, 'SOWING').some((w) => w.status === 'DONE') ? 'done' : ''}`}
-                            style={{ gridColumn: '5 / 6', gridRow: '2 / 3' }}
+                            style={{ gridColumn: '6 / 7', gridRow: '2 / 3' }}
                           >
                             {renderMilestone(row, 'SOWING')}
                             {!locked && !row.undetermined && row.works.length > 0 && (
@@ -1042,8 +1068,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           </div>
                         )}
 
-                        {/* Col 6: Hooldus */}
-                        <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '6 / 7', gridRow: '2 / 3' }}>
+                        {/* Col 7: Hooldus */}
+                        <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'}`} style={{ gridColumn: '7 / 8', gridRow: '2 / 3' }}>
                           {row.isWinter && !row.undetermined && !locked && visibleWorks(row, 'CARE').length === 0 && (
                             <button
                               type="button"
@@ -1062,8 +1088,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           )}
                         </div>
 
-                        {/* Col 7: Koristus */}
-                        <div className="fw-cell milestone harvest" style={{ gridColumn: '7 / 8', gridRow: '2 / 3' }}>
+                        {/* Col 8: Koristus */}
+                        <div className="fw-cell milestone harvest" style={{ gridColumn: '8 / 9', gridRow: '2 / 3' }}>
                           {renderMilestone(row, 'HARVEST')}
                           {!locked && !row.undetermined && row.works.length > 0 && (
                             <button
@@ -1078,11 +1104,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           )}
                         </div>
 
-                        {/* Rida 2: Järgmise kultuuri sügistööd (Cols 8-9) */}
+                        {/* Rida 2: Järgmise kultuuri sügistööd (Cols 9-11) */}
                         {!row.nextUndetermined ? (
                           <>
-                            {/* Col 8: Sügise ettevalmistus (nii tali- kui ka suviviljadel, nt sügiskünd) */}
-                            <div className="fw-cell" style={{ gridColumn: '8 / 9', gridRow: '2 / 3' }}>
+                            {/* Col 9: Sügise ettevalmistus (nii tali- kui ka suviviljadel, nt sügiskünd) */}
+                            <div className="fw-cell" style={{ gridColumn: '9 / 10', gridRow: '2 / 3' }}>
                               {row.nextWorks.length === 0 && !locked && row.nextRec?.fieldSeasonId && (
                                 <button
                                   type="button"
@@ -1093,44 +1119,62 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                   <ListChecks size={12} /> Lisa tööde plaan
                                 </button>
                               )}
-                              {renderNextCards(row, 'PREPARATION')}
+                              {renderNextCards(row, 'PREP')}
                               {!locked && row.nextRec?.fieldSeasonId && row.nextWorks.length > 0 && (
                                 <button
                                   type="button"
                                   className="fw-add"
                                   aria-label="Lisa sügistöid"
                                   title="Lisa sügise ettevalmistustöö (nt künd)"
-                                  onClick={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true })}
+                                  onClick={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true, plannedText: `Sügis ${year}` })}
                                 >
                                   <Pencil size={13} />
                                 </button>
                               )}
                             </div>
 
-                            {/* Col 9: Sügiskülv (ainult taliviljal; suviviljal ei toimu sügisel külvi) */}
+                            {/* Col 10: Sügiskülv (ainult taliviljal; suviviljal ei toimu sügisel külvi) */}
                             {row.nextIsWinter ? (
-                              <div className={`fw-cell milestone autumn-sow ${nextSownDone(row) ? 'done' : ''}`} style={{ gridColumn: '9 / 10', gridRow: '2 / 3' }}>
-                                {renderNextMilestone(row, 'SOWING')}
+                              <div className={`fw-cell milestone autumn-sow ${nextSownDone(row) ? 'done' : ''}`} style={{ gridColumn: '10 / 11', gridRow: '2 / 3' }}>
+                                {renderNextMilestone(row)}
                                 {!locked && row.nextRec?.fieldSeasonId && row.nextWorks.length > 0 && (
                                   <button
                                     type="button"
                                     className="fw-add"
                                     aria-label="Lisa sügiskülv"
                                     title="Lisa sügiskülv"
-                                    onClick={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true })}
+                                    onClick={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true, plannedText: `Sügis ${year}` })}
                                   >
                                     <Pencil size={13} />
                                   </button>
                                 )}
                               </div>
                             ) : (
-                              <div className="fw-cell fw-cell-no-sow" style={{ gridColumn: '9 / 10', gridRow: '2 / 3' }}>
-                                <span className="fw-muted" title="Suvivili – sügiskülvi ei toimu">—</span>
+                              <div className="fw-cell fw-cell-no-sow" style={{ gridColumn: '10 / 11', gridRow: '2 / 3' }}>
+                                {nextColumnWorks(row, 'SOWING').length > 0
+                                  ? renderNextMilestone(row)
+                                  : <span className="fw-muted" title="Suvivili – sügiskülvi ei toimu">—</span>}
                               </div>
                             )}
+
+                            {/* Col 11: Sügishooldus (järgmise kultuuri hooldus pärast sügiskülvi) */}
+                            <div className="fw-cell" style={{ gridColumn: '11 / 12', gridRow: '2 / 3' }}>
+                              {renderNextCards(row, 'CARE')}
+                              {!locked && row.nextRec?.fieldSeasonId && row.nextWorks.length > 0 && (
+                                <button
+                                  type="button"
+                                  className="fw-add"
+                                  aria-label="Lisa sügishooldustöid"
+                                  title={`Lisa ${year}. a sügishooldustöö (nt herbitsiid)`}
+                                  onClick={() => setAddDialog({ row, phase: 'CARE', isNextCrop: true, plannedText: `Sügis ${year}` })}
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                              )}
+                            </div>
                           </>
                         ) : (
-                          <div className="fw-cell fw-cell-next-none" style={{ gridColumn: '8 / 10', gridRow: '2 / 3' }}>
+                          <div className="fw-cell fw-cell-next-none" style={{ gridColumn: '9 / 12', gridRow: '2 / 3' }}>
                             <span className="fw-muted">Järgmine kultuur määramata</span>
                           </div>
                         )}
@@ -1423,9 +1467,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             )?.items
           }
           initialPhase={addDialog.phase}
+          initialPlannedText={addDialog.plannedText}
           allowedPhases={
             addDialog.isNextCrop
-              ? (addDialog.row.nextIsWinter ? ['PREPARATION', 'SOWING'] : ['PREPARATION'])
+              ? (addDialog.row.nextIsWinter ? ['PREPARATION', 'SOWING', 'CARE'] : ['PREPARATION', 'CARE'])
               : undefined
           }
           onClose={() => setAddDialog(null)}

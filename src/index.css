@@ -7837,15 +7837,15 @@ a.history-pill:hover {
 
 .fw-grid {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
+  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(120px, 1.1fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(120px, 1.1fr);
   width: 100%;
 }
 
-/* Tahvel on 9 veeruga lai: kitsal ekraanil keritakse horisontaalselt, põllu veerg jääb paigale */
+/* Tahvel on 11 veeruga lai: kitsal ekraanil keritakse horisontaalselt, põllu veerg jääb paigale */
 .fw-head,
 .fw-group-header,
 .fw-row-container {
-  min-width: 1085px;
+  min-width: 1315px;
 }
 
 .fw-head-section:first-child,
@@ -8003,7 +8003,7 @@ a.history-pill:hover {
 /* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
 .fw-row-container {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(140px, 1.4fr) minmax(85px, 0.7fr);
+  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(120px, 1.1fr) minmax(140px, 1.5fr) minmax(85px, 0.7fr) minmax(185px, 1.9fr) minmax(85px, 0.7fr) minmax(130px, 1.2fr) minmax(85px, 0.7fr) minmax(120px, 1.1fr);
   grid-template-rows: auto 1fr;
   border-bottom: 1px solid var(--border-card);
 }

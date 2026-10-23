@@ -85,7 +85,7 @@ export function sowingKindMatchesCrop(kind: string | null, crop: string): boolea
 }
 
 // Viimase saagikoristuse järel tehtud tööd (v.a koristus) → järgmine hooaeg; vahekultuuri külv (liik ei sobi
-// järgmise kultuuriga) jääb. Faas: külv → SOWING; enne sügiskülvi PREPARATION, alates sellest CARE.
+// järgmise kultuuriga) jääb. Faas: külv → SOWING; kuni sügiskülvi päevani (k.a) PREPARATION, hiljem CARE.
 export function splitPostHarvestOperations(
   ops: FieldBookImportOperation[],
   nextCrop: string | null
@@ -106,7 +106,7 @@ export function splitPostHarvestOperations(
   const firstSowing = sowings.length ? sowings.reduce((a, b) => (b < a ? b : a)) : null;
   const next = moved.map((o) => ({
     ...o,
-    phase: (o.type === PRIA_ACTIVITY.SOWING ? 'SOWING' : firstSowing && o.dateFrom >= firstSowing ? 'CARE' : 'PREPARATION') as WorkPhase
+    phase: (o.type === PRIA_ACTIVITY.SOWING ? 'SOWING' : firstSowing && o.dateFrom > firstSowing ? 'CARE' : 'PREPARATION') as WorkPhase
   }));
   return { current, next };
 }

@@ -15,6 +15,7 @@ interface AddFieldWorkDialogProps {
   templateWorkTypeIds: Set<string>; // kultuuri mall (või üldmall)
   templateItems?: WorkTemplateItem[];
   initialPhase?: WorkPhase;
+  initialPlannedText?: string; // vaikimisi planeeritud aeg (nt "Sügis 2025" sügisploki veerust lisades)
   allowedPhases?: WorkPhase[];
   onClose: () => void;
   onSaved: () => void;
@@ -28,12 +29,13 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
   templateWorkTypeIds,
   templateItems,
   initialPhase,
+  initialPlannedText,
   allowedPhases,
   onClose,
   onSaved
 }) => {
   const [toAdd, setToAdd] = useState<Set<string>>(new Set());
-  const [plannedText, setPlannedText] = useState('');
+  const [plannedText, setPlannedText] = useState(initialPlannedText ?? '');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
