@@ -155,36 +155,59 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   );
 };
 
-export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestRow) => void; areaHa: number; showTotals: boolean }> = ({ value, onChange, areaHa, showTotals }) => (
-  <div className="pria-line">
-    <select className="form-input" aria-label="Kultuuri tüüp" value={value.priaSpec} onChange={(e) => onChange({ ...value, priaSpec: e.target.value })}>
-      <option value="">– kultuuri tüüp –</option>
-      {CROP_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
-    </select>
-    <select className="form-input" aria-label="Saagi tüüp" value={value.priaKind} onChange={(e) => onChange({ ...value, priaKind: e.target.value })}>
-      <option value="">– saagi tüüp –</option>
-      {YIELD_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
-    </select>
-    <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
-      onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
-    {showTotals && (
-      <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t kokku" value={value.total}
-        onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
-    )}
-  </div>
-);
+export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestRow) => void; areaHa: number; showTotals: boolean }> = ({ value, onChange, areaHa, showTotals }) => {
+  // Sama veerupäisega ruudustik nagu materjaliridadel
+  const grid = { gridTemplateColumns: `minmax(140px, 1.2fr) minmax(140px, 1.2fr) 84px${showTotals ? ' 92px' : ''}` };
+  return (
+    <div className="pria-lines">
+      <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
+        <span>Kultuuri tüüp</span>
+        <span>Saagi tüüp</span>
+        <span className="num">Saak t/ha</span>
+        {showTotals && <span className="num">Kokku, t</span>}
+      </div>
+      <div className="pria-grid" style={grid}>
+        <select className="form-input" aria-label="Kultuuri tüüp" value={value.priaSpec} onChange={(e) => onChange({ ...value, priaSpec: e.target.value })}>
+          <option value="">– vali –</option>
+          {CROP_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+        <select className="form-input" aria-label="Saagi tüüp" value={value.priaKind} onChange={(e) => onChange({ ...value, priaKind: e.target.value })}>
+          <option value="">– vali –</option>
+          {YIELD_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
+        </select>
+        <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
+          onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
+        {showTotals && (
+          <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t" value={value.total}
+            onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
+        )}
+      </div>
+    </div>
+  );
+};
+
+const OBS_GRID = { gridTemplateColumns: 'minmax(140px, 1fr) minmax(160px, 1.6fr) 90px minmax(90px, 0.6fr) 28px' };
 
 export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChange: (rows: WorkEntryObservation[]) => void }> = ({ rows, onChange }) => (
   <div className="pria-lines">
+    {rows.length > 0 && (
+      <div className="pria-grid pria-grid-head" style={OBS_GRID} aria-hidden="true">
+        <span>Seire liik</span>
+        <span>Leid</span>
+        <span className="num">Kogus</span>
+        <span>Ühik</span>
+        <span />
+      </div>
+    )}
     {rows.map((o, i) => {
       const set = (p: Partial<WorkEntryObservation>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
       return (
-        <div key={i} className="pria-line">
+        <div key={i} className="pria-grid" style={OBS_GRID}>
           <select className="form-input" aria-label="Seire liik" value={o.priaRegister ?? ''} onChange={(e) => set({ priaRegister: e.target.value || null, unit: OBSERVATION_UNITS[e.target.value] ?? '' })}>
-            <option value="">– seire liik –</option>
+            <option value="">– vali –</option>
             {Object.keys(OBSERVATION_UNITS).map((x) => <option key={x} value={x}>{x}</option>)}
           </select>
-          <input className="form-input" aria-label="Leid" placeholder="Leid (nt Põldsinep)" value={o.label} onChange={(e) => set({ label: e.target.value })} />
+          <input className="form-input" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
           <ObservationQuantity value={o.quantity} unit={o.unit} onChange={(quantity) => set({ quantity })} />
           <span className="work-entry-unit">{o.unit}</span>
           <button type="button" className="icon-btn-danger" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></button>
