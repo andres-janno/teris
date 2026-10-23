@@ -9146,8 +9146,11 @@ a.history-pill:hover {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px 110px;
 }
 
+/* Kuupäevad, viis, töötaja ja kellaajad ühel real (väljade arv sõltub tegevusest) */
 .work-entry-grid.work-entry-top-grid {
-  grid-template-columns: 140px minmax(0, 1fr) 115px 115px 95px;
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
 }
 
 .work-entry-grid.work-entry-area-grid {
@@ -9158,6 +9161,7 @@ a.history-pill:hover {
   .work-entry-grid.work-entry-top-grid,
   .work-entry-grid.work-entry-area-grid {
     grid-template-columns: 1fr 1fr;
+    grid-auto-flow: row;
   }
 }
 
