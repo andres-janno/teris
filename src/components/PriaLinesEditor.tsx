@@ -89,37 +89,58 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
     set(i, m ? { materialId: m.id, label: m.name, unit: m.unit } : { materialId: '', label: '' });
   };
 
+  // Veerud tegevuse järgi; päis ja read kasutavad sama ruudustikku, et kõik oleks ühel real
+  const freeText = !showTotals; // plaanis võib toote nime vabalt kirjutada, kandel peab toode olema Kulumaterjalidest
+  const columns: { label: string; width: string; num?: boolean }[] = [
+    { label: 'Register/materjal', width: 'minmax(130px, 1.2fr)' },
+    { label: isSeed ? 'Sort' : 'Toode', width: 'minmax(130px, 1.4fr)' },
+    ...(freeText ? [{ label: 'või nimi', width: 'minmax(110px, 1fr)' }] : []),
+    { label: isSeed ? 'Liik' : isTkv ? 'Liik' : 'Väetise liik', width: 'minmax(110px, 1fr)' },
+    ...(isSeed ? [{ label: 'Kategooria', width: '90px' }] : []),
+    ...(isTkv ? [{ label: 'Toimeaine', width: 'minmax(110px, 1fr)' }] : []),
+    { label: 'Kogus/ha', width: '84px', num: true },
+    ...(showTotals ? [{ label: 'Kokku', width: '92px', num: true }] : []),
+    ...(isFert ? [{ label: 'N kg/ha', width: '70px', num: true }, { label: 'P kg/ha', width: '70px', num: true }, { label: 'K kg/ha', width: '70px', num: true }] : []),
+    { label: '', width: '28px' }
+  ];
+  const grid = { gridTemplateColumns: columns.map((c) => c.width).join(' ') };
+
   return (
     <div className="pria-lines">
+      {rows.length > 0 && (
+        <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
+          {columns.map((c, k) => <span key={k} className={c.num ? 'num' : undefined}>{c.label}</span>)}
+        </div>
+      )}
       {rows.map((r, i) => (
-        <div key={i} className="pria-line">
+        <div key={i} className="pria-grid" style={grid}>
           <select className="form-input" aria-label="Register/materjal" value={r.priaRegister} onChange={(e) => set(i, { priaRegister: e.target.value })}>
-            <option value="">– register/materjal –</option>
+            <option value="">– vali –</option>
             {registersFor(activity).map((x) => <option key={x} value={x}>{x}</option>)}
             {r.priaRegister && !registersFor(activity).includes(r.priaRegister) && <option value={r.priaRegister}>{r.priaRegister}</option>}
           </select>
-          <select className="form-input" aria-label="Toode" value={r.materialId} onChange={(e) => pickMaterial(i, e.target.value)}>
-            <option value="">{r.label && !r.materialId ? r.label : '– vali Kulumaterjalidest –'}</option>
+          <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.materialId} onChange={(e) => pickMaterial(i, e.target.value)}>
+            <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
             {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          {!r.materialId && (
-            <input className="form-input" aria-label="Toote nimi" placeholder="või kirjuta nimi" value={r.label} onChange={(e) => set(i, { label: e.target.value })} />
+          {freeText && (
+            <input className="form-input" aria-label="Toote nimi" placeholder="vabatekst" disabled={!!r.materialId} value={r.materialId ? '' : r.label} onChange={(e) => set(i, { label: e.target.value })} />
           )}
-          <input className="form-input" aria-label={isSeed ? 'Liik' : 'Liik/tüüp'} placeholder={isSeed ? 'Liik (nt Suvinisu)' : isTkv ? 'Liik (nt Herbitsiid)' : 'Väetise liik'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
+          <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
             <select className="form-input" aria-label="Seemne kategooria" value={r.priaSpec} onChange={(e) => set(i, { priaSpec: e.target.value })}>
-              <option value="">– kategooria –</option>
+              <option value="">–</option>
               {SEED_CATEGORIES.map((x) => <option key={x} value={x}>{x}</option>)}
             </select>
           )}
-          {isTkv && <input className="form-input" aria-label="Toimeaine" placeholder="Toimeaine" value={r.activeIngredient} onChange={(e) => set(i, { activeIngredient: e.target.value })} />}
+          {isTkv && <input className="form-input" aria-label="Toimeaine" value={r.activeIngredient} onChange={(e) => set(i, { activeIngredient: e.target.value })} />}
           <input className="form-input num" aria-label="Kogus ha kohta" inputMode="decimal" placeholder={`${r.unit}/ha`} value={r.ratePerHa} onChange={(e) => setRate(i, e.target.value)} />
-          {showTotals && <input className="form-input num" aria-label="Kogus kokku" inputMode="decimal" placeholder={`${r.unit} kokku`} value={r.total} onChange={(e) => setTotal(i, e.target.value)} />}
+          {showTotals && <input className="form-input num" aria-label="Kogus kokku" inputMode="decimal" placeholder={r.unit} value={r.total} onChange={(e) => setTotal(i, e.target.value)} />}
           {isFert && (
             <>
-              <input className="form-input num" aria-label="N kg/ha" inputMode="decimal" placeholder="N kg/ha" value={r.nKgHa} onChange={(e) => set(i, { nKgHa: e.target.value })} />
-              <input className="form-input num" aria-label="P kg/ha" inputMode="decimal" placeholder="P kg/ha" value={r.pKgHa} onChange={(e) => set(i, { pKgHa: e.target.value })} />
-              <input className="form-input num" aria-label="K kg/ha" inputMode="decimal" placeholder="K kg/ha" value={r.kKgHa} onChange={(e) => set(i, { kKgHa: e.target.value })} />
+              <input className="form-input num" aria-label="N kg/ha" inputMode="decimal" value={r.nKgHa} onChange={(e) => set(i, { nKgHa: e.target.value })} />
+              <input className="form-input num" aria-label="P kg/ha" inputMode="decimal" value={r.pKgHa} onChange={(e) => set(i, { pKgHa: e.target.value })} />
+              <input className="form-input num" aria-label="K kg/ha" inputMode="decimal" value={r.kKgHa} onChange={(e) => set(i, { kKgHa: e.target.value })} />
             </>
           )}
           <button type="button" className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}>

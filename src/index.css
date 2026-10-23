@@ -8947,7 +8947,7 @@ a.history-pill:hover {
 
 /* Kande aken */
 .work-entry-modal {
-  width: min(760px, 96vw);
+  width: min(1180px, 96vw);
   max-height: 94vh;
 }
 
@@ -10609,3 +10609,14 @@ select.time-select {
 .pria-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
 .pria-line .form-input { flex: 1 1 140px; min-width: 0; }
 .pria-line .form-input.num { flex: 0 1 90px; }
+/* Materjaliread: veerupäisega ruudustik, üks rida materjali kohta */
+.pria-grid { display: grid; gap: 6px; align-items: center; }
+.pria-grid .form-input { min-width: 0; width: 100%; }
+.pria-grid-head { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); padding: 0 2px; }
+.pria-grid-head .num { text-align: right; }
+@media (max-width: 760px) {
+  .pria-grid { display: flex; flex-wrap: wrap; }
+  .pria-grid .form-input { flex: 1 1 140px; width: auto; }
+  .pria-grid .form-input.num { flex: 0 1 90px; }
+  .pria-grid-head { display: none; }
+}
