@@ -1,6 +1,6 @@
 // Põllutööde tahvli veergude jaotus: eelmise aasta sügistööd vs käesoleva aasta tööd
 import { describe, it, expect } from 'vitest';
-import { autumnColumns, boardColumns, boardYearGroup, type BoardWorkLike } from './fieldWorksBoardColumns';
+import { autumnColumns, boardColumns, boardYearGroup, isExactAutumnText, type BoardWorkLike } from './fieldWorksBoardColumns';
 
 let seq = 0;
 const work = (over: Partial<BoardWorkLike>): BoardWorkLike => ({
@@ -109,5 +109,19 @@ describe('autumnColumns', () => {
     const mid = work({ phase: 'CARE', plannedDateFrom: '2025-09-07' });
     const m = autumnColumns([sowA, sowB, mid]);
     expect([m.get(sowA.id), m.get(sowB.id), m.get(mid.id)]).toEqual(['SOWING', 'SOWING', 'CARE']);
+  });
+});
+
+describe('kuupäevata hooldustöö sügisplokis ainult täpse "Sügis YYYY" plaaniga', () => {
+  const care = (plannedText: string | null): BoardWorkLike => ({ id: 'c', phase: 'CARE', entries: [], plannedDateFrom: null, plannedText, priaCode: null });
+  it('"Sügis 2026" → eelmise aasta plokk, malli "sügis … / kevad …" → käesolev hooaeg', () => {
+    expect(boardYearGroup(care('Sügis 2026'), 2027, true)).toBe('PREV');
+    expect(boardYearGroup(care('sügis (sept–okt) / kevad (mai–juuni)'), 2027, true)).toBe('CURRENT');
+    expect(boardYearGroup(care('mai'), 2027, true)).toBe('CURRENT');
+  });
+  it('isExactAutumnText', () => {
+    expect(isExactAutumnText(' sügis 2025 ')).toBe(true);
+    expect(isExactAutumnText('Sügis')).toBe(false);
+    expect(isExactAutumnText(null)).toBe(false);
   });
 });

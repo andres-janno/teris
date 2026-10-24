@@ -33,9 +33,14 @@ export function boardYearGroup(work: BoardWorkLike, seasonYear: number, isWinter
     return Number.isFinite(y) && y < seasonYear ? 'PREV' : 'CURRENT';
   }
   if (isWinter && (work.phase === 'PREPARATION' || work.phase === 'SOWING')) return 'PREV';
+  // Hooldustöö on sügistöö ainult täpselt "Sügis YYYY" plaaniga (sügisveeru lisamine); malli "sügis … / kevad …" jääb hooaega
+  if (work.phase === 'CARE') return isExactAutumnText(work.plannedText) ? 'PREV' : 'CURRENT';
   if ((work.plannedText ?? '').toLowerCase().includes('ügis')) return 'PREV';
   return 'CURRENT';
 }
+
+// "Sügis 2026" (tõstutundetu) — sellise plaani aja lisab tahvli sügisveeru pliiats
+export const isExactAutumnText = (text: string | null | undefined): boolean => /^\s*sügis\s+\d{4}\s*$/i.test(text ?? '');
 
 export const isSowingWork = (work: Pick<BoardWorkLike, 'phase' | 'priaCode'>) =>
   work.priaCode === PRIA_ACTIVITY.SOWING || work.phase === 'SOWING';

@@ -25,7 +25,7 @@ import { materialSeasonTotals } from './materialUsage.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
-import { boardWorkDate } from '../services/fieldWorksBoardColumns.ts';
+import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
 const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
@@ -1006,8 +1006,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       if (date) {
         if (w.phase === 'HARVEST' || Number(date.slice(0, 4)) > year) continue;
       } else {
-        const autumnText = (w.plannedText ?? '').toLowerCase().includes('ügis');
-        const undatedAutumn = w.phase === 'PREPARATION' || (isWinter && w.phase === 'SOWING') || (w.phase === 'CARE' && autumnText);
+        // hooldus ainult täpselt "Sügis YYYY" plaaniga; malli "sügis … / kevad …" kuulub järgmise hooaja hooldusse
+        const undatedAutumn = w.phase === 'PREPARATION' || (isWinter && w.phase === 'SOWING') || (w.phase === 'CARE' && isExactAutumnText(w.plannedText));
         if (!undatedAutumn) continue;
       }
       const isAutumnPhase = w.phase === 'PREPARATION' || w.phase === 'SOWING';
