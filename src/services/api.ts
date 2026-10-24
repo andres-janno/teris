@@ -245,8 +245,9 @@ export const api = {
     return res.json();
   },
 
-  async getFleet(): Promise<{ vehicles: Vehicle[]; implements: Implement[]; devices: TelemetryDevice[] }> {
-    const res = await apiFetch('/api/fleet');
+  // telemetry: false → kiire register ilma seadmete reaalajas asukohtadeta (tsdb päringuid ei tehta)
+  async getFleet(opts?: { telemetry?: boolean }): Promise<{ vehicles: Vehicle[]; implements: Implement[]; devices: TelemetryDevice[] }> {
+    const res = await apiFetch(opts?.telemetry === false ? '/api/fleet?telemetry=0' : '/api/fleet');
     if (!res.ok) throw new Error('Failed to fetch fleet');
     const data = await res.json();
     // Ilma telemeetria moodulita saadab server asukoha ja viimase aktiivsuse null-ina; klient kasutab undefined

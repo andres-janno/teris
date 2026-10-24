@@ -1,7 +1,7 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
 // Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Search, Plus, Lock, Calendar, SquareKanban, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
@@ -241,7 +241,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [reload]);
 
   // Põldude muutus (nt kultuuri valik registris) → server lisab malli; laeme tööd veidi hiljem uuesti.
+  // Esmalaadimine on ülal; siin ainult päris muutus pärast seda (mitte esimene renderdus ega
+  // põldude esmakordne saabumine käivitusel, mil eelmine loend oli tühi). Aasta vahetus laeb ülal.
+  const prevMasterFieldsRef = useRef(masterFields);
   useEffect(() => {
+    const prev = prevMasterFieldsRef.current;
+    prevMasterFieldsRef.current = masterFields;
+    if (prev === masterFields || prev.length === 0) return;
     const t = setTimeout(() => void reload(), 800);
     return () => clearTimeout(t);
   }, [masterFields, reload]);

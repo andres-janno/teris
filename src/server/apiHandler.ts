@@ -574,6 +574,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname === '/api/fleet' && method === 'GET') {
       // Ilma telemeetria moodulita: tsdb päringuid pole, seadmeid ei anta, masinate asukoht ja aktiivsus on tühi
       const telemetry = hasModule(licenseOf(req), 'TELEMETRY');
+      // ?telemetry=0: kiire register ilma tsdb päringuteta (rakenduse käivitus) — seadmed tulevad
+      // ilma reaalajas asukoha/aktiivsuseta (staatus offline), täisandmed laeb klient kaardivaates
+      const withLive = telemetry && url.searchParams.get('telemetry') !== '0';
       const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches, deviceLinks] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
@@ -633,8 +636,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         .map((d) => d.macAddress as string);
 
       const [cellularTelemetry, eyeTelemetry] = await Promise.all([
-        telemetry ? fetchCellularTelemetry(cellularImeis) : new Map<string, any>(),
-        telemetry ? fetchEyeTelemetry(eyeMacs) : new Map<string, any>()
+        withLive ? fetchCellularTelemetry(cellularImeis) : new Map<string, any>(),
+        withLive ? fetchEyeTelemetry(eyeMacs) : new Map<string, any>()
       ]);
 
       const now = Date.now();

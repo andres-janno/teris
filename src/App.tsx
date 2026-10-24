@@ -144,6 +144,9 @@ interface AppProps {
 export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Database connection status
   const [dbConnected, setDbConnected] = useState<boolean>(false);
+  // Käivituse andmed (sh masinapargi register) on laetud — alles siis tohib asukohti taustal laadida,
+  // et hiljem saabuv register ei kirjutaks värskeid asukohti üle
+  const [startupLoaded, setStartupLoaded] = useState(false);
   const [dbError, setDbError] = useState<boolean>(false);
 
   useEffect(() => {
@@ -373,7 +376,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           const [dbFields, dbSeasons, dbFleet, dbPois, dbParties, dbCrops, dbSoilSamples] = await Promise.all([
             api.getMasterFields().catch(() => null),
             api.getSeasons().catch(() => null),
-            api.getFleet().catch(() => null),
+            // Käivitusel ainult register (kiire); seadmete asukohad laetakse kaardivaates taustal
+            api.getFleet({ telemetry: false }).catch(() => null),
             api.getPois().catch(() => null),
             api.getParties().catch(() => null),
             api.getCrops().catch(() => null),
@@ -391,6 +395,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             if (dbFleet.implements?.length) setImplementsList(dbFleet.implements);
             if (dbFleet.devices?.length) setDevices(dbFleet.devices);
           }
+          setStartupLoaded(true);
           if (dbPois && dbPois.length > 0) setPois(dbPois);
           if (dbParties && dbParties.length > 0) setParties(dbParties);
           if (dbCrops && dbCrops.length > 0) setCrops(dbCrops);
@@ -897,14 +902,29 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   );
   const trackVehicleIds = useMemo(() => new Set(vehicleTracks.map((t) => t.vehicleId)), [vehicleTracks]);
 
+  // Seadmete reaalajas asukohad ja staatus (tsdb): käivitusel neid ei laeta, vaid alles siis,
+  // kui kaart või masinapargi vaade on avatud ja masinate kiht nähtav — üks kord seansis
+  // (masinate kihi sisselülitamine värskendab uuesti).
+  const devicePositionsLoadedRef = useRef(false);
+  const refreshDevicePositions = () => {
+    devicePositionsLoadedRef.current = true;
+    api.getFleet().then((fleet) => {
+      if (fleet?.devices?.length) setDevices(fleet.devices);
+    }).catch((err) => {
+      devicePositionsLoadedRef.current = false;
+      console.error('Error refreshing vehicle positions:', err);
+    });
+  };
+  useEffect(() => {
+    if (!startupLoaded || devicePositionsLoadedRef.current || !modules.telemetry) return;
+    if ((mainView === 'map' && visibility.vehicles) || mainView === 'fleet') refreshDevicePositions();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startupLoaded, mainView, visibility.vehicles, modules.telemetry]);
+
   // Layer toggling
   const handleToggleLayer = (key: keyof LayerVisibility) => {
     // Masinapargi sisselülitamisel loetakse seadmete viimased asukohad serverist uuesti
-    if (key === 'vehicles' && !visibility.vehicles) {
-      api.getFleet().then((fleet) => {
-        if (fleet?.devices?.length) setDevices(fleet.devices);
-      }).catch((err) => console.error('Error refreshing vehicle positions:', err));
-    }
+    if (key === 'vehicles' && !visibility.vehicles) refreshDevicePositions();
     setVisibility((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
