@@ -47,13 +47,14 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
     : null;
   const hasDate = !!(work.plannedDateFrom || work.plannedDateTo);
 
-  const isEmpty = !hasDate && !work.plannedText && work.plannedAreaHa == null && !method && !workerName
+  const isEmpty = !hasDate && work.plannedAreaHa == null && !method && !workerName
     && materialLines.length === 0 && !harvestLine && !work.notes;
   if (isEmpty) return <div className="fw-plan-view"><div className="fw-panel-empty">Plaan puudub</div></div>;
 
   const planned = work.plannedDateFrom
     ? (work.plannedDateTo && work.plannedDateTo !== work.plannedDateFrom ? formatDateRange(work.plannedDateFrom, work.plannedDateTo) : formatDate(work.plannedDateFrom))
-    : work.plannedDateTo ? `– ${formatDate(work.plannedDateTo)}` : work.plannedText || '–';
+    // Ainult kuupäevad; malli ligikaudset aega (nt "august – september") plaanis ei kuvata
+    : work.plannedDateTo ? `– ${formatDate(work.plannedDateTo)}` : '–';
   const dash = (s: string | null | undefined) => (s && s.trim() ? s : '–');
 
   const columns: { label: string; num?: boolean; value: (l: FieldWorkPlanLine) => string }[] = [
