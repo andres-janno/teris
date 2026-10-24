@@ -8787,15 +8787,24 @@ a.history-pill:hover {
   color: #1d4ed8;
 }
 
-/* Valitud töö hüpikaken (modal) */
+/* Valitud töö hüpikaken (modal): vaates ja plaani muutmisel sama lai (materjaliread mahuvad ühele reale, ei vilgu) */
 .modal-content.fw-work-modal {
-  width: min(580px, 94vw);
+  width: min(1180px, 96vw);
   max-height: 90vh;
 }
 
-/* Plaani muutmisel laiem aken, et materjaliread mahuks ühele reale */
-.modal-content.fw-work-modal.editing-plan {
-  width: min(1180px, 96vw);
+/* Plaani päise väljad (tegevus, kuupäevad, aeg, pindala, viis/teostaja) ühel real */
+.work-entry-grid.work-plan-top-grid {
+  grid-template-columns: none;
+  grid-auto-flow: column;
+  grid-auto-columns: minmax(0, 1fr);
+}
+
+@media (max-width: 680px) {
+  .work-entry-grid.work-plan-top-grid {
+    grid-template-columns: 1fr 1fr;
+    grid-auto-flow: row;
+  }
 }
 
 /* Valitud töö plaan (vaade ja kohapeal muutmine) */

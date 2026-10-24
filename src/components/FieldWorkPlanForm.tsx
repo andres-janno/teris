@@ -177,7 +177,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   return (
     <form className={`fw-plan-form ${layout}`} onSubmit={save}>
       <div className={dialog ? 'modal-body work-entry-body' : 'work-entry-body'}>
-        <div className="work-entry-grid">
+        <div className="work-entry-grid work-plan-top-grid">
           <div className="form-group">
             <label htmlFor="wp-type">Tegevus *</label>
             <select id="wp-type" className="form-input" value={workTypeId} disabled={!!work} onChange={(e) => setWorkTypeId(e.target.value)}>

@@ -1218,7 +1218,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           return (
             <div className="modal-backdrop" onClick={() => setSelectedId(null)}>
               <div
-                className={`modal-content animate-scale-up fw-work-modal${editingPlan ? ' editing-plan' : ''}`}
+                className="modal-content animate-scale-up fw-work-modal"
                 role="dialog"
                 aria-modal="true"
                 aria-label="Valitud töö"
