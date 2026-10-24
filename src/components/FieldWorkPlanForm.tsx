@@ -75,7 +75,6 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
       <dl className="fw-plan-rows">
         <dt>Tegevus</dt><dd title={work.priaName}>{work.workTypeName}</dd>
         <dt>Planeeritud</dt><dd>{planned}</dd>
-        {work.plannedText && hasDate && <><dt>Ligikaudne aeg</dt><dd>{work.plannedText}</dd></>}
         <dt>Pindala</dt><dd className="num">{fmtNum(work.plannedAreaHa ?? fieldAreaHa)} ha</dd>
         {method && <><dt>Väetamisviis</dt><dd>{method}</dd></>}
         {workerName && <><dt>Teostaja</dt><dd>{workerName}</dd></>}
@@ -127,7 +126,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const activity = workType?.priaCode ?? work?.priaCode ?? '';
   const [dateFrom, setDateFrom] = useState(work?.plannedDateFrom ?? '');
   const [dateTo, setDateTo] = useState(work?.plannedDateTo ?? '');
-  const [plannedText, setPlannedText] = useState(work?.plannedText ?? '');
+  const [plannedText] = useState(work?.plannedText ?? '');
   const [areaHa, setAreaHa] = useState(fmt(work?.plannedAreaHa ?? fieldAreaHa));
   const [method, setMethod] = useState(work?.method ?? '');
   const [workerId, setWorkerId] = useState(work?.plannedWorkerId ?? '');
@@ -185,16 +184,6 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
               {ordered.map((w) => <option key={w.id} value={w.id}>{w.shortName?.trim() ? `${w.shortName.trim()} (${w.name})` : w.name}</option>)}
             </select>
           </div>
-          <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} className="form-input" /></div>
-          <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} className="form-input" /></div>
-          <div className="form-group">
-            <label htmlFor="wp-text">Ligikaudne aeg</label>
-            <input id="wp-text" className="form-input" placeholder="nt apr–mai" value={plannedText} onChange={(e) => setPlannedText(e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label htmlFor="wp-area">Pindala, ha</label>
-            <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => setAreaHa(e.target.value)} />
-          </div>
           {activity === PRIA_ACTIVITY.FERTILIZING && (
             <div className="form-group">
               <label htmlFor="wp-method">Väetamisviis</label>
@@ -214,6 +203,13 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
               </select>
             </div>
           )}
+          {/* Ligikaudset aega vormis ei küsita; olemasolev väärtus (nt mallist "Sügis 2025") jääb salvestamisel alles */}
+          <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} className="form-input" /></div>
+          <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} className="form-input" /></div>
+          <div className="form-group">
+            <label htmlFor="wp-area">Pindala, ha</label>
+            <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => setAreaHa(e.target.value)} />
+          </div>
         </div>
         {usesMaterials && (
           <section className="work-entry-section">
