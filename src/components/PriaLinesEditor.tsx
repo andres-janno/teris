@@ -90,11 +90,9 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   };
 
   // Veerud tegevuse järgi; päis ja read kasutavad sama ruudustikku, et kõik oleks ühel real
-  const freeText = !showTotals; // plaanis võib toote nime vabalt kirjutada, kandel peab toode olema Kulumaterjalidest
   const columns: { label: string; width: string; num?: boolean }[] = [
     { label: 'Register/materjal', width: 'minmax(130px, 1.2fr)' },
     { label: isSeed ? 'Sort' : 'Toode', width: 'minmax(130px, 1.4fr)' },
-    ...(freeText ? [{ label: 'või nimi', width: 'minmax(110px, 1fr)' }] : []),
     { label: isSeed ? 'Liik' : isTkv ? 'Liik' : 'Väetise liik', width: 'minmax(110px, 1fr)' },
     ...(isSeed ? [{ label: 'Kategooria', width: '90px' }] : []),
     ...(isTkv ? [{ label: 'Toimeaine', width: 'minmax(110px, 1fr)' }] : []),
@@ -123,9 +121,6 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
             <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
             {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
           </select>
-          {freeText && (
-            <input className="form-input" aria-label="Toote nimi" placeholder="vabatekst" disabled={!!r.materialId} value={r.materialId ? '' : r.label} onChange={(e) => set(i, { label: e.target.value })} />
-          )}
           <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
             <select className="form-input" aria-label="Seemne kategooria" value={r.priaSpec} onChange={(e) => set(i, { priaSpec: e.target.value })}>

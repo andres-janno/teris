@@ -7,7 +7,7 @@ import { api } from '../services/api';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services/pria';
 import type { FieldWork, FieldWorkPlanLine, Material, WorkType } from '../types/fieldWork';
-import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, type PriaRow, type HarvestRow } from './PriaLinesEditor';
+import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -63,6 +63,8 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
     ...(isSeed ? [{ label: 'Kategooria', value: (l: FieldWorkPlanLine) => dash(l.priaSpec) }] : []),
     ...(isTkv ? [{ label: 'Toimeaine', value: (l: FieldWorkPlanLine) => dash(l.activeIngredient) }] : []),
     { label: 'Kogus/ha', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtNum(l.ratePerHa)} ${l.unit}`) },
+    // Kokku = norm × planeeritud pindala
+    { label: 'Kokku', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtNum(Math.round(l.ratePerHa * (work.plannedAreaHa ?? fieldAreaHa) * 100) / 100)} ${l.unit}`) },
     ...(isFert ? [
       { label: 'N kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtNum(l.nKgHa) },
       { label: 'P kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtNum(l.pKgHa) },
@@ -134,7 +136,14 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const area = parseNum(areaHa) ?? fieldAreaHa;
   const [rows, setRows] = useState<PriaRow[]>(() => work?.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, area)) ?? []);
   const harvestLine = work?.lines.find((l) => l.kind === 'HARVEST');
-  const [harvest, setHarvest] = useState<HarvestRow>({ ratePerHa: fmt(harvestLine?.ratePerHa), total: '', priaKind: harvestLine?.priaKind ?? '', priaSpec: harvestLine?.priaSpec ?? '' });
+  const [harvest, setHarvest] = useState<HarvestRow>(() => recomputeHarvestTotal({ ratePerHa: fmt(harvestLine?.ratePerHa), total: '', priaKind: harvestLine?.priaKind ?? '', priaSpec: harvestLine?.priaSpec ?? '' }, area));
+  // Pindala muutmisel arvutatakse materjalide ja saagi kogus kokku normist uuesti
+  const changeArea = (v: string) => {
+    setAreaHa(v);
+    const a = parseNum(v) ?? fieldAreaHa;
+    setRows((rs) => recomputeTotals(rs, a));
+    setHarvest((h) => recomputeHarvestTotal(h, a));
+  };
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -208,19 +217,19 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
           <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} className="form-input" /></div>
           <div className="form-group">
             <label htmlFor="wp-area">Pindala, ha</label>
-            <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => setAreaHa(e.target.value)} />
+            <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => changeArea(e.target.value)} />
           </div>
         </div>
         {usesMaterials && (
           <section className="work-entry-section">
-            <h4>Planeeritud materjalid (norm ha kohta)</h4>
-            <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={area} showTotals={false} />
+            <h4>Planeeritud materjalid</h4>
+            <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={area} showTotals />
           </section>
         )}
         {isHarvest && (
           <section className="work-entry-section">
             <h4>Planeeritud saak</h4>
-            <HarvestEditor value={harvest} onChange={setHarvest} areaHa={area} showTotals={false} />
+            <HarvestEditor value={harvest} onChange={setHarvest} areaHa={area} showTotals />
           </section>
         )}
         <div className="form-group">
