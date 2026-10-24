@@ -14,7 +14,7 @@ import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
 import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkTemplate, type WorkType } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
-import { FieldWorkPlanDialog } from './FieldWorkPlanDialog';
+import { FieldWorkPlanForm } from './FieldWorkPlanForm';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
 import { FieldShapeModal } from './FieldShapeModal';
@@ -186,7 +186,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [hideDone, setHideDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
-  const [planDialog, setPlanDialog] = useState<FieldWork | null>(null);
+  const [editingPlan, setEditingPlan] = useState(false);
   const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean; plannedText?: string } | null>(null);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [financeEntryId, setFinanceEntryId] = useState<string | null>(null);
@@ -198,15 +198,22 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   };
 
   useEffect(() => {
-    if (!selectedId || entryDialog || planDialog || isFinanceOpen) return;
+    if (!selectedId || entryDialog || isFinanceOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        setSelectedId(null);
+        // Plaani muutmisel katkestab esimene Esc muutmise, järgmine sulgeb akna
+        if (editingPlan) setEditingPlan(false);
+        else setSelectedId(null);
       }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, entryDialog, planDialog, isFinanceOpen]);
+  }, [selectedId, entryDialog, isFinanceOpen, editingPlan]);
+
+  // Teise töö valimisel või akna sulgemisel lõpeb plaani muutmine
+  useEffect(() => {
+    setEditingPlan(false);
+  }, [selectedId]);
 
   const pendingFinanceCount = useMemo(() => {
     return fieldWorks
@@ -1211,7 +1218,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           return (
             <div className="modal-backdrop" onClick={() => setSelectedId(null)}>
               <div
-                className="modal-content animate-scale-up fw-work-modal"
+                className={`modal-content animate-scale-up fw-work-modal${editingPlan ? ' editing-plan' : ''}`}
                 role="dialog"
                 aria-modal="true"
                 aria-label="Valitud töö"
@@ -1257,29 +1264,32 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   )}
 
-                  <div className="fw-panel-grid">
-                    <label>
-                      <span>Planeeritud</span>
-                      <input
-                        key={`${selected.id}-planned`}
-                        className="form-input"
-                        defaultValue={selected.plannedText ?? ''}
-                        placeholder={isSelectedNext ? `nt sügis ${year}` : 'nt mai 2026'}
-                        disabled={locked}
-                        onBlur={(e) => {
-                          const v = e.target.value.trim() || null;
-                          if (v !== (selected.plannedText ?? null)) void run(() => api.updateFieldWork(selected.id, { plannedText: v }));
-                        }}
-                      />
-                    </label>
-                  </div>
-
-                  {!locked && (
-                    <button type="button" className="btn btn-secondary btn-sm" onClick={() => setPlanDialog(selected)}>
-                      <Pencil size={14} />
-                      <span>Muuda plaani</span>
-                    </button>
-                  )}
+                  <section className="fw-plan-section">
+                    <div className="fw-plan-section-head">
+                      <span>Plaan</span>
+                      {!locked && !editingPlan && (
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingPlan(true)}>
+                          <Pencil size={13} />
+                          <span>Muuda</span>
+                        </button>
+                      )}
+                    </div>
+                    <FieldWorkPlanForm
+                      key={selected.id}
+                      fieldSeasonId={selected.fieldSeasonId}
+                      fieldAreaHa={activeArea}
+                      work={selected}
+                      workTypes={workTypes}
+                      materials={materials}
+                      workers={workers}
+                      mode={editingPlan && !locked ? 'edit' : 'view'}
+                      onSaved={() => {
+                        setEditingPlan(false);
+                        void reload();
+                      }}
+                      onCancel={() => setEditingPlan(false)}
+                    />
+                  </section>
 
                   {activeArea > 0 && (() => {
                     const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
@@ -1426,30 +1436,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             onClose={() => setEntryDialog(null)}
             onSaved={() => {
               setEntryDialog(null);
-              void reload();
-            }}
-          />
-        );
-      })()}
-
-      {planDialog && selectedRow && (() => {
-        const isNext = planDialog.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === planDialog.fieldSeasonId);
-        const activeLabel = isNext
-          ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1})`
-          : fieldLabel(selectedRow);
-        const activeArea = isNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
-        return (
-          <FieldWorkPlanDialog
-            fieldSeasonId={planDialog.fieldSeasonId}
-            fieldLabel={activeLabel}
-            fieldAreaHa={activeArea}
-            work={planDialog}
-            workTypes={workTypes}
-            materials={materials}
-            workers={workers}
-            onClose={() => setPlanDialog(null)}
-            onSaved={() => {
-              setPlanDialog(null);
               void reload();
             }}
           />

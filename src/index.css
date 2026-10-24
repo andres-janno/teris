@@ -8793,6 +8793,128 @@ a.history-pill:hover {
   max-height: 90vh;
 }
 
+/* Plaani muutmisel laiem aken, et materjaliread mahuks ühele reale */
+.modal-content.fw-work-modal.editing-plan {
+  width: min(1180px, 96vw);
+}
+
+/* Valitud töö plaan (vaade ja kohapeal muutmine) */
+.fw-plan-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border: 1px solid var(--border-card);
+  border-radius: 8px;
+}
+
+.fw-plan-section-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  min-height: 26px;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.fw-plan-view {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.fw-plan-rows {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 4px 14px;
+  margin: 0;
+  font-size: 0.8rem;
+}
+
+.fw-plan-rows dt {
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.fw-plan-rows dd {
+  margin: 0;
+  color: var(--text-primary);
+}
+
+.fw-plan-rows .num,
+.fw-plan-table .num {
+  font-variant-numeric: tabular-nums;
+}
+
+.fw-plan-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.fw-plan-block-title {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.fw-plan-table-wrap {
+  overflow-x: auto;
+}
+
+.fw-plan-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.78rem;
+  color: var(--text-primary);
+}
+
+.fw-plan-table th {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  text-align: left;
+  padding: 3px 6px;
+  border-bottom: 1px solid var(--border-card);
+  white-space: nowrap;
+}
+
+.fw-plan-table td {
+  padding: 4px 6px;
+  border-bottom: 1px solid var(--border-card);
+}
+
+.fw-plan-table tr:last-child td {
+  border-bottom: none;
+}
+
+.fw-plan-table th.num,
+.fw-plan-table td.num {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.fw-plan-notes {
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  white-space: pre-line;
+}
+
+.fw-plan-form.dialog {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+}
+
+.fw-plan-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
 .fw-panel-head {
   padding: 18px 22px 14px 22px;
   border-bottom: 1px solid var(--border-card);
