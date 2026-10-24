@@ -116,9 +116,6 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
       <span className="fw-card-title">
         <StatusIcon status={work.status} />
         <span title={work.priaName}>{work.workTypeName}</span>
-        {donePct !== null && (
-          <span className="fw-card-pct" title={`${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha tehtud`}>{donePct}%</span>
-        )}
       </span>
       {/* Viis (nt väetamisviis) eraldi real, et pealkiri ei läheks kaardist laiemaks */}
       {work.method && <span className="fw-card-method">{work.method}</span>}
@@ -138,11 +135,20 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
                 {(haStr || workerFirstName) && (
                   <span className="fw-card-entry-secondary">
                     {[haStr, workerFirstName].filter(Boolean).join(' · ')}
+                    {/* Ühe kande korral protsent sama rea lõpus */}
+                    {n === 1 && donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
                   </span>
                 )}
               </span>
             );
           })}
+          {/* Mitme kande korral kokkuvõte: tehtud / põllu pindala ja protsent */}
+          {n > 1 && (
+            <span className="fw-card-total">
+              Kokku {fmtHa(doneHa)} / {fmtHa(fieldAreaHa)} ha
+              {donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
+            </span>
+          )}
         </span>
       ) : (
         <span className="fw-card-sub">

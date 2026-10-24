@@ -8601,6 +8601,22 @@ a.history-pill:hover {
   line-height: 1.25;
 }
 
+.fw-card-entry-secondary .fw-card-pct,
+.fw-card-total .fw-card-pct {
+  margin-left: 6px;
+  font-size: 0.65rem;
+}
+
+/* Mitme kande kokkuvõte kaardi allosas */
+.fw-card-total {
+  margin-top: 2px;
+  padding-top: 3px;
+  border-top: 1px solid var(--border-color, #e5e7eb);
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+
 .fw-status-dot {
   width: 9px;
   height: 9px;
