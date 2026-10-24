@@ -656,9 +656,9 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö eemaldamine ebaõnnestus');
   },
 
-  async clearFieldWorks(fieldSeasonId: number, nextSeasonId?: number | null, mode?: 'ALL' | 'AUTUMN'): Promise<{ success: boolean; count: number }> {
+  async clearFieldWorks(fieldSeasonId: number, nextSeasonId?: number | null, mode?: 'ALL' | 'AUTUMN', workIds?: string[]): Promise<{ success: boolean; count: number }> {
     return jsonOrThrow(
-      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId, nextSeasonId: nextSeasonId ?? undefined, mode })),
+      await apiFetch('/api/field-works/clear', jsonInit('POST', { fieldSeasonId, nextSeasonId: nextSeasonId ?? undefined, mode, workIds })),
       'Põllu tööde eemaldamine ebaõnnestus'
     );
   },

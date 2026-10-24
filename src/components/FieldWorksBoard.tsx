@@ -588,7 +588,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     const nextName = r.nextCropName || 'järgmine kultuur';
     if (!await confirmDialog(`Kas soovid kindlasti eemaldada põllult "${r.field.name}" järgmise kultuuri "${nextName}" sügistööd (${count} tk)?`)) return;
     void run(async () => {
-      await api.clearFieldWorks(r.nextRec!.fieldSeasonId!, undefined, 'AUTUMN');
+      // Kustutatakse täpselt sügisplokis kuvatud tööd (ka sügishooldus)
+      await api.clearFieldWorks(r.nextRec!.fieldSeasonId!, undefined, undefined, r.nextWorks.map((w) => w.id));
       if (selectedRow?.fieldSeasonId === r.fieldSeasonId && selected && r.nextWorks.some((w) => w.id === selected.id)) {
         setSelectedId(null);
       }

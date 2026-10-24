@@ -1080,6 +1080,20 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Lukus hooaja töid ei saa muuta' }, 403);
       return true;
     }
+    // Kindlad tööd (nt järgmise kultuuri sügisplokis kuvatud tööd, sh sügishooldus)
+    if (Array.isArray(b?.workIds)) {
+      const ids = (b.workIds as unknown[]).map((v) => text(v, 64)).filter((v): v is string => !!v);
+      const where: Prisma.FieldWorkWhereInput = { fieldSeasonId, id: { in: ids } };
+      const entriesCount = await prisma.workEntry.count({ where: { fieldWork: where } });
+      if (entriesCount > 0) {
+        json(res, { error: `Valitud töödel on ${entriesCount} kannet. Kandeid omavaid töid ei saa eemaldada.` }, 409);
+        return true;
+      }
+      if (await bulkDeleteDenied(req, res, where)) return true;
+      const { count } = await prisma.fieldWork.deleteMany({ where });
+      json(res, { success: true, count, mode: 'IDS' });
+      return true;
+    }
     const mode = b?.mode === 'AUTUMN' ? 'AUTUMN' : 'ALL';
     if (mode === 'AUTUMN') {
       const entriesCount = await prisma.workEntry.count({
