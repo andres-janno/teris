@@ -899,36 +899,21 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             gridRow: '1 / 3'
                           }}
                         >
+                          {/* Põllu kuju nupp lahtri paremas ülanurgas */}
+                          <button
+                            type="button"
+                            className="fw-field-shape-btn corner"
+                            title={`Näita ${year}. a põllu kuju`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setShapeView({ field: row.field, record: row.rec });
+                            }}
+                          >
+                            <Crosshair size={13} />
+                          </button>
                           <div className="fw-field-title">
                             {row.field.num && <span className="field-num-badge">Nr {row.field.num}</span>}
                             <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>
-                            <div className="fw-field-actions">
-                              {!locked && !row.undetermined && row.works.length > 0 && (
-                                <button
-                                  type="button"
-                                  className="fw-field-edit-btn"
-                                  title={`Muuda või planeeri põllu "${row.field.name}" töid`}
-                                  aria-label="Muuda või planeeri töid"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setAddDialog({ row, phase: row.isWinter ? 'CARE' : 'PREPARATION' });
-                                  }}
-                                >
-                                  <Pencil size={13} />
-                                </button>
-                              )}
-                              <button
-                                type="button"
-                                className="fw-field-shape-btn"
-                                title={`Näita ${year}. a põllu kuju`}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setShapeView({ field: row.field, record: row.rec });
-                                }}
-                              >
-                                <Crosshair size={13} />
-                              </button>
-                            </div>
                           </div>
                           <div className="fw-field-sub">
                             <span className="fw-field-ha">{fmtHa(row.rec.areaHa)} ha</span>

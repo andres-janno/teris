@@ -8358,11 +8358,19 @@ a.history-pill:hover {
 }
 
 .fw-field {
+  position: relative;
   padding: 9px 12px;
   display: flex;
   flex-direction: column;
   gap: 3px;
   min-width: 0;
+}
+
+/* Põllu kuju nupp põllu lahtri paremas ülanurgas */
+.fw-field-shape-btn.corner {
+  position: absolute;
+  top: 6px;
+  right: 6px;
 }
 
 .fw-field.has-crop {
