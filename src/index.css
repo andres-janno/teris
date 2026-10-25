@@ -7853,7 +7853,9 @@ a.history-pill:hover {
 .fw-head-section.current,
 .fw-head-section.next,
 .fw-grid [style*="grid-column: 5 /"],
-.fw-grid [style*="grid-column: 9 /"] {
+.fw-grid [style*="grid-column: 9 /"],
+.fw-row-container > [style*="grid-column: 5 /"],
+.fw-row-container > [style*="grid-column: 9 /"] {
   border-left: 3px solid var(--border-strong, #94a3b8) !important;
 }
 
