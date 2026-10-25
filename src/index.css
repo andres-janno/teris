@@ -7837,8 +7837,8 @@ a.history-pill:hover {
 
 .fw-grid {
   display: grid;
-  /* Põllu veerg 15% laiusest, ülejäänud 85% jagatakse võrdselt 10 tööveeru vahel */
-  grid-template-columns: minmax(0, 15fr) repeat(10, minmax(0, 8.5fr));
+  /* Põllu veerg 10% laiusest, ülejäänud 90% jagatakse võrdselt 10 tööveeru vahel */
+  grid-template-columns: minmax(0, 10fr) repeat(10, minmax(0, 9fr));
   width: 100%;
 }
 
@@ -8015,8 +8015,8 @@ a.history-pill:hover {
 /* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
 .fw-row-container {
   display: grid;
-  /* Põllu veerg 15% laiusest, ülejäänud 85% jagatakse võrdselt 10 tööveeru vahel */
-  grid-template-columns: minmax(0, 15fr) repeat(10, minmax(0, 8.5fr));
+  /* Põllu veerg 10% laiusest, ülejäänud 90% jagatakse võrdselt 10 tööveeru vahel */
+  grid-template-columns: minmax(0, 10fr) repeat(10, minmax(0, 9fr));
   grid-template-rows: auto 1fr;
   border-bottom: 1px solid var(--border-card);
 }
