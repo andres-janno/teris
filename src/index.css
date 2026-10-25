@@ -8378,20 +8378,27 @@ a.history-pill:hover {
   box-shadow: inset 3px 0 0 var(--crop-color);
 }
 
+/* Põllu number ja nimi eraldi ridadel, et pikem nimi mahuks ära */
 .fw-field-title {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   min-width: 0;
+  padding-right: 18px; /* ruum paremas ülanurgas olevale põllu kuju nupule */
 }
 
 .fw-field-name {
   font-size: 0.86rem;
   font-weight: 700;
   color: var(--text-primary);
-  white-space: nowrap;
+  line-height: 1.25;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .fw-field-actions {
