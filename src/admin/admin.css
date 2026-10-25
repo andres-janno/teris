@@ -40,8 +40,6 @@
 .admin-row-actions { white-space: nowrap; display: flex; gap: 6px; }
 .admin-swatch { display: inline-block; width: 18px; height: 18px; border-radius: 4px; border: 1px solid var(--border-card); vertical-align: middle; }
 .admin-narrow { max-width: 90px; }
-.admin-template-add { margin-top: 12px; }
-.admin-template-add select { max-width: 320px; }
 .alert-box.success { background: rgba(16, 185, 129, 0.15); color: #059669; border-color: rgba(16, 185, 129, 0.4); }
 .alert-box.info { background: rgba(59, 130, 246, 0.12); color: #2563eb; border-color: rgba(59, 130, 246, 0.35); }
 .admin-card-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px; }

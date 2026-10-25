@@ -7,7 +7,7 @@ import { handleLandingApi } from './landing/landingApi.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
 import { handleHelpRead } from './helpArticles.ts';
-import { handleFieldWorks, applyCropTemplate } from './fieldWorks.ts';
+import { handleFieldWorks } from './fieldWorks.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
@@ -418,11 +418,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             const statusUpper = (h.status || 'not_started').toUpperCase();
             // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
             const seasonId = (await ensureSeasons([h.year])).get(Number(h.year)) ?? null;
-            // Kultuuri muutus → põllutööde mall (vt fieldWorks.ts applyCropTemplate)
-            const previousSeason = await prisma.fieldSeason.findUnique({
-              where: { fieldId_year: { fieldId: upsertedField.id, year: Number(h.year) } },
-              select: { crop: true }
-            });
             const savedSeason = await prisma.fieldSeason.upsert({
               where: {
                 fieldId_year: {
@@ -472,9 +467,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             // Hooaja katastriüksused: ainult kui klient need saatis (PRIA import ei saada → jäävad puutumata).
             if (Array.isArray(h.cadastralParcels)) {
               await syncSeasonCadastralParcels(savedSeason.id, h.cadastralParcels);
-            }
-            if (previousSeason?.crop !== savedSeason.crop) {
-              await applyCropTemplate(savedSeason.id);
             }
           }
         }

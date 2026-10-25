@@ -5,15 +5,13 @@ import {
   platformApi,
   type CatalogCrop,
   type CatalogData,
-  type CatalogTemplate,
   type CatalogVariety,
   type CatalogWorkType,
   type CropGroup,
-  type TemplateItemInput,
   type WorkPhase
 } from './platformApi.ts';
 
-type Tab = 'crops' | 'workTypes' | 'templates';
+type Tab = 'crops' | 'workTypes';
 
 const numOrNull = (s: string): number | null => {
   if (s.trim() === '') return null;
@@ -307,7 +305,7 @@ function CropsTab({ data, reload }: { data: CatalogData; reload: () => void }) {
   const [error, setError] = useState('');
 
   const remove = async (c: CatalogCrop) => {
-    if (!window.confirm(`Kustutad kultuuri „${c.name}“? Sordid ja kultuuripõhised mallid kustuvad koos sellega.`)) return;
+    if (!window.confirm(`Kustutad kultuuri „${c.name}“? Sordid kustuvad koos sellega.`)) return;
     setError('');
     try {
       await platformApi.deleteCrop(c.id);
@@ -509,158 +507,6 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
   );
 }
 
-// ---- Mallid ----
-
-interface DraftItem {
-  key: number;
-  catalogWorkTypeId: string;
-  typicalTiming: string;
-  plannedCount: string;
-}
-
-let itemKey = 0;
-
-function itemsOf(t: CatalogTemplate | undefined): DraftItem[] {
-  return (t?.items ?? []).map((i) => ({
-    key: ++itemKey,
-    catalogWorkTypeId: i.catalogWorkTypeId,
-    typicalTiming: i.typicalTiming ?? '',
-    plannedCount: numStr(i.plannedCount)
-  }));
-}
-
-function TemplatesTab({ data, reload }: { data: CatalogData; reload: () => void }) {
-  const [cropId, setCropId] = useState<string>(''); // '' = üldmall
-  const [isWinter, setIsWinter] = useState(false);
-  const [items, setItems] = useState<DraftItem[]>([]);
-  const [addId, setAddId] = useState('');
-  const [error, setError] = useState('');
-  const [notice, setNotice] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  const current = data.templates.find((t) => (t.catalogCropId ?? '') === cropId && t.isWinter === isWinter);
-
-  // Valiku või serveriandmete muutudes laetakse redaktor uuesti
-  useEffect(() => {
-    setItems(itemsOf(current));
-  }, [current, cropId, isWinter]);
-
-  // Teade ja viga nullitakse ainult valiku vahetamisel, mitte pärast salvestust
-  useEffect(() => {
-    setNotice('');
-    setError('');
-  }, [cropId, isWinter]);
-
-  const used = new Set(items.map((i) => i.catalogWorkTypeId));
-  const available = data.workTypes.filter((w) => !used.has(w.id));
-  const nameOf = (id: string) => data.workTypes.find((w) => w.id === id)?.name ?? id;
-
-  const patch = (key: number, p: Partial<DraftItem>) => setItems((prev) => prev.map((i) => (i.key === key ? { ...i, ...p } : i)));
-  const move = (idx: number, dir: -1 | 1) =>
-    setItems((prev) => {
-      const j = idx + dir;
-      if (j < 0 || j >= prev.length) return prev;
-      const next = [...prev];
-      [next[idx], next[j]] = [next[j], next[idx]];
-      return next;
-    });
-  const add = () => {
-    if (!addId) return;
-    setItems((prev) => [...prev, { key: ++itemKey, catalogWorkTypeId: addId, typicalTiming: '', plannedCount: '' }]);
-    setAddId('');
-  };
-
-  const save = async () => {
-    setBusy(true);
-    setError('');
-    setNotice('');
-    const payload: TemplateItemInput[] = items.map((i) => ({
-      catalogWorkTypeId: i.catalogWorkTypeId,
-      typicalTiming: textOrNull(i.typicalTiming),
-      plannedCount: numOrNull(i.plannedCount)
-    }));
-    try {
-      await platformApi.saveTemplate(cropId || null, isWinter, payload);
-      setNotice(payload.length ? 'Mall salvestatud.' : 'Mall on tühi ja eemaldati.');
-      reload();
-    } catch (err) {
-      setError((err as Error).message);
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const label = (t: CatalogTemplate) => `${t.cropName ?? 'Üldmall'} — ${t.isWinter ? 'talvi' : 'suvi'} (${t.items.length} tööd)`;
-
-  return (
-    <div>
-      <div className="admin-toolbar">
-        <h2>Mallid</h2>
-      </div>
-      <p className="admin-muted">
-        Olemasolevad mallid: {data.templates.length ? data.templates.map(label).join('; ') : 'puuduvad'}.
-      </p>
-      <div className="admin-form-grid">
-        <Field id="tp-crop" label="Kultuur">
-          <select id="tp-crop" className="form-input" value={cropId} onChange={(e) => setCropId(e.target.value)}>
-            <option value="">Üldmall (kõik kultuurid)</option>
-            {data.crops.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </Field>
-        <Field id="tp-season" label="Hooaeg">
-          <select id="tp-season" className="form-input" value={isWinter ? 'winter' : 'summer'} onChange={(e) => setIsWinter(e.target.value === 'winter')}>
-            <option value="summer">Suvivili</option>
-            <option value="winter">Talivili</option>
-          </select>
-        </Field>
-      </div>
-      {error && <div className="alert-box error">{error}</div>}
-      {notice && <div className="alert-box success">{notice}</div>}
-      <div className="admin-table-wrap">
-        <table className="admin-table">
-          <thead>
-            <tr><th>#</th><th>Tööliik</th><th>Tüüpiline aeg</th><th>Plaanitud kordi</th><th /></tr>
-          </thead>
-          <tbody>
-            {items.map((it, idx) => (
-              <tr key={it.key}>
-                <td>{idx + 1}</td>
-                <td>{nameOf(it.catalogWorkTypeId)}</td>
-                <td>
-                  <input className="form-input" aria-label="Tüüpiline aeg" value={it.typicalTiming} maxLength={100} onChange={(e) => patch(it.key, { typicalTiming: e.target.value })} />
-                </td>
-                <td>
-                  <input className="form-input admin-narrow" aria-label="Plaanitud kordi" type="number" min="0" step="1" value={it.plannedCount} onChange={(e) => patch(it.key, { plannedCount: e.target.value })} />
-                </td>
-                <td className="admin-row-actions">
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => move(idx, -1)} disabled={idx === 0} aria-label="Üles">↑</button>
-                  <button type="button" className="btn btn-secondary btn-sm" onClick={() => move(idx, 1)} disabled={idx === items.length - 1} aria-label="Alla">↓</button>
-                  <button type="button" className="btn btn-danger btn-sm" onClick={() => setItems((prev) => prev.filter((i) => i.key !== it.key))}>Eemalda</button>
-                </td>
-              </tr>
-            ))}
-            {items.length === 0 && <tr><td colSpan={5} className="admin-muted">Mallis pole töid</td></tr>}
-          </tbody>
-        </table>
-      </div>
-      <div className="admin-actions admin-template-add">
-        <select className="form-input" aria-label="Lisa tööliik" value={addId} onChange={(e) => setAddId(e.target.value)}>
-          <option value="">Vali tööliik…</option>
-          {available.map((w) => (
-            <option key={w.id} value={w.id}>{PHASE_LABELS[w.phase]} — {w.name}</option>
-          ))}
-        </select>
-        <button type="button" className="btn btn-secondary" onClick={add} disabled={!addId}>Lisa mallile</button>
-        <button type="button" className="btn btn-primary" onClick={() => void save()} disabled={busy}>
-          {busy ? 'Salvestan…' : 'Salvesta mall'}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 // ---- Vaade ----
 
 export function CatalogView() {
@@ -685,7 +531,7 @@ export function CatalogView() {
       <h2>Algkataloog</h2>
       <div className="alert-box info">Algkataloogi muudatused kehtivad ainult edaspidi loodavatele ettevõtetele.</div>
       <div className="admin-nav">
-        {([['crops', 'Kultuurid'], ['workTypes', 'Tööliigid'], ['templates', 'Mallid']] as [Tab, string][]).map(([k, l]) => (
+        {([['crops', 'Kultuurid'], ['workTypes', 'Tööliigid']] as [Tab, string][]).map(([k, l]) => (
           <button key={k} type="button" className={`btn btn-secondary ${tab === k ? 'active' : ''}`} onClick={() => setTab(k)}>
             {l}
           </button>
@@ -695,7 +541,6 @@ export function CatalogView() {
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && tab === 'crops' && <CropsTab data={data} reload={reload} />}
       {data && tab === 'workTypes' && <WorkTypesTab data={data} reload={reload} />}
-      {data && tab === 'templates' && <TemplatesTab data={data} reload={reload} />}
     </div>
   );
 }

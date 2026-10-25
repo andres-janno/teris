@@ -89,8 +89,6 @@ export interface CatalogCounts {
   crops: number;
   varieties: number;
   workTypes: number;
-  templates: number;
-  items: number;
 }
 
 export interface CatalogVariety {
@@ -134,38 +132,15 @@ export interface CatalogWorkType {
   isActive: boolean;
 }
 
-export interface CatalogTemplateItem {
-  id: string;
-  catalogWorkTypeId: string;
-  workTypeName: string;
-  sortOrder: number;
-  typicalTiming: string | null;
-  plannedCount: number | null;
-}
-
-export interface CatalogTemplate {
-  id: string;
-  catalogCropId: string | null;
-  cropName: string | null;
-  isWinter: boolean;
-  items: CatalogTemplateItem[];
-}
-
 export interface CatalogData {
   crops: CatalogCrop[];
   workTypes: CatalogWorkType[];
-  templates: CatalogTemplate[];
 }
 
 export type CropInput = Omit<CatalogCrop, 'id' | 'varieties'>;
 export type VarietyInput = Omit<CatalogVariety, 'id' | 'catalogCropId'>;
 // kordumist ei sisestata: iga töö on üks kord
 export type WorkTypeInput = Omit<CatalogWorkType, 'id' | 'repeatMode' | 'maxRepeats' | 'intervalDays'>;
-export interface TemplateItemInput {
-  catalogWorkTypeId: string;
-  typicalTiming: string | null;
-  plannedCount: number | null;
-}
 
 export const CROP_GROUP_LABELS: Record<CropGroup, string> = {
   CEREAL: 'Teravili',
@@ -276,8 +251,6 @@ export const platformApi = {
   createWorkType: (input: WorkTypeInput) => request<CatalogWorkType>('POST', '/catalog/work-types', input),
   updateWorkType: (id: string, input: Partial<WorkTypeInput>) => request<CatalogWorkType>('PATCH', `/catalog/work-types/${enc(id)}`, input),
   deleteWorkType: (id: string) => request<unknown>('DELETE', `/catalog/work-types/${enc(id)}`),
-  saveTemplate: (catalogCropId: string | null, isWinter: boolean, items: TemplateItemInput[]) =>
-    request<unknown>('PUT', '/catalog/templates', { catalogCropId, isWinter, items }),
   listDevices: () => request<DeviceRow[]>('GET', '/devices'),
   listDeviceRegistrations: (limit = 50) => request<DeviceRegistration[]>('GET', `/devices/registrations?limit=${limit}`),
   releaseDevice: (id: string) => request<unknown>('POST', `/devices/${enc(id)}/release`, {}),

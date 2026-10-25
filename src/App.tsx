@@ -2107,7 +2107,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       </DeferredMount>
 
       <DeferredMount when={isWorkRegisterOpen}>
-        <WorkRegisterModal isOpen={isWorkRegisterOpen} onClose={() => setIsWorkRegisterOpen(false)} crops={crops} />
+        <WorkRegisterModal isOpen={isWorkRegisterOpen} onClose={() => setIsWorkRegisterOpen(false)} />
       </DeferredMount>
 
       <DeferredMount when={isCropsModalOpen}>

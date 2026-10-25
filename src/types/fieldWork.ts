@@ -43,7 +43,6 @@ export interface WorkType {
   sortOrder: number;
   isActive: boolean;
   priaCode: string | null;
-  templateCount?: number;
   fieldWorkCount?: number;
 }
 
@@ -62,22 +61,6 @@ export interface Material {
 
 // Uue kulumaterjali vaikeväärtused
 export const NEW_MATERIAL: Partial<Material> = { category: 'FERTILIZER', unit: 'kg', isActive: true };
-
-export interface WorkTemplateItem {
-  id?: string;
-  workTypeId: string;
-  sortOrder: number;
-  typicalTiming: string | null;
-  plannedCount: number | null;
-}
-
-export interface WorkTemplate {
-  id: string;
-  name?: string;
-  cropId: string | null; // null = üldmall (isWinter: false = suvivilja üldmall, true = talivilja üldmall)
-  isWinter: boolean;
-  items: WorkTemplateItem[];
-}
 
 export interface WorkEntryMaterial extends Partial<PriaLineFields> {
   materialId: string;

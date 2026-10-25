@@ -2,13 +2,10 @@ import { describe, expect, it } from 'vitest';
 import {
   buildEntryLines,
   canConfirm,
-  filterTemplatePhasesForAutumn,
-  filterTemplatePhasesForCurrent,
   isWinterCrop,
   matchCrop,
   mergeLines,
   summarizeLines,
-  templateWorksToCreate,
   type StoredLine
 } from './fieldWorkRules';
 
@@ -143,44 +140,5 @@ describe('canConfirm / summarizeLines', () => {
   it('vaatlused ei mõjuta finantsi ega kinnitamist', () => {
     expect(summarizeLines([{ kind: 'OBSERVATION', quantity: 7, unitPrice: null }]).costTotal).toBe(0);
     expect(canConfirm([{ unitPrice: 1, kind: 'LABOR' }, { unitPrice: null, kind: 'OBSERVATION' }])).toBe(true);
-  });
-});
-
-describe('filterTemplatePhases (malli tööde filtreerimine hooaja ja vilja tüübi järgi)', () => {
-  it('jooksvas aastas taliviljal rakenduvad ainult hooldus ja koristus', () => {
-    expect(filterTemplatePhasesForCurrent(true, 'PREPARATION')).toBe(false);
-    expect(filterTemplatePhasesForCurrent(true, 'SOWING')).toBe(false);
-    expect(filterTemplatePhasesForCurrent(true, 'CARE')).toBe(true);
-    expect(filterTemplatePhasesForCurrent(true, 'HARVEST')).toBe(true);
-  });
-
-  it('jooksvas aastas suviviljal rakenduvad kõik 4 faasi', () => {
-    expect(filterTemplatePhasesForCurrent(false, 'PREPARATION')).toBe(true);
-    expect(filterTemplatePhasesForCurrent(false, 'SOWING')).toBe(true);
-    expect(filterTemplatePhasesForCurrent(false, 'CARE')).toBe(true);
-    expect(filterTemplatePhasesForCurrent(false, 'HARVEST')).toBe(true);
-  });
-
-  it('sügistöödes taliviljal rakenduvad ettevalmistus ja külv', () => {
-    expect(filterTemplatePhasesForAutumn(true, 'PREPARATION')).toBe(true);
-    expect(filterTemplatePhasesForAutumn(true, 'SOWING')).toBe(true);
-    expect(filterTemplatePhasesForAutumn(true, 'CARE')).toBe(false);
-    expect(filterTemplatePhasesForAutumn(true, 'HARVEST')).toBe(false);
-  });
-
-  it('sügistöödes suviviljal rakendub AINULT ettevalmistus (külv toimub kevadel)', () => {
-    expect(filterTemplatePhasesForAutumn(false, 'PREPARATION')).toBe(true);
-    expect(filterTemplatePhasesForAutumn(false, 'SOWING')).toBe(false);
-    expect(filterTemplatePhasesForAutumn(false, 'CARE')).toBe(false);
-    expect(filterTemplatePhasesForAutumn(false, 'HARVEST')).toBe(false);
-  });
-});
-
-
-describe('templateWorksToCreate', () => {
-  it('loob malli kordi miinus olemasolevad sama tüübi tööd', () => {
-    const items = [{ workTypeId: 'tkv', plannedCount: 3 }, { workTypeId: 'kund', plannedCount: null }];
-    expect(templateWorksToCreate(items, new Map([['tkv', 1]]))).toEqual(['tkv', 'tkv', 'kund']);
-    expect(templateWorksToCreate(items, new Map([['tkv', 5], ['kund', 1]]))).toEqual([]);
   });
 });

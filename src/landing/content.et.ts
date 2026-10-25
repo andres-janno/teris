@@ -58,7 +58,7 @@ export const CONTENT_ET: LandingContent = {
   features: [
     { id: 'fields', title: 'Põllud ja külvikord', text: 'Impordi põllud PRIA shp-failist, vaata külvikorda hooaegade kaupa ja põllumasiive Maa-ameti aluskaartidel.' },
     { id: 'fleet', title: 'Tehnika ja telemeetria', text: 'Tehnika ja haakeriistade asukoht ning liikumise/kasutamise jälgimine ja ajalugu.' },
-    { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd kultuuri ja mallide järgi, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
+    { id: 'field-works', title: 'Põllutööde tahvel', text: 'Planeeri tööd põldude ja kultuuride kaupa, märgi tehtud tööd ja näe, mis on igal põllul veel tegemata.' },
     { id: 'field-book', title: 'Kuluarvestus', text: 'Pea kuluarvestust tööde, väetiste ja taimekaitse üle ühes kohas.' },
     { id: 'soil', title: 'Mullaproovid', text: 'Laadi üles mullaproovide tulemused METK mullaportaali shp-failist ja vaata tulemusi otse põldudel.' },
     { id: 'satellite', title: 'Satelliidipildid ja NDVI', text: 'Sentinel-2 satelliidipiltide põhjal taimiku seisund (NDVI) põllu kaupa, pilvisuse kontrolliga.' },

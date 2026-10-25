@@ -19,29 +19,25 @@ async function inRollbackTx(fn: (tx: Parameters<Parameters<ReturnType<typeof aut
 describe('copyCatalogToTenant', () => {
   it('kopeerib kataloogi uuele ettevõttele uute ID-dega ja õigete viidetega', async () => {
     await inRollbackTx(async (tx) => {
-      const [cc, cv, cw, ct, ci] = await Promise.all([
-        tx.catalogCrop.count(), tx.catalogCropVariety.count(), tx.catalogWorkType.count(),
-        tx.catalogWorkTemplate.count(), tx.catalogWorkTemplateItem.count()
+      const [cc, cv, cw] = await Promise.all([
+        tx.catalogCrop.count(), tx.catalogCropVariety.count(), tx.catalogWorkType.count()
       ]);
       const otherCropIds = new Set((await tx.crop.findMany({ select: { id: true } })).map((c) => c.id));
       const res = await copyCatalogToTenant(tx, T);
-      expect(res).toEqual({ crops: cc, varieties: cv, workTypes: cw, templates: ct, items: ci });
+      expect(res).toEqual({ crops: cc, varieties: cv, workTypes: cw });
       const where = { tenantId: T };
       const crops = await tx.crop.findMany({ where });
       const varieties = await tx.cropVariety.findMany({ where });
       const types = await tx.workType.findMany({ where });
-      const templates = await tx.workTemplate.findMany({ where });
-      const items = await tx.workTemplateItem.findMany({ where });
-      expect([crops.length, varieties.length, types.length, templates.length, items.length]).toEqual([cc, cv, cw, ct, ci]);
+      expect([crops.length, varieties.length, types.length]).toEqual([cc, cv, cw]);
+      // Tööde malle ei kopeerita (funktsioon eemaldatud)
+      expect(await tx.workTemplate.count({ where })).toBe(0);
       for (const c of crops) {
         expect(c.id.startsWith('crop-')).toBe(true);
         expect(otherCropIds.has(c.id)).toBe(false);
       }
       const cropIds = new Set(crops.map((c) => c.id));
-      const typeIds = new Set(types.map((w) => w.id));
       for (const v of varieties) expect(cropIds.has(v.cropId)).toBe(true);
-      for (const t of templates) expect(t.cropId === null || cropIds.has(t.cropId)).toBe(true);
-      for (const i of items) expect(typeIds.has(i.workTypeId)).toBe(true);
       const cat = await tx.catalogCrop.findMany();
       for (const c of cat) {
         const copy = crops.find((x) => x.name === c.name);
@@ -59,12 +55,11 @@ describe('copyCatalogToTenant', () => {
 
   it('tühja kataloogiga tagastab nullid', async () => {
     await inRollbackTx(async (tx) => {
-      await tx.catalogWorkTemplateItem.deleteMany();
-      await tx.catalogWorkTemplate.deleteMany();
+      await tx.catalogWorkTemplateItem.deleteMany(); // vanad mallirida takistaks tööliikide kustutamist (Restrict FK)
       await tx.catalogWorkType.deleteMany();
       await tx.catalogCropVariety.deleteMany();
       await tx.catalogCrop.deleteMany();
-      expect(await copyCatalogToTenant(tx, T)).toEqual({ crops: 0, varieties: 0, workTypes: 0, templates: 0, items: 0 });
+      expect(await copyCatalogToTenant(tx, T)).toEqual({ crops: 0, varieties: 0, workTypes: 0 });
     });
   });
 });

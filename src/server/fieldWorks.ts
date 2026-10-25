@@ -1,4 +1,4 @@
-// src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, mallid, hooaja tööd, kanded, finantsid.
+// src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, hooaja tööd, kanded, finantsid.
 // Põllutööd on PRIA e-põlluraamatu allikas: töö = plaan, kanne = tegelik; PRIA import loob/seob töid.
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
@@ -14,10 +14,8 @@ import {
   canConfirm,
   isUndeterminedCrop,
   isWinterCrop,
-  matchCrop,
   mergeLines,
   summarizeLines,
-  templateWorksToCreate,
   type FinanceStatus,
   type StoredLine
 } from './fieldWorkRules.ts';
@@ -82,143 +80,6 @@ const canSeeFinance = (req: IncomingMessage) => {
   return u?.isAdmin === true || u?.isFinanceManager === true;
 };
 const FINANCE_FORBIDDEN = 'Finantsandmed on nähtavad ainult finantsjuhile ja adminile';
-
-// ---------------------------------------------------------------------------
-// Mall → hooaja põllu tööd (üldmall või kultuuri erimall)
-// ---------------------------------------------------------------------------
-
-// Rakendab malli jooksva koristusaasta kultuurile (fieldSeasonId).
-// - Talivili: lisatakse AINULT CARE ja HARVEST (ettevalmistus ja külv tehti eelmisel sügisel).
-// - Suvivili: lisatakse PREPARATION, SOWING, CARE, HARVEST.
-export async function applyCropTemplate(fieldSeasonId: number): Promise<void> {
-  const fs = await prisma.fieldSeason.findUnique({
-    where: { id: fieldSeasonId },
-    select: { id: true, fieldId: true, year: true, crop: true, season: { select: { isLocked: true } } }
-  });
-  if (!fs || fs.season?.isLocked) return;
-  if (isUndeterminedCrop(fs.crop)) return;
-
-  const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
-  const crop = matchCrop(fs.crop, crops);
-  const isWinter = isWinterCrop(fs.crop, crops);
-
-  const template =
-    (crop
-      ? await prisma.workTemplate.findFirst({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } })
-      : null) ||
-    (await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter }, include: { items: { include: { workType: true } } } }));
-
-  if (!template || !template.items.length) return;
-
-  // Kanneteta tööd eemaldatakse enne uuesti lisamist:
-  // Taliviljal eemaldatakse ainult CARE ja HARVEST, et mitte puutuda sügisel tehtud ettevalmistust/külvi
-  if (isWinter) {
-    await prisma.fieldWork.deleteMany({
-      where: { fieldSeasonId, fromTemplate: true, phase: { in: ['CARE', 'HARVEST'] }, entries: { none: {} } }
-    });
-  } else {
-    // Kui suviviljal oli sügisene ettevalmistus tehtud (nt sügiskünd), hoiame selle alles
-    const hasAutumnPrep = await prisma.fieldWork.count({
-      where: { fieldSeasonId, phase: 'PREPARATION', plannedText: { contains: 'ügis' } }
-    });
-    if (hasAutumnPrep > 0) {
-      await prisma.fieldWork.deleteMany({
-        where: { fieldSeasonId, fromTemplate: true, phase: { in: ['SOWING', 'CARE', 'HARVEST'] }, entries: { none: {} } }
-      });
-    } else {
-      await prisma.fieldWork.deleteMany({
-        where: { fieldSeasonId, fromTemplate: true, entries: { none: {} } }
-      });
-    }
-  }
-
-  const existingCounts = new Map<string, number>();
-  for (const w of await prisma.fieldWork.findMany({ where: { fieldSeasonId }, select: { workTypeId: true } })) {
-    existingCounts.set(w.workTypeId, (existingCounts.get(w.workTypeId) ?? 0) + 1);
-  }
-  const items = [...template.items]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    // Taliviljal käesoleval koristusaastal kevadist ettevalmistust ja külvi ei tehta!
-    .filter((it) => it.workType?.isActive && !(isWinter && (it.workType.phase === 'PREPARATION' || it.workType.phase === 'SOWING')));
-  const byType = new Map(items.map((it) => [it.workTypeId, it]));
-  for (const workTypeId of templateWorksToCreate(items, existingCounts)) {
-    const item = byType.get(workTypeId)!;
-    await prisma.fieldWork.create({
-      data: { fieldSeasonId, workTypeId, phase: item.workType.phase, sortOrder: item.sortOrder, plannedText: item.typicalTiming, plannedCount: 1, fromTemplate: true }
-    });
-  }
-}
-
-// Sügistööde lisamine järgmise aasta hooajale (nextFieldSeasonId):
-// - Taliviljal: lisatakse kogu talivilja elutsükkel: ettevalmistus ja külv sügisesse (näha sügistöödes),
-//   hooldus ja koristus saagiaastasse (näha järgmise aasta hooldus- ja koristusveergudes).
-// - Suviviljal: lisatakse sügisesse AINULT PREPARATION (sügisene ettevalmistus; külv, hooldus ja koristus on järgmise aasta töödes).
-export async function applyAutumnTemplate(nextFieldSeasonId: number): Promise<void> {
-  const nextFs = await prisma.fieldSeason.findUnique({
-    where: { id: nextFieldSeasonId },
-    select: { id: true, fieldId: true, year: true, crop: true, season: { select: { isLocked: true } } }
-  });
-  if (!nextFs || nextFs.season?.isLocked) return;
-  if (isUndeterminedCrop(nextFs.crop)) return;
-
-  const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
-  const crop = matchCrop(nextFs.crop, crops);
-  const isWinter = isWinterCrop(nextFs.crop, crops);
-
-  const template =
-    (crop
-      ? await prisma.workTemplate.findFirst({ where: { cropId: crop.id }, include: { items: { include: { workType: true } } } })
-      : null) ||
-    (await prisma.workTemplate.findFirst({ where: { cropId: null, isWinter }, include: { items: { include: { workType: true } } } }));
-
-  if (!template || !template.items.length) return;
-
-  // Eemaldatakse kanneteta tööd enne malli rakendamist:
-  // Taliviljal kogu tsükkel, suviviljal ainult sügisene PREPARATION
-  if (isWinter) {
-    await prisma.fieldWork.deleteMany({
-      where: {
-        fieldSeasonId: nextFieldSeasonId,
-        fromTemplate: true,
-        entries: { none: {} }
-      }
-    });
-  } else {
-    await prisma.fieldWork.deleteMany({
-      where: {
-        fieldSeasonId: nextFieldSeasonId,
-        fromTemplate: true,
-        phase: 'PREPARATION',
-        entries: { none: {} }
-      }
-    });
-  }
-
-  const existingCounts = new Map<string, number>();
-  for (const w of await prisma.fieldWork.findMany({ where: { fieldSeasonId: nextFieldSeasonId }, select: { workTypeId: true } })) {
-    existingCounts.set(w.workTypeId, (existingCounts.get(w.workTypeId) ?? 0) + 1);
-  }
-  const items = [...template.items]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    // Suviviljal lisatakse sügisesse AINULT PREPARATION tööd (külv, hooldus ja koristus on järgmise aasta töödes)
-    .filter((it) => it.workType?.isActive && (isWinter || it.workType.phase === 'PREPARATION'));
-  const byType = new Map(items.map((it) => [it.workTypeId, it]));
-  for (const workTypeId of templateWorksToCreate(items, existingCounts)) {
-    const item = byType.get(workTypeId)!;
-    const isAutumnPhase = item.workType.phase === 'PREPARATION' || item.workType.phase === 'SOWING';
-    await prisma.fieldWork.create({
-      data: {
-        fieldSeasonId: nextFieldSeasonId,
-        workTypeId,
-        phase: item.workType.phase,
-        sortOrder: item.sortOrder,
-        plannedText: isAutumnPhase ? (item.typicalTiming ?? `Sügis ${nextFs.year - 1}`) : item.typicalTiming,
-        plannedCount: 1,
-        fromTemplate: true
-      }
-    });
-  }
-}
 
 // ---------------------------------------------------------------------------
 // Kanded
@@ -690,9 +551,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   if (pathname === '/api/work-types' && method === 'GET') {
     const rows = await prisma.workType.findMany({
       orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }],
-      include: { _count: { select: { templateItems: true, fieldWorks: true } } }
+      include: { _count: { select: { fieldWorks: true } } }
     });
-    json(res, rows.map(({ _count, createdAt, updatedAt, ...w }) => ({ ...w, templateCount: _count.templateItems, fieldWorkCount: _count.fieldWorks })));
+    json(res, rows.map(({ _count, createdAt, updatedAt, ...w }) => ({ ...w, fieldWorkCount: _count.fieldWorks })));
     return true;
   }
   if (pathname === '/api/work-types' && method === 'POST') {
@@ -728,17 +589,21 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/work-types/') && method === 'DELETE') {
     const id = idOf('/api/work-types/');
-    const w = await prisma.workType.findUnique({ where: { id }, include: { _count: { select: { templateItems: true, fieldWorks: true } } } });
+    const w = await prisma.workType.findUnique({ where: { id }, include: { _count: { select: { fieldWorks: true } } } });
     if (!w) {
       json(res, { error: 'Tööd ei leitud' }, 404);
       return true;
     }
     if (deleteDenied(req, res, w.createdBy)) return true;
-    if (w._count.templateItems || w._count.fieldWorks) {
-      json(res, { error: `Töö on kasutusel ${w._count.templateItems} mallis ja ${w._count.fieldWorks} põllul. Eemalda need seosed või märgi töö mitteaktiivseks.` }, 409);
+    if (w._count.fieldWorks) {
+      json(res, { error: `Töö on kasutusel ${w._count.fieldWorks} põllul. Eemalda need seosed või märgi töö mitteaktiivseks.` }, 409);
       return true;
     }
-    await prisma.workType.delete({ where: { id } });
+    // Mallid on eemaldatud funktsioon; vanad mallirida (Restrict FK) ei tohi tööliigi kustutamist takistada
+    await tenantTransaction(async (tx) => {
+      await tx.workTemplateItem.deleteMany({ where: { workTypeId: id } });
+      await tx.workType.delete({ where: { id } });
+    });
     json(res, { success: true, id });
     return true;
   }
@@ -809,70 +674,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     await prisma.material.delete({ where: { id } });
-    json(res, { success: true, id });
-    return true;
-  }
-
-  // --- Mallid (üldmallid + kultuuride erimallid) ---
-  if (pathname === '/api/work-templates' && method === 'GET') {
-    const templates = await prisma.workTemplate.findMany({
-      include: { items: { orderBy: { sortOrder: 'asc' } } }
-    });
-
-    const result = templates.map((t) => ({
-      id: t.id,
-      cropId: t.cropId,
-      isWinter: t.isWinter,
-      name: t.cropId === null ? (t.isWinter ? 'Talivilja üldmall' : 'Suvivilja üldmall') : undefined,
-      items: t.items.map((i) => ({
-        id: i.id,
-        workTypeId: i.workTypeId,
-        sortOrder: i.sortOrder,
-        typicalTiming: i.typicalTiming,
-        plannedCount: i.plannedCount
-      }))
-    }));
-
-    json(res, result);
-    return true;
-  }
-  if (pathname === '/api/work-templates' && method === 'PUT') {
-    const b = await parseBody(req, MAX_BODY_BYTES);
-    const cropId = text(b?.cropId, 64);
-    const isWinter = b?.isWinter === true;
-    const items: any[] = Array.isArray(b?.items) ? b.items : [];
-
-    const saved = await tenantTransaction(async (tx) => {
-      const template =
-        (await tx.workTemplate.findFirst({ where: { cropId, isWinter } })) ?? (await tx.workTemplate.create({ data: { cropId, isWinter } }));
-      await tx.workTemplateItem.deleteMany({ where: { templateId: template.id } });
-      const seen = new Set<string>();
-      for (const [i, it] of items.entries()) {
-        const workTypeId = text(it?.workTypeId, 64);
-        if (!workTypeId || seen.has(workTypeId)) continue;
-        seen.add(workTypeId);
-        await tx.workTemplateItem.create({
-          data: { templateId: template.id, workTypeId, sortOrder: i, typicalTiming: text(it?.typicalTiming, 80), plannedCount: int(it?.plannedCount) }
-        });
-      }
-      return template;
-    });
-    json(res, { success: true, id: saved.id });
-    return true;
-  }
-  if (pathname.startsWith('/api/work-templates/') && method === 'DELETE') {
-    const id = idOf('/api/work-templates/');
-    const t = await prisma.workTemplate.findUnique({ where: { id } });
-    if (!t) {
-      json(res, { error: 'Malli ei leitud' }, 404);
-      return true;
-    }
-    if (deleteDenied(req, res, t.createdBy)) return true;
-    if (t.cropId === null) {
-      json(res, { error: 'Üldmalli ei saa kustutada' }, 409);
-      return true;
-    }
-    await prisma.workTemplate.delete({ where: { id } });
     json(res, { success: true, id });
     return true;
   }
@@ -1006,7 +807,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       if (date) {
         if (w.phase === 'HARVEST' || Number(date.slice(0, 4)) > year) continue;
       } else {
-        // hooldus ainult täpselt "Sügis YYYY" plaaniga; malli "sügis … / kevad …" kuulub järgmise hooaja hooldusse
+        // hooldus ainult täpselt "Sügis YYYY" plaaniga; "sügis … / kevad …" plaan kuulub järgmise hooaja hooldusse
         const undatedAutumn = w.phase === 'PREPARATION' || (isWinter && w.phase === 'SOWING') || (w.phase === 'CARE' && isExactAutumnText(w.plannedText));
         if (!undatedAutumn) continue;
       }
@@ -1049,20 +850,6 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       include: FIELD_WORK_INCLUDE
     });
     json(res, fieldWorkDto(saved, canSeeFinance(req)));
-    return true;
-  }
-  if (pathname === '/api/field-works/apply-template' && method === 'POST') {
-    const b = await parseBody(req, MAX_BODY_BYTES);
-    const ids: number[] = (Array.isArray(b?.fieldSeasonIds) ? b.fieldSeasonIds : [b?.fieldSeasonId]).map(int).filter((n: number | null): n is number => n !== null);
-    const mode = b?.mode === 'AUTUMN' ? 'AUTUMN' : 'CURRENT';
-    for (const id of ids) {
-      if (mode === 'AUTUMN') {
-        await applyAutumnTemplate(id);
-      } else {
-        await applyCropTemplate(id);
-      }
-    }
-    json(res, { success: true, count: ids.length, mode });
     return true;
   }
   if (pathname === '/api/field-works/clear' && method === 'POST') {

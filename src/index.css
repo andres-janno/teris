@@ -7168,7 +7168,7 @@ a.history-pill:hover {
 }
 
 /* ==========================================================================
-   Tööde register (tööd, kultuuride mallid, kulumaterjalid)
+   Tööde register (tööd, kulumaterjalid)
    ========================================================================== */
 .work-register-modal {
   width: min(1240px, 96vw);
@@ -7245,210 +7245,10 @@ a.history-pill:hover {
   white-space: nowrap;
 }
 
-.work-templates-layout {
-  display: grid;
-  grid-template-columns: 260px minmax(0, 1fr);
-  gap: 16px;
-  min-height: 0;
-}
-
-.work-templates-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.work-templates-list-label {
-  font-size: 0.66rem;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  color: var(--text-secondary);
-  padding: 8px 4px 2px 4px;
-}
-
-.work-template-crop {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px 8px 14px;
-  border: 0;
-  border-radius: 7px;
-  font: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
-  color: var(--text-primary);
-  text-align: left;
-  cursor: pointer;
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
-}
-
-.work-template-crop.general {
-  --crop-color: #64748b;
-}
-
-.work-template-crop:hover {
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
-}
-
-.work-template-crop.selected {
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8), 0 0 0 2px #16a34a;
-}
-
-.work-template-crop-name {
-  display: flex;
-  flex-direction: column;
-}
-
-.work-template-crop-name small {
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.work-template-crop-count {
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.work-template-editor {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
-  min-width: 0;
-}
-
-.work-template-head {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 12px;
-}
-
-.work-template-head h4 {
-  margin: 0;
-  font-size: 1.05rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.work-template-actions {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
-}
-
-.work-template-notice {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: rgba(59, 130, 246, 0.1);
-  color: var(--text-primary);
-  font-size: 0.8rem;
-}
-
-.work-template-notice span {
-  flex-grow: 1;
-}
-
-.work-template-section-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--bg-hover, rgba(0, 0, 0, 0.04));
-  border-radius: var(--radius-sm, 6px);
-  margin-top: 14px;
-  margin-bottom: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  border-left: 3px solid #16a34a;
-}
-
-.work-template-section-header.autumn {
-  border-left-color: #d97706;
-}
-
-.work-template-phase {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.work-template-phase-label {
+.add-work-phase-label {
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.05em;
-}
-
-.work-template-empty {
-  font-size: 0.78rem;
-  color: var(--text-muted);
-  padding: 4px 2px;
-}
-
-.work-template-item {
-  display: grid;
-  grid-template-columns: 48px minmax(180px, 240px) minmax(160px, 1fr) 140px 32px;
-  align-items: center;
-  gap: 10px;
-  padding: 6px 12px;
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-  background: var(--bg-card);
-}
-
-.work-template-item.readonly {
-  grid-template-columns: minmax(180px, 240px) minmax(160px, 1fr) 140px;
-}
-
-.work-template-move {
-  display: flex;
-  gap: 2px;
-}
-
-.work-template-name {
-  font-size: 0.86rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.work-template-count {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.76rem;
-  color: #1d4ed8;
-  font-weight: 600;
-}
-
-.work-template-count.muted {
-  color: var(--text-muted);
-  font-weight: 500;
-}
-
-.work-template-count .form-input {
-  width: 64px;
-  text-align: right;
-}
-
-.work-template-add {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
-.work-template-add .form-input {
-  max-width: 340px;
 }
 
 .work-form-modal {
@@ -9697,10 +9497,6 @@ select.time-select {
 
 .add-work-tag.removed {
   color: #9a5b00;
-}
-
-.add-work-tag.extra {
-  color: #1d4ed8;
 }
 
 .fw-field-edit-btn {

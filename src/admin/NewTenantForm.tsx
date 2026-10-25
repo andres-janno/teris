@@ -48,7 +48,7 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
         ? `Ettevõte loodud. Kutse saadeti aadressile ${adminEmail.trim()}.`
         : 'Ettevõte loodud. Kutset ei õnnestunud saata — saada uuesti ettevõtte kaardilt.';
       const c = res.catalog;
-      onCreated(res.id, c ? `${invite} Ettevõttele kopeeriti algkataloog: ${c.crops} kultuuri, ${c.workTypes} tööliiki, ${c.templates} malli.` : invite);
+      onCreated(res.id, c ? `${invite} Ettevõttele kopeeriti algkataloog: ${c.crops} kultuuri, ${c.workTypes} tööliiki.` : invite);
     } catch (err) {
       setError((err as Error).message);
     } finally {

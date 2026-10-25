@@ -438,14 +438,13 @@ function decodeId(raw: string, message: string): string {
 const CROP_NOT_FOUND = 'Kultuuri ei leitud';
 const VARIETY_NOT_FOUND = 'Sorti ei leitud';
 const WORK_TYPE_NOT_FOUND = 'Tööliiki ei leitud';
-const WORK_TYPE_IN_USE = 'Tööliiki kasutatakse mallis';
 const DUPLICATE_NAME: Record<string, string> = {
   crop: 'Sellise nimega kultuur on juba olemas',
   variety: 'Sellise nimega sort on juba olemas',
   workType: 'Sellise nimega tööliik on juba olemas'
 };
 
-type CatalogEntity = 'crop' | 'variety' | 'workType' | 'template';
+type CatalogEntity = 'crop' | 'variety' | 'workType';
 type Tx = Prisma.TransactionClient;
 
 // Käivitab muudatuse tehingus koos auditilogiga; Prisma vead tõlgitakse HTTP-vigadeks.
@@ -465,9 +464,7 @@ async function catalogMutation<T>(
     });
   } catch (err) {
     if (err instanceof Prisma.PrismaClientKnownRequestError) {
-      if (err.code === 'P2002' && entity === 'template') throw new HttpError(409, 'Mall on samal ajal muudetud — proovi uuesti');
       if (err.code === 'P2002' && DUPLICATE_NAME[entity]) throw new HttpError(409, DUPLICATE_NAME[entity]);
-      if (err.code === 'P2003' && entity === 'workType') throw new HttpError(409, WORK_TYPE_IN_USE);
     }
     throw err;
   }
@@ -475,77 +472,11 @@ async function catalogMutation<T>(
 
 async function getCatalog() {
   const db = authDb();
-  const [crops, workTypes, templates] = await Promise.all([
+  const [crops, workTypes] = await Promise.all([
     db.catalogCrop.findMany({ orderBy: { name: 'asc' }, include: { varieties: { orderBy: { name: 'asc' } } } }),
-    db.catalogWorkType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] }),
-    db.catalogWorkTemplate.findMany({
-      include: { crop: { select: { name: true } }, items: { orderBy: { sortOrder: 'asc' }, include: { workType: { select: { name: true } } } } }
-    })
+    db.catalogWorkType.findMany({ orderBy: [{ sortOrder: 'asc' }, { name: 'asc' }] })
   ]);
-  const tpl = templates.map((t) => ({
-    id: t.id,
-    catalogCropId: t.catalogCropId,
-    cropName: t.crop?.name ?? null,
-    isWinter: t.isWinter,
-    items: t.items.map((i) => ({
-      id: i.id,
-      catalogWorkTypeId: i.catalogWorkTypeId,
-      workTypeName: i.workType.name,
-      sortOrder: i.sortOrder,
-      typicalTiming: i.typicalTiming,
-      plannedCount: i.plannedCount
-    }))
-  }));
-  tpl.sort((a, b) => (a.cropName ?? '').localeCompare(b.cropName ?? '', 'et') || Number(a.isWinter) - Number(b.isWinter));
-  return { crops, workTypes, templates: tpl };
-}
-
-async function replaceTemplate(body: any, pu: PlatformUser) {
-  const cropId = body?.catalogCropId ?? null;
-  if (cropId !== null && typeof cropId !== 'string') throw new HttpError(400, 'Vigane kultuur');
-  if (typeof body?.isWinter !== 'boolean') throw new HttpError(400, 'Suve/talve valik puudub');
-  const isWinter: boolean = body.isWinter;
-  if (!Array.isArray(body?.items) || body.items.length > 200) throw new HttpError(400, 'Mallirea loend puudub või on liiga pikk');
-  const items = body.items.map((raw: any) => {
-    const id = typeof raw?.catalogWorkTypeId === 'string' ? raw.catalogWorkTypeId : '';
-    if (!id) throw new HttpError(400, 'Tööliik puudub');
-    const opts = parseFields(
-      raw,
-      [
-        { k: 'typicalTiming', t: 'text', max: 100, nullable: true, label: 'Tüüpiline aeg' },
-        { k: 'plannedCount', t: 'int', nullable: true, label: 'Planeeritud kordi' }
-      ],
-      [],
-      true
-    );
-    return { catalogWorkTypeId: id, typicalTiming: (opts.typicalTiming as string | null | undefined) ?? null, plannedCount: (opts.plannedCount as number | null | undefined) ?? null };
-  });
-  if (new Set(items.map((i: { catalogWorkTypeId: string }) => i.catalogWorkTypeId)).size !== items.length) {
-    throw new HttpError(400, 'Sama tööliik on mallis mitu korda');
-  }
-  return catalogMutation(pu, 'template', items.length ? 'replace' : 'delete', async (tx) => {
-    let cropName: string | null = null;
-    if (cropId !== null) {
-      const crop = await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { name: true } });
-      if (!crop) throw new HttpError(404, CROP_NOT_FOUND);
-      cropName = crop.name;
-    }
-    const found = await tx.catalogWorkType.count({ where: { id: { in: items.map((i: { catalogWorkTypeId: string }) => i.catalogWorkTypeId) } } });
-    if (found !== items.length) throw new HttpError(404, WORK_TYPE_NOT_FOUND);
-    // NULL catalogCropId korral unikaalsusindeks ei kehti, seepärast otsime üldmalli ise
-    const existing = await tx.catalogWorkTemplate.findFirst({ where: { catalogCropId: cropId, isWinter } });
-    const name = `${cropName ?? 'Üldmall'} (${isWinter ? 'talv' : 'suvi'})`;
-    if (!items.length) {
-      if (existing) await tx.catalogWorkTemplate.delete({ where: { id: existing.id } });
-      return { id: existing?.id ?? '', name, result: { success: true, templateId: null as string | null } };
-    }
-    const tpl = existing ?? (await tx.catalogWorkTemplate.create({ data: { catalogCropId: cropId, isWinter } }));
-    await tx.catalogWorkTemplateItem.deleteMany({ where: { templateId: tpl.id } });
-    await tx.catalogWorkTemplateItem.createMany({
-      data: items.map((i: { catalogWorkTypeId: string; typicalTiming: string | null; plannedCount: number | null }, idx: number) => ({ ...i, templateId: tpl.id, sortOrder: idx }))
-    });
-    return { id: tpl.id, name, result: { success: true, templateId: tpl.id as string | null } };
-  });
+  return { crops, workTypes };
 }
 
 const CATALOG_CROP_ROUTE = /^\/api\/platform\/catalog\/crops(?:\/([^/]+)(?:\/(varieties)(?:\/([^/]+))?)?)?$/;
@@ -556,11 +487,6 @@ async function routeCatalog(req: IncomingMessage, res: ServerResponse, pathname:
   if (pathname === '/api/platform/catalog') {
     if (method !== 'GET') return false;
     json(res, await getCatalog());
-    return true;
-  }
-  if (pathname === '/api/platform/catalog/templates') {
-    if (method !== 'PUT') return false;
-    json(res, await replaceTemplate(await readBody(req), pu));
     return true;
   }
 
@@ -591,7 +517,7 @@ async function routeCatalog(req: IncomingMessage, res: ServerResponse, pathname:
         json(res, await catalogMutation(pu, 'crop', 'delete', async (tx) => {
           const row = await tx.catalogCrop.findUnique({ where: { id: cropId }, select: { id: true, name: true } });
           if (!row) throw new HttpError(404, CROP_NOT_FOUND);
-          await tx.catalogCrop.delete({ where: { id: cropId } }); // sordid ja erimallid kaovad cascade'iga
+          await tx.catalogCrop.delete({ where: { id: cropId } }); // sordid kaovad cascade'iga
           return { id: row.id, name: row.name, result: { success: true } };
         }));
         return true;
@@ -655,7 +581,8 @@ async function routeCatalog(req: IncomingMessage, res: ServerResponse, pathname:
       json(res, await catalogMutation(pu, 'workType', 'delete', async (tx) => {
         const row = await tx.catalogWorkType.findUnique({ where: { id }, select: { id: true, name: true } });
         if (!row) throw new HttpError(404, WORK_TYPE_NOT_FOUND);
-        if (await tx.catalogWorkTemplateItem.count({ where: { catalogWorkTypeId: id } })) throw new HttpError(409, WORK_TYPE_IN_USE);
+        // Mallid on eemaldatud funktsioon; vanad mallirida (Restrict FK) ei tohi kustutamist takistada
+        await tx.catalogWorkTemplateItem.deleteMany({ where: { catalogWorkTypeId: id } });
         await tx.catalogWorkType.delete({ where: { id } });
         return { id: row.id, name: row.name, result: { success: true } };
       }));

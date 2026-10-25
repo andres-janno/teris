@@ -1,19 +1,17 @@
 // src/components/AddFieldWorkDialog.tsx — põllule tööde lisamine (sama tegevust võib lisada mitu korda; eemaldamine tahvli töö paneelist).
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Check, Pencil } from 'lucide-react';
+import { X, Check, Plus } from 'lucide-react';
 import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
-import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType, type WorkTemplateItem } from '../types/fieldWork';
+import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
   fieldLabel: string;
   workTypes: WorkType[];
   existing: FieldWork[]; // selle põllu hooaja tööd
-  templateWorkTypeIds: Set<string>; // kultuuri mall (või üldmall)
-  templateItems?: WorkTemplateItem[];
   initialPhase?: WorkPhase;
   initialPlannedText?: string; // vaikimisi planeeritud aeg (nt "Sügis 2025" sügisploki veerust lisades)
   allowedPhases?: WorkPhase[];
@@ -26,8 +24,6 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
   fieldLabel,
   workTypes,
   existing,
-  templateWorkTypeIds,
-  templateItems,
   initialPhase,
   initialPlannedText,
   allowedPhases,
@@ -45,14 +41,6 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
     for (const w of existing) map.set(w.workTypeId, (map.get(w.workTypeId) ?? 0) + 1);
     return map;
   }, [existing]);
-
-  const templateItemsMap = useMemo(() => {
-    const map = new Map<string, WorkTemplateItem>();
-    for (const item of templateItems ?? []) {
-      map.set(item.workTypeId, item);
-    }
-    return map;
-  }, [templateItems]);
 
   // PRIA tegevuste järjekord; PRIA-koodita tüübid lõppu
   const priaIndex = (w: WorkType): number => {
@@ -88,12 +76,11 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
     setBusy(true);
     setError(null);
     try {
-      // Lisa valitud tööd (säilitades malli sortOrderi)
+      // Lisa valitud tööd (järjekord: põllu tööde lõppu)
       for (const id of toAdd) {
         await api.addFieldWork({
           fieldSeasonId,
           workTypeId: id,
-          sortOrder: templateItemsMap.get(id)?.sortOrder,
           plannedText: plannedText.trim() || null
         });
       }
@@ -118,7 +105,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
       <div className="modal-content animate-scale-up add-work-modal">
         <div className="modal-header">
           <div className="modal-title-group">
-            <Pencil size={20} className="text-emerald" />
+            <Plus size={20} className="text-emerald" />
             <div>
               <h3>Lisa põllule töid</h3>
               <p className="modal-subtitle">{fieldLabel}</p>
@@ -136,17 +123,16 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
             if (list.length === 0) return null;
             return (
               <section key={phase} className="add-work-phase">
-                <span className="work-template-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
+                <span className="add-work-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
                   {WORK_PHASE_META[phase].label.toUpperCase()}
                 </span>
                 {list.map((w) => {
                   const count = existingCount.get(w.id) ?? 0;
                   const isAdding = toAdd.has(w.id);
-                  const inTemplate = templateWorkTypeIds.has(w.id);
 
                   let optionClass = 'add-work-option';
                   let tagClass = 'add-work-tag';
-                  let tagText: string;
+                  let tagText = '';
                   if (isAdding) {
                     optionClass += ' picked';
                     tagClass += ' to-add';
@@ -154,9 +140,6 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                   } else if (count > 0) {
                     tagClass += ' on-field';
                     tagText = `põllul juba ${count}`;
-                  } else {
-                    tagText = inTemplate ? 'Mallis' : 'Pole mallis';
-                    tagClass += inTemplate ? ' on-field' : ' extra';
                   }
 
                   return (
@@ -175,7 +158,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                         {workTypeDisplayName(w)}
                         {w.shortName?.trim() && <small style={{ display: 'block', fontWeight: 400, color: 'var(--text-secondary)' }}>{w.name}</small>}
                       </span>
-                      <span className={tagClass}>{tagText}</span>
+                      {tagText && <span className={tagClass}>{tagText}</span>}
                     </button>
                   );
                 })}

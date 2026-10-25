@@ -8,7 +8,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
-import type { WorkType, Material, WorkTemplate, WorkTemplateItem, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
+import type { WorkType, Material, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -613,26 +613,6 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
   },
 
-  async getWorkTemplates(): Promise<WorkTemplate[]> {
-    return jsonOrThrow(await apiFetch('/api/work-templates'), 'Mallide laadimine ebaõnnestus');
-  },
-
-  async saveWorkTemplate(
-    targetOrCropId: string | null | { cropId?: string | null; isWinter?: boolean },
-    items: WorkTemplateItem[],
-    isWinter?: boolean
-  ): Promise<void> {
-    const payload =
-      typeof targetOrCropId === 'object' && targetOrCropId !== null
-        ? { ...targetOrCropId, items }
-        : { cropId: targetOrCropId, items, isWinter };
-    await jsonOrThrow(await apiFetch('/api/work-templates', jsonInit('PUT', payload)), 'Malli salvestamine ebaõnnestus');
-  },
-
-  async deleteWorkTemplate(id: string): Promise<void> {
-    await jsonOrThrow(await apiFetch(`/api/work-templates/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Malli kustutamine ebaõnnestus');
-  },
-
   async getFieldSeasonWorks(fieldId: number | string, year: number): Promise<FieldSeasonWorks> {
     return jsonOrThrow(await apiFetch(`/api/field-season-works?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`), 'Põllu tööde laadimine ebaõnnestus');
   },
@@ -644,9 +624,6 @@ export const api = {
     return jsonOrThrow(await apiFetch('/api/field-works', jsonInit('POST', data)), 'Töö lisamine ebaõnnestus');
   },
 
-  async applyWorkTemplate(fieldSeasonIds: number[], mode: 'CURRENT' | 'AUTUMN' = 'CURRENT'): Promise<void> {
-    await jsonOrThrow(await apiFetch('/api/field-works/apply-template', jsonInit('POST', { fieldSeasonIds, mode })), 'Malli lisamine ebaõnnestus');
-  },
 
   async updateFieldWork(id: string, data: FieldWorkPlanInput & { status?: 'DONE' | 'REOPEN' }): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/field-works/${encodeURIComponent(id)}`, jsonInit('PATCH', data)), 'Töö muutmine ebaõnnestus');

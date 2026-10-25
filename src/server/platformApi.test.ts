@@ -92,8 +92,6 @@ afterAll(async () => {
   for (const t of byName) ids.push(t.id);
   for (const id of new Set(ids)) {
     const where = { tenantId: id };
-    await step('work_template_items', () => db.workTemplateItem.deleteMany({ where }));
-    await step('work_templates', () => db.workTemplate.deleteMany({ where }));
     await step('work_types', () => db.workType.deleteMany({ where }));
     await step('crop_varieties', () => db.cropVariety.deleteMany({ where }));
     await step('crops', () => db.crop.deleteMany({ where }));
@@ -158,11 +156,11 @@ describe('platvormi API', () => {
     const log = await db.platformAuditLog.findFirst({ where: { targetTenantId: newId, action: 'TENANT_CREATE' } });
     expect(log?.platformUserId).toBe(platformUserId);
     // Algkataloogi koopia
-    const [cc, cw, ct] = await Promise.all([db.catalogCrop.count(), db.catalogWorkType.count(), db.catalogWorkTemplate.count()]);
-    expect(r.data.catalog).toMatchObject({ crops: cc, workTypes: cw, templates: ct });
+    const [cc, cw] = await Promise.all([db.catalogCrop.count(), db.catalogWorkType.count()]);
+    expect(r.data.catalog).toMatchObject({ crops: cc, workTypes: cw });
     expect(await runAsTenant(newId, async () => prisma.crop.count())).toBe(cc);
     expect(await runAsTenant(newId, async () => prisma.workType.count())).toBe(cw);
-    expect(await runAsTenant(newId, async () => prisma.workTemplate.count())).toBe(ct);
+    expect(await runAsTenant(newId, async () => prisma.workTemplate.count())).toBe(0);
   });
 
   it('eraldus teistest ettevõtetest', async () => {
@@ -270,14 +268,13 @@ describe('platvormi API', () => {
 
 describe('platvormi API: catalog (algkataloog)', () => {
   const ZZ = `ZZ test ${PID}`;
-  const base = { crops: 0, workTypes: 0, templates: 0 };
+  const base = { crops: 0, workTypes: 0 };
   let cropId = '';
   let varId = '';
   let wtId = '';
 
   const cleanup = async () => {
     const db = authDb();
-    await db.catalogWorkTemplate.deleteMany({ where: { crop: { name: { startsWith: 'ZZ test' } } } });
     await db.catalogCrop.deleteMany({ where: { name: { startsWith: 'ZZ test' } } });
     await db.catalogWorkType.deleteMany({ where: { name: { startsWith: 'ZZ test' } } });
     await db.platformAuditLog.deleteMany({ where: { platformUserId, action: 'CATALOG_UPDATE' } });
@@ -286,21 +283,19 @@ describe('platvormi API: catalog (algkataloog)', () => {
   beforeAll(async () => {
     await cleanup();
     const db = authDb();
-    const [crops, workTypes, templates] = await Promise.all([db.catalogCrop.count(), db.catalogWorkType.count(), db.catalogWorkTemplate.count()]);
-    Object.assign(base, { crops, workTypes, templates });
+    const [crops, workTypes] = await Promise.all([db.catalogCrop.count(), db.catalogWorkType.count()]);
+    Object.assign(base, { crops, workTypes });
   });
 
   afterAll(cleanup);
 
-  it('GET catalog annab kultuurid, tööliigid ja mallid', async () => {
+  it('GET catalog annab kultuurid ja tööliigid', async () => {
     const r = await call('GET', '/api/platform/catalog');
     expect(r.status).toBe(200);
     expect(r.data.crops).toHaveLength(base.crops);
     expect(r.data.workTypes).toHaveLength(base.workTypes);
-    expect(r.data.templates).toHaveLength(base.templates);
+    expect(r.data).not.toHaveProperty('templates');
     expect(r.data.crops[0]).toHaveProperty('varieties');
-    const t = r.data.templates.find((x: any) => x.items.length > 0);
-    expect(t.items[0]).toEqual(expect.objectContaining({ workTypeName: expect.any(String), sortOrder: expect.any(Number) }));
     expect((await call('GET', '/api/platform/catalog', undefined, { cookie: '' })).status).toBe(401);
   });
 
@@ -361,74 +356,23 @@ describe('platvormi API: catalog (algkataloog)', () => {
     expect((await call('PATCH', '/api/platform/catalog/work-types/puudub', { sortOrder: 1 })).status).toBe(404);
   });
 
-  it('mall: PUT asendab read, tööliiki ei saa kustutada kuni mall olemas', async () => {
-    const wt2 = await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö2`, phase: 'SOWING' });
-    expect(wt2.status).toBe(201);
-    const put = await call('PUT', '/api/platform/catalog/templates', {
-      catalogCropId: cropId,
-      isWinter: false,
-      items: [{ catalogWorkTypeId: wt2.data.id, typicalTiming: 'mai', plannedCount: 1 }, { catalogWorkTypeId: wtId }]
-    });
-    expect(put.status).toBe(200);
-    let g = await call('GET', '/api/platform/catalog');
-    let tpl = g.data.templates.find((t: any) => t.catalogCropId === cropId && t.isWinter === false);
-    expect(tpl.cropName).toBe(ZZ);
-    expect(tpl.items.map((i: any) => i.catalogWorkTypeId)).toEqual([wt2.data.id, wtId]);
-    expect(tpl.items[0]).toMatchObject({ typicalTiming: 'mai', plannedCount: 1, workTypeName: `${ZZ} töö2` });
-    // Asendus: järjekord muutub
-    const put2 = await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: false, items: [{ catalogWorkTypeId: wtId }, { catalogWorkTypeId: wt2.data.id }] });
-    expect(put2.status).toBe(200);
-    g = await call('GET', '/api/platform/catalog');
-    tpl = g.data.templates.find((t: any) => t.catalogCropId === cropId && t.isWinter === false);
-    expect(tpl.items.map((i: any) => i.catalogWorkTypeId)).toEqual([wtId, wt2.data.id]);
-    expect(g.data.templates.filter((t: any) => t.catalogCropId === cropId)).toHaveLength(1);
-    // Vead
-    expect((await call('PUT', '/api/platform/catalog/templates', { catalogCropId: 'puudub', isWinter: false, items: [] })).status).toBe(404);
-    expect((await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: false, items: [{ catalogWorkTypeId: 'puudub' }] })).status).toBe(404);
-    expect((await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: false, items: [{ catalogWorkTypeId: wtId }, { catalogWorkTypeId: wtId }] })).status).toBe(400);
-    expect((await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: 'jah', items: [] })).status).toBe(400);
-    // Tööliigi kustutamine
-    const del = await call('DELETE', `/api/platform/catalog/work-types/${wtId}`);
-    expect(del.status).toBe(409);
-    expect(del.data.error).toBe('Tööliiki kasutatakse mallis');
-    // Tühi items kustutab malli
-    const empty = await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: false, items: [] });
-    expect(empty.status).toBe(200);
-    g = await call('GET', '/api/platform/catalog');
-    expect(g.data.templates.filter((t: any) => t.catalogCropId === cropId)).toHaveLength(0);
-    expect(g.data.templates).toHaveLength(base.templates);
+  it('tööliigi kustutamine; mallide endpoint on eemaldatud', async () => {
+    const put = await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: false, items: [] });
+    expect(put.status).not.toBe(200);
     expect((await call('DELETE', `/api/platform/catalog/work-types/${wtId}`)).status).toBe(200);
-    expect((await call('DELETE', `/api/platform/catalog/work-types/${wt2.data.id}`)).status).toBe(200);
     expect((await call('DELETE', `/api/platform/catalog/work-types/${wtId}`)).status).toBe(404);
   });
 
-  it('kultuuri kustutamine viib sordid ja erimallid kaasa', async () => {
+  it('kultuuri kustutamine viib sordid kaasa', async () => {
     const wt = await call('POST', '/api/platform/catalog/work-types', { name: `${ZZ} töö3`, phase: 'CARE' });
     await call('POST', `/api/platform/catalog/crops/${cropId}/varieties`, { name: `${ZZ} sort2` });
-    await call('PUT', '/api/platform/catalog/templates', { catalogCropId: cropId, isWinter: true, items: [{ catalogWorkTypeId: wt.data.id }] });
-    expect(await authDb().catalogWorkTemplate.count({ where: { catalogCropId: cropId } })).toBe(1);
     expect((await call('DELETE', `/api/platform/catalog/crops/${cropId}`)).status).toBe(200);
     expect(await authDb().catalogCropVariety.count({ where: { catalogCropId: cropId } })).toBe(0);
-    expect(await authDb().catalogWorkTemplate.count({ where: { catalogCropId: cropId } })).toBe(0);
     expect((await call('DELETE', `/api/platform/catalog/crops/${cropId}`)).status).toBe(404);
     expect((await call('DELETE', `/api/platform/catalog/work-types/${wt.data.id}`)).status).toBe(200);
   });
 
-  it('üldmall on isWinter kohta unikaalne ja logi tekib', async () => {
-    // Olemasolevat üldmalli ei muudeta sisuliselt: asendame selle samade ridadega
-    const g = await call('GET', '/api/platform/catalog');
-    const gen = g.data.templates.find((t: any) => t.catalogCropId === null && t.isWinter === false);
-    expect(gen).toBeTruthy();
-    const items = gen.items.map((i: any) => ({ catalogWorkTypeId: i.catalogWorkTypeId, typicalTiming: i.typicalTiming, plannedCount: i.plannedCount }));
-    const r = await call('PUT', '/api/platform/catalog/templates', { catalogCropId: null, isWinter: false, items });
-    expect(r.status).toBe(200);
-    expect(await authDb().catalogWorkTemplate.count({ where: { catalogCropId: null, isWinter: false } })).toBe(1);
-    const after = await call('GET', '/api/platform/catalog');
-    const gen2 = after.data.templates.find((t: any) => t.catalogCropId === null && t.isWinter === false);
-    expect(gen2.items.map((i: any) => [i.catalogWorkTypeId, i.sortOrder, i.typicalTiming, i.plannedCount]))
-      .toEqual(gen.items.map((i: any) => [i.catalogWorkTypeId, i.sortOrder, i.typicalTiming, i.plannedCount]));
-    expect(after.data.templates).toHaveLength(base.templates);
-    // Logi
+  it('kataloogi muudatused logitakse', async () => {
     const logs = await authDb().platformAuditLog.findMany({ where: { platformUserId, action: 'CATALOG_UPDATE' } });
     expect(logs.length).toBeGreaterThan(5);
     expect(logs.every((l) => l.targetTenantId === null)).toBe(true);
@@ -436,8 +380,7 @@ describe('platvormi API: catalog (algkataloog)', () => {
     expect(details).toEqual(expect.arrayContaining([
       expect.objectContaining({ entity: 'crop', op: 'create', name: ZZ }),
       expect.objectContaining({ entity: 'variety', op: 'create' }),
-      expect.objectContaining({ entity: 'workType', op: 'delete' }),
-      expect.objectContaining({ entity: 'template', op: 'replace' })
+      expect.objectContaining({ entity: 'workType', op: 'delete' })
     ]));
   });
 
@@ -446,7 +389,6 @@ describe('platvormi API: catalog (algkataloog)', () => {
     const db = authDb();
     expect(await db.catalogCrop.count()).toBe(base.crops);
     expect(await db.catalogWorkType.count()).toBe(base.workTypes);
-    expect(await db.catalogWorkTemplate.count()).toBe(base.templates);
   });
 });
 
