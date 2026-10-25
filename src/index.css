@@ -7821,6 +7821,26 @@ a.history-pill:hover {
   cursor: pointer;
 }
 
+.fw-filter-end {
+  margin-left: auto;
+}
+
+.fw-main .register-actions-bar {
+  gap: 10px;
+  margin-bottom: 0;
+}
+
+.fw-main .search-box-wrap {
+  flex: 1 1 220px;
+  max-width: 420px;
+}
+
+.fw-main .search-box-wrap .search-input,
+.fw-main .register-actions-bar select.form-input {
+  height: 34px;
+  font-size: 0.8rem;
+}
+
 .fw-filter.checkbox input {
   accent-color: #16a34a;
 }

@@ -19,6 +19,7 @@ import { AddFieldWorkDialog } from './AddFieldWorkDialog';
 import { FinanceModal } from './FinanceModal';
 import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 
 interface Option {
@@ -40,8 +41,6 @@ interface FieldWorksBoardProps {
   canManageFinance?: boolean;
   telemetryEnabled?: boolean;
 }
-
-type KindFilter = 'all' | 'winter' | 'spring' | 'none';
 
 interface Row {
   fieldSeasonId: number;
@@ -182,7 +181,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
-  const [kind, setKind] = useState<KindFilter>('all');
+  const [activity, setActivity] = useState<string>('all'); // töötüübi id või 'all'
   const [hideDone, setHideDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
@@ -338,6 +337,27 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       .sort((a, b) => compareFieldNumbers(a.field, b.field));
   }, [masterFields, fieldWorks, year, crops]);
 
+  // Tegevuse filter: ühtne eeldus, mida kasutavad kõik veeruabifunktsioonid
+  const workMatches = (w: FieldWork) => activity === 'all' || w.workTypeId === activity;
+
+  // Tahvlil olevad tegevused (käesolevad + järgmise hooaja sügistööd), PRIA järjekorras
+  const activityOptions = useMemo(() => {
+    const byId = new Map<string, FieldWork>();
+    allRows.forEach((r) => [...r.works, ...r.nextWorks].forEach((w) => { if (!byId.has(w.workTypeId)) byId.set(w.workTypeId, w); }));
+    const priaIndex = (w: FieldWork) => {
+      const i = PRIA_ACTIVITIES.findIndex((a) => a.name === (w.priaCode ?? w.priaName));
+      return i < 0 ? 999 : i;
+    };
+    return Array.from(byId.values())
+      .sort((a, b) => priaIndex(a) - priaIndex(b) || a.workTypeName.localeCompare(b.workTypeName, 'et'))
+      .map((w) => ({ id: w.workTypeId, name: w.workTypeName }));
+  }, [allRows]);
+
+  // Aasta vahetusel lähtesta filter, kui valitud tegevust enam pole
+  useEffect(() => {
+    if (activity !== 'all' && !loading && !activityOptions.some((o) => o.id === activity)) setActivity('all');
+  }, [activity, activityOptions, loading]);
+
   const rows = allRows.filter((r) => {
     const q = search.trim().toLowerCase();
     if (
@@ -347,9 +367,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         .includes(q)
     )
       return false;
-    if (kind === 'none') return r.nextUndetermined;
-    if (kind === 'winter') return r.nextIsWinter;
-    if (kind === 'spring') return !r.nextUndetermined && !r.nextIsWinter;
+    if (activity !== 'all' && !r.works.some(workMatches) && !r.nextWorks.some(workMatches)) return false;
     return true;
   });
 
@@ -414,7 +432,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [rows, year]);
 
   // Käesoleva hooaja tööd tahvli veeru kaupa (eelmise aasta sügistööd eraldi veergudes)
-  const columnWorks = (r: Row, col: BoardColumn) => r.works.filter((w) => r.columns.get(w.id) === col);
+  const columnWorks = (r: Row, col: BoardColumn) => r.works.filter((w) => r.columns.get(w.id) === col && workMatches(w));
   const visibleWorks = (r: Row, col: BoardColumn) => columnWorks(r, col).filter((w) => !hideDone || w.status !== 'DONE');
 
   const rowNeedsWorks = (r: Row) => {
@@ -611,30 +629,30 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   // Veergude kokkuvõtted
   const countPhase = (col: BoardColumn) => {
-    const ws = allRows.flatMap((r) => columnWorks(r, col));
+    const ws = rows.flatMap((r) => columnWorks(r, col));
     return `${ws.length} tööd · ${ws.filter((w) => w.status === 'DONE').length} lõpetatud`;
   };
-  const withCrop = allRows.filter((r) => !r.undetermined).length;
+  const withCrop = rows.filter((r) => !r.undetermined).length;
   const milestoneCount = (col: BoardColumn) =>
-    `${allRows.filter((r) => columnWorks(r, col).some((w) => w.status === 'DONE')).length} / ${withCrop} põldu`;
+    `${rows.filter((r) => columnWorks(r, col).some((w) => w.status === 'DONE')).length} / ${withCrop} põldu`;
   // Kevadkülv: ainult kevadist külvi vajavad põllud (talivili on külvatud eelmisel sügisel)
-  const springSowRows = allRows.filter((r) => !r.undetermined && !r.isWinter);
+  const springSowRows = rows.filter((r) => !r.undetermined && !r.isWinter);
   const springSowCount = () =>
     `${springSowRows.filter((r) => columnWorks(r, 'SOWING').some((w) => w.status === 'DONE')).length} / ${springSowRows.length} põldu`;
   // Eelmise aasta sügiskülv: käesoleva hooaja talivilja põllud
-  const prevWinterRows = allRows.filter((r) => r.isWinter);
+  const prevWinterRows = rows.filter((r) => r.isWinter);
   const prevSownDone = (r: Row) =>
     columnWorks(r, 'PREV_SOWING').some((w) => w.phase === 'SOWING' && (w.status === 'DONE' || w.entries.length > 0));
   const prevMilestoneCount = () =>
     `${prevWinterRows.filter(prevSownDone).length} / ${prevWinterRows.length} talivilja`;
 
   // Järgmise hooaja sügistööd sügisploki veeru kaupa
-  const nextColumnWorks = (r: Row, col: AutumnColumn) => r.nextWorks.filter((w) => r.nextColumns.get(w.id) === col);
+  const nextColumnWorks = (r: Row, col: AutumnColumn) => r.nextWorks.filter((w) => r.nextColumns.get(w.id) === col && workMatches(w));
   const countNextPhase = (col: AutumnColumn) => {
-    const ws = allRows.flatMap((r) => nextColumnWorks(r, col));
+    const ws = rows.flatMap((r) => nextColumnWorks(r, col));
     return `${ws.length} tööd · ${ws.filter((w) => w.status === 'DONE').length} lõpetatud`;
   };
-  const nextWinterRows = allRows.filter((r) => r.nextIsWinter);
+  const nextWinterRows = rows.filter((r) => r.nextIsWinter);
   const nextMilestoneCount = () =>
     `${nextWinterRows.filter((r) => nextColumnWorks(r, 'SOWING').some((w) => w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
 
@@ -744,28 +762,30 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             </div>
           </div>
 
-          <div className="register-stats-pills">
-            <div className="reg-stat-pill">
-              <span className="lbl">Põlde:</span>
-              <strong>{allRows.length} tk</strong>
-              {locked && <span className="sub-val"><Lock size={11} /> lukus</span>}
-            </div>
+        </div>
+
+        <div className="register-actions-bar">
+          <div className="search-box-wrap">
+            <Search size={16} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Otsi põldu või tööd"
+              aria-label="Otsi põldu või tööd"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="form-input search-input"
+            />
           </div>
-          <div className="fw-toolbar-spacer" />
-          <label className="fw-search">
-            <Search size={14} />
-            <input type="search" placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" value={search} onChange={(e) => setSearch(e.target.value)} />
-          </label>
           <label className="fw-filter">
-            <span>Külv</span>
-            <select className="form-input" value={kind} onChange={(e) => setKind(e.target.value as KindFilter)}>
-              <option value="all">Kõik põllud</option>
-              <option value="winter">Sügiskülviga (järgmine talivili)</option>
-              <option value="spring">Ilma sügiskülvita (järgmine suvivili)</option>
-              <option value="none">Järgmine kultuur valimata</option>
+            <span>Tegevus</span>
+            <select className="form-input" value={activity} onChange={(e) => setActivity(e.target.value)}>
+              <option value="all">Kõik tegevused</option>
+              {activityOptions.map((o) => (
+                <option key={o.id} value={o.id}>{o.name}</option>
+              ))}
             </select>
           </label>
-          <label className="fw-filter checkbox">
+          <label className="fw-filter checkbox fw-filter-end">
             <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />
             <span>Peida lõpetatud tööd</span>
           </label>
