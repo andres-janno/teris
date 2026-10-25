@@ -801,7 +801,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 <strong>Sügishooldus</strong>
                 <small>{countPhase('PREV_CARE')}</small>
               </div>
-              <div className="fw-head-cell phase">
+              <div className="fw-head-cell phase year-start">
                 <strong>Ettevalmistus</strong>
                 <small>{countPhase('PREPARATION')}</small>
               </div>
@@ -817,7 +817,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 <strong><Wheat size={14} /> Koristus</strong>
                 <small>{milestoneCount('HARVEST')}</small>
               </div>
-              <div className="fw-head-cell phase">
+              <div className="fw-head-cell phase year-start">
                 <strong>Ettevalmistus</strong>
                 <small>{countNextPhase('PREP')}</small>
               </div>
