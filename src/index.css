@@ -7837,7 +7837,8 @@ a.history-pill:hover {
 
 .fw-grid {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(106px, 0.875fr) minmax(120px, 1.1fr) minmax(140px, 1.5fr) minmax(106px, 0.875fr) minmax(185px, 1.9fr) minmax(106px, 0.875fr) minmax(130px, 1.2fr) minmax(106px, 0.875fr) minmax(120px, 1.1fr);
+  /* Põllu veerg 15% laiusest, ülejäänud 85% jagatakse võrdselt 10 tööveeru vahel */
+  grid-template-columns: minmax(0, 15fr) repeat(10, minmax(0, 8.5fr));
   width: 100%;
 }
 
@@ -8014,7 +8015,8 @@ a.history-pill:hover {
 /* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
 .fw-row-container {
   display: grid;
-  grid-template-columns: minmax(150px, 1.05fr) minmax(130px, 1.2fr) minmax(106px, 0.875fr) minmax(120px, 1.1fr) minmax(140px, 1.5fr) minmax(106px, 0.875fr) minmax(185px, 1.9fr) minmax(106px, 0.875fr) minmax(130px, 1.2fr) minmax(106px, 0.875fr) minmax(120px, 1.1fr);
+  /* Põllu veerg 15% laiusest, ülejäänud 85% jagatakse võrdselt 10 tööveeru vahel */
+  grid-template-columns: minmax(0, 15fr) repeat(10, minmax(0, 8.5fr));
   grid-template-rows: auto 1fr;
   border-bottom: 1px solid var(--border-card);
 }
