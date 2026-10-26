@@ -1552,7 +1552,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
               where: { fieldId_year: { fieldId: fieldSeason.fieldId, year: nextYear } },
               include: { season: { select: { isLocked: true } } }
             });
-            const split = splitPostHarvestOperations(ops, nextSeason?.crop ?? null);
+            const split = splitPostHarvestOperations(ops, nextSeason?.crop ?? null, Number(f.season));
             let currentOps = split.current;
             if (nextSeason && split.next.length) {
               const nextLocked = !!nextSeason.season?.isLocked

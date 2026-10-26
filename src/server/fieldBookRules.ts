@@ -2,7 +2,7 @@
 // Puhtad funktsioonid (andmebaasita), kasutab fieldBookImport.ts.
 import type { FieldBookImportOperation } from '../types/fieldOperation.ts';
 import type { MaterialCategory, WorkPhase } from '../types/fieldWork.ts';
-import { PRIA_ACTIVITY, baseUnit, daysApart, materialCategoryFor, nameKey, type PriaAttrs } from '../services/pria.ts';
+import { PRIA_ACTIVITY, PRIA_TILLAGE_ACTIVITIES, baseUnit, daysApart, materialCategoryFor, nameKey, type PriaAttrs } from '../services/pria.ts';
 
 export const MATCH_TOLERANCE_DAYS = 2;
 
@@ -84,17 +84,37 @@ export function sowingKindMatchesCrop(kind: string | null, crop: string): boolea
   return c.includes(k) || (!!first && k.includes(first));
 }
 
-// Viimase saagikoristuse järel tehtud tööd (v.a koristus) → järgmine hooaeg; vahekultuuri külv (liik ei sobi
-// järgmise kultuuriga) jääb. Faas: külv → SOWING; kuni sügiskülvi päevani (k.a) PREPARATION, hiljem CARE.
+// Hooaja Y piir, millest alates tööd kuuluvad järgmisele hooajale (ISO kuupäevad):
+// koristusega hooaeg → viimane koristus (hilisemad tööd liiguvad); koristuseta → esimene mullaharimine alates 1. juulist
+// (see ise liigub ka). Piiri pole → midagi ei liigu.
+export function postHarvestBoundary(
+  harvestDates: string[],
+  tillageDates: string[],
+  seasonYear: number
+): { date: string; inclusive: boolean } | null {
+  if (harvestDates.length) return { date: harvestDates.reduce((a, b) => (b > a ? b : a)), inclusive: false };
+  const from = `${seasonYear}-07-01`;
+  const autumn = tillageDates.filter((d) => d >= from);
+  if (!autumn.length) return null;
+  return { date: autumn.reduce((a, b) => (b < a ? b : a)), inclusive: true };
+}
+
+// Viimase saagikoristuse (koristuseta hooajal esimese juulijärgse mullaharimise) järel tehtud tööd (v.a koristus)
+// → järgmine hooaeg; vahekultuuri külv (liik ei sobi järgmise kultuuriga) jääb.
+// Faas: külv → SOWING; kuni sügiskülvi päevani (k.a) PREPARATION, hiljem CARE.
 export function splitPostHarvestOperations(
   ops: FieldBookImportOperation[],
-  nextCrop: string | null
+  nextCrop: string | null,
+  seasonYear: number
 ): { current: FieldBookImportOperation[]; next: (FieldBookImportOperation & { phase: WorkPhase })[] } {
-  const harvests = ops.filter((o) => o.type === PRIA_ACTIVITY.HARVEST).map((o) => o.dateFrom);
-  if (nextCrop == null || !harvests.length) return { current: ops, next: [] };
-  const harvestDate = harvests.reduce((a, b) => (b > a ? b : a));
+  const boundary = nextCrop == null ? null : postHarvestBoundary(
+    ops.filter((o) => o.type === PRIA_ACTIVITY.HARVEST).map((o) => o.dateFrom),
+    ops.filter((o) => PRIA_TILLAGE_ACTIVITIES.has(o.type)).map((o) => o.dateFrom),
+    seasonYear
+  );
+  if (nextCrop == null || !boundary) return { current: ops, next: [] };
   const moves = (o: FieldBookImportOperation) => {
-    if (o.type === PRIA_ACTIVITY.HARVEST || !(o.dateFrom > harvestDate)) return false;
+    if (o.type === PRIA_ACTIVITY.HARVEST || !(boundary.inclusive ? o.dateFrom >= boundary.date : o.dateFrom > boundary.date)) return false;
     if (o.type !== PRIA_ACTIVITY.SOWING) return true;
     const kinds = o.products.map((p) => p.kind).filter((k): k is string => !!nameKey(k));
     return !kinds.length || kinds.some((k) => sowingKindMatchesCrop(k, nextCrop));

@@ -1,13 +1,14 @@
 // scripts/pria-move-autumn-works.mts — PRIA: koristuse järel tehtud sügistööd järgmise aasta põllu hooaja alla.
 // npx tsx scripts/pria-move-autumn-works.mts --tenant <id> [--field-code X --num N] [--year Y] [--dry-run]
 // Hooaja Y PRIA_IMPORT tööd, mille plannedDateFrom on hilisem kui viimane PRIA saagikoristus, viiakse hooajale Y+1
-// (sama reegel mis impordil, vt splitPostHarvestOperations). Vahekultuuri külv (liik ei sobi Y+1 kultuuriga) jääb.
+// (sama reegel mis impordil, vt splitPostHarvestOperations). Koristuseta hooajal on piir esimene PRIA_IMPORT
+// mullaharimistöö alates 1. juulist (see ise liigub ka). Vahekultuuri külv (liik ei sobi Y+1 kultuuriga) jääb.
 // Y+1 sama töötüübi kuupäevata ja kanneteta mallitöö kustutatakse (imporditud töö asendab selle); muud ei kustutata.
 // Käivitus rakenduse rolliga (DATABASE_URL), ettevõtte kontekst seatakse tehingus (RLS).
 import { PrismaClient } from '@prisma/client';
 import type { WorkPhase } from '../src/types/fieldWork.ts';
-import { PRIA_ACTIVITY } from '../src/services/pria.ts';
-import { sowingKindMatchesCrop } from '../src/server/fieldBookRules.ts';
+import { PRIA_ACTIVITY, PRIA_TILLAGE_ACTIVITIES } from '../src/services/pria.ts';
+import { postHarvestBoundary, sowingKindMatchesCrop } from '../src/server/fieldBookRules.ts';
 
 const arg = (name: string) => { const i = process.argv.indexOf(`--${name}`); return i > 0 ? process.argv[i + 1] : undefined; };
 const tenant = arg('tenant');
@@ -28,6 +29,7 @@ async function main() {
       const typeRows = await tx.workType.findMany({ where: { priaCode: { not: null } }, select: { id: true, priaCode: true } });
       const typeName = new Map(typeRows.map((t) => [t.id, t.priaCode!]));
       const harvestTypeIds = new Set(typeRows.filter((t) => t.priaCode === PRIA_ACTIVITY.HARVEST).map((t) => t.id));
+      const tillageTypeIds = new Set(typeRows.filter((t) => PRIA_TILLAGE_ACTIVITIES.has(t.priaCode!)).map((t) => t.id));
       const sowingTypeIds = new Set(typeRows.filter((t) => t.priaCode === PRIA_ACTIVITY.SOWING).map((t) => t.id));
       const lockedYears = new Set((await tx.season.findMany({ where: { isLocked: true }, select: { year: true } })).map((s) => s.year));
 
@@ -51,10 +53,16 @@ async function main() {
 
       const total = { seasons: 0, moved: 0, templatesDeleted: 0, intercrop: 0, skipped: 0 };
       for (const fs of seasons) {
-        const harvests = fs.fieldWorks.filter((w) => harvestTypeIds.has(w.workTypeId) && w.plannedDateFrom).map((w) => time(w.plannedDateFrom)!);
-        if (!harvests.length) continue;
-        const harvestAt = Math.max(...harvests);
-        const candidates = fs.fieldWorks.filter((w) => !harvestTypeIds.has(w.workTypeId) && w.plannedDateFrom && time(w.plannedDateFrom)! > harvestAt);
+        const iso = (d: Date) => d.toISOString().slice(0, 10);
+        const dated = fs.fieldWorks.filter((w) => w.plannedDateFrom);
+        const boundary = postHarvestBoundary(
+          dated.filter((w) => harvestTypeIds.has(w.workTypeId)).map((w) => iso(w.plannedDateFrom!)),
+          dated.filter((w) => tillageTypeIds.has(w.workTypeId)).map((w) => iso(w.plannedDateFrom!)),
+          fs.year
+        );
+        if (!boundary) continue;
+        const candidates = dated.filter((w) => !harvestTypeIds.has(w.workTypeId)
+          && (boundary.inclusive ? iso(w.plannedDateFrom!) >= boundary.date : iso(w.plannedDateFrom!) > boundary.date));
         if (!candidates.length) continue;
         const label = `Nr ${fs.field.num} ${fs.year} → ${fs.year + 1}`;
 

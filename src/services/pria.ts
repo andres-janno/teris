@@ -53,6 +53,9 @@ export const PRIA_ACTIVITY = {
   MONITORING: 'Seire'
 } as const;
 
+// Mullaharimise tegevused (koristuseta hooaja piiri määramiseks)
+export const PRIA_TILLAGE_ACTIVITIES: ReadonlySet<string> = new Set(['Kündmine', 'Freesimine', 'Randaalimine', 'Kultiveerimine', 'Äestamine', 'Sügavkobestamine']);
+
 // Enne PRIA klassifikaatorit kasutatud töötüübid → PRIA tegevus (migratsioon)
 export const LEGACY_WORK_TYPE_MAP: Readonly<Record<string, string>> = {
   'Kõrrekoorimine': 'Randaalimine',

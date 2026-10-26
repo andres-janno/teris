@@ -105,44 +105,67 @@ describe('splitPostHarvestOperations', () => {
   it('Nr 5: koristuse järel tehtud tööd järgmise hooaja alla, faasid külvi järgi', () => {
     const before = op({ type: 'Kündmine', dateFrom: '2026-04-20' });
     const ops = [before, harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-07' }), op({ type: 'Väetamine', dateFrom: '2026-09-08' }), sow('Talioder')];
-    const r = splitPostHarvestOperations(ops, 'Talioder allakülvita');
+    const r = splitPostHarvestOperations(ops, 'Talioder allakülvita', 2026);
     expect(r.current.map((o) => o.type)).toEqual(['Kündmine', 'Saagikoristus']);
     expect(r.next.map((o) => [o.type, o.phase])).toEqual([
       ['Randaalimine', 'PREPARATION'], ['Väetamine', 'PREPARATION'], ['Külvamine/istutamine', 'SOWING']
     ]);
   });
   it('vahekultuuri külv jääb hooajale', () => {
-    const r = splitPostHarvestOperations([harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-01' }), sow('Valge sinep')], 'Talioder allakülvita');
+    const r = splitPostHarvestOperations([harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-01' }), sow('Valge sinep')], 'Talioder allakülvita', 2026);
     expect(r.current.map((o) => o.type)).toEqual(['Saagikoristus', 'Külvamine/istutamine']);
     expect(r.next.map((o) => [o.type, o.phase])).toEqual([['Randaalimine', 'PREPARATION']]);
   });
   it('liigita külv liigub', () => {
-    const r = splitPostHarvestOperations([harvest, sow(null)], 'Talioder allakülvita');
+    const r = splitPostHarvestOperations([harvest, sow(null)], 'Talioder allakülvita', 2026);
     expect(r.next.map((o) => o.phase)).toEqual(['SOWING']);
   });
   it('järgmise hooaja põlluta või koristuseta ei liigu midagi', () => {
     const ops = [harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-07' })];
-    expect(splitPostHarvestOperations(ops, null)).toEqual({ current: ops, next: [] });
-    const noHarvest = [op({ type: 'Randaalimine', dateFrom: '2026-09-07' })];
-    expect(splitPostHarvestOperations(noHarvest, 'Talioder')).toEqual({ current: noHarvest, next: [] });
+    expect(splitPostHarvestOperations(ops, null, 2026)).toEqual({ current: ops, next: [] });
+    // koristuseta, kuid mullaharimine alles kevadel → piiri pole
+    const aprilOnly = [op({ type: 'Kündmine', dateFrom: '2026-04-20' }), op({ type: 'Väetamine', dateFrom: '2026-09-07' })];
+    expect(splitPostHarvestOperations(aprilOnly, 'Talioder', 2026)).toEqual({ current: aprilOnly, next: [] });
+    // koristuseta ja järgmise hooaja kultuurita
+    const tillage = [op({ type: 'Kündmine', dateFrom: '2026-07-05' })];
+    expect(splitPostHarvestOperations(tillage, null, 2026)).toEqual({ current: tillage, next: [] });
+  });
+  it('koristuseta hooaeg: esimene juulijärgne mullaharimine on piir (Nr 1)', () => {
+    const t = (type: string, dateFrom: string) => op({ type, dateFrom });
+    const ops = [
+      t('Freesimine', '2026-07-05'), t('Kündmine', '2026-07-20'), t('Kivikorjamine', '2026-07-25'), t('Libistamine', '2026-07-25'),
+      t('Randaalimine', '2026-07-29'), t('Väetamine', '2026-07-30'), sow(null, '2026-07-31'), t('Taimekaitsevahendi kasutamine', '2026-08-21')
+    ];
+    const r = splitPostHarvestOperations(ops, 'Ristik', 2026);
+    expect(r.current).toEqual([]);
+    expect(r.next.map((o) => [o.type, o.phase])).toEqual([
+      ['Freesimine', 'PREPARATION'], ['Kündmine', 'PREPARATION'], ['Kivikorjamine', 'PREPARATION'], ['Libistamine', 'PREPARATION'],
+      ['Randaalimine', 'PREPARATION'], ['Väetamine', 'PREPARATION'], ['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']
+    ]);
+  });
+  it('koristuseta: mullaharimine täpselt 1. juulil liigub (piir kaasa arvatud), varasem jääb', () => {
+    const early = op({ type: 'Väetamine', dateFrom: '2026-06-15' });
+    const r = splitPostHarvestOperations([early, op({ type: 'Kündmine', dateFrom: '2026-07-01' })], 'Ristik', 2026);
+    expect(r.current).toEqual([early]);
+    expect(r.next.map((o) => o.type)).toEqual(['Kündmine']);
   });
   it('sügiskülviga samal päeval tehtud töö on ettevalmistus, hilisem hooldus', () => {
     const r = splitPostHarvestOperations([
       harvest, op({ type: 'Randaalimine', dateFrom: '2026-09-09' }), op({ type: 'Väetamine', dateFrom: '2026-09-09' }), sow('Talioder'),
       op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-09-10' })
-    ], 'Talioder allakülvita');
+    ], 'Talioder allakülvita', 2026);
     expect(r.next.map((o) => [o.type, o.phase])).toEqual([
       ['Randaalimine', 'PREPARATION'], ['Väetamine', 'PREPARATION'], ['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']
     ]);
   });
   it('sügiskülvi järel tehtud töö on hooldus', () => {
-    const r = splitPostHarvestOperations([harvest, sow('Talioder'), op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-10-01' })], 'Talioder allakülvita');
+    const r = splitPostHarvestOperations([harvest, sow('Talioder'), op({ type: 'Taimekaitsevahendi kasutamine', dateFrom: '2026-10-01' })], 'Talioder allakülvita', 2026);
     expect(r.next.map((o) => [o.type, o.phase])).toEqual([['Külvamine/istutamine', 'SOWING'], ['Taimekaitsevahendi kasutamine', 'CARE']]);
   });
   it('koristus ise ei liigu, ka viimane; koristuse päeval ja enne tehtud tööd jäävad', () => {
     const early = op({ type: 'Saagikoristus', dateFrom: '2026-08-10' });
     const sameDay = op({ type: 'Kündmine', dateFrom: '2026-08-26' });
-    const r = splitPostHarvestOperations([early, sameDay, harvest], 'Talioder');
+    const r = splitPostHarvestOperations([early, sameDay, harvest], 'Talioder', 2026);
     expect(r.current).toHaveLength(3);
     expect(r.next).toEqual([]);
   });
