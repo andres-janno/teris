@@ -299,6 +299,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (rows.some((r) => !r.materialId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
     // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
     const noQuantity = rows.find((r) => r.materialId && !((parseNum(r.total) ?? 0) > 0));
+    if (isHarvest && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
     if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || materials.find((m) => m.id === noQuantity.materialId)?.name || 'toode'}`);
     setBusy(true);
     try {

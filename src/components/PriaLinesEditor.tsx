@@ -153,14 +153,14 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
 // showBunkers: kandel punkrite arv (PRIA-s pole; hiljem tonnide arvutamiseks)
 export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestRow) => void; areaHa: number; showTotals: boolean; showBunkers?: boolean }> = ({ value, onChange, areaHa, showTotals, showBunkers }) => {
   // Sama veerupäisega ruudustik nagu materjaliridadel
-  const grid = { gridTemplateColumns: `minmax(140px, 1.2fr) minmax(140px, 1.2fr) 84px${showBunkers ? ' 84px' : ''}${showTotals ? ' 92px' : ''}` };
+  const grid = { gridTemplateColumns: `minmax(140px, 1.2fr) minmax(140px, 1.2fr) ${showBunkers ? '84px ' : ''}84px${showTotals ? ' 92px' : ''}` };
   return (
     <div className="pria-lines">
       <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
         <span>Kultuuri tüüp</span>
         <span>Saagi tüüp</span>
+        {showBunkers && <span className="num">Punkreid *</span>}
         <span className="num">Saak t/ha</span>
-        {showBunkers && <span className="num">Punkreid</span>}
         {showTotals && <span className="num">Kokku, t</span>}
       </div>
       <div className="pria-grid" style={grid}>
@@ -172,12 +172,12 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
           <option value="">– vali –</option>
           {YIELD_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
         </select>
-        <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
-          onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
         {showBunkers && (
-          <input className="form-input num" aria-label="Punkreid" inputMode="decimal" placeholder="tk" value={value.bunkers ?? ''}
+          <input className="form-input num" aria-label="Punkreid" required inputMode="decimal" placeholder="tk" value={value.bunkers ?? ''}
             onChange={(e) => onChange({ ...value, bunkers: e.target.value })} />
         )}
+        <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
+          onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
         {showTotals && (
           <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t" value={value.total}
             onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
