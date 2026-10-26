@@ -134,7 +134,7 @@ flowchart LR
 |---|---|---|---|
 | `FieldFullView` | näitab põllu hooaja andmeid, töid ja kandeid | `GET /api/field-season-works` | `FieldSeason` R, `FieldWork` R, `WorkType` R, `FieldWorkLine` R, `WorkEntry` R, `WorkEntryLine` R, `RelatedParty` R, `Vehicle` R, `Implement` R |
 | `FieldOverviewPanel` / `SoilSamplesSection` / `FieldNdviSection` | mullaproovid ja NDVI | — (käivituse andmed, väline satelliidipilt) | `SoilSample` R |
-| `FieldEditDialog` | muudab põllu põhiandmeid ja hooaja andmeid (pindala, kultuur, sort, katastriüksused) | `POST /api/master-fields` (üks põld) | `Field` RU, `FieldSeason` CU (kõik põllu aastad), `Season` C (puuduv hooaeg), `CadastralParcel` CU, `FieldCadastralParcel` CUD |
+| `FieldEditDialog` | muudab põllu põhiandmeid ja hooaja andmeid (pindala, kultuur, sort, katastriüksused) | `POST /api/master-fields` (üks põld) | `Field` RU, `FieldSeason` CU (ainult muudetud aasta; lukus hooaeg keelatud), `Season` C (puuduv hooaeg), `CadastralParcel` CU, `FieldCadastralParcel` CUD |
 | `FieldWorkPlanDialog` (`FieldWorkPlanForm`) | lisab või muudab töö plaani (kuupäevad, pindala, plaaniread) | `POST /api/field-works`, `PATCH /api/field-works/:id` | `WorkType` R, `FieldWork` RCU, `FieldWorkLine` CD (read asendatakse), `WorkEntry` R |
 | `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak) | `POST /api/work-entries`, `PUT /api/work-entries/:id` | `WorkEntry` RCU, `WorkEntryLine` CD, `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` R |
 | `FieldWorkEntryDialog` | pakub telemeetriast sõite kande täitmiseks | `GET /api/field-works/telemetry-suggestions` | `FieldSeason` R, `WorkEntry` R, `DeviceAssignment` R, `TelemetryDevice` R, `Vehicle` R, `RelatedParty` R, `Implement` R, `ImplementAssignment` R, `DeviceOwnership` R, `Field` R, `PointOfInterest` R, tsdb R |
@@ -196,8 +196,8 @@ flowchart LR
 | Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
 |---|---|---|---|
 | `FieldsTableView` | näitab põlde valitud hooaja andmetega, operaatori filtriga | — (käivituse andmed) | `Field` R, `FieldSeason` R, `RelatedParty` R, `Crop` R |
-| `FieldEditDialog` | muudab põldu (põhiandmed + kõigi aastate hooajakirjed + katastriüksused) | `POST /api/master-fields` | `Field` RU, `FieldSeason` CU, `Season` C, `CadastralParcel` CU, `FieldCadastralParcel` CUD |
-| `FieldsTableView` | kustutab põllu „koos kõigi aastate andmetega“ (looja või admin) | `DELETE /api/master-fields/:id` | `Field` RD; kaskaad: `FieldSeason`, `FieldCadastralParcel`, `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine` D |
+| `FieldEditDialog` | muudab põldu (põhiandmed + muudetud aasta hooajakirje + katastriüksused) | `POST /api/master-fields` | `Field` RU, `FieldSeason` CU, `Season` C, `CadastralParcel` CU, `FieldCadastralParcel` CUD |
+| `FieldsTableView` | kontrollib enne kustutamist kandeid ja plaanitud töid; kandega põldu ei kustuta, muidu küsib kinnitust (looja või admin) | `GET /api/master-fields/:id/delete-check`, `DELETE /api/master-fields/:id` | `WorkEntry` R, `FieldWork` R, `Field` RD; kaskaad: `FieldSeason`, `FieldCadastralParcel`, `FieldWork`, `FieldWorkLine` D |
 | `FieldUploadModal` (admin) | impordib PRIA põldude SHP-faili valitud aastasse | `POST /api/master-fields` (massiiv), seejärel `GET /api/master-fields`, `GET /api/seasons` | `Field` RCU, `FieldSeason` CU (ainult imporditud aasta), `Season` C |
 | `SoilSampleUploadModal` (admin) | impordib mullaproovid | `POST /api/soil-samples/import` | `SoilSample` CU (proovi numbri järgi), `Season` C |
 | `FieldBookUploadModal` (admin) | impordib e-PRIA põlluraamatu: loob või täiendab töid ja kandeid, saagid ja kuupäevad hooajale | `POST /api/field-book/import`, seejärel `GET /api/master-fields`, `GET /api/seasons` | `Season` RC, `Field` R, `FieldSeason` RU, `WorkType` RC, `Material` RC, `FieldWork` RCU, `FieldWorkLine` C, `WorkEntry` C, `WorkEntryLine` C |
@@ -248,7 +248,7 @@ flowchart LR
 | Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
 |---|---|---|---|
 | `FieldManagerModal` | näitab põldude kultuure aastate kaupa | — (käivituse andmed) | `Field` R, `FieldSeason` R, `Crop` R, `Season` R |
-| `FieldManagerModal` | muudab või tühjendab põllu hooaja kultuuri ja sordi | `POST /api/master-fields` | `Field` RU, `FieldSeason` CU, `Season` C, `CadastralParcel` CU, `FieldCadastralParcel` CUD (kogu põllu ajalugu saadetakse uuesti) |
+| `FieldManagerModal` | muudab või tühjendab põllu hooaja kultuuri ja sordi | `POST /api/master-fields` | `Field` RU, `FieldSeason` CU, `Season` C, `CadastralParcel` CU, `FieldCadastralParcel` CUD (saadetakse ainult muudetud aasta) |
 | `FieldShapeModal` | näitab põllu piiri | — | `FieldSeason` R |
 
 ## Põllutööd ja finantsid
@@ -294,7 +294,7 @@ flowchart LR
 
 | Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
 |---|---|---|---|
-| `FieldWorksBoard` | näitab hooaja põldude töid (ka järgmise hooaja sügistööd) | `GET /api/field-works?year=` | `Crop` R, `FieldSeason` RU (kõrvalmõju: määramata kultuuriga põllule kirjutatakse eelmise aasta talivili, kui litsents pole aegunud), `FieldWork` R, `WorkType` R, `FieldWorkLine` R, `WorkEntry` R, `WorkEntryLine` R, `RelatedParty` R, `Vehicle` R, `Implement` R |
+| `FieldWorksBoard` | näitab hooaja põldude töid (ka järgmise hooaja sügistööd) | `GET /api/field-works?year=` | `Crop` R, `FieldSeason` R, `FieldWork` R, `WorkType` R, `FieldWorkLine` R, `WorkEntry` R, `WorkEntryLine` R, `RelatedParty` R, `Vehicle` R, `Implement` R |
 | `FieldWorksBoard` | laeb tööliigid ja materjalid | `GET /api/work-types`, `GET /api/materials` | `WorkType` R, `Material` R, `FieldWork` R (loend), `WorkEntryLine` R (loend) |
 | `AddFieldWorkDialog` | lisab põllule töö | `POST /api/field-works` | `WorkType` R, `FieldWork` RC, `FieldWorkLine` C |
 | `FieldWorkPlanForm` | muudab töö plaani | `PATCH /api/field-works/:id` | `FieldWork` RU, `FieldWorkLine` CD, `WorkEntry` R |
@@ -560,7 +560,10 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `POST /api/seasons` | `Season` | C/U: `Season` | sulgemise aeg ja sulgeja serverist |
 | `GET /api/master-fields` | `Field`, `FieldSeason`, `FieldCadastralParcel`, `CadastralParcel`, `RelatedParty`, `FieldWork` (loend) | — | |
 | `POST /api/master-fields` | `Field` | C/U: `Field`, `FieldSeason`, `CadastralParcel`, `FieldCadastralParcel`; C: `Season`; D: `FieldCadastralParcel` | massiiv = PRIA import (ainult admin); katastri seosed ainult kui kliendilt tulid |
-| `DELETE /api/master-fields/:id` | `Field` | D: `Field`; kaskaad D: `FieldSeason`, `FieldCadastralParcel`, `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine` | looja või admin |
+| `GET /api/master-fields/:id/delete-check` | `WorkEntry`, `FieldWork` | — | kanded aastate kaupa, plaanitud tööde arv |
+| `DELETE /api/master-fields/:id` | `Field`, `WorkEntry` | D: `Field`; kaskaad D: `FieldSeason`, `FieldCadastralParcel`, `FieldWork`, `FieldWorkLine` | looja või admin; kandega põld → 409 |
+| `POST /api/master-fields/replace-year` | `FieldSeason`, `WorkEntry` | D: `FieldSeason` | admin; failist puuduvad põllud sama operaatori piires, töödega kirjed jäävad |
+| `POST /api/seasons/:year/fields` | `Field`, `FieldSeason`, `FieldCadastralParcel` | C: `Season`, `FieldSeason`, `FieldCadastralParcel` | kopeerib viimase aasta kirjed |
 | `GET /api/poi` | `PointOfInterest` | — | |
 | `POST /api/poi` | — | C/U: `PointOfInterest` | upsert id järgi |
 | `DELETE /api/poi/:id` | `PointOfInterest` | D: `PointOfInterest` | looja või admin |
@@ -601,7 +604,7 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `POST /api/materials` | — | C/U: `Material` | |
 | `DELETE /api/materials/:id` | `Material`, `WorkEntryLine` | D: `Material` | keelatud, kui kannetes kasutusel |
 | `GET /api/field-season-works` | `FieldSeason`, `FieldWork`, `WorkType`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement` | — | finantsväljad ainult admin/finantsjuht |
-| `GET /api/field-works` | `Crop`, `FieldSeason`, `FieldWork`, `WorkType`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement` | U: `FieldSeason` | kõrvalmõju: talivilja pärimine eelmisest aastast |
+| `GET /api/field-works` | `Crop`, `FieldSeason`, `FieldWork`, `WorkType`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement` | — | ainult lugemine |
 | `POST /api/field-works` | `WorkType`, `FieldWork` | C: `FieldWork`, `FieldWorkLine` | |
 | `POST /api/field-works/clear` | `FieldSeason`, `Season`, `WorkEntry`, `FieldWork` | D: `FieldWork`; kaskaad D: `FieldWorkLine` | lukus hooaeg keelatud |
 | `PATCH /api/field-works/:id` | `FieldWork`, `WorkEntry` | U: `FieldWork`; C/D: `FieldWorkLine` | `status` DONE/REOPEN |
