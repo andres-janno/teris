@@ -1,6 +1,7 @@
 // src/services/api.ts
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
+import type { YearReplacementPlan } from './fieldYearReplace';
 import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
@@ -217,13 +218,25 @@ export const api = {
     return res.json();
   },
 
-  async saveMasterFields(fields: MasterField | MasterField[]): Promise<{ success: boolean; count: number }> {
+  // Massiivi (import) korral tagastab server salvestatud põldude ID-d (ids) samas järjekorras.
+  async saveMasterFields(fields: MasterField | MasterField[]): Promise<{ success: boolean; count: number; ids?: number[] }> {
     const res = await apiFetch('/api/master-fields', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fields)
     });
     if (!res.ok) throw await apiErrorOf(res, 'Põllu salvestamine ebaõnnestus');
+    return res.json();
+  },
+
+  // PRIA impordi "Asenda": eemaldab aasta kirje ulatusse jäävatelt põldudelt, mida failis polnud.
+  async replaceFieldYear(year: number, operatorId: string | undefined, keepFieldIds: number[]): Promise<YearReplacementPlan> {
+    const res = await apiFetch('/api/master-fields/replace-year', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ year, operatorId: operatorId ?? null, keepFieldIds })
+    });
+    if (!res.ok) throw await apiErrorOf(res, 'Põldude asendamine ebaõnnestus');
     return res.json();
   },
 

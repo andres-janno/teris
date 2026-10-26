@@ -10,6 +10,9 @@ import {
 } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { RelatedParty } from '../types/party';
+import type { MasterField } from '../types/fieldRegister';
+import type { FarmingSeason } from '../types/season';
+import { matchImportedField, planYearReplacement } from '../services/fieldYearReplace';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
 
@@ -40,6 +43,8 @@ interface FieldUploadModalProps {
   onClose: () => void;
   onFieldsImported: (newFields: FieldCollection, replace: boolean, operatorId: string | undefined, year: number) => void;
   parties?: RelatedParty[];
+  masterFields?: MasterField[];
+  seasons?: FarmingSeason[];
   availableYears?: number[];
   defaultYear: number;
 }
@@ -49,6 +54,8 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
   onClose,
   onFieldsImported,
   parties = [],
+  masterFields = [],
+  seasons = [],
   availableYears = [],
   defaultYear
 }) => {
@@ -132,9 +139,33 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
     }
   };
 
+  // "Asenda" eelvaade: failis olevate põldude vasted (sama reegel nagu impordil) jäävad,
+  // ülejäänud ulatusse jäävad põllud kaotavad valitud aasta kirje; töödega jäetakse alles.
+  const importYearLocked = seasons.some((x) => x.year === importYear && x.isLocked);
+  const replacePlan = parsedPreview && replaceExisting
+    ? planYearReplacement(
+        masterFields,
+        importYear,
+        operatorId || undefined,
+        parsedPreview.features.flatMap((f, idx) => {
+          const p = f.properties;
+          if (!p.fieldCode) return [];
+          const match = matchImportedField(masterFields, String(p.fieldCode), p.num ? String(p.num) : String(idx + 1), operatorId || undefined);
+          return match ? [match.id] : [];
+        })
+      )
+    : null;
+  const fieldLabel = (r: { num: string; name: string }) => `${r.num ? `${r.num} ` : ''}${r.name}`;
+
   const handleConfirmImport = async () => {
     if (parsedPreview) {
-      if (replaceExisting && !await confirmDialog('Valitud on „Asenda olemasolevad põllud“: registris kuvatakse pärast importi ainult faili põllud.\n\nJätkata?')) return;
+      if (replacePlan && importYearLocked) return;
+      if (replacePlan && (replacePlan.removed.length || replacePlan.skipped.length)) {
+        const text = `Hooajast ${importYear} eemaldatakse ${replacePlan.removed.length} põllu hooaja kirje (põllud ise ja teiste aastate kirjed jäävad alles)`
+          + (replacePlan.skipped.length ? `; ${replacePlan.skipped.length} põldu jäetakse alles, sest neil on töid` : '')
+          + '.\n\nJätkata?';
+        if (!await confirmDialog(text)) return;
+      }
       onFieldsImported(parsedPreview, replaceExisting, operatorId || undefined, importYear);
       onClose();
     }
@@ -259,6 +290,28 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                 </select>
               </div>
 
+              {replacePlan && (
+                <div className={`alert-box ${importYearLocked ? 'error' : ''}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px', margin: '8px 0' }}>
+                  {importYearLocked ? (
+                    <span>Hooaeg {importYear} on lukus — asendamine pole võimalik.</span>
+                  ) : (
+                    <>
+                      <span>
+                        Hooaeg {importYear} muutub faili sisuks{operatorId ? ' valitud operaatori põldudel' : ' operaatorita põldudel'}.
+                        {' '}Failis puuduvatelt põldudelt eemaldatakse selle aasta kirje: <strong>{replacePlan.removed.length}</strong>
+                        {replacePlan.skipped.length > 0 && <>; töödega jäetakse alles: <strong>{replacePlan.skipped.length}</strong></>}
+                      </span>
+                      {replacePlan.removed.length > 0 && (
+                        <span className="modal-subtitle">Eemaldatakse: {replacePlan.removed.map(fieldLabel).join(', ')}</span>
+                      )}
+                      {replacePlan.skipped.length > 0 && (
+                        <span className="modal-subtitle">Jäetakse alles (töid): {replacePlan.skipped.map((r) => `${fieldLabel(r)} (${r.works})`).join(', ')}</span>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
               <div className="preview-fields-scroll">
                 {parsedPreview.features.slice(0, 10).map((f, idx) => (
                   <div key={idx} className="preview-field-row">
@@ -283,7 +336,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
         <div className="modal-footer">
           <button className="btn btn-ghost" onClick={onClose}>Loobu</button>
           {parsedPreview && (
-            <button className="btn btn-primary" onClick={handleConfirmImport}>
+            <button className="btn btn-primary" onClick={handleConfirmImport} disabled={!!replacePlan && importYearLocked}>
               <Check size={16} />
               <span>Lisa {parsedPreview.features.length} põldu hooaega {importYear}</span>
             </button>

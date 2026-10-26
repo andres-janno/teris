@@ -21,6 +21,7 @@ import { ensureSeasons, isSeasonYear } from './seasons.ts';
 import { latestEarlierSeason, buildCopiedSeason, buildCopiedParcelLink } from './fieldSeasonCopy.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
+import { planYearReplacement } from '../services/fieldYearReplace.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -538,8 +539,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       // Massiline salvestus (massiiv) = PRIA import — ainult adminile. Üksiku põllu muutmine on kõigile.
       if (Array.isArray(body)) {
         if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
-        for (const item of body) await saveMasterFieldItem(item, prisma as unknown as TxClient);
-        return json(res, { success: true, count: body.length });
+        const ids: number[] = [];
+        for (const item of body) ids.push((await saveMasterFieldItem(item, prisma as unknown as TxClient)).id);
+        return json(res, { success: true, count: body.length, ids });
       }
 
       // Üksik põld: lukus hooaja kirjet ei muudeta; kontroll ja kirjutamine ühes tehingus.
@@ -554,6 +556,36 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       });
       if (lockedYear !== null) return json(res, { error: `Hooaeg ${lockedYear} on lukus — seda ei saa muuta` }, 403);
       return json(res, { success: true, count: 1 });
+    }
+
+    // PRIA impordi "Asenda": pärast impordi salvestust eemaldatakse aasta kirje ulatusse jäävatelt
+    // põldudelt, mida failis polnud (keepFieldIds = impordi salvestatud põllud). Põld ise ja teised
+    // aastad jäävad; töödega hooaja kirjet ei eemaldata (skipped). Lukus aasta → keeldutakse.
+    if (pathname === '/api/master-fields/replace-year' && method === 'POST') {
+      if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
+      const body = await parseBody(req);
+      const year = Number(body?.year);
+      const operatorId: string | null = body?.operatorId ? String(body.operatorId) : null;
+      const keepFieldIds = Array.isArray(body?.keepFieldIds) ? body.keepFieldIds.map(Number) : null;
+      if (!isSeasonYear(year)) return json(res, { error: 'Vigane aasta' }, 400);
+      if (!keepFieldIds || keepFieldIds.some((n: number) => !Number.isInteger(n))) return json(res, { error: 'keepFieldIds peab olema põllu ID-de massiiv' }, 400);
+      const result = await tenantTransaction(async (tx) => {
+        if (await tx.season.findFirst({ where: { year, isLocked: true }, select: { id: true } })) return null;
+        const seasons = await tx.fieldSeason.findMany({
+          where: { year },
+          select: { id: true, fieldId: true, _count: { select: { fieldWorks: true } }, field: { select: { num: true, name: true, operatorId: true } } }
+        });
+        const plan = planYearReplacement(
+          seasons.map((s) => ({ id: s.fieldId, num: s.field.num, name: s.field.name, operatorId: s.field.operatorId, history: [{ year, worksCount: s._count.fieldWorks }] })),
+          year, operatorId, keepFieldIds
+        );
+        const removeIds = new Set(plan.removed.map((r) => r.fieldId));
+        // Kaskaad eemaldab ka hooaja katastriüksuste seosed
+        await tx.fieldSeason.deleteMany({ where: { year, fieldId: { in: [...removeIds] } } });
+        return plan;
+      });
+      if (!result) return json(res, { error: `Hooaeg ${year} on lukus — põlde ei asendatud` }, 403);
+      return json(res, result);
     }
 
     // Kustutamise eelkontroll: kandeid ja planeeritud töid hooaegade kaupa

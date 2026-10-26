@@ -30,6 +30,7 @@ import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimu
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
 import { api, setLicenseErrorHandler, isLicenseError } from './services/api';
+import { matchImportedField } from './services/fieldYearReplace';
 import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
@@ -1463,6 +1464,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // PRIA SHP import
   const handleFieldsImported = async (importedCollection: FieldCollection, replace: boolean, importOperatorId?: string, importYear: number = selectedYear) => {
+    // Lukus aasta asendamisest keeldutakse tervikuna (server kontrollib samuti)
+    if (replace && seasons.find((x) => x.year === importYear)?.isLocked) {
+      void alertDialog(`Hooaeg ${importYear} on lukus — põlde ei saa asendada.`);
+      return;
+    }
     const existingMaxId = Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
     let nextId = existingMaxId + 1;
 
@@ -1479,10 +1485,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       // Operaatori valimisel on vasteks sama operaatori põld või operaatorita
       // põld; teise operaatori sama massiivi+numbriga põld on eraldi põld
       // (jagatud massiiv) ja seda ei puututa.
-      const sameCodeNum = masterFields.filter((f) => f.fieldCode === fieldCode && (f.num || '') === num);
-      const existing = importOperatorId
-        ? sameCodeNum.find((f) => f.operatorId === importOperatorId) || sameCodeNum.find((f) => !f.operatorId)
-        : sameCodeNum[0];
+      const existing = matchImportedField(masterFields, fieldCode, num, importOperatorId);
 
       const id = existing ? existing.id : nextId++;
       const name = existing?.name || p.name || `Põld ${num}`;
@@ -1530,35 +1533,39 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     // toodud aastate kaupa. Kohalikku kuvatavat seisu muudame alles pärast
     // kinnitust, et ebaõnnestunud/korduvad katsed ei jätaks duplikaate.
     const importedYearOnly = newMasterFields.map((f) => ({ ...f, history: f.history.slice(0, 1) }));
+    let savedIds: number[];
     try {
-      await api.saveMasterFields(importedYearOnly);
+      const saved = await api.saveMasterFields(importedYearOnly);
+      savedIds = saved.ids ?? [];
     } catch (err) {
       console.error('Error saving imported fields to DB:', err);
+      if (!isLicenseError(err)) void alertDialog(err instanceof Error ? err.message : 'Põldude import ebaõnnestus');
       return;
     }
 
-    // Uued põllud said kliendis ajutise ID, andmebaas annab oma ID — laeme
-    // registri uuesti, et järgmised salvestused ei sihiks vale ID-ga rida.
-    const freshFields = replace ? null : await api.getMasterFields().catch(() => null);
-
-    if (replace) {
-      setMasterFields(newMasterFields);
-    } else if (freshFields) {
-      setMasterFields(freshFields);
-    } else {
-      setMasterFields((prev) => {
-        const byId = new Map(newMasterFields.map((f) => [String(f.id), f]));
-        const merged = prev.map((f) => {
-          const updated = byId.get(String(f.id));
-          if (updated) {
-            byId.delete(String(f.id));
-            return updated;
-          }
-          return f;
-        });
-        return [...merged, ...byId.values()];
-      });
+    // "Asenda": alles pärast õnnestunud salvestust eemaldab server failis puudunud
+    // põldude selle aasta kirjed (töödega kirjed jäävad alles).
+    let replaceMessage: string | null = null;
+    if (replace && savedIds.length !== importedYearOnly.length) {
+      // Ilma täieliku ID-loendita ei tea, mis jääb — parem mitte midagi eemaldada
+      replaceMessage = 'Põllud imporditi, kuid server ei tagastanud salvestatud põldude loendit — vanu kirjeid ei eemaldatud.';
+    } else if (replace) {
+      try {
+        const result = await api.replaceFieldYear(importYear, importOperatorId, savedIds);
+        const label = (r: { num: string; name: string }) => `${r.num ? `${r.num} ` : ''}${r.name}`;
+        replaceMessage = `Imporditi ${newMasterFields.length} põldu hooaega ${importYear}.\n\n`
+          + `Eemaldati ${result.removed.length} põllu ${importYear}. aasta kirje.`
+          + (result.skipped.length
+            ? `\n${result.skipped.length} põldu jäeti alles, sest neil on töid: ${result.skipped.map((r) => `${label(r)} (${r.works})`).join(', ')}.`
+            : '');
+      } catch (err) {
+        replaceMessage = `Põllud imporditi, kuid vanade kirjete eemaldamine ebaõnnestus: ${err instanceof Error ? err.message : 'tundmatu viga'}`;
+      }
     }
+
+    // Uued põllud said andmebaasist oma ID ja asendamine eemaldas kirjeid — alati serveri seis.
+    await reloadMasterFields();
+    if (replaceMessage) void alertDialog(replaceMessage);
 
     void refreshSeasons();
     setIsUploadOpen(false);
@@ -2028,6 +2035,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           isOpen={isUploadOpen}
           onClose={() => setIsUploadOpen(false)}
           onFieldsImported={handleFieldsImported}
+          masterFields={masterFields}
+          seasons={seasons}
           parties={parties}
           availableYears={availableYears}
           defaultYear={selectedYear}
