@@ -181,6 +181,8 @@ const doc = [
   '',
   `Genereeritud skriptiga \`scripts/generate-erd.mts\` failist \`prisma/schema.prisma\` (${new Date().toISOString().slice(0, 10)}). Ära muuda käsitsi — käivita \`npx tsx scripts/generate-erd.mts\` pärast skeemimuudatust.`,
   '',
+  'Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-ja-andmed.md](vaated-ja-andmed.md).',
+  '',
   '**Lugemisjuhend**',
   '- `PK` primaarvõti, `FK` võõrvõti, `UK` unikaalne; kommentaar \"valikuline\" tähendab, et väli võib olla tühi.',
   '- Seose sümbolid: `||` täpselt üks, `|o` null või üks, `o{` null või mitu. Seose nimi on võõrvõtme välja nimi.',
