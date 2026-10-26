@@ -9,7 +9,6 @@ import { loadPlaces } from './tripPlaces.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
-import { licenseOf } from './licenseGate.ts';
 import * as turf from '@turf/turf';
 import {
   buildEntryLines,
@@ -764,42 +763,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     const finance = canSeeFinance(req);
     const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
-    const currentSeasons = await prisma.fieldSeason.findMany({
-      where: { year },
-      select: {
-        id: true,
-        fieldId: true,
-        crop: true,
-        cropColor: true,
-        cropVariety: true,
-        fieldWorks: { select: { id: true } }
-      }
-    });
-
-    for (const fs of currentSeasons) {
-      // Kui kultuur on määramata, aga eelmisel aastal oli talivili: päri kultuur eelmisest aastast
-      if (isUndeterminedCrop(fs.crop)) {
-        const prevSeason = await prisma.fieldSeason.findUnique({
-          where: { fieldId_year: { fieldId: fs.fieldId, year: year - 1 } },
-          select: { crop: true, cropColor: true, cropVariety: true }
-        });
-        if (prevSeason && isWinterCrop(prevSeason.crop, crops)) {
-          // Aegunud litsentsiga ei kirjutata — vastuses näidatakse päritud kultuuri siiski
-          if (!licenseOf(req)?.readOnly) {
-            await prisma.fieldSeason.update({
-              where: { id: fs.id },
-              data: {
-                crop: prevSeason.crop,
-                cropColor: prevSeason.cropColor,
-                cropVariety: prevSeason.cropVariety
-              }
-            });
-          }
-          fs.crop = prevSeason.crop;
-        }
-      }
-    }
-
+    // Päring ainult loeb: kultuuri ei pärita eelmisest aastast (talivili kuulub koristusaasta hooaega)
     const rows = await prisma.fieldWork.findMany({
       where: { fieldSeason: { year } },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
