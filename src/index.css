@@ -10691,7 +10691,6 @@ select.time-select {
 /* Põllu täisvaade (FieldFullView) — päise (.app-header) all kogu ekraanil */
 .field-full-view { position: fixed; inset: 64px 0 0 0; z-index: 950; /* kaardi nurgapaneelide (900) kohal, päise (1000) all */ background: var(--bg-modal); color: var(--text-primary); display: flex; flex-direction: column; overflow: hidden; }
 /* Põlluregistri modaali (.modal-backdrop 2000) peal; alammodaalid (.sub-modal 2500) jäävad selle peale. Tavaliselt 950, et päise rippmenüüd jääksid peale. */
-.field-full-view.elevated { z-index: 2100; }
 .ffv-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--border-card); }
 .ffv-title { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
 .ffv-title h2 { margin: 0; font-size: 1.35rem; }

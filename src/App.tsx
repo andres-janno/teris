@@ -63,10 +63,10 @@ const FieldWorkPlanDialog = lazy(() => import('./components/FieldWorkPlanDialog'
 const FieldWorkEntryDialog = lazy(() => import('./components/FieldWorkEntryDialog').then((m) => ({ default: m.FieldWorkEntryDialog })));
 const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
 const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
-const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
 const FieldUploadModal = lazy(() => import('./components/FieldUploadModal').then((m) => ({ default: m.FieldUploadModal })));
 const SoilSampleUploadModal = lazy(() => import('./components/SoilSampleUploadModal').then((m) => ({ default: m.SoilSampleUploadModal })));
 const FieldBookUploadModal = lazy(() => import('./components/FieldBookUploadModal').then((m) => ({ default: m.FieldBookUploadModal })));
+const FieldManagerModal = lazy(() => import('./components/FieldManagerModal').then((m) => ({ default: m.FieldManagerModal })));
 const PoiManagerModal = lazy(() => import('./components/PoiManagerModal').then((m) => ({ default: m.PoiManagerModal })));
 const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
 const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
@@ -223,7 +223,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // 0. Hooaegade register (elutsükkel: ettevalmistus, külv, koristus, suletud/lukus)
   const [seasons, setSeasons] = useState<FarmingSeason[]>([]);
 
-  const [isSeasonManagerOpen, setIsSeasonManagerOpen] = useState(false);
 
   // 1. Põldude ja külvikorra master-register (andmebaasist)
   const [masterFields, setMasterFields] = useState<MasterField[]>([]);
@@ -418,11 +417,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   }, []);
 
   // Modals state
-  const [isFieldsRegisterOpen, setIsFieldsRegisterOpen] = useState(false);
   const [isUploadOpen, setIsUploadOpen] = useState(false);
   const [isSoilUploadOpen, setIsSoilUploadOpen] = useState(false);
   const [isFieldBookUploadOpen, setIsFieldBookUploadOpen] = useState(false);
-  const [isPoiModalOpen, setIsPoiModalOpen] = useState(false);
   
   // POI adding/picking mode
   const [isAddPoiMode, setIsAddPoiMode] = useState(false);
@@ -1031,7 +1028,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     [parties]
   );
   const handleFocusFieldFromRegister = (field: FieldFeature) => {
-    setIsFieldsRegisterOpen(false);
     changeMainView('map');
     setSelectedFieldId(null);
     // kaart peab enne fookustamist nähtavaks saama (Leaflet arvutab suuruse uuesti)
@@ -1297,7 +1293,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     radiusM?: number;
   }) => {
     setPoiDraft(currentDraft);
-    setIsPoiModalOpen(false);
     // Taristu leht katab kaardi: asukoha valimiseks tuleb kaart nähtavaks teha.
     changeMainView('map');
     if (!visibilityBeforePickRef.current) {
@@ -1918,39 +1913,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       </div>
 
       {/* Modals */}
-      <DeferredMount when={isSeasonManagerOpen}>
-        <SeasonManagerModal
-          isOpen={isSeasonManagerOpen}
-          onClose={() => setIsSeasonManagerOpen(false)}
-          seasons={seasons}
-          masterFields={masterFields}
-          selectedYear={selectedYear}
-          onUpdateSeason={handleUpdateSeason}
-          onCloseSeason={handleCloseSeason}
-          onReopenSeason={handleReopenSeason}
-          onCreateSeason={handleCreateSeason}
-        />
-      </DeferredMount>
-
-      <DeferredMount when={isFieldsRegisterOpen}>
-        <FieldManagerModal
-          isOpen={isFieldsRegisterOpen}
-          onClose={() => setIsFieldsRegisterOpen(false)}
-          masterFields={operatorMasterFields}
-          selectedYear={selectedYear}
-          onSelectYear={setSelectedYear}
-          baseMap={visibility.baseMap}
-          onUpdateField={handleUpdateMasterField}
-          seasons={seasons}
-          onOpenSeasonManager={() => {
-            setIsFieldsRegisterOpen(false);
-            changeMainView('seasons');
-          }}
-          crops={crops}
-          onOpenFieldDetails={setRegisterDetailFieldId}
-        />
-      </DeferredMount>
-
       {/* Põllu infoaken registrist (registri peal) */}
       {registerDetailMasterField && (
         <Suspense fallback={null}>
@@ -1961,7 +1923,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             soilSamples={soilSamples}
             canEdit={true}
             reloadKey={fullViewReloadKey}
-            elevated={isFieldsRegisterOpen}
             onClose={handleCloseRegisterFieldDetails}
             onFocusField={handleFocusFieldFromRegister}
             onEditField={setEditFieldId}
@@ -2065,25 +2026,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         />
       </DeferredMount>
 
-      <DeferredMount when={isPoiModalOpen}>
-        <PoiManagerModal
-          isOpen={isPoiModalOpen}
-          onClose={() => {
-            setIsPoiModalOpen(false);
-            setNewPoiCoords(null);
-            setPoiDraft(null);
-          }}
-          pois={pois}
-          onAddPoi={handleAddPoi}
-          onUpdatePoi={handleUpdatePoi}
-          onDeletePoi={handleDeletePoi}
-          onFocusPoi={handleFocusPoi}
-          onStartPickLocation={handleStartPickLocation}
-          initialDraft={poiDraft}
-          initialCoords={newPoiCoords}
-        />
-      </DeferredMount>
-
       <DeferredMount when={isPartiesModalOpen}>
         <RelatedPartiesModal
           isOpen={isPartiesModalOpen}
@@ -2094,7 +2036,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           masterFields={masterFields}
           vehicles={vehicles}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'fields'}
+          stacked={mainView === 'fields'}
         />
       </DeferredMount>
 
@@ -2111,7 +2053,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onDeleteCrop={handleDeleteCrop}
           masterFields={operatorMasterFields}
           selectedYear={selectedYear}
-          stacked={isFieldsRegisterOpen || mainView === 'fields'}
+          stacked={mainView === 'fields'}
         />
       </DeferredMount>
 

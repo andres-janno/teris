@@ -19,7 +19,6 @@ interface FieldFullViewProps {
   soilSamples?: SoilSample[];
   satelliteDate?: string | null;
   canEdit?: boolean;
-  elevated?: boolean; // kuvatakse modaalakna (nt põlluregistri) peal
   reloadKey?: number; // suureneb, kui töö/kanne salvestati väljaspool (dialoogid App'is)
   onClose: () => void;
   onFocusField: (field: FieldFeature) => void;
@@ -29,7 +28,7 @@ interface FieldFullViewProps {
 }
 
 export const FieldFullView: React.FC<FieldFullViewProps> = ({
-  field, masterField = null, seasons = [], soilSamples = [], satelliteDate = null, canEdit = false, elevated = false, reloadKey = 0,
+  field, masterField = null, seasons = [], soilSamples = [], satelliteDate = null, canEdit = false, reloadKey = 0,
   onClose, onFocusField, onEditField, onEditWork, onEditEntry
 }) => {
   const mapYear = field?.properties.year;
@@ -72,7 +71,7 @@ export const FieldFullView: React.FC<FieldFullViewProps> = ({
   const areaHa = works?.areaHa ?? 0;
 
   return (
-    <div className={`field-full-view${elevated ? ' elevated' : ''}`} role="dialog" aria-label={`Põld ${p.name}`}>
+    <div className="field-full-view" role="dialog" aria-label={`Põld ${p.name}`}>
       <header className="ffv-header">
         <div className="ffv-title">
           <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || '#22c55e' }} />
