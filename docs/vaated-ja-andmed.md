@@ -724,15 +724,17 @@ Hiljem (vajadusel) laetavad:
 
 ## Tähelepanekud ja ebakindlused
 
-Koodist tulenevad asjaolud, mis võivad üllatada:
-- **Ühe põllu salvestamine saadab kogu ajaloo.** `handleUpdateMasterField` saadab põllu kõik aastad; server upsert'ib iga aasta `FieldSeason` kirje ja sünkroniseerib iga aasta katastriüksused (`FieldCadastralParcel` puuduvad kustutatakse). See kehtib põllu muutmise dialoogi ja külvikorra kohta.
-- **Uue hooaja loomine kopeerib põldude hooajakirjed ainult brauseris.** `handleCreateSeason` salvestab serverisse ainult `Season` kirje; põldude uue aasta kirjed (`handleAddNewSeasonToAll`) tekivad andmebaasi alles siis, kui põldu hiljem salvestatakse.
-- **PRIA impordi valik „asenda“** muudab ainult brauseri olekut; server ei kustuta impordist puuduvaid põlde (salvestatakse ainult imporditud aasta kirjed).
-- **`GET /api/field-works` kirjutab andmebaasi:** määramata kultuuriga põllule kirjutatakse eelmise aasta talivili (`FieldSeason` U), kui litsents pole aegunud.
+Koodi läbivaatusel leitud ja 26.10.2026 parandatud:
+- **Ühe põllu salvestamine** saadab nüüd ainult põllu üldandmed ja muudetud aasta kirje; lukus hooaja kirjet ei muudeta (403); salvestus on ühes tehingus ja pärast seda laetakse põllud serverist uuesti.
+- **Uus hooaeg kõigile põldudele** luuakse serveris (`POST /api/seasons/:year/fields`): kirjed kopeeritakse viimasest aastast koos katastriseostega, olemasolevaid ei muudeta.
+- **PRIA impordi valik „Asenda olemasolevad põllud“** eemaldab serveris (`POST /api/master-fields/replace-year`) failist puuduvate põldude selle aasta kirjed sama operaatori piires; töödega kirjed jäetakse alles.
+- **`GET /api/field-works` ainult loeb**; eelmise aasta talivilja kultuuri enam ei pärita.
+- **Põllu kustutamine:** kandega põldu ei kustutata (409, teade hooaegade kaupa); kanneteta põllu kustutamisel küsitakse alati kinnitust koos planeeritud tööde arvuga (`GET /api/master-fields/:id/delete-check`).
+- **Materjali kustutamine** kontrollib nüüd ka tööde plaanide ridu (`FieldWorkLine`) ja annab arusaadava teate.
+
+Endiselt kehtivad:
 - **Masina/haakeriista kustutamisel** lõpetatakse avatud haakimised (U), kuid kohe järel kustutab kaskaad need kirjed niikuinii (`ImplementAssignment` `onDelete: Cascade`).
-- **Põllu kustutamine** eemaldab kaskaadiga ka kõik selle põllu tööd ja kanded (sh finantsiga kinnitatud kanded).
-- **Materjali kustutamine** kontrollib ainult kanderidu (`WorkEntryLine`); kui materjal on ainult plaaniridades (`FieldWorkLine`, `onDelete: Restrict`), keeldub andmebaas ja server vastab üldise veaga (500). Seda pole testiga kontrollitud.
-- **Kasutamata App-taseme aknad:** `SeasonManagerModal`, `FieldManagerModal` ja `PoiManagerModal` on `App.tsx`-is ka modaalina (`isSeasonManagerOpen`, `isFieldsRegisterOpen`, `isPoiModalOpen`), kuid koodis puudub koht, mis need lipud tõeseks paneks; kasutusel on ainult täislehe variandid.
+- **Kasutamata App-taseme aknad (kontrollimata):** `SeasonManagerModal`, `FieldManagerModal` ja `PoiManagerModal` on `App.tsx`-is ka modaalina (`isSeasonManagerOpen`, `isFieldsRegisterOpen`, `isPoiModalOpen`); võimalik, et neid ei ava ükski nupp ja kasutusel on ainult täislehe variandid.
 
 Ebakindlused:
 - Tabelite loetelu „R“ veerus põhineb Prisma `include`/`select` päringutel; lugemine sisemiste abifunktsioonide kaudu (nt `syncFieldWorkStatus`, `materialSeasonTotals`, `buildEntryLines`) on kontrollitud nende failide päringute järgi, kuid kõiki haru-tingimusi (millal mingi päring jääb tegemata) pole eraldi märgitud.
