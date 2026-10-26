@@ -14,6 +14,13 @@ const hm = (iso: string) => timeFmt.format(new Date(iso));
 const coords = (s: TripStop) => `${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}`;
 
 function StopLabel({ stop, highlightPlaceId }: { stop: TripStop; highlightPlaceId?: string }) {
+  if (!stop.place && stop.near) {
+    return (
+      <span className="trip-route-unknown" title={`Koordinaadid: ${coords(stop)}`}>
+        {stop.near.label} lähedal ({stop.near.distanceM} m)
+      </span>
+    );
+  }
   if (!stop.place) {
     return (
       <span className="trip-route-unknown" title={`Koordinaadid: ${coords(stop)}`}>

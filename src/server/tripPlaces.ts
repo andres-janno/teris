@@ -19,7 +19,7 @@ export async function loadPlaces(year: number): Promise<Place[]> {
       where: { year },
       select: { id: true, geometry: true, field: { select: { num: true, name: true } } }
     }),
-    prisma.pointOfInterest.findMany({ select: { id: true, name: true, category: true, latitude: true, longitude: true } })
+    prisma.pointOfInterest.findMany({ select: { id: true, name: true, category: true, latitude: true, longitude: true, radiusM: true } })
   ]);
   const places: Place[] = [];
   for (const s of seasons) {
@@ -29,7 +29,7 @@ export async function loadPlaces(year: number): Promise<Place[]> {
   }
   for (const p of pois) {
     const cat = POI_CATEGORY_LABELS[p.category];
-    places.push({ id: p.id, kind: 'POI', label: cat ? `${p.name} (${cat})` : p.name, lat: p.latitude, lng: p.longitude });
+    places.push({ id: p.id, kind: 'POI', label: cat ? `${p.name} (${cat})` : p.name, lat: p.latitude, lng: p.longitude, radiusM: p.radiusM });
   }
   return places;
 }

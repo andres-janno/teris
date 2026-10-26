@@ -12,9 +12,12 @@ export type Place = PlaceRef & {
   geometry?: Polygon | MultiPolygon;
   lat?: number;
   lng?: number;
+  radiusM?: number; // ainult huvipunkt: oma raadius (vaikimisi opts.poiRadiusM)
 };
 
-export type TripStop = { time: string; lat: number; lng: number; place: PlaceRef | null };
+/** Lähim teadaolev koht tundmatu alguse/lõpu juures (kuni NEAR_PLACE_MAX_M kaugusel). */
+export type TripNear = { id: string; kind: 'FIELD' | 'POI'; label: string; distanceM: number };
+export type TripStop = { time: string; lat: number; lng: number; place: PlaceRef | null; near?: TripNear };
 export type TripVisit = { place: PlaceRef; arrive: string; leave: string };
 export type TripRoute = { start: TripStop; end: TripStop; visits: TripVisit[] };
 
@@ -26,6 +29,7 @@ export type RouteOptions = {
 };
 
 export const DEFAULT_ROUTE_OPTIONS: RouteOptions = { fieldRadiusM: 10, poiRadiusM: 25, minVisitMs: 60_000 };
+export const NEAR_PLACE_MAX_M = 200;
 export const TRIP_GAP_MS = 20 * 60 * 1000;
 
 const isOn = (p: TripPoint) => p.ignition !== false;
@@ -86,7 +90,7 @@ function preparePlaces(places: Place[], opts: RouteOptions): PreparedPlace[] {
         const rings = p.geometry.type === 'Polygon' ? p.geometry.coordinates : p.geometry.coordinates.flat();
         out.push({ ref, poly: p.geometry, rings, radiusM: r, bbox: [minLng - dLng, minLat - dLat, maxLng + dLng, maxLat + dLat] });
       } else if (p.kind === 'POI' && p.lat != null && p.lng != null) {
-        const r = opts.poiRadiusM;
+        const r = p.radiusM ?? opts.poiRadiusM;
         const dLat = (r * 1.5) / M_PER_DEG_LAT;
         const dLng = (r * 1.5) / mPerDegLng(p.lat);
         out.push({ ref, center: [p.lng, p.lat], radiusM: r, bbox: [p.lng - dLng, p.lat - dLat, p.lng + dLng, p.lat + dLat] });
@@ -120,6 +124,36 @@ function distanceTo(place: PreparedPlace, lng: number, lat: number): number | nu
   return null;
 }
 
+/** Lähim koht (põld: kaugus piirini või 0 sees; huvipunkt: kaugus punktini) kuni maxM kaugusel. */
+function nearestPlace(places: Place[], lng: number, lat: number, maxM: number): TripNear | null {
+  let best: TripNear | null = null;
+  const pt = turf.point([lng, lat]);
+  for (const p of places) {
+    try {
+      let dist: number | null = null;
+      if (p.kind === 'FIELD' && p.geometry) {
+        if (turf.booleanPointInPolygon(pt, p.geometry)) dist = 0;
+        else {
+          const rings = p.geometry.type === 'Polygon' ? p.geometry.coordinates : p.geometry.coordinates.flat();
+          let b = Infinity;
+          for (const ring of rings) {
+            if (ring.length < 2) continue;
+            b = Math.min(b, turf.pointToLineDistance(pt, turf.lineString(ring), { units: 'meters' }));
+          }
+          dist = b;
+        }
+      } else if (p.kind === 'POI' && p.lat != null && p.lng != null) {
+        dist = turf.distance(pt, turf.point([p.lng, p.lat]), { units: 'meters' });
+      }
+      if (dist == null || !Number.isFinite(dist) || dist > maxM) continue;
+      if (!best || dist < best.distanceM) best = { id: p.id, kind: p.kind, label: p.label, distanceM: dist };
+    } catch {
+      // vigane geomeetria — jäetakse välja
+    }
+  }
+  return best ? { ...best, distanceM: Math.round(best.distanceM) } : null;
+}
+
 function matchPlace(prepared: PreparedPlace[], lng: number, lat: number, preferPlaceId?: string): PlaceRef | null {
   let best: PlaceRef | null = null;
   let bestDist = Infinity;
@@ -144,7 +178,14 @@ export function buildRoute(points: TripPoint[], places: Place[], opts: RouteOpti
   const prepared = preparePlaces(places, opts);
   const matches = points.map((p) => matchPlace(prepared, p.lng, p.lat, opts.preferPlaceId));
 
-  const stop = (i: number): TripStop => ({ time: points[i].time.toISOString(), lat: points[i].lat, lng: points[i].lng, place: matches[i] });
+  const stop = (i: number): TripStop => {
+    const s: TripStop = { time: points[i].time.toISOString(), lat: points[i].lat, lng: points[i].lng, place: matches[i] };
+    if (!s.place) {
+      const near = nearestPlace(places, s.lng, s.lat, NEAR_PLACE_MAX_M);
+      if (near) s.near = near;
+    }
+    return s;
+  };
 
   // Järjestikused sama koha punktide jadad
   const runs: { place: PlaceRef; from: number; to: number }[] = [];

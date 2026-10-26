@@ -436,6 +436,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     contactPerson?: string;
     phone?: string;
     accessNotes?: string;
+    radiusM?: number;
   } | null>(null);
 
   // 6. Seotud isikute register (maaomanikud, rentnikud, masinajuhid, partnerid)
@@ -1292,6 +1293,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     contactPerson?: string;
     phone?: string;
     accessNotes?: string;
+    radiusM?: number;
   }) => {
     setPoiDraft(currentDraft);
     setIsPoiModalOpen(false);

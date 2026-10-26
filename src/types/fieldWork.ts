@@ -178,6 +178,7 @@ export interface TripStop {
   lat: number;
   lng: number;
   place: TripPlaceRef | null;
+  near?: { id: string; kind: 'FIELD' | 'POI'; label: string; distanceM: number }; // lähim koht, kui place on null
 }
 export interface TripVisit {
   place: TripPlaceRef;

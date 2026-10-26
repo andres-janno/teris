@@ -107,3 +107,31 @@ describe('buildRoute', () => {
     expect(buildRoute([pt(0, -5, 50), pt(5, -5, 50)], [a, poi], OPTS).start.place?.id).toBe('A');
   });
 });
+
+describe('objekti raadius ja lähim koht', () => {
+  const poi: Place = { id: 'poi1', kind: 'POI', label: 'Kuivati', ...at(500, 500) };
+
+  it('POI oma raadius 80 m sobib 33 m kaugusel, vaikimisi 25 m mitte', () => {
+    const pts = [pt(0, 533, 500), pt(5, 533, 500)];
+    expect(buildRoute(pts, [{ ...poi, radiusM: 80 }], OPTS).start.place?.id).toBe('poi1');
+    expect(buildRoute(pts, [poi], OPTS).start.place).toBeNull();
+  });
+
+  it('tundmatu lõpp 33 m POI-st: near = see POI, 250 m kaugusel near puudub', () => {
+    const r = buildRoute([pt(0, 500, 500), pt(5, 533, 500)], [poi], OPTS);
+    expect(r.end.place).toBeNull();
+    expect(r.end.near).toEqual({ id: 'poi1', kind: 'POI', label: 'Kuivati', distanceM: 33 });
+    const far = buildRoute([pt(0, 500, 500), pt(5, 750, 500)], [poi], OPTS);
+    expect(far.end.near).toBeUndefined();
+  });
+
+  it('Riidaja kuivati 2026-10-22 lõpp 33 m kaugusel', () => {
+    const dryer: Place = { id: 'dryer', kind: 'POI', label: 'Riidaja kuivati (kuivati)', lat: 58.09407, lng: 25.89995 };
+    const p = [{ time: min(0), lat: 58.0940, lng: 25.9005, ignition: true }];
+    const r = buildRoute(p, [dryer], OPTS);
+    expect(r.end.place).toBeNull();
+    expect(r.end.near?.label).toBe('Riidaja kuivati (kuivati)');
+    expect(r.end.near?.distanceM).toBe(33);
+    expect(buildRoute(p, [{ ...dryer, radiusM: 80 }], OPTS).end.place?.id).toBe('dryer');
+  });
+});

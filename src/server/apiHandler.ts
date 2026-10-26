@@ -515,7 +515,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         capacity: p.capacity ?? undefined,
         contactPerson: p.contactPerson ?? undefined,
         phone: p.phone ?? undefined,
-        accessNotes: p.accessNotes ?? undefined
+        accessNotes: p.accessNotes ?? undefined,
+        radiusM: p.radiusM
       }));
       return json(res, mapped);
     }
@@ -525,6 +526,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const categoryUpper = POI_CATEGORY_TO_DB[body.category] ?? 'OTHER';
       const lat = Array.isArray(body.position) ? body.position[0] : body.latitude;
       const lng = Array.isArray(body.position) ? body.position[1] : body.longitude;
+
+      // Raadius 5–1000 m (täisarv); puudub/vigane → olemasolev jääb, uuel 25
+      const rawRadius = Number(body.radiusM);
+      const radiusM = body.radiusM != null && Number.isFinite(rawRadius) ? Math.min(1000, Math.max(5, Math.round(rawRadius))) : undefined;
 
       const saved = await prisma.pointOfInterest.upsert({
         where: { id: body.id || `poi-${Date.now()}` },
@@ -537,7 +542,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           capacity: body.capacity ?? null,
           contactPerson: body.contactPerson ?? null,
           phone: body.phone ?? null,
-          accessNotes: body.accessNotes ?? null
+          accessNotes: body.accessNotes ?? null,
+          ...(radiusM !== undefined ? { radiusM } : {})
         },
         create: {
           id: body.id || `poi-${Date.now()}`,
@@ -549,7 +555,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           capacity: body.capacity ?? null,
           contactPerson: body.contactPerson ?? null,
           phone: body.phone ?? null,
-          accessNotes: body.accessNotes ?? null
+          accessNotes: body.accessNotes ?? null,
+          radiusM: radiusM ?? 25
         }
       });
       return json(res, saved);

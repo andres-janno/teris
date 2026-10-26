@@ -292,6 +292,7 @@ model PointOfInterest {
   category       PoiCategory
   latitude       Float
   longitude      Float
+  radiusM        Int         @default(25) // raadius (m), mille piires sõidu punkt loetakse selle objekti juures olevaks
   description    String?
   capacity       String?
   contactPerson  String?

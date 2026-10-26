@@ -33,6 +33,7 @@ interface PoiManagerModalProps {
     contactPerson?: string;
     phone?: string;
     accessNotes?: string;
+    radiusM?: number;
   }) => void;
   initialDraft?: {
     id?: string;
@@ -44,6 +45,7 @@ interface PoiManagerModalProps {
     contactPerson?: string;
     phone?: string;
     accessNotes?: string;
+    radiusM?: number;
   } | null;
   initialCoords?: [number, number] | null;
   isFullPage?: boolean;
@@ -85,6 +87,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [accessNotes, setAccessNotes] = useState('');
+  const [radiusM, setRadiusM] = useState<number>(25);
 
   // Handle incoming draft or coordinates
   useEffect(() => {
@@ -102,6 +105,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
       if (initialDraft.contactPerson !== undefined) setContactPerson(initialDraft.contactPerson);
       if (initialDraft.phone !== undefined) setPhone(initialDraft.phone);
       if (initialDraft.accessNotes !== undefined) setAccessNotes(initialDraft.accessNotes);
+      if (initialDraft.radiusM !== undefined) setRadiusM(initialDraft.radiusM);
     } else if (initialCoords) {
       setIsAdding(true);
       setLat(initialCoords[0]);
@@ -136,6 +140,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     setContactPerson('');
     setPhone('');
     setAccessNotes('');
+    setRadiusM(25);
     setIsAdding(true);
   };
 
@@ -150,12 +155,14 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     setContactPerson(poi.contactPerson || '');
     setPhone(poi.phone || '');
     setAccessNotes(poi.accessNotes || '');
+    setRadiusM(poi.radiusM ?? 25);
     setIsAdding(true);
   };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    const radius = Math.min(1000, Math.max(5, Math.round(Number(radiusM)) || 25));
 
     if (editingId) {
       onUpdatePoi(editingId, {
@@ -166,7 +173,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
         capacity: capacity.trim() || undefined,
         contactPerson: contactPerson.trim() || undefined,
         phone: phone.trim() || undefined,
-        accessNotes: accessNotes.trim() || undefined
+        accessNotes: accessNotes.trim() || undefined,
+        radiusM: radius
       });
     } else {
       onAddPoi({
@@ -178,6 +186,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
         contactPerson: contactPerson.trim() || undefined,
         phone: phone.trim() || undefined,
         accessNotes: accessNotes.trim() || undefined,
+        radiusM: radius,
         isActive: true
       });
     }
@@ -196,7 +205,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
       capacity,
       contactPerson,
       phone,
-      accessNotes
+      accessNotes,
+      radiusM
     });
   };
 
@@ -337,6 +347,20 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                     value={lng}
                     onChange={(e) => setLng(Number(e.target.value))}
                     className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label>Raadius, m</label>
+                  <input
+                    type="number"
+                    min={5}
+                    max={1000}
+                    step={1}
+                    value={radiusM}
+                    onChange={(e) => setRadiusM(Number(e.target.value))}
+                    className="form-input"
+                    title="Sõidu punkt selle kauguse piires loetakse objekti juures olevaks (5–1000 m, vaikimisi 25)"
                   />
                 </div>
 
@@ -496,6 +520,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                         <MapPin size={13} />
                         <span>{p.position[0].toFixed(5)}, {p.position[1].toFixed(5)}</span>
                       </div>
+                      <div className="v-info-item"><span className="text-muted">Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
                     </div>
                   </div>
                 );

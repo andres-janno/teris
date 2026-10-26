@@ -17,6 +17,7 @@ export interface PointOfInterest {
   contactPerson?: string;
   phone?: string;
   accessNotes?: string;       // nt "Ligipääs ka 36m pritsiga"
+  radiusM?: number;           // objekti raadius (m), 5–1000, vaikimisi 25; sõidu punkt selle sees loetakse objekti juures olevaks
   isActive: boolean;
   createdAt: string;
 }
