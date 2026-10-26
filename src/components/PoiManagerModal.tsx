@@ -14,7 +14,7 @@ import {
   Edit2
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
-import { confirmDialog } from './ConfirmDialog';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -164,7 +164,10 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     e.preventDefault();
     if (!name.trim()) return;
     // Koordinaadid on kohustuslikud
-    if (lat == null || lng == null) return;
+    if (lat == null || lng == null) {
+      void alertDialog('Sisesta laius- ja pikkuskraad või vali asukoht kaardilt.');
+      return;
+    }
     const radius = Math.min(1000, Math.max(5, Math.round(Number(radiusM)) || 25));
 
     if (editingId) {
