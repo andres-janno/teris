@@ -734,10 +734,10 @@ Koodi läbivaatusel leitud ja 26.10.2026 parandatud:
 - **`GET /api/field-works` ainult loeb**; eelmise aasta talivilja kultuuri enam ei pärita.
 - **Põllu kustutamine:** kandega põldu ei kustutata (409, teade hooaegade kaupa); kanneteta põllu kustutamisel küsitakse alati kinnitust koos planeeritud tööde arvuga (`GET /api/master-fields/:id/delete-check`).
 - **Materjali kustutamine** kontrollib nüüd ka tööde plaanide ridu (`FieldWorkLine`) ja annab arusaadava teate.
+- **Kasutamata modaalivariandid eemaldatud:** `SeasonManagerModal`, `FieldManagerModal` ja `PoiManagerModal` avanevad ainult täislehena (`isFullPage`).
 
 Endiselt kehtivad:
 - **Masina/haakeriista kustutamisel** lõpetatakse avatud haakimised (U), kuid kohe järel kustutab kaskaad need kirjed niikuinii (`ImplementAssignment` `onDelete: Cascade`).
-- **Kasutamata App-taseme aknad (kontrollimata):** `SeasonManagerModal`, `FieldManagerModal` ja `PoiManagerModal` on `App.tsx`-is ka modaalina (`isSeasonManagerOpen`, `isFieldsRegisterOpen`, `isPoiModalOpen`); võimalik, et neid ei ava ükski nupp ja kasutusel on ainult täislehe variandid.
 
 Ebakindlused:
 - Tabelite loetelu „R“ veerus põhineb Prisma `include`/`select` päringutel; lugemine sisemiste abifunktsioonide kaudu (nt `syncFieldWorkStatus`, `materialSeasonTotals`, `buildEntryLines`) on kontrollitud nende failide päringute järgi, kuid kõiki haru-tingimusi (millal mingi päring jääb tegemata) pole eraldi märgitud.
