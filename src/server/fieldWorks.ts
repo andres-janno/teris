@@ -141,6 +141,7 @@ async function resolveEntryInput(body: any) {
       date: dateOnly(body?.date),
       dateTo: dateOnly(body?.dateTo),
       method: text(body?.method, 80),
+      harvestBunkers: num(body?.harvestBunkers),
       workerId: worker?.id ?? null,
       areaHa: num(body?.areaHa),
       telemetryAreaHa: num(body?.telemetryAreaHa),
@@ -193,6 +194,7 @@ function entryDto(e: any, withFinance: boolean) {
       nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa
     })),
     harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity ?? null,
+    harvestBunkers: e.harvestBunkers ?? null,
     harvest: (() => { const l = lines.find((x) => x.kind === 'HARVEST'); return l ? { tonnes: l.quantity, ratePerHa: l.ratePerHa, priaKind: l.priaKind, priaSpec: l.priaSpec } : null; })(),
     observations: lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ label: l.label, quantity: l.quantity, unit: l.unit, priaRegister: l.priaRegister })),
     notes: e.notes,

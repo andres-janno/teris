@@ -824,6 +824,7 @@ model WorkEntry {
   notes                String?
   dateTo               DateTime? // vahemiku lõpp (PRIA "27.04.2026 - 30.04.2026"); tühi = üks päev
   method               String? // tegelik viis (väetamisviis jms)
+  harvestBunkers       Float? // saagikoristusel punkrite arv; PRIA impordist ei tule, alus tonnide arvutamiseks
   source               WorkSource    @default(MANUAL)
   createdById          String?
   financeStatus        FinanceStatus @default(PENDING)

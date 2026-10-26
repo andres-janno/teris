@@ -102,6 +102,7 @@ export interface WorkEntry {
   endTime: string | null;
   materials: WorkEntryMaterial[];
   harvestTonnes: number | null;
+  harvestBunkers: number | null; // punkrite arv (PRIA-s pole)
   harvest: WorkEntryHarvest | null;
   observations: WorkEntryObservation[];
   notes: string | null;
@@ -210,6 +211,7 @@ export interface WorkEntryInput {
   endTime?: string | null;
   materials: { materialId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
   harvestTonnes: number | null;
+  harvestBunkers?: number | null;
   harvest?: WorkEntryHarvest | null;
   observations?: WorkEntryObservation[];
   notes: string | null;

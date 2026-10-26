@@ -150,7 +150,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [harvest, setHarvest] = useState<HarvestRow>(() => {
     if (entry) {
       const tonnes = entry.harvest?.tonnes ?? entry.harvestTonnes;
-      return { ratePerHa: fmt(entry.harvest?.ratePerHa, 3), total: fmt(tonnes, 3), priaKind: entry.harvest?.priaKind ?? '', priaSpec: entry.harvest?.priaSpec ?? '' };
+      return { ratePerHa: fmt(entry.harvest?.ratePerHa, 3), total: fmt(tonnes, 3), priaKind: entry.harvest?.priaKind ?? '', priaSpec: entry.harvest?.priaSpec ?? '', bunkers: fmt(entry.harvestBunkers) };
     }
     const plan = work.lines.find((l) => l.kind === 'HARVEST');
     return recomputeHarvestTotal(
@@ -325,6 +325,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             ? { tonnes: parseNum(harvest.total)!, ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
             : null,
           harvestTonnes: null,
+          harvestBunkers: isHarvest ? parseNum(harvest.bunkers ?? '') : null,
           observations: observations.filter((o) => o.label.trim()),
           notes: notes.trim() || null,
           finish
@@ -620,7 +621,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           {isHarvest && (
             <section className="work-entry-section">
               <h4>Saak</h4>
-              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals showBunkers />
             </section>
           )}
 
