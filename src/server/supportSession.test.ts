@@ -279,6 +279,7 @@ describe('tugisessioon', () => {
 // Uue muutva marsruudi lisamisel peab siia lisama ka rea (vt valvetest all).
 const MUTATING_ROUTES: Array<[string, string]> = [
   ['POST', '/api/seasons'], ['PUT', '/api/seasons/1'], ['PATCH', '/api/seasons/1'], ['DELETE', '/api/seasons/1'],
+  ['POST', '/api/seasons/2026/fields'],
   ['POST', '/api/master-fields'], ['DELETE', '/api/master-fields/x1'],
   ['POST', '/api/poi'], ['DELETE', '/api/poi/x1'],
   ['POST', '/api/fleet/vehicles'], ['DELETE', '/api/fleet/vehicles/x1'],

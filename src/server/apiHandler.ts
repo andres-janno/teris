@@ -1,6 +1,6 @@
 // src/server/apiHandler.ts
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE, type TxClient } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { authGate, sessionUserOf } from './authGate.ts';
 import { handleLandingApi } from './landing/landingApi.ts';
@@ -17,21 +17,22 @@ import { isPlatformHost } from './platformHost.ts';
 import { handlePlatformRequest } from './platformApi.ts';
 import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdentifiers.ts';
 import { syncOwnership } from './deviceOwnership.ts';
-import { ensureSeasons } from './seasons.ts';
+import { ensureSeasons, isSeasonYear } from './seasons.ts';
+import { latestEarlierSeason, buildCopiedSeason, buildCopiedParcelLink } from './fieldSeasonCopy.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
 // Asendab hooaja katastriüksuste seosed kliendi saadetud nimekirjaga; tundmatu tunnus lisatakse registrisse.
-async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): Promise<void> {
+async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], db: TxClient): Promise<void> {
   const num = (v: unknown) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
   const keepParcelIds: number[] = [];
   for (const l of links) {
     const cadastralCode = String(l?.cadastralCode ?? '').trim();
     if (!cadastralCode) continue;
     const parcelName = String(l?.parcelName ?? '').trim() || null;
-    const parcel = await prisma.cadastralParcel.upsert({
+    const parcel = await db.cadastralParcel.upsert({
       where: { tenantId_cadastralCode: { tenantId: requireTenantId(), cadastralCode } },
       update: parcelName ? { name: parcelName } : {},
       create: { cadastralCode, name: parcelName }
@@ -46,14 +47,14 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[]): 
       rentFeeEurYear: num(l?.rentFeeEurYear),
       notes: String(l?.notes ?? '').trim() || null
     };
-    await prisma.fieldCadastralParcel.upsert({
+    await db.fieldCadastralParcel.upsert({
       where: { fieldSeasonId_cadastralParcelId: { fieldSeasonId, cadastralParcelId: parcel.id } },
       update: data,
       create: { fieldSeasonId, cadastralParcelId: parcel.id, ...data }
     });
     keepParcelIds.push(parcel.id);
   }
-  await prisma.fieldCadastralParcel.deleteMany({
+  await db.fieldCadastralParcel.deleteMany({
     where: { fieldSeasonId, cadastralParcelId: { notIn: keepParcelIds } }
   });
 }
@@ -216,6 +217,109 @@ const toSeasonDto = (s: { id: number; year: number; name: string; isLocked: bool
   notes: s.notes
 });
 
+// Ühe põllu salvestus: põllu andmed + saadetud hooaja kirjed (ainult need aastad, mis history's on).
+async function saveMasterFieldItem(item: any, db: TxClient) {
+    const num = item.num || 'x';
+    const fieldCode = String(item.fieldCode);
+    const operatorId = item.operatorId || null;
+
+    // Kui klient saadab olemasoleva põllu sisemise ID (redigeerimine
+    // FieldManagerModal'is), sobitame ALATI selle järgi — muidu, kui
+    // kasutaja muudab nt operaatorit, muutuks loomulik võti
+    // (massiiv+number+operaator) ja allolev findFirst ei leiaks vana
+    // rida üles, luues selle asemel DUPLIKAADI (nii juhtuski:
+    // "Murikatsi Mirka" operaatori muutmine tekitas teise Field'i
+    // koos kõigi aastate field_seasons kirjetega).
+    // Ainult siis, kui ID puudub/ei leidu (nt PRIA import, kus id on
+    // kliendi genereeritud järjenumber), sobitame loomuliku võtmega
+    // (massiiv, põllunumber, operaator) — sama massiiv+number võib
+    // korduda eri operaatoritel. Prisma compound-unique `where` ei
+    // luba `null` väärtust nullable veeru jaoks, seega kasutame
+    // findFirst'i, mitte upsert'i.
+    const itemId = Number(item.id);
+    let existingField = !isNaN(itemId)
+      ? await db.field.findUnique({ where: { id: itemId } })
+      : null;
+    if (!existingField) {
+      existingField = await db.field.findFirst({
+        where: { fieldCode, num, operatorId }
+      });
+    }
+    const fieldUpdateData = {
+      num,
+      fieldCode,
+      operatorId,
+      name: item.name,
+      cadastralCode: item.cadastralCode ?? null,
+      soilType: item.soilType ?? null,
+      drainageSystem: Boolean(item.drainageSystem),
+      notes: item.notes ?? null
+    };
+    const upsertedField = existingField
+      ? await db.field.update({ where: { id: existingField.id }, data: fieldUpdateData })
+      : await db.field.create({ data: fieldUpdateData });
+
+    if (item.history && Array.isArray(item.history)) {
+      for (const h of item.history) {
+        const statusUpper = (h.status || 'not_started').toUpperCase();
+        // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
+        const seasonId = (await ensureSeasons([h.year], db)).get(Number(h.year)) ?? null;
+        const savedSeason = await db.fieldSeason.upsert({
+          where: {
+            fieldId_year: {
+              fieldId: upsertedField.id,
+              year: Number(h.year)
+            }
+          },
+          update: {
+            seasonId,
+            areaHa: Number(h.areaHa) || 0,
+            eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
+            areaChangeReason: h.areaChangeReason ?? null,
+            crop: h.crop || 'Teadmata kultuur',
+            cropVariety: h.cropVariety ?? null,
+            cropColor: h.cropColor || '#eab308',
+            targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
+            actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
+            workedAreaHa: Number(h.workedAreaHa) || 0,
+            workProgress: Number(h.workProgress) || 0,
+            status: statusUpper as any,
+            seedingDate: h.seedingDate ? new Date(h.seedingDate) : null,
+            harvestDate: h.harvestDate ? new Date(h.harvestDate) : null,
+            notes: h.notes ?? null,
+            geometry: h.geometry || item.geometry || null
+          },
+          create: {
+            fieldId: upsertedField.id,
+            seasonId,
+            year: Number(h.year),
+            areaHa: Number(h.areaHa) || 0,
+            eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
+            areaChangeReason: h.areaChangeReason ?? null,
+            crop: h.crop || 'Teadmata kultuur',
+            cropVariety: h.cropVariety ?? null,
+            cropColor: h.cropColor || '#eab308',
+            targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
+            actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
+            workedAreaHa: Number(h.workedAreaHa) || 0,
+            workProgress: Number(h.workProgress) || 0,
+            status: statusUpper as any,
+            seedingDate: h.seedingDate ? new Date(h.seedingDate) : null,
+            harvestDate: h.harvestDate ? new Date(h.harvestDate) : null,
+            notes: h.notes ?? null,
+            geometry: h.geometry || item.geometry || null
+          }
+        });
+        // Hooaja katastriüksused: ainult kui klient need saatis (PRIA import ei saada → jäävad puutumata).
+        if (Array.isArray(h.cadastralParcels)) {
+          await syncSeasonCadastralParcels(savedSeason.id, h.cadastralParcels, db);
+        }
+      }
+    }
+
+  return upsertedField;
+}
+
 export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
   // Kirjete looja/muutja (createdBy/updatedBy) täidetakse selle päringu kasutaja järgi
   return runInRequestContext(() => routeApiRequest(req, res, options));
@@ -299,6 +403,52 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       return json(res, toSeasonDto(saved));
     }
 
+    // Uus hooaeg kõigile (või valitud) põldudele: puuduv aasta kirje kopeeritakse põllu viimasest varasemast aastast.
+    const copyMatch = pathname.match(/^\/api\/seasons\/(\d{4})\/fields$/);
+    if (pathname.startsWith('/api/seasons/') && copyMatch && method === 'POST') {
+      const year = Number(copyMatch[1]);
+      if (!isSeasonYear(year)) return json(res, { error: 'Vigane hooaja aasta' }, 400);
+      const body = await parseBody(req).catch(() => ({}));
+      const fieldIds = Array.isArray(body?.fieldIds)
+        ? body.fieldIds.map(Number).filter((n: number) => Number.isInteger(n))
+        : null;
+      const result = await tenantTransaction(async (tx) => {
+        const seasonId = (await ensureSeasons([year], tx)).get(year)!;
+        const season = await tx.season.findUnique({ where: { id: seasonId }, select: { isLocked: true } });
+        if (season?.isLocked) return { locked: true, created: 0 };
+        const fields = await tx.field.findMany({
+          where: {
+            ...(fieldIds ? { id: { in: fieldIds } } : {}),
+            fieldSeasons: { none: { year } }
+          },
+          select: {
+            id: true,
+            fieldSeasons: {
+              where: { year: { lt: year } },
+              orderBy: { year: 'desc' },
+              take: 1,
+              include: { cadastralParcels: { orderBy: { id: 'asc' } } }
+            }
+          }
+        });
+        let created = 0;
+        for (const f of fields) {
+          const src = latestEarlierSeason(f.fieldSeasons, year);
+          if (!src) continue;
+          const saved = await tx.fieldSeason.create({ data: buildCopiedSeason(src, f.id, year, seasonId) });
+          if (src.cadastralParcels.length) {
+            await tx.fieldCadastralParcel.createMany({
+              data: src.cadastralParcels.map((l) => buildCopiedParcelLink(l, saved.id))
+            });
+          }
+          created++;
+        }
+        return { locked: false, created };
+      }, { timeout: 60000 });
+      if (result.locked) return json(res, { error: `Hooaeg ${year} on lukus — seda ei saa muuta` }, 403);
+      return json(res, { created: result.created });
+    }
+
     // 3. Master Fields (Fields + FieldSeasons)
     if (pathname === '/api/master-fields' && method === 'GET') {
       const dbFields = await prisma.field.findMany({
@@ -368,113 +518,24 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname === '/api/master-fields' && method === 'POST') {
       const body = await parseBody(req);
       // Massiline salvestus (massiiv) = PRIA import — ainult adminile. Üksiku põllu muutmine on kõigile.
-      if (Array.isArray(body) && !isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
-      const items = Array.isArray(body) ? body : [body];
-      const results = [];
-
-      for (const item of items) {
-        const num = item.num || 'x';
-        const fieldCode = String(item.fieldCode);
-        const operatorId = item.operatorId || null;
-
-        // Kui klient saadab olemasoleva põllu sisemise ID (redigeerimine
-        // FieldManagerModal'is), sobitame ALATI selle järgi — muidu, kui
-        // kasutaja muudab nt operaatorit, muutuks loomulik võti
-        // (massiiv+number+operaator) ja allolev findFirst ei leiaks vana
-        // rida üles, luues selle asemel DUPLIKAADI (nii juhtuski:
-        // "Murikatsi Mirka" operaatori muutmine tekitas teise Field'i
-        // koos kõigi aastate field_seasons kirjetega).
-        // Ainult siis, kui ID puudub/ei leidu (nt PRIA import, kus id on
-        // kliendi genereeritud järjenumber), sobitame loomuliku võtmega
-        // (massiiv, põllunumber, operaator) — sama massiiv+number võib
-        // korduda eri operaatoritel. Prisma compound-unique `where` ei
-        // luba `null` väärtust nullable veeru jaoks, seega kasutame
-        // findFirst'i, mitte upsert'i.
-        const itemId = Number(item.id);
-        let existingField = !isNaN(itemId)
-          ? await prisma.field.findUnique({ where: { id: itemId } })
-          : null;
-        if (!existingField) {
-          existingField = await prisma.field.findFirst({
-            where: { fieldCode, num, operatorId }
-          });
-        }
-        const fieldUpdateData = {
-          num,
-          fieldCode,
-          operatorId,
-          name: item.name,
-          cadastralCode: item.cadastralCode ?? null,
-          soilType: item.soilType ?? null,
-          drainageSystem: Boolean(item.drainageSystem),
-          notes: item.notes ?? null
-        };
-        const upsertedField = existingField
-          ? await prisma.field.update({ where: { id: existingField.id }, data: fieldUpdateData })
-          : await prisma.field.create({ data: fieldUpdateData });
-
-        if (item.history && Array.isArray(item.history)) {
-          for (const h of item.history) {
-            const statusUpper = (h.status || 'not_started').toUpperCase();
-            // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
-            const seasonId = (await ensureSeasons([h.year])).get(Number(h.year)) ?? null;
-            const savedSeason = await prisma.fieldSeason.upsert({
-              where: {
-                fieldId_year: {
-                  fieldId: upsertedField.id,
-                  year: Number(h.year)
-                }
-              },
-              update: {
-                seasonId,
-                areaHa: Number(h.areaHa) || 0,
-                eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
-                areaChangeReason: h.areaChangeReason ?? null,
-                crop: h.crop || 'Teadmata kultuur',
-                cropVariety: h.cropVariety ?? null,
-                cropColor: h.cropColor || '#eab308',
-                targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
-                actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
-                workedAreaHa: Number(h.workedAreaHa) || 0,
-                workProgress: Number(h.workProgress) || 0,
-                status: statusUpper as any,
-                seedingDate: h.seedingDate ? new Date(h.seedingDate) : null,
-                harvestDate: h.harvestDate ? new Date(h.harvestDate) : null,
-                notes: h.notes ?? null,
-                geometry: h.geometry || item.geometry || null
-              },
-              create: {
-                fieldId: upsertedField.id,
-                seasonId,
-                year: Number(h.year),
-                areaHa: Number(h.areaHa) || 0,
-                eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
-                areaChangeReason: h.areaChangeReason ?? null,
-                crop: h.crop || 'Teadmata kultuur',
-                cropVariety: h.cropVariety ?? null,
-                cropColor: h.cropColor || '#eab308',
-                targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
-                actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
-                workedAreaHa: Number(h.workedAreaHa) || 0,
-                workProgress: Number(h.workProgress) || 0,
-                status: statusUpper as any,
-                seedingDate: h.seedingDate ? new Date(h.seedingDate) : null,
-                harvestDate: h.harvestDate ? new Date(h.harvestDate) : null,
-                notes: h.notes ?? null,
-                geometry: h.geometry || item.geometry || null
-              }
-            });
-            // Hooaja katastriüksused: ainult kui klient need saatis (PRIA import ei saada → jäävad puutumata).
-            if (Array.isArray(h.cadastralParcels)) {
-              await syncSeasonCadastralParcels(savedSeason.id, h.cadastralParcels);
-            }
-          }
-        }
-
-        results.push(upsertedField);
+      if (Array.isArray(body)) {
+        if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
+        for (const item of body) await saveMasterFieldItem(item, prisma as unknown as TxClient);
+        return json(res, { success: true, count: body.length });
       }
 
-      return json(res, { success: true, count: results.length });
+      // Üksik põld: lukus hooaja kirjet ei muudeta; kontroll ja kirjutamine ühes tehingus.
+      const years = (Array.isArray(body.history) ? body.history : []).map((h: any) => Number(h?.year));
+      const lockedYear = await tenantTransaction(async (tx) => {
+        const locked = years.length
+          ? await tx.season.findFirst({ where: { year: { in: years }, isLocked: true }, select: { year: true } })
+          : null;
+        if (locked) return locked.year;
+        await saveMasterFieldItem(body, tx);
+        return null;
+      });
+      if (lockedYear !== null) return json(res, { error: `Hooaeg ${lockedYear} on lukus — seda ei saa muuta` }, 403);
+      return json(res, { success: true, count: 1 });
     }
 
     if (pathname.startsWith('/api/master-fields/') && method === 'DELETE') {

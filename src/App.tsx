@@ -1357,70 +1357,47 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   };
 
   // Field Register Handlers
+  // Laeb põllud serverist uuesti (serveri tõde pärast salvestust või viga).
+  const reloadMasterFields = () =>
+    api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude laadimine ebaõnnestus:', err));
+
+  // Serverisse saadetakse põllu andmed + AINULT muudetud aasta kirje; teisi aastaid ei puututa.
   const handleUpdateMasterField = (
-    fieldId: number | string, 
-    fieldData: Partial<MasterField>, 
+    fieldId: number | string,
+    fieldData: Partial<MasterField>,
     seasonData?: FieldYearlyRecord
   ) => {
-    setMasterFields((prev) => {
-      const next = prev.map((f) => {
-        if (f.id === fieldId || String(f.id) === String(fieldId)) {
-          let newHistory = [...f.history];
-          if (seasonData) {
-            const existingIdx = f.history.findIndex((h) => h.year === seasonData.year);
-            if (existingIdx >= 0) {
-              newHistory[existingIdx] = { ...newHistory[existingIdx], ...seasonData };
-            } else {
-              newHistory = [seasonData, ...newHistory];
-            }
-          }
-          const updated: MasterField = {
-            ...f,
-            ...fieldData,
-            history: newHistory
-          };
-          api.saveMasterFields(updated).catch((err) => console.error('Error saving master field to DB:', err));
-          return updated;
-        }
-        return f;
-      });
-      return next;
-    });
+    const field = masterFields.find((f) => f.id === fieldId || String(f.id) === String(fieldId));
+    if (!field) return;
+    const existing = seasonData ? field.history.find((h) => h.year === seasonData.year) : undefined;
+    const mergedSeason = seasonData ? { ...existing, ...seasonData } : undefined;
+    const newHistory = mergedSeason
+      ? existing
+        ? field.history.map((h) => (h === existing ? mergedSeason : h))
+        : [mergedSeason, ...field.history]
+      : field.history;
+    const updated: MasterField = { ...field, ...fieldData, history: newHistory };
+    // Kohe kuvatakse muudatus; pärast salvestust laetakse serveri seis
+    setMasterFields((prev) => prev.map((f) => (f === field || String(f.id) === String(field.id) ? updated : f)));
+    api
+      .saveMasterFields({ ...field, ...fieldData, history: mergedSeason ? [mergedSeason] : [] })
+      .catch((err) => {
+        if (!isLicenseError(err)) alertDialog(err instanceof Error ? err.message : 'Põllu salvestamine ebaõnnestus');
+      })
+      .finally(reloadMasterFields);
   };
 
-  const handleAddNewSeasonToAll = (newYear: number) => {
-    setMasterFields((prev) =>
-      prev.map((f) => {
-        if (f.history.some((h) => h.year === newYear)) return f;
-        if (operatorFilter.length && !(f.operatorId && operatorFilter.includes(f.operatorId))) return f;
-        const latestRec = f.history[0] || {
-          year: 2026,
-          areaHa: 5.0,
-          crop: 'Talinisu (Skagen)',
-          cropColor: '#eab308'
-        };
-        const newRec: FieldYearlyRecord = {
-          year: newYear,
-          areaHa: latestRec.areaHa,
-          eligibleAreaHa: latestRec.eligibleAreaHa,
-          crop: latestRec.crop,
-          cropVariety: latestRec.cropVariety,
-          cropColor: latestRec.cropColor,
-          targetYieldTonsHa: latestRec.targetYieldTonsHa,
-          workedAreaHa: 0,
-          workProgress: 0,
-          status: 'not_started',
-          geometry: latestRec.geometry || f.geometry,
-          boundaryPointsCount: latestRec.boundaryPointsCount,
-          perimeterM: latestRec.perimeterM,
-          cadastralParcels: latestRec.cadastralParcels ? [...latestRec.cadastralParcels] : (f.cadastralParcels ? [...f.cadastralParcels] : [])
-        };
-        return {
-          ...f,
-          history: [newRec, ...f.history]
-        };
-      })
-    );
+  // Uus hooaeg: server loob puuduvad aasta kirjed (operaatori filtri korral ainult filtrisse jäävatele põldudele).
+  const handleAddNewSeasonToAll = async (newYear: number) => {
+    const fieldIds = operatorFilter.length
+      ? operatorMasterFields.map((f) => Number(f.id)).filter((n) => Number.isInteger(n))
+      : undefined;
+    try {
+      await api.copyFieldSeasons(newYear, fieldIds);
+    } catch (err) {
+      if (!isLicenseError(err)) alertDialog(err instanceof Error ? err.message : 'Uue hooaja põldude loomine ebaõnnestus');
+    }
+    await reloadMasterFields();
     setSelectedYear(newYear);
   };
 
@@ -1460,8 +1437,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       const filtered = prev.filter((s) => s.year !== newSeason.year);
       return [newSeason, ...filtered].sort((a, b) => b.year - a.year);
     });
-    handleAddNewSeasonToAll(newSeason.year);
-    api.saveSeason(newSeason).then(refreshSeasons).catch((err) => console.error('Error creating season in DB:', err));
+    // Põllud kopeeritakse pärast hooaja salvestamist (hooaeg on siis serveris olemas)
+    api
+      .saveSeason(newSeason)
+      .then(refreshSeasons)
+      .catch((err) => console.error('Error creating season in DB:', err))
+      .finally(() => handleAddNewSeasonToAll(newSeason.year));
   };
 
   // Kultuuri värv peab olema läbiv üle aastate — kasutame alati Kultuuride

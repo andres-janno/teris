@@ -34,6 +34,12 @@ async function apiFetch(input: string, init?: RequestInit): Promise<Response> {
   return res;
 }
 
+// Serveri viga ApiError'ina (staatus + kood), et litsentsivigu ei näidataks kaks korda.
+async function apiErrorOf(res: Response, fallback: string): Promise<ApiError> {
+  const data = await res.json().catch(() => ({}));
+  return new ApiError(typeof data?.error === 'string' ? data.error : fallback, res.status, typeof data?.code === 'string' ? data.code : undefined);
+}
+
 async function errorMessage(res: Response, fallback: string): Promise<string> {
   const data = await res.json().catch(() => ({}));
   return typeof data?.error === 'string' ? data.error : fallback;
@@ -217,7 +223,18 @@ export const api = {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(fields)
     });
-    if (!res.ok) throw new Error('Failed to save master fields');
+    if (!res.ok) throw await apiErrorOf(res, 'Põllu salvestamine ebaõnnestus');
+    return res.json();
+  },
+
+  // Uus hooaeg: server loob puuduvad aasta kirjed (valitud või kõigile põldudele) eelmise aasta põhjal.
+  async copyFieldSeasons(year: number, fieldIds?: number[]): Promise<{ created: number }> {
+    const res = await apiFetch(`/api/seasons/${year}/fields`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(fieldIds ? { fieldIds } : {})
+    });
+    if (!res.ok) throw await apiErrorOf(res, 'Uue hooaja põldude loomine ebaõnnestus');
     return res.json();
   },
 
