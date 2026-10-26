@@ -334,3 +334,45 @@ export async function fetchFieldGpsPackets(
     ORDER BY lat.device, lat.time ASC
   `;
 }
+
+export type DevicePacket = { time: Date; lat: number; lng: number; ignition: boolean | null };
+
+/**
+ * Ühe seadme GPS-paketid [startUtc, endUtc] jooksul ettevõtte omandiperioodide piires (sõidu teekonna jaoks).
+ * Süüde: value_bool (numbrilised veerud varuks, 0 = väljas); välja puudumisel null.
+ */
+export async function fetchDevicePackets(device: string, startUtc: Date, endUtc: Date): Promise<DevicePacket[]> {
+  if (!tsdb) return [];
+  const segments = clampWindow((await ownershipWindows('IMEI', [device])).get(device) ?? [], startUtc, endUtc);
+  if (segments.length === 0) return [];
+  const froms = segments.map((s) => s.from.toISOString());
+  const tos = segments.map((s) => s.to.toISOString());
+  const incl = segments.map((s) => s.toInclusive);
+  const rows = await tsdb.$queryRaw<{ time: Date; lat: number | null; lng: number | null; ign: boolean | null }[]>`
+    WITH pts AS (
+      SELECT m.time, m.field, m.value_bool,
+        COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN unnest(${froms}::timestamptz[], ${tos}::timestamptz[], ${incl}::boolean[]) AS s(seg_from, seg_to, seg_incl)
+        ON m.time >= s.seg_from AND (m.time < s.seg_to OR (s.seg_incl AND m.time = s.seg_to))
+      WHERE m.device = ${device}
+        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
+        AND m.measurement = 'data'
+        AND m.field IN ('latitude', 'longitude', 'ignition')
+    )
+    SELECT time,
+      max(v) FILTER (WHERE field = 'latitude') AS lat,
+      max(v) FILTER (WHERE field = 'longitude') AS lng,
+      bool_or(COALESCE(value_bool, v <> 0)) FILTER (WHERE field = 'ignition') AS ign
+    FROM pts
+    GROUP BY time
+    HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
+    ORDER BY time ASC
+  `;
+  const out: DevicePacket[] = [];
+  for (const r of rows) {
+    if (r.lat == null || r.lng == null) continue;
+    out.push({ time: r.time, lat: Number(r.lat), lng: Number(r.lng), ignition: r.ign ?? null });
+  }
+  return out;
+}

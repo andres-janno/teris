@@ -2,8 +2,10 @@
 // Põllutööd on PRIA e-põlluraamatu allikas: töö = plaan, kanne = tegelik; PRIA import loob/seob töid.
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
-import { fetchFieldGpsPackets, type FieldGpsRow } from './telemetryAccess.ts';
+import { fetchFieldGpsPackets, fetchDevicePackets, type FieldGpsRow, type DevicePacket } from './telemetryAccess.ts';
 import { coverageAreaHa } from './coverageArea.ts';
+import { segmentTrip, buildRoute, DEFAULT_ROUTE_OPTIONS, type Place, type TripRoute } from './tripRoute.ts';
+import { loadPlaces } from './tripPlaces.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
@@ -310,6 +312,7 @@ export interface TelemetrySuggestion {
   durationHours: number;
   workedAreaHa: number | null;
   pointCount: number;
+  route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp); puudub, kui ei õnnestunud arvutada
 }
 
 export async function getTelemetrySuggestionsForField(
@@ -322,7 +325,7 @@ export async function getTelemetrySuggestionsForField(
 
   const fs = await prisma.fieldSeason.findUnique({
     where: { id: fieldSeasonId },
-    select: { geometry: true }
+    select: { geometry: true, year: true }
   });
   if (!fs?.geometry) return [];
 
@@ -444,6 +447,7 @@ export async function getTelemetrySuggestionsForField(
   });
 
   const suggestions: TelemetrySuggestion[] = [];
+  const sessionOf = new Map<TelemetrySuggestion, { device: string; startTime: Date; endTime: Date }>();
 
   for (const s of rawSessions) {
     const asgn = await prisma.deviceAssignment.findFirst({
@@ -525,7 +529,7 @@ export async function getTelemetrySuggestionsForField(
     }
 
     if (!isBound) {
-      suggestions.push({
+      const suggestion: TelemetrySuggestion = {
         id: `${s.device}_${startTimeStr.replace(':', '')}_${endTimeStr.replace(':', '')}`,
         vehicleId: vehicle?.id ?? null,
         vehicleName: vehicle?.name ?? null,
@@ -538,7 +542,43 @@ export async function getTelemetrySuggestionsForField(
         durationHours,
         workedAreaHa,
         pointCount: s.pointCount
-      });
+      };
+      suggestions.push(suggestion);
+      sessionOf.set(suggestion, { device: s.device, startTime: s.startTime, endTime: s.endTime });
+    }
+  }
+
+  // Sõidu teekond: seadme kogu päeva paketid (üks päring seadme kohta) → sõit → läbitud kohad.
+  // Viga siin ei tohi soovitusi katki teha — siis jääb route lihtsalt puudu.
+  if (suggestions.length > 0) {
+    let places: Place[] | null = null;
+    try {
+      places = await loadPlaces(fs.year);
+    } catch (err) {
+      console.warn('trip route places failed:', err);
+    }
+    const packetsByDevice = new Map<string, DevicePacket[] | null>();
+    for (const sug of suggestions) {
+      const sess = sessionOf.get(sug);
+      if (!sess || !places) continue;
+      try {
+        if (!packetsByDevice.has(sess.device)) {
+          let pk: DevicePacket[] | null = null;
+          try {
+            pk = (await fetchDevicePackets(sess.device, startUtc, endUtc)).filter((p) => tallinnDateFmt.format(p.time) === dateStr);
+          } catch (err) {
+            console.warn('trip route packets failed:', err);
+          }
+          packetsByDevice.set(sess.device, pk);
+        }
+        const pk = packetsByDevice.get(sess.device);
+        if (!pk || pk.length === 0) continue;
+        const trip = segmentTrip(pk, sess.startTime, sess.endTime);
+        if (!trip) continue;
+        sug.route = buildRoute(trip.points, places, { ...DEFAULT_ROUTE_OPTIONS, preferPlaceId: String(fieldSeasonId) });
+      } catch (err) {
+        console.warn('trip route failed:', err);
+      }
     }
   }
 

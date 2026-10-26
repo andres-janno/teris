@@ -9195,6 +9195,76 @@ a.history-pill:hover {
   color: #ffffff;
 }
 
+/* Sõidu teekond (TripRouteView) — soovituse nupu all täislaiuses */
+.telemetry-suggestion-pill {
+  flex-wrap: wrap;
+}
+
+.telemetry-suggestion-pill > .trip-route {
+  flex-basis: 100%;
+}
+
+.trip-route {
+  font-size: 0.74rem;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+
+.trip-route-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.trip-route-line {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.trip-route-toggle {
+  flex-shrink: 0;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--btn-sec-bg);
+  border: 1px solid var(--btn-sec-border);
+  border-radius: var(--radius-sm);
+  padding: 0 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.trip-route-toggle:hover {
+  background: var(--btn-sec-hover);
+}
+
+.trip-route-list {
+  list-style: none;
+  margin: 4px 0 0;
+  padding: 0 0 0 8px;
+  border-left: 2px solid var(--border-card);
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.trip-route-time {
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.trip-route-current {
+  font-weight: 700;
+  color: var(--basemap-active-color);
+}
+
+.trip-route-unknown {
+  font-style: italic;
+  color: var(--text-muted);
+}
+
 .work-entry-grid {
   display: grid;
   gap: 10px;

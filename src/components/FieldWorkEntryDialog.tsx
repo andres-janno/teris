@@ -5,6 +5,7 @@ import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import type { FieldWork, Material, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
+import TripRouteView from './TripRouteView';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
@@ -421,6 +422,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           {isSelected ? '✓ Valitud' : 'Vali see sõit'}
                         </span>
                       </div>
+                      {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                     </button>
                   );
                 })}

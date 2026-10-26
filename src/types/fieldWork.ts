@@ -164,6 +164,30 @@ export interface TelemetrySuggestion {
   durationHours: number;
   workedAreaHa: number | null;
   pointCount: number;
+  route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp)
+}
+
+// Telemeetria sõidu teekond (server: src/server/tripRoute.ts)
+export interface TripPlaceRef {
+  id: string; // põllu puhul põllu hooaja id
+  kind: 'FIELD' | 'POI';
+  label: string;
+}
+export interface TripStop {
+  time: string; // ISO
+  lat: number;
+  lng: number;
+  place: TripPlaceRef | null;
+}
+export interface TripVisit {
+  place: TripPlaceRef;
+  arrive: string; // ISO
+  leave: string; // ISO
+}
+export interface TripRoute {
+  start: TripStop;
+  end: TripStop;
+  visits: TripVisit[];
 }
 
 // Kande sisestus (töötaja: ainult kogused)
