@@ -320,6 +320,24 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
   return upsertedField;
 }
 
+
+// Põllu kustutamise kontroll: kanded ja planeeritud tööd (ilma kanneteta) hooaegade kaupa
+async function fieldDeleteCheck(fieldId: number) {
+  const seasons = await prisma.fieldSeason.findMany({
+    where: { fieldId },
+    select: { year: true, fieldWorks: { select: { _count: { select: { entries: true } } } } },
+    orderBy: { year: 'asc' }
+  });
+  const entries = seasons
+    .map((s) => ({ year: s.year, count: s.fieldWorks.reduce((n, w) => n + w._count.entries, 0) }))
+    .filter((e) => e.count > 0);
+  const plannedWorks = seasons.reduce((n, s) => n + s.fieldWorks.filter((w) => w._count.entries === 0).length, 0);
+  return { entries, plannedWorks };
+}
+
+const fieldDeleteBlockedMessage = (entries: { year: number; count: number }[]) =>
+  `Põldu ei saa kustutada: sellel on kandeid (${entries.map((e) => `${e.year}: ${e.count}`).join(', ')}). Kustuta enne kanded või jäta põld alles.`;
+
 export function handleApiRequest(req: IncomingMessage, res: ServerResponse, options: ApiOptions): Promise<void> {
   // Kirjete looja/muutja (createdBy/updatedBy) täidetakse selle päringu kasutaja järgi
   return runInRequestContext(() => routeApiRequest(req, res, options));
@@ -538,6 +556,13 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       return json(res, { success: true, count: 1 });
     }
 
+    // Kustutamise eelkontroll: kandeid ja planeeritud töid hooaegade kaupa
+    if (pathname.startsWith('/api/master-fields/') && pathname.endsWith('/delete-check') && method === 'GET') {
+      const fieldId = Number(pathname.replace('/api/master-fields/', '').replace('/delete-check', ''));
+      if (isNaN(fieldId)) return json(res, { error: 'Vigane põllu id' }, 400);
+      return json(res, await fieldDeleteCheck(fieldId));
+    }
+
     if (pathname.startsWith('/api/master-fields/') && method === 'DELETE') {
       const idPart = pathname.replace('/api/master-fields/', '');
       const fieldId = Number(idPart);
@@ -545,6 +570,11 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         return json(res, { error: 'master-fields delete requires a numeric field id' }, 400);
       }
       if (denyDelete(req, res, await prisma.field.findUnique({ where: { id: fieldId }, select: { createdBy: true } }))) return;
+      // Kandega põldu ei kustutata (kaskaad kustutaks ka tehtud ja finantsiliselt kinnitatud kanded)
+      const check = await fieldDeleteCheck(fieldId);
+      if (check.entries.length > 0) {
+        return json(res, { error: fieldDeleteBlockedMessage(check.entries) }, 409);
+      }
       await prisma.field.delete({ where: { id: fieldId } });
       return json(res, { success: true, id: idPart });
     }

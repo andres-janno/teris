@@ -238,6 +238,12 @@ export const api = {
     return res.json();
   },
 
+  async getFieldDeleteCheck(id: number | string): Promise<{ entries: { year: number; count: number }[]; plannedWorks: number }> {
+    const res = await apiFetch(`/api/master-fields/${id}/delete-check`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Põllu kontroll ebaõnnestus'));
+    return res.json();
+  },
+
   async deleteMasterField(id: number | string): Promise<{ success: boolean }> {
     const res = await apiFetch(`/api/master-fields/${id}`, {
       method: 'DELETE'

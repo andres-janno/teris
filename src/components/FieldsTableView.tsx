@@ -9,6 +9,7 @@ import { isCropUndetermined, seasonSelectorYears } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import { FieldEditDialog } from './FieldEditDialog';
+import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 
@@ -185,7 +186,20 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
       alertDialog(`Põldu "${label}" ei saa kustutada: sellel on andmeid lukustatud hooaegades ${locked.join(', ')}.`);
       return;
     }
-    if (await confirmDialog(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?`)) onDeleteField(field.id);
+    // Enne kinnitust küsitakse serverilt, kas põllul on kandeid (siis kustutada ei saa)
+    let check: { entries: { year: number; count: number }[]; plannedWorks: number };
+    try {
+      check = await api.getFieldDeleteCheck(field.id);
+    } catch (err) {
+      alertDialog(err instanceof Error ? err.message : 'Põllu kontroll ebaõnnestus');
+      return;
+    }
+    if (check.entries.length > 0) {
+      alertDialog(`Põldu "${label}" ei saa kustutada: sellel on kandeid (${check.entries.map((e) => `${e.year}: ${e.count}`).join(', ')}). Kustuta enne kanded või jäta põld alles.`);
+      return;
+    }
+    const works = check.plannedWorks > 0 ? ` Kustutatakse ka ${check.plannedWorks} planeeritud tööd.` : '';
+    if (await confirmDialog(`Kustutada põld "${label}" registrist koos kõigi aastate andmetega?${works}`)) onDeleteField(field.id);
   };
 
   const tenureFilters: TenureFilter[] = ['all', 'owned', 'rented', 'mixed', 'unknown'];
