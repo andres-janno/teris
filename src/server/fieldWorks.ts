@@ -359,6 +359,8 @@ export async function getTelemetrySuggestionsForField(
     const lat = r.fields?.latitude;
     const lng = r.fields?.longitude;
     if (lat == null || lng == null) continue;
+    // Arvesse lähevad ainult punktid, kus süüde on sees (süüteta seadmel puudub väli → punkt jääb)
+    if (r.fields?.ignition === 0) continue;
     if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
       if (turf.booleanPointInPolygon(turf.point([lng, lat]), poly)) {
         if (!pointsByDevice[r.device]) pointsByDevice[r.device] = [];
@@ -374,30 +376,35 @@ export async function getTelemetrySuggestionsForField(
     endTime: Date;
     points: { lat: number; lng: number }[];
     pointCount: number;
+    activeMs: number; // süüte sees oldud aeg (punktide vahed kuni ACTIVE_STEP_MS)
   }[] = [];
+  const ACTIVE_STEP_MS = 5 * 60 * 1000; // pikem vahe süüte sees punktide vahel = paus, ei loeta tööajaks
 
   for (const [device, pts] of Object.entries(pointsByDevice)) {
     if (pts.length < 3) continue;
     let curStart = pts[0].time;
     let curEnd = pts[0].time;
     let curPoints: { lat: number; lng: number }[] = [{ lat: pts[0].lat, lng: pts[0].lng }];
+    let curActive = 0;
 
     for (let i = 1; i < pts.length; i++) {
       const diff = pts[i].time.getTime() - pts[i - 1].time.getTime();
       if (diff > GAP_MS) {
         if (curPoints.length >= 3 && (curEnd.getTime() - curStart.getTime()) >= 2 * 60 * 1000) {
-          rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length });
+          rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length, activeMs: curActive });
         }
         curStart = pts[i].time;
         curEnd = pts[i].time;
         curPoints = [{ lat: pts[i].lat, lng: pts[i].lng }];
+        curActive = 0;
       } else {
         curEnd = pts[i].time;
         curPoints.push({ lat: pts[i].lat, lng: pts[i].lng });
+        if (diff <= ACTIVE_STEP_MS) curActive += diff;
       }
     }
     if (curPoints.length >= 3 && (curEnd.getTime() - curStart.getTime()) >= 2 * 60 * 1000) {
-      rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length });
+      rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length, activeMs: curActive });
     }
   }
 
@@ -481,7 +488,8 @@ export async function getTelemetrySuggestionsForField(
     const endTimeStr = timeFmt.format(s.endTime);
     const sessionStartMins = parseMins(startTimeStr) ?? 0;
     const sessionEndMins = parseMins(endTimeStr) ?? 0;
-    const durationHours = Math.round(((s.endTime.getTime() - s.startTime.getTime()) / (1000 * 60 * 60)) * 100) / 100;
+    // Tööaeg = süüte sees oldud aeg põllul (pausid süütega väljas või pikad katkestused jäävad välja)
+    const durationHours = Math.round((s.activeMs / (1000 * 60 * 60)) * 100) / 100;
 
     // Arvuta telemeetriast (GPS) tehtud pindala põllu piirides.
     // Hektari arvutuseks kasutame leitud haakeriista laiust.

@@ -281,7 +281,7 @@ export async function fetchDeviceHistory(imei: string, hours: number, from?: str
   }
 }
 
-export type FieldGpsRow = { device: string; time: Date; fields: { latitude?: number; longitude?: number } };
+export type FieldGpsRow = { device: string; time: Date; fields: { latitude?: number; longitude?: number; ignition?: number | null } };
 
 /**
  * GPS-paketid [startUtc, endUtc] jooksul ainult ettevõtte seadmete omandiperioodide piires (põllutööde soovitused).
@@ -315,11 +315,19 @@ export async function fetchFieldGpsPackets(
       JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
       WHERE m.measurement = 'data' AND m.field = 'longitude'
         AND m.time >= ${startUtc} AND m.time <= ${endUtc}
+    ),
+    ign AS (
+      SELECT m.device, m.time, COALESCE(m.value_int::double precision, m.value_double, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
+      WHERE m.measurement = 'data' AND m.field = 'ignition'
+        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
     )
     SELECT DISTINCT ON (lat.device, lat.time) lat.device, lat.time,
-      jsonb_build_object('latitude', lat.v, 'longitude', lng.v) AS fields
+      jsonb_build_object('latitude', lat.v, 'longitude', lng.v, 'ignition', ign.v) AS fields
     FROM lat
     JOIN lng ON lng.device = lat.device AND lng.time = lat.time
+    LEFT JOIN ign ON ign.device = lat.device AND ign.time = lat.time
     WHERE lat.v BETWEEN ${minLat} AND ${maxLat}
       AND lng.v BETWEEN ${minLng} AND ${maxLng}
     ORDER BY lat.device, lat.time ASC
