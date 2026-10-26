@@ -715,9 +715,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/materials/');
     const material = await prisma.material.findUnique({ where: { id }, select: { createdBy: true } });
     if (material && deleteDenied(req, res, material.createdBy)) return true;
-    const used = await prisma.workEntryLine.count({ where: { materialId: id } });
-    if (used) {
-      json(res, { error: `Materjal on kasutusel ${used} kandes. Märgi see mitteaktiivseks.` }, 409);
+    // Materjal võib olla kasutusel nii kannetes kui ka tööde plaanides (mõlemad keelavad kustutamise)
+    const [usedInEntries, usedInPlans] = await Promise.all([
+      prisma.workEntryLine.count({ where: { materialId: id } }),
+      prisma.fieldWorkLine.count({ where: { materialId: id } })
+    ]);
+    if (usedInEntries || usedInPlans) {
+      const where = [usedInEntries ? `${usedInEntries} kandes` : null, usedInPlans ? `${usedInPlans} töö plaanis` : null].filter(Boolean).join(' ja ');
+      json(res, { error: `Materjal on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
     await prisma.material.delete({ where: { id } });
