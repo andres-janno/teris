@@ -1,5 +1,6 @@
 // src/components/SeasonManagerModal.tsx
 import React, { useState, useEffect } from 'react';
+import { NumberInput } from './NumberInput';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -48,7 +49,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const [expandedYears, setExpandedYears] = useState<Set<number>>(new Set());
 
   // Form State
-  const [formYear, setFormYear] = useState<number>(2027);
+  const [formYear, setFormYear] = useState<number | null>(2027);
   const [formName, setFormName] = useState<string>('Hooaeg 2027');
   const [formNotes, setFormNotes] = useState<string>('');
 
@@ -114,6 +115,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
 
   const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
+    if (formYear == null) return;
     if (editingYear !== null) {
       const existing = seasons.find(s => s.year === editingYear);
       if (existing) {
@@ -171,19 +173,17 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               <div className="form-grid season-form-grid">
                 <div className="form-group">
                   <label>Aasta (Hooaeg) *</label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    integer
                     required
                     min={2020}
                     max={2040}
                     disabled={editingYear !== null}
                     value={formYear}
-                    onChange={(e) => {
-                      const yr = Number(e.target.value);
+                    onChange={(yr) => {
                       setFormYear(yr);
-                      setFormName(`Hooaeg ${yr}`);
+                      if (yr != null) setFormName(`Hooaeg ${yr}`);
                     }}
-                    className="form-input"
                   />
                 </div>
 

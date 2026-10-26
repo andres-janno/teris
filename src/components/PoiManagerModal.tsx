@@ -1,5 +1,6 @@
 // src/components/PoiManagerModal.tsx
 import React, { useState, useEffect } from 'react';
+import { NumberInput } from './NumberInput';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -80,14 +81,14 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   // Form fields
   const [name, setName] = useState('');
   const [category, setCategory] = useState<PoiCategory>('dryer');
-  const [lat, setLat] = useState<number>(58.138);
-  const [lng, setLng] = useState<number>(25.882);
+  const [lat, setLat] = useState<number | null>(58.138);
+  const [lng, setLng] = useState<number | null>(25.882);
   const [description, setDescription] = useState('');
   const [capacity, setCapacity] = useState('');
   const [contactPerson, setContactPerson] = useState('');
   const [phone, setPhone] = useState('');
   const [accessNotes, setAccessNotes] = useState('');
-  const [radiusM, setRadiusM] = useState<number>(25);
+  const [radiusM, setRadiusM] = useState<number | null>(25);
 
   // Handle incoming draft or coordinates
   useEffect(() => {
@@ -162,6 +163,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
+    // Koordinaadid on kohustuslikud
+    if (lat == null || lng == null) return;
     const radius = Math.min(1000, Math.max(5, Math.round(Number(radiusM)) || 25));
 
     if (editingId) {
@@ -200,13 +203,13 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
       id: editingId || undefined,
       name,
       category,
-      position: [lat, lng],
+      position: [lat ?? 58.138, lng ?? 25.882],
       description,
       capacity,
       contactPerson,
       phone,
       accessNotes,
-      radiusM
+      radiusM: radiusM ?? 25
     });
   };
 
@@ -330,36 +333,22 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
                 <div className="form-group">
                   <label>Laiuskraad (Lat WGS84)</label>
-                  <input
-                    type="number"
-                    step="0.000001"
-                    value={lat}
-                    onChange={(e) => setLat(Number(e.target.value))}
-                    className="form-input"
-                  />
+                  <NumberInput value={lat} onChange={setLat} decimals={6} />
                 </div>
 
                 <div className="form-group">
                   <label>Pikkuskraad (Lng WGS84)</label>
-                  <input
-                    type="number"
-                    step="0.000001"
-                    value={lng}
-                    onChange={(e) => setLng(Number(e.target.value))}
-                    className="form-input"
-                  />
+                  <NumberInput value={lng} onChange={setLng} decimals={6} />
                 </div>
 
                 <div className="form-group">
                   <label>Raadius, m</label>
-                  <input
-                    type="number"
+                  <NumberInput
+                    integer
                     min={5}
                     max={1000}
-                    step={1}
                     value={radiusM}
-                    onChange={(e) => setRadiusM(Number(e.target.value))}
-                    className="form-input"
+                    onChange={setRadiusM}
                     title="Sõidu punkt selle kauguse piires loetakse objekti juures olevaks (5–1000 m, vaikimisi 25)"
                   />
                 </div>

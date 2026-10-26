@@ -1,5 +1,6 @@
 // src/components/CropRegisterModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
+import { NumberInput } from './NumberInput';
 import { createPortal } from 'react-dom';
 import {
   X,
@@ -533,25 +534,21 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                 <div className="form-group">
                   <label>Vaikimisi külvinorm (kg/ha)</label>
-                  <input
-                    type="number"
-                    step="0.1"
+                  <NumberInput
+                    decimals={1}
                     placeholder="nt 220"
-                    value={editCropSeedRate}
-                    onChange={(e) => setEditCropSeedRate(e.target.value ? Number(e.target.value) : '')}
-                    className="form-input"
+                    value={editCropSeedRate === '' ? null : editCropSeedRate}
+                    onChange={(v) => setEditCropSeedRate(v ?? '')}
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Baas-saagiootus (t/ha)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="nt 7.5"
-                    value={editCropYield}
-                    onChange={(e) => setEditCropYield(e.target.value ? Number(e.target.value) : '')}
-                    className="form-input"
+                  <NumberInput
+                    decimals={1}
+                    placeholder="nt 7,5"
+                    value={editCropYield === '' ? null : editCropYield}
+                    onChange={(v) => setEditCropYield(v ?? '')}
                   />
                 </div>
 
@@ -652,25 +649,21 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                 <div className="form-group">
                   <label>Soovituslik külvinorm (kg/ha)</label>
-                  <input
-                    type="number"
-                    step="0.1"
+                  <NumberInput
+                    decimals={1}
                     placeholder="nt 210"
-                    value={editVarietySeedRate}
-                    onChange={(e) => setEditVarietySeedRate(e.target.value ? Number(e.target.value) : '')}
-                    className="form-input"
+                    value={editVarietySeedRate === '' ? null : editVarietySeedRate}
+                    onChange={(v) => setEditVarietySeedRate(v ?? '')}
                   />
                 </div>
 
                 <div className="form-group">
                   <label>Saagipotentsiaal (t/ha)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    placeholder="nt 9.5"
-                    value={editVarietyPotentialYield}
-                    onChange={(e) => setEditVarietyPotentialYield(e.target.value ? Number(e.target.value) : '')}
-                    className="form-input"
+                  <NumberInput
+                    decimals={1}
+                    placeholder="nt 9,5"
+                    value={editVarietyPotentialYield === '' ? null : editVarietyPotentialYield}
+                    onChange={(v) => setEditVarietyPotentialYield(v ?? '')}
                   />
                 </div>
 

@@ -10,6 +10,7 @@ import {
   type CropGroup,
   type WorkPhase
 } from './platformApi.ts';
+import { NumberInput } from '../components/NumberInput';
 
 type Tab = 'crops' | 'workTypes';
 
@@ -127,10 +128,10 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
           <input id="cc-icon" className="form-input" value={d.icon} onChange={(e) => set('icon', e.target.value)} maxLength={100} />
         </Field>
         <Field id="cc-seed" label="Külvinorm (kg/ha)">
-          <input id="cc-seed" className="form-input" type="number" min="0" step="any" value={d.seedRate} onChange={(e) => set('seedRate', e.target.value)} />
+          <NumberInput id="cc-seed" min={0} value={numOrNull(d.seedRate)} onChange={(v) => set('seedRate', numStr(v))} />
         </Field>
         <Field id="cc-yield" label="Saagikus (t/ha)">
-          <input id="cc-yield" className="form-input" type="number" min="0" step="any" value={d.yieldT} onChange={(e) => set('yieldT', e.target.value)} />
+          <NumberInput id="cc-yield" min={0} value={numOrNull(d.yieldT)} onChange={(v) => set('yieldT', numStr(v))} />
         </Field>
       </div>
       <Field id="cc-desc" label="Kirjeldus">
@@ -217,10 +218,10 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
           <input id="cv-wh" className="form-input" value={d.winterHardiness} onChange={(e) => set('winterHardiness', e.target.value)} maxLength={100} />
         </Field>
         <Field id="cv-seed" label="Soovitatav külvinorm (kg/ha)">
-          <input id="cv-seed" className="form-input" type="number" min="0" step="any" value={d.seedRate} onChange={(e) => set('seedRate', e.target.value)} />
+          <NumberInput id="cv-seed" min={0} value={numOrNull(d.seedRate)} onChange={(v) => set('seedRate', numStr(v))} />
         </Field>
         <Field id="cv-yield" label="Potentsiaalne saagikus (t/ha)">
-          <input id="cv-yield" className="form-input" type="number" min="0" step="any" value={d.yieldT} onChange={(e) => set('yieldT', e.target.value)} />
+          <NumberInput id="cv-yield" min={0} value={numOrNull(d.yieldT)} onChange={(v) => set('yieldT', numStr(v))} />
         </Field>
         <Field id="cv-q" label="Kvaliteediklass">
           <input id="cv-q" className="form-input" value={d.qualityClass} onChange={(e) => set('qualityClass', e.target.value)} maxLength={100} />
@@ -429,7 +430,7 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
           </select>
         </Field>
         <Field id="wt-order" label="Järjekord">
-          <input id="wt-order" className="form-input" type="number" min="0" step="1" value={d.sortOrder} onChange={(e) => set('sortOrder', e.target.value)} />
+          <NumberInput id="wt-order" min={0} integer value={numOrNull(d.sortOrder)} onChange={(v) => set('sortOrder', numStr(v))} />
         </Field>
       </div>
       <div className="admin-checks">

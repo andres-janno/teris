@@ -1,6 +1,7 @@
 // src/components/VehicleTracker.tsx
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { createPortal } from 'react-dom';
+import { NumberInput } from './NumberInput';
 import {
   X,
   Tractor,
@@ -154,15 +155,11 @@ const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateCha
     </div>
     <div className="form-group">
       <label>Soetusmaksumus (€)</label>
-      <input
-        type="number"
-        min="0"
-        step="any"
-        inputMode="decimal"
+      <NumberInput
+        min={0}
         placeholder="nt 185000"
-        value={cost}
-        onChange={(e) => onCostChange(e.target.value)}
-        className="form-input"
+        value={cost === '' ? null : Number(cost)}
+        onChange={(v) => onCostChange(v == null ? '' : String(v))}
       />
     </div>
     <div className="form-group">
@@ -178,16 +175,12 @@ const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateCha
             <option key={m} value={m}>{DEPRECIATION_METHOD_LABELS[m]}</option>
           ))}
         </select>
-        <input
-          type="number"
-          min="0"
-          max="100"
-          step="any"
-          inputMode="decimal"
+        <NumberInput
+          min={0}
+          max={100}
           placeholder="nt 20"
-          value={rate}
-          onChange={(e) => onRateChange(e.target.value)}
-          className="form-input"
+          value={rate === '' ? null : Number(rate)}
+          onChange={(v) => onRateChange(v == null ? '' : String(v))}
         />
       </div>
     </div>
@@ -308,7 +301,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impAcqDate, setImpAcqDate] = useState('');
   const [impDepRate, setImpDepRate] = useState('');
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
-  const [impWidth, setImpWidth] = useState(8.0);
+  const [impWidth, setImpWidth] = useState<number | null>(8.0);
   const [impSerial, setImpSerial] = useState('');
   const [impNotes, setImpNotes] = useState('');
 
@@ -667,7 +660,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       acquisitionDate: impAcqDate || undefined,
       depreciationRate: parsePositive(impDepRate),
       depreciationMethod: impDepMethod || undefined,
-      workingWidthM: Number(impWidth) || 6.0,
+      workingWidthM: impWidth || 6.0,
       serialNumber: impSerial.trim() || undefined,
       isActive: false,
       notes: impNotes.trim() || undefined
@@ -899,15 +892,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
                 <div className="form-group">
                   <label>Võimsus (kW)</label>
-                  <input
-                    type="number"
-                    min="0"
-                    step="any"
-                    inputMode="decimal"
+                  <NumberInput
+                    min={0}
                     placeholder="nt 302"
-                    value={vPowerKw}
-                    onChange={(e) => setVPowerKw(e.target.value)}
-                    className="form-input"
+                    value={vPowerKw === '' ? null : Number(vPowerKw)}
+                    onChange={(v) => setVPowerKw(v == null ? '' : String(v))}
                   />
                 </div>
                 <div className="form-group">
@@ -1050,13 +1039,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
                 <div className="form-group">
                   <label>Töölaius (m) *</label>
-                  <input
-                    type="number"
-                    step="0.1"
+                  <NumberInput
                     required
+                    decimals={1}
                     value={impWidth}
-                    onChange={(e) => setImpWidth(Number(e.target.value))}
-                    className="form-input"
+                    onChange={setImpWidth}
                   />
                 </div>
                 <div className="form-group">

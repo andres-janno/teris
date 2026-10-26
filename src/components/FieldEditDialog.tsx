@@ -1,6 +1,7 @@
 // src/components/FieldEditDialog.tsx — põllu põhiandmete ja valitud hooaja kirje muutmise aken
 import React, { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { NumberInput } from './NumberInput';
 import { X, Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
@@ -47,7 +48,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
   // Edit form state: Yearly details
   const editYear = selectedYear;
-  const [editAreaHa, setEditAreaHa] = useState<number>(0);
+  const [editAreaHa, setEditAreaHa] = useState<number | null>(0);
   const [editEligibleAreaHa, setEditEligibleAreaHa] = useState<number | undefined>(undefined);
   const [editAreaChangeReason, setEditAreaChangeReason] = useState('');
   const [editCrop, setEditCrop] = useState('');
@@ -164,7 +165,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       return;
     }
 
-    const defaultHa = Math.round((editAreaHa / (editCadastralParcels.length + 1)) * 100) / 100;
+    const defaultHa = Math.round(((editAreaHa ?? 0) / (editCadastralParcels.length + 1)) * 100) / 100;
 
     setEditCadastralParcels([
       ...editCadastralParcels,
@@ -384,28 +385,22 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       <div className="form-grid">
         <div className="form-group">
           <label>Põllu haritav pindala (ha) *</label>
-          <input
-            type="number"
-            step="0.01"
+          <NumberInput
             required
             disabled={isEditSeasonLocked}
             value={editAreaHa}
-            onChange={(e) => setEditAreaHa(Number(e.target.value))}
-            className="form-input"
+            onChange={setEditAreaHa}
             title="Põllu haritav suurus hooajal"
           />
         </div>
 
         <div className="form-group">
           <label>PRIA toetusõiguslik pindala (ha)</label>
-          <input
-            type="number"
-            step="0.01"
+          <NumberInput
             disabled={isEditSeasonLocked}
-            value={editEligibleAreaHa || ''}
-            onChange={(e) => setEditEligibleAreaHa(e.target.value ? Number(e.target.value) : undefined)}
-            className="form-input"
-            placeholder="nt 4.85"
+            value={editEligibleAreaHa || null}
+            onChange={(v) => setEditEligibleAreaHa(v ?? undefined)}
+            placeholder="nt 4,85"
           />
         </div>
 
@@ -520,23 +515,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         <div className="form-group">
           <label>Saagiootus (t/ha) & Koristatud saak (t/ha)</label>
           <div className="input-split">
-            <input
-              type="number"
-              step="0.1"
+            <NumberInput
               disabled={isEditSeasonLocked}
               placeholder="Plaan t/ha"
-              value={editTargetYield || ''}
-              onChange={(e) => setEditTargetYield(e.target.value ? Number(e.target.value) : undefined)}
-              className="form-input"
+              value={editTargetYield || null}
+              onChange={(v) => setEditTargetYield(v ?? undefined)}
             />
-            <input
-              type="number"
-              step="0.1"
+            <NumberInput
               disabled={isEditSeasonLocked}
               placeholder="Tegelik t/ha"
-              value={editActualYield || ''}
-              onChange={(e) => setEditActualYield(e.target.value ? Number(e.target.value) : undefined)}
-              className="form-input"
+              value={editActualYield || null}
+              onChange={(v) => setEditActualYield(v ?? undefined)}
             />
           </div>
         </div>
@@ -589,14 +578,11 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
               <div className="form-group">
                 <label>Põllu osa (ha) *</label>
-                <input
-                  type="number"
-                  step="0.01"
+                <NumberInput
                   required
                   disabled={isEditSeasonLocked}
-                  value={parcel.fieldAreaHa}
-                  onChange={(e) => handleUpdateCadastralParcel(pIdx, { fieldAreaHa: Number(e.target.value) })}
-                  className="form-input"
+                  value={parcel.fieldAreaHa || null}
+                  onChange={(v) => handleUpdateCadastralParcel(pIdx, { fieldAreaHa: v ?? 0 })}
                   title="Hektarite arv sellest katastriüksusest sellel hooajal"
                 />
               </div>
@@ -660,20 +646,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 <label>
                   {parcel.ownershipType === 'OWNED' ? `Maamaks (€/ha)` : `Renditasu (€/ha)`}
                 </label>
-                <input
-                  type="number"
-                  step="0.5"
+                <NumberInput
                   disabled={isEditSeasonLocked}
-                  value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurHa ?? '') : (parcel.rentFeeEurHa ?? '')}
-                  onChange={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : undefined;
+                  value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurHa ?? null) : (parcel.rentFeeEurHa ?? null)}
+                  onChange={(v) => {
+                    const val = v ?? undefined;
                     if (parcel.ownershipType === 'OWNED') {
                       handleUpdateCadastralParcel(pIdx, { landTaxEurHa: val });
                     } else {
                       handleUpdateCadastralParcel(pIdx, { rentFeeEurHa: val });
                     }
                   }}
-                  className="form-input"
                   placeholder="nt 140"
                   title="Tasu hektari kohta aastas (€/ha)"
                 />
@@ -684,20 +667,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 <label>
                   {parcel.ownershipType === 'OWNED' ? `Maamaks kokku (€/a)` : `Renditasu kokku (€/a)`}
                 </label>
-                <input
-                  type="number"
-                  step="1"
+                <NumberInput
                   disabled={isEditSeasonLocked}
-                  value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurYear ?? '') : (parcel.rentFeeEurYear ?? '')}
-                  onChange={(e) => {
-                    const val = e.target.value ? Number(e.target.value) : undefined;
+                  value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurYear ?? null) : (parcel.rentFeeEurYear ?? null)}
+                  onChange={(v) => {
+                    const val = v ?? undefined;
                     if (parcel.ownershipType === 'OWNED') {
                       handleUpdateCadastralParcel(pIdx, { landTaxEurYear: val });
                     } else {
                       handleUpdateCadastralParcel(pIdx, { rentFeeEurYear: val });
                     }
                   }}
-                  className="form-input"
                   placeholder="nt 630"
                   title="Kogusumma aastas (€/a)"
                 />
