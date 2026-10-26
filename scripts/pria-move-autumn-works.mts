@@ -1,7 +1,7 @@
 // scripts/pria-move-autumn-works.mts — PRIA: koristuse järel tehtud sügistööd järgmise aasta põllu hooaja alla.
-// npx tsx scripts/pria-move-autumn-works.mts --tenant <id> [--field-code X --num N] [--year Y] [--dry-run]
-// Hooaja Y PRIA_IMPORT tööd, mille plannedDateFrom on hilisem kui viimane PRIA saagikoristus, viiakse hooajale Y+1
-// (sama reegel mis impordil, vt splitPostHarvestOperations). Koristuseta hooajal on piir esimene PRIA_IMPORT
+// npx tsx scripts/pria-move-autumn-works.mts --tenant <id> [--field-code X --num N] [--year Y] [--dry-run] [--include-locked]
+// Hooaja Y kõik kuupäevaga tööd (ka MANUAL, kuupäev = plannedDateFrom või varaseim kanne), mis on hilisem kui viimane PRIA saagikoristus, viiakse hooajale Y+1
+// (sama reegel mis impordil, vt splitPostHarvestOperations). Koristuseta hooajal on piir esimene kuupäevaga
 // mullaharimistöö alates 1. juulist (see ise liigub ka). Vahekultuuri külv (liik ei sobi Y+1 kultuuriga) jääb.
 // Y+1 sama töötüübi kuupäevata ja kanneteta mallitöö kustutatakse (imporditud töö asendab selle); muud ei kustutata.
 // Käivitus rakenduse rolliga (DATABASE_URL), ettevõtte kontekst seatakse tehingus (RLS).
@@ -16,6 +16,7 @@ if (!tenant) throw new Error('--tenant on kohustuslik');
 const fieldCode = arg('field-code');
 const num = arg('num');
 const year = arg('year') ? Number(arg('year')) : undefined;
+const includeLocked = process.argv.includes('--include-locked');
 const dryRun = process.argv.includes('--dry-run');
 const time = (d: Date | null) => d?.getTime() ?? null;
 
@@ -43,8 +44,8 @@ async function main() {
         orderBy: [{ fieldId: 'asc' }, { year: 'asc' }],
         include: {
           field: { select: { num: true } },
+          season: { select: { isLocked: true } },
           fieldWorks: {
-            where: { source: 'PRIA_IMPORT' },
             orderBy: [{ plannedDateFrom: 'asc' }, { sortOrder: 'asc' }],
             include: { lines: true, entries: { include: { lines: true } } }
           }
@@ -54,17 +55,20 @@ async function main() {
       const total = { seasons: 0, moved: 0, templatesDeleted: 0, intercrop: 0, skipped: 0 };
       for (const fs of seasons) {
         const iso = (d: Date) => d.toISOString().slice(0, 10);
-        const dated = fs.fieldWorks.filter((w) => w.plannedDateFrom);
+        const workDate = (w: (typeof fs.fieldWorks)[number]): Date | null =>
+          w.plannedDateFrom ?? (w.entries.length ? new Date(Math.min(...w.entries.map((e) => e.date.getTime()))) : null);
+        const dated = fs.fieldWorks.filter((w) => workDate(w)).map((w) => ({ ...w, at: workDate(w)! }));
         const boundary = postHarvestBoundary(
-          dated.filter((w) => harvestTypeIds.has(w.workTypeId)).map((w) => iso(w.plannedDateFrom!)),
-          dated.filter((w) => tillageTypeIds.has(w.workTypeId)).map((w) => iso(w.plannedDateFrom!)),
+          dated.filter((w) => harvestTypeIds.has(w.workTypeId)).map((w) => iso(w.at)),
+          dated.filter((w) => tillageTypeIds.has(w.workTypeId)).map((w) => iso(w.at)),
           fs.year
         );
         if (!boundary) continue;
         const candidates = dated.filter((w) => !harvestTypeIds.has(w.workTypeId)
-          && (boundary.inclusive ? iso(w.plannedDateFrom!) >= boundary.date : iso(w.plannedDateFrom!) > boundary.date));
+          && (boundary.inclusive ? iso(w.at) >= boundary.date : iso(w.at) > boundary.date));
         if (!candidates.length) continue;
         const label = `Nr ${fs.field.num} ${fs.year} → ${fs.year + 1}`;
+        if ((fs.season?.isLocked || lockedYears.has(fs.year)) && !includeLocked) { console.log(`${label}: ${candidates.length} tööd jäid — ${fs.year} on lukus`); total.skipped += candidates.length; continue; }
 
         const next = await tx.fieldSeason.findUnique({
           where: { fieldId_year: { fieldId: fs.fieldId, year: fs.year + 1 } },
@@ -89,7 +93,7 @@ async function main() {
           if (!ok) intercrop++;
           return ok;
         });
-        const sowings = moving.filter((w) => sowingTypeIds.has(w.workTypeId)).map((w) => time(w.plannedDateFrom)!);
+        const sowings = moving.filter((w) => sowingTypeIds.has(w.workTypeId)).map((w) => w.at.getTime());
         const firstSowing = sowings.length ? Math.min(...sowings) : null;
 
         const templates = [...next.fieldWorks];
@@ -97,7 +101,7 @@ async function main() {
         for (const w of moving) {
           const phase: WorkPhase = sowingTypeIds.has(w.workTypeId)
             ? 'SOWING'
-            : firstSowing != null && time(w.plannedDateFrom)! > firstSowing ? 'CARE' : 'PREPARATION';
+            : firstSowing != null && w.at.getTime() > firstSowing ? 'CARE' : 'PREPARATION';
           await tx.fieldWork.update({ where: { id: w.id }, data: { fieldSeasonId: next.id, phase } });
           const ti = templates.findIndex((t) => t.workTypeId === w.workTypeId);
           if (ti >= 0) {
