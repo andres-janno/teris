@@ -317,7 +317,8 @@ export async function fetchFieldGpsPackets(
         AND m.time >= ${startUtc} AND m.time <= ${endUtc}
     ),
     ign AS (
-      SELECT m.device, m.time, COALESCE(m.value_int::double precision, m.value_double, m.value_bigint::double precision) AS v
+      -- süüde on tõeväärtus (value_bool); numbrilised veerud varuks
+      SELECT m.device, m.time, COALESCE(CASE WHEN m.value_bool IS NULL THEN NULL WHEN m.value_bool THEN 1 ELSE 0 END, m.value_int::double precision, m.value_double, m.value_bigint::double precision) AS v
       FROM measurements m
       JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
       WHERE m.measurement = 'data' AND m.field = 'ignition'
