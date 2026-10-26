@@ -254,7 +254,7 @@ describe('tugisessioon', () => {
     await authDb().platformUser.update({ where: { id: platformUserId }, data: { isActive: true } });
   });
 
-  it('GET /api/field-works ei kirjuta tugivaates; tavaliselt kirjutab', async () => {
+  it('GET /api/field-works ei kirjuta (ei tugivaates ega tavaliselt) — kultuuri ei pärita eelmisest aastast', async () => {
     const u = await authDb().user.findFirst({ where: { tenantId: T } });
     const year = new Date().getFullYear();
     const field = await authDb().field.create({ data: { tenantId: T, num: '1', name: 'SS', fieldCode: 'ss1' } as any });
@@ -268,7 +268,7 @@ describe('tugisessioon', () => {
     const tok = `ss-fw-${process.pid}`;
     await authDb().session.create({ data: { userId: u!.id, tokenHash: hashToken(tok), expiresAt: new Date(Date.now() + 3600_000) } });
     await call(`teris_session=${tok}`, 'GET', `/api/field-works?year=${year}`);
-    expect((await authDb().fieldSeason.findUnique({ where: { id: cur.id } }))!.crop).not.toBe('');
+    expect((await authDb().fieldSeason.findUnique({ where: { id: cur.id } }))!.crop).toBe('');
     await authDb().fieldSeason.deleteMany({ where: { fieldId: field.id } });
     await authDb().field.delete({ where: { id: field.id } });
   });
