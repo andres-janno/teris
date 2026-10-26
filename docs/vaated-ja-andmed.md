@@ -371,9 +371,9 @@ flowchart LR
 |---|---|---|---|
 | `VehicleTracker` | näitab masinaid, haakeriistu ja seadmeid koos seoste ja viimase asukohaga | `GET /api/fleet` (avamisel ja pärast registri muutmist) | `Vehicle` R, `RelatedParty` R (juht), `Implement` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `DeviceOwnership` R, tsdb R |
 | `VehicleTracker` | lisab või muudab masina | `POST /api/fleet/vehicles` | `Vehicle` CU |
-| `VehicleTracker` | kustutab masina (looja või admin) | `DELETE /api/fleet/vehicles/:id` | `Vehicle` RD, `ImplementAssignment` U (avatud kirjed lõpetatakse) ja kaskaad D; nullimine: `DeviceAssignment` U, `WorkEntry` U, `WorkEntryLine` U |
+| `VehicleTracker` | kustutab masina (looja või admin) | `DELETE /api/fleet/vehicles/:id` | `Vehicle` RD, kaskaad: `ImplementAssignment` D; nullimine: `DeviceAssignment` U, `WorkEntry` U, `WorkEntryLine` U |
 | `VehicleTracker` | lisab või muudab haakeriista | `POST /api/fleet/implements` | `Implement` CU |
-| `VehicleTracker` | kustutab haakeriista (looja või admin) | `DELETE /api/fleet/implements/:id` | `Implement` RD, `ImplementAssignment` U ja kaskaad D, `Vehicle` U; nullimine: `DeviceAssignment` U, `WorkEntry` U, `WorkEntryLine` U |
+| `VehicleTracker` | kustutab haakeriista (looja või admin) | `DELETE /api/fleet/implements/:id` | `Implement` RD, kaskaad: `ImplementAssignment` D, `Vehicle` U; nullimine: `DeviceAssignment` U, `WorkEntry` U, `WorkEntryLine` U |
 | `VehicleTracker` | lisab või muudab telemeetriaseadme (IMEI/MAC kontroll, globaalne unikaalsus) | `POST /api/fleet/devices` | `TelemetryDevice` RCU, `DeviceOwnership` CU (omandiperioodi avamine/sulgemine) |
 | `VehicleTracker` | kustutab seadme (looja või admin) | `DELETE /api/fleet/devices/:id` | `TelemetryDevice` RD, `DeviceOwnership` U (periood suletakse); kaskaad: `DeviceAssignment` D |
 | `VehicleTracker` | haagib, vahetab või haagib lahti haakeriista (kaardi nupud) | `POST /api/fleet/implements/assign` | `ImplementAssignment` RCU |
@@ -569,9 +569,9 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `DELETE /api/poi/:id` | `PointOfInterest` | D: `PointOfInterest` | looja või admin |
 | `GET /api/fleet` | `Vehicle`, `RelatedParty`, `Implement`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `DeviceOwnership`, tsdb `measurements` | — | `?telemetry=0` ja ilma moodulita tsdb päringuid pole |
 | `POST /api/fleet/vehicles` | — | C/U: `Vehicle` | |
-| `DELETE /api/fleet/vehicles/:id` | `Vehicle` | U: `ImplementAssignment`; D: `Vehicle`; kaskaad D: `ImplementAssignment`; nullimine U: `DeviceAssignment`, `WorkEntry`, `WorkEntryLine` | looja või admin |
+| `DELETE /api/fleet/vehicles/:id` | `Vehicle` | D: `Vehicle`; kaskaad D: `ImplementAssignment`; nullimine U: `DeviceAssignment`, `WorkEntry`, `WorkEntryLine` | looja või admin |
 | `POST /api/fleet/implements` | — | C/U: `Implement` | |
-| `DELETE /api/fleet/implements/:id` | `Implement` | U: `ImplementAssignment`, `Vehicle`; D: `Implement`; kaskaad D: `ImplementAssignment`; nullimine U: `DeviceAssignment`, `WorkEntry`, `WorkEntryLine` | looja või admin |
+| `DELETE /api/fleet/implements/:id` | `Implement` | U: `Vehicle`; D: `Implement`; kaskaad D: `ImplementAssignment`; nullimine U: `DeviceAssignment`, `WorkEntry`, `WorkEntryLine` | looja või admin |
 | `POST /api/fleet/devices` | `TelemetryDevice` | C/U: `TelemetryDevice`, `DeviceOwnership` | moodul TELEMETRY; 409 kui seade on teisel ettevõttel |
 | `DELETE /api/fleet/devices/:id` | `TelemetryDevice` | D: `TelemetryDevice`; U: `DeviceOwnership`; kaskaad D: `DeviceAssignment` | moodul TELEMETRY |
 | `POST /api/fleet/implements/assign` | `ImplementAssignment` | C/U: `ImplementAssignment` | |
@@ -735,9 +735,7 @@ Koodi läbivaatusel leitud ja 26.10.2026 parandatud:
 - **Põllu kustutamine:** kandega põldu ei kustutata (409, teade hooaegade kaupa); kanneteta põllu kustutamisel küsitakse alati kinnitust koos planeeritud tööde arvuga (`GET /api/master-fields/:id/delete-check`).
 - **Materjali kustutamine** kontrollib nüüd ka tööde plaanide ridu (`FieldWorkLine`) ja annab arusaadava teate.
 - **Kasutamata modaalivariandid eemaldatud:** `SeasonManagerModal`, `FieldManagerModal` ja `PoiManagerModal` avanevad ainult täislehena (`isFullPage`).
-
-Endiselt kehtivad:
-- **Masina/haakeriista kustutamisel** lõpetatakse avatud haakimised (U), kuid kohe järel kustutab kaskaad need kirjed niikuinii (`ImplementAssignment` `onDelete: Cascade`).
+- **Masina/haakeriista kustutamisel** ei lõpetata enam haakimisi eraldi; kaskaad kustutab need (`ImplementAssignment` `onDelete: Cascade`).
 
 Ebakindlused:
 - Tabelite loetelu „R“ veerus põhineb Prisma `include`/`select` päringutel; lugemine sisemiste abifunktsioonide kaudu (nt `syncFieldWorkStatus`, `materialSeasonTotals`, `buildEntryLines`) on kontrollitud nende failide päringute järgi, kuid kõiki haru-tingimusi (millal mingi päring jääb tegemata) pole eraldi märgitud.

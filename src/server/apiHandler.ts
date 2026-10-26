@@ -913,10 +913,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname.startsWith('/api/fleet/vehicles/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/vehicles/', '');
       if (denyDelete(req, res, await prisma.vehicle.findUnique({ where: { id }, select: { createdBy: true } }))) return;
-      await prisma.implementAssignment.updateMany({
-        where: { vehicleId: id, endedAt: null },
-        data: { endedAt: new Date() }
-      });
       await prisma.vehicle.delete({ where: { id } });
       return json(res, { success: true, id });
     }
@@ -953,10 +949,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname.startsWith('/api/fleet/implements/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/implements/', '');
       if (denyDelete(req, res, await prisma.implement.findUnique({ where: { id }, select: { createdBy: true } }))) return;
-      await prisma.implementAssignment.updateMany({
-        where: { implementId: id, endedAt: null },
-        data: { endedAt: new Date() }
-      });
       await prisma.vehicle.updateMany({
         where: { assignedImplementId: id },
         data: { assignedImplementId: null }
