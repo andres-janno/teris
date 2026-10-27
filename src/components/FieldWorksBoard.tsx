@@ -89,7 +89,7 @@ const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatu
 const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
   status === 'DONE' ? <Check size={13} strokeWidth={3} className="fw-status-done" /> : <span className={`fw-status-dot ${status === 'IN_PROGRESS' ? 'doing' : ''}`} />;
 
-const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void }> = ({ work, fieldAreaHa, selected, onSelect }) => {
+const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void; onAddEntry?: () => void }> = ({ work, fieldAreaHa, selected, onSelect, onAddEntry }) => {
   const n = work.entries.length;
   // Tehtud osa põllust
   const doneHa = work.entries.reduce((sum, e) => sum + (e.areaHa ?? 0), 0);
@@ -106,57 +106,65 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
   }, [work.entries]);
 
   return (
-    <button
-      type="button"
-      className={`fw-card ${work.status.toLowerCase()} ${selected ? 'selected' : ''}`}
-      onClick={onSelect}
-      aria-label={`${work.workTypeName}, ${STATUS_LABEL[work.status].toLowerCase()}`}
-    >
-      <span className="fw-card-title">
-        <StatusIcon status={work.status} />
-        <span title={work.priaName}>{work.workTypeName}</span>
-      </span>
-      {/* Viis (nt väetamisviis) eraldi real, et pealkiri ei läheks kaardist laiemaks */}
-      {work.method && <span className="fw-card-method">{work.method}</span>}
-      {n > 0 ? (
-        <span className="fw-card-entries">
-          {sortedEntries.map((e) => {
-            const dateStr = formatDayMonth(e.date);
-            const timeStr = e.startTime && e.endTime ? `${e.startTime}–${e.endTime}` : (e.startTime || e.endTime || null);
-            const haStr = e.areaHa ? `${fmtHa(e.areaHa)} ha` : null;
-            const workerFirstName = e.workerName ? e.workerName.trim().split(/\s+/)[0] : null;
+    <span className="fw-card-wrap">
+      <button
+        type="button"
+        className={`fw-card ${work.status.toLowerCase()} ${selected ? 'selected' : ''}`}
+        onClick={onSelect}
+        aria-label={`${work.workTypeName}, ${STATUS_LABEL[work.status].toLowerCase()}`}
+      >
+        <span className="fw-card-title">
+          <StatusIcon status={work.status} />
+          <span title={work.priaName}>{work.workTypeName}</span>
+        </span>
+        {/* Viis (nt väetamisviis) eraldi real, et pealkiri ei läheks kaardist laiemaks */}
+        {work.method && <span className="fw-card-method">{work.method}</span>}
+        {n > 0 ? (
+          <span className="fw-card-entries">
+            {sortedEntries.map((e) => {
+              const dateStr = formatDayMonth(e.date);
+              const timeStr = e.startTime && e.endTime ? `${e.startTime}–${e.endTime}` : (e.startTime || e.endTime || null);
+              const haStr = e.areaHa ? `${fmtHa(e.areaHa)} ha` : null;
+              const workerFirstName = e.workerName ? e.workerName.trim().split(/\s+/)[0] : null;
 
-            return (
-              <span key={e.id} className="fw-card-entry">
-                <span className="fw-card-entry-primary">
-                  {dateStr}{timeStr ? ` · ${timeStr}` : ''}
-                </span>
-                {(haStr || workerFirstName) && (
-                  <span className="fw-card-entry-secondary">
-                    {[haStr, workerFirstName].filter(Boolean).join(' · ')}
-                    {/* Ühe kande korral protsent sama rea lõpus */}
-                    {n === 1 && donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
+              return (
+                <span key={e.id} className="fw-card-entry">
+                  <span className="fw-card-entry-primary">
+                    {dateStr}{timeStr ? ` · ${timeStr}` : ''}
                   </span>
-                )}
+                  {(haStr || workerFirstName) && (
+                    <span className="fw-card-entry-secondary">
+                      {[haStr, workerFirstName].filter(Boolean).join(' · ')}
+                      {/* Ühe kande korral protsent sama rea lõpus */}
+                      {n === 1 && donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
+                    </span>
+                  )}
+                </span>
+              );
+            })}
+            {/* Mitme kande korral kokkuvõte: tehtud / põllu pindala ja protsent */}
+            {n > 1 && (
+              <span className="fw-card-total">
+                Kokku {fmtHa(doneHa)} / {fmtHa(fieldAreaHa)} ha
+                {donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
               </span>
-            );
-          })}
-          {/* Mitme kande korral kokkuvõte: tehtud / põllu pindala ja protsent */}
-          {n > 1 && (
-            <span className="fw-card-total">
-              Kokku {fmtHa(doneHa)} / {fmtHa(fieldAreaHa)} ha
-              {donePct !== null && <span className="fw-card-pct">{donePct}%</span>}
-            </span>
-          )}
-        </span>
-      ) : (
-        <span className="fw-card-sub">
-          {work.status === 'DONE'
-            ? (work.finishedAt ? `Lõpetatud ${formatDayMonth(work.finishedAt)}` : 'Lõpetatud')
-            : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || 'planeerimata')}
-        </span>
+            )}
+          </span>
+        ) : (
+          <span className="fw-card-sub">
+            {work.status === 'DONE'
+              ? (work.finishedAt ? `Lõpetatud ${formatDayMonth(work.finishedAt)}` : 'Lõpetatud')
+              : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || 'planeerimata')}
+          </span>
+        )}
+      </button>
+      {/* Kande kiirlisamine otse kaardilt, ilma töö paneeli avamata */}
+      {onAddEntry && (
+        <button type="button" className="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
+          <Plus size={12} strokeWidth={2.5} />
+        </button>
       )}
-    </button>
+    </span>
   );
 };
 
@@ -438,6 +446,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     ? allRows.find((r) => r.fieldSeasonId === selected.fieldSeasonId || r.nextRec?.fieldSeasonId === selected.fieldSeasonId) ?? null
     : null;
 
+  // Kandedialoogi rida leitakse töö järgi, sest kaardilt lisades ei ole tööd valitud
+  const entryRow = entryDialog
+    ? allRows.find((r) => r.fieldSeasonId === entryDialog.work.fieldSeasonId || r.nextRec?.fieldSeasonId === entryDialog.work.fieldSeasonId) ?? null
+    : null;
+
   const fieldLabel = (row: Row) =>
     `Nr ${row.field.num ?? '–'} ${row.field.name} · ${row.undetermined ? 'kultuur valimata' : row.rec.crop} · ${fmtHa(row.rec.areaHa)} ha · hooaeg ${year}`;
 
@@ -546,14 +559,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     `${nextWinterRows.filter((r) => nextColumnWorks(r, 'SOWING').some((w) => w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
 
   const renderCards = (row: Row, col: BoardColumn) =>
-    visibleWorks(row, col).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />);
+    visibleWorks(row, col).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />);
 
   // Verstapost (külv/koristus) on alati nähtav; eelmise sügise hooldustööd selles veerus järgivad filtrit
   const renderMilestone = (row: Row, col: BoardColumn) => {
     const ws = columnWorks(row, col).filter((w) => (w.phase !== 'CARE') || !hideDone || w.status !== 'DONE');
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
     ));
   };
 
@@ -562,14 +575,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const renderNextCards = (row: Row, col: AutumnColumn) =>
     visibleNextWorks(row, col).map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
     ));
 
   const renderNextMilestone = (row: Row) => {
     const ws = nextColumnWorks(row, 'SOWING');
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
     ));
   };
 
@@ -1262,7 +1275,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         document.body
       )}
 
-      {entryDialog && selectedRow && (() => {
+      {entryDialog && entryRow && (() => {
+        const selectedRow = entryRow;
         const isNext = entryDialog.work.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === entryDialog.work.fieldSeasonId);
         const activeLabel = isNext
           ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1})`

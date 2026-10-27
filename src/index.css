@@ -8339,8 +8339,52 @@ a.history-pill:hover {
   background: rgba(2, 132, 199, 0.22);
 }
 
-.fw-cell.milestone .fw-card {
+.fw-cell.milestone .fw-card,
+.fw-cell.milestone .fw-card-wrap {
   max-width: 100%;
+}
+
+/* Kaart + kande lisamise nupp paremas ülanurgas */
+.fw-card-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  max-width: 180px;
+}
+
+.fw-card-wrap .fw-card {
+  max-width: none;
+}
+
+.fw-card-wrap .fw-card-title {
+  padding-right: 16px;
+}
+
+.fw-card-add {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  border-radius: 4px;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.fw-card-wrap:hover .fw-card-add {
+  opacity: 1;
+}
+
+.fw-card-add:hover {
+  background: var(--emerald-500);
+  color: #fff;
 }
 
 .fw-muted {
