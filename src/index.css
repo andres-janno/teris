@@ -8651,8 +8651,10 @@ a.history-pill:hover {
 }
 
 .fw-add:hover {
-  border-color: #16a34a;
-  color: #16a34a;
+  border-color: var(--emerald-500);
+  border-style: solid;
+  background: var(--emerald-500);
+  color: #fff;
 }
 
 .fw-empty {
