@@ -135,17 +135,18 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [implementId, setImplementId] = useState(entry?.implementId ?? '');
   const [equipmentHours, setEquipmentHours] = useState(fmt(entry?.equipmentHours));
   const [fuelLiters, setFuelLiters] = useState(fmt(entry?.fuelLiters, 1));
-  const [areaHa, setAreaHa] = useState(fmt(entry ? entry.areaHa : work.plannedAreaHa ?? null));
+  // Uue kande pindala jääb tühjaks: täidetakse telemeetriast, protsendivalikust või käsitsi
+  const [areaHa, setAreaHa] = useState(fmt(entry?.areaHa));
   const [telemetryAreaHa, setTelemetryAreaHa] = useState(fmt(entry?.telemetryAreaHa));
   const [notes, setNotes] = useState(entry?.notes ?? '');
-  const initialTotal = doneBefore + (parseNum(fmt(entry ? entry.areaHa : work.plannedAreaHa ?? null)) ?? 0);
-  const initial100 = fieldAreaHa > 0 && initialTotal >= fieldAreaHa - 0.01;
+  const initialTotal = doneBefore + (entry?.areaHa ?? 0);
+  const initial100 = !!entry && fieldAreaHa > 0 && initialTotal >= fieldAreaHa - 0.01;
   const [finish, setFinish] = useState(initial100);
-  // Materjalid: olemasolevast kandest või uue kande puhul töö plaanist (norm ha kohta → kogus kokku)
+  // Materjalid: olemasolevast kandest või uue kande puhul töö plaanist (norm ha kohta; kogus kokku 0, kuni pindala on sisestatud)
   const [rows, setRows] = useState<PriaRow[]>(() =>
     entry
       ? entry.materials.map((m) => planLineToRow(m, entry.areaHa ?? fieldAreaHa))
-      : work.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, work.plannedAreaHa ?? fieldAreaHa))
+      : work.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, 0))
   );
   const [harvest, setHarvest] = useState<HarvestRow>(() => {
     if (entry) {
@@ -155,7 +156,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     const plan = work.lines.find((l) => l.kind === 'HARVEST');
     return recomputeHarvestTotal(
       { ratePerHa: fmt(plan?.ratePerHa, 3), total: '', priaKind: plan?.priaKind ?? '', priaSpec: plan?.priaSpec ?? '' },
-      work.plannedAreaHa ?? fieldAreaHa
+      0
     );
   });
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
@@ -258,7 +259,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   // Kande pindala muutmine (käsitsi, kiirvalik, telemeetria): read ja saak arvutatakse normist uuesti
   const setArea = (val: string) => {
     setAreaHa(val);
-    const area = parseNum(val) ?? fieldAreaHa;
+    const area = parseNum(val) ?? 0;
     setRows((rs) => recomputeTotals(rs, area));
     setHarvest((h) => recomputeHarvestTotal(h, area));
   };
@@ -300,6 +301,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
     const noQuantity = rows.find((r) => r.materialId && !((parseNum(r.total) ?? 0) > 0));
     if (isHarvest && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
+    // Materjali kogus kokku arvutatakse pindalast — ilma pindalata oleks see 0
+    if (noQuantity && !(areaNum > 0) && parseNum(noQuantity.ratePerHa) != null) return setError('Sisesta tehtud pindala');
     if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || materials.find((m) => m.id === noQuantity.materialId)?.name || 'toode'}`);
     setBusy(true);
     try {
@@ -615,14 +618,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           {(work.usesMaterials || rows.length > 0) && (
             <section className="work-entry-section">
               <h4>Materjalid</h4>
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals />
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals />
             </section>
           )}
 
           {isHarvest && (
             <section className="work-entry-section">
               <h4>Saak</h4>
-              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={parseNum(areaHa) ?? fieldAreaHa} showTotals showBunkers />
+              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={areaNum} showTotals showBunkers />
             </section>
           )}
 
