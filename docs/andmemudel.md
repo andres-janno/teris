@@ -17,7 +17,8 @@ Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-j
 4. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
 5. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
 6. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
-7. [Loendid (enum)](#loendid-enum)
+7. [Laoarvestus](#laoarvestus)
+8. [Loendid (enum)](#loendid-enum)
 
 ## Põllud, hooajad ja kultuurid
 
@@ -912,6 +913,14 @@ erDiagram
   CatalogWorkTemplate ||--o{ CatalogWorkTemplateItem : "template"
   CatalogWorkType ||--o{ CatalogWorkTemplateItem : "workType"
 ```
+
+## Laoarvestus
+
+- `warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).
+- `stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.
+- `material_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.
+- `work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).
+- FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.
 
 ## Loendid (enum)
 

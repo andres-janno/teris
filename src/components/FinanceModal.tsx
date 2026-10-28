@@ -265,6 +265,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
     try {
       const payloadPrices: Record<string, number | null> = {};
       for (const line of selectedEntry.lines || []) {
+        if (line.kind === 'MATERIAL') continue; // materjali hind tuleb laost (FIFO)
         const val = prices[line.id];
         if (val !== undefined && val !== '') {
           const p = parseFloat(val.replace(',', '.'));
@@ -685,6 +686,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                       <span className="finance-line-unit">{line.unit}</span>
                                     </td>
                                     <td className="finance-price-cell">
+                                      {line.kind === 'MATERIAL' ? (
+                                        <span className={`finance-fifo-price ${isMissing ? 'missing' : ''}`} title="Hind tuleb laost (FIFO)">
+                                          {isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
+                                        </span>
+                                      ) : (
                                       <div className={`finance-price-input-wrap ${isMissing ? 'missing' : ''}`}>
                                         <input
                                           type="text"
@@ -700,6 +706,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                         />
                                         <span className="finance-unit-suffix">€/{line.unit}</span>
                                       </div>
+                                      )}
                                     </td>
                                     <td className={`num finance-line-total ${isHarvest ? 'revenue-text' : ''}`}>
                                       {isHarvest ? '+' : ''}{fmtCur(line.total)}

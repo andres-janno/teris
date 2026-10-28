@@ -10908,3 +10908,9 @@ select.form-input:read-only {
 .stock-doc-lines input.num { text-align: right; max-width: 140px; }
 .stock-doc-lines .input-with-unit { display: inline-flex; gap: 6px; align-items: center; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+
+.stock-level-hint { font-size: 12px; color: var(--text-muted, #64748b); margin-left: 6px; white-space: nowrap; }
+.finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
+.finance-fifo-price.missing { color: #d97706; }
+.pria-material-cell { display: flex; flex-direction: column; min-width: 0; }
+.pria-material-cell .stock-level-hint { margin-left: 0; }

@@ -5,6 +5,7 @@ import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import type { FieldWork, Material, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
+import type { Warehouse } from '../types/stock';
 import TripRouteView from './TripRouteView';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
@@ -160,12 +161,27 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     );
   });
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouseId, setWarehouseId] = useState<string>(entry?.warehouseId ?? '');
+  const [stockLevels, setStockLevels] = useState<Map<string, number>>(new Map());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [telemetrySuggestions, setTelemetrySuggestions] = useState<TelemetrySuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
+
+  useEffect(() => {
+    api.getWarehouses().then((ws) => {
+      setWarehouses(ws);
+      setWarehouseId((cur) => cur || ws.find((w) => w.isDefault)?.id || '');
+    }).catch(() => setWarehouses([]));
+  }, []);
+
+  useEffect(() => {
+    if (!warehouseId) return;
+    api.getStockLevels(warehouseId).then((ls) => setStockLevels(new Map(ls.map((l) => [l.materialId, l.qty])))).catch(() => setStockLevels(new Map()));
+  }, [warehouseId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -322,6 +338,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           fuelLiters: parseNum(fuelLiters),
           areaHa: parseNum(areaHa),
           telemetryAreaHa: parseNum(telemetryAreaHa),
+          warehouseId: warehouseId || null,
           materials: rows
             .map((r) => ({ materialId: r.materialId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
             .filter((r) => r.materialId && r.quantity > 0),
@@ -618,7 +635,15 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           {(work.usesMaterials || rows.length > 0) && (
             <section className="work-entry-section">
               <h4>Materjalid</h4>
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals />
+              {warehouses.length > 1 && (
+                <div className="form-group">
+                  <label htmlFor="we-warehouse">Ladu</label>
+                  <select id="we-warehouse" className="form-input" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+                    {warehouses.filter((w) => w.isActive || w.id === warehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals stockLevels={stockLevels} />
             </section>
           )}
 

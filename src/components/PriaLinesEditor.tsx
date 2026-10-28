@@ -67,6 +67,7 @@ const registersFor = (activity: string): readonly string[] =>
     : [];
 
 interface PriaLinesEditorProps {
+  stockLevels?: Map<string, number>; // valitud lao laoseis (ainult kogus)
   activity: string;
   rows: PriaRow[];
   onChange: (rows: PriaRow[]) => void;
@@ -75,7 +76,7 @@ interface PriaLinesEditorProps {
   showTotals: boolean; // kandel kogus kokku, plaanil ainult norm
 }
 
-export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, materials, areaHa, showTotals }) => {
+export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, materials, areaHa, showTotals, stockLevels }) => {
   const category = materialCategoryFor(activity);
   const options = materials.filter((m) => (m.category === category && m.isActive) || rows.some((r) => r.materialId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
@@ -117,10 +118,17 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
             {registersFor(activity).map((x) => <option key={x} value={x}>{x}</option>)}
             {r.priaRegister && !registersFor(activity).includes(r.priaRegister) && <option value={r.priaRegister}>{r.priaRegister}</option>}
           </select>
-          <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.materialId} onChange={(e) => pickMaterial(i, e.target.value)}>
-            <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
-            {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-          </select>
+          <div className="pria-material-cell">
+            <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.materialId} onChange={(e) => pickMaterial(i, e.target.value)}>
+              <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
+              {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
+            </select>
+            {stockLevels && r.materialId && (
+              <span className={`stock-level-hint ${(stockLevels.get(r.materialId) ?? 0) < 0 ? 'material-overuse' : ''}`} title="Laoseis valitud laos">
+                Laos {(stockLevels.get(r.materialId) ?? 0).toLocaleString('et-EE', { maximumFractionDigits: 2 })} {materials.find((m) => m.id === r.materialId)?.unit ?? ''}
+              </span>
+            )}
+          </div>
           <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
             <select className="form-input" aria-label="Seemne kategooria" value={r.priaSpec} onChange={(e) => set(i, { priaSpec: e.target.value })}>
