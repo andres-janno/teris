@@ -36,7 +36,7 @@ interface RelatedPartiesModalProps {
   isFullPage?: boolean;
 }
 
-const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'OTHER'];
+const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'SUPPLIER', 'OTHER'];
 
 export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   isOpen,
@@ -481,6 +481,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                 <option value="LANDOWNER">🏛️ Maaomanikud ({parties.filter(p => p.roles.includes('LANDOWNER')).length})</option>
                 <option value="DRIVER">👤 Töötajad ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
                 <option value="OPERATOR">🧑‍🌾 Operaatorid ({parties.filter(p => p.roles.includes('OPERATOR')).length})</option>
+                <option value="SUPPLIER">🚚 Tarnijad ({parties.filter(p => p.roles.includes('SUPPLIER')).length})</option>
                 <option value="OTHER">🤝 Muud seotud isikud ({parties.filter(p => p.roles.includes('OTHER')).length})</option>
               </select>
             </FilterClear>

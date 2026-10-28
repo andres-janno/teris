@@ -6,6 +6,7 @@ export type PartyRole =
   | 'LANDOWNER'      // Maaomanik / Rendileandja
   | 'DRIVER'         // Töötaja (sh masinajuht)
   | 'OPERATOR'       // Põllu operaator / harija
+  | 'SUPPLIER'       // Tarnija (laokannete arvele võtmine)
   | 'OTHER';         // Muu seotud isik (täpsustus märkustes)
 
 export interface RelatedParty {
@@ -50,6 +51,12 @@ export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string;
     icon: '🧑‍🌾',
     color: '#15803d',
     bgColor: 'rgba(34, 197, 94, 0.12)'
+  },
+  SUPPLIER: {
+    label: 'Tarnija',
+    icon: '🚚',
+    color: '#2563eb',
+    bgColor: 'rgba(37, 99, 235, 0.12)'
   },
   OTHER: {
     label: 'Muu seotud isik',

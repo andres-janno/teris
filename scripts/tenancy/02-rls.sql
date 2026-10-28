@@ -8,7 +8,7 @@ BEGIN
     'points_of_interest','vehicles','implements','telemetry_devices','device_assignments',
     'implement_assignments','crops','crop_varieties','soil_samples','work_types','materials','work_templates','work_template_items',
     'field_works','field_work_lines','work_entries','work_entry_lines','users','device_ownerships',
-    'support_grants','support_access_log'
+    'support_grants','support_access_log','warehouses','stock_documents','stock_document_lines','material_stock'
   ] LOOP
     EXECUTE format('ALTER TABLE %I ENABLE ROW LEVEL SECURITY', t);
     EXECUTE format('ALTER TABLE %I FORCE ROW LEVEL SECURITY', t);
