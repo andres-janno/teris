@@ -451,6 +451,19 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     ? allRows.find((r) => r.fieldSeasonId === entryDialog.work.fieldSeasonId || r.nextRec?.fieldSeasonId === entryDialog.work.fieldSeasonId) ?? null
     : null;
 
+  // Uut kannet ei saa lisada tööle, mis on põllu pindalast juba 100% tehtud
+  const openNewEntry = (work: FieldWork) => {
+    const row = allRows.find((r) => r.fieldSeasonId === work.fieldSeasonId || r.nextRec?.fieldSeasonId === work.fieldSeasonId);
+    const isNext = work.isNextSeasonWinterSowing || row?.nextRec?.fieldSeasonId === work.fieldSeasonId;
+    const fieldAreaHa = row ? (isNext ? (row.nextRec?.areaHa ?? row.rec.areaHa) : row.rec.areaHa) : 0;
+    const doneHa = work.entries.reduce((sum, e) => sum + (e.areaHa ?? 0), 0);
+    if (fieldAreaHa > 0 && doneHa >= fieldAreaHa - 0.01) {
+      void alertDialog(`Töö „${work.workTypeName}" on juba 100% tehtud (${fmtHa(doneHa)} / ${fmtHa(fieldAreaHa)} ha). Uut kannet ei saa lisada — muuda vajadusel olemasolevat kannet.`);
+      return;
+    }
+    setEntryDialog({ work, entry: null });
+  };
+
   const fieldLabel = (row: Row) =>
     `Nr ${row.field.num ?? '–'} ${row.field.name} · ${row.undetermined ? 'kultuur valimata' : row.rec.crop} · ${fmtHa(row.rec.areaHa)} ha · hooaeg ${year}`;
 
@@ -559,14 +572,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     `${nextWinterRows.filter((r) => nextColumnWorks(r, 'SOWING').some((w) => w.status === 'DONE')).length} / ${nextWinterRows.length || 1} talivilja`;
 
   const renderCards = (row: Row, col: BoardColumn) =>
-    visibleWorks(row, col).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />);
+    visibleWorks(row, col).map((w) => <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => openNewEntry(w)} />);
 
   // Verstapost (külv/koristus) on alati nähtav; eelmise sügise hooldustööd selles veerus järgivad filtrit
   const renderMilestone = (row: Row, col: BoardColumn) => {
     const ws = columnWorks(row, col).filter((w) => (w.phase !== 'CARE') || !hideDone || w.status !== 'DONE');
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => openNewEntry(w)} />
     ));
   };
 
@@ -575,14 +588,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const renderNextCards = (row: Row, col: AutumnColumn) =>
     visibleNextWorks(row, col).map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => openNewEntry(w)} />
     ));
 
   const renderNextMilestone = (row: Row) => {
     const ws = nextColumnWorks(row, 'SOWING');
     if (ws.length === 0) return <span className="fw-muted">–</span>;
     return ws.map((w) => (
-      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => setEntryDialog({ work: w, entry: null })} />
+      <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => setSelectedId(w.id)} onAddEntry={locked ? undefined : () => openNewEntry(w)} />
     ));
   };
 
@@ -1222,7 +1235,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   ))}
                   {!locked && (
-                    <button type="button" className="btn btn-secondary fw-add-entry" onClick={() => setEntryDialog({ work: selected, entry: null })}>
+                    <button type="button" className="btn btn-secondary fw-add-entry" onClick={() => openNewEntry(selected)}>
                       <Plus size={13} />
                       <span>Lisa kanne…</span>
                     </button>
