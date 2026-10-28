@@ -9376,6 +9376,15 @@ select.time-select {
   border-color: var(--border-subtle, rgba(0, 0, 0, 0.15));
 }
 
+/* <select> loetakse brauseris alati :read-only alla — eelmine reegel kustutaks rippmenüü noole ja osuti */
+select.form-input:read-only {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+}
+
 .work-entry-hint {
   display: flex;
   align-items: flex-start;
