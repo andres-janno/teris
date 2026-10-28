@@ -76,11 +76,11 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, materials, on
           </select>
         </FilterClear>
         <FilterClear active={!!filter.from} onClear={() => setFilter({ ...filter, from: '' })}>
-          <DateInput value={filter.from ?? ''} onChange={(v) => setFilter({ ...filter, from: v })} />
+          <DateInput value={filter.from ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, from: v })} />
         </FilterClear>
         <span className="muted">–</span>
         <FilterClear active={!!filter.to} onClear={() => setFilter({ ...filter, to: '' })}>
-          <DateInput value={filter.to ?? ''} onChange={(v) => setFilter({ ...filter, to: v })} />
+          <DateInput value={filter.to ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, to: v })} />
         </FilterClear>
         <div className="register-io-buttons">
           <button className="btn btn-primary btn-sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></button>

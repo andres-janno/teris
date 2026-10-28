@@ -105,7 +105,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="sd-date">Kuupäev *</label>
-              <DateInput id="sd-date" value={date} onChange={setDate} required />
+              <DateInput id="sd-date" value={date} onChange={setDate} className="form-input" required />
             </div>
             <div className="form-group">
               <label htmlFor="sd-wh">{kind === 'RECEIPT' ? 'Ladu *' : 'Lähteladu *'}</label>
