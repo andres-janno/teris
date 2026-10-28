@@ -28,7 +28,7 @@ interface FieldWorkEntryDialogProps {
   telemetryEnabled?: boolean; // false: telemeetria moodul pole litsentsis → soovitusi ei küsita
 }
 
-const todayIso = () => new Date().toISOString().split('T')[0];
+const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(new Date());
 // Eesti sisend: koma või punkt
 const parseNum = (s: string): number | null => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
@@ -77,8 +77,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const others = work.entries.filter((e) => e.id !== entry?.id);
   const doneBefore = others.reduce((s, e) => s + (e.areaHa ?? 0), 0);
 
-  const [date, setDate] = useState(entry?.date ?? work.plannedDateFrom ?? todayIso());
-  const [dateTo, setDateTo] = useState(entry?.dateTo ?? (entry ? '' : work.plannedDateTo ?? ''));
+  const [date, setDate] = useState(entry?.date ?? todayIso());
+  const [dateTo, setDateTo] = useState(entry?.dateTo ?? '');
   const [method, setMethod] = useState(entry?.method ?? work.method ?? '');
   const [workerId, setWorkerId] = useState(entry?.workerId ?? (entry ? '' : work.plannedWorkerId ?? (workers.length === 1 ? workers[0].id : '')));
   const [startTime, setStartTime] = useState(entry?.startTime ?? '');
