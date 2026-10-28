@@ -2,7 +2,7 @@
 
 See dokument näitab, millised TERISe vaated ja komponendid kuvavad, lisavad, muudavad või kustutavad andmeid millistes andmebaasi tabelites. Ahel on alati sama: **vaade → komponent → API päring (`src/services/api.ts`) → serveri käsitleja (`src/server/*`) → Prisma mudel (tabel)**. Mudelite ja tabelite nimed on samad mis andmemudeli dokumendis [andmemudel.md](andmemudel.md).
 
-Koostatud koodi põhjal 26.10.2026, uuendada käsitsi koodimuudatuste järel.
+Koostatud koodi põhjal 26.10.2026 (laoarvestus lisatud 28.10.2026), uuendada käsitsi koodimuudatuste järel.
 
 **Lugemisjuhend**
 - `R` = loeb, `C` = lisab, `U` = muudab, `D` = kustutab.
@@ -46,7 +46,7 @@ Põhivaated on ülamenüüs (`MAIN_VIEWS` failis `src/components/Header.tsx`), v
 | Kultuurid (`crops`) | `CropRegisterModal` (täisleht) | Kultuuride ja sortide register | `Crop`, `CropVariety` (RCUD), `FieldSeason` (U värv) |
 | Külvikord (`rotation`) | `FieldManagerModal` (täisleht) + `FieldShapeModal` | Põldude kultuurid aastate kaupa | `FieldSeason` (RCU), `Field` (RU) |
 | Põllutööd (`works`) | `FieldWorksBoard` (+ `AddFieldWorkDialog`, `FieldWorkPlanForm`, `FieldWorkEntryDialog`, `FinanceModal`, `WorkRegisterModal`) | Hooaja tööde tahvel, plaanid, kanded, finantside kinnitamine, tööliikide register | `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `WorkType`, `Material` (RCUD) |
-| Kulumaterjalid (`materials`) | `MaterialsView` (+ `MaterialFormDialog`) | Materjalide register koos hooaja plaanitud ja kasutatud kogustega | `Material` (RCUD), `FieldWorkLine`, `WorkEntryLine` (R) |
+| Kulumaterjalid (`materials`) | `MaterialsView` (+ `MaterialFormDialog`, `MaterialStockCard`, `StockDocumentsPanel`, `WarehousesPanel`) | Materjalide register koos hooaja plaanitud ja kasutatud koguste ning laoseisuga; laokanded ja laod (finants) | `Material` (RCUD), `FieldWorkLine`, `WorkEntryLine` (R), `MaterialStock` (R), `StockDocument`, `StockDocumentLine`, `Warehouse` (RCUD) |
 | Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU) |
 | Taristu (`infrastructure`) | `PoiManagerModal` (täisleht) | Muud asukohad (kuivatid, laod, tanklad jm) | `PointOfInterest` (RCUD) |
 | Isikud (`parties`) | `RelatedPartiesModal` (täisleht) | Seotud isikud: maaomanikud, rentnikud, masinajuhid, partnerid | `RelatedParty` (RCUD) |
@@ -136,7 +136,7 @@ flowchart LR
 | `FieldOverviewPanel` / `SoilSamplesSection` / `FieldNdviSection` | mullaproovid ja NDVI | — (käivituse andmed, väline satelliidipilt) | `SoilSample` R |
 | `FieldEditDialog` | muudab põllu põhiandmeid ja hooaja andmeid (pindala, kultuur, sort, katastriüksused) | `POST /api/master-fields` (üks põld) | `Field` RU, `FieldSeason` CU (ainult muudetud aasta; lukus hooaeg keelatud), `Season` C (puuduv hooaeg), `CadastralParcel` CU, `FieldCadastralParcel` CUD |
 | `FieldWorkPlanDialog` (`FieldWorkPlanForm`) | lisab või muudab töö plaani (kuupäevad, pindala, plaaniread) | `POST /api/field-works`, `PATCH /api/field-works/:id` | `WorkType` R, `FieldWork` RCU, `FieldWorkLine` CD (read asendatakse), `WorkEntry` R |
-| `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak) | `POST /api/work-entries`, `PUT /api/work-entries/:id` | `WorkEntry` RCU, `WorkEntryLine` CD, `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` R |
+| `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak, materjali ladu); näitab valitud lao laoseisu | `POST /api/work-entries`, `PUT /api/work-entries/:id`, `GET /api/warehouses`, `GET /api/stock/levels` | `WorkEntry` RCU, `WorkEntryLine` CUD (ühikuhind ümberarvutusest), `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` RU, `Warehouse` RC (põhiladu), `MaterialStock` RCD, `StockDocumentLine` U |
 | `FieldWorkEntryDialog` | pakub telemeetriast sõite kande täitmiseks | `GET /api/field-works/telemetry-suggestions` | `FieldSeason` R, `WorkEntry` R, `DeviceAssignment` R, `TelemetryDevice` R, `Vehicle` R, `RelatedParty` R, `Implement` R, `ImplementAssignment` R, `DeviceOwnership` R, `Field` R, `PointOfInterest` R, tsdb R |
 | App (`ensureWorkRefs`) | laeb dialoogide valikud | `GET /api/work-types`, `GET /api/materials` | `WorkType` R, `FieldWork` R (loend), `Material` R, `WorkEntryLine` R (loend) |
 
@@ -311,7 +311,7 @@ flowchart LR
 
 ## Kulumaterjalid
 
-Materjalide leht (`MaterialsView`) näitab valitud hooaja plaanitud ja kasutatud kogused.
+Materjalide leht (`MaterialsView`) näitab valitud hooaja plaanitud ja kasutatud kogused ning laoseisu (valitud lao või kõigi ladude summa). Laoseisu kogust näevad kõik; laoväärtust, keskmist hinda, laokandeid ja ladude haldust ainult admin ja finantsjuht (vahelehed **Laokanded** ja **Laod**). Materjali real klõps avab laokaardi (`MaterialStockCard`). Iga laoliikumist muutev salvestus (laokanne, põllutöö kanne, PRIA import, materjali ühiku muutus) arvutab samas tehingus ümber laoseisu (`MaterialStock`), FIFO maksumused (`StockDocumentLine.fifoCost`, `shortageQty`) ja kanderidade ühikuhinnad (`WorkEntryLine.unitPrice`).
 
 ```mermaid
 flowchart LR
@@ -333,6 +333,14 @@ flowchart LR
 | `MaterialsView` | näitab materjale, hooaja plaanitud ja kasutatud koguseid | `GET /api/materials?year=` | `Material` R, `FieldWorkLine` R, `WorkEntryLine` R, `FieldWork` R, `FieldSeason` R |
 | `MaterialFormDialog` | lisab või muudab materjali | `POST /api/materials` | `Material` CU |
 | `MaterialsView` | kustutab materjali (looja või admin; kui kannetes pole kasutusel) | `DELETE /api/materials/:id` | `Material` RD, `WorkEntryLine` R |
+| `MaterialsView` | laoseis materjalide tabelis (kogus kõigile; väärtus ja keskmine hind finantsile), lao filter | `GET /api/materials?warehouseId=`, `GET /api/warehouses` | `MaterialStock` R, `Warehouse` R (puudumisel C: põhiladu) |
+| `MaterialStockCard` (laokaart) | materjali liikumised ja jooksev seis valitud laos; maksumus, tarnija ja dokumendi nr ainult finantsile | `GET /api/stock/materials/:id/movements?warehouseId=` | `Material` R, `StockDocument` R, `StockDocumentLine` R, `WorkEntry` R, `WorkEntryLine` R, `FieldWork` R, `WorkType` R, `FieldSeason` R, `Field` R, `RelatedParty` R (tarnija), `Warehouse` R |
+| `StockDocumentsPanel` (Laokanded) | laokannete register (arvele võtmine, mahakandmine, ülekanne) filtritega; puudujäägiga ülekande märge | `GET /api/stock/documents?kind=&warehouseId=&supplierId=&from=&to=` | `StockDocument` R, `StockDocumentLine` R, `Warehouse` R, `RelatedParty` R, `Material` R |
+| `StockDocumentDialog` | lisab või muudab laokande; ülekanne ei tohi lähteladu miinusesse viia | `POST /api/stock/documents`, `PUT /api/stock/documents/:id`, `GET /api/stock/levels` | `StockDocument` CU, `StockDocumentLine` CUD, `Warehouse` R, `Material` RU (probleemsete ridade arv), `MaterialStock` RCD, `WorkEntryLine` U (ühikuhind) |
+| `StockDocumentsPanel` | kustutab laokande (keelatud, kui hilisem ülekanne jääks katmata) | `DELETE /api/stock/documents/:id` | `StockDocument` RD; kaskaad: `StockDocumentLine` D; `MaterialStock` RCD, `StockDocumentLine` U, `WorkEntryLine` U, `Material` U |
+| `WarehousesPanel` (Laod) | ladude register; lisab, muudab, märgib põhilaoks või mitteaktiivseks, seob kaardi huvipunktiga | `GET /api/warehouses`, `POST /api/warehouses`, `GET /api/poi` | `Warehouse` RCU, `PointOfInterest` R |
+| `WarehousesPanel` | kustutab lao (mitte põhiladu; ainult kui laokandeid ega põllutöö kandeid pole) | `DELETE /api/warehouses/:id` | `Warehouse` RD, `StockDocument` R, `WorkEntry` R |
+| `MapView` | lao asukoha hüpikus nupp „Ava laoseis“ avab kulumaterjalid selle lao filtriga | — (käivituse andmed, `GET /api/poi`) | `PointOfInterest` R, `Warehouse` R |
 
 ## Tehnika (masinapark)
 
@@ -596,11 +604,11 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `DELETE /api/crops/:id` | `Crop` | D: `Crop`; kaskaad D: `CropVariety`, `WorkTemplate`, `WorkTemplateItem`; nullimine U: `FieldSeason`, `Material` | looja või admin |
 | `GET /api/soil-samples` | `SoilSample` | — | |
 | `POST /api/soil-samples/import` | — | C/U: `SoilSample`; C: `Season` | ainult admin |
-| `POST /api/field-book/import` | `Season`, `Field`, `FieldSeason`, `WorkType`, `Material`, `FieldWork` | C: `Season`, `WorkType`, `Material`, `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`; U: `FieldSeason`, `FieldWork` | ainult admin; üks tehing; lukus hooaeg jäetakse vahele |
+| `POST /api/field-book/import` | `Season`, `Field`, `FieldSeason`, `WorkType`, `Material`, `FieldWork`, `Warehouse` | C: `Season`, `WorkType`, `Material`, `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`; U: `FieldSeason`, `FieldWork`; laoseisu ümberarvutus (C/D: `MaterialStock`; U: `WorkEntryLine`, `StockDocumentLine`, `Material`) | ainult admin; üks tehing; lukus hooaeg jäetakse vahele; kanded seotakse põhilaoga |
 | `GET /api/work-types` | `WorkType`, `FieldWork` (loend) | — | |
 | `POST /api/work-types` | — | C/U: `WorkType` | |
 | `DELETE /api/work-types/:id` | `WorkType`, `FieldWork` (loend) | D: `WorkTemplateItem`, `WorkType` | keelatud, kui töö on põldudel kasutusel |
-| `GET /api/materials` | `Material`, `WorkEntryLine`; `?year=` korral ka `FieldWorkLine`, `FieldWork`, `FieldSeason` | — | |
+| `GET /api/materials` | `Material`, `WorkEntryLine`, `MaterialStock`; `?year=` korral ka `FieldWorkLine`, `FieldWork`, `FieldSeason` | — | `?warehouseId=` ühe lao seis; laoväärtus ja hinnatud kogus ainult admin/finantsjuht |
 | `POST /api/materials` | — | C/U: `Material` | |
 | `DELETE /api/materials/:id` | `Material`, `WorkEntryLine` | D: `Material` | keelatud, kui kannetes kasutusel |
 | `GET /api/field-season-works` | `FieldSeason`, `FieldWork`, `WorkType`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement` | — | finantsväljad ainult admin/finantsjuht |
@@ -610,9 +618,17 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `PATCH /api/field-works/:id` | `FieldWork`, `WorkEntry` | U: `FieldWork`; C/D: `FieldWorkLine` | `status` DONE/REOPEN |
 | `DELETE /api/field-works/:id` | `FieldWork`, `WorkEntry` | D: `FieldWork`; kaskaad D: `FieldWorkLine` | keelatud, kui kandeid on |
 | `GET /api/field-works/telemetry-suggestions` | `FieldWork`, `FieldSeason`, `WorkEntry`, `DeviceAssignment`, `TelemetryDevice`, `Vehicle`, `RelatedParty`, `Implement`, `ImplementAssignment`, `DeviceOwnership`, `Field`, `PointOfInterest`, tsdb `measurements` | — | moodul TELEMETRY |
-| `POST /api/work-entries` | `FieldWork`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `WorkEntry` | C: `WorkEntry`, `WorkEntryLine`; U: `FieldWork` (olek) | |
-| `PUT /api/work-entries/:id` | `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement`, `Material` | U: `WorkEntry`, `FieldWork`; C/D: `WorkEntryLine` | kinnitatud hinnad säilitatakse, finantsolek võib muutuda |
-| `DELETE /api/work-entries/:id` | `WorkEntry` | D: `WorkEntry`; kaskaad D: `WorkEntryLine`; U: `FieldWork` | kinnitatud kanne ainult finantsjuht |
+| `POST /api/work-entries` | `FieldWork`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `WorkEntry`, `Warehouse` | C: `WorkEntry`, `WorkEntryLine`; U: `FieldWork` (olek); laoseisu ümberarvutus | ladu salvestatakse alati (valimata → põhiladu); mitteaktiivne ladu → 400 |
+| `PUT /api/work-entries/:id` | `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `Warehouse` | U: `WorkEntry`, `FieldWork`; C/D: `WorkEntryLine`; laoseisu ümberarvutus | kinnitatud hinnad säilitatakse, finantsolek võib muutuda; senine mitteaktiivne ladu jääb, uueks laoks ainult aktiivne |
+| `DELETE /api/work-entries/:id` | `WorkEntry` | D: `WorkEntry`; kaskaad D: `WorkEntryLine`; U: `FieldWork`; laoseisu ümberarvutus | kinnitatud kanne ainult finantsjuht |
+| `GET /api/warehouses` | `Warehouse`, `PointOfInterest` | C/U: `Warehouse` (põhilao loomine, kui puudub) | kõigile |
+| `POST /api/warehouses` | `Warehouse` | C/U: `Warehouse` | admin/finantsjuht; põhilao vahetus lukuga |
+| `DELETE /api/warehouses/:id` | `Warehouse`, `StockDocument`, `WorkEntry` | D: `Warehouse`; kaskaad D: `MaterialStock` | admin/finantsjuht; põhiladu ja kasutusel ladu keelatud |
+| `GET /api/stock/levels` | `MaterialStock` | — | kogus kõigile |
+| `GET /api/stock/materials/:id/movements` | `Material`, `StockDocument`, `StockDocumentLine`, `WorkEntry`, `WorkEntryLine`, `FieldWork`, `WorkType`, `FieldSeason`, `Field`, `RelatedParty`, `Warehouse` | — | laokaart; maksumus, tarnija ja dokumendi nr ainult admin/finantsjuht |
+| `GET /api/stock/documents`, `GET /api/stock/documents/:id` | `StockDocument`, `StockDocumentLine`, `Warehouse`, `RelatedParty`, `Material` | — | admin/finantsjuht |
+| `POST /api/stock/documents`, `PUT /api/stock/documents/:id` | `Warehouse`, `Material`, `StockDocument`, `StockDocumentLine`, `WorkEntryLine` | C/U: `StockDocument`; C/D: `StockDocumentLine`; U: `StockDocumentLine` (FIFO), `WorkEntryLine` (ühikuhind), `Material`; C/D: `MaterialStock` | admin/finantsjuht; uus ülekande puudujääk → 400, tehing tagasi |
+| `DELETE /api/stock/documents/:id` | `StockDocument`, `StockDocumentLine` | D: `StockDocument`; kaskaad D: `StockDocumentLine`; laoseisu ümberarvutus | admin/finantsjuht; keelatud, kui hilisem ülekanne jääks katmata |
 | `GET /api/finance/entries` | `FieldSeason`, `WorkEntry`, `WorkEntryLine`, `FieldWork`, `WorkType`, `Field`, `RelatedParty`, `Vehicle`, `Implement` | — | admin/finantsjuht |
 | `PATCH /api/finance/entries/:id` | `WorkEntry`, `WorkEntryLine` | U: `WorkEntry`, `WorkEntryLine` | hinnad, kinnitamine |
 | `GET /api/finance/field-results` | `Crop`, `FieldSeason`, `Field`, `FieldWork`, `WorkEntry`, `WorkEntryLine` | — | admin/finantsjuht |
@@ -663,7 +679,7 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `CropVariety` | | | | | RCUD | | | | | | | | C |
 | `SoilSample` | R | R | | CU | | | | | | | | | |
 | `RelatedParty` | R | R | | R | | | R | | R | | RCUD | | C |
-| `PointOfInterest` | R | R | | | | | R | | | RCUD | RU | | |
+| `PointOfInterest` | R | R | | | | | R | R | | RCUD | RU | | |
 | `Vehicle` | R | R | | | | | R | | RCUD | | RU | | |
 | `Implement` | R | R | | | | | R | | RCUD | | | | |
 | `TelemetryDevice` | R | R | | | | | R | | RCUD | | | | RU |
@@ -671,13 +687,17 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `DeviceAssignment` | R | R | | | | | R | | RCUD | | | | |
 | `ImplementAssignment` | R | R | | | | | R | | RCUD | | | | |
 | `WorkType` | | R | | RC | | | RCUD | | | | | | C |
-| `Material` | | R | | RC | U | | RCUD | RCUD | | | | | |
+| `Material` | | RU | | RCU | U | | RCUD | RCUD | | | | | |
 | `WorkTemplate` | | | | | D | | | | | | | | |
 | `WorkTemplateItem` | | | | | D | | D | | | | | | |
 | `FieldWork` | | RCU | | RCUD | | R | RCUD | R | | | U | U | |
 | `FieldWorkLine` | | RCD | | CD | | | RCD | R | | | | | |
 | `WorkEntry` | | RCU | | CD | | | RCUD | | U | | U | U | |
-| `WorkEntryLine` | | RCD | | CD | | | RCUD | R | U | | | | |
+| `WorkEntryLine` | | RCUD | | CUD | | | RCUD | RU | U | | | | |
+| `Warehouse` | R | RC | | RC | | | R | RCUD | | | | | |
+| `StockDocument` | | | | | | | | RCUD | | | | | |
+| `StockDocumentLine` | | U | | U | | | U | RCUD | | | | | |
+| `MaterialStock` | | RCD | | CD | | | CD | RCD | | | | | |
 | `User` | | | | | | | | | | | | RCUD | RC |
 | `Session` | | | | | | | | | | | | RCUD | D |
 | `PasswordToken` | | | | | | | | | | | | RCUD | CD |
