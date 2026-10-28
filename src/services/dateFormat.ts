@@ -36,6 +36,10 @@ export const formatDateTime = (iso?: string | null): string => {
   return `${p(d.getDate())}.${p(d.getMonth() + 1)}.${d.getFullYear()} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
+/** Tänane kuupäev 'YYYY-MM-DD' Eesti ajas (Europe/Tallinn), sõltumata brauseri ajavööndist. */
+export const todayTallinn = (now: Date = new Date()): string =>
+  new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(now);
+
 /** ISO aeg → '15.08.2026 14:05' Eesti ajas (Europe/Tallinn), sõltumata brauseri ajavööndist. */
 export const formatDateTimeTallinn = (iso?: string | null): string => {
   if (!iso) return '–';

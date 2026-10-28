@@ -5,6 +5,7 @@ import { Plus, Trash2, X, ArrowRightLeft } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
+import { todayTallinn } from '../services/dateFormat';
 import type { Material } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
@@ -12,7 +13,6 @@ import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 
 interface Row { materialId: string; quantity: string; amount: string }
 const emptyRow: Row = { materialId: '', quantity: '', amount: '' };
-const today = () => new Date().toISOString().slice(0, 10);
 const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 3 });
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -32,7 +32,7 @@ interface Props {
 
 export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses, materials, suppliers, onClose, onSaved }) => {
   const defaultWh = warehouses.find((w) => w.isDefault)?.id ?? '';
-  const [date, setDate] = useState(initial?.date ?? today());
+  const [date, setDate] = useState(initial?.date ?? todayTallinn());
   const [warehouseId, setWarehouseId] = useState(initial?.warehouseId ?? defaultWh);
   const [toWarehouseId, setToWarehouseId] = useState(initial?.toWarehouseId ?? '');
   const [supplierId, setSupplierId] = useState(initial?.supplierId ?? '');

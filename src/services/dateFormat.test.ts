@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { formatDate, formatDayMonth, formatDateRange, parseEtDate, formatTimeAgo } from './dateFormat';
+import { formatDate, formatDayMonth, formatDateRange, parseEtDate, formatTimeAgo, todayTallinn } from './dateFormat';
 
 describe('formatDate', () => {
   it('vormindab ISO kuupäeva eesti kujule', () => {
@@ -77,5 +77,13 @@ describe('formatTimeAgo', () => {
   it('päevad ja tunnid (nt 1 p 3 h tagasi)', () => {
     const dayAgo = new Date(Date.now() - (24 + 3) * 3600 * 1000).toISOString();
     expect(formatTimeAgo(dayAgo)).toBe('1 p 3 h tagasi');
+  });
+});
+
+describe('todayTallinn', () => {
+  it('annab Tallinna kalendripäeva ka UTC päeva vahetuse ümber', () => {
+    expect(todayTallinn(new Date('2026-10-27T22:30:00Z'))).toBe('2026-10-28'); // EET +2
+    expect(todayTallinn(new Date('2026-07-15T21:30:00Z'))).toBe('2026-07-16'); // EEST +3
+    expect(todayTallinn(new Date('2026-07-15T20:30:00Z'))).toBe('2026-07-15');
   });
 });

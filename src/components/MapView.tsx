@@ -770,8 +770,10 @@ export const MapView: React.FC<MapViewProps> = ({
 
       if (poi.warehouse) {
         const whId = poi.warehouse.id;
+        // onclick omistamine (mitte addEventListener): hüpik taaskasutab elementi, nupp töötab korduvalt ka avatud hüpikus
         marker.on('popupopen', (ev) => {
-          ev.popup.getElement()?.querySelector('.poi-warehouse-link')?.addEventListener('click', () => onOpenWarehouseRef.current?.(whId), { once: true });
+          const btn = ev.popup.getElement()?.querySelector<HTMLButtonElement>('.poi-warehouse-link');
+          if (btn) btn.onclick = () => onOpenWarehouseRef.current?.(whId);
         });
       }
 
