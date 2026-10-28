@@ -11,6 +11,7 @@ import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 import { MaterialStockCard } from './MaterialStockCard';
 import type { Warehouse } from '../types/stock';
+import { StockDocumentsPanel } from './StockDocumentsPanel';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -44,6 +45,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
   const [stockCard, setStockCard] = useState<Material | null>(null);
+  const [tab, setTab] = useState<'materials' | 'documents' | 'warehouses'>('materials');
 
   useEffect(() => {
     if (initialWarehouseId) {
@@ -129,6 +131,15 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
 
         <div className="fullpage-board-body">
           <div className="modal-body">
+            {canManageFinance && (
+              <div className="category-filter-tabs materials-tabs">
+                <button type="button" className={`filter-tab ${tab === 'materials' ? 'active' : ''}`} onClick={() => setTab('materials')}>Materjalid</button>
+                <button type="button" className={`filter-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')}>Laokanded</button>
+                <button type="button" className={`filter-tab ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>Laod</button>
+              </div>
+            )}
+            {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} materials={materials} onChanged={() => void reload()} />}
+            {tab === 'materials' && (<>
             <div className="register-header-controls">
               <div className="year-selector-group">
                 <span className="year-label">
@@ -264,13 +275,16 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                 </tbody>
               </table>
             </div>
+            </>)}
           </div>
         </div>
+        {tab === 'materials' && (
         <div className="fullpage-board-footer">
           <span>
             Kuvatakse <strong>{filtered.length}</strong> materjali <strong>{materials.length}</strong>-st
           </span>
         </div>
+        )}
       </main>
 
       {stockCard && (
