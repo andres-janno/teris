@@ -21,6 +21,8 @@ import {
   type StoredLine
 } from './fieldWorkRules.ts';
 import { materialSeasonTotals } from './materialUsage.ts';
+import { recomputeMaterialStock, materialStockSummary } from './stock.ts';
+import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
@@ -90,10 +92,12 @@ async function resolveEntryInput(body: any) {
   const workerId = text(body?.workerId, 64);
   const vehicleId = text(body?.vehicleId, 64);
   const implementId = text(body?.implementId, 64);
-  const [worker, vehicle, implement] = await Promise.all([
+  const warehouseIdIn = text(body?.warehouseId, 64);
+  const [worker, vehicle, implement, warehouse] = await Promise.all([
     workerId ? prisma.relatedParty.findUnique({ where: { id: workerId }, select: { id: true, name: true } }) : null,
     vehicleId ? prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true, name: true } }) : null,
-    implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null
+    implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null,
+    warehouseIdIn ? prisma.warehouse.findFirst({ where: { id: warehouseIdIn, isActive: true }, select: { id: true } }) : null
   ]);
   const materialsIn: { materialId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.materials) ? body.materials : [];
   const materialIds = materialsIn.map((m) => String(m.materialId ?? '')).filter(Boolean);
@@ -147,6 +151,7 @@ async function resolveEntryInput(body: any) {
       telemetryAreaHa: num(body?.telemetryAreaHa),
       vehicleId: vehicle?.id ?? null,
       implementId: implement?.id ?? null,
+      warehouseId: warehouse?.id ?? null,
       equipmentHours,
       fuelLiters,
       laborHours,
@@ -164,6 +169,9 @@ const ENTRY_INCLUDE = {
   implement: { select: { name: true } },
   lines: { orderBy: { sortOrder: 'asc' as const } }
 };
+
+const materialIdsOf = (lines: { kind?: string; materialId: string | null }[]) =>
+  lines.filter((l) => (l.kind ?? 'MATERIAL') === 'MATERIAL' && l.materialId).map((l) => l.materialId as string);
 
 function entryDto(e: any, withFinance: boolean) {
   const lines = (e.lines ?? []) as any[];
@@ -183,6 +191,7 @@ function entryDto(e: any, withFinance: boolean) {
     vehicleName: e.vehicle?.name ?? null,
     implementId: e.implementId,
     implementName: e.implement?.name ?? null,
+    warehouseId: e.warehouseId ?? null,
     equipmentHours: e.equipmentHours,
     fuelLiters: e.fuelLiters,
     laborHours: e.laborHours,
@@ -659,6 +668,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
 
   // --- Kulumaterjalid ---
   if (pathname === '/api/materials' && method === 'GET') {
+    const warehouseId = text(url.searchParams.get('warehouseId'), 64);
+    const stock = await tenantTransaction((tx) => materialStockSummary(tx, warehouseId));
+    const finance = canSeeFinance(req);
     const rows = await prisma.material.findMany({
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { entryLines: true } } }
@@ -688,7 +700,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         ...m,
         // valitud hooaja korral kannete arv selle hooaja kohta, muidu kõik kanded
         usageCount: totals ? (totals.get(m.id)?.entryCount ?? 0) : _count.entryLines,
-        ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {})
+        ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {}),
+        stockQty: stock.get(m.id)?.qty ?? 0,
+        unpricedQty: stock.get(m.id)?.unpricedQty ?? 0,
+        stockIssueCount: m.stockIssueCount,
+        ...(finance ? { stockValue: stock.get(m.id)?.value ?? 0 } : {})
       }))
     );
     return true;
@@ -703,9 +719,28 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     const data = { name, category, unit, cropVarietyId: text(b?.cropVarietyId, 64), isActive: b?.isActive !== false, notes: text(b?.notes, 1000) };
+    const id = text(b?.id, 64);
+    const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true } }) : null;
+    const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
+    if (unitChanged) {
+      const docLines = await prisma.stockDocumentLine.count({ where: { materialId: id! } });
+      if (docLines) {
+        json(res, { error: `Materjalil on ${docLines} laokande rida; laoühikut ei saa muuta.` }, 409);
+        return true;
+      }
+      const lines = await prisma.workEntryLine.findMany({ where: { materialId: id!, kind: 'MATERIAL' }, select: { unit: true } });
+      const bad = lines.filter((l) => convertQty(1, l.unit, unit) === null).length;
+      if (bad && b?.confirmUnitChange !== true) {
+        json(res, { error: `${bad} kannet ei saa ühikusse "${unit}" teisendada ja need jäävad laoarvestusest välja.`, needsConfirm: true }, 409);
+        return true;
+      }
+    }
     try {
-      const id = text(b?.id, 64);
-      const saved = id ? await prisma.material.update({ where: { id }, data }) : await prisma.material.create({ data });
+      const saved = await tenantTransaction(async (tx) => {
+        const s = id ? await tx.material.update({ where: { id }, data }) : await tx.material.create({ data });
+        if (unitChanged) await recomputeMaterialStock(tx, [s.id]);
+        return s;
+      });
       json(res, saved);
     } catch (err: any) {
       if (err?.code === 'P2002') json(res, { error: 'Selline materjal on juba olemas' }, 409);
@@ -718,12 +753,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const material = await prisma.material.findUnique({ where: { id }, select: { createdBy: true } });
     if (material && deleteDenied(req, res, material.createdBy)) return true;
     // Materjal võib olla kasutusel nii kannetes kui ka tööde plaanides (mõlemad keelavad kustutamise)
-    const [usedInEntries, usedInPlans] = await Promise.all([
+    const [usedInEntries, usedInPlans, usedInStock] = await Promise.all([
       prisma.workEntryLine.count({ where: { materialId: id } }),
-      prisma.fieldWorkLine.count({ where: { materialId: id } })
+      prisma.fieldWorkLine.count({ where: { materialId: id } }),
+      prisma.stockDocumentLine.count({ where: { materialId: id } })
     ]);
-    if (usedInEntries || usedInPlans) {
-      const where = [usedInEntries ? `${usedInEntries} kandes` : null, usedInPlans ? `${usedInPlans} töö plaanis` : null].filter(Boolean).join(' ja ');
+    if (usedInEntries || usedInPlans || usedInStock) {
+      const where = [
+        usedInEntries ? `${usedInEntries} kandes` : null,
+        usedInPlans ? `${usedInPlans} töö plaanis` : null,
+        usedInStock ? `${usedInStock} laokandes` : null
+      ].filter(Boolean).join(' ja ');
       json(res, { error: `Materjal on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
@@ -1043,9 +1083,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Töö ja kuupäev on kohustuslikud' }, 400);
       return true;
     }
-    const saved = await prisma.workEntry.create({
-      data: { ...data, date: data.date, fieldWorkId: work.id, createdById: userId, lines: { create: drafts } },
-      include: ENTRY_INCLUDE
+    const saved = await tenantTransaction(async (tx) => {
+      const created = await tx.workEntry.create({
+        data: { ...data, date: data.date!, fieldWorkId: work.id, createdById: userId, lines: { create: drafts } }
+      });
+      await recomputeMaterialStock(tx, materialIdsOf(drafts));
+      return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
     });
     await syncFieldWorkStatus(work.id, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
@@ -1063,16 +1106,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
     const saved = await tenantTransaction(async (tx) => {
       await tx.workEntryLine.deleteMany({ where: { entryId: id } });
-      return tx.workEntry.update({
+      const updated = await tx.workEntry.update({
         where: { id },
         data: {
           ...data,
           date: data.date!,
           financeStatus: merged.financeStatus,
           lines: { create: merged.lines.map((l) => ({ ...l, unitPrice: l.unitPrice })) }
-        },
-        include: ENTRY_INCLUDE
+        }
       });
+      await recomputeMaterialStock(tx, [...materialIdsOf(old.lines), ...materialIdsOf(merged.lines)]);
+      return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
     });
     await syncFieldWorkStatus(old.fieldWorkId, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
@@ -1080,7 +1124,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/work-entries/') && method === 'DELETE') {
     const id = idOf('/api/work-entries/');
-    const e = await prisma.workEntry.findUnique({ where: { id } });
+    const e = await prisma.workEntry.findUnique({ where: { id }, include: { lines: { select: { kind: true, materialId: true } } } });
     if (!e) {
       json(res, { error: 'Kannet ei leitud' }, 404);
       return true;
@@ -1090,7 +1134,10 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Kinnitatud kannet saab kustutada ainult finantsjuht' }, 403);
       return true;
     }
-    await prisma.workEntry.delete({ where: { id } });
+    await tenantTransaction(async (tx) => {
+      await tx.workEntry.delete({ where: { id } });
+      await recomputeMaterialStock(tx, materialIdsOf(e.lines));
+    });
     await syncFieldWorkStatus(e.fieldWorkId, false, userId, prisma);
     json(res, { success: true, id });
     return true;
@@ -1172,12 +1219,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         return true;
       }
       const prices: Record<string, unknown> = b?.prices && typeof b.prices === 'object' ? b.prices : {};
+      // Materjaliridade hind tuleb laost (FIFO), käsitsi seda ei muudeta
       const lines = entry.lines.map((l) => ({
         ...l,
-        unitPrice: l.id in prices ? num(prices[l.id]) : decimalToNumber(l.unitPrice)
+        unitPrice: l.kind !== 'MATERIAL' && l.id in prices ? num(prices[l.id]) : decimalToNumber(l.unitPrice)
       }));
       if (b?.confirm === true && !canConfirm(lines)) {
-        json(res, { error: 'Igal real peab olema ühiku kulu' }, 400);
+        json(res, { error: 'Igal real peab olema ühiku kulu. Materjali hind tuleb laost — hindamata materjal ootab arvele võtmist.' }, 400);
         return true;
       }
       await tenantTransaction(async (tx) => {

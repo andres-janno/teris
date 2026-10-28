@@ -98,3 +98,16 @@ describe('laoseisu ümberarvutus', () => {
     expect(line?.fifoCost).toBeNull();
   });
 });
+
+import { materialStockSummary } from './stock';
+
+describe('materjalide laoseisu kokkuvõte', () => {
+  it('summeerib laod ja filtreerib ühe lao', async () => {
+    const all = await run(() => tenantTransaction((tx) => materialStockSummary(tx, null)));
+    const one = await run(() => tenantTransaction((tx) => materialStockSummary(tx, otherWh)));
+    const a = all.get(materialId)!;
+    const o = one.get(materialId)!;
+    expect(a.qty).toBe(300); // 500 − 200; ülekanne laosiseselt neutraalne
+    expect(o.qty).toBe(400);
+  });
+});

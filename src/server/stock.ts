@@ -133,3 +133,19 @@ export async function transferShortageKeys(tx: TxClient, materialIds: string[]):
   });
   return new Set(rows.map((r) => `${r.documentId}:${r.materialId}`));
 }
+
+export interface StockSummary { qty: number; value: number; unpricedQty: number }
+
+/** Materjalide laoseis: valitud lao või kõigi ladude summa. */
+export async function materialStockSummary(tx: TxClient, warehouseId: string | null): Promise<Map<string, StockSummary>> {
+  const rows = await tx.materialStock.findMany({ where: warehouseId ? { warehouseId } : {} });
+  const out = new Map<string, StockSummary>();
+  for (const r of rows) {
+    const s = out.get(r.materialId) ?? { qty: 0, value: 0, unpricedQty: 0 };
+    s.qty = Math.round((s.qty + r.qty) * 1e6) / 1e6;
+    s.value = Math.round((s.value + Number(r.value)) * 100) / 100;
+    s.unpricedQty = Math.round((s.unpricedQty + r.unpricedQty) * 1e6) / 1e6;
+    out.set(r.materialId, s);
+  }
+  return out;
+}
