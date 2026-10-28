@@ -3,15 +3,29 @@ import { useEffect, useState } from 'react';
 import { platformApi, type LandingStats } from './platformApi.ts';
 import { DateInput } from '../components/DateInput.tsx';
 import { formatDate, formatTallinn } from './format.ts';
+import { VisitsChart } from './VisitsChart.tsx';
 
 const tallinnDay = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(d);
 const CLASS_LABELS: Record<string, string> = { ai_bot: 'AI', search_bot: 'Otsing', other_bot: 'Muu' };
 const DEVICE_LABELS: Record<string, string> = { desktop: 'Arvuti', mobile: 'Telefon', tablet: 'Tahvel' };
+const daysAgo = (n: number) => tallinnDay(new Date(Date.now() - n * 24 * 60 * 60 * 1000));
+// Perioodi kiirvalikud; vaikimisi viimased 30 päeva (täna kaasa arvatud)
+const PRESETS = [
+  { days: 7, label: '7 päeva' },
+  { days: 30, label: '30 päeva' },
+  { days: 90, label: '90 päeva' },
+  { days: 365, label: '12 kuud' }
+];
 const pct = (a: number, b: number) => (b ? `${Math.round((a / b) * 1000) / 10}%` : '–');
 
 export function LandingStatsView() {
-  const [from, setFrom] = useState(() => tallinnDay(new Date(Date.now() - 29 * 24 * 60 * 60 * 1000)));
-  const [to, setTo] = useState(() => tallinnDay(new Date()));
+  const [from, setFrom] = useState(() => daysAgo(29));
+  const [to, setTo] = useState(() => daysAgo(0));
+  const today = daysAgo(0);
+  const applyPreset = (days: number) => {
+    setFrom(daysAgo(days - 1));
+    setTo(today);
+  };
   const [stats, setStats] = useState<LandingStats | null>(null);
   const [error, setError] = useState('');
 
@@ -35,6 +49,19 @@ export function LandingStatsView() {
     <div className="glass-card admin-card">
       <h2>Landing</h2>
       <div className="admin-filter-row">
+        <span>Periood</span>
+        <div className="admin-preset-group">
+          {PRESETS.map((p) => (
+            <button
+              key={p.days}
+              type="button"
+              className={`btn btn-sm ${to === today && from === daysAgo(p.days - 1) ? 'btn-primary' : 'btn-secondary'}`}
+              onClick={() => applyPreset(p.days)}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
         <label htmlFor="ls-from">Alates</label>
         <DateInput id="ls-from" className="form-input" value={from} onChange={setFrom} />
         <label htmlFor="ls-to">Kuni</label>
@@ -68,16 +95,20 @@ export function LandingStatsView() {
             </div>
           </div>
 
-          <h3>Päevad</h3>
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead><tr><th>Päev</th><th>Külastajad</th><th>Vaatamised</th></tr></thead>
-              <tbody>
-                {stats.daily.length === 0 && <tr><td colSpan={3}>Külastusi pole</td></tr>}
-                {stats.daily.map((d) => <tr key={d.day}><td>{formatDate(d.day)}</td><td>{d.visitors}</td><td>{d.views}</td></tr>)}
-              </tbody>
-            </table>
-          </div>
+          <h3>Külastajad</h3>
+          <VisitsChart daily={stats.daily} from={stats.from.slice(0, 10)} to={stats.to.slice(0, 10)} />
+          <details className="admin-details">
+            <summary>Näita tabelina</summary>
+            <div className="admin-table-wrap">
+              <table className="admin-table">
+                <thead><tr><th>Päev</th><th>Külastajad</th><th>Vaatamised</th></tr></thead>
+                <tbody>
+                  {stats.daily.length === 0 && <tr><td colSpan={3}>Külastusi pole</td></tr>}
+                  {stats.daily.map((d) => <tr key={d.day}><td>{formatDate(d.day)}</td><td>{d.visitors}</td><td>{d.views}</td></tr>)}
+                </tbody>
+              </table>
+            </div>
+          </details>
 
           <div className="admin-two-col">
             <div>
