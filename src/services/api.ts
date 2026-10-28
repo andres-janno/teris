@@ -10,6 +10,7 @@ import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Material, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
+import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, MaterialMovements, StockLevel } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -637,16 +638,52 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/work-types/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö kustutamine ebaõnnestus');
   },
 
-  async getMaterials(year?: number): Promise<Material[]> {
-    return jsonOrThrow(await apiFetch(year ? `/api/materials?year=${year}` : '/api/materials'), 'Materjalide laadimine ebaõnnestus');
+  async getMaterials(year?: number, warehouseId?: string): Promise<Material[]> {
+    const q = new URLSearchParams();
+    if (year) q.set('year', String(year));
+    if (warehouseId) q.set('warehouseId', warehouseId);
+    const qs = q.toString();
+    return jsonOrThrow(await apiFetch(qs ? `/api/materials?${qs}` : '/api/materials'), 'Materjalide laadimine ebaõnnestus');
   },
 
-  async saveMaterial(m: Partial<Material>): Promise<Material> {
-    return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', m)), 'Materjali salvestamine ebaõnnestus');
+  async saveMaterial(m: Partial<Material>, confirmUnitChange = false): Promise<Material> {
+    return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
   },
 
   async deleteMaterial(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
+  },
+
+  async getWarehouses(): Promise<Warehouse[]> {
+    return jsonOrThrow(await apiFetch('/api/warehouses'), 'Ladude laadimine ebaõnnestus');
+  },
+  async saveWarehouse(w: Partial<Warehouse>): Promise<Warehouse> {
+    return jsonOrThrow(await apiFetch('/api/warehouses', jsonInit('POST', w)), 'Lao salvestamine ebaõnnestus');
+  },
+  async deleteWarehouse(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/warehouses/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Lao kustutamine ebaõnnestus');
+  },
+  async getStockLevels(warehouseId?: string): Promise<StockLevel[]> {
+    return jsonOrThrow(await apiFetch(`/api/stock/levels${warehouseId ? `?warehouseId=${encodeURIComponent(warehouseId)}` : ''}`), 'Laoseisu laadimine ebaõnnestus');
+  },
+  async getStockDocuments(f: StockDocumentFilter = {}): Promise<StockDocument[]> {
+    const q = new URLSearchParams(Object.entries(f).filter(([, v]) => !!v) as [string, string][]);
+    return jsonOrThrow(await apiFetch(`/api/stock/documents?${q}`), 'Laokannete laadimine ebaõnnestus');
+  },
+  async saveStockDocument(input: StockDocumentInput, id?: string): Promise<StockDocument> {
+    return jsonOrThrow(
+      await apiFetch(id ? `/api/stock/documents/${encodeURIComponent(id)}` : '/api/stock/documents', jsonInit(id ? 'PUT' : 'POST', input)),
+      'Laokande salvestamine ebaõnnestus'
+    );
+  },
+  async deleteStockDocument(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/stock/documents/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Laokande kustutamine ebaõnnestus');
+  },
+  async getMaterialMovements(materialId: string, warehouseId?: string): Promise<MaterialMovements> {
+    return jsonOrThrow(
+      await apiFetch(`/api/stock/materials/${encodeURIComponent(materialId)}/movements${warehouseId ? `?warehouseId=${encodeURIComponent(warehouseId)}` : ''}`),
+      'Laokaardi laadimine ebaõnnestus'
+    );
   },
 
   async getFieldSeasonWorks(fieldId: number | string, year: number): Promise<FieldSeasonWorks> {
@@ -715,7 +752,12 @@ function jsonInit(method: string, body: unknown): RequestInit {
 }
 
 // Veateade serverist (eesti keeles) visatakse edasi, et selle saaks kasutajale näidata.
+// Vastuse keha jääb veaobjekti külge (body), nt needsConfirm-vastuse lugemiseks.
 async function jsonOrThrow<T>(res: Response, fallback: string): Promise<T> {
-  if (!res.ok) throw new Error(await errorMessage(res, fallback));
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const message = typeof data?.error === 'string' ? data.error : fallback;
+    throw Object.assign(new Error(message), { status: res.status, body: data });
+  }
   return res.json();
 }

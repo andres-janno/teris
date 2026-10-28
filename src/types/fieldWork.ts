@@ -57,6 +57,10 @@ export interface Material {
   usageCount?: number;
   plannedQty?: number | null; // hooaja planeeritud kogus (ainult ?year= päringul)
   usedQty?: number | null; // hooaja kasutatud kogus
+  stockQty?: number; // laoseis laoühikus (valitud lao või kõigi ladude summa)
+  unpricedQty?: number; // hindamata kogus (ootab arvele võtmist)
+  stockIssueCount?: number; // kanderead, mida ei saa laoühikusse teisendada
+  stockValue?: number; // laoväärtus € (ainult finantsõigusega)
 }
 
 // Uue kulumaterjali vaikeväärtused
@@ -111,6 +115,7 @@ export interface WorkEntry {
   financeNotes?: string | null;
   financeConfirmedAt?: string | null;
   lines?: WorkEntryLine[];
+  warehouseId?: string | null; // ladu, kust materjalid võetakse; tühi = põhiladu
 }
 
 export interface FieldWork {
@@ -216,6 +221,7 @@ export interface WorkEntryInput {
   observations?: WorkEntryObservation[];
   notes: string | null;
   finish: boolean;
+  warehouseId?: string | null; // ladu, kust materjalid võetakse; tühi = põhiladu
 }
 
 export interface FinanceEntry extends WorkEntry {

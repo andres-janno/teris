@@ -20,4 +20,5 @@ export interface PointOfInterest {
   radiusM?: number;           // objekti raadius (m), 5–1000, vaikimisi 25; sõidu punkt selle sees loetakse objekti juures olevaks
   isActive: boolean;
   createdAt: string;
+  warehouse?: { id: string; name: string }; // laoga seotud huvipunkt
 }
