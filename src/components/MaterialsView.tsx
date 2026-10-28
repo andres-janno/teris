@@ -78,7 +78,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
     const q = search.trim().toLowerCase();
     return materials
       .filter((m) => category === 'all' || m.category === category)
-      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
   }, [materials, category, search]);
 

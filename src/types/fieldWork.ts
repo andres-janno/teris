@@ -54,6 +54,7 @@ export interface Material {
   manufacturer: string | null; // tootja
   cropVarietyId: string | null;
   isActive: boolean;
+  composition: string | null; // koostisosad
   notes: string | null;
   usageCount?: number;
   plannedQty?: number | null; // hooaja planeeritud kogus (ainult ?year= päringul)

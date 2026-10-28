@@ -7,6 +7,13 @@ import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
 
+// Tekstiväli kasvab sisu järgi; field-sizing'ut mittetoetavas brauseris seatakse kõrgus käsitsi
+const autoGrow = (el: HTMLTextAreaElement | null) => {
+  if (!el || CSS.supports('field-sizing', 'content')) return;
+  el.style.height = 'auto';
+  el.style.height = `${Math.min(el.scrollHeight + 2, 320)}px`;
+};
+
 interface MaterialFormDialogProps {
   initial: Partial<Material>;
   onClose: () => void;
@@ -96,8 +103,12 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
               <datalist id="material-units"><option value="kg" /><option value="l" /><option value="t" /><option value="tk" /></datalist>
             </div>
             <div className="form-group full-width">
+              <label htmlFor="mt-composition">Koostisosad</label>
+              <textarea id="mt-composition" ref={autoGrow} rows={2} className="form-input auto-resize-textarea" placeholder="nt toimeained ja sisaldus, N-P-K" value={form.composition ?? ''} onChange={(e) => { autoGrow(e.target); setForm({ ...form, composition: e.target.value }); }} />
+            </div>
+            <div className="form-group full-width">
               <label htmlFor="mt-notes">Märkus</label>
-              <input id="mt-notes" className="form-input" placeholder="nt ERP tootekood" value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+              <textarea id="mt-notes" ref={autoGrow} rows={2} className="form-input auto-resize-textarea" placeholder="nt ERP tootekood" value={form.notes ?? ''} onChange={(e) => { autoGrow(e.target); setForm({ ...form, notes: e.target.value }); }} />
             </div>
             <label className="users-admin-checkbox full-width">
               <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
