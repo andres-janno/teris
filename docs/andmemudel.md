@@ -1,6 +1,6 @@
 # Andmemudel (ERD)
 
-Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-10-26). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
+Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-10-28). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
 
 Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-ja-andmed.md](vaated-ja-andmed.md).
 
@@ -14,10 +14,10 @@ Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-j
 1. [Põllud, hooajad ja kultuurid](#põllud-hooajad-ja-kultuurid)
 2. [Põllutööd ja kanded](#põllutööd-ja-kanded)
 3. [Masinapark, telemeetria ja objektid](#masinapark-telemeetria-ja-objektid)
-4. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
-5. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
-6. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
-7. [Laoarvestus](#laoarvestus)
+4. [Laoarvestus](#laoarvestus)
+5. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
+6. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
+7. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
 8. [Loendid (enum)](#loendid-enum)
 
 ## Põllud, hooajad ja kultuurid
@@ -288,6 +288,8 @@ erDiagram
     String notes "valikuline"
     DateTime dateTo "valikuline"
     String method "valikuline"
+    Float harvestBunkers "valikuline"
+    String warehouseId FK "valikuline"
     WorkSource source
     String createdById FK "valikuline"
     FinanceStatus financeStatus
@@ -327,6 +329,7 @@ erDiagram
     String cropVarietyId FK "valikuline"
     Boolean isActive
     String notes "valikuline"
+    Int stockIssueCount
     DateTime createdAt
     DateTime updatedAt
   }
@@ -368,12 +371,25 @@ erDiagram
     String id PK
     String assignedDeviceId FK,UK "valikuline"
   }
+  Warehouse {
+    String id PK
+    String poiId FK,UK "valikuline"
+  }
   CropVariety {
     String id PK
     String cropId FK
   }
   Crop {
     String id PK
+  }
+  StockDocumentLine {
+    String id PK
+    String documentId FK
+    String materialId FK
+  }
+  MaterialStock {
+    String materialId FK
+    String warehouseId FK
   }
   FieldSeason ||--o{ FieldWork : "fieldSeason"
   WorkType ||--o{ FieldWork : "workType"
@@ -385,6 +401,7 @@ erDiagram
   RelatedParty |o--o{ WorkEntry : "worker"
   Vehicle |o--o{ WorkEntry : "vehicle"
   Implement |o--o{ WorkEntry : "implement"
+  Warehouse |o--o{ WorkEntry : "warehouse"
   User |o--o{ WorkEntry : "createdByUser"
   User |o--o{ WorkEntry : "financeConfirmedBy"
   WorkEntry ||--o{ WorkEntryLine : "entry"
@@ -395,6 +412,8 @@ erDiagram
   Crop |o--o{ WorkTemplate : "crop"
   WorkTemplate ||--o{ WorkTemplateItem : "template"
   WorkType ||--o{ WorkTemplateItem : "workType"
+  Material ||--o{ StockDocumentLine : "material"
+  Material ||--o{ MaterialStock : "material"
 ```
 
 ## Masinapark, telemeetria ja objektid
@@ -532,6 +551,7 @@ erDiagram
     String workerId FK "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
+    String warehouseId FK "valikuline"
     String createdById FK "valikuline"
     String financeConfirmedById FK "valikuline"
   }
@@ -541,6 +561,10 @@ erDiagram
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
     String materialId FK "valikuline"
+  }
+  Warehouse {
+    String id PK
+    String poiId FK,UK "valikuline"
   }
   RelatedParty |o--o{ Vehicle : "assignedDriver"
   Implement |o--o| Vehicle : "assignedImplement"
@@ -556,6 +580,98 @@ erDiagram
   Implement |o--o{ WorkEntry : "implement"
   Vehicle |o--o{ WorkEntryLine : "vehicle"
   Implement |o--o{ WorkEntryLine : "implement"
+  PointOfInterest |o--o| Warehouse : "poi"
+```
+
+## Laoarvestus
+
+Kulumaterjalide laod, laokanded ja laoseisu koond. Põllutöö kande materjalid kantakse maha kande lao (`WorkEntry.warehouseId`) järgi.
+
+| Mudel | Tabel | Ettevõttepõhine | Sisu |
+|---|---|---|---|
+| `Warehouse` | `warehouses` | jah | Ladu (üks põhiladu); valikuline seos huvipunktiga |
+| `StockDocument` | `stock_documents` | jah | Laokanne: arvele võtmine, mahakandmine või ülekanne |
+| `StockDocumentLine` | `stock_document_lines` | jah | Laokande rida: materjal, kogus, hind, FIFO kulu, hindamata kogus |
+| `MaterialStock` | `material_stock` | jah | Laoseisu koond materjali ja lao kaupa (kogus, väärtus) |
+
+- `warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).
+- `stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.
+- `material_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.
+- `work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).
+- FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.
+
+```mermaid
+erDiagram
+  Warehouse {
+    String id PK
+    String name
+    Boolean isDefault
+    Boolean isActive
+    String poiId FK,UK "valikuline"
+    String notes "valikuline"
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  StockDocument {
+    String id PK
+    StockDocumentKind kind
+    DateTime date
+    String warehouseId FK
+    String toWarehouseId FK "valikuline"
+    String supplierId FK "valikuline"
+    String documentNo "valikuline"
+    WriteOffReason writeOffReason "valikuline"
+    String notes "valikuline"
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  StockDocumentLine {
+    String id PK
+    String documentId FK
+    String materialId FK
+    Float quantity
+    Decimal amount "valikuline"
+    Decimal fifoCost "valikuline"
+    Float shortageQty "valikuline"
+    Int sortOrder
+  }
+  MaterialStock {
+    String materialId FK
+    String warehouseId FK
+    Float qty
+    Decimal value
+    Float unpricedQty
+  }
+  PointOfInterest {
+    String id PK
+    String contactPartyId FK "valikuline"
+  }
+  RelatedParty {
+    String id PK
+  }
+  Material {
+    String id PK
+    String cropVarietyId FK "valikuline"
+  }
+  WorkEntry {
+    String id PK
+    String fieldWorkId FK
+    String workerId FK "valikuline"
+    String vehicleId FK "valikuline"
+    String implementId FK "valikuline"
+    String warehouseId FK "valikuline"
+    String createdById FK "valikuline"
+    String financeConfirmedById FK "valikuline"
+  }
+  PointOfInterest |o--o| Warehouse : "poi"
+  Warehouse ||--o{ StockDocument : "warehouse"
+  Warehouse |o--o{ StockDocument : "toWarehouse"
+  RelatedParty |o--o{ StockDocument : "supplier"
+  StockDocument ||--o{ StockDocumentLine : "document"
+  Material ||--o{ StockDocumentLine : "material"
+  Material ||--o{ MaterialStock : "material"
+  Warehouse ||--o{ MaterialStock : "warehouse"
+  Warehouse |o--o{ WorkEntry : "warehouse"
 ```
 
 ## Isikud, kasutajad ja tugi
@@ -666,8 +782,15 @@ erDiagram
     String workerId FK "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
+    String warehouseId FK "valikuline"
     String createdById FK "valikuline"
     String financeConfirmedById FK "valikuline"
+  }
+  StockDocument {
+    String id PK
+    String warehouseId FK
+    String toWarehouseId FK "valikuline"
+    String supplierId FK "valikuline"
   }
   User ||--o{ Session : "user"
   User ||--o{ PasswordToken : "user"
@@ -682,6 +805,7 @@ erDiagram
   RelatedParty |o--o{ WorkEntry : "worker"
   User |o--o{ WorkEntry : "createdByUser"
   User |o--o{ WorkEntry : "financeConfirmedBy"
+  RelatedParty |o--o{ StockDocument : "supplier"
 ```
 
 ## Platvorm (teenusepakkuja)
@@ -897,12 +1021,21 @@ erDiagram
   RelatedParty |o--o{ WorkEntry : "worker"
   Vehicle |o--o{ WorkEntry : "vehicle"
   Implement |o--o{ WorkEntry : "implement"
+  Warehouse |o--o{ WorkEntry : "warehouse"
   User |o--o{ WorkEntry : "createdByUser"
   User |o--o{ WorkEntry : "financeConfirmedBy"
   WorkEntry ||--o{ WorkEntryLine : "entry"
   Vehicle |o--o{ WorkEntryLine : "vehicle"
   Implement |o--o{ WorkEntryLine : "implement"
   Material |o--o{ WorkEntryLine : "material"
+  PointOfInterest |o--o| Warehouse : "poi"
+  Warehouse ||--o{ StockDocument : "warehouse"
+  Warehouse |o--o{ StockDocument : "toWarehouse"
+  RelatedParty |o--o{ StockDocument : "supplier"
+  StockDocument ||--o{ StockDocumentLine : "document"
+  Material ||--o{ StockDocumentLine : "material"
+  Material ||--o{ MaterialStock : "material"
+  Warehouse ||--o{ MaterialStock : "warehouse"
   User ||--o{ Session : "user"
   User ||--o{ SupportGrant : "grantedBy"
   SupportGrant ||--o{ SupportAccessLog : "grant"
@@ -913,14 +1046,6 @@ erDiagram
   CatalogWorkTemplate ||--o{ CatalogWorkTemplateItem : "template"
   CatalogWorkType ||--o{ CatalogWorkTemplateItem : "workType"
 ```
-
-## Laoarvestus
-
-- `warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).
-- `stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.
-- `material_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.
-- `work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).
-- FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.
 
 ## Loendid (enum)
 
@@ -933,7 +1058,7 @@ erDiagram
 | `DeviceStatus` | `WORKING`, `MOVING`, `STOPPED`, `IDLING`, `OFFLINE` |
 | `OwnershipType` | `OWNED`, `RENTED` |
 | `PartyType` | `PERSON`, `LEGAL_ENTITY` |
-| `PartyRole` | `LANDOWNER`, `DRIVER`, `OPERATOR`, `OTHER` |
+| `PartyRole` | `LANDOWNER`, `DRIVER`, `OPERATOR`, `SUPPLIER`, `OTHER` |
 | `DeviceConnectivity` | `CELLULAR`, `EYE_SENSOR` |
 | `DeviceIdentifierKind` | `IMEI`, `MAC` |
 | `CropGroup` | `CEREAL`, `OILSEED`, `LEGUME`, `FORAGE_GRASS`, `FALLOW`, `OTHER` |
@@ -944,6 +1069,8 @@ erDiagram
 | `FinanceStatus` | `PENDING`, `CONFIRMED`, `CHANGED` |
 | `WorkSource` | `MANUAL`, `PRIA_IMPORT` |
 | `MaterialCategory` | `SEED`, `FERTILIZER`, `PLANT_PROTECTION`, `OTHER` |
+| `StockDocumentKind` | `RECEIPT`, `WRITE_OFF`, `TRANSFER` |
+| `WriteOffReason` | `SPOILED`, `INVENTORY`, `OTHER` |
 | `TenantStatus` | `ACTIVE`, `SUSPENDED` |
 | `LicenseModule` | `TELEMETRY`, `SATELLITE`, `WEATHER` |
 | `InterestStatus` | `NEW`, `CONTACTED`, `CLOSED` |

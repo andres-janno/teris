@@ -41,6 +41,18 @@ const DOMAINS: Domain[] = [
     notes: ['Telemeetria (GPS, süüde, kiirus jm) on eraldi TimescaleDB andmebaasis (`measurements`), seotud seadme IMEI kaudu.']
   },
   {
+    title: 'Laoarvestus',
+    intro: 'Kulumaterjalide laod, laokanded ja laoseisu koond. Põllutöö kande materjalid kantakse maha kande lao (`WorkEntry.warehouseId`) järgi.',
+    models: ['Warehouse', 'StockDocument', 'StockDocumentLine', 'MaterialStock'],
+    notes: [
+      '`warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).',
+      '`stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.',
+      '`material_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.',
+      '`work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).',
+      'FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.'
+    ]
+  },
+  {
     title: 'Isikud, kasutajad ja tugi',
     intro: 'Seotud isikud (töötajad, omanikud, operaatorid, partnerid) ja rakenduse kasutajad. Tugiligipääs lubab teenusepakkujal ettevõtte andmeid ajutiselt vaadata.',
     models: ['RelatedParty', 'User', 'Session', 'PasswordToken', 'SupportGrant', 'SupportAccessLog']
@@ -77,6 +89,10 @@ const DESCRIPTIONS: Record<string, string> = {
   DeviceAssignment: 'Seadme paigaldus masinale/haakeriistale ajavahemikus',
   ImplementAssignment: 'Haakeriista ühendus masinaga ajavahemikus',
   PointOfInterest: 'Objekt (kuivati, ladu, töökoda jm): asukoht, raadius, kontakt',
+  Warehouse: 'Ladu (üks põhiladu); valikuline seos huvipunktiga',
+  StockDocument: 'Laokanne: arvele võtmine, mahakandmine või ülekanne',
+  StockDocumentLine: 'Laokande rida: materjal, kogus, hind, FIFO kulu, hindamata kogus',
+  MaterialStock: 'Laoseisu koond materjali ja lao kaupa (kogus, väärtus)',
   RelatedParty: 'Seotud isik/ettevõte: töötaja, omanik, operaator, partner',
   User: 'Rakenduse kasutaja (ettevõtte), rollid',
   Session: 'Kasutaja sessioon',
