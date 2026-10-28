@@ -22,11 +22,25 @@ describe('classifyUserAgent', () => {
     expect(classifyUserAgent('Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)')).toEqual({ visitorClass: 'search_bot', botName: 'Googlebot' });
     expect(classifyUserAgent('Mozilla/5.0 (compatible; bingbot/2.0)')).toEqual({ visitorClass: 'search_bot', botName: 'bingbot' });
   });
-  it('muud robotid ja tühi UA', () => {
-    expect(classifyUserAgent('curl/8.4.0')).toEqual({ visitorClass: 'other_bot', botName: null });
-    expect(classifyUserAgent('SomeCrawler/1.0')).toEqual({ visitorClass: 'other_bot', botName: null });
-    expect(classifyUserAgent('')).toEqual({ visitorClass: 'other_bot', botName: null });
-    expect(classifyUserAgent(undefined)).toEqual({ visitorClass: 'other_bot', botName: null });
+  it('lingi eelvaated, SEO-roomajad ja skriptid', () => {
+    expect(classifyUserAgent('Mozilla/5.0 (Macintosh; Intel Mac OS X 10_11_1) AppleWebKit/601.2.4 (KHTML, like Gecko) Version/9.0.1 Safari/601.2.4 facebookexternalhit/1.1 Facebot Twitterbot/1.0'))
+      .toEqual({ visitorClass: 'social_bot', botName: 'facebookexternalhit' });
+    expect(classifyUserAgent('WhatsApp/2.23.20.0')).toEqual({ visitorClass: 'social_bot', botName: 'WhatsApp' });
+    expect(classifyUserAgent('Mozilla/5.0 (compatible; AhrefsBot/7.0; +http://ahrefs.com/robot/)')).toEqual({ visitorClass: 'seo_bot', botName: 'AhrefsBot' });
+    expect(classifyUserAgent('Mozilla/5.0 (compatible; SemrushBot/7~bl; +http://www.semrush.com/bot.html)')).toEqual({ visitorClass: 'seo_bot', botName: 'SemrushBot' });
+    expect(classifyUserAgent('curl/8.4.0')).toEqual({ visitorClass: 'script', botName: 'curl' });
+    expect(classifyUserAgent('python-requests/2.32.5')).toEqual({ visitorClass: 'script', botName: 'python-requests' });
+    expect(classifyUserAgent('Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/121.0.6167.139 Safari/537.36'))
+      .toEqual({ visitorClass: 'script', botName: 'HeadlessChrome' });
+  });
+  it('muud robotid saavad nime UA-st, tühi UA eraldi', () => {
+    expect(classifyUserAgent('SomeCrawler/1.0')).toEqual({ visitorClass: 'other_bot', botName: 'SomeCrawler' });
+    expect(classifyUserAgent('Mozilla/5.0 (compatible; QlyzeBot/1.0; +https://app.qlyze.io/bot)')).toEqual({ visitorClass: 'other_bot', botName: 'QlyzeBot' });
+    expect(classifyUserAgent('ApcosysBot/1.0 (+https://apcosys.net)')).toEqual({ visitorClass: 'other_bot', botName: 'ApcosysBot' });
+    expect(classifyUserAgent('RecordedFuture Global Inventory Crawler')).toEqual({ visitorClass: 'other_bot', botName: 'RecordedFuture Global Inventory Crawler' });
+    expect(classifyUserAgent('2ip bot/1.1 (+https://2ip.io/bot/)')).toEqual({ visitorClass: 'other_bot', botName: '2ip bot' });
+    expect(classifyUserAgent('')).toEqual({ visitorClass: 'other_bot', botName: 'UA puudub' });
+    expect(classifyUserAgent(undefined)).toEqual({ visitorClass: 'other_bot', botName: 'UA puudub' });
   });
   it('inimese brauserid', () => {
     for (const ua of [CHROME, IPHONE, IPAD, ANDROID_PHONE]) expect(classifyUserAgent(ua)).toEqual({ visitorClass: 'human', botName: null });

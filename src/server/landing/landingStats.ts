@@ -39,7 +39,7 @@ export async function landingStats(from: string, to: string): Promise<LandingSta
       SELECT "device", count(DISTINCT ("visitorHash", ${day})) AS visitors
       FROM landing_events WHERE "event" = 'view' AND ${humanViews} GROUP BY 1 ORDER BY 2 DESC`,
     db.$queryRaw<{ visitorClass: string; botName: string; hits: bigint; llmsTxtHits: bigint; llmsTxtLastSeen: Date | null; lastSeen: Date }[]>`
-      SELECT "visitorClass", coalesce("botName", 'muu') AS "botName", count(*) AS hits,
+      SELECT "visitorClass", coalesce("botName", 'täpsustamata (enne 28.10.2026)') AS "botName", count(*) AS hits,
              count(*) FILTER (WHERE "path" = '/llms.txt') AS "llmsTxtHits",
              max("ts") FILTER (WHERE "path" = '/llms.txt') AS "llmsTxtLastSeen", max("ts") AS "lastSeen"
       FROM landing_events WHERE "source" = 'server' AND "visitorClass" <> 'human' AND ${inRange}

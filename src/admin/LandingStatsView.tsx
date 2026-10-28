@@ -6,7 +6,9 @@ import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
 
 const tallinnDay = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(d);
-const CLASS_LABELS: Record<string, string> = { ai_bot: 'AI', search_bot: 'Otsing', other_bot: 'Muu' };
+const CLASS_LABELS: Record<string, string> = {
+  ai_bot: 'AI', search_bot: 'Otsing', seo_bot: 'SEO', social_bot: 'Lingi eelvaade', script: 'Skript', other_bot: 'Muu'
+};
 const DEVICE_LABELS: Record<string, string> = { desktop: 'Arvuti', mobile: 'Telefon', tablet: 'Tahvel' };
 const daysAgo = (n: number) => tallinnDay(new Date(Date.now() - n * 24 * 60 * 60 * 1000));
 // Perioodi kiirvalikud; vaikimisi viimased 30 päeva (täna kaasa arvatud)
