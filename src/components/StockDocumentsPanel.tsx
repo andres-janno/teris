@@ -113,7 +113,10 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, materials, on
                 <td>{party(d)}</td>
                 <td>{d.documentNo ?? ''}</td>
                 <td className="num">{d.lines.length}</td>
-                <td className="num">{fmtEur(d.total)}{d.hasUnpriced && <span className="muted" title="Osa ridu on hindamata"> *</span>}</td>
+                <td className="num">
+                  {d.hasShortage && <span className="stock-shortage-badge" title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</span>}
+                  {fmtEur(d.total)}{d.hasUnpriced && <span className="muted" title="Osa ridu on hindamata"> *</span>}
+                </td>
                 <td className="actions-col">
                   <div className="row-actions">
                     <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></button>

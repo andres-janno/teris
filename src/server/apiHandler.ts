@@ -20,7 +20,7 @@ import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdent
 import { syncOwnership } from './deviceOwnership.ts';
 import { ensureSeasons, isSeasonYear } from './seasons.ts';
 import { latestEarlierSeason, buildCopiedSeason, buildCopiedParcelLink } from './fieldSeasonCopy.ts';
-import { recomputeAllMaterialStock } from './stock.ts';
+import { getDefaultWarehouseId, recomputeAllMaterialStock } from './stock.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
@@ -1649,6 +1649,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         async (tx) => {
           let imported = 0, created = 0, complemented = 0, linked = 0, entriesAdded = 0, unknown = 0, movedToNext = 0;
           let types: PriaWorkTypes | null = null; // PRIA töötüübid laaditakse üks kord impordi kohta
+          const warehouseId = await getDefaultWarehouseId(tx); // imporditud kanded seotakse põhilaoga
           const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
           // Lukus hooajad impordi aastate järgi (hooajakirje seos võib puududa või viidata teisele aastale)
@@ -1688,7 +1689,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
                 currentOps = ops;
                 skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: `${split.next.length} tööd jäid hooajale ${f.season}, sest ${nextYear} on lukus` });
               } else {
-                const rn = await importFieldSeasonOperations(tx, nextSeason.id, split.next, { userId, fieldAreaHa: nextSeason.areaHa, types });
+                const rn = await importFieldSeasonOperations(tx, nextSeason.id, split.next, { userId, fieldAreaHa: nextSeason.areaHa, types, warehouseId });
                 created += rn.created;
                 complemented += rn.complemented;
                 linked += rn.linked;
@@ -1698,7 +1699,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
               }
             }
             const r = await importFieldSeasonOperations(tx, fieldSeason.id, currentOps, {
-              userId, fieldAreaHa: fieldSeason.areaHa, types
+              userId, fieldAreaHa: fieldSeason.areaHa, types, warehouseId
             });
             created += r.created;
             complemented += r.complemented;

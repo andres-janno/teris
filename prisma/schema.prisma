@@ -996,6 +996,7 @@ model MaterialStock {
   qty         Float   @default(0) // võib olla negatiivne
   value       Decimal @default(0) @db.Decimal(12, 2) // hinnatud partiide jääk
   unpricedQty Float   @default(0) // hindamata kogus (võlg või hindamata partii)
+  pricedQty   Float   @default(0) // hinnatud partiide kogus (keskmise hinna jagaja)
 
   material  Material  @relation(fields: [materialId], references: [id], onDelete: Cascade)
   warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)

@@ -73,3 +73,32 @@ export function parseStockDocument(body: unknown): { ok: true; doc: StockDocumen
     }
   };
 }
+
+// --- Õigused (laoseisu kogust näevad kõik; raha ning ladude ja laokannete muutmine finantsjuhile ja adminile) ---
+
+/** Kas päring nõuab finantsõigust: laokanded ja ladude muutmine. Ladude loend, laoseis ja laokaart on kõigile. */
+export function stockRequiresFinance(pathname: string, method: string): boolean {
+  if (pathname === '/api/stock/documents' || pathname.startsWith('/api/stock/documents/')) return true;
+  if ((pathname === '/api/warehouses' || pathname.startsWith('/api/warehouses/')) && method !== 'GET') return true;
+  return false;
+}
+
+/** Laokaardi rea rahaga seotud väljad: maksumus, tarnija ja dokumendi nr ainult finantsõigusega. */
+export function stockCardFinanceFields<T extends { cost: number | null; supplierName?: string | null; documentNo?: string | null }>(
+  finance: boolean,
+  fields: T
+): T | Record<string, never> {
+  return finance ? fields : {};
+}
+
+/** Materjali laoseisu väljad: kogus kõigile, väärtus ja hinnatud kogus ainult finantsõigusega. */
+export function materialStockFields(
+  finance: boolean,
+  s: { qty: number; value: number; unpricedQty: number; pricedQty: number } | undefined
+) {
+  return {
+    stockQty: s?.qty ?? 0,
+    unpricedQty: s?.unpricedQty ?? 0,
+    ...(finance ? { stockValue: s?.value ?? 0, pricedQty: s?.pricedQty ?? 0 } : {})
+  };
+}

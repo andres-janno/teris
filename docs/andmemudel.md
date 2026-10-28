@@ -641,6 +641,7 @@ erDiagram
     Float qty
     Decimal value
     Float unpricedQty
+    Float pricedQty
   }
   PointOfInterest {
     String id PK

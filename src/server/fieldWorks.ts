@@ -21,7 +21,8 @@ import {
   type StoredLine
 } from './fieldWorkRules.ts';
 import { materialSeasonTotals } from './materialUsage.ts';
-import { recomputeMaterialStock, materialStockSummary } from './stock.ts';
+import { recomputeMaterialStock, materialStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
+import { materialStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { type PriaAttrs } from '../services/pria.ts';
@@ -92,12 +93,10 @@ async function resolveEntryInput(body: any) {
   const workerId = text(body?.workerId, 64);
   const vehicleId = text(body?.vehicleId, 64);
   const implementId = text(body?.implementId, 64);
-  const warehouseIdIn = text(body?.warehouseId, 64);
-  const [worker, vehicle, implement, warehouse] = await Promise.all([
+  const [worker, vehicle, implement] = await Promise.all([
     workerId ? prisma.relatedParty.findUnique({ where: { id: workerId }, select: { id: true, name: true } }) : null,
     vehicleId ? prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true, name: true } }) : null,
-    implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null,
-    warehouseIdIn ? prisma.warehouse.findFirst({ where: { id: warehouseIdIn, isActive: true }, select: { id: true } }) : null
+    implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null
   ]);
   const materialsIn: { materialId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.materials) ? body.materials : [];
   const materialIds = materialsIn.map((m) => String(m.materialId ?? '')).filter(Boolean);
@@ -151,7 +150,6 @@ async function resolveEntryInput(body: any) {
       telemetryAreaHa: num(body?.telemetryAreaHa),
       vehicleId: vehicle?.id ?? null,
       implementId: implement?.id ?? null,
-      warehouseId: warehouse?.id ?? null,
       equipmentHours,
       fuelLiters,
       laborHours,
@@ -159,7 +157,9 @@ async function resolveEntryInput(body: any) {
       endTime,
       notes: text(body?.notes, 2000)
     },
-    drafts
+    drafts,
+    // Ladu lahendatakse tehingus (resolveEntryWarehouseId): valimata → põhiladu, mitteaktiivne ainult senisena
+    warehouseId: text(body?.warehouseId, 64)
   };
 }
 
@@ -701,10 +701,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         // valitud hooaja korral kannete arv selle hooaja kohta, muidu kõik kanded
         usageCount: totals ? (totals.get(m.id)?.entryCount ?? 0) : _count.entryLines,
         ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {}),
-        stockQty: stock.get(m.id)?.qty ?? 0,
-        unpricedQty: stock.get(m.id)?.unpricedQty ?? 0,
-        stockIssueCount: m.stockIssueCount,
-        ...(finance ? { stockValue: stock.get(m.id)?.value ?? 0 } : {})
+        ...materialStockFields(finance, stock.get(m.id)),
+        stockIssueCount: m.stockIssueCount
       }))
     );
     return true;
@@ -1078,18 +1076,30 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const b = await parseBody(req, MAX_BODY_BYTES);
     const fieldWorkId = text(b?.fieldWorkId, 64);
     const work = fieldWorkId ? await prisma.fieldWork.findUnique({ where: { id: fieldWorkId } }) : null;
-    const { data, drafts } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId } = await resolveEntryInput(b);
     if (!work || !data.date) {
       json(res, { error: 'Töö ja kuupäev on kohustuslikud' }, 400);
       return true;
     }
-    const saved = await tenantTransaction(async (tx) => {
-      const created = await tx.workEntry.create({
-        data: { ...data, date: data.date!, fieldWorkId: work.id, createdById: userId, lines: { create: drafts } }
+    let saved;
+    try {
+      saved = await tenantTransaction(async (tx) => {
+        const created = await tx.workEntry.create({
+          data: {
+            ...data, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
+            fieldWorkId: work.id, createdById: userId, lines: { create: drafts }
+          }
+        });
+        await recomputeMaterialStock(tx, materialIdsOf(drafts));
+        return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
       });
-      await recomputeMaterialStock(tx, materialIdsOf(drafts));
-      return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
-    });
+    } catch (err) {
+      if (err instanceof StockValidationError) {
+        json(res, { error: err.message }, 400);
+        return true;
+      }
+      throw err;
+    }
     await syncFieldWorkStatus(work.id, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
     return true;
@@ -1098,26 +1108,37 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/work-entries/');
     const b = await parseBody(req, MAX_BODY_BYTES);
     const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true } });
-    const { data, drafts } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId } = await resolveEntryInput(b);
     if (!old || !data.date) {
       json(res, { error: 'Kannet ei leitud või kuupäev puudub' }, 400);
       return true;
     }
     const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
-    const saved = await tenantTransaction(async (tx) => {
-      await tx.workEntryLine.deleteMany({ where: { entryId: id } });
-      const updated = await tx.workEntry.update({
-        where: { id },
-        data: {
-          ...data,
-          date: data.date!,
-          financeStatus: merged.financeStatus,
-          lines: { create: merged.lines.map((l) => ({ ...l, unitPrice: l.unitPrice })) }
-        }
+    let saved;
+    try {
+      saved = await tenantTransaction(async (tx) => {
+        const entryWarehouseId = await resolveEntryWarehouseId(tx, warehouseId, old.warehouseId);
+        await tx.workEntryLine.deleteMany({ where: { entryId: id } });
+        const updated = await tx.workEntry.update({
+          where: { id },
+          data: {
+            ...data,
+            date: data.date!,
+            warehouseId: entryWarehouseId,
+            financeStatus: merged.financeStatus,
+            lines: { create: merged.lines.map((l) => ({ ...l, unitPrice: l.unitPrice })) }
+          }
+        });
+        await recomputeMaterialStock(tx, [...materialIdsOf(old.lines), ...materialIdsOf(merged.lines)]);
+        return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
       });
-      await recomputeMaterialStock(tx, [...materialIdsOf(old.lines), ...materialIdsOf(merged.lines)]);
-      return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
-    });
+    } catch (err) {
+      if (err instanceof StockValidationError) {
+        json(res, { error: err.message }, 400);
+        return true;
+      }
+      throw err;
+    }
     await syncFieldWorkStatus(old.fieldWorkId, b?.finish === true, userId, prisma);
     json(res, entryDto(saved, canSeeFinance(req)));
     return true;

@@ -1,9 +1,13 @@
 // Laoseisu ümberarvutus ajutises ettevõttes (live-andmebaas); kustutatakse testi lõpus.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
-import { getDefaultWarehouseId, recomputeMaterialStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError } from './stock';
+import {
+  getDefaultWarehouseId, recomputeMaterialStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError,
+  saveWarehouse, resolveEntryWarehouseId
+} from './stock';
 
 const T = `test-tenant-stock-${process.pid}`;
+const T2 = `${T}-b`; // tühi ettevõte põhilao samaaegse loomise testiks
 // await laseb laisa Prisma lubaduse täita ettevõtte kontekstis
 const run = <R>(fn: () => Promise<R>): Promise<R> => runAsTenant(T, async () => await fn());
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
@@ -11,6 +15,7 @@ let materialId = '';
 let mainWh = '';
 let otherWh = '';
 let entryLineId = '';
+let fieldWorkId = '';
 
 beforeAll(async () => {
   await authDb().tenant.create({ data: { id: T, name: 'Test ladu' } });
@@ -23,6 +28,7 @@ beforeAll(async () => {
     const fs = await prisma.fieldSeason.create({ data: { fieldId: field.id, year: 2026, areaHa: 1, crop: 'test', geometry: {} } });
     const wt = await prisma.workType.create({ data: { name: 'Testväetamine', phase: 'CARE' } });
     const fw = await prisma.fieldWork.create({ data: { fieldSeasonId: fs.id, workTypeId: wt.id, phase: 'CARE' } });
+    fieldWorkId = fw.id;
     const entry = await prisma.workEntry.create({
       data: {
         fieldWorkId: fw.id, date: d('2026-05-10'),
@@ -49,7 +55,7 @@ afterAll(async () => {
     await prisma.material.deleteMany({});
     await prisma.warehouse.deleteMany({});
   }).catch((e) => console.error('Testi puhastus ebaõnnestus', e));
-  await authDb().tenant.deleteMany({ where: { id: T } });
+  await authDb().tenant.deleteMany({ where: { id: { in: [T, T2] } } });
 });
 
 describe('laoseisu ümberarvutus', () => {
@@ -131,5 +137,117 @@ describe('laokande salvestus', () => {
     expect(Number(line?.fifoCost)).toBe(5);
     await run(() => tenantTransaction((tx) => deleteStockDocument(tx, id)));
     expect(await run(() => prisma.stockDocument.findUnique({ where: { id } }))).toBeNull();
+  });
+});
+
+const receipt = (date: string, warehouseId: string, mat: string, quantity: number, amount: number) => ({
+  kind: 'RECEIPT' as const, date: d(date), warehouseId, toWarehouseId: null, supplierId: null,
+  documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId: mat, quantity, amount }]
+});
+const transfer = (date: string, from: string, to: string, mat: string, quantity: number) => ({
+  kind: 'TRANSFER' as const, date: d(date), warehouseId: from, toWarehouseId: to, supplierId: null,
+  documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId: mat, quantity, amount: null }]
+});
+
+let seedId = '';
+
+describe('ülekande puudujääk arvele võtmise muutmisel ja kustutamisel', () => {
+  let receiptId = '';
+  let transferId = '';
+  beforeAll(async () => {
+    await run(async () => {
+      seedId = (await prisma.material.create({ data: { name: 'Testseeme', category: 'SEED', unit: 'kg' } })).id;
+      receiptId = await tenantTransaction((tx) => saveStockDocument(tx, null, receipt('2026-03-01', mainWh, seedId, 100, 200)));
+      transferId = await tenantTransaction((tx) => saveStockDocument(tx, null, transfer('2026-03-05', mainWh, otherWh, seedId, 80)));
+    });
+  });
+
+  it('arvele võtmise vähendamine, mis jätaks ülekande katmata, lükatakse tagasi', async () => {
+    await expect(run(() => tenantTransaction((tx) => saveStockDocument(tx, receiptId, receipt('2026-03-01', mainWh, seedId, 50, 100)))))
+      .rejects.toBeInstanceOf(StockValidationError);
+    const line = await run(() => prisma.stockDocumentLine.findFirst({ where: { documentId: receiptId } }));
+    expect(line?.quantity).toBe(100);
+    const tr = await run(() => prisma.stockDocumentLine.findFirst({ where: { documentId: transferId } }));
+    expect(tr?.shortageQty).toBeNull();
+    expect(Number(tr?.fifoCost)).toBe(160);
+  });
+
+  it('arvele võtmise kustutamine, mis jätaks ülekande katmata, lükatakse tagasi', async () => {
+    await expect(run(() => tenantTransaction((tx) => deleteStockDocument(tx, receiptId)))).rejects.toBeInstanceOf(StockValidationError);
+    expect(await run(() => prisma.stockDocument.findUnique({ where: { id: receiptId } }))).not.toBeNull();
+    const tr = await run(() => prisma.stockDocumentLine.findFirst({ where: { documentId: transferId } }));
+    expect(tr?.shortageQty).toBeNull();
+  });
+
+  it('kande rida saab teenuse kaudu salvestamisel valitud lao FIFO hinna', async () => {
+    const entryId = await run(() => tenantTransaction(async (tx) => {
+      const e = await tx.workEntry.create({
+        data: {
+          fieldWorkId, date: d('2026-04-01'), warehouseId: await resolveEntryWarehouseId(tx, otherWh, null),
+          lines: { create: [{ kind: 'MATERIAL', materialId: seedId, label: 'Testseeme', quantity: 20000, unit: 'g' }] }
+        }
+      });
+      await recomputeMaterialStock(tx, [seedId]);
+      return e.id;
+    }));
+    const line = await run(() => prisma.workEntryLine.findFirst({ where: { entryId } }));
+    expect(Number(line?.unitPrice)).toBe(0.002); // 2 €/kg grammides
+    const s = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId: seedId, warehouseId: otherWh } } }));
+    expect(s?.qty).toBe(60);
+    expect(s?.pricedQty).toBe(60);
+    expect(Number(s?.value)).toBe(120);
+  });
+});
+
+const seedMaterialId = () => seedId;
+
+describe('ladude reeglid', () => {
+  it('põhilao saab vahetada ainult teise lao põhilaoks märkimisega; ajalugu jääb oma lattu', async () => {
+    const thirdWh = await run(() => tenantTransaction((tx) => saveWarehouse(tx, null, { name: 'Kolmas ladu', isDefault: false, isActive: true, poiId: null, notes: null }))).then((w) => w.id);
+    await expect(run(() => tenantTransaction((tx) => saveWarehouse(tx, mainWh, { name: 'Põhiladu', isDefault: false, isActive: true, poiId: null, notes: null }))))
+      .rejects.toBeInstanceOf(StockValidationError);
+    // Valimata ladu → põhilao päris id
+    const entryWh = await run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, null, null)));
+    expect(entryWh).toBe(mainWh);
+    const before = await run(() => prisma.materialStock.findMany({ where: { materialId }, orderBy: { warehouseId: 'asc' } }));
+    // Kolmas ladu põhilaoks (mitteaktiivsena märgitu muutub aktiivseks)
+    const w = await run(() => tenantTransaction((tx) => saveWarehouse(tx, thirdWh, { name: 'Kolmas ladu', isDefault: true, isActive: false, poiId: null, notes: null })));
+    expect(w.isActive).toBe(true);
+    expect(await run(() => prisma.warehouse.count({ where: { isDefault: true } }))).toBe(1);
+    await run(() => tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId, seedMaterialId()])));
+    const entries = await run(() => prisma.workEntry.count({ where: { warehouseId: thirdWh } }));
+    expect(entries).toBe(0);
+    // Päris lao id-ga kanne (Testseeme, teine ladu) jääb oma lattu
+    const seedStock = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId: seedMaterialId(), warehouseId: otherWh } } }));
+    expect(seedStock?.qty).toBe(60);
+    // Laota vana kanne (varuvariant) liigub uude põhilattu; päris id-ga kanded ei liigu
+    const after = await run(() => prisma.materialStock.findMany({ where: { materialId, warehouseId: { not: thirdWh } }, orderBy: { warehouseId: 'asc' } }));
+    expect(after.find((r) => r.warehouseId === mainWh)!.qty).toBe(before.find((r) => r.warehouseId === mainWh)!.qty + 200);
+    // Tagasi
+    await run(() => tenantTransaction((tx) => saveWarehouse(tx, mainWh, { name: 'Põhiladu', isDefault: true, isActive: true, poiId: null, notes: null })));
+    await run(() => tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId, seedMaterialId()])));
+    await run(() => prisma.warehouse.delete({ where: { id: thirdWh } }));
+  });
+
+  it('kande ladu: senine mitteaktiivne ladu jääb, mitteaktiivsele vahetamine lükatakse tagasi', async () => {
+    const closedWh = await run(() => prisma.warehouse.create({ data: { name: 'Suletud ladu', isActive: false } })).then((w) => w.id);
+    expect(await run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, closedWh, closedWh)))).toBe(closedWh);
+    expect(await run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, null, closedWh)))).toBe(closedWh);
+    await expect(run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, closedWh, mainWh)))).rejects.toThrow('ei ole aktiivne');
+    await expect(run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, 'puudub', mainWh)))).rejects.toThrow('Ladu ei leitud');
+    expect(await run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, otherWh, mainWh)))).toBe(otherWh);
+    await run(() => prisma.warehouse.delete({ where: { id: closedWh } }));
+  });
+
+  it('samaaegsed põhilao päringud tühjas ettevõttes loovad ühe põhilao', async () => {
+    await authDb().tenant.create({ data: { id: T2, name: 'Test ladu 2' } });
+    const run2 = <R>(fn: () => Promise<R>): Promise<R> => runAsTenant(T2, async () => await fn());
+    try {
+      const ids = await Promise.all([1, 2, 3, 4].map(() => run2(() => tenantTransaction((tx) => getDefaultWarehouseId(tx)))));
+      expect(new Set(ids).size).toBe(1);
+      expect(await run2(() => prisma.warehouse.count())).toBe(1);
+    } finally {
+      await run2(() => prisma.warehouse.deleteMany({}));
+    }
   });
 });

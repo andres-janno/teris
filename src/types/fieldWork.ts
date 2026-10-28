@@ -61,6 +61,7 @@ export interface Material {
   unpricedQty?: number; // hindamata kogus (ootab arvele võtmist)
   stockIssueCount?: number; // kanderead, mida ei saa laoühikusse teisendada
   stockValue?: number; // laoväärtus € (ainult finantsõigusega)
+  pricedQty?: number; // hinnatud partiide kogus, keskmise hinna jagaja (ainult finantsõigusega)
 }
 
 // Uue kulumaterjali vaikeväärtused

@@ -4,9 +4,9 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
-import { parseStockDocument } from './stockRules.ts';
-import { getDefaultWarehouseId, loadMovements, saveStockDocument, deleteStockDocument, StockValidationError } from './stock.ts';
-import { fifoReplay, sortMovements } from './stockFifo.ts';
+import { parseStockDocument, stockRequiresFinance, stockCardFinanceFields } from './stockRules.ts';
+import { getDefaultWarehouseId, loadMovements, saveStockDocument, deleteStockDocument, saveWarehouse, StockValidationError } from './stock.ts';
+import { fifoReplay, movementCost, sortMovements } from './stockFifo.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 
 const FINANCE_FORBIDDEN = 'Laokanded ja laoväärtus on nähtavad ainult finantsjuhile ja adminile';
@@ -43,6 +43,7 @@ function documentDto(d: any) {
     documentNo: d.documentNo, writeOffReason: d.writeOffReason, notes: d.notes,
     total: Math.round(total * 100) / 100,
     hasUnpriced: d.kind !== 'RECEIPT' && lines.some((l: any) => l.fifoCost === null),
+    hasShortage: d.kind === 'TRANSFER' && lines.some((l: any) => (l.shortageQty ?? 0) > 0),
     lines
   };
 }
@@ -51,11 +52,10 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
   if (!pathname.startsWith('/api/warehouses') && !pathname.startsWith('/api/stock/')) return false;
   const finance = canSeeFinance(req);
   const idOf = (prefix: string) => decodeURIComponent(pathname.slice(prefix.length));
-  const denyNonFinance = () => {
-    if (finance) return false;
+  if (!finance && stockRequiresFinance(pathname, method)) {
     json(res, { error: FINANCE_FORBIDDEN }, 403);
     return true;
-  };
+  }
 
   // --- Laod ---
   if (pathname === '/api/warehouses' && method === 'GET') {
@@ -65,7 +65,6 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     return true;
   }
   if (pathname === '/api/warehouses' && method === 'POST') {
-    if (denyNonFinance()) return true;
     const b = await parseBody(req);
     const id = text(b?.id, 64);
     const name = text(b?.name, 120);
@@ -73,16 +72,10 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       json(res, { error: 'Lao nimi on kohustuslik' }, 400);
       return true;
     }
-    const isDefault = b?.isDefault === true;
-    const isActive = isDefault || b?.isActive !== false;
     try {
-      const saved = await tenantTransaction(async (tx) => {
-        const old = id ? await tx.warehouse.findUnique({ where: { id } }) : null;
-        if (old?.isDefault && !isDefault) throw new StockValidationError('Põhiladu muudetakse, kui mõni teine ladu märgitakse põhilaoks');
-        if (isDefault) await tx.warehouse.updateMany({ where: { isDefault: true, ...(id ? { NOT: { id } } : {}) }, data: { isDefault: false } });
-        const data = { name, isDefault, isActive, poiId: text(b?.poiId, 64), notes: text(b?.notes, 1000) };
-        return id ? tx.warehouse.update({ where: { id }, data }) : tx.warehouse.create({ data });
-      });
+      const saved = await tenantTransaction((tx) => saveWarehouse(tx, id, {
+        name, isDefault: b?.isDefault === true, isActive: b?.isActive !== false, poiId: text(b?.poiId, 64), notes: text(b?.notes, 1000)
+      }));
       json(res, saved);
     } catch (err: any) {
       if (err instanceof StockValidationError) json(res, { error: err.message }, 400);
@@ -92,7 +85,6 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     return true;
   }
   if (pathname.startsWith('/api/warehouses/') && method === 'DELETE') {
-    if (denyNonFinance()) return true;
     const id = idOf('/api/warehouses/');
     const w = await prisma.warehouse.findUnique({ where: { id } });
     if (!w) {
@@ -158,16 +150,16 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
         const [type, lineId] = m.ref.split(':');
         const base = { ref: m.ref, date: m.date, kind: m.kind, quantity: m.quantity, delta, balance,
           warehouseName: whName.get(m.warehouseId) ?? '', toWarehouseName: m.toWarehouseId ? whName.get(m.toWarehouseId) ?? '' : null };
-        const cost = m.kind === 'IN' ? (m.amount ?? 0) : o && o.unpricedQty === 0 ? o.cost : null;
-        const moneyPart = finance ? { cost } : {};
+        const cost = m.kind === 'IN' ? (m.amount ?? 0) : movementCost(m.kind, o);
         if (type === 'doc') {
           const l = docById.get(lineId)!;
+          // Tarnija ja dokumendi nr on ostuinfo — ainult finantsõigusega
+          const moneyPart = stockCardFinanceFields(finance, { cost, documentNo: l.document.documentNo, supplierName: l.document.supplier?.name ?? null });
           rows.push({ ...base, ...moneyPart, source: 'DOCUMENT', documentId: l.documentId, documentKind: l.document.kind,
-            documentNo: l.document.documentNo, supplierName: l.document.supplier?.name ?? null, writeOffReason: l.document.writeOffReason,
-            shortageQty: l.shortageQty });
+            writeOffReason: l.document.writeOffReason, shortageQty: l.shortageQty });
         } else {
           const l = entryById.get(lineId)!;
-          rows.push({ ...base, ...moneyPart, source: 'FIELD_WORK', entryId: l.entry.id,
+          rows.push({ ...base, ...stockCardFinanceFields(finance, { cost }), source: 'FIELD_WORK', entryId: l.entry.id,
             fieldName: `${l.entry.fieldWork.fieldSeason.field.num} ${l.entry.fieldWork.fieldSeason.field.name}`.trim(),
             workTypeName: workTypeDisplayName(l.entry.fieldWork.workType) });
         }
@@ -186,8 +178,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     return true;
   }
 
-  // --- Laokanded (finants) ---
-  if (pathname.startsWith('/api/stock/documents') && denyNonFinance()) return true;
+  // --- Laokanded (finants; õigus kontrollitud ülal) ---
   if (pathname === '/api/stock/documents' && method === 'GET') {
     const kind = (['RECEIPT', 'WRITE_OFF', 'TRANSFER'] as const).find((k) => k === url.searchParams.get('kind'));
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);

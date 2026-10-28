@@ -50,6 +50,7 @@ export interface StockDocument {
   notes: string | null;
   total: number;
   hasUnpriced: boolean;
+  hasShortage: boolean; // ülekanne, millel mõni rida võttis rohkem kui lähtelaos hinnaga oli
   lines: StockDocumentLine[];
 }
 

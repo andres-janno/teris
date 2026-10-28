@@ -255,7 +255,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       {canManageFinance && <td className="num">{fmtEur(m.stockValue ?? 0)}</td>}
                       {canManageFinance && (
                         <td className="num">
-                          {(m.stockQty ?? 0) - (m.unpricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / ((m.stockQty ?? 0) - (m.unpricedQty ?? 0))) : '–'}
+                          {(m.pricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / m.pricedQty!) : '–'}
                         </td>
                       )}
                       <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>

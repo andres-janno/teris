@@ -3,7 +3,7 @@
 // laokande ridade maksumuseks ja koondtabelisse material_stock. Kutsu samas tehingus pärast iga
 // liikumist muutvat salvestust.
 import type { TxClient } from './db.ts';
-import { fifoReplay, type Movement } from './stockFifo.ts';
+import { fifoReplay, movementCost, type Movement } from './stockFifo.ts';
 import { convertQty } from '../services/units.ts';
 import type { StockDocumentInput } from './stockRules.ts';
 
@@ -13,16 +13,53 @@ const DEFAULT_WAREHOUSE_NAME = 'Põhiladu';
 const isoDay = (d: Date) => d.toISOString().slice(0, 10);
 const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
+// Põhilao loomine ja vahetus serialiseeritakse ettevõtte piires tehingulukuga (osalist unikaalset
+// indeksit ei kasutata, sest prisma db push eemaldaks skeemivälise indeksi). Lukk vabaneb tehingu lõpus.
+async function lockDefaultWarehouse(tx: TxClient): Promise<void> {
+  await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('warehouse-default:' || current_setting('app.tenant_id')))`;
+}
+
 /** Põhilao id; puudumisel luuakse "Põhiladu" (uus ettevõte, esimene kasutus). */
 export async function getDefaultWarehouseId(tx: TxClient): Promise<string> {
   const found = await tx.warehouse.findFirst({ where: { isDefault: true }, select: { id: true } });
   if (found) return found.id;
+  await lockDefaultWarehouse(tx);
+  // Lukku oodates võis teine tehing põhilao juba luua
+  const created = await tx.warehouse.findFirst({ where: { isDefault: true }, select: { id: true } });
+  if (created) return created.id;
   const byName = await tx.warehouse.findFirst({ where: { name: DEFAULT_WAREHOUSE_NAME }, select: { id: true } });
   if (byName) {
     await tx.warehouse.update({ where: { id: byName.id }, data: { isDefault: true, isActive: true } });
     return byName.id;
   }
   return (await tx.warehouse.create({ data: { name: DEFAULT_WAREHOUSE_NAME, isDefault: true } })).id;
+}
+
+export interface WarehouseInput { name: string; isDefault: boolean; isActive: boolean; poiId: string | null; notes: string | null }
+
+/** Lao lisamine või muutmine. Põhilaoks märkimine võtab märke teistelt; põhiladu ei saa lihtsalt maha võtta. */
+export async function saveWarehouse(tx: TxClient, id: string | null, w: WarehouseInput) {
+  await lockDefaultWarehouse(tx);
+  const old = id ? await tx.warehouse.findUnique({ where: { id } }) : null;
+  if (id && !old) throw new StockValidationError('Ladu ei leitud');
+  if (old?.isDefault && !w.isDefault) throw new StockValidationError('Põhiladu muudetakse, kui mõni teine ladu märgitakse põhilaoks');
+  const data = { ...w, isActive: w.isDefault || w.isActive };
+  if (data.isDefault) await tx.warehouse.updateMany({ where: { isDefault: true, ...(id ? { NOT: { id } } : {}) }, data: { isDefault: false } });
+  return id ? tx.warehouse.update({ where: { id }, data }) : tx.warehouse.create({ data });
+}
+
+/**
+ * Põllutöö kande ladu, mis salvestatakse alati päris id-na (põhilao vahetus ei tohi ajalugu liigutada).
+ * Valimata → kande senine ladu või põhiladu. Kande senine ladu jääb alles ka mitteaktiivsena;
+ * teise lao valikul peab see olema aktiivne.
+ */
+export async function resolveEntryWarehouseId(tx: TxClient, requested: string | null, current: string | null): Promise<string> {
+  if (!requested) return current ?? getDefaultWarehouseId(tx);
+  if (requested === current) return requested;
+  const w = await tx.warehouse.findUnique({ where: { id: requested }, select: { isActive: true } });
+  if (!w) throw new StockValidationError('Ladu ei leitud');
+  if (!w.isActive) throw new StockValidationError('Valitud ladu ei ole aktiivne. Vali aktiivne ladu.');
+  return requested;
 }
 
 export interface MaterialMovements {
@@ -75,6 +112,7 @@ export async function loadMovements(tx: TxClient, materialIds: string[]): Promis
       out.entryLines.push({ id: l.id, ref, quantity: l.quantity });
       out.movements.push({
         ref, date: isoDay(l.entry.date), seq: l.entry.createdAt.getTime() * 1000 + l.sortOrder,
+        // Tühi ladu (vana kanne enne ühekordset täitmist) — varuvariandina põhiladu
         kind: 'OUT', warehouseId: l.entry.warehouseId ?? defaultWh, quantity: qty
       });
     }
@@ -108,14 +146,14 @@ export async function recomputeMaterialStock(tx: TxClient, materialIds: string[]
       await tx.stockDocumentLine.update({
         where: { id: l.id },
         data: {
-          fifoCost: o && o.unpricedQty === 0 ? o.cost : null,
+          fifoCost: movementCost(l.kind === 'TRANSFER' ? 'TRANSFER' : 'OUT', o),
           shortageQty: l.kind === 'TRANSFER' && o && o.shortageQty > 0 ? o.shortageQty : null
         }
       });
     }
 
     await tx.materialStock.deleteMany({ where: { materialId: mm.materialId } });
-    const rows = [...stock].map(([warehouseId, s]) => ({ materialId: mm.materialId, warehouseId, qty: s.qty, value: s.value, unpricedQty: s.unpricedQty }));
+    const rows = [...stock].map(([warehouseId, s]) => ({ materialId: mm.materialId, warehouseId, qty: s.qty, value: s.value, unpricedQty: s.unpricedQty, pricedQty: s.pricedQty }));
     if (rows.length) await tx.materialStock.createMany({ data: rows });
     await tx.material.update({ where: { id: mm.materialId }, data: { stockIssueCount: mm.issueEntryLineIds.length } });
   }
@@ -135,17 +173,18 @@ export async function transferShortageKeys(tx: TxClient, materialIds: string[]):
   return new Set(rows.map((r) => `${r.documentId}:${r.materialId}`));
 }
 
-export interface StockSummary { qty: number; value: number; unpricedQty: number }
+export interface StockSummary { qty: number; value: number; unpricedQty: number; pricedQty: number }
 
 /** Materjalide laoseis: valitud lao või kõigi ladude summa. */
 export async function materialStockSummary(tx: TxClient, warehouseId: string | null): Promise<Map<string, StockSummary>> {
   const rows = await tx.materialStock.findMany({ where: warehouseId ? { warehouseId } : {} });
   const out = new Map<string, StockSummary>();
   for (const r of rows) {
-    const s = out.get(r.materialId) ?? { qty: 0, value: 0, unpricedQty: 0 };
+    const s = out.get(r.materialId) ?? { qty: 0, value: 0, unpricedQty: 0, pricedQty: 0 };
     s.qty = Math.round((s.qty + r.qty) * 1e6) / 1e6;
     s.value = Math.round((s.value + Number(r.value)) * 100) / 100;
     s.unpricedQty = Math.round((s.unpricedQty + r.unpricedQty) * 1e6) / 1e6;
+    s.pricedQty = Math.round((s.pricedQty + r.pricedQty) * 1e6) / 1e6;
     out.set(r.materialId, s);
   }
   return out;

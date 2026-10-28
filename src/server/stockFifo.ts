@@ -25,6 +25,7 @@ export interface WarehouseStock {
   qty: number;
   value: number;
   unpricedQty: number;
+  pricedQty: number; // hinnatud partiide kogus (keskmise hinna jagaja)
 }
 
 export interface ReplayResult {
@@ -115,11 +116,13 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     const ls = lots.get(w) ?? [];
     const ds = debts.get(w) ?? [];
     const lotQty = ls.reduce((s, l) => s + l.qty, 0);
+    const pricedQty = ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty), 0);
     const debtQty = ds.reduce((s, d) => s + d.qty, 0);
     stock.set(w, {
       qty: roundQ(lotQty - debtQty) + 0,
       value: round2(ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty * l.unitCost), 0)) + 0,
-      unpricedQty: roundQ(debtQty + ls.filter((l) => l.unitCost === null).reduce((s, l) => s + l.qty, 0)) + 0
+      unpricedQty: roundQ(debtQty + ls.filter((l) => l.unitCost === null).reduce((s, l) => s + l.qty, 0)) + 0,
+      pricedQty: roundQ(pricedQty) + 0
     });
   }
   for (const o of outs.values()) {
@@ -128,4 +131,15 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     o.shortageQty = roundQ(o.shortageQty) + 0;
   }
   return { outs, stock };
+}
+
+/**
+ * Liikumise maksumus kandel: hinnatud osa summa, kui kogu kogus on hinnatud; muidu null.
+ * Puudujäägiga ülekanne jääb maksumuseta ka siis, kui hilisem arvele võtmine lähtelao võla katab —
+ * sihtlattu läks puudujääk hindamatuna ja maksumus selle eest tekitaks väärtuse augu.
+ */
+export function movementCost(kind: MovementKind, o: OutResult | undefined): number | null {
+  if (!o || o.unpricedQty !== 0) return null;
+  if (kind === 'TRANSFER' && o.shortageQty > 0) return null;
+  return o.cost;
 }

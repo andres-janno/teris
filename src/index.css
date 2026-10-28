@@ -10819,6 +10819,19 @@ select.form-input:read-only {
   font-weight: 600;
 }
 
+/* Laokannete registris puudujäägiga ülekande märge */
+.stock-shortage-badge {
+  display: inline-block;
+  margin-right: 6px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #dc2626;
+  background: rgba(220, 38, 38, 0.1);
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
 /* Filtri tühjendamise X-nupp (FilterClear): ühtne kõigil rippmenüü- ja otsingufiltritel */
 .filter-clear {
   position: relative;

@@ -61,11 +61,12 @@ const planLine = (l: OperationLine, materialId: string | null, sortOrder: number
 });
 
 // Kande andmed PRIA reast (sama uue töö ja kanneteta sobinud töö puhul)
-function entryData(op: FieldBookImportOperation, lines: { line: OperationLine; materialId: string | null }[], area: number, userId: string | null) {
+// warehouseId: põhilao id (kanne seotakse päris laoga, et põhilao vahetus ajalugu ei liigutaks)
+function entryData(op: FieldBookImportOperation, lines: { line: OperationLine; materialId: string | null }[], area: number, userId: string | null, warehouseId: string | null) {
   const method = op.type === 'Saagikoristus' ? null : op.method;
   return {
     date: asDate(op.dateFrom)!, dateTo: asDate(op.dateTo), areaHa: area, method, workerId: op.performerId,
-    notes: op.notes, source: 'PRIA_IMPORT' as const, createdById: userId,
+    notes: op.notes, source: 'PRIA_IMPORT' as const, createdById: userId, warehouseId,
     lines: {
       create: lines.map(({ line: l, materialId }, i) => ({
         kind: l.kind, materialId, label: l.label, unit: l.unit,
@@ -91,7 +92,7 @@ export async function importFieldSeasonOperations(
   client: ImportClient,
   fieldSeasonId: number,
   ops: (FieldBookImportOperation & { phase?: WorkPhase })[], // phase: uue töö faas (nt järgmise hooaja alla viidud sügistöö)
-  opts: { userId: string | null; fieldAreaHa: number; types?: PriaWorkTypes }
+  opts: { userId: string | null; fieldAreaHa: number; types?: PriaWorkTypes; warehouseId?: string | null } // warehouseId: kannete ladu (põhiladu)
 ): Promise<FieldSeasonImportResult> {
   const tx = client as Tx;
   const types = opts.types ?? (await ensurePriaWorkTypes(tx));
@@ -143,7 +144,7 @@ export async function importFieldSeasonOperations(
       if (w.entries.length === 0) {
         const withMaterials = [];
         for (const l of lines) withMaterials.push({ line: l, materialId: await materialFor(tx, l, materials) });
-        await tx.workEntry.create({ data: { ...entryData(op, withMaterials, area, opts.userId), fieldWorkId: w.id } });
+        await tx.workEntry.create({ data: { ...entryData(op, withMaterials, area, opts.userId, opts.warehouseId ?? null), fieldWorkId: w.id } });
         await syncFieldWorkStatus(w.id, true, opts.userId, tx);
         entryAdded = true;
         res.entriesAdded++;
@@ -166,7 +167,7 @@ export async function importFieldSeasonOperations(
         plannedDateFrom: asDate(op.dateFrom), plannedDateTo: asDate(op.dateTo), plannedAreaHa: op.areaHa,
         method: op.type === 'Saagikoristus' ? null : op.method, plannedWorkerId: op.performerId, notes: op.notes,
         lines: { create: planLines },
-        entries: { create: entryData(op, withMaterials, area, opts.userId) }
+        entries: { create: entryData(op, withMaterials, area, opts.userId, opts.warehouseId ?? null) }
       }
     });
     await syncFieldWorkStatus(work.id, true, opts.userId, tx);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStockDocument } from './stockRules';
+import { parseStockDocument, stockRequiresFinance, stockCardFinanceFields, materialStockFields } from './stockRules';
 
 const base = { date: '2026-05-01', warehouseId: 'w1', lines: [{ materialId: 'm1', quantity: '10', amount: '25,50' }] };
 
@@ -27,5 +27,43 @@ describe('parseStockDocument', () => {
     expect(parseStockDocument({ ...base, kind: 'RECEIPT', lines: [] })).toEqual({ ok: false, error: 'Lisa vähemalt üks rida' });
     expect(parseStockDocument({ ...base, kind: 'WRITE_OFF', writeOffReason: 'OTHER', lines: [{ materialId: 'm1', quantity: 0 }] })).toEqual({ ok: false, error: 'Kogus peab olema suurem kui 0' });
     expect(parseStockDocument({ ...base, kind: 'WRITE_OFF', writeOffReason: 'OTHER', lines: [{ materialId: '', quantity: 1 }] })).toEqual({ ok: false, error: 'Vali igale reale materjal' });
+  });
+});
+
+describe('stockRequiresFinance', () => {
+  it('laokanded ja ladude muutmine nõuavad finantsõigust', () => {
+    expect(stockRequiresFinance('/api/stock/documents', 'GET')).toBe(true);
+    expect(stockRequiresFinance('/api/stock/documents', 'POST')).toBe(true);
+    expect(stockRequiresFinance('/api/stock/documents/abc', 'GET')).toBe(true);
+    expect(stockRequiresFinance('/api/stock/documents/abc', 'PUT')).toBe(true);
+    expect(stockRequiresFinance('/api/stock/documents/abc', 'DELETE')).toBe(true);
+    expect(stockRequiresFinance('/api/warehouses', 'POST')).toBe(true);
+    expect(stockRequiresFinance('/api/warehouses/abc', 'DELETE')).toBe(true);
+  });
+  it('ladude loend, laoseis ja laokaart on kõigile', () => {
+    expect(stockRequiresFinance('/api/warehouses', 'GET')).toBe(false);
+    expect(stockRequiresFinance('/api/stock/levels', 'GET')).toBe(false);
+    expect(stockRequiresFinance('/api/stock/materials/m1/movements', 'GET')).toBe(false);
+  });
+});
+
+describe('stockCardFinanceFields', () => {
+  const f = { cost: 12.5, supplierName: 'Tarnija OÜ', documentNo: 'A-1' };
+  it('finantsõigusega maksumus, tarnija ja dokumendi nr', () => {
+    expect(stockCardFinanceFields(true, f)).toEqual(f);
+  });
+  it('ilma finantsõiguseta mitte midagi', () => {
+    expect(stockCardFinanceFields(false, f)).toEqual({});
+  });
+});
+
+describe('materialStockFields', () => {
+  const s = { qty: 10, value: 30, unpricedQty: 4, pricedQty: 6 };
+  it('kogus kõigile, väärtus ja hinnatud kogus ainult finantsile', () => {
+    expect(materialStockFields(false, s)).toEqual({ stockQty: 10, unpricedQty: 4 });
+    expect(materialStockFields(true, s)).toEqual({ stockQty: 10, unpricedQty: 4, stockValue: 30, pricedQty: 6 });
+  });
+  it('laoseisuta materjal annab nullid', () => {
+    expect(materialStockFields(true, undefined)).toEqual({ stockQty: 0, unpricedQty: 0, stockValue: 0, pricedQty: 0 });
   });
 });
