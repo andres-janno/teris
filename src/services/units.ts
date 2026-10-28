@@ -8,6 +8,6 @@ export function convertQty(qty: number, from: string, to: string): number | null
   const f = norm(from);
   const t = norm(to);
   if (f === t) return qty;
-  if (f in MASS && t in MASS) return Math.round(((qty * MASS[f]) / MASS[t]) * 1e9) / 1e9;
+  if (Object.hasOwn(MASS, f) && Object.hasOwn(MASS, t)) return Math.round(((qty * MASS[f]) / MASS[t]) * 1e9) / 1e9;
   return null;
 }

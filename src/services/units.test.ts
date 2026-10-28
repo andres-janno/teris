@@ -15,4 +15,8 @@ describe('convertQty', () => {
     expect(convertQty(1, 'l', 'kg')).toBeNull();
     expect(convertQty(1, 'tk', 'kg')).toBeNull();
   });
+  it('objekti prototüübi nimed ei ole ühikud', () => {
+    expect(convertQty(1, 'constructor', 'kg')).toBeNull();
+    expect(convertQty(1, 'kg', 'toString')).toBeNull();
+  });
 });
