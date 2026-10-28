@@ -66,7 +66,7 @@ export interface Material {
 }
 
 // Uue kulumaterjali vaikeväärtused
-export const NEW_MATERIAL: Partial<Material> = { category: 'FERTILIZER', unit: 'kg', isActive: true };
+export const NEW_MATERIAL: Partial<Material> = { unit: 'kg', isActive: true }; // liik valitakse alati ise
 
 export interface WorkEntryMaterial extends Partial<PriaLineFields> {
   materialId: string;

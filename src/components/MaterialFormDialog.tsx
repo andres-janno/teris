@@ -84,8 +84,9 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
               <datalist id="material-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
             </div>
             <div className="form-group">
-              <label htmlFor="mt-cat">Liik</label>
-              <select id="mt-cat" className="form-input" value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as MaterialCategory })}>
+              <label htmlFor="mt-cat">Liik *</label>
+              <select id="mt-cat" className="form-input" required value={form.category ?? ''} onChange={(e) => setForm({ ...form, category: e.target.value as MaterialCategory })}>
+                <option value="" disabled>– vali –</option>
                 {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => <option key={c} value={c}>{MATERIAL_CATEGORY_LABEL[c]}</option>)}
               </select>
             </div>
