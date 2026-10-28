@@ -65,6 +65,7 @@ interface Row {
   nextColumns: Map<string, AutumnColumn>; // järgmise hooaja sügistööde veerud
 }
 
+const NO_CROP = '__none__'; // kultuuri filtri väärtus valimata kultuuriga põldudele
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 const fmtHa = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
 const fmtNum = (n: number | null | undefined, unit: string) =>
@@ -189,6 +190,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activity, setActivity] = useState<string>('all'); // töötüübi id või 'all'
+  const [cropFilter, setCropFilter] = useState<string>('all'); // kultuuri nimi, NO_CROP või 'all'
   const [hideDone, setHideDone] = useState(false);
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
@@ -364,6 +366,26 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     if (activity !== 'all' && !loading && !activityOptions.some((o) => o.id === activity)) setActivity('all');
   }, [activity, activityOptions, loading]);
 
+  // Kultuuri filter: põld sobib käesoleva või järgmise hooaja (talivilja) kultuuri järgi
+  const cropOptions = useMemo(() => {
+    const names = new Set<string>();
+    allRows.forEach((r) => {
+      if (!r.undetermined) names.add(r.rec.crop);
+      if (!r.nextUndetermined && r.nextCropName) names.add(r.nextCropName);
+    });
+    return Array.from(names).sort((a, b) => a.localeCompare(b, 'et'));
+  }, [allRows]);
+  const hasUndetermined = allRows.some((r) => r.undetermined);
+
+  useEffect(() => {
+    if (cropFilter === 'all' || loading) return;
+    if (cropFilter === NO_CROP ? !hasUndetermined : !cropOptions.includes(cropFilter)) setCropFilter('all');
+  }, [cropFilter, cropOptions, hasUndetermined, loading]);
+
+  const cropMatches = (r: Row) =>
+    cropFilter === 'all' ||
+    (cropFilter === NO_CROP ? r.undetermined : (!r.undetermined && r.rec.crop === cropFilter) || (!r.nextUndetermined && r.nextCropName === cropFilter));
+
   const rows = allRows.filter((r) => {
     const q = search.trim().toLowerCase();
     if (
@@ -374,6 +396,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     )
       return false;
     if (activity !== 'all' && !r.works.some(workMatches) && !r.nextWorks.some(workMatches)) return false;
+    if (!cropMatches(r)) return false;
     return true;
   });
 
@@ -692,6 +715,16 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               {activityOptions.map((o) => (
                 <option key={o.id} value={o.id}>{o.name}</option>
               ))}
+            </select>
+          </label>
+          <label className="fw-filter">
+            <span>Kultuur</span>
+            <select className="form-input" value={cropFilter} onChange={(e) => setCropFilter(e.target.value)}>
+              <option value="all">Kõik kultuurid</option>
+              {cropOptions.map((name) => (
+                <option key={name} value={name}>{name}</option>
+              ))}
+              {hasUndetermined && <option value={NO_CROP}>Kultuur valimata</option>}
             </select>
           </label>
           <label className="fw-filter checkbox fw-filter-end">
