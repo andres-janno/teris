@@ -12,6 +12,7 @@ import { FilterClear } from './FilterClear';
 import { MaterialStockCard } from './MaterialStockCard';
 import type { Warehouse } from '../types/stock';
 import { StockDocumentsPanel } from './StockDocumentsPanel';
+import { WarehousesPanel } from './WarehousesPanel';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -54,9 +55,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
     }
   }, [initialWarehouseId, onInitialWarehouseConsumed]);
 
-  useEffect(() => {
+  const reloadWarehouses = useCallback(() => {
     api.getWarehouses().then(setWarehouses).catch((err) => alertDialog(errorText(err)));
   }, []);
+  useEffect(() => { reloadWarehouses(); }, [reloadWarehouses]);
 
   const reload = useCallback(async () => {
     try {
@@ -139,6 +141,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
               </div>
             )}
             {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} materials={materials} onChanged={() => void reload()} />}
+            {tab === 'warehouses' && canManageFinance && <WarehousesPanel warehouses={warehouses} onChanged={() => { reloadWarehouses(); void reload(); }} />}
             {tab === 'materials' && (<>
             <div className="register-header-controls">
               <div className="year-selector-group">

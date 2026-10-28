@@ -507,6 +507,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (view === 'map') setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
   };
 
+  // Kaardi huvipunkti lao link: avab kulumaterjalide vaate lao filtriga
+  const openWarehouse = (warehouseId: string) => {
+    setMaterialsWarehouseId(warehouseId);
+    changeMainView('materials');
+  };
+
   const handleSaveCrop = (cropToSave: Crop) => {
     setCrops((prev) => {
       const idx = prev.findIndex((c) => c.id === cropToSave.id);
@@ -1802,6 +1808,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           </div>
         )}
         <MapView 
+          onOpenWarehouse={openWarehouse}
           visibility={visibility}
           fields={fields}
           selectedField={selectedField}

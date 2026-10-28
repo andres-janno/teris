@@ -68,6 +68,8 @@ interface MapViewProps {
   onSelectSatelliteDate: (date: string | null) => void;
   /** Satelliidipildi paneeli koht (kaardikihtide kasti all) */
   satellitePanelHost?: HTMLElement | null;
+  /** Huvipunkti hüpikaknast lao laoseisu avamine */
+  onOpenWarehouse?: (warehouseId: string) => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -94,7 +96,8 @@ export const MapView: React.FC<MapViewProps> = ({
   onSelectSatelliteProduct,
   satelliteDate,
   onSelectSatelliteDate,
-  satellitePanelHost
+  satellitePanelHost,
+  onOpenWarehouse
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   // Kaart on teiste vaadete ajal peidus (display: none, suurus 0×0). Peidetud kaardile Leaflet
@@ -730,6 +733,10 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [radarFrames]);
 
   // 6. Render POI / Infrastructure Layer
+  // Viide hoiab uusimat callback'i, et huvipunktide kiht ei ehituks igal renderdusel uuesti
+  const onOpenWarehouseRef = useRef(onOpenWarehouse);
+  onOpenWarehouseRef.current = onOpenWarehouse;
+
   useEffect(() => {
     const layerGroup = poiLayerGroupRef.current;
     if (!layerGroup) return;
@@ -757,8 +764,16 @@ export const MapView: React.FC<MapViewProps> = ({
           ${poi.capacity ? `<div class="popup-row"><span>Mahutavus:</span> <strong>${poi.capacity}</strong></div>` : ''}
           ${poi.phone ? `<div class="popup-row"><span>Telefon:</span> <strong>${poi.phone}</strong></div>` : ''}
           ${poi.accessNotes ? `<div class="popup-note">${poi.accessNotes}</div>` : ''}
+          ${poi.warehouse ? `<div class="popup-row"><span>Ladu:</span> <strong>${escapeHtml(poi.warehouse.name)}</strong></div><button type="button" class="btn btn-secondary btn-sm poi-warehouse-link">Ava laoseis</button>` : ''}
         </div>
       `);
+
+      if (poi.warehouse) {
+        const whId = poi.warehouse.id;
+        marker.on('popupopen', (ev) => {
+          ev.popup.getElement()?.querySelector('.poi-warehouse-link')?.addEventListener('click', () => onOpenWarehouseRef.current?.(whId), { once: true });
+        });
+      }
 
       marker.addTo(layerGroup);
     });
