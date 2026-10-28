@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, X } from 'lucide-react';
 import { api } from '../services/api';
-import { alertDialog } from './ConfirmDialog';
+import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
 
@@ -32,7 +32,13 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
     e.preventDefault();
     setBusy(true);
     try {
-      await api.saveMaterial(form);
+      try {
+        await api.saveMaterial(form);
+      } catch (err: any) {
+        if (!err?.body?.needsConfirm) throw err;
+        if (!(await confirmDialog(`${err.message} Kas muudan ühiku ikkagi?`))) return;
+        await api.saveMaterial(form, true);
+      }
       onSaved();
     } catch (err) {
       alertDialog(err instanceof Error ? err.message : 'Materjali salvestamine ebaõnnestus');

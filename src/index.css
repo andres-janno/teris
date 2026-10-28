@@ -10894,3 +10894,10 @@ select.form-input:read-only {
 .finance-search-box .filter-clear-btn {
   right: 0;
 }
+
+/* Laoarvestus */
+.materials-table tr.clickable-row { cursor: pointer; }
+.stock-warning-icon { color: #d97706; margin-left: 4px; vertical-align: -2px; display: inline-flex; }
+.stock-card-modal { width: min(960px, 96vw); }
+.stock-card-table td, .stock-card-table th { white-space: nowrap; }
+.stock-card-table td:nth-child(2) { white-space: normal; }

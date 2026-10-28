@@ -485,6 +485,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Põhivaade (ülamenüü valik): jäetakse meelde kasutaja kaupa (selles brauseris), et lehe
   // värskendamine avaks sama vaate. Logo klõps lähtestab valiku kaardile.
+  const [materialsWarehouseId, setMaterialsWarehouseId] = useState<string | null>(null);
+  const clearMaterialsWarehouse = React.useCallback(() => setMaterialsWarehouseId(null), []);
   const mainViewKey = `agrimap_main_view_${user.id}`;
   const [mainView, setMainView] = useState<MainView>(() => {
     try {
@@ -1781,7 +1783,14 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       {mainView === 'materials' && (
         <Suspense fallback={null}>
-          <MaterialsView selectedYear={selectedYear} onSelectYear={setSelectedYear} seasons={seasons} />
+          <MaterialsView
+            selectedYear={selectedYear}
+            onSelectYear={setSelectedYear}
+            seasons={seasons}
+            canManageFinance={user.isAdmin || user.isFinanceManager}
+            initialWarehouseId={materialsWarehouseId}
+            onInitialWarehouseConsumed={clearMaterialsWarehouse}
+          />
         </Suspense>
       )}
 

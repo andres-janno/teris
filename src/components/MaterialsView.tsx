@@ -1,6 +1,6 @@
 // src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
+import { Package, AlertTriangle, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { MaterialFormDialog } from './MaterialFormDialog';
@@ -9,10 +9,18 @@ import { seasonSelectorYears } from '../types/season';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
+import { MaterialStockCard } from './MaterialStockCard';
+import type { Warehouse } from '../types/stock';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
+const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
+const stockWarning = (m: Material) =>
+  [
+    m.unpricedQty ? `${fmtQty(m.unpricedQty)} ${m.unit} ootab arvele võtmist (hindamata)` : null,
+    m.stockIssueCount ? `${m.stockIssueCount} kannet ei saa laoühikusse teisendada` : null
+  ].filter(Boolean).join('\n');
 const hasQty = (m: Material) => !!(m.plannedQty || m.usedQty);
 const diffQty = (m: Material) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;
 
@@ -20,9 +28,12 @@ interface MaterialsViewProps {
   selectedYear: number;
   onSelectYear: (year: number) => void;
   seasons: FarmingSeason[];
+  canManageFinance: boolean;
+  initialWarehouseId?: string | null; // kaardilt avatud lao filter
+  onInitialWarehouseConsumed?: () => void;
 }
 
-export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSelectYear, seasons }) => {
+export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSelectYear, seasons, canManageFinance, initialWarehouseId, onInitialWarehouseConsumed }) => {
   const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,15 +41,30 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<Partial<Material> | null>(null);
 
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
+  const [stockCard, setStockCard] = useState<Material | null>(null);
+
+  useEffect(() => {
+    if (initialWarehouseId) {
+      setWarehouseId(initialWarehouseId);
+      onInitialWarehouseConsumed?.();
+    }
+  }, [initialWarehouseId, onInitialWarehouseConsumed]);
+
+  useEffect(() => {
+    api.getWarehouses().then(setWarehouses).catch((err) => alertDialog(errorText(err)));
+  }, []);
+
   const reload = useCallback(async () => {
     try {
-      setMaterials(await api.getMaterials(selectedYear));
+      setMaterials(await api.getMaterials(selectedYear, warehouseId || undefined));
     } catch (err) {
       alertDialog(errorText(err));
     } finally {
       setLoading(false);
     }
-  }, [selectedYear]);
+  }, [selectedYear, warehouseId]);
 
   useEffect(() => {
     void reload();
@@ -64,12 +90,14 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Materjal', 'Liik', 'Ühik', 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Materjal', 'Liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
       `"${m.name}"`,
       `"${MATERIAL_CATEGORY_LABEL[m.category]}"`,
       `"${m.unit}"`,
+      m.stockQty ?? 0,
+      ...(canManageFinance ? [m.stockValue ?? 0] : []),
       m.plannedQty ?? 0,
       m.usedQty ?? 0,
       diffQty(m),
@@ -149,6 +177,12 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                   />
                 </FilterClear>
               </div>
+              <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
+                <select className="form-input" aria-label="Ladu" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+                  <option value="">Kõik laod</option>
+                  {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isActive ? '' : ' (mitteaktiivne)'}</option>)}
+                </select>
+              </FilterClear>
               <div className="category-filter-tabs">
                 <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
                   Kõik ({materials.length})
@@ -171,6 +205,9 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                     <th>Materjal</th>
                     <th>Liik</th>
                     <th>Ühik</th>
+                    <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
+                    {canManageFinance && <th className="num">Laoväärtus</th>}
+                    {canManageFinance && <th className="num" title="Laoväärtus / hinnatud laoseis">Keskm. hind</th>}
                     <th className="num">Planeeritud</th>
                     <th className="num">Kasutatud</th>
                     <th className="num" title="Planeeritud miinus kasutatud; negatiivne = ülekulu">Ala/ülekulu</th>
@@ -182,7 +219,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                 <tbody>
                   {!loading && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="muted">
+                      <td colSpan={canManageFinance ? 12 : 10} className="muted">
                         {materials.length === 0
                           ? 'Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.'
                           : 'Otsingule vastavaid materjale ei leitud.'}
@@ -190,13 +227,23 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                     </tr>
                   )}
                   {filtered.map((m) => (
-                    <tr key={m.id} className={m.isActive ? '' : 'inactive'}>
+                    <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => setStockCard(m)}>
                       <td className="name-cell">
                         <span className="field-name">{m.name}</span>
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
                       <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
                       <td>{m.unit}</td>
+                      <td className={`num ${(m.stockQty ?? 0) < 0 ? 'material-overuse' : ''}`}>
+                        {fmtQty(m.stockQty ?? 0)}
+                        {stockWarning(m) && <span title={stockWarning(m)} className="stock-warning-icon"><AlertTriangle size={13} /></span>}
+                      </td>
+                      {canManageFinance && <td className="num">{fmtEur(m.stockValue ?? 0)}</td>}
+                      {canManageFinance && (
+                        <td className="num">
+                          {(m.stockQty ?? 0) - (m.unpricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / ((m.stockQty ?? 0) - (m.unpricedQty ?? 0))) : '–'}
+                        </td>
+                      )}
                       <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>
                       <td className="num">{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</td>
                       <td className={`num ${diffQty(m) < 0 ? 'material-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
@@ -204,10 +251,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       <td className="muted">{m.notes ?? ''}</td>
                       <td className="actions-col">
                         <div className="row-actions">
-                          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm(m)}>
+                          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
                             <Edit2 size={15} />
                           </button>
-                          <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={() => remove(m)}>
+                          <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
                             <Trash2 size={15} />
                           </button>
                         </div>
@@ -225,6 +272,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
           </span>
         </div>
       </main>
+
+      {stockCard && (
+        <MaterialStockCard material={stockCard} warehouseId={warehouseId} warehouses={warehouses} canSeeMoney={canManageFinance} onClose={() => setStockCard(null)} />
+      )}
 
       {form && (
         <MaterialFormDialog
