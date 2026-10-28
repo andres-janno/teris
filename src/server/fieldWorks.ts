@@ -716,7 +716,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Materjali nimi, liik ja ühik on kohustuslikud' }, 400);
       return true;
     }
-    const data = { name, category, unit, cropVarietyId: text(b?.cropVarietyId, 64), isActive: b?.isActive !== false, notes: text(b?.notes, 1000) };
+    const data = { name, category, unit, manufacturer: text(b?.manufacturer, 160), cropVarietyId: text(b?.cropVarietyId, 64), isActive: b?.isActive !== false, notes: text(b?.notes, 1000) };
     const id = text(b?.id, 64);
     const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true } }) : null;
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();

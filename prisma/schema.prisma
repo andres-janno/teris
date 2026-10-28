@@ -684,6 +684,7 @@ model Material {
   name            String
   category        MaterialCategory
   unit            String // kg, l, t, tk
+  manufacturer    String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
   cropVarietyId   String? // seemne puhul sort
   isActive        Boolean          @default(true)
   notes           String?

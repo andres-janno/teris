@@ -51,6 +51,7 @@ export interface Material {
   name: string;
   category: MaterialCategory;
   unit: string;
+  manufacturer: string | null; // tootja
   cropVarietyId: string | null;
   isActive: boolean;
   notes: string | null;

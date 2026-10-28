@@ -78,7 +78,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
     const q = search.trim().toLowerCase();
     return materials
       .filter((m) => category === 'all' || m.category === category)
-      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
   }, [materials, category, search]);
 
@@ -94,10 +94,11 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Materjal', 'Liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Materjal', 'Tootja', 'Liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
       `"${m.name}"`,
+      `"${m.manufacturer ?? ''}"`,
       `"${MATERIAL_CATEGORY_LABEL[m.category]}"`,
       `"${m.unit}"`,
       m.stockQty ?? 0,
@@ -184,7 +185,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                 <FilterClear active={!!search} onClear={() => setSearch('')}>
                   <input
                     type="text"
-                    placeholder="Otsi materjali nime või märkust..."
+                    placeholder="Otsi materjali nime, tootjat või märkust..."
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="form-input search-input"
@@ -217,6 +218,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                 <thead>
                   <tr>
                     <th>Materjal</th>
+                    <th>Tootja</th>
                     <th>Liik</th>
                     <th>Ühik</th>
                     <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
@@ -233,7 +235,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                 <tbody>
                   {!loading && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={canManageFinance ? 12 : 10} className="muted">
+                      <td colSpan={canManageFinance ? 13 : 11} className="muted">
                         {materials.length === 0
                           ? 'Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.'
                           : 'Otsingule vastavaid materjale ei leitud.'}
@@ -246,6 +248,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                         <span className="field-name">{m.name}</span>
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
+                      <td>{m.manufacturer ?? ''}</td>
                       <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
                       <td>{m.unit}</td>
                       <td className={`num ${(m.stockQty ?? 0) < 0 ? 'material-overuse' : ''}`}>

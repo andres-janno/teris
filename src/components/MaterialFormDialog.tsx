@@ -16,6 +16,21 @@ interface MaterialFormDialogProps {
 export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial, onClose, onSaved }) => {
   const [form, setForm] = useState<Partial<Material>>(initial);
   const [busy, setBusy] = useState(false);
+  // Tootja valikud: teiste materjalide tootjad (kordusteta, tõstutundetult); uus nimi lisandub salvestamisel
+  const [manufacturers, setManufacturers] = useState<string[]>([]);
+
+  useEffect(() => {
+    api.getMaterials()
+      .then((ms) => {
+        const byKey = new Map<string, string>();
+        for (const m of ms) {
+          const v = m.manufacturer?.trim();
+          if (v && !byKey.has(v.toLowerCase())) byKey.set(v.toLowerCase(), v);
+        }
+        setManufacturers([...byKey.values()].sort((a, b) => a.localeCompare(b, 'et')));
+      })
+      .catch(() => setManufacturers([]));
+  }, []);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -62,6 +77,11 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
             <div className="form-group full-width">
               <label htmlFor="mt-name">Nimi *</label>
               <input id="mt-name" className="form-input" required placeholder="nt YaraMila 16-27-7" value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+            </div>
+            <div className="form-group full-width">
+              <label htmlFor="mt-manufacturer">Tootja</label>
+              <input id="mt-manufacturer" className="form-input" list="material-manufacturers" placeholder="vali olemasolev või sisesta uus" value={form.manufacturer ?? ''} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
+              <datalist id="material-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
             </div>
             <div className="form-group">
               <label htmlFor="mt-cat">Liik</label>
