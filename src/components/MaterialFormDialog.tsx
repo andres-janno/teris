@@ -14,6 +14,16 @@ const autoGrow = (el: HTMLTextAreaElement | null) => {
   el.style.height = `${Math.min(el.scrollHeight + 2, 320)}px`;
 };
 
+// Kordusteta (tõstutundetult) ja tähestiku järjekorras
+const distinctValues = (values: (string | null | undefined)[]) => {
+  const byKey = new Map<string, string>();
+  for (const raw of values) {
+    const v = raw?.trim();
+    if (v && !byKey.has(v.toLowerCase())) byKey.set(v.toLowerCase(), v);
+  }
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b, 'et'));
+};
+
 interface MaterialFormDialogProps {
   initial: Partial<Material>;
   onClose: () => void;
@@ -23,20 +33,20 @@ interface MaterialFormDialogProps {
 export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial, onClose, onSaved }) => {
   const [form, setForm] = useState<Partial<Material>>(initial);
   const [busy, setBusy] = useState(false);
-  // Tootja valikud: teiste materjalide tootjad (kordusteta, tõstutundetult); uus nimi lisandub salvestamisel
+  // Tootja ja ühiku valikud: teistel materjalidel kasutatud väärtused; uus väärtus lisandub salvestamisel
   const [manufacturers, setManufacturers] = useState<string[]>([]);
+  const [units, setUnits] = useState<string[]>([]);
 
   useEffect(() => {
     api.getMaterials()
       .then((ms) => {
-        const byKey = new Map<string, string>();
-        for (const m of ms) {
-          const v = m.manufacturer?.trim();
-          if (v && !byKey.has(v.toLowerCase())) byKey.set(v.toLowerCase(), v);
-        }
-        setManufacturers([...byKey.values()].sort((a, b) => a.localeCompare(b, 'et')));
+        setManufacturers(distinctValues(ms.map((m) => m.manufacturer)));
+        setUnits(distinctValues(ms.map((m) => m.unit)));
       })
-      .catch(() => setManufacturers([]));
+      .catch(() => {
+        setManufacturers([]);
+        setUnits([]);
+      });
   }, []);
 
   useEffect(() => {
@@ -99,8 +109,8 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
             </div>
             <div className="form-group">
               <label htmlFor="mt-unit">Ühik *</label>
-              <input id="mt-unit" className="form-input" required list="material-units" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-              <datalist id="material-units"><option value="kg" /><option value="l" /><option value="t" /><option value="tk" /></datalist>
+              <input id="mt-unit" className="form-input" required list="material-units" placeholder="vali olemasolev või sisesta uus" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+              <datalist id="material-units">{units.map((u) => <option key={u} value={u} />)}</datalist>
             </div>
             <div className="form-group full-width">
               <label htmlFor="mt-composition">Koostisosad</label>
