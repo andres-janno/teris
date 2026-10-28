@@ -5,6 +5,7 @@
 import type { TxClient } from './db.ts';
 import { fifoReplay, type Movement } from './stockFifo.ts';
 import { convertQty } from '../services/units.ts';
+import type { StockDocumentInput } from './stockRules.ts';
 
 export class StockValidationError extends Error {}
 
@@ -148,4 +149,62 @@ export async function materialStockSummary(tx: TxClient, warehouseId: string | n
     out.set(r.materialId, s);
   }
   return out;
+}
+
+const fmtDay = (d: Date) => d.toISOString().slice(0, 10).split('-').reverse().join('.');
+
+// Uus ülekande puudujääk (mida enne muudatust polnud) lükkab muudatuse tagasi; tehing veereb tagasi.
+async function assertNoNewShortage(tx: TxClient, materialIds: string[], before: Set<string>) {
+  const after = await transferShortageKeys(tx, materialIds);
+  const fresh = [...after].filter((k) => !before.has(k));
+  if (!fresh.length) return;
+  const [documentId, materialId] = fresh[0].split(':');
+  const line = await tx.stockDocumentLine.findFirst({
+    where: { documentId, materialId },
+    select: { quantity: true, shortageQty: true, material: { select: { name: true, unit: true } }, document: { select: { date: true, warehouse: { select: { name: true } } } } }
+  });
+  const available = Math.max(0, (line?.quantity ?? 0) - (line?.shortageQty ?? 0));
+  throw new StockValidationError(
+    `Laos "${line?.document.warehouse.name}" on ${line ? fmtDay(line.document.date) : ''} seisuga materjali "${line?.material.name}" ` +
+    `ülekandeks saadaval ${available.toLocaleString('et-EE', { maximumFractionDigits: 3 })} ${line?.material.unit}.`
+  );
+}
+
+export async function saveStockDocument(tx: TxClient, id: string | null, doc: StockDocumentInput): Promise<string> {
+  const whIds = [doc.warehouseId, doc.toWarehouseId].filter((x): x is string => !!x);
+  const whs = await tx.warehouse.findMany({ where: { id: { in: whIds } }, select: { id: true } });
+  if (whs.length !== whIds.length) throw new StockValidationError('Ladu ei leitud');
+  const mats = await tx.material.count({ where: { id: { in: doc.lines.map((l) => l.materialId) } } });
+  if (mats !== new Set(doc.lines.map((l) => l.materialId)).size) throw new StockValidationError('Materjali ei leitud');
+
+  const oldMaterialIds = id
+    ? (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { materialId: true } })).map((l) => l.materialId)
+    : [];
+  const materialIds = [...new Set([...oldMaterialIds, ...doc.lines.map((l) => l.materialId)])];
+  const before = await transferShortageKeys(tx, materialIds);
+  if (id) before.forEach((k) => k.startsWith(`${id}:`) && before.delete(k)); // muudetav kanne kontrollitakse uuesti
+
+  const header = {
+    kind: doc.kind, date: doc.date, warehouseId: doc.warehouseId, toWarehouseId: doc.toWarehouseId,
+    supplierId: doc.supplierId, documentNo: doc.documentNo, writeOffReason: doc.writeOffReason, notes: doc.notes
+  };
+  const lines = doc.lines.map((l, i) => ({ materialId: l.materialId, quantity: l.quantity, amount: l.amount, sortOrder: i }));
+  let docId = id;
+  if (id) {
+    await tx.stockDocumentLine.deleteMany({ where: { documentId: id } });
+    await tx.stockDocument.update({ where: { id }, data: { ...header, lines: { create: lines } } });
+  } else {
+    docId = (await tx.stockDocument.create({ data: { ...header, lines: { create: lines } } })).id;
+  }
+  await recomputeMaterialStock(tx, materialIds);
+  await assertNoNewShortage(tx, materialIds, before);
+  return docId!;
+}
+
+export async function deleteStockDocument(tx: TxClient, id: string): Promise<void> {
+  const materialIds = (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { materialId: true } })).map((l) => l.materialId);
+  const before = await transferShortageKeys(tx, materialIds);
+  await tx.stockDocument.delete({ where: { id } });
+  await recomputeMaterialStock(tx, materialIds);
+  await assertNoNewShortage(tx, materialIds, before);
 }

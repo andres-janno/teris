@@ -8,6 +8,7 @@ import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
 import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
+import { handleStock } from './stockApi.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
@@ -366,6 +367,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await handleSupportGrants(req, res, pathname, method)) return;
     if (await handleHelpRead(res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
+    if (await handleStock(req, res, pathname, method, url)) return;
 
     // 1. Health check / status
     if (pathname === '/api/status' && method === 'GET') {
@@ -628,7 +630,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/poi' && method === 'GET') {
       const dbPois = await prisma.pointOfInterest.findMany({
-        orderBy: { name: 'asc' }
+        orderBy: { name: 'asc' },
+        include: { warehouse: { select: { id: true, name: true } } }
       });
       const mapped = dbPois.map((p) => ({
         id: p.id,
@@ -640,7 +643,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         contactPerson: p.contactPerson ?? undefined,
         phone: p.phone ?? undefined,
         accessNotes: p.accessNotes ?? undefined,
-        radiusM: p.radiusM
+        radiusM: p.radiusM,
+        warehouse: p.warehouse ? { id: p.warehouse.id, name: p.warehouse.name } : undefined
       }));
       return json(res, mapped);
     }

@@ -1,7 +1,7 @@
 // Laoseisu ümberarvutus ajutises ettevõttes (live-andmebaas); kustutatakse testi lõpus.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
-import { getDefaultWarehouseId, recomputeMaterialStock, transferShortageKeys } from './stock';
+import { getDefaultWarehouseId, recomputeMaterialStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError } from './stock';
 
 const T = `test-tenant-stock-${process.pid}`;
 // await laseb laisa Prisma lubaduse täita ettevõtte kontekstis
@@ -109,5 +109,27 @@ describe('materjalide laoseisu kokkuvõte', () => {
     const o = one.get(materialId)!;
     expect(a.qty).toBe(300); // 500 − 200; ülekanne laosiseselt neutraalne
     expect(o.qty).toBe(400);
+  });
+});
+
+describe('laokande salvestus', () => {
+  it('ülekanne üle saadaoleva lükatakse tagasi ja midagi ei salvestu', async () => {
+    const before = await run(() => prisma.stockDocument.count());
+    await expect(run(() => tenantTransaction((tx) => saveStockDocument(tx, null, {
+      kind: 'TRANSFER', date: d('2026-07-01'), warehouseId: otherWh, toWarehouseId: mainWh, supplierId: null,
+      documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId, quantity: 100000, amount: null }]
+    })))).rejects.toBeInstanceOf(StockValidationError);
+    expect(await run(() => prisma.stockDocument.count())).toBe(before);
+  });
+
+  it('mahakandmine saab FIFO maksumuse ja kustutamine taastab seisu', async () => {
+    const id = await run(() => tenantTransaction((tx) => saveStockDocument(tx, null, {
+      kind: 'WRITE_OFF', date: d('2026-04-02'), warehouseId: mainWh, toWarehouseId: null, supplierId: null,
+      documentNo: null, writeOffReason: 'SPOILED', notes: null, lines: [{ materialId, quantity: 10, amount: null }]
+    })));
+    const line = await run(() => prisma.stockDocumentLine.findFirst({ where: { documentId: id } }));
+    expect(Number(line?.fifoCost)).toBe(5);
+    await run(() => tenantTransaction((tx) => deleteStockDocument(tx, id)));
+    expect(await run(() => prisma.stockDocument.findUnique({ where: { id } }))).toBeNull();
   });
 });
