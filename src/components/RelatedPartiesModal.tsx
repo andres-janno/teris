@@ -20,6 +20,7 @@ import { PARTY_ROLE_CONFIG } from '../types/party';
 import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { FilterClear } from './FilterClear';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -458,43 +459,44 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           <div className="register-actions-bar">
             <div className="search-box-wrap">
               <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="form-input search-input"
-              />
-              {searchQuery && (
-                <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                  <X size={14} />
-                </button>
-              )}
+              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
+                <input
+                  type="text"
+                  placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="form-input search-input"
+                />
+              </FilterClear>
             </div>
 
             {/* Role filter */}
-            <select
-              className="form-input filter-select"
-              value={selectedRoleFilter}
-              onChange={(e) => setSelectedRoleFilter(e.target.value)}
-            >
-              <option value="all">Kõik rollid ({parties.length})</option>
-              <option value="LANDOWNER">🏛️ Maaomanikud ({parties.filter(p => p.roles.includes('LANDOWNER')).length})</option>
-              <option value="DRIVER">👤 Töötajad ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
-              <option value="OPERATOR">🧑‍🌾 Operaatorid ({parties.filter(p => p.roles.includes('OPERATOR')).length})</option>
-              <option value="OTHER">🤝 Muud seotud isikud ({parties.filter(p => p.roles.includes('OTHER')).length})</option>
-            </select>
+            <FilterClear active={selectedRoleFilter !== 'all'} onClear={() => setSelectedRoleFilter('all')}>
+              <select
+                className="form-input filter-select"
+                value={selectedRoleFilter}
+                onChange={(e) => setSelectedRoleFilter(e.target.value)}
+              >
+                <option value="all">Kõik rollid ({parties.length})</option>
+                <option value="LANDOWNER">🏛️ Maaomanikud ({parties.filter(p => p.roles.includes('LANDOWNER')).length})</option>
+                <option value="DRIVER">👤 Töötajad ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
+                <option value="OPERATOR">🧑‍🌾 Operaatorid ({parties.filter(p => p.roles.includes('OPERATOR')).length})</option>
+                <option value="OTHER">🤝 Muud seotud isikud ({parties.filter(p => p.roles.includes('OTHER')).length})</option>
+              </select>
+            </FilterClear>
 
             {/* Type filter */}
-            <select
-              className="form-input filter-select"
-              value={selectedTypeFilter}
-              onChange={(e) => setSelectedTypeFilter(e.target.value)}
-            >
-              <option value="all">Kõik liigid</option>
-              <option value="PERSON">👤 Eraisikud ({parties.filter(p => p.type === 'PERSON').length})</option>
-              <option value="LEGAL_ENTITY">🏢 Ettevõtted ({parties.filter(p => p.type === 'LEGAL_ENTITY').length})</option>
-            </select>
+            <FilterClear active={selectedTypeFilter !== 'all'} onClear={() => setSelectedTypeFilter('all')}>
+              <select
+                className="form-input filter-select"
+                value={selectedTypeFilter}
+                onChange={(e) => setSelectedTypeFilter(e.target.value)}
+              >
+                <option value="all">Kõik liigid</option>
+                <option value="PERSON">👤 Eraisikud ({parties.filter(p => p.type === 'PERSON').length})</option>
+                <option value="LEGAL_ENTITY">🏢 Ettevõtted ({parties.filter(p => p.type === 'LEGAL_ENTITY').length})</option>
+              </select>
+            </FilterClear>
 
             <div className="actions-right">
               <button className="btn btn-primary btn-sm" onClick={startCreate}>

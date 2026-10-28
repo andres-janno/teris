@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, INTEREST_STATUS_LABELS, type InterestRow, type InterestStatus } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
+import { FilterClear } from '../components/FilterClear';
 
 const STATUSES = Object.keys(INTEREST_STATUS_LABELS) as InterestStatus[];
 
@@ -46,10 +47,12 @@ export function InterestView() {
       <h2>Huvilised</h2>
       <div className="admin-filter-row">
         <label htmlFor="interest-filter">Staatus</label>
-        <select id="interest-filter" className="form-input" value={filter} onChange={(e) => setFilter(e.target.value as InterestStatus | '')}>
-          <option value="">Kõik</option>
-          {STATUSES.map((s) => <option key={s} value={s}>{INTEREST_STATUS_LABELS[s]}</option>)}
-        </select>
+        <FilterClear active={filter !== ''} onClear={() => setFilter('')}>
+          <select id="interest-filter" className="form-input" value={filter} onChange={(e) => setFilter(e.target.value as InterestStatus | '')}>
+            <option value="">Kõik</option>
+            {STATUSES.map((s) => <option key={s} value={s}>{INTEREST_STATUS_LABELS[s]}</option>)}
+          </select>
+        </FilterClear>
       </div>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-table-wrap">

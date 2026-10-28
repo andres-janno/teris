@@ -1,6 +1,6 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
 import React, { useMemo, useState } from 'react';
-import { Layers, Calendar, Search, X, Lock, Download, Info, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Layers, Calendar, Search, Lock, Download, Info, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FieldCadastralLink } from '../types/cadastre';
@@ -12,6 +12,7 @@ import { FieldEditDialog } from './FieldEditDialog';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
+import { FilterClear } from './FilterClear';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -287,18 +288,15 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
             <div className="register-actions-bar">
               <div className="search-box-wrap">
                 <Search size={16} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input search-input"
-                />
-                {searchQuery && (
-                  <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                    <X size={14} />
-                  </button>
-                )}
+                <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
+                  <input
+                    type="text"
+                    placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="form-input search-input"
+                  />
+                </FilterClear>
               </div>
               <div className="category-filter-tabs">
                 {tenureFilters.map((t) => (

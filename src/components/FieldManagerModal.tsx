@@ -21,6 +21,7 @@ import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
+import { FilterClear } from './FilterClear';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -449,18 +450,15 @@ function cropSummaryKey(cropText: string): string {
           <div className="register-actions-bar">
             <div className="search-box-wrap">
               <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Otsi põllu nime, koodi, katastrit või omanikku..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="form-input search-input"
-              />
-              {searchQuery && (
-                <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                  <X size={14} />
-                </button>
-              )}
+              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
+                <input
+                  type="text"
+                  placeholder="Otsi põllu nime, koodi, katastrit või omanikku..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="form-input search-input"
+                />
+              </FilterClear>
             </div>
 
             {(cropFilter !== 'all' || tenureFilter !== 'all') && (

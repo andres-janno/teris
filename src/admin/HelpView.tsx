@@ -6,6 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
+import { FilterClear } from '../components/FilterClear';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -102,7 +103,9 @@ export function HelpView() {
           <h2>Juhendid</h2>
           <span className="admin-muted">{filledCount}/{knownCount} täidetud</span>
         </div>
-        <input className="form-input" type="search" placeholder="Otsi…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        <FilterClear active={!!query} onClear={() => setQuery('')}>
+          <input className="form-input" type="search" placeholder="Otsi…" value={query} onChange={(e) => setQuery(e.target.value)} />
+        </FilterClear>
         <div className="admin-help-filters">
           {(['all', 'filled', 'empty'] as Filter[]).map((f) => (
             <button key={f} type="button" className={`btn btn-secondary btn-sm ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>

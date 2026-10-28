@@ -22,6 +22,7 @@ import type { FarmingSeason } from '../types/season';
 import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
+import { FilterClear } from './FilterClear';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -394,18 +395,15 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           <div className="register-actions-bar">
             <div className="search-box-wrap">
               <Search size={16} className="search-icon" />
-              <input
-                type="text"
-                placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="form-input search-input"
-              />
-              {searchQuery && (
-                <button className="clear-search-btn" onClick={() => setSearchQuery('')}>
-                  <X size={14} />
-                </button>
-              )}
+              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
+                <input
+                  type="text"
+                  placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="form-input search-input"
+                />
+              </FilterClear>
             </div>
             <span className="crop-total-area" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
               Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>

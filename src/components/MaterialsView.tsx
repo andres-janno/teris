@@ -1,6 +1,6 @@
 // src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, X, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
+import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { MaterialFormDialog } from './MaterialFormDialog';
@@ -8,6 +8,7 @@ import type { FarmingSeason } from '../types/season';
 import { seasonSelectorYears } from '../types/season';
 import type { Material, MaterialCategory } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
+import { FilterClear } from './FilterClear';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -138,18 +139,15 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
             <div className="register-actions-bar">
               <div className="search-box-wrap">
                 <Search size={16} className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Otsi materjali nime või märkust..."
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  className="form-input search-input"
-                />
-                {search && (
-                  <button className="clear-search-btn" onClick={() => setSearch('')}>
-                    <X size={14} />
-                  </button>
-                )}
+                <FilterClear active={!!search} onClear={() => setSearch('')}>
+                  <input
+                    type="text"
+                    placeholder="Otsi materjali nime või märkust..."
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="form-input search-input"
+                  />
+                </FilterClear>
               </div>
               <div className="category-filter-tabs">
                 <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>

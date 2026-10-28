@@ -10809,3 +10809,79 @@ select.time-select {
   color: #dc2626;
   font-weight: 600;
 }
+
+/* Filtri tühjendamise X-nupp (FilterClear): ühtne kõigil rippmenüü- ja otsingufiltritel */
+.filter-clear {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.filter-clear > input {
+  width: 100%;
+  padding-right: 30px;
+}
+
+.filter-clear > select.form-input {
+  padding-right: 50px;
+}
+
+/* Brauseri enda tühjendusnupp otsinguväljal asendub ühtse X-nupuga */
+.filter-clear > input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  display: none;
+}
+
+.filter-clear-btn {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  transform: translateY(-50%);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+/* Rippmenüül jääb X noolest vasakule */
+.filter-clear:has(> select) .filter-clear-btn {
+  right: 26px;
+}
+
+.filter-clear-btn:hover {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+}
+
+/* Otsinguväli: ikoon vasakul, väli täidab ülejäänud laiuse */
+.search-box-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--text-secondary);
+}
+
+.search-box-wrap > .filter-clear {
+  flex: 1;
+}
+
+.finance-search-box > .filter-clear {
+  flex: 1;
+}
+
+.finance-search-box > .filter-clear > input {
+  padding-right: 26px;
+}
+
+.finance-search-box .filter-clear-btn {
+  right: 0;
+}

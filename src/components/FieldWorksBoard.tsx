@@ -21,6 +21,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
+import { FilterClear } from './FilterClear';
 
 interface Option {
   id: string;
@@ -699,33 +700,39 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         <div className="register-actions-bar">
           <div className="search-box-wrap">
             <Search size={16} className="search-icon" />
-            <input
-              type="text"
-              placeholder="Otsi põldu või tööd"
-              aria-label="Otsi põldu või tööd"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="form-input search-input"
-            />
+            <FilterClear active={!!search} onClear={() => setSearch('')}>
+              <input
+                type="text"
+                placeholder="Otsi põldu või tööd"
+                aria-label="Otsi põldu või tööd"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="form-input search-input"
+              />
+            </FilterClear>
           </div>
           <label className="fw-filter">
             <span>Tegevus</span>
-            <select className="form-input" value={activity} onChange={(e) => setActivity(e.target.value)}>
-              <option value="all">Kõik tegevused</option>
-              {activityOptions.map((o) => (
-                <option key={o.id} value={o.id}>{o.name}</option>
-              ))}
-            </select>
+            <FilterClear active={activity !== 'all'} onClear={() => setActivity('all')}>
+              <select className="form-input" value={activity} onChange={(e) => setActivity(e.target.value)}>
+                <option value="all">Kõik tegevused</option>
+                {activityOptions.map((o) => (
+                  <option key={o.id} value={o.id}>{o.name}</option>
+                ))}
+              </select>
+            </FilterClear>
           </label>
           <label className="fw-filter">
             <span>Kultuur</span>
-            <select className="form-input" value={cropFilter} onChange={(e) => setCropFilter(e.target.value)}>
-              <option value="all">Kõik kultuurid</option>
-              {cropOptions.map((name) => (
-                <option key={name} value={name}>{name}</option>
-              ))}
-              {hasUndetermined && <option value={NO_CROP}>Kultuur valimata</option>}
-            </select>
+            <FilterClear active={cropFilter !== 'all'} onClear={() => setCropFilter('all')}>
+              <select className="form-input" value={cropFilter} onChange={(e) => setCropFilter(e.target.value)}>
+                <option value="all">Kõik kultuurid</option>
+                {cropOptions.map((name) => (
+                  <option key={name} value={name}>{name}</option>
+                ))}
+                {hasUndetermined && <option value={NO_CROP}>Kultuur valimata</option>}
+              </select>
+            </FilterClear>
           </label>
           <label className="fw-filter checkbox fw-filter-end">
             <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />

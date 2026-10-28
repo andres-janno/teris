@@ -39,6 +39,7 @@ import type {
   ImplementAssignment
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { FilterClear } from './FilterClear';
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
@@ -1850,31 +1851,35 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div style={{ minWidth: '180px' }}>
-              <select
-                className="form-input"
-                value={historyVehicleFilter}
-                onChange={(e) => setHistoryVehicleFilter(e.target.value)}
-                style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
-              >
-                <option value="all">Kõik masinad</option>
-                {vehicles.map((v) => (
-                  <option key={v.id} value={v.id}>{v.name}</option>
-                ))}
-              </select>
+              <FilterClear active={historyVehicleFilter !== 'all'} onClear={() => setHistoryVehicleFilter('all')}>
+                <select
+                  className="form-input"
+                  value={historyVehicleFilter}
+                  onChange={(e) => setHistoryVehicleFilter(e.target.value)}
+                  style={{ fontSize: '13px', height: '34px' }}
+                >
+                  <option value="all">Kõik masinad</option>
+                  {vehicles.map((v) => (
+                    <option key={v.id} value={v.id}>{v.name}</option>
+                  ))}
+                </select>
+              </FilterClear>
             </div>
 
             <div style={{ minWidth: '180px' }}>
-              <select
-                className="form-input"
-                value={historyImplementFilter}
-                onChange={(e) => setHistoryImplementFilter(e.target.value)}
-                style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
-              >
-                <option value="all">Kõik haakeriistad</option>
-                {implementsList.map((imp) => (
-                  <option key={imp.id} value={imp.id}>{imp.name}</option>
-                ))}
-              </select>
+              <FilterClear active={historyImplementFilter !== 'all'} onClear={() => setHistoryImplementFilter('all')}>
+                <select
+                  className="form-input"
+                  value={historyImplementFilter}
+                  onChange={(e) => setHistoryImplementFilter(e.target.value)}
+                  style={{ fontSize: '13px', height: '34px' }}
+                >
+                  <option value="all">Kõik haakeriistad</option>
+                  {implementsList.map((imp) => (
+                    <option key={imp.id} value={imp.id}>{imp.name}</option>
+                  ))}
+                </select>
+              </FilterClear>
             </div>
 
             <div style={{ display: 'flex', gap: '4px' }}>

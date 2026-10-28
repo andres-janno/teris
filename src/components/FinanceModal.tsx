@@ -21,6 +21,7 @@ import {
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
+import { FilterClear } from './FilterClear';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -449,12 +450,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 <div className="finance-sidebar-controls">
                   <div className="finance-search-box">
                     <Search size={14} />
-                    <input
-                      type="search"
-                      placeholder="Otsi põldu, tööd või tegijat..."
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                    />
+                    <FilterClear active={!!search} onClear={() => setSearch('')}>
+                      <input
+                        type="search"
+                        placeholder="Otsi põldu, tööd või tegijat..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                      />
+                    </FilterClear>
                   </div>
 
                   <div className="finance-filter-row">
@@ -483,18 +486,20 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     </div>
 
                     {uniqueFields.length > 1 && (
-                      <select
-                        className="form-input finance-field-select"
-                        value={fieldFilter}
-                        onChange={(e) => setFieldFilter(e.target.value)}
-                      >
-                        <option value="all">Kõik põllud ({uniqueFields.length})</option>
-                        {uniqueFields.map((f) => (
-                          <option key={f.id} value={String(f.id)}>
-                            {f.num ? `Nr ${f.num} · ${f.name}` : f.name}
-                          </option>
-                        ))}
-                      </select>
+                      <FilterClear active={fieldFilter !== 'all'} onClear={() => setFieldFilter('all')}>
+                        <select
+                          className="form-input finance-field-select"
+                          value={fieldFilter}
+                          onChange={(e) => setFieldFilter(e.target.value)}
+                        >
+                          <option value="all">Kõik põllud ({uniqueFields.length})</option>
+                          {uniqueFields.map((f) => (
+                            <option key={f.id} value={String(f.id)}>
+                              {f.num ? `Nr ${f.num} · ${f.name}` : f.name}
+                            </option>
+                          ))}
+                        </select>
+                      </FilterClear>
                     )}
                   </div>
                 </div>
@@ -886,12 +891,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               <div className="finance-results-toolbar">
                 <div className="finance-search-box">
                   <Search size={14} />
-                  <input
-                    type="search"
-                    placeholder="Otsi põllu nime, numbri või kultuuri järgi..."
-                    value={resultsSearch}
-                    onChange={(e) => setResultsSearch(e.target.value)}
-                  />
+                  <FilterClear active={!!resultsSearch} onClear={() => setResultsSearch('')}>
+                    <input
+                      type="search"
+                      placeholder="Otsi põllu nime, numbri või kultuuri järgi..."
+                      value={resultsSearch}
+                      onChange={(e) => setResultsSearch(e.target.value)}
+                    />
+                  </FilterClear>
                 </div>
                 <div className="text-muted text-xs">
                   Klõpsa päisel, et veergu sorteerida. Klõpsa põllul, et avada selle kanded.

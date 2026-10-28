@@ -9,6 +9,7 @@ import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
+import { FilterClear } from './FilterClear';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -201,27 +202,31 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
         </div>
 
         <div style={{ minWidth: '180px' }}>
-          <select
-            className="form-input"
-            value={deviceFilter}
-            onChange={(e) => setDeviceFilter(e.target.value)}
-            style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
-          >
-            <option value="all">Kõik seadmed</option>
-            {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
-          </select>
+          <FilterClear active={deviceFilter !== 'all'} onClear={() => setDeviceFilter('all')}>
+            <select
+              className="form-input"
+              value={deviceFilter}
+              onChange={(e) => setDeviceFilter(e.target.value)}
+              style={{ fontSize: '13px', height: '34px' }}
+            >
+              <option value="all">Kõik seadmed</option>
+              {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
+            </select>
+          </FilterClear>
         </div>
 
         <div style={{ minWidth: '180px' }}>
-          <select
-            className="form-input"
-            value={targetFilter}
-            onChange={(e) => setTargetFilter(e.target.value)}
-            style={{ fontSize: '13px', padding: '6px 10px', height: '34px' }}
-          >
-            <option value="all">Kõik masinad ja haakeriistad</option>
-            {targetOptions}
-          </select>
+          <FilterClear active={targetFilter !== 'all'} onClear={() => setTargetFilter('all')}>
+            <select
+              className="form-input"
+              value={targetFilter}
+              onChange={(e) => setTargetFilter(e.target.value)}
+              style={{ fontSize: '13px', height: '34px' }}
+            >
+              <option value="all">Kõik masinad ja haakeriistad</option>
+              {targetOptions}
+            </select>
+          </FilterClear>
         </div>
 
         <div style={{ display: 'flex', gap: '4px' }}>
