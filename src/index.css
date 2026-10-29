@@ -10914,6 +10914,10 @@ select.form-input:read-only {
 .stock-card-modal { width: min(960px, 96vw); }
 .stock-card-table td, .stock-card-table th { white-space: nowrap; }
 .stock-card-table td:nth-child(2) { white-space: normal; }
+/* Laokaardi muutus: arvele võtmine roheline, mahakandmine punane */
+.stock-card-table td.stock-qty { font-weight: 600; }
+.stock-card-table td.stock-qty-in { color: var(--emerald-500); }
+.stock-card-table td.stock-qty-out { color: #dc2626; }
 
 .materials-tabs { margin-bottom: 12px; }
 .stock-doc-modal { width: min(980px, 96vw); }

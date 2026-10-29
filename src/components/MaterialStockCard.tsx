@@ -100,7 +100,7 @@ export const MaterialStockCard: React.FC<Props> = ({ material, warehouseId: init
                       {!!m.shortageQty && <span className="material-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
                     </td>
                     {!warehouseId && <td>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</td>}
-                    <td className={`num ${m.delta < 0 ? 'material-overuse' : ''}`}>
+                    <td className={`num stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
                       {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
                     </td>
                     {warehouseId && <td className={`num ${m.balance < 0 ? 'material-overuse' : ''}`}>{fmtQty(m.balance)}</td>}
