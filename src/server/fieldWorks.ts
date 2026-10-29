@@ -317,9 +317,11 @@ export interface TelemetrySuggestion {
   implementName: string | null;
   workerId: string | null;
   workerName: string | null;
-  startTime: string;
-  endTime: string;
-  durationHours: number;
+  startTime: string; // süüde sisse (sõidu algus); sõidu puudumisel põllule jõudmine
+  endTime: string; // süüde välja (sõidu lõpp); sõidu puudumisel põllult lahkumine
+  fieldStartTime: string; // põllu piiridesse jõudmine
+  fieldEndTime: string; // põllu piiridest lahkumine
+  durationHours: number; // põllu piirides süüde sees oldud aeg (masina ja haakeriista töötunnid)
   workedAreaHa: number | null;
   pointCount: number;
   route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp); puudub, kui ei õnnestunud arvutada
@@ -549,6 +551,8 @@ export async function getTelemetrySuggestionsForField(
         workerName: worker?.name ?? null,
         startTime: startTimeStr,
         endTime: endTimeStr,
+        fieldStartTime: startTimeStr,
+        fieldEndTime: endTimeStr,
         durationHours,
         workedAreaHa,
         pointCount: s.pointCount
@@ -558,8 +562,10 @@ export async function getTelemetrySuggestionsForField(
     }
   }
 
-  // Sõidu teekond: seadme kogu päeva paketid (üks päring seadme kohta) → sõit → läbitud kohad.
-  // Viga siin ei tohi soovitusi katki teha — siis jääb route lihtsalt puudu.
+  // Sõit (süüde sisse → välja) ja selle teekond: seadme kogu päeva paketid (üks päring seadme kohta).
+  // Kande algus ja lõpp tulevad süütest; kui sama sõit käis enne või pärast ka teistel põldudel,
+  // jagatakse aeg põllu piiril, et töötaja aega ei loetaks kahele kandele.
+  // Viga siin ei tohi soovitusi katki teha — siis jääb põllul oldud aeg ja route puudu.
   if (suggestions.length > 0) {
     let places: Place[] | null = null;
     try {
@@ -570,7 +576,7 @@ export async function getTelemetrySuggestionsForField(
     const packetsByDevice = new Map<string, DevicePacket[] | null>();
     for (const sug of suggestions) {
       const sess = sessionOf.get(sug);
-      if (!sess || !places) continue;
+      if (!sess) continue;
       try {
         if (!packetsByDevice.has(sess.device)) {
           let pk: DevicePacket[] | null = null;
@@ -585,7 +591,12 @@ export async function getTelemetrySuggestionsForField(
         if (!pk || pk.length === 0) continue;
         const trip = segmentTrip(pk, sess.startTime, sess.endTime);
         if (!trip) continue;
-        sug.route = buildRoute(trip.points, places, { ...DEFAULT_ROUTE_OPTIONS, preferPlaceId: String(fieldSeasonId) });
+        if (places) sug.route = buildRoute(trip.points, places, { ...DEFAULT_ROUTE_OPTIONS, preferPlaceId: String(fieldSeasonId) });
+        const otherFields = (sug.route?.visits ?? []).filter((v) => v.place.kind === 'FIELD' && v.place.id !== String(fieldSeasonId));
+        const fieldBefore = otherFields.some((v) => new Date(v.arrive).getTime() < sess.startTime.getTime());
+        const fieldAfter = otherFields.some((v) => new Date(v.leave).getTime() > sess.endTime.getTime());
+        if (!fieldBefore) sug.startTime = timeFmt.format(trip.start);
+        if (!fieldAfter) sug.endTime = timeFmt.format(trip.end);
       } catch (err) {
         console.warn('trip route failed:', err);
       }

@@ -205,17 +205,30 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (s.vehicleId) setVehicleId(s.vehicleId);
     setImplementId(s.implementId || '');
     if (s.workerId) setWorkerId(s.workerId);
+    // Kande aeg süüte järgi (sisse → välja), masina ja haakeriista tunnid põllu piirides oldud aja järgi
     setStartTime(s.startTime);
     setEndTime(s.endTime);
-    const hStr = fmt(s.durationHours);
-    setEquipmentHours(hStr);
-    setLaborHours(hStr);
+    const tripMins = timeToMinutes(s.endTime) - timeToMinutes(s.startTime);
+    setLaborHours(tripMins > 0 ? fmt(Math.round((tripMins / 60) * 100) / 100) : '');
+    setEquipmentHours(fmt(s.durationHours));
     if (s.workedAreaHa != null) {
       setTelemetryAreaHa(fmt(s.workedAreaHa));
       // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); 0 ha (haakeriist puudub) ei kirjuta üle
       if (s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
     }
   };
+
+  // Sõidu seos kandega: täpselt sama masin ja aeg = valitud; sama masin ja kattuv aeg = kanne on sellest sõidust,
+  // aga väärtused erinevad (nt varem salvestatud põllul oldud aja järgi)
+  const suggestionState = (s: TelemetrySuggestion): 'selected' | 'linked' | null => {
+    if (selectedSuggestionId === s.id) return 'selected';
+    if (!vehicleId || s.vehicleId !== vehicleId || !startTime || !endTime) return null;
+    if (startTime === s.startTime && endTime === s.endTime) return 'selected';
+    const from = Math.min(timeToMinutes(s.startTime), timeToMinutes(s.fieldStartTime));
+    const to = Math.max(timeToMinutes(s.endTime), timeToMinutes(s.fieldEndTime));
+    return Math.max(from, timeToMinutes(startTime)) < Math.min(to, timeToMinutes(endTime)) ? 'linked' : null;
+  };
+  const hasSelectedSuggestion = telemetrySuggestions.some((s) => suggestionState(s) === 'selected');
 
   const vehicleOptions = useMemo(() => {
     const list = [...vehicles];
@@ -406,7 +419,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </div>
               <div className="telemetry-suggestions-list">
                 {telemetrySuggestions.map((s) => {
-                  const isSelected = selectedSuggestionId === s.id;
+                  const state = suggestionState(s);
+                  const isSelected = state === 'selected';
                   return (
                     <button
                       key={s.id}
@@ -422,7 +436,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           <span className="telemetry-pill-impl" style={{ color: '#ef4444', fontWeight: 600 }}>(haakeriist puudub)</span>
                         )}
                         <span className="telemetry-pill-time">
-                          <Clock size={12} /> {s.startTime} – {s.endTime} ({fmt(s.durationHours)} h)
+                          <Clock size={12} /> {s.startTime} – {s.endTime}
                           {s.workedAreaHa != null && (
                             (s.workedAreaHa > 0 && s.implementName) ? (
                               <span> · {fmtHa(s.workedAreaHa)} ha</span>
@@ -434,8 +448,11 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                       </div>
                       <div className="telemetry-pill-meta">
                         {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
+                        <span className="telemetry-pill-field" title="Põllu piirides süüde sees oldud aeg (masina ja haakeriista töötunnid)">
+                          Põllul {s.fieldStartTime} – {s.fieldEndTime} · {fmt(s.durationHours)} h
+                        </span>
                         <span className="telemetry-pill-action">
-                          {isSelected ? '✓ Valitud' : 'Vali see sõit'}
+                          {isSelected ? '✓ Valitud' : state === 'linked' ? 'Uuenda selle sõidu järgi' : 'Vali see sõit'}
                         </span>
                       </div>
                       {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
@@ -541,12 +558,12 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   value={telemetryAreaHa}
                   placeholder="–"
                   style={
-                    (parseNum(telemetryAreaHa) === 0 && selectedSuggestionId)
+                    (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
                       ? { color: '#ef4444', borderColor: '#ef4444', fontWeight: 600, background: 'rgba(239, 68, 68, 0.08)' }
                       : undefined
                   }
                   title={
-                    (parseNum(telemetryAreaHa) === 0 && selectedSuggestionId)
+                    (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
                       ? 'Haakeriista ei leitud seoste tabelist — hektarid on 0'
                       : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
                   }

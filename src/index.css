@@ -9274,6 +9274,12 @@ a.history-pill:hover {
   white-space: nowrap;
 }
 
+.telemetry-pill-field {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
 .telemetry-suggestion-pill.selected .telemetry-pill-action {
   background: #059669;
   color: #ffffff;

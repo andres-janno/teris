@@ -177,9 +177,11 @@ export interface TelemetrySuggestion {
   implementName: string | null;
   workerId: string | null;
   workerName: string | null;
-  startTime: string;
-  endTime: string;
-  durationHours: number;
+  startTime: string; // süüde sisse (sõidu algus)
+  endTime: string; // süüde välja (sõidu lõpp)
+  fieldStartTime: string; // põllu piiridesse jõudmine
+  fieldEndTime: string; // põllu piiridest lahkumine
+  durationHours: number; // põllu piirides süüde sees oldud aeg
   workedAreaHa: number | null;
   pointCount: number;
   route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp)
