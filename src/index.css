@@ -10936,3 +10936,15 @@ td.stock-qty-out { color: #dc2626; }
 .finance-fifo-price.missing { color: #d97706; }
 .pria-material-cell { display: flex; flex-direction: column; min-width: 0; }
 .pria-material-cell .stock-level-hint { margin-left: 0; }
+
+/* Kulumaterjali vormi PRIA plokk */
+.form-section-title {
+  grid-column: span 2;
+  margin-top: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.material-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }

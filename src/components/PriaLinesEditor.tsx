@@ -7,6 +7,7 @@ import {
   PRIA_ACTIVITY, SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS,
   CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, materialCategoryFor
 } from '../services/pria';
+import { convertQty } from '../services/units';
 
 export interface PriaRow {
   materialId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -59,6 +60,15 @@ export const recomputeHarvestTotal = (h: HarvestRow, areaHa: number | null): Har
 export const rowToPlanLine = (r: PriaRow): FieldWorkPlanLine | null =>
   r.label.trim() ? { kind: 'MATERIAL', materialId: r.materialId || null, label: r.label.trim(), unit: r.unit, ratePerHa: parseNum(r.ratePerHa), ...rowPria(r) } : null;
 
+// Materjali N/P/K sisalduse (%) järgi rea N/P/K kg/ha; ainult massiühikus materjalil, mille sisaldus on teada
+const npkFor = (m: Material | undefined, ratePerHa: string): Partial<PriaRow> => {
+  if (!m || (m.nPct == null && m.pPct == null && m.kPct == null)) return {};
+  const rate = parseNum(ratePerHa);
+  const kgHa = rate == null ? null : convertQty(rate, m.unit, 'kg');
+  const part = (p: number | null | undefined) => (p == null || kgHa == null ? '' : fmt(Math.round(kgHa * p) / 100));
+  return { nKgHa: part(m.nPct), pKgHa: part(m.pPct), kKgHa: part(m.kPct) };
+};
+
 const registersFor = (activity: string): readonly string[] =>
   activity === PRIA_ACTIVITY.SOWING ? SEED_REGISTERS
     : activity === PRIA_ACTIVITY.FERTILIZING ? FERTILIZER_REGISTERS
@@ -83,11 +93,25 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   const isFert = activity === PRIA_ACTIVITY.FERTILIZING || activity === PRIA_ACTIVITY.LIMING;
   const isTkv = activity === PRIA_ACTIVITY.PLANT_PROTECTION;
   const set = (i: number, patch: Partial<PriaRow>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const setRate = (i: number, v: string) => set(i, { ratePerHa: v, total: fmt(totalFromRate(parseNum(v), areaHa)) });
-  const setTotal = (i: number, v: string) => set(i, { total: v, ratePerHa: fmt(rateFromTotal(parseNum(v), areaHa)) });
+  const materialOf = (r: PriaRow) => materials.find((m) => m.id === r.materialId);
+  const setRate = (i: number, v: string) => set(i, { ratePerHa: v, total: fmt(totalFromRate(parseNum(v), areaHa)), ...npkFor(materialOf(rows[i]), v) });
+  const setTotal = (i: number, v: string) => {
+    const ratePerHa = fmt(rateFromTotal(parseNum(v), areaHa));
+    set(i, { total: v, ratePerHa, ...npkFor(materialOf(rows[i]), ratePerHa) });
+  };
+  // Materjali valimisel tulevad PRIA väljad kulumaterjalide registrist; registris täitmata väli jääb reale alles
   const pickMaterial = (i: number, id: string) => {
     const m = materials.find((x) => x.id === id);
-    set(i, m ? { materialId: m.id, label: m.name, unit: m.unit } : { materialId: '', label: '' });
+    if (!m) return set(i, { materialId: '', label: '' });
+    const r = rows[i];
+    set(i, {
+      materialId: m.id, label: m.name, unit: m.unit,
+      priaRegister: m.priaRegister || r.priaRegister,
+      priaKind: m.priaKind || r.priaKind,
+      priaSpec: m.priaSpec || r.priaSpec,
+      activeIngredient: m.activeIngredient || r.activeIngredient,
+      ...npkFor(m, r.ratePerHa)
+    });
   };
 
   // Veerud tegevuse järgi; päis ja read kasutavad sama ruudustikku, et kõik oleks ühel real

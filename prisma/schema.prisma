@@ -687,6 +687,14 @@ model Material {
   manufacturer    String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
   composition     String? // koostisosad (toimeained, toitained jms; vaba tekst)
   cropVarietyId   String? // seemne puhul sort
+  // PRIA vaikeväärtused: täidavad plaani/kande rea materjali valimisel
+  priaRegister     String? // "Väetis registrist", "EL ühtne sordileht", ...
+  priaKind         String? // liik ("Taliraps", "NPK väetis", "Herbitsiid")
+  priaSpec         String? // seemne kategooria ("C2")
+  activeIngredient String? // taimekaitsevahendi toimeaine
+  nPct             Float? // väetise N sisaldus %; rea N kg/ha = kogus/ha × % / 100
+  pPct             Float?
+  kPct             Float?
   isActive        Boolean          @default(true)
   notes           String?
   stockIssueCount Int              @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)

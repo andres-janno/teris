@@ -55,6 +55,14 @@ export interface Material {
   cropVarietyId: string | null;
   isActive: boolean;
   composition: string | null; // koostisosad
+  // PRIA vaikeväärtused plaani/kande reale
+  priaRegister?: string | null;
+  priaKind?: string | null;
+  priaSpec?: string | null; // seemne kategooria
+  activeIngredient?: string | null;
+  nPct?: number | null; // N, P, K sisaldus %
+  pPct?: number | null;
+  kPct?: number | null;
   notes: string | null;
   usageCount?: number;
   plannedQty?: number | null; // hooaja planeeritud kogus (ainult ?year= päringul)
