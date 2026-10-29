@@ -20,6 +20,7 @@ import {
 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
+import { formatQty } from '../services/units';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 
@@ -682,7 +683,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                       <strong>{line.label}</strong>
                                     </td>
                                     <td className="num finance-line-qty">
-                                      <span>{line.quantity.toLocaleString('et-EE', { maximumFractionDigits: 2 })}</span>
+                                      <span>{formatQty(line.quantity)}</span>
                                       <span className="finance-line-unit">{line.unit}</span>
                                     </td>
                                     <td className="finance-price-cell">

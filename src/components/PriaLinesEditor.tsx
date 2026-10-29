@@ -7,7 +7,7 @@ import {
   PRIA_ACTIVITY, SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS,
   CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, materialCategoryFor
 } from '../services/pria';
-import { convertQty } from '../services/units';
+import { convertQty, formatQty } from '../services/units';
 
 export interface PriaRow {
   materialId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -149,7 +149,7 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
             </select>
             {stockLevels && r.materialId && (
               <span className={`stock-level-hint ${(stockLevels.get(r.materialId) ?? 0) < 0 ? 'material-overuse' : ''}`} title="Laoseis valitud laos">
-                Laos {(stockLevels.get(r.materialId) ?? 0).toLocaleString('et-EE', { maximumFractionDigits: 2 })} {materials.find((m) => m.id === r.materialId)?.unit ?? ''}
+                Laos {formatQty(stockLevels.get(r.materialId) ?? 0)} {materials.find((m) => m.id === r.materialId)?.unit ?? ''}
               </span>
             )}
           </div>

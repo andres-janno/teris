@@ -14,9 +14,10 @@ import type { Warehouse } from '../types/stock';
 import { StockDocumentsPanel } from './StockDocumentsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
+import { formatQty } from '../services/units';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
-const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
+const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const hasQty = (m: Material) => !!(m.plannedQty || m.usedQty);
 const diffQty = (m: Material) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;

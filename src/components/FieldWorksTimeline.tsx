@@ -2,8 +2,10 @@
 import React, { useMemo, useState } from 'react';
 import { Plus, Pencil, ChevronDown, ChevronRight, FileInput } from 'lucide-react';
 import { formatDate, formatDateRange } from '../services/dateFormat';
+import { formatQty } from '../services/units';
 import { WORK_PHASE_META, WORK_PHASES, type FieldSeasonWorks, type FieldWork, type WorkEntry, type WorkPhase, type FieldWorkPlanLine, type WorkEntryMaterial } from '../types/fieldWork';
 
+const qty = (n: number | null | undefined) => (n == null ? '' : formatQty(n));
 const num = (n: number | null | undefined, d = 2) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: d }));
 const range = (from: string | null, to: string | null) => (from ? (to && to !== from ? formatDateRange(from, to) : formatDate(from)) : null);
 const STATUS_LABEL = { PLANNED: 'Planeeritud', IN_PROGRESS: 'Töös', DONE: 'Tehtud' } as const;
@@ -18,9 +20,9 @@ const lineText = (l: Pick<FieldWorkPlanLine, 'label' | 'priaKind' | 'priaRegiste
     l.label,
     l.priaKind,
     l.priaSpec,
-    l.ratePerHa != null ? `${num(l.ratePerHa)} ${l.unit}/ha` : null,
-    total != null ? `= ${num(total)} ${l.unit}` : null,
-    l.nKgHa != null || l.pKgHa != null || l.kKgHa != null ? `N ${num(l.nKgHa)} P ${num(l.pKgHa)} K ${num(l.kKgHa)}` : null,
+    l.ratePerHa != null ? `${qty(l.ratePerHa)} ${l.unit}/ha` : null,
+    total != null ? `= ${qty(total)} ${l.unit}` : null,
+    l.nKgHa != null || l.pKgHa != null || l.kKgHa != null ? `N ${qty(l.nKgHa)} P ${qty(l.pKgHa)} K ${qty(l.kKgHa)}` : null,
     l.activeIngredient ? `toimeaine ${l.activeIngredient}` : null
   ].filter(Boolean).join(' · ');
 
@@ -43,14 +45,14 @@ const EntryRow: React.FC<{ work: FieldWork; entry: WorkEntry; onEdit?: () => voi
         return (
           <span key={i} className="fwt-line">
             {lineText({ label: m.name, unit: m.unit, ratePerHa: m.ratePerHa ?? null, priaKind: m.priaKind ?? null, priaRegister: m.priaRegister ?? null, priaSpec: m.priaSpec ?? null, activeIngredient: m.activeIngredient ?? null, nKgHa: m.nKgHa ?? null, pKgHa: m.pKgHa ?? null, kKgHa: m.kKgHa ?? null }, m.quantity)}
-            {differs && <span className="fwt-plan-diff"> (plaan {num(plan!.ratePerHa)} {m.unit}/ha)</span>}
+            {differs && <span className="fwt-plan-diff"> (plaan {qty(plan!.ratePerHa)} {m.unit}/ha)</span>}
           </span>
         );
       })}
       {entry.harvest && (
-        <span className="fwt-line">Saak {num(entry.harvest.ratePerHa)} t/ha = {num(entry.harvest.tonnes)} t{entry.harvest.priaKind ? ` · ${entry.harvest.priaKind}` : ''}{entry.harvest.priaSpec ? ` · ${entry.harvest.priaSpec}` : ''}</span>
+        <span className="fwt-line">Saak {qty(entry.harvest.ratePerHa)} t/ha = {qty(entry.harvest.tonnes)} t{entry.harvest.priaKind ? ` · ${entry.harvest.priaKind}` : ''}{entry.harvest.priaSpec ? ` · ${entry.harvest.priaSpec}` : ''}</span>
       )}
-      {!entry.harvest && entry.harvestTonnes != null && <span className="fwt-line">Saak {num(entry.harvestTonnes)} t</span>}
+      {!entry.harvest && entry.harvestTonnes != null && <span className="fwt-line">Saak {qty(entry.harvestTonnes)} t</span>}
       {entry.observations.map((o, i) => (
         <span key={`o${i}`} className="fwt-line">{o.priaRegister ? `${o.priaRegister}: ` : ''}{o.label}{o.unit ? ` · ${num(o.quantity)} ${o.unit}` : ''}</span>
       ))}

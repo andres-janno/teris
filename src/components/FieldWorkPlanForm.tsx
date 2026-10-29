@@ -3,6 +3,7 @@
 // kasutavad FieldWorkPlanDialog (uus töö, täisvaade) ja põllutööde tahvli valitud töö aken.
 import React, { useState } from 'react';
 import { DateInput } from './DateInput';
+import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services/pria';
@@ -28,6 +29,7 @@ const parseNum = (s: string): number | null => {
 };
 const fmt = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 2, useGrouping: false }));
 const fmtNum = (n: number | null | undefined) => (n == null ? '–' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
+const fmtQ = (n: number | null | undefined) => (n == null ? '–' : formatQty(n));
 
 export const FieldWorkPlanForm: React.FC<FieldWorkPlanFormProps> = (props) =>
   props.mode === 'view' && props.work ? <FieldWorkPlanView {...props} work={props.work} /> : <FieldWorkPlanEditor {...props} />;
@@ -63,13 +65,13 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
     { label: isSeed || isTkv ? 'Liik' : 'Väetise liik', value: (l) => dash(l.priaKind) },
     ...(isSeed ? [{ label: 'Kategooria', value: (l: FieldWorkPlanLine) => dash(l.priaSpec) }] : []),
     ...(isTkv ? [{ label: 'Toimeaine', value: (l: FieldWorkPlanLine) => dash(l.activeIngredient) }] : []),
-    { label: 'Kogus/ha', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtNum(l.ratePerHa)} ${l.unit}`) },
+    { label: 'Kogus/ha', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtQ(l.ratePerHa)} ${l.unit}`) },
     // Kokku = norm × planeeritud pindala
-    { label: 'Kokku', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtNum(Math.round(l.ratePerHa * (work.plannedAreaHa ?? fieldAreaHa) * 100) / 100)} ${l.unit}`) },
+    { label: 'Kokku', num: true, value: (l) => (l.ratePerHa == null ? '–' : `${fmtQ(l.ratePerHa * (work.plannedAreaHa ?? fieldAreaHa))} ${l.unit}`) },
     ...(isFert ? [
-      { label: 'N kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtNum(l.nKgHa) },
-      { label: 'P kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtNum(l.pKgHa) },
-      { label: 'K kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtNum(l.kKgHa) }
+      { label: 'N kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtQ(l.nKgHa) },
+      { label: 'P kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtQ(l.pKgHa) },
+      { label: 'K kg/ha', num: true, value: (l: FieldWorkPlanLine) => fmtQ(l.kKgHa) }
     ] : [])
   ];
 
@@ -103,7 +105,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
           <div className="fw-plan-table-wrap">
             <table className="fw-plan-table">
               <thead><tr><th>Kultuuri tüüp</th><th>Saagi tüüp</th><th className="num">Saak t/ha</th></tr></thead>
-              <tbody><tr><td>{dash(harvestLine.priaSpec)}</td><td>{dash(harvestLine.priaKind)}</td><td className="num">{fmtNum(harvestLine.ratePerHa)}</td></tr></tbody>
+              <tbody><tr><td>{dash(harvestLine.priaSpec)}</td><td>{dash(harvestLine.priaKind)}</td><td className="num">{fmtQ(harvestLine.ratePerHa)}</td></tr></tbody>
             </table>
           </div>
         </div>

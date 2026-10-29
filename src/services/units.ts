@@ -11,3 +11,6 @@ export function convertQty(qty: number, from: string, to: string): number | null
   if (Object.hasOwn(MASS, f) && Object.hasOwn(MASS, t)) return Math.round(((qty * MASS[f]) / MASS[t]) * 1e9) / 1e9;
   return null;
 }
+
+/** Koguse kuvamine: alati 2 komakohta, tuhanded eraldatud (nt "−3 256,00"). */
+export const formatQty = (n: number): string => n.toLocaleString('et-EE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });

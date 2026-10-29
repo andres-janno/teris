@@ -8,6 +8,7 @@ import { api } from '../services/api';
 import { matchCrop, isWinterCrop } from '../services/cropMatch';
 import { getCropColor } from '../services/cropColors';
 import { formatDate, formatDayMonth } from '../services/dateFormat';
+import { formatQty } from '../services/units';
 import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
@@ -71,6 +72,7 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toimi
 const fmtHa = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
 const fmtNum = (n: number | null | undefined, unit: string) =>
   n == null ? null : `${n.toLocaleString('et-EE', { maximumFractionDigits: 2 })} ${unit}`;
+const fmtQtyUnit = (n: number | null | undefined, unit: string) => (n == null ? null : `${formatQty(n)} ${unit}`);
 function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?: string | null; name: string }): number {
   const numA = (a.num ?? '').trim();
   const numB = (b.num ?? '').trim();
@@ -1240,8 +1242,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           fmtNum(e.laborHours, 'h tööaeg'),
                           fmtNum(e.equipmentHours, 'h masin'),
                           fmtNum(e.fuelLiters, 'l kütust'),
-                          ...e.materials.map((m) => `${m.name} ${m.quantity.toLocaleString('et-EE')} ${m.unit}`),
-                          fmtNum(e.harvestTonnes, 't saaki')
+                          ...e.materials.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
+                          fmtQtyUnit(e.harvestTonnes, 't saaki')
                         ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
                       </div>
                       <div className="fw-entry-foot">

@@ -2,6 +2,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, X, ArrowRightLeft } from 'lucide-react';
+import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
@@ -13,7 +14,7 @@ import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 
 interface Row { materialId: string; quantity: string; amount: string }
 const emptyRow: Row = { materialId: '', quantity: '', amount: '' };
-const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 3 });
+const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
