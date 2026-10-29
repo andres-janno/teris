@@ -600,6 +600,8 @@ export async function getTelemetrySuggestionsForField(
 // Päringute käsitleja
 // ---------------------------------------------------------------------------
 
+const DONE_WORK_ERROR = 'Töö on lõpetatud. Muutmiseks ava töö uuesti.';
+
 export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL): Promise<boolean> {
   const idOf = (prefix: string) => decodeURIComponent(pathname.slice(prefix.length));
   const user = sessionUserOf(req);
@@ -1069,6 +1071,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const { data: plan, lines } = await planInput(b);
     Object.assign(data, plan);
     const before = await prisma.fieldWork.findUnique({ where: { id }, select: { status: true, plannedAreaHa: true } });
+    // Lõpetatud tööd saab ainult uuesti avada
+    if (before?.status === 'DONE' && b?.status !== 'REOPEN') {
+      json(res, { error: DONE_WORK_ERROR }, 409);
+      return true;
+    }
     if (b?.status === 'DONE') {
       const latestEntry = await prisma.workEntry.findFirst({
         where: { fieldWorkId: id },
@@ -1098,8 +1105,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/field-works/') && method === 'DELETE') {
     const id = idOf('/api/field-works/');
-    const fw = await prisma.fieldWork.findUnique({ where: { id }, select: { createdBy: true } });
+    const fw = await prisma.fieldWork.findUnique({ where: { id }, select: { createdBy: true, status: true } });
     if (fw && deleteDenied(req, res, fw.createdBy)) return true;
+    if (fw?.status === 'DONE') {
+      json(res, { error: DONE_WORK_ERROR }, 409);
+      return true;
+    }
     const n = await prisma.workEntry.count({ where: { fieldWorkId: id } });
     if (n > 0) {
       json(res, { error: `Tööl on ${n} kannet. Kustuta enne kanded.` }, 409);
@@ -1146,6 +1157,10 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Töö ja kuupäev on kohustuslikud' }, 400);
       return true;
     }
+    if (work.status === 'DONE') {
+      json(res, { error: DONE_WORK_ERROR }, 409);
+      return true;
+    }
     let saved;
     try {
       saved = await tenantTransaction(async (tx) => {
@@ -1172,10 +1187,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   if (pathname.startsWith('/api/work-entries/') && method === 'PUT') {
     const id = idOf('/api/work-entries/');
     const b = await parseBody(req, MAX_BODY_BYTES);
-    const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true } });
+    const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true, fieldWork: { select: { status: true } } } });
     const { data, drafts, warehouseId } = await resolveEntryInput(b);
     if (!old || !data.date) {
       json(res, { error: 'Kannet ei leitud või kuupäev puudub' }, 400);
+      return true;
+    }
+    if (old.fieldWork.status === 'DONE') {
+      json(res, { error: DONE_WORK_ERROR }, 409);
       return true;
     }
     const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
@@ -1210,9 +1229,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/work-entries/') && method === 'DELETE') {
     const id = idOf('/api/work-entries/');
-    const e = await prisma.workEntry.findUnique({ where: { id }, include: { lines: { select: { kind: true, materialId: true } } } });
+    const e = await prisma.workEntry.findUnique({ where: { id }, include: { lines: { select: { kind: true, materialId: true } }, fieldWork: { select: { status: true } } } });
     if (!e) {
       json(res, { error: 'Kannet ei leitud' }, 404);
+      return true;
+    }
+    if (e.fieldWork.status === 'DONE') {
+      json(res, { error: DONE_WORK_ERROR }, 409);
       return true;
     }
     if (deleteDenied(req, res, e.createdBy)) return true;

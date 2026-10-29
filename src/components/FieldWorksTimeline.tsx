@@ -65,12 +65,14 @@ const WorkItem: React.FC<{ work: FieldWork; canEdit: boolean; onEditWork: () => 
   const meta = WORK_PHASE_META[work.phase];
   const entries = [...work.entries].sort((a, b) => a.date.localeCompare(b.date));
   const planned = range(work.plannedDateFrom, work.plannedDateTo) ?? work.plannedText;
+  // Lõpetatud tööd ei saa muuta enne uuesti avamist (töö aknas tööde tahvlil)
+  const editable = canEdit && work.status !== 'DONE';
   return (
     <article className={`fwt-work ${work.status.toLowerCase()}`} style={{ borderLeftColor: meta.color }}>
       <header className="fwt-work-head">
         <span className="fwt-work-title" title={work.priaName}>{work.workTypeName}{work.method ? <small> · {work.method}</small> : null}</span>
         <span className={`fwt-status ${work.status.toLowerCase()}`}>{STATUS_LABEL[work.status]}</span>
-        {canEdit && (
+        {editable && (
           <span className="fwt-actions">
             <button type="button" className="icon-btn-ghost" title="Muuda plaani" onClick={onEditWork}><Pencil size={14} /></button>
             <button type="button" className="btn btn-ghost btn-sm" onClick={onAddEntry}><Plus size={13} /> Kanne</button>
@@ -86,7 +88,7 @@ const WorkItem: React.FC<{ work: FieldWork; canEdit: boolean; onEditWork: () => 
           {work.lines.map((l, i) => <span key={i} className="fwt-line">{lineText(l)}</span>)}
         </div>
       )}
-      {entries.map((e) => <EntryRow key={e.id} work={work} entry={e} onEdit={canEdit ? () => onEditEntry(e) : undefined} />)}
+      {entries.map((e) => <EntryRow key={e.id} work={work} entry={e} onEdit={editable ? () => onEditEntry(e) : undefined} />)}
       {work.notes && (
         <button type="button" className="fwt-notes-toggle" onClick={() => setShowNotes(!showNotes)}>
           {showNotes ? <ChevronDown size={13} /> : <ChevronRight size={13} />} Märkused

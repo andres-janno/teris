@@ -8426,6 +8426,34 @@ a.history-pill:hover {
   box-shadow: 0 0 0 2px #15803d;
 }
 
+/* Planeerimata töö: kollane katkendjoon ja märgis, et see paistaks tahvlil silma */
+.fw-card.unplanned {
+  border: 1.5px dashed var(--amber-500);
+  background: rgba(245, 158, 11, 0.08);
+}
+
+.fw-card.unplanned:hover {
+  border-color: var(--amber-400);
+}
+
+.fw-card.unplanned .fw-status-dot {
+  border-color: var(--amber-500);
+}
+
+.fw-card-unplanned {
+  align-self: flex-start;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(245, 158, 11, 0.18);
+  color: #b45309;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+[data-theme='dark'] .fw-card-unplanned {
+  color: #fbbf24;
+}
+
 .fw-card-title {
   display: flex;
   align-items: center;
