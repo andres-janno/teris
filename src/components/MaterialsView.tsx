@@ -251,7 +251,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       <td>{m.manufacturer ?? ''}</td>
                       <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
                       <td>{m.unit}</td>
-                      <td className={`num ${(m.stockQty ?? 0) < 0 ? 'material-overuse' : ''}`}>
+                      <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
                         {fmtQty(m.stockQty ?? 0)}
                         {stockWarning(m) && <span title={stockWarning(m)} className="stock-warning-icon"><AlertTriangle size={13} /></span>}
                       </td>
