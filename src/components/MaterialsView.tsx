@@ -1,6 +1,6 @@
 // src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, AlertTriangle, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
+import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { MaterialFormDialog } from './MaterialFormDialog';
@@ -18,11 +18,6 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toimi
 
 const fmtQty = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
-const stockWarning = (m: Material) =>
-  [
-    m.unpricedQty ? `${fmtQty(m.unpricedQty)} ${m.unit} ootab arvele võtmist (hindamata)` : null,
-    m.stockIssueCount ? `${m.stockIssueCount} kannet ei saa laoühikusse teisendada` : null
-  ].filter(Boolean).join('\n');
 const hasQty = (m: Material) => !!(m.plannedQty || m.usedQty);
 const diffQty = (m: Material) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;
 
@@ -253,7 +248,6 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       <td>{m.unit}</td>
                       <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
                         {fmtQty(m.stockQty ?? 0)}
-                        {stockWarning(m) && <span title={stockWarning(m)} className="stock-warning-icon"><AlertTriangle size={13} /></span>}
                       </td>
                       {canManageFinance && <td className="num">{fmtEur(m.stockValue ?? 0)}</td>}
                       {canManageFinance && (
