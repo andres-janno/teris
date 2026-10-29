@@ -1,5 +1,5 @@
 // src/components/StockDocumentDialog.tsx — laokande vorm: arvele võtmine, mahakandmine, ülekanne (päis + read)
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, X, ArrowRightLeft } from 'lucide-react';
 import { formatQty } from '../services/units';
@@ -71,6 +71,13 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
     return () => document.removeEventListener('keydown', onKey, true);
   }, [onClose]);
 
+  // Viimase rea viimaselt väljalt viib Tab "Lisa rida" nupule (Safari jätab nupud Tab-iga muidu vahele)
+  const addRowRef = useRef<HTMLButtonElement>(null);
+  const tabToAddRow = (i: number) => (e: React.KeyboardEvent) => {
+    if (e.key !== 'Tab' || e.shiftKey || i !== rows.length - 1) return;
+    e.preventDefault();
+    addRowRef.current?.focus();
+  };
   const setRow = (i: number, patch: Partial<Row>) => setRows(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
 
   const save = async (e: React.FormEvent) => {
@@ -188,13 +195,13 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                     </td>
                     <td className="num">
                       <span className="input-with-unit">
-                        <input className="form-input num" inputMode="decimal" aria-label="Kogus" value={r.quantity} onChange={(e) => setRow(i, { quantity: e.target.value })} onBlur={() => setRow(i, { quantity: fmtInput(r.quantity) })} />
+                        <input className="form-input num" inputMode="decimal" aria-label="Kogus" value={r.quantity} onChange={(e) => setRow(i, { quantity: e.target.value })} onBlur={() => setRow(i, { quantity: fmtInput(r.quantity) })} onKeyDown={kind === 'RECEIPT' ? undefined : tabToAddRow(i)} />
                         <span className="stock-doc-unit">{m?.unit ?? ''}</span>
                       </span>
                     </td>
                     {kind === 'RECEIPT' && (
                       <td className="num">
-                        <input className="form-input num" inputMode="decimal" aria-label="Summa" value={r.amount} onChange={(e) => setRow(i, { amount: e.target.value })} onBlur={() => setRow(i, { amount: fmtInput(r.amount) })} />
+                        <input className="form-input num" inputMode="decimal" aria-label="Summa" value={r.amount} onChange={(e) => setRow(i, { amount: e.target.value })} onBlur={() => setRow(i, { amount: fmtInput(r.amount) })} onKeyDown={tabToAddRow(i)} />
                       </td>
                     )}
                     {kind === 'RECEIPT' && (
@@ -204,7 +211,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                       <td className="num">{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</td>
                     )}
                     <td className="actions-col">
-                      {/* Tab jätab kustutamisnupu vahele: viimaselt väljalt edasi järgmisele reale või "Lisa rida" nupule */}
+                      {/* Tab jätab kustutamisnupu vahele */}
                       <button type="button" tabIndex={-1} className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
                         <Trash2 size={15} />
                       </button>
@@ -215,7 +222,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </tbody>
           </table>
           <div className="stock-doc-footer-row">
-            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
+            <button type="button" ref={addRowRef} className="btn btn-secondary btn-sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
               <Plus size={14} /><span>Lisa rida</span>
             </button>
             {kind === 'RECEIPT' && <span>Kokku: <strong>{fmtEur(total)}</strong></span>}
