@@ -1,9 +1,10 @@
 // src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock } from 'lucide-react';
+import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { MaterialFormDialog } from './MaterialFormDialog';
+import { MaterialMergeDialog } from './MaterialMergeDialog';
 import type { FarmingSeason } from '../types/season';
 import { seasonSelectorYears } from '../types/season';
 import type { Material, MaterialCategory } from '../types/fieldWork';
@@ -42,6 +43,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
   const [stockCard, setStockCard] = useState<Material | null>(null);
+  const [merge, setMerge] = useState<Material | null>(null);
   const [tab, setTab] = useState<'materials' | 'documents' | 'warehouses'>('materials');
 
   useEffect(() => {
@@ -267,6 +269,9 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                           <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
                             <Edit2 size={15} />
                           </button>
+                          <button className="icon-btn-ghost" title="Asenda teise materjaliga (nt kirjaviga nimes)" aria-label="Asenda" onClick={(e) => { e.stopPropagation(); setMerge(m); }}>
+                            <GitMerge size={15} />
+                          </button>
                           <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
                             <Trash2 size={15} />
                           </button>
@@ -291,6 +296,18 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
 
       {stockCard && (
         <MaterialStockCard material={stockCard} warehouseId={warehouseId} warehouses={warehouses} canSeeMoney={canManageFinance} onClose={() => setStockCard(null)} />
+      )}
+
+      {merge && (
+        <MaterialMergeDialog
+          source={merge}
+          materials={materials}
+          onClose={() => setMerge(null)}
+          onMerged={() => {
+            setMerge(null);
+            void reload();
+          }}
+        />
       )}
 
       {form && (

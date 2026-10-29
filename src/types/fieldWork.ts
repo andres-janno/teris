@@ -63,6 +63,7 @@ export interface Material {
   nPct?: number | null; // N, P, K sisaldus %
   pPct?: number | null;
   kPct?: number | null;
+  aliases?: string[]; // asendatud materjalide nimed
   notes: string | null;
   usageCount?: number;
   plannedQty?: number | null; // hooaja planeeritud kogus (ainult ?year= päringul)

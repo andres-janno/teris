@@ -25,7 +25,7 @@ import { recomputeMaterialStock, materialStockSummary, resolveEntryWarehouseId, 
 import { materialStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
-import { type PriaAttrs } from '../services/pria.ts';
+import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
 
@@ -719,6 +719,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const data = { name, category, unit, manufacturer: text(b?.manufacturer, 160), cropVarietyId: text(b?.cropVarietyId, 64), isActive: b?.isActive !== false, composition: text(b?.composition, 4000), notes: text(b?.notes, 4000),
       priaRegister: text(b?.priaRegister, 120), priaKind: text(b?.priaKind, 120), priaSpec: text(b?.priaSpec, 20), activeIngredient: text(b?.activeIngredient, 500),
       nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct) };
+    // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
     const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true } }) : null;
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
@@ -746,6 +747,62 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       if (err?.code === 'P2002') json(res, { error: 'Selline materjal on juba olemas' }, 409);
       else throw err;
     }
+    return true;
+  }
+  // Materjali asendamine teisega (nt PRIA kirjaviga): plaanid, kanded ja laokanded viiakse sihtmaterjalile,
+  // asendatav kustutatakse ja tema nimi jääb sihtmaterjalile varunimeks (PRIA import seob selle edaspidi sihtmaterjaliga)
+  const mergeMatch = pathname.match(/^\/api\/materials\/([^/]+)\/merge$/);
+  if (mergeMatch && method === 'POST') {
+    const id = decodeURIComponent(mergeMatch[1]);
+    const b = await parseBody(req, MAX_BODY_BYTES);
+    const targetId = text(b?.targetId, 64);
+    const [source, target] = await Promise.all([
+      prisma.material.findUnique({ where: { id } }),
+      targetId ? prisma.material.findUnique({ where: { id: targetId } }) : null
+    ]);
+    if (!source || !target || source.id === target.id) {
+      json(res, { error: 'Vali materjal, millega asendada' }, 400);
+      return true;
+    }
+    if (deleteDenied(req, res, source.createdBy)) return true;
+    if (source.category !== target.category) {
+      json(res, { error: 'Asendada saab ainult sama liiki materjaliga' }, 400);
+      return true;
+    }
+    // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
+    const docLines = await prisma.stockDocumentLine.findMany({ where: { materialId: source.id }, select: { id: true, quantity: true } });
+    if (docLines.length && convertQty(1, source.unit, target.unit) === null) {
+      json(res, { error: `Materjalil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
+      return true;
+    }
+    const counts = await tenantTransaction(async (tx) => {
+      const plans = await tx.fieldWorkLine.updateMany({ where: { materialId: source.id }, data: { materialId: target.id, label: target.name } });
+      const entries = await tx.workEntryLine.updateMany({ where: { materialId: source.id }, data: { materialId: target.id, label: target.name } });
+      for (const l of docLines) {
+        await tx.stockDocumentLine.update({ where: { id: l.id }, data: { materialId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
+      }
+      const aliases = [...new Set([...target.aliases, ...source.aliases, nameKey(source.name)])].filter((a) => a !== nameKey(target.name));
+      // Sihtmaterjali tühjad PRIA väljad täidetakse asendatava omadest
+      await tx.material.update({
+        where: { id: target.id },
+        data: {
+          aliases,
+          manufacturer: target.manufacturer ?? source.manufacturer,
+          composition: target.composition ?? source.composition,
+          priaRegister: target.priaRegister ?? source.priaRegister,
+          priaKind: target.priaKind ?? source.priaKind,
+          priaSpec: target.priaSpec ?? source.priaSpec,
+          activeIngredient: target.activeIngredient ?? source.activeIngredient,
+          nPct: target.nPct ?? source.nPct,
+          pPct: target.pPct ?? source.pPct,
+          kPct: target.kPct ?? source.kPct
+        }
+      });
+      await tx.material.delete({ where: { id: source.id } });
+      await recomputeMaterialStock(tx, [target.id]);
+      return { plans: plans.count, entries: entries.count, stockLines: docLines.length };
+    });
+    json(res, { success: true, ...counts });
     return true;
   }
   if (pathname.startsWith('/api/materials/') && method === 'DELETE') {

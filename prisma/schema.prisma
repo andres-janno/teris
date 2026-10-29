@@ -695,6 +695,7 @@ model Material {
   nPct             Float? // väetise N sisaldus %; rea N kg/ha = kogus/ha × % / 100
   pPct             Float?
   kPct             Float?
+  aliases          String[]         @default([]) // asendatud materjalide nimed (nameKey kujul); PRIA import seob need selle materjaliga
   isActive        Boolean          @default(true)
   notes           String?
   stockIssueCount Int              @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)

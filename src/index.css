@@ -10964,3 +10964,5 @@ td.stock-qty-out { color: #dc2626; }
   color: var(--text-secondary);
 }
 .material-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+
+.material-merge-info { margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }

@@ -650,6 +650,10 @@ export const api = {
     return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
   },
 
+  async mergeMaterial(id: string, targetId: string): Promise<{ plans: number; entries: number; stockLines: number }> {
+    return jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}/merge`, jsonInit('POST', { targetId })), 'Materjali asendamine ebaõnnestus');
+  },
+
   async deleteMaterial(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
   },

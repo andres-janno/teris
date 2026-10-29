@@ -38,15 +38,19 @@ export async function ensurePriaWorkTypes(client: ImportClient): Promise<PriaWor
   return map;
 }
 
-async function materialFor(tx: Tx, line: OperationLine, cache: Map<string, string>): Promise<string | null> {
+async function materialFor(tx: Tx, line: OperationLine, cache: Map<string, { id: string; name: string }>): Promise<string | null> {
   if (line.kind !== 'MATERIAL' || !line.materialCategory) return null;
   const key = `${line.materialCategory}:${nameKey(line.label)}`;
-  const hit = cache.get(key);
-  if (hit) return hit;
-  const existing = await tx.material.findFirst({ where: { category: line.materialCategory, name: { equals: line.label, mode: 'insensitive' } } });
-  const id = existing?.id ?? (await tx.material.create({ data: { name: line.label, category: line.materialCategory, unit: line.unit || 'kg' } })).id;
-  cache.set(key, id);
-  return id;
+  let hit = cache.get(key);
+  if (!hit) {
+    const existing = await tx.material.findFirst({ where: { category: line.materialCategory, name: { equals: line.label, mode: 'insensitive' } } })
+      ?? await tx.material.findFirst({ where: { category: line.materialCategory, aliases: { has: nameKey(line.label) } } });
+    hit = existing ?? await tx.material.create({ data: { name: line.label, category: line.materialCategory, unit: line.unit || 'kg' } });
+    cache.set(key, { id: hit.id, name: hit.name });
+  }
+  // Varunime järgi leitud materjal: real kasutatakse materjali õiget nime (asendatud kirjaviga ei tule tagasi)
+  if (nameKey(hit.name) !== nameKey(line.label)) line.label = hit.name;
+  return hit.id;
 }
 
 const planLine = (l: OperationLine, materialId: string | null, sortOrder: number) => ({
@@ -113,7 +117,7 @@ export async function importFieldSeasonOperations(
   }));
   const rowById = new Map(rows.map((w) => [w.id, w]));
   const taken = new Set<string>();
-  const materials = new Map<string, string>();
+  const materials = new Map<string, { id: string; name: string }>();
   const res: FieldSeasonImportResult = { created: 0, complemented: 0, linked: 0, entriesAdded: 0, unknown: 0 };
   const last = await tx.fieldWork.findFirst({ where: { fieldSeasonId }, orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } });
   let sortOrder = (last?.sortOrder ?? -1) + 1;
@@ -135,6 +139,8 @@ export async function importFieldSeasonOperations(
       if (!w.plannedWorkerId && op.performerId) patch.plannedWorkerId = op.performerId;
       if (!w.notes && op.notes) patch.notes = op.notes;
       if (Object.keys(patch).length) await tx.fieldWork.update({ where: { id: w.id }, data: patch });
+      // Materjalide nimed varunimede järgi õigeks enne olemasolevate ridadega võrdlemist
+      for (const l of lines) await materialFor(tx, l, materials);
       const have = new Set(w.lines.map((l) => `${l.kind}:${nameKey(l.label)}`));
       const add = lines.filter((l) => l.kind !== 'OBSERVATION' && !have.has(`${l.kind}:${nameKey(l.label)}`));
       for (const [i, l] of add.entries()) {
