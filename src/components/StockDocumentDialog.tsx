@@ -204,7 +204,8 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                       <td className="num">{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</td>
                     )}
                     <td className="actions-col">
-                      <button type="button" className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
+                      {/* Tab jätab kustutamisnupu vahele: viimaselt väljalt edasi järgmisele reale või "Lisa rida" nupule */}
+                      <button type="button" tabIndex={-1} className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
                         <Trash2 size={15} />
                       </button>
                     </td>
