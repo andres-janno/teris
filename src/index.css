@@ -8503,7 +8503,7 @@ a.history-pill:hover {
 .fw-card-total {
   margin-top: 2px;
   padding-top: 3px;
-  border-top: 1px solid var(--border-color, #e5e7eb);
+  border-top: 1px solid var(--border-card);
   font-size: 0.68rem;
   font-weight: 600;
   color: var(--text-primary);
@@ -10937,10 +10937,17 @@ td.stock-qty-out { color: #dc2626; }
 .pria-material-cell { display: flex; flex-direction: column; min-width: 0; }
 .pria-material-cell .stock-level-hint { margin-left: 0; }
 
+/* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */
+.material-form-modal .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.material-form-modal .form-input { width: 100%; min-width: 0; box-sizing: border-box; text-overflow: ellipsis; }
+.material-form-modal .modal-body { overflow-x: hidden; }
+
 /* Kulumaterjali vormi PRIA plokk */
 .form-section-title {
   grid-column: span 2;
   margin-top: 6px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border-card);
   font-size: 0.72rem;
   font-weight: 600;
   text-transform: uppercase;

@@ -115,7 +115,7 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
 
   return createPortal(
     <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up work-form-modal" onSubmit={save}>
+      <form className="modal-content animate-scale-up work-form-modal material-form-modal" onSubmit={save}>
         <div className="modal-header">
           <div className="modal-title-group">
             <Edit2 size={20} className="text-emerald" />
@@ -148,8 +148,8 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
             </div>
             {form.category && REGISTERS[form.category] && (
               <>
-                <div className="form-section-title full-width">PRIA andmed (täidavad plaani ja kande rea)</div>
-                <div className="form-group">
+                <div className="form-section-title" title="Täidavad plaani ja kande rea materjali valimisel">PRIA andmed</div>
+                <div className="form-group full-width">
                   <label htmlFor="mt-pria-register">Register/materjal</label>
                   <select id="mt-pria-register" className="form-input" value={form.priaRegister ?? ''} onChange={(e) => setForm({ ...form, priaRegister: e.target.value })}>
                     <option value="">–</option>
