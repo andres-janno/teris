@@ -10941,11 +10941,9 @@ td.stock-qty-out { color: #dc2626; }
 .stock-doc-lines td > .stock-doc-unit { margin-left: 6px; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
 
-.stock-level-hint { font-size: 12px; color: var(--text-muted, #64748b); margin-left: 6px; white-space: nowrap; }
 .finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
 .finance-fifo-price.missing { color: #d97706; }
 .pria-material-cell { display: flex; flex-direction: column; min-width: 0; }
-.pria-material-cell .stock-level-hint { margin-left: 0; }
 
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */
 .material-form-modal .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }

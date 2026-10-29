@@ -163,7 +163,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(entry?.warehouseId ?? '');
-  const [stockLevels, setStockLevels] = useState<Map<string, number>>(new Map());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -177,11 +176,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
       setWarehouseId((cur) => cur || ws.find((w) => w.isDefault)?.id || '');
     }).catch(() => setWarehouses([]));
   }, []);
-
-  useEffect(() => {
-    if (!warehouseId) return;
-    api.getStockLevels(warehouseId).then((ls) => setStockLevels(new Map(ls.map((l) => [l.materialId, l.qty])))).catch(() => setStockLevels(new Map()));
-  }, [warehouseId]);
 
   useEffect(() => {
     let isMounted = true;
@@ -643,7 +637,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   </select>
                 </div>
               )}
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals stockLevels={stockLevels} />
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals />
             </section>
           )}
 

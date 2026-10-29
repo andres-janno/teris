@@ -7,7 +7,7 @@ import {
   PRIA_ACTIVITY, SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS,
   CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, materialCategoryFor
 } from '../services/pria';
-import { convertQty, formatQty } from '../services/units';
+import { convertQty } from '../services/units';
 
 export interface PriaRow {
   materialId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -77,7 +77,6 @@ const registersFor = (activity: string): readonly string[] =>
     : [];
 
 interface PriaLinesEditorProps {
-  stockLevels?: Map<string, number>; // valitud lao laoseis (ainult kogus)
   activity: string;
   rows: PriaRow[];
   onChange: (rows: PriaRow[]) => void;
@@ -86,7 +85,7 @@ interface PriaLinesEditorProps {
   showTotals: boolean; // kandel kogus kokku, plaanil ainult norm
 }
 
-export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, materials, areaHa, showTotals, stockLevels }) => {
+export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, materials, areaHa, showTotals }) => {
   const category = materialCategoryFor(activity);
   const options = materials.filter((m) => (m.category === category && m.isActive) || rows.some((r) => r.materialId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
@@ -147,11 +146,6 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
               <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
               {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
-            {stockLevels && r.materialId && (
-              <span className={`stock-level-hint ${(stockLevels.get(r.materialId) ?? 0) < 0 ? 'material-overuse' : ''}`} title="Laoseis valitud laos">
-                Laos {formatQty(stockLevels.get(r.materialId) ?? 0)} {materials.find((m) => m.id === r.materialId)?.unit ?? ''}
-              </span>
-            )}
           </div>
           <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
