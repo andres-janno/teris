@@ -721,7 +721,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct) };
     // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
-    const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true } }) : null;
+    const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true } }) : null;
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
     if (unitChanged) {
       const docLines = await prisma.stockDocumentLine.count({ where: { materialId: id! } });
@@ -740,6 +740,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       const saved = await tenantTransaction(async (tx) => {
         const s = id ? await tx.material.update({ where: { id }, data }) : await tx.material.create({ data });
         if (unitChanged) await recomputeMaterialStock(tx, [s.id]);
+        // Ümbernimetamine: plaani- ja kanderead saavad uue nime; vana nimi jääb varunimeks (PRIA import seob selle materjaliga)
+        if (old && old.name !== name) {
+          await tx.fieldWorkLine.updateMany({ where: { materialId: s.id }, data: { label: name } });
+          await tx.workEntryLine.updateMany({ where: { materialId: s.id }, data: { label: name } });
+          const aliases = [...new Set([...old.aliases, nameKey(old.name)])].filter((a) => a !== nameKey(name));
+          return tx.material.update({ where: { id: s.id }, data: { aliases } });
+        }
         return s;
       });
       json(res, saved);
