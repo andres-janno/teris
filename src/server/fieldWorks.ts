@@ -121,8 +121,8 @@ async function resolveEntryInput(body: any) {
   const endTime = text(body?.endTime, 10);
   const harvestTonnes = num(body?.harvestTonnes);
   const h = body?.harvest;
-  const harvest = h && num(h.tonnes) !== null
-    ? { tonnes: num(h.tonnes)!, ratePerHa: num(h.ratePerHa), priaKind: text(h.priaKind, 80), priaSpec: text(h.priaSpec, 80) }
+  const harvest = h
+    ? { tonnes: num(h.tonnes), ratePerHa: num(h.ratePerHa), priaKind: text(h.priaKind, 80), priaSpec: text(h.priaSpec, 80) }
     : null;
   const observations = (Array.isArray(body?.observations) ? body.observations : [])
     .map((o: any) => ({ label: text(o?.label, 200) ?? '', quantity: num(o?.quantity) ?? 0, unit: text(o?.unit, 40) ?? '', priaRegister: text(o?.priaRegister, 80) }))
@@ -202,9 +202,10 @@ function entryDto(e: any, withFinance: boolean) {
       priaRegister: l.priaRegister, priaKind: l.priaKind, priaSpec: l.priaSpec, activeIngredient: l.activeIngredient,
       nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa
     })),
-    harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity ?? null,
+    // Koguseta saagirida (ainult saagi/kultuuri tüüp) → kogus puudub
+    harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity || null,
     harvestBunkers: e.harvestBunkers ?? null,
-    harvest: (() => { const l = lines.find((x) => x.kind === 'HARVEST'); return l ? { tonnes: l.quantity, ratePerHa: l.ratePerHa, priaKind: l.priaKind, priaSpec: l.priaSpec } : null; })(),
+    harvest: (() => { const l = lines.find((x) => x.kind === 'HARVEST'); return l ? { tonnes: l.quantity || null, ratePerHa: l.ratePerHa, priaKind: l.priaKind, priaSpec: l.priaSpec } : null; })(),
     observations: lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ label: l.label, quantity: l.quantity, unit: l.unit, priaRegister: l.priaRegister })),
     notes: e.notes,
     financeStatus: e.financeStatus,

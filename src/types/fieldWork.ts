@@ -13,7 +13,7 @@ export interface PriaLineFields { ratePerHa: number | null; priaRegister: string
 // Töö plaani rida (plaanitud materjal või saak)
 export interface FieldWorkPlanLine extends PriaLineFields { id?: string; kind: 'MATERIAL' | 'HARVEST'; materialId: string | null; label: string; unit: string }
 export interface WorkEntryObservation { label: string; quantity: number; unit: string; priaRegister: string | null }
-export interface WorkEntryHarvest { tonnes: number; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null }
+export interface WorkEntryHarvest { tonnes: number | null; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null }
 
 export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'];
 

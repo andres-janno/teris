@@ -50,7 +50,10 @@ const EntryRow: React.FC<{ work: FieldWork; entry: WorkEntry; onEdit?: () => voi
         );
       })}
       {entry.harvest && (
-        <span className="fwt-line">Saak {qty(entry.harvest.ratePerHa)} t/ha = {qty(entry.harvest.tonnes)} t{entry.harvest.priaKind ? ` · ${entry.harvest.priaKind}` : ''}{entry.harvest.priaSpec ? ` · ${entry.harvest.priaSpec}` : ''}</span>
+        <span className="fwt-line">
+          {/* Koguseta saak (ainult tüübid) näitab ainult tüüpe */}
+          {['Saak', entry.harvest.tonnes != null ? `${qty(entry.harvest.ratePerHa)} t/ha = ${qty(entry.harvest.tonnes)} t` : null, entry.harvest.priaKind, entry.harvest.priaSpec].filter(Boolean).join(' · ').replace('Saak · ', 'Saak ')}
+        </span>
       )}
       {!entry.harvest && entry.harvestTonnes != null && <span className="fwt-line">Saak {qty(entry.harvestTonnes)} t</span>}
       {entry.observations.map((o, i) => (

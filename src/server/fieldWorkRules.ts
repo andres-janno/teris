@@ -30,7 +30,7 @@ export interface EntryQuantities {
   fuelLiters?: number | null;
   materials?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs> }[];
   harvestTonnes?: number | null; // lihtne saak (vana vorm)
-  harvest?: { tonnes: number; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null } | null;
+  harvest?: { tonnes: number | null; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null } | null;
   observations?: { label: string; quantity: number; unit: string; priaRegister: string | null }[];
 }
 
@@ -87,8 +87,9 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
       push({ kind: 'MATERIAL', materialId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
     }
   }
-  if (q.harvest && positive(q.harvest.tonnes)) {
-    push({ kind: 'HARVEST', label: 'Saak', quantity: q.harvest.tonnes, unit: 't', ratePerHa: q.harvest.ratePerHa, priaKind: q.harvest.priaKind, priaSpec: q.harvest.priaSpec });
+  // Saagi ja kultuuri tüüp salvestatakse ka siis, kui kogus pole veel teada (kogus 0)
+  if (q.harvest && (positive(q.harvest.tonnes) || q.harvest.priaKind || q.harvest.priaSpec)) {
+    push({ kind: 'HARVEST', label: 'Saak', quantity: positive(q.harvest.tonnes) ? q.harvest.tonnes! : 0, unit: 't', ratePerHa: q.harvest.ratePerHa, priaKind: q.harvest.priaKind, priaSpec: q.harvest.priaSpec });
   } else if (positive(q.harvestTonnes)) {
     push({ kind: 'HARVEST', label: 'Saak', quantity: q.harvestTonnes, unit: 't' });
   }

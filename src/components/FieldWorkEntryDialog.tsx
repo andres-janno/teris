@@ -350,8 +350,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           materials: rows
             .map((r) => ({ materialId: r.materialId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
             .filter((r) => r.materialId && r.quantity > 0),
-          harvest: isHarvest && parseNum(harvest.total) != null
-            ? { tonnes: parseNum(harvest.total)!, ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
+          // Saagi ja kultuuri tüüp salvestuvad ka ilma koguseta
+          harvest: isHarvest && (parseNum(harvest.total) != null || harvest.priaKind || harvest.priaSpec)
+            ? { tonnes: parseNum(harvest.total), ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
             : null,
           harvestTonnes: null,
           harvestBunkers: isHarvest ? parseNum(harvest.bunkers ?? '') : null,

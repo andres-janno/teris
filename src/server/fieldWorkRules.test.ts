@@ -71,6 +71,14 @@ describe('buildEntryLines', () => {
       { kind: 'HARVEST', quantity: 9.68, unit: 't', ratePerHa: 4, priaKind: 'Terad', priaSpec: 'Põhikultuur' }
     ]);
   });
+  it('saagi ja kultuuri tüüp salvestuvad ka koguseta', () => {
+    expect(buildEntryLines({ harvest: { tonnes: null, ratePerHa: null, priaKind: 'Terad', priaSpec: 'Põhikultuur' } })).toMatchObject([
+      { kind: 'HARVEST', quantity: 0, unit: 't', priaKind: 'Terad', priaSpec: 'Põhikultuur' }
+    ]);
+  });
+  it('tühja saagi rida ei teki', () => {
+    expect(buildEntryLines({ harvest: { tonnes: null, ratePerHa: null, priaKind: null, priaSpec: null } })).toEqual([]);
+  });
   it('seire leiud on OBSERVATION read, ka koguseta', () => {
     const lines = buildEntryLines({
       observations: [
