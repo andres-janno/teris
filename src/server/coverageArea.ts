@@ -4,13 +4,16 @@ import type { Feature, MultiPolygon, Polygon } from 'geojson';
 // Telemeetria sõidujoone kaetud pindala põllu piires ruudustikuga: iga lõigu ümber märgitakse
 // haakeriista laiuses ruudud ja loetakse need, mille keskpunkt on põllul. Varem kasutatud
 // turf.buffer + intersect pikal (10 000+ punktiga) joonel kestis kümneid sekundeid ja ajas
-// serveri mälu täis; ruudustiku mälukasutus sõltub ainult kaetud pinnast. Nagu varemgi, ühendatakse
-// sessiooni kõik järjestikused punktid (osa jälgureid saadab punkte harva, lõigud on pikemad kui 50 m).
+// serveri mälu täis; ruudustiku mälukasutus sõltub ainult kaetud pinnast. Ühendatakse sessiooni
+// järjestikused punktid (osa jälgureid saadab punkte harva, lõigud on pikemad kui 50 m), v.a kui punktil
+// on brk: seade käis vahepeal põllult väljas või oli pikk paus — siis lõiku ei tõmmata (ilma tolerantsita).
+
+export type CoveragePoint = { lat: number; lng: number; brk?: boolean };
 
 const M_PER_DEG_LAT = 110_540;
 
 export function coverageAreaHa(
-  points: { lat: number; lng: number }[],
+  points: CoveragePoint[],
   field: Polygon | MultiPolygon | Feature<Polygon | MultiPolygon>,
   widthM: number
 ): number {
@@ -30,6 +33,7 @@ export function coverageAreaHa(
   const key = (ix: number, iy: number) => (ix + OFFSET) * 2 ** 21 + (iy + OFFSET);
 
   for (let i = 1; i < points.length; i++) {
+    if (points[i].brk) continue;
     const ax = toX(points[i - 1].lng), ay = toY(points[i - 1].lat);
     const bx = toX(points[i].lng), by = toY(points[i].lat);
     const dx = bx - ax, dy = by - ay;

@@ -121,7 +121,8 @@ describe('Device Assignment and Telemetry History', () => {
       // Haakeseadme nime saab kasutaja muuta, seega võrreldakse seda andmebaasis oleva nimega
       const implement = await prisma.implement.findUnique({ where: { id: 'imp-01' }, select: { name: true } });
       expect(claasSuggestion?.implementName).toBe(implement?.name);
-      expect(claasSuggestion?.workedAreaHa).toBeCloseTo(5.45, 1);
+      // Põllult väljas käimise vahelisi jooni ei arvestata (varem 5,45 ha)
+      expect(claasSuggestion?.workedAreaHa).toBeCloseTo(5.38, 1);
     }));
 
     it('excludes telemetry suggestion when an overlapping workEntry exists on that date', () => runAsTenant(LOISU, async () => {
@@ -144,7 +145,7 @@ describe('Device Assignment and Telemetry History', () => {
       });
 
       try {
-        expect(dummy.telemetryAreaHa).toBeCloseTo(5.45, 1);
+        expect(dummy.telemetryAreaHa).toBeCloseTo(5.38, 1);
         const suggestionsWithDummy = await getTelemetrySuggestionsForField(450, '2026-10-04');
         expect(suggestionsWithDummy.some((s) => s.vehicleId === target.vehicleId)).toBe(false);
 

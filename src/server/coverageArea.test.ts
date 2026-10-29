@@ -27,6 +27,13 @@ describe('coverageAreaHa', () => {
     expect(coverageAreaHa(pts, square(100), 6)).toBeCloseTo(0.06, 2);
   });
 
+  it('põllult väljas käimise järel (brk) punkte joonega ei ühendata', () => {
+    const a = Array.from({ length: 11 }, (_, i) => at(50 + i * 10, 100));
+    const b = Array.from({ length: 11 }, (_, i) => ({ ...at(50 + i * 10, 200), brk: i === 0 }));
+    // kaks eraldi 100 m rida; ühendusjoon (150,100)→(50,200) jääb välja
+    expect(coverageAreaHa([...a, ...b], square(300), 6)).toBeCloseTo(0.126, 2);
+  });
+
   it('sama raja korduv läbimine ei loe pinda topelt', () => {
     const there = Array.from({ length: 11 }, (_, i) => at(50 + i * 10, 100));
     const once = coverageAreaHa(there, square(300), 6);

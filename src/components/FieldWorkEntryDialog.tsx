@@ -205,12 +205,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (s.vehicleId) setVehicleId(s.vehicleId);
     setImplementId(s.implementId || '');
     if (s.workerId) setWorkerId(s.workerId);
-    // Kande aeg süüte järgi (sisse → välja), masina ja haakeriista tunnid põllu piirides oldud aja järgi
+    // Kande aeg, tööaeg ning masina ja haakeriista töötunnid süüte järgi (sisse → välja)
     setStartTime(s.startTime);
     setEndTime(s.endTime);
     const tripMins = timeToMinutes(s.endTime) - timeToMinutes(s.startTime);
-    setLaborHours(tripMins > 0 ? fmt(Math.round((tripMins / 60) * 100) / 100) : '');
-    setEquipmentHours(fmt(s.durationHours));
+    const hStr = tripMins > 0 ? fmt(Math.round((tripMins / 60) * 100) / 100) : '';
+    setLaborHours(hStr);
+    setEquipmentHours(hStr);
     if (s.workedAreaHa != null) {
       setTelemetryAreaHa(fmt(s.workedAreaHa));
       // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); 0 ha (haakeriist puudub) ei kirjuta üle
@@ -448,8 +449,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                       </div>
                       <div className="telemetry-pill-meta">
                         {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
-                        <span className="telemetry-pill-field" title="Põllu piirides süüde sees oldud aeg (masina ja haakeriista töötunnid)">
-                          Põllul {s.fieldStartTime} – {s.fieldEndTime} · {fmt(s.durationHours)} h
+                        <span className="telemetry-pill-field" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
+                          Põllul {s.fieldStartTime} – {s.fieldEndTime}
                         </span>
                         <span className="telemetry-pill-action">
                           {isSelected ? '✓ Valitud' : state === 'linked' ? 'Uuenda selle sõidu järgi' : 'Vali see sõit'}

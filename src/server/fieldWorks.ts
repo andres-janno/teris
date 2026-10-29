@@ -3,7 +3,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
 import { fetchFieldGpsPackets, fetchDevicePackets, type FieldGpsRow, type DevicePacket } from './telemetryAccess.ts';
-import { coverageAreaHa } from './coverageArea.ts';
+import { coverageAreaHa, type CoveragePoint } from './coverageArea.ts';
 import { segmentTrip, buildRoute, DEFAULT_ROUTE_OPTIONS, type Place, type TripRoute } from './tripRoute.ts';
 import { loadPlaces } from './tripPlaces.ts';
 import type { Prisma } from '@prisma/client';
@@ -321,7 +321,7 @@ export interface TelemetrySuggestion {
   endTime: string; // süüde välja (sõidu lõpp); sõidu puudumisel põllult lahkumine
   fieldStartTime: string; // põllu piiridesse jõudmine
   fieldEndTime: string; // põllu piiridest lahkumine
-  durationHours: number; // põllu piirides süüde sees oldud aeg (masina ja haakeriista töötunnid)
+  durationHours: number; // põllu piirides süüde sees oldud aeg
   workedAreaHa: number | null;
   pointCount: number;
   route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp); puudub, kui ei õnnestunud arvutada
@@ -367,7 +367,9 @@ export async function getTelemetrySuggestionsForField(
   }
 
   const tallinnDateFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' });
-  const pointsByDevice: Record<string, { time: Date; lat: number; lng: number }[]> = {};
+  const pointsByDevice: Record<string, { time: Date; lat: number; lng: number; brk: boolean }[]> = {};
+  // Seade käis vahepeal põllu piiridest väljas → järgmine põllupunkt alustab uut joont (maanteesõit ei lähe pindalasse)
+  const leftField: Record<string, boolean> = {};
 
   for (const r of rows) {
     if (tallinnDateFmt.format(r.time) !== dateStr) continue;
@@ -376,11 +378,12 @@ export async function getTelemetrySuggestionsForField(
     if (lat == null || lng == null) continue;
     // Arvesse lähevad ainult punktid, kus süüde on sees (süüteta seadmel puudub väli → punkt jääb)
     if (r.fields?.ignition === 0) continue;
-    if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng) {
-      if (turf.booleanPointInPolygon(turf.point([lng, lat]), poly)) {
-        if (!pointsByDevice[r.device]) pointsByDevice[r.device] = [];
-        pointsByDevice[r.device].push({ time: r.time, lat, lng });
-      }
+    if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng && turf.booleanPointInPolygon(turf.point([lng, lat]), poly)) {
+      if (!pointsByDevice[r.device]) pointsByDevice[r.device] = [];
+      pointsByDevice[r.device].push({ time: r.time, lat, lng, brk: !!leftField[r.device] });
+      leftField[r.device] = false;
+    } else {
+      leftField[r.device] = true;
     }
   }
 
@@ -389,7 +392,7 @@ export async function getTelemetrySuggestionsForField(
     device: string;
     startTime: Date;
     endTime: Date;
-    points: { lat: number; lng: number }[];
+    points: CoveragePoint[];
     pointCount: number;
     activeMs: number; // süüte sees oldud aeg (punktide vahed kuni ACTIVE_STEP_MS)
   }[] = [];
@@ -399,7 +402,7 @@ export async function getTelemetrySuggestionsForField(
     if (pts.length < 3) continue;
     let curStart = pts[0].time;
     let curEnd = pts[0].time;
-    let curPoints: { lat: number; lng: number }[] = [{ lat: pts[0].lat, lng: pts[0].lng }];
+    let curPoints: CoveragePoint[] = [{ lat: pts[0].lat, lng: pts[0].lng }];
     let curActive = 0;
 
     for (let i = 1; i < pts.length; i++) {
@@ -414,7 +417,8 @@ export async function getTelemetrySuggestionsForField(
         curActive = 0;
       } else {
         curEnd = pts[i].time;
-        curPoints.push({ lat: pts[i].lat, lng: pts[i].lng });
+        // Joon katkeb, kui seade käis vahepeal põllult väljas või punktide vahel oli pikk paus
+        curPoints.push({ lat: pts[i].lat, lng: pts[i].lng, brk: pts[i].brk || diff > ACTIVE_STEP_MS });
         if (diff <= ACTIVE_STEP_MS) curActive += diff;
       }
     }
