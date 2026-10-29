@@ -73,7 +73,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
     const q = search.trim().toLowerCase();
     return materials
       .filter((m) => category === 'all' || m.category === category)
-      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q))
+      .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q) || (m.priaKind ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
   }, [materials, category, search]);
 
@@ -89,12 +89,13 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Materjal', 'Tootja', 'Liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Materjal', 'Tootja', 'Liik', 'Kultuur / täpsustav liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
       `"${m.name}"`,
       `"${m.manufacturer ?? ''}"`,
       `"${MATERIAL_CATEGORY_LABEL[m.category]}"`,
+      `"${m.priaKind ?? ''}"`,
       `"${m.unit}"`,
       m.stockQty ?? 0,
       ...(canManageFinance ? [m.stockValue ?? 0] : []),
@@ -215,6 +216,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                     <th>Materjal</th>
                     <th>Tootja</th>
                     <th>Liik</th>
+                    <th title="Seemnel kultuur, väetisel ja taimekaitsevahendil täpsustav liik (PRIA)">Kultuur / täpsustav liik</th>
                     <th>Ühik</th>
                     <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
                     {canManageFinance && <th className="num">Laoväärtus</th>}
@@ -223,7 +225,6 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                     <th className="num">Kasutatud</th>
                     <th className="num" title="Planeeritud miinus kasutatud; negatiivne = ülekulu">Ala/ülekulu</th>
                     <th className="num">Kandeid</th>
-                    <th>Märkus</th>
                     <th className="actions-col"><span className="sr-only">Tegevused</span></th>
                   </tr>
                 </thead>
@@ -239,12 +240,13 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                   )}
                   {filtered.map((m) => (
                     <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => setStockCard(m)}>
-                      <td className="name-cell">
+                      <td className="name-cell" title={m.notes ?? undefined}>
                         <span className="field-name">{m.name}</span>
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
                       <td>{m.manufacturer ?? ''}</td>
                       <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
+                      <td>{m.priaKind ?? ''}</td>
                       <td>{m.unit}</td>
                       <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
                         {fmtQty(m.stockQty ?? 0)}
@@ -259,7 +261,6 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       <td className="num">{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</td>
                       <td className={`num ${diffQty(m) < 0 ? 'material-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
                       <td className="num">{m.usageCount ?? 0}</td>
-                      <td className="muted">{m.notes ?? ''}</td>
                       <td className="actions-col">
                         <div className="row-actions">
                           <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
