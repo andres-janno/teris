@@ -110,8 +110,11 @@ describe('Device Assignment and Telemetry History', () => {
       expect(suggestions.length).toBeGreaterThanOrEqual(1);
       const claasSuggestion = suggestions.find((s) => s.vehicleName === 'Suur Claas');
       expect(claasSuggestion).toBeDefined();
-      expect(claasSuggestion?.startTime).toBe('15:45');
-      expect(claasSuggestion?.endTime).toBe('17:05');
+      // Põllu piirides 15:45–17:05; kande aeg süüte järgi (sisse 15:44)
+      expect(claasSuggestion?.fieldStartTime).toBe('15:45');
+      expect(claasSuggestion?.fieldEndTime).toBe('17:05');
+      expect(claasSuggestion?.startTime).toBe('15:44');
+      expect(claasSuggestion!.endTime >= '17:05').toBe(true);
       expect(claasSuggestion?.durationHours).toBeGreaterThan(1);
       expect(claasSuggestion?.pointCount).toBeGreaterThan(100);
       expect(claasSuggestion?.implementId).toBe('imp-01');
