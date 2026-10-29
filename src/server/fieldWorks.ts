@@ -751,9 +751,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   // Materjali asendamine teisega (nt PRIA kirjaviga): plaanid, kanded ja laokanded viiakse sihtmaterjalile,
   // asendatav kustutatakse ja tema nimi jääb sihtmaterjalile varunimeks (PRIA import seob selle edaspidi sihtmaterjaliga)
-  const mergeMatch = pathname.match(/^\/api\/materials\/([^/]+)\/merge$/);
-  if (mergeMatch && method === 'POST') {
-    const id = decodeURIComponent(mergeMatch[1]);
+  if (pathname.startsWith('/api/materials/') && pathname.endsWith('/merge') && method === 'POST') {
+    const id = decodeURIComponent(pathname.slice('/api/materials/'.length, -'/merge'.length));
     const b = await parseBody(req, MAX_BODY_BYTES);
     const targetId = text(b?.targetId, 64);
     const [source, target] = await Promise.all([
