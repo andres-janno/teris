@@ -198,7 +198,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                       </td>
                     )}
                     {kind === 'RECEIPT' && (
-                      <td className="num muted">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</td>
+                      <td className="num stock-doc-unit-price">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</td>
                     )}
                     {kind !== 'RECEIPT' && initial && (
                       <td className="num">{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</td>

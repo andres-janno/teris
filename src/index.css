@@ -10927,7 +10927,13 @@ td.stock-qty-out { color: #dc2626; }
 .materials-tabs { margin-bottom: 12px; }
 .stock-doc-modal { width: min(980px, 96vw); }
 .stock-doc-lines { margin-top: 12px; }
-.stock-doc-lines input.num { text-align: right; max-width: 140px; }
+.stock-doc-lines input.num { text-align: right; width: 110px; }
+/* Read keskele; materjali valik võtab ülejäänud laiuse, et tabel mahuks aknasse ilma kerimisribata */
+.stock-doc-lines td { vertical-align: middle; }
+.stock-doc-lines td:first-child { width: 100%; }
+.stock-doc-lines td:first-child select { width: 100%; min-width: 160px; }
+.stock-doc-lines td.num, .stock-doc-lines th.num { white-space: nowrap; }
+.stock-doc-lines .stock-doc-unit-price { color: var(--text-primary); }
 .stock-doc-lines .input-with-unit { display: inline-flex; gap: 6px; align-items: center; }
 /* Ühik kindla laiusega, et numbrid jääksid ühte joonde ka eri pikkusega ühiku korral */
 .stock-doc-lines .stock-doc-unit { display: inline-block; width: 2.5em; text-align: left; }
