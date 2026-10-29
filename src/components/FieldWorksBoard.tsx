@@ -93,9 +93,10 @@ const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatu
 const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
   status === 'DONE' ? <Check size={13} strokeWidth={3} className="fw-status-done" /> : <span className={`fw-status-dot ${status === 'IN_PROGRESS' ? 'doing' : ''}`} />;
 
-// Planeerimata: kandeid pole ja plaanis pole aega (kuupäeva ega vaba teksti)
+// Planeerimata: kandeid pole ja plaan on tühi (aega, materjale, töötajat ega märkusi pole)
 const isUnplanned = (w: FieldWork) =>
-  w.status === 'PLANNED' && w.entries.length === 0 && !w.plannedDateFrom && !w.plannedDateTo && !w.plannedText;
+  w.status === 'PLANNED' && w.entries.length === 0 && !w.plannedDateFrom && !w.plannedDateTo && !w.plannedText &&
+  w.lines.length === 0 && !w.plannedWorkerId && !w.notes;
 
 const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void; onAddEntry?: () => void }> = ({ work, fieldAreaHa, selected, onSelect, onAddEntry }) => {
   const n = work.entries.length;
@@ -165,7 +166,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
           <span className="fw-card-sub">
             {work.status === 'DONE'
               ? (work.finishedAt ? `Lõpetatud ${formatDayMonth(work.finishedAt)}` : 'Lõpetatud')
-              : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || (work.plannedDateTo ? `– ${formatDayMonth(work.plannedDateTo)}` : ''))}
+              : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || (work.plannedDateTo ? `– ${formatDayMonth(work.plannedDateTo)}` : 'aeg määramata'))}
           </span>
         )}
       </button>
@@ -1163,9 +1164,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
                 <div className="fw-panel-body">
                   <div className="fw-panel-status">
-                    <span className={`fw-status-pill ${selected.status.toLowerCase()}`}>{STATUS_LABEL[selected.status]}</span>
+                    {isUnplanned(selected) ? (
+                      <span className="fw-status-pill unplanned">Planeerimata</span>
+                    ) : (
+                      <span className={`fw-status-pill ${selected.status.toLowerCase()}`}>{STATUS_LABEL[selected.status]}</span>
+                    )}
                     <span className="fw-muted">
-                      {selected.status === 'PLANNED' && 'Esimene kanne muudab töö olekuks „Töös“.'}
+                      {selected.status === 'PLANNED' && (isUnplanned(selected) ? 'Lisa plaan: aeg, materjalid või töötaja.' : 'Esimene kanne muudab töö olekuks „Töös“.')}
                       {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
                       {selected.status === 'DONE' && `Lõpetatud${selected.finishedAt ? ` ${formatDate(selected.finishedAt)}` : ''}${locked ? '' : ' · muutmiseks ava töö uuesti'}`}
                     </span>

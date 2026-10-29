@@ -8914,6 +8914,15 @@ a.history-pill:hover {
   background: #16a34a;
 }
 
+.fw-status-pill.unplanned {
+  color: #b45309;
+  background: rgba(245, 158, 11, 0.18);
+}
+
+[data-theme='dark'] .fw-status-pill.unplanned {
+  color: #fbbf24;
+}
+
 .fw-panel-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
