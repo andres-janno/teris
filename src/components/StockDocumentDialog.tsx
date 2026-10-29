@@ -20,6 +20,11 @@ const parseNum = (s: string) => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
   return s.trim() && Number.isFinite(n) ? n : null;
 };
+// Sisestusväljas 2 komakohta (ilma tuhandete eraldajata); mittearvuline tekst jääb alles
+const fmtInput = (v: number | string | null | undefined) => {
+  const n = typeof v === 'number' ? v : parseNum(v ?? '');
+  return n == null ? (typeof v === 'string' ? v : '') : n.toLocaleString('et-EE', { minimumFractionDigits: 2, maximumFractionDigits: 2, useGrouping: false });
+};
 
 interface Props {
   kind: StockDocumentKind;
@@ -41,7 +46,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
   const [reason, setReason] = useState<WriteOffReason | ''>(initial?.writeOffReason ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [rows, setRows] = useState<Row[]>(
-    initial?.lines.map((l) => ({ materialId: l.materialId, quantity: String(l.quantity).replace('.', ','), amount: l.amount == null ? '' : String(l.amount).replace('.', ',') })) ?? [{ ...emptyRow }]
+    initial?.lines.map((l) => ({ materialId: l.materialId, quantity: fmtInput(l.quantity), amount: fmtInput(l.amount) })) ?? [{ ...emptyRow }]
   );
   const [levels, setLevels] = useState<Map<string, number>>(new Map());
   const [busy, setBusy] = useState(false);
@@ -179,17 +184,17 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                       </select>
                     </td>
                     <td className={`num ${(levels.get(r.materialId) ?? 0) < 0 ? 'material-overuse' : ''}`}>
-                      {m ? `${fmtQty(levels.get(m.id) ?? 0)} ${m.unit}` : '–'}
+                      {m ? <>{fmtQty(levels.get(m.id) ?? 0)}<span className="stock-doc-unit">{m.unit}</span></> : '–'}
                     </td>
                     <td className="num">
                       <span className="input-with-unit">
-                        <input className="form-input num" inputMode="decimal" aria-label="Kogus" value={r.quantity} onChange={(e) => setRow(i, { quantity: e.target.value })} />
-                        <span>{m?.unit ?? ''}</span>
+                        <input className="form-input num" inputMode="decimal" aria-label="Kogus" value={r.quantity} onChange={(e) => setRow(i, { quantity: e.target.value })} onBlur={() => setRow(i, { quantity: fmtInput(r.quantity) })} />
+                        <span className="stock-doc-unit">{m?.unit ?? ''}</span>
                       </span>
                     </td>
                     {kind === 'RECEIPT' && (
                       <td className="num">
-                        <input className="form-input num" inputMode="decimal" aria-label="Summa" value={r.amount} onChange={(e) => setRow(i, { amount: e.target.value })} />
+                        <input className="form-input num" inputMode="decimal" aria-label="Summa" value={r.amount} onChange={(e) => setRow(i, { amount: e.target.value })} onBlur={() => setRow(i, { amount: fmtInput(r.amount) })} />
                       </td>
                     )}
                     {kind === 'RECEIPT' && (

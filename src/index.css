@@ -10929,6 +10929,9 @@ td.stock-qty-out { color: #dc2626; }
 .stock-doc-lines { margin-top: 12px; }
 .stock-doc-lines input.num { text-align: right; max-width: 140px; }
 .stock-doc-lines .input-with-unit { display: inline-flex; gap: 6px; align-items: center; }
+/* Ühik kindla laiusega, et numbrid jääksid ühte joonde ka eri pikkusega ühiku korral */
+.stock-doc-lines .stock-doc-unit { display: inline-block; width: 2.5em; text-align: left; }
+.stock-doc-lines td > .stock-doc-unit { margin-left: 6px; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
 
 .stock-level-hint { font-size: 12px; color: var(--text-muted, #64748b); margin-left: 6px; white-space: nowrap; }
