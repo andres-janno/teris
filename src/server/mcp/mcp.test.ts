@@ -163,3 +163,22 @@ describe('tööd ja kanded', () => {
     expect(r.rows[0].materials[0].unitPrice).toBeUndefined();
   });
 });
+
+describe('ladu', () => {
+  it('list_stock_levels: kogus kõigile, väärtus ainult finantsjuhile, miinus märgitud', async () => {
+    const plain = (await call(A.plainKey, 'list_stock_levels')).data;
+    expect(plain.rows[0]).toMatchObject({ warehouse: 'Põhiladu', material: 'Ammooniumnitraat', quantity: -150, unit: 'kg', negative: true });
+    expect(plain.rows[0].value).toBeUndefined();
+    const fin = (await call(A.financeKey, 'list_stock_levels')).data;
+    expect(fin.rows[0]).toHaveProperty('value');
+  });
+  it('list_stock_movements puudub tavakasutajal, finantsjuht näeb liikumisi', async () => {
+    const client = await connect(A.plainKey);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.some((t) => t.name === 'list_stock_movements')).toBe(false);
+    const r = (await call(A.financeKey, 'list_stock_movements', { from: '01.01.2026', to: '31.12.2026' })).data;
+    expect(r.rows.map((x: { type: string }) => x.type).sort()).toEqual(['FIELD_WORK', 'RECEIPT']);
+    expect(r.rows.find((x: { type: string }) => x.type === 'RECEIPT')).toMatchObject({ quantity: 1000, documentNo: 'ARV-1', cost: 450 });
+  });
+});
