@@ -19,6 +19,7 @@
   "dependencies": {
     "@fontsource/outfit": "^5.3.0",
     "@fontsource/plus-jakarta-sans": "^5.3.0",
+    "@modelcontextprotocol/sdk": "1.32.1",
     "@prisma/client": "^6.19.3",
     "@turf/turf": "^7.4.0",
     "canvas-confetti": "^1.9.4",
@@ -31,7 +32,8 @@
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "shpjs": "^6.2.0",
-    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz",
+    "zod": "4.6.5"
   },
   "devDependencies": {
     "@types/canvas-confetti": "^1.9.0",

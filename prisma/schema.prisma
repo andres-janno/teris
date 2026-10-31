@@ -679,14 +679,14 @@ model WorkType {
 }
 
 model Material {
-  id              String           @id @default(cuid())
-  tenantId        String           @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name            String
-  category        MaterialCategory
-  unit            String // kg, l, t, tk
-  manufacturer    String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
-  composition     String? // koostisosad (toimeained, toitained jms; vaba tekst)
-  cropVarietyId   String? // seemne puhul sort
+  id               String           @id @default(cuid())
+  tenantId         String           @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name             String
+  category         MaterialCategory
+  unit             String // kg, l, t, tk
+  manufacturer     String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
+  composition      String? // koostisosad (toimeained, toitained jms; vaba tekst)
+  cropVarietyId    String? // seemne puhul sort
   // PRIA vaikeväärtused: täidavad plaani/kande rea materjali valimisel
   priaRegister     String? // "Väetis registrist", "EL ühtne sordileht", ...
   priaKind         String? // liik ("Taliraps", "NPK väetis", "Herbitsiid")
@@ -696,13 +696,13 @@ model Material {
   pPct             Float?
   kPct             Float?
   aliases          String[]         @default([]) // asendatud materjalide nimed (nameKey kujul); PRIA import seob need selle materjaliga
-  isActive        Boolean          @default(true)
-  notes           String?
-  stockIssueCount Int              @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  createdBy       String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy       String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  isActive         Boolean          @default(true)
+  notes            String?
+  stockIssueCount  Int              @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   cropVariety    CropVariety?        @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
   entryLines     WorkEntryLine[]
@@ -1040,6 +1040,7 @@ model User {
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   sessions             Session[]
+  apiKeys              ApiKey[]
   passwordTokens       PasswordToken[]
   finishedFieldWorks   FieldWork[]     @relation("FieldWorkFinishedBy")
   createdWorkEntries   WorkEntry[]     @relation("WorkEntryCreatedBy")
@@ -1063,6 +1064,23 @@ model Session {
 
   @@index([userId])
   @@map("sessions")
+}
+
+// Kasutaja isiklik API-võti AI ühenduse (MCP) jaoks; võtit ennast ei salvestata (platvormi tabel nagu sessions)
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  name       String // kasutaja antud nimi (nt "Claude Desktop sülearvutis")
+  keyHash    String    @unique // SHA-256 võtmest
+  keyPrefix  String // võtme algus äratundmiseks (nt "trs_ab12cd")
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("api_keys")
 }
 
 // Ettevõtte admini antud ajutine luba kasutajatoele (ainult lugemiseks)
@@ -1224,6 +1242,17 @@ model HelpArticle {
   createdAt DateTime @default(now())
 
   @@map("help_articles")
+}
+
+// Platvormi tekstiseaded, mida teenusepakkuja muudab admin.teris.ee-s (nt AI juhis)
+model PlatformSetting {
+  key       String   @id // nt "mcp_instructions"
+  value     String
+  updatedBy String? // platvormi kasutajanimi
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+
+  @@map("platform_settings")
 }
 
 // ============================================================================
