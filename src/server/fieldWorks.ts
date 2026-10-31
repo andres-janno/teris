@@ -25,6 +25,7 @@ import { recomputeMaterialStock, materialStockSummary, resolveEntryWarehouseId, 
 import { materialStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
+import { changeMaterialUnit } from './materialUnitChange.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -741,10 +742,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = text(b?.id, 64);
     const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true } }) : null;
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
-    if (unitChanged) {
+    // Teisendustegur (1 vana ühik = tegur uut ühikut): kasutaja antud või kaaluühikute korral automaatne
+    const unitFactor = unitChanged ? (num(b?.unitFactor) ?? convertQty(1, old!.unit, unit)) : null;
+    if (unitChanged && !(unitFactor && unitFactor > 0)) {
       const docLines = await prisma.stockDocumentLine.count({ where: { materialId: id! } });
       if (docLines) {
-        json(res, { error: `Materjalil on ${docLines} laokande rida; laoühikut ei saa muuta.` }, 409);
+        json(res, { error: `Materjalil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
       }
       const lines = await prisma.workEntryLine.findMany({ where: { materialId: id!, kind: 'MATERIAL' }, select: { unit: true } });
@@ -756,8 +759,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     try {
       const saved = await tenantTransaction(async (tx) => {
-        const s = id ? await tx.material.update({ where: { id }, data }) : await tx.material.create({ data });
-        if (unitChanged) await recomputeMaterialStock(tx, [s.id]);
+        let s = id ? await tx.material.update({ where: { id }, data: unitFactor ? { ...data, unit: old!.unit } : data }) : await tx.material.create({ data });
+        if (unitFactor) {
+          await changeMaterialUnit(tx, s.id, old!.unit, unit, unitFactor);
+          s = await tx.material.findUniqueOrThrow({ where: { id: s.id } });
+        } else if (unitChanged) await recomputeMaterialStock(tx, [s.id]);
         // Ümbernimetamine: plaani- ja kanderead saavad uue nime; vana nimi jääb varunimeks (PRIA import seob selle materjaliga)
         if (old && old.name !== name) {
           await tx.fieldWorkLine.updateMany({ where: { materialId: s.id }, data: { label: name } });
@@ -766,7 +772,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           return tx.material.update({ where: { id: s.id }, data: { aliases } });
         }
         return s;
-      });
+      }, { timeout: 60000 }); // ühiku teisendus uuendab iga kande-, plaani- ja laokande rea eraldi
       json(res, saved);
     } catch (err: any) {
       if (err?.code === 'P2002') json(res, { error: 'Selline materjal on juba olemas' }, 409);

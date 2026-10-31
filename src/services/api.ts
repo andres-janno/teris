@@ -646,7 +646,7 @@ export const api = {
     return jsonOrThrow(await apiFetch(qs ? `/api/materials?${qs}` : '/api/materials'), 'Materjalide laadimine ebaõnnestus');
   },
 
-  async saveMaterial(m: Partial<Material>, confirmUnitChange = false): Promise<Material> {
+  async saveMaterial(m: Partial<Material> & { unitFactor?: number | null }, confirmUnitChange = false): Promise<Material> {
     return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
   },
 
