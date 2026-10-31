@@ -148,4 +148,18 @@ describe('tööd ja kanded', () => {
     expect(r.isError).toBe(true);
     expect(r.text).toContain('Vigane kuupäev');
   });
+  it('põld + vahemik ilma aastata: ei piira jooksva hooajaga', async () => {
+    expect((await call(A.plainKey, 'list_work_entries', { field: '4', from: '01.05.2026', to: '31.05.2026' })).data.total).toBe(1);
+    const other = await call(A.plainKey, 'list_work_entries', { field: '4', from: '01.05.2025', to: '31.05.2025' });
+    expect(other.isError).toBeFalsy();
+    expect(other.data.total).toBe(0);
+    const w = (await call(A.plainKey, 'list_field_works', { from: '01.04.2026', to: '31.05.2026' })).data;
+    expect(w.rows[0].field).toBe('Nr 4 Toosi');
+    expect(w.year).toBeNull();
+  });
+  it('list_work_entries: tavakasutaja ei näe kulu ega hinda', async () => {
+    const r = (await call(A.plainKey, 'list_work_entries', { year: 2026 })).data;
+    expect(r.rows[0].totalCost).toBeUndefined();
+    expect(r.rows[0].materials[0].unitPrice).toBeUndefined();
+  });
 });

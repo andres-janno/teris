@@ -18,6 +18,11 @@ export async function resolveVehicleId(query: string): Promise<string> {
   return pickOne('Masin', query, rows.map((v) => ({ id: v.id, label: v.regNumber ? `${v.name} (${v.regNumber})` : v.name, keys: [v.name, v.regNumber ?? ''].filter(Boolean) }))).id;
 }
 
+export async function resolveFieldId(query: string): Promise<number> {
+  const rows = await prisma.field.findMany({ select: { id: true, num: true, name: true } });
+  return Number(pickOne('Põld', query, rows.map((f) => ({ id: String(f.id), label: fieldLabel(f), keys: [f.num, f.name] }))).id);
+}
+
 function dateRange(a: { from?: string; to?: string }): Prisma.DateTimeFilter | undefined {
   const f = parseDateInput(a.from, 'from');
   const t = parseDateInput(a.to, 'to');
@@ -30,12 +35,15 @@ function dateRange(a: { from?: string; to?: string }): Prisma.DateTimeFilter | u
 async function entryWhere(a: { year?: number; from?: string; to?: string; field?: string; workType?: string; material?: string; vehicle?: string }): Promise<Prisma.WorkEntryWhereInput> {
   const range = dateRange(a);
   const y = a.year ?? (range ? undefined : tallinnYear());
-  const fieldSeasonId = a.field ? (await resolveFieldSeason(a.field, y ?? tallinnYear())).id : undefined;
+  // Vahemik ilma aastata: ei piira hooaega, põld valitakse hooaegadeülese põllu id järgi
+  const fieldSeasonId = a.field && y !== undefined ? (await resolveFieldSeason(a.field, y)).id : undefined;
+  const fieldId = a.field && y === undefined ? await resolveFieldId(a.field) : undefined;
   return {
     ...(range ? { date: range } : {}),
     fieldWork: {
       ...(y !== undefined ? { fieldSeason: { year: y } } : {}),
       ...(fieldSeasonId !== undefined ? { fieldSeasonId } : {}),
+      ...(fieldId !== undefined ? { fieldSeason: { fieldId } } : {}),
       ...(a.workType ? { workType: { OR: [{ name: ci(a.workType) }, { shortName: ci(a.workType) }] } } : {})
     },
     ...(a.material ? { lines: { some: { kind: 'MATERIAL', label: ci(a.material) } } } : {}),
@@ -64,13 +72,15 @@ export const workTools = [
       from, to, limit
     },
     run: async (a) => {
-      const y = a.year ?? tallinnYear();
       const range = dateRange(a);
-      const fieldSeasonId = a.field ? (await resolveFieldSeason(a.field, y)).id : undefined;
+      const y = a.year ?? (range ? undefined : tallinnYear());
+      const fieldSeasonId = a.field && y !== undefined ? (await resolveFieldSeason(a.field, y)).id : undefined;
+      const fieldId = a.field && y === undefined ? await resolveFieldId(a.field) : undefined;
       const rows = await prisma.fieldWork.findMany({
         where: {
-          fieldSeason: { year: y },
+          ...(y !== undefined ? { fieldSeason: { year: y } } : {}),
           ...(fieldSeasonId !== undefined ? { fieldSeasonId } : {}),
+          ...(fieldId !== undefined ? { fieldSeason: { fieldId } } : {}),
           ...(a.workType ? { workType: { OR: [{ name: ci(a.workType) }, { shortName: ci(a.workType) }] } } : {}),
           ...(a.status ? { status: a.status } : {}),
           ...(range ? { plannedDateFrom: range } : {})
@@ -86,7 +96,7 @@ export const workTools = [
       });
       const out = limitRows(rows, a.limit);
       return {
-        year: y, total: out.total, shown: out.shown,
+        year: y ?? null, total: out.total, shown: out.shown,
         rows: out.rows.map((w) => ({
           field: fieldLabel(w.fieldSeason.field), work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status,
           planned: w.plannedDateFrom ? [fmtDate(w.plannedDateFrom), fmtDate(w.plannedDateTo)].filter(Boolean).join(' – ') : w.plannedText,
