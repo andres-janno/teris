@@ -19,7 +19,13 @@ export const isMcpPath = (pathname: string): boolean => MCP_ROUTE.test(pathname)
 
 function keyFrom(req: IncomingMessage, pathname: string): string {
   const fromPath = MCP_ROUTE.exec(pathname)?.[1];
-  if (fromPath) return decodeURIComponent(fromPath);
+  if (fromPath) {
+    try {
+      return decodeURIComponent(fromPath);
+    } catch {
+      return ''; // vigane %-jada → sama 401 mis vale võtme korral
+    }
+  }
   const auth = req.headers.authorization ?? '';
   return auth.toLowerCase().startsWith('bearer ') ? auth.slice(7).trim() : '';
 }

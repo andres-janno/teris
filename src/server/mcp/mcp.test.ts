@@ -49,6 +49,11 @@ describe('autentimine', () => {
     expect(r.status).toBe(401);
     expect(await r.json()).toEqual({ error: 'Vigane võti' });
   });
+  it('vigane %-jada URL-is → 401 sama teatega', async () => {
+    const r = await fetch(`${base}/mcp/%E0%A4%A`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: '{}' });
+    expect(r.status).toBe(401);
+    expect(await r.json()).toEqual({ error: 'Vigane võti' });
+  });
   it('võti päises töötab', async () => {
     const client = new Client({ name: 'test', version: '1.0.0' });
     await client.connect(new StreamableHTTPClientTransport(new URL(`${base}/mcp`), { requestInit: { headers: { Authorization: `Bearer ${A.plainKey}` } } }));
