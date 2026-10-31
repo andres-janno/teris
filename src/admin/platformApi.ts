@@ -175,6 +175,7 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
 }
 
 export type HelpArticleRow = { key: string; html: string; updatedAt: string; updatedBy: string | null };
+export type McpInstructions = { value: string; isDefault: boolean; defaultValue: string; updatedBy: string | null; updatedAt: string | null; maxLength: number };
 
 export interface LandingStats {
   from: string;
@@ -256,6 +257,9 @@ export const platformApi = {
   releaseDevice: (id: string) => request<unknown>('POST', `/devices/${enc(id)}/release`, {}),
   listHelp: () => request<HelpArticleRow[]>('GET', '/help'),
   saveHelp: (key: string, html: string) => request<{ success: true; deleted: boolean }>('PUT', `/help/${enc(key)}`, { html }, 'Juhendi salvestamine ebaõnnestus'),
+  getMcpInstructions: () => request<McpInstructions>('GET', '/mcp-instructions'),
+  saveMcpInstructions: (value: string) => request<McpInstructions>('PUT', '/mcp-instructions', { value }, 'Juhise salvestamine ebaõnnestus'),
+  resetMcpInstructions: () => request<McpInstructions>('DELETE', '/mcp-instructions', undefined, 'Vaikejuhise taastamine ebaõnnestus'),
   listAudit: (tenantId?: string, limit = 100) =>
     request<AuditEntry[]>('GET', `/audit?limit=${limit}${tenantId ? `&tenantId=${enc(tenantId)}` : ''}`),
   landingStats: (from: string, to: string) => request<LandingStats>('GET', `/landing/stats?from=${enc(from)}&to=${enc(to)}`),

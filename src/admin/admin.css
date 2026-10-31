@@ -114,3 +114,7 @@ body { overflow: auto; }
 .visits-tip span { color: var(--text-secondary); font-variant-numeric: tabular-nums; }
 .admin-details { margin-bottom: 16px; font-size: 0.8rem; }
 .admin-details summary { cursor: pointer; color: var(--text-secondary); margin-bottom: 8px; }
+
+.ai-instructions-input { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
+.ai-instructions-footer { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 12px; }
+.ai-instructions-footer .muted { margin-right: auto; }

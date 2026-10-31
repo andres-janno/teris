@@ -15,6 +15,7 @@ import { randomBytes } from 'crypto';
 import { hashToken } from './auth.ts';
 import { landingStats, parseDay } from './landing/landingStats.ts';
 import { listInterest, parseInterestPatch, updateInterest, deleteInterest } from './landing/interestAdmin.ts';
+import { getMcpInstructionsAdmin, saveMcpInstructions, resetMcpInstructions } from './mcp/instructions.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
@@ -614,6 +615,18 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
   if (hr && method === 'PUT') {
     const key = decodeId(hr[1], HELP_KEY_ERROR);
     return sendHelpResult(res, await saveHelpArticle(key, (await readBody(req))?.html, pu));
+  }
+  if (pathname === '/api/platform/mcp-instructions') {
+    if (method === 'GET') return json(res, await getMcpInstructionsAdmin());
+    if (method === 'PUT') {
+      const r = await saveMcpInstructions((await readBody(req))?.value, pu);
+      if (!r.ok) throw new HttpError(400, r.error);
+      return json(res, await getMcpInstructionsAdmin());
+    }
+    if (method === 'DELETE') {
+      await resetMcpInstructions(pu);
+      return json(res, await getMcpInstructionsAdmin());
+    }
   }
   if (pathname === '/api/platform/landing/stats' && method === 'GET') {
     const from = parseDay(url.searchParams.get('from'));

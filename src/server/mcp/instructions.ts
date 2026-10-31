@@ -22,3 +22,39 @@ export async function loadMcpInstructions(): Promise<string> {
   const row = await authDb().platformSetting.findUnique({ where: { key: MCP_INSTRUCTIONS_KEY }, select: { value: true } });
   return row && row.value.trim() ? row.value : DEFAULT_MCP_INSTRUCTIONS;
 }
+
+export type McpInstructionsDto = { value: string; isDefault: boolean; defaultValue: string; updatedBy: string | null; updatedAt: string | null; maxLength: number };
+
+export async function getMcpInstructionsAdmin(): Promise<McpInstructionsDto> {
+  const row = await authDb().platformSetting.findUnique({ where: { key: MCP_INSTRUCTIONS_KEY } });
+  const isDefault = !row || !row.value.trim();
+  return {
+    value: isDefault ? DEFAULT_MCP_INSTRUCTIONS : row.value,
+    isDefault,
+    defaultValue: DEFAULT_MCP_INSTRUCTIONS,
+    updatedBy: row?.updatedBy ?? null,
+    updatedAt: row?.updatedAt.toISOString() ?? null,
+    maxLength: MCP_INSTRUCTIONS_MAX
+  };
+}
+
+export async function saveMcpInstructions(value: unknown, pu: { id: string; username: string }): Promise<{ ok: true } | { ok: false; error: string }> {
+  if (typeof value !== 'string' || !value.trim()) return { ok: false, error: 'Juhis on tühi — vaikejuhise taastamiseks kasuta „Taasta vaikejuhis“' };
+  if (value.length > MCP_INSTRUCTIONS_MAX) return { ok: false, error: `Juhis on liiga pikk (kuni ${MCP_INSTRUCTIONS_MAX} märki)` };
+  await authDb().$transaction(async (tx) => {
+    await tx.platformSetting.upsert({
+      where: { key: MCP_INSTRUCTIONS_KEY },
+      create: { key: MCP_INSTRUCTIONS_KEY, value, updatedBy: pu.username },
+      update: { value, updatedBy: pu.username }
+    });
+    await tx.platformAuditLog.create({ data: { action: 'MCP_INSTRUCTIONS_UPDATE', platformUserId: pu.id, targetTenantId: null, details: { length: value.length } } });
+  });
+  return { ok: true };
+}
+
+export async function resetMcpInstructions(pu: { id: string; username: string }): Promise<void> {
+  await authDb().$transaction(async (tx) => {
+    const { count } = await tx.platformSetting.deleteMany({ where: { key: MCP_INSTRUCTIONS_KEY } });
+    if (count > 0) await tx.platformAuditLog.create({ data: { action: 'MCP_INSTRUCTIONS_RESET', platformUserId: pu.id, targetTenantId: null } });
+  });
+}

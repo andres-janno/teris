@@ -8,10 +8,11 @@ import { AuditView } from './AuditView.tsx';
 import { CatalogView } from './CatalogView.tsx';
 import { DevicesView } from './DevicesView.tsx';
 import { HelpView } from './HelpView.tsx';
+import { AiInstructionsView } from './AiInstructionsView.tsx';
 import { LandingStatsView } from './LandingStatsView.tsx';
 import { InterestView } from './InterestView.tsx';
 
-type View = { kind: 'tenants' } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' };
+type View = { kind: 'tenants' } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' };
 
 export function AdminApp() {
   const [user, setUser] = useState<string | null>(null);
@@ -49,7 +50,7 @@ export function AdminApp() {
         </div>
       </header>
       <nav className="admin-nav">
-        <button type="button" className={`btn btn-secondary ${!['audit', 'catalog', 'devices', 'help', 'landing', 'interest'].includes(view.kind) ? 'active' : ''}`} onClick={() => setView({ kind: 'tenants' })}>
+        <button type="button" className={`btn btn-secondary ${!['audit', 'catalog', 'devices', 'help', 'landing', 'interest', 'ai'].includes(view.kind) ? 'active' : ''}`} onClick={() => setView({ kind: 'tenants' })}>
           Ettevõtted
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'catalog' ? 'active' : ''}`} onClick={() => setView({ kind: 'catalog' })}>
@@ -60,6 +61,9 @@ export function AdminApp() {
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'help' ? 'active' : ''}`} onClick={() => setView({ kind: 'help' })}>
           Juhendid
+        </button>
+        <button type="button" className={`btn btn-secondary ${view.kind === 'ai' ? 'active' : ''}`} onClick={() => setView({ kind: 'ai' })}>
+          AI ühendus
         </button>
         <button type="button" className={`btn btn-secondary ${view.kind === 'landing' ? 'active' : ''}`} onClick={() => setView({ kind: 'landing' })}>
           Landing
@@ -79,6 +83,7 @@ export function AdminApp() {
       {view.kind === 'catalog' && <CatalogView />}
       {view.kind === 'devices' && <DevicesView />}
       {view.kind === 'help' && <HelpView />}
+      {view.kind === 'ai' && <AiInstructionsView />}
       {view.kind === 'landing' && <LandingStatsView />}
       {view.kind === 'interest' && <InterestView />}
       {view.kind === 'audit' && (

@@ -6,6 +6,8 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { handleMcpRequest } from './handler';
 import { createTestTenant, type TestTenant } from './testTenant';
+import { MCP_INSTRUCTIONS_KEY, saveMcpInstructions, resetMcpInstructions, getMcpInstructionsAdmin, DEFAULT_MCP_INSTRUCTIONS } from './instructions';
+import { authDb } from '../db';
 
 let server: http.Server;
 let base = '';
@@ -203,5 +205,46 @@ describe('tehnika', () => {
   it('get_vehicle_activity: üle 31 päeva → viga', async () => {
     const r = await call(A.plainKey, 'get_vehicle_activity', { vehicle: 'Valtra', from: '01.01.2026', to: '31.03.2026' });
     expect(r.isError).toBe(true);
+  });
+});
+
+describe('juhis AI-le', () => {
+  const pu = { id: `test-pu-${process.pid}`, username: 'testplatvorm' };
+  let saved: { value: string; updatedBy: string | null } | null = null;
+  // Live-andmebaasis võib admin olla päris juhise salvestanud: võta koopia ja taasta see lõpus täpselt.
+  beforeAll(async () => {
+    saved = await authDb().platformSetting.findUnique({ where: { key: MCP_INSTRUCTIONS_KEY }, select: { value: true, updatedBy: true } });
+  });
+  afterAll(async () => {
+    if (saved) {
+      await authDb().platformSetting.upsert({
+        where: { key: MCP_INSTRUCTIONS_KEY },
+        create: { key: MCP_INSTRUCTIONS_KEY, value: saved.value, updatedBy: saved.updatedBy },
+        update: { value: saved.value, updatedBy: saved.updatedBy }
+      });
+    } else {
+      await authDb().platformSetting.deleteMany({ where: { key: MCP_INSTRUCTIONS_KEY } });
+    }
+    await authDb().platformAuditLog.deleteMany({ where: { platformUserId: pu.id } });
+  });
+  it('salvestatud juhis jõuab kliendini; taastamine annab vaikejuhise', async () => {
+    await resetMcpInstructions(pu);
+    expect((await getMcpInstructionsAdmin()).isDefault).toBe(true);
+    expect((await saveMcpInstructions('Testjuhis: vasta lühidalt.', pu)).ok).toBe(true);
+    const client = await connect(A.plainKey);
+    expect(client.getInstructions()).toBe('Testjuhis: vasta lühidalt.');
+    await client.close();
+    expect((await getMcpInstructionsAdmin()).updatedBy).toBe('testplatvorm');
+    await resetMcpInstructions(pu);
+    const c2 = await connect(A.plainKey);
+    expect(c2.getInstructions()).toBe(DEFAULT_MCP_INSTRUCTIONS);
+    await c2.close();
+    const actions = (await authDb().platformAuditLog.findMany({ where: { platformUserId: pu.id }, select: { action: true } })).map((l) => l.action);
+    expect(actions).toContain('MCP_INSTRUCTIONS_UPDATE');
+    expect(actions).toContain('MCP_INSTRUCTIONS_RESET');
+  });
+  it('liiga pikk või tühi juhis lükatakse tagasi', async () => {
+    expect((await saveMcpInstructions('x'.repeat(20001), pu)).ok).toBe(false);
+    expect((await saveMcpInstructions('   ', pu)).ok).toBe(false);
   });
 });
