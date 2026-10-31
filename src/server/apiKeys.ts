@@ -103,7 +103,13 @@ export async function handleApiKeys(req: IncomingMessage, res: ServerResponse, p
   }
   const m = KEY_ROUTE.exec(pathname);
   if (m && method === 'DELETE') {
-    if (!(await revokeApiKey(user.id, decodeURIComponent(m[1])))) json(res, { error: 'Võtit ei leitud' }, 404);
+    let id: string | null = null;
+    try {
+      id = decodeURIComponent(m[1]);
+    } catch {
+      id = null; // vigane %-jada
+    }
+    if (id === null || !(await revokeApiKey(user.id, id))) json(res, { error: 'Võtit ei leitud' }, 404);
     else json(res, { success: true });
     return true;
   }

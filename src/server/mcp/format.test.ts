@@ -24,6 +24,8 @@ describe('kuupäevad', () => {
 describe('arvud ja loendid', () => {
   it('ümardab 2 kohani', () => {
     expect(round2(1.005)).toBe(1.01);
+    expect(round2(-1.005)).toBe(-1.01);
+    expect(Object.is(round2(-0.001), 0)).toBe(true);
     expect(round2(null)).toBeNull();
   });
   it('piirab ja ütleb kogusumma', () => {

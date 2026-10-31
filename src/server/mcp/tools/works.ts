@@ -63,7 +63,7 @@ export const workTools = [
   defineTool({
     name: 'list_field_works',
     title: 'Plaanitud tööd',
-    description: 'Põllutööde plaan: põld, töö liik, faas, plaanitud aeg, staatus (PLANNED/IN_PROGRESS/DONE), plaanitud pindala, viis, teostaja ja plaanitud materjalid normiga.',
+    description: 'Põllutööde plaan: põld, töö liik, faas, plaanitud aeg, staatus (PLANNED/IN_PROGRESS/DONE), plaanitud pindala, viis, teostaja ja plaanitud materjalid normiga. Ajavahemik filtreerib alguskuupäeva järgi.',
     input: {
       year,
       field: z.string().optional().describe('Põllu nimi või number'),
@@ -109,7 +109,7 @@ export const workTools = [
   defineTool({
     name: 'list_work_entries',
     title: 'Kanded (põlluraamat)',
-    description: 'Tegelikult tehtud tööd: kuupäev, põld, töö, tegija, masin, haakeriist, pindala, töötunnid, kütus, materjalid (kogus, ühik, norm/ha, toimeaine, NPK) ja saak. Finantsõigusega ka hinnad, kulud ja kinnitamise staatus. Ilma aasta ja vahemikuta: jooksev aasta.',
+    description: 'Tegelikult tehtud tööd: kuupäev, põld, töö, tegija, masin, haakeriist, pindala, töötunnid, kütus, materjalid (kogus, ühik, norm/ha, toimeaine, NPK) ja saak. Finantsõigusega ka hinnad, kulud ja kinnitamise staatus. Ilma aasta ja vahemikuta: jooksev aasta. unpricedLines > 0 tähendab, et totalCost on osaline. Ajavahemik filtreerib alguskuupäeva järgi.',
     input: { ...entryFilters, limit },
     run: async (a, ctx) => {
       const finance = canSeeFinance(ctx);
@@ -134,7 +134,7 @@ export const workTools = [
             method: e.method, notes: e.notes,
             materials: e.lines.filter((l) => l.kind === 'MATERIAL').map((l) => materialLineOut(l, ctx)),
             harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit })),
-            ...(finance ? { financeStatus: e.financeStatus, totalCost: round2(costed.reduce((s, l) => s + Number(l.unitPrice) * l.quantity, 0)) } : {})
+            ...(finance ? { financeStatus: e.financeStatus, totalCost: round2(costed.reduce((s, l) => s + Number(l.unitPrice) * l.quantity, 0)), unpricedLines: e.lines.filter((l) => l.unitPrice === null && l.kind !== 'HARVEST' && l.kind !== 'OBSERVATION').length } : {})
           };
         })
       };

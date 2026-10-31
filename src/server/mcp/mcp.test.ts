@@ -4,7 +4,7 @@ import http from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
-import { handleMcpRequest } from './handler';
+import { handleMcpRequest, isOAuthDiscoveryPath } from './handler';
 import { createTestTenant, type TestTenant } from './testTenant';
 import { MCP_INSTRUCTIONS_KEY, saveMcpInstructions, resetMcpInstructions, getMcpInstructionsAdmin, DEFAULT_MCP_INSTRUCTIONS } from './instructions';
 import { authDb } from '../db';
@@ -63,6 +63,13 @@ describe('autentimine', () => {
     expect(tools.tools.some((t) => t.name === 'whoami')).toBe(true);
     await client.close();
   });
+  it('isOAuthDiscoveryPath', () => {
+    expect(isOAuthDiscoveryPath('/.well-known/oauth-protected-resource')).toBe(true);
+    expect(isOAuthDiscoveryPath('/.well-known/oauth-protected-resource/mcp/x')).toBe(true);
+    expect(isOAuthDiscoveryPath('/.well-known/oauth-authorization-server')).toBe(true);
+    expect(isOAuthDiscoveryPath('/.well-known/other')).toBe(false);
+    expect(isOAuthDiscoveryPath('/mcp')).toBe(false);
+  });
   it('GET → 405', async () => {
     const r = await fetch(`${base}/mcp/${A.plainKey}`);
     expect(r.status).toBe(405);
@@ -105,6 +112,14 @@ describe('põllud', () => {
     const r = (await call(A.financeKey, 'get_field', { field: '4', year: 2026 })).data;
     expect(r.works[0].entries[0].materials[0]).toMatchObject({ unitPrice: 0.45, cost: 67.5 });
   });
+  it('get_field: rent ja maamaks ainult finantsjuhile', async () => {
+    const plain = (await call(A.plainKey, 'get_field', { field: '4', year: 2026 })).data.cadastralParcels[0];
+    expect(plain).toMatchObject({ code: 'T-KAT-1', ownership: 'RENTED' });
+    expect('rentFeeEurYear' in plain).toBe(false);
+    expect('landTaxEurYear' in plain).toBe(false);
+    const fin = (await call(A.financeKey, 'get_field', { field: '4', year: 2026 })).data.cadastralParcels[0];
+    expect(fin).toMatchObject({ rentFeeEurYear: 1200, landTaxEurYear: 80 });
+  });
   it('get_field: olematu põld → selge viga', async () => {
     const r = await call(A.plainKey, 'get_field', { field: 'Mets', year: 2026 });
     expect(r.isError).toBe(true);
@@ -136,7 +151,7 @@ describe('tööd ja kanded', () => {
   });
   it('list_work_entries: finantsjuht näeb kulu ja staatust', async () => {
     const r = (await call(A.financeKey, 'list_work_entries', { year: 2026 })).data;
-    expect(r.rows[0]).toMatchObject({ financeStatus: 'PENDING', totalCost: 67.5 });
+    expect(r.rows[0]).toMatchObject({ financeStatus: 'PENDING', totalCost: 67.5, unpricedLines: 0 });
   });
   it('summarize_material_usage: põllu kaupa; raha ainult finantsjuhile', async () => {
     const plain = (await call(A.plainKey, 'summarize_material_usage', { year: 2026, groupBy: 'field' })).data;
@@ -246,5 +261,19 @@ describe('juhis AI-le', () => {
   it('liiga pikk või tühi juhis lükatakse tagasi', async () => {
     expect((await saveMcpInstructions('x'.repeat(20001), pu)).ok).toBe(false);
     expect((await saveMcpInstructions('   ', pu)).ok).toBe(false);
+  });
+});
+
+// Viimane: blokeerib selle IP vigaste võtmete jaoks (moodulitasemel piirang)
+describe('piirang', () => {
+  it('vigased katsed blokeeritakse, kehtiv võti läbib ikka', async () => {
+    const bad = () => fetch(`${base}/mcp/trs_vale${Math.random().toString(36).slice(2)}`, { method: 'POST', headers: { 'content-type': 'application/json', accept: 'application/json, text/event-stream' }, body: '{}' });
+    const statuses: number[] = [];
+    for (let i = 0; i < 11; i++) statuses.push((await bad()).status);
+    expect(statuses.slice(0, 5).every((s) => s === 401)).toBe(true);
+    expect(statuses[statuses.length - 1]).toBe(429);
+    const client = await connect(A.plainKey);
+    expect((await client.listTools()).tools.length).toBeGreaterThan(0);
+    await client.close();
   });
 });

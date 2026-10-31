@@ -17,6 +17,10 @@ const limiter = createLoginLimiter({ max: 10, windowMs: 15 * 60 * 1000 });
 
 export const isMcpPath = (pathname: string): boolean => MCP_ROUTE.test(pathname);
 
+/** OAuth avastusteed, mida MCP kliendid võivad pärast 401 pärida; võtmepõhisel serveril neid pole (JSON 404). */
+export const isOAuthDiscoveryPath = (pathname: string): boolean =>
+  /^\/\.well-known\/(oauth-protected-resource|oauth-authorization-server)(\/|$)/.test(pathname);
+
 function keyFrom(req: IncomingMessage, pathname: string): string {
   const fromPath = MCP_ROUTE.exec(pathname)?.[1];
   if (fromPath) {
@@ -34,11 +38,12 @@ export async function handleMcpRequest(req: IncomingMessage, res: ServerResponse
   const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
   const ip = clientIpFrom(req.headers['x-forwarded-for'], req.socket.remoteAddress);
   const limitKey = `mcp:${ip}`;
-  if (limiter.isBlocked(limitKey)) return json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
 
+  // Kehtiv võti läbib alati: piirang loeb ainult vigaseid katseid (jagatud IP-lt ei tohi vana võti kehtivaid välja lukustada).
   const found = await findActiveApiKey(keyFrom(req, pathname));
   if (!found) {
     limiter.registerFailure(limitKey);
+    if (limiter.isBlocked(limitKey)) return json(res, { error: 'Liiga palju katseid, proovi 15 minuti pärast' }, 429);
     return json(res, { error: INVALID_KEY_MESSAGE }, 401);
   }
   if (req.method !== 'POST') {

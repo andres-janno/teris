@@ -52,7 +52,8 @@ export const dayAfter = (d: Date): Date => new Date(d.getTime() + 24 * 60 * 60 *
 
 export function round2(n: number | null | undefined): number | null {
   if (n === null || n === undefined || !Number.isFinite(n)) return null;
-  return Math.round((n + Number.EPSILON) * 100) / 100;
+  const r = (Math.sign(n) * Math.round((Math.abs(n) + Number.EPSILON) * 100)) / 100;
+  return r === 0 ? 0 : r; // -0 → 0
 }
 
 const DEFAULT_LIMIT = 200;
