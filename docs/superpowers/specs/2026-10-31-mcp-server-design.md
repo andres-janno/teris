@@ -41,6 +41,7 @@ Staatus: kinnitatud vestluses, ootab spetsifikatsiooni ülevaatust
 | Parooli vahetus | Võtmeid ei tühista |
 | Kasutaja deaktiveerimine / ettevõtte peatamine | Võtmed lakkavad kohe toimimast (kontroll igal päringul) |
 | UI nimi | „AI ühendus“ (kasutajamenüüs) |
+| Juhis AI-le | Hallatakse admin.teris.ee-s (`platform_settings`); koodis ainult vaikejuhis |
 
 ## Andmemudel
 
@@ -138,10 +139,46 @@ tagastatakse valikute nimekiri (mitte juhuslik esimene).
 
 ### Serveri juhis AI-le (`instructions`)
 
-Lühike eestikeelne kirjeldus: Teris on põllumajandusettevõtte haldus;
-**töö** on plaan, **kanne** on tegelik tehtud tegevus (põlluraamat);
-hooaeg = aasta; kulusid ja laokandeid näeb ainult finantsõigusega
-kasutaja — vaata `whoami`; loendid on piiratud, kontrolli `total`.
+Juhist hallatakse **admin.teris.ee-s**, mitte koodis — seda saab täiendada
+ilma väljalaseta. Juhis on ühine kõigile ettevõtetele.
+
+- Andmed: uus platvormi tabel (ilma RLS-ita, `authDb()` kaudu, nagu
+  `HelpArticle`):
+
+  ```prisma
+  // Platvormi tekstiseaded, mida teenusepakkuja muudab admin.teris.ee-s (nt AI juhis)
+  model PlatformSetting {
+    key       String   @id // nt "mcp_instructions"
+    value     String
+    updatedBy String? // platvormi kasutajanimi
+    updatedAt DateTime @updatedAt
+    createdAt DateTime @default(now())
+
+    @@map("platform_settings")
+  }
+  ```
+
+- Koodis on ainult **vaikejuhis** (`DEFAULT_MCP_INSTRUCTIONS`), mida
+  kasutatakse, kui andmebaasis kirjet pole või see on tühi. Vaikejuhise
+  sisu: Teris on põllumajandusettevõtte haldus; **töö** on plaan,
+  **kanne** on tegelik tehtud tegevus (põlluraamat); hooaeg = aasta;
+  kulusid ja laokandeid näeb ainult finantsõigusega kasutaja — vaata
+  `whoami`; loendid on piiratud, kontrolli `total`.
+- MCP server loeb juhise igal `initialize` päringul (üks lihtne päring
+  võtme järgi; vahemälu pole vaja).
+- admin.teris.ee: uus vaade **„AI ühendus“** — lihttekstiväli (mitte
+  HTML-redaktor; juhis läheb AI-le tekstina), näha viimane muutja ja aeg
+  (`pp.kk.aaaa HH:MM`), nupud „Salvesta“ ja „Taasta vaikejuhis“ (kustutab
+  kirje → kehtib koodi vaikejuhis). Maksimaalne pikkus 20 000 märki.
+- API: `GET /api/platform/mcp-instructions` →
+  `{ value, isDefault, updatedBy, updatedAt }`;
+  `PUT /api/platform/mcp-instructions` `{ value }`;
+  `DELETE` → taastab vaikejuhise. Platvormi sessioon nagu ülejäänud
+  `/api/platform/*`.
+- Iga muudatus kirjutatakse `PlatformAuditLog`-i
+  (`action: 'MCP_INSTRUCTIONS_UPDATE'` / `'MCP_INSTRUCTIONS_RESET'`).
+- Muudatus jõuab AI-kliendini järgmisel ühendusel (klient loeb juhise
+  ühenduse alguses).
 
 ## Kasutajaliides: „AI ühendus“
 
@@ -164,11 +201,14 @@ API (sessioon + CSRF nagu ülejäänud API):
 
 ## Failid
 
-- `prisma/schema.prisma` — `ApiKey` + `User.apiKeys`
+- `prisma/schema.prisma` — `ApiKey` + `User.apiKeys`, `PlatformSetting`
 - `scripts/tenancy/…` — RLS poliitika `api_keys` tabelile
 - `src/server/apiKeys.ts` — võtme loomine, räsi, otsing, kehtivus, API teekonnad
 - `src/server/mcp/handler.ts` — `/mcp` päring: autentimine, kontekst, transport
-- `src/server/mcp/server.ts` — MCP serveri loomine kasutaja/litsentsi järgi, juhis
+- `src/server/mcp/server.ts` — MCP serveri loomine kasutaja/litsentsi järgi
+- `src/server/mcp/instructions.ts` — vaikejuhis, lugemine/salvestamine, platvormi teekonnad
+- `src/server/platformApi.ts` — `/api/platform/mcp-instructions`
+- `src/admin/AiInstructionsView.tsx`, `AdminApp.tsx`, `platformApi.ts` — admini vaade
 - `src/server/mcp/format.ts` — kuupäev, kogus, piiramine, nime järgi otsing
 - `src/server/mcp/tools/{fields,works,stock,fleet,account}.ts` — tööriistad plokkide kaupa
 - `src/server/prod.ts`, `src/server/dbApiPlugin.ts` — `/mcp` marsruut
@@ -189,7 +229,10 @@ Vitest, olemasolevas stiilis (andmebaasiga testid nagu `authSession.test.ts`):
 - telemeetria moodulita: telemeetriatööriist/asukoht puudub;
 - iga tööriist SDK in-memory kliendi kaudu: õige kujuga vastus, `total`
   ja `shown`, mitme vaste valikunimekiri;
-- `/api/api-keys`: max 5, teise kasutaja võtit ei saa tühistada ega näha.
+- `/api/api-keys`: max 5, teise kasutaja võtit ei saa tühistada ega näha;
+- juhis: tühi/puuduv kirje → vaikejuhis; salvestatud tekst jõuab
+  `initialize` vastusesse; platvormi teekond nõuab platvormi sessiooni;
+  muudatus ja taastamine kirjutavad auditilogisse.
 
 Käsitsi pärast väljalaset: võti → MCP Inspector → kõik tööriistad;
 Apache logis võtit pole; Claude Desktopis connector töötab.
