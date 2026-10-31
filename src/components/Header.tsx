@@ -48,6 +48,7 @@ interface HeaderProps {
   dbConnected?: boolean;
   currentUser?: AuthUser;
   onChangePassword?: () => void;
+  onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
   onLogout?: () => void;
 }
@@ -63,6 +64,7 @@ export const Header: React.FC<HeaderProps> = ({
   dbConnected = false,
   currentUser,
   onChangePassword,
+  onOpenAiConnection,
   onOpenUsers,
   onLogout
 }) => {
@@ -183,6 +185,7 @@ export const Header: React.FC<HeaderProps> = ({
             theme={theme}
             onToggleTheme={onToggleTheme}
             onChangePassword={onChangePassword}
+            onOpenAiConnection={onOpenAiConnection}
             onOpenUsers={onOpenUsers}
             onLogout={onLogout}
             dbConnected={dbConnected}

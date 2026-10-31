@@ -10,6 +10,7 @@ import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Material, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
+import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, MaterialMovements, StockLevel } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -102,6 +103,27 @@ export const api = {
       body: JSON.stringify({ currentPassword, newPassword })
     });
     if (!res.ok) throw Object.assign(new Error(await errorMessage(res, 'Parooli muutmine ebaõnnestus')), { status: res.status });
+  },
+
+  async listApiKeys(): Promise<ApiKeyRow[]> {
+    const res = await apiFetch('/api/api-keys');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Võtmete laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async createApiKey(name: string): Promise<CreatedApiKey> {
+    const res = await apiFetch('/api/api-keys', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Võtme loomine ebaõnnestus'));
+    return res.json();
+  },
+
+  async revokeApiKey(id: string): Promise<void> {
+    const res = await apiFetch(`/api/api-keys/${encodeURIComponent(id)}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Võtme tühistamine ebaõnnestus'));
   },
 
   async listUsers(): Promise<AdminUser[]> {

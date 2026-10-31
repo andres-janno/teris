@@ -6989,6 +6989,20 @@ a.history-pill:hover {
   width: min(420px, 94vw);
 }
 
+.modal-content.ai-connection-modal { max-width: 720px; width: min(720px, 94vw); }
+.ai-key-created { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.ai-key-url, .ai-key-new { display: flex; gap: 8px; }
+.ai-key-url .form-input, .ai-key-new .form-input { flex: 1; min-width: 0; }
+.ai-key-url .form-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.ai-key-table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+.ai-key-table th, .ai-key-table td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border-card); }
+.ai-key-help { font-size: 13px; }
+.ai-key-help ol { margin: 6px 0 0 18px; padding: 0; }
+@media (max-width: 640px) {
+  .ai-key-url, .ai-key-new { flex-direction: column; }
+  .ai-key-table th:nth-child(3), .ai-key-table td:nth-child(3) { display: none; }
+}
+
 .login-forgot-link {
   align-self: center;
   margin-top: 4px;

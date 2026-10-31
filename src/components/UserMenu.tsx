@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users } from 'lucide-react';
+import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
 import { COPYRIGHT_TEXT } from '../copyright';
 
@@ -8,6 +8,7 @@ interface UserMenuProps {
   theme: 'light' | 'dark';
   onToggleTheme: () => void;
   onChangePassword?: () => void;
+  onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
   onLogout?: () => void;
   dbConnected: boolean;
@@ -20,6 +21,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   theme,
   onToggleTheme,
   onChangePassword,
+  onOpenAiConnection,
   onOpenUsers,
   onLogout,
   dbConnected
@@ -78,6 +80,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             <button type="button" role="menuitem" className="user-menu-item" onClick={run(onChangePassword)}>
               <KeyRound size={15} />
               <span>Muuda parooli</span>
+            </button>
+          )}
+          {!user.supportView && onOpenAiConnection && (
+            <button type="button" role="menuitem" className="user-menu-item" onClick={run(onOpenAiConnection)}>
+              <Bot size={15} />
+              <span>AI ühendus</span>
             </button>
           )}
           {user.isAdmin && onOpenUsers && (
