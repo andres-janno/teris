@@ -1,7 +1,7 @@
 # AI ühendus: Terise MCP server (disain)
 
 Kuupäev: 2026-10-31
-Staatus: kinnitatud vestluses, ootab spetsifikatsiooni ülevaatust
+Staatus: teostatud 2026-10-31 (plaan docs/superpowers/plans/2026-10-31-ai-uhendus-mcp.md)
 
 ## Eesmärk
 
