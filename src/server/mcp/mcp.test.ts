@@ -193,6 +193,7 @@ describe('tehnika', () => {
     expect((await call(A.financeKey, 'list_vehicles')).data.vehicles[0].acquisitionCost).toBe(150000);
     const noTelemetry = (await call(B.plainKey, 'list_vehicles')).data.vehicles[0];
     expect(noTelemetry.lastPosition).toBeUndefined();
+    expect(noTelemetry.lastActive).toBeUndefined();
   });
   it('get_vehicle_activity: kanded; telemeetriata ettevõttel telemetry puudub', async () => {
     const r = (await call(B.plainKey, 'get_vehicle_activity', { vehicle: '123ABC', from: '01.05.2026', to: '31.05.2026' })).data;

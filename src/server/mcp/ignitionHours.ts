@@ -17,3 +17,16 @@ export function ignitionHoursByDay(points: { time: Date; ignition: boolean | nul
   }
   return [...ms].sort(([x], [y]) => x.localeCompare(y)).map(([day, v]) => ({ day, hours: Math.round((v / 3_600_000) * 100) / 100 }));
 }
+
+const offsetFmt = new Intl.DateTimeFormat('en-US', { timeZone: 'Europe/Tallinn', timeZoneName: 'longOffset' });
+
+// UTC hetk, mil Tallinnas algab antud päev (aaaa-kk-pp, 00:00). Nihe võetakse eelmise päeva keskpäeval,
+// sest suve-/talveaja üleminek toimub öösel pärast kesköö-hetke.
+export function tallinnMidnightUtc(isoDay: string): Date {
+  const [y, m, d] = isoDay.split('-').map(Number);
+  const ref = new Date(Date.UTC(y, m - 1, d - 1, 12));
+  const name = offsetFmt.formatToParts(ref).find((p) => p.type === 'timeZoneName')?.value ?? 'GMT+2';
+  const mt = /GMT([+-])(\d+)(?::(\d+))?/.exec(name);
+  const offsetMin = mt ? (mt[1] === '-' ? -1 : 1) * (Number(mt[2]) * 60 + Number(mt[3] ?? 0)) : 0;
+  return new Date(Date.UTC(y, m - 1, d) - offsetMin * 60_000);
+}

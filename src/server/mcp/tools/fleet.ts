@@ -8,7 +8,7 @@ import { loadPlaces } from '../../tripPlaces.ts';
 import { defineTool, canSeeFinance, hasTelemetry } from '../context.ts';
 import { parseDateInput, dayAfter, fieldLabel, fmtDate, fmtDateTime, round2, ToolInputError } from '../format.ts';
 import { resolveVehicleId } from './works.ts';
-import { ignitionHoursByDay } from '../ignitionHours.ts';
+import { ignitionHoursByDay, tallinnMidnightUtc } from '../ignitionHours.ts';
 
 const MAX_DAYS = 31;
 const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' });
@@ -41,7 +41,7 @@ export const fleetTools = [
         vehicles: vehicles.map((v) => ({
           name: v.name, type: v.type, category: v.category, manufacturer: v.manufacturer, model: v.model, regNumber: v.regNumber,
           powerKw: v.powerKw, workingWidthM: v.workingWidthM, driver: v.assignedDriver?.name ?? null, implement: hitchOf.get(v.id) ?? null,
-          lastActive: fmtDateTime(v.lastActiveAt),
+          ...(telemetry ? { lastActive: fmtDateTime(v.lastActiveAt) } : {}),
           ...(telemetry && v.lastLatitude != null && v.lastLongitude != null ? { lastPosition: { lat: v.lastLatitude, lng: v.lastLongitude } } : {}),
           ...(finance ? financeOut(v) : {})
         })),
@@ -83,26 +83,33 @@ export const fleetTools = [
       if (!hasTelemetry(ctx)) return result;
 
       // Seadmed, mis olid vahemikus selle masina küljes (seoste register), ja nende GPS-paketid seose piires
+      const fromDay = from.toISOString().slice(0, 10);
+      const toDay = to.toISOString().slice(0, 10);
+      const winFrom = tallinnMidnightUtc(fromDay);
+      const winEnd = tallinnMidnightUtc(end.toISOString().slice(0, 10));
       const links = await prisma.deviceAssignment.findMany({
-        where: { vehicleId, startedAt: { lt: end }, OR: [{ endedAt: null }, { endedAt: { gt: from } }] },
+        where: { vehicleId, startedAt: { lt: winEnd }, OR: [{ endedAt: null }, { endedAt: { gt: winFrom } }] },
         select: { startedAt: true, endedAt: true, device: { select: { imei: true } } }
       });
       const packets: DevicePacket[] = [];
       for (const l of links) {
         if (!l.device.imei) continue;
-        const s = l.startedAt > from ? l.startedAt : from;
-        const t = l.endedAt && l.endedAt < end ? l.endedAt : end;
+        const s = l.startedAt > winFrom ? l.startedAt : winFrom;
+        const t = l.endedAt && l.endedAt < winEnd ? l.endedAt : winEnd;
         packets.push(...(await fetchDevicePackets(l.device.imei, s, t)));
       }
       packets.sort((p, q) => p.time.getTime() - q.time.getTime());
       const byDay = new Map<string, DevicePacket[]>();
       for (const p of packets) {
         const day = dayFmt.format(p.time);
-        byDay.set(day, [...(byDay.get(day) ?? []), p]);
+        const arr = byDay.get(day);
+        if (arr) arr.push(p);
+        else byDay.set(day, [p]);
       }
       const placesByYear = new Map<number, Awaited<ReturnType<typeof loadPlaces>>>();
       const days = [];
       for (const { day, hours } of ignitionHoursByDay(packets)) {
+        if (day < fromDay || day > toDay) continue;
         const pts = (byDay.get(day) ?? []).filter((p) => p.ignition !== false);
         const y = Number(day.slice(0, 4));
         if (!placesByYear.has(y)) placesByYear.set(y, await loadPlaces(y));

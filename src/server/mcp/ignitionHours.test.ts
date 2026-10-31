@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { ignitionHoursByDay } from './ignitionHours';
+import { ignitionHoursByDay, tallinnMidnightUtc } from './ignitionHours';
 
 const p = (iso: string, ignition: boolean | null = true) => ({ time: new Date(iso), ignition });
 
@@ -16,4 +16,9 @@ describe('ignitionHoursByDay', () => {
   it('süüteväljata seade (null) loetakse sees olevaks', () => {
     expect(ignitionHoursByDay([p('2026-05-10T05:00:00Z', null), p('2026-05-10T05:15:00Z', null), p('2026-05-10T05:30:00Z', null)])).toEqual([{ day: '2026-05-10', hours: 0.5 }]);
   });
+});
+
+describe('tallinnMidnightUtc', () => {
+  it('suvi (UTC+3)', () => expect(tallinnMidnightUtc('2026-05-10').toISOString()).toBe('2026-05-09T21:00:00.000Z'));
+  it('talv (UTC+2)', () => expect(tallinnMidnightUtc('2026-01-10').toISOString()).toBe('2026-01-09T22:00:00.000Z'));
 });
