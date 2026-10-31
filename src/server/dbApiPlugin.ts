@@ -4,6 +4,7 @@
 import type { Plugin } from 'vite';
 import { handleApiRequest } from './apiHandler.ts';
 import { hasValidSession } from './authGate.ts';
+import { handleMcpRequest, isMcpPath } from './mcp/handler.ts';
 import { decideLandingRoute, needsSessionCheck } from './landing/landingRoute.ts';
 
 const DEV_OPTIONS = {
@@ -24,6 +25,10 @@ export function dbApiPlugin(): Plugin {
         }
       });
       server.middlewares.use(async (req, res, next) => {
+        if (isMcpPath(new URL(req.url ?? '/', 'http://localhost').pathname)) {
+          await handleMcpRequest(req, res);
+          return;
+        }
         if (!req.url?.startsWith('/api')) {
           const pathname = new URL(req.url ?? '/', 'http://localhost').pathname;
           if (!needsSessionCheck(pathname) && pathname !== '/privacy') return next();

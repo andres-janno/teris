@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { handleApiRequest } from './apiHandler';
 import { serveStatic, serveFile } from './static';
 import { isPlatformHost } from './platformHost';
+import { handleMcpRequest, isMcpPath } from './mcp/handler';
 import { hasValidSession } from './authGate';
 import { decideLandingRoute, needsSessionCheck, PUBLIC_ONLY_FILES } from './landing/landingRoute';
 import { recordHit, startLandingRetention } from './landing/landingEvents';
@@ -42,6 +43,8 @@ const server = http.createServer(async (req, res) => {
   try {
     if ((req.url ?? '').startsWith('/api')) {
       await handleApiRequest(req, res, API_OPTIONS);
+    } else if (!isPlatformHost(req) && isMcpPath(new URL(req.url ?? '/', 'http://localhost').pathname)) {
+      await handleMcpRequest(req, res);
     } else if (isPlatformHost(req)) {
       await serveStatic(req, res, DIST_DIR, { spaEntry: 'admin.html', blocked: ['index.html', ...PUBLIC_ONLY_FILES] });
     } else {
