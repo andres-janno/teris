@@ -117,3 +117,35 @@ describe('põllud', () => {
     expect(g.works.flatMap((w: any) => w.entries)).toHaveLength(1);
   });
 });
+
+describe('tööd ja kanded', () => {
+  it('list_field_works: plaan koos plaanitud materjaliga', async () => {
+    const r = (await call(A.plainKey, 'list_field_works', { year: 2026 })).data;
+    expect(r.rows[0]).toMatchObject({ field: 'Nr 4 Toosi', work: 'Väetamine', status: 'DONE', planned: '01.05.2026' });
+    expect(r.rows[0].plannedMaterials[0]).toMatchObject({ name: 'Ammooniumnitraat', ratePerHa: 200, unit: 'kg' });
+  });
+  it('list_work_entries: kuupäevavahemik ja masina filter', async () => {
+    const r = (await call(A.plainKey, 'list_work_entries', { from: '01.05.2026', to: '10.05.2026', vehicle: 'Valtra' })).data;
+    expect(r.total).toBe(1);
+    expect(r.rows[0]).toMatchObject({ date: '10.05.2026', field: 'Nr 4 Toosi', vehicle: 'Valtra T1', equipmentHours: 3.5 });
+    expect(r.rows[0].financeStatus).toBeUndefined();
+    const none = (await call(A.plainKey, 'list_work_entries', { from: '11.05.2026', to: '31.05.2026' })).data;
+    expect(none.total).toBe(0);
+  });
+  it('list_work_entries: finantsjuht näeb kulu ja staatust', async () => {
+    const r = (await call(A.financeKey, 'list_work_entries', { year: 2026 })).data;
+    expect(r.rows[0]).toMatchObject({ financeStatus: 'PENDING', totalCost: 67.5 });
+  });
+  it('summarize_material_usage: põllu kaupa; raha ainult finantsjuhile', async () => {
+    const plain = (await call(A.plainKey, 'summarize_material_usage', { year: 2026, groupBy: 'field' })).data;
+    expect(plain.rows[0]).toMatchObject({ material: 'Ammooniumnitraat', group: 'Nr 4 Toosi', quantity: 150, unit: 'kg', areaHa: 12.4 });
+    expect(plain.rows[0].cost).toBeUndefined();
+    const fin = (await call(A.financeKey, 'summarize_material_usage', { year: 2026, groupBy: 'crop' })).data;
+    expect(fin.rows[0]).toMatchObject({ group: 'Talinisu', cost: 67.5 });
+  });
+  it('vigane kuupäev → selge viga', async () => {
+    const r = await call(A.plainKey, 'list_work_entries', { from: '31.02.2026' });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain('Vigane kuupäev');
+  });
+});
