@@ -6,6 +6,7 @@ import { authGate, sessionUserOf } from './authGate.ts';
 import { handleLandingApi } from './landing/landingApi.ts';
 import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
+import { handleApiKeys } from './apiKeys.ts';
 import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
 import { handleStock } from './stockApi.ts';
@@ -365,6 +366,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (sessionUser && (await applyLicenseGate(req, res, pathname, method, sessionUser.tenantId, sessionUser.supportView === true))) return;
     if (await handleAdminUsers(req, res, pathname, method)) return;
     if (await handleSupportGrants(req, res, pathname, method)) return;
+    if (await handleApiKeys(req, res, pathname, method)) return;
     if (await handleHelpRead(res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
     if (await handleStock(req, res, pathname, method, url)) return;
