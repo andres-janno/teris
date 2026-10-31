@@ -84,3 +84,36 @@ describe('server', () => {
     expect((await call(A.plainKey, 'list_seasons')).data).toEqual([{ year: 2026, name: '2026', locked: false }]);
   });
 });
+
+describe('põllud', () => {
+  it('list_fields: aasta põllud, ümardatud pindala, geomeetriata', async () => {
+    const r = (await call(A.plainKey, 'list_fields', { year: 2026 })).data;
+    expect(r.total).toBe(1);
+    expect(r.rows[0]).toMatchObject({ field: 'Nr 4 Toosi', areaHa: 12.4, crop: 'Talinisu', variety: 'Ada' });
+    expect(JSON.stringify(r)).not.toContain('geometry');
+  });
+  it('get_field: täpne nimi võidab osalist; tööd ja kanded kaasas', async () => {
+    const r = (await call(A.plainKey, 'get_field', { field: 'Toosi', year: 2026 })).data;
+    expect(r.field).toBe('Nr 4 Toosi');
+    expect(r.soilType).toBe('Leostunud liivsavi');
+    expect(r.works[0].entries[0].materials[0]).toMatchObject({ name: 'Ammooniumnitraat', quantity: 150, unit: 'kg' });
+    expect(r.works[0].entries[0].materials[0].unitPrice).toBeUndefined();
+  });
+  it('get_field: finantsjuht näeb hinda', async () => {
+    const r = (await call(A.financeKey, 'get_field', { field: '4', year: 2026 })).data;
+    expect(r.works[0].entries[0].materials[0]).toMatchObject({ unitPrice: 0.45, cost: 67.5 });
+  });
+  it('get_field: olematu põld → selge viga', async () => {
+    const r = await call(A.plainKey, 'get_field', { field: 'Mets', year: 2026 });
+    expect(r.isError).toBe(true);
+    expect(r.text).toContain('ei leitud');
+  });
+  it('ettevõte B ei näe ettevõtte A põlde', async () => {
+    expect((await call(B.plainKey, 'list_fields', { year: 2026 })).data.total).toBe(1);
+    const r = (await call(B.plainKey, 'list_fields', { year: 2026 })).data;
+    expect(r.rows.every((x: { field: string }) => x.field === 'Nr 4 Toosi')).toBe(true);
+    // B andmestik on samanimeline, aga eraldi: A kanne ei tohi B vastuses olla
+    const g = (await call(B.plainKey, 'get_field', { field: '4', year: 2026 })).data;
+    expect(g.works.flatMap((w: any) => w.entries)).toHaveLength(1);
+  });
+});
