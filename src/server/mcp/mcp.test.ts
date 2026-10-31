@@ -182,3 +182,25 @@ describe('ladu', () => {
     expect(r.rows.find((x: { type: string }) => x.type === 'RECEIPT')).toMatchObject({ quantity: 1000, documentNo: 'ARV-1', cost: 450 });
   });
 });
+
+describe('tehnika', () => {
+  it('list_vehicles: soetusmaksumus ainult finantsjuhile, asukoht ainult telemeetriaga', async () => {
+    const plain = (await call(A.plainKey, 'list_vehicles')).data;
+    const v = plain.vehicles.find((x: { name: string }) => x.name === 'Valtra T1');
+    expect(v).toMatchObject({ regNumber: '123ABC', lastPosition: { lat: 58.1, lng: 25.5 } });
+    expect(v.acquisitionCost).toBeUndefined();
+    expect(plain.implements[0]).toMatchObject({ name: 'Amazone ZA', workingWidthM: 24 });
+    expect((await call(A.financeKey, 'list_vehicles')).data.vehicles[0].acquisitionCost).toBe(150000);
+    const noTelemetry = (await call(B.plainKey, 'list_vehicles')).data.vehicles[0];
+    expect(noTelemetry.lastPosition).toBeUndefined();
+  });
+  it('get_vehicle_activity: kanded; telemeetriata ettevõttel telemetry puudub', async () => {
+    const r = (await call(B.plainKey, 'get_vehicle_activity', { vehicle: '123ABC', from: '01.05.2026', to: '31.05.2026' })).data;
+    expect(r.entries[0]).toMatchObject({ date: '10.05.2026', field: 'Nr 4 Toosi', equipmentHours: 3.5 });
+    expect(r.telemetry).toBeUndefined();
+  });
+  it('get_vehicle_activity: üle 31 päeva → viga', async () => {
+    const r = await call(A.plainKey, 'get_vehicle_activity', { vehicle: 'Valtra', from: '01.01.2026', to: '31.03.2026' });
+    expect(r.isError).toBe(true);
+  });
+});
