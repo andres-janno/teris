@@ -45,13 +45,14 @@ Staatus: kinnitatud vestluses, ootab spetsifikatsiooni ülevaatust
 
 ## Andmemudel
 
-Uus ettevõttepõhine tabel (RLS nagu teistel ettevõtte tabelitel):
+Uus **platvormi tabel** (nagu `sessions`: ilma `tenant_id`-ta, ainult
+`teris_platform` rollile, loetakse `authDb()` kaudu). Võti leitakse enne,
+kui päringul on ettevõtte kontekst; ettevõte tuleneb võtme omanikust.
 
 ```prisma
-// Kasutaja isiklik API-võti AI ühenduse (MCP) jaoks; võtit ennast ei salvestata
+// Kasutaja isiklik API-võti AI ühenduse (MCP) jaoks; võtit ennast ei salvestata (platvormi tabel nagu sessions)
 model ApiKey {
   id         String    @id @default(cuid())
-  tenantId   String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id")
   userId     String
   name       String // kasutaja antud nimi (nt "Claude Desktop sülearvutis")
   keyHash    String    @unique // SHA-256 võtmest
@@ -59,22 +60,18 @@ model ApiKey {
   lastUsedAt DateTime?
   revokedAt  DateTime?
   createdAt  DateTime  @default(now())
-  createdBy  String?
-  updatedBy  String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@index([tenantId])
   @@index([userId])
   @@map("api_keys")
 }
 ```
 
 - Võtme kuju: `trs_` + 32 juhuslikku baiti base64url-ina.
-- Võtme otsing räsi järgi käib `authDb()` kaudu (nagu sessioon) —
-  ettevõtte konteksti enne võtme leidmist veel pole.
-- Migratsioon on ainult lisav; RLS-poliitika lisatakse samas stiilis nagu
-  `scripts/tenancy/02-rls.sql`.
+- `api_keys` ja `platform_settings` lisatakse `02-rls.sql` ja
+  `04-privileges.sql` platvormi tabelite loendisse (REVOKE `teris_app`,
+  GRANT `teris_platform`).
 
 ## Päringu käik `/mcp`
 
@@ -202,7 +199,7 @@ API (sessioon + CSRF nagu ülejäänud API):
 ## Failid
 
 - `prisma/schema.prisma` — `ApiKey` + `User.apiKeys`, `PlatformSetting`
-- `scripts/tenancy/…` — RLS poliitika `api_keys` tabelile
+- `scripts/tenancy/02-rls.sql`, `04-privileges.sql` — `api_keys`, `platform_settings` platvormi tabelite õigustesse
 - `src/server/apiKeys.ts` — võtme loomine, räsi, otsing, kehtivus, API teekonnad
 - `src/server/mcp/handler.ts` — `/mcp` päring: autentimine, kontekst, transport
 - `src/server/mcp/server.ts` — MCP serveri loomine kasutaja/litsentsi järgi
