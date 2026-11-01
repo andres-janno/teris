@@ -34,6 +34,8 @@ export const SYSTEM_CATEGORIES: { systemKind: ArticleSystemKind; group: ArticleG
 export const OTHER_CONSUMABLE_NAME = 'Muu kulumaterjal';
 
 const PRIA_KINDS: ReadonlySet<ArticleSystemKind> = new Set(['SEED', 'FERTILIZER', 'PLANT_PROTECTION']);
+// Kütus ja kuivatusõli lähevad oma ridadele, mitte tavalise kulumaterjali alla
+const OWN_LINE_KINDS: ReadonlySet<ArticleSystemKind> = new Set(['FUEL', 'DRYING_OIL']);
 
 /** Kaup = laoarvestusega artikkel; teenuse üle laoarvestust ei peeta. */
 export const isGoods = (group: ArticleGroup): boolean => group !== 'SERVICE';
@@ -97,8 +99,24 @@ export function sanitizeArticleFields<T extends ArticleOptionalFields>(f: T, r: 
 
 /** Kas artikkel sobib PRIA tegevuse materjalireale (OTHER = muu kulumaterjal). */
 export function matchesPriaKind(a: { group: ArticleGroup; systemKind: ArticleSystemKind | null }, kind: PriaArticleKind): boolean {
-  if (kind === 'OTHER') return a.group === 'CONSUMABLE' && !(a.systemKind && PRIA_KINDS.has(a.systemKind));
+  if (kind === 'OTHER') {
+    return a.group === 'CONSUMABLE' && !(a.systemKind && (PRIA_KINDS.has(a.systemKind) || OWN_LINE_KINDS.has(a.systemKind)));
+  }
   return a.systemKind === kind;
+}
+
+export type ArticleLineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST' | 'OBSERVATION';
+
+/** Kas artikkel sobib kande- või plaanireale (tööaeg → vastav teenus, kütus → kütus, materjal → muu kulumaterjal). */
+export function articleAllowedOnLine(kind: ArticleLineKind, a: { group: ArticleGroup; systemKind: ArticleSystemKind | null }): boolean {
+  switch (kind) {
+    case 'LABOR': return a.group === 'SERVICE' && a.systemKind === 'LABOR_TIME';
+    case 'MACHINE': return a.group === 'SERVICE' && a.systemKind === 'MACHINE_TIME';
+    case 'IMPLEMENT': return a.group === 'SERVICE' && a.systemKind === 'IMPLEMENT_TIME';
+    case 'FUEL': return a.systemKind === 'FUEL';
+    case 'MATERIAL': return a.group === 'CONSUMABLE' && !(a.systemKind && OWN_LINE_KINDS.has(a.systemKind));
+    default: return false;
+  }
 }
 
 /** Liigi lisamise/muutmise kontroll; null = lubatud. */

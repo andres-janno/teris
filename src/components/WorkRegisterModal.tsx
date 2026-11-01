@@ -51,7 +51,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     try {
       const [w, m] = await Promise.all([api.getWorkTypes(), api.getArticles()]);
       setWorkTypes(w);
-      setArticles(m);
+      // Kulumaterjalide sakk näitab ainult kulumaterjale (teenused ja toodang on artiklite registris)
+      setArticles(m.filter((x) => x.category.group === 'CONSUMABLE'));
     } catch (err) {
       alertDialog(errorText(err));
     }

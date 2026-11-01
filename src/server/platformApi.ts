@@ -6,6 +6,7 @@ import { authDb } from './db.ts';
 import { json, parseBody, hasRequestBody } from './http.ts';
 import { handlePlatformAuth, platformUserOf } from './platformAuth.ts';
 import { copyCatalogToTenant } from './catalog.ts';
+import { SYSTEM_CATEGORIES } from '../services/articleRules.ts';
 import { LICENSE_MODULES, licenseState, tallinnToday, loadLicenseState, parseLicenseDate, type LicenseModule } from './license.ts';
 import { sendPasswordLink } from './passwordTokens.ts';
 import { normalizeUsername, USERNAME_ERROR } from './adminRules.ts';
@@ -105,6 +106,11 @@ async function createTenant(body: any, platformUser: { id: string; username: str
         data: { tenantId: t.id, validUntil, modules, updatedBy: platformUser.username }
       });
       const catalog = await copyCatalogToTenant(tx, t.id);
+      // Artikli süsteemsed liigid kohe ettevõtte loomisel (sama tehingu sees, tenantId otse)
+      await tx.articleCategory.createMany({
+        data: SYSTEM_CATEGORIES.map((c) => ({ tenantId: t.id, name: c.name, group: c.group, systemKind: c.systemKind, sortOrder: c.sortOrder })),
+        skipDuplicates: true
+      });
       const user = await tx.user.create({
         data: { tenantId: t.id, username, displayName, email, passwordHash: '', isAdmin: true }
       });

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SYSTEM_CATEGORIES, isGoods, articleFieldRules, sanitizeArticleFields, matchesPriaKind, categoryChangeError
+  SYSTEM_CATEGORIES, isGoods, articleFieldRules, sanitizeArticleFields, matchesPriaKind, categoryChangeError, articleAllowedOnLine
 } from './articleRules';
 
 describe('SYSTEM_CATEGORIES', () => {
@@ -67,7 +67,8 @@ describe('matchesPriaKind', () => {
   });
   it('OTHER = kulumaterjal, mis pole seeme, väetis ega taimekaitse', () => {
     expect(matchesPriaKind({ group: 'CONSUMABLE', systemKind: null }, 'OTHER')).toBe(true);
-    expect(matchesPriaKind({ group: 'CONSUMABLE', systemKind: 'FUEL' }, 'OTHER')).toBe(true);
+    expect(matchesPriaKind({ group: 'CONSUMABLE', systemKind: 'FUEL' }, 'OTHER')).toBe(false);
+    expect(matchesPriaKind({ group: 'CONSUMABLE', systemKind: 'DRYING_OIL' }, 'OTHER')).toBe(false);
     expect(matchesPriaKind({ group: 'CONSUMABLE', systemKind: 'SEED' }, 'OTHER')).toBe(false);
     expect(matchesPriaKind({ group: 'SERVICE', systemKind: null }, 'OTHER')).toBe(false);
     expect(matchesPriaKind({ group: 'PRODUCE', systemKind: 'GRAIN' }, 'OTHER')).toBe(false);
@@ -85,5 +86,38 @@ describe('categoryChangeError', () => {
   it('kasutaja liigi rühma ei saa teenuse ja kauba vahel muuta', () => {
     expect(categoryChangeError({ group: 'CONSUMABLE', systemKind: null }, 'SERVICE')).toMatch(/teenuse ja kauba/);
     expect(categoryChangeError({ group: 'CONSUMABLE', systemKind: null }, 'OTHER_GOODS')).toBeNull();
+  });
+});
+
+describe('articleAllowedOnLine', () => {
+  const svc = (systemKind: any) => ({ group: 'SERVICE' as const, systemKind });
+  const cons = (systemKind: any) => ({ group: 'CONSUMABLE' as const, systemKind });
+  it('tööaja read: ainult vastava süsteemse teenuse liigi artikkel', () => {
+    expect(articleAllowedOnLine('LABOR', svc('LABOR_TIME'))).toBe(true);
+    expect(articleAllowedOnLine('LABOR', svc('MACHINE_TIME'))).toBe(false);
+    expect(articleAllowedOnLine('MACHINE', svc('MACHINE_TIME'))).toBe(true);
+    expect(articleAllowedOnLine('MACHINE', svc('IMPLEMENT_TIME'))).toBe(false);
+    expect(articleAllowedOnLine('IMPLEMENT', svc('IMPLEMENT_TIME'))).toBe(true);
+    expect(articleAllowedOnLine('IMPLEMENT', svc('LABOR_TIME'))).toBe(false);
+    expect(articleAllowedOnLine('LABOR', svc(null))).toBe(false);
+    expect(articleAllowedOnLine('MACHINE', cons('FUEL'))).toBe(false);
+  });
+  it('kütuse rida: ainult kütus', () => {
+    expect(articleAllowedOnLine('FUEL', cons('FUEL'))).toBe(true);
+    expect(articleAllowedOnLine('FUEL', cons('DRYING_OIL'))).toBe(false);
+    expect(articleAllowedOnLine('FUEL', cons(null))).toBe(false);
+  });
+  it('materjali rida: kulumaterjal, mis pole kütus ega kuivatusõli', () => {
+    expect(articleAllowedOnLine('MATERIAL', cons('SEED'))).toBe(true);
+    expect(articleAllowedOnLine('MATERIAL', cons(null))).toBe(true);
+    expect(articleAllowedOnLine('MATERIAL', cons('FUEL'))).toBe(false);
+    expect(articleAllowedOnLine('MATERIAL', cons('DRYING_OIL'))).toBe(false);
+    expect(articleAllowedOnLine('MATERIAL', svc('LABOR_TIME'))).toBe(false);
+    expect(articleAllowedOnLine('MATERIAL', { group: 'PRODUCE', systemKind: 'GRAIN' })).toBe(false);
+    expect(articleAllowedOnLine('MATERIAL', { group: 'OTHER_GOODS', systemKind: null })).toBe(false);
+  });
+  it('saagi ja seire real artiklit pole', () => {
+    expect(articleAllowedOnLine('HARVEST', { group: 'PRODUCE', systemKind: 'GRAIN' })).toBe(false);
+    expect(articleAllowedOnLine('OBSERVATION', cons(null))).toBe(false);
   });
 });

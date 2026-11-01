@@ -26,7 +26,7 @@ import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
-import { articleFieldRules, sanitizeArticleFields } from '../services/articleRules.ts';
+import { articleFieldRules, sanitizeArticleFields, articleAllowedOnLine, type ArticleLineKind } from '../services/articleRules.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -90,6 +90,19 @@ const FINANCE_FORBIDDEN = 'Finantsandmed on nähtavad ainult finantsjuhile ja ad
 // Kanded
 // ---------------------------------------------------------------------------
 
+/** Kontrollib, et iga rea artikkel sobib rea liigiga; tagastab veateate või null. */
+async function articleLineError(lines: { kind: ArticleLineKind; articleId: string | null }[]): Promise<string | null> {
+  const ids = [...new Set(lines.map((l) => l.articleId).filter((id): id is string => !!id))];
+  if (!ids.length) return null;
+  const rows = await prisma.article.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, category: { select: { group: true, systemKind: true } } } });
+  const byId = new Map(rows.map((r) => [r.id, r]));
+  for (const l of lines) {
+    const a = l.articleId ? byId.get(l.articleId) : null;
+    if (a && !articleAllowedOnLine(l.kind, a.category)) return `Artikkel „${a.name}“ ei sobi sellele reale`;
+  }
+  return null;
+}
+
 async function resolveEntryInput(body: any) {
   const workerId = text(body?.workerId, 64);
   const vehicleId = text(body?.vehicleId, 64);
@@ -105,6 +118,7 @@ async function resolveEntryInput(body: any) {
     ? await prisma.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, name: true, unit: true } })
     : [];
   const byId = new Map(articleRows.map((m) => [m.id, m]));
+  const articleError = await articleLineError(articleRows.map((m) => ({ kind: 'MATERIAL' as const, articleId: m.id })));
   const articles = articlesIn
     .map((m) => {
       const row = byId.get(String(m.articleId ?? ''));
@@ -159,6 +173,7 @@ async function resolveEntryInput(body: any) {
       notes: text(body?.notes, 2000)
     },
     drafts,
+    articleError,
     // Ladu lahendatakse tehingus (resolveEntryWarehouseId): valimata → põhiladu, mitteaktiivne ainult senisena
     warehouseId: text(body?.warehouseId, 64)
   };
@@ -249,7 +264,8 @@ async function planInput(b: any) {
         sortOrder: i
       })).filter((l: { label: string }) => l.label)
     : null;
-  return { data, lines };
+  const articleError = lines ? await articleLineError(lines) : null;
+  return { data, lines, articleError };
 }
 
 const FIELD_WORK_INCLUDE = {
@@ -739,9 +755,15 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     const finance = canSeeFinance(req);
+    const priceIn = finance ? num(b?.price) : null;
+    // Hind on Decimal(12,4): lõplik, mitte negatiivne ja alla 10^8
+    if (priceIn !== null && !(Number.isFinite(priceIn) && priceIn >= 0 && priceIn < 100000000)) {
+      json(res, { error: 'Hind peab olema 0 või suurem' }, 400);
+      return true;
+    }
     const rules = articleFieldRules(category.group, category.systemKind);
     const optional = sanitizeArticleFields({
-      price: finance ? num(b?.price) : null, cropId: text(b?.cropId, 64), defaultWarehouseId: text(b?.defaultWarehouseId, 64),
+      price: priceIn, cropId: text(b?.cropId, 64), defaultWarehouseId: text(b?.defaultWarehouseId, 64),
       cropVarietyId: text(b?.cropVarietyId, 64), priaRegister: text(b?.priaRegister, 120), priaKind: text(b?.priaKind, 120),
       priaSpec: text(b?.priaSpec, 20), activeIngredient: text(b?.activeIngredient, 500), nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct)
     }, rules);
@@ -757,8 +779,25 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     // Ilma finantsõiguseta muutmisel jääb teenuse vana hind alles (kaubal hinda pole, see tühjendatakse)
     if (id && !finance && rules.price) delete (data as Partial<typeof data>).price;
     // Teenuse üle laoarvestust ei peeta: laokannetega kaupa ei saa teenuseks muuta
-    if (old && old.category.group !== 'SERVICE' && category.group === 'SERVICE' && (await prisma.stockDocumentLine.count({ where: { articleId: id! } })) > 0) {
-      json(res, { error: 'Artiklil on laokandeid, seda ei saa teenuseks muuta' }, 409);
+    if (old && old.category.group !== 'SERVICE' && category.group === 'SERVICE') {
+      const [docLines, entryLines, planLines] = await Promise.all([
+        prisma.stockDocumentLine.count({ where: { articleId: id! } }),
+        prisma.workEntryLine.count({ where: { articleId: id!, kind: { in: ['MATERIAL', 'FUEL'] } } }),
+        prisma.fieldWorkLine.count({ where: { articleId: id!, kind: 'MATERIAL' } })
+      ]);
+      if (docLines > 0) {
+        json(res, { error: 'Artiklil on laokandeid, seda ei saa teenuseks muuta' }, 409);
+        return true;
+      }
+      if (entryLines + planLines > 0) {
+        json(res, { error: 'Artikkel on kasutusel kulumaterjalina, seda ei saa teenuseks muuta' }, 409);
+        return true;
+      }
+    }
+    // Tööaja ridadel kasutatavat teenust ei saa kaubaks muuta
+    if (old && old.category.group === 'SERVICE' && category.group !== 'SERVICE'
+      && (await prisma.workEntryLine.count({ where: { articleId: id!, kind: { in: ['LABOR', 'MACHINE', 'IMPLEMENT'] } } })) > 0) {
+      json(res, { error: 'Teenus on kasutusel tööaja ridadel, seda ei saa kaubaks muuta' }, 409);
       return true;
     }
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
@@ -786,8 +825,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         } else if (unitChanged) await recomputeArticleStock(tx, [s.id]);
         // Ümbernimetamine: plaani- ja kanderead saavad uue nime; vana nimi jääb varunimeks (PRIA import seob selle materjaliga)
         if (old && old.name !== name) {
-          await tx.fieldWorkLine.updateMany({ where: { articleId: s.id }, data: { label: name } });
-          await tx.workEntryLine.updateMany({ where: { articleId: s.id }, data: { label: name } });
+          // Tööaja ridade nimi tuleb töötajast/masinast, mitte artiklist: nimi muutub ainult materjali- ja kütuseridadel
+          await tx.fieldWorkLine.updateMany({ where: { articleId: s.id, kind: 'MATERIAL' }, data: { label: name } });
+          await tx.workEntryLine.updateMany({ where: { articleId: s.id, kind: { in: ['MATERIAL', 'FUEL'] } }, data: { label: name } });
           const aliases = [...new Set([...old.aliases, nameKey(old.name)])].filter((a) => a !== nameKey(name));
           return tx.article.update({ where: { id: s.id }, data: { aliases } });
         }
@@ -826,8 +866,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     const counts = await tenantTransaction(async (tx) => {
-      const plans = await tx.fieldWorkLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id, label: target.name } });
-      const entries = await tx.workEntryLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id, label: target.name } });
+      // Nimi muutub ainult materjali- ja kütuseridadel (tööaja ridade nimi tuleb töötajast/masinast)
+      await tx.fieldWorkLine.updateMany({ where: { articleId: source.id, kind: 'MATERIAL' }, data: { label: target.name } });
+      await tx.workEntryLine.updateMany({ where: { articleId: source.id, kind: { in: ['MATERIAL', 'FUEL'] } }, data: { label: target.name } });
+      const plans = await tx.fieldWorkLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
+      const entries = await tx.workEntryLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
       for (const l of docLines) {
         await tx.stockDocumentLine.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
       }
@@ -839,6 +882,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           aliases,
           manufacturer: target.manufacturer ?? source.manufacturer,
           composition: target.composition ?? source.composition,
+          price: target.price ?? source.price,
+          cropId: target.cropId ?? source.cropId,
+          defaultWarehouseId: target.defaultWarehouseId ?? source.defaultWarehouseId,
           priaRegister: target.priaRegister ?? source.priaRegister,
           priaKind: target.priaKind ?? source.priaKind,
           priaSpec: target.priaSpec ?? source.priaSpec,
@@ -1002,7 +1048,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     const preferredSortOrder = int(b?.sortOrder);
     const last = await prisma.fieldWork.findFirst({ where: { fieldSeasonId }, orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } });
-    const { data: plan, lines } = await planInput(b);
+    const { data: plan, lines, articleError } = await planInput(b);
+    if (articleError) {
+      json(res, { error: articleError }, 400);
+      return true;
+    }
     const saved = await prisma.fieldWork.create({
       data: {
         ...(plan as object),
@@ -1110,7 +1160,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/field-works/');
     const b = await parseBody(req, MAX_BODY_BYTES);
     const data: Record<string, unknown> = {};
-    const { data: plan, lines } = await planInput(b);
+    const { data: plan, lines, articleError } = await planInput(b);
+    if (articleError) {
+      json(res, { error: articleError }, 400);
+      return true;
+    }
     Object.assign(data, plan);
     const before = await prisma.fieldWork.findUnique({ where: { id }, select: { status: true, plannedAreaHa: true } });
     // Lõpetatud tööd saab ainult uuesti avada
@@ -1194,7 +1248,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const b = await parseBody(req, MAX_BODY_BYTES);
     const fieldWorkId = text(b?.fieldWorkId, 64);
     const work = fieldWorkId ? await prisma.fieldWork.findUnique({ where: { id: fieldWorkId } }) : null;
-    const { data, drafts, warehouseId } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId, articleError } = await resolveEntryInput(b);
+    if (articleError) {
+      json(res, { error: articleError }, 400);
+      return true;
+    }
     if (!work || !data.date) {
       json(res, { error: 'Töö ja kuupäev on kohustuslikud' }, 400);
       return true;
@@ -1230,7 +1288,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/work-entries/');
     const b = await parseBody(req, MAX_BODY_BYTES);
     const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true, fieldWork: { select: { status: true } } } });
-    const { data, drafts, warehouseId } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId, articleError } = await resolveEntryInput(b);
+    if (articleError) {
+      json(res, { error: articleError }, 400);
+      return true;
+    }
     if (!old || !data.date) {
       json(res, { error: 'Kannet ei leitud või kuupäev puudub' }, 400);
       return true;

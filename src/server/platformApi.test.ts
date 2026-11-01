@@ -2,6 +2,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { Readable } from 'stream';
 import type { IncomingMessage, ServerResponse } from 'http';
+import { SYSTEM_CATEGORIES } from '../services/articleRules';
 import { authDb, prisma, runAsTenant } from './db';
 import { hashPassword, generateSessionToken, hashToken } from './auth';
 import { encryptTotpSecret } from './totp';
@@ -92,6 +93,7 @@ afterAll(async () => {
   for (const t of byName) ids.push(t.id);
   for (const id of new Set(ids)) {
     const where = { tenantId: id };
+    await step('article_categories', () => db.articleCategory.deleteMany({ where }));
     await step('work_types', () => db.workType.deleteMany({ where }));
     await step('crop_varieties', () => db.cropVariety.deleteMany({ where }));
     await step('crops', () => db.crop.deleteMany({ where }));
@@ -161,6 +163,8 @@ describe('platvormi API', () => {
     expect(await runAsTenant(newId, async () => prisma.crop.count())).toBe(cc);
     expect(await runAsTenant(newId, async () => prisma.workType.count())).toBe(cw);
     expect(await runAsTenant(newId, async () => prisma.workTemplate.count())).toBe(0);
+    // Artikli süsteemsed liigid luuakse koos ettevõttega
+    expect(await runAsTenant(newId, async () => prisma.articleCategory.count({ where: { systemKind: { not: null } } }))).toBe(SYSTEM_CATEGORIES.length);
   });
 
   it('eraldus teistest ettevõtetest', async () => {
