@@ -337,8 +337,6 @@ model Vehicle {
   color               String      @default("#10b981")
   fuelCapacityL       Float?
   assignedDriverId    String? // Seotud isiku ID (töötaja / masinajuht)
-  assignedImplementId String?     @unique
-  assignedDeviceId    String?     @unique
   lastLatitude        Float?
   lastLongitude       Float?
   lastActiveAt        DateTime?
@@ -349,8 +347,6 @@ model Vehicle {
   updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
-  assignedImplement    Implement?            @relation(fields: [assignedImplementId], references: [id])
-  assignedDevice       TelemetryDevice?      @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
@@ -376,15 +372,12 @@ model Implement {
   model              String?
   serialNumber       String? // VIN / seerianumber
   year               Int?
-  assignedDeviceId   String?       @unique
   notes              String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
   createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  vehicle              Vehicle?
-  assignedDevice       TelemetryDevice?      @relation(fields: [assignedDeviceId], references: [id])
   deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
@@ -416,8 +409,6 @@ model TelemetryDevice {
   createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  vehicle     Vehicle?
-  implement   Implement?
   assignments DeviceAssignment[]
 
   @@index([tenantId])

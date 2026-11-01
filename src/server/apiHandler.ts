@@ -956,10 +956,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname.startsWith('/api/fleet/implements/') && method === 'DELETE') {
       const id = pathname.replace('/api/fleet/implements/', '');
       if (denyDelete(req, res, await prisma.implement.findUnique({ where: { id }, select: { createdBy: true } }))) return;
-      await prisma.vehicle.updateMany({
-        where: { assignedImplementId: id },
-        data: { assignedImplementId: null }
-      });
       await prisma.implement.delete({ where: { id } });
       return json(res, { success: true, id });
     }

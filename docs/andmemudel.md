@@ -364,12 +364,9 @@ erDiagram
   Vehicle {
     String id PK
     String assignedDriverId FK "valikuline"
-    String assignedImplementId FK,UK "valikuline"
-    String assignedDeviceId FK,UK "valikuline"
   }
   Implement {
     String id PK
-    String assignedDeviceId FK,UK "valikuline"
   }
   Warehouse {
     String id PK
@@ -452,8 +449,6 @@ erDiagram
     String color
     Float fuelCapacityL "valikuline"
     String assignedDriverId FK "valikuline"
-    String assignedImplementId FK,UK "valikuline"
-    String assignedDeviceId FK,UK "valikuline"
     Float lastLatitude "valikuline"
     Float lastLongitude "valikuline"
     DateTime lastActiveAt "valikuline"
@@ -475,7 +470,6 @@ erDiagram
     String model "valikuline"
     String serialNumber "valikuline"
     Int year "valikuline"
-    String assignedDeviceId FK,UK "valikuline"
     String notes "valikuline"
     DateTime createdAt
     DateTime updatedAt
@@ -567,9 +561,6 @@ erDiagram
     String poiId FK,UK "valikuline"
   }
   RelatedParty |o--o{ Vehicle : "assignedDriver"
-  Implement |o--o| Vehicle : "assignedImplement"
-  TelemetryDevice |o--o| Vehicle : "assignedDevice"
-  TelemetryDevice |o--o| Implement : "assignedDevice"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
@@ -767,8 +758,6 @@ erDiagram
   Vehicle {
     String id PK
     String assignedDriverId FK "valikuline"
-    String assignedImplementId FK,UK "valikuline"
-    String assignedDeviceId FK,UK "valikuline"
   }
   FieldWork {
     String id PK
@@ -999,9 +988,6 @@ erDiagram
   RelatedParty |o--o{ FieldCadastralParcel : "ownerParty"
   RelatedParty |o--o{ PointOfInterest : "contactParty"
   RelatedParty |o--o{ Vehicle : "assignedDriver"
-  Implement |o--o| Vehicle : "assignedImplement"
-  TelemetryDevice |o--o| Vehicle : "assignedDevice"
-  TelemetryDevice |o--o| Implement : "assignedDevice"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
