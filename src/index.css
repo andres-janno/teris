@@ -10997,6 +10997,11 @@ td.stock-qty-out { color: #dc2626; }
 .stock-doc-lines .stock-doc-unit { display: inline-block; width: 2.5em; text-align: left; }
 .stock-doc-lines td > .stock-doc-unit { margin-left: 6px; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+.article-categories-modal { max-width: 640px; }
+.article-categories-group h4 { margin: 12px 0 6px; }
+.article-categories-group .register-table td:first-child { width: 60%; }
+.article-categories-add { display: flex; gap: 8px; margin-top: 16px; }
+.article-categories-add .form-input:first-child { max-width: 180px; }
 
 .finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
 .finance-fifo-price.missing { color: #d97706; }

@@ -277,6 +277,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
       {articleForm && (
         <ArticleFormDialog
           initial={articleForm}
+          canManageFinance={false}
           onClose={() => setArticleForm(null)}
           onSaved={() => {
             setArticleForm(null);

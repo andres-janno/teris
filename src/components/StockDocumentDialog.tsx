@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Trash2, X, ArrowRightLeft } from 'lucide-react';
 import { formatQty } from '../services/units';
+import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
@@ -53,7 +54,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
 
   const activeWarehouses = warehouses.filter((w) => w.isActive || w.id === warehouseId || w.id === toWarehouseId);
   const options = useMemo(
-    () => articles.filter((m) => m.isActive || rows.some((r) => r.articleId === m.id)).sort((a, b) => a.name.localeCompare(b.name, 'et')),
+    () => articles.filter((m) => (isGoods(m.category.group) && m.isActive) || rows.some((r) => r.articleId === m.id)).sort((a, b) => a.name.localeCompare(b.name, 'et')),
     [articles, rows]
   );
   const total = rows.reduce((s, r) => s + (parseNum(r.amount) ?? 0), 0);

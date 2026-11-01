@@ -5,6 +5,7 @@ import { Edit2, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { Article, ArticleCategory } from '../types/fieldWork';
+import type { Warehouse } from '../types/stock';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, articleFieldRules, sanitizeArticleFields, type ArticleSystemKind } from '../services/articleRules';
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
@@ -45,9 +46,10 @@ interface ArticleFormDialogProps {
   initial: Partial<Article>;
   onClose: () => void;
   onSaved: () => void;
+  canManageFinance: boolean;
 }
 
-export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, onClose, onSaved }) => {
+export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, onClose, onSaved, canManageFinance }) => {
   const [form, setForm] = useState<Partial<Article>>(initial);
   const [busy, setBusy] = useState(false);
   // Tootja ja ühiku valikud: teistel materjalidel kasutatud väärtused; uus väärtus lisandub salvestamisel
@@ -55,6 +57,9 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
   const [units, setUnits] = useState<string[]>([]);
   const [all, setAll] = useState<Article[]>([]);
   const [categories, setCategories] = useState<ArticleCategory[]>([]);
+  const [crops, setCrops] = useState<{ id: string; name: string }[]>([]);
+  const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
+  const [priceText, setPriceText] = useState(fmtPct(initial.price));
   const cat = categories.find((c) => c.id === form.categoryId);
   const rules = cat ? articleFieldRules(cat.group, cat.systemKind) : null;
   const registers = rules?.pria && cat?.systemKind ? REGISTERS[cat.systemKind] : undefined;
@@ -79,6 +84,8 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
         setUnits([]);
       });
     api.getArticleCategories().then(setCategories).catch(() => setCategories([]));
+    api.getCrops().then((cs) => setCrops(cs.map((c) => ({ id: c.id, name: c.name })))).catch(() => setCrops([]));
+    api.getWarehouses().then(setWarehouses).catch(() => setWarehouses([]));
   }, []);
 
   useEffect(() => {
@@ -99,7 +106,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
     const payload: Partial<Article> & { unitFactor?: number | null } = {
       ...form,
       ...sanitizeArticleFields({
-        price: form.price ?? null, cropId: form.cropId ?? null, defaultWarehouseId: form.defaultWarehouseId ?? null,
+        price: rules.price && canManageFinance ? parsePct(priceText) : (form.price ?? null), cropId: form.cropId ?? null, defaultWarehouseId: form.defaultWarehouseId ?? null,
         cropVarietyId: form.cropVarietyId ?? null, priaRegister: form.priaRegister || null, priaKind: form.priaKind || null,
         priaSpec: form.priaSpec || null, activeIngredient: form.activeIngredient || null,
         nPct: parsePct(pct.nPct), pPct: parsePct(pct.pPct), kPct: parsePct(pct.kPct)
@@ -147,7 +154,10 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             </div>
             <div className="form-group">
               <label htmlFor="mt-cat">Liik *</label>
-              <select id="mt-cat" className="form-input" required value={form.categoryId ?? ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
+              <select id="mt-cat" className="form-input" required value={form.categoryId ?? ''} onChange={(e) => {
+                const c = categories.find((x) => x.id === e.target.value);
+                setForm({ ...form, categoryId: e.target.value, unit: form.unit || (c?.group === 'SERVICE' ? 'h' : form.unit) });
+              }}>
                 <option value="" disabled>– vali –</option>
                 {ARTICLE_GROUPS.map((g) => {
                   const list = categories.filter((c) => c.group === g && (c.isActive || c.id === form.categoryId));
@@ -164,6 +174,30 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <input id="mt-unit" className="form-input" required list="article-units" placeholder="vali olemasolev või sisesta uus" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
               <datalist id="article-units">{units.map((u) => <option key={u} value={u} />)}</datalist>
             </div>
+            {rules?.price && canManageFinance && (
+              <div className="form-group">
+                <label htmlFor="mt-price">Hind (€ / {form.unit || 'ühik'})</label>
+                <input id="mt-price" className="form-input num" inputMode="decimal" value={priceText} onChange={(e) => setPriceText(e.target.value)} />
+              </div>
+            )}
+            {rules?.crop && (
+              <div className="form-group">
+                <label htmlFor="mt-crop">Kultuur</label>
+                <select id="mt-crop" className="form-input" value={form.cropId ?? ''} onChange={(e) => setForm({ ...form, cropId: e.target.value || null })}>
+                  <option value="">–</option>
+                  {crops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </div>
+            )}
+            {rules?.defaultWarehouse && (
+              <div className="form-group">
+                <label htmlFor="mt-wh" title="Kust kaup vaikimisi maha kantakse (nt kütus mahutist)">Vaikimisi ladu</label>
+                <select id="mt-wh" className="form-input" value={form.defaultWarehouseId ?? ''} onChange={(e) => setForm({ ...form, defaultWarehouseId: e.target.value || null })}>
+                  <option value="">Kande ladu</option>
+                  {warehouses.filter((w) => w.isActive || w.id === form.defaultWarehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                </select>
+              </div>
+            )}
             {unitChanged && (
               <div className="form-group full-width">
                 <label htmlFor="mt-unit-factor">Teisendus: 1 {initial.unit} = ? {form.unit}</label>

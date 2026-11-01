@@ -1,15 +1,16 @@
 // src/components/ArticlesView.tsx — laoarvestus täislehena: artiklid, laokanded, laod
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge } from 'lucide-react';
+import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge, Tags } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ArticleFormDialog } from './ArticleFormDialog';
 import { ArticleMergeDialog } from './ArticleMergeDialog';
+import { ArticleCategoriesDialog } from './ArticleCategoriesDialog';
 import type { FarmingSeason } from '../types/season';
 import { seasonSelectorYears } from '../types/season';
-import type { Article } from '../types/fieldWork';
+import type { Article, ArticleCategory } from '../types/fieldWork';
 import { NEW_ARTICLE } from '../types/fieldWork';
-import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
+import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, isGoods, type ArticleGroup } from '../services/articleRules';
 import { FilterClear } from './FilterClear';
 import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
@@ -40,6 +41,14 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   const [group, setGroup] = useState<ArticleGroup | 'all'>('all');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<Partial<Article> | null>(null);
+
+  const [categories, setCategories] = useState<ArticleCategory[]>([]);
+  const [categoryId, setCategoryId] = useState('');
+  const [showCategories, setShowCategories] = useState(false);
+  const reloadCategories = useCallback(() => {
+    api.getArticleCategories().then(setCategories).catch((err) => alertDialog(errorText(err)));
+  }, []);
+  useEffect(() => { reloadCategories(); }, [reloadCategories]);
 
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
@@ -77,9 +86,10 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
     const q = search.trim().toLowerCase();
     return articles
       .filter((m) => group === 'all' || m.category.group === group)
+      .filter((m) => !categoryId || m.categoryId === categoryId)
       .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q) || (m.priaKind ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  }, [articles, group, search]);
+  }, [articles, group, categoryId, search]);
 
 
   const remove = async (m: Article) => {
@@ -167,6 +177,12 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   })}
                 </div>
                 <div className="register-io-buttons">
+                  {canManageFinance && (
+                    <button className="btn btn-secondary btn-sm" onClick={() => setShowCategories(true)} title="Artikli liikide haldus">
+                      <Tags size={14} />
+                      <span>Liigid</span>
+                    </button>
+                  )}
                   <button className="btn btn-secondary btn-sm" onClick={exportCsv} title="Ekspordi materjalide register CSV failina">
                     <Download size={14} />
                     <span>CSV Eksport</span>
@@ -198,14 +214,20 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isActive ? '' : ' (mitteaktiivne)'}</option>)}
                 </select>
               </FilterClear>
+              <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
+                <select className="form-input" aria-label="Liik" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                  <option value="">Kõik liigid</option>
+                  {categories.filter((c) => group === 'all' || c.group === group).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </FilterClear>
               <div className="category-filter-tabs">
-                <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => setGroup('all')}>
+                <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => { setGroup('all'); setCategoryId(''); }}>
                   Kõik ({articles.length})
                 </button>
                 {ARTICLE_GROUPS.map((g) => {
                   const count = articles.filter((m) => m.category.group === g).length;
                   return (
-                    <button key={g} type="button" className={`filter-tab ${group === g ? 'active' : ''}`} onClick={() => setGroup(g)} disabled={count === 0}>
+                    <button key={g} type="button" className={`filter-tab ${group === g ? 'active' : ''}`} onClick={() => { setGroup(g); setCategoryId(''); }} disabled={count === 0}>
                       {ARTICLE_GROUP_LABEL[g]} ({count})
                     </button>
                   );
@@ -222,6 +244,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <th>Liik</th>
                     <th title="Seemnel kultuur, väetisel ja taimekaitsevahendil täpsustav liik (PRIA)">Kultuur / täpsustav liik</th>
                     <th>Ühik</th>
+                    {canManageFinance && <th className="num">Hind</th>}
                     <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
                     {canManageFinance && <th className="num">Laoväärtus</th>}
                     {canManageFinance && <th className="num" title="Laoväärtus / hinnatud laoseis">Keskm. hind</th>}
@@ -235,7 +258,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 <tbody>
                   {!loading && filtered.length === 0 && (
                     <tr>
-                      <td colSpan={canManageFinance ? 13 : 11} className="muted">
+                      <td colSpan={canManageFinance ? 14 : 11} className="muted">
                         {articles.length === 0
                           ? 'Artikleid pole. Lisa seemned, väetised, taimekaitsevahendid ja teenused.'
                           : 'Otsingule vastavaid artikleid ei leitud.'}
@@ -243,7 +266,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     </tr>
                   )}
                   {filtered.map((m) => (
-                    <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => setStockCard(m)}>
+                    <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
                       <td className="name-cell" title={m.notes ?? undefined}>
                         <span className="field-name">{m.name}</span>
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
@@ -252,13 +275,18 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                       <td>{m.category.name}</td>
                       <td>{m.priaKind ?? ''}</td>
                       <td>{m.unit}</td>
-                      <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
-                        {fmtQty(m.stockQty ?? 0)}
-                      </td>
-                      {canManageFinance && <td className="num">{fmtEur(m.stockValue ?? 0)}</td>}
+                      {canManageFinance && (
+                        <td className="num">{!isGoods(m.category.group) && m.price != null ? `${fmtEur(m.price)} / ${m.unit}` : ''}</td>
+                      )}
+                      {isGoods(m.category.group) ? (
+                        <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
+                          {fmtQty(m.stockQty ?? 0)}
+                        </td>
+                      ) : <td className="num">–</td>}
+                      {canManageFinance && <td className="num">{isGoods(m.category.group) ? fmtEur(m.stockValue ?? 0) : '–'}</td>}
                       {canManageFinance && (
                         <td className="num">
-                          {(m.pricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / m.pricedQty!) : '–'}
+                          {isGoods(m.category.group) && (m.pricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / m.pricedQty!) : '–'}
                         </td>
                       )}
                       <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>
@@ -311,9 +339,12 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
         />
       )}
 
+      {showCategories && <ArticleCategoriesDialog onClose={() => setShowCategories(false)} onChanged={() => { reloadCategories(); void reload(); }} />}
+
       {form && (
         <ArticleFormDialog
           initial={form}
+          canManageFinance={canManageFinance}
           onClose={() => setForm(null)}
           onSaved={() => {
             setForm(null);
