@@ -11,7 +11,7 @@ Mõisted:
 - Hooaeg = kalendriaasta. Põllul on igal hooajal oma pindala, kultuur ja sort.
 - Töö (list_field_works) on plaan: mida põllul teha kavatsetakse.
 - Kanne (list_work_entries) on tegelikult tehtud tegevus (põlluraamat): kuupäev, tegija, masin, materjalid ja kogused.
-- Materjalide kulu kokku: summarize_article_usage.
+- Kulumaterjalide kulu kokku: summarize_article_usage. Artiklid on teenused (tööaeg) ja kaubad (kulumaterjal, toodang, muu kaup); laoseis on ainult kaupadel.
 - Laoseis: list_stock_levels. Laokanded ja kõik rahasummad (hinnad, kulud, väärtused) on nähtavad ainult finantsõigusega kasutajale — vaata whoami (financeAccess).
 
 Põllu, masina, materjali ja lao saab anda nime või numbri järgi. Kui nimi sobib mitmele, tuleb vastuseks valikute loend — küsi kasutajalt täpsustust.

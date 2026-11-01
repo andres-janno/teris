@@ -28,9 +28,10 @@ const DOMAINS: Domain[] = [
   {
     title: 'Põllutööd ja kanded',
     intro: 'Töö on hooaja põllu planeeritud tegevus (PRIA tegevus), plaaniread on planeeritud materjalid normiga. Kanne on tegelikult tehtud töö osa; kande read on tööaeg, masin, kütus, materjalid, saak ja seire leiud.',
-    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'Article', 'WorkTemplate', 'WorkTemplateItem'],
+    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'ArticleCategory', 'Article', 'WorkTemplate', 'WorkTemplateItem'],
     notes: [
       'Töötüübid = PRIA e-põlluraamatu 29 tegevust (`priaCode`); `shortName` on ettevõtte lühinimi.',
+      '**Artikli liigid** (`article_categories`): artikkel kuulub liiki; liik kuulub rühma (`ArticleGroup`): `SERVICE` (teenus — laoarvestust pole), `CONSUMABLE` (kulumaterjal), `PRODUCE` (toodang), `OTHER_GOODS` (muu kaup). Süsteemsetel liikidel on `systemKind` (töötaja/masina/haakeriista/kuivatamise tööaeg, seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, terad); need luuakse automaatselt ja neid ei kustutata. Kasutaja loob liike juurde (nt varuosad, mürgid). Teenusel `price` (ühiku hind), teradel `cropId`, kaubal `defaultWarehouseId`. Reeglid: `src/services/articleRules.ts`.',
       '`WorkTemplate` ja `WorkTemplateItem` (tööde mallid) on andmebaasis alles, aga rakendus neid enam ei kasuta.'
     ]
   },
@@ -55,12 +56,12 @@ const DOMAINS: Domain[] = [
   {
     title: 'Isikud, kasutajad ja tugi',
     intro: 'Seotud isikud (töötajad, omanikud, operaatorid, partnerid) ja rakenduse kasutajad. Tugiligipääs lubab teenusepakkujal ettevõtte andmeid ajutiselt vaadata.',
-    models: ['RelatedParty', 'User', 'Session', 'PasswordToken', 'SupportGrant', 'SupportAccessLog']
+    models: ['RelatedParty', 'User', 'Session', 'PasswordToken', 'SupportGrant', 'SupportAccessLog', 'ApiKey']
   },
   {
     title: 'Platvorm (teenusepakkuja)',
     intro: 'Ettevõtted, litsentsid, platvormi kasutajad, algkataloog uue ettevõtte jaoks, abiartiklid ja landing-lehe andmed. Need tabelid ei ole ettevõttepõhised.',
-    models: ['Tenant', 'TenantLicense', 'PlatformUser', 'PlatformSession', 'PlatformAuditLog', 'SupportSession', 'HelpArticle', 'CatalogCrop', 'CatalogCropVariety', 'CatalogWorkType', 'CatalogWorkTemplate', 'CatalogWorkTemplateItem', 'LandingEvent', 'InterestRequest']
+    models: ['Tenant', 'TenantLicense', 'PlatformUser', 'PlatformSession', 'PlatformAuditLog', 'SupportSession', 'HelpArticle', 'CatalogCrop', 'CatalogCropVariety', 'CatalogWorkType', 'CatalogWorkTemplate', 'CatalogWorkTemplateItem', 'LandingEvent', 'InterestRequest', 'PlatformSetting']
   }
 ];
 
@@ -79,7 +80,8 @@ const DESCRIPTIONS: Record<string, string> = {
   FieldWorkLine: 'Töö plaanirida: planeeritud materjal (norm/ha, PRIA atribuudid) või saak',
   WorkEntry: 'Kanne = tehtud töö osa: kuupäev, töötaja, masin, haakeriist, tunnid, kütus, pindala, finantsi olek',
   WorkEntryLine: 'Kande rida: tööaeg, masin, haakeriist, kütus, materjal, saak, seire leid (kogus, ühik, hind)',
-  Article: 'Kulumaterjal (seeme, väetis, taimekaitsevahend, muu)',
+  ArticleCategory: 'Artikli liik (rühm, süsteemne liik)',
+  Article: 'Artikkel: teenus (tööaeg) või kaup (kulumaterjal, toodang, muu kaup)',
   WorkTemplate: 'Tööde mall (kasutuseta)',
   WorkTemplateItem: 'Tööde malli rida (kasutuseta)',
   Vehicle: 'Masin (traktor, kombain jm): andmed, amortisatsioon, viimane asukoht, juht',
@@ -99,6 +101,7 @@ const DESCRIPTIONS: Record<string, string> = {
   PasswordToken: 'Parooli seadmise / kutse token',
   SupportGrant: 'Ettevõtte antud tugiligipääs teenusepakkujale',
   SupportAccessLog: 'Tugiligipääsu logi',
+  ApiKey: 'AI-ühenduse (MCP) võti: räsi, algus, viimane kasutus, tühistamine',
   Tenant: 'Ettevõte (klient)',
   TenantLicense: 'Ettevõtte litsents ja moodulid',
   PlatformUser: 'Teenusepakkuja (admin.teris.ee) kasutaja',
@@ -112,7 +115,8 @@ const DESCRIPTIONS: Record<string, string> = {
   CatalogWorkTemplate: 'Algkataloogi mall (kasutuseta)',
   CatalogWorkTemplateItem: 'Algkataloogi malli rida (kasutuseta)',
   LandingEvent: 'Landing-lehe külastuse sündmus',
-  InterestRequest: 'Landing-lehe huvipäring'
+  InterestRequest: 'Landing-lehe huvipäring',
+  PlatformSetting: 'Platvormi seadistus (võti/väärtus, nt AI-ühenduse juhis)'
 };
 
 const covered = new Set(DOMAINS.flatMap((d) => d.models));

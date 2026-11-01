@@ -143,7 +143,7 @@ export const workTools = [
   defineTool({
     name: 'summarize_article_usage',
     title: 'Materjalikulu kokku',
-    description: 'Kulumaterjalide kogus kokku materjali ja põllu või kultuuri kaupa (kanded). Pindala = nende kannete pindala summa. Finantsõigusega ka summa €.',
+    description: 'Kulumaterjalide kogus kokku artikli ja põllu või kultuuri kaupa (kanded). Pindala = nende kannete pindala summa. Finantsõigusega ka summa €.',
     input: { ...entryFilters, groupBy: z.enum(['field', 'crop']).default('field').describe('Grupeeri põllu või kultuuri järgi') },
     run: async (a, ctx) => {
       const finance = canSeeFinance(ctx);

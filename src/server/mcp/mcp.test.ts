@@ -185,6 +185,7 @@ describe('ladu', () => {
   it('list_stock_levels: kogus kõigile, väärtus ainult finantsjuhile, miinus märgitud', async () => {
     const plain = (await call(A.plainKey, 'list_stock_levels')).data;
     expect(plain.rows[0]).toMatchObject({ warehouse: 'Põhiladu', article: 'Ammooniumnitraat', quantity: -150, unit: 'kg', negative: true });
+    expect(plain.rows[0]).toMatchObject({ article: expect.any(String), group: 'CONSUMABLE', category: expect.any(String) });
     expect(plain.rows[0].value).toBeUndefined();
     const fin = (await call(A.financeKey, 'list_stock_levels')).data;
     expect(fin.rows[0]).toHaveProperty('value');
