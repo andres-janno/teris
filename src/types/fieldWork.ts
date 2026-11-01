@@ -1,5 +1,5 @@
 // src/types/fieldWork.ts — põllutööde register (PRIA põlluraamatust lahus)
-import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules';
+import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules.ts';
 
 export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
 export type WorkRepeatMode = 'ONCE' | 'UP_TO' | 'INTERVAL';
