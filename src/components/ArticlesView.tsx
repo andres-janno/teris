@@ -7,8 +7,9 @@ import { ArticleFormDialog } from './ArticleFormDialog';
 import { ArticleMergeDialog } from './ArticleMergeDialog';
 import type { FarmingSeason } from '../types/season';
 import { seasonSelectorYears } from '../types/season';
-import type { Article, PriaArticleKind } from '../types/fieldWork';
-import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
+import type { Article } from '../types/fieldWork';
+import { NEW_ARTICLE } from '../types/fieldWork';
+import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
 import { FilterClear } from './FilterClear';
 import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
@@ -36,7 +37,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<PriaArticleKind | 'all'>('all');
+  const [group, setGroup] = useState<ArticleGroup | 'all'>('all');
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<Partial<Article> | null>(null);
 
@@ -75,14 +76,14 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return articles
-      .filter((m) => category === 'all' || m.category === category)
+      .filter((m) => group === 'all' || m.category.group === group)
       .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q) || (m.priaKind ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  }, [articles, category, search]);
+  }, [articles, group, search]);
 
 
   const remove = async (m: Article) => {
-    if (!(await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`))) return;
+    if (!(await confirmDialog(`Kas soovid kindlasti kustutada artikli "${m.name}"?`))) return;
     try {
       await api.deleteArticle(m.id);
       await reload();
@@ -97,7 +98,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
       `"${m.id}"`,
       `"${m.name}"`,
       `"${m.manufacturer ?? ''}"`,
-      `"${MATERIAL_CATEGORY_LABEL[m.category]}"`,
+      `"${m.category.name}"`,
       `"${m.priaKind ?? ''}"`,
       `"${m.unit}"`,
       m.stockQty ?? 0,
@@ -170,9 +171,9 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <Download size={14} />
                     <span>CSV Eksport</span>
                   </button>
-                  <button className="btn btn-primary btn-sm" onClick={() => setForm(NEW_MATERIAL)}>
+                  <button className="btn btn-primary btn-sm" onClick={() => setForm(NEW_ARTICLE)}>
                     <Plus size={14} />
-                    <span>Lisa materjal</span>
+                    <span>Lisa artikkel</span>
                   </button>
                 </div>
               </div>
@@ -198,14 +199,14 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 </select>
               </FilterClear>
               <div className="category-filter-tabs">
-                <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
+                <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => setGroup('all')}>
                   Kõik ({articles.length})
                 </button>
-                {(Object.keys(MATERIAL_CATEGORY_LABEL) as PriaArticleKind[]).map((c) => {
-                  const count = articles.filter((m) => m.category === c).length;
+                {ARTICLE_GROUPS.map((g) => {
+                  const count = articles.filter((m) => m.category.group === g).length;
                   return (
-                    <button key={c} type="button" className={`filter-tab ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)} disabled={count === 0}>
-                      {MATERIAL_CATEGORY_LABEL[c]} ({count})
+                    <button key={g} type="button" className={`filter-tab ${group === g ? 'active' : ''}`} onClick={() => setGroup(g)} disabled={count === 0}>
+                      {ARTICLE_GROUP_LABEL[g]} ({count})
                     </button>
                   );
                 })}
@@ -236,8 +237,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <tr>
                       <td colSpan={canManageFinance ? 13 : 11} className="muted">
                         {articles.length === 0
-                          ? 'Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.'
-                          : 'Otsingule vastavaid materjale ei leitud.'}
+                          ? 'Artikleid pole. Lisa seemned, väetised, taimekaitsevahendid ja teenused.'
+                          : 'Otsingule vastavaid artikleid ei leitud.'}
                       </td>
                     </tr>
                   )}
@@ -248,7 +249,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
                       <td>{m.manufacturer ?? ''}</td>
-                      <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
+                      <td>{m.category.name}</td>
                       <td>{m.priaKind ?? ''}</td>
                       <td>{m.unit}</td>
                       <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>

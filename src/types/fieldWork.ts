@@ -1,4 +1,5 @@
 // src/types/fieldWork.ts — põllutööde register (PRIA põlluraamatust lahus)
+import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules';
 
 export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
 export type WorkRepeatMode = 'ONCE' | 'UP_TO' | 'INTERVAL';
@@ -24,12 +25,17 @@ export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; 
   HARVEST: { label: 'Koristus', color: '#9a5b00', bg: '#fdf1d8' }
 };
 
-export const MATERIAL_CATEGORY_LABEL: Record<PriaArticleKind, string> = {
-  SEED: 'Seeme',
-  FERTILIZER: 'Väetis',
-  PLANT_PROTECTION: 'Taimekaitsevahend',
-  OTHER: 'Muu'
-};
+// Artikli liik
+export interface ArticleCategory {
+  id: string;
+  name: string;
+  group: ArticleGroup;
+  systemKind: ArticleSystemKind | null;
+  sortOrder: number;
+  isActive: boolean;
+  articleCount?: number;
+}
+export type ArticleCategoryRef = Pick<ArticleCategory, 'id' | 'name' | 'group' | 'systemKind'>;
 
 export interface WorkType {
   id: string;
@@ -49,10 +55,14 @@ export interface WorkType {
 export interface Article {
   id: string;
   name: string;
-  category: PriaArticleKind;
+  categoryId: string;
+  category: ArticleCategoryRef;
   unit: string;
   manufacturer: string | null; // tootja
   cropVarietyId: string | null;
+  price?: number | null; // teenuse ühiku hind (ainult finantsõigusega)
+  cropId?: string | null; // terade kultuur
+  defaultWarehouseId?: string | null; // kauba vaikimisi ladu
   isActive: boolean;
   composition: string | null; // koostisosad
   // PRIA vaikeväärtused plaani/kande reale
@@ -75,8 +85,8 @@ export interface Article {
   pricedQty?: number; // hinnatud partiide kogus, keskmise hinna jagaja (ainult finantsõigusega)
 }
 
-// Uue kulumaterjali vaikeväärtused
-export const NEW_MATERIAL: Partial<Article> = { isActive: true }; // liik ja ühik valitakse alati ise
+// Uue artikli vaikeväärtused
+export const NEW_ARTICLE: Partial<Article> = { isActive: true }; // liik ja ühik valitakse alati ise
 
 export interface WorkEntryArticle extends Partial<PriaLineFields> {
   articleId: string;

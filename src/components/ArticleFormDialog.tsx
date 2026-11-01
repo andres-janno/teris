@@ -1,11 +1,11 @@
-// src/components/ArticleFormDialog.tsx — kulumaterjali lisamine/muutmine (Materjalide leht ja Tööde register)
+// src/components/ArticleFormDialog.tsx — artikli lisamine/muutmine (Artiklite leht ja Tööde register)
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
-import type { Article, PriaArticleKind } from '../types/fieldWork';
-import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
+import type { Article, ArticleCategory } from '../types/fieldWork';
+import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, articleFieldRules, sanitizeArticleFields, type ArticleSystemKind } from '../services/articleRules';
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
 
@@ -26,8 +26,8 @@ const distinctValues = (values: (string | null | undefined)[]) => {
   return [...byKey.values()].sort((a, b) => a.localeCompare(b, 'et'));
 };
 
-// PRIA registrid materjali liigi järgi (väetisel ka lubiväetised)
-const REGISTERS: Partial<Record<PriaArticleKind, readonly string[]>> = {
+// PRIA registrid artikli süsteemse liigi järgi (väetisel ka lubiväetised)
+const REGISTERS: Partial<Record<ArticleSystemKind, readonly string[]>> = {
   SEED: SEED_REGISTERS,
   FERTILIZER: [...new Set([...FERTILIZER_REGISTERS, ...LIMING_REGISTERS])],
   PLANT_PROTECTION: PLANT_PROTECTION_REGISTERS
@@ -54,6 +54,10 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [units, setUnits] = useState<string[]>([]);
   const [all, setAll] = useState<Article[]>([]);
+  const [categories, setCategories] = useState<ArticleCategory[]>([]);
+  const cat = categories.find((c) => c.id === form.categoryId);
+  const rules = cat ? articleFieldRules(cat.group, cat.systemKind) : null;
+  const registers = rules?.pria && cat?.systemKind ? REGISTERS[cat.systemKind] : undefined;
   // Sisalduse % tekstina, et komaga arvu (nt "8,") saaks sisestada
   // Ühiku muutmisel teisendustegur: 1 vana ühik = tegur uut ühikut (kaaluühikutel automaatne)
   const [unitFactor, setUnitFactor] = useState('');
@@ -74,6 +78,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
         setManufacturers([]);
         setUnits([]);
       });
+    api.getArticleCategories().then(setCategories).catch(() => setCategories([]));
   }, []);
 
   useEffect(() => {
@@ -89,17 +94,16 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
 
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Liigiga mittesobivad PRIA väljad tühjendatakse (nt liigi muutmisel)
-    const c = form.category;
+    // Liigiga mittesobivad väljad tühjendatakse (nt liigi muutmisel)
+    if (!rules) return alertDialog('Vali liik');
     const payload: Partial<Article> & { unitFactor?: number | null } = {
       ...form,
-      priaRegister: REGISTERS[c!] ? form.priaRegister || null : null,
-      priaKind: REGISTERS[c!] ? form.priaKind || null : null,
-      priaSpec: c === 'SEED' ? form.priaSpec || null : null,
-      activeIngredient: c === 'PLANT_PROTECTION' ? form.activeIngredient || null : null,
-      nPct: c === 'FERTILIZER' ? parsePct(pct.nPct) : null,
-      pPct: c === 'FERTILIZER' ? parsePct(pct.pPct) : null,
-      kPct: c === 'FERTILIZER' ? parsePct(pct.kPct) : null,
+      ...sanitizeArticleFields({
+        price: form.price ?? null, cropId: form.cropId ?? null, defaultWarehouseId: form.defaultWarehouseId ?? null,
+        cropVarietyId: form.cropVarietyId ?? null, priaRegister: form.priaRegister || null, priaKind: form.priaKind || null,
+        priaSpec: form.priaSpec || null, activeIngredient: form.activeIngredient || null,
+        nPct: parsePct(pct.nPct), pPct: parsePct(pct.pPct), kPct: parsePct(pct.kPct)
+      }, rules),
       unitFactor: unitChanged ? parsePct(unitFactor) ?? autoFactor : null
     };
     if (unitChanged && payload.unitFactor != null && !(payload.unitFactor > 0)) return alertDialog('Teisendustegur peab olema suurem kui 0');
@@ -114,7 +118,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
       }
       onSaved();
     } catch (err) {
-      alertDialog(err instanceof Error ? err.message : 'Materjali salvestamine ebaõnnestus');
+      alertDialog(err instanceof Error ? err.message : 'Artikli salvestamine ebaõnnestus');
     } finally {
       setBusy(false);
     }
@@ -126,7 +130,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
         <div className="modal-header">
           <div className="modal-title-group">
             <Edit2 size={20} className="text-emerald" />
-            <h3>{form.id ? `Muuda materjali: ${initial.name}` : 'Lisa materjal'}</h3>
+            <h3>{form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'}</h3>
           </div>
           <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
         </div>
@@ -143,9 +147,16 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             </div>
             <div className="form-group">
               <label htmlFor="mt-cat">Liik *</label>
-              <select id="mt-cat" className="form-input" required value={form.category ?? ''} onChange={(e) => setForm({ ...form, category: e.target.value as PriaArticleKind })}>
+              <select id="mt-cat" className="form-input" required value={form.categoryId ?? ''} onChange={(e) => setForm({ ...form, categoryId: e.target.value })}>
                 <option value="" disabled>– vali –</option>
-                {(Object.keys(MATERIAL_CATEGORY_LABEL) as PriaArticleKind[]).map((c) => <option key={c} value={c}>{MATERIAL_CATEGORY_LABEL[c]}</option>)}
+                {ARTICLE_GROUPS.map((g) => {
+                  const list = categories.filter((c) => c.group === g && (c.isActive || c.id === form.categoryId));
+                  return list.length ? (
+                    <optgroup key={g} label={ARTICLE_GROUP_LABEL[g]}>
+                      {list.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                    </optgroup>
+                  ) : null;
+                })}
               </select>
             </div>
             <div className="form-group">
@@ -170,23 +181,23 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                 </small>
               </div>
             )}
-            {form.category && REGISTERS[form.category] && (
+            {registers && (
               <>
                 <div className="form-section-title" title="Täidavad plaani ja kande rea materjali valimisel">PRIA andmed</div>
                 <div className="form-group full-width">
                   <label htmlFor="mt-pria-register">Register/materjal</label>
                   <select id="mt-pria-register" className="form-input" value={form.priaRegister ?? ''} onChange={(e) => setForm({ ...form, priaRegister: e.target.value })}>
                     <option value="">–</option>
-                    {REGISTERS[form.category]!.map((x) => <option key={x} value={x}>{x}</option>)}
-                    {form.priaRegister && !REGISTERS[form.category]!.includes(form.priaRegister) && <option value={form.priaRegister}>{form.priaRegister}</option>}
+                    {registers.map((x) => <option key={x} value={x}>{x}</option>)}
+                    {form.priaRegister && !registers.includes(form.priaRegister) && <option value={form.priaRegister}>{form.priaRegister}</option>}
                   </select>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mt-pria-kind">{form.category === 'FERTILIZER' ? 'Väetise liik' : form.category === 'SEED' ? 'Kultuur (liik)' : 'Liik'}</label>
-                  <input id="mt-pria-kind" className="form-input" list="article-pria-kinds" placeholder={form.category === 'SEED' ? 'nt Taliraps' : form.category === 'FERTILIZER' ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
-                  <datalist id="article-pria-kinds">{distinctValues(all.filter((m) => m.category === form.category).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
+                  <label htmlFor="mt-pria-kind">{rules?.fertilizer ? 'Väetise liik' : rules?.seed ? 'Kultuur (liik)' : 'Liik'}</label>
+                  <input id="mt-pria-kind" className="form-input" list="article-pria-kinds" placeholder={rules?.seed ? 'nt Taliraps' : rules?.fertilizer ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
+                  <datalist id="article-pria-kinds">{distinctValues(all.filter((m) => m.categoryId === form.categoryId).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
                 </div>
-                {form.category === 'SEED' && (
+                {rules?.seed && (
                   <div className="form-group">
                     <label htmlFor="mt-pria-spec">Kategooria</label>
                     <select id="mt-pria-spec" className="form-input" value={form.priaSpec ?? ''} onChange={(e) => setForm({ ...form, priaSpec: e.target.value })}>
@@ -195,13 +206,13 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                     </select>
                   </div>
                 )}
-                {form.category === 'PLANT_PROTECTION' && (
+                {rules?.plantProtection && (
                   <div className="form-group">
                     <label htmlFor="mt-active">Toimeaine</label>
                     <input id="mt-active" className="form-input" value={form.activeIngredient ?? ''} onChange={(e) => setForm({ ...form, activeIngredient: e.target.value })} />
                   </div>
                 )}
-                {form.category === 'FERTILIZER' && (
+                {rules?.fertilizer && (
                   <div className="form-group">
                     <label title="PRIA arvestab P ja K elemendina, mitte P₂O₅ / K₂O">Sisaldus % (N / P / K elemendina)</label>
                     <div className="article-npk-inputs">

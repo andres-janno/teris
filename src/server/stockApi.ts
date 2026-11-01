@@ -173,7 +173,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       });
       return { unit: mm.unit, movements: rows.reverse(), issues };
     });
-    if (!result) json(res, { error: 'Materjali ei leitud' }, 404);
+    if (!result) json(res, { error: 'Artiklit ei leitud' }, 404);
     else json(res, result);
     return true;
   }

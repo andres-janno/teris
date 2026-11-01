@@ -1,6 +1,7 @@
 // src/server/mcp/testTenant.ts — MCP testide ajutine ettevõte (live-andmebaas): kaks kasutajat
 // (tavaline ja finantsjuht) koos võtmetega ning väike andmestik. cleanup() kustutab kõik.
-import { prisma, authDb, runAsTenant } from '../db.ts';
+import { prisma, authDb, runAsTenant, tenantTransaction } from '../db.ts';
+import { systemCategoryId } from '../articleCategories.ts';
 import { createApiKey } from '../apiKeys.ts';
 import type { LicenseModule } from '../license.ts';
 
@@ -39,6 +40,7 @@ export async function createTestTenant(suffix: string, opts: { modules?: License
       await prisma.stockDocument.deleteMany({});
       await prisma.articleStock.deleteMany({});
       await prisma.article.deleteMany({});
+      await prisma.articleCategory.deleteMany({});
       await prisma.warehouse.deleteMany({});
       await prisma.vehicle.deleteMany({});
       await prisma.implement.deleteMany({});
@@ -67,7 +69,8 @@ export async function createTestTenant(suffix: string, opts: { modules?: License
     const parcel = await prisma.cadastralParcel.create({ data: { cadastralCode: 'T-KAT-1', name: 'Testkatastri' } });
     await prisma.fieldCadastralParcel.create({ data: { fieldSeasonId: fs.id, cadastralParcelId: parcel.id, fieldAreaHa: 12.4, ownershipType: 'RENTED', rentFeeEurYear: 1200, landTaxEurYear: 80 } });
     const warehouse = await prisma.warehouse.create({ data: { name: 'Põhiladu', isDefault: true } });
-    const article = await prisma.article.create({ data: { name: 'Ammooniumnitraat', category: 'FERTILIZER', unit: 'kg', nPct: 34 } });
+    const catId = await tenantTransaction((tx) => systemCategoryId(tx, 'FERTILIZER'));
+    const article = await prisma.article.create({ data: { name: 'Ammooniumnitraat', categoryId: catId, unit: 'kg', nPct: 34 } });
     await prisma.articleStock.create({ data: { articleId: article.id, warehouseId: warehouse.id, qty: -150, value: 0, pricedQty: 0, unpricedQty: 150 } });
     const wt = await prisma.workType.create({ data: { name: 'Mineraalväetise kasutamine', shortName: 'Väetamine', phase: 'CARE', usesMaterials: true } });
     const vehicle = await prisma.vehicle.create({ data: { name: 'Valtra T1', type: 'TRACTOR', model: 'T194', regNumber: '123ABC', acquisitionCost: 150000, lastLatitude: 58.1, lastLongitude: 25.5 } });

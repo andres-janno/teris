@@ -6,8 +6,7 @@ import { api } from '../services/api';
 import {
   WORK_PHASES,
   WORK_PHASE_META,
-  MATERIAL_CATEGORY_LABEL,
-  NEW_MATERIAL,
+  NEW_ARTICLE,
   type Article,
   type WorkPhase,
   type WorkType
@@ -179,7 +178,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           {tab === 'articles' && (
             <>
               <div className="work-register-toolbar">
-                <button className="btn btn-primary btn-sm" onClick={() => setArticleForm(NEW_MATERIAL)}>
+                <button className="btn btn-primary btn-sm" onClick={() => setArticleForm(NEW_ARTICLE)}>
                   <Plus size={14} />
                   <span>Lisa materjal</span>
                 </button>
@@ -206,7 +205,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                           {m.name}
                           {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                         </td>
-                        <td>{MATERIAL_CATEGORY_LABEL[m.category]}</td>
+                        <td>{m.category.name}</td>
                         <td>{m.unit}</td>
                         <td className="num">{m.usageCount ?? 0}</td>
                         <td className="muted">{m.notes ?? ''}</td>

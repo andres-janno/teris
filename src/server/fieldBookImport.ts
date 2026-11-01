@@ -9,6 +9,8 @@ import type { WorkPhase } from '../types/fieldWork.ts';
 import { PRIA_ACTIVITIES, nameKey, totalFromRate } from '../services/pria.ts';
 import { findMatchingWork, operationLines, type ExistingWork, type OperationLine } from './fieldBookRules.ts';
 import { syncFieldWorkStatus, type PrismaClientLike } from './fieldWorkStatus.ts';
+import { categoryIdForPriaKind } from './articleCategories.ts';
+import type { TxClient } from './db.ts';
 
 type Tx = Prisma.TransactionClient;
 type Fn = (args: any) => Promise<unknown>;
@@ -43,12 +45,13 @@ async function articleFor(tx: Tx, line: OperationLine, cache: Map<string, { id: 
   const key = `${line.priaArticleKind}:${nameKey(line.label)}`;
   let hit = cache.get(key);
   if (!hit) {
-    const existing = await tx.article.findFirst({ where: { category: line.priaArticleKind, name: { equals: line.label, mode: 'insensitive' } } })
-      ?? await tx.article.findFirst({ where: { category: line.priaArticleKind, aliases: { has: nameKey(line.label) } } });
-    hit = existing ?? await tx.article.create({ data: { name: line.label, category: line.priaArticleKind, unit: line.unit || 'kg' } });
+    const categoryId = await categoryIdForPriaKind(tx as unknown as TxClient, line.priaArticleKind);
+    const existing = await tx.article.findFirst({ where: { categoryId, name: { equals: line.label, mode: 'insensitive' } } })
+      ?? await tx.article.findFirst({ where: { categoryId, aliases: { has: nameKey(line.label) } } });
+    hit = existing ?? await tx.article.create({ data: { name: line.label, categoryId, unit: line.unit || 'kg' } });
     cache.set(key, { id: hit.id, name: hit.name });
   }
-  // Varunime järgi leitud materjal: real kasutatakse materjali õiget nime (asendatud kirjaviga ei tule tagasi)
+  // Varunime järgi leitud artikkel: real kasutatakse artikli õiget nime (asendatud kirjaviga ei tule tagasi)
   if (nameKey(hit.name) !== nameKey(line.label)) line.label = hit.name;
   return hit.id;
 }

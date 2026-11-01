@@ -213,8 +213,9 @@ export async function saveStockDocument(tx: TxClient, id: string | null, doc: St
   const whIds = [doc.warehouseId, doc.toWarehouseId].filter((x): x is string => !!x);
   const whs = await tx.warehouse.findMany({ where: { id: { in: whIds } }, select: { id: true } });
   if (whs.length !== whIds.length) throw new StockValidationError('Ladu ei leitud');
-  const mats = await tx.article.count({ where: { id: { in: doc.lines.map((l) => l.articleId) } } });
-  if (mats !== new Set(doc.lines.map((l) => l.articleId)).size) throw new StockValidationError('Materjali ei leitud');
+  const arts = await tx.article.findMany({ where: { id: { in: doc.lines.map((l) => l.articleId) } }, select: { category: { select: { group: true } } } });
+  if (arts.length !== new Set(doc.lines.map((l) => l.articleId)).size) throw new StockValidationError('Artiklit ei leitud');
+  if (arts.some((a) => a.category.group === 'SERVICE')) throw new StockValidationError('Teenust ei saa laokandele panna');
 
   const oldArticleIds = id
     ? (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { articleId: true } })).map((l) => l.articleId)

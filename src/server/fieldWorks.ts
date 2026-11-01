@@ -26,12 +26,12 @@ import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
+import { articleFieldRules, sanitizeArticleFields } from '../services/articleRules.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
 
 const PHASES = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'] as const;
-const MATERIAL_CATEGORIES = ['SEED', 'FERTILIZER', 'PLANT_PROTECTION', 'OTHER'] as const;
 const MAX_BODY_BYTES = 256 * 1024;
 
 const text = (v: unknown, max = 500): string | null => {
@@ -691,8 +691,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const stock = await tenantTransaction((tx) => articleStockSummary(tx, warehouseId));
     const finance = canSeeFinance(req);
     const rows = await prisma.article.findMany({
-      orderBy: [{ category: 'asc' }, { name: 'asc' }],
-      include: { _count: { select: { entryLines: true } } }
+      orderBy: [{ category: { sortOrder: 'asc' } }, { name: 'asc' }],
+      include: { _count: { select: { entryLines: true } }, category: { select: { id: true, name: true, group: true, systemKind: true } } }
     });
     const year = int(url.searchParams.get('year'));
     let totals: ReturnType<typeof articleSeasonTotals> | null = null;
@@ -717,6 +717,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       res,
       rows.map(({ _count, createdAt, updatedAt, ...m }) => ({
         ...m,
+        // teenuse hinda näeb ainult finantsõigusega
+        price: m.price === null ? null : (finance ? Number(m.price) : null),
         // valitud hooaja korral kannete arv selle hooaja kohta, muidu kõik kanded
         usageCount: totals ? (totals.get(m.id)?.entryCount ?? 0) : _count.entryLines,
         ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {}),
@@ -729,25 +731,43 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   if (pathname === '/api/articles' && method === 'POST') {
     const b = await parseBody(req, MAX_BODY_BYTES);
     const name = text(b?.name, 160);
-    const category = oneOf(b?.category, MATERIAL_CATEGORIES);
+    const categoryId = text(b?.categoryId, 64);
     const unit = text(b?.unit, 16);
+    const category = categoryId ? await prisma.articleCategory.findUnique({ where: { id: categoryId }, select: { group: true, systemKind: true } }) : null;
     if (!name || !category || !unit) {
-      json(res, { error: 'Materjali nimi, liik ja ühik on kohustuslikud' }, 400);
+      json(res, { error: 'Artikli nimi, liik ja ühik on kohustuslikud' }, 400);
       return true;
     }
-    const data = { name, category, unit, manufacturer: text(b?.manufacturer, 160), cropVarietyId: text(b?.cropVarietyId, 64), isActive: b?.isActive !== false, composition: text(b?.composition, 4000), notes: text(b?.notes, 4000),
-      priaRegister: text(b?.priaRegister, 120), priaKind: text(b?.priaKind, 120), priaSpec: text(b?.priaSpec, 20), activeIngredient: text(b?.activeIngredient, 500),
-      nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct) };
+    const finance = canSeeFinance(req);
+    const rules = articleFieldRules(category.group, category.systemKind);
+    const optional = sanitizeArticleFields({
+      price: finance ? num(b?.price) : null, cropId: text(b?.cropId, 64), defaultWarehouseId: text(b?.defaultWarehouseId, 64),
+      cropVarietyId: text(b?.cropVarietyId, 64), priaRegister: text(b?.priaRegister, 120), priaKind: text(b?.priaKind, 120),
+      priaSpec: text(b?.priaSpec, 20), activeIngredient: text(b?.activeIngredient, 500), nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct)
+    }, rules);
+    const data = { name, categoryId: categoryId!, unit, manufacturer: text(b?.manufacturer, 160), isActive: b?.isActive !== false,
+      composition: text(b?.composition, 4000), notes: text(b?.notes, 4000), ...optional };
     // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
-    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true } }) : null;
+    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true, category: { select: { group: true } } } }) : null;
+    if (id && !old) {
+      json(res, { error: 'Artiklit ei leitud' }, 404);
+      return true;
+    }
+    // Ilma finantsõiguseta muutmisel jääb teenuse vana hind alles (kaubal hinda pole, see tühjendatakse)
+    if (id && !finance && rules.price) delete (data as Partial<typeof data>).price;
+    // Teenuse üle laoarvestust ei peeta: laokannetega kaupa ei saa teenuseks muuta
+    if (old && old.category.group !== 'SERVICE' && category.group === 'SERVICE' && (await prisma.stockDocumentLine.count({ where: { articleId: id! } })) > 0) {
+      json(res, { error: 'Artiklil on laokandeid, seda ei saa teenuseks muuta' }, 409);
+      return true;
+    }
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
     // Teisendustegur (1 vana ühik = tegur uut ühikut): kasutaja antud või kaaluühikute korral automaatne
     const unitFactor = unitChanged ? (num(b?.unitFactor) ?? convertQty(1, old!.unit, unit)) : null;
     if (unitChanged && !(unitFactor && unitFactor > 0)) {
       const docLines = await prisma.stockDocumentLine.count({ where: { articleId: id! } });
       if (docLines) {
-        json(res, { error: `Materjalil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
+        json(res, { error: `Artiklil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
       }
       const lines = await prisma.workEntryLine.findMany({ where: { articleId: id!, kind: 'MATERIAL' }, select: { unit: true } });
@@ -773,9 +793,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         }
         return s;
       }, { timeout: 60000 }); // ühiku teisendus uuendab iga kande-, plaani- ja laokande rea eraldi
-      json(res, saved);
+      json(res, { ...saved, price: saved.price === null || !finance ? null : Number(saved.price) });
     } catch (err: any) {
-      if (err?.code === 'P2002') json(res, { error: 'Selline materjal on juba olemas' }, 409);
+      if (err?.code === 'P2002') json(res, { error: 'Selles liigis on sellise nimega artikkel juba olemas' }, 409);
       else throw err;
     }
     return true;
@@ -791,18 +811,18 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       targetId ? prisma.article.findUnique({ where: { id: targetId } }) : null
     ]);
     if (!source || !target || source.id === target.id) {
-      json(res, { error: 'Vali materjal, millega asendada' }, 400);
+      json(res, { error: 'Vali artikkel, millega asendada' }, 400);
       return true;
     }
     if (deleteDenied(req, res, source.createdBy)) return true;
-    if (source.category !== target.category) {
-      json(res, { error: 'Asendada saab ainult sama liiki materjaliga' }, 400);
+    if (source.categoryId !== target.categoryId) {
+      json(res, { error: 'Asendada saab ainult sama liigi artikliga' }, 400);
       return true;
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
     const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true } });
     if (docLines.length && convertQty(1, source.unit, target.unit) === null) {
-      json(res, { error: `Materjalil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
+      json(res, { error: `Artiklil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
       return true;
     }
     const counts = await tenantTransaction(async (tx) => {
@@ -851,7 +871,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         usedInPlans ? `${usedInPlans} töö plaanis` : null,
         usedInStock ? `${usedInStock} laokandes` : null
       ].filter(Boolean).join(' ja ');
-      json(res, { error: `Materjal on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
+      json(res, { error: `Artikkel on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
     await prisma.article.delete({ where: { id } });

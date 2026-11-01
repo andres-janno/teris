@@ -8,6 +8,7 @@ import {
   CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, priaArticleKindFor
 } from '../services/pria';
 import { convertQty } from '../services/units';
+import { matchesPriaKind } from '../services/articleRules';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -86,8 +87,8 @@ interface PriaLinesEditorProps {
 }
 
 export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals }) => {
-  const category = priaArticleKindFor(activity);
-  const options = articles.filter((m) => (m.category === category && m.isActive) || rows.some((r) => r.articleId === m.id));
+  const kind = priaArticleKindFor(activity);
+  const options = articles.filter((m) => (matchesPriaKind(m.category, kind) && m.isActive) || rows.some((r) => r.articleId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
   const isFert = activity === PRIA_ACTIVITY.FERTILIZING || activity === PRIA_ACTIVITY.LIMING;
   const isTkv = activity === PRIA_ACTIVITY.PLANT_PROTECTION;

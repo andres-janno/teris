@@ -9,6 +9,7 @@ import { handleSupportGrants } from './supportGrants.ts';
 import { handleApiKeys } from './apiKeys.ts';
 import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
+import { handleArticleCategories } from './articleCategories.ts';
 import { handleStock } from './stockApi.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
@@ -368,6 +369,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await handleSupportGrants(req, res, pathname, method)) return;
     if (await handleApiKeys(req, res, pathname, method)) return;
     if (await handleHelpRead(res, pathname, method)) return;
+    if (await handleArticleCategories(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
     if (await handleStock(req, res, pathname, method, url)) return;
 

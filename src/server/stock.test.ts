@@ -5,6 +5,7 @@ import {
   getDefaultWarehouseId, recomputeArticleStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError,
   saveWarehouse, resolveEntryWarehouseId
 } from './stock';
+import { systemCategoryId } from './articleCategories';
 
 const T = `test-tenant-stock-${process.pid}`;
 const T2 = `${T}-b`; // tühi ettevõte põhilao samaaegse loomise testiks
@@ -20,7 +21,8 @@ let fieldWorkId = '';
 beforeAll(async () => {
   await authDb().tenant.create({ data: { id: T, name: 'Test ladu' } });
   await run(async () => {
-    articleId = (await prisma.article.create({ data: { name: 'Testväetis', category: 'FERTILIZER', unit: 'kg' } })).id;
+    const catId = await tenantTransaction((tx) => systemCategoryId(tx, 'FERTILIZER'));
+    articleId = (await prisma.article.create({ data: { name: 'Testväetis', categoryId: catId, unit: 'kg' } })).id;
     mainWh = await tenantTransaction((tx) => getDefaultWarehouseId(tx));
     otherWh = (await prisma.warehouse.create({ data: { name: 'Teine ladu' } })).id;
     // Põllutöö kanne: hooaeg → põld → töö → kanne 1500 g... ja 200 kg
@@ -53,6 +55,7 @@ afterAll(async () => {
     await prisma.stockDocument.deleteMany({});
     await prisma.articleStock.deleteMany({});
     await prisma.article.deleteMany({});
+    await prisma.articleCategory.deleteMany({});
     await prisma.warehouse.deleteMany({});
   }).catch((e) => console.error('Testi puhastus ebaõnnestus', e));
   await authDb().tenant.deleteMany({ where: { id: { in: [T, T2] } } });
@@ -156,7 +159,8 @@ describe('ülekande puudujääk arvele võtmise muutmisel ja kustutamisel', () =
   let transferId = '';
   beforeAll(async () => {
     await run(async () => {
-      seedId = (await prisma.article.create({ data: { name: 'Testseeme', category: 'SEED', unit: 'kg' } })).id;
+      const catId = await tenantTransaction((tx) => systemCategoryId(tx, 'SEED'));
+      seedId = (await prisma.article.create({ data: { name: 'Testseeme', categoryId: catId, unit: 'kg' } })).id;
       receiptId = await tenantTransaction((tx) => saveStockDocument(tx, null, receipt('2026-03-01', mainWh, seedId, 100, 200)));
       transferId = await tenantTransaction((tx) => saveStockDocument(tx, null, transfer('2026-03-05', mainWh, otherWh, seedId, 80)));
     });

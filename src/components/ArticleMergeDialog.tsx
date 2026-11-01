@@ -5,7 +5,6 @@ import { GitMerge, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import type { Article } from '../types/fieldWork';
-import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
 
 // Võrdlusvõti: tõstutundetu, tühikute ja kirjavahemärkideta ("Stabilan 750SL" = "Stabilan 750 SL")
 const looseKey = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -26,7 +25,7 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
       return k === key || k.startsWith(key) || key.startsWith(k) ? 0 : 1;
     };
     return articles
-      .filter((m) => m.id !== source.id && m.category === source.category)
+      .filter((m) => m.id !== source.id && m.categoryId === source.categoryId)
       .sort((a, b) => similar(a) - similar(b) || a.name.localeCompare(b.name, 'et'));
   }, [articles, source]);
   const [targetId, setTargetId] = useState(() => {
@@ -76,7 +75,7 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
           <div className="form-group">
             <label htmlFor="mm-target">Asenda materjaliga *</label>
             <select id="mm-target" className="form-input" required autoFocus value={targetId} onChange={(e) => setTargetId(e.target.value)}>
-              <option value="" disabled>– vali {MATERIAL_CATEGORY_LABEL[source.category].toLowerCase()} –</option>
+              <option value="" disabled>– vali {source.category.name.toLowerCase()} –</option>
               {options.map((m) => <option key={m.id} value={m.id}>{m.name}{m.unit !== source.unit ? ` (${m.unit})` : ''}</option>)}
             </select>
           </div>

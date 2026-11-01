@@ -9,7 +9,7 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
-import type { WorkType, Article, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
+import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel } from '../types/stock';
 
@@ -665,19 +665,28 @@ export const api = {
     if (year) q.set('year', String(year));
     if (warehouseId) q.set('warehouseId', warehouseId);
     const qs = q.toString();
-    return jsonOrThrow(await apiFetch(qs ? `/api/articles?${qs}` : '/api/articles'), 'Materjalide laadimine ebaõnnestus');
+    return jsonOrThrow(await apiFetch(qs ? `/api/articles?${qs}` : '/api/articles'), 'Artiklite laadimine ebaõnnestus');
   },
 
   async saveArticle(m: Partial<Article> & { unitFactor?: number | null }, confirmUnitChange = false): Promise<Article> {
-    return jsonOrThrow(await apiFetch('/api/articles', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
+    return jsonOrThrow(await apiFetch('/api/articles', jsonInit('POST', { ...m, confirmUnitChange })), 'Artikli salvestamine ebaõnnestus');
   },
 
   async mergeArticle(id: string, targetId: string): Promise<{ plans: number; entries: number; stockLines: number }> {
-    return jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}/merge`, jsonInit('POST', { targetId })), 'Materjali asendamine ebaõnnestus');
+    return jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}/merge`, jsonInit('POST', { targetId })), 'Artikli asendamine ebaõnnestus');
   },
 
   async deleteArticle(id: string): Promise<void> {
-    await jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
+    await jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Artikli kustutamine ebaõnnestus');
+  },
+  async getArticleCategories(): Promise<ArticleCategory[]> {
+    return jsonOrThrow(await apiFetch('/api/article-categories'), 'Artikli liikide laadimine ebaõnnestus');
+  },
+  async saveArticleCategory(c: Partial<ArticleCategory>): Promise<ArticleCategory> {
+    return jsonOrThrow(await apiFetch('/api/article-categories', jsonInit('POST', c)), 'Liigi salvestamine ebaõnnestus');
+  },
+  async deleteArticleCategory(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/article-categories/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Liigi kustutamine ebaõnnestus');
   },
 
   async getWarehouses(): Promise<Warehouse[]> {

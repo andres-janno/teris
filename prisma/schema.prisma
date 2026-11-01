@@ -319,32 +319,32 @@ model PointOfInterest {
 // ============================================================================
 
 model Vehicle {
-  id                  String      @id @default(cuid())
-  tenantId            String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name                String
-  type                VehicleType
-  category            String? // Masina liik (vabatekst, isetäienev olemasolevatest)
-  manufacturer        String? // Tootja
-  model               String
-  powerKw             Float? // Mootorivõimsus kW
-  acquisitionCost     Float? // Soetusmaksumus (€)
-  acquisitionDate     DateTime?   @db.Date // Soetamise kuupäev
-  depreciationRate    Float? // Amortisatsioonimäär (% aastas)
-  depreciationMethod  String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
-  regNumber           String?
-  serialNumber        String? // VIN / seerianumber
-  workingWidthM       Float       @default(6.0)
-  color               String      @default("#10b981")
-  fuelCapacityL       Float?
-  assignedDriverId    String? // Seotud isiku ID (töötaja / masinajuht)
-  lastLatitude        Float?
-  lastLongitude       Float?
-  lastActiveAt        DateTime?
-  notes               String?
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
-  createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  id                 String      @id @default(cuid())
+  tenantId           String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name               String
+  type               VehicleType
+  category           String? // Masina liik (vabatekst, isetäienev olemasolevatest)
+  manufacturer       String? // Tootja
+  model              String
+  powerKw            Float? // Mootorivõimsus kW
+  acquisitionCost    Float? // Soetusmaksumus (€)
+  acquisitionDate    DateTime?   @db.Date // Soetamise kuupäev
+  depreciationRate   Float? // Amortisatsioonimäär (% aastas)
+  depreciationMethod String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
+  regNumber          String?
+  serialNumber       String? // VIN / seerianumber
+  workingWidthM      Float       @default(6.0)
+  color              String      @default("#10b981")
+  fuelCapacityL      Float?
+  assignedDriverId   String? // Seotud isiku ID (töötaja / masinajuht)
+  lastLatitude       Float?
+  lastLongitude      Float?
+  lastActiveAt       DateTime?
+  notes              String?
+  createdAt          DateTime    @default(now())
+  updatedAt          DateTime    @updatedAt
+  createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   deviceAssignments    DeviceAssignment[]
@@ -520,6 +520,7 @@ model Crop {
   varieties     CropVariety[]
   fieldSeasons  FieldSeason[]
   workTemplates WorkTemplate[]
+  articles      Article[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -635,11 +636,47 @@ enum WorkSource {
   PRIA_IMPORT // PRIA põlluraamatu väljavõtte impordist
 }
 
-enum MaterialCategory {
-  SEED
-  FERTILIZER
-  PLANT_PROTECTION
-  OTHER
+enum ArticleGroup {
+  SERVICE // teenus — laoarvestust pole
+  CONSUMABLE // kulumaterjal
+  PRODUCE // toodang
+  OTHER_GOODS // muu kaup
+}
+
+// Süsteemne liik: loogika käitub selle järgi (src/services/articleRules.ts). Kasutaja loodud liigil null.
+enum ArticleSystemKind {
+  LABOR_TIME // töötaja tööaeg
+  MACHINE_TIME // masina tööaeg
+  IMPLEMENT_TIME // haakeriista tööaeg
+  DRYING_TIME // kuivatamise tööaeg
+  SEED // seeme: sort, PRIA
+  FERTILIZER // väetis: NPK, PRIA
+  PLANT_PROTECTION // taimekaitsevahend: toimeaine, PRIA
+  FUEL // kütus
+  DRYING_OIL // kuivatusõli
+  GRAIN // terad: kultuur
+}
+
+// Artikli liik; süsteemsed liigid luuakse automaatselt (src/server/articleCategories.ts)
+model ArticleCategory {
+  id         String             @id @default(cuid())
+  tenantId   String             @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name       String
+  group      ArticleGroup
+  systemKind ArticleSystemKind? // süsteemne liik; ei saa kustutada ega teise rühma viia
+  sortOrder  Int                @default(0)
+  isActive   Boolean            @default(true)
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+  createdBy  String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy  String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  articles Article[]
+
+  @@unique([tenantId, name])
+  @@unique([tenantId, systemKind])
+  @@index([tenantId])
+  @@map("article_categories")
 }
 
 model WorkType {
@@ -671,38 +708,47 @@ model WorkType {
 
 // Artikkel (kulumaterjal, hiljem ka teenus ja toodang)
 model Article {
-  id               String           @id @default(cuid())
-  tenantId         String           @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name             String
-  category         MaterialCategory
-  unit             String // kg, l, t, tk
-  manufacturer     String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
-  composition      String? // koostisosad (toimeained, toitained jms; vaba tekst)
-  cropVarietyId    String? // seemne puhul sort
+  id                 String   @id @default(cuid())
+  tenantId           String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name               String
+  categoryId         String // liik
+  unit               String // kg, l, t, tk
+  manufacturer       String? // tootja (vaba tekst; vormis pakutakse olemasolevaid)
+  composition        String? // koostisosad (toimeained, toitained jms; vaba tekst)
+  cropVarietyId      String? // seemne puhul sort
+  price              Decimal? @db.Decimal(12, 4) // ainult teenusel: ühiku (tunni) hind
+  cropId             String? // ainult terade liigil: kultuur
+  defaultWarehouseId String? // ainult kaubal: vaikimisi ladu
   // PRIA vaikeväärtused: täidavad plaani/kande rea materjali valimisel
-  priaRegister     String? // "Väetis registrist", "EL ühtne sordileht", ...
-  priaKind         String? // liik ("Taliraps", "NPK väetis", "Herbitsiid")
-  priaSpec         String? // seemne kategooria ("C2")
-  activeIngredient String? // taimekaitsevahendi toimeaine
-  nPct             Float? // väetise N sisaldus %; rea N kg/ha = kogus/ha × % / 100
-  pPct             Float?
-  kPct             Float?
-  aliases          String[]         @default([]) // asendatud materjalide nimed (nameKey kujul); PRIA import seob need selle materjaliga
-  isActive         Boolean          @default(true)
-  notes            String?
-  stockIssueCount  Int              @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  priaRegister       String? // "Väetis registrist", "EL ühtne sordileht", ...
+  priaKind           String? // liik ("Taliraps", "NPK väetis", "Herbitsiid")
+  priaSpec           String? // seemne kategooria ("C2")
+  activeIngredient   String? // taimekaitsevahendi toimeaine
+  nPct               Float? // väetise N sisaldus %; rea N kg/ha = kogus/ha × % / 100
+  pPct               Float?
+  kPct               Float?
+  aliases            String[] @default([]) // asendatud materjalide nimed (nameKey kujul); PRIA import seob need selle materjaliga
+  isActive           Boolean  @default(true)
+  notes              String?
+  stockIssueCount    Int      @default(0) // põllutöö kanderead, mida ei saa laoühikusse teisendada (arvestusest väljas)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  cropVariety    CropVariety?        @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
-  entryLines     WorkEntryLine[]
-  fieldWorkLines FieldWorkLine[]
-  stockLines     StockDocumentLine[]
-  stock          ArticleStock[]
+  cropVariety      CropVariety?        @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
+  category         ArticleCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  crop             Crop?               @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  defaultWarehouse Warehouse?          @relation("ArticleDefaultWarehouse", fields: [defaultWarehouseId], references: [id], onDelete: SetNull)
+  entryLines       WorkEntryLine[]
+  fieldWorkLines   FieldWorkLine[]
+  stockLines       StockDocumentLine[]
+  stock            ArticleStock[]
 
-  @@unique([tenantId, category, name])
+  @@unique([tenantId, categoryId, name])
+  @@index([categoryId])
+  @@index([cropId])
+  @@index([defaultWarehouseId])
   @@index([cropVarietyId])
   @@index([tenantId])
   @@map("articles")
@@ -791,7 +837,7 @@ model FieldWorkLine {
   tenantId         String            @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   fieldWorkId      String
   kind             WorkEntryLineKind // MATERIAL | HARVEST
-  articleId       String?
+  articleId        String?
   label            String
   ratePerHa        Float? // kogus ha kohta
   unit             String // kg, l, t, g, tk
@@ -805,7 +851,7 @@ model FieldWorkLine {
   sortOrder        Int               @default(0)
 
   fieldWork FieldWork @relation(fields: [fieldWorkId], references: [id], onDelete: Cascade)
-  article  Article? @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  article   Article?  @relation(fields: [articleId], references: [id], onDelete: Restrict)
 
   @@index([fieldWorkId])
   @@index([articleId])
@@ -871,7 +917,7 @@ model WorkEntryLine {
   kind              WorkEntryLineKind
   vehicleId         String?
   implementId       String?
-  articleId        String?
+  articleId         String?
   label             String // nimi salvestamise hetkel
   quantity          Float
   unit              String
@@ -890,7 +936,7 @@ model WorkEntryLine {
   entry     WorkEntry  @relation(fields: [entryId], references: [id], onDelete: Cascade)
   vehicle   Vehicle?   @relation(fields: [vehicleId], references: [id], onDelete: SetNull)
   implement Implement? @relation(fields: [implementId], references: [id], onDelete: SetNull)
-  article  Article?  @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  article   Article?   @relation(fields: [articleId], references: [id], onDelete: Restrict)
 
   @@index([entryId])
   @@index([articleId])
@@ -935,6 +981,7 @@ model Warehouse {
   documentsTo   StockDocument[]  @relation("StockDocTo")
   entries       WorkEntry[]
   stock         ArticleStock[]
+  defaultFor    Article[]        @relation("ArticleDefaultWarehouse")
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -975,7 +1022,7 @@ model StockDocumentLine {
   id          String   @id @default(cuid())
   tenantId    String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   documentId  String
-  articleId  String
+  articleId   String
   quantity    Float // laoühikus, > 0
   amount      Decimal? @db.Decimal(12, 2) // RECEIPT: rea summa km-ta
   fifoCost    Decimal? @db.Decimal(12, 2) // WRITE_OFF, TRANSFER: arvutatud maksumus; null = (osaliselt) hindamata
@@ -983,7 +1030,7 @@ model StockDocumentLine {
   sortOrder   Int      @default(0)
 
   document StockDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
-  article Article      @relation(fields: [articleId], references: [id], onDelete: Restrict)
+  article  Article       @relation(fields: [articleId], references: [id], onDelete: Restrict)
 
   @@index([documentId])
   @@index([articleId])
@@ -994,14 +1041,14 @@ model StockDocumentLine {
 // Laoseisu koond artikli ja lao kaupa; kirjutab ainult ümberarvutus
 model ArticleStock {
   tenantId    String  @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  articleId  String
+  articleId   String
   warehouseId String
   qty         Float   @default(0) // võib olla negatiivne
   value       Decimal @default(0) @db.Decimal(12, 2) // hinnatud partiide jääk
   unpricedQty Float   @default(0) // hindamata kogus (võlg või hindamata partii)
   pricedQty   Float   @default(0) // hinnatud partiide kogus (keskmise hinna jagaja)
 
-  article  Article  @relation(fields: [articleId], references: [id], onDelete: Cascade)
+  article   Article   @relation(fields: [articleId], references: [id], onDelete: Cascade)
   warehouse Warehouse @relation(fields: [warehouseId], references: [id], onDelete: Cascade)
 
   @@id([articleId, warehouseId])

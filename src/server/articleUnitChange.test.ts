@@ -3,6 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import { getDefaultWarehouseId, saveStockDocument } from './stock';
 import { changeArticleUnit } from './articleUnitChange';
+import { systemCategoryId } from './articleCategories';
 
 const T = `test-tenant-unit-${process.pid}`;
 const run = <R>(fn: () => Promise<R>): Promise<R> => runAsTenant(T, async () => await fn());
@@ -13,7 +14,8 @@ let mainWh = '';
 beforeAll(async () => {
   await authDb().tenant.create({ data: { id: T, name: 'Test ühik' } });
   await run(async () => {
-    articleId = (await prisma.article.create({ data: { name: 'Testseeme', category: 'SEED', unit: 'kott' } })).id;
+    const catId = await tenantTransaction((tx) => systemCategoryId(tx, 'SEED'));
+    articleId = (await prisma.article.create({ data: { name: 'Testseeme', categoryId: catId, unit: 'kott' } })).id;
     mainWh = await tenantTransaction((tx) => getDefaultWarehouseId(tx));
     // Sissetulek 10 kotti 1000 € eest
     await tenantTransaction((tx) => saveStockDocument(tx, null, {
@@ -51,6 +53,7 @@ afterAll(async () => {
     await prisma.stockDocument.deleteMany({});
     await prisma.articleStock.deleteMany({});
     await prisma.article.deleteMany({});
+    await prisma.articleCategory.deleteMany({});
     await prisma.warehouse.deleteMany({});
   }).catch((e) => console.error('Testi puhastus ebaõnnestus', e));
   await authDb().tenant.deleteMany({ where: { id: T } });

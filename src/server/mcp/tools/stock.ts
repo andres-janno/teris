@@ -25,13 +25,13 @@ export const stockTools = [
       const warehouseId = await resolveWarehouseId(a.warehouse);
       const rows = await prisma.articleStock.findMany({
         where: { ...(warehouseId ? { warehouseId } : {}), ...(a.article ? { article: { name: ci(a.article) } } : {}), OR: [{ qty: { not: 0 } }, { unpricedQty: { not: 0 } }] },
-        include: { article: { select: { name: true, unit: true, category: true } }, warehouse: { select: { name: true } } }
+        include: { article: { select: { name: true, unit: true, category: { select: { name: true } } } }, warehouse: { select: { name: true } } }
       });
       rows.sort((p, q) => p.warehouse.name.localeCompare(q.warehouse.name, 'et') || p.article.name.localeCompare(q.article.name, 'et'));
       return {
         total: rows.length, shown: rows.length,
         rows: rows.map((r) => ({
-          warehouse: r.warehouse.name, article: r.article.name, category: r.article.category, quantity: round2(r.qty), unit: r.article.unit, negative: r.qty < 0,
+          warehouse: r.warehouse.name, article: r.article.name, category: r.article.category.name, quantity: round2(r.qty), unit: r.article.unit, negative: r.qty < 0,
           ...(finance ? { value: round2(Number(r.value)), avgPrice: r.pricedQty > 0 ? round2(Number(r.value) / r.pricedQty) : null, unpricedQty: round2(r.unpricedQty) } : {})
         }))
       };
