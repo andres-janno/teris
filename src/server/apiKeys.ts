@@ -8,6 +8,7 @@ import { hashToken } from './auth.ts';
 import { sessionUserOf } from './authGate.ts';
 import { APP_BASE_URL } from './mail.ts';
 import { json, parseBody } from './http.ts';
+import { fmtDate } from './mcp/format.ts';
 
 export const API_KEY_PREFIX = 'trs_';
 export const MAX_ACTIVE_KEYS = 5;
@@ -64,8 +65,9 @@ export async function listApiKeys(userId: string): Promise<ApiKeyRow[]> {
 }
 
 export async function createApiKey(userId: string, name: unknown): Promise<{ ok: true; key: string; url: string; row: ApiKeyRow } | { ok: false; status: number; error: string }> {
-  const clean = typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : '';
-  if (!clean || clean.length > NAME_MAX) return { ok: false, status: 400, error: `Nimi peab olema 1–${NAME_MAX} märki` };
+  // Nimi on valikuline — tühja nime korral „AI ühendus pp.kk.aaaa“
+  const clean = (typeof name === 'string' ? name.trim().replace(/\s+/g, ' ') : '') || `AI ühendus ${fmtDate(new Date())}`;
+  if (clean.length > NAME_MAX) return { ok: false, status: 400, error: `Nimi võib olla kuni ${NAME_MAX} märki` };
   const active = await authDb().apiKey.count({ where: { userId, revokedAt: null } });
   if (active >= MAX_ACTIVE_KEYS) return { ok: false, status: 400, error: `Aktiivseid võtmeid saab olla kuni ${MAX_ACTIVE_KEYS}. Tühista mõni vana võti.` };
   const key = generateApiKey();

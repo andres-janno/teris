@@ -123,12 +123,12 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
           <form className="ai-key-new" onSubmit={create}>
             <input
               className="form-input"
-              placeholder="Võtme nimi, nt Claude Desktop sülearvutis"
+              placeholder="Võtme nimi (valikuline), nt Claude Desktop sülearvutis"
               maxLength={100}
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <button type="submit" className="btn btn-secondary" disabled={busy || !name.trim()}>
+            <button type="submit" className="btn btn-secondary" disabled={busy}>
               <Plus size={16} />
               <span>Loo uus võti</span>
             </button>

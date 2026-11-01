@@ -43,9 +43,11 @@ describe('võtme elutsükkel', () => {
     expect(JSON.stringify(rows)).not.toContain(r.key);
   });
 
-  it('tühi nimi lükatakse tagasi', async () => {
+  it('tühi nimi saab vaikenime', async () => {
     const r = await createApiKey(U, '   ');
-    expect(r.ok).toBe(false);
+    if (!r.ok) throw new Error(r.error);
+    expect(r.row.name).toMatch(/^AI ühendus \d{2}\.\d{2}\.\d{4}$/);
+    await revokeApiKey(U, r.row.id);
   });
 
   it('tühistatud võti ei kehti; teise kasutaja võtit ei saa tühistada', async () => {
