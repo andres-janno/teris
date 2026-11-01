@@ -105,12 +105,12 @@ describe('põllud', () => {
     const r = (await call(A.plainKey, 'get_field', { field: 'Toosi', year: 2026 })).data;
     expect(r.field).toBe('Nr 4 Toosi');
     expect(r.soilType).toBe('Leostunud liivsavi');
-    expect(r.works[0].entries[0].materials[0]).toMatchObject({ name: 'Ammooniumnitraat', quantity: 150, unit: 'kg' });
-    expect(r.works[0].entries[0].materials[0].unitPrice).toBeUndefined();
+    expect(r.works[0].entries[0].articles[0]).toMatchObject({ name: 'Ammooniumnitraat', quantity: 150, unit: 'kg' });
+    expect(r.works[0].entries[0].articles[0].unitPrice).toBeUndefined();
   });
   it('get_field: finantsjuht näeb hinda', async () => {
     const r = (await call(A.financeKey, 'get_field', { field: '4', year: 2026 })).data;
-    expect(r.works[0].entries[0].materials[0]).toMatchObject({ unitPrice: 0.45, cost: 67.5 });
+    expect(r.works[0].entries[0].articles[0]).toMatchObject({ unitPrice: 0.45, cost: 67.5 });
   });
   it('get_field: rent ja maamaks ainult finantsjuhile', async () => {
     const plain = (await call(A.plainKey, 'get_field', { field: '4', year: 2026 })).data.cadastralParcels[0];
@@ -139,7 +139,7 @@ describe('tööd ja kanded', () => {
   it('list_field_works: plaan koos plaanitud materjaliga', async () => {
     const r = (await call(A.plainKey, 'list_field_works', { year: 2026 })).data;
     expect(r.rows[0]).toMatchObject({ field: 'Nr 4 Toosi', work: 'Väetamine', status: 'DONE', planned: '01.05.2026' });
-    expect(r.rows[0].plannedMaterials[0]).toMatchObject({ name: 'Ammooniumnitraat', ratePerHa: 200, unit: 'kg' });
+    expect(r.rows[0].plannedArticles[0]).toMatchObject({ name: 'Ammooniumnitraat', ratePerHa: 200, unit: 'kg' });
   });
   it('list_work_entries: kuupäevavahemik ja masina filter', async () => {
     const r = (await call(A.plainKey, 'list_work_entries', { from: '01.05.2026', to: '10.05.2026', vehicle: 'Valtra' })).data;
@@ -153,11 +153,11 @@ describe('tööd ja kanded', () => {
     const r = (await call(A.financeKey, 'list_work_entries', { year: 2026 })).data;
     expect(r.rows[0]).toMatchObject({ financeStatus: 'PENDING', totalCost: 67.5, unpricedLines: 0 });
   });
-  it('summarize_material_usage: põllu kaupa; raha ainult finantsjuhile', async () => {
-    const plain = (await call(A.plainKey, 'summarize_material_usage', { year: 2026, groupBy: 'field' })).data;
-    expect(plain.rows[0]).toMatchObject({ material: 'Ammooniumnitraat', group: 'Nr 4 Toosi', quantity: 150, unit: 'kg', areaHa: 12.4 });
+  it('summarize_article_usage: põllu kaupa; raha ainult finantsjuhile', async () => {
+    const plain = (await call(A.plainKey, 'summarize_article_usage', { year: 2026, groupBy: 'field' })).data;
+    expect(plain.rows[0]).toMatchObject({ article: 'Ammooniumnitraat', group: 'Nr 4 Toosi', quantity: 150, unit: 'kg', areaHa: 12.4 });
     expect(plain.rows[0].cost).toBeUndefined();
-    const fin = (await call(A.financeKey, 'summarize_material_usage', { year: 2026, groupBy: 'crop' })).data;
+    const fin = (await call(A.financeKey, 'summarize_article_usage', { year: 2026, groupBy: 'crop' })).data;
     expect(fin.rows[0]).toMatchObject({ group: 'Talinisu', cost: 67.5 });
   });
   it('vigane kuupäev → selge viga', async () => {
@@ -177,14 +177,14 @@ describe('tööd ja kanded', () => {
   it('list_work_entries: tavakasutaja ei näe kulu ega hinda', async () => {
     const r = (await call(A.plainKey, 'list_work_entries', { year: 2026 })).data;
     expect(r.rows[0].totalCost).toBeUndefined();
-    expect(r.rows[0].materials[0].unitPrice).toBeUndefined();
+    expect(r.rows[0].articles[0].unitPrice).toBeUndefined();
   });
 });
 
 describe('ladu', () => {
   it('list_stock_levels: kogus kõigile, väärtus ainult finantsjuhile, miinus märgitud', async () => {
     const plain = (await call(A.plainKey, 'list_stock_levels')).data;
-    expect(plain.rows[0]).toMatchObject({ warehouse: 'Põhiladu', material: 'Ammooniumnitraat', quantity: -150, unit: 'kg', negative: true });
+    expect(plain.rows[0]).toMatchObject({ warehouse: 'Põhiladu', article: 'Ammooniumnitraat', quantity: -150, unit: 'kg', negative: true });
     expect(plain.rows[0].value).toBeUndefined();
     const fin = (await call(A.financeKey, 'list_stock_levels')).data;
     expect(fin.rows[0]).toHaveProperty('value');

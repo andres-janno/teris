@@ -18,7 +18,7 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'materials'] as const;
+export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'stock'] as const;
 export type MainView = typeof MAIN_VIEWS[number];
 
 interface HeaderProps {
@@ -135,12 +135,12 @@ export const Header: React.FC<HeaderProps> = ({
             </button>
             <button
               type="button"
-              className={mainView === 'materials' ? 'active' : ''}
-              aria-current={mainView === 'materials' ? 'page' : undefined}
-              onClick={() => onChangeMainView('materials')}
+              className={mainView === 'stock' ? 'active' : ''}
+              aria-current={mainView === 'stock' ? 'page' : undefined}
+              onClick={() => onChangeMainView('stock')}
             >
               <Package size={15} />
-              <span>Kulumaterjalid</span>
+              <span>Laoarvestus</span>
             </button>
             <button
               type="button"

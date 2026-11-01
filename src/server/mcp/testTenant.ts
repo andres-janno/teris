@@ -12,7 +12,7 @@ export type TestTenant = {
   financeKey: string;
   plainUserId: string;
   financeUserId: string;
-  ids: { fieldId: number; fieldSeasonId: number; materialId: string; warehouseId: string; vehicleId: string; implementId: string; workTypeId: string };
+  ids: { fieldId: number; fieldSeasonId: number; articleId: string; warehouseId: string; vehicleId: string; implementId: string; workTypeId: string };
   cleanup: () => Promise<void>;
 };
 
@@ -37,8 +37,8 @@ export async function createTestTenant(suffix: string, opts: { modules?: License
       await prisma.field.deleteMany({});
       await prisma.season.deleteMany({});
       await prisma.stockDocument.deleteMany({});
-      await prisma.materialStock.deleteMany({});
-      await prisma.material.deleteMany({});
+      await prisma.articleStock.deleteMany({});
+      await prisma.article.deleteMany({});
       await prisma.warehouse.deleteMany({});
       await prisma.vehicle.deleteMany({});
       await prisma.implement.deleteMany({});
@@ -67,26 +67,26 @@ export async function createTestTenant(suffix: string, opts: { modules?: License
     const parcel = await prisma.cadastralParcel.create({ data: { cadastralCode: 'T-KAT-1', name: 'Testkatastri' } });
     await prisma.fieldCadastralParcel.create({ data: { fieldSeasonId: fs.id, cadastralParcelId: parcel.id, fieldAreaHa: 12.4, ownershipType: 'RENTED', rentFeeEurYear: 1200, landTaxEurYear: 80 } });
     const warehouse = await prisma.warehouse.create({ data: { name: 'Põhiladu', isDefault: true } });
-    const material = await prisma.material.create({ data: { name: 'Ammooniumnitraat', category: 'FERTILIZER', unit: 'kg', nPct: 34 } });
-    await prisma.materialStock.create({ data: { materialId: material.id, warehouseId: warehouse.id, qty: -150, value: 0, pricedQty: 0, unpricedQty: 150 } });
+    const article = await prisma.article.create({ data: { name: 'Ammooniumnitraat', category: 'FERTILIZER', unit: 'kg', nPct: 34 } });
+    await prisma.articleStock.create({ data: { articleId: article.id, warehouseId: warehouse.id, qty: -150, value: 0, pricedQty: 0, unpricedQty: 150 } });
     const wt = await prisma.workType.create({ data: { name: 'Mineraalväetise kasutamine', shortName: 'Väetamine', phase: 'CARE', usesMaterials: true } });
     const vehicle = await prisma.vehicle.create({ data: { name: 'Valtra T1', type: 'TRACTOR', model: 'T194', regNumber: '123ABC', acquisitionCost: 150000, lastLatitude: 58.1, lastLongitude: 25.5 } });
     const implement = await prisma.implement.create({ data: { name: 'Amazone ZA', type: 'SEEDER', workingWidthM: 24, acquisitionCost: 20000 } });
     const fw = await prisma.fieldWork.create({
       data: { fieldSeasonId: fs.id, workTypeId: wt.id, phase: 'CARE', plannedDateFrom: d('2026-05-01'), status: 'DONE',
-        lines: { create: [{ kind: 'MATERIAL', materialId: material.id, label: 'Ammooniumnitraat', unit: 'kg', ratePerHa: 200 }] } }
+        lines: { create: [{ kind: 'MATERIAL', articleId: article.id, label: 'Ammooniumnitraat', unit: 'kg', ratePerHa: 200 }] } }
     });
     await prisma.workEntry.create({
       data: {
         fieldWorkId: fw.id, date: d('2026-05-10'), areaHa: 12.4, vehicleId: vehicle.id, implementId: implement.id, equipmentHours: 3.5, fuelLiters: 40,
-        lines: { create: [{ kind: 'MATERIAL', materialId: material.id, label: 'Ammooniumnitraat', quantity: 150, unit: 'kg', ratePerHa: 12.15, unitPrice: 0.45, nKgHa: 4.13 }] }
+        lines: { create: [{ kind: 'MATERIAL', articleId: article.id, label: 'Ammooniumnitraat', quantity: 150, unit: 'kg', ratePerHa: 12.15, unitPrice: 0.45, nKgHa: 4.13 }] }
       }
     });
     await prisma.stockDocument.create({
       data: { kind: 'RECEIPT', date: d('2026-04-01'), warehouseId: warehouse.id, documentNo: 'ARV-1',
-        lines: { create: [{ materialId: material.id, quantity: 1000, amount: 450 }] } }
+        lines: { create: [{ articleId: article.id, quantity: 1000, amount: 450 }] } }
     });
-    return { fieldId: field.id, fieldSeasonId: fs.id, materialId: material.id, warehouseId: warehouse.id, vehicleId: vehicle.id, implementId: implement.id, workTypeId: wt.id };
+    return { fieldId: field.id, fieldSeasonId: fs.id, articleId: article.id, warehouseId: warehouse.id, vehicleId: vehicle.id, implementId: implement.id, workTypeId: wt.id };
   });
 
   } catch (err) {

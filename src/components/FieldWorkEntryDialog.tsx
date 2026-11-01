@@ -4,7 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
-import type { FieldWork, Material, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
+import type { FieldWork, Article, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
 import TripRouteView from './TripRouteView';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
@@ -23,7 +23,7 @@ interface FieldWorkEntryDialogProps {
   workers: Option[];
   vehicles: Option[];
   implementsList: Option[];
-  materials: Material[];
+  articles: Article[];
   onClose: () => void;
   onSaved: () => void;
   telemetryEnabled?: boolean; // false: telemeetria moodul pole litsentsis → soovitusi ei küsita
@@ -66,7 +66,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   workers,
   vehicles,
   implementsList,
-  materials,
+  articles,
   onClose,
   onSaved,
   telemetryEnabled = true
@@ -146,7 +146,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   // Materjalid: olemasolevast kandest või uue kande puhul töö plaanist (norm ha kohta; kogus kokku 0, kuni pindala on sisestatud)
   const [rows, setRows] = useState<PriaRow[]>(() =>
     entry
-      ? entry.materials.map((m) => planLineToRow(m, entry.areaHa ?? fieldAreaHa))
+      ? entry.articles.map((m) => planLineToRow(m, entry.areaHa ?? fieldAreaHa))
       : work.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, 0))
   );
   const [harvest, setHarvest] = useState<HarvestRow>(() => {
@@ -321,13 +321,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
       return setError('Lõpukellaaeg peab olema alguse omast suurem');
     }
     // Kandel peab materjal olema Kulumaterjalide registris (plaanis on vabatekst lubatud)
-    if (rows.some((r) => !r.materialId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
+    if (rows.some((r) => !r.articleId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
     // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
-    const noQuantity = rows.find((r) => r.materialId && !((parseNum(r.total) ?? 0) > 0));
+    const noQuantity = rows.find((r) => r.articleId && !((parseNum(r.total) ?? 0) > 0));
     if (isHarvest && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
     // Materjali kogus kokku arvutatakse pindalast — ilma pindalata oleks see 0
     if (noQuantity && !(areaNum > 0) && parseNum(noQuantity.ratePerHa) != null) return setError('Sisesta tehtud pindala');
-    if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || materials.find((m) => m.id === noQuantity.materialId)?.name || 'toode'}`);
+    if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || articles.find((m) => m.id === noQuantity.articleId)?.name || 'toode'}`);
     setBusy(true);
     try {
       await api.saveWorkEntry(
@@ -347,9 +347,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           areaHa: parseNum(areaHa),
           telemetryAreaHa: parseNum(telemetryAreaHa),
           warehouseId: warehouseId || null,
-          materials: rows
-            .map((r) => ({ materialId: r.materialId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
-            .filter((r) => r.materialId && r.quantity > 0),
+          articles: rows
+            .map((r) => ({ articleId: r.articleId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
+            .filter((r) => r.articleId && r.quantity > 0),
           // Saagi ja kultuuri tüüp salvestuvad ka ilma koguseta
           harvest: isHarvest && (parseNum(harvest.total) != null || harvest.priaKind || harvest.priaSpec)
             ? { tonnes: parseNum(harvest.total), ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
@@ -656,7 +656,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   </select>
                 </div>
               )}
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} materials={materials} areaHa={areaNum} showTotals />
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals />
             </section>
           )}
 

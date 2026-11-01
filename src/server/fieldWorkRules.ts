@@ -8,7 +8,7 @@ export interface LineDraft extends PriaAttrs {
   kind: LineKind;
   vehicleId: string | null;
   implementId: string | null;
-  materialId: string | null;
+  articleId: string | null;
   label: string;
   quantity: number;
   unit: string;
@@ -28,7 +28,7 @@ export interface EntryQuantities {
   implement?: { id: string; name: string } | null;
   equipmentHours?: number | null; // masina ja haakeriista töötunnid sisestatakse korraga
   fuelLiters?: number | null;
-  materials?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs> }[];
+  articles?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs> }[];
   harvestTonnes?: number | null; // lihtne saak (vana vorm)
   harvest?: { tonnes: number | null; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null } | null;
   observations?: { label: string; quantity: number; unit: string; priaRegister: string | null }[];
@@ -73,8 +73,8 @@ export function isWinterCrop(cropText: string | null | undefined, crops?: { name
 // sest neile pannakse erinev ühiku kulu.
 export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   const lines: LineDraft[] = [];
-  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'materialId' | 'ratePerHa' | keyof PriaAttrs> & Partial<LineDraft>) =>
-    lines.push({ vehicleId: null, implementId: null, materialId: null, ratePerHa: null, ...EMPTY_PRIA_ATTRS, ...l, sortOrder: lines.length });
+  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'articleId' | 'ratePerHa' | keyof PriaAttrs> & Partial<LineDraft>) =>
+    lines.push({ vehicleId: null, implementId: null, articleId: null, ratePerHa: null, ...EMPTY_PRIA_ATTRS, ...l, sortOrder: lines.length });
 
   if (positive(q.laborHours)) push({ kind: 'LABOR', label: q.workerName || 'Tööaeg', quantity: q.laborHours, unit: 'h' });
   if (positive(q.equipmentHours)) {
@@ -82,9 +82,9 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
     if (q.implement) push({ kind: 'IMPLEMENT', implementId: q.implement.id, label: q.implement.name, quantity: q.equipmentHours, unit: 'h' });
   }
   if (positive(q.fuelLiters)) push({ kind: 'FUEL', label: 'Kütus', quantity: q.fuelLiters, unit: 'l' });
-  for (const m of q.materials ?? []) {
+  for (const m of q.articles ?? []) {
     if (positive(m.quantity)) {
-      push({ kind: 'MATERIAL', materialId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
+      push({ kind: 'MATERIAL', articleId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
     }
   }
   // Saagi ja kultuuri tüüp salvestatakse ka siis, kui kogus pole veel teada (kogus 0)
@@ -101,8 +101,8 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
 }
 
 // Materjalita read (vaatlused) eristatakse nime järgi
-const lineKey = (l: Pick<LineDraft, 'kind' | 'vehicleId' | 'implementId' | 'materialId' | 'label'>) =>
-  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.materialId ?? ''}:${l.kind === 'OBSERVATION' ? l.label : ''}`;
+const lineKey = (l: Pick<LineDraft, 'kind' | 'vehicleId' | 'implementId' | 'articleId' | 'label'>) =>
+  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.articleId ?? ''}:${l.kind === 'OBSERVATION' ? l.label : ''}`;
 
 // Kande muutmisel säilitatakse sama rea ühiku kulu. Kinnitatud kande koguse muutus → CHANGED
 // (kinnita uuesti); confirmedQuantity jätab alles kinnitamise hetke koguse.
@@ -136,7 +136,7 @@ export interface FieldResult {
   labor: number;
   equipment: number; // masinad ja haakeriistad koos
   fuel: number;
-  materials: number;
+  articles: number;
   costTotal: number;
   revenue: number;
   profit: number;
@@ -144,16 +144,16 @@ export interface FieldResult {
 
 // Põllu tulemus kinnitatud kannete ridadest (kinnitamata kanded ei lähe summadesse).
 export function summarizeLines(lines: Pick<StoredLine, 'kind' | 'quantity' | 'unitPrice'>[]): FieldResult {
-  const r: FieldResult = { labor: 0, equipment: 0, fuel: 0, materials: 0, costTotal: 0, revenue: 0, profit: 0 };
+  const r: FieldResult = { labor: 0, equipment: 0, fuel: 0, articles: 0, costTotal: 0, revenue: 0, profit: 0 };
   for (const l of lines) {
     const sum = l.quantity * (l.unitPrice ?? 0);
     if (l.kind === 'LABOR') r.labor += sum;
     else if (l.kind === 'MACHINE' || l.kind === 'IMPLEMENT') r.equipment += sum;
     else if (l.kind === 'FUEL') r.fuel += sum;
-    else if (l.kind === 'MATERIAL') r.materials += sum;
+    else if (l.kind === 'MATERIAL') r.articles += sum;
     else if (l.kind === 'HARVEST') r.revenue += sum;
   }
-  r.costTotal = r.labor + r.equipment + r.fuel + r.materials;
+  r.costTotal = r.labor + r.equipment + r.fuel + r.articles;
   r.profit = r.revenue - r.costTotal;
   return r;
 }

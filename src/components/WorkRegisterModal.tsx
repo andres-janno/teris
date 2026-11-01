@@ -8,11 +8,11 @@ import {
   WORK_PHASE_META,
   MATERIAL_CATEGORY_LABEL,
   NEW_MATERIAL,
-  type Material,
+  type Article,
   type WorkPhase,
   type WorkType
 } from '../types/fieldWork';
-import { MaterialFormDialog } from './MaterialFormDialog';
+import { ArticleFormDialog } from './ArticleFormDialog';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface WorkRegisterModalProps {
@@ -20,7 +20,7 @@ interface WorkRegisterModalProps {
   onClose: () => void;
 }
 
-type Tab = 'works' | 'materials';
+type Tab = 'works' | 'articles';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -45,14 +45,14 @@ const PhaseBadge: React.FC<{ phase: WorkPhase }> = ({ phase }) => {
 export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, onClose }) => {
   const [tab, setTab] = useState<Tab>('works');
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [busy, setBusy] = useState(false);
 
   const reload = useCallback(async () => {
     try {
-      const [w, m] = await Promise.all([api.getWorkTypes(), api.getMaterials()]);
+      const [w, m] = await Promise.all([api.getWorkTypes(), api.getArticles()]);
       setWorkTypes(w);
-      setMaterials(m);
+      setArticles(m);
     } catch (err) {
       alertDialog(errorText(err));
     }
@@ -90,10 +90,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   };
 
   // --- Materjali vorm ---
-  const [materialForm, setMaterialForm] = useState<Partial<Material> | null>(null);
-  const deleteMaterial = async (m: Material) => {
+  const [articleForm, setArticleForm] = useState<Partial<Article> | null>(null);
+  const deleteArticle = async (m: Article) => {
     if (!await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`)) return;
-    void run(() => api.deleteMaterial(m.id));
+    void run(() => api.deleteArticle(m.id));
   };
 
   if (!isOpen) return null;
@@ -113,7 +113,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
           </div>
           <div className="season-header-actions">
             <div className="work-register-tabs" role="tablist">
-              {([['works', 'Tööd'], ['materials', 'Kulumaterjalid']] as [Tab, string][]).map(([k, label]) => (
+              {([['works', 'Tööd'], ['articles', 'Kulumaterjalid']] as [Tab, string][]).map(([k, label]) => (
                 <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>
                   {label}
                 </button>
@@ -176,10 +176,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
             </>
           )}
 
-          {tab === 'materials' && (
+          {tab === 'articles' && (
             <>
               <div className="work-register-toolbar">
-                <button className="btn btn-primary btn-sm" onClick={() => setMaterialForm(NEW_MATERIAL)}>
+                <button className="btn btn-primary btn-sm" onClick={() => setArticleForm(NEW_MATERIAL)}>
                   <Plus size={14} />
                   <span>Lisa materjal</span>
                 </button>
@@ -197,10 +197,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                     </tr>
                   </thead>
                   <tbody>
-                    {materials.length === 0 && (
+                    {articles.length === 0 && (
                       <tr><td colSpan={6} className="muted">Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.</td></tr>
                     )}
-                    {materials.map((m) => (
+                    {articles.map((m) => (
                       <tr key={m.id} className={m.isActive ? '' : 'inactive'}>
                         <td className="work-name-cell">
                           {m.name}
@@ -212,10 +212,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                         <td className="muted">{m.notes ?? ''}</td>
                         <td className="actions-col">
                           <div className="row-actions">
-                            <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setMaterialForm(m)}>
+                            <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setArticleForm(m)}>
                               <Edit2 size={15} />
                             </button>
-                            <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteMaterial(m)}>
+                            <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteArticle(m)}>
                               <Trash2 size={15} />
                             </button>
                           </div>
@@ -275,12 +275,12 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         document.body
       )}
 
-      {materialForm && (
-        <MaterialFormDialog
-          initial={materialForm}
-          onClose={() => setMaterialForm(null)}
+      {articleForm && (
+        <ArticleFormDialog
+          initial={articleForm}
+          onClose={() => setArticleForm(null)}
           onSaved={() => {
-            setMaterialForm(null);
+            setArticleForm(null);
             void reload();
           }}
         />

@@ -46,7 +46,7 @@ describe('buildEntryLines', () => {
       implement: { id: 'i1', name: 'Ader' },
       equipmentHours: 7.4,
       fuelLiters: 68,
-      materials: [{ id: 'm1', name: 'Väetis', unit: 'kg', quantity: 1418 }, { id: 'm2', name: 'Seeme', unit: 'kg', quantity: 0 }]
+      articles: [{ id: 'm1', name: 'Väetis', unit: 'kg', quantity: 1418 }, { id: 'm2', name: 'Seeme', unit: 'kg', quantity: 0 }]
     });
     expect(lines.map((l) => [l.kind, l.quantity])).toEqual([
       ['LABOR', 8],
@@ -62,7 +62,7 @@ describe('buildEntryLines', () => {
   });
   it('materjalirida kannab PRIA atribuute ja normi', () => {
     const [l] = buildEntryLines({
-      materials: [{ id: 'm1', name: 'Tombo WG', unit: 'kg', quantity: 0.36, ratePerHa: 0.15, pria: { priaRegister: 'Taimekaitsevahendid registrist', priaKind: 'Herbitsiid' } }]
+      articles: [{ id: 'm1', name: 'Tombo WG', unit: 'kg', quantity: 0.36, ratePerHa: 0.15, pria: { priaRegister: 'Taimekaitsevahendid registrist', priaKind: 'Herbitsiid' } }]
     });
     expect(l).toMatchObject({ kind: 'MATERIAL', quantity: 0.36, ratePerHa: 0.15, priaKind: 'Herbitsiid', activeIngredient: null });
   });
@@ -94,7 +94,7 @@ describe('buildEntryLines', () => {
 });
 
 const stored = (kind: StoredLine['kind'], quantity: number, unitPrice: number | null, confirmedQuantity: number | null): StoredLine => ({
-  kind, quantity, unitPrice, confirmedQuantity, vehicleId: null, implementId: null, materialId: null, label: kind, unit: 'h', sortOrder: 0,
+  kind, quantity, unitPrice, confirmedQuantity, vehicleId: null, implementId: null, articleId: null, label: kind, unit: 'h', sortOrder: 0,
   ratePerHa: null, priaRegister: null, priaKind: null, priaSpec: null, activeIngredient: null, nKgHa: null, pKgHa: null, kKgHa: null
 });
 
@@ -143,7 +143,7 @@ describe('canConfirm / summarizeLines', () => {
       { kind: 'MATERIAL', quantity: 200, unitPrice: 0.5 },
       { kind: 'HARVEST', quantity: 10, unitPrice: 200 }
     ]);
-    expect(r).toEqual({ labor: 150, equipment: 250, fuel: 120, materials: 100, costTotal: 620, revenue: 2000, profit: 1380 });
+    expect(r).toEqual({ labor: 150, equipment: 250, fuel: 120, articles: 100, costTotal: 620, revenue: 2000, profit: 1380 });
   });
   it('vaatlused ei mõjuta finantsi ega kinnitamist', () => {
     expect(summarizeLines([{ kind: 'OBSERVATION', quantity: 7, unitPrice: null }]).costTotal).toBe(0);

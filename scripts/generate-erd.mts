@@ -28,7 +28,7 @@ const DOMAINS: Domain[] = [
   {
     title: 'Põllutööd ja kanded',
     intro: 'Töö on hooaja põllu planeeritud tegevus (PRIA tegevus), plaaniread on planeeritud materjalid normiga. Kanne on tegelikult tehtud töö osa; kande read on tööaeg, masin, kütus, materjalid, saak ja seire leiud.',
-    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'Material', 'WorkTemplate', 'WorkTemplateItem'],
+    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'Article', 'WorkTemplate', 'WorkTemplateItem'],
     notes: [
       'Töötüübid = PRIA e-põlluraamatu 29 tegevust (`priaCode`); `shortName` on ettevõtte lühinimi.',
       '`WorkTemplate` ja `WorkTemplateItem` (tööde mallid) on andmebaasis alles, aga rakendus neid enam ei kasuta.'
@@ -43,11 +43,11 @@ const DOMAINS: Domain[] = [
   {
     title: 'Laoarvestus',
     intro: 'Kulumaterjalide laod, laokanded ja laoseisu koond. Põllutöö kande materjalid kantakse maha kande lao (`WorkEntry.warehouseId`) järgi.',
-    models: ['Warehouse', 'StockDocument', 'StockDocumentLine', 'MaterialStock'],
+    models: ['Warehouse', 'StockDocument', 'StockDocumentLine', 'ArticleStock'],
     notes: [
       '`warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).',
       '`stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.',
-      '`material_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.',
+      '`article_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.',
       '`work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).',
       'FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.'
     ]
@@ -79,7 +79,7 @@ const DESCRIPTIONS: Record<string, string> = {
   FieldWorkLine: 'Töö plaanirida: planeeritud materjal (norm/ha, PRIA atribuudid) või saak',
   WorkEntry: 'Kanne = tehtud töö osa: kuupäev, töötaja, masin, haakeriist, tunnid, kütus, pindala, finantsi olek',
   WorkEntryLine: 'Kande rida: tööaeg, masin, haakeriist, kütus, materjal, saak, seire leid (kogus, ühik, hind)',
-  Material: 'Kulumaterjal (seeme, väetis, taimekaitsevahend, muu)',
+  Article: 'Kulumaterjal (seeme, väetis, taimekaitsevahend, muu)',
   WorkTemplate: 'Tööde mall (kasutuseta)',
   WorkTemplateItem: 'Tööde malli rida (kasutuseta)',
   Vehicle: 'Masin (traktor, kombain jm): andmed, amortisatsioon, viimane asukoht, juht',
@@ -92,7 +92,7 @@ const DESCRIPTIONS: Record<string, string> = {
   Warehouse: 'Ladu (üks põhiladu); valikuline seos huvipunktiga',
   StockDocument: 'Laokanne: arvele võtmine, mahakandmine või ülekanne',
   StockDocumentLine: 'Laokande rida: materjal, kogus, hind, FIFO kulu, hindamata kogus',
-  MaterialStock: 'Laoseisu koond materjali ja lao kaupa (kogus, väärtus)',
+  ArticleStock: 'Laoseisu koond materjali ja lao kaupa (kogus, väärtus)',
   RelatedParty: 'Seotud isik/ettevõte: töötaja, omanik, operaator, partner',
   User: 'Rakenduse kasutaja (ettevõtte), rollid',
   Session: 'Kasutaja sessioon',

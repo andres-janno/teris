@@ -9,9 +9,9 @@ import type { Crop } from '../types/crop';
 import type { SoilSample } from '../types/soilSample';
 import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fieldOperation';
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
-import type { WorkType, Material, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
+import type { WorkType, Article, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, MaterialMovements, StockLevel } from '../types/stock';
+import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -660,24 +660,24 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/work-types/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Töö kustutamine ebaõnnestus');
   },
 
-  async getMaterials(year?: number, warehouseId?: string): Promise<Material[]> {
+  async getArticles(year?: number, warehouseId?: string): Promise<Article[]> {
     const q = new URLSearchParams();
     if (year) q.set('year', String(year));
     if (warehouseId) q.set('warehouseId', warehouseId);
     const qs = q.toString();
-    return jsonOrThrow(await apiFetch(qs ? `/api/materials?${qs}` : '/api/materials'), 'Materjalide laadimine ebaõnnestus');
+    return jsonOrThrow(await apiFetch(qs ? `/api/articles?${qs}` : '/api/articles'), 'Materjalide laadimine ebaõnnestus');
   },
 
-  async saveMaterial(m: Partial<Material> & { unitFactor?: number | null }, confirmUnitChange = false): Promise<Material> {
-    return jsonOrThrow(await apiFetch('/api/materials', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
+  async saveArticle(m: Partial<Article> & { unitFactor?: number | null }, confirmUnitChange = false): Promise<Article> {
+    return jsonOrThrow(await apiFetch('/api/articles', jsonInit('POST', { ...m, confirmUnitChange })), 'Materjali salvestamine ebaõnnestus');
   },
 
-  async mergeMaterial(id: string, targetId: string): Promise<{ plans: number; entries: number; stockLines: number }> {
-    return jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}/merge`, jsonInit('POST', { targetId })), 'Materjali asendamine ebaõnnestus');
+  async mergeArticle(id: string, targetId: string): Promise<{ plans: number; entries: number; stockLines: number }> {
+    return jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}/merge`, jsonInit('POST', { targetId })), 'Materjali asendamine ebaõnnestus');
   },
 
-  async deleteMaterial(id: string): Promise<void> {
-    await jsonOrThrow(await apiFetch(`/api/materials/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
+  async deleteArticle(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Materjali kustutamine ebaõnnestus');
   },
 
   async getWarehouses(): Promise<Warehouse[]> {
@@ -705,9 +705,9 @@ export const api = {
   async deleteStockDocument(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/stock/documents/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Laokande kustutamine ebaõnnestus');
   },
-  async getMaterialMovements(materialId: string, warehouseId?: string): Promise<MaterialMovements> {
+  async getArticleMovements(articleId: string, warehouseId?: string): Promise<ArticleMovements> {
     return jsonOrThrow(
-      await apiFetch(`/api/stock/materials/${encodeURIComponent(materialId)}/movements${warehouseId ? `?warehouseId=${encodeURIComponent(warehouseId)}` : ''}`),
+      await apiFetch(`/api/stock/articles/${encodeURIComponent(articleId)}/movements${warehouseId ? `?warehouseId=${encodeURIComponent(warehouseId)}` : ''}`),
       'Laokaardi laadimine ebaõnnestus'
     );
   },

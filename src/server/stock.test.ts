@@ -2,7 +2,7 @@
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import {
-  getDefaultWarehouseId, recomputeMaterialStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError,
+  getDefaultWarehouseId, recomputeArticleStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError,
   saveWarehouse, resolveEntryWarehouseId
 } from './stock';
 
@@ -11,7 +11,7 @@ const T2 = `${T}-b`; // tühi ettevõte põhilao samaaegse loomise testiks
 // await laseb laisa Prisma lubaduse täita ettevõtte kontekstis
 const run = <R>(fn: () => Promise<R>): Promise<R> => runAsTenant(T, async () => await fn());
 const d = (s: string) => new Date(`${s}T00:00:00Z`);
-let materialId = '';
+let articleId = '';
 let mainWh = '';
 let otherWh = '';
 let entryLineId = '';
@@ -20,7 +20,7 @@ let fieldWorkId = '';
 beforeAll(async () => {
   await authDb().tenant.create({ data: { id: T, name: 'Test ladu' } });
   await run(async () => {
-    materialId = (await prisma.material.create({ data: { name: 'Testväetis', category: 'FERTILIZER', unit: 'kg' } })).id;
+    articleId = (await prisma.article.create({ data: { name: 'Testväetis', category: 'FERTILIZER', unit: 'kg' } })).id;
     mainWh = await tenantTransaction((tx) => getDefaultWarehouseId(tx));
     otherWh = (await prisma.warehouse.create({ data: { name: 'Teine ladu' } })).id;
     // Põllutöö kanne: hooaeg → põld → töö → kanne 1500 g... ja 200 kg
@@ -33,8 +33,8 @@ beforeAll(async () => {
       data: {
         fieldWorkId: fw.id, date: d('2026-05-10'),
         lines: { create: [
-          { kind: 'MATERIAL', materialId, label: 'Testväetis', quantity: 200, unit: 'kg' },
-          { kind: 'MATERIAL', materialId, label: 'Testväetis', quantity: 3, unit: 'l' }
+          { kind: 'MATERIAL', articleId, label: 'Testväetis', quantity: 200, unit: 'kg' },
+          { kind: 'MATERIAL', articleId, label: 'Testväetis', quantity: 3, unit: 'l' }
         ] }
       },
       include: { lines: true }
@@ -51,8 +51,8 @@ afterAll(async () => {
     await prisma.fieldSeason.deleteMany({});
     await prisma.field.deleteMany({});
     await prisma.stockDocument.deleteMany({});
-    await prisma.materialStock.deleteMany({});
-    await prisma.material.deleteMany({});
+    await prisma.articleStock.deleteMany({});
+    await prisma.article.deleteMany({});
     await prisma.warehouse.deleteMany({});
   }).catch((e) => console.error('Testi puhastus ebaõnnestus', e));
   await authDb().tenant.deleteMany({ where: { id: { in: [T, T2] } } });
@@ -66,26 +66,26 @@ describe('laoseisu ümberarvutus', () => {
   });
 
   it('ilma arvele võtmiseta on kanne miinuses ja hindamata; teisendamatu rida on probleem', async () => {
-    await run(() => tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId])));
-    const s = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId, warehouseId: mainWh } } }));
+    await run(() => tenantTransaction((tx) => recomputeArticleStock(tx, [articleId])));
+    const s = await run(() => prisma.articleStock.findUnique({ where: { articleId_warehouseId: { articleId, warehouseId: mainWh } } }));
     expect(s?.qty).toBe(-200);
     expect(s?.unpricedQty).toBe(200);
     const line = await run(() => prisma.workEntryLine.findUnique({ where: { id: entryLineId } }));
     expect(line?.unitPrice).toBeNull();
-    const m = await run(() => prisma.material.findUnique({ where: { id: materialId } }));
+    const m = await run(() => prisma.article.findUnique({ where: { id: articleId } }));
     expect(m?.stockIssueCount).toBe(1);
   });
 
   it('tagantjärele arvele võtmine annab kandereale FIFO hinna', async () => {
     await run(async () => {
       await prisma.stockDocument.create({
-        data: { kind: 'RECEIPT', date: d('2026-04-01'), warehouseId: mainWh, lines: { create: [{ materialId, quantity: 500, amount: 250 }] } }
+        data: { kind: 'RECEIPT', date: d('2026-04-01'), warehouseId: mainWh, lines: { create: [{ articleId, quantity: 500, amount: 250 }] } }
       });
-      await tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId]));
+      await tenantTransaction((tx) => recomputeArticleStock(tx, [articleId]));
     });
     const line = await run(() => prisma.workEntryLine.findUnique({ where: { id: entryLineId } }));
     expect(Number(line?.unitPrice)).toBe(0.5);
-    const s = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId, warehouseId: mainWh } } }));
+    const s = await run(() => prisma.articleStock.findUnique({ where: { articleId_warehouseId: { articleId, warehouseId: mainWh } } }));
     expect(s?.qty).toBe(300);
     expect(Number(s?.value)).toBe(150);
   });
@@ -93,11 +93,11 @@ describe('laoseisu ümberarvutus', () => {
   it('ülekanne üle saadaoleva annab puudujäägi võtme', async () => {
     await run(async () => {
       await prisma.stockDocument.create({
-        data: { kind: 'TRANSFER', date: d('2026-06-01'), warehouseId: mainWh, toWarehouseId: otherWh, lines: { create: [{ materialId, quantity: 400 }] } }
+        data: { kind: 'TRANSFER', date: d('2026-06-01'), warehouseId: mainWh, toWarehouseId: otherWh, lines: { create: [{ articleId, quantity: 400 }] } }
       });
-      await tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId]));
+      await tenantTransaction((tx) => recomputeArticleStock(tx, [articleId]));
     });
-    const keys = await run(() => tenantTransaction((tx) => transferShortageKeys(tx, [materialId])));
+    const keys = await run(() => tenantTransaction((tx) => transferShortageKeys(tx, [articleId])));
     expect(keys.size).toBe(1);
     const line = await run(() => prisma.stockDocumentLine.findFirst({ where: { document: { kind: 'TRANSFER' } } }));
     expect(line?.shortageQty).toBe(100);
@@ -105,14 +105,14 @@ describe('laoseisu ümberarvutus', () => {
   });
 });
 
-import { materialStockSummary } from './stock';
+import { articleStockSummary } from './stock';
 
 describe('materjalide laoseisu kokkuvõte', () => {
   it('summeerib laod ja filtreerib ühe lao', async () => {
-    const all = await run(() => tenantTransaction((tx) => materialStockSummary(tx, null)));
-    const one = await run(() => tenantTransaction((tx) => materialStockSummary(tx, otherWh)));
-    const a = all.get(materialId)!;
-    const o = one.get(materialId)!;
+    const all = await run(() => tenantTransaction((tx) => articleStockSummary(tx, null)));
+    const one = await run(() => tenantTransaction((tx) => articleStockSummary(tx, otherWh)));
+    const a = all.get(articleId)!;
+    const o = one.get(articleId)!;
     expect(a.qty).toBe(300); // 500 − 200; ülekanne laosiseselt neutraalne
     expect(o.qty).toBe(400);
   });
@@ -123,7 +123,7 @@ describe('laokande salvestus', () => {
     const before = await run(() => prisma.stockDocument.count());
     await expect(run(() => tenantTransaction((tx) => saveStockDocument(tx, null, {
       kind: 'TRANSFER', date: d('2026-07-01'), warehouseId: otherWh, toWarehouseId: mainWh, supplierId: null,
-      documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId, quantity: 100000, amount: null }]
+      documentNo: null, writeOffReason: null, notes: null, lines: [{ articleId, quantity: 100000, amount: null }]
     })))).rejects.toBeInstanceOf(StockValidationError);
     expect(await run(() => prisma.stockDocument.count())).toBe(before);
   });
@@ -131,7 +131,7 @@ describe('laokande salvestus', () => {
   it('mahakandmine saab FIFO maksumuse ja kustutamine taastab seisu', async () => {
     const id = await run(() => tenantTransaction((tx) => saveStockDocument(tx, null, {
       kind: 'WRITE_OFF', date: d('2026-04-02'), warehouseId: mainWh, toWarehouseId: null, supplierId: null,
-      documentNo: null, writeOffReason: 'SPOILED', notes: null, lines: [{ materialId, quantity: 10, amount: null }]
+      documentNo: null, writeOffReason: 'SPOILED', notes: null, lines: [{ articleId, quantity: 10, amount: null }]
     })));
     const line = await run(() => prisma.stockDocumentLine.findFirst({ where: { documentId: id } }));
     expect(Number(line?.fifoCost)).toBe(5);
@@ -142,11 +142,11 @@ describe('laokande salvestus', () => {
 
 const receipt = (date: string, warehouseId: string, mat: string, quantity: number, amount: number) => ({
   kind: 'RECEIPT' as const, date: d(date), warehouseId, toWarehouseId: null, supplierId: null,
-  documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId: mat, quantity, amount }]
+  documentNo: null, writeOffReason: null, notes: null, lines: [{ articleId: mat, quantity, amount }]
 });
 const transfer = (date: string, from: string, to: string, mat: string, quantity: number) => ({
   kind: 'TRANSFER' as const, date: d(date), warehouseId: from, toWarehouseId: to, supplierId: null,
-  documentNo: null, writeOffReason: null, notes: null, lines: [{ materialId: mat, quantity, amount: null }]
+  documentNo: null, writeOffReason: null, notes: null, lines: [{ articleId: mat, quantity, amount: null }]
 });
 
 let seedId = '';
@@ -156,7 +156,7 @@ describe('ülekande puudujääk arvele võtmise muutmisel ja kustutamisel', () =
   let transferId = '';
   beforeAll(async () => {
     await run(async () => {
-      seedId = (await prisma.material.create({ data: { name: 'Testseeme', category: 'SEED', unit: 'kg' } })).id;
+      seedId = (await prisma.article.create({ data: { name: 'Testseeme', category: 'SEED', unit: 'kg' } })).id;
       receiptId = await tenantTransaction((tx) => saveStockDocument(tx, null, receipt('2026-03-01', mainWh, seedId, 100, 200)));
       transferId = await tenantTransaction((tx) => saveStockDocument(tx, null, transfer('2026-03-05', mainWh, otherWh, seedId, 80)));
     });
@@ -184,22 +184,22 @@ describe('ülekande puudujääk arvele võtmise muutmisel ja kustutamisel', () =
       const e = await tx.workEntry.create({
         data: {
           fieldWorkId, date: d('2026-04-01'), warehouseId: await resolveEntryWarehouseId(tx, otherWh, null),
-          lines: { create: [{ kind: 'MATERIAL', materialId: seedId, label: 'Testseeme', quantity: 20000, unit: 'g' }] }
+          lines: { create: [{ kind: 'MATERIAL', articleId: seedId, label: 'Testseeme', quantity: 20000, unit: 'g' }] }
         }
       });
-      await recomputeMaterialStock(tx, [seedId]);
+      await recomputeArticleStock(tx, [seedId]);
       return e.id;
     }));
     const line = await run(() => prisma.workEntryLine.findFirst({ where: { entryId } }));
     expect(Number(line?.unitPrice)).toBe(0.002); // 2 €/kg grammides
-    const s = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId: seedId, warehouseId: otherWh } } }));
+    const s = await run(() => prisma.articleStock.findUnique({ where: { articleId_warehouseId: { articleId: seedId, warehouseId: otherWh } } }));
     expect(s?.qty).toBe(60);
     expect(s?.pricedQty).toBe(60);
     expect(Number(s?.value)).toBe(120);
   });
 });
 
-const seedMaterialId = () => seedId;
+const seedArticleId = () => seedId;
 
 describe('ladude reeglid', () => {
   it('põhilao saab vahetada ainult teise lao põhilaoks märkimisega; ajalugu jääb oma lattu', async () => {
@@ -209,23 +209,23 @@ describe('ladude reeglid', () => {
     // Valimata ladu → põhilao päris id
     const entryWh = await run(() => tenantTransaction((tx) => resolveEntryWarehouseId(tx, null, null)));
     expect(entryWh).toBe(mainWh);
-    const before = await run(() => prisma.materialStock.findMany({ where: { materialId }, orderBy: { warehouseId: 'asc' } }));
+    const before = await run(() => prisma.articleStock.findMany({ where: { articleId }, orderBy: { warehouseId: 'asc' } }));
     // Kolmas ladu põhilaoks (mitteaktiivsena märgitu muutub aktiivseks)
     const w = await run(() => tenantTransaction((tx) => saveWarehouse(tx, thirdWh, { name: 'Kolmas ladu', isDefault: true, isActive: false, poiId: null, notes: null })));
     expect(w.isActive).toBe(true);
     expect(await run(() => prisma.warehouse.count({ where: { isDefault: true } }))).toBe(1);
-    await run(() => tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId, seedMaterialId()])));
+    await run(() => tenantTransaction((tx) => recomputeArticleStock(tx, [articleId, seedArticleId()])));
     const entries = await run(() => prisma.workEntry.count({ where: { warehouseId: thirdWh } }));
     expect(entries).toBe(0);
     // Päris lao id-ga kanne (Testseeme, teine ladu) jääb oma lattu
-    const seedStock = await run(() => prisma.materialStock.findUnique({ where: { materialId_warehouseId: { materialId: seedMaterialId(), warehouseId: otherWh } } }));
+    const seedStock = await run(() => prisma.articleStock.findUnique({ where: { articleId_warehouseId: { articleId: seedArticleId(), warehouseId: otherWh } } }));
     expect(seedStock?.qty).toBe(60);
     // Laota vana kanne (varuvariant) liigub uude põhilattu; päris id-ga kanded ei liigu
-    const after = await run(() => prisma.materialStock.findMany({ where: { materialId, warehouseId: { not: thirdWh } }, orderBy: { warehouseId: 'asc' } }));
+    const after = await run(() => prisma.articleStock.findMany({ where: { articleId, warehouseId: { not: thirdWh } }, orderBy: { warehouseId: 'asc' } }));
     expect(after.find((r) => r.warehouseId === mainWh)!.qty).toBe(before.find((r) => r.warehouseId === mainWh)!.qty + 200);
     // Tagasi
     await run(() => tenantTransaction((tx) => saveWarehouse(tx, mainWh, { name: 'Põhiladu', isDefault: true, isActive: true, poiId: null, notes: null })));
-    await run(() => tenantTransaction((tx) => recomputeMaterialStock(tx, [materialId, seedMaterialId()])));
+    await run(() => tenantTransaction((tx) => recomputeArticleStock(tx, [articleId, seedArticleId()])));
     await run(() => prisma.warehouse.delete({ where: { id: thirdWh } }));
   });
 

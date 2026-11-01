@@ -21,7 +21,7 @@ import { validateImei, normalizeMac, IMEI_ERROR, MAC_ERROR } from './deviceIdent
 import { syncOwnership } from './deviceOwnership.ts';
 import { ensureSeasons, isSeasonYear } from './seasons.ts';
 import { latestEarlierSeason, buildCopiedSeason, buildCopiedParcelLink } from './fieldSeasonCopy.ts';
-import { getDefaultWarehouseId, recomputeAllMaterialStock } from './stock.ts';
+import { getDefaultWarehouseId, recomputeAllArticleStock } from './stock.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
@@ -1715,7 +1715,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             imported++;
           }
           // Import lisab materjaliga kandeid → laoseis ja FIFO hinnad uuesti
-          if (entriesAdded + created > 0) await recomputeAllMaterialStock(tx);
+          if (entriesAdded + created > 0) await recomputeAllArticleStock(tx);
           return { imported, created, complemented, linked, entriesAdded, unknown, movedToNext, skipped };
         },
         { timeout: 120000 }

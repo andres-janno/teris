@@ -301,7 +301,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
     let totalLabor = 0;
     let totalEquipment = 0;
     let totalFuel = 0;
-    let totalMaterials = 0;
+    let totalArticles = 0;
     let totalEntries = 0;
     let totalConfirmed = 0;
 
@@ -312,7 +312,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
       totalLabor += r.labor;
       totalEquipment += r.equipment;
       totalFuel += r.fuel;
-      totalMaterials += r.materials;
+      totalArticles += r.articles;
       totalEntries += r.entriesTotal;
       totalConfirmed += r.entriesConfirmed;
     }
@@ -334,7 +334,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
       totalLabor,
       totalEquipment,
       totalFuel,
-      totalMaterials,
+      totalArticles,
       totalEntries,
       totalConfirmed
     };
@@ -889,8 +889,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <div className="finance-cost-item">
                     <span className="dot" style={{ backgroundColor: '#16a34a' }} />
                     <span className="label">Kulumaterjalid:</span>
-                    <strong>{fmtCur(resultsSummary.totalMaterials)}</strong>
-                    <small>({Math.round((resultsSummary.totalMaterials / resultsSummary.totalCost) * 100)}%)</small>
+                    <strong>{fmtCur(resultsSummary.totalArticles)}</strong>
+                    <small>({Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)</small>
                   </div>
                 </div>
               )}
@@ -1006,7 +1006,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             <td className="num text-muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</td>
                             <td className="num text-muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</td>
                             <td className="num text-muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</td>
-                            <td className="num text-muted">{r.materials > 0 ? fmtCur(r.materials) : '–'}</td>
+                            <td className="num text-muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</td>
                             <td className="num font-semibold">{fmtCur(r.costTotal)}</td>
                             <td className="num text-emerald-700 font-semibold">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</td>
                             <td className={`num font-bold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>

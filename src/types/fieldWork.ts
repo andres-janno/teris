@@ -4,14 +4,14 @@ export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
 export type WorkRepeatMode = 'ONCE' | 'UP_TO' | 'INTERVAL';
 export type FieldWorkStatus = 'PLANNED' | 'IN_PROGRESS' | 'DONE';
 export type FinanceStatus = 'PENDING' | 'CONFIRMED' | 'CHANGED';
-export type MaterialCategory = 'SEED' | 'FERTILIZER' | 'PLANT_PROTECTION' | 'OTHER';
+export type PriaArticleKind = 'SEED' | 'FERTILIZER' | 'PLANT_PROTECTION' | 'OTHER';
 export type WorkEntryLineKind = 'LABOR' | 'MACHINE' | 'IMPLEMENT' | 'FUEL' | 'MATERIAL' | 'HARVEST' | 'OBSERVATION';
 export type WorkSource = 'MANUAL' | 'PRIA_IMPORT';
 
 // PRIA e-põlluraamatu atribuudid materjali/saagi real
 export interface PriaLineFields { ratePerHa: number | null; priaRegister: string | null; priaKind: string | null; priaSpec: string | null; activeIngredient: string | null; nKgHa: number | null; pKgHa: number | null; kKgHa: number | null }
 // Töö plaani rida (plaanitud materjal või saak)
-export interface FieldWorkPlanLine extends PriaLineFields { id?: string; kind: 'MATERIAL' | 'HARVEST'; materialId: string | null; label: string; unit: string }
+export interface FieldWorkPlanLine extends PriaLineFields { id?: string; kind: 'MATERIAL' | 'HARVEST'; articleId: string | null; label: string; unit: string }
 export interface WorkEntryObservation { label: string; quantity: number; unit: string; priaRegister: string | null }
 export interface WorkEntryHarvest { tonnes: number | null; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null }
 
@@ -24,7 +24,7 @@ export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; 
   HARVEST: { label: 'Koristus', color: '#9a5b00', bg: '#fdf1d8' }
 };
 
-export const MATERIAL_CATEGORY_LABEL: Record<MaterialCategory, string> = {
+export const MATERIAL_CATEGORY_LABEL: Record<PriaArticleKind, string> = {
   SEED: 'Seeme',
   FERTILIZER: 'Väetis',
   PLANT_PROTECTION: 'Taimekaitsevahend',
@@ -46,10 +46,10 @@ export interface WorkType {
   fieldWorkCount?: number;
 }
 
-export interface Material {
+export interface Article {
   id: string;
   name: string;
-  category: MaterialCategory;
+  category: PriaArticleKind;
   unit: string;
   manufacturer: string | null; // tootja
   cropVarietyId: string | null;
@@ -76,10 +76,10 @@ export interface Material {
 }
 
 // Uue kulumaterjali vaikeväärtused
-export const NEW_MATERIAL: Partial<Material> = { isActive: true }; // liik ja ühik valitakse alati ise
+export const NEW_MATERIAL: Partial<Article> = { isActive: true }; // liik ja ühik valitakse alati ise
 
-export interface WorkEntryMaterial extends Partial<PriaLineFields> {
-  materialId: string;
+export interface WorkEntryArticle extends Partial<PriaLineFields> {
+  articleId: string;
   name: string;
   unit: string;
   quantity: number;
@@ -116,7 +116,7 @@ export interface WorkEntry {
   laborHours: number | null;
   startTime: string | null;
   endTime: string | null;
-  materials: WorkEntryMaterial[];
+  articles: WorkEntryArticle[];
   harvestTonnes: number | null;
   harvestBunkers: number | null; // punkrite arv (PRIA-s pole)
   harvest: WorkEntryHarvest | null;
@@ -228,7 +228,7 @@ export interface WorkEntryInput {
   laborHours: number | null;
   startTime?: string | null;
   endTime?: string | null;
-  materials: { materialId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
+  articles: { articleId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
   harvestTonnes: number | null;
   harvestBunkers?: number | null;
   harvest?: WorkEntryHarvest | null;
@@ -262,7 +262,7 @@ export interface FieldResult {
   labor: number;
   equipment: number;
   fuel: number;
-  materials: number;
+  articles: number;
   costTotal: number;
   revenue: number;
   profit: number;

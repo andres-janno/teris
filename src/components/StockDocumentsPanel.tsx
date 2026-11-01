@@ -7,7 +7,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
 import { StockDocumentDialog } from './StockDocumentDialog';
-import type { Material } from '../types/fieldWork';
+import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
@@ -17,11 +17,11 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toimi
 
 interface Props {
   warehouses: Warehouse[];
-  materials: Material[];
+  articles: Article[];
   onChanged: () => void;
 }
 
-export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, materials, onChanged }) => {
+export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onChanged }) => {
   const [docs, setDocs] = useState<StockDocument[]>([]);
   const [filter, setFilter] = useState<StockDocumentFilter>({});
   const [suppliers, setSuppliers] = useState<RelatedParty[]>([]);
@@ -134,7 +134,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, materials, on
           kind={form.kind}
           initial={form.initial}
           warehouses={warehouses}
-          materials={materials}
+          articles={articles}
           suppliers={suppliers}
           onClose={() => setForm(null)}
           onSaved={() => { setForm(null); void reload(); onChanged(); }}

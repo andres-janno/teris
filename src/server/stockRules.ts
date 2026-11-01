@@ -11,7 +11,7 @@ export interface StockDocumentInput {
   documentNo: string | null;
   writeOffReason: WriteOffReason | null;
   notes: string | null;
-  lines: { materialId: string; quantity: number; amount: number | null }[];
+  lines: { articleId: string; quantity: number; amount: number | null }[];
 }
 
 const KINDS: StockDocumentKind[] = ['RECEIPT', 'WRITE_OFF', 'TRANSFER'];
@@ -49,8 +49,8 @@ export function parseStockDocument(body: unknown): { ok: true; doc: StockDocumen
   if (!linesIn.length) return fail('Lisa vähemalt üks rida');
   const lines: StockDocumentInput['lines'] = [];
   for (const l of linesIn) {
-    const materialId = text(l?.materialId, 64);
-    if (!materialId) return fail('Vali igale reale materjal');
+    const articleId = text(l?.articleId, 64);
+    if (!articleId) return fail('Vali igale reale materjal');
     const quantity = num(l?.quantity);
     if (quantity === null || quantity <= 0) return fail('Kogus peab olema suurem kui 0');
     let amount: number | null = null;
@@ -59,7 +59,7 @@ export function parseStockDocument(body: unknown): { ok: true; doc: StockDocumen
       if (amount === null) return fail('Arvele võtmisel on rea summa kohustuslik');
       if (amount < 0) return fail('Summa ei tohi olla negatiivne');
     }
-    lines.push({ materialId, quantity, amount });
+    lines.push({ articleId, quantity, amount });
   }
   return {
     ok: true,
@@ -92,7 +92,7 @@ export function stockCardFinanceFields<T extends { cost: number | null; supplier
 }
 
 /** Materjali laoseisu väljad: kogus kõigile, väärtus ja hinnatud kogus ainult finantsõigusega. */
-export function materialStockFields(
+export function articleStockFields(
   finance: boolean,
   s: { qty: number; value: number; unpricedQty: number; pricedQty: number } | undefined
 ) {

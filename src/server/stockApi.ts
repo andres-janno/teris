@@ -26,12 +26,12 @@ const DOC_INCLUDE = {
   warehouse: { select: { name: true } },
   toWarehouse: { select: { name: true } },
   supplier: { select: { name: true } },
-  lines: { orderBy: { sortOrder: 'asc' as const }, include: { material: { select: { name: true, unit: true } } } }
+  lines: { orderBy: { sortOrder: 'asc' as const }, include: { article: { select: { name: true, unit: true } } } }
 };
 
 function documentDto(d: any) {
   const lines = d.lines.map((l: any) => ({
-    id: l.id, materialId: l.materialId, materialName: l.material.name, unit: l.material.unit,
+    id: l.id, articleId: l.articleId, articleName: l.article.name, unit: l.article.unit,
     quantity: l.quantity, amount: money(l.amount), fifoCost: money(l.fifoCost), shortageQty: l.shortageQty
   }));
   const total = lines.reduce((s: number, l: any) => s + ((d.kind === 'RECEIPT' ? l.amount : l.fifoCost) ?? 0), 0);
@@ -107,20 +107,20 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
   // --- Laoseis (kogus) kõigile ---
   if (pathname === '/api/stock/levels' && method === 'GET') {
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);
-    const rows = await prisma.materialStock.findMany({ where: warehouseId ? { warehouseId } : {}, select: { materialId: true, qty: true } });
+    const rows = await prisma.articleStock.findMany({ where: warehouseId ? { warehouseId } : {}, select: { articleId: true, qty: true } });
     const sum = new Map<string, number>();
-    for (const r of rows) sum.set(r.materialId, Math.round(((sum.get(r.materialId) ?? 0) + r.qty) * 1e6) / 1e6);
-    json(res, [...sum].map(([materialId, qty]) => ({ materialId, qty })));
+    for (const r of rows) sum.set(r.articleId, Math.round(((sum.get(r.articleId) ?? 0) + r.qty) * 1e6) / 1e6);
+    json(res, [...sum].map(([articleId, qty]) => ({ articleId, qty })));
     return true;
   }
 
   // --- Laokaart ---
-  const mv = /^\/api\/stock\/materials\/([^/]+)\/movements$/.exec(pathname);
+  const mv = /^\/api\/stock\/articles\/([^/]+)\/movements$/.exec(pathname);
   if (mv && method === 'GET') {
-    const materialId = decodeURIComponent(mv[1]);
+    const articleId = decodeURIComponent(mv[1]);
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);
     const result = await tenantTransaction(async (tx) => {
-      const [mm] = await loadMovements(tx, [materialId]);
+      const [mm] = await loadMovements(tx, [articleId]);
       if (!mm) return null;
       const { outs } = fifoReplay(mm.movements);
       const docIds = mm.docLines.map((l) => l.id);

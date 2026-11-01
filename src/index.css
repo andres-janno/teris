@@ -9456,7 +9456,7 @@ select.form-input:read-only {
   padding-bottom: 8px;
 }
 
-.work-entry-material-row {
+.work-entry-article-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 120px 40px 34px;
   gap: 8px;
@@ -10866,13 +10866,13 @@ select.form-input:read-only {
   .pria-grid-head { display: none; }
 }
 
-.materials-table th.num,
-.materials-table td.num {
+.articles-table th.num,
+.articles-table td.num {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-.material-overuse {
+.article-overuse {
   color: #dc2626;
   font-weight: 600;
 }
@@ -10967,7 +10967,7 @@ select.form-input:read-only {
 }
 
 /* Laoarvestus */
-.materials-table tr.clickable-row { cursor: pointer; }
+.articles-table tr.clickable-row { cursor: pointer; }
 .stock-card-modal { width: min(960px, 96vw); }
 .stock-card-table td, .stock-card-table th { white-space: nowrap; }
 .stock-card-table td:nth-child(2) { white-space: normal; }
@@ -10982,7 +10982,7 @@ td.stock-qty { font-weight: 600; }
 td.stock-qty-in { color: var(--emerald-500); }
 td.stock-qty-out { color: #dc2626; }
 
-.materials-tabs { margin-bottom: 12px; }
+.articles-tabs { margin-bottom: 12px; }
 .stock-doc-modal { width: min(980px, 96vw); }
 .stock-doc-lines { margin-top: 12px; }
 .stock-doc-lines input.num { text-align: right; width: 110px; }
@@ -11000,12 +11000,12 @@ td.stock-qty-out { color: #dc2626; }
 
 .finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
 .finance-fifo-price.missing { color: #d97706; }
-.pria-material-cell { display: flex; flex-direction: column; min-width: 0; }
+.pria-article-cell { display: flex; flex-direction: column; min-width: 0; }
 
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */
-.material-form-modal .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
-.material-form-modal .form-input { width: 100%; min-width: 0; box-sizing: border-box; text-overflow: ellipsis; }
-.material-form-modal .modal-body { overflow-x: hidden; }
+.article-form-modal .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.article-form-modal .form-input { width: 100%; min-width: 0; box-sizing: border-box; text-overflow: ellipsis; }
+.article-form-modal .modal-body { overflow-x: hidden; }
 
 /* Kulumaterjali vormi PRIA plokk */
 .form-section-title {
@@ -11019,6 +11019,6 @@ td.stock-qty-out { color: #dc2626; }
   letter-spacing: 0.04em;
   color: var(--text-secondary);
 }
-.material-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.article-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
-.material-merge-info { margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }
+.article-merge-info { margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }

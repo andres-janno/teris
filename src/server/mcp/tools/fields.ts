@@ -18,7 +18,7 @@ export async function resolveFieldSeason(query: string, y: number): Promise<{ id
 const byNum = (a: { num: string }, b: { num: string }) => a.num.localeCompare(b.num, 'et', { numeric: true });
 
 /** Kande materjalirea väljund; hind ja kulu ainult finantsõigusega. */
-export function materialLineOut(l: { label: string; quantity: number; unit: string; ratePerHa: number | null; activeIngredient: string | null; nKgHa: number | null; pKgHa: number | null; kKgHa: number | null; unitPrice: unknown }, ctx: McpContext) {
+export function articleLineOut(l: { label: string; quantity: number; unit: string; ratePerHa: number | null; activeIngredient: string | null; nKgHa: number | null; pKgHa: number | null; kKgHa: number | null; unitPrice: unknown }, ctx: McpContext) {
   const unitPrice = l.unitPrice === null || l.unitPrice === undefined ? null : Number(l.unitPrice);
   return {
     name: l.label,
@@ -110,11 +110,11 @@ export const fieldTools = [
         works: s.fieldWorks.map((w) => ({
           work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status,
           planned: w.plannedDateFrom ? [fmtDate(w.plannedDateFrom), fmtDate(w.plannedDateTo)].filter(Boolean).join(' – ') : w.plannedText,
-          plannedMaterials: w.lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit })),
+          plannedArticles: w.lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit })),
           entries: w.entries.map((e) => ({
             date: fmtDate(e.date), dateTo: fmtDate(e.dateTo), worker: e.worker?.name ?? null, vehicle: e.vehicle?.name ?? null, implement: e.implement?.name ?? null,
             areaHa: round2(e.areaHa), equipmentHours: round2(e.equipmentHours), fuelLiters: round2(e.fuelLiters),
-            materials: e.lines.filter((l) => l.kind === 'MATERIAL').map((l) => materialLineOut(l, ctx)),
+            articles: e.lines.filter((l) => l.kind === 'MATERIAL').map((l) => articleLineOut(l, ctx)),
             harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit }))
           }))
         }))

@@ -19,19 +19,19 @@ export const stockTools = [
     name: 'list_stock_levels',
     title: 'Laoseis',
     description: 'Kulumaterjalide laoseis lao ja materjali kaupa (laoühikus). negative = laoseis on miinuses (kanded on kulutanud rohkem kui arvele võetud). Finantsõigusega ka väärtus (FIFO) ja keskmine hind.',
-    input: { warehouse: z.string().optional().describe('Lao nimi'), material: z.string().optional().describe('Materjal (osaline nimi)') },
+    input: { warehouse: z.string().optional().describe('Lao nimi'), article: z.string().optional().describe('Materjal (osaline nimi)') },
     run: async (a, ctx) => {
       const finance = canSeeFinance(ctx);
       const warehouseId = await resolveWarehouseId(a.warehouse);
-      const rows = await prisma.materialStock.findMany({
-        where: { ...(warehouseId ? { warehouseId } : {}), ...(a.material ? { material: { name: ci(a.material) } } : {}), OR: [{ qty: { not: 0 } }, { unpricedQty: { not: 0 } }] },
-        include: { material: { select: { name: true, unit: true, category: true } }, warehouse: { select: { name: true } } }
+      const rows = await prisma.articleStock.findMany({
+        where: { ...(warehouseId ? { warehouseId } : {}), ...(a.article ? { article: { name: ci(a.article) } } : {}), OR: [{ qty: { not: 0 } }, { unpricedQty: { not: 0 } }] },
+        include: { article: { select: { name: true, unit: true, category: true } }, warehouse: { select: { name: true } } }
       });
-      rows.sort((p, q) => p.warehouse.name.localeCompare(q.warehouse.name, 'et') || p.material.name.localeCompare(q.material.name, 'et'));
+      rows.sort((p, q) => p.warehouse.name.localeCompare(q.warehouse.name, 'et') || p.article.name.localeCompare(q.article.name, 'et'));
       return {
         total: rows.length, shown: rows.length,
         rows: rows.map((r) => ({
-          warehouse: r.warehouse.name, material: r.material.name, category: r.material.category, quantity: round2(r.qty), unit: r.material.unit, negative: r.qty < 0,
+          warehouse: r.warehouse.name, article: r.article.name, category: r.article.category, quantity: round2(r.qty), unit: r.article.unit, negative: r.qty < 0,
           ...(finance ? { value: round2(Number(r.value)), avgPrice: r.pricedQty > 0 ? round2(Number(r.value) / r.pricedQty) : null, unpricedQty: round2(r.unpricedQty) } : {})
         }))
       };
@@ -44,7 +44,7 @@ export const stockTools = [
     when: canSeeFinance,
     input: {
       warehouse: z.string().optional().describe('Lao nimi'),
-      material: z.string().optional().describe('Materjal (osaline nimi)'),
+      article: z.string().optional().describe('Materjal (osaline nimi)'),
       from: z.string().optional().describe('Alates (pp.kk.aaaa)'),
       to: z.string().optional().describe('Kuni, kaasa arvatud (pp.kk.aaaa)'),
       limit: z.number().int().min(1).max(1000).optional()
@@ -59,18 +59,18 @@ export const stockTools = [
       const [docLines, entryLines] = await Promise.all([
         prisma.stockDocumentLine.findMany({
           where: {
-            ...(a.material ? { material: { name: ci(a.material) } } : {}),
+            ...(a.article ? { article: { name: ci(a.article) } } : {}),
             document: { ...(date ? { date } : {}), ...(warehouseId ? { OR: [{ warehouseId }, { toWarehouseId: warehouseId }] } : {}) }
           },
           include: {
-            material: { select: { name: true, unit: true } },
+            article: { select: { name: true, unit: true } },
             document: { include: { warehouse: { select: { name: true } }, toWarehouse: { select: { name: true } }, supplier: { select: { name: true } } } }
           }
         }),
         prisma.workEntryLine.findMany({
           where: {
-            kind: 'MATERIAL', materialId: { not: null },
-            ...(a.material ? { label: ci(a.material) } : {}),
+            kind: 'MATERIAL', articleId: { not: null },
+            ...(a.article ? { label: ci(a.article) } : {}),
             entry: {
               ...(date ? { date } : {}),
               ...(warehouseId ? (warehouseId === defaultWh?.id ? { OR: [{ warehouseId }, { warehouseId: null }] } : { warehouseId }) : {})
@@ -86,16 +86,16 @@ export const stockTools = [
           }
         })
       ]);
-      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; material: string; quantity: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; cost: number | null };
+      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; cost: number | null };
       const rows: Row[] = [
         ...docLines.map((l) => ({
           sortDate: l.document.date, date: fmtDate(l.document.date), type: l.document.kind, warehouse: l.document.warehouse.name, toWarehouse: l.document.toWarehouse?.name ?? null,
-          material: l.material.name, quantity: round2(l.quantity), unit: l.material.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
+          article: l.article.name, quantity: round2(l.quantity), unit: l.article.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
           reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.fifoCost)
         })),
         ...entryLines.map((l) => ({
           sortDate: l.entry.date, date: fmtDate(l.entry.date), type: 'FIELD_WORK', warehouse: l.entry.warehouse?.name ?? defaultWh?.name ?? '',
-          material: l.label, quantity: round2(l.quantity), unit: l.unit,
+          article: l.label, quantity: round2(l.quantity), unit: l.unit,
           field: fieldLabel(l.entry.fieldWork.fieldSeason.field), work: workTypeDisplayName(l.entry.fieldWork.workType),
           cost: l.unitPrice === null ? null : round2(Number(l.unitPrice) * l.quantity)
         }))

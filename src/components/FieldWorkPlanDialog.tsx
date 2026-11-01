@@ -2,7 +2,7 @@
 import React, { useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
-import type { FieldWork, Material, WorkType } from '../types/fieldWork';
+import type { FieldWork, Article, WorkType } from '../types/fieldWork';
 import { FieldWorkPlanForm } from './FieldWorkPlanForm';
 
 interface FieldWorkPlanDialogProps {
@@ -11,13 +11,13 @@ interface FieldWorkPlanDialogProps {
   fieldAreaHa: number;
   work: FieldWork | null; // null = uus töö
   workTypes: WorkType[];
-  materials: Material[];
+  articles: Article[];
   workers: { id: string; name: string }[];
   onClose: () => void;
   onSaved: () => void;
 }
 
-export const FieldWorkPlanDialog: React.FC<FieldWorkPlanDialogProps> = ({ fieldSeasonId, fieldLabel, fieldAreaHa, work, workTypes, materials, workers, onClose, onSaved }) => {
+export const FieldWorkPlanDialog: React.FC<FieldWorkPlanDialogProps> = ({ fieldSeasonId, fieldLabel, fieldAreaHa, work, workTypes, articles, workers, onClose, onSaved }) => {
   // Esc sulgeb ainult selle dialoogi (capture-faasis, enne täisvaate Esc-käsitlejat)
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
@@ -40,7 +40,7 @@ export const FieldWorkPlanDialog: React.FC<FieldWorkPlanDialogProps> = ({ fieldS
           fieldAreaHa={fieldAreaHa}
           work={work}
           workTypes={workTypes}
-          materials={materials}
+          articles={articles}
           workers={workers}
           mode="edit"
           layout="dialog"

@@ -20,12 +20,12 @@ import {
   type FinanceStatus,
   type StoredLine
 } from './fieldWorkRules.ts';
-import { materialSeasonTotals } from './materialUsage.ts';
-import { recomputeMaterialStock, materialStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
-import { materialStockFields } from './stockRules.ts';
+import { articleSeasonTotals } from './articleUsage.ts';
+import { recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
+import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
-import { changeMaterialUnit } from './materialUnitChange.ts';
+import { changeArticleUnit } from './articleUnitChange.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -99,15 +99,15 @@ async function resolveEntryInput(body: any) {
     vehicleId ? prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true, name: true } }) : null,
     implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null
   ]);
-  const materialsIn: { materialId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.materials) ? body.materials : [];
-  const materialIds = materialsIn.map((m) => String(m.materialId ?? '')).filter(Boolean);
-  const materialRows = materialIds.length
-    ? await prisma.material.findMany({ where: { id: { in: materialIds } }, select: { id: true, name: true, unit: true } })
+  const articlesIn: { articleId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.articles) ? body.articles : [];
+  const articleIds = articlesIn.map((m) => String(m.articleId ?? '')).filter(Boolean);
+  const articleRows = articleIds.length
+    ? await prisma.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, name: true, unit: true } })
     : [];
-  const byId = new Map(materialRows.map((m) => [m.id, m]));
-  const materials = materialsIn
+  const byId = new Map(articleRows.map((m) => [m.id, m]));
+  const articles = articlesIn
     .map((m) => {
-      const row = byId.get(String(m.materialId ?? ''));
+      const row = byId.get(String(m.articleId ?? ''));
       const quantity = num(m.quantity);
       return row && quantity !== null
         ? { ...row, quantity, ratePerHa: num(m.ratePerHa), pria: priaAttrsIn(m.pria) }
@@ -135,7 +135,7 @@ async function resolveEntryInput(body: any) {
     implement,
     equipmentHours,
     fuelLiters,
-    materials,
+    articles,
     harvestTonnes,
     harvest,
     observations
@@ -171,8 +171,8 @@ const ENTRY_INCLUDE = {
   lines: { orderBy: { sortOrder: 'asc' as const } }
 };
 
-const materialIdsOf = (lines: { kind?: string; materialId: string | null }[]) =>
-  lines.filter((l) => (l.kind ?? 'MATERIAL') === 'MATERIAL' && l.materialId).map((l) => l.materialId as string);
+const articleIdsOf = (lines: { kind?: string; articleId: string | null }[]) =>
+  lines.filter((l) => (l.kind ?? 'MATERIAL') === 'MATERIAL' && l.articleId).map((l) => l.articleId as string);
 
 function entryDto(e: any, withFinance: boolean) {
   const lines = (e.lines ?? []) as any[];
@@ -198,8 +198,8 @@ function entryDto(e: any, withFinance: boolean) {
     laborHours: e.laborHours,
     startTime: e.startTime ?? null,
     endTime: e.endTime ?? null,
-    materials: lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({
-      materialId: l.materialId, name: l.label, unit: l.unit, quantity: l.quantity, ratePerHa: l.ratePerHa,
+    articles: lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({
+      articleId: l.articleId, name: l.label, unit: l.unit, quantity: l.quantity, ratePerHa: l.ratePerHa,
       priaRegister: l.priaRegister, priaKind: l.priaKind, priaSpec: l.priaSpec, activeIngredient: l.activeIngredient,
       nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa
     })),
@@ -241,7 +241,7 @@ async function planInput(b: any) {
   const lines = Array.isArray(b?.lines)
     ? b.lines.map((l: any, i: number) => ({
         kind: l?.kind === 'HARVEST' ? 'HARVEST' : 'MATERIAL',
-        materialId: text(l?.materialId, 64),
+        articleId: text(l?.articleId, 64),
         label: text(l?.label, 200) ?? '',
         unit: text(l?.unit, 20) ?? '',
         ratePerHa: num(l?.ratePerHa),
@@ -294,7 +294,7 @@ const toStored = (l: any): StoredLine => ({
   kind: l.kind,
   vehicleId: l.vehicleId,
   implementId: l.implementId,
-  materialId: l.materialId,
+  articleId: l.articleId,
   label: l.label,
   quantity: l.quantity,
   unit: l.unit,
@@ -686,30 +686,30 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
 
   // --- Kulumaterjalid ---
-  if (pathname === '/api/materials' && method === 'GET') {
+  if (pathname === '/api/articles' && method === 'GET') {
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);
-    const stock = await tenantTransaction((tx) => materialStockSummary(tx, warehouseId));
+    const stock = await tenantTransaction((tx) => articleStockSummary(tx, warehouseId));
     const finance = canSeeFinance(req);
-    const rows = await prisma.material.findMany({
+    const rows = await prisma.article.findMany({
       orderBy: [{ category: 'asc' }, { name: 'asc' }],
       include: { _count: { select: { entryLines: true } } }
     });
     const year = int(url.searchParams.get('year'));
-    let totals: ReturnType<typeof materialSeasonTotals> | null = null;
+    let totals: ReturnType<typeof articleSeasonTotals> | null = null;
     if (year) {
       // Hooaja kogused: plaaniread (kõik hooaja tööd, ka tehtud) ja kanderead
       const [planRows, entryRows] = await Promise.all([
         prisma.fieldWorkLine.findMany({
-          where: { kind: 'MATERIAL', materialId: { not: null }, fieldWork: { fieldSeason: { year } } },
-          select: { materialId: true, ratePerHa: true, fieldWork: { select: { plannedAreaHa: true, fieldSeason: { select: { areaHa: true } } } } }
+          where: { kind: 'MATERIAL', articleId: { not: null }, fieldWork: { fieldSeason: { year } } },
+          select: { articleId: true, ratePerHa: true, fieldWork: { select: { plannedAreaHa: true, fieldSeason: { select: { areaHa: true } } } } }
         }),
         prisma.workEntryLine.findMany({
-          where: { kind: 'MATERIAL', materialId: { not: null }, entry: { fieldWork: { fieldSeason: { year } } } },
-          select: { materialId: true, quantity: true }
+          where: { kind: 'MATERIAL', articleId: { not: null }, entry: { fieldWork: { fieldSeason: { year } } } },
+          select: { articleId: true, quantity: true }
         })
       ]);
-      totals = materialSeasonTotals(
-        planRows.map((l) => ({ materialId: l.materialId, ratePerHa: l.ratePerHa, areaHa: l.fieldWork.plannedAreaHa ?? l.fieldWork.fieldSeason.areaHa })),
+      totals = articleSeasonTotals(
+        planRows.map((l) => ({ articleId: l.articleId, ratePerHa: l.ratePerHa, areaHa: l.fieldWork.plannedAreaHa ?? l.fieldWork.fieldSeason.areaHa })),
         entryRows
       );
     }
@@ -720,13 +720,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         // valitud hooaja korral kannete arv selle hooaja kohta, muidu kõik kanded
         usageCount: totals ? (totals.get(m.id)?.entryCount ?? 0) : _count.entryLines,
         ...(totals ? { plannedQty: totals.get(m.id)?.plannedQty ?? 0, usedQty: totals.get(m.id)?.usedQty ?? 0 } : {}),
-        ...materialStockFields(finance, stock.get(m.id)),
+        ...articleStockFields(finance, stock.get(m.id)),
         stockIssueCount: m.stockIssueCount
       }))
     );
     return true;
   }
-  if (pathname === '/api/materials' && method === 'POST') {
+  if (pathname === '/api/articles' && method === 'POST') {
     const b = await parseBody(req, MAX_BODY_BYTES);
     const name = text(b?.name, 160);
     const category = oneOf(b?.category, MATERIAL_CATEGORIES);
@@ -740,17 +740,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct) };
     // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
-    const old = id ? await prisma.material.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true } }) : null;
+    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true } }) : null;
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
     // Teisendustegur (1 vana ühik = tegur uut ühikut): kasutaja antud või kaaluühikute korral automaatne
     const unitFactor = unitChanged ? (num(b?.unitFactor) ?? convertQty(1, old!.unit, unit)) : null;
     if (unitChanged && !(unitFactor && unitFactor > 0)) {
-      const docLines = await prisma.stockDocumentLine.count({ where: { materialId: id! } });
+      const docLines = await prisma.stockDocumentLine.count({ where: { articleId: id! } });
       if (docLines) {
         json(res, { error: `Materjalil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
       }
-      const lines = await prisma.workEntryLine.findMany({ where: { materialId: id!, kind: 'MATERIAL' }, select: { unit: true } });
+      const lines = await prisma.workEntryLine.findMany({ where: { articleId: id!, kind: 'MATERIAL' }, select: { unit: true } });
       const bad = lines.filter((l) => convertQty(1, l.unit, unit) === null).length;
       if (bad && b?.confirmUnitChange !== true) {
         json(res, { error: `${bad} kannet ei saa ühikusse "${unit}" teisendada ja need jäävad laoarvestusest välja.`, needsConfirm: true }, 409);
@@ -759,17 +759,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     try {
       const saved = await tenantTransaction(async (tx) => {
-        let s = id ? await tx.material.update({ where: { id }, data: unitFactor ? { ...data, unit: old!.unit } : data }) : await tx.material.create({ data });
+        let s = id ? await tx.article.update({ where: { id }, data: unitFactor ? { ...data, unit: old!.unit } : data }) : await tx.article.create({ data });
         if (unitFactor) {
-          await changeMaterialUnit(tx, s.id, old!.unit, unit, unitFactor);
-          s = await tx.material.findUniqueOrThrow({ where: { id: s.id } });
-        } else if (unitChanged) await recomputeMaterialStock(tx, [s.id]);
+          await changeArticleUnit(tx, s.id, old!.unit, unit, unitFactor);
+          s = await tx.article.findUniqueOrThrow({ where: { id: s.id } });
+        } else if (unitChanged) await recomputeArticleStock(tx, [s.id]);
         // Ümbernimetamine: plaani- ja kanderead saavad uue nime; vana nimi jääb varunimeks (PRIA import seob selle materjaliga)
         if (old && old.name !== name) {
-          await tx.fieldWorkLine.updateMany({ where: { materialId: s.id }, data: { label: name } });
-          await tx.workEntryLine.updateMany({ where: { materialId: s.id }, data: { label: name } });
+          await tx.fieldWorkLine.updateMany({ where: { articleId: s.id }, data: { label: name } });
+          await tx.workEntryLine.updateMany({ where: { articleId: s.id }, data: { label: name } });
           const aliases = [...new Set([...old.aliases, nameKey(old.name)])].filter((a) => a !== nameKey(name));
-          return tx.material.update({ where: { id: s.id }, data: { aliases } });
+          return tx.article.update({ where: { id: s.id }, data: { aliases } });
         }
         return s;
       }, { timeout: 60000 }); // ühiku teisendus uuendab iga kande-, plaani- ja laokande rea eraldi
@@ -782,13 +782,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   // Materjali asendamine teisega (nt PRIA kirjaviga): plaanid, kanded ja laokanded viiakse sihtmaterjalile,
   // asendatav kustutatakse ja tema nimi jääb sihtmaterjalile varunimeks (PRIA import seob selle edaspidi sihtmaterjaliga)
-  if (pathname.startsWith('/api/materials/') && pathname.endsWith('/merge') && method === 'POST') {
-    const id = decodeURIComponent(pathname.slice('/api/materials/'.length, -'/merge'.length));
+  if (pathname.startsWith('/api/articles/') && pathname.endsWith('/merge') && method === 'POST') {
+    const id = decodeURIComponent(pathname.slice('/api/articles/'.length, -'/merge'.length));
     const b = await parseBody(req, MAX_BODY_BYTES);
     const targetId = text(b?.targetId, 64);
     const [source, target] = await Promise.all([
-      prisma.material.findUnique({ where: { id } }),
-      targetId ? prisma.material.findUnique({ where: { id: targetId } }) : null
+      prisma.article.findUnique({ where: { id } }),
+      targetId ? prisma.article.findUnique({ where: { id: targetId } }) : null
     ]);
     if (!source || !target || source.id === target.id) {
       json(res, { error: 'Vali materjal, millega asendada' }, 400);
@@ -800,20 +800,20 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
-    const docLines = await prisma.stockDocumentLine.findMany({ where: { materialId: source.id }, select: { id: true, quantity: true } });
+    const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true } });
     if (docLines.length && convertQty(1, source.unit, target.unit) === null) {
       json(res, { error: `Materjalil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
       return true;
     }
     const counts = await tenantTransaction(async (tx) => {
-      const plans = await tx.fieldWorkLine.updateMany({ where: { materialId: source.id }, data: { materialId: target.id, label: target.name } });
-      const entries = await tx.workEntryLine.updateMany({ where: { materialId: source.id }, data: { materialId: target.id, label: target.name } });
+      const plans = await tx.fieldWorkLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id, label: target.name } });
+      const entries = await tx.workEntryLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id, label: target.name } });
       for (const l of docLines) {
-        await tx.stockDocumentLine.update({ where: { id: l.id }, data: { materialId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
+        await tx.stockDocumentLine.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
       }
       const aliases = [...new Set([...target.aliases, ...source.aliases, nameKey(source.name)])].filter((a) => a !== nameKey(target.name));
       // Sihtmaterjali tühjad PRIA väljad täidetakse asendatava omadest
-      await tx.material.update({
+      await tx.article.update({
         where: { id: target.id },
         data: {
           aliases,
@@ -828,22 +828,22 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           kPct: target.kPct ?? source.kPct
         }
       });
-      await tx.material.delete({ where: { id: source.id } });
-      await recomputeMaterialStock(tx, [target.id]);
+      await tx.article.delete({ where: { id: source.id } });
+      await recomputeArticleStock(tx, [target.id]);
       return { plans: plans.count, entries: entries.count, stockLines: docLines.length };
     });
     json(res, { success: true, ...counts });
     return true;
   }
-  if (pathname.startsWith('/api/materials/') && method === 'DELETE') {
-    const id = idOf('/api/materials/');
-    const material = await prisma.material.findUnique({ where: { id }, select: { createdBy: true } });
-    if (material && deleteDenied(req, res, material.createdBy)) return true;
+  if (pathname.startsWith('/api/articles/') && method === 'DELETE') {
+    const id = idOf('/api/articles/');
+    const article = await prisma.article.findUnique({ where: { id }, select: { createdBy: true } });
+    if (article && deleteDenied(req, res, article.createdBy)) return true;
     // Materjal võib olla kasutusel nii kannetes kui ka tööde plaanides (mõlemad keelavad kustutamise)
     const [usedInEntries, usedInPlans, usedInStock] = await Promise.all([
-      prisma.workEntryLine.count({ where: { materialId: id } }),
-      prisma.fieldWorkLine.count({ where: { materialId: id } }),
-      prisma.stockDocumentLine.count({ where: { materialId: id } })
+      prisma.workEntryLine.count({ where: { articleId: id } }),
+      prisma.fieldWorkLine.count({ where: { articleId: id } }),
+      prisma.stockDocumentLine.count({ where: { articleId: id } })
     ]);
     if (usedInEntries || usedInPlans || usedInStock) {
       const where = [
@@ -854,7 +854,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: `Materjal on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
-    await prisma.material.delete({ where: { id } });
+    await prisma.article.delete({ where: { id } });
     json(res, { success: true, id });
     return true;
   }
@@ -1192,7 +1192,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
             fieldWorkId: work.id, createdById: userId, lines: { create: drafts }
           }
         });
-        await recomputeMaterialStock(tx, materialIdsOf(drafts));
+        await recomputeArticleStock(tx, articleIdsOf(drafts));
         return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
@@ -1235,7 +1235,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
             lines: { create: merged.lines.map((l) => ({ ...l, unitPrice: l.unitPrice })) }
           }
         });
-        await recomputeMaterialStock(tx, [...materialIdsOf(old.lines), ...materialIdsOf(merged.lines)]);
+        await recomputeArticleStock(tx, [...articleIdsOf(old.lines), ...articleIdsOf(merged.lines)]);
         return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
@@ -1251,7 +1251,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/work-entries/') && method === 'DELETE') {
     const id = idOf('/api/work-entries/');
-    const e = await prisma.workEntry.findUnique({ where: { id }, include: { lines: { select: { kind: true, materialId: true } }, fieldWork: { select: { status: true } } } });
+    const e = await prisma.workEntry.findUnique({ where: { id }, include: { lines: { select: { kind: true, articleId: true } }, fieldWork: { select: { status: true } } } });
     if (!e) {
       json(res, { error: 'Kannet ei leitud' }, 404);
       return true;
@@ -1267,7 +1267,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     await tenantTransaction(async (tx) => {
       await tx.workEntry.delete({ where: { id } });
-      await recomputeMaterialStock(tx, materialIdsOf(e.lines));
+      await recomputeArticleStock(tx, articleIdsOf(e.lines));
     });
     await syncFieldWorkStatus(e.fieldWorkId, false, userId, prisma);
     json(res, { success: true, id });

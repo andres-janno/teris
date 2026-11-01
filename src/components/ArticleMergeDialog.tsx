@@ -1,34 +1,34 @@
-// src/components/MaterialMergeDialog.tsx — kulumaterjali asendamine teisega (nt PRIA kirjaviga "Stabilan 750SL" → "Stabilan 750 SL")
+// src/components/ArticleMergeDialog.tsx — kulumaterjali asendamine teisega (nt PRIA kirjaviga "Stabilan 750SL" → "Stabilan 750 SL")
 import React, { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { GitMerge, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
-import type { Material } from '../types/fieldWork';
+import type { Article } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
 
 // Võrdlusvõti: tõstutundetu, tühikute ja kirjavahemärkideta ("Stabilan 750SL" = "Stabilan 750 SL")
 const looseKey = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
 
 interface Props {
-  source: Material;
-  materials: Material[];
+  source: Article;
+  articles: Article[];
   onClose: () => void;
   onMerged: () => void;
 }
 
-export const MaterialMergeDialog: React.FC<Props> = ({ source, materials, onClose, onMerged }) => {
+export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose, onMerged }) => {
   // Sama liigi materjalid; sarnase nimega eespool
   const options = useMemo(() => {
     const key = looseKey(source.name);
-    const similar = (m: Material) => {
+    const similar = (m: Article) => {
       const k = looseKey(m.name);
       return k === key || k.startsWith(key) || key.startsWith(k) ? 0 : 1;
     };
-    return materials
+    return articles
       .filter((m) => m.id !== source.id && m.category === source.category)
       .sort((a, b) => similar(a) - similar(b) || a.name.localeCompare(b.name, 'et'));
-  }, [materials, source]);
+  }, [articles, source]);
   const [targetId, setTargetId] = useState(() => {
     const first = options[0];
     return first && looseKey(first.name) === looseKey(source.name) ? first.id : '';
@@ -52,7 +52,7 @@ export const MaterialMergeDialog: React.FC<Props> = ({ source, materials, onClos
     if (!target) return;
     setBusy(true);
     try {
-      const r = await api.mergeMaterial(source.id, target.id);
+      const r = await api.mergeArticle(source.id, target.id);
       await alertDialog(`Asendatud: ${r.plans} plaanirida, ${r.entries} kanderida, ${r.stockLines} laokande rida. "${source.name}" on kustutatud.`);
       onMerged();
     } catch (err) {
@@ -80,7 +80,7 @@ export const MaterialMergeDialog: React.FC<Props> = ({ source, materials, onClos
               {options.map((m) => <option key={m.id} value={m.id}>{m.name}{m.unit !== source.unit ? ` (${m.unit})` : ''}</option>)}
             </select>
           </div>
-          <p className="muted material-merge-info">
+          <p className="muted article-merge-info">
             Kõigis töödes, kannetes ja laokannetes pannakse „{source.name}“ asemele {target ? `„${target.name}“` : 'valitud materjal'}.
             „{source.name}“ kustutatakse ja tema nimi jääb valitud materjalile varunimeks, et PRIA uuesti importimisel seotaks see kohe õige materjaliga.
             {target && target.unit !== source.unit && ` Ühikud erinevad (${source.unit} → ${target.unit}): laokannete kogused teisendatakse, kannete kogused jäävad oma ühikusse.`}

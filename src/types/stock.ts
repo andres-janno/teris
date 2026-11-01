@@ -26,8 +26,8 @@ export interface Warehouse {
 
 export interface StockDocumentLine {
   id: string;
-  materialId: string;
-  materialName: string;
+  articleId: string;
+  articleName: string;
   unit: string;
   quantity: number;
   amount: number | null;
@@ -63,7 +63,7 @@ export interface StockDocumentInput {
   documentNo?: string | null;
   writeOffReason?: WriteOffReason | null;
   notes?: string | null;
-  lines: { materialId: string; quantity: string | number; amount?: string | number | null }[];
+  lines: { articleId: string; quantity: string | number; amount?: string | number | null }[];
 }
 
 export interface StockDocumentFilter {
@@ -96,13 +96,13 @@ export interface StockMovement {
   workTypeName?: string;
 }
 
-export interface MaterialMovements {
+export interface ArticleMovements {
   unit: string;
   movements: StockMovement[]; // uuemad eespool
   issues: { entryId: string; date: string; quantity: number; unit: string; fieldName: string; workTypeName: string }[];
 }
 
 export interface StockLevel {
-  materialId: string;
+  articleId: string;
   qty: number;
 }

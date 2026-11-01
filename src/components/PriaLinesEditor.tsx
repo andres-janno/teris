@@ -2,15 +2,15 @@
 // Kogus ha kohta ja kokku arvutavad teineteist pindala järgi (PRIA reegel). Samas failis saagi ja seire plokid.
 import React from 'react';
 import { Plus, Trash2 } from 'lucide-react';
-import type { FieldWorkPlanLine, Material, WorkEntryMaterial, WorkEntryObservation } from '../types/fieldWork';
+import type { FieldWorkPlanLine, Article, WorkEntryArticle, WorkEntryObservation } from '../types/fieldWork';
 import {
   PRIA_ACTIVITY, SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS,
-  CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, materialCategoryFor
+  CROP_TYPES, YIELD_TYPES, OBSERVATION_UNITS, totalFromRate, rateFromTotal, priaArticleKindFor
 } from '../services/pria';
 import { convertQty } from '../services/units';
 
 export interface PriaRow {
-  materialId: string; label: string; unit: string; ratePerHa: string; total: string;
+  articleId: string; label: string; unit: string; ratePerHa: string; total: string;
   priaRegister: string; priaKind: string; priaSpec: string; activeIngredient: string; nKgHa: string; pKgHa: string; kKgHa: string;
 }
 
@@ -23,16 +23,16 @@ const parseNum = (s: string): number | null => {
 const fmt = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
 
 export const emptyPriaRow = (): PriaRow => ({
-  materialId: '', label: '', unit: 'kg', ratePerHa: '', total: '', priaRegister: '', priaKind: '', priaSpec: '', activeIngredient: '', nKgHa: '', pKgHa: '', kKgHa: ''
+  articleId: '', label: '', unit: 'kg', ratePerHa: '', total: '', priaRegister: '', priaKind: '', priaSpec: '', activeIngredient: '', nKgHa: '', pKgHa: '', kKgHa: ''
 });
 
-// Plaanirida (FieldWorkPlanLine) või kande materjal (WorkEntryMaterial) vormireaks
-export const planLineToRow = (l: FieldWorkPlanLine | WorkEntryMaterial, areaHa: number): PriaRow => {
+// Plaanirida (FieldWorkPlanLine) või kande materjal (WorkEntryArticle) vormireaks
+export const planLineToRow = (l: FieldWorkPlanLine | WorkEntryArticle, areaHa: number): PriaRow => {
   const label = 'label' in l ? l.label : l.name;
   const quantity = 'quantity' in l ? l.quantity : null;
   const ratePerHa = l.ratePerHa ?? null;
   return {
-    materialId: l.materialId ?? '', label: label ?? '', unit: l.unit ?? 'kg',
+    articleId: l.articleId ?? '', label: label ?? '', unit: l.unit ?? 'kg',
     ratePerHa: fmt(ratePerHa ?? rateFromTotal(quantity, areaHa)),
     total: fmt(quantity ?? totalFromRate(ratePerHa, areaHa)),
     priaRegister: l.priaRegister ?? '', priaKind: l.priaKind ?? '', priaSpec: l.priaSpec ?? '', activeIngredient: l.activeIngredient ?? '',
@@ -58,10 +58,10 @@ export const recomputeHarvestTotal = (h: HarvestRow, areaHa: number | null): Har
 };
 
 export const rowToPlanLine = (r: PriaRow): FieldWorkPlanLine | null =>
-  r.label.trim() ? { kind: 'MATERIAL', materialId: r.materialId || null, label: r.label.trim(), unit: r.unit, ratePerHa: parseNum(r.ratePerHa), ...rowPria(r) } : null;
+  r.label.trim() ? { kind: 'MATERIAL', articleId: r.articleId || null, label: r.label.trim(), unit: r.unit, ratePerHa: parseNum(r.ratePerHa), ...rowPria(r) } : null;
 
 // Materjali N/P/K sisalduse (%) järgi rea N/P/K kg/ha; ainult massiühikus materjalil, mille sisaldus on teada
-const npkFor = (m: Material | undefined, ratePerHa: string): Partial<PriaRow> => {
+const npkFor = (m: Article | undefined, ratePerHa: string): Partial<PriaRow> => {
   if (!m || (m.nPct == null && m.pPct == null && m.kPct == null)) return {};
   const rate = parseNum(ratePerHa);
   const kgHa = rate == null ? null : convertQty(rate, m.unit, 'kg');
@@ -80,31 +80,31 @@ interface PriaLinesEditorProps {
   activity: string;
   rows: PriaRow[];
   onChange: (rows: PriaRow[]) => void;
-  materials: Material[];
+  articles: Article[];
   areaHa: number;
   showTotals: boolean; // kandel kogus kokku, plaanil ainult norm
 }
 
-export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, materials, areaHa, showTotals }) => {
-  const category = materialCategoryFor(activity);
-  const options = materials.filter((m) => (m.category === category && m.isActive) || rows.some((r) => r.materialId === m.id));
+export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals }) => {
+  const category = priaArticleKindFor(activity);
+  const options = articles.filter((m) => (m.category === category && m.isActive) || rows.some((r) => r.articleId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
   const isFert = activity === PRIA_ACTIVITY.FERTILIZING || activity === PRIA_ACTIVITY.LIMING;
   const isTkv = activity === PRIA_ACTIVITY.PLANT_PROTECTION;
   const set = (i: number, patch: Partial<PriaRow>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...patch } : r)));
-  const materialOf = (r: PriaRow) => materials.find((m) => m.id === r.materialId);
-  const setRate = (i: number, v: string) => set(i, { ratePerHa: v, total: fmt(totalFromRate(parseNum(v), areaHa)), ...npkFor(materialOf(rows[i]), v) });
+  const articleOf = (r: PriaRow) => articles.find((m) => m.id === r.articleId);
+  const setRate = (i: number, v: string) => set(i, { ratePerHa: v, total: fmt(totalFromRate(parseNum(v), areaHa)), ...npkFor(articleOf(rows[i]), v) });
   const setTotal = (i: number, v: string) => {
     const ratePerHa = fmt(rateFromTotal(parseNum(v), areaHa));
-    set(i, { total: v, ratePerHa, ...npkFor(materialOf(rows[i]), ratePerHa) });
+    set(i, { total: v, ratePerHa, ...npkFor(articleOf(rows[i]), ratePerHa) });
   };
   // Materjali valimisel tulevad PRIA väljad kulumaterjalide registrist; registris täitmata väli jääb reale alles
-  const pickMaterial = (i: number, id: string) => {
-    const m = materials.find((x) => x.id === id);
-    if (!m) return set(i, { materialId: '', label: '' });
+  const pickArticle = (i: number, id: string) => {
+    const m = articles.find((x) => x.id === id);
+    if (!m) return set(i, { articleId: '', label: '' });
     const r = rows[i];
     set(i, {
-      materialId: m.id, label: m.name, unit: m.unit,
+      articleId: m.id, label: m.name, unit: m.unit,
       priaRegister: m.priaRegister || r.priaRegister,
       priaKind: m.priaKind || r.priaKind,
       priaSpec: m.priaSpec || r.priaSpec,
@@ -141,9 +141,9 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
             {registersFor(activity).map((x) => <option key={x} value={x}>{x}</option>)}
             {r.priaRegister && !registersFor(activity).includes(r.priaRegister) && <option value={r.priaRegister}>{r.priaRegister}</option>}
           </select>
-          <div className="pria-material-cell">
-            <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.materialId} onChange={(e) => pickMaterial(i, e.target.value)}>
-              <option value="">{r.label && !r.materialId ? r.label : '– Kulumaterjalidest –'}</option>
+          <div className="pria-article-cell">
+            <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(e) => pickArticle(i, e.target.value)}>
+              <option value="">{r.label && !r.articleId ? r.label : '– Kulumaterjalidest –'}</option>
               {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
             </select>
           </div>

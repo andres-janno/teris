@@ -3,7 +3,7 @@ import React, { useMemo, useState } from 'react';
 import { Plus, Pencil, ChevronDown, ChevronRight, FileInput } from 'lucide-react';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import { formatQty } from '../services/units';
-import { WORK_PHASE_META, WORK_PHASES, type FieldSeasonWorks, type FieldWork, type WorkEntry, type WorkPhase, type FieldWorkPlanLine, type WorkEntryMaterial } from '../types/fieldWork';
+import { WORK_PHASE_META, WORK_PHASES, type FieldSeasonWorks, type FieldWork, type WorkEntry, type WorkPhase, type FieldWorkPlanLine, type WorkEntryArticle } from '../types/fieldWork';
 
 const qty = (n: number | null | undefined) => (n == null ? '' : formatQty(n));
 const num = (n: number | null | undefined, d = 2) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: d }));
@@ -39,7 +39,7 @@ const EntryRow: React.FC<{ work: FieldWork; entry: WorkEntry; onEdit?: () => voi
         {entry.fuelLiters != null && <span>{num(entry.fuelLiters, 1)} l</span>}
         {entry.source === 'PRIA_IMPORT' && <span className="fwt-badge" title="Imporditud PRIA põlluraamatust"><FileInput size={12} /> PRIA</span>}
       </span>
-      {entry.materials.map((m: WorkEntryMaterial, i) => {
+      {entry.articles.map((m: WorkEntryArticle, i) => {
         const plan = planByKey.get(m.name.toLowerCase());
         const differs = plan?.ratePerHa != null && m.ratePerHa != null && Math.abs(plan.ratePerHa - m.ratePerHa) > 0.005;
         return (
@@ -117,7 +117,7 @@ export const FieldWorksTimeline: React.FC<FieldWorksTimelineProps> = ({ data, lo
   const works = data?.works ?? [];
   const { done, plannedOnly, npk } = useMemo(() => {
     const npk = { n: 0, p: 0, k: 0 };
-    for (const w of works) for (const e of w.entries) for (const m of e.materials) {
+    for (const w of works) for (const e of w.entries) for (const m of e.articles) {
       const share = e.areaHa && data?.areaHa ? e.areaHa / data.areaHa : 1;
       npk.n += (m.nKgHa ?? 0) * share; npk.p += (m.pKgHa ?? 0) * share; npk.k += (m.kKgHa ?? 0) * share;
     }

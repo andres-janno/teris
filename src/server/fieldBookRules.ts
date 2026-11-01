@@ -1,8 +1,8 @@
 // src/server/fieldBookRules.ts — PRIA põlluraamatu rea sidumine Terise tööga ja rea tooted → read.
 // Puhtad funktsioonid (andmebaasita), kasutab fieldBookImport.ts.
 import type { FieldBookImportOperation } from '../types/fieldOperation.ts';
-import type { MaterialCategory, WorkPhase } from '../types/fieldWork.ts';
-import { PRIA_ACTIVITY, PRIA_TILLAGE_ACTIVITIES, baseUnit, daysApart, materialCategoryFor, nameKey, type PriaAttrs } from '../services/pria.ts';
+import type { PriaArticleKind, WorkPhase } from '../types/fieldWork.ts';
+import { PRIA_ACTIVITY, PRIA_TILLAGE_ACTIVITIES, baseUnit, daysApart, priaArticleKindFor, nameKey, type PriaAttrs } from '../services/pria.ts';
 
 export const MATCH_TOLERANCE_DAYS = 2;
 
@@ -51,7 +51,7 @@ export interface OperationLine extends PriaAttrs {
   amount: number | null;
   unit: string;
   perHa: boolean; // kogus on hektari kohta (MATERIAL, HARVEST)
-  materialCategory: MaterialCategory | null;
+  priaArticleKind: PriaArticleKind | null;
 }
 
 export function operationLines(op: FieldBookImportOperation): OperationLine[] {
@@ -63,11 +63,11 @@ export function operationLines(op: FieldBookImportOperation): OperationLine[] {
       nKgHa: p.nKgHa, pKgHa: p.pKgHa, kKgHa: p.kKgHa
     };
     if (op.type === PRIA_ACTIVITY.HARVEST) {
-      out.push({ ...common, kind: 'HARVEST', label: 'Saak', amount: p.amount, unit: baseUnit(unit) || 't', perHa: unit.endsWith('/ha'), priaSpec: op.method, materialCategory: null });
+      out.push({ ...common, kind: 'HARVEST', label: 'Saak', amount: p.amount, unit: baseUnit(unit) || 't', perHa: unit.endsWith('/ha'), priaSpec: op.method, priaArticleKind: null });
     } else if (op.type === PRIA_ACTIVITY.MONITORING) {
-      if (p.name) out.push({ ...common, kind: 'OBSERVATION', label: p.name, amount: p.amount, unit, perHa: false, materialCategory: null });
+      if (p.name) out.push({ ...common, kind: 'OBSERVATION', label: p.name, amount: p.amount, unit, perHa: false, priaArticleKind: null });
     } else if (p.name) {
-      out.push({ ...common, kind: 'MATERIAL', label: p.name, amount: p.amount, unit: baseUnit(unit), perHa: unit.endsWith('/ha'), materialCategory: materialCategoryFor(op.type, p.category) });
+      out.push({ ...common, kind: 'MATERIAL', label: p.name, amount: p.amount, unit: baseUnit(unit), perHa: unit.endsWith('/ha'), priaArticleKind: priaArticleKindFor(op.type, p.category) });
     }
   }
   return out;

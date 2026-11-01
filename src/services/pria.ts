@@ -1,6 +1,6 @@
 // src/services/pria.ts — PRIA e-põlluraamatu klassifikaatorid ja puhtad abifunktsioonid
 // (kasutavad nii klient kui server). Väärtused on PRIA andmed ja jäävad eesti keelde.
-import type { MaterialCategory, WorkPhase } from '../types/fieldWork.ts';
+import type { PriaArticleKind, WorkPhase } from '../types/fieldWork.ts';
 
 export interface PriaActivity {
   name: string;
@@ -115,7 +115,7 @@ export const EMPTY_PRIA_ATTRS: PriaAttrs = {
   priaRegister: null, priaKind: null, priaSpec: null, activeIngredient: null, nKgHa: null, pKgHa: null, kKgHa: null
 };
 
-export function materialCategoryFor(activity: string, _priaRegister?: string | null): MaterialCategory {
+export function priaArticleKindFor(activity: string, _priaRegister?: string | null): PriaArticleKind {
   if (activity === PRIA_ACTIVITY.SOWING) return 'SEED';
   if (activity === PRIA_ACTIVITY.FERTILIZING || activity === PRIA_ACTIVITY.LIMING) return 'FERTILIZER';
   if (activity === PRIA_ACTIVITY.PLANT_PROTECTION) return 'PLANT_PROTECTION';

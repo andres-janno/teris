@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
-  PRIA_ACTIVITIES, LEGACY_WORK_TYPE_MAP, materialCategoryFor, baseUnit, totalFromRate, rateFromTotal, nameKey, daysApart
+  PRIA_ACTIVITIES, LEGACY_WORK_TYPE_MAP, priaArticleKindFor, baseUnit, totalFromRate, rateFromTotal, nameKey, daysApart
 } from './pria';
 
 describe('PRIA_ACTIVITIES', () => {
@@ -17,13 +17,13 @@ describe('PRIA_ACTIVITIES', () => {
   });
 });
 
-describe('materialCategoryFor', () => {
+describe('priaArticleKindFor', () => {
   it('kategooria tegevuse järgi', () => {
-    expect(materialCategoryFor('Külvamine/istutamine')).toBe('SEED');
-    expect(materialCategoryFor('Väetamine')).toBe('FERTILIZER');
-    expect(materialCategoryFor('Lupjamine')).toBe('FERTILIZER');
-    expect(materialCategoryFor('Taimekaitsevahendi kasutamine', 'Märgaja/kleepaine')).toBe('PLANT_PROTECTION');
-    expect(materialCategoryFor('Kündmine')).toBe('OTHER');
+    expect(priaArticleKindFor('Külvamine/istutamine')).toBe('SEED');
+    expect(priaArticleKindFor('Väetamine')).toBe('FERTILIZER');
+    expect(priaArticleKindFor('Lupjamine')).toBe('FERTILIZER');
+    expect(priaArticleKindFor('Taimekaitsevahendi kasutamine', 'Märgaja/kleepaine')).toBe('PLANT_PROTECTION');
+    expect(priaArticleKindFor('Kündmine')).toBe('OTHER');
   });
 });
 

@@ -16,7 +16,7 @@ type Fn = (args: any) => Promise<unknown>;
 // käitusajal samad päringud (vt fieldWorkStatus.ts).
 export interface ImportClientLike extends PrismaClientLike {
   workType: { findFirst: Fn; create: Fn };
-  material: { findFirst: Fn; create: Fn };
+  article: { findFirst: Fn; create: Fn };
   fieldWork: PrismaClientLike['fieldWork'] & { findMany: Fn; findFirst: Fn; create: Fn };
   fieldWorkLine: { create: Fn };
   workEntry: PrismaClientLike['workEntry'] & { create: Fn };
@@ -38,14 +38,14 @@ export async function ensurePriaWorkTypes(client: ImportClient): Promise<PriaWor
   return map;
 }
 
-async function materialFor(tx: Tx, line: OperationLine, cache: Map<string, { id: string; name: string }>): Promise<string | null> {
-  if (line.kind !== 'MATERIAL' || !line.materialCategory) return null;
-  const key = `${line.materialCategory}:${nameKey(line.label)}`;
+async function articleFor(tx: Tx, line: OperationLine, cache: Map<string, { id: string; name: string }>): Promise<string | null> {
+  if (line.kind !== 'MATERIAL' || !line.priaArticleKind) return null;
+  const key = `${line.priaArticleKind}:${nameKey(line.label)}`;
   let hit = cache.get(key);
   if (!hit) {
-    const existing = await tx.material.findFirst({ where: { category: line.materialCategory, name: { equals: line.label, mode: 'insensitive' } } })
-      ?? await tx.material.findFirst({ where: { category: line.materialCategory, aliases: { has: nameKey(line.label) } } });
-    hit = existing ?? await tx.material.create({ data: { name: line.label, category: line.materialCategory, unit: line.unit || 'kg' } });
+    const existing = await tx.article.findFirst({ where: { category: line.priaArticleKind, name: { equals: line.label, mode: 'insensitive' } } })
+      ?? await tx.article.findFirst({ where: { category: line.priaArticleKind, aliases: { has: nameKey(line.label) } } });
+    hit = existing ?? await tx.article.create({ data: { name: line.label, category: line.priaArticleKind, unit: line.unit || 'kg' } });
     cache.set(key, { id: hit.id, name: hit.name });
   }
   // Varunime järgi leitud materjal: real kasutatakse materjali õiget nime (asendatud kirjaviga ei tule tagasi)
@@ -53,9 +53,9 @@ async function materialFor(tx: Tx, line: OperationLine, cache: Map<string, { id:
   return hit.id;
 }
 
-const planLine = (l: OperationLine, materialId: string | null, sortOrder: number) => ({
+const planLine = (l: OperationLine, articleId: string | null, sortOrder: number) => ({
   kind: l.kind as 'MATERIAL' | 'HARVEST',
-  materialId,
+  articleId,
   label: l.label,
   unit: l.unit,
   ratePerHa: l.perHa ? l.amount : null,
@@ -66,14 +66,14 @@ const planLine = (l: OperationLine, materialId: string | null, sortOrder: number
 
 // Kande andmed PRIA reast (sama uue töö ja kanneteta sobinud töö puhul)
 // warehouseId: põhilao id (kanne seotakse päris laoga, et põhilao vahetus ajalugu ei liigutaks)
-function entryData(op: FieldBookImportOperation, lines: { line: OperationLine; materialId: string | null }[], area: number, userId: string | null, warehouseId: string | null) {
+function entryData(op: FieldBookImportOperation, lines: { line: OperationLine; articleId: string | null }[], area: number, userId: string | null, warehouseId: string | null) {
   const method = op.type === 'Saagikoristus' ? null : op.method;
   return {
     date: asDate(op.dateFrom)!, dateTo: asDate(op.dateTo), areaHa: area, method, workerId: op.performerId,
     notes: op.notes, source: 'PRIA_IMPORT' as const, createdById: userId, warehouseId,
     lines: {
-      create: lines.map(({ line: l, materialId }, i) => ({
-        kind: l.kind, materialId, label: l.label, unit: l.unit,
+      create: lines.map(({ line: l, articleId }, i) => ({
+        kind: l.kind, articleId, label: l.label, unit: l.unit,
         quantity: (l.perHa ? totalFromRate(l.amount, area) : l.amount) ?? 0,
         ratePerHa: l.perHa ? l.amount : null,
         priaRegister: l.priaRegister, priaKind: l.priaKind, priaSpec: l.priaSpec, activeIngredient: l.activeIngredient,
@@ -117,7 +117,7 @@ export async function importFieldSeasonOperations(
   }));
   const rowById = new Map(rows.map((w) => [w.id, w]));
   const taken = new Set<string>();
-  const materials = new Map<string, { id: string; name: string }>();
+  const articles = new Map<string, { id: string; name: string }>();
   const res: FieldSeasonImportResult = { created: 0, complemented: 0, linked: 0, entriesAdded: 0, unknown: 0 };
   const last = await tx.fieldWork.findFirst({ where: { fieldSeasonId }, orderBy: { sortOrder: 'desc' }, select: { sortOrder: true } });
   let sortOrder = (last?.sortOrder ?? -1) + 1;
@@ -140,17 +140,17 @@ export async function importFieldSeasonOperations(
       if (!w.notes && op.notes) patch.notes = op.notes;
       if (Object.keys(patch).length) await tx.fieldWork.update({ where: { id: w.id }, data: patch });
       // Materjalide nimed varunimede järgi õigeks enne olemasolevate ridadega võrdlemist
-      for (const l of lines) await materialFor(tx, l, materials);
+      for (const l of lines) await articleFor(tx, l, articles);
       const have = new Set(w.lines.map((l) => `${l.kind}:${nameKey(l.label)}`));
       const add = lines.filter((l) => l.kind !== 'OBSERVATION' && !have.has(`${l.kind}:${nameKey(l.label)}`));
       for (const [i, l] of add.entries()) {
-        await tx.fieldWorkLine.create({ data: { ...planLine(l, await materialFor(tx, l, materials), w.lines.length + i), fieldWorkId: w.id } });
+        await tx.fieldWorkLine.create({ data: { ...planLine(l, await articleFor(tx, l, articles), w.lines.length + i), fieldWorkId: w.id } });
       }
       let entryAdded = false;
       if (w.entries.length === 0) {
-        const withMaterials = [];
-        for (const l of lines) withMaterials.push({ line: l, materialId: await materialFor(tx, l, materials) });
-        await tx.workEntry.create({ data: { ...entryData(op, withMaterials, area, opts.userId, opts.warehouseId ?? null), fieldWorkId: w.id } });
+        const withArticles = [];
+        for (const l of lines) withArticles.push({ line: l, articleId: await articleFor(tx, l, articles) });
+        await tx.workEntry.create({ data: { ...entryData(op, withArticles, area, opts.userId, opts.warehouseId ?? null), fieldWorkId: w.id } });
         await syncFieldWorkStatus(w.id, true, opts.userId, tx);
         entryAdded = true;
         res.entriesAdded++;
@@ -161,11 +161,11 @@ export async function importFieldSeasonOperations(
     }
 
     const planLines = [];
-    const withMaterials = [];
+    const withArticles = [];
     for (const l of lines) {
-      const materialId = await materialFor(tx, l, materials);
-      if (l.kind !== 'OBSERVATION') planLines.push(planLine(l, materialId, planLines.length));
-      withMaterials.push({ line: l, materialId });
+      const articleId = await articleFor(tx, l, articles);
+      if (l.kind !== 'OBSERVATION') planLines.push(planLine(l, articleId, planLines.length));
+      withArticles.push({ line: l, articleId });
     }
     const work = await tx.fieldWork.create({
       data: {
@@ -173,7 +173,7 @@ export async function importFieldSeasonOperations(
         plannedDateFrom: asDate(op.dateFrom), plannedDateTo: asDate(op.dateTo), plannedAreaHa: op.areaHa,
         method: op.type === 'Saagikoristus' ? null : op.method, plannedWorkerId: op.performerId, notes: op.notes,
         lines: { create: planLines },
-        entries: { create: entryData(op, withMaterials, area, opts.userId, opts.warehouseId ?? null) }
+        entries: { create: entryData(op, withArticles, area, opts.userId, opts.warehouseId ?? null) }
       }
     });
     await syncFieldWorkStatus(work.id, true, opts.userId, tx);

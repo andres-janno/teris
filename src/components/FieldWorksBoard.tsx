@@ -13,7 +13,7 @@ import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
-import { WORK_PHASE_META, type FieldWork, type Material, type WorkEntry, type WorkPhase, type WorkType } from '../types/fieldWork';
+import { WORK_PHASE_META, type FieldWork, type Article, type WorkEntry, type WorkPhase, type WorkType } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { FieldWorkPlanForm } from './FieldWorkPlanForm';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
@@ -196,7 +196,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 }) => {
   const [fieldWorks, setFieldWorks] = useState<FieldWork[]>([]);
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
@@ -274,10 +274,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   }, [masterFields, reload]);
 
   useEffect(() => {
-    Promise.all([api.getWorkTypes(), api.getMaterials()])
+    Promise.all([api.getWorkTypes(), api.getArticles()])
       .then(([w, m]) => {
         setWorkTypes(w);
-        setMaterials(m);
+        setArticles(m);
       })
       .catch((err) => alertDialog(errorText(err)));
   }, []);
@@ -1211,7 +1211,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       fieldAreaHa={activeArea}
                       work={selected}
                       workTypes={workTypes}
-                      materials={materials}
+                      articles={articles}
                       workers={workers}
                       mode={editingPlan && !workLocked ? 'edit' : 'view'}
                       onSaved={() => {
@@ -1258,7 +1258,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           fmtNum(e.laborHours, 'h tööaeg'),
                           fmtNum(e.equipmentHours, 'h masin'),
                           fmtNum(e.fuelLiters, 'l kütust'),
-                          ...e.materials.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
+                          ...e.articles.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
                           fmtQtyUnit(e.harvestTonnes, 't saaki')
                         ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
                       </div>
@@ -1363,7 +1363,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             workers={workers}
             vehicles={vehicles}
             implementsList={implementsList}
-            materials={materials}
+            articles={articles}
             telemetryEnabled={telemetryEnabled}
             onClose={() => setEntryDialog(null)}
             onSaved={() => {

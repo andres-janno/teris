@@ -7,13 +7,13 @@ import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
 import { todayTallinn } from '../services/dateFormat';
-import type { Material } from '../types/fieldWork';
+import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 
-interface Row { materialId: string; quantity: string; amount: string }
-const emptyRow: Row = { materialId: '', quantity: '', amount: '' };
+interface Row { articleId: string; quantity: string; amount: string }
+const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -30,13 +30,13 @@ interface Props {
   kind: StockDocumentKind;
   initial: StockDocument | null;
   warehouses: Warehouse[];
-  materials: Material[];
+  articles: Article[];
   suppliers: RelatedParty[];
   onClose: () => void;
   onSaved: () => void;
 }
 
-export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses, materials, suppliers, onClose, onSaved }) => {
+export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses, articles, suppliers, onClose, onSaved }) => {
   const defaultWh = warehouses.find((w) => w.isDefault)?.id ?? '';
   const [date, setDate] = useState(initial?.date ?? todayTallinn());
   const [warehouseId, setWarehouseId] = useState(initial?.warehouseId ?? defaultWh);
@@ -46,22 +46,22 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
   const [reason, setReason] = useState<WriteOffReason | ''>(initial?.writeOffReason ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [rows, setRows] = useState<Row[]>(
-    initial?.lines.map((l) => ({ materialId: l.materialId, quantity: fmtInput(l.quantity), amount: fmtInput(l.amount) })) ?? [{ ...emptyRow }]
+    initial?.lines.map((l) => ({ articleId: l.articleId, quantity: fmtInput(l.quantity), amount: fmtInput(l.amount) })) ?? [{ ...emptyRow }]
   );
   const [levels, setLevels] = useState<Map<string, number>>(new Map());
   const [busy, setBusy] = useState(false);
 
   const activeWarehouses = warehouses.filter((w) => w.isActive || w.id === warehouseId || w.id === toWarehouseId);
   const options = useMemo(
-    () => materials.filter((m) => m.isActive || rows.some((r) => r.materialId === m.id)).sort((a, b) => a.name.localeCompare(b.name, 'et')),
-    [materials, rows]
+    () => articles.filter((m) => m.isActive || rows.some((r) => r.articleId === m.id)).sort((a, b) => a.name.localeCompare(b.name, 'et')),
+    [articles, rows]
   );
   const total = rows.reduce((s, r) => s + (parseNum(r.amount) ?? 0), 0);
 
   useEffect(() => {
     if (!warehouseId) return;
     api.getStockLevels(warehouseId)
-      .then((ls: StockLevel[]) => setLevels(new Map(ls.map((l) => [l.materialId, l.qty]))))
+      .then((ls: StockLevel[]) => setLevels(new Map(ls.map((l) => [l.articleId, l.qty]))))
       .catch(() => setLevels(new Map()));
   }, [warehouseId]);
 
@@ -92,7 +92,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
           documentNo: documentNo || null,
           writeOffReason: kind === 'WRITE_OFF' ? reason || null : null,
           notes: notes || null,
-          lines: rows.filter((r) => r.materialId || r.quantity).map((r) => ({ materialId: r.materialId, quantity: r.quantity, amount: kind === 'RECEIPT' ? r.amount : null }))
+          lines: rows.filter((r) => r.articleId || r.quantity).map((r) => ({ articleId: r.articleId, quantity: r.quantity, amount: kind === 'RECEIPT' ? r.amount : null }))
         },
         initial?.id
       );
@@ -178,19 +178,19 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </thead>
             <tbody>
               {rows.map((r, i) => {
-                const m = materials.find((x) => x.id === r.materialId);
+                const m = articles.find((x) => x.id === r.articleId);
                 const qty = parseNum(r.quantity);
                 const amount = parseNum(r.amount);
-                const saved = initial?.lines.find((l) => l.materialId === r.materialId);
+                const saved = initial?.lines.find((l) => l.articleId === r.articleId);
                 return (
                   <tr key={i}>
                     <td>
-                      <select className="form-input" aria-label="Materjal" value={r.materialId} onChange={(e) => setRow(i, { materialId: e.target.value })}>
+                      <select className="form-input" aria-label="Materjal" value={r.articleId} onChange={(e) => setRow(i, { articleId: e.target.value })}>
                         <option value="">– vali –</option>
                         {options.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                       </select>
                     </td>
-                    <td className={`num ${(levels.get(r.materialId) ?? 0) < 0 ? 'material-overuse' : ''}`}>
+                    <td className={`num ${(levels.get(r.articleId) ?? 0) < 0 ? 'article-overuse' : ''}`}>
                       {m ? <>{fmtQty(levels.get(m.id) ?? 0)}<span className="stock-doc-unit">{m.unit}</span></> : '–'}
                     </td>
                     <td className="num">

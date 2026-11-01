@@ -75,18 +75,18 @@ describe('operationLines', () => {
       type: 'Väetamine',
       products: [prod({ category: 'Väetis registrist', name: 'NPK 18-12-9', kind: 'NPK väetis', amount: 250, unit: 'kg/ha', nKgHa: 45, pKgHa: 13.08, kKgHa: 18.68 })]
     }));
-    expect(l).toMatchObject({ kind: 'MATERIAL', label: 'NPK 18-12-9', amount: 250, unit: 'kg', perHa: true, priaRegister: 'Väetis registrist', priaKind: 'NPK väetis', nKgHa: 45, materialCategory: 'FERTILIZER' });
+    expect(l).toMatchObject({ kind: 'MATERIAL', label: 'NPK 18-12-9', amount: 250, unit: 'kg', perHa: true, priaRegister: 'Väetis registrist', priaKind: 'NPK väetis', nKgHa: 45, priaArticleKind: 'FERTILIZER' });
   });
   it('külv: sort, liik ja seemne kategooria', () => {
     const [l] = operationLines(op({
       type: 'Külvamine/istutamine',
       products: [prod({ category: 'Eesti sordiregister', name: 'Testsort', kind: 'Suvinisu', spec: 'C1', amount: 200, unit: 'kg/ha' })]
     }));
-    expect(l).toMatchObject({ kind: 'MATERIAL', label: 'Testsort', priaSpec: 'C1', materialCategory: 'SEED' });
+    expect(l).toMatchObject({ kind: 'MATERIAL', label: 'Testsort', priaSpec: 'C1', priaArticleKind: 'SEED' });
   });
   it('saagikoristus: HARVEST, kultuuri tüüp meetodist', () => {
     const [l] = operationLines(op({ type: 'Saagikoristus', method: 'Põhikultuur', products: [prod({ kind: 'Terad', amount: 4, unit: 't/ha' })] }));
-    expect(l).toMatchObject({ kind: 'HARVEST', label: 'Saak', amount: 4, unit: 't', perHa: true, priaKind: 'Terad', priaSpec: 'Põhikultuur', materialCategory: null });
+    expect(l).toMatchObject({ kind: 'HARVEST', label: 'Saak', amount: 4, unit: 't', perHa: true, priaKind: 'Terad', priaSpec: 'Põhikultuur', priaArticleKind: null });
   });
   it('seire: OBSERVATION, kogus ei ole ha kohta', () => {
     const [l] = operationLines(op({ type: 'Seire', products: [prod({ category: 'Umbrohud', name: 'Põldsinep', amount: 7, unit: 'taime/m2' })] }));

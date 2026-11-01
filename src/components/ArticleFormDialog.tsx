@@ -1,10 +1,10 @@
-// src/components/MaterialFormDialog.tsx — kulumaterjali lisamine/muutmine (Materjalide leht ja Tööde register)
+// src/components/ArticleFormDialog.tsx — kulumaterjali lisamine/muutmine (Materjalide leht ja Tööde register)
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Edit2, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
-import type { Material, MaterialCategory } from '../types/fieldWork';
+import type { Article, PriaArticleKind } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL } from '../types/fieldWork';
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
@@ -27,7 +27,7 @@ const distinctValues = (values: (string | null | undefined)[]) => {
 };
 
 // PRIA registrid materjali liigi järgi (väetisel ka lubiväetised)
-const REGISTERS: Partial<Record<MaterialCategory, readonly string[]>> = {
+const REGISTERS: Partial<Record<PriaArticleKind, readonly string[]>> = {
   SEED: SEED_REGISTERS,
   FERTILIZER: [...new Set([...FERTILIZER_REGISTERS, ...LIMING_REGISTERS])],
   PLANT_PROTECTION: PLANT_PROTECTION_REGISTERS
@@ -41,19 +41,19 @@ const parsePct = (s: string): number | null => {
 };
 const fmtPct = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
 
-interface MaterialFormDialogProps {
-  initial: Partial<Material>;
+interface ArticleFormDialogProps {
+  initial: Partial<Article>;
   onClose: () => void;
   onSaved: () => void;
 }
 
-export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial, onClose, onSaved }) => {
-  const [form, setForm] = useState<Partial<Material>>(initial);
+export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, onClose, onSaved }) => {
+  const [form, setForm] = useState<Partial<Article>>(initial);
   const [busy, setBusy] = useState(false);
   // Tootja ja ühiku valikud: teistel materjalidel kasutatud väärtused; uus väärtus lisandub salvestamisel
   const [manufacturers, setManufacturers] = useState<string[]>([]);
   const [units, setUnits] = useState<string[]>([]);
-  const [all, setAll] = useState<Material[]>([]);
+  const [all, setAll] = useState<Article[]>([]);
   // Sisalduse % tekstina, et komaga arvu (nt "8,") saaks sisestada
   // Ühiku muutmisel teisendustegur: 1 vana ühik = tegur uut ühikut (kaaluühikutel automaatne)
   const [unitFactor, setUnitFactor] = useState('');
@@ -64,7 +64,7 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
   });
 
   useEffect(() => {
-    api.getMaterials()
+    api.getArticles()
       .then((ms) => {
         setManufacturers(distinctValues(ms.map((m) => m.manufacturer)));
         setUnits(distinctValues(ms.map((m) => m.unit)));
@@ -91,7 +91,7 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
     e.preventDefault();
     // Liigiga mittesobivad PRIA väljad tühjendatakse (nt liigi muutmisel)
     const c = form.category;
-    const payload: Partial<Material> & { unitFactor?: number | null } = {
+    const payload: Partial<Article> & { unitFactor?: number | null } = {
       ...form,
       priaRegister: REGISTERS[c!] ? form.priaRegister || null : null,
       priaKind: REGISTERS[c!] ? form.priaKind || null : null,
@@ -106,11 +106,11 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
     setBusy(true);
     try {
       try {
-        await api.saveMaterial(payload);
+        await api.saveArticle(payload);
       } catch (err: any) {
         if (!err?.body?.needsConfirm) throw err;
         if (!(await confirmDialog(`${err.message} Kas muudan ühiku ikkagi?`))) return;
-        await api.saveMaterial(payload, true);
+        await api.saveArticle(payload, true);
       }
       onSaved();
     } catch (err) {
@@ -122,7 +122,7 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
 
   return createPortal(
     <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up work-form-modal material-form-modal" onSubmit={save}>
+      <form className="modal-content animate-scale-up work-form-modal article-form-modal" onSubmit={save}>
         <div className="modal-header">
           <div className="modal-title-group">
             <Edit2 size={20} className="text-emerald" />
@@ -138,20 +138,20 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
             </div>
             <div className="form-group full-width">
               <label htmlFor="mt-manufacturer">Tootja</label>
-              <input id="mt-manufacturer" className="form-input" list="material-manufacturers" placeholder="vali olemasolev või sisesta uus" value={form.manufacturer ?? ''} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
-              <datalist id="material-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
+              <input id="mt-manufacturer" className="form-input" list="article-manufacturers" placeholder="vali olemasolev või sisesta uus" value={form.manufacturer ?? ''} onChange={(e) => setForm({ ...form, manufacturer: e.target.value })} />
+              <datalist id="article-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
             </div>
             <div className="form-group">
               <label htmlFor="mt-cat">Liik *</label>
-              <select id="mt-cat" className="form-input" required value={form.category ?? ''} onChange={(e) => setForm({ ...form, category: e.target.value as MaterialCategory })}>
+              <select id="mt-cat" className="form-input" required value={form.category ?? ''} onChange={(e) => setForm({ ...form, category: e.target.value as PriaArticleKind })}>
                 <option value="" disabled>– vali –</option>
-                {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => <option key={c} value={c}>{MATERIAL_CATEGORY_LABEL[c]}</option>)}
+                {(Object.keys(MATERIAL_CATEGORY_LABEL) as PriaArticleKind[]).map((c) => <option key={c} value={c}>{MATERIAL_CATEGORY_LABEL[c]}</option>)}
               </select>
             </div>
             <div className="form-group">
               <label htmlFor="mt-unit">Ühik *</label>
-              <input id="mt-unit" className="form-input" required list="material-units" placeholder="vali olemasolev või sisesta uus" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
-              <datalist id="material-units">{units.map((u) => <option key={u} value={u} />)}</datalist>
+              <input id="mt-unit" className="form-input" required list="article-units" placeholder="vali olemasolev või sisesta uus" value={form.unit ?? ''} onChange={(e) => setForm({ ...form, unit: e.target.value })} />
+              <datalist id="article-units">{units.map((u) => <option key={u} value={u} />)}</datalist>
             </div>
             {unitChanged && (
               <div className="form-group full-width">
@@ -183,8 +183,8 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
                 </div>
                 <div className="form-group">
                   <label htmlFor="mt-pria-kind">{form.category === 'FERTILIZER' ? 'Väetise liik' : form.category === 'SEED' ? 'Kultuur (liik)' : 'Liik'}</label>
-                  <input id="mt-pria-kind" className="form-input" list="material-pria-kinds" placeholder={form.category === 'SEED' ? 'nt Taliraps' : form.category === 'FERTILIZER' ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
-                  <datalist id="material-pria-kinds">{distinctValues(all.filter((m) => m.category === form.category).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
+                  <input id="mt-pria-kind" className="form-input" list="article-pria-kinds" placeholder={form.category === 'SEED' ? 'nt Taliraps' : form.category === 'FERTILIZER' ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
+                  <datalist id="article-pria-kinds">{distinctValues(all.filter((m) => m.category === form.category).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
                 </div>
                 {form.category === 'SEED' && (
                   <div className="form-group">
@@ -204,7 +204,7 @@ export const MaterialFormDialog: React.FC<MaterialFormDialogProps> = ({ initial,
                 {form.category === 'FERTILIZER' && (
                   <div className="form-group">
                     <label title="PRIA arvestab P ja K elemendina, mitte P₂O₅ / K₂O">Sisaldus % (N / P / K elemendina)</label>
-                    <div className="material-npk-inputs">
+                    <div className="article-npk-inputs">
                       {NUTRIENTS.map(([k, label]) => (
                         <input key={k} className="form-input num" inputMode="decimal" aria-label={`${label} %`} placeholder={label} value={pct[k]} onChange={(e) => setPct({ ...pct, [k]: e.target.value })} />
                       ))}

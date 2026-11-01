@@ -1,6 +1,6 @@
 // src/server/stock.ts — laoseisu ümberarvutus: loeb materjali liikumised (laokanded + põllutöö kande
 // materjaliread), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
-// laokande ridade maksumuseks ja koondtabelisse material_stock. Kutsu samas tehingus pärast iga
+// laokande ridade maksumuseks ja koondtabelisse article_stock. Kutsu samas tehingus pärast iga
 // liikumist muutvat salvestust.
 import type { TxClient } from './db.ts';
 import { fifoReplay, movementCost, type Movement } from './stockFifo.ts';
@@ -62,8 +62,8 @@ export async function resolveEntryWarehouseId(tx: TxClient, requested: string | 
   return requested;
 }
 
-export interface MaterialMovements {
-  materialId: string;
+export interface ArticleMovements {
+  articleId: string;
   unit: string;
   movements: Movement[];
   entryLines: { id: string; ref: string; quantity: number }[];
@@ -71,26 +71,26 @@ export interface MaterialMovements {
   issueEntryLineIds: string[];
 }
 
-export async function loadMovements(tx: TxClient, materialIds: string[]): Promise<MaterialMovements[]> {
-  if (!materialIds.length) return [];
+export async function loadMovements(tx: TxClient, articleIds: string[]): Promise<ArticleMovements[]> {
+  if (!articleIds.length) return [];
   const defaultWh = await getDefaultWarehouseId(tx);
-  const [materials, docLines, entryLines] = await Promise.all([
-    tx.material.findMany({ where: { id: { in: materialIds } }, select: { id: true, unit: true } }),
+  const [articles, docLines, entryLines] = await Promise.all([
+    tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true } }),
     tx.stockDocumentLine.findMany({
-      where: { materialId: { in: materialIds } },
+      where: { articleId: { in: articleIds } },
       select: {
-        id: true, materialId: true, quantity: true, amount: true, sortOrder: true,
+        id: true, articleId: true, quantity: true, amount: true, sortOrder: true,
         document: { select: { kind: true, date: true, warehouseId: true, toWarehouseId: true, createdAt: true } }
       }
     }),
     tx.workEntryLine.findMany({
-      where: { kind: 'MATERIAL', materialId: { in: materialIds } },
-      select: { id: true, materialId: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
+      where: { kind: 'MATERIAL', articleId: { in: articleIds } },
+      select: { id: true, articleId: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
     })
   ]);
-  return materials.map((m) => {
-    const out: MaterialMovements = { materialId: m.id, unit: m.unit, movements: [], entryLines: [], docLines: [], issueEntryLineIds: [] };
-    for (const l of docLines.filter((x) => x.materialId === m.id)) {
+  return articles.map((m) => {
+    const out: ArticleMovements = { articleId: m.id, unit: m.unit, movements: [], entryLines: [], docLines: [], issueEntryLineIds: [] };
+    for (const l of docLines.filter((x) => x.articleId === m.id)) {
       const ref = `doc:${l.id}`;
       const doc = l.document;
       out.docLines.push({ id: l.id, ref, kind: doc.kind });
@@ -101,7 +101,7 @@ export async function loadMovements(tx: TxClient, materialIds: string[]): Promis
         quantity: l.quantity, amount: l.amount === null ? undefined : Number(l.amount)
       });
     }
-    for (const l of entryLines.filter((x) => x.materialId === m.id)) {
+    for (const l of entryLines.filter((x) => x.articleId === m.id)) {
       const qty = convertQty(l.quantity, l.unit, m.unit);
       if (qty === null) {
         out.issueEntryLineIds.push(l.id);
@@ -120,14 +120,14 @@ export async function loadMovements(tx: TxClient, materialIds: string[]): Promis
   });
 }
 
-export async function recomputeMaterialStock(tx: TxClient, materialIds: string[]): Promise<void> {
-  const ids = [...new Set(materialIds.filter(Boolean))];
+export async function recomputeArticleStock(tx: TxClient, articleIds: string[]): Promise<void> {
+  const ids = [...new Set(articleIds.filter(Boolean))];
   for (const mm of await loadMovements(tx, ids)) {
     const { outs, stock } = fifoReplay(mm.movements);
 
     // Põllutöö kanderead: ühikuhind kanderea ühikus; hindamata või teisendamatu → null
     const current = new Map(
-      (await tx.workEntryLine.findMany({ where: { kind: 'MATERIAL', materialId: mm.materialId }, select: { id: true, unitPrice: true } }))
+      (await tx.workEntryLine.findMany({ where: { kind: 'MATERIAL', articleId: mm.articleId }, select: { id: true, unitPrice: true } }))
         .map((l) => [l.id, l.unitPrice === null ? null : Number(l.unitPrice)])
     );
     const wanted = new Map<string, number | null>(mm.issueEntryLineIds.map((id) => [id, null]));
@@ -152,40 +152,40 @@ export async function recomputeMaterialStock(tx: TxClient, materialIds: string[]
       });
     }
 
-    await tx.materialStock.deleteMany({ where: { materialId: mm.materialId } });
-    const rows = [...stock].map(([warehouseId, s]) => ({ materialId: mm.materialId, warehouseId, qty: s.qty, value: s.value, unpricedQty: s.unpricedQty, pricedQty: s.pricedQty }));
-    if (rows.length) await tx.materialStock.createMany({ data: rows });
-    await tx.material.update({ where: { id: mm.materialId }, data: { stockIssueCount: mm.issueEntryLineIds.length } });
+    await tx.articleStock.deleteMany({ where: { articleId: mm.articleId } });
+    const rows = [...stock].map(([warehouseId, s]) => ({ articleId: mm.articleId, warehouseId, qty: s.qty, value: s.value, unpricedQty: s.unpricedQty, pricedQty: s.pricedQty }));
+    if (rows.length) await tx.articleStock.createMany({ data: rows });
+    await tx.article.update({ where: { id: mm.articleId }, data: { stockIssueCount: mm.issueEntryLineIds.length } });
   }
 }
 
-export async function recomputeAllMaterialStock(tx: TxClient): Promise<void> {
-  const ids = (await tx.material.findMany({ select: { id: true } })).map((m) => m.id);
-  await recomputeMaterialStock(tx, ids);
+export async function recomputeAllArticleStock(tx: TxClient): Promise<void> {
+  const ids = (await tx.article.findMany({ select: { id: true } })).map((m) => m.id);
+  await recomputeArticleStock(tx, ids);
 }
 
-/** Ülekande read, millel on puudujääk (võti documentId:materialId) — salvestuse eel ja järel võrdlemiseks. */
-export async function transferShortageKeys(tx: TxClient, materialIds: string[]): Promise<Set<string>> {
+/** Ülekande read, millel on puudujääk (võti documentId:articleId) — salvestuse eel ja järel võrdlemiseks. */
+export async function transferShortageKeys(tx: TxClient, articleIds: string[]): Promise<Set<string>> {
   const rows = await tx.stockDocumentLine.findMany({
-    where: { materialId: { in: materialIds }, shortageQty: { gt: 0 }, document: { kind: 'TRANSFER' } },
-    select: { documentId: true, materialId: true }
+    where: { articleId: { in: articleIds }, shortageQty: { gt: 0 }, document: { kind: 'TRANSFER' } },
+    select: { documentId: true, articleId: true }
   });
-  return new Set(rows.map((r) => `${r.documentId}:${r.materialId}`));
+  return new Set(rows.map((r) => `${r.documentId}:${r.articleId}`));
 }
 
 export interface StockSummary { qty: number; value: number; unpricedQty: number; pricedQty: number }
 
 /** Materjalide laoseis: valitud lao või kõigi ladude summa. */
-export async function materialStockSummary(tx: TxClient, warehouseId: string | null): Promise<Map<string, StockSummary>> {
-  const rows = await tx.materialStock.findMany({ where: warehouseId ? { warehouseId } : {} });
+export async function articleStockSummary(tx: TxClient, warehouseId: string | null): Promise<Map<string, StockSummary>> {
+  const rows = await tx.articleStock.findMany({ where: warehouseId ? { warehouseId } : {} });
   const out = new Map<string, StockSummary>();
   for (const r of rows) {
-    const s = out.get(r.materialId) ?? { qty: 0, value: 0, unpricedQty: 0, pricedQty: 0 };
+    const s = out.get(r.articleId) ?? { qty: 0, value: 0, unpricedQty: 0, pricedQty: 0 };
     s.qty = Math.round((s.qty + r.qty) * 1e6) / 1e6;
     s.value = Math.round((s.value + Number(r.value)) * 100) / 100;
     s.unpricedQty = Math.round((s.unpricedQty + r.unpricedQty) * 1e6) / 1e6;
     s.pricedQty = Math.round((s.pricedQty + r.pricedQty) * 1e6) / 1e6;
-    out.set(r.materialId, s);
+    out.set(r.articleId, s);
   }
   return out;
 }
@@ -193,19 +193,19 @@ export async function materialStockSummary(tx: TxClient, warehouseId: string | n
 const fmtDay = (d: Date) => d.toISOString().slice(0, 10).split('-').reverse().join('.');
 
 // Uus ülekande puudujääk (mida enne muudatust polnud) lükkab muudatuse tagasi; tehing veereb tagasi.
-async function assertNoNewShortage(tx: TxClient, materialIds: string[], before: Set<string>) {
-  const after = await transferShortageKeys(tx, materialIds);
+async function assertNoNewShortage(tx: TxClient, articleIds: string[], before: Set<string>) {
+  const after = await transferShortageKeys(tx, articleIds);
   const fresh = [...after].filter((k) => !before.has(k));
   if (!fresh.length) return;
-  const [documentId, materialId] = fresh[0].split(':');
+  const [documentId, articleId] = fresh[0].split(':');
   const line = await tx.stockDocumentLine.findFirst({
-    where: { documentId, materialId },
-    select: { quantity: true, shortageQty: true, material: { select: { name: true, unit: true } }, document: { select: { date: true, warehouse: { select: { name: true } } } } }
+    where: { documentId, articleId },
+    select: { quantity: true, shortageQty: true, article: { select: { name: true, unit: true } }, document: { select: { date: true, warehouse: { select: { name: true } } } } }
   });
   const available = Math.max(0, (line?.quantity ?? 0) - (line?.shortageQty ?? 0));
   throw new StockValidationError(
-    `Laos "${line?.document.warehouse.name}" on ${line ? fmtDay(line.document.date) : ''} seisuga materjali "${line?.material.name}" ` +
-    `ülekandeks saadaval ${available.toLocaleString('et-EE', { maximumFractionDigits: 3 })} ${line?.material.unit}.`
+    `Laos "${line?.document.warehouse.name}" on ${line ? fmtDay(line.document.date) : ''} seisuga materjali "${line?.article.name}" ` +
+    `ülekandeks saadaval ${available.toLocaleString('et-EE', { maximumFractionDigits: 3 })} ${line?.article.unit}.`
   );
 }
 
@@ -213,21 +213,21 @@ export async function saveStockDocument(tx: TxClient, id: string | null, doc: St
   const whIds = [doc.warehouseId, doc.toWarehouseId].filter((x): x is string => !!x);
   const whs = await tx.warehouse.findMany({ where: { id: { in: whIds } }, select: { id: true } });
   if (whs.length !== whIds.length) throw new StockValidationError('Ladu ei leitud');
-  const mats = await tx.material.count({ where: { id: { in: doc.lines.map((l) => l.materialId) } } });
-  if (mats !== new Set(doc.lines.map((l) => l.materialId)).size) throw new StockValidationError('Materjali ei leitud');
+  const mats = await tx.article.count({ where: { id: { in: doc.lines.map((l) => l.articleId) } } });
+  if (mats !== new Set(doc.lines.map((l) => l.articleId)).size) throw new StockValidationError('Materjali ei leitud');
 
-  const oldMaterialIds = id
-    ? (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { materialId: true } })).map((l) => l.materialId)
+  const oldArticleIds = id
+    ? (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { articleId: true } })).map((l) => l.articleId)
     : [];
-  const materialIds = [...new Set([...oldMaterialIds, ...doc.lines.map((l) => l.materialId)])];
-  const before = await transferShortageKeys(tx, materialIds);
+  const articleIds = [...new Set([...oldArticleIds, ...doc.lines.map((l) => l.articleId)])];
+  const before = await transferShortageKeys(tx, articleIds);
   if (id) before.forEach((k) => k.startsWith(`${id}:`) && before.delete(k)); // muudetav kanne kontrollitakse uuesti
 
   const header = {
     kind: doc.kind, date: doc.date, warehouseId: doc.warehouseId, toWarehouseId: doc.toWarehouseId,
     supplierId: doc.supplierId, documentNo: doc.documentNo, writeOffReason: doc.writeOffReason, notes: doc.notes
   };
-  const lines = doc.lines.map((l, i) => ({ materialId: l.materialId, quantity: l.quantity, amount: l.amount, sortOrder: i }));
+  const lines = doc.lines.map((l, i) => ({ articleId: l.articleId, quantity: l.quantity, amount: l.amount, sortOrder: i }));
   let docId = id;
   if (id) {
     await tx.stockDocumentLine.deleteMany({ where: { documentId: id } });
@@ -235,15 +235,15 @@ export async function saveStockDocument(tx: TxClient, id: string | null, doc: St
   } else {
     docId = (await tx.stockDocument.create({ data: { ...header, lines: { create: lines } } })).id;
   }
-  await recomputeMaterialStock(tx, materialIds);
-  await assertNoNewShortage(tx, materialIds, before);
+  await recomputeArticleStock(tx, articleIds);
+  await assertNoNewShortage(tx, articleIds, before);
   return docId!;
 }
 
 export async function deleteStockDocument(tx: TxClient, id: string): Promise<void> {
-  const materialIds = (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { materialId: true } })).map((l) => l.materialId);
-  const before = await transferShortageKeys(tx, materialIds);
+  const articleIds = (await tx.stockDocumentLine.findMany({ where: { documentId: id }, select: { articleId: true } })).map((l) => l.articleId);
+  const before = await transferShortageKeys(tx, articleIds);
   await tx.stockDocument.delete({ where: { id } });
-  await recomputeMaterialStock(tx, materialIds);
-  await assertNoNewShortage(tx, materialIds, before);
+  await recomputeArticleStock(tx, articleIds);
+  await assertNoNewShortage(tx, articleIds, before);
 }

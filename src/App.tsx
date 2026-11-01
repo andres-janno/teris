@@ -21,7 +21,7 @@ import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
 import type { FarmingSeason } from './types/season';
 import type { RelatedParty } from './types/party';
-import type { FieldWork, WorkEntry, WorkType, Material } from './types/fieldWork';
+import type { FieldWork, WorkEntry, WorkType, Article } from './types/fieldWork';
 import type { Crop } from './types/crop';
 import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
 
@@ -72,7 +72,7 @@ const PoiManagerModal = lazy(() => import('./components/PoiManagerModal').then((
 const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
 const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
 const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
-const MaterialsView = lazy(() => import('./components/MaterialsView').then((m) => ({ default: m.MaterialsView })));
+const ArticlesView = lazy(() => import('./components/ArticlesView').then((m) => ({ default: m.ArticlesView })));
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
@@ -487,8 +487,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Põhivaade (ülamenüü valik): jäetakse meelde kasutaja kaupa (selles brauseris), et lehe
   // värskendamine avaks sama vaate. Logo klõps lähtestab valiku kaardile.
-  const [materialsWarehouseId, setMaterialsWarehouseId] = useState<string | null>(null);
-  const clearMaterialsWarehouse = React.useCallback(() => setMaterialsWarehouseId(null), []);
+  const [articlesWarehouseId, setArticlesWarehouseId] = useState<string | null>(null);
+  const clearArticlesWarehouse = React.useCallback(() => setArticlesWarehouseId(null), []);
   const mainViewKey = `agrimap_main_view_${user.id}`;
   const [mainView, setMainView] = useState<MainView>(() => {
     try {
@@ -509,10 +509,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (view === 'map') setTimeout(() => window.dispatchEvent(new Event('resize')), 0);
   };
 
-  // Kaardi huvipunkti lao link: avab kulumaterjalide vaate lao filtriga
+  // Kaardi huvipunkti lao link: avab laoarvestuse vaate lao filtriga
   const openWarehouse = (warehouseId: string) => {
-    setMaterialsWarehouseId(warehouseId);
-    changeMainView('materials');
+    setArticlesWarehouseId(warehouseId);
+    changeMainView('stock');
   };
 
   const handleSaveCrop = (cropToSave: Crop) => {
@@ -1015,13 +1015,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [planDialog, setPlanDialog] = useState<{ fieldSeasonId: number; fieldLabel: string; fieldAreaHa: number; work: FieldWork | null } | null>(null);
   const [entryDialog, setEntryDialog] = useState<{ fieldLabel: string; fieldAreaHa: number; work: FieldWork; entry: WorkEntry | null } | null>(null);
   const [fullViewReloadKey, setFullViewReloadKey] = useState(0);
-  const [workRefs, setWorkRefs] = useState<{ workTypes: WorkType[]; materials: Material[] } | null>(null);
+  const [workRefs, setWorkRefs] = useState<{ workTypes: WorkType[]; articles: Article[] } | null>(null);
   const workRefsLoading = useRef(false);
   const ensureWorkRefs = React.useCallback(() => {
     if (workRefs || workRefsLoading.current) return;
     workRefsLoading.current = true;
-    Promise.all([api.getWorkTypes(), api.getMaterials()])
-      .then(([workTypes, materials]) => setWorkRefs({ workTypes, materials }))
+    Promise.all([api.getWorkTypes(), api.getArticles()])
+      .then(([workTypes, articles]) => setWorkRefs({ workTypes, articles }))
       .catch((err) => {
         console.error('Tööliikide/kulumaterjalide laadimine ebaõnnestus:', err);
         setPlanDialog(null);
@@ -1790,15 +1790,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </Suspense>
       )}
 
-      {mainView === 'materials' && (
+      {mainView === 'stock' && (
         <Suspense fallback={null}>
-          <MaterialsView
+          <ArticlesView
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
             seasons={seasons}
             canManageFinance={user.isAdmin || user.isFinanceManager}
-            initialWarehouseId={materialsWarehouseId}
-            onInitialWarehouseConsumed={clearMaterialsWarehouse}
+            initialWarehouseId={articlesWarehouseId}
+            onInitialWarehouseConsumed={clearArticlesWarehouse}
           />
         </Suspense>
       )}
@@ -1977,7 +1977,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             fieldAreaHa={planDialog.fieldAreaHa}
             work={planDialog.work}
             workTypes={workRefs.workTypes}
-            materials={workRefs.materials}
+            articles={workRefs.articles}
             workers={workDialogWorkers}
             onClose={closePlanDialog}
             onSaved={() => {
@@ -1999,7 +1999,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             workers={workDialogWorkers}
             vehicles={rawVehicles.map((v) => ({ id: v.id, name: v.name }))}
             implementsList={implementsList.map((i) => ({ id: i.id, name: i.name }))}
-            materials={workRefs.materials}
+            articles={workRefs.articles}
             telemetryEnabled={modules.telemetry}
             onClose={closeEntryDialog}
             onSaved={() => {

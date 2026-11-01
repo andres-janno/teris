@@ -1,16 +1,16 @@
-// src/components/MaterialsView.tsx — kulumaterjalide register täislehena (seemned, väetised, taimekaitse jm)
+// src/components/ArticlesView.tsx — laoarvestus täislehena: artiklid, laokanded, laod
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { MaterialFormDialog } from './MaterialFormDialog';
-import { MaterialMergeDialog } from './MaterialMergeDialog';
+import { ArticleFormDialog } from './ArticleFormDialog';
+import { ArticleMergeDialog } from './ArticleMergeDialog';
 import type { FarmingSeason } from '../types/season';
 import { seasonSelectorYears } from '../types/season';
-import type { Material, MaterialCategory } from '../types/fieldWork';
+import type { Article, PriaArticleKind } from '../types/fieldWork';
 import { MATERIAL_CATEGORY_LABEL, NEW_MATERIAL } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
-import { MaterialStockCard } from './MaterialStockCard';
+import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
 import { StockDocumentsPanel } from './StockDocumentsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
@@ -20,10 +20,10 @@ const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toimi
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
-const hasQty = (m: Material) => !!(m.plannedQty || m.usedQty);
-const diffQty = (m: Material) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;
+const hasQty = (m: Article) => !!(m.plannedQty || m.usedQty);
+const diffQty = (m: Article) => Math.round(((m.plannedQty ?? 0) - (m.usedQty ?? 0)) * 100) / 100;
 
-interface MaterialsViewProps {
+interface ArticlesViewProps {
   selectedYear: number;
   onSelectYear: (year: number) => void;
   seasons: FarmingSeason[];
@@ -32,19 +32,19 @@ interface MaterialsViewProps {
   onInitialWarehouseConsumed?: () => void;
 }
 
-export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSelectYear, seasons, canManageFinance, initialWarehouseId, onInitialWarehouseConsumed }) => {
+export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSelectYear, seasons, canManageFinance, initialWarehouseId, onInitialWarehouseConsumed }) => {
   const availableYearsList = useMemo(() => seasonSelectorYears(seasons), [seasons]);
-  const [materials, setMaterials] = useState<Material[]>([]);
+  const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(true);
-  const [category, setCategory] = useState<MaterialCategory | 'all'>('all');
+  const [category, setCategory] = useState<PriaArticleKind | 'all'>('all');
   const [search, setSearch] = useState('');
-  const [form, setForm] = useState<Partial<Material> | null>(null);
+  const [form, setForm] = useState<Partial<Article> | null>(null);
 
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
-  const [stockCard, setStockCard] = useState<Material | null>(null);
-  const [merge, setMerge] = useState<Material | null>(null);
-  const [tab, setTab] = useState<'materials' | 'documents' | 'warehouses'>('materials');
+  const [stockCard, setStockCard] = useState<Article | null>(null);
+  const [merge, setMerge] = useState<Article | null>(null);
+  const [tab, setTab] = useState<'articles' | 'documents' | 'warehouses'>('articles');
 
   useEffect(() => {
     if (initialWarehouseId) {
@@ -60,7 +60,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
 
   const reload = useCallback(async () => {
     try {
-      setMaterials(await api.getMaterials(selectedYear, warehouseId || undefined));
+      setArticles(await api.getArticles(selectedYear, warehouseId || undefined));
     } catch (err) {
       alertDialog(errorText(err));
     } finally {
@@ -74,17 +74,17 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return materials
+    return articles
       .filter((m) => category === 'all' || m.category === category)
       .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q) || (m.priaKind ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  }, [materials, category, search]);
+  }, [articles, category, search]);
 
 
-  const remove = async (m: Material) => {
+  const remove = async (m: Article) => {
     if (!(await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`))) return;
     try {
-      await api.deleteMaterial(m.id);
+      await api.deleteArticle(m.id);
       await reload();
     } catch (err) {
       alertDialog(errorText(err));
@@ -125,8 +125,8 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
           <div className="fullpage-title-wrap">
             <Package className="text-emerald" size={26} />
             <div>
-              <h2>Kulumaterjalid</h2>
-              <p className="fullpage-subtitle">Kulumaterjalide register: seemned, väetised, taimekaitsevahendid ja muu, mida kannetes kasutatakse</p>
+              <h2>Laoarvestus</h2>
+              <p className="fullpage-subtitle">Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod</p>
             </div>
           </div>
         </div>
@@ -134,15 +134,15 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
         <div className="fullpage-board-body">
           <div className="modal-body">
             {canManageFinance && (
-              <div className="category-filter-tabs materials-tabs">
-                <button type="button" className={`filter-tab ${tab === 'materials' ? 'active' : ''}`} onClick={() => setTab('materials')}>Materjalid</button>
+              <div className="category-filter-tabs articles-tabs">
+                <button type="button" className={`filter-tab ${tab === 'articles' ? 'active' : ''}`} onClick={() => setTab('articles')}>Artiklid</button>
                 <button type="button" className={`filter-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')}>Laokanded</button>
                 <button type="button" className={`filter-tab ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>Laod</button>
               </div>
             )}
-            {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} materials={materials} onChanged={() => void reload()} />}
+            {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} articles={articles} onChanged={() => void reload()} />}
             {tab === 'warehouses' && canManageFinance && <WarehousesPanel warehouses={warehouses} onChanged={() => { reloadWarehouses(); void reload(); }} />}
-            {tab === 'materials' && (<>
+            {tab === 'articles' && (<>
             <div className="register-header-controls">
               <div className="year-selector-group">
                 <span className="year-label">
@@ -199,10 +199,10 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
               </FilterClear>
               <div className="category-filter-tabs">
                 <button type="button" className={`filter-tab ${category === 'all' ? 'active' : ''}`} onClick={() => setCategory('all')}>
-                  Kõik ({materials.length})
+                  Kõik ({articles.length})
                 </button>
-                {(Object.keys(MATERIAL_CATEGORY_LABEL) as MaterialCategory[]).map((c) => {
-                  const count = materials.filter((m) => m.category === c).length;
+                {(Object.keys(MATERIAL_CATEGORY_LABEL) as PriaArticleKind[]).map((c) => {
+                  const count = articles.filter((m) => m.category === c).length;
                   return (
                     <button key={c} type="button" className={`filter-tab ${category === c ? 'active' : ''}`} onClick={() => setCategory(c)} disabled={count === 0}>
                       {MATERIAL_CATEGORY_LABEL[c]} ({count})
@@ -213,7 +213,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
             </div>
 
             <div className="register-table-wrap">
-              <table className="register-table materials-table">
+              <table className="register-table articles-table">
                 <thead>
                   <tr>
                     <th>Materjal</th>
@@ -235,7 +235,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                   {!loading && filtered.length === 0 && (
                     <tr>
                       <td colSpan={canManageFinance ? 13 : 11} className="muted">
-                        {materials.length === 0
+                        {articles.length === 0
                           ? 'Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.'
                           : 'Otsingule vastavaid materjale ei leitud.'}
                       </td>
@@ -262,7 +262,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
                       )}
                       <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>
                       <td className="num">{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</td>
-                      <td className={`num ${diffQty(m) < 0 ? 'material-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
+                      <td className={`num ${diffQty(m) < 0 ? 'article-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
                       <td className="num">{m.usageCount ?? 0}</td>
                       <td className="actions-col">
                         <div className="row-actions">
@@ -285,23 +285,23 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
             </>)}
           </div>
         </div>
-        {tab === 'materials' && (
+        {tab === 'articles' && (
         <div className="fullpage-board-footer">
           <span>
-            Kuvatakse <strong>{filtered.length}</strong> materjali <strong>{materials.length}</strong>-st
+            Kuvatakse <strong>{filtered.length}</strong> materjali <strong>{articles.length}</strong>-st
           </span>
         </div>
         )}
       </main>
 
       {stockCard && (
-        <MaterialStockCard material={stockCard} warehouseId={warehouseId} warehouses={warehouses} canSeeMoney={canManageFinance} onClose={() => setStockCard(null)} />
+        <ArticleStockCard article={stockCard} warehouseId={warehouseId} warehouses={warehouses} canSeeMoney={canManageFinance} onClose={() => setStockCard(null)} />
       )}
 
       {merge && (
-        <MaterialMergeDialog
+        <ArticleMergeDialog
           source={merge}
-          materials={materials}
+          articles={articles}
           onClose={() => setMerge(null)}
           onMerged={() => {
             setMerge(null);
@@ -311,7 +311,7 @@ export const MaterialsView: React.FC<MaterialsViewProps> = ({ selectedYear, onSe
       )}
 
       {form && (
-        <MaterialFormDialog
+        <ArticleFormDialog
           initial={form}
           onClose={() => setForm(null)}
           onSaved={() => {

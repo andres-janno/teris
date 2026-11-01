@@ -1,4 +1,4 @@
-// src/components/MaterialStockCard.tsx — materjali laokaart: liikumised kuupäeva järjekorras, jooksev seis, maksumus
+// src/components/ArticleStockCard.tsx — materjali laokaart: liikumised kuupäeva järjekorras, jooksev seis, maksumus
 import React, { useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Package, AlertTriangle } from 'lucide-react';
@@ -6,8 +6,8 @@ import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { FilterClear } from './FilterClear';
-import type { Material } from '../types/fieldWork';
-import type { MaterialMovements, StockMovement, Warehouse } from '../types/stock';
+import type { Article } from '../types/fieldWork';
+import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 
 const fmtQty = formatQty;
@@ -22,26 +22,26 @@ const describe = (m: StockMovement) => {
 };
 
 interface Props {
-  material: Material;
+  article: Article;
   warehouseId: string;
   warehouses: Warehouse[];
   canSeeMoney: boolean;
   onClose: () => void;
 }
 
-export const MaterialStockCard: React.FC<Props> = ({ material, warehouseId: initialWh, warehouses, canSeeMoney, onClose }) => {
+export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initialWh, warehouses, canSeeMoney, onClose }) => {
   const [warehouseId, setWarehouseId] = useState(initialWh);
-  const [data, setData] = useState<MaterialMovements | null>(null);
+  const [data, setData] = useState<ArticleMovements | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     setData(null);
-    api.getMaterialMovements(material.id, warehouseId || undefined)
+    api.getArticleMovements(article.id, warehouseId || undefined)
       .then((d) => alive && setData(d))
       .catch((e) => alive && setError(e instanceof Error ? e.message : 'Laokaardi laadimine ebaõnnestus'));
     return () => { alive = false; };
-  }, [material.id, warehouseId]);
+  }, [article.id, warehouseId]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
@@ -55,7 +55,7 @@ export const MaterialStockCard: React.FC<Props> = ({ material, warehouseId: init
         <div className="modal-header">
           <div className="modal-title-group">
             <Package size={20} className="text-emerald" />
-            <h3>Laokaart: {material.name}</h3>
+            <h3>Laokaart: {article.name}</h3>
           </div>
           <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
         </div>
@@ -84,7 +84,7 @@ export const MaterialStockCard: React.FC<Props> = ({ material, warehouseId: init
                   <th>Kuupäev</th>
                   <th>Liikumine</th>
                   {!warehouseId && <th>Ladu</th>}
-                  <th className="num">Muutus ({data?.unit ?? material.unit})</th>
+                  <th className="num">Muutus ({data?.unit ?? article.unit})</th>
                   {warehouseId && <th className="num">Seis</th>}
                   {canSeeMoney && <th className="num">Maksumus</th>}
                 </tr>
@@ -98,13 +98,13 @@ export const MaterialStockCard: React.FC<Props> = ({ material, warehouseId: init
                     <td>{formatDate(m.date)}</td>
                     <td>
                       {describe(m)}
-                      {!!m.shortageQty && <span className="material-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
+                      {!!m.shortageQty && <span className="article-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
                     </td>
                     {!warehouseId && <td>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</td>}
                     <td className={`num stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
                       {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
                     </td>
-                    {warehouseId && <td className={`num ${m.balance < 0 ? 'material-overuse' : ''}`}>{fmtQty(m.balance)}</td>}
+                    {warehouseId && <td className={`num ${m.balance < 0 ? 'article-overuse' : ''}`}>{fmtQty(m.balance)}</td>}
                     {canSeeMoney && (
                       <td className="num">{m.cost == null ? <span className="muted" title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</td>
                     )}
