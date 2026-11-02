@@ -1,6 +1,6 @@
 // src/types/stock.ts — laoarvestus: laod, laokanded, laokaart
 export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY';
-export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'OTHER';
+export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'SOLD' | 'OTHER';
 
 export const STOCK_DOC_KIND_LABEL: Record<StockDocumentKind, string> = {
   RECEIPT: 'Arvele võtmine',
@@ -12,6 +12,7 @@ export const STOCK_DOC_KIND_LABEL: Record<StockDocumentKind, string> = {
 export const WRITE_OFF_REASON_LABEL: Record<WriteOffReason, string> = {
   SPOILED: 'Riknenud',
   INVENTORY: 'Inventuuri vahe',
+  SOLD: 'Müük',
   OTHER: 'Muu'
 };
 
@@ -88,7 +89,7 @@ export interface StockMovement {
   warehouseName: string;
   toWarehouseName: string | null;
   cost?: number | null; // ainult finantsõigusega
-  source: 'DOCUMENT' | 'FIELD_WORK';
+  source: 'DOCUMENT' | 'FIELD_WORK' | 'HARVEST_LOT';
   documentId?: string;
   documentKind?: StockDocumentKind;
   documentNo?: string | null;
@@ -99,6 +100,9 @@ export interface StockMovement {
   entryId?: string;
   fieldName?: string;
   workTypeName?: string;
+  lotId?: string;
+  lotName?: string;
+  lotMovement?: 'WEIGHING' | 'COST'; // kaalumine (hinnata) või kuivatuskulu
 }
 
 export interface ArticleMovements {

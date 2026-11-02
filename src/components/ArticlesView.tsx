@@ -15,6 +15,7 @@ import { FilterClear } from './FilterClear';
 import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
 import { StockDocumentsPanel } from './StockDocumentsPanel';
+import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
@@ -54,7 +55,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
   const [stockCard, setStockCard] = useState<Article | null>(null);
   const [merge, setMerge] = useState<Article | null>(null);
-  const [tab, setTab] = useState<'articles' | 'documents' | 'warehouses'>('articles');
+  const [tab, setTab] = useState<'articles' | 'documents' | 'lots' | 'warehouses'>('articles');
 
   useEffect(() => {
     if (initialWarehouseId) {
@@ -148,10 +149,12 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               <div className="category-filter-tabs articles-tabs">
                 <button type="button" className={`filter-tab ${tab === 'articles' ? 'active' : ''}`} onClick={() => setTab('articles')}>Artiklid</button>
                 <button type="button" className={`filter-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')}>Laokanded</button>
+                {canManageFinance && <button type="button" className={`filter-tab ${tab === 'lots' ? 'active' : ''}`} onClick={() => setTab('lots')}>Saagipartiid</button>}
                 <button type="button" className={`filter-tab ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>Laod</button>
               </div>
             )}
             {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} articles={articles} onChanged={() => void reload()} />}
+            {tab === 'lots' && canManageFinance && <HarvestLotsPanel warehouses={warehouses} articles={articles} onChanged={() => void reload()} />}
             {tab === 'warehouses' && canManageFinance && <WarehousesPanel warehouses={warehouses} onChanged={() => { reloadWarehouses(); void reload(); }} />}
             {tab === 'articles' && (<>
             <div className="register-header-controls">

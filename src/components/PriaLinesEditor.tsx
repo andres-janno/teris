@@ -178,7 +178,7 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
 };
 
 // showBunkers: kandel punkrite arv (PRIA-s pole; hiljem tonnide arvutamiseks)
-export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestRow) => void; areaHa: number; showTotals: boolean; showBunkers?: boolean }> = ({ value, onChange, areaHa, showTotals, showBunkers }) => {
+export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestRow) => void; areaHa: number; showTotals: boolean; showBunkers?: boolean; tonnesText?: string | null }> = ({ value, onChange, areaHa, showTotals, showBunkers, tonnesText }) => {
   // Sama veerupäisega ruudustik nagu materjaliridadel
   const grid = { gridTemplateColumns: `minmax(140px, 1.2fr) minmax(140px, 1.2fr) ${showBunkers ? '84px ' : ''}84px${showTotals ? ' 92px' : ''}` };
   return (
@@ -187,8 +187,12 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
         <span>Kultuuri tüüp</span>
         <span>Saagi tüüp</span>
         {showBunkers && <span className="num">Punkreid *</span>}
-        <span className="num">Saak t/ha</span>
-        {showTotals && <span className="num">Kokku, t</span>}
+        {tonnesText != null
+          ? <span className="num" style={{ gridColumn: `span ${showTotals ? 2 : 1}` }}>Saak, t</span>
+          : <>
+              <span className="num">Saak t/ha</span>
+              {showTotals && <span className="num">Kokku, t</span>}
+            </>}
       </div>
       <div className="pria-grid" style={grid}>
         <select className="form-input" aria-label="Kultuuri tüüp" value={value.priaSpec} onChange={(e) => onChange({ ...value, priaSpec: e.target.value })}>
@@ -203,11 +207,17 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
           <input className="form-input num" aria-label="Punkreid" required inputMode="decimal" placeholder="tk" value={value.bunkers ?? ''}
             onChange={(e) => onChange({ ...value, bunkers: e.target.value })} />
         )}
-        <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
-          onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
-        {showTotals && (
-          <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t" value={value.total}
-            onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
+        {tonnesText != null ? (
+          <span className="num muted" style={{ gridColumn: `span ${showTotals ? 2 : 1}` }}>{tonnesText}</span>
+        ) : (
+          <>
+            <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
+              onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
+            {showTotals && (
+              <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t" value={value.total}
+                onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
+            )}
+          </>
         )}
       </div>
     </div>

@@ -11,6 +11,7 @@ import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fie
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
+import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -717,6 +718,40 @@ export const api = {
   },
   async deleteStockDocument(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/stock/documents/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Laokande kustutamine ebaõnnestus');
+  },
+  async getHarvestLots(year?: number): Promise<HarvestLotSummary[]> {
+    return jsonOrThrow(await apiFetch(year ? `/api/harvest-lots?year=${year}` : '/api/harvest-lots'), 'Saagipartiide laadimine ebaõnnestus');
+  },
+  async getHarvestLot(id: string): Promise<HarvestLotDetail> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}`), 'Saagipartii laadimine ebaõnnestus');
+  },
+  async getOpenHarvestLots(fieldSeasonId: number | string): Promise<{ id: string; name: string }[]> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/open?fieldSeasonId=${encodeURIComponent(String(fieldSeasonId))}`), 'Lahtiste partiide laadimine ebaõnnestus');
+  },
+  async saveHarvestLot(input: HarvestLotInput): Promise<HarvestLotSummary> {
+    // Server loob ja muudab samal POST-teel (muutmisel tuleb body's id)
+    return jsonOrThrow(await apiFetch('/api/harvest-lots', jsonInit('POST', input)), 'Saagipartii salvestamine ebaõnnestus');
+  },
+  async deleteHarvestLot(id: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Saagipartii kustutamine ebaõnnestus');
+  },
+  async closeHarvestLot(id: string): Promise<HarvestLotSummary> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/close`, { method: 'POST' }), 'Partii sulgemine ebaõnnestus');
+  },
+  async reopenHarvestLot(id: string): Promise<HarvestLotSummary> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/reopen`, { method: 'POST' }), 'Partii taasavamine ebaõnnestus');
+  },
+  async addHarvestLotWeighing(id: string, w: { date: string; tonnes: string | number; notes: string | null }): Promise<HarvestLotWeighing> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/weighings`, jsonInit('POST', w)), 'Kaalumise lisamine ebaõnnestus');
+  },
+  async deleteHarvestLotWeighing(id: string, wid: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/weighings/${encodeURIComponent(wid)}`, { method: 'DELETE' }), 'Kaalumise kustutamine ebaõnnestus');
+  },
+  async addHarvestLotCost(id: string, c: { date: string; articleId: string; quantity: string | number; notes: string | null }): Promise<HarvestLotCost> {
+    return jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/costs`, jsonInit('POST', c)), 'Kuivatuskulu lisamine ebaõnnestus');
+  },
+  async deleteHarvestLotCost(id: string, cid: string): Promise<void> {
+    await jsonOrThrow(await apiFetch(`/api/harvest-lots/${encodeURIComponent(id)}/costs/${encodeURIComponent(cid)}`, { method: 'DELETE' }), 'Kuivatuskulu kustutamine ebaõnnestus');
   },
   async getArticleMovements(articleId: string, warehouseId?: string): Promise<ArticleMovements> {
     return jsonOrThrow(

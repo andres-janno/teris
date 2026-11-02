@@ -15,6 +15,7 @@ const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', cur
 
 const describe = (m: StockMovement) => {
   if (m.source === 'FIELD_WORK') return `${m.workTypeName} · ${m.fieldName}`;
+  if (m.source === 'HARVEST_LOT') return `${m.lotMovement === 'WEIGHING' ? 'Kaalumine' : 'Kuivatuskulu'} · ${m.lotName}`;
   const kind = STOCK_DOC_KIND_LABEL[m.documentKind!];
   if (m.documentKind === 'RECEIPT') return [kind, m.supplierName, m.documentNo].filter(Boolean).join(' · ');
   if (m.documentKind === 'WRITE_OFF') return [kind, m.writeOffReason ? WRITE_OFF_REASON_LABEL[m.writeOffReason] : null, m.documentNo].filter(Boolean).join(' · ');

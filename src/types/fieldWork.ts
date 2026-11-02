@@ -108,6 +108,10 @@ export interface WorkEntryLine {
 }
 
 export interface WorkEntry {
+  harvestLotId: string | null;
+  harvestLotName: string | null;
+  harvestLotStatus: 'OPEN' | 'CLOSED' | null;
+  harvestTonnesManual: boolean;
   inventoryNotice?: string | null; // salvestuse vastuses (finants): kanne muudab inventuuri vahet
   id: string;
   fieldWorkId: string;
@@ -244,6 +248,8 @@ export interface WorkEntryInput {
   articles: { articleId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
   harvestTonnes: number | null;
   harvestBunkers?: number | null;
+  harvestLotId?: string | null;
+  harvestTonnesManual?: boolean;
   harvest?: WorkEntryHarvest | null;
   observations?: WorkEntryObservation[];
   notes: string | null;
@@ -276,6 +282,8 @@ export interface FieldResult {
   equipment: number;
   fuel: number;
   articles: number;
+  drying: number;
+  dryingLots: { name: string; amount: number }[];
   costTotal: number;
   revenue: number;
   profit: number;

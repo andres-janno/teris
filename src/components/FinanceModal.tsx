@@ -948,6 +948,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       <th className="num">Masinad</th>
                       <th className="num">Kütus</th>
                       <th className="num">Materjalid</th>
+                      <th className="num">Kuivatamine</th>
                       <th onClick={() => toggleSort('cost')} className="num sortable">
                         <div className="th-content num">
                           <span>Kulu kokku</span>
@@ -978,7 +979,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <tbody>
                     {sortedResults.length === 0 ? (
                       <tr>
-                        <td colSpan={12} className="text-center py-6 text-muted">
+                        <td colSpan={13} className="text-center py-6 text-muted">
                           {resultsError ? resultsError : 'Tulemusi ei leitud.'}
                         </td>
                       </tr>
@@ -1015,6 +1016,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             <td className="num text-muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</td>
                             <td className="num text-muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</td>
                             <td className="num text-muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</td>
+                            <td className="num text-muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</td>
                             <td className="num font-semibold">{fmtCur(r.costTotal)}</td>
                             <td className="num text-emerald-700 font-semibold">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</td>
                             <td className={`num font-bold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>

@@ -8,6 +8,7 @@ import { alertDialog } from './ConfirmDialog';
 import type { FieldWork, Article, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
 import TripRouteView from './TripRouteView';
+import { formatQty } from '../services/units';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
@@ -161,6 +162,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
       0
     );
   });
+  // Koristuskande partii ja tonnide käsitsi sisestus (imporditud kanne on alati käsitsi)
+  const [manual, setManual] = useState(imported || (entry?.harvestTonnesManual ?? false));
+  const [lotId, setLotId] = useState(entry?.harvestLotId ?? '');
+  const [openLots, setOpenLots] = useState<{ id: string; name: string }[]>([]);
+  useEffect(() => {
+    if (!isHarvest) return;
+    api.getOpenHarvestLots(work.fieldSeasonId).then(setOpenLots).catch(() => setOpenLots([]));
+  }, [isHarvest, work.fieldSeasonId]);
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(entry?.warehouseId ?? '');
@@ -352,9 +361,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             .map((r) => ({ articleId: r.articleId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
             .filter((r) => r.articleId && r.quantity > 0),
           // Saagi ja kultuuri tüüp salvestuvad ka ilma koguseta
-          harvest: isHarvest && (parseNum(harvest.total) != null || harvest.priaKind || harvest.priaSpec)
-            ? { tonnes: parseNum(harvest.total), ratePerHa: parseNum(harvest.ratePerHa), priaKind: harvest.priaKind || null, priaSpec: harvest.priaSpec || null }
+          harvest: isHarvest && (manual ? (parseNum(harvest.total) != null || harvest.priaKind || harvest.priaSpec) : (harvest.priaKind || harvest.priaSpec))
+            ? {
+                tonnes: manual ? parseNum(harvest.total) : null,
+                ratePerHa: manual ? parseNum(harvest.ratePerHa) : null,
+                priaKind: harvest.priaKind || null,
+                priaSpec: harvest.priaSpec || null
+              }
             : null,
+          // Muutmisel saadetakse partii ainult siis, kui kasutaja valis teise; muidu jääb senine (kultuur võis vahepeal muutuda)
+          harvestLotId: isHarvest && lotId && lotId !== (entry?.harvestLotId ?? '') ? lotId : null,
+          harvestTonnesManual: isHarvest ? manual : false,
           harvestTonnes: null,
           harvestBunkers: isHarvest ? parseNum(harvest.bunkers ?? '') : null,
           observations: observations.filter((o) => o.label.trim()),
@@ -665,7 +682,30 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           {isHarvest && (
             <section className="work-entry-section">
               <h4>Saak</h4>
-              <HarvestEditor value={harvest} onChange={setHarvest} areaHa={areaNum} showTotals showBunkers />
+              {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
+                <div className="form-group">
+                  <label htmlFor="we-lot">Saagipartii</label>
+                  <select id="we-lot" className="form-input" value={lotId} onChange={(e) => setLotId(e.target.value)}>
+                    {!entry?.harvestLotId && <option value="">– viimane lahtine –</option>}
+                    {entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) && (
+                      <option value={entry.harvestLotId}>{entry.harvestLotName}</option>
+                    )}
+                    {openLots.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
+                  </select>
+                </div>
+              )}
+              <label className="users-admin-checkbox">
+                <input type="checkbox" checked={manual} disabled={imported} onChange={(e) => setManual(e.target.checked)} />
+                <span>Sisesta tonnid käsitsi</span>
+              </label>
+              <HarvestEditor
+                value={harvest}
+                onChange={setHarvest}
+                areaHa={areaNum}
+                showTotals
+                showBunkers
+                tonnesText={manual ? undefined : entry?.harvestLotStatus === 'CLOSED' ? `${formatQty(entry.harvest?.tonnes ?? entry.harvestTonnes ?? 0)} t` : 'kaalumata'}
+              />
             </section>
           )}
 
