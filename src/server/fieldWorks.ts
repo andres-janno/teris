@@ -26,7 +26,8 @@ import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
-import { articleFieldRules, sanitizeArticleFields, articleAllowedOnLine, type ArticleLineKind } from '../services/articleRules.ts';
+import { articleFieldRules, sanitizeArticleFields } from '../services/articleRules.ts';
+import { articleLineError } from './entryArticles.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -89,19 +90,6 @@ const FINANCE_FORBIDDEN = 'Finantsandmed on nähtavad ainult finantsjuhile ja ad
 // ---------------------------------------------------------------------------
 // Kanded
 // ---------------------------------------------------------------------------
-
-/** Kontrollib, et iga rea artikkel sobib rea liigiga; tagastab veateate või null. */
-async function articleLineError(lines: { kind: ArticleLineKind; articleId: string | null }[]): Promise<string | null> {
-  const ids = [...new Set(lines.map((l) => l.articleId).filter((id): id is string => !!id))];
-  if (!ids.length) return null;
-  const rows = await prisma.article.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, category: { select: { group: true, systemKind: true } } } });
-  const byId = new Map(rows.map((r) => [r.id, r]));
-  for (const l of lines) {
-    const a = l.articleId ? byId.get(l.articleId) : null;
-    if (a && !articleAllowedOnLine(l.kind, a.category)) return `Artikkel „${a.name}“ ei sobi sellele reale`;
-  }
-  return null;
-}
 
 async function resolveEntryInput(body: any) {
   const workerId = text(body?.workerId, 64);

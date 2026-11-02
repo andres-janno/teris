@@ -223,22 +223,24 @@ model FieldSeason {
 // ============================================================================
 
 model RelatedParty {
-  id          String      @id @default(cuid())
-  tenantId    String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name        String // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
-  type        PartyType   @default(PERSON)
-  code        String? // Isikukood või registrikood
-  vatNumber   String? // KMKR number
-  roles       PartyRole[] // Rollid süsteemis
-  phone       String? // Telefon
-  email       String? // E-post
-  address     String? // Postiaadress / asukoht
-  bankAccount String? // IBAN arveldusarve (rendimakseteks / maamaksuks)
-  notes       String? // Märkused
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  createdBy   String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy   String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  id               String      @id @default(cuid())
+  tenantId         String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name             String // Täisnimi või ärinimi (nt "Loisu Agro OÜ", "Maret Paju")
+  type             PartyType   @default(PERSON)
+  code             String? // Isikukood või registrikood
+  vatNumber        String? // KMKR number
+  roles            PartyRole[] // Rollid süsteemis
+  phone            String? // Telefon
+  email            String? // E-post
+  address          String? // Postiaadress / asukoht
+  bankAccount      String? // IBAN arveldusarve (rendimakseteks / maamaksuks)
+  serviceArticleId String? // töötaja tööaja teenus, kui erineb vaikimisi omast
+  hourlyRate       Decimal?    @db.Decimal(12, 4) // oma tunnihind (näeb finantsõigusega)
+  notes            String? // Märkused
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+  createdBy        String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   cadastralParcels  FieldCadastralParcel[]
   vehicles          Vehicle[]
@@ -247,7 +249,9 @@ model RelatedParty {
   workEntries       WorkEntry[]
   plannedFieldWorks FieldWork[]            @relation("FieldWorkPlannedWorker")
   stockDocuments    StockDocument[]        @relation("StockDocSupplier")
+  serviceArticle    Article?               @relation("PartyService", fields: [serviceArticleId], references: [id], onDelete: SetNull)
 
+  @@index([serviceArticleId])
   @@index([tenantId])
   @@map("related_parties")
 }
@@ -337,6 +341,9 @@ model Vehicle {
   color              String      @default("#10b981")
   fuelCapacityL      Float?
   assignedDriverId   String? // Seotud isiku ID (töötaja / masinajuht)
+  serviceArticleId   String? // masina tööaja teenus, kui erineb vaikimisi omast
+  hourlyRate         Decimal?    @db.Decimal(12, 4) // oma tunnihind (näeb finantsõigusega)
+  fuelArticleId      String? // vaikimisi kütus (liik FUEL)
   lastLatitude       Float?
   lastLongitude      Float?
   lastActiveAt       DateTime?
@@ -347,12 +354,16 @@ model Vehicle {
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
+  serviceArticle       Article?              @relation("VehicleService", fields: [serviceArticleId], references: [id], onDelete: SetNull)
+  fuelArticle          Article?              @relation("VehicleFuel", fields: [fuelArticleId], references: [id], onDelete: SetNull)
   deviceAssignments    DeviceAssignment[]
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
   workEntryLines       WorkEntryLine[]
 
   @@index([assignedDriverId])
+  @@index([serviceArticleId])
+  @@index([fuelArticleId])
   @@index([tenantId])
   @@map("vehicles")
 }
@@ -372,6 +383,8 @@ model Implement {
   model              String?
   serialNumber       String? // VIN / seerianumber
   year               Int?
+  serviceArticleId   String? // haakeriista tööaja teenus, kui erineb vaikimisi omast
+  hourlyRate         Decimal?      @db.Decimal(12, 4) // oma tunnihind (näeb finantsõigusega)
   notes              String?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
@@ -382,7 +395,9 @@ model Implement {
   implementAssignments ImplementAssignment[]
   workEntries          WorkEntry[]
   workEntryLines       WorkEntryLine[]
+  serviceArticle       Article?              @relation("ImplementService", fields: [serviceArticleId], references: [id], onDelete: SetNull)
 
+  @@index([serviceArticleId])
   @@index([tenantId])
   @@map("implements")
 }
@@ -719,6 +734,7 @@ model Article {
   price              Decimal? @db.Decimal(12, 4) // ainult teenusel: ühiku (tunni) hind
   cropId             String? // ainult terade liigil: kultuur
   defaultWarehouseId String? // ainult kaubal: vaikimisi ladu
+  isDefaultService   Boolean  @default(false) // tööaja liigi vaikimisi teenus; liigi kohta üks, tagab rakendus (src/server/entryArticles.ts)
   // PRIA vaikeväärtused: täidavad plaani/kande rea materjali valimisel
   priaRegister       String? // "Väetis registrist", "EL ühtne sordileht", ...
   priaKind           String? // liik ("Taliraps", "NPK väetis", "Herbitsiid")
@@ -736,14 +752,18 @@ model Article {
   createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  cropVariety      CropVariety?        @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
-  category         ArticleCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  crop             Crop?               @relation(fields: [cropId], references: [id], onDelete: SetNull)
-  defaultWarehouse Warehouse?          @relation("ArticleDefaultWarehouse", fields: [defaultWarehouseId], references: [id], onDelete: SetNull)
-  entryLines       WorkEntryLine[]
-  fieldWorkLines   FieldWorkLine[]
-  stockLines       StockDocumentLine[]
-  stock            ArticleStock[]
+  cropVariety       CropVariety?        @relation(fields: [cropVarietyId], references: [id], onDelete: SetNull)
+  category          ArticleCategory     @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  crop              Crop?               @relation(fields: [cropId], references: [id], onDelete: SetNull)
+  defaultWarehouse  Warehouse?          @relation("ArticleDefaultWarehouse", fields: [defaultWarehouseId], references: [id], onDelete: SetNull)
+  entryLines        WorkEntryLine[]
+  fieldWorkLines    FieldWorkLine[]
+  stockLines        StockDocumentLine[]
+  stock             ArticleStock[]
+  vehicleServices   Vehicle[]           @relation("VehicleService")
+  vehicleFuels      Vehicle[]           @relation("VehicleFuel")
+  implementServices Implement[]         @relation("ImplementService")
+  partyServices     RelatedParty[]      @relation("PartyService")
 
   @@unique([tenantId, categoryId, name])
   @@index([categoryId])
