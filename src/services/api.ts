@@ -11,7 +11,7 @@ import type { FieldBookImportPayload, FieldBookImportResult } from '../types/fie
 import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../types/auth';
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel } from '../types/stock';
+import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
 
@@ -697,6 +697,10 @@ export const api = {
   },
   async deleteWarehouse(id: string): Promise<void> {
     await jsonOrThrow(await apiFetch(`/api/warehouses/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Lao kustutamine ebaõnnestus');
+  },
+  async getInventoryPreview(warehouseId: string, date: string, documentId?: string): Promise<InventoryPreviewRow[]> {
+    const q = new URLSearchParams({ warehouseId, date, ...(documentId ? { documentId } : {}) });
+    return jsonOrThrow(await apiFetch(`/api/stock/inventory-preview?${q}`), 'Arvestusliku seisu laadimine ebaõnnestus');
   },
   async getStockLevels(warehouseId?: string): Promise<StockLevel[]> {
     return jsonOrThrow(await apiFetch(`/api/stock/levels${warehouseId ? `?warehouseId=${encodeURIComponent(warehouseId)}` : ''}`), 'Laoseisu laadimine ebaõnnestus');

@@ -1,12 +1,13 @@
 // src/components/StockDocumentsPanel.tsx — laokannete register (finantsjuht ja admin)
 import React, { useCallback, useEffect, useState } from 'react';
-import { PackagePlus, PackageMinus, ArrowRightLeft, Edit2, Trash2 } from 'lucide-react';
+import { PackagePlus, PackageMinus, ArrowRightLeft, ClipboardCheck, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
 import { StockDocumentDialog } from './StockDocumentDialog';
+import { InventoryDialog } from './InventoryDialog';
 import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
@@ -86,6 +87,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
           <button className="btn btn-primary btn-sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></button>
           <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'WRITE_OFF', initial: null })}><PackageMinus size={14} /><span>Mahakandmine</span></button>
           <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={warehouses.filter((w) => w.isActive).length < 2}><ArrowRightLeft size={14} /><span>Ülekanne</span></button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'INVENTORY', initial: null })}><ClipboardCheck size={14} /><span>Inventuur</span></button>
         </div>
       </div>
 
@@ -129,7 +131,16 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
         </table>
       </div>
 
-      {form && (
+      {form && form.kind === 'INVENTORY' && (
+        <InventoryDialog
+          initial={form.initial}
+          warehouses={warehouses}
+          articles={articles}
+          onClose={() => setForm(null)}
+          onSaved={() => { setForm(null); void reload(); onChanged(); }}
+        />
+      )}
+      {form && form.kind !== 'INVENTORY' && (
         <StockDocumentDialog
           kind={form.kind}
           initial={form.initial}

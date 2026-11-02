@@ -85,7 +85,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
     e.preventDefault();
     setBusy(true);
     try {
-      await api.saveStockDocument(
+      const saved = await api.saveStockDocument(
         {
           kind, date, warehouseId,
           toWarehouseId: kind === 'TRANSFER' ? toWarehouseId : null,
@@ -97,6 +97,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
         },
         initial?.id
       );
+      if (saved.inventoryNotice) await alertDialog(saved.inventoryNotice);
       onSaved();
     } catch (err) {
       alertDialog(err instanceof Error ? err.message : 'Laokande salvestamine ebaõnnestus');
@@ -151,7 +152,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                 <label htmlFor="sd-reason">Põhjus *</label>
                 <select id="sd-reason" className="form-input" required value={reason} onChange={(e) => setReason(e.target.value as WriteOffReason)}>
                   <option value="">– vali –</option>
-                  {(Object.keys(WRITE_OFF_REASON_LABEL) as WriteOffReason[]).map((r) => <option key={r} value={r}>{WRITE_OFF_REASON_LABEL[r]}</option>)}
+                  {(Object.keys(WRITE_OFF_REASON_LABEL) as WriteOffReason[]).filter((r) => r !== 'INVENTORY' || reason === 'INVENTORY').map((r) => <option key={r} value={r}>{WRITE_OFF_REASON_LABEL[r]}</option>)}
                 </select>
               </div>
             )}

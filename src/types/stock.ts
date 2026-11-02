@@ -1,11 +1,12 @@
 // src/types/stock.ts — laoarvestus: laod, laokanded, laokaart
-export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER';
+export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY';
 export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'OTHER';
 
 export const STOCK_DOC_KIND_LABEL: Record<StockDocumentKind, string> = {
   RECEIPT: 'Arvele võtmine',
   WRITE_OFF: 'Mahakandmine',
-  TRANSFER: 'Ülekanne'
+  TRANSFER: 'Ülekanne',
+  INVENTORY: 'Inventuur'
 };
 
 export const WRITE_OFF_REASON_LABEL: Record<WriteOffReason, string> = {
@@ -33,6 +34,8 @@ export interface StockDocumentLine {
   amount: number | null;
   fifoCost: number | null;
   shortageQty: number | null;
+  countedQty: number | null; // inventuur: tegelik seis
+  diffQty: number | null; // inventuur: vahe (+ juurde, − maha)
 }
 
 export interface StockDocument {
@@ -52,6 +55,7 @@ export interface StockDocument {
   hasUnpriced: boolean;
   hasShortage: boolean; // ülekanne, millel mõni rida võttis rohkem kui lähtelaos hinnaga oli
   lines: StockDocumentLine[];
+  inventoryNotice?: string | null; // salvestuse vastuses: kanne muudab inventuuri vahet
 }
 
 export interface StockDocumentInput {
@@ -63,7 +67,7 @@ export interface StockDocumentInput {
   documentNo?: string | null;
   writeOffReason?: WriteOffReason | null;
   notes?: string | null;
-  lines: { articleId: string; quantity: string | number; amount?: string | number | null }[];
+  lines: { articleId: string; quantity?: string | number; amount?: string | number | null; countedQty?: string | number | null }[];
 }
 
 export interface StockDocumentFilter {
@@ -77,7 +81,7 @@ export interface StockDocumentFilter {
 export interface StockMovement {
   ref: string;
   date: string;
-  kind: 'IN' | 'TRANSFER' | 'OUT';
+  kind: 'IN' | 'TRANSFER' | 'OUT' | 'COUNT';
   quantity: number;
   delta: number;
   balance: number;
@@ -91,6 +95,7 @@ export interface StockMovement {
   supplierName?: string | null;
   writeOffReason?: WriteOffReason | null;
   shortageQty?: number | null;
+  countedQty?: number; // inventuur: tegelik seis
   entryId?: string;
   fieldName?: string;
   workTypeName?: string;
@@ -105,4 +110,13 @@ export interface ArticleMovements {
 export interface StockLevel {
   articleId: string;
   qty: number;
+}
+
+/** Inventuuri vormi rida: arvestuslik seis kuupäeva lõpus ja ülejäägi eeldatav ühikuhind. */
+export interface InventoryPreviewRow {
+  articleId: string;
+  articleName: string;
+  unit: string;
+  bookQty: number;
+  unitPrice: number | null;
 }

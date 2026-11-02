@@ -108,6 +108,7 @@ export interface WorkEntryLine {
 }
 
 export interface WorkEntry {
+  inventoryNotice?: string | null; // salvestuse vastuses (finants): kanne muudab inventuuri vahet
   id: string;
   fieldWorkId: string;
   date: string; // ISO YYYY-MM-DD

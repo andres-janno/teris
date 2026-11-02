@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
+import { alertDialog } from './ConfirmDialog';
 import type { FieldWork, Article, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
 import TripRouteView from './TripRouteView';
@@ -330,7 +331,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || articles.find((m) => m.id === noQuantity.articleId)?.name || 'toode'}`);
     setBusy(true);
     try {
-      await api.saveWorkEntry(
+      const saved = await api.saveWorkEntry(
         {
           fieldWorkId: work.id,
           date,
@@ -362,6 +363,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
         },
         entry?.id
       );
+      if (saved.inventoryNotice) await alertDialog(saved.inventoryNotice);
       onSaved();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Salvestamine ebaõnnestus');

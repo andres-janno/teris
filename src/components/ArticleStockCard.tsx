@@ -18,6 +18,7 @@ const describe = (m: StockMovement) => {
   const kind = STOCK_DOC_KIND_LABEL[m.documentKind!];
   if (m.documentKind === 'RECEIPT') return [kind, m.supplierName, m.documentNo].filter(Boolean).join(' · ');
   if (m.documentKind === 'WRITE_OFF') return [kind, m.writeOffReason ? WRITE_OFF_REASON_LABEL[m.writeOffReason] : null, m.documentNo].filter(Boolean).join(' · ');
+  if (m.documentKind === 'INVENTORY') return [kind, m.countedQty != null ? `loetud ${fmtQty(m.countedQty)}` : null, m.documentNo].filter(Boolean).join(' · ');
   return [kind, `${m.warehouseName} → ${m.toWarehouseName}`, m.documentNo].filter(Boolean).join(' · ');
 };
 
