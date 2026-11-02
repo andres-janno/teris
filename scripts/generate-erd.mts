@@ -44,12 +44,13 @@ const DOMAINS: Domain[] = [
   {
     title: 'Laoarvestus',
     intro: 'Kulumaterjalide laod, laokanded ja laoseisu koond. Põllutöö kande materjalid kantakse maha kande lao (`WorkEntry.warehouseId`) järgi.',
-    models: ['Warehouse', 'StockDocument', 'StockDocumentLine', 'ArticleStock'],
+    models: ['Warehouse', 'StockDocument', 'StockDocumentLine', 'ArticleStock', 'HarvestLot', 'HarvestLotWeighing', 'HarvestLotCost'],
     notes: [
       '`warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).',
       '`stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.',
       '`article_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.',
       '`work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).',
+      '`harvest_lots` — saagipartii (hooaeg + kultuur + ladu): koristuskanded viitavad partiile (`work_entries.harvestLotId`); `harvest_lot_weighings` — kaalumised (terade lao sissetulek, hindamata); `harvest_lot_costs` — kuivatuskulud (teenus või kaup); suletud partii jaotab punkri kaalu kanderidadele (`harvestTonnesManual` = käsitsi tonnid).',
       'FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.'
     ]
   },
@@ -95,6 +96,9 @@ const DESCRIPTIONS: Record<string, string> = {
   StockDocument: 'Laokanne: arvele võtmine, mahakandmine või ülekanne',
   StockDocumentLine: 'Laokande rida: materjal, kogus, hind, FIFO kulu, hindamata kogus',
   ArticleStock: 'Laoseisu koond materjali ja lao kaupa (kogus, väärtus)',
+  HarvestLot: 'Saagipartii: hooaja ja kultuuri koristuse kaalumine ja kuivatus',
+  HarvestLotWeighing: 'Partii kaalumine (tonnid, terade lao sissetulek)',
+  HarvestLotCost: 'Partii kuivatuskulu (teenus või kaup)',
   RelatedParty: 'Seotud isik/ettevõte: töötaja, omanik, operaator, partner',
   User: 'Rakenduse kasutaja (ettevõtte), rollid',
   Session: 'Kasutaja sessioon',

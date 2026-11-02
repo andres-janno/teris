@@ -186,6 +186,13 @@ erDiagram
     String finishedById FK "valikuline"
     String plannedWorkerId FK "valikuline"
   }
+  HarvestLot {
+    String id PK
+    Int seasonId FK
+    String cropId FK
+    String articleId FK
+    String warehouseId FK
+  }
   RelatedParty |o--o{ Field : "operator"
   Field ||--o{ FieldSeason : "field"
   Season |o--o{ FieldSeason : "season"
@@ -199,6 +206,8 @@ erDiagram
   Crop |o--o{ Article : "crop"
   Crop |o--o{ WorkTemplate : "crop"
   FieldSeason ||--o{ FieldWork : "fieldSeason"
+  Season ||--o{ HarvestLot : "season"
+  Crop ||--o{ HarvestLot : "crop"
 ```
 
 ## Põllutööd ja kanded
@@ -296,6 +305,8 @@ erDiagram
     DateTime dateTo "valikuline"
     String method "valikuline"
     Float harvestBunkers "valikuline"
+    String harvestLotId FK "valikuline"
+    Boolean harvestTonnesManual
     String warehouseId FK "valikuline"
     WorkSource source
     String createdById FK "valikuline"
@@ -407,6 +418,13 @@ erDiagram
     String id PK
     String poiId FK,UK "valikuline"
   }
+  HarvestLot {
+    String id PK
+    Int seasonId FK
+    String cropId FK
+    String articleId FK
+    String warehouseId FK
+  }
   CropVariety {
     String id PK
     String cropId FK
@@ -423,6 +441,11 @@ erDiagram
     String articleId FK
     String warehouseId FK
   }
+  HarvestLotCost {
+    String id PK
+    String lotId FK
+    String articleId FK
+  }
   FieldSeason ||--o{ FieldWork : "fieldSeason"
   WorkType ||--o{ FieldWork : "workType"
   User |o--o{ FieldWork : "finishedBy"
@@ -436,6 +459,7 @@ erDiagram
   Warehouse |o--o{ WorkEntry : "warehouse"
   User |o--o{ WorkEntry : "createdByUser"
   User |o--o{ WorkEntry : "financeConfirmedBy"
+  HarvestLot |o--o{ WorkEntry : "harvestLot"
   WorkEntry ||--o{ WorkEntryLine : "entry"
   Vehicle |o--o{ WorkEntryLine : "vehicle"
   Implement |o--o{ WorkEntryLine : "implement"
@@ -453,6 +477,8 @@ erDiagram
   Article |o--o{ Implement : "serviceArticle"
   Article ||--o{ StockDocumentLine : "article"
   Article ||--o{ ArticleStock : "article"
+  Article ||--o{ HarvestLot : "article"
+  Article ||--o{ HarvestLotCost : "article"
 ```
 
 ## Masinapark, telemeetria ja objektid
@@ -600,6 +626,7 @@ erDiagram
     String workerId FK "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
+    String harvestLotId FK "valikuline"
     String warehouseId FK "valikuline"
     String createdById FK "valikuline"
     String financeConfirmedById FK "valikuline"
@@ -642,11 +669,15 @@ Kulumaterjalide laod, laokanded ja laoseisu koond. Põllutöö kande materjalid 
 | `StockDocument` | `stock_documents` | jah | Laokanne: arvele võtmine, mahakandmine või ülekanne |
 | `StockDocumentLine` | `stock_document_lines` | jah | Laokande rida: materjal, kogus, hind, FIFO kulu, hindamata kogus |
 | `ArticleStock` | `article_stock` | jah | Laoseisu koond materjali ja lao kaupa (kogus, väärtus) |
+| `HarvestLot` | `harvest_lots` | jah | Saagipartii: hooaja ja kultuuri koristuse kaalumine ja kuivatus |
+| `HarvestLotWeighing` | `harvest_lot_weighings` | jah | Partii kaalumine (tonnid, terade lao sissetulek) |
+| `HarvestLotCost` | `harvest_lot_costs` | jah | Partii kuivatuskulu (teenus või kaup) |
 
 - `warehouses` — laod; täpselt üks põhiladu (`isDefault`); valikuline seos huvipunktiga (`poiId`).
 - `stock_documents` / `stock_document_lines` — laokanded: arvele võtmine (summa km-ta), mahakandmine (põhjus), ülekanne (lähte- ja sihtladu). `fifoCost` ja `shortageQty` arvutab süsteem.
 - `article_stock` — laoseisu koond materjali ja lao kaupa (kogus, väärtus, hindamata kogus); kirjutab ainult ümberarvutus.
 - `work_entries.warehouseId` — ladu, kust kande materjalid võetakse (tühi = põhiladu).
+- `harvest_lots` — saagipartii (hooaeg + kultuur + ladu): koristuskanded viitavad partiile (`work_entries.harvestLotId`); `harvest_lot_weighings` — kaalumised (terade lao sissetulek, hindamata); `harvest_lot_costs` — kuivatuskulud (teenus või kaup); suletud partii jaotab punkri kaalu kanderidadele (`harvestTonnesManual` = käsitsi tonnid).
 - FIFO: liikumised arvutatakse iga muudatuse järel materjali kaupa uuesti (`src/server/stock.ts`); põllutöö kande materjalirea `unitPrice` = FIFO hind.
 
 ```mermaid
@@ -694,6 +725,40 @@ erDiagram
     Float unpricedQty
     Float pricedQty
   }
+  HarvestLot {
+    String id PK
+    String name
+    Int seasonId FK
+    String cropId FK
+    String articleId FK
+    String warehouseId FK
+    HarvestLotStatus status
+    Float bunkerTonnes "valikuline"
+    DateTime closedAt "valikuline"
+    String notes "valikuline"
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  HarvestLotWeighing {
+    String id PK
+    String lotId FK
+    DateTime date
+    Float tonnes
+    String notes "valikuline"
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  HarvestLotCost {
+    String id PK
+    String lotId FK
+    DateTime date
+    String articleId FK
+    Float quantity
+    Decimal unitPrice "valikuline"
+    String notes "valikuline"
+    DateTime createdAt
+    DateTime updatedAt
+  }
   PointOfInterest {
     String id PK
     String contactPartyId FK "valikuline"
@@ -709,12 +774,19 @@ erDiagram
     String cropId FK "valikuline"
     String defaultWarehouseId FK "valikuline"
   }
+  Season {
+    Int id PK
+  }
+  Crop {
+    String id PK
+  }
   WorkEntry {
     String id PK
     String fieldWorkId FK
     String workerId FK "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
+    String harvestLotId FK "valikuline"
     String warehouseId FK "valikuline"
     String createdById FK "valikuline"
     String financeConfirmedById FK "valikuline"
@@ -727,8 +799,16 @@ erDiagram
   Article ||--o{ StockDocumentLine : "article"
   Article ||--o{ ArticleStock : "article"
   Warehouse ||--o{ ArticleStock : "warehouse"
+  Season ||--o{ HarvestLot : "season"
+  Crop ||--o{ HarvestLot : "crop"
+  Article ||--o{ HarvestLot : "article"
+  Warehouse ||--o{ HarvestLot : "warehouse"
+  HarvestLot ||--o{ HarvestLotWeighing : "lot"
+  HarvestLot ||--o{ HarvestLotCost : "lot"
+  Article ||--o{ HarvestLotCost : "article"
   Warehouse |o--o{ Article : "defaultWarehouse"
   Warehouse |o--o{ WorkEntry : "warehouse"
+  HarvestLot |o--o{ WorkEntry : "harvestLot"
 ```
 
 ## Isikud, kasutajad ja tugi
@@ -859,6 +939,7 @@ erDiagram
     String workerId FK "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
+    String harvestLotId FK "valikuline"
     String warehouseId FK "valikuline"
     String createdById FK "valikuline"
     String financeConfirmedById FK "valikuline"
@@ -1114,6 +1195,7 @@ erDiagram
   Warehouse |o--o{ WorkEntry : "warehouse"
   User |o--o{ WorkEntry : "createdByUser"
   User |o--o{ WorkEntry : "financeConfirmedBy"
+  HarvestLot |o--o{ WorkEntry : "harvestLot"
   WorkEntry ||--o{ WorkEntryLine : "entry"
   Vehicle |o--o{ WorkEntryLine : "vehicle"
   Implement |o--o{ WorkEntryLine : "implement"
@@ -1126,6 +1208,13 @@ erDiagram
   Article ||--o{ StockDocumentLine : "article"
   Article ||--o{ ArticleStock : "article"
   Warehouse ||--o{ ArticleStock : "warehouse"
+  Season ||--o{ HarvestLot : "season"
+  Crop ||--o{ HarvestLot : "crop"
+  Article ||--o{ HarvestLot : "article"
+  Warehouse ||--o{ HarvestLot : "warehouse"
+  HarvestLot ||--o{ HarvestLotWeighing : "lot"
+  HarvestLot ||--o{ HarvestLotCost : "lot"
+  Article ||--o{ HarvestLotCost : "article"
   User ||--o{ Session : "user"
   User ||--o{ ApiKey : "user"
   User ||--o{ SupportGrant : "grantedBy"
@@ -1162,7 +1251,8 @@ erDiagram
 | `ArticleGroup` | `SERVICE`, `CONSUMABLE`, `PRODUCE`, `OTHER_GOODS` |
 | `ArticleSystemKind` | `LABOR_TIME`, `MACHINE_TIME`, `IMPLEMENT_TIME`, `DRYING_TIME`, `SEED`, `FERTILIZER`, `PLANT_PROTECTION`, `FUEL`, `DRYING_OIL`, `GRAIN` |
 | `StockDocumentKind` | `RECEIPT`, `WRITE_OFF`, `TRANSFER`, `INVENTORY` |
-| `WriteOffReason` | `SPOILED`, `INVENTORY`, `OTHER` |
+| `WriteOffReason` | `SPOILED`, `INVENTORY`, `SOLD`, `OTHER` |
+| `HarvestLotStatus` | `OPEN`, `CLOSED` |
 | `TenantStatus` | `ACTIVE`, `SUSPENDED` |
 | `LicenseModule` | `TELEMETRY`, `SATELLITE`, `WEATHER` |
 | `InterestStatus` | `NEW`, `CONTACTED`, `CLOSED` |
