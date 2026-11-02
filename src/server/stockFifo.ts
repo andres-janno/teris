@@ -19,6 +19,7 @@ export interface OutResult {
   cost: number; // hinnatud osa maksumus
   unpricedQty: number; // hindamata kogus (võlg või hindamata partii)
   shortageQty: number; // ainult TRANSFER: kogus, mida lähtelaos hinnaga partiina polnud
+  missingQty: number; // ainult TRANSFER: kogus, mida lähtelaos füüsiliselt polnud (võlg); hindamata partii ei lähe siia
 }
 
 export interface WarehouseStock {
@@ -64,7 +65,7 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
   let lastReceipt: number | null = null;
   const lotsOf = (w: string) => lots.get(w) ?? (lots.set(w, []), lots.get(w)!);
   const debtsOf = (w: string) => debts.get(w) ?? (debts.set(w, []), debts.get(w)!);
-  const outOf = (ref: string) => outs.get(ref) ?? (outs.set(ref, { cost: 0, unpricedQty: 0, shortageQty: 0 }), outs.get(ref)!);
+  const outOf = (ref: string) => outs.get(ref) ?? (outs.set(ref, { cost: 0, unpricedQty: 0, shortageQty: 0, missingQty: 0 }), outs.get(ref)!);
 
   // Sissetulek lattu: kõigepealt kaetakse võlg vanimast alates, ülejääk läheb partiiks
   const receive = (w: string, qty: number, unitCost: number | null) => {
@@ -113,6 +114,7 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     o.unpricedQty += missing;
     if (m.kind === 'TRANSFER') {
       const to = m.toWarehouseId!;
+      o.missingQty += missing;
       o.shortageQty += missing + pieces.filter((p) => p.unitCost === null).reduce((s, p) => s + p.qty, 0);
       for (const p of pieces) receive(to, p.qty, p.unitCost);
       if (missing > 0) receive(to, missing, null);
@@ -166,6 +168,7 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     o.cost = round2(o.cost) + 0;
     o.unpricedQty = roundQ(o.unpricedQty) + 0;
     o.shortageQty = roundQ(o.shortageQty) + 0;
+    o.missingQty = roundQ(o.missingQty) + 0;
   }
   return { outs, counts, stock, lastReceiptUnitCost: lastReceipt };
 }

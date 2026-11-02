@@ -210,20 +210,29 @@ export async function articleStockSummary(tx: TxClient, warehouseId: string | nu
 const fmtDay = (d: Date) => d.toISOString().slice(0, 10).split('-').reverse().join('.');
 
 // Uus ülekande puudujääk (mida enne muudatust polnud) lükkab muudatuse tagasi; tehing veereb tagasi.
+// Lükatakse tagasi ainult lähtelaos füüsiliselt puuduv kogus; olemasolev, kuid hindamata kaup (nt inventuuriga leitud) on ülekantav.
 async function assertNoNewShortage(tx: TxClient, articleIds: string[], before: Set<string>) {
   const after = await transferShortageKeys(tx, articleIds);
   const fresh = [...after].filter((k) => !before.has(k));
   if (!fresh.length) return;
-  const [documentId, articleId] = fresh[0].split(':');
-  const line = await tx.stockDocumentLine.findFirst({
-    where: { documentId, articleId },
-    select: { quantity: true, shortageQty: true, article: { select: { name: true, unit: true } }, document: { select: { date: true, warehouse: { select: { name: true } } } } }
-  });
-  const available = Math.max(0, (line?.quantity ?? 0) - (line?.shortageQty ?? 0));
-  throw new StockValidationError(
-    `Laos "${line?.document.warehouse.name}" on ${line ? fmtDay(line.document.date) : ''} seisuga materjali "${line?.article.name}" ` +
-    `ülekandeks saadaval ${available.toLocaleString('et-EE', { maximumFractionDigits: 3 })} ${line?.article.unit}.`
-  );
+  const replays = new Map<string, ReturnType<typeof fifoReplay>>();
+  for (const key of fresh) {
+    const [documentId, articleId] = key.split(':');
+    if (!replays.has(articleId)) replays.set(articleId, fifoReplay((await loadMovements(tx, [articleId]))[0].movements));
+    const lines = await tx.stockDocumentLine.findMany({
+      where: { documentId, articleId },
+      select: { id: true, quantity: true, article: { select: { name: true, unit: true } }, document: { select: { date: true, warehouse: { select: { name: true } } } } }
+    });
+    for (const line of lines) {
+      const missing = replays.get(articleId)!.outs.get(`doc:${line.id}`)?.missingQty ?? 0;
+      if (missing <= 0) continue;
+      const available = Math.max(0, line.quantity - missing);
+      throw new StockValidationError(
+        `Laos "${line.document.warehouse.name}" on ${fmtDay(line.document.date)} seisuga materjali "${line.article.name}" ` +
+        `ülekandeks saadaval ${available.toLocaleString('et-EE', { maximumFractionDigits: 3 })} ${line.article.unit}.`
+      );
+    }
+  }
 }
 
 export async function saveStockDocument(tx: TxClient, id: string | null, doc: StockDocumentInput): Promise<string> {

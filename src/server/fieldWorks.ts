@@ -21,7 +21,7 @@ import {
   type StoredLine
 } from './fieldWorkRules.ts';
 import { articleSeasonTotals } from './articleUsage.ts';
-import { inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
+import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
@@ -1312,6 +1312,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     // Finantsjuhile hoiatus, kui kanne jääb inventuuri ette (muudab selle vahet)
     const notice = finance && saved.warehouseId
       ? await tenantTransaction(async (tx) => inventoryNotice(tx, await entryStockTouches(tx, saved.lines, saved.warehouseId!), saved.date, null))
+          .catch((err) => { console.error('Inventuuri hoiatuse arvutus ebaõnnestus', err); return null; })
       : null;
     json(res, { ...entryDto(saved, finance), ...(finance ? { inventoryNotice: notice } : {}) });
     return true;
@@ -1363,9 +1364,10 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const finance = canSeeFinance(req);
     const notice = finance && saved.warehouseId
       ? await tenantTransaction(async (tx) => inventoryNotice(tx, [
-          ...(await entryStockTouches(tx, old.lines, old.warehouseId ?? saved.warehouseId!)),
+          ...(await entryStockTouches(tx, old.lines, old.warehouseId ?? await getDefaultWarehouseId(tx))),
           ...(await entryStockTouches(tx, saved.lines, saved.warehouseId!))
         ], old.date < saved.date ? old.date : saved.date, null))
+          .catch((err) => { console.error('Inventuuri hoiatuse arvutus ebaõnnestus', err); return null; })
       : null;
     json(res, { ...entryDto(saved, finance), ...(finance ? { inventoryNotice: notice } : {}) });
     return true;

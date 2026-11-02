@@ -94,7 +94,7 @@ export const stockTools = [
           quantity: l.document.kind === 'INVENTORY' ? round2(l.diffQty ?? 0) : round2(l.quantity),
           ...(l.document.kind === 'INVENTORY' ? { counted: round2(l.countedQty ?? 0) } : {}),
           unit: l.article.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
-          reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) > 0 ? l.amount : l.fifoCost)
+          reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) > 0 ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) === 0 ? 0 : l.fifoCost)
         })),
         ...entryLines.map((l) => ({
           sortDate: l.entry.date, date: fmtDate(l.entry.date), type: 'FIELD_WORK', warehouse: l.entry.warehouse?.name ?? defaultWh?.name ?? '',

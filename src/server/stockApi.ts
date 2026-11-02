@@ -260,7 +260,9 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       const whIds = [...new Set([parsed.doc.warehouseId, parsed.doc.toWarehouseId, old?.warehouseId, old?.toWarehouseId].filter((x): x is string => !!x))];
       const articleIds = [...new Set([...parsed.doc.lines.map((l) => l.articleId), ...(old?.lines.map((l) => l.articleId) ?? [])])];
       const fromDate = old && old.date < parsed.doc.date ? old.date : parsed.doc.date;
-      const notice = await tenantTransaction((tx) => inventoryNotice(tx, articleIds.flatMap((articleId) => whIds.map((warehouseId) => ({ articleId, warehouseId }))), fromDate, savedId));
+      // Hoiatuse viga ei tohi juba salvestatud kannet 500-ks muuta
+      const notice = await tenantTransaction((tx) => inventoryNotice(tx, articleIds.flatMap((articleId) => whIds.map((warehouseId) => ({ articleId, warehouseId }))), fromDate, savedId))
+        .catch((err) => { console.error('Inventuuri hoiatuse arvutus ebaõnnestus', err); return null; });
       const d = await prisma.stockDocument.findUniqueOrThrow({ where: { id: savedId }, include: DOC_INCLUDE });
       json(res, { ...documentDto(d), inventoryNotice: notice });
     } catch (err) {

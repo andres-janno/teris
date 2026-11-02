@@ -4,6 +4,7 @@ import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import { getDefaultWarehouseId, saveStockDocument, inventoryNotice } from './stock';
 import { changeArticleUnit } from './articleUnitChange';
 import { systemCategoryId } from './articleCategories';
+import { StockValidationError } from './stock';
 import type { StockDocumentInput } from './stockRules';
 
 const T = `test-tenant-inventory-${process.pid}`;
@@ -87,5 +88,18 @@ describe('inventuur', () => {
     expect(l.countedQty).toBeCloseTo(0.09, 9);
     expect(l.diffQty).toBeCloseTo(-0.005, 9);
     expect((await stock()).qty).toBeCloseTo(0.01, 9);
+  });
+
+  it('inventuuriga leitud hindamata kaup on ülekantav; päris puudujääk lükatakse tagasi', async () => {
+    const catId = await run(() => tenantTransaction((tx) => systemCategoryId(tx, 'FERTILIZER')));
+    const art = (await run(() => prisma.article.create({ data: { name: 'Hindamata leid', categoryId: catId, unit: 'kg' } }))).id;
+    const wh2 = (await run(() => prisma.warehouse.create({ data: { name: 'Teine ladu' } }))).id;
+    await save({ kind: 'INVENTORY', date: d('2026-06-01'), lines: [{ articleId: art, quantity: 0, amount: null, countedQty: 10 }] });
+    const trId = await save({ kind: 'TRANSFER', date: d('2026-06-02'), toWarehouseId: wh2, lines: [{ articleId: art, quantity: 5, amount: null }] });
+    expect((await lineOf(trId)).fifoCost).toBeNull();
+    const st = (w: string) => run(() => prisma.articleStock.findUniqueOrThrow({ where: { articleId_warehouseId: { articleId: art, warehouseId: w } } }));
+    expect((await st(wh)).qty).toBe(5);
+    expect((await st(wh2)).qty).toBe(5);
+    await expect(save({ kind: 'TRANSFER', date: d('2026-06-03'), toWarehouseId: wh2, lines: [{ articleId: art, quantity: 15, amount: null }] })).rejects.toBeInstanceOf(StockValidationError);
   });
 });
