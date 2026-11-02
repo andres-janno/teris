@@ -24,6 +24,7 @@ import { articleSeasonTotals } from './articleUsage.ts';
 import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
+import { lotCostShares } from '../services/harvestLotRules.ts';
 import { applyEntryHarvest, assertEntryLotOpen, HarvestLotError } from './harvestLots.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit, lotUnitBlocked, LOT_UNIT_ERROR } from './articleUnitChange.ts';
@@ -1589,6 +1590,30 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           fieldWorks: { select: { phase: true, entries: { select: { financeStatus: true, lines: { select: { kind: true, quantity: true, unitPrice: true } } } } } }
         }
       });
+      // Partii kuivatuskulu põldudele: partii kulu × põllu võrdpunkrid / partii võrdpunkrid (arvutatakse lugemisel)
+      const lots = await prisma.harvestLot.findMany({
+        where: { season: { year } },
+        select: {
+          name: true, bunkerTonnes: true,
+          costs: { select: { quantity: true, unitPrice: true } },
+          entries: { select: { harvestBunkers: true, harvestTonnesManual: true, fieldWork: { select: { fieldSeasonId: true } }, lines: { where: { kind: 'HARVEST' }, select: { quantity: true } } } }
+        }
+      });
+      const drying = new Map<number, { total: number; lots: { name: string; amount: number }[] }>();
+      for (const lot of lots) {
+        const total = lot.costs.reduce((sum, c) => sum + c.quantity * (decimalToNumber(c.unitPrice) ?? 0), 0);
+        if (!(total > 0)) continue;
+        const shares = lotCostShares(lot.bunkerTonnes, lot.entries.map((e) => ({
+          key: String(e.fieldWork.fieldSeasonId), bunkers: e.harvestBunkers, manual: e.harvestTonnesManual, tonnes: e.lines[0]?.quantity ?? 0
+        })));
+        for (const [key, share] of shares) {
+          const amount = Math.round(total * share * 100) / 100;
+          const cur = drying.get(Number(key)) ?? { total: 0, lots: [] };
+          cur.total = Math.round((cur.total + amount) * 100) / 100;
+          cur.lots.push({ name: lot.name, amount });
+          drying.set(Number(key), cur);
+        }
+      }
       const results = [];
       for (const s of seasons) {
         let entries = s.fieldWorks.flatMap((w) => w.entries);
@@ -1611,6 +1636,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         }
         const confirmed = entries.filter((e) => e.financeStatus === 'CONFIRMED');
         const resObj = summarizeLines(confirmed.flatMap((e) => e.lines.map((l) => ({ kind: l.kind, quantity: l.quantity, unitPrice: decimalToNumber(l.unitPrice) }))));
+        const dry = drying.get(s.id);
         results.push({
           fieldSeasonId: s.id,
           fieldId: s.field.id,
@@ -1621,7 +1647,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           areaHa: s.areaHa,
           entriesTotal: entries.length,
           entriesConfirmed: confirmed.length,
-          ...resObj
+          ...resObj,
+          drying: dry?.total ?? 0,
+          dryingLots: dry?.lots ?? [],
+          costTotal: resObj.costTotal + (dry?.total ?? 0),
+          profit: resObj.profit - (dry?.total ?? 0)
         });
       }
       json(res, results.filter((r) => r.entriesTotal > 0));

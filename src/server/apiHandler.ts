@@ -11,6 +11,7 @@ import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
 import { handleArticleCategories } from './articleCategories.ts';
 import { handleStock } from './stockApi.ts';
+import { handleHarvestLots } from './harvestLotApi.ts';
 import { resourceCostIn, resourceCostOut } from './entryArticles.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
@@ -378,6 +379,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await handleArticleCategories(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
     if (await handleStock(req, res, pathname, method, url)) return;
+    if (await handleHarvestLots(req, res, pathname, method, url)) return;
 
     // 1. Health check / status
     if (pathname === '/api/status' && method === 'GET') {

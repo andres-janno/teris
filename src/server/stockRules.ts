@@ -1,6 +1,6 @@
 // src/server/stockRules.ts — laokande sisendi valideerimine (puhas funktsioon)
 export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY';
-export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'OTHER';
+export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'SOLD' | 'OTHER';
 
 export interface StockDocumentInput {
   kind: StockDocumentKind;
@@ -15,7 +15,7 @@ export interface StockDocumentInput {
 }
 
 const KINDS: StockDocumentKind[] = ['RECEIPT', 'WRITE_OFF', 'TRANSFER', 'INVENTORY'];
-const REASONS: WriteOffReason[] = ['SPOILED', 'INVENTORY', 'OTHER'];
+const REASONS: WriteOffReason[] = ['SPOILED', 'INVENTORY', 'SOLD', 'OTHER'];
 const text = (v: unknown, max = 500): string | null => {
   const s = String(v ?? '').trim().slice(0, max);
   return s || null;

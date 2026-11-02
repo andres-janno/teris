@@ -7,14 +7,14 @@ import { systemCategoryId } from './articleCategories.ts';
 import { matchCrop, type LineDraft } from './fieldWorkRules.ts';
 import { computeBunkerTonnes, defaultLotName, entryHarvestTonnes } from '../services/harvestLotRules.ts';
 
-export class HarvestLotError extends Error {}
+export class HarvestLotError extends Error { http?: number }
 export const closedLotError = (name: string) => `Partii „${name}“ on suletud — ava partii uuesti`;
 export const NO_CROP_ERROR = 'Põllu kultuur on määramata — sisesta tonnid käsitsi';
 
 const rate3 = (qty: number, area: number) => (qty > 0 && area > 0 ? Math.round((qty / area) * 1000) / 1000 : null);
 
 // Automaatse partii loomine serialiseeritakse ettevõtte piires (sama hooaja ja kultuuri topeltpartii vältimiseks)
-async function lockLots(tx: TxClient): Promise<void> {
+export async function lockLots(tx: TxClient): Promise<void> {
   await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('harvest-lot:' || current_setting('app.tenant_id')))`;
 }
 

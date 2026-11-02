@@ -88,6 +88,13 @@ describe('inventuuri sisend', () => {
   });
 });
 
+describe('mahakandmise põhjus SOLD', () => {
+  it('müük on lubatud põhjus', () => {
+    const r = parseStockDocument({ ...base, kind: 'WRITE_OFF', writeOffReason: 'SOLD' });
+    expect(r).toEqual({ ok: true, doc: expect.objectContaining({ writeOffReason: 'SOLD' }) });
+  });
+});
+
 describe('inventoryNoticeText', () => {
   it('kuupäevad kasvavalt ja kordumatult', () => {
     expect(inventoryNoticeText([])).toBeNull();
