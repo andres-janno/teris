@@ -6,7 +6,7 @@ import { ClipboardCheck, X } from 'lucide-react';
 import { formatQty } from '../services/units';
 import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
-import { alertDialog } from './ConfirmDialog';
+import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
 import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
@@ -34,26 +34,29 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
   const [documentNo, setDocumentNo] = useState(initial?.documentNo ?? '');
   const [notes, setNotes] = useState(initial?.notes ?? '');
   const [preview, setPreview] = useState<InventoryPreviewRow[]>([]);
-  const [added, setAdded] = useState<string[]>([]); // käsitsi lisatud artiklid, mida nimekirjas polnud
+  const [added, setAdded] = useState<string[]>(() => initial?.lines.map((l) => l.articleId) ?? []); // käsitsi lisatud ja dokumendi enda artiklid, mida eelvaates ei pruugi olla
   const [counted, setCounted] = useState<Record<string, string>>(
     () => Object.fromEntries((initial?.lines ?? []).map((l) => [l.articleId, fmtInput(l.countedQty)]))
   );
   const [busy, setBusy] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (!warehouseId || !date) return;
     let alive = true;
+    setPreview([]);
+    setLoading(true);
     api.getInventoryPreview(warehouseId, date, initial?.id)
-      .then((rows) => { if (alive) setPreview(rows); })
-      .catch((e) => { if (alive) void alertDialog(e instanceof Error ? e.message : 'Arvestusliku seisu laadimine ebaõnnestus'); });
+      .then((rows) => { if (alive) { setPreview(rows); setLoading(false); } })
+      .catch((e) => { if (alive) { setLoading(false); void alertDialog(e instanceof Error ? e.message : 'Arvestusliku seisu laadimine ebaõnnestus'); } });
     return () => { alive = false; };
   }, [warehouseId, date, initial?.id]);
 
   useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); if (!busy) onClose(); } };
     document.addEventListener('keydown', onKey, true);
     return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
+  }, [onClose, busy]);
 
   const rows = useMemo(() => {
     const listed = new Set(preview.map((p) => p.articleId));
@@ -80,11 +83,22 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
   const shortage = results.reduce((s, x) => s + (x && x.diff < 0 ? -(x.value ?? 0) : 0), 0);
   const surplus = results.reduce((s, x) => s + (x && x.diff > 0 ? x.value ?? 0 : 0), 0);
 
+  const changeWarehouse = async (id: string) => {
+    if (!initial) {
+      if (Object.values(counted).some((v) => v.trim()) && !(await confirmDialog('Lao vahetus tühjendab sisestatud tegelikud seisud. Jätkan?'))) return;
+      setCounted({});
+      setAdded([]);
+    }
+    setWarehouseId(id);
+  };
+
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     const filled = rows.filter((r) => (counted[r.articleId] ?? '').trim());
     const bad = filled.find((r) => parseNum(counted[r.articleId]) === null);
     if (bad) return void alertDialog(`Tegelik seis peab olema arv: ${bad.articleName}`);
+    const neg = filled.find((r) => (parseNum(counted[r.articleId]) ?? 0) < 0);
+    if (neg) return void alertDialog(`Tegelik seis ei tohi olla negatiivne: ${neg.articleName}`);
     if (!filled.length) return void alertDialog('Sisesta vähemalt ühe artikli tegelik seis');
     setBusy(true);
     try {
@@ -122,7 +136,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
             </div>
             <div className="form-group">
               <label htmlFor="inv-wh">Ladu *</label>
-              <select id="inv-wh" className="form-input" required value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
+              <select id="inv-wh" className="form-input" required value={warehouseId} onChange={(e) => void changeWarehouse(e.target.value)}>
                 <option value="">– vali –</option>
                 {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
               </select>
@@ -149,7 +163,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
               </tr>
             </thead>
             <tbody>
-              {rows.length === 0 && <tr><td colSpan={5} className="muted">Selles laos pole kaupu. Lisa artikkel allpool.</td></tr>}
+              {rows.length === 0 && <tr><td colSpan={5} className="muted">{loading ? 'Laen…' : 'Selles laos pole kaupu. Lisa artikkel allpool.'}</td></tr>}
               {rows.map((r, i) => {
                 const x = results[i];
                 return (
@@ -186,7 +200,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
         </div>
         <div className="modal-footer">
           <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+          <button type="submit" className="btn btn-primary" disabled={busy || loading}>Salvesta</button>
         </div>
       </form>
     </div>,
