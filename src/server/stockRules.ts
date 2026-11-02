@@ -1,5 +1,5 @@
 // src/server/stockRules.ts — laokande sisendi valideerimine (puhas funktsioon)
-export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER';
+export type StockDocumentKind = 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY';
 export type WriteOffReason = 'SPOILED' | 'INVENTORY' | 'OTHER';
 
 export interface StockDocumentInput {
@@ -11,10 +11,10 @@ export interface StockDocumentInput {
   documentNo: string | null;
   writeOffReason: WriteOffReason | null;
   notes: string | null;
-  lines: { articleId: string; quantity: number; amount: number | null }[];
+  lines: { articleId: string; quantity: number; amount: number | null; countedQty?: number | null }[];
 }
 
-const KINDS: StockDocumentKind[] = ['RECEIPT', 'WRITE_OFF', 'TRANSFER'];
+const KINDS: StockDocumentKind[] = ['RECEIPT', 'WRITE_OFF', 'TRANSFER', 'INVENTORY'];
 const REASONS: WriteOffReason[] = ['SPOILED', 'INVENTORY', 'OTHER'];
 const text = (v: unknown, max = 500): string | null => {
   const s = String(v ?? '').trim().slice(0, max);
@@ -47,6 +47,26 @@ export function parseStockDocument(body: unknown): { ok: true; doc: StockDocumen
 
   const linesIn: any[] = Array.isArray(b.lines) ? b.lines : [];
   if (!linesIn.length) return fail('Lisa vähemalt üks rida');
+  if (kind === 'INVENTORY') {
+    // Inventuur: tühi tegelik seis = rida ei salvestata; 0 = kogu seis maha
+    const counted: StockDocumentInput['lines'] = [];
+    for (const l of linesIn) {
+      const raw = String(l?.countedQty ?? '').trim();
+      if (!raw) continue;
+      const articleId = text(l?.articleId, 64);
+      if (!articleId) return fail('Vali igale reale materjal');
+      const countedQty = num(raw);
+      if (countedQty === null) return fail('Tegelik seis peab olema arv');
+      if (countedQty < 0) return fail('Tegelik seis ei tohi olla negatiivne');
+      if (counted.some((c) => c.articleId === articleId)) return fail('Artikkel on inventuuris mitu korda');
+      counted.push({ articleId, quantity: 0, amount: null, countedQty });
+    }
+    if (!counted.length) return fail('Sisesta vähemalt ühe artikli tegelik seis');
+    return {
+      ok: true,
+      doc: { kind, date, warehouseId, toWarehouseId: null, supplierId: null, documentNo: text(b.documentNo, 80), writeOffReason: null, notes: text(b.notes, 2000), lines: counted }
+    };
+  }
   const lines: StockDocumentInput['lines'] = [];
   for (const l of linesIn) {
     const articleId = text(l?.articleId, 64);
@@ -78,7 +98,7 @@ export function parseStockDocument(body: unknown): { ok: true; doc: StockDocumen
 
 /** Kas päring nõuab finantsõigust: laokanded ja ladude muutmine. Ladude loend, laoseis ja laokaart on kõigile. */
 export function stockRequiresFinance(pathname: string, method: string): boolean {
-  if (pathname === '/api/stock/documents' || pathname.startsWith('/api/stock/documents/')) return true;
+  if (pathname === '/api/stock/documents' || pathname.startsWith('/api/stock/documents/') || pathname === '/api/stock/inventory-preview') return true;
   if ((pathname === '/api/warehouses' || pathname.startsWith('/api/warehouses/')) && method !== 'GET') return true;
   return false;
 }
@@ -101,4 +121,12 @@ export function articleStockFields(
     unpricedQty: s?.unpricedQty ?? 0,
     ...(finance ? { stockValue: s?.value ?? 0, pricedQty: s?.pricedQty ?? 0 } : {})
   };
+}
+
+const fmtIsoDay = (iso: string) => iso.slice(0, 10).split('-').reverse().join('.');
+
+/** Hoiatus, kui salvestatud liikumine jääb inventuuri(de) ette samas laos; null = hoiatust pole. */
+export function inventoryNoticeText(isoDates: string[]): string | null {
+  const dates = [...new Set(isoDates.map((d) => d.slice(0, 10)))].sort();
+  return dates.length ? `See kanne muudab inventuuri ${dates.map(fmtIsoDay).join(', ')} vahet` : null;
 }

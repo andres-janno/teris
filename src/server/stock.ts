@@ -68,7 +68,7 @@ export interface ArticleMovements {
   unit: string;
   movements: Movement[];
   entryLines: { id: string; ref: string; quantity: number }[];
-  docLines: { id: string; ref: string; kind: 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' }[];
+  docLines: { id: string; ref: string; kind: 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY' }[];
   issueEntryLineIds: string[];
 }
 

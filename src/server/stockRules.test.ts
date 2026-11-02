@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { parseStockDocument, stockRequiresFinance, stockCardFinanceFields, articleStockFields } from './stockRules';
+import { parseStockDocument, stockRequiresFinance, inventoryNoticeText, stockCardFinanceFields, articleStockFields } from './stockRules';
 
 const base = { date: '2026-05-01', warehouseId: 'w1', lines: [{ articleId: 'm1', quantity: '10', amount: '25,50' }] };
 
@@ -33,6 +33,7 @@ describe('parseStockDocument', () => {
 describe('stockRequiresFinance', () => {
   it('laokanded ja ladude muutmine nõuavad finantsõigust', () => {
     expect(stockRequiresFinance('/api/stock/documents', 'GET')).toBe(true);
+    expect(stockRequiresFinance('/api/stock/inventory-preview', 'GET')).toBe(true);
     expect(stockRequiresFinance('/api/stock/documents', 'POST')).toBe(true);
     expect(stockRequiresFinance('/api/stock/documents/abc', 'GET')).toBe(true);
     expect(stockRequiresFinance('/api/stock/documents/abc', 'PUT')).toBe(true);
@@ -65,5 +66,31 @@ describe('articleStockFields', () => {
   });
   it('laoseisuta materjal annab nullid', () => {
     expect(articleStockFields(true, undefined)).toEqual({ stockQty: 0, unpricedQty: 0, stockValue: 0, pricedQty: 0 });
+  });
+});
+
+describe('inventuuri sisend', () => {
+  const inv = { kind: 'INVENTORY', date: '2026-05-31', warehouseId: 'w1' };
+  it('tühi tegelik seis jäetakse välja, 0 jääb alles', () => {
+    const r = parseStockDocument({ ...inv, supplierId: 's1', writeOffReason: 'SPOILED', toWarehouseId: 'w2', lines: [
+      { articleId: 'a1', countedQty: '' }, { articleId: 'a2', countedQty: '0' }, { articleId: 'a3', countedQty: '12,5' }
+    ] });
+    expect(r).toEqual({ ok: true, doc: expect.objectContaining({
+      kind: 'INVENTORY', supplierId: null, writeOffReason: null, toWarehouseId: null,
+      lines: [{ articleId: 'a2', quantity: 0, amount: null, countedQty: 0 }, { articleId: 'a3', quantity: 0, amount: null, countedQty: 12.5 }]
+    }) });
+  });
+  it('vead', () => {
+    expect(parseStockDocument({ ...inv, lines: [{ articleId: 'a1', countedQty: '' }] })).toEqual({ ok: false, error: 'Sisesta vähemalt ühe artikli tegelik seis' });
+    expect(parseStockDocument({ ...inv, lines: [{ articleId: 'a1', countedQty: '-1' }] })).toEqual({ ok: false, error: 'Tegelik seis ei tohi olla negatiivne' });
+    expect(parseStockDocument({ ...inv, lines: [{ articleId: 'a1', countedQty: 'x' }] })).toEqual({ ok: false, error: 'Tegelik seis peab olema arv' });
+    expect(parseStockDocument({ ...inv, lines: [{ articleId: 'a1', countedQty: 1 }, { articleId: 'a1', countedQty: 2 }] })).toEqual({ ok: false, error: 'Artikkel on inventuuris mitu korda' });
+  });
+});
+
+describe('inventoryNoticeText', () => {
+  it('kuupäevad kasvavalt ja kordumatult', () => {
+    expect(inventoryNoticeText([])).toBeNull();
+    expect(inventoryNoticeText(['2026-05-31', '2026-03-31', '2026-05-31'])).toBe('See kanne muudab inventuuri 31.03.2026, 31.05.2026 vahet');
   });
 });
