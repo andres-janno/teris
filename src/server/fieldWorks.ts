@@ -869,7 +869,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
-    const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true } });
+    const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true, countedQty: true, documentId: true } });
     if (docLines.length && convertQty(1, source.unit, target.unit) === null) {
       json(res, { error: `Artiklil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
       return true;
@@ -881,7 +881,15 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       const plans = await tx.fieldWorkLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
       const entries = await tx.workEntryLine.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
       for (const l of docLines) {
-        await tx.stockDocumentLine.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
+        const counted = l.countedQty === null ? null : convertQty(l.countedQty, source.unit, target.unit)!;
+        // Sama inventuuri sihtartikli rida: tegelikud seisud liidetakse (artikkel on inventuuris üks kord)
+        const twin = counted === null ? null : await tx.stockDocumentLine.findFirst({ where: { documentId: l.documentId, articleId: target.id }, select: { id: true, countedQty: true } });
+        if (twin) {
+          await tx.stockDocumentLine.update({ where: { id: twin.id }, data: { countedQty: (twin.countedQty ?? 0) + counted! } });
+          await tx.stockDocumentLine.delete({ where: { id: l.id } });
+          continue;
+        }
+        await tx.stockDocumentLine.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)!, countedQty: counted } });
       }
       const aliases = [...new Set([...target.aliases, ...source.aliases, nameKey(source.name)])].filter((a) => a !== nameKey(target.name));
       // Sihtmaterjali tühjad PRIA väljad täidetakse asendatava omadest

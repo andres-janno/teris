@@ -1,12 +1,12 @@
 // src/server/stock.ts — laoseisu ümberarvutus: loeb materjali liikumised (laokanded + põllutöö kande
-// kulumaterjali- ja kütuseread), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
+// kulumaterjali- ja kütuseread; laokanded sh inventuur), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
 // laokande ridade maksumuseks ja koondtabelisse article_stock. Kutsu samas tehingus pärast iga
 // liikumist muutvat salvestust.
 import type { TxClient } from './db.ts';
 import { fifoReplay, movementCost, type Movement } from './stockFifo.ts';
 import { convertQty } from '../services/units.ts';
 import { entryLineWarehouseId } from '../services/articleRules.ts';
-import type { StockDocumentInput } from './stockRules.ts';
+import { inventoryNoticeText, type StockDocumentInput } from './stockRules.ts';
 
 export class StockValidationError extends Error {}
 
@@ -80,7 +80,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
     tx.stockDocumentLine.findMany({
       where: { articleId: { in: articleIds } },
       select: {
-        id: true, articleId: true, quantity: true, amount: true, sortOrder: true,
+        id: true, articleId: true, quantity: true, amount: true, sortOrder: true, countedQty: true,
         document: { select: { kind: true, date: true, warehouseId: true, toWarehouseId: true, createdAt: true } }
       }
     }),
@@ -97,9 +97,11 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       out.docLines.push({ id: l.id, ref, kind: doc.kind });
       out.movements.push({
         ref, date: isoDay(doc.date), seq: doc.createdAt.getTime() * 1000 + l.sortOrder,
-        kind: doc.kind === 'RECEIPT' ? 'IN' : doc.kind === 'TRANSFER' ? 'TRANSFER' : 'OUT',
+        kind: doc.kind === 'RECEIPT' ? 'IN' : doc.kind === 'TRANSFER' ? 'TRANSFER' : doc.kind === 'INVENTORY' ? 'COUNT' : 'OUT',
         warehouseId: doc.warehouseId, toWarehouseId: doc.toWarehouseId ?? undefined,
-        quantity: l.quantity, amount: l.amount === null ? undefined : Number(l.amount)
+        // Inventuuril on liikumise kogus tegelik seis
+        quantity: doc.kind === 'INVENTORY' ? l.countedQty ?? 0 : l.quantity,
+        amount: l.amount === null ? undefined : Number(l.amount)
       });
     }
     for (const l of entryLines.filter((x) => x.articleId === m.id)) {
@@ -124,7 +126,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
 export async function recomputeArticleStock(tx: TxClient, articleIds: string[]): Promise<void> {
   const ids = [...new Set(articleIds.filter(Boolean))];
   for (const mm of await loadMovements(tx, ids)) {
-    const { outs, stock } = fifoReplay(mm.movements);
+    const { outs, counts, stock } = fifoReplay(mm.movements);
 
     // Põllutöö kanderead: ühikuhind kanderea ühikus; hindamata või teisendamatu → null
     const current = new Map(
@@ -140,10 +142,24 @@ export async function recomputeArticleStock(tx: TxClient, articleIds: string[]):
       if (current.get(id) !== price) await tx.workEntryLine.update({ where: { id }, data: { unitPrice: price } });
     }
 
-    // Laokande read: maksumus ja ülekande puudujääk
+    // Laokande read: maksumus, ülekande puudujääk, inventuuri vahe
     for (const l of mm.docLines) {
       if (l.kind === 'RECEIPT') continue;
       const o = outs.get(l.ref);
+      if (l.kind === 'INVENTORY') {
+        const diff = counts.get(l.ref)?.diffQty ?? 0;
+        await tx.stockDocumentLine.update({
+          where: { id: l.id },
+          data: {
+            diffQty: diff,
+            quantity: Math.abs(diff),
+            amount: diff > 0 ? counts.get(l.ref)!.amount : null,
+            fifoCost: diff < 0 ? movementCost('OUT', o) : diff === 0 ? 0 : null,
+            shortageQty: null
+          }
+        });
+        continue;
+      }
       await tx.stockDocumentLine.update({
         where: { id: l.id },
         data: {
@@ -229,7 +245,7 @@ export async function saveStockDocument(tx: TxClient, id: string | null, doc: St
     kind: doc.kind, date: doc.date, warehouseId: doc.warehouseId, toWarehouseId: doc.toWarehouseId,
     supplierId: doc.supplierId, documentNo: doc.documentNo, writeOffReason: doc.writeOffReason, notes: doc.notes
   };
-  const lines = doc.lines.map((l, i) => ({ articleId: l.articleId, quantity: l.quantity, amount: l.amount, sortOrder: i }));
+  const lines = doc.lines.map((l, i) => ({ articleId: l.articleId, quantity: l.quantity, amount: l.amount, countedQty: l.countedQty ?? null, sortOrder: i }));
   let docId = id;
   if (id) {
     await tx.stockDocumentLine.deleteMany({ where: { documentId: id } });
@@ -248,4 +264,33 @@ export async function deleteStockDocument(tx: TxClient, id: string): Promise<voi
   await tx.stockDocument.delete({ where: { id } });
   await recomputeArticleStock(tx, articleIds);
   await assertNoNewShortage(tx, articleIds, before);
+}
+
+/**
+ * Hoiatus, kui liikumine (kuupäevast fromDate) jääb mõne inventuuri ette samas laos — muudab selle vahet.
+ * Inventuur on päeva viimane, seega ka sama päeva liikumine muudab vahet. null = hoiatust pole.
+ */
+export async function inventoryNotice(
+  tx: TxClient, touches: { articleId: string; warehouseId: string }[], fromDate: Date, excludeDocumentId: string | null
+): Promise<string | null> {
+  if (!touches.length) return null;
+  const rows = await tx.stockDocumentLine.findMany({
+    where: {
+      document: { kind: 'INVENTORY', date: { gte: fromDate }, ...(excludeDocumentId ? { id: { not: excludeDocumentId } } : {}) },
+      OR: touches.map((t) => ({ articleId: t.articleId, document: { warehouseId: t.warehouseId } }))
+    },
+    select: { document: { select: { date: true } } }
+  });
+  return inventoryNoticeText(rows.map((r) => isoDay(r.document.date)));
+}
+
+/** Põllutöö kande kaubaread (artikkel + ladu, kust maha kantakse) inventuuri hoiatuse jaoks. */
+export async function entryStockTouches(
+  tx: TxClient, lines: { kind: string; articleId: string | null }[], entryWarehouseId: string
+): Promise<{ articleId: string; warehouseId: string }[]> {
+  const goods = lines.filter((l): l is { kind: 'MATERIAL' | 'FUEL'; articleId: string } => (l.kind === 'MATERIAL' || l.kind === 'FUEL') && !!l.articleId);
+  if (!goods.length) return [];
+  const arts = await tx.article.findMany({ where: { id: { in: goods.map((l) => l.articleId) } }, select: { id: true, defaultWarehouseId: true } });
+  const dw = new Map(arts.map((a) => [a.id, a.defaultWarehouseId]));
+  return goods.map((l) => ({ articleId: l.articleId, warehouseId: entryLineWarehouseId(l.kind, dw.get(l.articleId) ?? null, entryWarehouseId) }));
 }

@@ -10,9 +10,12 @@ const scale = (n: number | null, f: number) => (n == null ? null : Math.round(n 
 export async function changeArticleUnit(tx: TxClient, articleId: string, fromUnit: string, toUnit: string, factor: number): Promise<void> {
   if (!(factor > 0)) throw new Error('Teisendustegur peab olema positiivne');
 
-  const docLines = await tx.stockDocumentLine.findMany({ where: { articleId }, select: { id: true, quantity: true, shortageQty: true } });
+  const docLines = await tx.stockDocumentLine.findMany({ where: { articleId }, select: { id: true, quantity: true, shortageQty: true, countedQty: true, diffQty: true } });
   for (const l of docLines) {
-    await tx.stockDocumentLine.update({ where: { id: l.id }, data: { quantity: scale(l.quantity, factor)!, shortageQty: scale(l.shortageQty, factor) } });
+    await tx.stockDocumentLine.update({
+      where: { id: l.id },
+      data: { quantity: scale(l.quantity, factor)!, shortageQty: scale(l.shortageQty, factor), countedQty: scale(l.countedQty, factor), diffQty: scale(l.diffQty, factor) }
+    });
   }
 
   const entryLines = await tx.workEntryLine.findMany({
