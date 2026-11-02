@@ -165,9 +165,14 @@ export async function recomputeArticleStock(tx: TxClient, articleIds: string[]):
     }
 
     // Partii kuivatuskulu (kaup): FIFO ühikuhind; hindamata → null
+    const currentCosts = new Map(
+      (await tx.harvestLotCost.findMany({ where: { id: { in: mm.lotCostLines.map((l) => l.id) } }, select: { id: true, unitPrice: true } }))
+        .map((l) => [l.id, l.unitPrice === null ? null : Number(l.unitPrice)])
+    );
     for (const l of mm.lotCostLines) {
       const o = outs.get(l.ref);
-      await tx.harvestLotCost.update({ where: { id: l.id }, data: { unitPrice: o && o.unpricedQty === 0 ? round4(o.cost / l.quantity) : null } });
+      const price = o && o.unpricedQty === 0 ? round4(o.cost / l.quantity) : null;
+      if (currentCosts.get(l.id) !== price) await tx.harvestLotCost.update({ where: { id: l.id }, data: { unitPrice: price } });
     }
 
     // Laokande read: maksumus, ülekande puudujääk, inventuuri vahe

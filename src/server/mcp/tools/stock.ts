@@ -41,7 +41,7 @@ export const stockTools = [
   defineTool({
     name: 'list_stock_movements',
     title: 'Laoliikumised',
-    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER), inventuur (INVENTORY: quantity = vahe, + juurde / − maha; counted = tegelik seis) põllutöö kande kulu (FIELD_WORK), saagipartii kaalumine (HARVEST_WEIGHING: quantity tonnid artikli ühikus, lot = partii, hinnata) ja partii kuivatuskulu kaubast (HARVEST_LOT_COST), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
+    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER), inventuur (INVENTORY: quantity = vahe, + juurde / − maha; counted = tegelik seis) põllutöö kande kulu (FIELD_WORK), saagipartii kaalumine (HARVEST_WEIGHING: quantity artikli ühikus, lot = partii, hinnata), ja partii kuivatuskulu kaubast (HARVEST_LOT_COST), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
     when: canSeeFinance,
     input: {
       warehouse: z.string().optional().describe('Lao nimi'),
@@ -97,7 +97,8 @@ export const stockTools = [
           where: {
             article: { category: { group: { not: 'SERVICE' } }, ...(a.article ? { name: ci(a.article) } : {}) },
             ...(date ? { date } : {}),
-            ...(warehouseId ? { lot: { warehouseId } } : {})
+            // Kulu läheb artikli vaikimisi laost, puudumisel partii laost
+            ...(warehouseId ? { OR: [{ article: { defaultWarehouseId: warehouseId } }, { article: { defaultWarehouseId: null }, lot: { warehouseId } }] } : {})
           },
           include: { article: { select: { name: true, unit: true, defaultWarehouse: { select: { name: true } } } }, lot: { select: { name: true, warehouse: { select: { name: true } } } } }
         })
@@ -118,11 +119,16 @@ export const stockTools = [
           field: fieldLabel(l.entry.fieldWork.fieldSeason.field), work: workTypeDisplayName(l.entry.fieldWork.workType),
           cost: l.unitPrice === null ? null : round2(Number(l.unitPrice) * l.quantity)
         })),
-        ...weighings.map((w) => ({
-          sortDate: w.date, date: fmtDate(w.date), type: 'HARVEST_WEIGHING', warehouse: w.lot.warehouse.name,
-          article: w.lot.article.name, quantity: round2(convertQty(w.tonnes, 't', w.lot.article.unit) ?? 0), unit: w.lot.article.unit,
-          lot: w.lot.name, cost: null
-        })),
+        ...weighings.flatMap((w) => {
+          const qty = convertQty(w.tonnes, 't', w.lot.article.unit);
+          // Teisendamatu kaalumine ei ole laoarvestuses: ära näita 0-ga
+          if (qty === null) return [];
+          return [{
+            sortDate: w.date, date: fmtDate(w.date), type: 'HARVEST_WEIGHING', warehouse: w.lot.warehouse.name,
+            article: w.lot.article.name, quantity: Math.round(qty * 1e6) / 1e6, unit: w.lot.article.unit,
+            lot: w.lot.name, cost: null
+          }];
+        }),
         ...lotCosts.map((c) => ({
           sortDate: c.date, date: fmtDate(c.date), type: 'HARVEST_LOT_COST', warehouse: c.article.defaultWarehouse?.name ?? c.lot.warehouse.name,
           article: c.article.name, quantity: round2(c.quantity), unit: c.article.unit,

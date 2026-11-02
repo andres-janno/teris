@@ -3,12 +3,19 @@
 // (muus ühikus read teisendatakse laoarvestuses nagu varemgi). Rahaline väärtus ei muutu: ühikuhind jagatakse teguriga.
 import type { TxClient } from './db.ts';
 import { recomputeArticleStock } from './stock.ts';
+import { convertQty } from '../services/units.ts';
 
 const norm = (u: string) => u.trim().toLowerCase();
 const scale = (n: number | null, f: number) => (n == null ? null : Math.round(n * f * 1e9) / 1e9);
 
+// Saagipartii kaalumised on tonnides: partiidega artikli ühik peab olema kaaluühik, muidu kaalumised kaoksid laost
+export const LOT_UNIT_ERROR = 'Artiklil on saagipartiisid; ühikut saab muuta ainult kaaluühikuks (t, kg)';
+export const lotUnitBlocked = (lotCount: number, newUnit: string): boolean => lotCount > 0 && convertQty(1, 't', newUnit) === null;
+
 export async function changeArticleUnit(tx: TxClient, articleId: string, fromUnit: string, toUnit: string, factor: number): Promise<void> {
   if (!(factor > 0)) throw new Error('Teisendustegur peab olema positiivne');
+
+  if (lotUnitBlocked(await tx.harvestLot.count({ where: { articleId } }), toUnit)) throw new Error(LOT_UNIT_ERROR);
 
   const docLines = await tx.stockDocumentLine.findMany({ where: { articleId }, select: { id: true, quantity: true, shortageQty: true, countedQty: true, diffQty: true } });
   for (const l of docLines) {
@@ -40,8 +47,8 @@ export async function changeArticleUnit(tx: TxClient, articleId: string, fromUni
     await tx.fieldWorkLine.update({ where: { id: l.id }, data: { unit: toUnit, ratePerHa: scale(l.ratePerHa, factor) } });
   }
 
-  // Partii kuivatuskulud (kaup) on artikli ühikus
-  const lotCosts = await tx.harvestLotCost.findMany({ where: { articleId }, select: { id: true, quantity: true, unitPrice: true } });
+  // Partii kuivatuskulud (kaup) on artikli ühikus; teenuse kulu kogus on tunnid ja jääb samaks
+  const lotCosts = await tx.harvestLotCost.findMany({ where: { articleId, article: { category: { group: { not: 'SERVICE' } } } }, select: { id: true, quantity: true, unitPrice: true } });
   for (const l of lotCosts) {
     await tx.harvestLotCost.update({
       where: { id: l.id },

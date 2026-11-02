@@ -26,7 +26,7 @@ import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { applyEntryHarvest, assertEntryLotOpen, HarvestLotError } from './harvestLots.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
-import { changeArticleUnit } from './articleUnitChange.ts';
+import { changeArticleUnit, lotUnitBlocked, LOT_UNIT_ERROR } from './articleUnitChange.ts';
 import { articleFieldRules, sanitizeArticleFields, SERVICE_TIME_KINDS } from '../services/articleRules.ts';
 import { articleLineError, loadEntryArticles, ensureDefaultServices } from './entryArticles.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
@@ -817,10 +817,16 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const unitChanged = !!old && old.unit.trim().toLowerCase() !== unit.trim().toLowerCase();
     // Teisendustegur (1 vana ühik = tegur uut ühikut): kasutaja antud või kaaluühikute korral automaatne
     const unitFactor = unitChanged ? (num(b?.unitFactor) ?? convertQty(1, old!.unit, unit)) : null;
+    if (unitChanged && lotUnitBlocked(await prisma.harvestLot.count({ where: { articleId: id! } }), unit)) {
+      json(res, { error: LOT_UNIT_ERROR }, 409);
+      return true;
+    }
     if (unitChanged && !(unitFactor && unitFactor > 0)) {
-      const docLines = (await prisma.stockDocumentLine.count({ where: { articleId: id! } })) + (await prisma.harvestLotCost.count({ where: { articleId: id! } }));
-      if (docLines) {
-        json(res, { error: `Artiklil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
+      const docLines = await prisma.stockDocumentLine.count({ where: { articleId: id! } });
+      const goodsLotCosts = await prisma.harvestLotCost.count({ where: { articleId: id!, article: { category: { group: { not: 'SERVICE' } } } } });
+      if (docLines || goodsLotCosts) {
+        const what = [docLines ? `${docLines} laokande rida` : null, goodsLotCosts ? `${goodsLotCosts} kuivatuskulu rida` : null].filter(Boolean).join(' ja ');
+        json(res, { error: `Artiklil on ${what}. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
       }
       const lines = await prisma.workEntryLine.findMany({ where: { articleId: id!, kind: { in: ['MATERIAL', 'FUEL'] } }, select: { unit: true } });
@@ -880,9 +886,17 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
     const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true, countedQty: true, documentId: true } });
+    // Teenuse kuivatuskulu kogus on tunnid: seda ei teisendata ega loeta ühikute kontrolli
+    const isGoods = source.categoryId ? (await prisma.articleCategory.findUnique({ where: { id: source.categoryId }, select: { group: true } }))?.group !== 'SERVICE' : true;
     const lotCostLines = await prisma.harvestLotCost.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true } });
-    if ((docLines.length || lotCostLines.length) && convertQty(1, source.unit, target.unit) === null) {
-      json(res, { error: `Artiklil on ${docLines.length + lotCostLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
+    const convertibleLotCosts = isGoods ? lotCostLines.length : 0;
+    if ((docLines.length || convertibleLotCosts) && convertQty(1, source.unit, target.unit) === null) {
+      const what = [docLines.length ? `${docLines.length} laokande rida` : null, convertibleLotCosts ? `${convertibleLotCosts} kuivatuskulu rida` : null].filter(Boolean).join(' ja ');
+      json(res, { error: `Artiklil on ${what} ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
+      return true;
+    }
+    if (lotUnitBlocked(await prisma.harvestLot.count({ where: { articleId: source.id } }), target.unit)) {
+      json(res, { error: LOT_UNIT_ERROR }, 409);
       return true;
     }
     const counts = await tenantTransaction(async (tx) => {
@@ -904,7 +918,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }
       // Saagipartii kuivatuskulud: kogus artikli ühikus; partii põhiartikkel liigub sihtartiklile
       for (const l of lotCostLines) {
-        await tx.harvestLotCost.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
+        await tx.harvestLotCost.update({ where: { id: l.id }, data: { articleId: target.id, ...(isGoods ? { quantity: convertQty(l.quantity, source.unit, target.unit)! } : {}) } });
       }
       await tx.harvestLot.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
       const aliases = [...new Set([...target.aliases, ...source.aliases, nameKey(source.name)])].filter((a) => a !== nameKey(target.name));

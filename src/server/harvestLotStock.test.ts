@@ -3,6 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import { getDefaultWarehouseId, recomputeArticleStock, saveStockDocument } from './stock';
 import { systemCategoryId } from './articleCategories';
+import { changeArticleUnit, LOT_UNIT_ERROR } from './articleUnitChange';
 
 const T = `test-tenant-lotstock-${process.pid}`;
 const run = <R>(fn: () => Promise<R>): Promise<R> => runAsTenant(T, async () => await fn());
@@ -29,6 +30,8 @@ beforeAll(async () => {
 
 afterAll(async () => {
   await run(async () => {
+    await prisma.harvestLotWeighing.deleteMany({});
+    await prisma.harvestLotCost.deleteMany({});
     await prisma.harvestLot.deleteMany({});
     await prisma.stockDocument.deleteMany({});
     await prisma.articleStock.deleteMany({});
@@ -63,5 +66,34 @@ describe('partii laoarvestuses', () => {
     const c = await run(() => prisma.harvestLotCost.findUniqueOrThrow({ where: { id: cost.id } }));
     expect(Number(c.unitPrice)).toBe(1.5);
     expect((await stockOf(oilId))?.qty).toBe(70);
+  });
+
+  it('teenuse kuivatuskulu ei satu lattu ja ümberarvutus ei muuda selle hinda', async () => {
+    const svcCat = await run(() => tenantTransaction((tx) => systemCategoryId(tx, 'DRYING_TIME')));
+    const svc = await run(() => prisma.article.create({ data: { name: 'Kuivatustunnid', categoryId: svcCat, unit: 'h' } }));
+    const cost = await run(() => prisma.harvestLotCost.create({ data: { lotId, date: d('2026-08-06'), articleId: svc.id, quantity: 4, unitPrice: 12.5 } }));
+    await run(() => tenantTransaction((tx) => recomputeArticleStock(tx, [svc.id])));
+    expect(await stockOf(svc.id)).toBeNull();
+    expect(Number((await run(() => prisma.harvestLotCost.findUniqueOrThrow({ where: { id: cost.id } }))).unitPrice)).toBe(12.5);
+  });
+
+  it('kauba vaikimisi ladu erineb partii laost: väljaminek läheb artikli vaikimisi lattu', async () => {
+    const other = await run(() => prisma.warehouse.create({ data: { name: 'Teine ladu' } }));
+    const cat = await run(() => tenantTransaction((tx) => systemCategoryId(tx, 'DRYING_OIL')));
+    const art = await run(() => prisma.article.create({ data: { name: 'Gaas', categoryId: cat, unit: 'kg', defaultWarehouseId: other.id } }));
+    await run(() => prisma.harvestLotCost.create({ data: { lotId, date: d('2026-08-07'), articleId: art.id, quantity: 5 } }));
+    await run(() => tenantTransaction((tx) => recomputeArticleStock(tx, [art.id])));
+    const rows = await run(() => prisma.articleStock.findMany({ where: { articleId: art.id } }));
+    expect(rows).toHaveLength(1);
+    expect(rows[0].warehouseId).toBe(other.id);
+    expect(rows[0].qty).toBe(-5);
+    // hindamata kulu: ühikuhind puudub
+    const c = await run(() => prisma.harvestLotCost.findFirstOrThrow({ where: { articleId: art.id } }));
+    expect(c.unitPrice).toBeNull();
+  });
+
+  it('partiiga terade ühikut ei saa muuta mitte-kaaluühikuks', async () => {
+    await expect(run(() => tenantTransaction((tx) => changeArticleUnit(tx, grainId, 'kg', 'kott', 25)))).rejects.toThrow(LOT_UNIT_ERROR);
+    expect((await run(() => prisma.article.findUniqueOrThrow({ where: { id: grainId } }))).unit).toBe('kg');
   });
 });
