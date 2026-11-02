@@ -1,6 +1,6 @@
 # Andmemudel (ERD)
 
-Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-11-01). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
+Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-11-02). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
 
 Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-ja-andmed.md](vaated-ja-andmed.md).
 
@@ -166,6 +166,7 @@ erDiagram
   }
   RelatedParty {
     String id PK
+    String serviceArticleId FK "valikuline"
   }
   Article {
     String id PK
@@ -348,6 +349,7 @@ erDiagram
     Decimal price "valikuline"
     String cropId FK "valikuline"
     String defaultWarehouseId FK "valikuline"
+    Boolean isDefaultService
     String priaRegister "valikuline"
     String priaKind "valikuline"
     String priaSpec "valikuline"
@@ -389,13 +391,17 @@ erDiagram
   }
   RelatedParty {
     String id PK
+    String serviceArticleId FK "valikuline"
   }
   Vehicle {
     String id PK
     String assignedDriverId FK "valikuline"
+    String serviceArticleId FK "valikuline"
+    String fuelArticleId FK "valikuline"
   }
   Implement {
     String id PK
+    String serviceArticleId FK "valikuline"
   }
   Warehouse {
     String id PK
@@ -441,6 +447,10 @@ erDiagram
   Crop |o--o{ WorkTemplate : "crop"
   WorkTemplate ||--o{ WorkTemplateItem : "template"
   WorkType ||--o{ WorkTemplateItem : "workType"
+  Article |o--o{ RelatedParty : "serviceArticle"
+  Article |o--o{ Vehicle : "serviceArticle"
+  Article |o--o{ Vehicle : "fuelArticle"
+  Article |o--o{ Implement : "serviceArticle"
   Article ||--o{ StockDocumentLine : "article"
   Article ||--o{ ArticleStock : "article"
 ```
@@ -481,6 +491,9 @@ erDiagram
     String color
     Float fuelCapacityL "valikuline"
     String assignedDriverId FK "valikuline"
+    String serviceArticleId FK "valikuline"
+    Decimal hourlyRate "valikuline"
+    String fuelArticleId FK "valikuline"
     Float lastLatitude "valikuline"
     Float lastLongitude "valikuline"
     DateTime lastActiveAt "valikuline"
@@ -502,6 +515,8 @@ erDiagram
     String model "valikuline"
     String serialNumber "valikuline"
     Int year "valikuline"
+    String serviceArticleId FK "valikuline"
+    Decimal hourlyRate "valikuline"
     String notes "valikuline"
     DateTime createdAt
     DateTime updatedAt
@@ -570,6 +585,14 @@ erDiagram
   }
   RelatedParty {
     String id PK
+    String serviceArticleId FK "valikuline"
+  }
+  Article {
+    String id PK
+    String categoryId FK
+    String cropVarietyId FK "valikuline"
+    String cropId FK "valikuline"
+    String defaultWarehouseId FK "valikuline"
   }
   WorkEntry {
     String id PK
@@ -593,6 +616,9 @@ erDiagram
     String poiId FK,UK "valikuline"
   }
   RelatedParty |o--o{ Vehicle : "assignedDriver"
+  Article |o--o{ Vehicle : "serviceArticle"
+  Article |o--o{ Vehicle : "fuelArticle"
+  Article |o--o{ Implement : "serviceArticle"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
@@ -672,6 +698,7 @@ erDiagram
   }
   RelatedParty {
     String id PK
+    String serviceArticleId FK "valikuline"
   }
   Article {
     String id PK
@@ -729,6 +756,8 @@ erDiagram
     String email "valikuline"
     String address "valikuline"
     String bankAccount "valikuline"
+    String serviceArticleId FK "valikuline"
+    Decimal hourlyRate "valikuline"
     String notes "valikuline"
     DateTime createdAt
     DateTime updatedAt
@@ -788,6 +817,13 @@ erDiagram
     DateTime revokedAt "valikuline"
     DateTime createdAt
   }
+  Article {
+    String id PK
+    String categoryId FK
+    String cropVarietyId FK "valikuline"
+    String cropId FK "valikuline"
+    String defaultWarehouseId FK "valikuline"
+  }
   Field {
     Int id PK
     String operatorId FK "valikuline"
@@ -805,6 +841,8 @@ erDiagram
   Vehicle {
     String id PK
     String assignedDriverId FK "valikuline"
+    String serviceArticleId FK "valikuline"
+    String fuelArticleId FK "valikuline"
   }
   FieldWork {
     String id PK
@@ -829,6 +867,7 @@ erDiagram
     String toWarehouseId FK "valikuline"
     String supplierId FK "valikuline"
   }
+  Article |o--o{ RelatedParty : "serviceArticle"
   User ||--o{ Session : "user"
   User ||--o{ PasswordToken : "user"
   User ||--o{ SupportGrant : "grantedBy"
@@ -1038,11 +1077,15 @@ erDiagram
   Season |o--o{ FieldSeason : "season"
   Crop |o--o{ FieldSeason : "cropEntity"
   CropVariety |o--o{ FieldSeason : "varietyEntity"
+  Article |o--o{ RelatedParty : "serviceArticle"
   FieldSeason ||--o{ FieldCadastralParcel : "fieldSeason"
   CadastralParcel ||--o{ FieldCadastralParcel : "cadastralParcel"
   RelatedParty |o--o{ FieldCadastralParcel : "ownerParty"
   RelatedParty |o--o{ PointOfInterest : "contactParty"
   RelatedParty |o--o{ Vehicle : "assignedDriver"
+  Article |o--o{ Vehicle : "serviceArticle"
+  Article |o--o{ Vehicle : "fuelArticle"
+  Article |o--o{ Implement : "serviceArticle"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
