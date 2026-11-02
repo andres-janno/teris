@@ -20,6 +20,8 @@ export interface RelatedParty {
   email?: string;                 // E-posti aadress
   address?: string;               // Postiaadress / asukoht
   bankAccount?: string;           // IBAN arveldusarve (nt EE12220000...)
+  serviceArticleId?: string | null; // töötaja tööaja teenus (tühi = vaikimisi teenus)
+  hourlyRate?: number | null;       // oma tunnihind € (ainult finantsõigusega)
   notes?: string;                 // Märkused / lepingulised eritingimused
   createdAt?: string;
   updatedAt?: string;

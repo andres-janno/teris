@@ -28,6 +28,9 @@ export interface Vehicle {
   type: VehicleType;
   category?: string;              // Masina liik (vabatekst)
   powerKw?: number;               // Mootorivõimsus kW
+  serviceArticleId?: string | null; // masina tööaja teenus (tühi = vaikimisi teenus)
+  hourlyRate?: number | null;       // oma tunnihind € (ainult finantsõigusega)
+  fuelArticleId?: string | null;    // vaikimisi kütus
   acquisitionCost?: number;       // Soetusmaksumus (€)
   acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
@@ -94,6 +97,8 @@ export interface Implement {
   model: string;
   type: ImplementType;
   category?: string;              // Haakeriista liik (vabatekst, eraldi masinate liikidest)
+  serviceArticleId?: string | null; // haakeriista tööaja teenus (tühi = vaikimisi teenus)
+  hourlyRate?: number | null;       // oma tunnihind € (ainult finantsõigusega)
   acquisitionCost?: number;       // Soetusmaksumus (€)
   acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)

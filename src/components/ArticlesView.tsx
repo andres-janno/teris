@@ -269,6 +269,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
                       <td className="name-cell" title={m.notes ?? undefined}>
                         <span className="field-name">{m.name}</span>
+                        {m.isDefaultService && <span className="article-default-badge" title="Tööaja liigi vaikimisi teenus">vaikimisi</span>}
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
                       <td>{m.manufacturer ?? ''}</td>

@@ -111,6 +111,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
         priaSpec: form.priaSpec || null, activeIngredient: form.activeIngredient || null,
         nPct: parsePct(pct.nPct), pPct: parsePct(pct.pPct), kPct: parsePct(pct.kPct)
       }, rules),
+      isDefaultService: !!form.isDefaultService,
       unitFactor: unitChanged ? parsePct(unitFactor) ?? autoFactor : null
     };
     if (unitChanged && payload.unitFactor != null && !(payload.unitFactor > 0)) return alertDialog('Teisendustegur peab olema suurem kui 0');
@@ -154,7 +155,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             </div>
             <div className="form-group">
               <label htmlFor="mt-cat">Liik *</label>
-              <select id="mt-cat" className="form-input" required value={form.categoryId ?? ''} onChange={(e) => {
+              <select id="mt-cat" className="form-input" required disabled={!!initial?.isDefaultService} value={form.categoryId ?? ''} onChange={(e) => {
                 const c = categories.find((x) => x.id === e.target.value);
                 setForm({ ...form, categoryId: e.target.value, unit: form.unit || (c?.group === 'SERVICE' ? 'h' : form.unit) });
               }}>
@@ -179,6 +180,13 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                 <label htmlFor="mt-price">Hind (€ / {form.unit || 'ühik'})</label>
                 <input id="mt-price" className="form-input num" inputMode="decimal" value={priceText} onChange={(e) => setPriceText(e.target.value)} />
               </div>
+            )}
+            {cat?.group === 'SERVICE' && ['LABOR_TIME', 'MACHINE_TIME', 'IMPLEMENT_TIME', 'DRYING_TIME'].includes(cat.systemKind ?? '') && (
+              <label className="users-admin-checkbox" title="Kanne kasutab seda teenust, kui töötajal, masinal või haakeriistal pole oma teenust">
+                <input type="checkbox" checked={!!form.isDefaultService} disabled={!!initial?.isDefaultService}
+                  onChange={(e) => setForm({ ...form, isDefaultService: e.target.checked })} />
+                <span>Vaikimisi teenus</span>
+              </label>
             )}
             {rules?.crop && (
               <div className="form-group">
@@ -267,7 +275,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <textarea id="mt-notes" ref={autoGrow} rows={2} className="form-input auto-resize-textarea" placeholder="nt ERP tootekood" value={form.notes ?? ''} onChange={(e) => { autoGrow(e.target); setForm({ ...form, notes: e.target.value }); }} />
             </div>
             <label className="users-admin-checkbox full-width">
-              <input type="checkbox" checked={form.isActive ?? true} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
+              <input type="checkbox" checked={form.isActive ?? true} disabled={!!initial?.isDefaultService} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
               <span>Aktiivne (kannetes valitav)</span>
             </label>
           </div>

@@ -257,6 +257,12 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
     setSaveError(null);
     setSaveSuccess(null);
 
+    if (confirm && (selectedEntry.lines || []).some((l) => l.kind === 'FUEL' && !l.articleId)) {
+      setSaveError('Kütuse artikkel määramata. Määra masinale vaikimisi kütus või jäta aktiivseks ainult üks kütus ja salvesta kanne uuesti.');
+      setSaving(false);
+      return;
+    }
+
     if (confirm && !allLinesPriced) {
       setSaveError('Finantsi kinnitamiseks peab igal real olema sisestatud kehtiv ühikuhind.');
       setSaving(false);
@@ -266,7 +272,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
     try {
       const payloadPrices: Record<string, number | null> = {};
       for (const line of selectedEntry.lines || []) {
-        if (line.kind === 'MATERIAL') continue; // materjali hind tuleb laost (FIFO)
+        if (line.kind === 'MATERIAL' || line.kind === 'FUEL') continue; // kulumaterjali ja kütuse hind tuleb laost (FIFO)
         const val = prices[line.id];
         if (val !== undefined && val !== '') {
           const p = parseFloat(val.replace(',', '.'));
@@ -687,9 +693,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                       <span className="finance-line-unit">{line.unit}</span>
                                     </td>
                                     <td className="finance-price-cell">
-                                      {line.kind === 'MATERIAL' ? (
-                                        <span className={`finance-fifo-price ${isMissing ? 'missing' : ''}`} title="Hind tuleb laost (FIFO)">
-                                          {isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
+                                      {line.kind === 'MATERIAL' || line.kind === 'FUEL' ? (
+                                        <span className={`finance-fifo-price ${isMissing || (line.kind === 'FUEL' && !line.articleId) ? 'missing' : ''}`} title="Hind tuleb laost (FIFO)">
+                                          {line.kind === 'FUEL' && !line.articleId
+                                            ? 'Kütuse artikkel määramata'
+                                            : isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
                                         </span>
                                       ) : (
                                       <div className={`finance-price-input-wrap ${isMissing ? 'missing' : ''}`}>

@@ -21,6 +21,9 @@ import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
+import { ResourceCostFields, parseRate, rateText } from './ResourceCostFields';
+import { api } from '../services/api';
+import type { Article } from '../types/fieldWork';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -34,6 +37,7 @@ interface RelatedPartiesModalProps {
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
   stacked?: boolean;
   isFullPage?: boolean;
+  canManageFinance?: boolean; // tunnihinda näeb ja muudab ainult finantsõigusega kasutaja
 }
 
 const ALL_ROLES: PartyRole[] = ['LANDOWNER', 'DRIVER', 'OPERATOR', 'SUPPLIER', 'OTHER'];
@@ -49,6 +53,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   selectedYear = 2026,
   stacked = false,
   isFullPage = false,
+  canManageFinance = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedRoleFilter, setSelectedRoleFilter] = useState<string>('all');
@@ -66,6 +71,13 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const [editEmail, setEditEmail] = useState('');
   const [editAddress, setEditAddress] = useState('');
   const [editBankAccount, setEditBankAccount] = useState('');
+  const [costArticles, setCostArticles] = useState<Article[]>([]);
+  const [editServiceId, setEditServiceId] = useState('');
+  const [editRate, setEditRate] = useState('');
+  // Teenuste valik töötaja vormil
+  useEffect(() => {
+    api.getArticles().then(setCostArticles).catch(() => setCostArticles([]));
+  }, []);
   const [editNotes, setEditNotes] = useState('');
 
   // Open Edit Form
@@ -80,6 +92,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditEmail(party.email || '');
     setEditAddress(party.address || '');
     setEditBankAccount(party.bankAccount || '');
+    setEditServiceId(party.serviceArticleId ?? '');
+    setEditRate(rateText(party.hourlyRate));
     setEditNotes(party.notes || '');
     setIsEditing(true);
   };
@@ -96,6 +110,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditEmail('');
     setEditAddress('');
     setEditBankAccount('');
+    setEditServiceId('');
+    setEditRate('');
     setEditNotes('');
     setIsEditing(true);
   };
@@ -128,6 +144,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       email: editEmail.trim() || undefined,
       address: editAddress.trim() || undefined,
       bankAccount: editBankAccount.trim().replace(/\s+/g, '') || undefined,
+      serviceArticleId: editRoles.includes('DRIVER') ? (editServiceId || null) : null,
+      ...(canManageFinance ? { hourlyRate: editRoles.includes('DRIVER') ? parseRate(editRate) : null } : {}),
       notes: editNotes.trim() || undefined,
       updatedAt: new Date().toISOString()
     };
@@ -407,6 +425,14 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             className="form-input"
           />
         </div>
+
+        {editRoles.includes('DRIVER') && (
+          <ResourceCostFields
+            serviceKind="LABOR_TIME" articles={costArticles}
+            serviceArticleId={editServiceId} onServiceChange={setEditServiceId}
+            hourlyRate={editRate} onRateChange={setEditRate} canManageFinance={canManageFinance}
+          />
+        )}
 
       </div>
 

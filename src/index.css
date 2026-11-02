@@ -11005,6 +11005,7 @@ td.stock-qty-out { color: #dc2626; }
 
 .finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
 .finance-fifo-price.missing { color: #d97706; }
+.article-default-badge { margin-left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 11px; background: var(--color-surface-muted, #eef2f7); color: var(--color-text-muted, #475569); }
 .pria-article-cell { display: flex; flex-direction: column; min-width: 0; }
 
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */

@@ -40,6 +40,8 @@ import type {
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
+import { ResourceCostFields, parseRate, rateText } from './ResourceCostFields';
+import type { Article } from '../types/fieldWork';
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
@@ -68,6 +70,7 @@ interface VehicleTrackerProps {
   onAddDevice: (dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => Promise<boolean>;
   onUpdateDevice: (id: string, dev: Omit<TelemetryDevice, 'id' | 'position' | 'heading' | 'speedKmH' | 'status' | 'lastUpdate'>) => Promise<boolean>;
   onDeleteDevice: (id: string) => void;
+  canManageFinance?: boolean;      // tunnihinda näeb ja muudab ainult finantsõigusega kasutaja
   telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
 }
 type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory';
@@ -261,6 +264,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onAddDevice,
   onUpdateDevice,
   onDeleteDevice,
+  canManageFinance = false,
   telemetryEnabled = true,
 }) => {
   const [selectedTab, setActiveTab] = useState<TabType>('vehicles');
@@ -284,6 +288,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vCategory, setVCategory] = useState('');
   const [vPowerKw, setVPowerKw] = useState('');
   const [vCost, setVCost] = useState('');
+  const [costArticles, setCostArticles] = useState<Article[]>([]);
+  // Teenuste ja kütuste valik ressursi vormidel
+  useEffect(() => {
+    api.getArticles().then(setCostArticles).catch(() => setCostArticles([]));
+  }, []);
+  const [vServiceId, setVServiceId] = useState('');
+  const [vRate, setVRate] = useState('');
+  const [vFuelId, setVFuelId] = useState('');
+  const [impServiceId, setImpServiceId] = useState('');
+  const [impRate, setImpRate] = useState('');
   const [vAcqDate, setVAcqDate] = useState('');
   const [vDepRate, setVDepRate] = useState('');
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
@@ -570,6 +584,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVCategory('');
     setVPowerKw('');
     setVCost('');
+    setVServiceId('');
+    setVRate('');
+    setVFuelId('');
     setVAcqDate('');
     setVDepRate('');
     setVDepMethod('');
@@ -586,6 +603,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpModel('');
     setImpCategory('');
     setImpCost('');
+    setImpServiceId('');
+    setImpRate('');
     setImpAcqDate('');
     setImpDepRate('');
     setImpDepMethod('');
@@ -624,6 +643,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       category: normalizeCategory(vCategory, vehicleCategories),
       powerKw: parsePositive(vPowerKw),
       acquisitionCost: parsePositive(vCost),
+      serviceArticleId: vServiceId || null,
+      fuelArticleId: vFuelId || null,
+      ...(canManageFinance ? { hourlyRate: parseRate(vRate) } : {}),
       acquisitionDate: vAcqDate || undefined,
       depreciationRate: parsePositive(vDepRate),
       depreciationMethod: vDepMethod || undefined,
@@ -658,6 +680,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       type: implementsList.find((i) => i.id === editingImplementId)?.type ?? 'other',
       category: normalizeCategory(impCategory, implementCategories),
       acquisitionCost: parsePositive(impCost),
+      serviceArticleId: impServiceId || null,
+      ...(canManageFinance ? { hourlyRate: parseRate(impRate) } : {}),
       acquisitionDate: impAcqDate || undefined,
       depreciationRate: parsePositive(impDepRate),
       depreciationMethod: impDepMethod || undefined,
@@ -724,6 +748,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVCategory(v.category || '');
     setVPowerKw(v.powerKw != null ? String(v.powerKw) : '');
     setVCost(v.acquisitionCost != null ? String(v.acquisitionCost) : '');
+    setVServiceId(v.serviceArticleId ?? '');
+    setVRate(rateText(v.hourlyRate));
+    setVFuelId(v.fuelArticleId ?? '');
     setVAcqDate(v.acquisitionDate || '');
     setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
     setVDepMethod(v.depreciationMethod || '');
@@ -742,6 +769,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpModel(imp.model);
     setImpCategory(imp.category || '');
     setImpCost(imp.acquisitionCost != null ? String(imp.acquisitionCost) : '');
+    setImpServiceId(imp.serviceArticleId ?? '');
+    setImpRate(rateText(imp.hourlyRate));
     setImpAcqDate(imp.acquisitionDate || '');
     setImpDepRate(imp.depreciationRate != null ? String(imp.depreciationRate) : '');
     setImpDepMethod(imp.depreciationMethod || '');
@@ -961,6 +990,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   method={vDepMethod}
                   onMethodChange={setVDepMethod}
                 />
+                <ResourceCostFields
+                  serviceKind="MACHINE_TIME" articles={costArticles}
+                  serviceArticleId={vServiceId} onServiceChange={setVServiceId}
+                  hourlyRate={vRate} onRateChange={setVRate} canManageFinance={canManageFinance}
+                  fuelArticleId={vFuelId} onFuelChange={setVFuelId}
+                />
                 <div className="form-group full-width">
                   <label>Märkused</label>
                   <AutoResizeTextarea
@@ -1066,6 +1101,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   onRateChange={setImpDepRate}
                   method={impDepMethod}
                   onMethodChange={setImpDepMethod}
+                />
+                <ResourceCostFields
+                  serviceKind="IMPLEMENT_TIME" articles={costArticles}
+                  serviceArticleId={impServiceId} onServiceChange={setImpServiceId}
+                  hourlyRate={impRate} onRateChange={setImpRate} canManageFinance={canManageFinance}
                 />
                 <div className="form-group full-width">
                   <label>Märkused</label>

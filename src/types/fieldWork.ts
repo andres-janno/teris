@@ -63,6 +63,7 @@ export interface Article {
   price?: number | null; // teenuse ühiku hind (ainult finantsõigusega)
   cropId?: string | null; // terade kultuur
   defaultWarehouseId?: string | null; // kauba vaikimisi ladu
+  isDefaultService?: boolean; // tööaja liigi vaikimisi teenus
   isActive: boolean;
   composition: string | null; // koostisosad
   // PRIA vaikeväärtused plaani/kande reale
@@ -98,6 +99,7 @@ export interface WorkEntryArticle extends Partial<PriaLineFields> {
 export interface WorkEntryLine {
   id: string;
   kind: WorkEntryLineKind;
+  articleId?: string | null;
   label: string;
   quantity: number;
   unit: string;
