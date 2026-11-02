@@ -102,6 +102,7 @@ model Season {
   updatedBy String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   fieldSeasons FieldSeason[]
+  harvestLots  HarvestLot[]
 
   @@unique([tenantId, year])
   @@index([tenantId])
@@ -536,6 +537,7 @@ model Crop {
   fieldSeasons  FieldSeason[]
   workTemplates WorkTemplate[]
   articles      Article[]
+  harvestLots   HarvestLot[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -760,6 +762,8 @@ model Article {
   fieldWorkLines    FieldWorkLine[]
   stockLines        StockDocumentLine[]
   stock             ArticleStock[]
+  harvestLots       HarvestLot[]        @relation("HarvestLotArticle")
+  harvestLotCosts   HarvestLotCost[]    @relation("HarvestLotCostArticle")
   vehicleServices   Vehicle[]           @relation("VehicleService")
   vehicleFuels      Vehicle[]           @relation("VehicleFuel")
   implementServices Implement[]         @relation("ImplementService")
@@ -900,6 +904,8 @@ model WorkEntry {
   dateTo               DateTime? // vahemiku lõpp (PRIA "27.04.2026 - 30.04.2026"); tühi = üks päev
   method               String? // tegelik viis (väetamisviis jms)
   harvestBunkers       Float? // saagikoristusel punkrite arv; PRIA impordist ei tule, alus tonnide arvutamiseks
+  harvestLotId         String? // saagipartii (koristuskanne); PRIA impordil tühi
+  harvestTonnesManual  Boolean       @default(false) // saagi tonnid käsitsi lukustatud, punkri kaalu jaotusest väljas
   warehouseId          String? // ladu, kust kande materjalid võetakse; tühi = põhiladu
   source               WorkSource    @default(MANUAL)
   createdById          String?
@@ -919,9 +925,11 @@ model WorkEntry {
   warehouse          Warehouse?      @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
   createdByUser      User?           @relation("WorkEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   financeConfirmedBy User?           @relation("WorkEntryConfirmedBy", fields: [financeConfirmedById], references: [id], onDelete: SetNull)
+  harvestLot         HarvestLot?     @relation(fields: [harvestLotId], references: [id], onDelete: SetNull)
   lines              WorkEntryLine[]
 
   @@index([fieldWorkId])
+  @@index([harvestLotId])
   @@index([financeStatus])
   @@index([workerId])
   @@index([warehouseId])
@@ -980,6 +988,7 @@ enum StockDocumentKind {
 enum WriteOffReason {
   SPOILED // riknenud
   INVENTORY // inventuuri vahe (ainult vanadel kannetel; uutele ei pakuta)
+  SOLD // müük
   OTHER // muu (täpsustus märkuses)
 }
 
@@ -1003,6 +1012,7 @@ model Warehouse {
   entries       WorkEntry[]
   stock         ArticleStock[]
   defaultFor    Article[]        @relation("ArticleDefaultWarehouse")
+  harvestLots   HarvestLot[]
 
   @@unique([tenantId, name])
   @@index([tenantId])
@@ -1078,6 +1088,95 @@ model ArticleStock {
   @@index([warehouseId])
   @@index([tenantId])
   @@map("article_stock")
+}
+
+// ============================================================================
+// 9c. SAAGIPARTIID
+// Koristuskanded → partii; kaalumised võtavad toodangu lattu (hinnata); sulgemisel arvutatakse punkri kaal
+// ja kannete tonnid (src/server/harvestLots.ts); kuivatuskulud jaotatakse põldudele lugemisel.
+// ============================================================================
+
+enum HarvestLotStatus {
+  OPEN // lahtine: kandeid ja kaalumisi saab lisada
+  CLOSED // suletud: punkri kaal arvutatud
+}
+
+model HarvestLot {
+  id           String           @id @default(cuid())
+  tenantId     String           @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name         String // "Talinisu 2026"
+  seasonId     Int
+  cropId       String
+  articleId    String // toodanguartikkel (liik GRAIN)
+  warehouseId  String // hoidla
+  status       HarvestLotStatus @default(OPEN)
+  bunkerTonnes Float? // arvutatud punkri kaal; täitub sulgemisel
+  closedAt     DateTime?
+  notes        String?
+  createdAt    DateTime         @default(now())
+  updatedAt    DateTime         @updatedAt
+  createdBy    String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy    String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  season    Season               @relation(fields: [seasonId], references: [id], onDelete: Restrict)
+  crop      Crop                 @relation(fields: [cropId], references: [id], onDelete: Restrict)
+  article   Article              @relation("HarvestLotArticle", fields: [articleId], references: [id], onDelete: Restrict)
+  warehouse Warehouse            @relation(fields: [warehouseId], references: [id], onDelete: Restrict)
+  entries   WorkEntry[]
+  weighings HarvestLotWeighing[]
+  costs     HarvestLotCost[]
+
+  @@unique([tenantId, name])
+  @@index([seasonId])
+  @@index([cropId])
+  @@index([articleId])
+  @@index([warehouseId])
+  @@index([tenantId])
+  @@map("harvest_lots")
+}
+
+// Kaalumine = toodangu arvelevõtt partii hoidlasse (hinnata)
+model HarvestLotWeighing {
+  id        String   @id @default(cuid())
+  tenantId  String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  lotId     String
+  date      DateTime
+  tonnes    Float
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  lot HarvestLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+
+  @@index([lotId])
+  @@index([tenantId])
+  @@map("harvest_lot_weighings")
+}
+
+// Kuivatuskulu: teenus (tunnid, hind artiklist) või kaup (laost maha FIFO-ga)
+model HarvestLotCost {
+  id        String   @id @default(cuid())
+  tenantId  String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  lotId     String
+  date      DateTime
+  articleId String
+  quantity  Float // artikli ühikus
+  unitPrice Decimal? @db.Decimal(12, 4) // teenusel artiklist, kaubal FIFO (kirjutab ümberarvutus)
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  createdBy String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  lot     HarvestLot @relation(fields: [lotId], references: [id], onDelete: Cascade)
+  article Article    @relation("HarvestLotCostArticle", fields: [articleId], references: [id], onDelete: Restrict)
+
+  @@index([lotId])
+  @@index([articleId])
+  @@index([tenantId])
+  @@map("harvest_lot_costs")
 }
 
 // ============================================================================

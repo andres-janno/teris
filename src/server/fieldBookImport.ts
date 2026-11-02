@@ -73,7 +73,7 @@ function entryData(op: FieldBookImportOperation, lines: { line: OperationLine; a
   const method = op.type === 'Saagikoristus' ? null : op.method;
   return {
     date: asDate(op.dateFrom)!, dateTo: asDate(op.dateTo), areaHa: area, method, workerId: op.performerId,
-    notes: op.notes, source: 'PRIA_IMPORT' as const, createdById: userId, warehouseId,
+    notes: op.notes, source: 'PRIA_IMPORT' as const, createdById: userId, warehouseId, harvestTonnesManual: true,
     lines: {
       create: lines.map(({ line: l, articleId }, i) => ({
         kind: l.kind, articleId, label: l.label, unit: l.unit,
