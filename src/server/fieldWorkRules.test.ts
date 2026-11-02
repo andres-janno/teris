@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   buildEntryLines,
   canConfirm,
+  confirmBlockReason,
+  FUEL_ARTICLE_MISSING,
   isWinterCrop,
   matchCrop,
   mergeLines,
   summarizeLines,
+  type LineDraft,
   type StoredLine
 } from './fieldWorkRules';
 
@@ -148,5 +151,75 @@ describe('canConfirm / summarizeLines', () => {
   it('vaatlused ei mõjuta finantsi ega kinnitamist', () => {
     expect(summarizeLines([{ kind: 'OBSERVATION', quantity: 7, unitPrice: null }]).costTotal).toBe(0);
     expect(canConfirm([{ unitPrice: 1, kind: 'LABOR' }, { unitPrice: null, kind: 'OBSERVATION' }])).toBe(true);
+  });
+});
+
+describe('buildEntryLines teenuste ja kütusega', () => {
+  it('tööaja read saavad teenusartikli ja pakutud hinna', () => {
+    const lines = buildEntryLines({
+      laborHours: 8,
+      workerName: 'Tööaeg · Mart',
+      vehicle: { id: 'v1', name: 'Traktor' },
+      implement: { id: 'i1', name: 'Ader' },
+      equipmentHours: 6,
+      laborService: { articleId: 'sL', price: 20 },
+      machineService: { articleId: 'sM', price: 55 },
+      implementService: { articleId: 'sI', price: null }
+    });
+    expect(lines.map((l) => [l.kind, l.articleId, l.unitPrice])).toEqual([
+      ['LABOR', 'sL', 20],
+      ['MACHINE', 'sM', 55],
+      ['IMPLEMENT', 'sI', null]
+    ]);
+  });
+  it('kütuserida saab kütuseartikli ja selle nime', () => {
+    const [l] = buildEntryLines({ fuelLiters: 40, fuelArticle: { id: 'f1', name: 'Diislikütus' } });
+    expect(l).toMatchObject({ kind: 'FUEL', articleId: 'f1', label: 'Diislikütus', quantity: 40, unit: 'l', unitPrice: null });
+  });
+  it('kütuseartiklita kütuserida jääb artiklita', () => {
+    const [l] = buildEntryLines({ fuelLiters: 40 });
+    expect(l).toMatchObject({ kind: 'FUEL', articleId: null, label: 'Kütus' });
+  });
+  it('materjalireal pakutud hinda pole', () => {
+    const [l] = buildEntryLines({ articles: [{ id: 'm1', name: 'Väetis', unit: 'kg', quantity: 10 }] });
+    expect(l.unitPrice).toBeNull();
+  });
+});
+
+describe('mergeLines hinnaga', () => {
+  const draft = (over: Partial<LineDraft>): LineDraft => ({
+    kind: 'LABOR', vehicleId: null, implementId: null, articleId: 'sL', label: 'Tööaeg', quantity: 8, unit: 'h',
+    sortOrder: 0, ratePerHa: null, unitPrice: 20, priaRegister: null, priaKind: null, priaSpec: null,
+    activeIngredient: null, nKgHa: null, pKgHa: null, kKgHa: null, ...over
+  });
+  it('olemasolev hind jääb, pakutud hind ei kirjuta üle', () => {
+    const old: StoredLine = { ...draft({ unitPrice: 18 }), confirmedQuantity: null };
+    expect(mergeLines([old], [draft({ unitPrice: 25 })], 'PENDING').lines[0].unitPrice).toBe(18);
+  });
+  it('tühja hinna asemele tuleb pakutud hind', () => {
+    const old: StoredLine = { ...draft({ unitPrice: null }), confirmedQuantity: null };
+    expect(mergeLines([old], [draft({ unitPrice: 25 })], 'PENDING').lines[0].unitPrice).toBe(25);
+  });
+  it('tööaja rea teenusartikli vahetus ei kaota hinda ega muuda kinnitust', () => {
+    const old: StoredLine = { ...draft({ articleId: 'sOld', unitPrice: 18 }), confirmedQuantity: 8 };
+    const r = mergeLines([old], [draft({ articleId: 'sNew', unitPrice: 25 })], 'CONFIRMED');
+    expect(r.lines[0]).toMatchObject({ articleId: 'sNew', unitPrice: 18 });
+    expect(r.financeStatus).toBe('CONFIRMED');
+  });
+});
+
+describe('confirmBlockReason', () => {
+  it('artiklita kütuserida takistab kinnitamist', () => {
+    expect(confirmBlockReason([{ kind: 'FUEL', articleId: null, unitPrice: 1.5 }])).toBe(FUEL_ARTICLE_MISSING);
+  });
+  it('hinnata rida takistab kinnitamist', () => {
+    expect(confirmBlockReason([{ kind: 'LABOR', articleId: 'sL', unitPrice: null }])).toMatch(/ühiku kulu/);
+  });
+  it('kõik korras → null', () => {
+    expect(confirmBlockReason([
+      { kind: 'LABOR', articleId: 'sL', unitPrice: 20 },
+      { kind: 'FUEL', articleId: 'f1', unitPrice: 1.5 },
+      { kind: 'OBSERVATION', articleId: null, unitPrice: null }
+    ])).toBeNull();
   });
 });

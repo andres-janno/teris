@@ -14,14 +14,24 @@ export interface LineDraft extends PriaAttrs {
   unit: string;
   sortOrder: number;
   ratePerHa: number | null; // kogus ha kohta (PRIA)
+  unitPrice: number | null; // tööaja real pakutud teenuse hind; kütusel ja materjalil tuleb hind laost (FIFO)
 }
 
 export interface StoredLine extends LineDraft {
-  unitPrice: number | null;
   confirmedQuantity: number | null;
 }
 
+/** Tööaja rea teenusartikkel ja pakutud hind (src/server/entryArticles.ts loadEntryArticles). */
+export interface ServiceChoice {
+  articleId: string;
+  price: number | null;
+}
+
 export interface EntryQuantities {
+  laborService?: ServiceChoice | null;
+  machineService?: ServiceChoice | null;
+  implementService?: ServiceChoice | null;
+  fuelArticle?: { id: string; name: string } | null; // kande kütuseartikkel
   laborHours?: number | null;
   workerName?: string | null;
   vehicle?: { id: string; name: string } | null;
@@ -73,15 +83,16 @@ export function isWinterCrop(cropText: string | null | undefined, crops?: { name
 // sest neile pannakse erinev ühiku kulu.
 export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   const lines: LineDraft[] = [];
-  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'articleId' | 'ratePerHa' | keyof PriaAttrs> & Partial<LineDraft>) =>
-    lines.push({ vehicleId: null, implementId: null, articleId: null, ratePerHa: null, ...EMPTY_PRIA_ATTRS, ...l, sortOrder: lines.length });
+  const push = (l: Omit<LineDraft, 'sortOrder' | 'vehicleId' | 'implementId' | 'articleId' | 'ratePerHa' | 'unitPrice' | keyof PriaAttrs> & Partial<LineDraft>) =>
+    lines.push({ vehicleId: null, implementId: null, articleId: null, ratePerHa: null, unitPrice: null, ...EMPTY_PRIA_ATTRS, ...l, sortOrder: lines.length });
+  const service = (s: ServiceChoice | null | undefined) => ({ articleId: s?.articleId ?? null, unitPrice: s?.price ?? null });
 
-  if (positive(q.laborHours)) push({ kind: 'LABOR', label: q.workerName || 'Tööaeg', quantity: q.laborHours, unit: 'h' });
+  if (positive(q.laborHours)) push({ kind: 'LABOR', label: q.workerName || 'Tööaeg', quantity: q.laborHours, unit: 'h', ...service(q.laborService) });
   if (positive(q.equipmentHours)) {
-    if (q.vehicle) push({ kind: 'MACHINE', vehicleId: q.vehicle.id, label: q.vehicle.name, quantity: q.equipmentHours, unit: 'h' });
-    if (q.implement) push({ kind: 'IMPLEMENT', implementId: q.implement.id, label: q.implement.name, quantity: q.equipmentHours, unit: 'h' });
+    if (q.vehicle) push({ kind: 'MACHINE', vehicleId: q.vehicle.id, label: q.vehicle.name, quantity: q.equipmentHours, unit: 'h', ...service(q.machineService) });
+    if (q.implement) push({ kind: 'IMPLEMENT', implementId: q.implement.id, label: q.implement.name, quantity: q.equipmentHours, unit: 'h', ...service(q.implementService) });
   }
-  if (positive(q.fuelLiters)) push({ kind: 'FUEL', label: 'Kütus', quantity: q.fuelLiters, unit: 'l' });
+  if (positive(q.fuelLiters)) push({ kind: 'FUEL', articleId: q.fuelArticle?.id ?? null, label: q.fuelArticle?.name ?? 'Kütus', quantity: q.fuelLiters, unit: 'l' });
   for (const m of q.articles ?? []) {
     if (positive(m.quantity)) {
       push({ kind: 'MATERIAL', articleId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
@@ -100,9 +111,10 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   return lines;
 }
 
-// Materjalita read (vaatlused) eristatakse nime järgi
+// Materjalita read (vaatlused) eristatakse nime järgi; artikkel eristab ainult materjaliridu
+// (tööaja teenuse või kütuseartikli vahetus ei kaota rea hinda ega kinnitust)
 const lineKey = (l: Pick<LineDraft, 'kind' | 'vehicleId' | 'implementId' | 'articleId' | 'label'>) =>
-  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.articleId ?? ''}:${l.kind === 'OBSERVATION' ? l.label : ''}`;
+  `${l.kind}:${l.vehicleId ?? ''}:${l.implementId ?? ''}:${l.kind === 'MATERIAL' ? l.articleId ?? '' : ''}:${l.kind === 'OBSERVATION' ? l.label : ''}`;
 
 // Kande muutmisel säilitatakse sama rea ühiku kulu. Kinnitatud kande koguse muutus → CHANGED
 // (kinnita uuesti); confirmedQuantity jätab alles kinnitamise hetke koguse.
@@ -114,7 +126,7 @@ export function mergeLines(
   const byKey = new Map(oldLines.map((l) => [lineKey(l), l]));
   const lines: StoredLine[] = drafts.map((d) => {
     const old = byKey.get(lineKey(d));
-    return { ...d, unitPrice: old?.unitPrice ?? null, confirmedQuantity: old?.confirmedQuantity ?? null };
+    return { ...d, unitPrice: old?.unitPrice ?? d.unitPrice, confirmedQuantity: old?.confirmedQuantity ?? null };
   });
   if (status === 'PENDING') return { lines, financeStatus: 'PENDING' };
 
@@ -130,6 +142,15 @@ export function mergeLines(
 export function canConfirm(lines: (Pick<StoredLine, 'unitPrice'> & { kind?: LineKind })[]): boolean {
   const priced = lines.filter((l) => l.kind !== 'OBSERVATION');
   return priced.length > 0 && priced.every((l) => l.unitPrice !== null && Number.isFinite(l.unitPrice));
+}
+
+export const FUEL_ARTICLE_MISSING = 'Kütuse artikkel määramata';
+
+/** Miks kannet ei saa kinnitada; null = saab kinnitada. */
+export function confirmBlockReason(lines: { kind: LineKind; unitPrice: number | null; articleId: string | null }[]): string | null {
+  if (lines.some((l) => l.kind === 'FUEL' && !l.articleId)) return FUEL_ARTICLE_MISSING;
+  if (!canConfirm(lines)) return 'Igal real peab olema ühiku kulu. Materjali ja kütuse hind tuleb laost — hindamata kaup ootab arvele võtmist.';
+  return null;
 }
 
 export interface FieldResult {

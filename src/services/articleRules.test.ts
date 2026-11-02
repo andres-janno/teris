@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import {
-  SYSTEM_CATEGORIES, isGoods, articleFieldRules, sanitizeArticleFields, matchesPriaKind, categoryChangeError, articleAllowedOnLine
+  SYSTEM_CATEGORIES, isGoods, articleFieldRules, sanitizeArticleFields, matchesPriaKind, categoryChangeError, articleAllowedOnLine,
+  SERVICE_TIME_KINDS, pickServicePrice, pickFuelArticleId, entryLineWarehouseId
 } from './articleRules';
 
 describe('SYSTEM_CATEGORIES', () => {
@@ -119,5 +120,53 @@ describe('articleAllowedOnLine', () => {
   it('saagi ja seire real artiklit pole', () => {
     expect(articleAllowedOnLine('HARVEST', { group: 'PRODUCE', systemKind: 'GRAIN' })).toBe(false);
     expect(articleAllowedOnLine('OBSERVATION', cons(null))).toBe(false);
+  });
+});
+
+describe('pickServicePrice', () => {
+  it('eelistab ressursi tunnihinda', () => {
+    expect(pickServicePrice(55, 40, 30)).toBe(55);
+  });
+  it('siis ressursi teenusartikli hinda, siis vaikimisi teenuse hinda', () => {
+    expect(pickServicePrice(null, 40, 30)).toBe(40);
+    expect(pickServicePrice(null, null, 30)).toBe(30);
+  });
+  it('0 on kehtiv hind', () => {
+    expect(pickServicePrice(0, 40, 30)).toBe(0);
+  });
+  it('hinnata → null', () => {
+    expect(pickServicePrice(null, null, null)).toBeNull();
+  });
+});
+
+describe('pickFuelArticleId', () => {
+  it('masina kütus enne kõike', () => {
+    expect(pickFuelArticleId('f1', ['f2', 'f3'])).toBe('f1');
+  });
+  it('ainus aktiivne kütus', () => {
+    expect(pickFuelArticleId(null, ['f2'])).toBe('f2');
+  });
+  it('mitu või null kütust → null', () => {
+    expect(pickFuelArticleId(null, ['f2', 'f3'])).toBeNull();
+    expect(pickFuelArticleId(null, [])).toBeNull();
+  });
+});
+
+describe('entryLineWarehouseId', () => {
+  it('kütus artikli vaikimisi laost', () => {
+    expect(entryLineWarehouseId('FUEL', 'tank', 'main')).toBe('tank');
+  });
+  it('vaikimisi laota kütus kande laost', () => {
+    expect(entryLineWarehouseId('FUEL', null, 'main')).toBe('main');
+  });
+  it('kulumaterjal alati kande laost', () => {
+    expect(entryLineWarehouseId('MATERIAL', 'tank', 'main')).toBe('main');
+  });
+});
+
+describe('SERVICE_TIME_KINDS', () => {
+  it('neli tööaja liiki, kõik rühmas SERVICE', () => {
+    expect(SERVICE_TIME_KINDS).toEqual(['LABOR_TIME', 'MACHINE_TIME', 'IMPLEMENT_TIME', 'DRYING_TIME']);
+    for (const k of SERVICE_TIME_KINDS) expect(SYSTEM_CATEGORIES.find((c) => c.systemKind === k)?.group).toBe('SERVICE');
   });
 });

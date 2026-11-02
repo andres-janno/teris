@@ -129,3 +129,22 @@ export function categoryChangeError(
   if (isGoods(old.group) !== isGoods(nextGroup)) return 'Liiki ei saa teenuse ja kauba vahel ümber tõsta';
   return null;
 }
+
+/** Tööaja süsteemsed liigid; igal on täpselt üks vaikimisi teenusartikkel (src/server/entryArticles.ts). */
+export const SERVICE_TIME_KINDS: ArticleSystemKind[] = ['LABOR_TIME', 'MACHINE_TIME', 'IMPLEMENT_TIME', 'DRYING_TIME'];
+
+/** Tööaja rea hind: ressursi tunnihind → ressursi teenusartikli hind → vaikimisi teenuse hind → tühi. */
+export function pickServicePrice(resourceRate: number | null, resourceArticlePrice: number | null, defaultArticlePrice: number | null): number | null {
+  return resourceRate ?? resourceArticlePrice ?? defaultArticlePrice ?? null;
+}
+
+/** Kande kütuseartikkel: masina vaikimisi kütus, muidu ettevõtte ainus aktiivne kütus; mitme või puudumisel null. */
+export function pickFuelArticleId(vehicleFuelId: string | null, activeFuelIds: string[]): string | null {
+  if (vehicleFuelId) return vehicleFuelId;
+  return activeFuelIds.length === 1 ? activeFuelIds[0] : null;
+}
+
+/** Ladu, kust kanderida maha kantakse: kütus artikli vaikimisi laost (nt mahuti), kulumaterjal kande laost. */
+export function entryLineWarehouseId(kind: 'MATERIAL' | 'FUEL', articleDefaultWarehouseId: string | null, entryWarehouseId: string): string {
+  return kind === 'FUEL' && articleDefaultWarehouseId ? articleDefaultWarehouseId : entryWarehouseId;
+}
