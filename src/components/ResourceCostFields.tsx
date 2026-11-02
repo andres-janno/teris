@@ -29,7 +29,7 @@ export const ResourceCostFields: React.FC<ResourceCostFieldsProps> = ({
         <label htmlFor={`rc-service-${serviceKind}`}>Teenus</label>
         <select id={`rc-service-${serviceKind}`} className="form-input" value={serviceArticleId} onChange={(e) => onServiceChange(e.target.value)}>
           <option value="">{defaultService ? `Vaikimisi (${defaultService.name})` : 'Vaikimisi'}</option>
-          {services.filter((a) => !a.isDefaultService).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
+          {services.filter((a) => !a.isDefaultService || a.id === serviceArticleId).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
         </select>
       </div>
       {canManageFinance && (
@@ -57,6 +57,13 @@ export const parseRate = (v: string): number | null => {
   if (!t) return null;
   const n = Number(t);
   return Number.isFinite(n) ? n : null;
+};
+
+/** Tühi tekst on lubatud (= teenuse hind); muidu peab olema lõplik arv vahemikus 0 ≤ x < 1e8. */
+export const isRateTextValid = (v: string): boolean => {
+  if (!v.trim()) return true;
+  const n = parseRate(v);
+  return n != null && n >= 0 && n < 1e8;
 };
 
 export const rateText = (v: number | null | undefined): string => (v == null ? '' : String(v).replace('.', ','));

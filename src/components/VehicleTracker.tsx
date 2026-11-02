@@ -40,7 +40,7 @@ import type {
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
-import { ResourceCostFields, parseRate, rateText } from './ResourceCostFields';
+import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 
 interface VehicleTrackerProps {
@@ -635,6 +635,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const handleCreateVehicle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!vName.trim()) return;
+    if (canManageFinance && !isRateTextValid(vRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
     const payload = {
       name: vName.trim(),
       manufacturer: vManufacturer.trim() || undefined,
@@ -672,6 +673,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const handleCreateImplement = (e: React.FormEvent) => {
     e.preventDefault();
     if (!impName.trim()) return;
+    if (canManageFinance && !isRateTextValid(impRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
     const payload = {
       name: impName.trim(),
       manufacturer: impManufacturer.trim(),

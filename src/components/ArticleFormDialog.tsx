@@ -62,6 +62,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
   const [priceText, setPriceText] = useState(fmtPct(initial.price));
   const cat = categories.find((c) => c.id === form.categoryId);
   const rules = cat ? articleFieldRules(cat.group, cat.systemKind) : null;
+  const isTimeService = cat?.group === 'SERVICE' && ['LABOR_TIME', 'MACHINE_TIME', 'IMPLEMENT_TIME', 'DRYING_TIME'].includes(cat.systemKind ?? '');
   const registers = rules?.pria && cat?.systemKind ? REGISTERS[cat.systemKind] : undefined;
   // Sisalduse % tekstina, et komaga arvu (nt "8,") saaks sisestada
   // Ühiku muutmisel teisendustegur: 1 vana ühik = tegur uut ühikut (kaaluühikutel automaatne)
@@ -111,7 +112,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
         priaSpec: form.priaSpec || null, activeIngredient: form.activeIngredient || null,
         nPct: parsePct(pct.nPct), pPct: parsePct(pct.pPct), kPct: parsePct(pct.kPct)
       }, rules),
-      isDefaultService: !!form.isDefaultService,
+      isDefaultService: isTimeService && !!form.isDefaultService,
       unitFactor: unitChanged ? parsePct(unitFactor) ?? autoFactor : null
     };
     if (unitChanged && payload.unitFactor != null && !(payload.unitFactor > 0)) return alertDialog('Teisendustegur peab olema suurem kui 0');
@@ -181,7 +182,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                 <input id="mt-price" className="form-input num" inputMode="decimal" value={priceText} onChange={(e) => setPriceText(e.target.value)} />
               </div>
             )}
-            {cat?.group === 'SERVICE' && ['LABOR_TIME', 'MACHINE_TIME', 'IMPLEMENT_TIME', 'DRYING_TIME'].includes(cat.systemKind ?? '') && (
+            {isTimeService && (
               <label className="users-admin-checkbox" title="Kanne kasutab seda teenust, kui töötajal, masinal või haakeriistal pole oma teenust">
                 <input type="checkbox" checked={!!form.isDefaultService} disabled={!!initial?.isDefaultService}
                   onChange={(e) => setForm({ ...form, isDefaultService: e.target.checked })} />

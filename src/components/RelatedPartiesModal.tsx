@@ -21,7 +21,7 @@ import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
-import { ResourceCostFields, parseRate, rateText } from './ResourceCostFields';
+import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
 
@@ -131,6 +131,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const handleSaveForm = (e: React.FormEvent) => {
     e.preventDefault();
     if (!editName.trim()) return;
+    // Tunnihinna väli on nähtav ainult töötaja rolliga
+    if (canManageFinance && editRoles.includes('DRIVER') && !isRateTextValid(editRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
 
     const partyToSave: RelatedParty = {
       id: editId || `party-${Date.now()}`,
