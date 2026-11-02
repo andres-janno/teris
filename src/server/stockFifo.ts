@@ -130,10 +130,12 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
       // Inventuur: vahe arvestuslikust seisust; puudujääk FIFO järgi maha, ülejääk lao keskmise hinnaga juurde
       const ls = lotsOf(m.warehouseId);
       const book = ls.reduce((s, l) => s + l.qty, 0) - debtsOf(m.warehouseId).reduce((s, d) => s + d.qty, 0);
-      const diff = roundQ(m.quantity - book) + 0;
+      const counted = Math.max(0, m.quantity);
+      const diff = roundQ(counted - book) + 0;
       let amount: number | null = null;
-      if (diff < 0) issue(m, -diff);
+      if (diff < 0) issue(m, Math.min(-diff, ls.reduce((s, l) => s + l.qty, 0)));
       else if (diff > 0) {
+        // Ülejääk, mis katab varasema võla, hindab selle väljamineku ümber; amount katab kogu vahe
         const pricedQty = ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty), 0);
         const pricedValue = ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty * l.unitCost), 0);
         const unitCost = pricedQty > EPS ? pricedValue / pricedQty : lastReceipt;

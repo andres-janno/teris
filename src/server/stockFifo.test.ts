@@ -209,6 +209,36 @@ describe('inventuur (COUNT)', () => {
     expect(r.counts.get('c')).toEqual({ diffQty: 0, amount: null });
     expect(r.outs.has('c')).toBe(false);
   });
+
+  it('puudujääk ulatub mitme partii üle FIFO järgi', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 10), inM('i2', '2026-01-02', 10, 30), cntM('c', '2026-02-01', 5)]);
+    expect(r.counts.get('c')!.diffQty).toBe(-15);
+    expect(movementCost('OUT', r.outs.get('c'))).toBe(25); // 10×1 + 5×3
+    expect(r.stock.get(A)).toEqual({ qty: 5, value: 15, unpricedQty: 0, pricedQty: 5 });
+  });
+
+  it('viimane sissetulek loeb; ülekanne ei lähe sissetulekuna arvesse', () => {
+    const r = fifoReplay([
+      inM('i1', '2026-01-01', 10, 10, B), // 1 €
+      inM('i2', '2026-01-02', 10, 50, B), // 5 €
+      trM('t', '2026-01-03', 10, B, 'wh-c'),
+      cntM('c', '2026-02-01', 2)
+    ]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 2, amount: 10 }); // 2×5
+    expect(r.lastReceiptUnitCost).toBe(5);
+  });
+
+  it('hindamata laos olev puudujääk jääb hindamata', () => {
+    const r = fifoReplay([cntM('c0', '2026-01-01', 5), cntM('c1', '2026-02-01', 2)]);
+    expect(r.counts.get('c1')!.diffQty).toBe(-3);
+    expect(movementCost('OUT', r.outs.get('c1'))).toBeNull();
+    expect(r.stock.get(A)!.unpricedQty).toBe(2);
+  });
+
+  it('sama päeva väljaminek loeb arvestuslikku seisu', () => {
+    const r = fifoReplay([inM('i1', '2026-03-01', 10, 10), outM('o', '2026-03-01', 4), cntM('c', '2026-03-01', 6)]);
+    expect(r.counts.get('c')!.diffQty).toBe(0);
+  });
 });
 
 describe('stockAtDate', () => {
