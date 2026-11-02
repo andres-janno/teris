@@ -682,6 +682,8 @@ erDiagram
     Decimal amount "valikuline"
     Decimal fifoCost "valikuline"
     Float shortageQty "valikuline"
+    Float countedQty "valikuline"
+    Float diffQty "valikuline"
     Int sortOrder
   }
   ArticleStock {
@@ -1159,7 +1161,7 @@ erDiagram
 | `WorkSource` | `MANUAL`, `PRIA_IMPORT` |
 | `ArticleGroup` | `SERVICE`, `CONSUMABLE`, `PRODUCE`, `OTHER_GOODS` |
 | `ArticleSystemKind` | `LABOR_TIME`, `MACHINE_TIME`, `IMPLEMENT_TIME`, `DRYING_TIME`, `SEED`, `FERTILIZER`, `PLANT_PROTECTION`, `FUEL`, `DRYING_OIL`, `GRAIN` |
-| `StockDocumentKind` | `RECEIPT`, `WRITE_OFF`, `TRANSFER` |
+| `StockDocumentKind` | `RECEIPT`, `WRITE_OFF`, `TRANSFER`, `INVENTORY` |
 | `WriteOffReason` | `SPOILED`, `INVENTORY`, `OTHER` |
 | `TenantStatus` | `ACTIVE`, `SUSPENDED` |
 | `LicenseModule` | `TELEMETRY`, `SATELLITE`, `WEATHER` |
