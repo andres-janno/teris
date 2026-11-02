@@ -25,7 +25,7 @@ export interface HarvestLotEntry {
   id: string;
   date: string;
   fieldName: string;
-  bunkers: number;
+  bunkers: number | null;
   manual: boolean;
   tonnes: number | null;
   financeStatus: string | null;

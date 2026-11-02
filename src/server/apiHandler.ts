@@ -1602,6 +1602,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (pathname.startsWith('/api/crops/') && method === 'DELETE') {
       const id = pathname.replace('/api/crops/', '');
       if (denyDelete(req, res, await prisma.crop.findUnique({ where: { id }, select: { createdBy: true } }))) return;
+      const lotCount = await prisma.harvestLot.count({ where: { cropId: id } });
+      if (lotCount > 0) return json(res, { error: `Kultuuril on ${lotCount} saagipartiid — kultuuri ei saa kustutada` }, 409);
       await prisma.crop.delete({ where: { id } });
       return json(res, { success: true, id });
     }

@@ -793,6 +793,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     data.isDefaultService = isDefaultService;
     // Ilma finantsõiguseta muutmisel jääb teenuse vana hind alles (kaubal hinda pole, see tühjendatakse)
     if (id && !finance && rules.price) delete (data as Partial<typeof data>).price;
+    // Kuivatuskulu ridadega artiklit ei saa teenuse ja kauba vahel viia (rea hind ja laokäive sõltuvad liigist)
+    if (old && (old.category.group === 'SERVICE') !== (category.group === 'SERVICE')) {
+      const lotCosts = await prisma.harvestLotCost.count({ where: { articleId: id! } });
+      if (lotCosts > 0) {
+        json(res, { error: `Artiklil on ${lotCosts} kuivatuskulu rida — liiki ei saa muuta` }, 409);
+        return true;
+      }
+    }
     // Teenuse üle laoarvestust ei peeta: laokannetega kaupa ei saa teenuseks muuta
     if (old && old.category.group !== 'SERVICE' && category.group === 'SERVICE') {
       const [docLines, entryLines, planLines] = await Promise.all([

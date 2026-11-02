@@ -217,10 +217,10 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                       <tr key={e.id}>
                         <td>{formatDate(e.date)}</td>
                         <td>{e.fieldName}</td>
-                        <td className="num">{e.bunkers}</td>
+                        <td className="num">{e.bunkers ?? '–'}</td>
                         <td className="num">
                           {e.manual && <span className="muted" title="Tonnid sisestatud käsitsi"> käsitsi </span>}
-                          {!e.manual && !closed ? <span className="muted">kaalumata</span> : formatQty(e.tonnes ?? 0)}
+                          {!e.manual && !(e.tonnes != null && e.tonnes > 0) ? <span className="muted">kaalumata</span> : formatQty(e.tonnes ?? 0)}
                         </td>
                         <td>{e.financeStatus ?? ''}</td>
                       </tr>

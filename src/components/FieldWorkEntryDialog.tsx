@@ -334,7 +334,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (rows.some((r) => !r.articleId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
     // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
     const noQuantity = rows.find((r) => r.articleId && !((parseNum(r.total) ?? 0) > 0));
-    if (isHarvest && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
+    if (isHarvest && !manual && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
     // Materjali kogus kokku arvutatakse pindalast — ilma pindalata oleks see 0
     if (noQuantity && !(areaNum > 0) && parseNum(noQuantity.ratePerHa) != null) return setError('Sisesta tehtud pindala');
     if (noQuantity) return setError(`Sisesta kogus: ${noQuantity.label || articles.find((m) => m.id === noQuantity.articleId)?.name || 'toode'}`);
@@ -694,6 +694,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   </select>
                 </div>
               )}
+              {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
+                <p className="muted">Partii: {entry.harvestLotName}</p>
+              )}
               <label className="users-admin-checkbox">
                 <input type="checkbox" checked={manual} disabled={imported} onChange={(e) => setManual(e.target.checked)} />
                 <span>Sisesta tonnid käsitsi</span>
@@ -704,7 +707,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                 areaHa={areaNum}
                 showTotals
                 showBunkers
-                tonnesText={manual ? undefined : entry?.harvestLotStatus === 'CLOSED' ? `${formatQty(entry.harvest?.tonnes ?? entry.harvestTonnes ?? 0)} t` : 'kaalumata'}
+                tonnesText={manual ? undefined : (entry?.harvest?.tonnes ?? entry?.harvestTonnes ?? 0) > 0 ? `${formatQty(entry!.harvest?.tonnes ?? entry!.harvestTonnes ?? 0)} t` : 'kaalumata'}
               />
             </section>
           )}

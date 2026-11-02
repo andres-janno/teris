@@ -192,4 +192,17 @@ describe('saagipartiide API', () => {
     expect(await grainQty(articleId)).toBeCloseTo(12.5, 6);
     expect(await run(async () => (await prisma.articleStock.findMany({ where: { articleId: s.gas } })).reduce((a, r) => a + r.qty, 0))).toBeCloseTo(100, 6);
   });
+  it('sisendi kontroll: võimatu kuupäev, hooaeg, puuduv põld ja puuduv partii', async () => {
+    const lot = await call('POST', '/api/harvest-lots', { name: 'Kontroll', year: 2026, cropId: s.crop, warehouseId: s.main });
+    expect(lot.status).toBe(200);
+    const bad = await call('POST', `/api/harvest-lots/${lot.json.id}/weighings`, { date: '2026-02-31', tonnes: 1 });
+    expect(bad.status).toBe(400);
+    expect(bad.json.error).toBe('Kuupäev on kohustuslik');
+    expect((await call('GET', '/api/harvest-lots/open')).status).toBe(400);
+    expect((await call('GET', '/api/harvest-lots/open?fieldSeasonId=0')).status).toBe(400);
+    expect((await call('GET', '/api/harvest-lots?year=abc')).status).toBe(400);
+    const missing = await call('POST', '/api/harvest-lots', { id: 'olematu', name: 'X', warehouseId: s.main });
+    expect(missing.status).toBe(404);
+    expect(missing.json.error).toBe('Saagipartiid ei leitud');
+  });
 });
