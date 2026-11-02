@@ -118,4 +118,32 @@ describe('saagipartii', () => {
     expect(next).not.toBe(lotId);
     expect((await run(() => prisma.harvestLot.findUniqueOrThrow({ where: { id: next! } }))).name).toBe('Talinisu 2026 2');
   });
+  it('käsitsi lukustatud kanne partiita: tonnid jäävad ja partiid ei looda', async () => {
+    const lotsBefore = await run(() => prisma.harvestLot.count());
+    const drafts = buildEntryLines({ harvest: { tonnes: 48, ratePerHa: null, priaKind: null, priaSpec: null, withBunkers: false } });
+    const old = { harvestLotId: null, harvestBunkers: null, harvestTonnesManual: true, harvestTonnes: 48 };
+    const got = await tx((t) => applyEntryHarvest(t, drafts, input({ fieldSeasonId: fsNoCrop, bunkers: null, manual: true, old })));
+    expect(got).toBeNull();
+    expect(drafts[0].quantity).toBe(48);
+    expect(await run(() => prisma.harvestLot.count())).toBe(lotsBefore);
+  });
+
+  it('uuesti avatud partii: muutmata lukustamata kanne säilitab tonnid, muudetud punkrid nullivad', async () => {
+    await tx((t) => reopenLot(t, lotId));
+    const old = { harvestLotId: lotId, harvestBunkers: 6, harvestTonnesManual: false, harvestTonnes: 15 };
+    const same = draft();
+    expect(await tx((t) => applyEntryHarvest(t, same, input({ bunkers: 6, old })))).toBe(lotId);
+    expect(same[0].quantity).toBe(15);
+    expect(same[0].ratePerHa).toBe(1.5);
+    const changed = draft();
+    await tx((t) => applyEntryHarvest(t, changed, input({ bunkers: 7, old })));
+    expect(changed[0].quantity).toBe(0);
+  });
+
+  it('teise kultuuri partiid ei saa valida', async () => {
+    const base = await run(() => prisma.harvestLot.findUniqueOrThrow({ where: { id: lotId } }));
+    const crop2 = await run(() => prisma.crop.create({ data: { id: `crop2-${T}`, name: 'Oder' } }));
+    const other = await run(() => prisma.harvestLot.create({ data: { name: 'Oder 2026', seasonId: base.seasonId, cropId: crop2.id, articleId: base.articleId, warehouseId: base.warehouseId } }));
+    await expect(tx((t) => applyEntryHarvest(t, draft(), input({ requestedLotId: other.id })))).rejects.toThrow('Valitud partii ei ole selle põllu hooaja ja kultuuri partii');
+  });
 });

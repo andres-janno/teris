@@ -80,21 +80,29 @@ export interface EntryHarvestInput {
  */
 export async function applyEntryHarvest(tx: TxClient, drafts: LineDraft[], input: EntryHarvestInput): Promise<string | null> {
   const line = drafts.find((l) => l.kind === 'HARVEST');
+  const oldLotId = input.old?.harvestLotId ?? null;
+  // Saagireata kandel, mis polnud partiis, pole partiiga midagi teha
+  if (!line && !oldLotId) return null;
   let lotId: string | null = null;
   if (line) {
     if (input.requestedLotId) {
-      const req = await tx.harvestLot.findUnique({ where: { id: input.requestedLotId }, select: { id: true } });
+      const req = await tx.harvestLot.findUnique({ where: { id: input.requestedLotId }, select: { id: true, seasonId: true, cropId: true } });
       if (!req) throw new HarvestLotError('Saagipartiid ei leitud');
+      // Valitud partii peab olema selle põllu hooaja ja kultuuri oma
+      const key = await lotKeyOf(tx, input.fieldSeasonId);
+      if (!key || key.seasonId !== req.seasonId || key.crop.id !== req.cropId) throw new HarvestLotError('Valitud partii ei ole selle põllu hooaja ja kultuuri partii');
       lotId = req.id;
-    } else if (input.old?.harvestLotId) lotId = input.old.harvestLotId;
+    } else if (oldLotId) lotId = oldLotId;
     else {
       const key = await lotKeyOf(tx, input.fieldSeasonId);
       if (key) lotId = await findOrCreateOpenLot(tx, key);
     }
     if (!lotId && !input.manual) throw new HarvestLotError(NO_CROP_ERROR);
   }
+  // Staatus loetakse pärast lukku, et paralleelne sulgemine ei jääks märkamata
+  if (lotId || oldLotId) await lockLots(tx);
   const lots = await tx.harvestLot.findMany({
-    where: { id: { in: [lotId, input.old?.harvestLotId].filter((x): x is string => !!x) } },
+    where: { id: { in: [lotId, oldLotId].filter((x): x is string => !!x) } },
     select: { id: true, name: true, status: true, bunkerTonnes: true }
   });
   // Suletud partii: uus kanne, partii vahetus või saagi muutus nõuab partii uuesti avamist
@@ -105,11 +113,21 @@ export async function applyEntryHarvest(tx: TxClient, drafts: LineDraft[], input
   if (closed && changed) throw new HarvestLotError(closedLotError(closed.name));
   if (line && !input.manual) {
     const lot = lots.find((l) => l.id === lotId);
-    const qty = lot?.status === 'CLOSED' ? entryHarvestTonnes(input.bunkers, lot.bunkerTonnes) : 0;
+    let qty = 0;
+    if (lot?.status === 'CLOSED') qty = entryHarvestTonnes(input.bunkers, lot.bunkerTonnes);
+    else if (old && !changed) qty = old.harvestTonnes; // uuesti avatud partii: muutmata kande tonnid jäävad kuni järgmise sulgemiseni
     line.quantity = qty;
     line.ratePerHa = rate3(qty, input.areaHa ?? input.fieldAreaHa);
   }
   return lotId;
+}
+
+/** Kustutamise kaitse: suletud partii kannet ei kustutata (kutsuda tehingus). */
+export async function assertEntryLotOpen(tx: TxClient, harvestLotId: string | null): Promise<void> {
+  if (!harvestLotId) return;
+  await lockLots(tx);
+  const lot = await tx.harvestLot.findUnique({ where: { id: harvestLotId }, select: { name: true, status: true } });
+  if (lot?.status === 'CLOSED') throw new HarvestLotError(closedLotError(lot.name));
 }
 
 /** Sulgemine: punkri kaal ja lukustamata kannete saagi tonnid; kinnitatud kanne, mille kogus muutub → CHANGED. */
