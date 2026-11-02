@@ -40,7 +40,7 @@ export const stockTools = [
   defineTool({
     name: 'list_stock_movements',
     title: 'Laoliikumised',
-    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER) ja põllutöö kande kulu (FIELD_WORK), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
+    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER), inventuur (INVENTORY: quantity = vahe, + juurde / − maha; counted = tegelik seis) ja põllutöö kande kulu (FIELD_WORK), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
     when: canSeeFinance,
     input: {
       warehouse: z.string().optional().describe('Lao nimi'),
@@ -86,12 +86,15 @@ export const stockTools = [
           }
         })
       ]);
-      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; cost: number | null };
+      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; counted?: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; cost: number | null };
       const rows: Row[] = [
         ...docLines.map((l) => ({
           sortDate: l.document.date, date: fmtDate(l.document.date), type: l.document.kind, warehouse: l.document.warehouse.name, toWarehouse: l.document.toWarehouse?.name ?? null,
-          article: l.article.name, quantity: round2(l.quantity), unit: l.article.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
-          reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.fifoCost)
+          article: l.article.name,
+          quantity: l.document.kind === 'INVENTORY' ? round2(l.diffQty ?? 0) : round2(l.quantity),
+          ...(l.document.kind === 'INVENTORY' ? { counted: round2(l.countedQty ?? 0) } : {}),
+          unit: l.article.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
+          reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) > 0 ? l.amount : l.fifoCost)
         })),
         ...entryLines.map((l) => ({
           sortDate: l.entry.date, date: fmtDate(l.entry.date), type: 'FIELD_WORK', warehouse: l.entry.warehouse?.name ?? defaultWh?.name ?? '',

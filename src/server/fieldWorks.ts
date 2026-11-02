@@ -21,7 +21,7 @@ import {
   type StoredLine
 } from './fieldWorkRules.ts';
 import { articleSeasonTotals } from './articleUsage.ts';
-import { recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
+import { inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
@@ -1308,7 +1308,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       throw err;
     }
     await syncFieldWorkStatus(work.id, b?.finish === true, userId, prisma);
-    json(res, entryDto(saved, canSeeFinance(req)));
+    const finance = canSeeFinance(req);
+    // Finantsjuhile hoiatus, kui kanne jääb inventuuri ette (muudab selle vahet)
+    const notice = finance && saved.warehouseId
+      ? await tenantTransaction(async (tx) => inventoryNotice(tx, await entryStockTouches(tx, saved.lines, saved.warehouseId!), saved.date, null))
+      : null;
+    json(res, { ...entryDto(saved, finance), ...(finance ? { inventoryNotice: notice } : {}) });
     return true;
   }
   if (pathname.startsWith('/api/work-entries/') && method === 'PUT') {
@@ -1355,7 +1360,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       throw err;
     }
     await syncFieldWorkStatus(old.fieldWorkId, b?.finish === true, userId, prisma);
-    json(res, entryDto(saved, canSeeFinance(req)));
+    const finance = canSeeFinance(req);
+    const notice = finance && saved.warehouseId
+      ? await tenantTransaction(async (tx) => inventoryNotice(tx, [
+          ...(await entryStockTouches(tx, old.lines, old.warehouseId ?? saved.warehouseId!)),
+          ...(await entryStockTouches(tx, saved.lines, saved.warehouseId!))
+        ], old.date < saved.date ? old.date : saved.date, null))
+      : null;
+    json(res, { ...entryDto(saved, finance), ...(finance ? { inventoryNotice: notice } : {}) });
     return true;
   }
   if (pathname.startsWith('/api/work-entries/') && method === 'DELETE') {

@@ -5,8 +5,8 @@ import { prisma, tenantTransaction } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
 import { parseStockDocument, stockRequiresFinance, stockCardFinanceFields } from './stockRules.ts';
-import { getDefaultWarehouseId, loadMovements, saveStockDocument, deleteStockDocument, saveWarehouse, recomputeArticleStock, StockValidationError } from './stock.ts';
-import { fifoReplay, movementCost, sortMovements } from './stockFifo.ts';
+import { getDefaultWarehouseId, inventoryNotice, loadMovements, saveStockDocument, deleteStockDocument, saveWarehouse, recomputeArticleStock, StockValidationError } from './stock.ts';
+import { fifoReplay, movementCost, sortMovements, stockAtDate } from './stockFifo.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 
 const FINANCE_FORBIDDEN = 'Laokanded ja laoväärtus on nähtavad ainult finantsjuhile ja adminile';
@@ -32,9 +32,13 @@ const DOC_INCLUDE = {
 function documentDto(d: any) {
   const lines = d.lines.map((l: any) => ({
     id: l.id, articleId: l.articleId, articleName: l.article.name, unit: l.article.unit,
-    quantity: l.quantity, amount: money(l.amount), fifoCost: money(l.fifoCost), shortageQty: l.shortageQty
+    quantity: l.quantity, amount: money(l.amount), fifoCost: money(l.fifoCost), shortageQty: l.shortageQty,
+    countedQty: l.countedQty, diffQty: l.diffQty
   }));
-  const total = lines.reduce((s: number, l: any) => s + ((d.kind === 'RECEIPT' ? l.amount : l.fifoCost) ?? 0), 0);
+  // Inventuuri summa = ülejäägi väärtus − puudujäägi maksumus
+  const value = (l: any) => (d.kind === 'RECEIPT' ? l.amount : d.kind === 'INVENTORY' ? (l.amount ?? 0) - (l.fifoCost ?? 0) : l.fifoCost);
+  const total = lines.reduce((s: number, l: any) => s + (value(l) ?? 0), 0);
+  const unpricedInventory = (l: any) => ((l.diffQty ?? 0) > 0 ? l.amount === null : (l.diffQty ?? 0) < 0 ? l.fifoCost === null : false);
   return {
     id: d.id, kind: d.kind, date: isoDate(d.date),
     warehouseId: d.warehouseId, warehouseName: d.warehouse.name,
@@ -42,7 +46,7 @@ function documentDto(d: any) {
     supplierId: d.supplierId, supplierName: d.supplier?.name ?? null,
     documentNo: d.documentNo, writeOffReason: d.writeOffReason, notes: d.notes,
     total: Math.round(total * 100) / 100,
-    hasUnpriced: d.kind !== 'RECEIPT' && lines.some((l: any) => l.fifoCost === null),
+    hasUnpriced: d.kind === 'INVENTORY' ? lines.some(unpricedInventory) : d.kind !== 'RECEIPT' && lines.some((l: any) => l.fifoCost === null),
     hasShortage: d.kind === 'TRANSFER' && lines.some((l: any) => (l.shortageQty ?? 0) > 0),
     lines
   };
@@ -119,6 +123,35 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     return true;
   }
 
+  // --- Inventuuri eelvaade (finants): lao kaubad arvestusliku seisuga kuupäeva lõpus ---
+  if (pathname === '/api/stock/inventory-preview' && method === 'GET') {
+    const warehouseId = text(url.searchParams.get('warehouseId'), 64);
+    const date = text(url.searchParams.get('date'), 10);
+    const documentId = text(url.searchParams.get('documentId'), 64);
+    if (!warehouseId || !date || !/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+      json(res, { error: 'Vali ladu ja kuupäev' }, 400);
+      return true;
+    }
+    const rows = await tenantTransaction(async (tx) => {
+      const goods = await tx.article.findMany({ where: { category: { group: { not: 'SERVICE' } } }, select: { id: true, name: true, unit: true } });
+      // Muudetava inventuuri enda read ei loe arvestuslikku seisu; selle artiklid on alati nimekirjas
+      const own = documentId ? await tx.stockDocumentLine.findMany({ where: { documentId }, select: { id: true, articleId: true } }) : [];
+      const exclude = new Set(own.map((l) => `doc:${l.id}`));
+      const ownArticles = new Set(own.map((l) => l.articleId));
+      const byId = new Map(goods.map((a) => [a.id, a]));
+      const out: { articleId: string; articleName: string; unit: string; bookQty: number; unitPrice: number | null }[] = [];
+      for (const mm of await loadMovements(tx, goods.map((a) => a.id))) {
+        const s = stockAtDate(mm.movements, warehouseId, date, exclude);
+        if (!s.touched && s.qty === 0 && !ownArticles.has(mm.articleId)) continue;
+        const a = byId.get(mm.articleId)!;
+        out.push({ articleId: a.id, articleName: a.name, unit: a.unit, bookQty: s.qty, unitPrice: s.surplusUnitCost });
+      }
+      return out.sort((x, y) => x.articleName.localeCompare(y.articleName, 'et'));
+    }, { timeout: 60000 });
+    json(res, rows);
+    return true;
+  }
+
   // --- Laokaart ---
   const mv = /^\/api\/stock\/articles\/([^/]+)\/movements$/.exec(pathname);
   if (mv && method === 'GET') {
@@ -127,7 +160,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     const result = await tenantTransaction(async (tx) => {
       const [mm] = await loadMovements(tx, [articleId]);
       if (!mm) return null;
-      const { outs } = fifoReplay(mm.movements);
+      const { outs, counts } = fifoReplay(mm.movements);
       const docIds = mm.docLines.map((l) => l.id);
       const entryIds = [...mm.entryLines.map((l) => l.id), ...mm.issueEntryLineIds];
       const [docLines, entryLines, whs] = await Promise.all([
@@ -149,13 +182,17 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
         let delta = 0;
         if (m.kind === 'IN') delta = m.quantity;
         else if (m.kind === 'OUT') delta = -m.quantity;
+        else if (m.kind === 'COUNT') delta = counts.get(m.ref)?.diffQty ?? 0;
         else if (warehouseId) delta = m.warehouseId === warehouseId ? -m.quantity : m.quantity;
         balance = Math.round((balance + delta) * 1e6) / 1e6;
         const o = outs.get(m.ref);
         const [type, lineId] = m.ref.split(':');
-        const base = { ref: m.ref, date: m.date, kind: m.kind, quantity: m.quantity, delta, balance,
-          warehouseName: whName.get(m.warehouseId) ?? '', toWarehouseName: m.toWarehouseId ? whName.get(m.toWarehouseId) ?? '' : null };
-        const cost = m.kind === 'IN' ? (m.amount ?? 0) : movementCost(m.kind, o);
+        const base = { ref: m.ref, date: m.date, kind: m.kind, quantity: m.kind === 'COUNT' ? Math.abs(delta) : m.quantity, delta, balance,
+          warehouseName: whName.get(m.warehouseId) ?? '', toWarehouseName: m.toWarehouseId ? whName.get(m.toWarehouseId) ?? '' : null,
+          ...(m.kind === 'COUNT' ? { countedQty: m.quantity } : {}) };
+        // Inventuur: ülejäägi väärtus, puudujäägi FIFO maksumus, vahe 0 → 0
+        const countCost = delta > 0 ? counts.get(m.ref)?.amount ?? null : delta < 0 ? movementCost('OUT', o) : 0;
+        const cost = m.kind === 'IN' ? (m.amount ?? 0) : m.kind === 'COUNT' ? countCost : movementCost(m.kind, o);
         if (type === 'doc') {
           const l = docById.get(lineId)!;
           // Tarnija ja dokumendi nr on ostuinfo — ainult finantsõigusega
@@ -185,7 +222,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
 
   // --- Laokanded (finants; õigus kontrollitud ülal) ---
   if (pathname === '/api/stock/documents' && method === 'GET') {
-    const kind = (['RECEIPT', 'WRITE_OFF', 'TRANSFER'] as const).find((k) => k === url.searchParams.get('kind'));
+    const kind = (['RECEIPT', 'WRITE_OFF', 'TRANSFER', 'INVENTORY'] as const).find((k) => k === url.searchParams.get('kind'));
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);
     const supplierId = text(url.searchParams.get('supplierId'), 64);
     const from = dateOnly(url.searchParams.get('from'));
@@ -217,9 +254,15 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       return true;
     }
     try {
+      const old = id ? await prisma.stockDocument.findUnique({ where: { id }, select: { date: true, warehouseId: true, toWarehouseId: true, lines: { select: { articleId: true } } } }) : null;
       const savedId = await tenantTransaction((tx) => saveStockDocument(tx, id, parsed.doc), { timeout: 60000 });
+      // Liikumine enne inventuuri samas laos muudab selle vahet (vana ja uus kuupäev, ladu ja artiklid)
+      const whIds = [...new Set([parsed.doc.warehouseId, parsed.doc.toWarehouseId, old?.warehouseId, old?.toWarehouseId].filter((x): x is string => !!x))];
+      const articleIds = [...new Set([...parsed.doc.lines.map((l) => l.articleId), ...(old?.lines.map((l) => l.articleId) ?? [])])];
+      const fromDate = old && old.date < parsed.doc.date ? old.date : parsed.doc.date;
+      const notice = await tenantTransaction((tx) => inventoryNotice(tx, articleIds.flatMap((articleId) => whIds.map((warehouseId) => ({ articleId, warehouseId }))), fromDate, savedId));
       const d = await prisma.stockDocument.findUniqueOrThrow({ where: { id: savedId }, include: DOC_INCLUDE });
-      json(res, documentDto(d));
+      json(res, { ...documentDto(d), inventoryNotice: notice });
     } catch (err) {
       if (err instanceof StockValidationError) json(res, { error: err.message }, 400);
       else throw err;
