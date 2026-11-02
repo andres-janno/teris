@@ -1,17 +1,17 @@
 // src/server/stockFifo.ts — ühe materjali FIFO arvutus kõigis ladudes (puhas funktsioon).
-// Liikumised käiakse kuupäeva järjekorras läbi; sama päeva sees enne sissetulek, siis ülekanne, siis väljaminek.
+// Liikumised käiakse kuupäeva järjekorras läbi; sama päeva sees enne sissetulek, siis ülekanne, siis väljaminek, viimasena inventuur.
 // Väljaminek võtab lao vanimast partiist; partiide puudumisel tekib võlg, mille järgmine sissetulek katab
 // (võla read saavad selle partii hinna). Ülekanne viib võetud partiid koos hinnaga sihtlattu.
-export type MovementKind = 'IN' | 'TRANSFER' | 'OUT';
+export type MovementKind = 'IN' | 'TRANSFER' | 'OUT' | 'COUNT';
 
 export interface Movement {
   ref: string; // nt 'doc:<reaId>' või 'entry:<reaId>'
   date: string; // YYYY-MM-DD
   seq: number; // sama päeva ja liigi sees stabiilne järjekord
   kind: MovementKind;
-  warehouseId: string; // IN: sihtladu; TRANSFER ja OUT: lähteladu
+  warehouseId: string; // IN: sihtladu; TRANSFER ja OUT: lähteladu; COUNT: inventeeritav ladu
   toWarehouseId?: string; // TRANSFER: sihtladu
-  quantity: number; // laoühikus, > 0
+  quantity: number; // laoühikus, > 0; COUNT: tegelik seis (≥ 0)
   amount?: number; // IN: rea summa
 }
 
@@ -28,18 +28,27 @@ export interface WarehouseStock {
   pricedQty: number; // hinnatud partiide kogus (keskmise hinna jagaja)
 }
 
+/** Inventuuri tulemus: vahe ja ülejäägi väärtus. Puudujäägi maksumus on outs-is nagu väljaminekul. */
+export interface CountResult {
+  diffQty: number; // tegelik − arvestuslik (+ juurde, − maha)
+  amount: number | null; // ülejäägi väärtus; null = puudujääk, vahe 0 või hindamata
+}
+
 export interface ReplayResult {
   outs: Map<string, OutResult>;
+  counts: Map<string, CountResult>;
   stock: Map<string, WarehouseStock>;
+  lastReceiptUnitCost: number | null; // artikli viimase arvelevõtu ühikuhind
 }
 
 interface Lot { qty: number; unitCost: number | null }
 interface Debt { ref: string; qty: number }
 
 const EPS = 1e-9;
-const KIND_ORDER: Record<MovementKind, number> = { IN: 0, TRANSFER: 1, OUT: 2 };
+const KIND_ORDER: Record<MovementKind, number> = { IN: 0, TRANSFER: 1, OUT: 2, COUNT: 3 };
 const round2 = (n: number) => Math.round((n + Number.EPSILON) * 100) / 100;
 const roundQ = (n: number) => Math.round(n * 1e6) / 1e6;
+const round4 = (n: number) => Math.round(n * 10000) / 10000;
 
 export function sortMovements(movements: Movement[]): Movement[] {
   return [...movements].sort(
@@ -51,6 +60,8 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
   const lots = new Map<string, Lot[]>();
   const debts = new Map<string, Debt[]>();
   const outs = new Map<string, OutResult>();
+  const counts = new Map<string, CountResult>();
+  let lastReceipt: number | null = null;
   const lotsOf = (w: string) => lots.get(w) ?? (lots.set(w, []), lots.get(w)!);
   const debtsOf = (w: string) => debts.get(w) ?? (debts.set(w, []), debts.get(w)!);
   const outOf = (ref: string) => outs.get(ref) ?? (outs.set(ref, { cost: 0, unpricedQty: 0, shortageQty: 0 }), outs.get(ref)!);
@@ -91,13 +102,10 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     return { pieces, missing: rest > EPS ? rest : 0 };
   };
 
-  for (const m of sortMovements(movements)) {
-    if (m.kind === 'IN') {
-      receive(m.warehouseId, m.quantity, m.quantity > 0 ? (m.amount ?? 0) / m.quantity : 0);
-      continue;
-    }
+  // Väljaminek (ka ülekanne ja inventuuri puudujääk): võetud partiid maksumuseks, puudujääk võlaks
+  const issue = (m: Movement, qty: number) => {
     const o = outOf(m.ref);
-    const { pieces, missing } = take(m.warehouseId, m.quantity, m.ref);
+    const { pieces, missing } = take(m.warehouseId, qty, m.ref);
     for (const p of pieces) {
       if (p.unitCost === null) o.unpricedQty += p.qty;
       else o.cost += p.qty * p.unitCost;
@@ -109,6 +117,33 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
       for (const p of pieces) receive(to, p.qty, p.unitCost);
       if (missing > 0) receive(to, missing, null);
     }
+  };
+
+  for (const m of sortMovements(movements)) {
+    if (m.kind === 'IN') {
+      const unitCost = m.quantity > 0 ? (m.amount ?? 0) / m.quantity : 0;
+      receive(m.warehouseId, m.quantity, unitCost);
+      if (m.quantity > 0) lastReceipt = unitCost;
+      continue;
+    }
+    if (m.kind === 'COUNT') {
+      // Inventuur: vahe arvestuslikust seisust; puudujääk FIFO järgi maha, ülejääk lao keskmise hinnaga juurde
+      const ls = lotsOf(m.warehouseId);
+      const book = ls.reduce((s, l) => s + l.qty, 0) - debtsOf(m.warehouseId).reduce((s, d) => s + d.qty, 0);
+      const diff = roundQ(m.quantity - book) + 0;
+      let amount: number | null = null;
+      if (diff < 0) issue(m, -diff);
+      else if (diff > 0) {
+        const pricedQty = ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty), 0);
+        const pricedValue = ls.reduce((s, l) => s + (l.unitCost === null ? 0 : l.qty * l.unitCost), 0);
+        const unitCost = pricedQty > EPS ? pricedValue / pricedQty : lastReceipt;
+        receive(m.warehouseId, diff, unitCost);
+        amount = unitCost === null ? null : round2(diff * unitCost) + 0;
+      }
+      counts.set(m.ref, { diffQty: diff, amount });
+      continue;
+    }
+    issue(m, m.quantity);
   }
 
   const stock = new Map<string, WarehouseStock>();
@@ -130,7 +165,7 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
     o.unpricedQty = roundQ(o.unpricedQty) + 0;
     o.shortageQty = roundQ(o.shortageQty) + 0;
   }
-  return { outs, stock };
+  return { outs, counts, stock, lastReceiptUnitCost: lastReceipt };
 }
 
 /**
@@ -142,4 +177,16 @@ export function movementCost(kind: MovementKind, o: OutResult | undefined): numb
   if (!o || o.unpricedQty !== 0) return null;
   if (kind === 'TRANSFER' && o.shortageQty > 0) return null;
   return o.cost;
+}
+
+/** Artikli seis laos kuupäeva lõpus (kaasa arvatud) ja inventuuri ülejäägi eeldatav ühikuhind. */
+export function stockAtDate(movements: Movement[], warehouseId: string, date: string, excludeRefs: Set<string> = new Set()) {
+  const ms = movements.filter((m) => m.date <= date && !excludeRefs.has(m.ref));
+  const r = fifoReplay(ms);
+  const s = r.stock.get(warehouseId);
+  return {
+    touched: ms.some((m) => m.warehouseId === warehouseId || m.toWarehouseId === warehouseId),
+    qty: s?.qty ?? 0,
+    surplusUnitCost: s && s.pricedQty > EPS ? round4(s.value / s.pricedQty) : r.lastReceiptUnitCost === null ? null : round4(r.lastReceiptUnitCost)
+  };
 }

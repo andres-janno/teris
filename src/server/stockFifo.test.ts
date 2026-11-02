@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { fifoReplay, movementCost, sortMovements, type Movement } from './stockFifo';
+import { fifoReplay, movementCost, sortMovements, stockAtDate, type Movement } from './stockFifo';
 
 const A = 'wh-a';
 const B = 'wh-b';
@@ -145,5 +145,80 @@ describe('movementCost', () => {
     expect(movementCost('OUT', { cost: 5, unpricedQty: 1, shortageQty: 0 })).toBeNull();
     expect(movementCost('OUT', undefined)).toBeNull();
     expect(movementCost('TRANSFER', { cost: 5, unpricedQty: 0, shortageQty: 0 })).toBe(5);
+  });
+});
+
+const cntM = (ref: string, date: string, counted: number, warehouseId = A): Movement =>
+  ({ ref, date, seq: seq++, kind: 'COUNT', warehouseId, quantity: counted });
+
+describe('inventuur (COUNT)', () => {
+  it('inventuur on päeva viimane liikumine', () => {
+    const m = [cntM('c', '2026-05-01', 1), outM('o', '2026-05-01', 1), inM('i', '2026-05-01', 1, 1)];
+    expect(sortMovements(m).map((x) => x.ref)).toEqual(['i', 'o', 'c']);
+  });
+
+  it('puudujääk kantakse maha FIFO järgi', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 100, 100), cntM('c', '2026-02-01', 70)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: -30, amount: null });
+    expect(movementCost('OUT', r.outs.get('c'))).toBe(30);
+    expect(r.stock.get(A)).toEqual({ qty: 70, value: 70, unpricedQty: 0, pricedQty: 70 });
+  });
+
+  it('0 kannab kogu seisu maha', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 20), cntM('c', '2026-02-01', 0)]);
+    expect(r.counts.get('c')!.diffQty).toBe(-10);
+    expect(movementCost('OUT', r.outs.get('c'))).toBe(20);
+    expect(r.stock.get(A)!.qty).toBe(0);
+  });
+
+  it('ülejääk võetakse juurde lao keskmise hinnaga', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 10), inM('i2', '2026-01-02', 10, 30), cntM('c', '2026-02-01', 25)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 5, amount: 10 }); // keskmine 2 €/kg
+    expect(r.stock.get(A)).toEqual({ qty: 25, value: 50, unpricedQty: 0, pricedQty: 25 });
+  });
+
+  it('hinnatud partiita laos võtab ülejääk artikli viimase arvelevõtu hinna', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 40, B), cntM('c', '2026-02-01', 5)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 5, amount: 20 });
+    expect(r.lastReceiptUnitCost).toBe(4);
+  });
+
+  it('hinnata ülejääk, kui arvelevõttu pole olnud', () => {
+    const r = fifoReplay([cntM('c', '2026-02-01', 5)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 5, amount: null });
+    expect(r.stock.get(A)).toEqual({ qty: 5, value: 0, unpricedQty: 5, pricedQty: 0 });
+  });
+
+  it('ülejääk katab miinusseisu võla ja annab sellele hinna', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 10, B), outM('o', '2026-01-05', 4), cntM('c', '2026-02-01', 2)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 6, amount: 6 });
+    expect(r.outs.get('o')).toEqual({ cost: 4, unpricedQty: 0, shortageQty: 0 });
+    expect(r.stock.get(A)).toEqual({ qty: 2, value: 2, unpricedQty: 0, pricedQty: 2 });
+  });
+
+  it('tagantjärele liikumine enne inventuuri muudab vahet, mitte tegelikku seisu', () => {
+    const base = [inM('i1', '2026-01-01', 10, 10), cntM('c', '2026-03-01', 10)];
+    expect(fifoReplay(base).counts.get('c')!.diffQty).toBe(0);
+    const r = fifoReplay([...base, outM('o', '2026-02-01', 3)]);
+    expect(r.counts.get('c')!.diffQty).toBe(3);
+    expect(r.stock.get(A)!.qty).toBe(10);
+  });
+
+  it('vahe 0 ei tekita liikumist', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 10, 10), cntM('c', '2026-02-01', 10)]);
+    expect(r.counts.get('c')).toEqual({ diffQty: 0, amount: null });
+    expect(r.outs.has('c')).toBe(false);
+  });
+});
+
+describe('stockAtDate', () => {
+  const ms = [inM('i1', '2026-01-01', 10, 20), outM('o1', '2026-02-01', 4), inM('i2', '2026-03-01', 5, 50, B)];
+  it('seis kuupäeval (kaasa arvatud) ja ülejäägi hind', () => {
+    expect(stockAtDate(ms, A, '2026-02-01')).toEqual({ touched: true, qty: 6, surplusUnitCost: 2 });
+    expect(stockAtDate(ms, A, '2026-01-31')).toEqual({ touched: true, qty: 10, surplusUnitCost: 2 });
+  });
+  it('välistatud liikumised ei loe; puutumata ladu', () => {
+    expect(stockAtDate(ms, A, '2026-12-31', new Set(['o1'])).qty).toBe(10);
+    expect(stockAtDate(ms, 'wh-c', '2026-12-31')).toEqual({ touched: false, qty: 0, surplusUnitCost: 10 });
   });
 });
