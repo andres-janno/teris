@@ -818,7 +818,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     // Teisendustegur (1 vana ühik = tegur uut ühikut): kasutaja antud või kaaluühikute korral automaatne
     const unitFactor = unitChanged ? (num(b?.unitFactor) ?? convertQty(1, old!.unit, unit)) : null;
     if (unitChanged && !(unitFactor && unitFactor > 0)) {
-      const docLines = await prisma.stockDocumentLine.count({ where: { articleId: id! } });
+      const docLines = (await prisma.stockDocumentLine.count({ where: { articleId: id! } })) + (await prisma.harvestLotCost.count({ where: { articleId: id! } }));
       if (docLines) {
         json(res, { error: `Artiklil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
@@ -880,8 +880,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia
     const docLines = await prisma.stockDocumentLine.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true, countedQty: true, documentId: true } });
-    if (docLines.length && convertQty(1, source.unit, target.unit) === null) {
-      json(res, { error: `Artiklil on ${docLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
+    const lotCostLines = await prisma.harvestLotCost.findMany({ where: { articleId: source.id }, select: { id: true, quantity: true } });
+    if ((docLines.length || lotCostLines.length) && convertQty(1, source.unit, target.unit) === null) {
+      json(res, { error: `Artiklil on ${docLines.length + lotCostLines.length} laokande rida ühikus "${source.unit}", mida ei saa ühikusse "${target.unit}" teisendada.` }, 409);
       return true;
     }
     const counts = await tenantTransaction(async (tx) => {
@@ -901,6 +902,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         }
         await tx.stockDocumentLine.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)!, countedQty: counted } });
       }
+      // Saagipartii kuivatuskulud: kogus artikli ühikus; partii põhiartikkel liigub sihtartiklile
+      for (const l of lotCostLines) {
+        await tx.harvestLotCost.update({ where: { id: l.id }, data: { articleId: target.id, quantity: convertQty(l.quantity, source.unit, target.unit)! } });
+      }
+      await tx.harvestLot.updateMany({ where: { articleId: source.id }, data: { articleId: target.id } });
       const aliases = [...new Set([...target.aliases, ...source.aliases, nameKey(source.name)])].filter((a) => a !== nameKey(target.name));
       // Sihtmaterjali tühjad PRIA väljad täidetakse asendatava omadest
       await tx.article.update({
@@ -943,16 +949,20 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       return true;
     }
     // Materjal võib olla kasutusel nii kannetes kui ka tööde plaanides (mõlemad keelavad kustutamise)
-    const [usedInEntries, usedInPlans, usedInStock] = await Promise.all([
+    const [usedInEntries, usedInPlans, usedInStock, usedInLots, usedInLotCosts] = await Promise.all([
       prisma.workEntryLine.count({ where: { articleId: id } }),
       prisma.fieldWorkLine.count({ where: { articleId: id } }),
-      prisma.stockDocumentLine.count({ where: { articleId: id } })
+      prisma.stockDocumentLine.count({ where: { articleId: id } }),
+      prisma.harvestLot.count({ where: { articleId: id } }),
+      prisma.harvestLotCost.count({ where: { articleId: id } })
     ]);
-    if (usedInEntries || usedInPlans || usedInStock) {
+    if (usedInEntries || usedInPlans || usedInStock || usedInLots || usedInLotCosts) {
       const where = [
         usedInEntries ? `${usedInEntries} kandes` : null,
         usedInPlans ? `${usedInPlans} töö plaanis` : null,
-        usedInStock ? `${usedInStock} laokandes` : null
+        usedInStock ? `${usedInStock} laokandes` : null,
+        usedInLots ? `${usedInLots} saagipartiis` : null,
+        usedInLotCosts ? `${usedInLotCosts} partii kuivatuskulus` : null
       ].filter(Boolean).join(' ja ');
       json(res, { error: `Artikkel on kasutusel ${where}. Märgi see mitteaktiivseks.` }, 409);
       return true;

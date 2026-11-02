@@ -95,12 +95,13 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       json(res, { error: 'Ladu ei leitud' }, 404);
       return true;
     }
-    const [docs, entries] = await Promise.all([
+    const [docs, entries, lots] = await Promise.all([
       prisma.stockDocument.count({ where: { OR: [{ warehouseId: id }, { toWarehouseId: id }] } }),
-      prisma.workEntry.count({ where: { warehouseId: id } })
+      prisma.workEntry.count({ where: { warehouseId: id } }),
+      prisma.harvestLot.count({ where: { warehouseId: id } })
     ]);
-    if (w.isDefault || docs || entries) {
-      json(res, { error: w.isDefault ? 'Põhiladu ei saa kustutada' : `Laol on ${docs} laokannet ja ${entries} põllutöö kannet. Märgi see mitteaktiivseks.` }, 409);
+    if (w.isDefault || docs || entries || lots) {
+      json(res, { error: w.isDefault ? 'Põhiladu ei saa kustutada' : `Laol on ${docs} laokannet, ${entries} põllutöö kannet ja ${lots} saagipartiid. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
     // Kütus kirjutatakse maha artikli vaikimisi laost: pärast kustutamist arvuta need artiklid ümber
@@ -163,14 +164,20 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       const { outs, counts } = fifoReplay(mm.movements);
       const docIds = mm.docLines.map((l) => l.id);
       const entryIds = [...mm.entryLines.map((l) => l.id), ...mm.issueEntryLineIds];
-      const [docLines, entryLines, whs] = await Promise.all([
+      const weighIds = mm.movements.filter((m) => m.ref.startsWith('weigh:')).map((m) => m.ref.slice(6));
+      const lotCostIds = mm.lotCostLines.map((l) => l.id);
+      const [docLines, entryLines, whs, weighRows, lotCostRows] = await Promise.all([
         tx.stockDocumentLine.findMany({ where: { id: { in: docIds } }, include: { document: { include: { supplier: { select: { name: true } } } } } }),
         tx.workEntryLine.findMany({
           where: { id: { in: entryIds } },
           include: { entry: { select: { id: true, date: true, warehouseId: true, fieldWork: { select: { workType: { select: { name: true, shortName: true } }, fieldSeason: { select: { field: { select: { num: true, name: true } } } } } } } } }
         }),
-        tx.warehouse.findMany({ select: { id: true, name: true } })
+        tx.warehouse.findMany({ select: { id: true, name: true } }),
+        tx.harvestLotWeighing.findMany({ where: { id: { in: weighIds } }, select: { id: true, lot: { select: { id: true, name: true } } } }),
+        tx.harvestLotCost.findMany({ where: { id: { in: lotCostIds } }, select: { id: true, lot: { select: { id: true, name: true } } } })
       ]);
+      const weighById = new Map(weighRows.map((l) => [l.id, l]));
+      const lotCostById = new Map(lotCostRows.map((l) => [l.id, l]));
       const whName = new Map(whs.map((w) => [w.id, w.name]));
       const docById = new Map(docLines.map((l) => [l.id, l]));
       const entryById = new Map(entryLines.map((l) => [l.id, l]));
@@ -192,13 +199,16 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
           ...(m.kind === 'COUNT' ? { countedQty: m.quantity } : {}) };
         // Inventuur: ülejäägi väärtus, puudujäägi FIFO maksumus, vahe 0 → 0
         const countCost = delta > 0 ? counts.get(m.ref)?.amount ?? null : delta < 0 ? movementCost('OUT', o) : 0;
-        const cost = m.kind === 'IN' ? (m.amount ?? 0) : m.kind === 'COUNT' ? countCost : movementCost(m.kind, o);
+        const cost = m.kind === 'IN' ? (m.amount ?? null) : m.kind === 'COUNT' ? countCost : movementCost(m.kind, o);
         if (type === 'doc') {
           const l = docById.get(lineId)!;
           // Tarnija ja dokumendi nr on ostuinfo — ainult finantsõigusega
           const moneyPart = stockCardFinanceFields(finance, { cost, documentNo: l.document.documentNo, supplierName: l.document.supplier?.name ?? null });
           rows.push({ ...base, ...moneyPart, source: 'DOCUMENT', documentId: l.documentId, documentKind: l.document.kind,
             writeOffReason: l.document.writeOffReason, shortageQty: l.shortageQty });
+        } else if (type === 'weigh' || type === 'lotcost') {
+          const l = type === 'weigh' ? weighById.get(lineId)! : lotCostById.get(lineId)!;
+          rows.push({ ...base, ...stockCardFinanceFields(finance, { cost }), source: 'HARVEST_LOT', lotId: l.lot.id, lotName: l.lot.name, lotMovement: type === 'weigh' ? 'WEIGHING' : 'COST' });
         } else {
           const l = entryById.get(lineId)!;
           rows.push({ ...base, ...stockCardFinanceFields(finance, { cost }), source: 'FIELD_WORK', entryId: l.entry.id,

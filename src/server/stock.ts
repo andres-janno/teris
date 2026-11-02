@@ -1,5 +1,5 @@
 // src/server/stock.ts — laoseisu ümberarvutus: loeb materjali liikumised (laokanded + põllutöö kande
-// kulumaterjali- ja kütuseread; laokanded sh inventuur), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
+// kulumaterjali- ja kütuseread; laokanded sh inventuur; saagipartii kaalumised ja kauba kuivatuskulud), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
 // laokande ridade maksumuseks ja koondtabelisse article_stock. Kutsu samas tehingus pärast iga
 // liikumist muutvat salvestust.
 import type { TxClient } from './db.ts';
@@ -70,12 +70,13 @@ export interface ArticleMovements {
   entryLines: { id: string; ref: string; quantity: number }[];
   docLines: { id: string; ref: string; kind: 'RECEIPT' | 'WRITE_OFF' | 'TRANSFER' | 'INVENTORY' }[];
   issueEntryLineIds: string[];
+  lotCostLines: { id: string; ref: string; quantity: number }[];
 }
 
 export async function loadMovements(tx: TxClient, articleIds: string[]): Promise<ArticleMovements[]> {
   if (!articleIds.length) return [];
   const defaultWh = await getDefaultWarehouseId(tx);
-  const [articles, docLines, entryLines] = await Promise.all([
+  const [articles, docLines, entryLines, weighings, lotCosts] = await Promise.all([
     tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true, defaultWarehouseId: true } }),
     tx.stockDocumentLine.findMany({
       where: { articleId: { in: articleIds } },
@@ -87,10 +88,18 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
     tx.workEntryLine.findMany({
       where: { kind: { in: ['MATERIAL', 'FUEL'] }, articleId: { in: articleIds } },
       select: { id: true, articleId: true, kind: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
+    }),
+    tx.harvestLotWeighing.findMany({
+      where: { lot: { articleId: { in: articleIds } } },
+      select: { id: true, date: true, tonnes: true, createdAt: true, lot: { select: { articleId: true, warehouseId: true } } }
+    }),
+    tx.harvestLotCost.findMany({
+      where: { articleId: { in: articleIds }, article: { category: { group: { not: 'SERVICE' } } } },
+      select: { id: true, articleId: true, date: true, quantity: true, createdAt: true, lot: { select: { warehouseId: true } } }
     })
   ]);
   return articles.map((m) => {
-    const out: ArticleMovements = { articleId: m.id, unit: m.unit, movements: [], entryLines: [], docLines: [], issueEntryLineIds: [] };
+    const out: ArticleMovements = { articleId: m.id, unit: m.unit, movements: [], entryLines: [], docLines: [], issueEntryLineIds: [], lotCostLines: [] };
     for (const l of docLines.filter((x) => x.articleId === m.id)) {
       const ref = `doc:${l.id}`;
       const doc = l.document;
@@ -119,6 +128,19 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
         kind: 'OUT', warehouseId: entryLineWarehouseId(l.kind as 'MATERIAL' | 'FUEL', m.defaultWarehouseId, l.entry.warehouseId ?? defaultWh), quantity: qty
       });
     }
+    // Saagi kaalumine: hinnata sissetulek partii laos (tonnid artikli ühikus)
+    for (const w of weighings.filter((x) => x.lot.articleId === m.id)) {
+      const qty = convertQty(w.tonnes, 't', m.unit);
+      if (qty === null || qty <= 0) continue;
+      out.movements.push({ ref: `weigh:${w.id}`, date: isoDay(w.date), seq: w.createdAt.getTime() * 1000, kind: 'IN', warehouseId: w.lot.warehouseId, quantity: qty });
+    }
+    // Partii kuivatuskulu (kaup): väljaminek artikli vaikimisi laost, puudumisel partii laost
+    for (const c of lotCosts.filter((x) => x.articleId === m.id)) {
+      if (!(c.quantity > 0)) continue;
+      const ref = `lotcost:${c.id}`;
+      out.lotCostLines.push({ id: c.id, ref, quantity: c.quantity });
+      out.movements.push({ ref, date: isoDay(c.date), seq: c.createdAt.getTime() * 1000, kind: 'OUT', warehouseId: m.defaultWarehouseId ?? c.lot.warehouseId, quantity: c.quantity });
+    }
     return out;
   });
 }
@@ -140,6 +162,12 @@ export async function recomputeArticleStock(tx: TxClient, articleIds: string[]):
     }
     for (const [id, price] of wanted) {
       if (current.get(id) !== price) await tx.workEntryLine.update({ where: { id }, data: { unitPrice: price } });
+    }
+
+    // Partii kuivatuskulu (kaup): FIFO ühikuhind; hindamata → null
+    for (const l of mm.lotCostLines) {
+      const o = outs.get(l.ref);
+      await tx.harvestLotCost.update({ where: { id: l.id }, data: { unitPrice: o && o.unpricedQty === 0 ? round4(o.cost / l.quantity) : null } });
     }
 
     // Laokande read: maksumus, ülekande puudujääk, inventuuri vahe

@@ -40,6 +40,15 @@ export async function changeArticleUnit(tx: TxClient, articleId: string, fromUni
     await tx.fieldWorkLine.update({ where: { id: l.id }, data: { unit: toUnit, ratePerHa: scale(l.ratePerHa, factor) } });
   }
 
+  // Partii kuivatuskulud (kaup) on artikli ühikus
+  const lotCosts = await tx.harvestLotCost.findMany({ where: { articleId }, select: { id: true, quantity: true, unitPrice: true } });
+  for (const l of lotCosts) {
+    await tx.harvestLotCost.update({
+      where: { id: l.id },
+      data: { quantity: scale(l.quantity, factor)!, unitPrice: l.unitPrice == null ? null : l.unitPrice.div(factor).toDecimalPlaces(4) }
+    });
+  }
+
   await tx.article.update({ where: { id: articleId }, data: { unit: toUnit } });
   await recomputeArticleStock(tx, [articleId]);
 }

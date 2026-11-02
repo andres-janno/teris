@@ -1,6 +1,7 @@
 // src/server/mcp/tools/stock.ts — laoseis (kogus kõigile, raha finantsõigusega) ja laoliikumised (ainult finantsõigusega).
 import { z } from 'zod';
 import { prisma } from '../../db.ts';
+import { convertQty } from '../../../services/units.ts';
 import { workTypeDisplayName } from '../../../services/workTypeName.ts';
 import { defineTool, canSeeFinance } from '../context.ts';
 import { pickOne, parseDateInput, dayAfter, fieldLabel, fmtDate, round2, limitRows, ToolInputError } from '../format.ts';
@@ -40,7 +41,7 @@ export const stockTools = [
   defineTool({
     name: 'list_stock_movements',
     title: 'Laoliikumised',
-    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER), inventuur (INVENTORY: quantity = vahe, + juurde / − maha; counted = tegelik seis) ja põllutöö kande kulu (FIELD_WORK), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
+    description: 'Laoliikumised: arvele võtmine (RECEIPT), mahakandmine (WRITE_OFF), ülekanne (TRANSFER), inventuur (INVENTORY: quantity = vahe, + juurde / − maha; counted = tegelik seis) põllutöö kande kulu (FIELD_WORK), saagipartii kaalumine (HARVEST_WEIGHING: quantity tonnid artikli ühikus, lot = partii, hinnata) ja partii kuivatuskulu kaubast (HARVEST_LOT_COST), koos tarnija, dokumendi nr ja maksumusega. Uuemad eespool.',
     when: canSeeFinance,
     input: {
       warehouse: z.string().optional().describe('Lao nimi'),
@@ -56,7 +57,7 @@ export const stockTools = [
       const date = f || t ? { ...(f ? { gte: f } : {}), ...(t ? { lt: dayAfter(t) } : {}) } : undefined;
       const warehouseId = await resolveWarehouseId(a.warehouse);
       const defaultWh = await prisma.warehouse.findFirst({ where: { isDefault: true }, select: { id: true, name: true } });
-      const [docLines, entryLines] = await Promise.all([
+      const [docLines, entryLines, weighings, lotCosts] = await Promise.all([
         prisma.stockDocumentLine.findMany({
           where: {
             ...(a.article ? { article: { name: ci(a.article) } } : {}),
@@ -84,9 +85,24 @@ export const stockTools = [
               }
             }
           }
+        }),
+        prisma.harvestLotWeighing.findMany({
+          where: {
+            ...(date ? { date } : {}),
+            lot: { ...(warehouseId ? { warehouseId } : {}), ...(a.article ? { article: { name: ci(a.article) } } : {}) }
+          },
+          include: { lot: { select: { name: true, warehouse: { select: { name: true } }, article: { select: { name: true, unit: true } } } } }
+        }),
+        prisma.harvestLotCost.findMany({
+          where: {
+            article: { category: { group: { not: 'SERVICE' } }, ...(a.article ? { name: ci(a.article) } : {}) },
+            ...(date ? { date } : {}),
+            ...(warehouseId ? { lot: { warehouseId } } : {})
+          },
+          include: { article: { select: { name: true, unit: true, defaultWarehouse: { select: { name: true } } } }, lot: { select: { name: true, warehouse: { select: { name: true } } } } }
         })
       ]);
-      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; counted?: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; cost: number | null };
+      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; counted?: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; lot?: string; cost: number | null };
       const rows: Row[] = [
         ...docLines.map((l) => ({
           sortDate: l.document.date, date: fmtDate(l.document.date), type: l.document.kind, warehouse: l.document.warehouse.name, toWarehouse: l.document.toWarehouse?.name ?? null,
@@ -101,6 +117,16 @@ export const stockTools = [
           article: l.label, quantity: round2(l.quantity), unit: l.unit,
           field: fieldLabel(l.entry.fieldWork.fieldSeason.field), work: workTypeDisplayName(l.entry.fieldWork.workType),
           cost: l.unitPrice === null ? null : round2(Number(l.unitPrice) * l.quantity)
+        })),
+        ...weighings.map((w) => ({
+          sortDate: w.date, date: fmtDate(w.date), type: 'HARVEST_WEIGHING', warehouse: w.lot.warehouse.name,
+          article: w.lot.article.name, quantity: round2(convertQty(w.tonnes, 't', w.lot.article.unit) ?? 0), unit: w.lot.article.unit,
+          lot: w.lot.name, cost: null
+        })),
+        ...lotCosts.map((c) => ({
+          sortDate: c.date, date: fmtDate(c.date), type: 'HARVEST_LOT_COST', warehouse: c.article.defaultWarehouse?.name ?? c.lot.warehouse.name,
+          article: c.article.name, quantity: round2(c.quantity), unit: c.article.unit,
+          lot: c.lot.name, cost: c.unitPrice === null ? null : round2(Number(c.unitPrice) * c.quantity)
         }))
       ];
       rows.sort((p, q) => q.sortDate.getTime() - p.sortDate.getTime());
