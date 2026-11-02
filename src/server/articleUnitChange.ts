@@ -16,7 +16,7 @@ export async function changeArticleUnit(tx: TxClient, articleId: string, fromUni
   }
 
   const entryLines = await tx.workEntryLine.findMany({
-    where: { articleId, kind: 'MATERIAL' },
+    where: { articleId, kind: { in: ['MATERIAL', 'FUEL'] } },
     select: { id: true, unit: true, quantity: true, ratePerHa: true, confirmedQuantity: true, unitPrice: true }
   });
   for (const l of entryLines.filter((x) => norm(x.unit) === norm(fromUnit))) {

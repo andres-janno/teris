@@ -69,7 +69,7 @@ export const stockTools = [
         }),
         prisma.workEntryLine.findMany({
           where: {
-            kind: 'MATERIAL', articleId: { not: null },
+            kind: { in: ['MATERIAL', 'FUEL'] }, articleId: { not: null },
             ...(a.article ? { label: ci(a.article) } : {}),
             entry: {
               ...(date ? { date } : {}),

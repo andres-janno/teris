@@ -12,7 +12,7 @@ import { sessionUserOf } from './authGate.ts';
 import * as turf from '@turf/turf';
 import {
   buildEntryLines,
-  canConfirm,
+  confirmBlockReason,
   isUndeterminedCrop,
   isWinterCrop,
   mergeLines,
@@ -27,7 +27,7 @@ import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
 import { articleFieldRules, sanitizeArticleFields } from '../services/articleRules.ts';
-import { articleLineError } from './entryArticles.ts';
+import { articleLineError, loadEntryArticles } from './entryArticles.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -130,7 +130,10 @@ async function resolveEntryInput(body: any) {
   const observations = (Array.isArray(body?.observations) ? body.observations : [])
     .map((o: any) => ({ label: text(o?.label, 200) ?? '', quantity: num(o?.quantity) ?? 0, unit: text(o?.unit, 40) ?? '', priaRegister: text(o?.priaRegister, 80) }))
     .filter((o: { label: string }) => o.label);
+  // Tööaja ridade teenused ja pakutud hinnad, kande kütuseartikkel
+  const entryArticles = await tenantTransaction((tx) => loadEntryArticles(tx, { workerId: worker?.id ?? null, vehicleId: vehicle?.id ?? null, implementId: implement?.id ?? null }));
   const drafts = buildEntryLines({
+    ...entryArticles,
     laborHours,
     workerName: worker ? `Tööaeg · ${worker.name}` : null,
     vehicle,
@@ -174,8 +177,9 @@ const ENTRY_INCLUDE = {
   lines: { orderBy: { sortOrder: 'asc' as const } }
 };
 
+// Laoarvestusega kanderead: kulumaterjal ja kütus
 const articleIdsOf = (lines: { kind?: string; articleId: string | null }[]) =>
-  lines.filter((l) => (l.kind ?? 'MATERIAL') === 'MATERIAL' && l.articleId).map((l) => l.articleId as string);
+  lines.filter((l) => ['MATERIAL', 'FUEL'].includes(l.kind ?? 'MATERIAL') && l.articleId).map((l) => l.articleId as string);
 
 function entryDto(e: any, withFinance: boolean) {
   const lines = (e.lines ?? []) as any[];
@@ -220,6 +224,7 @@ function entryDto(e: any, withFinance: boolean) {
           lines: lines.filter((l) => l.kind !== 'OBSERVATION').map((l) => ({
             id: l.id,
             kind: l.kind,
+            articleId: l.articleId,
             label: l.label,
             quantity: l.quantity,
             unit: l.unit,
@@ -759,7 +764,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       composition: text(b?.composition, 4000), notes: text(b?.notes, 4000), ...optional };
     // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
-    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, aliases: true, category: { select: { group: true } } } }) : null;
+    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, defaultWarehouseId: true, aliases: true, category: { select: { group: true } } } }) : null;
     if (id && !old) {
       json(res, { error: 'Artiklit ei leitud' }, 404);
       return true;
@@ -797,7 +802,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         json(res, { error: `Artiklil on ${docLines} laokande rida. Sisesta teisendustegur: mitu ${unit} on üks ${old!.unit}.`, needsFactor: true }, 409);
         return true;
       }
-      const lines = await prisma.workEntryLine.findMany({ where: { articleId: id!, kind: 'MATERIAL' }, select: { unit: true } });
+      const lines = await prisma.workEntryLine.findMany({ where: { articleId: id!, kind: { in: ['MATERIAL', 'FUEL'] } }, select: { unit: true } });
       const bad = lines.filter((l) => convertQty(1, l.unit, unit) === null).length;
       if (bad && b?.confirmUnitChange !== true) {
         json(res, { error: `${bad} kannet ei saa ühikusse "${unit}" teisendada ja need jäävad laoarvestusest välja.`, needsConfirm: true }, 409);
@@ -811,6 +816,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           await changeArticleUnit(tx, s.id, old!.unit, unit, unitFactor);
           s = await tx.article.findUniqueOrThrow({ where: { id: s.id } });
         } else if (unitChanged) await recomputeArticleStock(tx, [s.id]);
+        // Kütus kantakse maha artikli vaikimisi laost: lao vahetus liigutab kütuse kanderead teise lattu
+        else if (old && old.defaultWarehouseId !== s.defaultWarehouseId) await recomputeArticleStock(tx, [s.id]);
         // Ümbernimetamine: plaani- ja kanderead saavad uue nime; vana nimi jääb varunimeks (PRIA import seob selle materjaliga)
         if (old && old.name !== name) {
           // Tööaja ridade nimi tuleb töötajast/masinast, mitte artiklist: nimi muutub ainult materjali- ja kütuseridadel
@@ -1420,13 +1427,15 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         return true;
       }
       const prices: Record<string, unknown> = b?.prices && typeof b.prices === 'object' ? b.prices : {};
-      // Materjaliridade hind tuleb laost (FIFO), käsitsi seda ei muudeta
+      // Kulumaterjali ja kütuse hind tuleb laost (FIFO), käsitsi seda ei muudeta
+      const fromStock = (kind: string) => kind === 'MATERIAL' || kind === 'FUEL';
       const lines = entry.lines.map((l) => ({
         ...l,
-        unitPrice: l.kind !== 'MATERIAL' && l.id in prices ? num(prices[l.id]) : decimalToNumber(l.unitPrice)
+        unitPrice: !fromStock(l.kind) && l.id in prices ? num(prices[l.id]) : decimalToNumber(l.unitPrice)
       }));
-      if (b?.confirm === true && !canConfirm(lines)) {
-        json(res, { error: 'Igal real peab olema ühiku kulu. Materjali hind tuleb laost — hindamata materjal ootab arvele võtmist.' }, 400);
+      const blocked = b?.confirm === true ? confirmBlockReason(lines) : null;
+      if (blocked) {
+        json(res, { error: blocked }, 400);
         return true;
       }
       await tenantTransaction(async (tx) => {

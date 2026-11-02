@@ -1,10 +1,11 @@
 // src/server/stock.ts — laoseisu ümberarvutus: loeb materjali liikumised (laokanded + põllutöö kande
-// materjaliread), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
+// kulumaterjali- ja kütuseread), käivitab FIFO (stockFifo.ts) ja kirjutab tulemuse kanderidade ühikuhinnaks,
 // laokande ridade maksumuseks ja koondtabelisse article_stock. Kutsu samas tehingus pärast iga
 // liikumist muutvat salvestust.
 import type { TxClient } from './db.ts';
 import { fifoReplay, movementCost, type Movement } from './stockFifo.ts';
 import { convertQty } from '../services/units.ts';
+import { entryLineWarehouseId } from '../services/articleRules.ts';
 import type { StockDocumentInput } from './stockRules.ts';
 
 export class StockValidationError extends Error {}
@@ -75,7 +76,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
   if (!articleIds.length) return [];
   const defaultWh = await getDefaultWarehouseId(tx);
   const [articles, docLines, entryLines] = await Promise.all([
-    tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true } }),
+    tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true, defaultWarehouseId: true } }),
     tx.stockDocumentLine.findMany({
       where: { articleId: { in: articleIds } },
       select: {
@@ -84,8 +85,8 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       }
     }),
     tx.workEntryLine.findMany({
-      where: { kind: 'MATERIAL', articleId: { in: articleIds } },
-      select: { id: true, articleId: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
+      where: { kind: { in: ['MATERIAL', 'FUEL'] }, articleId: { in: articleIds } },
+      select: { id: true, articleId: true, kind: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
     })
   ]);
   return articles.map((m) => {
@@ -112,8 +113,8 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       out.entryLines.push({ id: l.id, ref, quantity: l.quantity });
       out.movements.push({
         ref, date: isoDay(l.entry.date), seq: l.entry.createdAt.getTime() * 1000 + l.sortOrder,
-        // Tühi ladu (vana kanne enne ühekordset täitmist) — varuvariandina põhiladu
-        kind: 'OUT', warehouseId: l.entry.warehouseId ?? defaultWh, quantity: qty
+        // Tühi ladu (vana kanne enne ühekordset täitmist) — varuvariandina põhiladu; kütus artikli vaikimisi laost
+        kind: 'OUT', warehouseId: entryLineWarehouseId(l.kind as 'MATERIAL' | 'FUEL', m.defaultWarehouseId, l.entry.warehouseId ?? defaultWh), quantity: qty
       });
     }
     return out;
@@ -127,7 +128,7 @@ export async function recomputeArticleStock(tx: TxClient, articleIds: string[]):
 
     // Põllutöö kanderead: ühikuhind kanderea ühikus; hindamata või teisendamatu → null
     const current = new Map(
-      (await tx.workEntryLine.findMany({ where: { kind: 'MATERIAL', articleId: mm.articleId }, select: { id: true, unitPrice: true } }))
+      (await tx.workEntryLine.findMany({ where: { kind: { in: ['MATERIAL', 'FUEL'] }, articleId: mm.articleId }, select: { id: true, unitPrice: true } }))
         .map((l) => [l.id, l.unitPrice === null ? null : Number(l.unitPrice)])
     );
     const wanted = new Map<string, number | null>(mm.issueEntryLineIds.map((id) => [id, null]));
