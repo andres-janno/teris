@@ -12,7 +12,7 @@ export interface Movement {
   warehouseId: string; // IN: sihtladu; TRANSFER ja OUT: lähteladu; COUNT: inventeeritav ladu
   toWarehouseId?: string; // TRANSFER: sihtladu
   quantity: number; // laoühikus, > 0; COUNT: tegelik seis (≥ 0)
-  amount?: number; // IN: rea summa
+  amount?: number; // IN: rea summa; puudub = hinnata sissetulek (saagi kaalumine)
 }
 
 export interface OutResult {
@@ -123,9 +123,10 @@ export function fifoReplay(movements: Movement[]): ReplayResult {
 
   for (const m of sortMovements(movements)) {
     if (m.kind === 'IN') {
-      const unitCost = m.quantity > 0 ? (m.amount ?? 0) / m.quantity : 0;
+      // Summata sissetulek (saagi kaalumine) on hinnata partii
+      const unitCost = m.amount === undefined ? null : m.quantity > 0 ? m.amount / m.quantity : 0;
       receive(m.warehouseId, m.quantity, unitCost);
-      if (m.quantity > 0) lastReceipt = unitCost;
+      if (unitCost !== null && m.quantity > 0) lastReceipt = unitCost;
       continue;
     }
     if (m.kind === 'COUNT') {

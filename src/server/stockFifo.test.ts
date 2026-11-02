@@ -252,3 +252,13 @@ describe('stockAtDate', () => {
     expect(stockAtDate(ms, 'wh-c', '2026-12-31')).toEqual({ touched: false, qty: 0, surplusUnitCost: 10 });
   });
 });
+
+describe('hinnata sissetulek (kaalumine)', () => {
+  const inU = (ref: string, date: string, quantity: number, warehouseId = A): Movement => ({ ref, date, seq: seq++, kind: 'IN', warehouseId, quantity });
+  it('summata sissetulek on hinnata partii ega muuda viimase arvelevõtu hinda', () => {
+    const r = fifoReplay([inM('i1', '2026-01-01', 5, 10), inU('w1', '2026-02-01', 10), outM('o1', '2026-03-01', 8)]);
+    expect(r.outs.get('o1')).toEqual({ cost: 10, unpricedQty: 3, shortageQty: 0, missingQty: 0 });
+    expect(r.stock.get(A)).toEqual({ qty: 7, value: 0, unpricedQty: 7, pricedQty: 0 });
+    expect(r.lastReceiptUnitCost).toBe(2);
+  });
+});
