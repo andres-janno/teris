@@ -11,6 +11,7 @@ import { handleHelpRead } from './helpArticles.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
 import { handleArticleCategories } from './articleCategories.ts';
 import { handleStock } from './stockApi.ts';
+import { resourceCostIn, resourceCostOut } from './entryArticles.ts';
 import { fetchCellularTelemetry, fetchEyeTelemetry, fetchDeviceHistory } from './telemetryAccess.ts';
 import { getRecentRadarFrames, getCachedRadarFrame } from './weatherRadar.ts';
 import { getSatiladuDates, validateSatiladuQuery, type SatiladuQuery } from './satiladu.ts';
@@ -67,6 +68,11 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], d
 // Andmete importimine (PRIA, mullaproovid, põlluraamat) on lubatud ainult adminile.
 const IMPORT_FORBIDDEN = 'Andmete importimine on lubatud ainult adminile';
 const isAdmin = (req: IncomingMessage) => sessionUserOf(req)?.isAdmin === true;
+// Finantsandmeid (tunnihind) näevad finantsjuht ja admin
+const canSeeFinance = (req: IncomingMessage) => {
+  const u = sessionUserOf(req) as { isAdmin?: boolean; isFinanceManager?: boolean } | null;
+  return u?.isAdmin === true || u?.isFinanceManager === true;
+};
 
 // Kustutada saab ainult kirje looja või admin. Tagastab true, kui keelduv vastus on saadetud.
 function denyDelete(req: IncomingMessage, res: ServerResponse, record: { createdBy: string | null } | null): boolean {
@@ -708,6 +714,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       // ?telemetry=0: kiire register ilma tsdb päringuteta (rakenduse käivitus) — seadmed tulevad
       // ilma reaalajas asukoha/aktiivsuseta (staatus offline), täisandmed laeb klient kaardivaates
       const withLive = telemetry && url.searchParams.get('telemetry') !== '0';
+      const finance = canSeeFinance(req);
       const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches, deviceLinks] = await Promise.all([
         prisma.vehicle.findMany({
           include: { assignedDriver: true }
@@ -730,6 +737,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         model: v.model,
         powerKw: v.powerKw ?? undefined,
         ...depreciationOut(v),
+        ...resourceCostOut(v, finance),
         registrationPlate: v.regNumber ?? undefined,
         serialNumber: v.serialNumber ?? undefined,
         color: v.color,
@@ -749,6 +757,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         type: i.type.toLowerCase(),
         category: i.category ?? undefined,
         ...depreciationOut(i),
+        ...resourceCostOut({ serviceArticleId: i.serviceArticleId, hourlyRate: i.hourlyRate }, finance),
         model: i.model ?? '',
         manufacturer: i.manufacturer ?? '',
         serialNumber: i.serialNumber ?? undefined,
@@ -892,6 +901,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/fleet/vehicles' && method === 'POST') {
       const v = await parseBody(req);
+      const cost = await resourceCostIn(v, 'MACHINE', true, canSeeFinance(req));
+      if ('error' in cost) return json(res, { error: cost.error }, 400);
       const vData: any = {
         name: v.name,
         type: (v.type || 'tractor').toUpperCase() as any,
@@ -903,7 +914,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         regNumber: v.registrationPlate || v.regNumber || null,
         serialNumber: cleanText(v.serialNumber),
         color: v.color || '#10b981',
-        notes: v.notes ?? null
+        notes: v.notes ?? null,
+        ...cost.data
       };
 
       const saved = await prisma.vehicle.upsert({
@@ -916,7 +928,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       });
 
       // Haakimine ei käi masina vormi kaudu: see on ainult haakimise registris
-      return json(res, saved);
+      const { hourlyRate: _rate, ...savedRest } = saved;
+      return json(res, { ...savedRest, ...resourceCostOut(saved, canSeeFinance(req)) });
     }
 
     if (pathname.startsWith('/api/fleet/vehicles/') && method === 'DELETE') {
@@ -928,6 +941,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/fleet/implements' && method === 'POST') {
       const i = await parseBody(req);
+      const cost = await resourceCostIn(i, 'IMPLEMENT', false, canSeeFinance(req));
+      if ('error' in cost) return json(res, { error: cost.error }, 400);
       const iData: any = {
         name: i.name,
         category: cleanText(i.category),
@@ -937,7 +952,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         model: i.model || null,
         serialNumber: cleanText(i.serialNumber),
         year: i.year ?? null,
-        notes: i.notes ?? null
+        notes: i.notes ?? null,
+        ...cost.data
       };
 
       const saved = await prisma.implement.upsert({
@@ -952,7 +968,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       });
 
       // Haakimine ei käi haakeriista vormi kaudu: see on ainult haakimise registris
-      return json(res, saved);
+      const { hourlyRate: _rate, ...savedRest } = saved;
+      return json(res, { ...savedRest, ...resourceCostOut(saved, canSeeFinance(req)) });
     }
 
     if (pathname.startsWith('/api/fleet/implements/') && method === 'DELETE') {
@@ -1445,8 +1462,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       // Kustutamise kaitse põhineb päris viidetel (FK kasutusel) —
       // frontend kasutab neid loenduid, et otsustada, kas kustutamine
       // on ohutu, ja kui mitte, näidata seoste ülevaadet.
-      const mapped = dbParties.map(({ _count, ...p }) => ({
+      const finance = canSeeFinance(req);
+      const mapped = dbParties.map(({ _count, hourlyRate, ...p }) => ({
         ...p,
+        ...resourceCostOut({ serviceArticleId: p.serviceArticleId, hourlyRate }, finance),
         assignedVehiclesCount: _count.vehicles,
         ownedParcelsCount: _count.cadastralParcels,
         poiContactsCount: _count.poiContacts,
@@ -1459,6 +1478,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/parties' && method === 'POST') {
       const p = await parseBody(req);
+      const cost = await resourceCostIn(p, 'LABOR', false, canSeeFinance(req));
+      if ('error' in cost) return json(res, { error: cost.error }, 400);
       const saved = await prisma.relatedParty.upsert({
         where: { id: p.id || `party-${Date.now()}` },
         update: {
@@ -1471,7 +1492,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           email: p.email ?? null,
           address: p.address ?? null,
           bankAccount: p.bankAccount ?? null,
-          notes: p.notes ?? null
+          notes: p.notes ?? null,
+          ...cost.data
         },
         create: {
           id: p.id || `party-${Date.now()}`,
@@ -1484,10 +1506,12 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           email: p.email ?? null,
           address: p.address ?? null,
           bankAccount: p.bankAccount ?? null,
-          notes: p.notes ?? null
+          notes: p.notes ?? null,
+          ...cost.data
         }
       });
-      return json(res, saved);
+      const { hourlyRate, ...rest } = saved;
+      return json(res, { ...rest, ...resourceCostOut({ serviceArticleId: saved.serviceArticleId, hourlyRate }, canSeeFinance(req)) });
     }
 
     if (pathname.startsWith('/api/parties/') && method === 'DELETE') {

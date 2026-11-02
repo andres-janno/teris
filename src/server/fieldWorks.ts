@@ -26,8 +26,8 @@ import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
-import { articleFieldRules, sanitizeArticleFields } from '../services/articleRules.ts';
-import { articleLineError, loadEntryArticles } from './entryArticles.ts';
+import { articleFieldRules, sanitizeArticleFields, SERVICE_TIME_KINDS } from '../services/articleRules.ts';
+import { articleLineError, loadEntryArticles, ensureDefaultServices } from './entryArticles.ts';
 import { type PriaAttrs, nameKey } from '../services/pria.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 import { boardWorkDate, isExactAutumnText } from '../services/fieldWorksBoardColumns.ts';
@@ -697,7 +697,10 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   // --- Kulumaterjalid ---
   if (pathname === '/api/articles' && method === 'GET') {
     const warehouseId = text(url.searchParams.get('warehouseId'), 64);
-    const stock = await tenantTransaction((tx) => articleStockSummary(tx, warehouseId));
+    const stock = await tenantTransaction(async (tx) => {
+      await ensureDefaultServices(tx);
+      return articleStockSummary(tx, warehouseId);
+    });
     const finance = canSeeFinance(req);
     const rows = await prisma.article.findMany({
       orderBy: [{ category: { sortOrder: 'asc' } }, { name: 'asc' }],
@@ -761,14 +764,22 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       priaSpec: text(b?.priaSpec, 20), activeIngredient: text(b?.activeIngredient, 500), nPct: num(b?.nPct), pPct: num(b?.pPct), kPct: num(b?.kPct)
     }, rules);
     const data = { name, categoryId: categoryId!, unit, manufacturer: text(b?.manufacturer, 160), isActive: b?.isActive !== false,
-      composition: text(b?.composition, 4000), notes: text(b?.notes, 4000), ...optional };
+      composition: text(b?.composition, 4000), notes: text(b?.notes, 4000), isDefaultService: false, ...optional };
     // aliases muutub ainult asendamisel
     const id = text(b?.id, 64);
-    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, defaultWarehouseId: true, aliases: true, category: { select: { group: true } } } }) : null;
+    const old = id ? await prisma.article.findUnique({ where: { id }, select: { unit: true, name: true, defaultWarehouseId: true, isDefaultService: true, categoryId: true, isActive: true, aliases: true, category: { select: { group: true } } } }) : null;
     if (id && !old) {
       json(res, { error: 'Artiklit ei leitud' }, 404);
       return true;
     }
+    // Tööaja liigi vaikimisi teenus: liigi kohta üks; märge liigub ainult teise teenuse märkimisega
+    const timeService = category.group === 'SERVICE' && !!category.systemKind && SERVICE_TIME_KINDS.includes(category.systemKind as any);
+    if (old?.isDefaultService && (old.categoryId !== categoryId || data.isActive === false)) {
+      json(res, { error: 'Vaikimisi teenust ei saa teise liiki viia ega mitteaktiivseks muuta' }, 400);
+      return true;
+    }
+    const isDefaultService: boolean = timeService && (old?.isDefaultService === true || b?.isDefaultService === true);
+    data.isDefaultService = isDefaultService;
     // Ilma finantsõiguseta muutmisel jääb teenuse vana hind alles (kaubal hinda pole, see tühjendatakse)
     if (id && !finance && rules.price) delete (data as Partial<typeof data>).price;
     // Teenuse üle laoarvestust ei peeta: laokannetega kaupa ei saa teenuseks muuta
@@ -811,6 +822,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     try {
       const saved = await tenantTransaction(async (tx) => {
+        if (isDefaultService && !old?.isDefaultService) {
+          await tx.article.updateMany({ where: { categoryId: categoryId!, isDefaultService: true, ...(id ? { NOT: { id } } : {}) }, data: { isDefaultService: false } });
+        }
         let s = id ? await tx.article.update({ where: { id }, data: unitFactor ? { ...data, unit: old!.unit } : data }) : await tx.article.create({ data });
         if (unitFactor) {
           await changeArticleUnit(tx, s.id, old!.unit, unit, unitFactor);
@@ -875,6 +889,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         where: { id: target.id },
         data: {
           aliases,
+          isDefaultService: target.isDefaultService || source.isDefaultService,
           manufacturer: target.manufacturer ?? source.manufacturer,
           composition: target.composition ?? source.composition,
           price: target.price ?? source.price,
@@ -889,6 +904,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           kPct: target.kPct ?? source.kPct
         }
       });
+      // Ressursside teenus ja kütus ning vaikimisi teenuse märge liiguvad sihtartiklile
+      await tx.vehicle.updateMany({ where: { serviceArticleId: source.id }, data: { serviceArticleId: target.id } });
+      await tx.vehicle.updateMany({ where: { fuelArticleId: source.id }, data: { fuelArticleId: target.id } });
+      await tx.implement.updateMany({ where: { serviceArticleId: source.id }, data: { serviceArticleId: target.id } });
+      await tx.relatedParty.updateMany({ where: { serviceArticleId: source.id }, data: { serviceArticleId: target.id } });
       await tx.article.delete({ where: { id: source.id } });
       await recomputeArticleStock(tx, [target.id]);
       return { plans: plans.count, entries: entries.count, stockLines: docLines.length };
@@ -898,8 +918,12 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   }
   if (pathname.startsWith('/api/articles/') && method === 'DELETE') {
     const id = idOf('/api/articles/');
-    const article = await prisma.article.findUnique({ where: { id }, select: { createdBy: true } });
+    const article = await prisma.article.findUnique({ where: { id }, select: { createdBy: true, isDefaultService: true } });
     if (article && deleteDenied(req, res, article.createdBy)) return true;
+    if (article?.isDefaultService) {
+      json(res, { error: 'Vaikimisi teenust ei saa kustutada' }, 409);
+      return true;
+    }
     // Materjal võib olla kasutusel nii kannetes kui ka tööde plaanides (mõlemad keelavad kustutamise)
     const [usedInEntries, usedInPlans, usedInStock] = await Promise.all([
       prisma.workEntryLine.count({ where: { articleId: id } }),

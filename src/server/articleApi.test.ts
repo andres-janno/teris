@@ -63,6 +63,7 @@ afterAll(async () => {
     await prisma.workType.deleteMany({});
     await prisma.fieldSeason.deleteMany({});
     await prisma.field.deleteMany({});
+    await prisma.vehicle.deleteMany({});
     await prisma.stockDocument.deleteMany({});
     await prisma.articleStock.deleteMany({});
     await prisma.article.deleteMany({});
@@ -151,5 +152,52 @@ describe('artikli sobivus reale', () => {
     const seed = await run(() => prisma.article.create({ data: { name: 'Testseeme', categoryId: cat.seed, unit: 'kg' } }));
     const ok = await call('PATCH', `/api/field-works/${fieldWorkId}`, { lines: [{ kind: 'MATERIAL', articleId: seed.id, label: 'Testseeme', unit: 'kg' }] });
     expect(ok.status).toBe(200);
+  });
+});
+
+describe('vaikimisi teenus', () => {
+  const defaultId = async () => (await run(() => prisma.article.findFirstOrThrow({ where: { isDefaultService: true, category: { systemKind: 'MACHINE_TIME' } } }))).id;
+
+  it('artiklite loend loob vaikimisi teenused ja näitab märget', async () => {
+    const r = await call('GET', '/api/articles');
+    expect(r.json.filter((a: any) => a.isDefaultService).map((a: any) => a.name).sort())
+      .toEqual(['Haakeriista tööaeg', 'Kuivatamise tööaeg', 'Masina tööaeg', 'Töötaja tööaeg']);
+  });
+  it('vaikimisi teenust ei saa kustutada', async () => {
+    const r = await call('DELETE', `/api/articles/${await defaultId()}`);
+    expect(r.status).toBe(409);
+    expect(r.json.error).toBe('Vaikimisi teenust ei saa kustutada');
+  });
+  it('vaikimisi teenust ei saa mitteaktiivseks muuta ega märget eemaldada', async () => {
+    const id = await defaultId();
+    const off = await call('POST', '/api/articles', { id, name: 'Masina tööaeg', categoryId: cat.machine, unit: 'h', isActive: false, isDefaultService: true });
+    expect(off.status).toBe(400);
+    expect(off.json.error).toBe('Vaikimisi teenust ei saa teise liiki viia ega mitteaktiivseks muuta');
+    const unflag = await call('POST', '/api/articles', { id, name: 'Masina tööaeg', categoryId: cat.machine, unit: 'h', isDefaultService: false });
+    expect(unflag.status).toBe(200);
+    expect(unflag.json.isDefaultService).toBe(true);
+  });
+  it('teise teenuse märkimine vaikimisi teenuseks võtab märke vanalt', async () => {
+    const old = await defaultId();
+    const r = await call('POST', '/api/articles', { name: 'Masinatund 2026', categoryId: cat.machine, unit: 'h', isDefaultService: true });
+    expect(r.status).toBe(200);
+    expect(r.json.isDefaultService).toBe(true);
+    const prev = await run(() => prisma.article.findUniqueOrThrow({ where: { id: old } }));
+    expect(prev.isDefaultService).toBe(false);
+  });
+  it('mitte-tööaja liigi artikkel ei saa vaikimisi teenuseks', async () => {
+    const r = await call('POST', '/api/articles', { name: 'Konsultatsioon', categoryId: cat.otherService, unit: 'h', isDefaultService: true });
+    expect(r.status).toBe(200);
+    expect(r.json.isDefaultService).toBe(false);
+  });
+  it('asendamine viib masina teenuse ja vaikimisi märke sihtartiklile', async () => {
+    const source = await defaultId();
+    const target = (await run(() => prisma.article.create({ data: { name: 'Masinatund uus', categoryId: cat.machine, unit: 'h' } }))).id;
+    const v = await run(() => prisma.vehicle.create({ data: { name: 'T', type: 'TRACTOR', model: 'X', serviceArticleId: source } }));
+    const r = await call('POST', `/api/articles/${source}/merge`, { targetId: target });
+    expect(r.status).toBe(200);
+    expect((await run(() => prisma.vehicle.findUniqueOrThrow({ where: { id: v.id } }))).serviceArticleId).toBe(target);
+    expect((await run(() => prisma.article.findUniqueOrThrow({ where: { id: target } }))).isDefaultService).toBe(true);
+    await run(() => prisma.vehicle.delete({ where: { id: v.id } }));
   });
 });
