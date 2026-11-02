@@ -73,6 +73,7 @@ afterAll(async () => {
     await prisma.articleCategory.deleteMany({});
     await prisma.warehouse.deleteMany({});
   });
+  await authDb().user.deleteMany({ where: { id: ADMIN.id } }).catch((e) => console.error('Testi puhastus', e));
   await authDb().tenant.delete({ where: { id: T } });
 });
 
