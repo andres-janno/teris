@@ -5,7 +5,7 @@ import { prisma, tenantTransaction } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
 import { parseStockDocument, stockRequiresFinance, stockCardFinanceFields } from './stockRules.ts';
-import { getDefaultWarehouseId, loadMovements, saveStockDocument, deleteStockDocument, saveWarehouse, StockValidationError } from './stock.ts';
+import { getDefaultWarehouseId, loadMovements, saveStockDocument, deleteStockDocument, saveWarehouse, recomputeArticleStock, StockValidationError } from './stock.ts';
 import { fifoReplay, movementCost, sortMovements } from './stockFifo.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 
@@ -99,7 +99,12 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       json(res, { error: w.isDefault ? 'Põhiladu ei saa kustutada' : `Laol on ${docs} laokannet ja ${entries} põllutöö kannet. Märgi see mitteaktiivseks.` }, 409);
       return true;
     }
-    await prisma.warehouse.delete({ where: { id } });
+    // Kütus kirjutatakse maha artikli vaikimisi laost: pärast kustutamist arvuta need artiklid ümber
+    await tenantTransaction(async (tx) => {
+      const articles = await tx.article.findMany({ where: { defaultWarehouseId: id }, select: { id: true } });
+      await tx.warehouse.delete({ where: { id } });
+      await recomputeArticleStock(tx, articles.map((a) => a.id));
+    });
     json(res, { success: true, id });
     return true;
   }

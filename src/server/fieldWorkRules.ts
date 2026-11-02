@@ -126,7 +126,9 @@ export function mergeLines(
   const byKey = new Map(oldLines.map((l) => [lineKey(l), l]));
   const lines: StoredLine[] = drafts.map((d) => {
     const old = byKey.get(lineKey(d));
-    return { ...d, unitPrice: old?.unitPrice ?? d.unitPrice, confirmedQuantity: old?.confirmedQuantity ?? null };
+    // Teenuse- ja kütuserea artikkel jääb samaks (nagu hind); rida ilma artiklita saab uue
+    const articleId = d.kind === 'MATERIAL' ? d.articleId : old?.articleId ?? d.articleId;
+    return { ...d, articleId, unitPrice: old?.unitPrice ?? d.unitPrice, confirmedQuantity: old?.confirmedQuantity ?? null };
   });
   if (status === 'PENDING') return { lines, financeStatus: 'PENDING' };
 

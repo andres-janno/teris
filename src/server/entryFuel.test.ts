@@ -7,6 +7,7 @@ import { systemCategoryId } from './articleCategories';
 import { setSessionUserForTest } from './authGate';
 import { handleFieldWorks } from './fieldWorks';
 import { saveStockDocument, getDefaultWarehouseId } from './stock';
+import { handleStock } from './stockApi';
 import { ensureDefaultServices } from './entryArticles';
 
 const T = `test-tenant-entryfuel-${process.pid}`;
@@ -124,5 +125,24 @@ describe('kanne teenuste ja kütusega', () => {
     expect(r.status).toBe(200);
     const stock = await run(() => prisma.articleStock.findMany({ where: { articleId: s.fuel }, orderBy: { qty: 'asc' } }));
     expect(stock.map((x) => [x.warehouseId, x.qty])).toEqual([[s.main, -40], [s.tank, 100]]);
+  });
+  it('kütuseartikli vaikimisi lao kustutamine kannab mahakirjutuse kandelao peale', async () => {
+    const tank2 = await run(() => prisma.warehouse.create({ data: { name: 'Teine mahuti' } }));
+    const cat = (await run(() => prisma.article.findUniqueOrThrow({ where: { id: s.fuel } }))).categoryId;
+    const fuel2 = await run(() => prisma.article.create({ data: { name: 'Kütus 2', categoryId: cat, unit: 'l', defaultWarehouseId: tank2.id } }));
+    const veh2 = await run(() => prisma.vehicle.create({ data: { name: 'Traktor 2', type: 'TRACTOR', model: 'Y', hourlyRate: 40, fuelArticleId: fuel2.id } }));
+    const r = await call('POST', '/api/work-entries', { fieldWorkId: s.fieldWorkId, date: '2026-05-12', vehicleId: veh2.id, fuelLiters: 40, laborHours: 1 });
+    expect(r.status).toBe(200);
+    expect((await run(() => prisma.articleStock.findMany({ where: { articleId: fuel2.id } }))).map((x) => [x.warehouseId, x.qty])).toEqual([[tank2.id, -40]]);
+    // Laokirjeid ei ole, kande ladu on põhiladu: tank2 kustutamine on lubatud
+    const method = 'DELETE';
+    const path = `/api/warehouses/${tank2.id}`;
+    const req = Object.assign(Readable.from([]), { method, url: path, headers: { host: 'localhost' }, socket: {} }) as unknown as IncomingMessage;
+    setSessionUserForTest(req, ADMIN);
+    const out = { status: 200 };
+    const res = { statusCode: 200, setHeader() {}, writeHead(c: number) { out.status = c; }, end() { out.status = (res as any).statusCode; } } as unknown as ServerResponse;
+    await run(() => handleStock(req, res, path, method, new URL(path, 'http://localhost')));
+    expect(out.status).toBe(200);
+    expect((await run(() => prisma.articleStock.findMany({ where: { articleId: fuel2.id } }))).map((x) => [x.warehouseId, x.qty])).toEqual([[s.main, -40]]);
   });
 });

@@ -716,7 +716,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           select: { articleId: true, ratePerHa: true, fieldWork: { select: { plannedAreaHa: true, fieldSeason: { select: { areaHa: true } } } } }
         }),
         prisma.workEntryLine.findMany({
-          where: { kind: 'MATERIAL', articleId: { not: null }, entry: { fieldWork: { fieldSeason: { year } } } },
+          where: { kind: { in: ['MATERIAL', 'FUEL'] }, articleId: { not: null }, entry: { fieldWork: { fieldSeason: { year } } } },
           select: { articleId: true, quantity: true }
         })
       ]);

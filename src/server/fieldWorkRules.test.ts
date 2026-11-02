@@ -200,10 +200,10 @@ describe('mergeLines hinnaga', () => {
     const old: StoredLine = { ...draft({ unitPrice: null }), confirmedQuantity: null };
     expect(mergeLines([old], [draft({ unitPrice: 25 })], 'PENDING').lines[0].unitPrice).toBe(25);
   });
-  it('tööaja rea teenusartikli vahetus ei kaota hinda ega muuda kinnitust', () => {
+  it('tööaja rea teenusartikkel ja hind jäävad alles ning kinnitus kehtib', () => {
     const old: StoredLine = { ...draft({ articleId: 'sOld', unitPrice: 18 }), confirmedQuantity: 8 };
     const r = mergeLines([old], [draft({ articleId: 'sNew', unitPrice: 25 })], 'CONFIRMED');
-    expect(r.lines[0]).toMatchObject({ articleId: 'sNew', unitPrice: 18 });
+    expect(r.lines[0]).toMatchObject({ articleId: 'sOld', unitPrice: 18 });
     expect(r.financeStatus).toBe('CONFIRMED');
   });
 });
@@ -221,5 +221,29 @@ describe('confirmBlockReason', () => {
       { kind: 'FUEL', articleId: 'f1', unitPrice: 1.5 },
       { kind: 'OBSERVATION', articleId: null, unitPrice: null }
     ])).toBeNull();
+  });
+});
+
+describe('mergeLines rea artikkel', () => {
+  const line = (over: Partial<LineDraft>): LineDraft => ({
+    kind: 'FUEL', vehicleId: null, implementId: null, articleId: 'f2', label: 'Kütus', quantity: 40, unit: 'l',
+    sortOrder: 0, ratePerHa: null, unitPrice: 1.5, priaRegister: null, priaKind: null, priaSpec: null,
+    activeIngredient: null, nKgHa: null, pKgHa: null, kKgHa: null, ...over
+  });
+  it('kütuserea vana artikkel jääb alles ja kinnitus kehtib', () => {
+    const old: StoredLine = { ...line({ articleId: 'f1' }), confirmedQuantity: 40 };
+    const r = mergeLines([old], [line({ articleId: 'f2' })], 'CONFIRMED');
+    expect(r.lines[0].articleId).toBe('f1');
+    expect(r.financeStatus).toBe('CONFIRMED');
+  });
+  it('artiklita kütuserida saab uue artikli', () => {
+    const old: StoredLine = { ...line({ articleId: null }), confirmedQuantity: null };
+    expect(mergeLines([old], [line({ articleId: 'f2' })], 'PENDING').lines[0].articleId).toBe('f2');
+  });
+  it('materjalirida on endiselt artikli järgi: teine artikkel on uus rida', () => {
+    const old: StoredLine = { ...line({ kind: 'MATERIAL', articleId: 'm1' }), confirmedQuantity: 40 };
+    const r = mergeLines([old], [line({ kind: 'MATERIAL', articleId: 'm2' })], 'CONFIRMED');
+    expect(r.lines[0].articleId).toBe('m2');
+    expect(r.financeStatus).toBe('CHANGED');
   });
 });

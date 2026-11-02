@@ -152,7 +152,7 @@ export const workTools = [
         select: {
           id: true, areaHa: true,
           fieldWork: { select: { fieldSeason: { select: { crop: true, field: { select: { num: true, name: true } } } } } },
-          lines: { where: { kind: 'MATERIAL', ...(a.article ? { label: ci(a.article) } : {}) }, select: { label: true, quantity: true, unit: true, unitPrice: true } }
+          lines: { where: { kind: { in: ['MATERIAL', 'FUEL'] }, ...(a.article ? { label: ci(a.article) } : {}) }, select: { label: true, quantity: true, unit: true, unitPrice: true } }
         }
       });
       type Acc = { article: string; group: string; unit: string; quantity: number; entryIds: Set<string>; areaHa: number; cost: number };
