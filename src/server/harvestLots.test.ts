@@ -146,4 +146,12 @@ describe('saagipartii', () => {
     const other = await run(() => prisma.harvestLot.create({ data: { name: 'Oder 2026', seasonId: base.seasonId, cropId: crop2.id, articleId: base.articleId, warehouseId: base.warehouseId } }));
     await expect(tx((t) => applyEntryHarvest(t, draft(), input({ requestedLotId: other.id })))).rejects.toThrow('Valitud partii ei ole selle põllu hooaja ja kultuuri partii');
   });
+  it('lukustatud partiita kanne jääb muutmisel partiita ka tuntud kultuuriga põllul', async () => {
+    const lotsBefore = await run(() => prisma.harvestLot.count());
+    const drafts = buildEntryLines({ harvest: { tonnes: 48, ratePerHa: null, priaKind: null, priaSpec: null, withBunkers: false } });
+    const old = { harvestLotId: null, harvestBunkers: null, harvestTonnesManual: true, harvestTonnes: 48 };
+    expect(await tx((t) => applyEntryHarvest(t, drafts, input({ bunkers: null, manual: true, old })))).toBeNull();
+    expect(drafts[0].quantity).toBe(48);
+    expect(await run(() => prisma.harvestLot.count())).toBe(lotsBefore);
+  });
 });

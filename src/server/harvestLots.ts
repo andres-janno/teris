@@ -93,7 +93,8 @@ export async function applyEntryHarvest(tx: TxClient, drafts: LineDraft[], input
       if (!key || key.seasonId !== req.seasonId || key.crop.id !== req.cropId) throw new HarvestLotError('Valitud partii ei ole selle põllu hooaja ja kultuuri partii');
       lotId = req.id;
     } else if (oldLotId) lotId = oldLotId;
-    else {
+    else if (!input.old || !input.manual) {
+      // Automaatne partii: uuele kandele või muudetavale kandele, mille tonnid on lukust lahti; lukustatud partiita kanne (PRIA, ajalugu) jääb partiita
       const key = await lotKeyOf(tx, input.fieldSeasonId);
       if (key) lotId = await findOrCreateOpenLot(tx, key);
     }
