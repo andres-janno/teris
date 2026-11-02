@@ -24,6 +24,7 @@ import { articleSeasonTotals } from './articleUsage.ts';
 import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
+import { applyEntryHarvest, HarvestLotError, closedLotError } from './harvestLots.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit } from './articleUnitChange.ts';
 import { articleFieldRules, sanitizeArticleFields, SERVICE_TIME_KINDS } from '../services/articleRules.ts';
@@ -124,8 +125,9 @@ async function resolveEntryInput(body: any) {
   const endTime = text(body?.endTime, 10);
   const harvestTonnes = num(body?.harvestTonnes);
   const h = body?.harvest;
-  const harvest = h
-    ? { tonnes: num(h.tonnes), ratePerHa: num(h.ratePerHa), priaKind: text(h.priaKind, 80), priaSpec: text(h.priaSpec, 80) }
+  const harvestBunkers = num(body?.harvestBunkers);
+  const harvest = h || harvestBunkers !== null
+    ? { tonnes: num(h?.tonnes), ratePerHa: num(h?.ratePerHa), priaKind: text(h?.priaKind, 80), priaSpec: text(h?.priaSpec, 80), withBunkers: harvestBunkers !== null }
     : null;
   const observations = (Array.isArray(body?.observations) ? body.observations : [])
     .map((o: any) => ({ label: text(o?.label, 200) ?? '', quantity: num(o?.quantity) ?? 0, unit: text(o?.unit, 40) ?? '', priaRegister: text(o?.priaRegister, 80) }))
@@ -150,7 +152,8 @@ async function resolveEntryInput(body: any) {
       date: dateOnly(body?.date),
       dateTo: dateOnly(body?.dateTo),
       method: text(body?.method, 80),
-      harvestBunkers: num(body?.harvestBunkers),
+      harvestBunkers,
+      harvestTonnesManual: body?.harvestTonnesManual === true,
       workerId: worker?.id ?? null,
       areaHa: num(body?.areaHa),
       telemetryAreaHa: num(body?.telemetryAreaHa),
@@ -165,6 +168,7 @@ async function resolveEntryInput(body: any) {
     },
     drafts,
     articleError,
+    harvestLotId: text(body?.harvestLotId, 64),
     // Ladu lahendatakse tehingus (resolveEntryWarehouseId): valimata → põhiladu, mitteaktiivne ainult senisena
     warehouseId: text(body?.warehouseId, 64)
   };
@@ -174,6 +178,7 @@ const ENTRY_INCLUDE = {
   worker: { select: { name: true } },
   vehicle: { select: { name: true } },
   implement: { select: { name: true } },
+  harvestLot: { select: { name: true, status: true } },
   lines: { orderBy: { sortOrder: 'asc' as const } }
 };
 
@@ -213,6 +218,10 @@ function entryDto(e: any, withFinance: boolean) {
     // Koguseta saagirida (ainult saagi/kultuuri tüüp) → kogus puudub
     harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity || null,
     harvestBunkers: e.harvestBunkers ?? null,
+    harvestLotId: e.harvestLotId ?? null,
+    harvestLotName: e.harvestLot?.name ?? null,
+    harvestLotStatus: e.harvestLot?.status ?? null,
+    harvestTonnesManual: e.harvestTonnesManual ?? false,
     harvest: (() => { const l = lines.find((x) => x.kind === 'HARVEST'); return l ? { tonnes: l.quantity || null, ratePerHa: l.ratePerHa, priaKind: l.priaKind, priaSpec: l.priaSpec } : null; })(),
     observations: lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ label: l.label, quantity: l.quantity, unit: l.unit, priaRegister: l.priaRegister })),
     notes: e.notes,
@@ -1275,7 +1284,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const b = await parseBody(req, MAX_BODY_BYTES);
     const fieldWorkId = text(b?.fieldWorkId, 64);
     const work = fieldWorkId ? await prisma.fieldWork.findUnique({ where: { id: fieldWorkId } }) : null;
-    const { data, drafts, warehouseId, articleError } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn } = await resolveEntryInput(b);
     if (articleError) {
       json(res, { error: articleError }, 400);
       return true;
@@ -1291,9 +1300,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     let saved;
     try {
       saved = await tenantTransaction(async (tx) => {
+        const fs = await tx.fieldWork.findUniqueOrThrow({ where: { id: work.id }, select: { fieldSeason: { select: { id: true, areaHa: true } } } });
+        const harvestLotId = await applyEntryHarvest(tx, drafts, {
+          fieldSeasonId: fs.fieldSeason.id, areaHa: data.areaHa, fieldAreaHa: fs.fieldSeason.areaHa,
+          bunkers: data.harvestBunkers, manual: data.harvestTonnesManual, requestedLotId: harvestLotIdIn, old: null
+        });
         const created = await tx.workEntry.create({
           data: {
-            ...data, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
+            ...data, harvestLotId, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
             fieldWorkId: work.id, createdById: userId, lines: { create: drafts }
           }
         });
@@ -1301,7 +1315,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
-      if (err instanceof StockValidationError) {
+      if (err instanceof StockValidationError || err instanceof HarvestLotError) {
         json(res, { error: err.message }, 400);
         return true;
       }
@@ -1321,7 +1335,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const id = idOf('/api/work-entries/');
     const b = await parseBody(req, MAX_BODY_BYTES);
     const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true, fieldWork: { select: { status: true } } } });
-    const { data, drafts, warehouseId, articleError } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn } = await resolveEntryInput(b);
     if (articleError) {
       json(res, { error: articleError }, 400);
       return true;
@@ -1334,16 +1348,23 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: DONE_WORK_ERROR }, 409);
       return true;
     }
-    const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
     let saved;
     try {
       saved = await tenantTransaction(async (tx) => {
         const entryWarehouseId = await resolveEntryWarehouseId(tx, warehouseId, old.warehouseId);
+        const fs = await tx.fieldWork.findUniqueOrThrow({ where: { id: old.fieldWorkId }, select: { fieldSeason: { select: { id: true, areaHa: true } } } });
+        const harvestLotId = await applyEntryHarvest(tx, drafts, {
+          fieldSeasonId: fs.fieldSeason.id, areaHa: data.areaHa, fieldAreaHa: fs.fieldSeason.areaHa,
+          bunkers: data.harvestBunkers, manual: data.harvestTonnesManual, requestedLotId: harvestLotIdIn,
+          old: { harvestLotId: old.harvestLotId, harvestBunkers: old.harvestBunkers, harvestTonnesManual: old.harvestTonnesManual, harvestTonnes: old.lines.find((l) => l.kind === 'HARVEST')?.quantity ?? 0 }
+        });
+        const merged = mergeLines(old.lines.map(toStored), drafts, old.financeStatus as FinanceStatus);
         await tx.workEntryLine.deleteMany({ where: { entryId: id } });
         const updated = await tx.workEntry.update({
           where: { id },
           data: {
             ...data,
+            harvestLotId,
             date: data.date!,
             warehouseId: entryWarehouseId,
             financeStatus: merged.financeStatus,
@@ -1354,7 +1375,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
-      if (err instanceof StockValidationError) {
+      if (err instanceof StockValidationError || err instanceof HarvestLotError) {
         json(res, { error: err.message }, 400);
         return true;
       }
@@ -1386,6 +1407,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     if (deleteDenied(req, res, e.createdBy)) return true;
     if (e.financeStatus !== 'PENDING' && !canSeeFinance(req)) {
       json(res, { error: 'Kinnitatud kannet saab kustutada ainult finantsjuht' }, 403);
+      return true;
+    }
+    const lot = e.harvestLotId ? await prisma.harvestLot.findUnique({ where: { id: e.harvestLotId }, select: { name: true, status: true } }) : null;
+    if (lot?.status === 'CLOSED') {
+      json(res, { error: closedLotError(lot.name) }, 409);
       return true;
     }
     await tenantTransaction(async (tx) => {

@@ -246,4 +246,8 @@ describe('mergeLines rea artikkel', () => {
     expect(r.lines[0].articleId).toBe('m2');
     expect(r.financeStatus).toBe('CHANGED');
   });
+  it('punkritega koristuskanne saab saagirea ka koguse ja tüübita', () => {
+    const lines = buildEntryLines({ harvest: { tonnes: null, ratePerHa: null, priaKind: null, priaSpec: null, withBunkers: true } });
+    expect(lines).toEqual([expect.objectContaining({ kind: 'HARVEST', quantity: 0, unit: 't' })]);
+  });
 });
