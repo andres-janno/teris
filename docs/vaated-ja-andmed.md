@@ -749,7 +749,7 @@ Hiljem (vajadusel) laetavad:
 
 Koodi läbivaatusel leitud ja 26.10.2026 parandatud:
 - **Ühe põllu salvestamine** saadab nüüd ainult põllu üldandmed ja muudetud aasta kirje; lukus hooaja kirjet ei muudeta (403); salvestus on ühes tehingus ja pärast seda laetakse põllud serverist uuesti.
-- **Uus hooaeg kõigile põldudele** luuakse serveris (`POST /api/seasons/:year/fields`): kirjed kopeeritakse viimasest aastast koos katastriseostega, olemasolevaid ei muudeta.
+- **Uus hooaeg kõigile põldudele** luuakse serveris (`POST /api/seasons/:year/fields`): kirjed kopeeritakse viimasest aastast koos katastriseostega (pindala ja piirid; kultuur, sort ja saagiootus jäävad määramata), olemasolevaid ei muudeta.
 - **PRIA impordi valik „Asenda olemasolevad põllud“** eemaldab serveris (`POST /api/master-fields/replace-year`) failist puuduvate põldude selle aasta kirjed sama operaatori piires; töödega kirjed jäetakse alles.
 - **`GET /api/field-works` ainult loeb**; eelmise aasta talivilja kultuuri enam ei pärita.
 - **Põllu kustutamine:** kandega põldu ei kustutata (409, teade hooaegade kaupa); kanneteta põllu kustutamisel küsitakse alati kinnitust koos planeeritud tööde arvuga (`GET /api/master-fields/:id/delete-check`).

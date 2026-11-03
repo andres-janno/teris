@@ -66,6 +66,19 @@ export function matchCrop<T extends { id: string; name: string }>(cropText: stri
   );
 }
 
+// Hooaja registri kultuur: seos (cropId), seose puudumisel nime järgi.
+export function seasonRegistryCrop<T extends { id: string; name: string }>(season: { crop: string | null; cropId?: string | null }, crops: T[]): T | null {
+  return (season.cropId ? crops.find((c) => c.id === season.cropId) : undefined) ?? matchCrop(season.crop, crops);
+}
+
+// Kas hooaja kultuur on talivili (registri seose järgi; registrist puuduval kultuuril nime järgi).
+export function isWinterSeason(season: { crop: string | null; cropId?: string | null }, crops: { id: string; name: string; isWinterCrop?: boolean }[]): boolean {
+  if (isUndeterminedCrop(season.crop)) return false;
+  const reg = season.cropId ? crops.find((c) => c.id === season.cropId) : undefined;
+  if (reg && typeof reg.isWinterCrop === 'boolean') return reg.isWinterCrop;
+  return isWinterCrop(season.crop, crops);
+}
+
 // Talivilja tuvastamine (nt "Talinisu allakülvita", "Taliraps", "Rukis" jne).
 export function isWinterCrop(cropText: string | null | undefined, crops?: { name: string; isWinterCrop?: boolean }[]): boolean {
   if (isUndeterminedCrop(cropText)) return false;

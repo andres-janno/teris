@@ -5,7 +5,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { createPortal } from 'react-dom';
 import { Search, Plus, Lock, Calendar, SquareKanban, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
-import { matchCrop, isWinterCrop } from '../services/cropMatch';
+import { seasonRegistryCrop, isWinterSeason } from '../services/cropMatch';
 import { getCropColor } from '../services/cropColors';
 import { formatDate, formatDayMonth } from '../services/dateFormat';
 import { formatQty } from '../services/units';
@@ -305,15 +305,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         const works = (byFs.get(rec.fieldSeasonId) ?? []).sort((a, b) => a.sortOrder - b.sortOrder);
         const carriedWork = works.find((w) => !!w.carriedOverFromYear);
         const prevRec = field.history.find((h) => h.year === year - 1) ?? null;
-        const prevIsWinter = prevRec ? isWinterCrop(prevRec.crop, crops) : false;
 
-        const cropName = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.crop ? prevRec.crop : rec.crop;
-        // Registri kultuur: serveri seos, kui kultuur on sel aastal enda oma; muidu (talivili eelmisest aastast) nime järgi
-        const crop = (cropName === rec.crop && rec.cropId ? crops.find((c) => c.id === rec.cropId) : undefined) ?? matchCrop(cropName, crops);
-        const cropColor = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.cropColor
-          ? prevRec.cropColor
-          : (crop?.color || rec.cropColor || (cropName ? getCropColor(cropName) : null));
-        const currentIsWinter = isWinterCrop(cropName, crops);
+        // Kultuur on selle aasta hooaja oma (talivili kuulub koristusaasta hooaega; eelmisest aastast ei pärita)
+        const cropName = rec.crop;
+        const crop = seasonRegistryCrop(rec, crops);
+        const cropColor = crop?.color || rec.cropColor || (cropName ? getCropColor(cropName) : null);
+        const currentIsWinter = isWinterSeason(rec, crops);
 
         const carriedFromYear: number | null = carriedWork?.carriedOverFromYear ?? (currentIsWinter ? year - 1 : null);
         const undetermined = isCropUndetermined(cropName);
@@ -322,10 +319,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         // Järgmise aasta kultuur (sügiskülvi tuletamiseks)
         const nextRec = field.history.find((h) => h.year === year + 1) ?? null;
         const nextCropName = nextRec?.crop ?? null;
-        const nextCrop = (nextRec?.cropId ? crops.find((c) => c.id === nextRec.cropId) : undefined) ?? (nextCropName ? matchCrop(nextCropName, crops) : null);
+        const nextCrop = seasonRegistryCrop(nextRec, crops);
         const nextCropColor = nextCrop?.color || nextRec?.cropColor || (nextCropName ? getCropColor(nextCropName) : null);
         const nextUndetermined = !nextRec || isCropUndetermined(nextCropName);
-        const nextIsWinter = !nextUndetermined && isWinterCrop(nextCropName, crops);
+        const nextIsWinter = !nextUndetermined && isWinterSeason(nextRec, crops);
         const allNextWorks = nextRec?.fieldSeasonId
           ? (byFs.get(nextRec.fieldSeasonId) ?? []).sort((a, b) => a.sortOrder - b.sortOrder)
           : [];
@@ -1145,6 +1142,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1}) · ${fmtHa(selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa)} ha`
             : fieldLabel(selectedRow);
           const activeArea = isSelectedNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
+          const selectedSeedCheck = { seasonCrop: isSelectedNext ? selectedRow.nextCrop : selectedRow.crop, crops };
           // Lõpetatud tööd ei saa muuta enne uuesti avamist
           const workLocked = locked || selected.status === 'DONE';
 
@@ -1219,6 +1217,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       workTypes={workTypes}
                       articles={articles}
                       workers={workers}
+                      seedCheck={selectedSeedCheck}
                       mode={editingPlan && !workLocked ? 'edit' : 'view'}
                       onSaved={() => {
                         setEditingPlan(false);
@@ -1359,6 +1358,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1})`
           : fieldLabel(selectedRow);
         const activeArea = isNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
+        const seedCheck = { seasonCrop: isNext ? selectedRow.nextCrop : selectedRow.crop, crops };
 
         return (
           <FieldWorkEntryDialog
@@ -1371,6 +1371,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             implementsList={implementsList}
             articles={articles}
             telemetryEnabled={telemetryEnabled}
+            seedCheck={seedCheck}
             onClose={() => setEntryDialog(null)}
             onSaved={() => {
               setEntryDialog(null);

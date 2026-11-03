@@ -504,16 +504,11 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             }
           }
         });
-        const crops = await loadCropsForLink(tx);
         let created = 0;
         for (const f of fields) {
           const src = latestEarlierSeason(f.fieldSeasons, year);
           if (!src) continue;
-          // PRIA kultuur uue aasta reegli järgi (eelmise aasta nimi võib olla muutunud)
-          const reg = src.cropId ? crops.find((c) => c.id === src.cropId) : undefined;
-          const variety = reg?.varieties.find((v) => v.id === src.varietyId) ?? null;
-          const priaCropName = reg ? derivePriaCropName(reg, variety, src.undersowing) : src.priaCropName;
-          const saved = await tx.fieldSeason.create({ data: { ...buildCopiedSeason(src, f.id, year, seasonId), priaCropName } });
+          const saved = await tx.fieldSeason.create({ data: buildCopiedSeason(src, f.id, year, seasonId) });
           if (src.cadastralParcels.length) {
             await tx.fieldCadastralParcel.createMany({
               data: src.cadastralParcels.map((l) => buildCopiedParcelLink(l, saved.id))
@@ -1615,7 +1610,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       // Põllukirjetes on kultuuri värv koopiana: värvi muutmisel uuendame selle kultuuri kirjed.
       if (previous && previous.color !== saved.color) {
         await prisma.fieldSeason.updateMany({
-          where: { cropColor: previous.color, crop: { contains: previous.name, mode: 'insensitive' } },
+          where: { OR: [{ cropId: saved.id }, { cropId: null, cropColor: previous.color, crop: { contains: previous.name, mode: 'insensitive' } }] },
           data: { cropColor: saved.color }
         });
       }

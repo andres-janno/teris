@@ -14,7 +14,7 @@ import {
   buildEntryLines,
   confirmBlockReason,
   isUndeterminedCrop,
-  isWinterCrop,
+  isWinterSeason,
   mergeLines,
   summarizeLines,
   type FinanceStatus,
@@ -1037,7 +1037,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const rows = await prisma.fieldWork.findMany({
       where: { fieldSeason: { year } },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
-      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } } }
+      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, cropId: true, year: true } } }
     });
 
     // Järgmise aasta taliviljade ja suviviljade sügistööd (teostatakse selle aasta sügisel)
@@ -1064,11 +1064,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         fieldSeasonId: { in: nextAutumnSeasonIds }
       },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
-      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, year: true } } }
+      include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, cropId: true, year: true } } }
     }) : [];
 
     const worksDto: any[] = rows.map((w) => {
-      const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
+      const isWinter = isWinterSeason(w.fieldSeason, crops);
       const isAutumnPhase = isWinter && (w.phase === 'PREPARATION' || w.phase === 'SOWING');
       return {
         ...fieldWorkDto(w, finance),
@@ -1080,7 +1080,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     });
 
     for (const w of nextAutumnRows) {
-      const isWinter = isWinterCrop(w.fieldSeason.crop, crops);
+      const isWinter = isWinterSeason(w.fieldSeason, crops);
       const dto = fieldWorkDto(w, finance);
       // Dateeritud töö (varaseim kanne, muidu plaani algus) kuulub sügisesse, kui see on aastal Y (iga faas,
       // nt järgmise kultuuri sügishooldus). Kuupäevata: talivili ettevalmistus+külv, suvivili ettevalmistus,
@@ -1585,13 +1585,14 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         json(res, { error: 'Hooaeg (year) on kohustuslik' }, 400);
         return true;
       }
-      const crops = await prisma.crop.findMany({ select: { name: true, isWinterCrop: true } });
+      const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
       const seasons = await prisma.fieldSeason.findMany({
         where: { year },
         select: {
           id: true,
           fieldId: true,
           crop: true,
+          cropId: true,
           cropColor: true,
           areaHa: true,
           field: { select: { id: true, num: true, name: true } },
@@ -1625,7 +1626,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       const results = [];
       for (const s of seasons) {
         let entries = s.fieldWorks.flatMap((w) => w.entries);
-        const isWinter = isWinterCrop(s.crop, crops);
+        const isWinter = isWinterSeason(s, crops);
         // Kui tegemist on taliviljaga, kaasame saagiaasta tulemusse ka eelmise sügise ettevalmistuse ja külvi kanded!
         if (isWinter) {
           const prevSeason = await prisma.fieldSeason.findUnique({

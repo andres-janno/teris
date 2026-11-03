@@ -14,6 +14,20 @@ export function matchCrop<T extends { name: string }>(cropText: string | null | 
   );
 }
 
+// Hooaja registri kultuur: seos (cropId), seose puudumisel nime järgi.
+export function seasonRegistryCrop<T extends { id: string; name: string }>(rec: { crop?: string | null; cropId?: string | null } | null | undefined, crops: T[]): T | null {
+  if (!rec) return null;
+  return (rec.cropId ? crops.find((c) => c.id === rec.cropId) : undefined) ?? matchCrop(rec.crop, crops);
+}
+
+// Kas hooaja kultuur on talivili (registri seose järgi; registrist puuduval kultuuril nime järgi).
+export function isWinterSeason(rec: { crop?: string | null; cropId?: string | null } | null | undefined, crops: { id: string; name: string; isWinterCrop?: boolean }[]): boolean {
+  if (!rec || isCropUndetermined(rec.crop)) return false;
+  const reg = rec.cropId ? crops.find((c) => c.id === rec.cropId) : undefined;
+  if (reg && typeof reg.isWinterCrop === 'boolean') return reg.isWinterCrop;
+  return isWinterCrop(rec.crop, crops);
+}
+
 export function isWinterCrop(cropText: string | null | undefined, crops?: { name: string; isWinterCrop?: boolean }[]): boolean {
   if (isCropUndetermined(cropText)) return false;
   if (crops && crops.length > 0) {

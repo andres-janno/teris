@@ -8,6 +8,7 @@ import { api } from '../services/api';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services/pria';
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
+import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 export interface FieldWorkPlanFormProps {
@@ -21,6 +22,7 @@ export interface FieldWorkPlanFormProps {
   layout?: 'dialog' | 'inline'; // dialog: modal-body + modal-footer; inline: paneeli sees
   onSaved: () => void;
   onCancel?: () => void;
+  seedCheck?: SeedCheck; // seemne ja põllu kultuuri võrdlus
 }
 
 const parseNum = (s: string): number | null => {
@@ -122,7 +124,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
 
 // --- Muutmine ---
 
-const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, fieldAreaHa, work, workTypes, articles, workers, layout = 'inline', onSaved, onCancel }) => {
+const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, fieldAreaHa, work, workTypes, articles, workers, layout = 'inline', onSaved, onCancel, seedCheck }) => {
   // PRIA tegevused tööloogika järjekorras; muudetava töö tüüp jääb valikusse ka siis, kui see pole enam aktiivne
   const ordered = workTypes.filter((w) => (w.isActive && w.priaCode) || w.id === work?.workTypeId)
     .sort((a, b) => PRIA_ACTIVITIES.findIndex((p) => p.name === a.priaCode) - PRIA_ACTIVITIES.findIndex((p) => p.name === b.priaCode));
@@ -226,7 +228,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
         {usesMaterials && (
           <section className="work-entry-section">
             <h4>Planeeritud materjalid</h4>
-            <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={area} showTotals />
+            <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={area} showTotals seedCheck={seedCheck} />
           </section>
         )}
         {isHarvest && (

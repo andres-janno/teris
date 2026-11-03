@@ -10,6 +10,7 @@ import type { Warehouse } from '../types/stock';
 import TripRouteView from './TripRouteView';
 import { formatQty } from '../services/units';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
+import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 interface Option {
@@ -29,6 +30,7 @@ interface FieldWorkEntryDialogProps {
   onClose: () => void;
   onSaved: () => void;
   telemetryEnabled?: boolean; // false: telemeetria moodul pole litsentsis → soovitusi ei küsita
+  seedCheck?: SeedCheck; // seemne ja põllu kultuuri võrdlus
 }
 
 const todayIso = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(new Date());
@@ -71,7 +73,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   articles,
   onClose,
   onSaved,
-  telemetryEnabled = true
+  telemetryEnabled = true,
+  seedCheck
 }) => {
   const activity = work.priaCode ?? '';
   // PRIA tegevuseta (vana) töö puhul jääb saagi tunnuseks koristusfaas
@@ -675,7 +678,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   </select>
                 </div>
               )}
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals />
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck} />
             </section>
           )}
 

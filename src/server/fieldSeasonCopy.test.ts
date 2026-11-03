@@ -6,14 +6,6 @@ const src: SeasonSource = {
   year: 2025,
   areaHa: 12.5,
   eligibleAreaHa: 12.1,
-  crop: 'Talinisu',
-  cropVariety: 'Skagen',
-  cropColor: '#eab308',
-  cropId: 'c1',
-  varietyId: 'v1',
-  undersowing: 'LEGUME',
-  priaCropName: 'Talinisu liblikõieliste allakülviga',
-  targetYieldTonsHa: 7,
   geometry: { type: 'Polygon', coordinates: [] },
   boundaryPointsCount: 40,
   perimeterM: 1500
@@ -31,7 +23,7 @@ describe('latestEarlierSeason', () => {
 });
 
 describe('buildCopiedSeason', () => {
-  it('kopeerib pindala, kultuuri ja piirid; tööd nullist', () => {
+  it('kopeerib pindala ja piirid; kultuur määramata; tööd nullist', () => {
     const rec = buildCopiedSeason(src, 7, 2026, 3);
     expect(rec).toMatchObject({
       fieldId: 7,
@@ -39,12 +31,13 @@ describe('buildCopiedSeason', () => {
       year: 2026,
       areaHa: 12.5,
       eligibleAreaHa: 12.1,
-      crop: 'Talinisu',
-      cropVariety: 'Skagen',
-      cropId: 'c1',
-      varietyId: 'v1',
-      undersowing: 'LEGUME',
-      targetYieldTonsHa: 7,
+      crop: 'Teadmata kultuur',
+      cropVariety: null,
+      cropId: null,
+      varietyId: null,
+      undersowing: 'NONE',
+      priaCropName: null,
+      targetYieldTonsHa: null,
       boundaryPointsCount: 40,
       perimeterM: 1500,
       status: 'NOT_STARTED',

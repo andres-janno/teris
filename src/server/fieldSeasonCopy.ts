@@ -1,18 +1,13 @@
 // src/server/fieldSeasonCopy.ts — uue hooaja kirje loomine põllu viimase varasema aasta põhjal.
 
+// Määramata kultuuri värv (sama mis külvikorra tabelis kultuuri eemaldamisel)
+export const UNDETERMINED_CROP_COLOR = '#94a3b8';
+
 /** Hooaja kirje väljad, mis uude aastasse kopeeritakse. */
 export interface SeasonSource {
   year: number;
   areaHa: number;
   eligibleAreaHa: number | null;
-  crop: string;
-  cropVariety: string | null;
-  cropColor: string;
-  cropId: string | null;
-  varietyId: string | null;
-  undersowing: 'NONE' | 'OTHER' | 'LEGUME';
-  priaCropName: string | null;
-  targetYieldTonsHa: number | null;
   geometry: unknown;
   boundaryPointsCount: number | null;
   perimeterM: number | null;
@@ -41,7 +36,10 @@ export function latestEarlierSeason<T extends { year: number }>(records: T[], ye
   return best;
 }
 
-/** Uue aasta kirje: pindala, kultuur ja piirid eelmisest aastast, tööd nullist. */
+/**
+ * Uue aasta kirje: pindala ja piirid eelmisest aastast, tööd nullist. Kultuur jääb määramata —
+ * külvikorras on kohe näha, mis on planeerimata (eelmise aasta kultuuri kopeerimine näis planeerituna).
+ */
 export function buildCopiedSeason(src: SeasonSource, fieldId: number, year: number, seasonId: number | null) {
   return {
     fieldId,
@@ -49,14 +47,14 @@ export function buildCopiedSeason(src: SeasonSource, fieldId: number, year: numb
     year,
     areaHa: src.areaHa,
     eligibleAreaHa: src.eligibleAreaHa,
-    crop: src.crop,
-    cropVariety: src.cropVariety,
-    cropColor: src.cropColor,
-    cropId: src.cropId,
-    varietyId: src.varietyId,
-    undersowing: src.undersowing,
-    priaCropName: src.priaCropName,
-    targetYieldTonsHa: src.targetYieldTonsHa,
+    crop: 'Teadmata kultuur',
+    cropVariety: null,
+    cropColor: UNDETERMINED_CROP_COLOR,
+    cropId: null,
+    varietyId: null,
+    undersowing: 'NONE' as const,
+    priaCropName: null,
+    targetYieldTonsHa: null,
     geometry: src.geometry as object,
     boundaryPointsCount: src.boundaryPointsCount,
     perimeterM: src.perimeterM,

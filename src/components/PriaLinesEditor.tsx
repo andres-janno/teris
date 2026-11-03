@@ -1,7 +1,7 @@
 // src/components/PriaLinesEditor.tsx — PRIA materjaliread (seeme, väetis, lubi, taimekaitse) tegevuse järgi.
 // Kogus ha kohta ja kokku arvutavad teineteist pindala järgi (PRIA reegel). Samas failis saagi ja seire plokid.
 import React from 'react';
-import { Plus, Trash2 } from 'lucide-react';
+import { Plus, Trash2, AlertTriangle } from 'lucide-react';
 import type { FieldWorkPlanLine, Article, WorkEntryArticle, WorkEntryObservation } from '../types/fieldWork';
 import {
   PRIA_ACTIVITY, SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS,
@@ -9,6 +9,7 @@ import {
 } from '../services/pria';
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
+import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -84,9 +85,10 @@ interface PriaLinesEditorProps {
   articles: Article[];
   areaHa: number;
   showTotals: boolean; // kandel kogus kokku, plaanil ainult norm
+  seedCheck?: SeedCheck; // külvil: hoiatus, kui seemne sort on teise kultuuri oma
 }
 
-export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals }) => {
+export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals, seedCheck }) => {
   const kind = priaArticleKindFor(activity);
   const options = articles.filter((m) => (matchesPriaKind(m.category, kind) && m.isActive) || rows.some((r) => r.articleId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
@@ -128,8 +130,19 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   ];
   const grid = { gridTemplateColumns: columns.map((c) => c.width).join(' ') };
 
+  const seedMismatches = isSeed ? seedCropMismatches(rows.map((r) => r.articleId), articles, seedCheck) : [];
+
   return (
     <div className="pria-lines">
+      {seedMismatches.length > 0 && (
+        <div className="work-entry-warning" role="alert">
+          <AlertTriangle size={14} />
+          <span>
+            Põllu kultuur on {seedCheck?.seasonCrop?.name}, aga {seedMismatches.map((m) => `„${m.articleName}" on ${m.seedCropName.toLowerCase()} seeme`).join(', ')}.
+            Kontrolli seemet või külvikorra kultuuri.
+          </span>
+        </div>
+      )}
       {rows.length > 0 && (
         <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
           {columns.map((c, k) => <span key={k} className={c.num ? 'num' : undefined}>{c.label}</span>)}
