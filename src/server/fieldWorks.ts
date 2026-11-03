@@ -25,7 +25,7 @@ import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArt
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { lotCostShares } from '../services/harvestLotRules.ts';
-import { applyEntryHarvest, assertEntryLotOpen, HarvestLotError } from './harvestLots.ts';
+import { applyEntryHarvest, assertEntryLotOpen, lotBunkerArticleIds, HarvestLotError } from './harvestLots.ts';
 import { syncFieldWorkStatus } from './fieldWorkStatus.ts';
 import { changeArticleUnit, lotUnitBlocked, LOT_UNIT_ERROR } from './articleUnitChange.ts';
 import { articleFieldRules, sanitizeArticleFields, SERVICE_TIME_KINDS } from '../services/articleRules.ts';
@@ -1350,7 +1350,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
             fieldWorkId: work.id, createdById: userId, lines: { create: drafts }
           }
         });
-        await recomputeArticleStock(tx, articleIdsOf(drafts));
+        await recomputeArticleStock(tx, [...articleIdsOf(drafts), ...await lotBunkerArticleIds(tx, [harvestLotId])]);
         return tx.workEntry.findUniqueOrThrow({ where: { id: created.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
@@ -1418,7 +1418,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
             lines: { create: merged.lines.map((l) => ({ ...l, unitPrice: l.unitPrice })) }
           }
         });
-        await recomputeArticleStock(tx, [...articleIdsOf(old.lines), ...articleIdsOf(merged.lines)]);
+        await recomputeArticleStock(tx, [...articleIdsOf(old.lines), ...articleIdsOf(merged.lines), ...await lotBunkerArticleIds(tx, [old.harvestLotId, harvestLotId])]);
         return tx.workEntry.findUniqueOrThrow({ where: { id: updated.id }, include: ENTRY_INCLUDE });
       });
     } catch (err) {
@@ -1459,8 +1459,9 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     try {
       await tenantTransaction(async (tx) => {
         await assertEntryLotOpen(tx, e.harvestLotId);
+        const bunkerArticles = await lotBunkerArticleIds(tx, [e.harvestLotId]);
         await tx.workEntry.delete({ where: { id } });
-        await recomputeArticleStock(tx, articleIdsOf(e.lines));
+        await recomputeArticleStock(tx, [...articleIdsOf(e.lines), ...bunkerArticles]);
       });
     } catch (err) {
       if (err instanceof HarvestLotError) {

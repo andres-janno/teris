@@ -25,7 +25,7 @@ describe('ensureArticleCategories', () => {
   it('loob süsteemsed liigid üks kord', async () => {
     await run(() => tenantTransaction(async (tx) => { await ensureArticleCategories(tx); await ensureArticleCategories(tx); }));
     const rows = await run(() => prisma.articleCategory.findMany({ where: { systemKind: { not: null } } }));
-    expect(rows).toHaveLength(10);
+    expect(rows).toHaveLength(11);
   });
   it('ümbernimetatud süsteemset liiki ei looda uuesti', async () => {
     const id = await run(() => tenantTransaction((tx) => systemCategoryId(tx, 'FUEL')));

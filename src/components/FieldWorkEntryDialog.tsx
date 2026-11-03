@@ -185,7 +185,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   useEffect(() => {
     api.getWarehouses().then((ws) => {
-      setWarehouses(ws);
+      setWarehouses(ws.filter((w) => !w.fieldId)); // põllu laod on ainult punkrite jaoks
       setWarehouseId((cur) => cur || ws.find((w) => w.isDefault)?.id || '');
     }).catch(() => setWarehouses([]));
   }, []);
@@ -688,8 +688,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
                 <div className="form-group">
                   <label htmlFor="we-lot">Saagipartii</label>
-                  <select id="we-lot" className="form-input" value={lotId} onChange={(e) => setLotId(e.target.value)}>
-                    {!entry?.harvestLotId && <option value="">– viimane lahtine –</option>}
+                  <select id="we-lot" className="form-input" required={!entry?.harvestLotId && !manual} value={lotId} onChange={(e) => setLotId(e.target.value)}>
+                    {!entry?.harvestLotId && <option value="">– vali partii –</option>}
                     {entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) && (
                       <option value={entry.harvestLotId}>{entry.harvestLotName}</option>
                     )}

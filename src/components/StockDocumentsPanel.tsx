@@ -12,6 +12,7 @@ import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
+import { WarehouseOptions } from './WarehouseOptions';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -68,7 +69,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
         <FilterClear active={!!filter.warehouseId} onClear={() => setFilter({ ...filter, warehouseId: '' })}>
           <select className="form-input" aria-label="Ladu" value={filter.warehouseId ?? ''} onChange={(e) => setFilter({ ...filter, warehouseId: e.target.value })}>
             <option value="">Kõik laod</option>
-            {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+            <WarehouseOptions warehouses={warehouses} />
           </select>
         </FilterClear>
         <FilterClear active={!!filter.supplierId} onClear={() => setFilter({ ...filter, supplierId: '' })}>

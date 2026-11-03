@@ -12,6 +12,7 @@ import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
+import { WarehouseOptions } from './WarehouseOptions';
 
 interface Row { articleId: string; quantity: string; amount: string }
 const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
@@ -126,7 +127,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
               <label htmlFor="sd-wh">{kind === 'RECEIPT' ? 'Ladu *' : 'Lähteladu *'}</label>
               <select id="sd-wh" className="form-input" required value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                 <option value="">– vali –</option>
-                {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                <WarehouseOptions warehouses={activeWarehouses} />
               </select>
             </div>
             {kind === 'TRANSFER' && (
@@ -134,7 +135,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                 <label htmlFor="sd-to">Sihtladu *</label>
                 <select id="sd-to" className="form-input" required value={toWarehouseId} onChange={(e) => setToWarehouseId(e.target.value)}>
                   <option value="">– vali –</option>
-                  {activeWarehouses.filter((w) => w.id !== warehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  <WarehouseOptions warehouses={activeWarehouses.filter((w) => w.id !== warehouseId)} />
                 </select>
               </div>
             )}

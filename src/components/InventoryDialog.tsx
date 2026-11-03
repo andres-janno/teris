@@ -11,6 +11,7 @@ import { DateInput } from './DateInput';
 import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { InventoryPreviewRow, StockDocument, Warehouse } from '../types/stock';
+import { WarehouseOptions } from './WarehouseOptions';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -138,7 +139,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
               <label htmlFor="inv-wh">Ladu *</label>
               <select id="inv-wh" className="form-input" required value={warehouseId} onChange={(e) => void changeWarehouse(e.target.value)}>
                 <option value="">– vali –</option>
-                {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                <WarehouseOptions warehouses={activeWarehouses} />
               </select>
             </div>
             <div className="form-group">

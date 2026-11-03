@@ -11075,3 +11075,10 @@ td.stock-qty-out { color: #dc2626; }
   .harvest-lot-head, .harvest-lot-add-weighing, .harvest-lot-add-cost { grid-template-columns: 1fr 1fr; }
   .harvest-lot-tiles { grid-template-columns: 1fr 1fr; }
 }
+
+/* Registri tabeli vahepealkiri (nt ladude registris „Põllu laod“) */
+.register-table tr.register-group-row td {
+  background: var(--stat-bg);
+  padding-top: 14px;
+  font-size: 0.8rem;
+}

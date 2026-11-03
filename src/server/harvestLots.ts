@@ -9,6 +9,7 @@ import { computeBunkerTonnes, defaultLotName, entryHarvestTonnes } from '../serv
 
 export class HarvestLotError extends Error { http?: number }
 export const closedLotError = (name: string) => `Partii „${name}“ on suletud — ava partii uuesti`;
+export const CHOOSE_LOT_ERROR = 'Kultuuril on mitu lahtist saagipartiid — vali, millisesse partiisse punkrid lähevad';
 export const NO_CROP_ERROR = 'Põllu kultuur on määramata — sisesta tonnid käsitsi';
 
 const rate3 = (qty: number, area: number) => (qty > 0 && area > 0 ? Math.round((qty / area) * 1000) / 1000 : null);
@@ -33,6 +34,31 @@ export async function ensureGrainArticle(tx: TxClient, crop: { id: string; name:
   return (await tx.article.create({ data: { name, categoryId, unit: 't', cropId: crop.id, defaultWarehouseId: await getDefaultWarehouseId(tx) } })).id;
 }
 
+/** Kultuuri punkriartikkel (liik BUNKERS, ühik punker); puudumisel luuakse „‹kultuur› punkrid“. */
+export async function ensureBunkerArticle(tx: TxClient, crop: { id: string; name: string }): Promise<string> {
+  const found = await tx.article.findFirst({
+    where: { cropId: crop.id, category: { systemKind: 'BUNKERS' } },
+    orderBy: [{ isActive: 'desc' }, { createdAt: 'asc' }],
+    select: { id: true }
+  });
+  if (found) return found.id;
+  const categoryId = await systemCategoryId(tx, 'BUNKERS');
+  const name = `${crop.name} punkrid`;
+  const byName = await tx.article.findFirst({ where: { categoryId, name }, select: { id: true } });
+  if (byName) return byName.id;
+  return (await tx.article.create({ data: { name, categoryId, unit: 'punker', cropId: crop.id } })).id;
+}
+
+/** Partiide kultuuride punkriartiklid (laoseisu ümberarvutuseks pärast koristuskande või partii muutust). */
+export async function lotBunkerArticleIds(tx: TxClient, lotIds: (string | null | undefined)[]): Promise<string[]> {
+  const ids = [...new Set(lotIds.filter((x): x is string => !!x))];
+  if (!ids.length) return [];
+  const lots = await tx.harvestLot.findMany({ where: { id: { in: ids } }, select: { crop: { select: { id: true, name: true } } } });
+  const out = new Set<string>();
+  for (const l of lots) out.add(await ensureBunkerArticle(tx, l.crop));
+  return [...out];
+}
+
 /** Põlluhooaja hooaeg ja kultuur; kultuurita või tundmatu kultuuriga põllul partiid pole (null). */
 async function lotKeyOf(tx: TxClient, fieldSeasonId: number) {
   const fs = await tx.fieldSeason.findUnique({ where: { id: fieldSeasonId }, select: { year: true, seasonId: true, crop: true, cropId: true } });
@@ -53,8 +79,10 @@ export async function openLotsFor(tx: TxClient, fieldSeasonId: number): Promise<
 
 async function findOrCreateOpenLot(tx: TxClient, key: NonNullable<Awaited<ReturnType<typeof lotKeyOf>>>): Promise<string> {
   await lockLots(tx);
-  const open = await tx.harvestLot.findFirst({ where: { seasonId: key.seasonId, cropId: key.crop.id, status: 'OPEN' }, orderBy: { createdAt: 'desc' }, select: { id: true } });
-  if (open) return open.id;
+  const open = await tx.harvestLot.findMany({ where: { seasonId: key.seasonId, cropId: key.crop.id, status: 'OPEN' }, orderBy: { createdAt: 'desc' }, select: { id: true } });
+  // Mitu lahtist partiid (nt kuivati ja otse): partii valib kasutaja, mitte süsteem
+  if (open.length > 1) throw new HarvestLotError(CHOOSE_LOT_ERROR);
+  if (open.length) return open[0].id;
   const taken = (await tx.harvestLot.findMany({ select: { name: true } })).map((l) => l.name);
   return (await tx.harvestLot.create({
     data: {

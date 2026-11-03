@@ -36,6 +36,19 @@ export async function getDefaultWarehouseId(tx: TxClient): Promise<string> {
   return (await tx.warehouse.create({ data: { name: DEFAULT_WAREHOUSE_NAME, isDefault: true } })).id;
 }
 
+/** Põllu ladu (koristatud punkrid enne vedu); puudumisel luuakse põllu nimega. Nime kokkupõrkel lisatakse põllu number. */
+export async function ensureFieldWarehouse(tx: TxClient, fieldId: number): Promise<string> {
+  const found = await tx.warehouse.findUnique({ where: { fieldId }, select: { id: true } });
+  if (found) return found.id;
+  const field = await tx.field.findUniqueOrThrow({ where: { id: fieldId }, select: { name: true, num: true } });
+  const taken = new Set((await tx.warehouse.findMany({ select: { name: true } })).map((w) => w.name));
+  const base = field.name.trim() || `Põld ${field.num}`;
+  let name = base;
+  if (taken.has(name)) name = `${base} (põld ${field.num})`;
+  for (let i = 2; taken.has(name); i++) name = `${base} (põld ${field.num}) ${i}`;
+  return (await tx.warehouse.create({ data: { name, fieldId } })).id;
+}
+
 export interface WarehouseInput { name: string; isDefault: boolean; isActive: boolean; poiId: string | null; notes: string | null }
 
 /** Lao lisamine või muutmine. Põhilaoks märkimine võtab märke teistelt; põhiladu ei saa lihtsalt maha võtta. */
@@ -44,6 +57,7 @@ export async function saveWarehouse(tx: TxClient, id: string | null, w: Warehous
   const old = id ? await tx.warehouse.findUnique({ where: { id } }) : null;
   if (id && !old) throw new StockValidationError('Ladu ei leitud');
   if (old?.isDefault && !w.isDefault) throw new StockValidationError('Põhiladu muudetakse, kui mõni teine ladu märgitakse põhilaoks');
+  if (old?.fieldId && w.isDefault) throw new StockValidationError('Põllu ladu ei saa olla põhiladu');
   const data = { ...w, isActive: w.isDefault || w.isActive };
   if (data.isDefault) await tx.warehouse.updateMany({ where: { isDefault: true, ...(id ? { NOT: { id } } : {}) }, data: { isDefault: false } });
   return id ? tx.warehouse.update({ where: { id }, data }) : tx.warehouse.create({ data });
@@ -77,7 +91,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
   if (!articleIds.length) return [];
   const defaultWh = await getDefaultWarehouseId(tx);
   const [articles, docLines, entryLines, weighings, lotCosts] = await Promise.all([
-    tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true, defaultWarehouseId: true } }),
+    tx.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, unit: true, defaultWarehouseId: true, cropId: true, category: { select: { systemKind: true } } } }),
     tx.stockDocumentLine.findMany({
       where: { articleId: { in: articleIds } },
       select: {
@@ -98,6 +112,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       select: { id: true, articleId: true, date: true, quantity: true, createdAt: true, lot: { select: { warehouseId: true } } }
     })
   ]);
+  const bunkers = await loadBunkerMovements(tx, articles.filter((a) => a.category.systemKind === 'BUNKERS' && a.cropId).map((a) => ({ id: a.id, cropId: a.cropId! })));
   return articles.map((m) => {
     const out: ArticleMovements = { articleId: m.id, unit: m.unit, movements: [], entryLines: [], docLines: [], issueEntryLineIds: [], lotCostLines: [] };
     for (const l of docLines.filter((x) => x.articleId === m.id)) {
@@ -134,6 +149,8 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       if (qty === null || qty <= 0) continue;
       out.movements.push({ ref: `weigh:${w.id}`, date: isoDay(w.date), seq: w.createdAt.getTime() * 1000, kind: 'IN', warehouseId: w.lot.warehouseId, quantity: qty });
     }
+    // Punkrid: koristus põllu lattu, suletud partii punkrid teisendatakse partii laos tonnideks
+    out.movements.push(...(bunkers.get(m.id) ?? []));
     // Partii kuivatuskulu (kaup): väljaminek artikli vaikimisi laost, puudumisel partii laost
     for (const c of lotCosts.filter((x) => x.articleId === m.id)) {
       if (!(c.quantity > 0)) continue;
@@ -143,6 +160,47 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
     }
     return out;
   });
+}
+
+/**
+ * Punkriartikli liikumised: partiisse kuuluv lukustamata koristuskanne võtab punkrid hinnata põllu lattu (IN);
+ * suletud partii kannab kõik oma punkrid partii laost maha (OUT) — seal said need kaalumisel tonnideks.
+ * Mahakandmise kuupäev on viimane kaalumine (puudumisel sulgemise päev).
+ */
+async function loadBunkerMovements(tx: TxClient, articles: { id: string; cropId: string }[]): Promise<Map<string, Movement[]>> {
+  const out = new Map<string, Movement[]>();
+  if (!articles.length) return out;
+  const cropIds = [...new Set(articles.map((a) => a.cropId))];
+  const lots = await tx.harvestLot.findMany({
+    where: { cropId: { in: cropIds } },
+    select: {
+      id: true, cropId: true, status: true, warehouseId: true, closedAt: true, createdAt: true,
+      weighings: { select: { date: true } },
+      entries: {
+        where: { harvestTonnesManual: false, harvestBunkers: { gt: 0 } },
+        select: { id: true, date: true, createdAt: true, harvestBunkers: true, fieldWork: { select: { fieldSeason: { select: { fieldId: true } } } } }
+      }
+    }
+  });
+  const fieldWh = new Map<number, string>();
+  for (const a of articles) {
+    const list: Movement[] = [];
+    for (const lot of lots.filter((l) => l.cropId === a.cropId)) {
+      let total = 0;
+      for (const e of lot.entries) {
+        const fieldId = e.fieldWork.fieldSeason.fieldId;
+        if (!fieldWh.has(fieldId)) fieldWh.set(fieldId, await ensureFieldWarehouse(tx, fieldId));
+        total += e.harvestBunkers!;
+        list.push({ ref: `harvest:${e.id}`, date: isoDay(e.date), seq: e.createdAt.getTime() * 1000, kind: 'IN', warehouseId: fieldWh.get(fieldId)!, quantity: e.harvestBunkers! });
+      }
+      if (lot.status === 'CLOSED' && total > 0) {
+        const last = lot.weighings.reduce<Date | null>((d, w) => (!d || w.date > d ? w.date : d), null) ?? lot.closedAt ?? lot.createdAt;
+        list.push({ ref: `lotclose:${lot.id}`, date: isoDay(last), seq: (lot.closedAt ?? lot.createdAt).getTime() * 1000, kind: 'OUT', warehouseId: lot.warehouseId, quantity: total });
+      }
+    }
+    out.set(a.id, list);
+  }
+  return out;
 }
 
 export async function recomputeArticleStock(tx: TxClient, articleIds: string[]): Promise<void> {

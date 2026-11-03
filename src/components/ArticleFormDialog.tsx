@@ -203,7 +203,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                 <label htmlFor="mt-wh" title="Kust kaup vaikimisi maha kantakse (nt kütus mahutist)">Vaikimisi ladu</label>
                 <select id="mt-wh" className="form-input" value={form.defaultWarehouseId ?? ''} onChange={(e) => setForm({ ...form, defaultWarehouseId: e.target.value || null })}>
                   <option value="">Kande ladu</option>
-                  {warehouses.filter((w) => w.isActive || w.id === form.defaultWarehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                  {warehouses.filter((w) => (w.isActive && !w.fieldId) || w.id === form.defaultWarehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
                 </select>
               </div>
             )}

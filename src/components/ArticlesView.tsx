@@ -19,6 +19,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
+import { WarehouseOptions } from './WarehouseOptions';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -221,7 +222,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
                 <select className="form-input" aria-label="Ladu" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                   <option value="">Kõik laod</option>
-                  {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isActive ? '' : ' (mitteaktiivne)'}</option>)}
+                  <WarehouseOptions warehouses={warehouses} inactiveSuffix />
                 </select>
               </FilterClear>
               <div className="category-filter-tabs">

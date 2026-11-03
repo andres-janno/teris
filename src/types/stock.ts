@@ -21,6 +21,7 @@ export interface Warehouse {
   name: string;
   isDefault: boolean;
   isActive: boolean;
+  fieldId: number | null; // põllu ladu (koristatud punkrid); muul laol null
   poiId: string | null;
   poiName: string | null;
   notes: string | null;

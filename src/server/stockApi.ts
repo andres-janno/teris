@@ -65,7 +65,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
   if (pathname === '/api/warehouses' && method === 'GET') {
     await tenantTransaction((tx) => getDefaultWarehouseId(tx));
     const rows = await prisma.warehouse.findMany({ orderBy: [{ isDefault: 'desc' }, { name: 'asc' }], include: { poi: { select: { name: true } } } });
-    json(res, rows.map((w) => ({ id: w.id, name: w.name, isDefault: w.isDefault, isActive: w.isActive, poiId: w.poiId, poiName: w.poi?.name ?? null, notes: w.notes })));
+    json(res, rows.map((w) => ({ id: w.id, name: w.name, isDefault: w.isDefault, isActive: w.isActive, fieldId: w.fieldId, poiId: w.poiId, poiName: w.poi?.name ?? null, notes: w.notes })));
     return true;
   }
   if (pathname === '/api/warehouses' && method === 'POST') {
@@ -100,6 +100,10 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
       prisma.workEntry.count({ where: { warehouseId: id } }),
       prisma.harvestLot.count({ where: { warehouseId: id } })
     ]);
+    if (w.fieldId) {
+      json(res, { error: 'Põllu ladu tekib koristusest ja seda ei kustutata. Märgi see vajadusel mitteaktiivseks.' }, 409);
+      return true;
+    }
     if (w.isDefault || docs || entries || lots) {
       json(res, { error: w.isDefault ? 'Põhiladu ei saa kustutada' : `Laol on ${docs} laokannet, ${entries} põllutöö kannet ja ${lots} saagipartiid. Märgi see mitteaktiivseks.` }, 409);
       return true;

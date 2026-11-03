@@ -100,7 +100,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
   const dryingArticles = articles
     .filter((a) => a.isActive && (a.category.group !== 'SERVICE' || a.category.systemKind === 'DRYING_TIME'))
     .sort((a, b) => a.name.localeCompare(b.name, 'et'));
-  const activeWarehouses = warehouses.filter((w) => w.isActive || w.id === warehouseId);
+  const activeWarehouses = warehouses.filter((w) => (w.isActive && !w.fieldId) || w.id === warehouseId); // põllu ladu partii hoidlaks ei sobi
 
   const addWeighing = (e: React.FormEvent) => {
     e.preventDefault();

@@ -8,7 +8,7 @@ import { sessionUserOf } from './authGate.ts';
 import { ensureSeasons, isSeasonYear } from './seasons.ts';
 import { recomputeArticleStock } from './stock.ts';
 import { ensureDefaultServices } from './entryArticles.ts';
-import { closeLot, reopenLot, openLotsFor, ensureGrainArticle, lockLots, HarvestLotError, closedLotError } from './harvestLots.ts';
+import { closeLot, reopenLot, openLotsFor, ensureGrainArticle, lotBunkerArticleIds, lockLots, HarvestLotError, closedLotError } from './harvestLots.ts';
 import { lotServicePrice } from '../services/harvestLotRules.ts';
 
 const FINANCE_FORBIDDEN = 'Saagipartiid on nähtavad ainult finantsjuhile ja adminile';
@@ -123,11 +123,13 @@ export async function handleHarvestLots(req: IncomingMessage, res: ServerRespons
           const lot = await tx.harvestLot.findUnique({ where: { id: editId }, select: { id: true, articleId: true, warehouseId: true } });
           if (!lot) { const e = new HarvestLotError('Saagipartiid ei leitud'); e.http = 404; throw e; }
           if (!warehouse.isActive && warehouse.id !== lot.warehouseId) throw new HarvestLotError('Ladu on mitteaktiivne');
+          if (warehouse.fieldId && warehouse.id !== lot.warehouseId) throw new HarvestLotError('Partii ladu ei saa olla põllu ladu — vali hoidla (nt Rõngu)');
           await tx.harvestLot.update({ where: { id: editId }, data: { name, warehouseId: warehouse.id, notes } });
-          if (lot.warehouseId !== warehouse.id) await recomputeArticleStock(tx, [lot.articleId]);
+          if (lot.warehouseId !== warehouse.id) await recomputeArticleStock(tx, [lot.articleId, ...await lotBunkerArticleIds(tx, [editId])]);
           return loadSummary(tx, editId);
         }
         if (!warehouse.isActive) throw new HarvestLotError('Ladu on mitteaktiivne');
+        if (warehouse.fieldId) throw new HarvestLotError('Partii ladu ei saa olla põllu ladu — vali hoidla (nt Rõngu)');
         const year = num(b?.year);
         if (!isSeasonYear(year)) throw new HarvestLotError('Hooaeg on kohustuslik');
         const cropId = text(b?.cropId, 64);
@@ -203,6 +205,8 @@ export async function handleHarvestLots(req: IncomingMessage, res: ServerRespons
       const out = await tenantTransaction(async (tx) => {
         if (sub === 'reopen') await lockLots(tx);
         await (sub === 'close' ? closeLot(tx, id) : reopenLot(tx, id));
+        // Sulgemine teisendab partii punkrid tonnideks (mahakandmine partii laost), avamine võtab selle tagasi
+        await recomputeArticleStock(tx, await lotBunkerArticleIds(tx, [id]));
         return loadSummary(tx, id);
       });
       json(res, out);

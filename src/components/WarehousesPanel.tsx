@@ -61,6 +61,28 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
     }
   };
 
+  const mainWarehouses = warehouses.filter((w) => !w.fieldId);
+  const fieldWarehouses = warehouses.filter((w) => w.fieldId);
+  const editingField = !!form?.id && !!warehouses.find((w) => w.id === form.id)?.fieldId;
+
+  const row = (w: Warehouse) => (
+    <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
+      <td className="name-cell">
+        <span className="field-name">{w.name}</span>
+        {w.isDefault && <span className="users-admin-badge">Põhiladu</span>}
+        {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+      </td>
+      <td>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</td>
+      <td className="muted">{w.notes ?? ''}</td>
+      <td className="actions-col">
+        <div className="row-actions">
+          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></button>
+          {!w.isDefault && !w.fieldId && <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></button>}
+        </div>
+      </td>
+    </tr>
+  );
+
   return (
     <>
       <div className="register-actions-bar">
@@ -79,23 +101,16 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
             </tr>
           </thead>
           <tbody>
-            {warehouses.map((w) => (
-              <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
-                <td className="name-cell">
-                  <span className="field-name">{w.name}</span>
-                  {w.isDefault && <span className="users-admin-badge">Põhiladu</span>}
-                  {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-                </td>
-                <td>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</td>
-                <td className="muted">{w.notes ?? ''}</td>
-                <td className="actions-col">
-                  <div className="row-actions">
-                    <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></button>
-                    {!w.isDefault && <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></button>}
-                  </div>
+            {mainWarehouses.map(row)}
+            {fieldWarehouses.length > 0 && (
+              <tr className="register-group-row">
+                <td colSpan={4}>
+                  <strong>Põllu laod</strong>
+                  <span className="muted"> — koristatud punkrid enne vedu; tekivad esimesel koristusel automaatselt</span>
                 </td>
               </tr>
-            ))}
+            )}
+            {fieldWarehouses.map(row)}
           </tbody>
         </table>
       </div>
@@ -127,10 +142,10 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
                   <label htmlFor="wh-notes">Märkus</label>
                   <input id="wh-notes" className="form-input" value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
                 </div>
-                <label className="users-admin-checkbox full-width">
+                {!editingField && <label className="users-admin-checkbox full-width">
                   <input type="checkbox" checked={form.isDefault ?? false} disabled={!!warehouses.find((w) => w.id === form.id)?.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked, isActive: e.target.checked ? true : form.isActive })} />
                   <span>Põhiladu (põllutöö kannete vaikimisi ladu)</span>
-                </label>
+                </label>}
                 <label className="users-admin-checkbox full-width">
                   <input type="checkbox" checked={form.isActive ?? true} disabled={form.isDefault} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
                   <span>Aktiivne (kannetes valitav)</span>

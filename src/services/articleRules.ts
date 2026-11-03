@@ -5,7 +5,7 @@ export type ArticleGroup = 'SERVICE' | 'CONSUMABLE' | 'PRODUCE' | 'OTHER_GOODS';
 export type ArticleSystemKind =
   | 'LABOR_TIME' | 'MACHINE_TIME' | 'IMPLEMENT_TIME' | 'DRYING_TIME'
   | 'SEED' | 'FERTILIZER' | 'PLANT_PROTECTION' | 'FUEL' | 'DRYING_OIL'
-  | 'GRAIN';
+  | 'GRAIN' | 'BUNKERS';
 
 export const ARTICLE_GROUPS: ArticleGroup[] = ['SERVICE', 'CONSUMABLE', 'PRODUCE', 'OTHER_GOODS'];
 
@@ -27,7 +27,8 @@ export const SYSTEM_CATEGORIES: { systemKind: ArticleSystemKind; group: ArticleG
   { systemKind: 'PLANT_PROTECTION', group: 'CONSUMABLE', name: 'Taimekaitsevahend', sortOrder: 130 },
   { systemKind: 'FUEL', group: 'CONSUMABLE', name: 'Kütus', sortOrder: 140 },
   { systemKind: 'DRYING_OIL', group: 'CONSUMABLE', name: 'Kuivatusõli', sortOrder: 150 },
-  { systemKind: 'GRAIN', group: 'PRODUCE', name: 'Terad', sortOrder: 210 }
+  { systemKind: 'GRAIN', group: 'PRODUCE', name: 'Terad', sortOrder: 210 },
+  { systemKind: 'BUNKERS', group: 'PRODUCE', name: 'Punkrid', sortOrder: 220 }
 ];
 
 // PRIA import paneb muud kulumaterjalid sellesse liiki (luuakse vajadusel)
@@ -59,7 +60,7 @@ export function articleFieldRules(group: ArticleGroup, systemKind: ArticleSystem
     fertilizer: systemKind === 'FERTILIZER',
     plantProtection: systemKind === 'PLANT_PROTECTION',
     price: !goods,
-    crop: systemKind === 'GRAIN',
+    crop: systemKind === 'GRAIN' || systemKind === 'BUNKERS',
     defaultWarehouse: goods,
     stock: goods
   };

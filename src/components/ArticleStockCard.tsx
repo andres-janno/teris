@@ -9,6 +9,7 @@ import { FilterClear } from './FilterClear';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
+import { WarehouseOptions } from './WarehouseOptions';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -66,7 +67,7 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
             <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
               <select className="form-input" aria-label="Ladu" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
                 <option value="">Kõik laod</option>
-                {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
+                <WarehouseOptions warehouses={warehouses} />
               </select>
             </FilterClear>
           </div>

@@ -153,6 +153,7 @@ model Field {
 
   fieldSeasons FieldSeason[]
   operator     RelatedParty? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
+  warehouse    Warehouse? // põllu ladu: koristatud punkrid enne vedu (luuakse esimesel koristusel)
 
   @@unique([tenantId, fieldCode, num, operatorId])
   // Massiivinumber + põllunumber võivad korduda (nt kui operaator vahetub),
@@ -687,6 +688,7 @@ enum ArticleSystemKind {
   FUEL // kütus
   DRYING_OIL // kuivatusõli
   GRAIN // terad: kultuur
+  BUNKERS // punkrid: kultuur; koristatud ja kaalumata vili punkrites
 }
 
 // Artikli liik; süsteemsed liigid luuakse automaatselt (src/server/articleCategories.ts)
@@ -1015,6 +1017,7 @@ model Warehouse {
   isDefault Boolean  @default(false) // põhiladu: põllutöö kanded vaikimisi, PRIA import
   isActive  Boolean  @default(true)
   poiId     String?  @unique // asukoht kaardil (huvipunkt)
+  fieldId   Int?     @unique // põllu ladu: koristuskanded võtavad punkrid siia arvele
   notes     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -1022,6 +1025,7 @@ model Warehouse {
   updatedBy String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   poi           PointOfInterest? @relation(fields: [poiId], references: [id], onDelete: SetNull)
+  field         Field?           @relation(fields: [fieldId], references: [id], onDelete: SetNull) // põllu kustutamisel jääb tavaliseks laoks
   documentsFrom StockDocument[]  @relation("StockDocFrom")
   documentsTo   StockDocument[]  @relation("StockDocTo")
   entries       WorkEntry[]
