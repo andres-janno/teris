@@ -758,7 +758,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const unit = text(b?.unit, 16);
     const category = categoryId ? await prisma.articleCategory.findUnique({ where: { id: categoryId }, select: { group: true, systemKind: true } }) : null;
     if (!name || !category || !unit) {
-      json(res, { error: 'Artikli nimi, liik ja ühik on kohustuslikud' }, 400);
+      json(res, { error: 'Artikli nimi, kategooria ja ühik on kohustuslikud' }, 400);
       return true;
     }
     const finance = canSeeFinance(req);
@@ -786,7 +786,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     // Tööaja liigi vaikimisi teenus: liigi kohta üks; märge liigub ainult teise teenuse märkimisega
     const timeService = category.group === 'SERVICE' && !!category.systemKind && SERVICE_TIME_KINDS.includes(category.systemKind as any);
     if (old?.isDefaultService && (old.categoryId !== categoryId || data.isActive === false)) {
-      json(res, { error: 'Vaikimisi teenust ei saa teise liiki viia ega mitteaktiivseks muuta' }, 400);
+      json(res, { error: 'Vaikimisi teenust ei saa teise kategooriasse viia ega mitteaktiivseks muuta' }, 400);
       return true;
     }
     const isDefaultService: boolean = timeService && (old?.isDefaultService === true || b?.isDefaultService === true);
@@ -797,7 +797,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     if (old && (old.category.group === 'SERVICE') !== (category.group === 'SERVICE')) {
       const lotCosts = await prisma.harvestLotCost.count({ where: { articleId: id! } });
       if (lotCosts > 0) {
-        json(res, { error: `Artiklil on ${lotCosts} kuivatuskulu rida — liiki ei saa muuta` }, 409);
+        json(res, { error: `Artiklil on ${lotCosts} kuivatuskulu rida — kategooriat ei saa muuta` }, 409);
         return true;
       }
     }
@@ -869,7 +869,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       }, { timeout: 60000 }); // ühiku teisendus uuendab iga kande-, plaani- ja laokande rea eraldi
       json(res, { ...saved, price: saved.price === null || !finance ? null : Number(saved.price) });
     } catch (err: any) {
-      if (err?.code === 'P2002') json(res, { error: 'Selles liigis on sellise nimega artikkel juba olemas' }, 409);
+      if (err?.code === 'P2002') json(res, { error: 'Selles kategoorias on sellise nimega artikkel juba olemas' }, 409);
       else throw err;
     }
     return true;
@@ -890,7 +890,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     if (deleteDenied(req, res, source.createdBy)) return true;
     if (source.categoryId !== target.categoryId) {
-      json(res, { error: 'Asendada saab ainult sama liigi artikliga' }, 400);
+      json(res, { error: 'Asendada saab ainult sama kategooria artikliga' }, 400);
       return true;
     }
     // Laokande read on laoühikus: eri ühiku korral teisendatakse; teisendamatu ühikuga laokandeid ei saa üle viia

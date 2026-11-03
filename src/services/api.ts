@@ -681,13 +681,13 @@ export const api = {
     await jsonOrThrow(await apiFetch(`/api/articles/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Artikli kustutamine ebaõnnestus');
   },
   async getArticleCategories(): Promise<ArticleCategory[]> {
-    return jsonOrThrow(await apiFetch('/api/article-categories'), 'Artikli liikide laadimine ebaõnnestus');
+    return jsonOrThrow(await apiFetch('/api/article-categories'), 'Artikli kategooriate laadimine ebaõnnestus');
   },
   async saveArticleCategory(c: Partial<ArticleCategory>): Promise<ArticleCategory> {
-    return jsonOrThrow(await apiFetch('/api/article-categories', jsonInit('POST', c)), 'Liigi salvestamine ebaõnnestus');
+    return jsonOrThrow(await apiFetch('/api/article-categories', jsonInit('POST', c)), 'Kategooria salvestamine ebaõnnestus');
   },
   async deleteArticleCategory(id: string): Promise<void> {
-    await jsonOrThrow(await apiFetch(`/api/article-categories/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Liigi kustutamine ebaõnnestus');
+    await jsonOrThrow(await apiFetch(`/api/article-categories/${encodeURIComponent(id)}`, { method: 'DELETE' }), 'Kategooria kustutamine ebaõnnestus');
   },
 
   async getWarehouses(): Promise<Warehouse[]> {

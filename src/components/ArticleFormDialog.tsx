@@ -103,7 +103,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     // Liigiga mittesobivad väljad tühjendatakse (nt liigi muutmisel)
-    if (!rules) return alertDialog('Vali liik');
+    if (!rules) return alertDialog('Vali kategooria');
     const payload: Partial<Article> & { unitFactor?: number | null } = {
       ...form,
       ...sanitizeArticleFields({
@@ -155,7 +155,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <datalist id="article-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
             </div>
             <div className="form-group">
-              <label htmlFor="mt-cat">Liik *</label>
+              <label htmlFor="mt-cat">Kategooria *</label>
               <select id="mt-cat" className="form-input" required disabled={!!initial?.isDefaultService} value={form.categoryId ?? ''} onChange={(e) => {
                 const c = categories.find((x) => x.id === e.target.value);
                 setForm({ ...form, categoryId: e.target.value, unit: form.unit || (c?.group === 'SERVICE' ? 'h' : form.unit) });

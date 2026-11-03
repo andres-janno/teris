@@ -422,32 +422,32 @@ erDiagram
 
 ## Artiklid
 
-Artikkel on kõik, mida põllutöödel kulutatakse või toodetakse: teenused (tööaeg), kulumaterjalid, toodang ja muu kaup. Plaani- ja kanderead, laokanded, saagipartiid ning masinate, haakeriistade ja töötajate teenused viitavad artiklile. Artikkel kuulub liiki, liik kuulub gruppi.
+Artikkel on kõik, mida põllutöödel kulutatakse või toodetakse: teenused (tööaeg), kulumaterjalid, toodang ja muu kaup. Plaani- ja kanderead, laokanded, saagipartiid ning masinate, haakeriistade ja töötajate teenused viitavad artiklile. Artikkel kuulub kategooriasse, kategooria kuulub gruppi.
 
 | Mudel | Tabel | Ettevõttepõhine | Sisu |
 |---|---|---|---|
-| `ArticleCategory` | `article_categories` | jah | Artikli liik (grupp, süsteemne liik) |
+| `ArticleCategory` | `article_categories` | jah | Artikli kategooria (grupp, süsteemne kategooria) |
 | `Article` | `articles` | jah | Artikkel: teenus (tööaeg) või kaup (kulumaterjal, toodang, muu kaup) |
 
-- Kasutajaliidese nimed: `ArticleGroup` = **grupp** (filtrinupud Teenus, Kulumaterjal, Toodang, Muu kaup), `article_categories` = **liik** (nupp „Liigid“), `priaKind` = **täpsustus**, `name` = **nimetus**.
-- Reeglid (mis väli millisel liigil on, mis reale artikli saab panna, teenuse hind, kütuseartikkel): `src/services/articleRules.ts`. Kande artiklite leidmine: `src/server/entryArticles.ts`.
+- Kasutajaliidese nimed: ekraanil on ingliskeelse nime tõlge — `ArticleGroup` = **grupp** (filtrinupud Teenus, Kulumaterjal, Toodang, Muu kaup), `article_categories` = **kategooria** (nupp „Kategooriad“), `systemKind` = süsteemne kategooria, `priaKind` = **täpsustus**, `name` = **nimetus**.
+- Reeglid (mis väli millisel kategoorial on, mis reale artikli saab panna, teenuse hind, kütuseartikkel): `src/services/articleRules.ts`. Kande artiklite leidmine: `src/server/entryArticles.ts`.
 
 ### Grupid (`ArticleGroup`)
 
 | Grupp | Tähendus | Laoarvestus |
 |---|---|---|
 | `SERVICE` | Teenus: töötaja, masina, haakeriista või kuivatamise tööaeg. Ühik tavaliselt h, hind artiklil (`price`). | Ei |
-| `CONSUMABLE` | Kulumaterjal: seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, kasutaja liigid. | Jah (FIFO) |
+| `CONSUMABLE` | Kulumaterjal: seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, kasutaja kategooriad. | Jah (FIFO) |
 | `PRODUCE` | Toodang: terad (saagipartii kaalumine võtab lattu hindamata). | Jah |
-| `OTHER_GOODS` | Muu kaup (nt edasimüük, varuosad); ainult kasutaja loodud liikides. | Jah |
+| `OTHER_GOODS` | Muu kaup (nt edasimüük, varuosad); ainult kasutaja loodud kategooriates. | Jah |
 
-Kaup = iga grupp peale `SERVICE` (`isGoods`). Liiki ei saa teenuse ja kauba vahel ümber tõsta.
+Kaup = iga grupp peale `SERVICE` (`isGoods`). Kategooriat ei saa teenuse ja kauba vahel ümber tõsta.
 
-### Liigid (`article_categories`)
+### Kategooriad (`article_categories`)
 
-Süsteemsed liigid luuakse igale ettevõttele automaatselt ja neid ei saa kustutada ega teise gruppi viia; loogika käitub `systemKind` järgi. Kasutaja loodud liigil on `systemKind` tühi ja see käitub nagu oma grupi tavaline liik. Liigi nimi on ettevõttes unikaalne; liigi saab kustutada ainult siis, kui selles pole artikleid.
+Süsteemsed kategooriad luuakse igale ettevõttele automaatselt ja neid ei saa kustutada ega teise gruppi viia; loogika käitub `systemKind` järgi. Kasutaja loodud kategoorial on `systemKind` tühi ja see käitub nagu oma grupi tavaline kategooria. Kategooria nimi on ettevõttes unikaalne; kategooria saab kustutada ainult siis, kui selles pole artikleid.
 
-| `systemKind` | Liik | Grupp | Lisaväljad artiklil | Kasutus |
+| `systemKind` | Kategooria | Grupp | Lisaväljad artiklil | Kasutus |
 |---|---|---|---|---|
 | `LABOR_TIME` | Töötaja tööaeg | `SERVICE` | `price` | kande tööaja rida |
 | `MACHINE_TIME` | Masina tööaeg | `SERVICE` | `price` | kande masina rida |
@@ -460,11 +460,11 @@ Süsteemsed liigid luuakse igale ettevõttele automaatselt ja neid ei saa kustut
 | `DRYING_OIL` | Kuivatusõli | `CONSUMABLE` | vaikimisi ladu | saagipartii kuivatuskulu |
 | `GRAIN` | Terad | `PRODUCE` | kultuur (`cropId`) | saagipartii toodanguartikkel |
 
-Kaubale saab määrata vaikimisi lao (`defaultWarehouseId`, valikuline; teenusel puudub). PRIA import paneb tundmatud kulumaterjalid liiki „Muu kulumaterjal“ (luuakse vajadusel).
+Kaubale saab määrata vaikimisi lao (`defaultWarehouseId`, valikuline; teenusel puudub). PRIA import paneb tundmatud kulumaterjalid kategooriasse „Muu kulumaterjal“ (luuakse vajadusel).
 
 ### Teenused ja hind kandel
 
-- Igal tööaja liigil on üks vaikimisi teenus (`isDefaultService`); puudumisel luuakse see liigi nimega (ühik h, hind tühi).
+- Igal tööaja kategoorial on üks vaikimisi teenus (`isDefaultService`); puudumisel luuakse see kategooria nimega (ühik h, hind tühi).
 - Masinal, haakeriistal ja töötajal (`vehicles`, `implements`, `related_parties`) võib olla oma teenus (`serviceArticleId`) ja oma tunnihind (`hourlyRate`, näeb ainult admin/finants).
 - Kande tööaja rea hind: ressursi tunnihind → ressursi teenuse hind → vaikimisi teenuse hind (`pickServicePrice`).
 - Kütuserea artikkel: masina vaikimisi kütus (`fuelArticleId`), muidu ettevõtte ainus aktiivne kütus; artiklita kütuserida ei lase kannet kinnitada. Kütus kantakse maha kütuseartikli vaikimisi laost, kulumaterjal kande laost.
@@ -478,9 +478,9 @@ Kaubale saab määrata vaikimisi lao (`defaultWarehouseId`, valikuline; teenusel
 
 ### Asendamine ja kustutamine
 
-- Asendamine (ühendamine) on lubatud ainult sama liigi artikliga: kõik viited (plaani-, kande- ja laokande read, kuivatuskulud, ressursside teenused) viiakse sihtartiklile, vana nimi lisatakse sihtartikli `aliases` hulka (PRIA import tunneb selle ära) ja vana artikkel kustutatakse.
-- Kasutuses olevat artiklit (plaani-, kande- või laokande read, saagipartii, kuivatuskulu) ei kustutata — see märgitakse mitteaktiivseks. Vaikimisi teenust ei saa kustutada, teise liiki viia ega mitteaktiivseks muuta. Kuivatuskuludega artikli liiki ei saa muuta.
-- Unikaalsus: nimetus on unikaalne liigi piires (`tenantId + categoryId + name`).
+- Asendamine (ühendamine) on lubatud ainult sama kategooria artikliga: kõik viited (plaani-, kande- ja laokande read, kuivatuskulud, ressursside teenused) viiakse sihtartiklile, vana nimi lisatakse sihtartikli `aliases` hulka (PRIA import tunneb selle ära) ja vana artikkel kustutatakse.
+- Kasutuses olevat artiklit (plaani-, kande- või laokande read, saagipartii, kuivatuskulu) ei kustutata — see märgitakse mitteaktiivseks. Vaikimisi teenust ei saa kustutada, teise kategooriasse viia ega mitteaktiivseks muuta. Kuivatuskuludega artikli kategooriat ei saa muuta.
+- Unikaalsus: nimetus on unikaalne kategooria piires (`tenantId + categoryId + name`).
 
 ```mermaid
 erDiagram

@@ -55,7 +55,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
   };
 
   const remove = async (c: ArticleCategory) => {
-    if (!(await confirmDialog(`Kas kustutan liigi "${c.name}"?`))) return;
+    if (!(await confirmDialog(`Kas kustutan kategooria "${c.name}"?`))) return;
     try {
       await api.deleteArticleCategory(c.id);
       reload();
@@ -71,7 +71,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
         <div className="modal-header">
           <div className="modal-title-group">
             <Tags size={20} className="text-emerald" />
-            <h3>Artikli liigid</h3>
+            <h3>Artikli kategooriad</h3>
           </div>
           <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
         </div>
@@ -86,7 +86,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
                       <td>
                         <input
                           className="form-input"
-                          aria-label="Liigi nimi"
+                          aria-label="Kategooria nimi"
                           defaultValue={c.name}
                           onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== c.name && void save({ ...c, name: e.target.value.trim() })}
                         />
@@ -100,8 +100,8 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
                       </td>
                       <td className="actions-col">
                         {c.systemKind
-                          ? <span title="Süsteemne liik: süsteem kasutab seda (PRIA, laoarvestus, kanded)"><Lock size={14} /></span>
-                          : <button type="button" className="icon-btn-ghost" title="Kustuta liik" onClick={() => void remove(c)} disabled={(c.articleCount ?? 0) > 0}><Trash2 size={14} /></button>}
+                          ? <span title="Süsteemne kategooria: süsteem kasutab seda (PRIA, laoarvestus, kanded)"><Lock size={14} /></span>
+                          : <button type="button" className="icon-btn-ghost" title="Kustuta kategooria" onClick={() => void remove(c)} disabled={(c.articleCount ?? 0) > 0}><Trash2 size={14} /></button>}
                       </td>
                     </tr>
                   ))}
@@ -113,8 +113,8 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
             <select className="form-input" aria-label="Grupp" value={draft.group} onChange={(e) => setDraft({ ...draft, group: e.target.value as ArticleGroup })}>
               {ARTICLE_GROUPS.map((g) => <option key={g} value={g}>{ARTICLE_GROUP_LABEL[g]}</option>)}
             </select>
-            <input className="form-input" placeholder="Uue liigi nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa liik</span></button>
+            <input className="form-input" placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <button type="submit" className="btn btn-primary btn-sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></button>
           </form>
         </div>
         <div className="modal-footer">

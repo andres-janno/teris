@@ -189,7 +189,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                   <thead>
                     <tr>
                       <th>Materjal</th>
-                      <th>Liik</th>
+                      <th>Kategooria</th>
                       <th>Ühik</th>
                       <th className="num">Kandeid</th>
                       <th>Märkus</th>
