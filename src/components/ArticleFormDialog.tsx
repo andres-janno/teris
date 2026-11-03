@@ -228,7 +228,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <>
                 <div className="form-section-title" title="Täidavad plaani ja kande rea materjali valimisel">PRIA andmed</div>
                 <div className="form-group full-width">
-                  <label htmlFor="mt-pria-register">Register/materjal</label>
+                  <label htmlFor="mt-pria-register">PRIA register</label>
                   <select id="mt-pria-register" className="form-input" value={form.priaRegister ?? ''} onChange={(e) => setForm({ ...form, priaRegister: e.target.value })}>
                     <option value="">–</option>
                     {registers.map((x) => <option key={x} value={x}>{x}</option>)}
@@ -236,13 +236,13 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                   </select>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mt-pria-kind">Täpsustus</label>
+                  <label htmlFor="mt-pria-kind">PRIA täpsustus</label>
                   <input id="mt-pria-kind" className="form-input" list="article-pria-kinds" placeholder={rules?.seed ? 'nt Taliraps' : rules?.fertilizer ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
                   <datalist id="article-pria-kinds">{distinctValues(all.filter((m) => m.categoryId === form.categoryId).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
                 </div>
                 {rules?.seed && (
                   <div className="form-group">
-                    <label htmlFor="mt-pria-spec">Kategooria</label>
+                    <label htmlFor="mt-pria-spec">PRIA spetsifikatsioon</label>
                     <select id="mt-pria-spec" className="form-input" value={form.priaSpec ?? ''} onChange={(e) => setForm({ ...form, priaSpec: e.target.value })}>
                       <option value="">–</option>
                       {SEED_CATEGORIES.map((x) => <option key={x} value={x}>{x}</option>)}

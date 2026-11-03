@@ -40,7 +40,7 @@ const DOMAINS: Domain[] = [
     intro: 'Artikkel on kõik, mida põllutöödel kulutatakse või toodetakse: teenused (tööaeg), kulumaterjalid, toodang ja muu kaup. Plaani- ja kanderead, laokanded, saagipartiid ning masinate, haakeriistade ja töötajate teenused viitavad artiklile. Artikkel kuulub kategooriasse, kategooria kuulub gruppi.',
     models: ['ArticleCategory', 'Article'],
     notes: [
-      'Kasutajaliidese nimed: ekraanil on ingliskeelse nime tõlge — `ArticleGroup` = **grupp** (filtrinupud Teenus, Kulumaterjal, Toodang, Muu kaup), `article_categories` = **kategooria** (nupp „Kategooriad“), `systemKind` = süsteemne kategooria, `priaKind` = **täpsustus**, `name` = **nimetus**.',
+      'Kasutajaliidese nimed: ekraanil on ingliskeelse nime tõlge — `ArticleGroup` = **grupp** (filtrinupud Teenus, Kulumaterjal, Toodang, Muu kaup), `article_categories` = **kategooria** (nupp „Kategooriad“), `systemKind` = süsteemne kategooria, `priaRegister` = **PRIA register**, `priaKind` = **PRIA täpsustus** (artiklite tabelis veerg „Täpsustus“ koos terade kultuuriga), `priaSpec` = **PRIA spetsifikatsioon** (seemne kategooria C1, C2 jne), `name` = **nimetus**.',
       'Reeglid (mis väli millisel kategoorial on, mis reale artikli saab panna, teenuse hind, kütuseartikkel): `src/services/articleRules.ts`. Kande artiklite leidmine: `src/server/entryArticles.ts`.'
     ],
     details: [
