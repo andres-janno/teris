@@ -308,7 +308,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         const prevIsWinter = prevRec ? isWinterCrop(prevRec.crop, crops) : false;
 
         const cropName = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.crop ? prevRec.crop : rec.crop;
-        const crop = matchCrop(cropName, crops);
+        // Registri kultuur: serveri seos, kui kultuur on sel aastal enda oma; muidu (talivili eelmisest aastast) nime järgi
+        const crop = (cropName === rec.crop && rec.cropId ? crops.find((c) => c.id === rec.cropId) : undefined) ?? matchCrop(cropName, crops);
         const cropColor = isCropUndetermined(rec.crop) && prevIsWinter && prevRec?.cropColor
           ? prevRec.cropColor
           : (crop?.color || rec.cropColor || (cropName ? getCropColor(cropName) : null));
@@ -321,7 +322,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         // Järgmise aasta kultuur (sügiskülvi tuletamiseks)
         const nextRec = field.history.find((h) => h.year === year + 1) ?? null;
         const nextCropName = nextRec?.crop ?? null;
-        const nextCrop = nextCropName ? matchCrop(nextCropName, crops) : null;
+        const nextCrop = (nextRec?.cropId ? crops.find((c) => c.id === nextRec.cropId) : undefined) ?? (nextCropName ? matchCrop(nextCropName, crops) : null);
         const nextCropColor = nextCrop?.color || nextRec?.cropColor || (nextCropName ? getCropColor(nextCropName) : null);
         const nextUndetermined = !nextRec || isCropUndetermined(nextCropName);
         const nextIsWinter = !nextUndetermined && isWinterCrop(nextCropName, crops);
@@ -379,12 +380,17 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     if (activity !== 'all' && !loading && !activityOptions.some((o) => o.id === activity)) setActivity('all');
   }, [activity, activityOptions, loading]);
 
-  // Kultuuri filter: põld sobib käesoleva või järgmise hooaja (talivilja) kultuuri järgi
+  // Kultuuri filter: põld sobib käesoleva või järgmise hooaja (talivilja) kultuuri järgi.
+  // Võti on registri kultuuri nimi ("Talinisu allakülvita" → "Talinisu"); registrist puuduv jääb põllu nimega.
+  const cropKey = (r: Row) => (r.undetermined ? null : r.crop?.name ?? r.rec.crop);
+  const nextCropKey = (r: Row) => (r.nextUndetermined || !r.nextCropName ? null : r.nextCrop?.name ?? r.nextCropName);
   const cropOptions = useMemo(() => {
     const names = new Set<string>();
     allRows.forEach((r) => {
-      if (!r.undetermined) names.add(r.rec.crop);
-      if (!r.nextUndetermined && r.nextCropName) names.add(r.nextCropName);
+      const cur = cropKey(r);
+      const next = nextCropKey(r);
+      if (cur) names.add(cur);
+      if (next) names.add(next);
     });
     return Array.from(names).sort((a, b) => a.localeCompare(b, 'et'));
   }, [allRows]);
@@ -397,7 +403,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const cropMatches = (r: Row) =>
     cropFilter === 'all' ||
-    (cropFilter === NO_CROP ? r.undetermined : (!r.undetermined && r.rec.crop === cropFilter) || (!r.nextUndetermined && r.nextCropName === cropFilter));
+    (cropFilter === NO_CROP ? r.undetermined : cropKey(r) === cropFilter || nextCropKey(r) === cropFilter);
 
   const rows = allRows.filter((r) => {
     const q = search.trim().toLowerCase();

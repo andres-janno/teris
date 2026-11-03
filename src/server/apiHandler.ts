@@ -28,6 +28,7 @@ import { getDefaultWarehouseId, recomputeAllArticleStock } from './stock.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
+import { loadCropsForLink, seasonCropId, relinkSeasonCrops } from './seasonCropLink.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -272,6 +273,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
       : await db.field.create({ data: fieldUpdateData });
 
     if (item.history && Array.isArray(item.history)) {
+      const crops = await loadCropsForLink(db); // hooaja kultuuritekst → registri kultuur
       for (const h of item.history) {
         const statusUpper = (h.status || 'not_started').toUpperCase();
         // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
@@ -289,6 +291,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
             crop: h.crop || 'Teadmata kultuur',
+            cropId: seasonCropId(h.crop, crops),
             cropVariety: h.cropVariety ?? null,
             cropColor: h.cropColor || '#eab308',
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
@@ -309,6 +312,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
             crop: h.crop || 'Teadmata kultuur',
+            cropId: seasonCropId(h.crop, crops),
             cropVariety: h.cropVariety ?? null,
             cropColor: h.cropColor || '#eab308',
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
@@ -517,6 +521,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           eligibleAreaHa: fs.eligibleAreaHa,
           areaChangeReason: fs.areaChangeReason,
           crop: fs.crop,
+          cropId: fs.cropId,
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
           worksCount: fs._count.fieldWorks,
@@ -1563,6 +1568,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           isWinterCrop: crop.isWinterCrop === true
         }
       });
+      // Uus või ümbernimetatud kultuur muudab, millised hooajad selle kultuuriga seotud on
+      if (!previous || previous.name !== saved.name) await relinkSeasonCrops(prisma as unknown as TxClient);
       // Põllukirjetes on kultuuri värv koopiana: värvi muutmisel uuendame selle kultuuri kirjed.
       if (previous && previous.color !== saved.color) {
         await prisma.fieldSeason.updateMany({
@@ -1605,6 +1612,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const lotCount = await prisma.harvestLot.count({ where: { cropId: id } });
       if (lotCount > 0) return json(res, { error: `Kultuuril on ${lotCount} saagipartiid — kultuuri ei saa kustutada` }, 409);
       await prisma.crop.delete({ where: { id } });
+      await relinkSeasonCrops(prisma as unknown as TxClient); // seotud hooajad võivad sobida mõne teise kultuuriga
       return json(res, { success: true, id });
     }
 

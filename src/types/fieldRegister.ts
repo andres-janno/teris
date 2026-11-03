@@ -12,6 +12,7 @@ export interface FieldYearlyRecord {
   eligibleAreaHa?: number | null; // PRIA toetusõiguslik pindala ha
   areaChangeReason?: string | null; // Pindala muutuse põhjus (nt võsa pealekasv, kraavihooldus)
   crop: string;                 // Põllukultuur (nt Talinisu, Suvioder, Taliraps)
+  cropId?: string | null;       // Registri kultuur (server tuletab nimest; ainult lugemiseks)
   cropVariety?: string | null;  // Sordinimi (nt 'Skagen', 'Planet', 'Mercedes')
   cropColor: string;            // Värvikood kaardil (nt #eab308)
   worksCount?: number;          // Terise tööde arv sel aastal (ainult lugemiseks)
