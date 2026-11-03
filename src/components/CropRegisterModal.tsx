@@ -23,6 +23,7 @@ import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { FilterClear } from './FilterClear';
+import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -76,6 +77,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editCropYield, setEditCropYield] = useState<number | ''>('');
   const [editCropDescription, setEditCropDescription] = useState('');
   const [editCropIsWinter, setEditCropIsWinter] = useState(false);
+  // PRIA nimetuse reegel; erandnimed tühjad = vaikimisi alus + allakülvi järelliide
+  const [editCropPria, setEditCropPria] = useState({ name: '', undersowing: false, NONE: '', OTHER: '', LEGUME: '' });
   // Uuele kultuurile värv automaatselt (talivili külm, suvivili soe toon); kasutaja võib üle kirjutada.
   const [editCropAutoColor, setEditCropAutoColor] = useState(false);
 
@@ -90,6 +93,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editVarietySeedRate, setEditVarietySeedRate] = useState<number | ''>('');
   const [editVarietyPotentialYield, setEditVarietyPotentialYield] = useState<number | ''>('');
   const [editVarietyQualityClass, setEditVarietyQualityClass] = useState('');
+  const [editVarietyPriaName, setEditVarietyPriaName] = useState('');
   const [editVarietyNotes, setEditVarietyNotes] = useState('');
 
   // Calculate field acreage per crop for active season.
@@ -197,6 +201,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropYield('');
     setEditCropDescription('');
     setEditCropIsWinter(false);
+    setEditCropPria({ name: '', undersowing: group === 'CEREAL' || group === 'OILSEED', NONE: '', OTHER: '', LEGUME: '' });
     setIsEditingCrop(true);
     setIsEditingVariety(false);
   };
@@ -214,6 +219,13 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropYield(crop.defaultYieldTonsHa ?? '');
     setEditCropDescription(crop.description || '');
     setEditCropIsWinter(crop.isWinterCrop === true);
+    setEditCropPria({
+      name: crop.priaName || '',
+      undersowing: crop.priaUndersowing === true,
+      NONE: crop.priaNameWithoutUndersowing || '',
+      OTHER: crop.priaNameWithUndersowing || '',
+      LEGUME: crop.priaNameWithLegumeUndersowing || ''
+    });
     setIsEditingCrop(true);
     setIsEditingVariety(false);
   };
@@ -235,6 +247,11 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
       defaultYieldTonsHa: editCropYield !== '' ? Number(editCropYield) : undefined,
       description: editCropDescription.trim() || undefined,
       isWinterCrop: editCropIsWinter,
+      priaName: editCropPria.name.trim() || null,
+      priaUndersowing: editCropPria.undersowing,
+      priaNameWithoutUndersowing: (editCropPria.undersowing && editCropPria.NONE.trim()) || null,
+      priaNameWithUndersowing: (editCropPria.undersowing && editCropPria.OTHER.trim()) || null,
+      priaNameWithLegumeUndersowing: (editCropPria.undersowing && editCropPria.LEGUME.trim()) || null,
       varieties: existingCrop ? existingCrop.varieties : [],
       updatedAt: new Date().toISOString()
     };
@@ -254,6 +271,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditVarietySeedRate(crop.defaultSeedRateKgHa ?? '');
     setEditVarietyPotentialYield(crop.defaultYieldTonsHa ?? '');
     setEditVarietyQualityClass('');
+    setEditVarietyPriaName('');
     setEditVarietyNotes('');
     setIsEditingVariety(true);
     setIsEditingCrop(false);
@@ -269,6 +287,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditVarietySeedRate(variety.recommendedSeedRateKgHa ?? '');
     setEditVarietyPotentialYield(variety.potentialYieldTonsHa ?? '');
     setEditVarietyQualityClass(variety.qualityClass || '');
+    setEditVarietyPriaName(variety.priaName || '');
     setEditVarietyNotes(variety.notes || '');
     setIsEditingVariety(true);
     setIsEditingCrop(false);
@@ -291,6 +310,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
       recommendedSeedRateKgHa: editVarietySeedRate !== '' ? Number(editVarietySeedRate) : undefined,
       potentialYieldTonsHa: editVarietyPotentialYield !== '' ? Number(editVarietyPotentialYield) : undefined,
       qualityClass: editVarietyQualityClass.trim() || undefined,
+      priaName: editVarietyPriaName.trim() || null,
       notes: editVarietyNotes.trim() || undefined,
       isActive: true
     };
@@ -560,6 +580,42 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     className="form-input"
                   />
                 </div>
+
+                <div className="form-group" style={{ gridColumn: 'span 2' }}>
+                  <label htmlFor="crop-pria-name">PRIA nimetus</label>
+                  <input
+                    id="crop-pria-name"
+                    type="text"
+                    placeholder={editCropName.trim() || 'nt Muu põlduba'}
+                    value={editCropPria.name}
+                    onChange={(e) => setEditCropPria({ ...editCropPria, name: e.target.value })}
+                    className="form-input"
+                    title="Nimi PRIA põllumajanduskultuuride loetelust; tühi = kultuuri nimi. Põllu hooaja PRIA nimetus tuletatakse sellest."
+                  />
+                  <label className="crop-winter-toggle">
+                    <input
+                      type="checkbox"
+                      checked={editCropPria.undersowing}
+                      onChange={(e) => setEditCropPria({ ...editCropPria, undersowing: e.target.checked })}
+                    />
+                    <span>PRIA eristab allakülvi (nimele lisandub allakülvi variant)</span>
+                  </label>
+                </div>
+
+                {editCropPria.undersowing && (Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
+                  <div className="form-group" style={{ gridColumn: 'span 2' }} key={u}>
+                    <label htmlFor={`crop-pria-${u}`}>PRIA nimetus: {UNDERSOWING_LABELS[u].toLowerCase()}</label>
+                    <input
+                      id={`crop-pria-${u}`}
+                      type="text"
+                      placeholder={defaultPriaVariantName(editCropPria.name.trim() || editCropName.trim() || 'Kultuur', u)}
+                      value={editCropPria[u]}
+                      onChange={(e) => setEditCropPria({ ...editCropPria, [u]: e.target.value })}
+                      className="form-input"
+                      title="Täida ainult siis, kui PRIA nimi erineb vaikimisi nimest"
+                    />
+                  </div>
+                ))}
               </div>
 
               </div>
@@ -673,6 +729,19 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     value={editVarietyQualityClass}
                     onChange={(e) => setEditVarietyQualityClass(e.target.value)}
                     className="form-input"
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="variety-pria-name">PRIA nimetus</label>
+                  <input
+                    id="variety-pria-name"
+                    type="text"
+                    placeholder="tühi = kultuuri PRIA nimetus"
+                    value={editVarietyPriaName}
+                    onChange={(e) => setEditVarietyPriaName(e.target.value)}
+                    className="form-input"
+                    title='Ainult siis, kui PRIA loetelus on sort eraldi (nt "Sangaste" rukis, põlduba "Jõgeva")'
                   />
                 </div>
 

@@ -28,7 +28,8 @@ import { getDefaultWarehouseId, recomputeAllArticleStock } from './stock.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
-import { loadCropsForLink, seasonCropId, relinkSeasonCrops } from './seasonCropLink.ts';
+import { loadCropsForLink, resolveSeasonCrop, relinkSeasonCrops } from './seasonCropLink.ts';
+import { derivePriaCropName } from '../services/priaCropName.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -230,6 +231,35 @@ const toSeasonDto = (s: { id: number; year: number; name: string; isLocked: bool
   notes: s.notes
 });
 
+const optText = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, 300) : null);
+
+// Kultuuri PRIA nimetuse reegel (services/priaCropName.ts)
+const cropPriaFields = (crop: any) => ({
+  priaName: optText(crop.priaName),
+  priaUndersowing: crop.priaUndersowing === true,
+  priaNameWithoutUndersowing: optText(crop.priaNameWithoutUndersowing),
+  priaNameWithUndersowing: optText(crop.priaNameWithUndersowing),
+  priaNameWithLegumeUndersowing: optText(crop.priaNameWithLegumeUndersowing)
+});
+
+// PRIA reegli muutus: lukustamata hooaegadel, mille PRIA nimi oli vana reegli järgi tuletatud, uus nimi.
+// PRIA impordist tulnud või käsitsi erinev nimi ja lukus hooajad jäävad muutmata.
+async function refreshDerivedPriaNames(previous: Parameters<typeof derivePriaCropName>[0] & { varieties: { id: string; priaName: string | null }[] }, cropId: string) {
+  const current = (await loadCropsForLink(prisma as unknown as TxClient)).find((c) => c.id === cropId);
+  if (!current) return;
+  const seasons = await prisma.fieldSeason.findMany({
+    where: { cropId, OR: [{ seasonId: null }, { season: { isLocked: false } }] },
+    select: { id: true, varietyId: true, undersowing: true, priaCropName: true }
+  });
+  for (const s of seasons) {
+    const oldName = derivePriaCropName(previous, previous.varieties.find((v) => v.id === s.varietyId), s.undersowing);
+    const newName = derivePriaCropName(current, current.varieties.find((v) => v.id === s.varietyId), s.undersowing);
+    if (s.priaCropName === oldName && newName !== oldName) {
+      await prisma.fieldSeason.update({ where: { id: s.id }, data: { priaCropName: newName } });
+    }
+  }
+}
+
 // Ühe põllu salvestus: põllu andmed + saadetud hooaja kirjed (ainult need aastad, mis history's on).
 async function saveMasterFieldItem(item: any, db: TxClient) {
     const num = item.num || 'x';
@@ -278,6 +308,13 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
         const statusUpper = (h.status || 'not_started').toUpperCase();
         // Puuduv hooaeg luuakse (import ega põllu salvestus ei jää hooajata)
         const seasonId = (await ensureSeasons([h.year], db)).get(Number(h.year)) ?? null;
+        const existingSeason = await db.fieldSeason.findUnique({
+          where: { fieldId_year: { fieldId: upsertedField.id, year: Number(h.year) } },
+          select: { cropId: true, cropVariety: true, undersowing: true, priaCropName: true }
+        });
+        const cropFields = resolveSeasonCrop(
+          { crop: h.crop, cropId: h.cropId, cropVariety: h.cropVariety, undersowing: h.undersowing }, crops, existingSeason
+        );
         const savedSeason = await db.fieldSeason.upsert({
           where: {
             fieldId_year: {
@@ -290,8 +327,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             areaHa: Number(h.areaHa) || 0,
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
-            crop: h.crop || 'Teadmata kultuur',
-            cropId: seasonCropId(h.crop, crops),
+            ...cropFields,
             cropVariety: h.cropVariety ?? null,
             cropColor: h.cropColor || '#eab308',
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
@@ -311,8 +347,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             areaHa: Number(h.areaHa) || 0,
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
-            crop: h.crop || 'Teadmata kultuur',
-            cropId: seasonCropId(h.crop, crops),
+            ...cropFields,
             cropVariety: h.cropVariety ?? null,
             cropColor: h.cropColor || '#eab308',
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
@@ -469,11 +504,16 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             }
           }
         });
+        const crops = await loadCropsForLink(tx);
         let created = 0;
         for (const f of fields) {
           const src = latestEarlierSeason(f.fieldSeasons, year);
           if (!src) continue;
-          const saved = await tx.fieldSeason.create({ data: buildCopiedSeason(src, f.id, year, seasonId) });
+          // PRIA kultuur uue aasta reegli järgi (eelmise aasta nimi võib olla muutunud)
+          const reg = src.cropId ? crops.find((c) => c.id === src.cropId) : undefined;
+          const variety = reg?.varieties.find((v) => v.id === src.varietyId) ?? null;
+          const priaCropName = reg ? derivePriaCropName(reg, variety, src.undersowing) : src.priaCropName;
+          const saved = await tx.fieldSeason.create({ data: { ...buildCopiedSeason(src, f.id, year, seasonId), priaCropName } });
           if (src.cadastralParcels.length) {
             await tx.fieldCadastralParcel.createMany({
               data: src.cadastralParcels.map((l) => buildCopiedParcelLink(l, saved.id))
@@ -522,6 +562,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           areaChangeReason: fs.areaChangeReason,
           crop: fs.crop,
           cropId: fs.cropId,
+          undersowing: fs.undersowing,
+          priaCropName: fs.priaCropName,
           cropVariety: fs.cropVariety,
           cropColor: fs.cropColor,
           worksCount: fs._count.fieldWorks,
@@ -1539,7 +1581,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
 
     if (pathname === '/api/crops' && method === 'POST') {
       const crop = await parseBody(req);
-      const previous = crop.id ? await prisma.crop.findUnique({ where: { id: crop.id } }) : null;
+      const previous = crop.id ? await prisma.crop.findUnique({ where: { id: crop.id }, include: { varieties: true } }) : null;
       const saved = await prisma.crop.upsert({
         where: { id: crop.id || `crop-${Date.now()}` },
         update: {
@@ -1552,7 +1594,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
           description: crop.description ?? null,
-          isWinterCrop: crop.isWinterCrop === true
+          isWinterCrop: crop.isWinterCrop === true,
+          ...cropPriaFields(crop)
         },
         create: {
           id: crop.id || `crop-${Date.now()}`,
@@ -1565,11 +1608,10 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
           description: crop.description ?? null,
-          isWinterCrop: crop.isWinterCrop === true
+          isWinterCrop: crop.isWinterCrop === true,
+          ...cropPriaFields(crop)
         }
       });
-      // Uus või ümbernimetatud kultuur muudab, millised hooajad selle kultuuriga seotud on
-      if (!previous || previous.name !== saved.name) await relinkSeasonCrops(prisma as unknown as TxClient);
       // Põllukirjetes on kultuuri värv koopiana: värvi muutmisel uuendame selle kultuuri kirjed.
       if (previous && previous.color !== saved.color) {
         await prisma.fieldSeason.updateMany({
@@ -1592,6 +1634,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             recommendedSeedRateKgHa: v.recommendedSeedRateKgHa ? Number(v.recommendedSeedRateKgHa) : null,
             potentialYieldTonsHa: v.potentialYieldTonsHa ? Number(v.potentialYieldTonsHa) : null,
             qualityClass: v.qualityClass ?? null,
+            priaName: optText(v.priaName),
             notes: v.notes ?? null,
             isActive: v.isActive !== false
           };
@@ -1602,6 +1645,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           });
         }
       }
+      // Uus või ümbernimetatud kultuur muudab hooaegade seost ja kuvatavat nime (PRIA nimi hooajal jääb)
+      if (!previous || previous.name !== saved.name) await relinkSeasonCrops(prisma as unknown as TxClient);
+      if (previous) await refreshDerivedPriaNames(previous, saved.id);
       const withVarieties = await prisma.crop.findUnique({ where: { id: saved.id }, include: { varieties: true } });
       return json(res, withVarieties ?? saved);
     }

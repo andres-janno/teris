@@ -8,6 +8,7 @@ import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
+import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
@@ -54,6 +55,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   const [editCrop, setEditCrop] = useState('');
   const [editCropColor, setEditCropColor] = useState('#eab308');
   const [editVariety, setEditVariety] = useState('');
+  const [editUndersowing, setEditUndersowing] = useState<Undersowing>('NONE');
+  // Salvestatud valik: muutmata valikuga jääb hooaja senine PRIA nimetus (nagu serveris)
+  const [savedPria, setSavedPria] = useState<{ crop: string; variety: string; undersowing: Undersowing; name: string | null }>({ crop: '', variety: '', undersowing: 'NONE', name: null });
   const [editTargetYield, setEditTargetYield] = useState<number | undefined>(undefined);
   const [editActualYield, setEditActualYield] = useState<number | undefined>(undefined);
   const [editNotes, setEditNotes] = useState('');
@@ -82,6 +86,15 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   const availableVarieties = useMemo(() => {
     return selectedCropObj?.varieties || [];
   }, [selectedCropObj]);
+
+  // PRIA nimetus: muutmata valikul salvestatud, muidu registri reegli järgi (lõpliku nime paneb server)
+  const priaPreview = useMemo(() => {
+    const unchanged = savedPria.name && savedPria.crop === editCrop && savedPria.variety === editVariety.trim() && savedPria.undersowing === editUndersowing;
+    if (unchanged) return savedPria.name;
+    if (!selectedCropObj) return editCrop || null;
+    const variety = selectedCropObj.varieties?.find((v) => v.name.toLowerCase() === editVariety.trim().toLowerCase());
+    return derivePriaCropName(selectedCropObj, variety, editUndersowing);
+  }, [savedPria, editCrop, editVariety, editUndersowing, selectedCropObj]);
 
   const loadForm = (field: MasterField) => {
     const currentRec = field.history.find(h => h.year === selectedYear) || {
@@ -116,6 +129,13 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     setEditCrop(currentRec.crop);
     setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
     setEditVariety(currentRec.cropVariety || '');
+    setEditUndersowing(('undersowing' in currentRec && currentRec.undersowing) || 'NONE');
+    setSavedPria({
+      crop: currentRec.crop,
+      variety: currentRec.cropVariety || '',
+      undersowing: ('undersowing' in currentRec && currentRec.undersowing) || 'NONE',
+      name: ('priaCropName' in currentRec && currentRec.priaCropName) || null
+    });
     setEditTargetYield(currentRec.targetYieldTonsHa || undefined);
     setEditActualYield(currentRec.actualYieldTonsHa || undefined);
     setEditNotes(currentRec.notes || '');
@@ -148,6 +168,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         areaChangeReason: editAreaChangeReason.trim() || undefined,
         crop: editCrop.trim() || 'Talinisu',
         cropVariety: editVariety.trim() || undefined,
+        undersowing: editUndersowing,
         cropColor: finalCropColor,
         targetYieldTonsHa: editTargetYield ? Number(editTargetYield) : undefined,
         actualYieldTonsHa: editActualYield ? Number(editActualYield) : undefined,
@@ -510,6 +531,30 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </option>
             ))}
           </datalist>
+        </div>
+
+        {selectedCropObj?.priaUndersowing && (
+          <div className="form-group">
+            <label htmlFor="field-undersowing">Allakülv</label>
+            <select
+              id="field-undersowing"
+              disabled={isEditSeasonLocked}
+              value={editUndersowing}
+              onChange={(e) => setEditUndersowing(e.target.value as Undersowing)}
+              className="form-input"
+            >
+              {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
+                <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        <div className="form-group">
+          <label>PRIA nimetus</label>
+          <div className="form-input readonly" title="Tuletatakse kultuurist, sordist ja allakülvist (kultuuride registri PRIA nimetus)">
+            {priaPreview || '–'}
+          </div>
         </div>
 
         <div className="form-group">

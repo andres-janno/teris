@@ -18,6 +18,7 @@ export interface CropVariety {
   recommendedSeedRateKgHa?: number;     // Soovituslik külvinorm kg/ha (nt 220)
   potentialYieldTonsHa?: number;        // Saagipotentsiaal t/ha (nt 9.5)
   qualityClass?: string;                // Kvaliteediklass (nt 'Toiduvili (E)', 'Toiduvili (I)', 'Söödavili', 'Õlisisaldus >48%')
+  priaName?: string | null;             // PRIA nimetuse alus, kui PRIA eristab sorti (nt '"Sangaste" rukis')
   notes?: string;                       // Sordiomadused ja märkused
   isActive?: boolean;
 }
@@ -34,6 +35,11 @@ export interface Crop {
   defaultYieldTonsHa?: number;          // Baas-saagiootus t/ha
   description?: string;                 // Agrotehniline kirjeldus või märkmed
   isWinterCrop?: boolean;               // Talivili (külv sügisel) — hooaeg algab eelmisel sügisel
+  priaName?: string | null;             // PRIA nimetuse alus (nt 'Talinisu', 'Muu põlduba'); tühi = kultuuri nimi
+  priaUndersowing?: boolean;            // PRIA eristab allakülvi (nimele lisandub allakülvi variant)
+  priaNameWithoutUndersowing?: string | null;    // erandnimi; tühi = alus + " allakülvita"
+  priaNameWithUndersowing?: string | null;       // erandnimi; tühi = alus + " allakülviga, v.a liblikõieliste allakülviga"
+  priaNameWithLegumeUndersowing?: string | null; // erandnimi; tühi = alus + " liblikõieliste allakülviga"
   varieties: CropVariety[];             // Alamregister antud kultuuri sortidest
   createdAt?: string;
   updatedAt?: string;

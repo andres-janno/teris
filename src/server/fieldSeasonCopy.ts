@@ -10,6 +10,8 @@ export interface SeasonSource {
   cropColor: string;
   cropId: string | null;
   varietyId: string | null;
+  undersowing: 'NONE' | 'OTHER' | 'LEGUME';
+  priaCropName: string | null;
   targetYieldTonsHa: number | null;
   geometry: unknown;
   boundaryPointsCount: number | null;
@@ -52,6 +54,8 @@ export function buildCopiedSeason(src: SeasonSource, fieldId: number, year: numb
     cropColor: src.cropColor,
     cropId: src.cropId,
     varietyId: src.varietyId,
+    undersowing: src.undersowing,
+    priaCropName: src.priaCropName,
     targetYieldTonsHa: src.targetYieldTonsHa,
     geometry: src.geometry as object,
     boundaryPointsCount: src.boundaryPointsCount,

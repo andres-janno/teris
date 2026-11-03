@@ -54,6 +54,8 @@ interface CropDraft {
   yieldT: string;
   description: string;
   isWinterCrop: boolean;
+  priaName: string;
+  priaUndersowing: boolean;
 }
 
 function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSaved: () => void; onCancel: () => void }) {
@@ -67,7 +69,9 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
     seedRate: numStr(crop?.defaultSeedRateKgHa),
     yieldT: numStr(crop?.defaultYieldTonsHa),
     description: crop?.description ?? '',
-    isWinterCrop: crop?.isWinterCrop ?? false
+    isWinterCrop: crop?.isWinterCrop ?? false,
+    priaName: crop?.priaName ?? '',
+    priaUndersowing: crop?.priaUndersowing ?? false
   });
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
@@ -87,7 +91,9 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
       defaultSeedRateKgHa: numOrNull(d.seedRate),
       defaultYieldTonsHa: numOrNull(d.yieldT),
       description: textOrNull(d.description),
-      isWinterCrop: d.isWinterCrop
+      isWinterCrop: d.isWinterCrop,
+      priaName: textOrNull(d.priaName),
+      priaUndersowing: d.priaUndersowing
     };
     try {
       if (crop) await platformApi.updateCrop(crop.id, input);
@@ -137,7 +143,11 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
       <Field id="cc-desc" label="Kirjeldus">
         <textarea id="cc-desc" className="form-input" rows={2} value={d.description} onChange={(e) => set('description', e.target.value)} maxLength={2000} />
       </Field>
+      <Field id="cc-pria-name" label="PRIA nimetus">
+        <input id="cc-pria-name" className="form-input" value={d.priaName} onChange={(e) => set('priaName', e.target.value)} maxLength={300} placeholder={d.name} />
+      </Field>
       <Check label="Talikultuur" checked={d.isWinterCrop} onChange={(v) => set('isWinterCrop', v)} />
+      <Check label="PRIA eristab allakülvi" checked={d.priaUndersowing} onChange={(v) => set('priaUndersowing', v)} />
       <div className="admin-actions">
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</button>
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>Tühista</button>

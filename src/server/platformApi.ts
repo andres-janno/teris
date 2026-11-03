@@ -360,7 +360,9 @@ const CROP_FIELDS: FieldSpec[] = [
   { k: 'defaultSeedRateKgHa', t: 'float', nullable: true, label: 'Külvinorm' },
   { k: 'defaultYieldTonsHa', t: 'float', nullable: true, label: 'Saagikus' },
   { k: 'description', t: 'text', max: 2000, nullable: true, label: 'Kirjeldus' },
-  { k: 'isWinterCrop', t: 'bool', label: 'Talikultuur' }
+  { k: 'isWinterCrop', t: 'bool', label: 'Talikultuur' },
+  { k: 'priaName', t: 'text', max: 300, nullable: true, label: 'PRIA nimetus' },
+  { k: 'priaUndersowing', t: 'bool', label: 'PRIA eristab allakülvi' }
 ];
 const VARIETY_FIELDS: FieldSpec[] = [
   { k: 'name', t: 'name', label: 'Nimi' },

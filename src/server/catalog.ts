@@ -14,7 +14,8 @@ export async function copyCatalogToTenant(tx: Prisma.TransactionClient, tenantId
       data: {
         id, tenantId, name: c.name, scientificName: c.scientificName, group: c.group, color: c.color,
         icon: c.icon, priaCode: c.priaCode, defaultSeedRateKgHa: c.defaultSeedRateKgHa,
-        defaultYieldTonsHa: c.defaultYieldTonsHa, description: c.description, isWinterCrop: c.isWinterCrop
+        defaultYieldTonsHa: c.defaultYieldTonsHa, description: c.description, isWinterCrop: c.isWinterCrop,
+        priaName: c.priaName, priaUndersowing: c.priaUndersowing
       }
     });
     for (const v of c.varieties) {

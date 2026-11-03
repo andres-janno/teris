@@ -1,6 +1,7 @@
 import type { Polygon, MultiPolygon } from 'geojson';
 import type { FieldFeature, FieldCollection } from './field';
 import type { FieldCadastralLink } from './cadastre';
+import type { Undersowing } from '../services/priaCropName';
 
 /**
  * Ühe konkreetse põllumajandusaasta / hooaja kirje (suurus ja kultuur võivad igal aastal erineda)
@@ -12,7 +13,9 @@ export interface FieldYearlyRecord {
   eligibleAreaHa?: number | null; // PRIA toetusõiguslik pindala ha
   areaChangeReason?: string | null; // Pindala muutuse põhjus (nt võsa pealekasv, kraavihooldus)
   crop: string;                 // Põllukultuur (nt Talinisu, Suvioder, Taliraps)
-  cropId?: string | null;       // Registri kultuur (server tuletab nimest; ainult lugemiseks)
+  cropId?: string | null;       // Registri kultuur (server seob nime järgi)
+  undersowing?: Undersowing;    // Allakülv (PRIA nimetuse jaoks)
+  priaCropName?: string | null; // PRIA kultuur (server tuletab salvestamisel; ainult lugemiseks)
   cropVariety?: string | null;  // Sordinimi (nt 'Skagen', 'Planet', 'Mercedes')
   cropColor: string;            // Värvikood kaardil (nt #eab308)
   worksCount?: number;          // Terise tööde arv sel aastal (ainult lugemiseks)

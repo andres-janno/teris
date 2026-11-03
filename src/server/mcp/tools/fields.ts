@@ -37,18 +37,18 @@ export const fieldTools = [
   defineTool({
     name: 'list_fields',
     title: 'Põllud',
-    description: 'Hooaja põllud: pindala, toetusõiguslik pindala, kultuur, sort, staatus, töö edenemine, külvi- ja koristuskuupäev, saagi siht ja tegelik saak (t/ha). Filtrid: aasta, kultuur, nime/numbri otsing.',
+    description: 'Hooaja põllud: pindala, toetusõiguslik pindala, kultuur (registri nimi) ja PRIA kultuuri nimetus, sort, staatus, töö edenemine, külvi- ja koristuskuupäev, saagi siht ja tegelik saak (t/ha). Filtrid: aasta, kultuur, nime/numbri otsing.',
     input: { year, crop: z.string().optional().describe('Kultuur (osaline nimi)'), search: z.string().optional().describe('Põllu nimi või number (osaline)'), limit },
     run: async (a) => {
       const y = a.year ?? tallinnYear();
       const rows = await prisma.fieldSeason.findMany({
         where: {
           year: y,
-          ...(a.crop ? { crop: { contains: a.crop, mode: 'insensitive' as const } } : {}),
+          ...(a.crop ? { OR: [{ crop: { contains: a.crop, mode: 'insensitive' as const } }, { priaCropName: { contains: a.crop, mode: 'insensitive' as const } }] } : {}),
           ...(a.search ? { field: { OR: [{ name: { contains: a.search, mode: 'insensitive' as const } }, { num: { contains: a.search, mode: 'insensitive' as const } }] } } : {})
         },
         select: {
-          areaHa: true, eligibleAreaHa: true, crop: true, cropVariety: true, status: true, workProgress: true,
+          areaHa: true, eligibleAreaHa: true, crop: true, priaCropName: true, cropVariety: true, status: true, workProgress: true,
           seedingDate: true, harvestDate: true, targetYieldTonsHa: true, actualYieldTonsHa: true,
           field: { select: { num: true, name: true } }
         }
@@ -61,7 +61,7 @@ export const fieldTools = [
         shown: out.shown,
         totalAreaHa: round2(rows.reduce((s, r) => s + r.areaHa, 0)),
         rows: out.rows.map((r) => ({
-          field: fieldLabel(r.field), areaHa: round2(r.areaHa), eligibleAreaHa: round2(r.eligibleAreaHa), crop: r.crop, variety: r.cropVariety,
+          field: fieldLabel(r.field), areaHa: round2(r.areaHa), eligibleAreaHa: round2(r.eligibleAreaHa), crop: r.crop, priaCrop: r.priaCropName, variety: r.cropVariety,
           status: r.status, progressPct: round2(r.workProgress), seeded: fmtDate(r.seedingDate), harvested: fmtDate(r.harvestDate),
           targetYieldTHa: round2(r.targetYieldTonsHa), actualYieldTHa: round2(r.actualYieldTonsHa)
         }))
@@ -99,7 +99,7 @@ export const fieldTools = [
         }
       });
       return {
-        field: fs.label, year: y, areaHa: round2(s.areaHa), eligibleAreaHa: round2(s.eligibleAreaHa), crop: s.crop, variety: s.cropVariety,
+        field: fs.label, year: y, areaHa: round2(s.areaHa), eligibleAreaHa: round2(s.eligibleAreaHa), crop: s.crop, priaCrop: s.priaCropName, variety: s.cropVariety,
         status: s.status, progressPct: round2(s.workProgress), seeded: fmtDate(s.seedingDate), harvested: fmtDate(s.harvestDate),
         targetYieldTHa: round2(s.targetYieldTonsHa), actualYieldTHa: round2(s.actualYieldTonsHa),
         priaCode: s.field.fieldCode, soilType: s.field.soilType, drainage: s.field.drainageSystem, operator: s.field.operator?.name ?? null, notes: s.notes ?? s.field.notes,

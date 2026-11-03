@@ -178,8 +178,10 @@ model FieldSeason {
   crop                String
   cropVariety         String?
   cropColor           String      @default("#eab308")
-  cropId              String?
+  cropId              String? // registri kultuur; crop = selle nimi
   varietyId           String?
+  undersowing         Undersowing @default(NONE) // allakülv (PRIA nimetuse jaoks)
+  priaCropName        String? // PRIA kultuur: tuletatud salvestamisel või PRIA impordist; jääb hooajale alles
   targetYieldTonsHa   Float?
   actualYieldTonsHa   Float?
   workedAreaHa        Float       @default(0)
@@ -515,23 +517,35 @@ enum CropGroup {
   OTHER // Muu kultuur
 }
 
+enum Undersowing {
+  NONE // allakülvita
+  OTHER // allakülviga, v.a liblikõieliste allakülviga
+  LEGUME // liblikõieliste allakülviga
+}
+
 model Crop {
-  id                  String    @id
-  tenantId            String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name                String
-  scientificName      String?
-  group               CropGroup @default(CEREAL)
-  color               String    @default("#eab308")
-  icon                String?
-  priaCode            String?
-  defaultSeedRateKgHa Float?
-  defaultYieldTonsHa  Float?
-  description         String?
-  isWinterCrop        Boolean   @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
-  createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  id                            String    @id
+  tenantId                      String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name                          String
+  scientificName                String?
+  group                         CropGroup @default(CEREAL)
+  color                         String    @default("#eab308")
+  icon                          String?
+  priaCode                      String?
+  defaultSeedRateKgHa           Float?
+  defaultYieldTonsHa            Float?
+  description                   String?
+  isWinterCrop                  Boolean   @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
+  // PRIA nimetus: hooaja PRIA kultuur tuletatakse neist (services/priaCropName.ts). Tühi = kultuuri nimi.
+  priaName                      String? // PRIA nimetuse alus (nt "talinisu", "muu põlduba")
+  priaUndersowing               Boolean   @default(false) // PRIA eristab allakülvi (nimele lisandub allakülvi variant)
+  priaNameWithoutUndersowing    String? // erandnimi allakülvita variandile; tühi = alus + " allakülvita"
+  priaNameWithUndersowing       String? // erandnimi muu allakülviga variandile
+  priaNameWithLegumeUndersowing String? // erandnimi liblikõieliste allakülviga variandile
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  createdBy                     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy                     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   varieties     CropVariety[]
   fieldSeasons  FieldSeason[]
@@ -555,6 +569,7 @@ model CropVariety {
   recommendedSeedRateKgHa Float? // Soovituslik külvinorm kg/ha
   potentialYieldTonsHa    Float? // Saagipotentsiaal t/ha
   qualityClass            String? // Kvaliteediklass (nt Toiduvili E, I, söödavili)
+  priaName                String? // PRIA nimetuse alus, kui PRIA eristab sorti (nt '"Sangaste" rukis'); tühi = kultuuri oma
   notes                   String?
   isActive                Boolean  @default(true)
   createdAt               DateTime @default(now())
@@ -1432,6 +1447,8 @@ model CatalogCrop {
   defaultYieldTonsHa  Float?
   description         String?
   isWinterCrop        Boolean   @default(false)
+  priaName            String? // PRIA nimetuse alus
+  priaUndersowing     Boolean   @default(false) // PRIA eristab allakülvi
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

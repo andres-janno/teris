@@ -22,6 +22,7 @@ import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
+import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -219,6 +220,7 @@ function cropSummaryKey(cropText: string): string {
     year: number;
     crop: string;
     variety: string;
+    undersowing: Undersowing;
   } | null>(null);
   const cropEditRef = React.useRef<HTMLDivElement>(null);
 
@@ -251,7 +253,7 @@ function cropSummaryKey(cropText: string): string {
   };
 
   const openCropEdit = (field: MasterField, year: number, rec?: FieldYearlyRecord) =>
-    setCropEdit({ fieldId: field.id, year, crop: rec?.crop ?? '', variety: rec?.cropVariety ?? '' });
+    setCropEdit({ fieldId: field.id, year, crop: rec?.crop ?? '', variety: rec?.cropVariety ?? '', undersowing: rec?.undersowing ?? 'NONE' });
 
   const saveCropEdit = () => {
     if (!cropEdit) return;
@@ -268,7 +270,7 @@ function cropSummaryKey(cropText: string): string {
     const cropColor = findRegistryCrop(cropEdit.crop)?.color || rec?.cropColor || '#22c55e';
 
     if (rec) {
-      onUpdateField(field.id, {}, { ...rec, crop: cropEdit.crop, cropVariety: cropEdit.variety || undefined, cropColor });
+      onUpdateField(field.id, {}, { ...rec, crop: cropEdit.crop, cropVariety: cropEdit.variety || undefined, undersowing: cropEdit.undersowing, cropColor });
     } else {
       // Uus aasta kirje: pindala, piirid ja katastriüksused lähimast varasemast (või viimasest) aastast.
       const byYearDesc = [...field.history].sort((a, b) => b.year - a.year);
@@ -279,6 +281,7 @@ function cropSummaryKey(cropText: string): string {
         eligibleAreaHa: source.eligibleAreaHa,
         crop: cropEdit.crop,
         cropVariety: cropEdit.variety || undefined,
+        undersowing: cropEdit.undersowing,
         cropColor,
         workedAreaHa: 0,
         workProgress: 0,
@@ -564,7 +567,7 @@ function cropSummaryKey(cropText: string): string {
                                   className="form-input"
                                   value={cropEdit.crop}
                                   autoFocus
-                                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '' })}
+                                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '', undersowing: 'NONE' })}
                                 >
                                   <option value="">– Kultuur määramata –</option>
                                   {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
@@ -585,6 +588,18 @@ function cropSummaryKey(cropText: string): string {
                                     <option key={v} value={v}>{v}</option>
                                   ))}
                                 </select>
+                                {findRegistryCrop(cropEdit.crop)?.priaUndersowing && (
+                                  <select
+                                    className="form-input"
+                                    value={cropEdit.undersowing}
+                                    onChange={(e) => setCropEdit({ ...cropEdit, undersowing: e.target.value as Undersowing })}
+                                    title="Allakülv"
+                                  >
+                                    {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
+                                      <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
+                                    ))}
+                                  </select>
+                                )}
                                 <div className="crop-inline-edit-actions">
                                   <button type="button" className="icon-btn-ghost" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
                                     <X size={15} />
@@ -609,7 +624,7 @@ function cropSummaryKey(cropText: string): string {
                               <>
                                 <div className="year-crop">
                                   {hasCrop
-                                    ? <span className="year-crop-name" title={rec.crop}>{rec.crop}</span>
+                                    ? <span className="year-crop-name" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
                                     : <span className="muted">–</span>}
                                   {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                                   <button
@@ -625,6 +640,9 @@ function cropSummaryKey(cropText: string): string {
                                   </button>
                                 </div>
                                 {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                                {hasCrop && rec.undersowing && rec.undersowing !== 'NONE' && (
+                                  <div className="cell-sub">{UNDERSOWING_LABELS[rec.undersowing]}</div>
+                                )}
                               </>
                             ) : (
                               <div className="year-crop">
