@@ -69,6 +69,13 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   }, []);
   useEffect(() => { reloadWarehouses(); }, [reloadWarehouses]);
 
+  // Täpsustus: terade kultuur ja/või PRIA täpsustav liik
+  const [cropNames, setCropNames] = useState<Map<string, string>>(new Map());
+  useEffect(() => {
+    api.getCrops().then((cs) => setCropNames(new Map(cs.map((c) => [c.id, c.name])))).catch(() => setCropNames(new Map()));
+  }, []);
+  const refinement = (m: Article) => [m.cropId ? cropNames.get(m.cropId) : null, m.priaKind].filter(Boolean).join(" · ");
+
   const reload = useCallback(async () => {
     try {
       setArticles(await api.getArticles(selectedYear, warehouseId || undefined));
@@ -104,13 +111,13 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Materjal', 'Tootja', 'Liik', 'Kultuur / täpsustav liik', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Liik', 'Täpsustus', 'Nimetus', 'Tootja', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
+      `"${m.category.name}"`,
+      `"${refinement(m)}"`,
       `"${m.name}"`,
       `"${m.manufacturer ?? ''}"`,
-      `"${m.category.name}"`,
-      `"${m.priaKind ?? ''}"`,
       `"${m.unit}"`,
       m.stockQty ?? 0,
       ...(canManageFinance ? [m.stockValue ?? 0] : []),
@@ -242,10 +249,10 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               <table className="register-table articles-table">
                 <thead>
                   <tr>
-                    <th>Materjal</th>
-                    <th>Tootja</th>
                     <th>Liik</th>
-                    <th title="Seemnel kultuur, väetisel ja taimekaitsevahendil täpsustav liik (PRIA)">Kultuur / täpsustav liik</th>
+                    <th title="Terade kultuur, väetise ja taimekaitsevahendi täpsustav liik (PRIA)">Täpsustus</th>
+                    <th>Nimetus</th>
+                    <th>Tootja</th>
                     <th>Ühik</th>
                     {canManageFinance && <th className="num">Hind</th>}
                     <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
@@ -270,14 +277,14 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   )}
                   {filtered.map((m) => (
                     <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
+                      <td>{m.category.name}</td>
+                      <td>{refinement(m)}</td>
                       <td className="name-cell" title={m.notes ?? undefined}>
                         <span className="field-name">{m.name}</span>
                         {m.isDefaultService && <span className="article-default-badge" title="Tööaja liigi vaikimisi teenus">vaikimisi</span>}
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
                       <td>{m.manufacturer ?? ''}</td>
-                      <td>{m.category.name}</td>
-                      <td>{m.priaKind ?? ''}</td>
                       <td>{m.unit}</td>
                       {canManageFinance && (
                         <td className="num">{!isGoods(m.category.group) && m.price != null ? `${fmtEur(m.price)} / ${m.unit}` : ''}</td>
