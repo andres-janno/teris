@@ -16,6 +16,7 @@ interface Domain {
   intro: string;
   models: string[];
   notes?: string[];
+  details?: string[]; // vaba markdown (alapeatükid) märkuste järel
 }
 
 const DOMAINS: Domain[] = [
@@ -28,11 +29,71 @@ const DOMAINS: Domain[] = [
   {
     title: 'Põllutööd ja kanded',
     intro: 'Töö on hooaja põllu planeeritud tegevus (PRIA tegevus), plaaniread on planeeritud materjalid normiga. Kanne on tegelikult tehtud töö osa; kande read on tööaeg, masin, kütus, materjalid, saak ja seire leiud.',
-    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'ArticleCategory', 'Article', 'WorkTemplate', 'WorkTemplateItem'],
+    models: ['WorkType', 'FieldWork', 'FieldWorkLine', 'WorkEntry', 'WorkEntryLine', 'WorkTemplate', 'WorkTemplateItem'],
     notes: [
       'Töötüübid = PRIA e-põlluraamatu 29 tegevust (`priaCode`); `shortName` on ettevõtte lühinimi.',
-      '**Artikli liigid** (`article_categories`): artikkel kuulub liiki; liik kuulub rühma (`ArticleGroup`): `SERVICE` (teenus — laoarvestust pole), `CONSUMABLE` (kulumaterjal), `PRODUCE` (toodang), `OTHER_GOODS` (muu kaup). Süsteemsetel liikidel on `systemKind` (töötaja/masina/haakeriista/kuivatamise tööaeg, seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, terad); need luuakse automaatselt ja neid ei kustutata. Kasutaja loob liike juurde (nt varuosad, mürgid). Teenusel `price` (ühiku hind), teradel `cropId`, kaubal `defaultWarehouseId`. Reeglid: `src/services/articleRules.ts`.',
       '`WorkTemplate` ja `WorkTemplateItem` (tööde mallid) on andmebaasis alles, aga rakendus neid enam ei kasuta.'
+    ]
+  },
+  {
+    title: 'Artiklid',
+    intro: 'Artikkel on kõik, mida põllutöödel kulutatakse või toodetakse: teenused (tööaeg), kulumaterjalid, toodang ja muu kaup. Plaani- ja kanderead, laokanded, saagipartiid ning masinate, haakeriistade ja töötajate teenused viitavad artiklile. Artikkel kuulub gruppi, grupp kuulub tüüpi.',
+    models: ['ArticleCategory', 'Article'],
+    notes: [
+      'Kasutajaliidese nimed: `article_categories` = **grupp** (nupp „Grupid“), `ArticleGroup` = **tüüp**, `priaKind` = **täpsustus**, `name` = **nimetus**.',
+      'Reeglid (mis väli millisel grupil on, mis reale artikli saab panna, teenuse hind, kütuseartikkel): `src/services/articleRules.ts`. Kande artiklite leidmine: `src/server/entryArticles.ts`.'
+    ],
+    details: [
+      '### Tüübid (`ArticleGroup`)',
+      '',
+      '| Tüüp | Tähendus | Laoarvestus |',
+      '|---|---|---|',
+      '| `SERVICE` | Teenus: töötaja, masina, haakeriista või kuivatamise tööaeg. Ühik tavaliselt h, hind artiklil (`price`). | Ei |',
+      '| `CONSUMABLE` | Kulumaterjal: seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, kasutaja grupid. | Jah (FIFO) |',
+      '| `PRODUCE` | Toodang: terad (saagipartii kaalumine võtab lattu hindamata). | Jah |',
+      '| `OTHER_GOODS` | Muu kaup (nt edasimüük, varuosad); ainult kasutaja loodud gruppides. | Jah |',
+      '',
+      'Kaup = iga tüüp peale `SERVICE` (`isGoods`). Gruppi ei saa teenuse ja kauba vahel ümber tõsta.',
+      '',
+      '### Grupid (`article_categories`)',
+      '',
+      'Süsteemsed grupid luuakse igale ettevõttele automaatselt ja neid ei saa kustutada ega teise tüüpi viia; loogika käitub `systemKind` järgi. Kasutaja loodud grupil on `systemKind` tühi ja see käitub nagu oma tüübi tavaline grupp. Grupi nimi on ettevõttes unikaalne; grupi saab kustutada ainult siis, kui selles pole artikleid.',
+      '',
+      '| `systemKind` | Grupp | Tüüp | Lisaväljad artiklil | Kasutus |',
+      '|---|---|---|---|---|',
+      '| `LABOR_TIME` | Töötaja tööaeg | `SERVICE` | `price` | kande tööaja rida |',
+      '| `MACHINE_TIME` | Masina tööaeg | `SERVICE` | `price` | kande masina rida |',
+      '| `IMPLEMENT_TIME` | Haakeriista tööaeg | `SERVICE` | `price` | kande haakeriista rida |',
+      '| `DRYING_TIME` | Kuivatamise tööaeg | `SERVICE` | `price` | saagipartii kuivatuskulu |',
+      '| `SEED` | Seeme | `CONSUMABLE` | PRIA (`priaRegister`, `priaKind`, `priaSpec`), sort (`cropVarietyId`) | plaani-/kande materjalirida |',
+      '| `FERTILIZER` | Väetis | `CONSUMABLE` | PRIA, N/P/K % | plaani-/kande materjalirida |',
+      '| `PLANT_PROTECTION` | Taimekaitsevahend | `CONSUMABLE` | PRIA, toimeaine (`activeIngredient`) | plaani-/kande materjalirida |',
+      '| `FUEL` | Kütus | `CONSUMABLE` | vaikimisi ladu (mahuti) | kande kütuserida (oma rida, mitte materjal) |',
+      '| `DRYING_OIL` | Kuivatusõli | `CONSUMABLE` | vaikimisi ladu | saagipartii kuivatuskulu |',
+      '| `GRAIN` | Terad | `PRODUCE` | kultuur (`cropId`) | saagipartii toodanguartikkel |',
+      '',
+      'Kaubale saab määrata vaikimisi lao (`defaultWarehouseId`, valikuline; teenusel puudub). PRIA import paneb tundmatud kulumaterjalid gruppi „Muu kulumaterjal“ (luuakse vajadusel).',
+      '',
+      '### Teenused ja hind kandel',
+      '',
+      '- Igal tööaja grupil on üks vaikimisi teenus (`isDefaultService`); puudumisel luuakse see grupi nimega (ühik h, hind tühi).',
+      '- Masinal, haakeriistal ja töötajal (`vehicles`, `implements`, `related_parties`) võib olla oma teenus (`serviceArticleId`) ja oma tunnihind (`hourlyRate`, näeb ainult admin/finants).',
+      '- Kande tööaja rea hind: ressursi tunnihind → ressursi teenuse hind → vaikimisi teenuse hind (`pickServicePrice`).',
+      '- Kütuserea artikkel: masina vaikimisi kütus (`fuelArticleId`), muidu ettevõtte ainus aktiivne kütus; artiklita kütuserida ei lase kannet kinnitada. Kütus kantakse maha kütuseartikli vaikimisi laost, kulumaterjal kande laost.',
+      '- Kande muutmisel jääb teenuse- ja kütusereale vana artikkel ja hind (ajalugu ei muutu tagantjärele).',
+      '',
+      '### Kaubad ja ladu',
+      '',
+      '- Laoseis ja väärtus arvutatakse FIFO järgi artikli ja lao kaupa (`article_stock`, vt [Laoarvestus](#laoarvestus)); kande materjali- ja kütuserea `unitPrice` = FIFO hind.',
+      '- `unit` on laoühik; laokande read on alati selles ühikus. Ühiku muutmisel teisendatakse read teguriga ja ühikuhind jagatakse sellega (`src/server/articleUnitChange.ts`); saagipartiidega artikli ühikut saab muuta ainult kaaluühikuks.',
+      '- `stockIssueCount` — kanderead, mille ühikut ei saa laoühikusse teisendada (laoarvestusest väljas).',
+      '',
+      '### Asendamine ja kustutamine',
+      '',
+      '- Asendamine (ühendamine) on lubatud ainult sama grupi artikliga: kõik viited (plaani-, kande- ja laokande read, kuivatuskulud, ressursside teenused) viiakse sihtartiklile, vana nimi lisatakse sihtartikli `aliases` hulka (PRIA import tunneb selle ära) ja vana artikkel kustutatakse.',
+      '- Kasutuses olevat artiklit (plaani-, kande- või laokande read, saagipartii, kuivatuskulu) ei kustutata — see märgitakse mitteaktiivseks. Vaikimisi teenust ei saa kustutada, teise gruppi viia ega mitteaktiivseks muuta. Kuivatuskuludega artikli gruppi ei saa muuta.',
+      '- Unikaalsus: nimetus on unikaalne grupi piires (`tenantId + categoryId + name`).',
+      ''
     ]
   },
   {
@@ -81,7 +142,7 @@ const DESCRIPTIONS: Record<string, string> = {
   FieldWorkLine: 'Töö plaanirida: planeeritud materjal (norm/ha, PRIA atribuudid) või saak',
   WorkEntry: 'Kanne = tehtud töö osa: kuupäev, töötaja, masin, haakeriist, tunnid, kütus, pindala, finantsi olek',
   WorkEntryLine: 'Kande rida: tööaeg, masin, haakeriist, kütus, materjal, saak, seire leid (kogus, ühik, hind)',
-  ArticleCategory: 'Artikli liik (rühm, süsteemne liik)',
+  ArticleCategory: 'Artikli grupp (tüüp, süsteemne grupp)',
   Article: 'Artikkel: teenus (tööaeg) või kaup (kulumaterjal, toodang, muu kaup)',
   WorkTemplate: 'Tööde mall (kasutuseta)',
   WorkTemplateItem: 'Tööde malli rida (kasutuseta)',
@@ -226,6 +287,7 @@ const doc = [
     tableIndex(d),
     '',
     ...(d.notes?.length ? [...d.notes.map((n) => `- ${n}`), ''] : []),
+    ...(d.details ?? []),
     domainDiagram(d),
     ''
   ]),

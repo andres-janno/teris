@@ -1,6 +1,6 @@
 # Andmemudel (ERD)
 
-Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-11-02). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
+Genereeritud skriptiga `scripts/generate-erd.mts` failist `prisma/schema.prisma` (2026-11-03). Ära muuda käsitsi — käivita `npx tsx scripts/generate-erd.mts` pärast skeemimuudatust.
 
 Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-ja-andmed.md](vaated-ja-andmed.md).
 
@@ -13,12 +13,13 @@ Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-j
 ## Sisukord
 1. [Põllud, hooajad ja kultuurid](#põllud-hooajad-ja-kultuurid)
 2. [Põllutööd ja kanded](#põllutööd-ja-kanded)
-3. [Masinapark, telemeetria ja objektid](#masinapark-telemeetria-ja-objektid)
-4. [Laoarvestus](#laoarvestus)
-5. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
-6. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
-7. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
-8. [Loendid (enum)](#loendid-enum)
+3. [Artiklid](#artiklid)
+4. [Masinapark, telemeetria ja objektid](#masinapark-telemeetria-ja-objektid)
+5. [Laoarvestus](#laoarvestus)
+6. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
+7. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
+8. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
+9. [Loendid (enum)](#loendid-enum)
 
 ## Põllud, hooajad ja kultuurid
 
@@ -221,13 +222,10 @@ Töö on hooaja põllu planeeritud tegevus (PRIA tegevus), plaaniread on planeer
 | `FieldWorkLine` | `field_work_lines` | jah | Töö plaanirida: planeeritud materjal (norm/ha, PRIA atribuudid) või saak |
 | `WorkEntry` | `work_entries` | jah | Kanne = tehtud töö osa: kuupäev, töötaja, masin, haakeriist, tunnid, kütus, pindala, finantsi olek |
 | `WorkEntryLine` | `work_entry_lines` | jah | Kande rida: tööaeg, masin, haakeriist, kütus, materjal, saak, seire leid (kogus, ühik, hind) |
-| `ArticleCategory` | `article_categories` | jah | Artikli liik (rühm, süsteemne liik) |
-| `Article` | `articles` | jah | Artikkel: teenus (tööaeg) või kaup (kulumaterjal, toodang, muu kaup) |
 | `WorkTemplate` | `work_templates` | jah | Tööde mall (kasutuseta) |
 | `WorkTemplateItem` | `work_template_items` | jah | Tööde malli rida (kasutuseta) |
 
 - Töötüübid = PRIA e-põlluraamatu 29 tegevust (`priaCode`); `shortName` on ettevõtte lühinimi.
-- **Artikli liigid** (`article_categories`): artikkel kuulub liiki; liik kuulub rühma (`ArticleGroup`): `SERVICE` (teenus — laoarvestust pole), `CONSUMABLE` (kulumaterjal), `PRODUCE` (toodang), `OTHER_GOODS` (muu kaup). Süsteemsetel liikidel on `systemKind` (töötaja/masina/haakeriista/kuivatamise tööaeg, seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, terad); need luuakse automaatselt ja neid ei kustutata. Kasutaja loob liike juurde (nt varuosad, mürgid). Teenusel `price` (ühiku hind), teradel `cropId`, kaubal `defaultWarehouseId`. Reeglid: `src/services/articleRules.ts`.
 - `WorkTemplate` ja `WorkTemplateItem` (tööde mallid) on andmebaasis alles, aga rakendus neid enam ei kasuta.
 
 ```mermaid
@@ -339,6 +337,153 @@ erDiagram
     Float kKgHa "valikuline"
     Int sortOrder
   }
+  WorkTemplate {
+    String id PK
+    String cropId FK "valikuline"
+    Boolean isWinter
+    DateTime createdAt
+    DateTime updatedAt
+  }
+  WorkTemplateItem {
+    String id PK
+    String templateId FK
+    String workTypeId FK
+    Int sortOrder
+    String typicalTiming "valikuline"
+    Int plannedCount "valikuline"
+  }
+  FieldSeason {
+    Int id PK
+    Int fieldId FK
+    Int seasonId FK "valikuline"
+    String cropId FK "valikuline"
+    String varietyId FK "valikuline"
+  }
+  User {
+    String id PK
+  }
+  RelatedParty {
+    String id PK
+    String serviceArticleId FK "valikuline"
+  }
+  Article {
+    String id PK
+    String categoryId FK
+    String cropVarietyId FK "valikuline"
+    String cropId FK "valikuline"
+    String defaultWarehouseId FK "valikuline"
+  }
+  Vehicle {
+    String id PK
+    String assignedDriverId FK "valikuline"
+    String serviceArticleId FK "valikuline"
+    String fuelArticleId FK "valikuline"
+  }
+  Implement {
+    String id PK
+    String serviceArticleId FK "valikuline"
+  }
+  Warehouse {
+    String id PK
+    String poiId FK,UK "valikuline"
+  }
+  HarvestLot {
+    String id PK
+    Int seasonId FK
+    String cropId FK
+    String articleId FK
+    String warehouseId FK
+  }
+  Crop {
+    String id PK
+  }
+  FieldSeason ||--o{ FieldWork : "fieldSeason"
+  WorkType ||--o{ FieldWork : "workType"
+  User |o--o{ FieldWork : "finishedBy"
+  RelatedParty |o--o{ FieldWork : "plannedWorker"
+  FieldWork ||--o{ FieldWorkLine : "fieldWork"
+  Article |o--o{ FieldWorkLine : "article"
+  FieldWork ||--o{ WorkEntry : "fieldWork"
+  RelatedParty |o--o{ WorkEntry : "worker"
+  Vehicle |o--o{ WorkEntry : "vehicle"
+  Implement |o--o{ WorkEntry : "implement"
+  Warehouse |o--o{ WorkEntry : "warehouse"
+  User |o--o{ WorkEntry : "createdByUser"
+  User |o--o{ WorkEntry : "financeConfirmedBy"
+  HarvestLot |o--o{ WorkEntry : "harvestLot"
+  WorkEntry ||--o{ WorkEntryLine : "entry"
+  Vehicle |o--o{ WorkEntryLine : "vehicle"
+  Implement |o--o{ WorkEntryLine : "implement"
+  Article |o--o{ WorkEntryLine : "article"
+  Crop |o--o{ WorkTemplate : "crop"
+  WorkTemplate ||--o{ WorkTemplateItem : "template"
+  WorkType ||--o{ WorkTemplateItem : "workType"
+```
+
+## Artiklid
+
+Artikkel on kõik, mida põllutöödel kulutatakse või toodetakse: teenused (tööaeg), kulumaterjalid, toodang ja muu kaup. Plaani- ja kanderead, laokanded, saagipartiid ning masinate, haakeriistade ja töötajate teenused viitavad artiklile. Artikkel kuulub gruppi, grupp kuulub tüüpi.
+
+| Mudel | Tabel | Ettevõttepõhine | Sisu |
+|---|---|---|---|
+| `ArticleCategory` | `article_categories` | jah | Artikli grupp (tüüp, süsteemne grupp) |
+| `Article` | `articles` | jah | Artikkel: teenus (tööaeg) või kaup (kulumaterjal, toodang, muu kaup) |
+
+- Kasutajaliidese nimed: `article_categories` = **grupp** (nupp „Grupid“), `ArticleGroup` = **tüüp**, `priaKind` = **täpsustus**, `name` = **nimetus**.
+- Reeglid (mis väli millisel grupil on, mis reale artikli saab panna, teenuse hind, kütuseartikkel): `src/services/articleRules.ts`. Kande artiklite leidmine: `src/server/entryArticles.ts`.
+
+### Tüübid (`ArticleGroup`)
+
+| Tüüp | Tähendus | Laoarvestus |
+|---|---|---|
+| `SERVICE` | Teenus: töötaja, masina, haakeriista või kuivatamise tööaeg. Ühik tavaliselt h, hind artiklil (`price`). | Ei |
+| `CONSUMABLE` | Kulumaterjal: seeme, väetis, taimekaitsevahend, kütus, kuivatusõli, kasutaja grupid. | Jah (FIFO) |
+| `PRODUCE` | Toodang: terad (saagipartii kaalumine võtab lattu hindamata). | Jah |
+| `OTHER_GOODS` | Muu kaup (nt edasimüük, varuosad); ainult kasutaja loodud gruppides. | Jah |
+
+Kaup = iga tüüp peale `SERVICE` (`isGoods`). Gruppi ei saa teenuse ja kauba vahel ümber tõsta.
+
+### Grupid (`article_categories`)
+
+Süsteemsed grupid luuakse igale ettevõttele automaatselt ja neid ei saa kustutada ega teise tüüpi viia; loogika käitub `systemKind` järgi. Kasutaja loodud grupil on `systemKind` tühi ja see käitub nagu oma tüübi tavaline grupp. Grupi nimi on ettevõttes unikaalne; grupi saab kustutada ainult siis, kui selles pole artikleid.
+
+| `systemKind` | Grupp | Tüüp | Lisaväljad artiklil | Kasutus |
+|---|---|---|---|---|
+| `LABOR_TIME` | Töötaja tööaeg | `SERVICE` | `price` | kande tööaja rida |
+| `MACHINE_TIME` | Masina tööaeg | `SERVICE` | `price` | kande masina rida |
+| `IMPLEMENT_TIME` | Haakeriista tööaeg | `SERVICE` | `price` | kande haakeriista rida |
+| `DRYING_TIME` | Kuivatamise tööaeg | `SERVICE` | `price` | saagipartii kuivatuskulu |
+| `SEED` | Seeme | `CONSUMABLE` | PRIA (`priaRegister`, `priaKind`, `priaSpec`), sort (`cropVarietyId`) | plaani-/kande materjalirida |
+| `FERTILIZER` | Väetis | `CONSUMABLE` | PRIA, N/P/K % | plaani-/kande materjalirida |
+| `PLANT_PROTECTION` | Taimekaitsevahend | `CONSUMABLE` | PRIA, toimeaine (`activeIngredient`) | plaani-/kande materjalirida |
+| `FUEL` | Kütus | `CONSUMABLE` | vaikimisi ladu (mahuti) | kande kütuserida (oma rida, mitte materjal) |
+| `DRYING_OIL` | Kuivatusõli | `CONSUMABLE` | vaikimisi ladu | saagipartii kuivatuskulu |
+| `GRAIN` | Terad | `PRODUCE` | kultuur (`cropId`) | saagipartii toodanguartikkel |
+
+Kaubale saab määrata vaikimisi lao (`defaultWarehouseId`, valikuline; teenusel puudub). PRIA import paneb tundmatud kulumaterjalid gruppi „Muu kulumaterjal“ (luuakse vajadusel).
+
+### Teenused ja hind kandel
+
+- Igal tööaja grupil on üks vaikimisi teenus (`isDefaultService`); puudumisel luuakse see grupi nimega (ühik h, hind tühi).
+- Masinal, haakeriistal ja töötajal (`vehicles`, `implements`, `related_parties`) võib olla oma teenus (`serviceArticleId`) ja oma tunnihind (`hourlyRate`, näeb ainult admin/finants).
+- Kande tööaja rea hind: ressursi tunnihind → ressursi teenuse hind → vaikimisi teenuse hind (`pickServicePrice`).
+- Kütuserea artikkel: masina vaikimisi kütus (`fuelArticleId`), muidu ettevõtte ainus aktiivne kütus; artiklita kütuserida ei lase kannet kinnitada. Kütus kantakse maha kütuseartikli vaikimisi laost, kulumaterjal kande laost.
+- Kande muutmisel jääb teenuse- ja kütusereale vana artikkel ja hind (ajalugu ei muutu tagantjärele).
+
+### Kaubad ja ladu
+
+- Laoseis ja väärtus arvutatakse FIFO järgi artikli ja lao kaupa (`article_stock`, vt [Laoarvestus](#laoarvestus)); kande materjali- ja kütuserea `unitPrice` = FIFO hind.
+- `unit` on laoühik; laokande read on alati selles ühikus. Ühiku muutmisel teisendatakse read teguriga ja ühikuhind jagatakse sellega (`src/server/articleUnitChange.ts`); saagipartiidega artikli ühikut saab muuta ainult kaaluühikuks.
+- `stockIssueCount` — kanderead, mille ühikut ei saa laoühikusse teisendada (laoarvestusest väljas).
+
+### Asendamine ja kustutamine
+
+- Asendamine (ühendamine) on lubatud ainult sama grupi artikliga: kõik viited (plaani-, kande- ja laokande read, kuivatuskulud, ressursside teenused) viiakse sihtartiklile, vana nimi lisatakse sihtartikli `aliases` hulka (PRIA import tunneb selle ära) ja vana artikkel kustutatakse.
+- Kasutuses olevat artiklit (plaani-, kande- või laokande read, saagipartii, kuivatuskulu) ei kustutata — see märgitakse mitteaktiivseks. Vaikimisi teenust ei saa kustutada, teise gruppi viia ega mitteaktiivseks muuta. Kuivatuskuludega artikli gruppi ei saa muuta.
+- Unikaalsus: nimetus on unikaalne grupi piires (`tenantId + categoryId + name`).
+
+```mermaid
+erDiagram
   ArticleCategory {
     String id PK
     String name
@@ -375,30 +520,16 @@ erDiagram
     DateTime createdAt
     DateTime updatedAt
   }
-  WorkTemplate {
+  CropVariety {
     String id PK
-    String cropId FK "valikuline"
-    Boolean isWinter
-    DateTime createdAt
-    DateTime updatedAt
+    String cropId FK
   }
-  WorkTemplateItem {
+  Crop {
     String id PK
-    String templateId FK
-    String workTypeId FK
-    Int sortOrder
-    String typicalTiming "valikuline"
-    Int plannedCount "valikuline"
   }
-  FieldSeason {
-    Int id PK
-    Int fieldId FK
-    Int seasonId FK "valikuline"
-    String cropId FK "valikuline"
-    String varietyId FK "valikuline"
-  }
-  User {
+  Warehouse {
     String id PK
+    String poiId FK,UK "valikuline"
   }
   RelatedParty {
     String id PK
@@ -414,23 +545,17 @@ erDiagram
     String id PK
     String serviceArticleId FK "valikuline"
   }
-  Warehouse {
+  FieldWorkLine {
     String id PK
-    String poiId FK,UK "valikuline"
+    String fieldWorkId FK
+    String articleId FK "valikuline"
   }
-  HarvestLot {
+  WorkEntryLine {
     String id PK
-    Int seasonId FK
-    String cropId FK
-    String articleId FK
-    String warehouseId FK
-  }
-  CropVariety {
-    String id PK
-    String cropId FK
-  }
-  Crop {
-    String id PK
+    String entryId FK
+    String vehicleId FK "valikuline"
+    String implementId FK "valikuline"
+    String articleId FK "valikuline"
   }
   StockDocumentLine {
     String id PK
@@ -441,40 +566,28 @@ erDiagram
     String articleId FK
     String warehouseId FK
   }
+  HarvestLot {
+    String id PK
+    Int seasonId FK
+    String cropId FK
+    String articleId FK
+    String warehouseId FK
+  }
   HarvestLotCost {
     String id PK
     String lotId FK
     String articleId FK
   }
-  FieldSeason ||--o{ FieldWork : "fieldSeason"
-  WorkType ||--o{ FieldWork : "workType"
-  User |o--o{ FieldWork : "finishedBy"
-  RelatedParty |o--o{ FieldWork : "plannedWorker"
-  FieldWork ||--o{ FieldWorkLine : "fieldWork"
-  Article |o--o{ FieldWorkLine : "article"
-  FieldWork ||--o{ WorkEntry : "fieldWork"
-  RelatedParty |o--o{ WorkEntry : "worker"
-  Vehicle |o--o{ WorkEntry : "vehicle"
-  Implement |o--o{ WorkEntry : "implement"
-  Warehouse |o--o{ WorkEntry : "warehouse"
-  User |o--o{ WorkEntry : "createdByUser"
-  User |o--o{ WorkEntry : "financeConfirmedBy"
-  HarvestLot |o--o{ WorkEntry : "harvestLot"
-  WorkEntry ||--o{ WorkEntryLine : "entry"
-  Vehicle |o--o{ WorkEntryLine : "vehicle"
-  Implement |o--o{ WorkEntryLine : "implement"
-  Article |o--o{ WorkEntryLine : "article"
   CropVariety |o--o{ Article : "cropVariety"
   ArticleCategory ||--o{ Article : "category"
   Crop |o--o{ Article : "crop"
   Warehouse |o--o{ Article : "defaultWarehouse"
-  Crop |o--o{ WorkTemplate : "crop"
-  WorkTemplate ||--o{ WorkTemplateItem : "template"
-  WorkType ||--o{ WorkTemplateItem : "workType"
   Article |o--o{ RelatedParty : "serviceArticle"
   Article |o--o{ Vehicle : "serviceArticle"
   Article |o--o{ Vehicle : "fuelArticle"
   Article |o--o{ Implement : "serviceArticle"
+  Article |o--o{ FieldWorkLine : "article"
+  Article |o--o{ WorkEntryLine : "article"
   Article ||--o{ StockDocumentLine : "article"
   Article ||--o{ ArticleStock : "article"
   Article ||--o{ HarvestLot : "article"
