@@ -11028,3 +11028,23 @@ td.stock-qty-out { color: #dc2626; }
 .article-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
 .article-merge-info { margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }
+
+/* Saagipartii aken: plokid ei tohi kerimisaknas kokku tõmbuda (muidu jääb tabelist üks rida) */
+.harvest-lot-modal .modal-body > * { flex-shrink: 0; }
+.harvest-lot-modal .modal-body { gap: 20px; }
+.harvest-lot-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; gap: 12px; align-items: end; }
+.harvest-lot-head .form-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.harvest-lot-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
+.harvest-lot-tiles .finance-kpi-value { font-size: 1.15rem; font-weight: 700; text-align: left; }
+.harvest-lot-section { display: flex; flex-direction: column; gap: 8px; }
+.harvest-lot-section h4 { margin: 0; }
+.harvest-lot-section .register-table-wrap { max-height: 40vh; }
+.harvest-lot-add { display: grid; gap: 10px; align-items: end; padding: 10px 12px; border: 1px dashed var(--border-card); border-radius: var(--radius-md); }
+.harvest-lot-add .form-group label { font-size: 0.72rem; color: var(--text-secondary); }
+.harvest-lot-add .form-input { width: 100%; min-width: 0; box-sizing: border-box; }
+.harvest-lot-add-weighing { grid-template-columns: 150px 120px minmax(0, 1fr) auto; }
+.harvest-lot-add-cost { grid-template-columns: 150px minmax(0, 1.4fr) 110px minmax(0, 1fr) auto; }
+@media (max-width: 720px) {
+  .harvest-lot-head, .harvest-lot-add-weighing, .harvest-lot-add-cost { grid-template-columns: 1fr 1fr; }
+  .harvest-lot-tiles { grid-template-columns: 1fr 1fr; }
+}
