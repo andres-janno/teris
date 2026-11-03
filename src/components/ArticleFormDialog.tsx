@@ -103,7 +103,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     // Liigiga mittesobivad väljad tühjendatakse (nt liigi muutmisel)
-    if (!rules) return alertDialog('Vali liik');
+    if (!rules) return alertDialog('Vali grupp');
     const payload: Partial<Article> & { unitFactor?: number | null } = {
       ...form,
       ...sanitizeArticleFields({
@@ -155,7 +155,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <datalist id="article-manufacturers">{manufacturers.map((m) => <option key={m} value={m} />)}</datalist>
             </div>
             <div className="form-group">
-              <label htmlFor="mt-cat">Liik *</label>
+              <label htmlFor="mt-cat">Grupp *</label>
               <select id="mt-cat" className="form-input" required disabled={!!initial?.isDefaultService} value={form.categoryId ?? ''} onChange={(e) => {
                 const c = categories.find((x) => x.id === e.target.value);
                 setForm({ ...form, categoryId: e.target.value, unit: form.unit || (c?.group === 'SERVICE' ? 'h' : form.unit) });
@@ -236,7 +236,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                   </select>
                 </div>
                 <div className="form-group">
-                  <label htmlFor="mt-pria-kind">{rules?.fertilizer ? 'Väetise liik' : rules?.seed ? 'Kultuur (liik)' : 'Liik'}</label>
+                  <label htmlFor="mt-pria-kind">Täpsustus</label>
                   <input id="mt-pria-kind" className="form-input" list="article-pria-kinds" placeholder={rules?.seed ? 'nt Taliraps' : rules?.fertilizer ? 'nt NPK väetis' : 'nt Herbitsiid'} value={form.priaKind ?? ''} onChange={(e) => setForm({ ...form, priaKind: e.target.value })} />
                   <datalist id="article-pria-kinds">{distinctValues(all.filter((m) => m.categoryId === form.categoryId).map((m) => m.priaKind)).map((k) => <option key={k} value={k} />)}</datalist>
                 </div>

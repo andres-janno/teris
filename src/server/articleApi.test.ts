@@ -172,7 +172,7 @@ describe('vaikimisi teenus', () => {
     const id = await defaultId();
     const off = await call('POST', '/api/articles', { id, name: 'Masina tööaeg', categoryId: cat.machine, unit: 'h', isActive: false, isDefaultService: true });
     expect(off.status).toBe(400);
-    expect(off.json.error).toBe('Vaikimisi teenust ei saa teise liiki viia ega mitteaktiivseks muuta');
+    expect(off.json.error).toBe('Vaikimisi teenust ei saa teise gruppi viia ega mitteaktiivseks muuta');
     const unflag = await call('POST', '/api/articles', { id, name: 'Masina tööaeg', categoryId: cat.machine, unit: 'h', isDefaultService: false });
     expect(unflag.status).toBe(200);
     expect(unflag.json.isDefaultService).toBe(true);

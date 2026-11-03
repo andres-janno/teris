@@ -111,7 +111,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   };
 
   const exportCsv = () => {
-    const headers = ['ID', 'Liik', 'Täpsustus', 'Nimetus', 'Tootja', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
+    const headers = ['ID', 'Grupp', 'Täpsustus', 'Nimetus', 'Tootja', 'Ühik', 'Laoseis', ...(canManageFinance ? ['Laoväärtus'] : []), 'Planeeritud', 'Kasutatud', 'Ala/ülekulu', 'Aktiivne', 'Kandeid', 'Märkus'];
     const rows = filtered.map((m) => [
       `"${m.id}"`,
       `"${m.category.name}"`,
@@ -188,9 +188,9 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 </div>
                 <div className="register-io-buttons">
                   {canManageFinance && (
-                    <button className="btn btn-secondary btn-sm" onClick={() => setShowCategories(true)} title="Artikli liikide haldus">
+                    <button className="btn btn-secondary btn-sm" onClick={() => setShowCategories(true)} title="Artikli gruppide haldus">
                       <Tags size={14} />
-                      <span>Liigid</span>
+                      <span>Grupid</span>
                     </button>
                   )}
                   <button className="btn btn-secondary btn-sm" onClick={exportCsv} title="Ekspordi materjalide register CSV failina">
@@ -238,8 +238,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 })}
               </div>
               <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
-                <select className="form-input" aria-label="Liik" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                  <option value="">Kõik liigid</option>
+                <select className="form-input" aria-label="Grupp" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                  <option value="">Kõik grupid</option>
                   {categories.filter((c) => group === 'all' || c.group === group).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
                 </select>
               </FilterClear>
@@ -249,8 +249,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               <table className="register-table articles-table">
                 <thead>
                   <tr>
-                    <th>Liik</th>
-                    <th title="Terade kultuur, väetise ja taimekaitsevahendi täpsustav liik (PRIA)">Täpsustus</th>
+                    <th>Grupp</th>
+                    <th title="Terade kultuur, väetise ja taimekaitsevahendi täpsustus (PRIA)">Täpsustus</th>
                     <th>Nimetus</th>
                     <th>Tootja</th>
                     <th>Ühik</th>

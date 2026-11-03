@@ -10,7 +10,7 @@ import {
 } from '../services/articleRules.ts';
 import type { PriaArticleKind } from '../types/fieldWork.ts';
 
-const FORBIDDEN = 'Artikli liike muudavad ainult finantsjuht ja admin';
+const FORBIDDEN = 'Artikli gruppe muudavad ainult finantsjuht ja admin';
 const canManage = (req: IncomingMessage) => {
   const u = sessionUserOf(req) as { isAdmin?: boolean; isFinanceManager?: boolean } | null;
   return u?.isAdmin === true || u?.isFinanceManager === true;
@@ -66,13 +66,13 @@ export async function handleArticleCategories(req: IncomingMessage, res: ServerR
     const name = text(b?.name);
     const group = ARTICLE_GROUPS.includes(b?.group) ? (b.group as ArticleGroup) : null;
     if (!name || !group) {
-      json(res, { error: 'Liigi nimi ja rühm on kohustuslikud' }, 400);
+      json(res, { error: 'Grupi nimi ja tüüp on kohustuslikud' }, 400);
       return true;
     }
     const id = text(b?.id, 64);
     const old = id ? await prisma.articleCategory.findUnique({ where: { id }, select: { group: true, systemKind: true } }) : null;
     if (id && !old) {
-      json(res, { error: 'Liiki ei leitud' }, 404);
+      json(res, { error: 'Gruppi ei leitud' }, 404);
       return true;
     }
     const err = categoryChangeError(old, group);
@@ -85,7 +85,7 @@ export async function handleArticleCategories(req: IncomingMessage, res: ServerR
       const saved = id ? await prisma.articleCategory.update({ where: { id }, data }) : await prisma.articleCategory.create({ data });
       json(res, saved);
     } catch (e: any) {
-      if (e?.code === 'P2002') json(res, { error: 'Selle nimega liik on juba olemas' }, 409);
+      if (e?.code === 'P2002') json(res, { error: 'Selle nimega grupp on juba olemas' }, 409);
       else throw e;
     }
     return true;
@@ -95,15 +95,15 @@ export async function handleArticleCategories(req: IncomingMessage, res: ServerR
     const id = decodeURIComponent(pathname.slice('/api/article-categories/'.length));
     const c = await prisma.articleCategory.findUnique({ where: { id }, include: { _count: { select: { articles: true } } } });
     if (!c) {
-      json(res, { error: 'Liiki ei leitud' }, 404);
+      json(res, { error: 'Gruppi ei leitud' }, 404);
       return true;
     }
     if (c.systemKind) {
-      json(res, { error: 'Süsteemset liiki ei saa kustutada' }, 409);
+      json(res, { error: 'Süsteemset gruppi ei saa kustutada' }, 409);
       return true;
     }
     if (c._count.articles) {
-      json(res, { error: `Liigis on ${c._count.articles} artiklit. Vii need enne teise liiki.` }, 409);
+      json(res, { error: `Grupis on ${c._count.articles} artiklit. Vii need enne teise gruppi.` }, 409);
       return true;
     }
     await prisma.articleCategory.delete({ where: { id } });
