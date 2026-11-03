@@ -81,7 +81,7 @@ describe('categoryChangeError', () => {
     expect(categoryChangeError(null, 'OTHER_GOODS')).toBeNull();
   });
   it('süsteemset liiki ei saa teise rühma viia', () => {
-    expect(categoryChangeError({ group: 'CONSUMABLE', systemKind: 'FUEL' }, 'OTHER_GOODS')).toMatch(/Süsteemse grupi tüüpi/);
+    expect(categoryChangeError({ group: 'CONSUMABLE', systemKind: 'FUEL' }, 'OTHER_GOODS')).toMatch(/Süsteemse liigi gruppi/);
     expect(categoryChangeError({ group: 'CONSUMABLE', systemKind: 'FUEL' }, 'CONSUMABLE')).toBeNull();
   });
   it('kasutaja liigi rühma ei saa teenuse ja kauba vahel muuta', () => {

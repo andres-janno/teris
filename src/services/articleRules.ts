@@ -125,8 +125,8 @@ export function categoryChangeError(
   nextGroup: ArticleGroup
 ): string | null {
   if (!old || old.group === nextGroup) return null;
-  if (old.systemKind) return 'Süsteemse grupi tüüpi ei saa muuta';
-  if (isGoods(old.group) !== isGoods(nextGroup)) return 'Gruppi ei saa teenuse ja kauba vahel ümber tõsta';
+  if (old.systemKind) return 'Süsteemse liigi gruppi ei saa muuta';
+  if (isGoods(old.group) !== isGoods(nextGroup)) return 'Liiki ei saa teenuse ja kauba vahel ümber tõsta';
   return null;
 }
 

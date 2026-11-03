@@ -19,7 +19,7 @@ export const stockTools = [
   defineTool({
     name: 'list_stock_levels',
     title: 'Laoseis',
-    description: 'Kaupade laoseis lao ja artikli kaupa (laoühikus). group = rühm (CONSUMABLE kulumaterjal, PRODUCE toodang, OTHER_GOODS muu kaup), category = liik. negative = laoseis on miinuses (kanded on kulutanud rohkem kui arvele võetud). Finantsõigusega ka väärtus (FIFO) ja keskmine hind.',
+    description: 'Kaupade laoseis lao ja artikli kaupa (laoühikus). group = grupp (CONSUMABLE kulumaterjal, PRODUCE toodang, OTHER_GOODS muu kaup), category = liik. negative = laoseis on miinuses (kanded on kulutanud rohkem kui arvele võetud). Finantsõigusega ka väärtus (FIFO) ja keskmine hind.',
     input: { warehouse: z.string().optional().describe('Lao nimi'), article: z.string().optional().describe('Artikli nimi (tõstutundetu)') },
     run: async (a, ctx) => {
       const finance = canSeeFinance(ctx);
