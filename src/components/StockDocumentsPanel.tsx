@@ -27,6 +27,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
   const [filter, setFilter] = useState<StockDocumentFilter>({});
   const [suppliers, setSuppliers] = useState<RelatedParty[]>([]);
   const [form, setForm] = useState<{ kind: StockDocumentKind; initial: StockDocument | null } | null>(null);
+  const canTransfer = warehouses.filter((w) => w.isActive).length >= 2;
 
   const reload = useCallback(async () => {
     try {
@@ -86,7 +87,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
         <div className="register-io-buttons">
           <button className="btn btn-primary btn-sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></button>
           <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'WRITE_OFF', initial: null })}><PackageMinus size={14} /><span>Mahakandmine</span></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={warehouses.filter((w) => w.isActive).length < 2}><ArrowRightLeft size={14} /><span>Ülekanne</span></button>
+          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={!canTransfer} title={canTransfer ? undefined : 'Ülekandeks on vaja vähemalt kahte aktiivset ladu'}><ArrowRightLeft size={14} /><span>Ülekanne</span></button>
           <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'INVENTORY', initial: null })}><ClipboardCheck size={14} /><span>Inventuur</span></button>
         </div>
       </div>

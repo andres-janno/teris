@@ -484,6 +484,16 @@ body {
   width: 100%;
 }
 
+/* Välja lülitatud nupp peab olema nähtavalt erinev */
+.btn:disabled,
+.btn:disabled:hover {
+  opacity: 0.5;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+  pointer-events: auto;
+}
+
 .icon-btn-ghost {
   background: transparent;
   border: none;
