@@ -217,12 +217,6 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   {warehouses.map((w) => <option key={w.id} value={w.id}>{w.name}{w.isActive ? '' : ' (mitteaktiivne)'}</option>)}
                 </select>
               </FilterClear>
-              <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
-                <select className="form-input" aria-label="Liik" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                  <option value="">Kõik liigid</option>
-                  {categories.filter((c) => group === 'all' || c.group === group).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
-              </FilterClear>
               <div className="category-filter-tabs">
                 <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => { setGroup('all'); setCategoryId(''); }}>
                   Kõik ({articles.length})
@@ -236,6 +230,12 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   );
                 })}
               </div>
+              <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
+                <select className="form-input" aria-label="Liik" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
+                  <option value="">Kõik liigid</option>
+                  {categories.filter((c) => group === 'all' || c.group === group).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+                </select>
+              </FilterClear>
             </div>
 
             <div className="register-table-wrap">
