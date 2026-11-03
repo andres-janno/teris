@@ -1,6 +1,6 @@
 // src/services/landTenure.ts — katastriüksuse omandivorm tuletatakse maaomanikust: omanik = põllu operaator → oma maa,
 // muu omanik → renditud. Omanikuta üksus on oma maa (omanikku pole sisestatud). Sama kliendis ja serveris.
-import type { LandTenureType } from '../types/cadastre';
+import type { LandTenureType } from '../types/cadastre.ts';
 
 const norm = (s: string | null | undefined) => (s ?? '').trim().replace(/\s+/g, ' ').toLowerCase();
 
