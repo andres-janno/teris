@@ -265,7 +265,7 @@ model FieldCadastralParcel {
   fieldSeasonId     Int
   cadastralParcelId Int
   fieldAreaHa       Float // Hektarid sellest katastriüksusest sellel hooajal
-  ownershipType     OwnershipType @default(OWNED) // Oma maa vs Rent sellel hooajal
+  ownershipType     OwnershipType @default(OWNED) // Tuletatud: omanik = põllu operaator või sisestamata → OWNED, muu → RENTED (services/landTenure.ts)
   ownerName         String? // Omaniku nimi sellel hooajal
   ownerPartyId      String? // Seos seotud isikute registriga
   landTaxEurHa      Float? // Selle hooaja maamaks hektari kohta (€/ha)

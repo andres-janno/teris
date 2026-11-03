@@ -30,6 +30,7 @@ import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
 import { loadCropsForLink, resolveSeasonCrop, relinkSeasonCrops } from './seasonCropLink.ts';
 import { derivePriaCropName } from '../services/priaCropName.ts';
+import { deriveOwnershipType } from '../services/landTenure.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
@@ -48,7 +49,7 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], d
     });
     const data = {
       fieldAreaHa: num(l?.fieldAreaHa) ?? 0,
-      ownershipType: (l?.ownershipType === 'RENTED' ? 'RENTED' : 'OWNED') as 'OWNED' | 'RENTED',
+      // omandivorm tuletatakse omanikust (refreshParcelOwnership), kliendi väärtust ei võeta
       ownerName: String(l?.ownerName ?? '').trim() || null,
       landTaxEurHa: num(l?.landTaxEurHa),
       landTaxEurYear: num(l?.landTaxEurYear),
@@ -66,6 +67,29 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], d
   await db.fieldCadastralParcel.deleteMany({
     where: { fieldSeasonId, cadastralParcelId: { notIn: keepParcelIds } }
   });
+}
+
+// Omandivorm maaomaniku järgi (omanik = põllu operaator → oma maa, muu → renditud). Lukus hooaegu ei muudeta.
+// fieldId puudumisel kõik põllud (nt operaatori/omaniku nime muutus registris).
+async function refreshParcelOwnership(db: TxClient, fieldId?: number): Promise<number> {
+  const links = await db.fieldCadastralParcel.findMany({
+    where: {
+      fieldSeason: { ...(fieldId !== undefined ? { fieldId } : {}), OR: [{ seasonId: null }, { season: { isLocked: false } }] }
+    },
+    select: {
+      id: true, ownershipType: true, ownerName: true, ownerPartyId: true,
+      fieldSeason: { select: { field: { select: { operator: { select: { id: true, name: true } } } } } }
+    }
+  });
+  let changed = 0;
+  for (const l of links) {
+    const ownershipType = deriveOwnershipType(l, l.fieldSeason.field.operator);
+    if (ownershipType !== l.ownershipType) {
+      await db.fieldCadastralParcel.update({ where: { id: l.id }, data: { ownershipType } });
+      changed++;
+    }
+  }
+  return changed;
 }
 
 // Andmete importimine (PRIA, mullaproovid, põlluraamat) on lubatud ainult adminile.
@@ -367,6 +391,8 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
         }
       }
     }
+  // Omanik või operaator võis muutuda
+  await refreshParcelOwnership(db, upsertedField.id);
 
   return upsertedField;
 }
@@ -1524,6 +1550,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const p = await parseBody(req);
       const cost = await resourceCostIn(p, 'LABOR', false, canSeeFinance(req));
       if ('error' in cost) return json(res, { error: cost.error }, 400);
+      const previousParty = p.id ? await prisma.relatedParty.findUnique({ where: { id: p.id }, select: { name: true } }) : null;
       const saved = await prisma.relatedParty.upsert({
         where: { id: p.id || `party-${Date.now()}` },
         update: {
@@ -1554,6 +1581,14 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           ...cost.data
         }
       });
+      // Nime muutus: maaomaniku nimi katastriseostel kaasa, omandivorm uuesti (omanik vs operaator)
+      if (previousParty && previousParty.name !== saved.name) {
+        await prisma.fieldCadastralParcel.updateMany({
+          where: { ownerName: previousParty.name, fieldSeason: { OR: [{ seasonId: null }, { season: { isLocked: false } }] } },
+          data: { ownerName: saved.name }
+        });
+        await refreshParcelOwnership(prisma as unknown as TxClient);
+      }
       const { hourlyRate, ...rest } = saved;
       return json(res, { ...rest, ...resourceCostOut({ serviceArticleId: saved.serviceArticleId, hourlyRate }, canSeeFinance(req)) });
     }

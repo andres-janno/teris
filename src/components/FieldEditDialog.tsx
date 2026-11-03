@@ -5,9 +5,10 @@ import { NumberInput } from './NumberInput';
 import { X, Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
+import type { FieldCadastralLink } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
+import { deriveOwnershipType, OWNERSHIP_LABELS } from '../services/landTenure';
 import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 
@@ -96,6 +97,11 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     return derivePriaCropName(selectedCropObj, variety, editUndersowing);
   }, [savedPria, editCrop, editVariety, editUndersowing, selectedCropObj]);
 
+  const operatorOf = (id: string) => {
+    const p = parties.find((x) => x.id === id);
+    return p ? { id: p.id, name: p.name } : null;
+  };
+
   const loadForm = (field: MasterField) => {
     const currentRec = field.history.find(h => h.year === selectedYear) || {
       year: selectedYear,
@@ -120,7 +126,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     setEditCadastralCode(field.cadastralCode || (initialParcels[0]?.cadastralCode) || '');
     setEditOperatorId(field.operatorId || '');
     setEditSoilType(field.soilType || '');
-    setEditCadastralParcels(initialParcels);
+    setEditCadastralParcels(initialParcels.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(field.operatorId || '')) })));
 
     const matchedCrop = findRegistryCrop(currentRec.crop);
     setEditAreaHa(currentRec.areaHa);
@@ -219,6 +225,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     setEditCadastralParcels(prev => {
       const copy = [...prev];
       const current = { ...copy[index], ...updates };
+      current.ownershipType = deriveOwnershipType(current, operatorOf(editOperatorId));
 
       // Kui muutus fieldAreaHa, uuendame kogusummat vastavalt olemasolevale €/ha määrale
       if ('fieldAreaHa' in updates) {
@@ -383,7 +390,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           <select
             disabled={isEditSeasonLocked}
             value={editOperatorId}
-            onChange={(e) => setEditOperatorId(e.target.value)}
+            onChange={(e) => {
+              const id = e.target.value;
+              setEditOperatorId(id);
+              // Omandivorm sõltub operaatorist (omanik = operaator → oma maa)
+              setEditCadastralParcels((prev) => prev.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(id)) })));
+            }}
             className="form-input"
           >
             <option value="">-- Määramata --</option>
@@ -633,21 +645,13 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </div>
 
               <div className="form-group">
-                <label>Omandivorm</label>
-                <select
-                  disabled={isEditSeasonLocked}
-                  value={parcel.ownershipType}
-                  onChange={(e) => handleUpdateCadastralParcel(pIdx, { ownershipType: e.target.value as LandTenureType })}
-                  className="form-input"
-                >
-                  <option value="OWNED">🏛️ Oma maa</option>
-                  <option value="RENTED">🤝 Renditud</option>
-                </select>
-              </div>
-
-              <div className="form-group">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ margin: 0 }}>Maaomanik</label>
+                  <label style={{ margin: 0 }}>
+                    Maaomanik
+                    <span className={`cad-tenure-tag ${parcel.ownershipType === 'OWNED' ? 'owned' : 'rented'}`} title="Tuletatakse: omanik = põllu operaator või omanik sisestamata → oma maa, muu omanik → renditud">
+                      {OWNERSHIP_LABELS[parcel.ownershipType]}
+                    </span>
+                  </label>
                   {onOpenParties && (
                     <button
                       type="button"

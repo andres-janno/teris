@@ -6282,8 +6282,8 @@ input[type="number"],
 
 .edit-cad-grid {
   display: grid;
-  /* tunnus | põllu osa | omandivorm | omanik | €/ha | €/a | kustuta — numbriväljad kitsad, et rida mahuks kerimata */
-  grid-template-columns: minmax(120px, 1.1fr) 76px minmax(110px, 0.9fr) minmax(140px, 1.5fr) 76px 86px 34px;
+  /* tunnus | põllu osa | omanik (+ tuletatud omandivorm) | €/ha | €/a | kustuta — numbriväljad kitsad, et rida mahuks kerimata */
+  grid-template-columns: minmax(120px, 1.1fr) 76px minmax(180px, 2fr) 76px 86px 34px;
   gap: 8px;
   align-items: flex-end;
 }
@@ -6301,6 +6301,23 @@ input[type="number"],
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Tuletatud omandivorm maaomaniku sildi kõrval */
+.cad-tenure-tag {
+  margin-left: 6px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 600;
+}
+.cad-tenure-tag.owned {
+  background: color-mix(in srgb, var(--emerald-500) 15%, transparent);
+  color: var(--emerald-500);
+}
+.cad-tenure-tag.rented {
+  background: color-mix(in srgb, var(--amber-500) 15%, transparent);
+  color: var(--amber-500);
 }
 
 .edit-cad-action {
