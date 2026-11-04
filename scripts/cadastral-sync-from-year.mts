@@ -1,19 +1,20 @@
 // scripts/cadastral-sync-from-year.mts — põldude katastriüksuste seosed kõigis teistes hooaegades (ka lukus) lähteaasta järgi:
 // sama üksus, pindala, omanik ja omandivorm. Rent ja maamaks kopeeritakse alates aastast KEEP_FEES_FROM, varasematel tühjad.
-// Põld, millel lähteaastat pole, jääb puutumata. Käivita: npx tsx scripts/cadastral-sync-from-year.mts 2026 2025 [--apply]
+// Põld, millel lähteaastat pole, jääb puutumata. Käivita: npx tsx scripts/cadastral-sync-from-year.mts 2026 2025 [--field=<id>] [--apply]
 import { authDb, runAsTenant, tenantTransaction } from "../src/server/db.ts";
 import { buildCopiedParcelLink } from "../src/server/fieldSeasonCopy.ts";
 
 const SOURCE_YEAR = Number(process.argv[2]);
 const KEEP_FEES_FROM = Number(process.argv[3]);
 const APPLY = process.argv.includes("--apply");
+const FIELD_ID = Number(process.argv.find((a) => a.startsWith("--field="))?.slice(8)) || null; // ainult see põld
 if (!SOURCE_YEAR || !KEEP_FEES_FROM) throw new Error("Kasutus: <lähteaasta> <rent alates aastast> [--apply]");
 
 const tenants = await authDb().tenant.findMany({ select: { id: true, name: true } });
 for (const t of tenants) {
   const r = await runAsTenant(t.id, () => tenantTransaction(async (tx) => {
     const fields = await tx.field.findMany({
-      where: { fieldSeasons: { some: { year: SOURCE_YEAR } } },
+      where: { fieldSeasons: { some: { year: SOURCE_YEAR } }, ...(FIELD_ID ? { id: FIELD_ID } : {}) },
       select: { id: true, fieldSeasons: { select: { id: true, year: true, cadastralParcels: { orderBy: { id: "asc" } } } } }
     });
     let seasons = 0, removed = 0, created = 0;
