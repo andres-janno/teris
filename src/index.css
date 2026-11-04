@@ -11141,3 +11141,28 @@ td.stock-qty-out { color: #dc2626; }
   padding: 6px 8px;
 }
 .map-context-menu-note.error { color: #ef4444; }
+
+/* Isiku kaardi kontaktread: ikoon ja tekst eraldi, pikk e-post murdub, märkus kahel real */
+.party-contact-link,
+.party-contact-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+  line-height: 1.4;
+  color: var(--text-secondary);
+}
+.party-contact-link {
+  align-self: flex-start;
+  max-width: 100%;
+  text-decoration: none;
+}
+.party-contact-link span { overflow-wrap: anywhere; }
+.party-contact-link:hover span { color: var(--text-primary); text-decoration: underline; }
+.party-contact-link svg,
+.party-contact-note svg {
+  flex-shrink: 0;
+  margin-top: 2px; /* ikoon esimese tekstirea keskele */
+}
+.party-contact-note svg { color: var(--text-muted); }
+.v-info-rows .field-sub-tags { margin-bottom: 2px; }

@@ -13,7 +13,8 @@ import {
   Mail,
   CreditCard,
   AlertCircle,
-  Link2
+  Link2,
+  MessageSquare
 } from 'lucide-react';
 import type { RelatedParty, PartyType, PartyRole } from '../types/party';
 import { PARTY_ROLE_CONFIG } from '../types/party';
@@ -628,17 +629,22 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                     )}
                     {party.phone && (
                       <a href={`tel:${party.phone}`} className="party-contact-link" title="Helista" onClick={(e) => e.stopPropagation()}>
-                        <Phone size={12} className="text-emerald" />
+                        <Phone size={13} className="text-emerald" />
                         <span>{party.phone}</span>
                       </a>
                     )}
                     {party.email && (
                       <a href={`mailto:${party.email}`} className="party-contact-link" title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
-                        <Mail size={12} className="text-blue" />
+                        <Mail size={13} className="text-blue" />
                         <span>{party.email}</span>
                       </a>
                     )}
-                    {party.notes && <div className="v-info-item card-info-text" title={party.notes}>💬 {party.notes}</div>}
+                    {party.notes && (
+                      <div className="party-contact-note" title={party.notes}>
+                        <MessageSquare size={13} />
+                        <span className="card-info-text">{party.notes}</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               );
