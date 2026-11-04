@@ -31,6 +31,7 @@ export interface Vehicle {
   serviceArticleId?: string | null; // masina tööaja teenus (tühi = vaikimisi teenus)
   hourlyRate?: number | null;       // oma tunnihind € (ainult finantsõigusega)
   fuelArticleId?: string | null;    // vaikimisi kütus
+  fuelCapacityL?: number | null;    // paagi maht liitrites
   acquisitionCost?: number;       // Soetusmaksumus (€)
   acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)

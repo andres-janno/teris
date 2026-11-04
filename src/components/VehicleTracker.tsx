@@ -296,6 +296,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vServiceId, setVServiceId] = useState('');
   const [vRate, setVRate] = useState('');
   const [vFuelId, setVFuelId] = useState('');
+  const [vTankL, setVTankL] = useState(''); // paagi maht, l
   const [impServiceId, setImpServiceId] = useState('');
   const [impRate, setImpRate] = useState('');
   const [vAcqDate, setVAcqDate] = useState('');
@@ -587,6 +588,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVServiceId('');
     setVRate('');
     setVFuelId('');
+    setVTankL('');
     setVAcqDate('');
     setVDepRate('');
     setVDepMethod('');
@@ -646,6 +648,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       acquisitionCost: parsePositive(vCost),
       serviceArticleId: vServiceId || null,
       fuelArticleId: vFuelId || null,
+      fuelCapacityL: parsePositive(vTankL) ?? null,
       ...(canManageFinance ? { hourlyRate: parseRate(vRate) } : {}),
       acquisitionDate: vAcqDate || undefined,
       depreciationRate: parsePositive(vDepRate),
@@ -753,6 +756,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVServiceId(v.serviceArticleId ?? '');
     setVRate(rateText(v.hourlyRate));
     setVFuelId(v.fuelArticleId ?? '');
+    setVTankL(v.fuelCapacityL != null ? String(v.fuelCapacityL) : '');
     setVAcqDate(v.acquisitionDate || '');
     setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
     setVDepMethod(v.depreciationMethod || '');
@@ -998,6 +1002,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   hourlyRate={vRate} onRateChange={setVRate} canManageFinance={canManageFinance}
                   fuelArticleId={vFuelId} onFuelChange={setVFuelId}
                 />
+                <div className="form-group">
+                  <label htmlFor="v-tank">Paagi maht (l)</label>
+                  <NumberInput
+                    id="v-tank"
+                    min={0}
+                    placeholder="nt 600"
+                    value={vTankL === '' ? null : Number(vTankL)}
+                    onChange={(v) => setVTankL(v == null ? '' : String(v))}
+                  />
+                </div>
                 <div className="form-group full-width">
                   <label>Märkused</label>
                   <AutoResizeTextarea
