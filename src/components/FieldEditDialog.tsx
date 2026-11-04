@@ -199,7 +199,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {
         cadastralCode: '',
         parcelName: '',
-        ownershipType: 'OWNED',
+        ownershipType: 'UNKNOWN',
         ownerName: '',
         fieldAreaHa: defaultHa
       }
@@ -648,7 +648,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <label style={{ margin: 0 }}>
                     Maaomanik
-                    <span className={`cad-tenure-tag ${parcel.ownershipType === 'OWNED' ? 'owned' : 'rented'}`} title="Tuletatakse: omanik = põllu operaator või omanik sisestamata → oma maa, muu omanik → renditud">
+                    <span className={`cad-tenure-tag ${parcel.ownershipType.toLowerCase()}`} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
                       {OWNERSHIP_LABELS[parcel.ownershipType]}
                     </span>
                   </label>
@@ -690,6 +690,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 </datalist>
               </div>
 
+              {parcel.ownershipType === 'UNKNOWN' ? (
+                <div className="form-group full-width cad-tenure-hint">
+                  Omandivorm on teadmata. Maamaksu või renditasu saab sisestada, kui maaomanik ja põllu operaator on valitud.
+                </div>
+              ) : (
+              <>
               {/* €/ha väli ENNE kogusummat */}
               <div className="form-group">
                 <label>
@@ -731,6 +737,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                   title="Kogusumma aastas (€/a)"
                 />
               </div>
+
+              </>
+              )}
 
               <div className="form-group edit-cad-action">
                 {isEditSeasonLocked ? (

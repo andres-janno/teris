@@ -68,6 +68,7 @@ enum DeviceStatus {
 enum OwnershipType {
   OWNED
   RENTED
+  UNKNOWN // maaomanik või põllu operaator sisestamata
 }
 
 enum PartyType {
@@ -266,7 +267,7 @@ model FieldCadastralParcel {
   fieldSeasonId     Int
   cadastralParcelId Int
   fieldAreaHa       Float // Hektarid sellest katastriüksusest sellel hooajal
-  ownershipType     OwnershipType @default(OWNED) // Tuletatud: omanik = põllu operaator või sisestamata → OWNED, muu → RENTED (services/landTenure.ts)
+  ownershipType     OwnershipType @default(UNKNOWN) // Tuletatud: omanik = põllu operaator → OWNED, muu → RENTED, omanik/operaator sisestamata → UNKNOWN (services/landTenure.ts)
   ownerName         String? // Omaniku nimi sellel hooajal
   ownerPartyId      String? // Seos seotud isikute registriga
   landTaxEurHa      Float? // Selle hooaja maamaks hektari kohta (€/ha)

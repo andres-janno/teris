@@ -67,14 +67,16 @@ function buildRow(field: MasterField, rec: FieldYearlyRecord): FieldRow {
     if (p.ownershipType === 'OWNED') {
       ownedHa += p.fieldAreaHa;
       landTaxEur += p.landTaxEurYear ?? (p.landTaxEurHa ? p.landTaxEurHa * p.fieldAreaHa : 0);
-    } else {
+    } else if (p.ownershipType === 'RENTED') {
       rentedHa += p.fieldAreaHa;
       rentFeeEur += p.rentFeeEurYear ?? (p.rentFeeEurHa ? p.rentFeeEurHa * p.fieldAreaHa : 0);
     }
   });
   const hasOwned = parcels.some((p) => p.ownershipType === 'OWNED');
   const hasRented = parcels.some((p) => p.ownershipType === 'RENTED');
-  const tenure: TenureKind = hasOwned && hasRented ? 'mixed' : hasOwned ? 'owned' : hasRented ? 'rented' : 'unknown';
+  // Kui mõne katastriüksuse omandivorm on teadmata, ei saa ka põllu oma teada olla
+  const hasUnknown = parcels.length === 0 || parcels.some((p) => p.ownershipType === 'UNKNOWN');
+  const tenure: TenureKind = hasUnknown ? 'unknown' : hasOwned && hasRented ? 'mixed' : hasOwned ? 'owned' : 'rented';
   const owners = Array.from(new Set(parcels.map((p) => p.ownerName?.trim()).filter((n): n is string => !!n)));
   return { field, rec, parcels, tenure, ownedHa, rentedHa, landTaxEur, rentFeeEur, owners };
 }

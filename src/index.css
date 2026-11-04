@@ -11166,3 +11166,15 @@ td.stock-qty-out { color: #dc2626; }
 }
 .party-contact-note svg { color: var(--text-muted); }
 .v-info-rows .field-sub-tags { margin-bottom: 2px; }
+
+/* Teadmata omandivorm (maaomanik või operaator sisestamata) */
+.cad-tenure-tag.unknown,
+.tenure-pill.unknown {
+  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
+  color: var(--text-secondary);
+}
+.cad-tenure-hint {
+  align-self: center;
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}

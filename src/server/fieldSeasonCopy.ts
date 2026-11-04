@@ -17,7 +17,7 @@ export interface SeasonSource {
 export interface ParcelLinkSource {
   cadastralParcelId: number;
   fieldAreaHa: number;
-  ownershipType: 'OWNED' | 'RENTED';
+  ownershipType: 'OWNED' | 'RENTED' | 'UNKNOWN';
   ownerName: string | null;
   ownerPartyId: string | null;
   landTaxEurHa: number | null;

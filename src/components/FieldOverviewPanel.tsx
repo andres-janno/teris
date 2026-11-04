@@ -123,7 +123,7 @@ export const FieldOverviewPanel: React.FC<FieldOverviewPanelProps> = ({ shown, s
         {cadastralParcels.length > 0 ? (
           <div className="cadastre-parcels-list">
             {cadastralParcels.map((cad, idx) => {
-              const isOwned = cad.ownershipType === 'OWNED';
+              const tenureClass = cad.ownershipType === 'OWNED' ? 'owned' : cad.ownershipType === 'RENTED' ? 'rented' : 'unknown';
               return (
                 <div key={cad.cadastralCode + idx} className="cadastre-parcel-item">
                   <div className="cad-parcel-top">
@@ -131,8 +131,8 @@ export const FieldOverviewPanel: React.FC<FieldOverviewPanelProps> = ({ shown, s
                       <code className="cad-code">{cad.cadastralCode}</code>
                       {cad.parcelName && <span className="cad-name">({cad.parcelName})</span>}
                     </div>
-                    <span className={`tenure-pill ${isOwned ? 'owned' : 'rented'}`}>
-                      {isOwned ? '🏛️ Oma maa' : '🤝 Renditud'}
+                    <span className={`tenure-pill ${tenureClass}`}>
+                      {tenureClass === 'owned' ? '🏛️ Oma maa' : tenureClass === 'rented' ? '🤝 Renditud' : 'Omand teadmata'}
                     </span>
                   </div>
 
@@ -145,7 +145,7 @@ export const FieldOverviewPanel: React.FC<FieldOverviewPanelProps> = ({ shown, s
                       <span className="lbl">Omanik:</span>
                       <span>{cad.ownerName}</span>
                     </div>
-                    {isOwned && (cad.landTaxEurHa !== undefined || cad.landTaxEurYear !== undefined) && (
+                    {tenureClass === 'owned' && (cad.landTaxEurHa !== undefined || cad.landTaxEurYear !== undefined) && (
                       <div className="cad-detail-row">
                         <span className="lbl">Maamaks:</span>
                         <span className="text-emerald font-semibold">
@@ -155,7 +155,7 @@ export const FieldOverviewPanel: React.FC<FieldOverviewPanelProps> = ({ shown, s
                         </span>
                       </div>
                     )}
-                    {!isOwned && (cad.rentFeeEurHa !== undefined || cad.rentFeeEurYear !== undefined) && (
+                    {tenureClass === 'rented' && (cad.rentFeeEurHa !== undefined || cad.rentFeeEurYear !== undefined) && (
                       <div className="cad-detail-row">
                         <span className="lbl">Renditasu:</span>
                         <span className="text-blue font-semibold">

@@ -71,7 +71,7 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], d
 
 // Omandivorm maaomaniku järgi (omanik = põllu operaator → oma maa, muu → renditud). Lukus hooaegu ei muudeta.
 // fieldId puudumisel kõik põllud (nt operaatori/omaniku nime muutus registris).
-async function refreshParcelOwnership(db: TxClient, fieldId?: number): Promise<number> {
+export async function refreshParcelOwnership(db: TxClient, fieldId?: number): Promise<number> {
   const links = await db.fieldCadastralParcel.findMany({
     where: {
       fieldSeason: { ...(fieldId !== undefined ? { fieldId } : {}), OR: [{ seasonId: null }, { season: { isLocked: false } }] }

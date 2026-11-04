@@ -109,7 +109,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
 
     fieldsForSelectedYear.forEach((f) => {
       const rec = f.history.find(h => h.year === selectedYear);
-      const fieldArea = rec ? rec.areaHa : 0;
       const parcels = rec?.cadastralParcels || f.cadastralParcels || [];
 
       if (parcels.length > 0) {
@@ -117,16 +116,13 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
           if (p.ownershipType === 'OWNED') {
             ownedHa += p.fieldAreaHa;
             totalTax += p.landTaxEurYear !== undefined ? p.landTaxEurYear : (p.landTaxEurHa ? p.landTaxEurHa * p.fieldAreaHa : 0);
-          } else {
+          } else if (p.ownershipType === 'RENTED') {
             rentedHa += p.fieldAreaHa;
             totalRent += p.rentFeeEurYear !== undefined ? p.rentFeeEurYear : (p.rentFeeEurHa ? p.rentFeeEurHa * p.fieldAreaHa : 0);
           }
         });
-      } else {
-        // Kataster-taseme omandi andmed puuduvad — vaikimisi loeme oma maaks
-        ownedHa += fieldArea;
-        totalTax += fieldArea * 15;
       }
+      // Katastriüksusteta või teadmata omandiga pind ei lähe oma ega rendimaa alla
     });
 
     return {
@@ -155,8 +151,7 @@ function cropSummaryKey(cropText: string): string {
         const q = searchQuery.toLowerCase();
 
         const parcels = yearRecord?.cadastralParcels || f.cadastralParcels || [];
-        // Kataster-taseme omandi andmeteta põld loetakse oma maaks (nagu kokkuvõttes)
-        const hasOwned = parcels.length === 0 || parcels.some(p => p.ownershipType === 'OWNED');
+        const hasOwned = parcels.some(p => p.ownershipType === 'OWNED');
         const hasRented = parcels.some(p => p.ownershipType === 'RENTED');
 
         const matchesSearch =

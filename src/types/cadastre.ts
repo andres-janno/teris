@@ -1,6 +1,6 @@
 // src/types/cadastre.ts
 
-export type LandTenureType = 'OWNED' | 'RENTED';
+export type LandTenureType = 'OWNED' | 'RENTED' | 'UNKNOWN';
 
 /**
  * Katastriüksuse põhiandmed

@@ -11,10 +11,11 @@ describe('deriveOwnershipType', () => {
   it('muu omanik → renditud', () => {
     expect(deriveOwnershipType({ ownerName: 'Jaan Tamm' }, op)).toBe('RENTED');
     expect(deriveOwnershipType({ ownerPartyId: 'p2' }, op)).toBe('RENTED');
-    expect(deriveOwnershipType({ ownerName: 'Jaan Tamm' }, null)).toBe('RENTED');
   });
-  it('omanikuta üksus → oma maa', () => {
-    expect(deriveOwnershipType({ ownerName: '' }, op)).toBe('OWNED');
-    expect(deriveOwnershipType({}, null)).toBe('OWNED');
+  it('omanik või operaator sisestamata → teadmata', () => {
+    expect(deriveOwnershipType({ ownerName: '' }, op)).toBe('UNKNOWN');
+    expect(deriveOwnershipType({}, null)).toBe('UNKNOWN');
+    expect(deriveOwnershipType({ ownerName: 'Jaan Tamm' }, null)).toBe('UNKNOWN');
+    expect(deriveOwnershipType({ ownerPartyId: 'p2' }, null)).toBe('UNKNOWN');
   });
 });
