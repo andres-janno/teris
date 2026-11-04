@@ -297,6 +297,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vRate, setVRate] = useState('');
   const [vFuelId, setVFuelId] = useState('');
   const [vTankL, setVTankL] = useState(''); // paagi maht, l
+  const [vYear, setVYear] = useState<number | null>(null); // väljalaskeaasta
   const [impServiceId, setImpServiceId] = useState('');
   const [impRate, setImpRate] = useState('');
   const [vAcqDate, setVAcqDate] = useState('');
@@ -589,6 +590,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVRate('');
     setVFuelId('');
     setVTankL('');
+    setVYear(null);
     setVAcqDate('');
     setVDepRate('');
     setVDepMethod('');
@@ -649,6 +651,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       serviceArticleId: vServiceId || null,
       fuelArticleId: vFuelId || null,
       fuelCapacityL: parsePositive(vTankL) ?? null,
+      year: vYear ?? undefined, // tühi → server salvestab tühjana
       ...(canManageFinance ? { hourlyRate: parseRate(vRate) } : {}),
       acquisitionDate: vAcqDate || undefined,
       depreciationRate: parsePositive(vDepRate),
@@ -757,6 +760,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVRate(rateText(v.hourlyRate));
     setVFuelId(v.fuelArticleId ?? '');
     setVTankL(v.fuelCapacityL != null ? String(v.fuelCapacityL) : '');
+    setVYear(v.year ?? null);
     setVAcqDate(v.acquisitionDate || '');
     setVDepRate(v.depreciationRate != null ? String(v.depreciationRate) : '');
     setVDepMethod(v.depreciationMethod || '');
@@ -977,6 +981,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     className="form-input"
                   />
                 </div>
+                <div className="form-group">
+                  <label htmlFor="v-year">Väljalaskeaasta</label>
+                  <NumberInput id="v-year" integer min={1900} max={2100} placeholder="nt 2012" value={vYear} onChange={setVYear} />
+                </div>
                 <DepreciationFields
                   date={vAcqDate}
                   onDateChange={setVAcqDate}
@@ -1100,7 +1108,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   />
                 </div>
                 <div className="form-group">
-                  <label htmlFor="imp-year">Valmistamisaasta</label>
+                  <label htmlFor="imp-year">Väljalaskeaasta</label>
                   <NumberInput id="imp-year" integer min={1900} max={2100} placeholder="nt 2018" value={impYear} onChange={setImpYear} />
                 </div>
                 <DepreciationFields

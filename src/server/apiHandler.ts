@@ -87,6 +87,12 @@ export async function refreshParcelOwnership(db: TxClient, fieldId?: number): Pr
   return changed;
 }
 
+// Masina/haakeriista väljalaskeaasta: täisarv 1900–2100, muu → tühi
+const validYear = (v: unknown): number | null => {
+  const n = Number(v);
+  return v != null && v !== '' && Number.isInteger(n) && n >= 1900 && n <= 2100 ? n : null;
+};
+
 // Andmete importimine (PRIA, mullaproovid, põlluraamat) on lubatud ainult adminile.
 const IMPORT_FORBIDDEN = 'Andmete importimine on lubatud ainult adminile';
 const isAdmin = (req: IncomingMessage) => sessionUserOf(req)?.isAdmin === true;
@@ -800,6 +806,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         model: v.model,
         powerKw: v.powerKw ?? undefined,
         fuelCapacityL: v.fuelCapacityL ?? null,
+        year: v.year ?? null,
         ...depreciationOut(v),
         ...resourceCostOut(v, finance),
         registrationPlate: v.regNumber ?? undefined,
@@ -974,6 +981,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         model: typeof v.model === 'string' ? v.model.trim() : '',
         powerKw: toPositiveNumber(v.powerKw),
         fuelCapacityL: toPositiveNumber(v.fuelCapacityL),
+        year: validYear(v.year),
         ...depreciationIn(v),
         regNumber: v.registrationPlate || v.regNumber || null,
         serialNumber: cleanText(v.serialNumber),
@@ -1015,8 +1023,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         manufacturer: i.manufacturer || null,
         model: i.model || null,
         serialNumber: cleanText(i.serialNumber),
-        // valmistamisaasta: täisarv 1900–2100, muu → tühi
-        year: Number.isInteger(Number(i.year)) && Number(i.year) >= 1900 && Number(i.year) <= 2100 ? Number(i.year) : null,
+        year: validYear(i.year),
         notes: i.notes ?? null,
         ...cost.data
       };
