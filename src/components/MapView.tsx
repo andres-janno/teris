@@ -523,7 +523,6 @@ export const MapView: React.FC<MapViewProps> = ({
             <h4>${vehicle.name}</h4>
             <span class="status-tag ${vehicle.status}">${isWorking ? 'TÖÖTAB' : (isMoving ? 'LIIKUB' : 'SEISAB')}</span>
           </div>
-          <div class="popup-row"><span>Juht:</span> <strong>${vehicle.driverName || 'Määramata'}</strong></div>
           <div class="popup-row"><span>Kiirus:</span> <strong>${vehicle.speedKmH.toFixed(1)} km/h</strong></div>
           <div class="popup-row"><span>Viimane liikumine:</span> <strong>${activityLabel}</strong></div>
           <div class="popup-row"><span>Kütusetase:</span> <strong>${vehicle.telemetry.fuelLevelPct}%</strong></div>

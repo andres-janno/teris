@@ -38,7 +38,6 @@ export interface Vehicle {
   depreciationMethod?: DepreciationMethod;
   registrationPlate?: string;
   serialNumber?: string;          // VIN / seerianumber
-  driverName?: string;
   color: string;
   year?: number;
   assignedDeviceId?: string;      // Seotud telemeetriaseadme ID (seoste registrist)

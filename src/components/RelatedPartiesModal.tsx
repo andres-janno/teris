@@ -185,19 +185,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         });
       });
 
-      // Find assigned vehicles
-      const assignedVehicles = vehicles.filter(
-        (v) =>
-          v.driverName &&
-          (v.driverName.toLowerCase().includes(party.name.toLowerCase()) ||
-            party.name.toLowerCase().includes(v.driverName.toLowerCase()))
-      );
-
       return {
         ...party,
         linkedParcels,
-        totalAreaHa: Math.round(totalHa * 100) / 100,
-        assignedVehicles
+        totalAreaHa: Math.round(totalHa * 100) / 100
       };
     });
   }, [parties, masterFields, vehicles, selectedYear]);
@@ -580,10 +571,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           onClick={(e) => {
                             e.stopPropagation();
                             const parts: string[] = [];
-                            if (party.assignedVehiclesCount) parts.push(`${party.assignedVehiclesCount} sõidukiga (juht)`);
                             if (party.operatorFieldsCount) parts.push(`${party.operatorFieldsCount} põlluga (operaator)`);
                             if (party.ownedParcelsCount) parts.push(`${party.ownedParcelsCount} katastriüksusega (omanik)`);
-                            if (party.poiContactsCount) parts.push(`${party.poiContactsCount} asukohaga (kontakt)`);
                             alertDialog(`"${party.name}" on seotud:\n\n${parts.map((p) => `• ${p}`).join('\n')}\n\nKustutamiseks eemalda esmalt need seosed.`);
                           }}
                           title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}

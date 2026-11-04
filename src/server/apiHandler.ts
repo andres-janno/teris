@@ -781,9 +781,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const withLive = telemetry && url.searchParams.get('telemetry') !== '0';
       const finance = canSeeFinance(req);
       const [rawVehicles, rawImplements, rawDevices, activeAssignments, hitches, deviceLinks] = await Promise.all([
-        prisma.vehicle.findMany({
-          include: { assignedDriver: true }
-        }),
+        prisma.vehicle.findMany(),
         prisma.implement.findMany(),
         prisma.telemetryDevice.findMany(),
         prisma.deviceAssignment.findMany({
@@ -807,7 +805,6 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         registrationPlate: v.regNumber ?? undefined,
         serialNumber: v.serialNumber ?? undefined,
         color: v.color,
-        driverName: v.assignedDriver?.name,
         assignedDeviceId: deviceLinks.byVehicle.get(v.id),
         assignedImplementId: hitches.byVehicle.get(v.id),
         lastKnownPosition: !telemetry ? null : (v.lastLatitude != null && v.lastLongitude != null)
@@ -1518,9 +1515,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         include: {
           _count: {
             select: {
-              vehicles: true,
               cadastralParcels: true,
-              poiContacts: true,
               fieldsAsOperator: true
             }
           }
@@ -1534,11 +1529,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       const mapped = dbParties.map(({ _count, hourlyRate, ...p }) => ({
         ...p,
         ...resourceCostOut({ serviceArticleId: p.serviceArticleId, hourlyRate }, finance),
-        assignedVehiclesCount: _count.vehicles,
         ownedParcelsCount: _count.cadastralParcels,
-        poiContactsCount: _count.poiContacts,
         operatorFieldsCount: _count.fieldsAsOperator,
-        usageCount: _count.vehicles + _count.cadastralParcels + _count.poiContacts + _count.fieldsAsOperator
+        usageCount: _count.cadastralParcels + _count.fieldsAsOperator
       }));
 
       return json(res, mapped);

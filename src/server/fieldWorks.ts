@@ -496,7 +496,7 @@ export async function getTelemetrySuggestionsForField(
       },
       orderBy: { startedAt: 'desc' },
       include: {
-        vehicle: { include: { assignedDriver: true } },
+        vehicle: true,
         implement: true
       }
     });
@@ -504,7 +504,6 @@ export async function getTelemetrySuggestionsForField(
     // Seade ↔ masin/haakeriist tuleb ainult seadmete seoste registrist
     const vehicle = asgn?.vehicle ?? null;
     let implement = asgn?.implement ?? null;
-    const worker = vehicle?.assignedDriver ?? null;
 
     // Kui telemeetria enda andmetest ei tule välja, milline haakeriist oli masina küljes,
     // siis leiame selle haakeriista masina ja haakeriista seose tabelist (ImplementAssignment),
@@ -573,8 +572,8 @@ export async function getTelemetrySuggestionsForField(
         vehicleName: vehicle?.name ?? null,
         implementId: implement?.id ?? null,
         implementName: implement?.name ?? null,
-        workerId: worker?.id ?? null,
-        workerName: worker?.name ?? null,
+        workerId: null, // töötaja valitakse kandel
+        workerName: null,
         startTime: startTimeStr,
         endTime: endTimeStr,
         fieldStartTime: startTimeStr,

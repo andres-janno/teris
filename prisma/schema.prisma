@@ -248,8 +248,6 @@ model RelatedParty {
   updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   cadastralParcels  FieldCadastralParcel[]
-  vehicles          Vehicle[]
-  poiContacts       PointOfInterest[]
   fieldsAsOperator  Field[]
   workEntries       WorkEntry[]
   plannedFieldWorks FieldWork[]            @relation("FieldWorkPlannedWorker")
@@ -308,7 +306,6 @@ model PointOfInterest {
   description    String?
   capacity       String?
   contactPerson  String?
-  contactPartyId String?
   phone          String?
   accessNotes    String?
   createdAt      DateTime    @default(now())
@@ -316,10 +313,8 @@ model PointOfInterest {
   createdBy      String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy      String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  contactParty RelatedParty? @relation(fields: [contactPartyId], references: [id], onDelete: SetNull)
   warehouse    Warehouse?
 
-  @@index([contactPartyId])
   @@index([tenantId])
   @@map("points_of_interest")
 }
@@ -346,7 +341,6 @@ model Vehicle {
   workingWidthM      Float       @default(6.0)
   color              String      @default("#10b981")
   fuelCapacityL      Float?
-  assignedDriverId   String? // Seotud isiku ID (töötaja / masinajuht)
   serviceArticleId   String? // masina tööaja teenus, kui erineb vaikimisi omast
   hourlyRate         Decimal?    @db.Decimal(12, 4) // oma tunnihind (näeb finantsõigusega)
   fuelArticleId      String? // vaikimisi kütus (liik FUEL)
@@ -359,7 +353,6 @@ model Vehicle {
   createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  assignedDriver       RelatedParty?         @relation(fields: [assignedDriverId], references: [id], onDelete: SetNull)
   serviceArticle       Article?              @relation("VehicleService", fields: [serviceArticleId], references: [id], onDelete: SetNull)
   fuelArticle          Article?              @relation("VehicleFuel", fields: [fuelArticleId], references: [id], onDelete: SetNull)
   deviceAssignments    DeviceAssignment[]
@@ -367,7 +360,6 @@ model Vehicle {
   workEntries          WorkEntry[]
   workEntryLines       WorkEntryLine[]
 
-  @@index([assignedDriverId])
   @@index([serviceArticleId])
   @@index([fuelArticleId])
   @@index([tenantId])
@@ -822,7 +814,6 @@ model WorkTemplateItem {
   templateId    String
   workTypeId    String
   sortOrder     Int     @default(0)
-  typicalTiming String? // nt "apr–mai", "eelmine sügis"
   plannedCount  Int? // korduva töö plaanitud kordi (tühi = töö liigi järgi)
 
   template WorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
@@ -1518,7 +1509,6 @@ model CatalogWorkTemplateItem {
   templateId        String
   catalogWorkTypeId String
   sortOrder         Int     @default(0)
-  typicalTiming     String?
   plannedCount      Int?
 
   template CatalogWorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)

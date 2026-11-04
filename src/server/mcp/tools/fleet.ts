@@ -28,7 +28,7 @@ export const fleetTools = [
       const telemetry = hasTelemetry(ctx);
       const now = new Date();
       const [vehicles, implementRows, hitches] = await Promise.all([
-        prisma.vehicle.findMany({ orderBy: { name: 'asc' }, include: { assignedDriver: { select: { name: true } } } }),
+        prisma.vehicle.findMany({ orderBy: { name: 'asc' } }),
         prisma.implement.findMany({ orderBy: { name: 'asc' } }),
         prisma.implementAssignment.findMany({
           where: { startedAt: { lte: now }, OR: [{ endedAt: null }, { endedAt: { gt: now } }] },
@@ -40,7 +40,7 @@ export const fleetTools = [
       return {
         vehicles: vehicles.map((v) => ({
           name: v.name, type: v.type, category: v.category, manufacturer: v.manufacturer, model: v.model, regNumber: v.regNumber,
-          powerKw: v.powerKw, workingWidthM: v.workingWidthM, driver: v.assignedDriver?.name ?? null, implement: hitchOf.get(v.id) ?? null,
+          powerKw: v.powerKw, workingWidthM: v.workingWidthM, implement: hitchOf.get(v.id) ?? null,
           ...(telemetry ? { lastActive: fmtDateTime(v.lastActiveAt) } : {}),
           ...(telemetry && v.lastLatitude != null && v.lastLongitude != null ? { lastPosition: { lat: v.lastLatitude, lng: v.lastLongitude } } : {}),
           ...(finance ? financeOut(v) : {})

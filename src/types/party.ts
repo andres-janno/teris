@@ -29,8 +29,6 @@ export interface RelatedParty {
   // Virtuaalsed seosed statistika jaoks (serveri poolt arvutatud)
   ownedParcelsCount?: number;     // Mitu katastriüksust temaga seotud
   totalAreaHa?: number;           // Hektareid kokku
-  assignedVehiclesCount?: number; // Mitu masinat talle määratud
-  poiContactsCount?: number;      // Mitu POI-punkti kontaktisikuna
   operatorFieldsCount?: number;   // Mitu põldu operaatorina (harijana)
   usageCount?: number;            // Kõigi eelnevate loenduste summa — kui > 0, ei tohi kustutada
 }
