@@ -304,7 +304,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
   const [vPlate, setVPlate] = useState('');
   const [vSerial, setVSerial] = useState('');
-  const [vDriver, setVDriver] = useState('');
   const [vColor, setVColor] = useState('#22c55e');
   const [vNotes, setVNotes] = useState('');
 
@@ -319,6 +318,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
   const [impWidth, setImpWidth] = useState<number | null>(8.0);
   const [impSerial, setImpSerial] = useState('');
+  const [impYear, setImpYear] = useState<number | null>(null); // valmistamisaasta
   const [impNotes, setImpNotes] = useState('');
 
   // Masinate ja haakeriistade liigid on eraldi nimekirjad
@@ -594,7 +594,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDepMethod('');
     setVPlate('');
     setVSerial('');
-    setVDriver('');
     setVColor('#22c55e');
     setVNotes('');
   };
@@ -612,6 +611,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod('');
     setImpWidth(8.0);
     setImpSerial('');
+    setImpYear(null);
     setImpNotes('');
   };
 
@@ -655,7 +655,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       depreciationMethod: vDepMethod || undefined,
       registrationPlate: vPlate.trim() || undefined,
       serialNumber: vSerial.trim() || undefined,
-      driverName: vDriver.trim() || undefined,
       color: vColor,
       notes: vNotes.trim() || undefined
     };
@@ -692,6 +691,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       depreciationMethod: impDepMethod || undefined,
       workingWidthM: impWidth || 6.0,
       serialNumber: impSerial.trim() || undefined,
+      year: impYear ?? undefined,
       isActive: false,
       notes: impNotes.trim() || undefined
     };
@@ -762,7 +762,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDepMethod(v.depreciationMethod || '');
     setVPlate(v.registrationPlate || '');
     setVSerial(v.serialNumber || '');
-    setVDriver(v.driverName || '');
     setVColor(v.color);
     setVNotes(v.notes || '');
     setEditingVehicleId(v.id);
@@ -782,6 +781,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod(imp.depreciationMethod || '');
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
+    setImpYear(imp.year ?? null);
     setImpNotes(imp.notes || '');
     setEditingImplementId(imp.id);
     setIsAddingNew(true);
@@ -958,23 +958,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Registrinumber & Juht</label>
-                  <div className="input-split">
-                    <input
-                      type="text"
-                      placeholder="4821 TH"
-                      value={vPlate}
-                      onChange={(e) => setVPlate(e.target.value)}
-                      className="form-input"
-                    />
-                    <input
-                      type="text"
-                      placeholder="Juhi nimi"
-                      value={vDriver}
-                      onChange={(e) => setVDriver(e.target.value)}
-                      className="form-input"
-                    />
-                  </div>
+                  <label>Registrinumber</label>
+                  <input
+                    type="text"
+                    placeholder="4821 TH"
+                    value={vPlate}
+                    onChange={(e) => setVPlate(e.target.value)}
+                    className="form-input"
+                  />
                 </div>
                 <div className="form-group">
                   <label>VIN / Seerianumber</label>
@@ -1107,6 +1098,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     onChange={(e) => setImpSerial(e.target.value)}
                     className="form-input"
                   />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="imp-year">Valmistamisaasta</label>
+                  <NumberInput id="imp-year" integer min={1900} max={2100} placeholder="nt 2018" value={impYear} onChange={setImpYear} />
                 </div>
                 <DepreciationFields
                   date={impAcqDate}

@@ -1018,7 +1018,8 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         manufacturer: i.manufacturer || null,
         model: i.model || null,
         serialNumber: cleanText(i.serialNumber),
-        year: i.year ?? null,
+        // valmistamisaasta: täisarv 1900–2100, muu → tühi
+        year: Number.isInteger(Number(i.year)) && Number(i.year) >= 1900 && Number(i.year) <= 2100 ? Number(i.year) : null,
         notes: i.notes ?? null,
         ...cost.data
       };
