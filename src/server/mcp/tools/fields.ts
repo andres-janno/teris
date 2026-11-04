@@ -71,7 +71,7 @@ export const fieldTools = [
   defineTool({
     name: 'get_field',
     title: 'Põllu hooaeg',
-    description: 'Ühe põllu hooaja täisvaade: põllu andmed, mullastik, operaator, katastriüksused, kõik plaanitud tööd ja nende kanded koos materjalidega.',
+    description: 'Ühe põllu hooaja täisvaade: põllu andmed, mullastik, operaator, katastriüksused (kinnistu nimi, maaomanik/rendileandja, omandivorm OWNED/RENTED/UNKNOWN; rent ja maamaks finantsõigusega), kõik plaanitud tööd ja nende kanded koos materjalidega.',
     input: { field: z.string().min(1).describe('Põllu nimi või number'), year },
     run: async (a, ctx) => {
       const y = a.year ?? tallinnYear();
@@ -81,7 +81,7 @@ export const fieldTools = [
         where: { id: fs.id },
         include: {
           field: { include: { operator: { select: { name: true } } } },
-          cadastralParcels: { include: { cadastralParcel: { select: { cadastralCode: true, name: true } } } },
+          cadastralParcels: { orderBy: { id: 'asc' }, include: { cadastralParcel: { select: { cadastralCode: true, name: true } } } },
           fieldWorks: {
             orderBy: [{ plannedDateFrom: 'asc' }, { sortOrder: 'asc' }],
             include: {
@@ -104,8 +104,13 @@ export const fieldTools = [
         targetYieldTHa: round2(s.targetYieldTonsHa), actualYieldTHa: round2(s.actualYieldTonsHa),
         priaCode: s.field.fieldCode, soilType: s.field.soilType, drainage: s.field.drainageSystem, operator: s.field.operator?.name ?? null, notes: s.notes ?? s.field.notes,
         cadastralParcels: s.cadastralParcels.map((p) => ({
-          code: p.cadastralParcel.cadastralCode, name: p.cadastralParcel.name, areaHa: round2(p.fieldAreaHa), ownership: p.ownershipType,
-          ...(finance ? { rentFeeEurYear: round2(p.rentFeeEurYear), landTaxEurYear: round2(p.landTaxEurYear) } : {})
+          // name = katastriüksuse (kinnistu) nimi; owner = maaomanik/rendileandja sellel hooajal. Sama üksus võib korduda eri omanikega.
+          code: p.cadastralParcel.cadastralCode, name: p.cadastralParcel.name, owner: p.ownerName, areaHa: round2(p.fieldAreaHa), ownership: p.ownershipType,
+          notes: p.notes,
+          ...(finance ? {
+            rentFeeEurHa: round2(p.rentFeeEurHa), rentFeeEurYear: round2(p.rentFeeEurYear),
+            landTaxEurHa: round2(p.landTaxEurHa), landTaxEurYear: round2(p.landTaxEurYear)
+          } : {})
         })),
         works: s.fieldWorks.map((w) => ({
           work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status,

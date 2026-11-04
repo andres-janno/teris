@@ -67,7 +67,7 @@ export async function createTestTenant(suffix: string, opts: { modules?: License
     await prisma.field.create({ data: { num: '14', name: 'Toosi alumine', fieldCode: 'T-14' } });
     const fs = await prisma.fieldSeason.create({ data: { fieldId: field.id, seasonId: season.id, year: 2026, areaHa: 12.4, crop: 'Talinisu', cropVariety: 'Ada', geometry: {} } });
     const parcel = await prisma.cadastralParcel.create({ data: { cadastralCode: 'T-KAT-1', name: 'Testkatastri' } });
-    await prisma.fieldCadastralParcel.create({ data: { fieldSeasonId: fs.id, cadastralParcelId: parcel.id, fieldAreaHa: 12.4, ownershipType: 'RENTED', rentFeeEurYear: 1200, landTaxEurYear: 80 } });
+    await prisma.fieldCadastralParcel.create({ data: { fieldSeasonId: fs.id, cadastralParcelId: parcel.id, fieldAreaHa: 12.4, ownershipType: 'RENTED', ownerName: 'Jaan Tamm', rentFeeEurYear: 1200, landTaxEurYear: 80 } });
     const warehouse = await prisma.warehouse.create({ data: { name: 'Põhiladu', isDefault: true } });
     const catId = await tenantTransaction((tx) => systemCategoryId(tx, 'FERTILIZER'));
     const article = await prisma.article.create({ data: { name: 'Ammooniumnitraat', categoryId: catId, unit: 'kg', nPct: 34 } });

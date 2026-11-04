@@ -114,9 +114,10 @@ describe('põllud', () => {
   });
   it('get_field: rent ja maamaks ainult finantsjuhile', async () => {
     const plain = (await call(A.plainKey, 'get_field', { field: '4', year: 2026 })).data.cadastralParcels[0];
-    expect(plain).toMatchObject({ code: 'T-KAT-1', ownership: 'RENTED' });
+    expect(plain).toMatchObject({ code: 'T-KAT-1', owner: 'Jaan Tamm', ownership: 'RENTED' });
     expect('rentFeeEurYear' in plain).toBe(false);
     expect('landTaxEurYear' in plain).toBe(false);
+    expect('rentFeeEurHa' in plain).toBe(false);
     const fin = (await call(A.financeKey, 'get_field', { field: '4', year: 2026 })).data.cadastralParcels[0];
     expect(fin).toMatchObject({ rentFeeEurYear: 1200, landTaxEurYear: 80 });
   });
