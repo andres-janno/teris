@@ -1020,7 +1020,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         name: i.name,
         category: cleanText(i.category),
         ...depreciationIn(i),
-        workingWidthM: i.workingWidthM,
+        workingWidthM: toPositiveNumber(i.workingWidthM) ?? null,
         manufacturer: i.manufacturer || null,
         model: i.model || null,
         regNumber: cleanText(i.registrationPlate),
@@ -1510,7 +1510,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           ? {
               id: resolvedImplement.id,
               name: resolvedImplement.name,
-              workingWidthM: resolvedImplement.workingWidthM,
+              workingWidthM: resolvedImplement.workingWidthM ?? 0, // 0 = määramata (klient kasutab vaikimisi laiust)
               type: resolvedImplement.type
             }
           : null

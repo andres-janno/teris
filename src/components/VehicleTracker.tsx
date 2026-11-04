@@ -317,7 +317,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impAcqDate, setImpAcqDate] = useState('');
   const [impDepRate, setImpDepRate] = useState('');
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
-  const [impWidth, setImpWidth] = useState<number | null>(8.0);
+  const [impWidth, setImpWidth] = useState<number | null>(null);
   const [impSerial, setImpSerial] = useState('');
   const [impPlate, setImpPlate] = useState(''); // registrinumber
   const [impYear, setImpYear] = useState<number | null>(null); // valmistamisaasta
@@ -694,7 +694,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       acquisitionDate: impAcqDate || undefined,
       depreciationRate: parsePositive(impDepRate),
       depreciationMethod: impDepMethod || undefined,
-      workingWidthM: impWidth || 6.0,
+      workingWidthM: impWidth && impWidth > 0 ? impWidth : null,
       serialNumber: impSerial.trim() || undefined,
       registrationPlate: impPlate.trim() || undefined,
       year: impYear ?? undefined,
@@ -1093,10 +1093,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </div>
                 <div className="form-group">
-                  <label>Töölaius (m) *</label>
+                  <label>Töölaius (m)</label>
                   <NumberInput
-                    required
                     decimals={1}
+                    min={0}
                     value={impWidth}
                     onChange={setImpWidth}
                   />
@@ -1516,7 +1516,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <div className="equipment-tag implement-tag">
                       <Wrench size={12} className="text-emerald" />
                       <span className="tag-text">
-                        {attachedImplement ? `${attachedImplement.name} (${attachedImplement.workingWidthM}m)` : 'Haakeriist puudub'}
+                        {attachedImplement ? `${attachedImplement.name}${attachedImplement.workingWidthM ? ` (${attachedImplement.workingWidthM}m)` : ''}` : 'Haakeriist puudub'}
                       </span>
                       <button
                         className="mini-swap-btn"
@@ -1634,7 +1634,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                   <div className="imp-title-wrap">
                     <h4 className="imp-name">{imp.name}</h4>
-                    <span className="imp-meta">{[imp.category, imp.manufacturer, `${imp.workingWidthM}m`].filter(Boolean).join(' • ')}</span>
+                    <span className="imp-meta">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
                   </div>
                   <div className="card-header-actions">
                     <button
@@ -2241,7 +2241,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       >
                         <Wrench size={16} className="text-emerald" />
                         <div className="option-info">
-                          <strong>{imp.name} ({imp.workingWidthM}m töölaius)</strong>
+                          <strong>{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
                           <p>
                             {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
                               otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'

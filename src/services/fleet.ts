@@ -51,7 +51,7 @@ export function enrichVehicles(
         id: implement.id,
         name: implement.name,
         type: implement.type,
-        workingWidthM: implement.workingWidthM,
+        workingWidthM: implement.workingWidthM ?? 0, // 0 = määramata
         offsetM: implement.offsetM,
         isActive: implement.isActive ?? (device ? device.hydraulicActive : false)
       } : undefined

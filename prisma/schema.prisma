@@ -373,7 +373,7 @@ model Implement {
   name               String
   type               ImplementType
   category           String? // Haakeriista liik (vabatekst, eraldi masinate liikidest)
-  workingWidthM      Float
+  workingWidthM      Float? // töölaius m; tühi = telemeetria ei arvuta haakeriista järgi pindala
   acquisitionCost    Float? // Soetusmaksumus (€)
   acquisitionDate    DateTime?     @db.Date // Soetamise kuupäev
   depreciationRate   Float? // Amortisatsioonimäär (% aastas)

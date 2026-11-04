@@ -744,12 +744,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     const attachedToVeh = implementsList.find(
       (i) => i.id === activeSimVehicle?.assignedImplementId || i.assignedVehicleId === currentVehicleId
     );
-    if (attachedToVeh && attachedToVeh.workingWidthM > 0) {
-      setWorkingWidthM(attachedToVeh.workingWidthM);
+    const attachedWidth = attachedToVeh?.workingWidthM ?? 0; // määramata töölaius = 0 (kasutatakse vaikimisi laiust)
+    if (attachedToVeh && attachedWidth > 0) {
+      setWorkingWidthM(attachedWidth);
       setDetectedImplement({
         id: attachedToVeh.id,
         name: attachedToVeh.name,
-        workingWidthM: attachedToVeh.workingWidthM,
+        workingWidthM: attachedWidth,
         type: attachedToVeh.type
       });
     }
@@ -785,13 +786,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           effectiveWidth = res.implement.workingWidthM;
           setWorkingWidthM(effectiveWidth);
           setDetectedImplement(res.implement);
-        } else if (attachedToVeh && attachedToVeh.workingWidthM > 0) {
-          effectiveWidth = attachedToVeh.workingWidthM;
+        } else if (attachedToVeh && attachedWidth > 0) {
+          effectiveWidth = attachedWidth;
           setWorkingWidthM(effectiveWidth);
           setDetectedImplement({
             id: attachedToVeh.id,
             name: attachedToVeh.name,
-            workingWidthM: attachedToVeh.workingWidthM,
+            workingWidthM: attachedWidth,
             type: attachedToVeh.type
           });
         }

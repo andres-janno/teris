@@ -103,7 +103,7 @@ export interface Implement {
   acquisitionDate?: string;       // Soetamise kuupäev (YYYY-MM-DD)
   depreciationRate?: number;      // Amortisatsioonimäär (% aastas)
   depreciationMethod?: DepreciationMethod;
-  workingWidthM: number;          // Töölaius meetrites (nt 12m)
+  workingWidthM: number | null;   // Töölaius meetrites (nt 12m); tühi = määramata
   offsetM?: number;              // Külgnihe
   year?: number;
   registrationPlate?: string;    // registrinumber
