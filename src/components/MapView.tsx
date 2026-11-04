@@ -70,6 +70,8 @@ interface MapViewProps {
   satellitePanelHost?: HTMLElement | null;
   /** Huvipunkti hüpikaknast lao laoseisu avamine */
   onOpenWarehouse?: (warehouseId: string) => void;
+  /** Põllul parem hiireklõps: kontekstimenüü avamine (ekraani koordinaadid) */
+  onFieldContextMenu?: (field: FieldFeature, point: { x: number; y: number }) => void;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -97,7 +99,8 @@ export const MapView: React.FC<MapViewProps> = ({
   satelliteDate,
   onSelectSatelliteDate,
   satellitePanelHost,
-  onOpenWarehouse
+  onOpenWarehouse,
+  onFieldContextMenu
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
   // Kaart on teiste vaadete ajal peidus (display: none, suurus 0×0). Peidetud kaardile Leaflet
@@ -111,6 +114,9 @@ export const MapView: React.FC<MapViewProps> = ({
   const baseMapLayerRef = useRef<L.TileLayer | null>(null);
   const cadastreLayerRef = useRef<L.TileLayer.WMS | null>(null);
   const fieldsLayerGroupRef = useRef<L.GeoJSON | null>(null);
+  // Kontekstimenüü käsitleja viitena, et põllukihti ei joonistataks iga renderduse järel uuesti
+  const onFieldContextMenuRef = useRef(onFieldContextMenu);
+  onFieldContextMenuRef.current = onFieldContextMenu;
   const fieldNumbersLayerRef = useRef<L.LayerGroup | null>(null);
   const vehiclesLayerGroupRef = useRef<L.LayerGroup | null>(null);
   const cultivationLayerGroupRef = useRef<L.LayerGroup | null>(null);
@@ -394,6 +400,12 @@ export const MapView: React.FC<MapViewProps> = ({
           click: (e) => {
             L.DomEvent.stopPropagation(e);
             onSelectField(feature);
+          },
+          contextmenu: (e: L.LeafletMouseEvent) => {
+            if (!onFieldContextMenuRef.current) return;
+            L.DomEvent.stopPropagation(e);
+            L.DomEvent.preventDefault(e.originalEvent);
+            onFieldContextMenuRef.current(feature, { x: e.originalEvent.clientX, y: e.originalEvent.clientY });
           },
           mouseover: (e) => {
             const l = e.target;

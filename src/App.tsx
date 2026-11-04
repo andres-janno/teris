@@ -61,6 +61,7 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
 const FieldFullView = lazy(() => import('./components/FieldFullView').then((m) => ({ default: m.FieldFullView })));
 const FieldWorkPlanDialog = lazy(() => import('./components/FieldWorkPlanDialog').then((m) => ({ default: m.FieldWorkPlanDialog })));
+const FieldContextMenu = lazy(() => import('./components/FieldContextMenu').then((m) => ({ default: m.FieldContextMenu })));
 const FieldWorkEntryDialog = lazy(() => import('./components/FieldWorkEntryDialog').then((m) => ({ default: m.FieldWorkEntryDialog })));
 const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
 const FieldsTableView = lazy(() => import('./components/FieldsTableView').then((m) => ({ default: m.FieldsTableView })));
@@ -1033,6 +1034,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const openEntryDialog = React.useCallback((ctx: NonNullable<typeof entryDialog>) => { ensureWorkRefs(); setEntryDialog(ctx); }, [ensureWorkRefs]);
   const closePlanDialog = React.useCallback(() => setPlanDialog(null), []);
   const closeEntryDialog = React.useCallback(() => setEntryDialog(null), []);
+  // Kaardil põllu kontekstimenüü (parem hiireklõps)
+  const [fieldMenu, setFieldMenu] = useState<{ field: FieldFeature; point: { x: number; y: number } } | null>(null);
+  const openFieldMenu = React.useCallback((field: FieldFeature, point: { x: number; y: number }) => setFieldMenu({ field, point }), []);
+  const closeFieldMenu = React.useCallback(() => setFieldMenu(null), []);
   const workDialogWorkers = React.useMemo(
     () => parties.filter((p) => p.roles.includes('DRIVER')).map((p) => ({ id: p.id, name: p.name })),
     [parties]
@@ -1814,6 +1819,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         )}
         <MapView 
           onOpenWarehouse={openWarehouse}
+          onFieldContextMenu={openFieldMenu}
           visibility={visibility}
           fields={fields}
           selectedField={selectedField}
@@ -1990,7 +1996,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </Suspense>
       )}
 
-      {/* Kande lisamine/muutmine täisvaatest */}
+      {fieldMenu && (
+        <Suspense fallback={null}>
+          <FieldContextMenu
+            key={`${fieldMenu.field.properties.id}-${fieldMenu.point.x}-${fieldMenu.point.y}`}
+            field={fieldMenu.field}
+            point={fieldMenu.point}
+            masterField={masterFields.find((f) => String(f.id) === String(fieldMenu.field.properties.id)) ?? null}
+            seasons={seasons}
+            onAddEntry={openEntryDialog}
+            onClose={closeFieldMenu}
+          />
+        </Suspense>
+      )}
+
+      {/* Kande lisamine/muutmine täisvaatest ja kaardi kontekstimenüüst */}
       {entryDialog && workRefs && (
         <Suspense fallback={null}>
           <FieldWorkEntryDialog

@@ -11082,3 +11082,62 @@ td.stock-qty-out { color: #dc2626; }
   padding-top: 14px;
   font-size: 0.8rem;
 }
+
+/* Kaardi põllu kontekstimenüü (parem hiireklõps) */
+.map-context-menu {
+  position: fixed;
+  z-index: 3000;
+  min-width: 240px;
+  max-width: 340px;
+  max-height: 70vh;
+  overflow-y: auto;
+  padding: 6px;
+  background: var(--bg-modal);
+  border: 1px solid var(--btn-sec-border);
+  border-radius: var(--radius-md);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.25);
+  font-size: 0.82rem;
+}
+.map-context-menu-title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 8px 8px;
+  border-bottom: 1px solid var(--btn-sec-border);
+  margin-bottom: 4px;
+}
+.map-context-menu-title .muted { font-size: 0.74rem; }
+.map-context-menu-section {
+  padding: 6px 8px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--text-secondary);
+}
+.map-context-menu-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.map-context-menu-item:hover,
+.map-context-menu-item:focus-visible { background: var(--btn-sec-hover); outline: none; }
+.map-context-menu-item svg { flex-shrink: 0; margin-top: 2px; color: #22c55e; }
+.map-context-menu-item-text { display: flex; flex-direction: column; gap: 1px; }
+.map-context-menu-item-text .muted { font-size: 0.74rem; }
+.map-context-menu-note {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 8px;
+}
+.map-context-menu-note.error { color: #ef4444; }

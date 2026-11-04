@@ -763,8 +763,9 @@ export const api = {
   async getFieldSeasonWorks(fieldId: number | string, year: number): Promise<FieldSeasonWorks> {
     return jsonOrThrow(await apiFetch(`/api/field-season-works?fieldId=${encodeURIComponent(String(fieldId))}&year=${year}`), 'Põllu tööde laadimine ebaõnnestus');
   },
-  async getFieldWorks(year: number): Promise<FieldWork[]> {
-    return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}`), 'Põllutööde laadimine ebaõnnestus');
+  async getFieldWorks(year: number, fieldId?: number | string): Promise<FieldWork[]> {
+    const field = fieldId != null ? `&fieldId=${encodeURIComponent(String(fieldId))}` : '';
+    return jsonOrThrow(await apiFetch(`/api/field-works?year=${year}${field}`), 'Põllutööde laadimine ebaõnnestus');
   },
 
   async addFieldWork(data: { fieldSeasonId: number; workTypeId: string; sortOrder?: number | null } & FieldWorkPlanInput): Promise<FieldWork> {

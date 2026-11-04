@@ -1031,18 +1031,21 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
       json(res, { error: 'Hooaeg (year) on kohustuslik' }, 400);
       return true;
     }
+    // Valikuline põllu filter (kaardi kontekstimenüü): sama loogika, ainult ühe põllu tööd
+    const fieldIdFilter = url.searchParams.has('fieldId') ? int(url.searchParams.get('fieldId')) : null;
+    const byField = fieldIdFilter ? { fieldId: fieldIdFilter } : {};
     const finance = canSeeFinance(req);
     const crops = await prisma.crop.findMany({ select: { id: true, name: true, isWinterCrop: true } });
     // Päring ainult loeb: kultuuri ei pärita eelmisest aastast (talivili kuulub koristusaasta hooaega)
     const rows = await prisma.fieldWork.findMany({
-      where: { fieldSeason: { year } },
+      where: { fieldSeason: { year, ...byField } },
       orderBy: [{ fieldSeasonId: 'asc' }, { sortOrder: 'asc' }],
       include: { ...FIELD_WORK_INCLUDE, fieldSeason: { select: { id: true, fieldId: true, crop: true, cropId: true, year: true } } }
     });
 
     // Järgmise aasta taliviljade ja suviviljade sügistööd (teostatakse selle aasta sügisel)
     const nextYearSeasons = await prisma.fieldSeason.findMany({
-      where: { year: year + 1 },
+      where: { year: year + 1, ...byField },
       select: {
         id: true,
         fieldId: true,
