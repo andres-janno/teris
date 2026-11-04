@@ -84,7 +84,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const doneBefore = others.reduce((s, e) => s + (e.areaHa ?? 0), 0);
 
   const [date, setDate] = useState(entry?.date ?? todayIso());
-  const [dateTo, setDateTo] = useState(entry?.dateTo ?? '');
   const [method, setMethod] = useState(entry?.method ?? work.method ?? '');
   const [workerId, setWorkerId] = useState(entry?.workerId ?? (entry ? '' : work.plannedWorkerId ?? (workers.length === 1 ? workers[0].id : '')));
   const [startTime, setStartTime] = useState(entry?.startTime ?? '');
@@ -325,7 +324,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     e.preventDefault();
     setError(null);
     if (!date) return setError('Kuupäev on kohustuslik');
-    if (dateTo && dateTo < date) return setError('Lõpu kuupäev ei saa olla enne algust');
     if (activity === PRIA_ACTIVITY.PLANT_PROTECTION && !workerId) return setError('Taimekaitsetöö teostaja on kohustuslik');
     if (!workerId && !imported) return setError('Vali töötaja');
     if ((!startTime || !endTime) && !imported) return setError('Vali algus- ja lõpukellaaeg');
@@ -347,7 +345,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
         {
           fieldWorkId: work.id,
           date,
-          dateTo: dateTo || null,
           method: method || null,
           workerId: workerId || null,
           laborHours: parseNum(laborHours),
@@ -491,10 +488,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <div className="form-group">
               <label htmlFor="we-date">Kuupäev *</label>
               <DateInput id="we-date" value={date} onChange={setDate} className="form-input" />
-            </div>
-            <div className="form-group">
-              <label htmlFor="we-date-to">Lõpp (kui mitu päeva)</label>
-              <DateInput id="we-date-to" value={dateTo} onChange={setDateTo} className="form-input" />
             </div>
             {activity === PRIA_ACTIVITY.FERTILIZING && (
               <div className="form-group">

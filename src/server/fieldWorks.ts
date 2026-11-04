@@ -151,7 +151,7 @@ async function resolveEntryInput(body: any) {
   return {
     data: {
       date: dateOnly(body?.date),
-      dateTo: dateOnly(body?.dateTo),
+      // Kandel on üks kuupäev; vahemik (dateTo) tuleb ainult PRIA impordist ja jääb kande muutmisel alles
       method: text(body?.method, 80),
       harvestBunkers,
       workerId: worker?.id ?? null,
