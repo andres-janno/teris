@@ -34,10 +34,11 @@ import { deriveOwnershipType } from '../services/landTenure.ts';
 
 const TELEMETRY_STALE_MS = 10 * 60 * 1000; // 10 min ilma uue kirjeta = 'offline'
 
-// Asendab hooaja katastriüksuste seosed kliendi saadetud nimekirjaga; tundmatu tunnus lisatakse registrisse.
+// Asendab hooaja katastriüksuste seosed kliendi saadetud nimekirjaga (järjekord säilib); tundmatu tunnus lisatakse registrisse.
+// Sama tunnus võib korduda (eri omanikud); iga rida on eraldi seos.
 async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], db: TxClient): Promise<void> {
   const num = (v: unknown) => (v === null || v === undefined || v === '' || isNaN(Number(v)) ? null : Number(v));
-  const keepParcelIds: number[] = [];
+  const rows: any[] = [];
   for (const l of links) {
     const cadastralCode = String(l?.cadastralCode ?? '').trim();
     if (!cadastralCode) continue;
@@ -57,16 +58,10 @@ async function syncSeasonCadastralParcels(fieldSeasonId: number, links: any[], d
       rentFeeEurYear: num(l?.rentFeeEurYear),
       notes: String(l?.notes ?? '').trim() || null
     };
-    await db.fieldCadastralParcel.upsert({
-      where: { fieldSeasonId_cadastralParcelId: { fieldSeasonId, cadastralParcelId: parcel.id } },
-      update: data,
-      create: { fieldSeasonId, cadastralParcelId: parcel.id, ...data }
-    });
-    keepParcelIds.push(parcel.id);
+    rows.push({ fieldSeasonId, cadastralParcelId: parcel.id, ...data });
   }
-  await db.fieldCadastralParcel.deleteMany({
-    where: { fieldSeasonId, cadastralParcelId: { notIn: keepParcelIds } }
-  });
+  await db.fieldCadastralParcel.deleteMany({ where: { fieldSeasonId } });
+  if (rows.length) await db.fieldCadastralParcel.createMany({ data: rows });
 }
 
 // Omandivorm maaomaniku järgi (omanik = põllu operaator → oma maa, muu → renditud). Lukus hooaegu ei muudeta.

@@ -379,8 +379,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                         </td>
                         <td className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</td>
                         <td>
-                          {r.parcels.length ? r.parcels.map((p) => (
-                            <div key={p.cadastralCode} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
+                          {r.parcels.length ? r.parcels.map((p, i) => (
+                            <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
                               {p.cadastralCode}
                               {r.parcels.length > 1 && <span className="cell-sub-inline"> · {fmtHa(p.fieldAreaHa)} ha</span>}
                             </div>

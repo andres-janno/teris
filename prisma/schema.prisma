@@ -284,7 +284,8 @@ model FieldCadastralParcel {
   cadastralParcel CadastralParcel @relation(fields: [cadastralParcelId], references: [id], onDelete: Cascade)
   ownerParty      RelatedParty?   @relation(fields: [ownerPartyId], references: [id], onDelete: SetNull)
 
-  @@unique([fieldSeasonId, cadastralParcelId])
+  // Sama katastriüksus võib hooajal korduda (nt kaasomanikud: igal real oma omanik, pindala ja rent)
+  @@index([fieldSeasonId, cadastralParcelId])
   @@index([fieldSeasonId])
   @@index([cadastralParcelId])
   @@index([ownerPartyId])
