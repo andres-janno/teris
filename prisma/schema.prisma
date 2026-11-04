@@ -380,6 +380,7 @@ model Implement {
   depreciationMethod String? // Amortisatsioonimeetod: LINEAR (lineaarne) | DECLINING (degressiivne)
   manufacturer       String?
   model              String?
+  regNumber          String? // registrinumber (nt haagis)
   serialNumber       String? // VIN / seerianumber
   year               Int?
   serviceArticleId   String? // haakeriista tööaja teenus, kui erineb vaikimisi omast

@@ -46,7 +46,7 @@ export const fleetTools = [
           ...(finance ? financeOut(v) : {})
         })),
         implements: implementRows.map((i) => ({
-          name: i.name, type: i.type, category: i.category, manufacturer: i.manufacturer, model: i.model, year: i.year, workingWidthM: i.workingWidthM,
+          name: i.name, type: i.type, category: i.category, manufacturer: i.manufacturer, model: i.model, regNumber: i.regNumber, year: i.year, workingWidthM: i.workingWidthM,
           ...(finance ? financeOut(i) : {})
         }))
       };

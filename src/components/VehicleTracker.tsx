@@ -319,6 +319,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [impDepMethod, setImpDepMethod] = useState<DepreciationMethod | ''>('');
   const [impWidth, setImpWidth] = useState<number | null>(8.0);
   const [impSerial, setImpSerial] = useState('');
+  const [impPlate, setImpPlate] = useState(''); // registrinumber
   const [impYear, setImpYear] = useState<number | null>(null); // valmistamisaasta
   const [impNotes, setImpNotes] = useState('');
 
@@ -613,6 +614,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod('');
     setImpWidth(8.0);
     setImpSerial('');
+    setImpPlate('');
     setImpYear(null);
     setImpNotes('');
   };
@@ -694,6 +696,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       depreciationMethod: impDepMethod || undefined,
       workingWidthM: impWidth || 6.0,
       serialNumber: impSerial.trim() || undefined,
+      registrationPlate: impPlate.trim() || undefined,
       year: impYear ?? undefined,
       isActive: false,
       notes: impNotes.trim() || undefined
@@ -785,6 +788,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpDepMethod(imp.depreciationMethod || '');
     setImpWidth(imp.workingWidthM);
     setImpSerial(imp.serialNumber || '');
+    setImpPlate(imp.registrationPlate || '');
     setImpYear(imp.year ?? null);
     setImpNotes(imp.notes || '');
     setEditingImplementId(imp.id);
@@ -1106,6 +1110,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     onChange={(e) => setImpSerial(e.target.value)}
                     className="form-input"
                   />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="imp-plate">Registrinumber</label>
+                  <input id="imp-plate" type="text" placeholder="nt 123 XYZ" value={impPlate} onChange={(e) => setImpPlate(e.target.value)} className="form-input" />
                 </div>
                 <div className="form-group">
                   <label htmlFor="imp-year">Väljalaskeaasta</label>
@@ -1676,6 +1684,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                   )}
                 </div>
+
+                {imp.registrationPlate && (
+                  <div className="imp-serial-row">
+                    <span className="text-muted">Registrinumber:</span>
+                    <code>{imp.registrationPlate}</code>
+                  </div>
+                )}
 
                 {imp.serialNumber && (
                   <div className="imp-serial-row">

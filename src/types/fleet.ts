@@ -106,6 +106,7 @@ export interface Implement {
   workingWidthM: number;          // Töölaius meetrites (nt 12m)
   offsetM?: number;              // Külgnihe
   year?: number;
+  registrationPlate?: string;    // registrinumber
   serialNumber?: string;
   assignedVehicleId?: string;    // Millise masina küljes (kui on haagitud)
   assignedDeviceId?: string;     // Külge paigaldatud seade (nt Eye sensor otsikul)
