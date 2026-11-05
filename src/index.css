@@ -10996,6 +10996,16 @@ select.form-input:read-only {
   right: 26px;
 }
 
+/* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
+.history-filter-bar > div > .filter-clear {
+  display: flex;
+  width: 100%;
+}
+
+.history-filter-bar > div > .filter-clear > select.form-input {
+  width: 100%;
+}
+
 /* Liitfilter (kuupäevavahemik, linnuke): X-nupp sisu järel, mitte välja peal (seal on kalendri ikoon / tekst) */
 .filter-clear.filter-clear-inline {
   gap: 4px;
