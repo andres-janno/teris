@@ -1,5 +1,5 @@
 // src/server/tripRoute.ts — telemeetria sõidu teekond: algus, läbitud kohad (põllud, huvipunktid) ja lõpp.
-// Puhtad funktsioonid (segmentTrip, buildRoute) ei puutu andmebaasi; loadPlaces laeb kohad ettevõtte piires.
+// Puhas funktsioon buildRoute ei puutu andmebaasi; kohad laeb tripPlaces.ts.
 // Koordinaate ei saadeta kuhugi välja — kohad tuvastatakse ainult oma põldude ja huvipunktide järgi.
 import * as turf from '@turf/turf';
 import type { Polygon, MultiPolygon, Position } from 'geojson';
@@ -31,39 +31,6 @@ export type RouteOptions = {
 export const DEFAULT_ROUTE_OPTIONS: RouteOptions = { fieldRadiusM: 10, poiRadiusM: 25, minVisitMs: 60_000 };
 export const NEAR_PLACE_MAX_M = 200;
 export const TRIP_GAP_MS = 20 * 60 * 1000;
-
-const isOn = (p: TripPoint) => p.ignition !== false;
-
-/**
- * Sõit = ühe seadme katkematu süüte-sees-jada, mis sisaldab põllusessiooni [sessionStart, sessionEnd].
- * Laiendatakse sessioonist mõlemale poole, kuni süüde lülitub välja või punktide vahe ületab gapMs.
- * Süüteväljata seadme punktid (ignition = null) loetakse süüte sees olevaks. Punktid peavad olema ajas kasvavalt.
- */
-export function segmentTrip(
-  points: TripPoint[],
-  sessionStart: Date,
-  sessionEnd: Date,
-  opts: { gapMs?: number } = {}
-): { start: Date; end: Date; points: TripPoint[] } | null {
-  const gapMs = opts.gapMs ?? TRIP_GAP_MS;
-  const s0 = sessionStart.getTime();
-  const s1 = sessionEnd.getTime();
-  let first = -1;
-  let last = -1;
-  for (let i = 0; i < points.length; i++) {
-    const t = points[i].time.getTime();
-    if (t < s0 || t > s1 || !isOn(points[i])) continue;
-    if (first < 0) first = i;
-    last = i;
-  }
-  if (first < 0) return null;
-
-  while (first > 0 && isOn(points[first - 1]) && points[first].time.getTime() - points[first - 1].time.getTime() <= gapMs) first--;
-  while (last < points.length - 1 && isOn(points[last + 1]) && points[last + 1].time.getTime() - points[last].time.getTime() <= gapMs) last++;
-
-  const tripPoints = points.slice(first, last + 1).filter(isOn);
-  return { start: tripPoints[0].time, end: tripPoints[tripPoints.length - 1].time, points: tripPoints };
-}
 
 type PreparedPlace = {
   ref: PlaceRef;

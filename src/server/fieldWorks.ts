@@ -1,15 +1,11 @@
 // src/server/fieldWorks.ts — põllutööde register: tööd, materjalid, hooaja tööd, kanded, finantsid.
 // Põllutööd on PRIA e-põlluraamatu allikas: töö = plaan, kanne = tegelik; PRIA import loob/seob töid.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tenantTransaction, tsdb, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
-import { fetchFieldGpsPackets, fetchDevicePackets, type FieldGpsRow, type DevicePacket } from './telemetryAccess.ts';
-import { coverageAreaHa, type CoveragePoint } from './coverageArea.ts';
-import { segmentTrip, buildRoute, DEFAULT_ROUTE_OPTIONS, type Place, type TripRoute } from './tripRoute.ts';
-import { loadPlaces } from './tripPlaces.ts';
+import { prisma, tenantTransaction, canDelete, DELETE_FORBIDDEN_MESSAGE } from './db.ts';
+import { getTelemetrySuggestionsForField, entryTripError } from './tripSuggestions.ts';
 import type { Prisma } from '@prisma/client';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
-import * as turf from '@turf/turf';
 import {
   buildEntryLines,
   confirmBlockReason,
@@ -172,7 +168,9 @@ async function resolveEntryInput(body: any) {
     // Puuduv väärtus pole „false“: vorm ei saada seda; lahendatakse POST/PUT-is
     harvestTonnesManualIn: typeof body?.harvestTonnesManual === 'boolean' ? (body.harvestTonnesManual as boolean) : null,
     // Ladu lahendatakse tehingus (resolveEntryWarehouseId): valimata → põhiladu, mitteaktiivne ainult senisena
-    warehouseId: text(body?.warehouseId, 64)
+    warehouseId: text(body?.warehouseId, 64),
+    // Sõitude registri sõit: võti puudub → muutmisel jääb senine; null → seos eemaldatakse
+    tripId: body?.tripId === undefined ? undefined : text(body.tripId, 64)
   };
 }
 
@@ -207,6 +205,7 @@ function entryDto(e: any, withFinance: boolean) {
     implementId: e.implementId,
     implementName: e.implement?.name ?? null,
     warehouseId: e.warehouseId ?? null,
+    tripId: e.tripId ?? null,
     equipmentHours: e.equipmentHours,
     fuelLiters: e.fuelLiters,
     laborHours: e.laborHours,
@@ -330,307 +329,6 @@ const toStored = (l: any): StoredLine => ({
   unitPrice: decimalToNumber(l.unitPrice),
   confirmedQuantity: l.confirmedQuantity
 });
-
-export interface TelemetrySuggestion {
-  id: string;
-  vehicleId: string | null;
-  vehicleName: string | null;
-  implementId: string | null;
-  implementName: string | null;
-  workerId: string | null;
-  workerName: string | null;
-  startTime: string; // süüde sisse (sõidu algus); sõidu puudumisel põllule jõudmine
-  endTime: string; // süüde välja (sõidu lõpp); sõidu puudumisel põllult lahkumine
-  fieldStartTime: string; // põllu piiridesse jõudmine
-  fieldEndTime: string; // põllu piiridest lahkumine
-  durationHours: number; // põllu piirides süüde sees oldud aeg
-  workedAreaHa: number | null;
-  pointCount: number;
-  route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp); puudub, kui ei õnnestunud arvutada
-}
-
-export async function getTelemetrySuggestionsForField(
-  fieldSeasonId: number,
-  dateStr: string,
-  excludeEntryId?: string | null
-): Promise<TelemetrySuggestion[]> {
-  if (!tsdb) return [];
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return [];
-
-  const fs = await prisma.fieldSeason.findUnique({
-    where: { id: fieldSeasonId },
-    select: { geometry: true, year: true }
-  });
-  if (!fs?.geometry) return [];
-
-  const poly = fs.geometry as any;
-  let bbox: [number, number, number, number];
-  try {
-    bbox = turf.bbox(poly) as [number, number, number, number];
-  } catch {
-    return [];
-  }
-  const [minLng, minLat, maxLng, maxLat] = bbox;
-
-  // UTC aken, mis katab tervet Europe/Tallinn kalendripäeva (20:00 eelmise päeva õhtust kuni 02:00 järgmise päeva öösel)
-  const prevDay = new Date(dateStr + 'T00:00:00Z');
-  prevDay.setUTCDate(prevDay.getUTCDate() - 1);
-  const startUtc = new Date(Date.UTC(prevDay.getUTCFullYear(), prevDay.getUTCMonth(), prevDay.getUTCDate(), 20, 0, 0));
-  const nextDay = new Date(dateStr + 'T00:00:00Z');
-  nextDay.setUTCDate(nextDay.getUTCDate() + 1);
-  const endUtc = new Date(Date.UTC(nextDay.getUTCFullYear(), nextDay.getUTCMonth(), nextDay.getUTCDate(), 2, 0, 0));
-
-  let rows: FieldGpsRow[] = [];
-  try {
-    rows = await fetchFieldGpsPackets(startUtc, endUtc, bbox);
-  } catch (err) {
-    console.error('telemetry suggestions query failed:', err);
-    return [];
-  }
-
-  const tallinnDateFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' });
-  const pointsByDevice: Record<string, { time: Date; lat: number; lng: number; brk: boolean }[]> = {};
-  // Seade käis vahepeal põllu piiridest väljas → järgmine põllupunkt alustab uut joont (maanteesõit ei lähe pindalasse)
-  const leftField: Record<string, boolean> = {};
-
-  for (const r of rows) {
-    if (tallinnDateFmt.format(r.time) !== dateStr) continue;
-    const lat = r.fields?.latitude;
-    const lng = r.fields?.longitude;
-    if (lat == null || lng == null) continue;
-    // Arvesse lähevad ainult punktid, kus süüde on sees (süüteta seadmel puudub väli → punkt jääb)
-    if (r.fields?.ignition === 0) continue;
-    if (lat >= minLat && lat <= maxLat && lng >= minLng && lng <= maxLng && turf.booleanPointInPolygon(turf.point([lng, lat]), poly)) {
-      if (!pointsByDevice[r.device]) pointsByDevice[r.device] = [];
-      pointsByDevice[r.device].push({ time: r.time, lat, lng, brk: !!leftField[r.device] });
-      leftField[r.device] = false;
-    } else {
-      leftField[r.device] = true;
-    }
-  }
-
-  const GAP_MS = 20 * 60 * 1000; // 20 minutit vahet tähistab eraldi sessiooni
-  const rawSessions: {
-    device: string;
-    startTime: Date;
-    endTime: Date;
-    points: CoveragePoint[];
-    pointCount: number;
-    activeMs: number; // süüte sees oldud aeg (punktide vahed kuni ACTIVE_STEP_MS)
-  }[] = [];
-  const ACTIVE_STEP_MS = 5 * 60 * 1000; // pikem vahe süüte sees punktide vahel = paus, ei loeta tööajaks
-
-  for (const [device, pts] of Object.entries(pointsByDevice)) {
-    if (pts.length < 3) continue;
-    let curStart = pts[0].time;
-    let curEnd = pts[0].time;
-    let curPoints: CoveragePoint[] = [{ lat: pts[0].lat, lng: pts[0].lng }];
-    let curActive = 0;
-
-    for (let i = 1; i < pts.length; i++) {
-      const diff = pts[i].time.getTime() - pts[i - 1].time.getTime();
-      if (diff > GAP_MS) {
-        if (curPoints.length >= 3 && (curEnd.getTime() - curStart.getTime()) >= 2 * 60 * 1000) {
-          rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length, activeMs: curActive });
-        }
-        curStart = pts[i].time;
-        curEnd = pts[i].time;
-        curPoints = [{ lat: pts[i].lat, lng: pts[i].lng }];
-        curActive = 0;
-      } else {
-        curEnd = pts[i].time;
-        // Joon katkeb, kui seade käis vahepeal põllult väljas või punktide vahel oli pikk paus
-        curPoints.push({ lat: pts[i].lat, lng: pts[i].lng, brk: pts[i].brk || diff > ACTIVE_STEP_MS });
-        if (diff <= ACTIVE_STEP_MS) curActive += diff;
-      }
-    }
-    if (curPoints.length >= 3 && (curEnd.getTime() - curStart.getTime()) >= 2 * 60 * 1000) {
-      rawSessions.push({ device, startTime: curStart, endTime: curEnd, points: curPoints, pointCount: curPoints.length, activeMs: curActive });
-    }
-  }
-
-  if (rawSessions.length === 0) return [];
-
-  // Kontrolli olemasolevaid kandeid sellel kuupäeval ja SELLEL põllul — teise põllu kanne
-  // (eriti ilma kellaaegadeta) ei tohi sama masina siinseid sõite peita.
-  const existingEntries = await prisma.workEntry.findMany({
-    where: {
-      fieldWork: { fieldSeasonId },
-      date: {
-        gte: new Date(dateStr + 'T00:00:00.000Z'),
-        lte: new Date(dateStr + 'T23:59:59.999Z')
-      },
-      ...(excludeEntryId ? { id: { not: excludeEntryId } } : {})
-    },
-    select: {
-      id: true,
-      vehicleId: true,
-      startTime: true,
-      endTime: true
-    }
-  });
-
-  const parseMins = (t?: string | null): number | null => {
-    if (!t) return null;
-    const parts = t.split(':').map(Number);
-    if (parts.length < 2 || isNaN(parts[0]) || isNaN(parts[1])) return null;
-    return parts[0] * 60 + parts[1];
-  };
-
-  const timeFmt = new Intl.DateTimeFormat('et-EE', {
-    timeZone: 'Europe/Tallinn',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false
-  });
-
-  const suggestions: TelemetrySuggestion[] = [];
-  const sessionOf = new Map<TelemetrySuggestion, { device: string; startTime: Date; endTime: Date }>();
-
-  for (const s of rawSessions) {
-    const asgn = await prisma.deviceAssignment.findFirst({
-      where: {
-        device: { imei: s.device },
-        startedAt: { lte: s.endTime },
-        OR: [{ endedAt: null }, { endedAt: { gte: s.startTime } }]
-      },
-      orderBy: { startedAt: 'desc' },
-      include: {
-        vehicle: true,
-        implement: true
-      }
-    });
-
-    // Seade ↔ masin/haakeriist tuleb ainult seadmete seoste registrist
-    const vehicle = asgn?.vehicle ?? null;
-    let implement = asgn?.implement ?? null;
-
-    // Kui telemeetria enda andmetest ei tule välja, milline haakeriist oli masina küljes,
-    // siis leiame selle haakeriista masina ja haakeriista seose tabelist (ImplementAssignment),
-    // mis kattub sama kuupäeva ja kellaajaga, mis telemeetrias tuli.
-    if (!implement && vehicle) {
-      const impAsgn = await prisma.implementAssignment.findFirst({
-        where: {
-          vehicleId: vehicle.id,
-          startedAt: { lte: s.endTime },
-          OR: [{ endedAt: null }, { endedAt: { gte: s.startTime } }]
-        },
-        orderBy: { startedAt: 'desc' },
-        include: {
-          implement: true
-        }
-      });
-      if (impAsgn?.implement) {
-        implement = impAsgn.implement;
-      }
-    }
-
-    const startTimeStr = timeFmt.format(s.startTime);
-    const endTimeStr = timeFmt.format(s.endTime);
-    const sessionStartMins = parseMins(startTimeStr) ?? 0;
-    const sessionEndMins = parseMins(endTimeStr) ?? 0;
-    // Tööaeg = süüte sees oldud aeg põllul (pausid süütega väljas või pikad katkestused jäävad välja)
-    const durationHours = Math.round((s.activeMs / (1000 * 60 * 60)) * 100) / 100;
-
-    // Arvuta telemeetriast (GPS) tehtud pindala põllu piirides.
-    // Hektari arvutuseks kasutame leitud haakeriista laiust.
-    // Kui haakeriista ei leita, siis jätame hektarid 0-ks.
-    let workedAreaHa: number = 0;
-    const widthM = implement?.workingWidthM ?? null;
-
-    if (widthM && widthM > 0 && s.points.length >= 2) {
-      try {
-        workedAreaHa = coverageAreaHa(s.points, poly, widthM);
-      } catch (err) {
-        console.warn('Could not calculate telemetry worked area:', err);
-      }
-    }
-
-    let isBound = false;
-    if (vehicle) {
-      for (const entry of existingEntries) {
-        if (entry.vehicleId === vehicle.id) {
-          const eStartMins = parseMins(entry.startTime);
-          const eEndMins = parseMins(entry.endTime);
-          if (eStartMins !== null && eEndMins !== null) {
-            if (Math.max(eStartMins, sessionStartMins) < Math.min(eEndMins, sessionEndMins)) {
-              isBound = true;
-              break;
-            }
-          } else {
-            isBound = true;
-            break;
-          }
-        }
-      }
-    }
-
-    if (!isBound) {
-      const suggestion: TelemetrySuggestion = {
-        id: `${s.device}_${startTimeStr.replace(':', '')}_${endTimeStr.replace(':', '')}`,
-        vehicleId: vehicle?.id ?? null,
-        vehicleName: vehicle?.name ?? null,
-        implementId: implement?.id ?? null,
-        implementName: implement?.name ?? null,
-        workerId: null, // töötaja valitakse kandel
-        workerName: null,
-        startTime: startTimeStr,
-        endTime: endTimeStr,
-        fieldStartTime: startTimeStr,
-        fieldEndTime: endTimeStr,
-        durationHours,
-        workedAreaHa,
-        pointCount: s.pointCount
-      };
-      suggestions.push(suggestion);
-      sessionOf.set(suggestion, { device: s.device, startTime: s.startTime, endTime: s.endTime });
-    }
-  }
-
-  // Sõit (süüde sisse → välja) ja selle teekond: seadme kogu päeva paketid (üks päring seadme kohta).
-  // Kande algus ja lõpp tulevad süütest; kui sama sõit käis enne või pärast ka teistel põldudel,
-  // jagatakse aeg põllu piiril, et töötaja aega ei loetaks kahele kandele.
-  // Viga siin ei tohi soovitusi katki teha — siis jääb põllul oldud aeg ja route puudu.
-  if (suggestions.length > 0) {
-    let places: Place[] | null = null;
-    try {
-      places = await loadPlaces(fs.year);
-    } catch (err) {
-      console.warn('trip route places failed:', err);
-    }
-    const packetsByDevice = new Map<string, DevicePacket[] | null>();
-    for (const sug of suggestions) {
-      const sess = sessionOf.get(sug);
-      if (!sess) continue;
-      try {
-        if (!packetsByDevice.has(sess.device)) {
-          let pk: DevicePacket[] | null = null;
-          try {
-            pk = (await fetchDevicePackets(sess.device, startUtc, endUtc)).filter((p) => tallinnDateFmt.format(p.time) === dateStr);
-          } catch (err) {
-            console.warn('trip route packets failed:', err);
-          }
-          packetsByDevice.set(sess.device, pk);
-        }
-        const pk = packetsByDevice.get(sess.device);
-        if (!pk || pk.length === 0) continue;
-        const trip = segmentTrip(pk, sess.startTime, sess.endTime);
-        if (!trip) continue;
-        if (places) sug.route = buildRoute(trip.points, places, { ...DEFAULT_ROUTE_OPTIONS, preferPlaceId: String(fieldSeasonId) });
-        const otherFields = (sug.route?.visits ?? []).filter((v) => v.place.kind === 'FIELD' && v.place.id !== String(fieldSeasonId));
-        const fieldBefore = otherFields.some((v) => new Date(v.arrive).getTime() < sess.startTime.getTime());
-        const fieldAfter = otherFields.some((v) => new Date(v.leave).getTime() > sess.endTime.getTime());
-        if (!fieldBefore) sug.startTime = timeFmt.format(trip.start);
-        if (!fieldAfter) sug.endTime = timeFmt.format(trip.end);
-      } catch (err) {
-        console.warn('trip route failed:', err);
-      }
-    }
-  }
-
-  suggestions.sort((a, b) => a.startTime.localeCompare(b.startTime));
-  return suggestions;
-}
 
 // ---------------------------------------------------------------------------
 // Päringute käsitleja
@@ -1320,7 +1018,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     const b = await parseBody(req, MAX_BODY_BYTES);
     const fieldWorkId = text(b?.fieldWorkId, 64);
     const work = fieldWorkId ? await prisma.fieldWork.findUnique({ where: { id: fieldWorkId } }) : null;
-    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn, harvestTonnesManualIn } = await resolveEntryInput(b);
+    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn, harvestTonnesManualIn, tripId } = await resolveEntryInput(b);
     if (articleError) {
       json(res, { error: articleError }, 400);
       return true;
@@ -1331,6 +1029,11 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     if (work.status === 'DONE') {
       json(res, { error: DONE_WORK_ERROR }, 409);
+      return true;
+    }
+    const tripError = tripId ? await entryTripError(tripId, work.fieldSeasonId, null) : null;
+    if (tripError) {
+      json(res, { error: tripError }, 400);
       return true;
     }
     let saved;
@@ -1348,7 +1051,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
         }
         const created = await tx.workEntry.create({
           data: {
-            ...data, harvestLotId, harvestTonnesManual, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
+            ...data, tripId: tripId ?? null, harvestLotId, harvestTonnesManual, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
             fieldWorkId: work.id, createdById: userId, lines: { create: drafts }
           }
         });
@@ -1375,8 +1078,8 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
   if (pathname.startsWith('/api/work-entries/') && method === 'PUT') {
     const id = idOf('/api/work-entries/');
     const b = await parseBody(req, MAX_BODY_BYTES);
-    const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true, fieldWork: { select: { status: true } } } });
-    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn, harvestTonnesManualIn } = await resolveEntryInput(b);
+    const old = await prisma.workEntry.findUnique({ where: { id }, include: { lines: true, fieldWork: { select: { status: true, fieldSeasonId: true } } } });
+    const { data, drafts, warehouseId, articleError, harvestLotId: harvestLotIdIn, harvestTonnesManualIn, tripId } = await resolveEntryInput(b);
     if (articleError) {
       json(res, { error: articleError }, 400);
       return true;
@@ -1387,6 +1090,13 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     }
     if (old.fieldWork.status === 'DONE') {
       json(res, { error: DONE_WORK_ERROR }, 409);
+      return true;
+    }
+    // Seost kontrollitakse ainult muutmisel (senine jääb ka siis, kui sõit vahepeal ümber arvutati)
+    const newTripId = tripId === undefined ? old.tripId : tripId;
+    const tripError = newTripId && newTripId !== old.tripId ? await entryTripError(newTripId, old.fieldWork.fieldSeasonId, id) : null;
+    if (tripError) {
+      json(res, { error: tripError }, 400);
       return true;
     }
     let saved;
@@ -1412,6 +1122,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
           where: { id },
           data: {
             ...data,
+            tripId: newTripId,
             harvestLotId,
             harvestTonnesManual,
             date: data.date!,

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import type { Polygon } from 'geojson';
-import { segmentTrip, buildRoute, type Place, type TripPoint } from './tripRoute';
+import { buildRoute, type Place, type TripPoint } from './tripRoute';
 
 const LAT0 = 58.12;
 const LNG0 = 25.9;
@@ -19,39 +19,6 @@ const min = (m: number) => new Date(T0 + m * 60_000);
 const pt = (m: number, xM: number, yM: number, ignition: boolean | null = true): TripPoint => ({ time: min(m), ...at(xM, yM), ignition });
 
 const OPTS = { fieldRadiusM: 10, poiRadiusM: 25, minVisitMs: 60_000 } as const;
-
-describe('segmentTrip', () => {
-  it('laiendab sõitu sessioonist välja ja peatub süüte väljalülitamisel', () => {
-    const pts: TripPoint[] = [
-      pt(0, 0, 0, true), // varasem sõit
-      pt(5, 0, 0, false), // süüde väljas → katkestus
-      pt(10, 0, 0, true), // sõidu algus
-      pt(15, 0, 0, true),
-      pt(20, 0, 0, true), // sessioon algab
-      pt(30, 0, 0, true), // sessioon lõpeb
-      pt(40, 0, 0, true),
-      pt(45, 0, 0, null), // süüteväljata seade → loeb sees olevaks
-      pt(50, 0, 0, false), // süüde väljas
-      pt(55, 0, 0, true)
-    ];
-    const trip = segmentTrip(pts, min(20), min(30));
-    expect(trip).not.toBeNull();
-    expect(trip!.start.getTime()).toBe(min(10).getTime());
-    expect(trip!.end.getTime()).toBe(min(45).getTime());
-    expect(trip!.points).toHaveLength(6);
-  });
-
-  it('peatub üle 20 min vahe juures', () => {
-    const pts: TripPoint[] = [pt(0, 0, 0), pt(21, 0, 0), pt(30, 0, 0), pt(40, 0, 0), pt(59, 0, 0), pt(80, 0, 0)];
-    const trip = segmentTrip(pts, min(30), min(40));
-    expect(trip!.start.getTime()).toBe(min(21).getTime());
-    expect(trip!.end.getTime()).toBe(min(59).getTime());
-  });
-
-  it('tagastab null, kui sessiooni ajal punkte pole', () => {
-    expect(segmentTrip([pt(0, 0, 0)], min(30), min(40))).toBeNull();
-  });
-});
 
 describe('buildRoute', () => {
   const field: Place = { id: '450', kind: 'FIELD', label: 'Nr 4 Toosi', geometry: square(0, 100) };

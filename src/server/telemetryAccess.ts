@@ -61,12 +61,6 @@ export async function ownershipWindows(kind: 'IMEI' | 'MAC', identifiers: string
   return toWindowMap(kind, rows);
 }
 
-/** Kõik jooksva ettevõtte seadmetunnuste omandiperioodid (nt põllutööde soovituste jaoks). */
-export async function allOwnershipWindows(kind: 'IMEI' | 'MAC'): Promise<Map<string, OwnershipWindow[]>> {
-  const rows = await prisma.deviceOwnership.findMany({ where: { kind }, orderBy: { validFrom: 'asc' } });
-  return toWindowMap(kind, rows);
-}
-
 export type Segment = { from: Date; to: Date; toInclusive: boolean };
 
 /**
@@ -280,60 +274,6 @@ export async function fetchDeviceHistory(imei: string, hours: number, from?: str
     console.error('telemetry_tsdb: device history query failed:', err);
     return [];
   }
-}
-
-export type FieldGpsRow = { device: string; time: Date; fields: { latitude?: number; longitude?: number; ignition?: number | null } };
-
-/**
- * GPS-paketid [startUtc, endUtc] jooksul ainult ettevõtte seadmete omandiperioodide piires (põllutööde soovitused).
- * bbox = [minLng, minLat, maxLng, maxLat]: punktid filtreeritakse põllu ümbritseva ristküliku järgi juba päringus,
- * muidu tuleks kogu päeva kõigi seadmete punktid koondada ja üle võrgu tuua.
- */
-export async function fetchFieldGpsPackets(
-  startUtc: Date,
-  endUtc: Date,
-  bbox: [number, number, number, number]
-): Promise<FieldGpsRow[]> {
-  if (!tsdb) return [];
-  const all = await allOwnershipWindows('IMEI');
-  const { ids, froms, tos } = flatten(all);
-  if (ids.length === 0) return [];
-  const [minLng, minLat, maxLng, maxLat] = bbox;
-  return tsdb.$queryRaw<FieldGpsRow[]>`
-    WITH w AS (
-      SELECT * FROM unnest(${ids}::text[], ${froms}::timestamptz[], ${tos}::timestamptz[]) AS w(device, valid_from, valid_to)
-    ),
-    lat AS (
-      SELECT m.device, m.time, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
-      FROM measurements m
-      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
-      WHERE m.measurement = 'data' AND m.field = 'latitude'
-        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
-    ),
-    lng AS (
-      SELECT m.device, m.time, COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
-      FROM measurements m
-      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
-      WHERE m.measurement = 'data' AND m.field = 'longitude'
-        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
-    ),
-    ign AS (
-      -- süüde on tõeväärtus (value_bool); numbrilised veerud varuks
-      SELECT m.device, m.time, COALESCE(CASE WHEN m.value_bool IS NULL THEN NULL WHEN m.value_bool THEN 1 ELSE 0 END, m.value_int::double precision, m.value_double, m.value_bigint::double precision) AS v
-      FROM measurements m
-      JOIN w ON m.device = w.device AND m.time >= w.valid_from AND m.time < w.valid_to
-      WHERE m.measurement = 'data' AND m.field = 'ignition'
-        AND m.time >= ${startUtc} AND m.time <= ${endUtc}
-    )
-    SELECT DISTINCT ON (lat.device, lat.time) lat.device, lat.time,
-      jsonb_build_object('latitude', lat.v, 'longitude', lng.v, 'ignition', ign.v) AS fields
-    FROM lat
-    JOIN lng ON lng.device = lat.device AND lng.time = lat.time
-    LEFT JOIN ign ON ign.device = lat.device AND ign.time = lat.time
-    WHERE lat.v BETWEEN ${minLat} AND ${maxLat}
-      AND lng.v BETWEEN ${minLng} AND ${maxLng}
-    ORDER BY lat.device, lat.time ASC
-  `;
 }
 
 export type DevicePacket = { time: Date; lat: number; lng: number; ignition: boolean | null };
