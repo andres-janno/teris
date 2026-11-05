@@ -25,7 +25,6 @@ export const placeText = (s: TripStopInfo): string => {
 
 const timeOnly = (iso: string) => formatDateTime(iso).slice(11);
 const minutesText = (m: number) => formatDuration(new Date(0).toISOString(), new Date(m * 60_000).toISOString());
-const opt = (v: number | null, unit: string) => (v == null ? '—' : `${formatQty(v)} ${unit}`);
 
 export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork }) => {
   const mapDivRef = useRef<HTMLDivElement>(null);
@@ -90,21 +89,33 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
   };
 
   const who = trip.vehicleName ?? `${trip.deviceLabel} — seos puudub`;
-  const rows: [string, string][] = [
-    ['Algus', `${formatDateTime(trip.startedAt)} · ${placeText(trip.start)}`],
-    ['Lõpp', trip.status === 'ACTIVE' ? 'käimas' : `${formatDateTime(trip.endedAt)} · ${placeText(trip.end)}`],
-    ['Kestus', formatDuration(trip.startedAt, trip.endedAt)],
-    ['Läbitud', `${formatQty(trip.distanceKm)} km`],
-    ['Liikumisaeg', minutesText(trip.movingMinutes)],
-    ['Seisuaeg süütega', minutesText(trip.idleMinutes)],
-    ['Pausid', trip.pauseCount ? `${trip.pauseCount} · ${minutesText(trip.pauseMinutes)}` : '—'],
-    ['Max kiirus', opt(trip.maxSpeedKmh, 'km/h')],
-    ['Keskmine kiirus', opt(trip.avgSpeedKmh, 'km/h')],
-    ['Kütus', opt(trip.fuelLiters, 'l')],
-    ['Tehtud pindala', opt(trip.areaHa, 'ha')],
-    ['Kütusetase', trip.fuelLevelStartPct == null ? '—' : `${formatQty(trip.fuelLevelStartPct)} % → ${formatQty(trip.fuelLevelEndPct ?? trip.fuelLevelStartPct)} %`],
-    ['Mootoritunnid', trip.engineHoursStart == null ? '—' : `${formatQty(trip.engineHoursStart)} → ${formatQty(trip.engineHoursEnd ?? trip.engineHoursStart)} h`]
+  const active = trip.status === 'ACTIVE';
+  // Põhinumbrid: alati neli kasti (andmete puudumisel „—“), et paigutus ei hüppaks sõidult sõidule
+  const tiles: { label: string; value: string; unit?: string }[] = [
+    { label: 'Kestus', value: formatDuration(trip.startedAt, trip.endedAt) },
+    { label: 'Läbitud', value: formatQty(trip.distanceKm), unit: 'km' },
+    { label: 'Tehtud pindala', value: trip.areaHa == null ? '—' : formatQty(trip.areaHa), unit: trip.areaHa == null ? undefined : 'ha' },
+    { label: 'Kütus', value: trip.fuelLiters == null ? '—' : formatQty(trip.fuelLiters), unit: trip.fuelLiters == null ? undefined : 'l' }
   ];
+  // Aja jaotus: liikumine / seisuaeg süütega / pausid (osad proportsionaalsed, null osa ei joonistu)
+  const timeParts = [
+    { key: 'moving', label: 'Liikumine', minutes: trip.movingMinutes },
+    { key: 'idle', label: 'Seisuaeg süütega', minutes: trip.idleMinutes },
+    { key: 'pause', label: trip.pauseCount ? `Pausid (${trip.pauseCount})` : 'Pausid', minutes: trip.pauseMinutes }
+  ];
+  const timeTotal = timeParts.reduce((s, p) => s + p.minutes, 0);
+  // Lisanäitajad: ainult need, mille kohta seade andmeid saadab
+  const details: [string, string][] = [];
+  if (trip.maxSpeedKmh != null || trip.avgSpeedKmh != null) {
+    details.push(['Kiirus', [trip.maxSpeedKmh != null ? `max ${formatQty(trip.maxSpeedKmh)} km/h` : null,
+      trip.avgSpeedKmh != null ? `keskmine ${formatQty(trip.avgSpeedKmh)} km/h` : null].filter(Boolean).join(' · ')]);
+  }
+  if (trip.fuelLevelStartPct != null) {
+    details.push(['Kütusetase', `${formatQty(trip.fuelLevelStartPct)} % → ${formatQty(trip.fuelLevelEndPct ?? trip.fuelLevelStartPct)} %`]);
+  }
+  if (trip.engineHoursStart != null) {
+    details.push(['Mootoritunnid', `${formatQty(trip.engineHoursStart)} → ${formatQty(trip.engineHoursEnd ?? trip.engineHoursStart)} h`]);
+  }
 
   return createPortal(
     <div className="modal-backdrop sub-modal">
@@ -119,13 +130,59 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
         <div className="modal-body">
           <div ref={mapDivRef} className="trip-dialog-map" />
           {trackError && <div className="auth-error-banner">{trackError}</div>}
-          <table className="trip-dialog-metrics">
-            <tbody>
-              {rows.map(([k, v]) => (
-                <tr key={k}><th>{k}</th><td>{v}</td></tr>
+          {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
+          <div className="trip-stops">
+            <div className="trip-stop">
+              <span className="trip-stop-dot start" aria-hidden="true" />
+              <span className="trip-stop-time">{formatDateTime(trip.startedAt)}</span>
+              <span className="trip-stop-place">{placeText(trip.start)}</span>
+            </div>
+            <div className="trip-stop">
+              <span className="trip-stop-dot end" aria-hidden="true" />
+              <span className="trip-stop-time">{active ? 'käimas' : formatDateTime(trip.endedAt)}</span>
+              <span className="trip-stop-place">{active ? '' : placeText(trip.end)}</span>
+            </div>
+          </div>
+
+          <div className="trip-tiles">
+            {tiles.map((t) => (
+              <div key={t.label} className="trip-tile">
+                <div className="trip-tile-label">{t.label}</div>
+                <div className={`trip-tile-value${t.value === '—' ? ' empty' : ''}`}>
+                  {t.value}{t.unit && <span className="trip-tile-unit"> {t.unit}</span>}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {timeTotal > 0 && (
+            <div className="trip-timesplit">
+              <div className="trip-timesplit-label">Aja jaotus</div>
+              <div className="trip-timesplit-bar" role="img"
+                aria-label={timeParts.map((p) => `${p.label} ${minutesText(p.minutes)}`).join(', ')}>
+                {timeParts.filter((p) => p.minutes > 0).map((p) => (
+                  <span key={p.key} className={`trip-timesplit-part ${p.key}`}
+                    style={{ flexGrow: p.minutes }} title={`${p.label}: ${minutesText(p.minutes)}`} />
+                ))}
+              </div>
+              <div className="trip-timesplit-legend">
+                {timeParts.map((p) => (
+                  <span key={p.key} className="trip-timesplit-item">
+                    <span className={`trip-timesplit-swatch ${p.key}`} aria-hidden="true" />
+                    {p.label} <strong>{minutesText(p.minutes)}</strong>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {details.length > 0 && (
+            <dl className="trip-details">
+              {details.map(([k, v]) => (
+                <React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>
               ))}
-            </tbody>
-          </table>
+            </dl>
+          )}
           {trip.fields.length > 0 && (
             <>
               <h4>Põllud</h4>

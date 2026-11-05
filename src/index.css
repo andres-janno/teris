@@ -11374,6 +11374,56 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog { max-width: 860px; }
 .trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
+
+/* Sõidu aken: algus/lõpp, põhinumbrid, aja jaotus, lisanäitajad */
+.trip-dialog {
+  --trip-moving: #2a78d6;
+  --trip-idle: #eb6834;
+  --trip-pause: #1baf7a;
+}
+:root[data-theme='dark'] .trip-dialog {
+  --trip-moving: #3987e5;
+  --trip-idle: #d95926;
+  --trip-pause: #199e70;
+}
+.trip-stops { position: relative; display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; padding-left: 2px; }
+.trip-stops::before {
+  content: ''; position: absolute; left: 6px; top: 12px; bottom: 12px; width: 2px;
+  background: var(--border-card);
+}
+.trip-stop { position: relative; display: flex; align-items: baseline; gap: 10px; font-size: 13px; }
+.trip-stop-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; align-self: center; box-shadow: 0 0 0 2px var(--bg-modal, #fff); }
+.trip-stop-dot.start { background: #10b981; }
+.trip-stop-dot.end { background: #ef4444; }
+.trip-stop-time { color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.trip-stop-place { color: var(--text-secondary); }
+
+.trip-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
+.trip-tile { border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--stat-bg); padding: 10px 12px; min-width: 0; }
+.trip-tile-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
+.trip-tile-value { font-size: 20px; font-weight: 700; color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
+.trip-tile-value.empty { color: var(--text-muted); font-weight: 400; }
+.trip-tile-unit { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
+
+.trip-timesplit { margin-bottom: 16px; }
+.trip-timesplit-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+.trip-timesplit-bar { display: flex; gap: 2px; height: 8px; border-radius: 4px; overflow: hidden; }
+.trip-timesplit-part { flex-basis: 0; min-width: 2px; }
+.trip-timesplit-part.moving, .trip-timesplit-swatch.moving { background: var(--trip-moving); }
+.trip-timesplit-part.idle, .trip-timesplit-swatch.idle { background: var(--trip-idle); }
+.trip-timesplit-part.pause, .trip-timesplit-swatch.pause { background: var(--trip-pause); }
+.trip-timesplit-legend { display: flex; flex-wrap: wrap; gap: 6px 18px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); }
+.trip-timesplit-item { display: inline-flex; align-items: center; gap: 6px; }
+.trip-timesplit-item strong { color: var(--text-primary); font-weight: 700; }
+.trip-timesplit-swatch { width: 10px; height: 10px; border-radius: 2px; }
+
+.trip-details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 16px; font-size: 13px; }
+.trip-details dt { color: var(--text-secondary); }
+.trip-details dd { margin: 0; color: var(--text-primary); }
+
+@media (max-width: 640px) {
+  .trip-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
 .trip-dialog-metrics th { text-align: left; font-weight: 500; color: var(--text-muted); padding: 3px 12px 3px 0; width: 40%; }
 .trip-dialog-visits { font-size: 13px; margin: 4px 0 12px 16px; }
 .trip-dialog-fields { width: 100%; font-size: 13px; margin-bottom: 12px; }
