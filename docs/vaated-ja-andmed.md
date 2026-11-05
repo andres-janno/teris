@@ -47,7 +47,7 @@ Põhivaated on ülamenüüs (`MAIN_VIEWS` failis `src/components/Header.tsx`), v
 | Külvikord (`rotation`) | `FieldManagerModal` (täisleht) + `FieldShapeModal` | Põldude kultuurid aastate kaupa | `FieldSeason` (RCU), `Field` (RU) |
 | Põllutööd (`works`) | `FieldWorksBoard` (+ `AddFieldWorkDialog`, `FieldWorkPlanForm`, `FieldWorkEntryDialog`, `FinanceModal`, `WorkRegisterModal`) | Hooaja tööde tahvel, plaanid, kanded, finantside kinnitamine, tööliikide register | `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `WorkType`, `Material` (RCUD) |
 | Kulumaterjalid (`materials`) | `MaterialsView` (+ `MaterialFormDialog`, `MaterialStockCard`, `StockDocumentsPanel`, `WarehousesPanel`) | Materjalide register koos hooaja plaanitud ja kasutatud koguste ning laoseisuga; laokanded ja laod (finants) | `Material` (RCUD), `FieldWorkLine`, `WorkEntryLine` (R), `MaterialStock` (R), `StockDocument`, `StockDocumentLine`, `Warehouse` (RCUD) |
-| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU) |
+| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU), `VehicleTrip` (RCUD), `TripImportState` (RCU) |
 | Taristu (`infrastructure`) | `PoiManagerModal` (täisleht) | Muud asukohad (kuivatid, laod, tanklad jm) | `PointOfInterest` (RCUD) |
 | Isikud (`parties`) | `RelatedPartiesModal` (täisleht) | Seotud isikud: maaomanikud, rentnikud, masinajuhid, partnerid | `RelatedParty` (RCUD) |
 | Konto (päise kasutajamenüü, sisselogimine) | `AuthGate`, `LoginPage`, `SetPasswordPage`, `UserMenu`, `ChangePasswordModal`, `UsersAdminModal`, `SupportAccessPanel` | Sisselogimine, parooli määramine ja vahetus, kasutajate haldus, kasutajatoe ligipääs | `User`, `Session`, `PasswordToken`, `SupportGrant` (RCUD) |
@@ -90,7 +90,11 @@ flowchart LR
 | `MapView` | näitab valitud hooaja põlde, objekte, mullaproove ja masinaid | (käivituse andmed, vt allpool) | `Field` R, `FieldSeason` R, `PointOfInterest` R, `SoilSample` R, `Vehicle` R |
 | `LayerControl` (kiht „Tehnika“) | lülitab masinate kihi sisse → loeb seadmete viimased asukohad | `GET /api/fleet` | `Vehicle` R, `RelatedParty` R (juht), `Implement` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `DeviceOwnership` R, tsdb R |
 | `LayerControl` (kiht „Põllutööd“) | näitab kõigi masinate viimase ≥ 48 h rajad | `GET /api/telemetry/history` (iga masina kohta) | `DeviceAssignment` R, `TelemetryDevice` R, `ImplementAssignment` R, `Implement` R, `DeviceOwnership` R, tsdb R |
-| `CultivationControl` | ühe masina raja taasesitus valitud ajavahemikus | `GET /api/telemetry/history` | nagu eelmine |
+| `CultivationControl` | ühe masina raja taasesitus valitud ajavahemikus | `GET /api/fleet/trips` | `VehicleTrip`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY |
+| `GET /api/fleet/trips/import-status` | `TripImportState`, `TelemetryDevice` | — | moodul TELEMETRY |
+| `GET /api/fleet/trips/:id/track` | `VehicleTrip`, `TelemetryDevice`, `DeviceOwnership`, tsdb `measurements` | — | moodul TELEMETRY |
+| `PATCH /api/fleet/trips/:id` | `VehicleTrip` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
+| `GET /api/telemetry/history` | nagu eelmine |
 | `MapView` (sajuradar) | sajuradari kaadrid | `GET /api/weather/radar`, `GET /api/weather/radar.png` | andmebaasi ei kasuta (väline KAIA teenus, serveri vahemälu) |
 | `SatellitePanel` | satelliidipiltide kuupäevad ja pilvisus põldude kohal | `GET /api/satellite/dates`, `POST /api/satellite/cloud-check` | andmebaasi ei kasuta (väline Satiladu); pildikihid laaditakse brauserist otse Maa- ja Ruumiameti teenusest |
 | `MapYearSelector` | hooaja valik ja kultuuride legend | — | `Season` R, `FieldSeason` R (käivituse andmetest) |
@@ -388,6 +392,10 @@ flowchart LR
 | `VehicleTracker` (haakimise register) | näitab, lisab, muudab, kustutab haakimise kirjeid | `GET`/`POST /api/fleet/implement-assignments`, `PUT`/`DELETE /api/fleet/implement-assignments/:id` | `ImplementAssignment` RCUD, `Vehicle` R, `Implement` R |
 | `VehicleTracker` | paigaldab seadme masinale või haakeriistale (kaardi „Vaheta“) | `POST /api/fleet/devices/assign` | `TelemetryDevice` R, `DeviceAssignment` RCU, `Vehicle` U (viimane asukoht), `DeviceOwnership` R, tsdb R |
 | `VehicleTracker` / `DeviceAssignmentRegister` | seadmete seoste register | `GET`/`POST /api/fleet/device-assignments`, `PUT`/`DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` RCUD, `TelemetryDevice` R, `Vehicle` R, `Implement` R |
+| `TripRegister` | sõitude register: filtrid, impordi olek | `GET /api/fleet/trips`, `GET /api/fleet/trips/import-status` | `VehicleTrip` R, `TripImportState` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
+| `TripDialog` | sõidu rada, kohad, mõõdikud; märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id` | `VehicleTrip` RU, tsdb R |
+
+**Taustaimport** (`tripImport.ts`, käivitab `prod.ts` iga 15 min; käsitsi `npm run tenant -- trips:import`): TELEMETRY mooduliga ettevõtete mobiilseadmete punktid (`measurements`, omandiperioodi piires) → sõidud (`VehicleTrip` CUD) ja impordi olek (`TripImportState` CU). Kohad: `FieldSeason` R, `PointOfInterest` R.
 
 ## Taristu
 
@@ -686,6 +694,8 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `DeviceOwnership` | R | R | | | | | R | | RCU | | | | RU |
 | `DeviceAssignment` | R | R | | | | | R | | RCUD | | | | |
 | `ImplementAssignment` | R | R | | | | | R | | RCUD | | | | |
+| `VehicleTrip` | | | | | | | | | RCUD | | | | |
+| `TripImportState` | | | | | | | | | RCU | | | | |
 | `WorkType` | | R | | RC | | | RCUD | | | | | | C |
 | `Material` | | RU | | RCU | U | | RCUD | RCUD | | | | | |
 | `WorkTemplate` | | | | | D | | | | | | | | |

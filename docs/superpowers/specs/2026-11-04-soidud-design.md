@@ -1,7 +1,7 @@
 # Sõitude register (disain)
 
 Kuupäev: 2026-11-04
-Staatus: disain kinnitatud, plaan koostamata
+Staatus: teostatud 2026-11-05 (plaan docs/superpowers/plans/2026-11-05-soidud.md)
 
 ## Eesmärk
 

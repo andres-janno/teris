@@ -606,6 +606,8 @@ Masinad, haakeriistad ja telemeetriaseadmed. Seadme omand (ettevõttele kuulumis
 | `DeviceOwnership` | `device_ownerships` | jah | Seadme kuulumine ettevõttele ajavahemikus |
 | `DeviceAssignment` | `device_assignments` | jah | Seadme paigaldus masinale/haakeriistale ajavahemikus |
 | `ImplementAssignment` | `implement_assignments` | jah | Haakeriista ühendus masinaga ajavahemikus |
+| `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; muudetav ainult märkus |
+| `TripImportState` | `trip_import_state` | jah | Seadme sõitude impordi olek (lõplik kuni, viimane viga, kohtade sõrmejälg) |
 | `PointOfInterest` | `points_of_interest` | jah | Objekt (kuivati, ladu, töökoda jm): asukoht, raadius, kontakt |
 
 - Telemeetria (GPS, süüde, kiirus jm) on eraldi TimescaleDB andmebaasis (`measurements`), seotud seadme IMEI kaudu.
@@ -760,6 +762,8 @@ erDiagram
   Article |o--o{ Vehicle : "fuelArticle"
   Article |o--o{ Implement : "serviceArticle"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
+  TelemetryDevice ||--o{ VehicleTrip : "device"
+  TelemetryDevice ||--o| TripImportState : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
   Vehicle ||--o{ ImplementAssignment : "vehicle"
@@ -1283,6 +1287,8 @@ erDiagram
   Article |o--o{ Vehicle : "fuelArticle"
   Article |o--o{ Implement : "serviceArticle"
   TelemetryDevice ||--o{ DeviceAssignment : "device"
+  TelemetryDevice ||--o{ VehicleTrip : "device"
+  TelemetryDevice ||--o| TripImportState : "device"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
   Vehicle ||--o{ ImplementAssignment : "vehicle"
