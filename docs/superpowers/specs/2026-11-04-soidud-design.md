@@ -82,11 +82,12 @@ Seadmete andmed erinevad (seisuga 04.11.2026: CAN-kütusekulu ja mootoritunnid
 - `deviceId` (PK, → `TelemetryDevice`, Cascade), `tenantId`
 - `finalizedUntil` (aeg, milleni sõidud on lõplikud)
 - `lastRunAt`, `lastError?`, `lastErrorAt?`
+- `placesFingerprint?`, `placesCheckedAt?` (kohtade muutuse tuvastus)
 
-`TripPlaceRefresh` → `trip_place_refresh` (kohtade ümberarvutuse järjekord)
-- `id`, `tenantId`, `minLat`, `minLng`, `maxLat`, `maxLng`, `createdAt`
-- Lisatakse huvipunkti loomisel/muutmisel/kustutamisel ja põllu hooaja geomeetria
-  muutmisel (vana ja uus ristkülik).
+Kohtade muutust ei tuvastata salvestamise haakidega (põlde kirjutatakse viies
+kohas), vaid sõrmejäljega: huvipunktide ja hooaegade arv + viimane `updatedAt`.
+Kui see muutub, arvutatakse ümber lõplikud sõidud, mille ristkülik kattub pärast
+`placesCheckedAt` muudetud kohaga või mille kohaviide osutab kustutatud kohale.
 
 ## Import (`src/server/tripImport.ts` + puhas `src/server/tripSegments.ts`)
 
@@ -99,7 +100,7 @@ kui eelmine töö käib, uus ei alga. Arendusserveris (`dbApiPlugin`) ei käivit
 2. Iga ettevõte, kelle litsentsis on `TELEMETRY` (`runAsTenant`):
    1. Ettevõtte `CELLULAR` seadmed ja nende omandiperioodid.
    2. Iga seadme kohta (eraldi try/catch):
-      - `from` = `finalizedUntil` (puudumisel omandiperioodi algus) − 1 h varu;
+      - `from` = `finalizedUntil` (puudumisel omandiperioodi algus);
         `to` = praegu. Kui vahe > 2 päeva, töödeldakse päevahaaval (ajaloo
         järeltöötlus).
       - Paketid (`fetchDevicePackets` laiendus: + `speed`, `fuel_consumed_counted`,
@@ -112,9 +113,8 @@ kui eelmine töö käib, uus ei alga. Arendusserveris (`dbApiPlugin`) ei käivit
       - `finalizedUntil` = viimase sellise sõidu lõpp, mis on > 24 h vana
         (või akna algus − 24 h, kui sõite polnud); `lastRunAt`, `lastError = null`.
       - Viga → `lastError`, `lastErrorAt`, logi; `finalizedUntil` ei liigu.
-   3. Kohtade ümberarvutus: iga `trip_place_refresh` rea kohta sõidud, mille
-      ristkülik kattub → paketid uuesti, `buildRoute`, uuenda ainult kohaväljad;
-      rida kustutatakse.
+   3. Kohtade ümberarvutus (sõrmejälje muutusel, vt andmemudel): paketid
+      uuesti, `buildRoute`, uuenda ainult kohaväljad.
 
 ## Vaade
 
