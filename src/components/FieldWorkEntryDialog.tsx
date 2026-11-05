@@ -1,5 +1,5 @@
 // src/components/FieldWorkEntryDialog.tsx — kande lisamine/muutmine: töötaja sisestab ainult kogused.
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { X, Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
@@ -181,6 +181,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [telemetrySuggestions, setTelemetrySuggestions] = useState<TelemetrySuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   // Kande seos sõitude registri sõiduga (tühi = seoseta)
+  const autoFuelRef = useRef<string | null>(null); // viimati soovitusest täidetud kütuse väärtus
   const [tripId, setTripId] = useState<string | null>(entry?.tripId ?? null);
 
   useEffect(() => {
@@ -226,7 +227,15 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     setLaborHours(hStr);
     setEquipmentHours(hStr);
     // Kütus: põllu kütus + osa teekütusest (sõitude registrist)
-    if (s.fuelLiters != null) setFuelLiters(fmt(s.fuelLiters, 1));
+    // Tühja kütusega sõit ei jäta eelmise soovituse kütust; kasutaja sisestatut ei puututa
+    if (s.fuelLiters != null) {
+      const v = fmt(s.fuelLiters, 1);
+      setFuelLiters(v);
+      autoFuelRef.current = v;
+    } else {
+      setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? '' : cur));
+      autoFuelRef.current = null;
+    }
     setTelemetryAreaHa(fmt(s.workedAreaHa));
     // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); tühi/0 ha (laius puudub) ei kirjuta üle
     if (s.workedAreaHa != null && s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
@@ -237,9 +246,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     s.tripId !== tripId ? null : tripId === (entry?.tripId ?? null) ? 'linked' : 'selected';
   const hasSelectedSuggestion = telemetrySuggestions.some((s) => suggestionState(s) !== null);
   // Seose eemaldamine: nupp on soovituse sees — klõps ei tohi soovitust uuesti valida
-  const unlinkTrip = (e: React.MouseEvent | React.KeyboardEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
+  const unlinkTrip = () => {
     setTripId(null);
   };
 
@@ -444,8 +451,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   const state = suggestionState(s);
                   const isSelected = state !== null;
                   return (
+                    <div key={s.id} className="telemetry-suggestion-item">
                     <button
-                      key={s.id}
                       type="button"
                       className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
                       onClick={() => applySuggestion(s)}
@@ -477,20 +484,15 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                         <span className="telemetry-pill-action">
                           {state === 'linked' ? '✓ Seotud' : state === 'selected' ? '✓ Valitud' : 'Vali see sõit'}
                         </span>
-                        {isSelected && (
-                          <span
-                            role="button"
-                            tabIndex={0}
-                            className="telemetry-pill-unlink"
-                            onClick={unlinkTrip}
-                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') unlinkTrip(e); }}
-                          >
-                            Eemalda seos
-                          </span>
-                        )}
                       </div>
                       {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                     </button>
+                    {isSelected && (
+                      <button type="button" className="telemetry-pill-unlink" onClick={unlinkTrip}>
+                        Eemalda seos
+                      </button>
+                    )}
+                    </div>
                   );
                 })}
               </div>

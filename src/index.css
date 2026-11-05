@@ -9333,7 +9333,16 @@ a.history-pill:hover {
   color: #ffffff;
 }
 
+.telemetry-suggestion-item {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 4px;
+}
+
 .telemetry-pill-unlink {
+  align-self: flex-end;
+  font-family: inherit;
   font-size: 0.72rem;
   font-weight: 600;
   color: var(--text-secondary);
