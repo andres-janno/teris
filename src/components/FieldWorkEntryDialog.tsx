@@ -245,9 +245,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const suggestionState = (s: TelemetrySuggestion): 'selected' | 'linked' | null =>
     s.tripId !== tripId ? null : tripId === (entry?.tripId ?? null) ? 'linked' : 'selected';
   const hasSelectedSuggestion = telemetrySuggestions.some((s) => suggestionState(s) !== null);
-  // Seose eemaldamine: nupp on soovituse sees — klõps ei tohi soovitust uuesti valida
+  // Seose eemaldamine: nupp on soovituse sees (klõps ei tohi soovitust uuesti valida).
+  // Tühjendab sõidust tulnud väärtused: telemeetria pindala ja automaatselt täidetud kütus;
+  // kasutaja sisestatut, kellaaegu ja tehtud pindala ei puututa
   const unlinkTrip = () => {
     setTripId(null);
+    setTelemetryAreaHa('');
+    setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? '' : cur));
+    autoFuelRef.current = null;
   };
 
   const vehicleOptions = useMemo(() => {
@@ -469,9 +474,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           {s.workedAreaHa != null && s.workedAreaHa > 0 ? (
                             <span> · {fmtHa(s.workedAreaHa)} ha</span>
                           ) : (
-                            <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
-                              {' · '}{s.workedAreaHa == null ? 'ha puudub' : '0 ha'}
-                            </span>
+                            s.workedAreaHa == null ? (
+                              <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
+                                {' · '}ha puudub
+                              </span>
+                            ) : (
+                              <span title="GPS järgi kaetud pindala ~0 ha">{' · '}0 ha</span>
+                            )
                           )}
                           {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
                         </span>
@@ -590,14 +599,16 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   value={telemetryAreaHa}
                   placeholder="–"
                   style={
-                    (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
+                    (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
                       ? { color: '#ef4444', borderColor: '#ef4444', fontWeight: 600, background: 'rgba(239, 68, 68, 0.08)' }
                       : undefined
                   }
                   title={
-                    (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
-                      ? 'Haakeriista ei leitud seoste tabelist — hektarid on 0'
-                      : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
+                    (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
+                      ? 'Haakeriista või selle töölaiust pole seoste registris'
+                      : (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
+                        ? 'GPS järgi kaetud pindala ~0 ha'
+                        : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
                   }
                 />
               </div>

@@ -109,7 +109,7 @@ describe('tripsApi', () => {
 
   it('seade haakeriistal: masin leitakse haakimise registrist sõidu alguse ajal', async () => {
     const ids = await run(async () => {
-      const dev2 = (await prisma.telemetryDevice.create({ data: { imei: `${IMEI.slice(0, 14)}9`, model: 'FMC650' } })).id;
+      const dev2 = (await prisma.telemetryDevice.create({ data: { imei: `39${String(process.pid).padStart(13, '0')}`.slice(0, 15), model: 'FMC650' } })).id;
       const impl = (await prisma.implement.create({ data: { name: 'Testhaake', type: 'PLOW' } })).id;
       const v2 = (await prisma.vehicle.create({ data: { name: 'Teine traktor', type: 'TRACTOR', model: 'Y' } })).id;
       await prisma.deviceAssignment.create({ data: { deviceId: dev2, implementId: impl, startedAt: d('2026-10-01T00:00:00Z') } });
