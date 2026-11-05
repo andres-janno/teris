@@ -10971,6 +10971,16 @@ select.form-input:read-only {
   right: 26px;
 }
 
+/* Liitfilter (kuupäevavahemik, linnuke): X-nupp sisu järel, mitte välja peal (seal on kalendri ikoon / tekst) */
+.filter-clear.filter-clear-inline {
+  gap: 4px;
+}
+
+.filter-clear.filter-clear-inline .filter-clear-btn {
+  position: static;
+  transform: none;
+}
+
 .filter-clear-btn:hover {
   background: rgba(239, 68, 68, 0.12);
   color: #ef4444;

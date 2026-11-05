@@ -268,7 +268,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   canManageFinance = false,
   telemetryEnabled = true,
 }) => {
-  const [selectedTab, setActiveTab] = useState<TabType>('vehicles');
+  // Vaikimisi sõidud; ilma telemeetriamoodulita langeb activeTab masinatele
+  const [selectedTab, setActiveTab] = useState<TabType>('trips');
   // Ilma telemeetriamoodulita seadmete tabid puuduvad → langeb tagasi masinate tabile
   const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'deviceHistory' || selectedTab === 'trips') ? 'vehicles' : selectedTab;
   const [isAddingNew, setIsAddingNew] = useState(false);
@@ -813,6 +814,15 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       {/* Main Navigation Tabs */}
       <div className="fleet-top-bar">
         <div className="category-filter-tabs">
+          {telemetryEnabled && (
+          <button
+            className={`filter-tab ${activeTab === 'trips' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('trips'); closeForm(); }}
+          >
+            <span>🛣️ Sõidud</span>
+          </button>
+          )}
+
           <button
             className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
             onClick={() => { setActiveTab('vehicles'); closeForm(); }}
@@ -854,14 +864,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           >
             <span>🔗 Seadmete seosed</span>
             <span className="count-pill">{deviceAssignments.length}</span>
-          </button>
-          )}
-          {telemetryEnabled && (
-          <button
-            className={`filter-tab ${activeTab === 'trips' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('trips'); closeForm(); }}
-          >
-            <span>🛣️ Sõidud</span>
           </button>
           )}
         </div>

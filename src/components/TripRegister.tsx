@@ -92,7 +92,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
           <Filter size={15} className="text-muted" />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
         </div>
-        <FilterClear active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
+        <FilterClear className="filter-clear-inline" active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
             <DateInput value={fromDay} onChange={setFromDay} className="form-input" />
             <span>–</span>
@@ -116,7 +116,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
             </select>
           </FilterClear>
         </div>
-        <FilterClear active={unknownPlace} onClear={() => setUnknownPlace(false)}>
+        <FilterClear className="filter-clear-inline" active={unknownPlace} onClear={() => setUnknownPlace(false)}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             <input type="checkbox" checked={unknownPlace} onChange={(e) => setUnknownPlace(e.target.checked)} />
             Ainult tundmatu algus või lõpp
