@@ -53,12 +53,13 @@ export async function loadAssignmentResolver(deviceIds: string[]): Promise<Assig
     if (!vehicle && a?.implementId) {
       vehicle = implAssignments.find((x) => x.implementId === a.implementId && covers(x, at))?.vehicle ?? null;
     }
+    const w = implement?.workingWidthM;
     return {
       vehicleId: vehicle?.id ?? null,
       vehicleName: vehicle?.name ?? null,
       implementId: implement?.id ?? null,
       implementName: implement?.name ?? null,
-      widthM: implement?.workingWidthM ?? null
+      widthM: typeof w === 'number' && w > 0 ? w : null // puuduv või ≤ 0 laius = pindala ei arvutata
     };
   };
 }
