@@ -206,6 +206,7 @@ model FieldSeason {
   cropEntity       Crop?                  @relation(fields: [cropId], references: [id], onDelete: SetNull)
   varietyEntity    CropVariety?           @relation(fields: [varietyId], references: [id], onDelete: SetNull)
   fieldWorks       FieldWork[]
+  tripFields       VehicleTripField[]
 
   @@unique([fieldId, year])
   @@index([fieldId])
@@ -521,16 +522,44 @@ model VehicleTrip {
   maxLat            Float
   maxLng            Float
   pointCount        Int
+  areaHa            Float? // põldude kaetud pindala summa; tühi = ühelgi põllul pole haakeriista laiust
   notes             String?
   computedAt        DateTime
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt
   createdBy         String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy         String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  fields            VehicleTripField[]
+  workEntries       WorkEntry[]
 
   @@index([deviceId, startedAt])
   @@index([tenantId, startedAt])
   @@map("vehicle_trips")
+}
+
+// Sõidu põllurida: sõidu osa ühel põllul (hooajal) — põllul oldud aeg, kaetud pindala ja kütus.
+// Tuletatud impordis koos sõidu kohtadega; haakeriist on teave (mitte FK), et haakeriista kustutamisel ajalugu jääks.
+model VehicleTripField {
+  id            String      @id @default(cuid())
+  tenantId      String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  tripId        String
+  trip          VehicleTrip @relation(fields: [tripId], references: [id], onDelete: Cascade)
+  fieldSeasonId Int
+  fieldSeason   FieldSeason @relation(fields: [fieldSeasonId], references: [id], onDelete: Cascade)
+  arriveAt      DateTime // esimene sõidu punkt põllu piires
+  leaveAt       DateTime // viimane sõidu punkt põllu piires
+  activeMinutes Float // põllul süütega oldud aeg (punktide vahed ≤ 5 min, pausid välja)
+  areaHa        Float? // kaetud pindala põllu piires; tühi = haakeriista laius puudub
+  implementId   String? // haakeriist, millega ha arvutati (teave, mitte FK)
+  widthM        Float? // töölaius, millega ha arvutati
+  fuelFieldL    Float? // põllul kulunud kütus
+  fuelSharedL   Float? // põllu kütus + osa teekütusest (põllul oldud aja järgi)
+  computedAt    DateTime
+
+  @@unique([tripId, fieldSeasonId])
+  @@index([fieldSeasonId, arriveAt])
+  @@index([tenantId])
+  @@map("vehicle_trip_fields")
 }
 
 // Seadme sõitude impordi olek: milleni on sõidud lõplikud, viimane käivitus ja viga, kohtade sõrmejälg.
@@ -542,8 +571,10 @@ model TripImportState {
   lastRunAt         DateTime?
   lastError         String?
   lastErrorAt       DateTime?
-  placesFingerprint String?
-  placesCheckedAt   DateTime?
+  placesFingerprint      String?
+  placesCheckedAt        DateTime?
+  assignmentsFingerprint String? // seoste (seade, haakimine, haakeriist) arv + viimane muutmisaeg
+  assignmentsCheckedAt   DateTime?
 
   @@index([tenantId])
   @@map("trip_import_state")
@@ -987,6 +1018,7 @@ model WorkEntry {
   harvestLotId         String? // saagipartii (koristuskanne); PRIA impordil tühi
   harvestTonnesManual  Boolean       @default(false) // saagi tonnid käsitsi lukustatud, punkri kaalu jaotusest väljas
   warehouseId          String? // ladu, kust kande materjalid võetakse; tühi = põhiladu
+  tripId               String? // sõitude registri sõit, millest kanne tehti; tühi = seoseta
   source               WorkSource    @default(MANUAL)
   createdById          String?
   financeStatus        FinanceStatus @default(PENDING)
@@ -1006,10 +1038,12 @@ model WorkEntry {
   createdByUser      User?           @relation("WorkEntryCreatedBy", fields: [createdById], references: [id], onDelete: SetNull)
   financeConfirmedBy User?           @relation("WorkEntryConfirmedBy", fields: [financeConfirmedById], references: [id], onDelete: SetNull)
   harvestLot         HarvestLot?     @relation(fields: [harvestLotId], references: [id], onDelete: SetNull)
+  trip               VehicleTrip?    @relation(fields: [tripId], references: [id], onDelete: SetNull)
   lines              WorkEntryLine[]
 
   @@index([fieldWorkId])
   @@index([harvestLotId])
+  @@index([tripId])
   @@index([financeStatus])
   @@index([workerId])
   @@index([warehouseId])
