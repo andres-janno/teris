@@ -3,6 +3,7 @@
 // ilma omandita on tulemus tühi. Päringud on parameetriseeritud (unnest massiividest).
 import { prisma, tsdb } from './db.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
+import type { TripSample } from './tripSegments.ts';
 
 export type OwnershipWindow = { from: Date; to: Date | null };
 
@@ -373,6 +374,69 @@ export async function fetchDevicePackets(device: string, startUtc: Date, endUtc:
   for (const r of rows) {
     if (r.lat == null || r.lng == null) continue;
     out.push({ time: r.time, lat: Number(r.lat), lng: Number(r.lng), ignition: r.ign ?? null });
+  }
+  return out;
+}
+
+// ---------------------------------------------------------------------------
+// Sõitude import: seadme punktid koos kiiruse, kütuse ja mootoritundidega
+// ---------------------------------------------------------------------------
+
+/** fuel_consumed_counted väärtuse ühik liitrites (Teltonika loendur 0,1 l sammuga). */
+export const FUEL_CONSUMED_COUNTED_L = 0.1;
+
+const TRIP_FIELDS = ['latitude', 'longitude', 'ignition', 'speed', 'fuel_consumed_counted', 'fuel_rate_lph', 'fuel_level_percent', 'engine_total_hours_h'];
+
+/**
+ * Ühe seadme punktid (fromExclusive, toInclusive] ettevõtte omandiperioodide piires, ajas kasvavalt.
+ * Punkt ilma asukohata jäetakse välja. Süüde: value_bool (numbrilised varuks), välja puudumisel null.
+ */
+export async function fetchTripSamples(imei: string, fromExclusive: Date, toInclusive: Date): Promise<TripSample[]> {
+  if (!tsdb) return [];
+  const segments = clampWindow((await ownershipWindows('IMEI', [imei])).get(imei) ?? [], fromExclusive, toInclusive);
+  if (segments.length === 0) return [];
+  const froms = segments.map((s) => s.from.toISOString());
+  const tos = segments.map((s) => s.to.toISOString());
+  const incl = segments.map((s) => s.toInclusive);
+  const rows = await tsdb.$queryRaw<{
+    time: Date; lat: number | null; lng: number | null; ign: boolean | null; speed: number | null;
+    fuel_used: number | null; fuel_rate: number | null; fuel_level: number | null; engine_hours: number | null;
+  }[]>`
+    WITH pts AS (
+      SELECT m.time, m.field, m.value_bool,
+        COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN unnest(${froms}::timestamptz[], ${tos}::timestamptz[], ${incl}::boolean[]) AS s(seg_from, seg_to, seg_incl)
+        ON m.time >= s.seg_from AND (m.time < s.seg_to OR (s.seg_incl AND m.time = s.seg_to))
+      WHERE m.device = ${imei}
+        AND m.time > ${fromExclusive} AND m.time <= ${toInclusive}
+        AND m.measurement = 'data'
+        AND m.field = ANY(${TRIP_FIELDS}::text[])
+    )
+    SELECT time,
+      max(v) FILTER (WHERE field = 'latitude') AS lat,
+      max(v) FILTER (WHERE field = 'longitude') AS lng,
+      bool_or(COALESCE(value_bool, v <> 0)) FILTER (WHERE field = 'ignition') AS ign,
+      max(v) FILTER (WHERE field = 'speed') AS speed,
+      max(v) FILTER (WHERE field = 'fuel_consumed_counted') AS fuel_used,
+      max(v) FILTER (WHERE field = 'fuel_rate_lph') AS fuel_rate,
+      max(v) FILTER (WHERE field = 'fuel_level_percent') AS fuel_level,
+      max(v) FILTER (WHERE field = 'engine_total_hours_h') AS engine_hours
+    FROM pts
+    GROUP BY time
+    HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
+    ORDER BY time ASC
+  `;
+  const num = (v: unknown) => (v == null ? null : Number(v));
+  const out: TripSample[] = [];
+  for (const r of rows) {
+    if (r.lat == null || r.lng == null) continue;
+    const used = num(r.fuel_used);
+    out.push({
+      time: r.time, lat: Number(r.lat), lng: Number(r.lng), ignition: r.ign ?? null,
+      speedKmh: num(r.speed), fuelUsedL: used == null ? null : used * FUEL_CONSUMED_COUNTED_L,
+      fuelRateLph: num(r.fuel_rate), fuelLevelPct: num(r.fuel_level), engineHours: num(r.engine_hours)
+    });
   }
   return out;
 }
