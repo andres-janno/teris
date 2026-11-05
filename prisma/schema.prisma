@@ -425,6 +425,8 @@ model TelemetryDevice {
   updatedBy        String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   assignments DeviceAssignment[]
+  trips       VehicleTrip[]
+  importState TripImportState?
 
   @@index([tenantId])
   @@map("telemetry_devices")
@@ -480,6 +482,72 @@ model DeviceAssignment {
   @@map("device_assignments")
 }
 
+enum TripStatus {
+  ACTIVE
+  CLOSED
+}
+
+// Sõit = seadme süüde sisse → välja (lühikesed pausid ≤ 10 min sees). Tuletatud telemeetriast taustaimpordiga;
+// masin/haakeriist leitakse lugemisel seoste registrist (ei salvestata). Muudetav ainult märkus.
+model VehicleTrip {
+  id                String          @id @default(cuid())
+  tenantId          String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  deviceId          String
+  device            TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  startedAt         DateTime
+  endedAt           DateTime
+  status            TripStatus
+  startLat          Float
+  startLng          Float
+  startPlace        Json? // { place: PlaceRef | null, near?: TripNear }
+  endLat            Float
+  endLng            Float
+  endPlace          Json?
+  visits            Json? // TripVisit[]
+  distanceKm        Float
+  movingMinutes     Float
+  idleMinutes       Float // seisuaeg süütega (tühikäik)
+  pauseCount        Int
+  pauseMinutes      Float
+  maxSpeedKmh       Float?
+  avgSpeedKmh       Float?
+  fuelLiters        Float? // tühi = seade ei saada kütuseandmeid
+  fuelLevelStartPct Float?
+  fuelLevelEndPct   Float?
+  engineHoursStart  Float?
+  engineHoursEnd    Float?
+  minLat            Float
+  minLng            Float
+  maxLat            Float
+  maxLng            Float
+  pointCount        Int
+  notes             String?
+  computedAt        DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  createdBy         String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy         String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+
+  @@index([deviceId, startedAt])
+  @@index([tenantId, startedAt])
+  @@map("vehicle_trips")
+}
+
+// Seadme sõitude impordi olek: milleni on sõidud lõplikud, viimane käivitus ja viga, kohtade sõrmejälg.
+model TripImportState {
+  deviceId          String          @id
+  device            TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tenantId          String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  finalizedUntil    DateTime?
+  lastRunAt         DateTime?
+  lastError         String?
+  lastErrorAt       DateTime?
+  placesFingerprint String?
+  placesCheckedAt   DateTime?
+
+  @@index([tenantId])
+  @@map("trip_import_state")
+}
 model ImplementAssignment {
   id          String    @id @default(cuid())
   tenantId    String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
