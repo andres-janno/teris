@@ -10967,6 +10967,20 @@ select.form-input:read-only {
   padding-right: 50px;
 }
 
+/* Filtri rippmenüü: tavaline kiri; paks ainult siis, kui filter on seatud (vaikevalik „Kõik …“ jääb tavaliseks).
+   Valikute loend on alati tavalise kirjaga. */
+.filter-clear > select {
+  font-weight: 400;
+}
+
+.filter-clear.active > select {
+  font-weight: 700;
+}
+
+.filter-clear > select option {
+  font-weight: 400;
+}
+
 /* Brauseri enda tühjendusnupp otsinguväljal asendub ühtse X-nupuga */
 .filter-clear > input[type="search"]::-webkit-search-cancel-button {
   -webkit-appearance: none;
