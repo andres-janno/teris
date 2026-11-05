@@ -112,8 +112,13 @@ async function writeChunk(
       if (m) used.add(m.id);
       return m?.id ?? null;
     });
-    const stale = existing.filter((e) => !used.has(e.id)).map((e) => e.id);
-    if (stale.length) await tx.vehicleTrip.deleteMany({ where: { id: { in: stale } } });
+    const stale = existing.filter((e) => !used.has(e.id));
+    // Liitumisel ei kao kande seos: kustutatava sõidu kanded kolivad uuele (kattuvale) sõidule
+    for (const e of stale) {
+      const i = trips.findIndex((t) => e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+      if (i >= 0 && matchIds[i]) await tx.workEntry.updateMany({ where: { tripId: e.id }, data: { tripId: matchIds[i] } });
+    }
+    if (stale.length) await tx.vehicleTrip.deleteMany({ where: { id: { in: stale.map((e) => e.id) } } });
     for (let i = 0; i < trips.length; i++) {
       const data = tripData(trips[i], routes[i], fields[i], now);
       const id = matchIds[i];
@@ -270,9 +275,6 @@ async function assignmentsFingerprint(): Promise<string> {
   return [da, ia, im].map((a) => `${a._count._all}:${a._max.updatedAt?.toISOString() ?? ''}`).join('|');
 }
 
-type Period = { startedAt: Date; endedAt: Date | null };
-const periodOverlaps = (p: Period, t: { startedAt: Date; endedAt: Date }) =>
-  p.startedAt <= t.endedAt && (!p.endedAt || p.endedAt >= t.startedAt);
 const normWidth = (w: number | null) => (w != null && w > 0 ? w : null);
 
 export async function refreshTripAssignments(device: Device, deps: ImportDeps = defaultDeps): Promise<number> {
@@ -283,36 +285,18 @@ export async function refreshTripAssignments(device: Device, deps: ImportDeps = 
   const now = deps.now();
   let count = 0;
   if (state.assignmentsCheckedAt && state.finalizedUntil) {
-    const since = state.assignmentsCheckedAt;
     const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
-    const deviceRows = await prisma.deviceAssignment.findMany({
-      where: { deviceId: device.id },
-      select: { vehicleId: true, implementId: true, startedAt: true, endedAt: true, updatedAt: true }
-    });
-    const vehicleIds = deviceRows.map((a) => a.vehicleId).filter((x): x is string => !!x);
-    const implementIds = deviceRows.map((a) => a.implementId).filter((x): x is string => !!x);
-    const [implRows, changedImplements] = await Promise.all([
-      prisma.implementAssignment.findMany({
-        where: { updatedAt: { gt: since }, OR: [{ vehicleId: { in: vehicleIds } }, { implementId: { in: implementIds } }] },
-        select: { startedAt: true, endedAt: true }
-      }),
-      prisma.implement.findMany({ where: { updatedAt: { gt: since } }, select: { id: true } })
-    ]);
-    const changedPeriods: Period[] = [...deviceRows.filter((a) => a.updatedAt > since), ...implRows];
-    const changedImpl = new Set(changedImplements.map((i) => i.id));
     const trips = await prisma.vehicleTrip.findMany({
       where: { deviceId: device.id, startedAt: { lte: state.finalizedUntil } },
       include: { fields: { select: { arriveAt: true, implementId: true, widthM: true } } }
     });
     const placesFor = placesCache(deps);
     for (const t of trips) {
-      const hit = changedPeriods.some((p) => periodOverlaps(p, t))
-        || t.fields.some((f) => f.implementId != null && changedImpl.has(f.implementId))
-        // Kustutatud seos: põllurea haakeriist või laius ei vasta enam seoste registrile
-        || t.fields.some((f) => {
-          const cur = implementAt(f.arriveAt);
-          return cur.implementId !== f.implementId || normWidth(cur.widthM) !== f.widthM;
-        });
+      // Ainult lahknevad põlluread: haakeriist või laius ei vasta enam seoste registrile (muutus, kustutus, laiuse muutus)
+      const hit = t.fields.some((f) => {
+        const cur = implementAt(f.arriveAt);
+        return cur.implementId !== f.implementId || normWidth(cur.widthM) !== f.widthM;
+      });
       if (!hit) continue;
       if (await recomputeTrip(device, t, await placesFor(t.startedAt.getUTCFullYear()), implementAt, deps, now)) count++;
     }

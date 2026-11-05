@@ -245,6 +245,23 @@ describe('importDeviceTrips', () => {
     const e = await run(() => prisma.workEntry.findUnique({ where: { id: entry.id } }));
     expect(e!.tripId).toBe(t[1].id);
   });
+
+  it('liitumisel liiguvad mõlema vana sõidu kanded uuele sõidule', async () => {
+    samples = [...range(0, 10), ...range(40, 50)];
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    expect(t).toHaveLength(2);
+    const day = new Date('2026-10-22T00:00:00Z');
+    const e1 = await run(() => prisma.workEntry.create({ data: { fieldWorkId, date: day, tripId: t[0].id } }));
+    const e2 = await run(() => prisma.workEntry.create({ data: { fieldWorkId, date: day, tripId: t[1].id } }));
+    samples = range(0, 50);
+    await run(() => importDeviceTrips(device(), deps));
+    const merged = await trips();
+    expect(merged).toHaveLength(1);
+    const es = await run(() => prisma.workEntry.findMany({ where: { id: { in: [e1.id, e2.id] } } }));
+    expect(es.map((e) => e.tripId)).toEqual([merged[0].id, merged[0].id]);
+  });
 });
 
 describe('importTenantTrips', () => {
@@ -325,6 +342,60 @@ describe('refreshTripAssignments', () => {
     } finally {
       implAsgId = (await run(() => prisma.implementAssignment.create({ data: { vehicleId, implementId: impl6, startedAt: at(-60) } }))).id;
     }
+  });
+
+  it('ainult lahknevad sõidud arvutatakse ümber: kahest sõidust muutub üks', async () => {
+    places = [fieldPlace()];
+    const second = Array.from({ length: 31 }, (_, i) => pt(120 + i, true, 58.1 + i * 0.0001));
+    samples = [...range(0, 30), ...second];
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    expect(await trips()).toHaveLength(2);
+    await run(() => refreshTripAssignments(device(), deps));
+    await run(() => prisma.tripImportState.update({ where: { deviceId }, data: { assignmentsCheckedAt: new Date() } }));
+    // Haakimine lõpeb pärast esimest sõitu; teisel sõidul on haakeriist 12 m
+    await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { endedAt: at(60) } }));
+    const extra = await run(() => prisma.implementAssignment.create({ data: { vehicleId, implementId: impl12, startedAt: at(61) } }));
+    try {
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(1);
+      const f = await fieldRows();
+      expect(f).toHaveLength(2);
+      expect(f[0]).toMatchObject({ implementId: impl6, widthM: 6 });
+      expect(f[1]).toMatchObject({ implementId: impl12, widthM: 12 });
+    } finally {
+      await run(() => prisma.implementAssignment.delete({ where: { id: extra.id } }));
+      await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { endedAt: null } }));
+    }
+  });
+
+  it('ainult haakeriista laiuse muutus arvutab sõidu ha ümber', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => refreshTripAssignments(device(), deps));
+    const [before] = await fieldRows();
+    await run(() => prisma.tripImportState.update({ where: { deviceId }, data: { assignmentsCheckedAt: new Date() } }));
+    await run(() => prisma.implement.update({ where: { id: impl6 }, data: { workingWidthM: 9 } }));
+    try {
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(1);
+      const [after] = await fieldRows();
+      expect(after.widthM).toBe(9);
+      expect(after.areaHa!).toBeGreaterThan(before.areaHa! * 1.4);
+      expect((await trips())[0].areaHa).toBe(after.areaHa);
+    } finally {
+      await run(() => prisma.implement.update({ where: { id: impl6 }, data: { workingWidthM: 6 } }));
+    }
+  });
+
+  it('ebaoluline muutus (nt märkus) ei arvuta midagi ümber', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => refreshTripAssignments(device(), deps));
+    await run(() => prisma.implement.update({ where: { id: impl6 }, data: { name: `Kultivaator 6 m ${Date.now()}` } }));
+    expect(await run(() => refreshTripAssignments(device(), deps))).toBe(0);
   });
 
   it('kohtade ümberarvutus kirjutab ka põllud', async () => {
