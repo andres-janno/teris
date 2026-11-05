@@ -90,11 +90,7 @@ flowchart LR
 | `MapView` | näitab valitud hooaja põlde, objekte, mullaproove ja masinaid | (käivituse andmed, vt allpool) | `Field` R, `FieldSeason` R, `PointOfInterest` R, `SoilSample` R, `Vehicle` R |
 | `LayerControl` (kiht „Tehnika“) | lülitab masinate kihi sisse → loeb seadmete viimased asukohad | `GET /api/fleet` | `Vehicle` R, `RelatedParty` R (juht), `Implement` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `DeviceOwnership` R, tsdb R |
 | `LayerControl` (kiht „Põllutööd“) | näitab kõigi masinate viimase ≥ 48 h rajad | `GET /api/telemetry/history` (iga masina kohta) | `DeviceAssignment` R, `TelemetryDevice` R, `ImplementAssignment` R, `Implement` R, `DeviceOwnership` R, tsdb R |
-| `CultivationControl` | ühe masina raja taasesitus valitud ajavahemikus | `GET /api/fleet/trips` | `VehicleTrip`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY |
-| `GET /api/fleet/trips/import-status` | `TripImportState`, `TelemetryDevice` | — | moodul TELEMETRY |
-| `GET /api/fleet/trips/:id/track` | `VehicleTrip`, `TelemetryDevice`, `DeviceOwnership`, tsdb `measurements` | — | moodul TELEMETRY |
-| `PATCH /api/fleet/trips/:id` | `VehicleTrip` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
-| `GET /api/telemetry/history` | nagu eelmine |
+| `CultivationControl` | ühe masina raja taasesitus valitud ajavahemikus | `GET /api/telemetry/history` | nagu eelmine |
 | `MapView` (sajuradar) | sajuradari kaadrid | `GET /api/weather/radar`, `GET /api/weather/radar.png` | andmebaasi ei kasuta (väline KAIA teenus, serveri vahemälu) |
 | `SatellitePanel` | satelliidipiltide kuupäevad ja pilvisus põldude kohal | `GET /api/satellite/dates`, `POST /api/satellite/cloud-check` | andmebaasi ei kasuta (väline Satiladu); pildikihid laaditakse brauserist otse Maa- ja Ruumiameti teenusest |
 | `MapYearSelector` | hooaja valik ja kultuuride legend | — | `Season` R, `FieldSeason` R (käivituse andmetest) |
@@ -600,6 +596,10 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `PUT`/`PATCH /api/fleet/device-assignments/:id` | `TelemetryDevice`, `Vehicle`, `Implement` | U: `DeviceAssignment` | moodul TELEMETRY |
 | `DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` | D: `DeviceAssignment` | looja või admin |
 | `POST /api/fleet/devices/assign` | `TelemetryDevice`, `DeviceAssignment`, `DeviceOwnership`, tsdb `measurements` | C/U: `DeviceAssignment`; U: `Vehicle` | moodul TELEMETRY |
+| `GET /api/fleet/trips` | `VehicleTrip`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY |
+| `GET /api/fleet/trips/import-status` | `TripImportState`, `TelemetryDevice` | — | moodul TELEMETRY |
+| `GET /api/fleet/trips/:id/track` | `VehicleTrip`, `TelemetryDevice`, `DeviceOwnership`, tsdb `measurements` | — | moodul TELEMETRY |
+| `PATCH /api/fleet/trips/:id` | `VehicleTrip` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
 | `GET /api/weather/radar`, `GET /api/weather/radar.png` | — | — | väline KAIA; moodul WEATHER |
 | `GET /api/satellite/dates` | — | — | väline Satiladu; moodul SATELLITE |
 | `POST /api/satellite/cloud-check` | — | — | väline Satiladu; ainult lugev POST |
