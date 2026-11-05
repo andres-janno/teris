@@ -15,7 +15,7 @@ import type { SatelliteProductId } from './services/satelliteLayer';
 import { BASE_MAPS } from './services/maaAmetLayers';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
-import { generateFieldCollectionForYear, getFieldFeatureForYear } from './types/fieldRegister';
+import { generateFieldCollectionForYear } from './types/fieldRegister';
 import type { Vehicle, Implement, TelemetryDevice, EnrichedVehicle } from './types/fleet';
 import type { CultivationPass, TelemetryPoint } from './types/telemetry';
 import type { PointOfInterest, PoiCategory } from './types/poi';
@@ -59,8 +59,7 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
 }
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
-const FieldFullView = lazy(() => import('./components/FieldFullView').then((m) => ({ default: m.FieldFullView })));
-const FieldWorkPlanDialog = lazy(() => import('./components/FieldWorkPlanDialog').then((m) => ({ default: m.FieldWorkPlanDialog })));
+const FieldMapCard = lazy(() => import('./components/FieldMapCard').then((m) => ({ default: m.FieldMapCard })));
 const FieldContextMenu = lazy(() => import('./components/FieldContextMenu').then((m) => ({ default: m.FieldContextMenu })));
 const FieldWorkEntryDialog = lazy(() => import('./components/FieldWorkEntryDialog').then((m) => ({ default: m.FieldWorkEntryDialog })));
 const FieldEditDialog = lazy(() => import('./components/FieldEditDialog').then((m) => ({ default: m.FieldEditDialog })));
@@ -501,7 +500,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   });
   const changeMainView = (view: MainView) => {
     setMainView(view);
-    if (view !== 'works') setWorksFocusId(null); // ootel töö ei kehti pärast vaate vahetust
+    if (view !== 'works') { setWorksFocusId(null); setWorksSearch(null); } // ootel töö/otsing ei kehti pärast vaate vahetust
     try {
       localStorage.setItem(mainViewKey, view);
     } catch {
@@ -520,6 +519,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Sõidu põllurea kande link (Tehnika → Sõidud): avab põllutööde vaate selle töö valikuga
   const [worksFocusId, setWorksFocusId] = useState<string | null>(null);
   const clearWorksFocus = React.useCallback(() => setWorksFocusId(null), []);
+  // Kaardi põllukastist avatud põllutööde vaate otsing
+  const [worksSearch, setWorksSearch] = useState<string | null>(null);
+  const clearWorksSearch = React.useCallback(() => setWorksSearch(null), []);
   const openFieldWork = (fieldWorkId: string, year: number) => {
     setSelectedYear(year);
     setWorksFocusId(fieldWorkId);
@@ -1009,24 +1011,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   const handleCloseFieldDetails = React.useCallback(() => setSelectedFieldId(null), []);
 
-  // Põllu infoaken põldude registrist (registri valitud hooaja andmetega)
-  const [registerDetailFieldId, setRegisterDetailFieldId] = useState<number | string | null>(null);
-  const registerDetailMasterField = React.useMemo(
-    () => (registerDetailFieldId === null ? null : masterFields.find((f) => String(f.id) === String(registerDetailFieldId)) ?? null),
-    [masterFields, registerDetailFieldId]
-  );
-  const handleCloseRegisterFieldDetails = React.useCallback(() => setRegisterDetailFieldId(null), []);
-  // Täisvaatest avatud põllu muutmise dialoog (Esc sulgeb ainult dialoogi, vt FieldEditDialog)
+  // Kaardi põllukastist avatud põllu muutmise dialoog (Esc sulgeb ainult dialoogi, vt FieldEditDialog)
   const [editFieldId, setEditFieldId] = useState<number | null>(null);
   const editFieldMaster = React.useMemo(
     () => (editFieldId === null ? null : masterFields.find((f) => String(f.id) === String(editFieldId)) ?? null),
     [masterFields, editFieldId]
   );
   const closeEditField = React.useCallback(() => setEditFieldId(null), []);
-  // Täisvaatest avatud töö (plaani) ja kande dialoogid; salvestamisel laeb täisvaade tööd uuesti
-  const [planDialog, setPlanDialog] = useState<{ fieldSeasonId: number; fieldLabel: string; fieldAreaHa: number; work: FieldWork | null } | null>(null);
+  // Kaardi kontekstimenüüst avatud kande dialoog
   const [entryDialog, setEntryDialog] = useState<{ fieldLabel: string; fieldAreaHa: number; work: FieldWork; entry: WorkEntry | null } | null>(null);
-  const [fullViewReloadKey, setFullViewReloadKey] = useState(0);
   const [workRefs, setWorkRefs] = useState<{ workTypes: WorkType[]; articles: Article[] } | null>(null);
   const workRefsLoading = useRef(false);
   const ensureWorkRefs = React.useCallback(() => {
@@ -1036,14 +1029,11 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       .then(([workTypes, articles]) => setWorkRefs({ workTypes, articles }))
       .catch((err) => {
         console.error('Tööliikide/kulumaterjalide laadimine ebaõnnestus:', err);
-        setPlanDialog(null);
         setEntryDialog(null);
       })
       .finally(() => { workRefsLoading.current = false; });
   }, [workRefs]);
-  const openPlanDialog = React.useCallback((ctx: NonNullable<typeof planDialog>) => { ensureWorkRefs(); setPlanDialog(ctx); }, [ensureWorkRefs]);
   const openEntryDialog = React.useCallback((ctx: NonNullable<typeof entryDialog>) => { ensureWorkRefs(); setEntryDialog(ctx); }, [ensureWorkRefs]);
-  const closePlanDialog = React.useCallback(() => setPlanDialog(null), []);
   const closeEntryDialog = React.useCallback(() => setEntryDialog(null), []);
   // Kaardil põllu kontekstimenüü (parem hiireklõps)
   const [fieldMenu, setFieldMenu] = useState<{ field: FieldFeature; point: { x: number; y: number } } | null>(null);
@@ -1053,13 +1043,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     () => parties.filter((p) => p.roles.includes('DRIVER')).map((p) => ({ id: p.id, name: p.name })),
     [parties]
   );
-  const handleFocusFieldFromRegister = (field: FieldFeature) => {
-    changeMainView('map');
-    setSelectedFieldId(null);
-    // kaart peab enne fookustamist nähtavaks saama (Leaflet arvutab suuruse uuesti)
-    setTimeout(() => handleFocusField(field), 50);
-  };
-
   // Vehicle focus
   const handleFocusVehicle = (vehicle: EnrichedVehicle) => {
     setSelectedVehicle(vehicle);
@@ -1671,7 +1654,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
             seasons={seasons}
-            onOpenFieldDetails={setRegisterDetailFieldId}
+            baseMap={visibility.baseMap}
             onUpdateField={handleUpdateMasterField}
             onDeleteField={handleDeleteMasterField}
             onOpenUpload={user.isAdmin ? () => setIsUploadOpen(true) : undefined}
@@ -1699,7 +1682,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             seasons={seasons}
             onOpenSeasonManager={() => changeMainView('seasons')}
             crops={crops}
-            onOpenFieldDetails={setRegisterDetailFieldId}
           />
         </Suspense>
       )}
@@ -1738,6 +1720,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             telemetryEnabled={modules.telemetry}
             initialWorkId={worksFocusId}
             onInitialWorkConsumed={clearWorksFocus}
+            initialSearch={worksSearch}
+            onInitialSearchConsumed={clearWorksSearch}
           />
         </Suspense>
       )}
@@ -1877,22 +1861,19 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
         </div>
 
-        {/* Valitud põllu info keskmises aknas */}
+        {/* Valitud põllu väike infokast kaardi all vasakul */}
         {selectedField && (
           <Suspense fallback={null}>
-            <FieldFullView
+            <FieldMapCard
               field={selectedField}
-              masterField={masterFields.find((f) => String(f.id) === String(selectedField.properties.id)) ?? null}
-              seasons={seasons}
-              soilSamples={soilSamples}
-              satelliteDate={visibility.satellite ? satelliteDate : null}
-              canEdit={true}
-              reloadKey={fullViewReloadKey}
               onClose={handleCloseFieldDetails}
-              onFocusField={handleFocusField}
+              onOpenWorks={(f) => {
+                setSelectedYear(f.properties.year ?? selectedYear);
+                setWorksSearch(f.properties.name);
+                setSelectedFieldId(null);
+                changeMainView('works');
+              }}
               onEditField={setEditFieldId}
-              onEditWork={openPlanDialog}
-              onEditEntry={openEntryDialog}
             />
           </Suspense>
         )}
@@ -1954,26 +1935,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       </div>
 
       {/* Modals */}
-      {/* Põllu infoaken registrist (registri peal) */}
-      {registerDetailMasterField && (
-        <Suspense fallback={null}>
-          <FieldFullView
-            field={getFieldFeatureForYear(registerDetailMasterField, selectedYear)}
-            masterField={registerDetailMasterField}
-            seasons={seasons}
-            soilSamples={soilSamples}
-            canEdit={true}
-            reloadKey={fullViewReloadKey}
-            onClose={handleCloseRegisterFieldDetails}
-            onFocusField={handleFocusFieldFromRegister}
-            onEditField={setEditFieldId}
-            onEditWork={openPlanDialog}
-            onEditEntry={openEntryDialog}
-          />
-        </Suspense>
-      )}
-
-      {/* Põllu muutmine täisvaatest ("Muuda põldu") */}
+      {/* Põllu muutmine kaardi põllukastist ("Muuda põldu") */}
       {editFieldMaster && (
         <Suspense fallback={null}>
           <FieldEditDialog
@@ -1986,26 +1948,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenCrops={() => setIsCropsModalOpen(true)}
             onUpdateField={handleUpdateMasterField}
             onClose={closeEditField}
-          />
-        </Suspense>
-      )}
-
-      {/* Töö (plaani) lisamine/muutmine täisvaatest */}
-      {planDialog && workRefs && (
-        <Suspense fallback={null}>
-          <FieldWorkPlanDialog
-            fieldSeasonId={planDialog.fieldSeasonId}
-            fieldLabel={planDialog.fieldLabel}
-            fieldAreaHa={planDialog.fieldAreaHa}
-            work={planDialog.work}
-            workTypes={workRefs.workTypes}
-            articles={workRefs.articles}
-            workers={workDialogWorkers}
-            onClose={closePlanDialog}
-            onSaved={() => {
-              setPlanDialog(null);
-              setFullViewReloadKey((k) => k + 1);
-            }}
           />
         </Suspense>
       )}
@@ -2024,7 +1966,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </Suspense>
       )}
 
-      {/* Kande lisamine/muutmine täisvaatest ja kaardi kontekstimenüüst */}
+      {/* Kande lisamine kaardi kontekstimenüüst */}
       {entryDialog && workRefs && (
         <Suspense fallback={null}>
           <FieldWorkEntryDialog
@@ -2040,7 +1982,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onClose={closeEntryDialog}
             onSaved={() => {
               setEntryDialog(null);
-              setFullViewReloadKey((k) => k + 1);
             }}
           />
         </Suspense>

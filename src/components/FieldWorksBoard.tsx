@@ -45,6 +45,8 @@ interface FieldWorksBoardProps {
   telemetryEnabled?: boolean;
   initialWorkId?: string | null; // mujalt (sõidu aknast) avatud töö
   onInitialWorkConsumed?: () => void;
+  initialSearch?: string | null; // mujalt (kaardi põllukastist) antud otsing, rakendatakse ühe korra
+  onInitialSearchConsumed?: () => void;
 }
 
 interface Row {
@@ -197,7 +199,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   canManageFinance = false,
   telemetryEnabled = true,
   initialWorkId = null,
-  onInitialWorkConsumed
+  onInitialWorkConsumed,
+  initialSearch = null,
+  onInitialSearchConsumed
 }) => {
   const [fieldWorks, setFieldWorks] = useState<FieldWork[]>([]);
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
@@ -267,6 +271,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     void reload();
     setSelectedId(null);
   }, [reload]);
+
+  // Mujalt antud otsing (nt kaardil valitud põld) kirjutatakse otsinguväljale ühe korra
+  useEffect(() => {
+    if (!initialSearch) return;
+    setSearch(initialSearch);
+    onInitialSearchConsumed?.();
+  }, [initialSearch, onInitialSearchConsumed]);
 
   // Mujalt avatud töö valitakse, kui tööd on laetud (enne laadimist id-d loendis pole)
   useEffect(() => {

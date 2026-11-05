@@ -286,7 +286,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   useEffect(() => {
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key !== 'Escape') return;
-      e.stopPropagation(); // ei jõua window'ni — alusvaade (nt põllu täisvaade) jääb avatuks
+      e.stopPropagation(); // ei jõua window'ni — alusvaade (nt põllu infokast kaardil) jääb avatuks
       onClose();
     };
     document.addEventListener('keydown', onKeyDown);

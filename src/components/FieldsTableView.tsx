@@ -1,6 +1,6 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
 import React, { useMemo, useState } from 'react';
-import { Layers, Calendar, Search, Lock, Download, Info, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Layers, Calendar, Search, Lock, Download, Crosshair, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FieldCadastralLink } from '../types/cadastre';
@@ -8,7 +8,9 @@ import type { FarmingSeason } from '../types/season';
 import { isCropUndetermined, seasonSelectorYears } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
+import type { BaseMapLayerId } from '../types/map';
 import { FieldEditDialog } from './FieldEditDialog';
+import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
@@ -19,8 +21,8 @@ interface FieldsTableViewProps {
   selectedYear: number;
   onSelectYear: (year: number) => void;
   seasons?: FarmingSeason[];
-  /** Avab põllu infoakna (sama mis kaardil põllule klikates) */
-  onOpenFieldDetails?: (fieldId: number | string) => void;
+  /** Aluskaart põllu kuju aknale */
+  baseMap?: BaseMapLayerId;
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onDeleteField: (fieldId: number | string) => void;
   onOpenUpload?: () => void; // puudub mitteadminil (import ainult adminile)
@@ -86,7 +88,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   selectedYear,
   onSelectYear,
   seasons = [],
-  onOpenFieldDetails,
+  baseMap = 'maaamet-pohikaart',
   onUpdateField,
   onDeleteField,
   onOpenUpload,
@@ -98,6 +100,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   onOpenCrops
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  const [shapeView, setShapeView] = useState<{ field: MasterField; record: FieldYearlyRecord } | null>(null);
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
   const editingField = editingFieldId === null ? null : masterFields.find((f) => f.id === editingFieldId) ?? null;
   const closeEdit = React.useCallback(() => setEditingFieldId(null), []);
@@ -344,14 +347,14 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           <div className="field-title-line">
                             {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
                             <span className="field-name">{field.name}</span>
-                            {onOpenFieldDetails && (
+                            {rec.geometry && (
                               <button
                                 type="button"
                                 className="icon-btn-ghost field-info-btn"
-                                onClick={() => onOpenFieldDetails(field.id)}
-                                title="Ava põllu info"
+                                onClick={() => setShapeView({ field, record: rec })}
+                                title={`Näita ${selectedYear}. a põllu kuju`}
                               >
-                                <Info size={15} />
+                                <Crosshair size={15} />
                               </button>
                             )}
                           </div>
@@ -428,6 +431,15 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   </tfoot>
                 )}
               </table>
+
+              {shapeView && (
+                <FieldShapeModal
+                  field={shapeView.field}
+                  record={shapeView.record}
+                  baseMap={baseMap}
+                  onClose={() => setShapeView(null)}
+                />
+              )}
 
               {editingField && (
                 <FieldEditDialog

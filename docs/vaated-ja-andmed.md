@@ -15,7 +15,7 @@ Koostatud koodi põhjal 26.10.2026 (laoarvestus lisatud 28.10.2026), uuendada k�
 ## Sisukord
 1. [Ülevaade](#ülevaade)
 2. [Kaart](#kaart)
-3. [Põllu aken (täisvaade) ja selle dialoogid](#põllu-aken-täisvaade-ja-selle-dialoogid)
+3. [Põllu infokast kaardil ja selle dialoogid](#põllu-infokast-kaardil-ja-selle-dialoogid)
 4. [Hooajad](#hooajad)
 5. [Põllud ja impordid](#põllud-ja-impordid)
 6. [Kultuurid](#kultuurid)
@@ -40,7 +40,7 @@ Põhivaated on ülamenüüs (`MAIN_VIEWS` failis `src/components/Header.tsx`), v
 | Vaade | Peakomponent | Kirjeldus | Peamised tabelid |
 |---|---|---|---|
 | Kaart (`map`) | `MapView` + `LayerControl`, `MapYearSelector`, `SatellitePanel`, `CultivationControl` | Põllud, objektid, mullaproovid, masinad ja nende rajad kaardil; sajuradar ja satelliidipilt | `Field`, `FieldSeason`, `PointOfInterest`, `SoilSample`, `Vehicle`, `TelemetryDevice`, `DeviceAssignment`, tsdb (kõik R) |
-| Põllu aken | `FieldFullView` (+ `FieldEditDialog`, `FieldWorkPlanDialog`, `FieldWorkEntryDialog`) | Ühe põllu hooaja ülevaade, tööd ja kanded; avaneb kaardilt või põldude/külvikorra registrist | `FieldSeason`, `FieldWork`, `WorkEntry` (RCU), `Field` (RU) |
+| Põllu infokast | `FieldMapCard` (+ `FieldEditDialog`, `FieldShapeModal`) | Kaardil valitud põllu nimi, pindala ja kultuur; nupud „Ava põllutööd“ ja „Muuda põldu“; põldude/külvikorra vaates põllu kuju nupp | `FieldSeason` (käivituse andmed), `Field` (RU) |
 | Hooajad (`seasons`) | `SeasonManagerModal` (täisleht) | Hooaegade loomine, muutmine, lukustamine ja avamine | `Season` (RCU) |
 | Põllud (`fields`) | `FieldsTableView` (+ `FieldEditDialog`, impordiaknad) | Põldude register, põllu muutmine ja kustutamine, PRIA põldude, mullaproovide ja põlluraamatu import | `Field`, `FieldSeason`, `FieldCadastralParcel` (RCUD), `SoilSample`, `FieldWork`, `WorkEntry` (import) |
 | Kultuurid (`crops`) | `CropRegisterModal` (täisleht) | Kultuuride ja sortide register | `Crop`, `CropVariety` (RCUD), `FieldSeason` (U värv) |
@@ -95,33 +95,29 @@ flowchart LR
 | `SatellitePanel` | satelliidipiltide kuupäevad ja pilvisus põldude kohal | `GET /api/satellite/dates`, `POST /api/satellite/cloud-check` | andmebaasi ei kasuta (väline Satiladu); pildikihid laaditakse brauserist otse Maa- ja Ruumiameti teenusest |
 | `MapYearSelector` | hooaja valik ja kultuuride legend | — | `Season` R, `FieldSeason` R (käivituse andmetest) |
 
-## Põllu aken (täisvaade) ja selle dialoogid
+## Põllu infokast kaardil ja selle dialoogid
 
-`FieldFullView` avaneb kaardil põllu klõpsamisel või põldude/külvikorra registrist („Ava põld“). Aken laeb põllu valitud hooaja tööd ja kanded. Nupud avavad App-taseme dialoogid: põllu muutmine (`FieldEditDialog`), töö plaan (`FieldWorkPlanDialog` → `FieldWorkPlanForm`) ja kanne (`FieldWorkEntryDialog`). Esimese plaani- või kandedialoogi avamisel laetakse tööliigid ja materjalid. Mullaproovid tulevad käivituse andmetest, NDVI arvutatakse brauseris satelliidipildist.
+`FieldMapCard` on väike kast kaardi all vasakul, mis avaneb põllu klõpsamisel kaardil (Esc või ✕ sulgeb). Näitab põllu numbrit, nime, pindala ja kultuuri valitud hooaja kohta (käivituse andmetest, API-päringuid ei tee). „Ava põllutööd“ viib põllutööde tahvlile, kus otsing on seatud põllu nimele; „Muuda põldu“ avab App-taseme `FieldEditDialog`-i. Põldude ja külvikorra vaates avab põllu kuju nupp (`FieldShapeModal`) põllu valitud hooaja kuju väikesel kaardil. Põllutööde plaanid ja kanded lisatakse põllutööde tahvlil; kaardi kontekstimenüü avab kande dialoogi (`FieldWorkEntryDialog`).
 
 ```mermaid
 flowchart LR
-  V["Põllu aken"] --> FFV["FieldFullView"]
-  FFV --> FED["FieldEditDialog"]
-  FFV --> FWP["FieldWorkPlanDialog"]
-  FFV --> FWE["FieldWorkEntryDialog"]
-  FFV --> A1["GET /api/field-season-works"]
+  V["Põllu infokast"] --> FMC["FieldMapCard"]
+  FMC --> FED["FieldEditDialog"]
+  FME["Kaardi kontekstimenüü"] --> FWE["FieldWorkEntryDialog"]
+  FWB["FieldWorksBoard"] --> FWP["FieldWorkPlanForm"]
   FED --> A2["POST /api/master-fields"]
   FWP --> A3["POST /api/field-works"]
   FWP --> A4["PATCH /api/field-works/id"]
   FWE --> A5["POST, PUT /api/work-entries"]
   FWE --> A6["GET /api/field-works/telemetry-suggestions"]
-  FFV --> A7["GET /api/work-types, /api/materials"]
-  A1 -->|R| T1["FieldSeason"]
-  A1 -->|R| T2["FieldWork, FieldWorkLine"]
-  A1 -->|R| T3["WorkEntry, WorkEntryLine"]
-  A2 -->|CU| T1
+  FWB --> A7["GET /api/work-types, /api/materials"]
+  A2 -->|CU| T1["FieldSeason"]
   A2 -->|U| T4["Field"]
   A2 -->|C| T5["Season"]
   A2 -->|CUD| T6["CadastralParcel, FieldCadastralParcel"]
-  A3 -->|C| T2
+  A3 -->|C| T2["FieldWork, FieldWorkLine"]
   A4 -->|UCD| T2
-  A5 -->|CU| T3
+  A5 -->|CU| T3["WorkEntry, WorkEntryLine"]
   A5 -->|U| T2
   A6 -->|R| T7["DeviceAssignment, ImplementAssignment, DeviceOwnership"]
   A6 -->|R| TS["tsdb measurements"]
@@ -132,10 +128,9 @@ flowchart LR
 
 | Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
 |---|---|---|---|
-| `FieldFullView` | näitab põllu hooaja andmeid, töid ja kandeid | `GET /api/field-season-works` | `FieldSeason` R, `FieldWork` R, `WorkType` R, `FieldWorkLine` R, `WorkEntry` R, `WorkEntryLine` R, `RelatedParty` R, `Vehicle` R, `Implement` R |
-| `FieldOverviewPanel` / `SoilSamplesSection` / `FieldNdviSection` | mullaproovid ja NDVI | — (käivituse andmed, väline satelliidipilt) | `SoilSample` R |
+| `FieldMapCard` | näitab kaardil valitud põllu nime, pindala ja kultuuri; viib põllutööde tahvlile või põllu muutmisele | — (käivituse andmed) | — |
+| `FieldShapeModal` | näitab põllu valitud hooaja kuju väikesel kaardil (põldude, külvikorra ja põllutööde vaatest) | — (käivituse andmed) | — |
 | `FieldEditDialog` | muudab põllu põhiandmeid ja hooaja andmeid (pindala, kultuur, sort, katastriüksused) | `POST /api/master-fields` (üks põld) | `Field` RU, `FieldSeason` CU (ainult muudetud aasta; lukus hooaeg keelatud), `Season` C (puuduv hooaeg), `CadastralParcel` CU, `FieldCadastralParcel` CUD |
-| `FieldWorkPlanDialog` (`FieldWorkPlanForm`) | lisab või muudab töö plaani (kuupäevad, pindala, plaaniread) | `POST /api/field-works`, `PATCH /api/field-works/:id` | `WorkType` R, `FieldWork` RCU, `FieldWorkLine` CD (read asendatakse), `WorkEntry` R |
 | `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak, materjali ladu); näitab valitud lao laoseisu | `POST /api/work-entries`, `PUT /api/work-entries/:id`, `GET /api/warehouses`, `GET /api/stock/levels` | `WorkEntry` RCU (sh sõidu seos `tripId`), `VehicleTripField` R (seose kontroll), `WorkEntryLine` CUD (ühikuhind ümberarvutusest), `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` RU, `Warehouse` RC (põhiladu), `MaterialStock` RCD, `StockDocumentLine` U |
 | `FieldWorkEntryDialog` | pakub sõitude registrist selle põllu sõite kande täitmiseks (aeg pausidega, ha, kütus koos teekütuse osaga); klõps seob kande sõiduga, „Eemalda seos“ eemaldab | `GET /api/field-works/telemetry-suggestions` | `VehicleTripField` R, `VehicleTrip` R, `WorkEntry` R, `FieldWork` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
 | App (`ensureWorkRefs`) | laeb dialoogide valikud | `GET /api/work-types`, `GET /api/materials` | `WorkType` R, `FieldWork` R (loend), `Material` R, `WorkEntryLine` R (loend) |
@@ -281,7 +276,7 @@ flowchart LR
   A2 -->|C| T2
   A3 -->|UCD| T2
   A4 -->|D| T2
-  A5 -->|CU| T3
+  A5 -->|CU| T3["WorkEntry, WorkEntryLine"]
   A5 -->|U| T2
   A6 -->|D| T3
   A7 -->|RU| T3
@@ -301,7 +296,7 @@ flowchart LR
 | `FieldWorksBoard` | märgib töö tehtuks või avab uuesti | `PATCH /api/field-works/:id` (`status`) | `FieldWork` U, `WorkEntry` R |
 | `FieldWorksBoard` | eemaldab töö (kui kandeid pole; looja või admin) | `DELETE /api/field-works/:id` | `FieldWork` RD, `WorkEntry` R; kaskaad: `FieldWorkLine` D |
 | `FieldWorksBoard` | eemaldab põllu kõik / sügis- / valitud tööd (kui kandeid pole) | `POST /api/field-works/clear` | `FieldSeason` R, `Season` R, `WorkEntry` R, `FieldWork` RD; kaskaad: `FieldWorkLine` D |
-| `FieldWorkEntryDialog` | lisab või muudab kande; telemeetria soovitused | `POST`/`PUT /api/work-entries`, `GET /api/field-works/telemetry-suggestions` | vt [Põllu aken](#põllu-aken-täisvaade-ja-selle-dialoogid) |
+| `FieldWorkEntryDialog` | lisab või muudab kande; telemeetria soovitused | `POST`/`PUT /api/work-entries`, `GET /api/field-works/telemetry-suggestions` | vt [Põllu infokast](#põllu-infokast-kaardil-ja-selle-dialoogid) |
 | `FieldWorksBoard` | kustutab kande (looja või admin; kinnitatud kande ainult finantsjuht) | `DELETE /api/work-entries/:id` | `WorkEntry` RD, `FieldWork` U (olek); kaskaad: `WorkEntryLine` D |
 | `FinanceModal` | näitab kandeid ja nende ridu | `GET /api/finance/entries` | `FieldSeason` R, `WorkEntry` R, `WorkEntryLine` R, `FieldWork` R, `WorkType` R, `Field` R, `RelatedParty` R, `Vehicle` R, `Implement` R |
 | `FinanceModal` | sisestab ühikuhinnad ja kinnitab kande | `PATCH /api/finance/entries/:id` | `WorkEntry` RU, `WorkEntryLine` U |
@@ -741,13 +736,13 @@ Märkused maatriksi juurde:
 
 | Andmed (olek) | API | Tabelid | Kasutavad vaated |
 |---|---|---|---|
-| `masterFields` | `GET /api/master-fields` | `Field`, `FieldSeason`, `FieldCadastralParcel`, `CadastralParcel`, `RelatedParty` (operaator), `FieldWork` (loend) | Kaart (põllukiht, valitud hooaja kaupa), Põllu aken, Hooajad (statistika), Põllud, Kultuurid (pindalad), Külvikord, Põllutööd (read), Isikud (seosed), `FieldBookUploadModal`, `FieldEditDialog` |
-| `seasons` | `GET /api/seasons` | `Season` | hooaja valik kõikjal (`MapYearSelector`, aastavalikud), Hooajad, Põllud, Külvikord, Kultuurid, Põllutööd, Kulumaterjalid, Põllu aken, `FieldEditDialog`, `FieldBookUploadModal`; aktiivne hooaeg määrab vaikimisi aasta |
+| `masterFields` | `GET /api/master-fields` | `Field`, `FieldSeason`, `FieldCadastralParcel`, `CadastralParcel`, `RelatedParty` (operaator), `FieldWork` (loend) | Kaart (põllukiht, valitud hooaja kaupa), Põllu infokast, Hooajad (statistika), Põllud, Kultuurid (pindalad), Külvikord, Põllutööd (read), Isikud (seosed), `FieldBookUploadModal`, `FieldEditDialog` |
+| `seasons` | `GET /api/seasons` | `Season` | hooaja valik kõikjal (`MapYearSelector`, aastavalikud), Hooajad, Põllud, Külvikord, Kultuurid, Põllutööd, Kulumaterjalid, Põllu infokast, `FieldEditDialog`, `FieldBookUploadModal`; aktiivne hooaeg määrab vaikimisi aasta |
 | `rawVehicles`, `implementsList`, `devices` | `GET /api/fleet?telemetry=0` (ilma reaalajas asukohtadeta) | `Vehicle`, `RelatedParty`, `Implement`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment` | Tehnika, Kaart (masinate kiht, rajad), Põllutööd ja kandedialoog (masinate/haakeriistade valik), Isikud (masinad) |
 | `pois` | `GET /api/poi` | `PointOfInterest` | Kaart (objektide kiht), Taristu |
 | `parties` | `GET /api/parties` | `RelatedParty` (+ viidete loendid) | päise operaatori filter (`OperatorSelector`), Põllud, `FieldEditDialog`, Põllutööd ja dialoogid (töötajad = roll DRIVER), `FieldUploadModal`, `FieldBookUploadModal`, Isikud |
 | `crops` | `GET /api/crops` | `Crop`, `CropVariety` | Kultuurid, Põllud, Külvikord, Põllutööd, `FieldEditDialog`; PRIA impordil kultuuri värvi määramine |
-| `soilSamples` | `GET /api/soil-samples` | `SoilSample` | Kaart (mullaproovide kiht), Põllu aken (mullaproovide jaotis) |
+| `soilSamples` | `GET /api/soil-samples` | `SoilSample` | Kaart (mullaproovide kiht) |
 
 Hiljem (vajadusel) laetavad:
 - `GET /api/fleet` (koos telemeetriaga) — kui kaardil lülitatakse sisse masinate kiht või avatakse Tehnika vaade (üks kord seansis; uuesti kihi sisselülitamisel ja pärast seoste registri muutmist).

@@ -1,5 +1,5 @@
 // src/components/FieldContextMenu.tsx — kaardil põllu kontekstimenüü (parem hiireklõps).
-// Esimene tegevus: kande lisamine lõpetamata tööle (kande dialoogi avab App, nagu põllu täisvaatest).
+// Esimene tegevus: kande lisamine lõpetamata tööle (kande dialoogi avab App, nagu varem põllu täisvaatest).
 import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { ClipboardPlus, Loader2 } from 'lucide-react';
