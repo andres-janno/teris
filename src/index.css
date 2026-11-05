@@ -7584,7 +7584,14 @@ a.history-pill:hover {
 
 /* Põhinimekiri / -tabel täidab ülejäänud kõrguse ja kerib ise (päis jääb paigale);
    väga madalal aknal kerib kogu leht */
+/* Tehnika lehe registrid (haakimised, seadmete seosed, sõidud): jaotis täidab lehe ja tabel kerib ise */
+.fleet-board-body > .implement-history-section {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
 .fullpage-board-body .register-table-wrap,
+.fleet-board-body .implement-history-section .register-table-wrap,
 .fullpage-board-body .register-fields-list,
 .fullpage-board-body .seasons-table-wrap {
   flex: 1 1 0;
