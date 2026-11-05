@@ -12,6 +12,7 @@ import { TripDialog, placeText } from './TripDialog';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
+  onOpenFieldWork?: (fieldWorkId: string, year: number) => void;
 }
 
 const DEFAULT_DAYS = 7;
@@ -37,12 +38,13 @@ const nextDayStartIso = (day: string) => {
   return d.toISOString();
 };
 
-export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
+export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFieldWork }) => {
   const [fromDay, setFromDay] = useState(defaultFrom);
   const [toDay, setToDay] = useState(defaultTo);
   const [vehicleId, setVehicleId] = useState('');
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'CLOSED'>('');
   const [unknownPlace, setUnknownPlace] = useState(false);
+  const [unlinkedOnly, setUnlinkedOnly] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [importStatus, setImportStatus] = useState<TripImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -57,7 +59,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
       const [list, st] = await Promise.all([
         api.getTrips({
           from: dayStartIso(fromDay), to: nextDayStartIso(toDay),
-          vehicleId: vehicleId || undefined, status: status || undefined, unknownPlace
+          vehicleId: vehicleId || undefined, status: status || undefined, unknownPlace, unlinkedOnly
         }),
         api.getTripImportStatus()
       ]);
@@ -68,12 +70,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
     } finally {
       setLoading(false);
     }
-  }, [fromDay, toDay, vehicleId, status, unknownPlace]);
+  }, [fromDay, toDay, vehicleId, status, unknownPlace, unlinkedOnly]);
 
   useEffect(() => { load(); }, [load]);
 
   const periodActive = fromDay !== defaultFrom() || toDay !== defaultTo();
-  const hasFilters = periodActive || !!vehicleId || !!status || unknownPlace;
+  const hasFilters = periodActive || !!vehicleId || !!status || unknownPlace || unlinkedOnly;
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
@@ -122,6 +124,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
             Ainult tundmatu algus või lõpp
           </label>
         </FilterClear>
+        <FilterClear className="filter-clear-inline" active={unlinkedOnly} onClear={() => setUnlinkedOnly(false)}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+            <input type="checkbox" checked={unlinkedOnly} onChange={(e) => setUnlinkedOnly(e.target.checked)} />
+            Ainult kandeta põllusõidud
+          </label>
+        </FilterClear>
         <button className="btn btn-secondary btn-sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
         </button>
@@ -152,8 +160,10 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
                 <th className="num">Kestus</th>
                 <th>Kust → kuhu</th>
                 <th className="num">km</th>
+                <th className="num">ha</th>
                 <th className="num">Kütus l</th>
                 <th className="num">Mootoritunnid</th>
+                <th title="✓ = vähemalt ühel põllul on kanne; — = põllusõit on kirja panemata">Kanne</th>
                 <th>Olek</th>
               </tr>
             </thead>
@@ -172,8 +182,10 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
                     <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
                     <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>
                     <td className="num">{formatQty(t.distanceKm)}</td>
+                    <td className="num">{t.areaHa == null ? '—' : formatQty(t.areaHa)}</td>
                     <td className="num">{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</td>
                     <td className="num">{engine == null ? '—' : formatQty(engine)}</td>
+                    <td>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</td>
                     <td>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</td>
                   </tr>
                 );
@@ -186,6 +198,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
       {open && (
         <TripDialog
           trip={open}
+          onOpenFieldWork={onOpenFieldWork}
           onClose={() => setOpen(null)}
           onSaved={(saved) => { setTrips((list) => list.map((x) => (x.id === saved.id ? saved : x))); setOpen(saved); }}
         />

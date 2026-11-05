@@ -516,6 +516,15 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     changeMainView('stock');
   };
 
+  // Sõidu põllurea kande link (Tehnika → Sõidud): avab põllutööde vaate selle töö valikuga
+  const [worksFocusId, setWorksFocusId] = useState<string | null>(null);
+  const clearWorksFocus = React.useCallback(() => setWorksFocusId(null), []);
+  const openFieldWork = (fieldWorkId: string, year: number) => {
+    setSelectedYear(year);
+    setWorksFocusId(fieldWorkId);
+    changeMainView('works');
+  };
+
   const handleSaveCrop = (cropToSave: Crop) => {
     setCrops((prev) => {
       const idx = prev.findIndex((c) => c.id === cropToSave.id);
@@ -1726,6 +1735,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenWorkRegister={() => setIsWorkRegisterOpen(true)}
             canManageFinance={user.isAdmin || user.isFinanceManager}
             telemetryEnabled={modules.telemetry}
+            initialWorkId={worksFocusId}
+            onInitialWorkConsumed={clearWorksFocus}
           />
         </Suspense>
       )}
@@ -1755,6 +1766,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onUpdateDevice={handleUpdateDevice}
           onDeleteDevice={handleDeleteDevice}
           telemetryEnabled={modules.telemetry}
+          onOpenFieldWork={openFieldWork}
         />
       )}
 

@@ -42,6 +42,8 @@ interface FieldWorksBoardProps {
   onOpenWorkRegister: () => void;
   canManageFinance?: boolean;
   telemetryEnabled?: boolean;
+  initialWorkId?: string | null; // mujalt (sõidu aknast) avatud töö
+  onInitialWorkConsumed?: () => void;
 }
 
 interface Row {
@@ -192,7 +194,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   implementsList,
   onOpenWorkRegister,
   canManageFinance = false,
-  telemetryEnabled = true
+  telemetryEnabled = true,
+  initialWorkId = null,
+  onInitialWorkConsumed
 }) => {
   const [fieldWorks, setFieldWorks] = useState<FieldWork[]>([]);
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
@@ -260,6 +264,13 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     void reload();
     setSelectedId(null);
   }, [reload]);
+
+  // Mujalt avatud töö valitakse, kui tööd on laetud (enne laadimist id-d loendis pole)
+  useEffect(() => {
+    if (!initialWorkId || !fieldWorks.some((w) => w.id === initialWorkId)) return;
+    setSelectedId(initialWorkId);
+    onInitialWorkConsumed?.();
+  }, [initialWorkId, fieldWorks, onInitialWorkConsumed]);
 
   // Põldude muutus (nt kultuuri valik või põllu kustutamine registris) → laeme tööd veidi hiljem uuesti.
   // Esmalaadimine on ülal; siin ainult päris muutus pärast seda (mitte esimene renderdus ega

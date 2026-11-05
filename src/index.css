@@ -11231,3 +11231,6 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
 .trip-dialog-metrics th { text-align: left; font-weight: 500; color: var(--text-muted); padding: 3px 12px 3px 0; width: 40%; }
 .trip-dialog-visits { font-size: 13px; margin: 4px 0 12px 16px; }
+.trip-dialog-fields { width: 100%; font-size: 13px; margin-bottom: 12px; }
+.trip-dialog-fields .text-muted { font-size: 12px; }
+.trip-dialog-fields .btn-sm { padding: 0 6px; }

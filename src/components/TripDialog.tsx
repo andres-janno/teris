@@ -8,11 +8,13 @@ import { api } from '../services/api';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
+import { formatDate } from '../services/dateFormat';
 
 interface TripDialogProps {
   trip: Trip;
   onClose: () => void;
   onSaved: (trip: Trip) => void;
+  onOpenFieldWork?: (fieldWorkId: string, year: number) => void; // kande link: avab põllu töö
 }
 
 export const placeText = (s: TripStopInfo): string => {
@@ -25,7 +27,7 @@ const timeOnly = (iso: string) => formatDateTime(iso).slice(11);
 const minutesText = (m: number) => formatDuration(new Date(0).toISOString(), new Date(m * 60_000).toISOString());
 const opt = (v: number | null, unit: string) => (v == null ? '—' : `${formatQty(v)} ${unit}`);
 
-export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved }) => {
+export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork }) => {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const [notes, setNotes] = useState(trip.notes ?? '');
   const [saving, setSaving] = useState(false);
@@ -85,6 +87,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved }
     ['Max kiirus', opt(trip.maxSpeedKmh, 'km/h')],
     ['Keskmine kiirus', opt(trip.avgSpeedKmh, 'km/h')],
     ['Kütus', opt(trip.fuelLiters, 'l')],
+    ['Tehtud pindala', opt(trip.areaHa, 'ha')],
     ['Kütusetase', trip.fuelLevelStartPct == null ? '—' : `${formatQty(trip.fuelLevelStartPct)} % → ${formatQty(trip.fuelLevelEndPct ?? trip.fuelLevelStartPct)} %`],
     ['Mootoritunnid', trip.engineHoursStart == null ? '—' : `${formatQty(trip.engineHoursStart)} → ${formatQty(trip.engineHoursEnd ?? trip.engineHoursStart)} h`]
   ];
@@ -109,6 +112,57 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved }
               ))}
             </tbody>
           </table>
+          {trip.fields.length > 0 && (
+            <>
+              <h4>Põllud</h4>
+              <table className="register-table trip-dialog-fields">
+                <thead>
+                  <tr>
+                    <th>Põld</th>
+                    <th>Põllul</th>
+                    <th className="num">ha</th>
+                    <th className="num">Kütus põllul l</th>
+                    <th className="num">Koos teega l</th>
+                    <th>Kanne</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {trip.fields.map((f) => (
+                    <tr key={f.fieldSeasonId}>
+                      <td>{f.label}</td>
+                      <td>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</td>
+                      <td className="num">
+                        {f.areaHa == null ? '—' : formatQty(f.areaHa)}
+                        <div className="text-muted">
+                          {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
+                        </div>
+                      </td>
+                      <td className="num">{f.fuelFieldL == null ? '—' : formatQty(f.fuelFieldL)}</td>
+                      <td className="num">{f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}</td>
+                      <td>
+                        {f.entries.length === 0 ? (
+                          <span className="text-muted">kanne puudub</span>
+                        ) : (
+                          f.entries.map((e) => (
+                            <button
+                              key={e.id}
+                              type="button"
+                              className="btn btn-ghost btn-sm"
+                              title="Ava põllu töö"
+                              disabled={!onOpenFieldWork}
+                              onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
+                            >
+                              {e.workTypeName} {formatDate(e.date)}
+                            </button>
+                          ))
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </>
+          )}
           {trip.visits.length > 0 && (
             <>
               <h4>Läbitud kohad</h4>

@@ -73,6 +73,7 @@ interface VehicleTrackerProps {
   onDeleteDevice: (id: string) => void;
   canManageFinance?: boolean;      // tunnihinda näeb ja muudab ainult finantsõigusega kasutaja
   telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
+  onOpenFieldWork?: (fieldWorkId: string, year: number) => void; // sõidu põllurea kanne → põllutööde vaade
 }
 type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory' | 'trips';
 
@@ -267,6 +268,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   onDeleteDevice,
   canManageFinance = false,
   telemetryEnabled = true,
+  onOpenFieldWork,
 }) => {
   // Vaikimisi sõidud; ilma telemeetriamoodulita langeb activeTab masinatele
   const [selectedTab, setActiveTab] = useState<TabType>('trips');
@@ -1926,7 +1928,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       )}
 
       {/* TAB 6: SÕITUDE REGISTER */}
-      {telemetryEnabled && activeTab === 'trips' && <TripRegister vehicles={vehicles} />}
+      {telemetryEnabled && activeTab === 'trips' && <TripRegister vehicles={vehicles} onOpenFieldWork={onOpenFieldWork} />}
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
       {activeTab === 'history' && (
