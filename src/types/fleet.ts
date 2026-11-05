@@ -249,3 +249,7 @@ export interface TripImportStatus {
   devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
 }
 export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean }
+
+/** Sõidu rada kaardil: peenike joon + põllulõigud haakeriista laiusega. */
+export type TripSwath = { fieldSeasonId: number; widthM: number; lines: [number, number][][] };
+export type TripTrack = { points: [number, number][]; swaths: TripSwath[] };

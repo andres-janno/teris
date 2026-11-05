@@ -4,7 +4,8 @@ import { Readable } from 'stream';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, authDb, runAsTenant } from './db';
 import { setSessionUserForTest } from './authGate';
-import { handleTrips } from './tripsApi';
+import { handleTrips, buildSwaths } from './tripsApi';
+import type { TripSample } from './tripSegments';
 
 const T = `test-tenant-tripsapi-${process.pid}`;
 const T2 = `test-tenant-tripsapi2-${process.pid}`;
@@ -196,6 +197,37 @@ describe('tripsApi', () => {
     expect(t.fields[0].entries.map((e: any) => e.id)).toEqual([seasonEntryId]);
     const u = await call('GET', `/api/fleet/trips${Q}&unlinkedOnly=1`);
     expect(u.json.map((x: any) => x.id)).not.toContain(seasonTripId);
+  });
+
+  it('põllulõigud kaardile: ainult read laiusega, lõigud katkevad põllult väljas', async () => {
+    const sq = (x0: number, x1: number): number[][] => [[x0, 58], [x1, 58], [x1, 58.01], [x0, 58.01], [x0, 58]];
+    const smp = (m: number, lng: number, lat = 58.005): TripSample => ({
+      time: new Date(Date.UTC(2026, 10, 3, 6, m)), lat, lng, ignition: true, speedKmh: 8,
+      fuelUsedL: null, fuelRateLph: null, fuelLevelPct: null, engineHours: null
+    });
+    await run(async () => {
+      const mk = async (num: string, x0: number, x1: number) => {
+        const f = await prisma.field.create({ data: { num, name: `Lõik ${num}`, fieldCode: `TA-${num}` } });
+        return (await prisma.fieldSeason.create({ data: { fieldId: f.id, year: 2026, areaHa: 1, crop: 'test', geometry: { type: 'Polygon', coordinates: [sq(x0, x1)] } } })).id;
+      };
+      const withW = await mk('81', 26, 26.01);
+      const noW = await mk('82', 26.1, 26.11);
+      const base = { tripId, arriveAt: d('2026-11-03T06:00:00Z'), leaveAt: d('2026-11-03T06:30:00Z'), activeMinutes: 10, computedAt: new Date() };
+      await prisma.vehicleTripField.create({ data: { ...base, fieldSeasonId: withW, widthM: 6 } });
+      await prisma.vehicleTripField.create({ data: { ...base, fieldSeasonId: noW, widthM: null } });
+      const samples = [
+        smp(0, 26.002), smp(1, 26.004), smp(2, 26.006), // sees
+        smp(3, 26.05), // väljas
+        smp(4, 26.002), smp(5, 26.004), // sees
+        smp(6, 26.006), // üksik punkt pärast 1 min — jätkab eelmist lõiku
+        smp(30, 26.002), // üksik punkt pärast pikka vahet — langeb välja
+        smp(31, 26.105), smp(32, 26.106) // põld ilma laiuseta
+      ];
+      const sw = await buildSwaths(tripId, samples);
+      expect(sw).toHaveLength(1);
+      expect(sw[0]).toMatchObject({ fieldSeasonId: withW, widthM: 6 });
+      expect(sw[0].lines.map((l) => l.length)).toEqual([3, 3]);
+    });
   });
 
   it('muud teed ei kuulu siia', async () => {

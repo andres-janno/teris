@@ -2,7 +2,7 @@
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import type { YearReplacementPlan } from './fieldYearReplace';
-import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput, Trip, TripImportStatus, TripFilter } from '../types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput, Trip, TripTrack, TripImportStatus, TripFilter } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -508,10 +508,11 @@ export const api = {
     return res.json();
   },
 
-  async getTripTrack(id: string): Promise<[number, number][]> {
+  async getTripTrack(id: string): Promise<TripTrack> {
     const res = await apiFetch(`/api/fleet/trips/${id}/track`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu raja laadimine ebaõnnestus'));
-    return (await res.json()).points;
+    const body = await res.json();
+    return { points: body.points, swaths: body.swaths ?? [] };
   },
 
   async updateTripNotes(id: string, notes: string | null): Promise<Trip> {

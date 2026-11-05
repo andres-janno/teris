@@ -58,6 +58,48 @@ function fieldOf(fields: PreparedField[], lng: number, lat: number): PreparedFie
   return null;
 }
 
+type FieldStep = {
+  sample: TripSample;
+  prev: TripSample | null; // eelmine süütega punkt
+  field: PreparedField | null;
+  contiguous: boolean; // jätkab eelmist punkti samal põllul (pole pausi, väljas käimist ega üle 5 min vahet)
+  dt: number;
+};
+
+/** Süütega punktid koos põllu ja katkematuse märkega; ühine põllul oldud aja ja kaardijoonte jaoks. */
+function fieldSteps(samples: TripSample[], fields: PreparedField[]): FieldStep[] {
+  const out: FieldStep[] = [];
+  let prev: { sample: TripSample; fieldId: number | null } | null = null;
+  let offSeen = false;
+  for (const s of samples) {
+    if (s.ignition === false) {
+      if (prev) offSeen = true;
+      continue;
+    }
+    const f = fieldOf(fields, s.lng, s.lat);
+    const dt = prev ? s.time.getTime() - prev.sample.time.getTime() : Infinity;
+    const contiguous = !!prev && !offSeen && f != null && prev.fieldId === f.id && dt <= FIELD_STEP_MAX_MS;
+    out.push({ sample: s, prev: prev?.sample ?? null, field: f, contiguous, dt });
+    prev = { sample: s, fieldId: f?.id ?? null };
+    offSeen = false;
+  }
+  return out;
+}
+
+/** Põllul sõidetud katkematud lõigud (punktide jadad) põldude kaupa, kronoloogilises järjekorras. */
+export function fieldRuns(samples: TripSample[], places: Place[]): { fieldSeasonId: number; points: TripSample[] }[] {
+  const fields = prepareFields(places);
+  const runs: { fieldSeasonId: number; points: TripSample[] }[] = [];
+  if (fields.length === 0) return runs;
+  for (const st of fieldSteps(samples, fields)) {
+    if (!st.field) continue;
+    const last = runs[runs.length - 1];
+    if (st.contiguous && last && last.fieldSeasonId === st.field.id) last.points.push(st.sample);
+    else runs.push({ fieldSeasonId: st.field.id, points: [st.sample] });
+  }
+  return runs;
+}
+
 type Acc = {
   field: PreparedField;
   points: CoveragePoint[];
@@ -76,38 +118,26 @@ export function computeTripFields(samples: TripSample[], places: Place[], tripFu
   const useCounter = on.filter((s) => s.fuelUsedL != null).length >= 2;
   const useRate = !useCounter && on.some((s) => s.fuelRateLph != null);
   const acc = new Map<number, Acc>();
-  let prev: { sample: TripSample; fieldId: number | null } | null = null;
-  let offSeen = false;
-  for (const s of samples) {
-    if (s.ignition === false) {
-      if (prev) offSeen = true;
-      continue;
+  for (const { sample: s, prev, field: f, contiguous, dt } of fieldSteps(samples, fields)) {
+    if (!f) continue;
+    let a = acc.get(f.id);
+    if (!a) {
+      a = { field: f, points: [], arriveAt: s.time, leaveAt: s.time, activeMs: 0, fuel: 0, runCounter: null };
+      acc.set(f.id, a);
     }
-    const f = fieldOf(fields, s.lng, s.lat);
-    const dt = prev ? s.time.getTime() - prev.sample.time.getTime() : Infinity;
-    const contiguous = !!prev && !offSeen && f != null && prev.fieldId === f.id && dt <= FIELD_STEP_MAX_MS;
-    if (f) {
-      let a = acc.get(f.id);
-      if (!a) {
-        a = { field: f, points: [], arriveAt: s.time, leaveAt: s.time, activeMs: 0, fuel: 0, runCounter: null };
-        acc.set(f.id, a);
+    a.points.push({ lat: s.lat, lng: s.lng, brk: !contiguous });
+    a.leaveAt = s.time;
+    if (contiguous) a.activeMs += dt;
+    if (useCounter) {
+      const c = s.fuelUsedL;
+      if (!contiguous) a.runCounter = c;
+      else if (c != null) {
+        if (a.runCounter != null && c > a.runCounter) a.fuel += c - a.runCounter; // loenduri nullimine (langus) ei loe
+        a.runCounter = c;
       }
-      a.points.push({ lat: s.lat, lng: s.lng, brk: !contiguous });
-      a.leaveAt = s.time;
-      if (contiguous) a.activeMs += dt;
-      if (useCounter) {
-        const c = s.fuelUsedL;
-        if (!contiguous) a.runCounter = c;
-        else if (c != null) {
-          if (a.runCounter != null && c > a.runCounter) a.fuel += c - a.runCounter; // loenduri nullimine (langus) ei loe
-          a.runCounter = c;
-        }
-      } else if (useRate && contiguous && prev!.sample.fuelRateLph != null) {
-        a.fuel += prev!.sample.fuelRateLph * (dt / 3_600_000);
-      }
+    } else if (useRate && contiguous && prev!.fuelRateLph != null) {
+      a.fuel += prev!.fuelRateLph * (dt / 3_600_000);
     }
-    prev = { sample: s, fieldId: f?.id ?? null };
-    offSeen = false;
   }
 
   // Läbisõit serva pealt ei ole põllutöö

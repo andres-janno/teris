@@ -5,6 +5,8 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { fetchTripSamples } from './telemetryAccess.ts';
+import { fieldRuns } from './tripFields.ts';
+import type { Place } from './tripRoute.ts';
 import { loadAssignmentResolver } from './tripAssignments.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
 
@@ -57,6 +59,30 @@ async function resolveTargets(trips: TripRow[]) {
 }
 
 // Sõitude põllured koos põllu nime, haakeriista nime ja selle põllu kannetega (kanne = sama sõit + sama põld; sügistööd on järgmise aasta hooajal)
+export type TripSwathDto = { fieldSeasonId: number; widthM: number; lines: [number, number][][] };
+
+/** Põllulõigud haakeriista laiusega (ainult read, kus laius teada): kaardil lai kate. */
+export async function buildSwaths(tripId: string, samples: Parameters<typeof fieldRuns>[0]): Promise<TripSwathDto[]> {
+  const rows = await prisma.vehicleTripField.findMany({ where: { tripId }, orderBy: { arriveAt: 'asc' }, select: { fieldSeasonId: true, widthM: true } });
+  const withWidth = rows.filter((r) => r.widthM != null && r.widthM > 0);
+  if (withWidth.length === 0) return [];
+  const seasons = await prisma.fieldSeason.findMany({ where: { id: { in: withWidth.map((r) => r.fieldSeasonId) } }, select: { id: true, geometry: true } });
+  const places: Place[] = [];
+  for (const s of seasons) {
+    const g = s.geometry as any;
+    if (g && (g.type === 'Polygon' || g.type === 'MultiPolygon')) places.push({ id: String(s.id), kind: 'FIELD', label: String(s.id), geometry: g });
+  }
+  const runs = fieldRuns(samples, places);
+  const out: TripSwathDto[] = [];
+  for (const r of withWidth) {
+    const lines = runs
+      .filter((run) => run.fieldSeasonId === r.fieldSeasonId && run.points.length >= 2)
+      .map((run) => run.points.map((p) => [p.lat, p.lng] as [number, number]));
+    if (lines.length) out.push({ fieldSeasonId: r.fieldSeasonId, widthM: r.widthM as number, lines });
+  }
+  return out;
+}
+
 async function loadTripFields(trips: TripRow[]): Promise<(tripId: string) => TripFieldDto[]> {
   const tripIds = trips.map((t) => t.id);
   if (tripIds.length === 0) return () => [];
@@ -167,7 +193,8 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     const trip = await prisma.vehicleTrip.findUnique({ where: { id: trackMatch[1] }, include: { device: { select: { imei: true } } } });
     if (!trip || !trip.device.imei) { json(res, { error: 'Sõitu ei leitud' }, 404); return true; }
     const samples = await fetchTripSamples(trip.device.imei, new Date(trip.startedAt.getTime() - 1), trip.endedAt);
-    json(res, { points: samples.filter((s) => s.ignition !== false).map((s) => [s.lat, s.lng]) });
+    const points = samples.filter((s) => s.ignition !== false).map((s) => [s.lat, s.lng]);
+    json(res, { points, swaths: await buildSwaths(trip.id, samples) });
     return true;
   }
 

@@ -54,13 +54,27 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
     L.circleMarker([trip.end.lat, trip.end.lng], { radius: 7, color: '#ef4444', fillOpacity: 1 }).addTo(map).bindTooltip('Lõpp');
     map.setView(start.getLatLng(), 14);
     let cancelled = false;
-    api.getTripTrack(trip.id).then((pts) => {
+    let onZoom: (() => void) | null = null;
+    api.getTripTrack(trip.id).then(({ points: pts, swaths }) => {
       if (cancelled || pts.length === 0) return;
+      // Põllulõigud haakeriista laiusega: laius pikslites sõltub suumist, seega uuendame suumimisel
+      const swathLines = swaths.flatMap((sw) => sw.lines.map((ln) => ({
+        widthM: sw.widthM,
+        layer: L.polyline(ln, { color: '#16a34a', opacity: 0.35, weight: 1, lineCap: 'butt', lineJoin: 'round', interactive: false }).addTo(map)
+      })));
+      if (swathLines.length) {
+        onZoom = () => {
+          const mPerPx = (40075016.686 * Math.cos((map.getCenter().lat * Math.PI) / 180)) / 2 ** (map.getZoom() + 8);
+          for (const s of swathLines) s.layer.setStyle({ weight: Math.max(1, s.widthM / mPerPx) });
+        };
+        map.on('zoomend', onZoom);
+      }
       const line = L.polyline(pts, { color: '#3b82f6', weight: 3 }).addTo(map);
       map.fitBounds(line.getBounds(), { padding: [24, 24], maxZoom: 17 });
+      onZoom?.(); // fitBounds ei pruugi suumi muuta
     }).catch((e) => { if (!cancelled) setTrackError(e.message); });
     const t = window.setTimeout(() => map.invalidateSize(), 250);
-    return () => { cancelled = true; window.clearTimeout(t); map.remove(); };
+    return () => { cancelled = true; window.clearTimeout(t); if (onZoom) map.off('zoomend', onZoom); map.remove(); };
   }, [trip.id, trip.start.lat, trip.start.lng, trip.end.lat, trip.end.lng]);
 
   const save = async () => {
