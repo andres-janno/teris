@@ -1,7 +1,7 @@
 // src/server/tripImport.test.ts — sõitude import live-andmebaasis ajutise ettevõttega; telemeetria on võltsitud.
 import { describe, it, expect, beforeAll, afterAll, beforeEach } from 'vitest';
 import { prisma, authDb, runAsTenant } from './db';
-import { importDeviceTrips, refreshTripPlaces, importTenantTrips, type ImportDeps } from './tripImport';
+import { importDeviceTrips, refreshTripPlaces, refreshTripAssignments, importTenantTrips, type ImportDeps } from './tripImport';
 import type { TripSample } from './tripSegments';
 import type { Place } from './tripRoute';
 
@@ -18,6 +18,11 @@ const pt = (m: number, on = true, lat = 58.1 + m * 0.0001): TripSample => ({
   time: at(m), lat, lng: 26.1, ignition: on, speedKmh: 15, fuelUsedL: null, fuelRateLph: null, fuelLevelPct: null, engineHours: null
 });
 const range = (a: number, b: number) => Array.from({ length: b - a + 1 }, (_, i) => pt(a + i));
+// Põld katab punktid lat 58.1 … 58.105, lng 26.1
+const FIELD_GEOMETRY = {
+  type: 'Polygon' as const,
+  coordinates: [[[26.0995, 58.0995], [26.1005, 58.0995], [26.1005, 58.106], [26.0995, 58.106], [26.0995, 58.0995]]]
+};
 
 let samples: TripSample[] = [];
 let places: Place[] = [];
@@ -34,6 +39,13 @@ const deps: ImportDeps = {
 
 let deviceId = '';
 let badDeviceId = '';
+let vehicleId = '';
+let impl6 = '';
+let impl12 = '';
+let implAsgId = '';
+let fsId = 0;
+let fieldWorkId = '';
+const fieldPlace = (): Place => ({ id: String(fsId), kind: 'FIELD', label: 'Nr 1 Testpõld', geometry: FIELD_GEOMETRY });
 
 beforeAll(async () => {
   await authDb().tenant.create({ data: { id: T, name: 'Test sõidud' } });
@@ -43,13 +55,31 @@ beforeAll(async () => {
     badDeviceId = (await prisma.telemetryDevice.create({ data: { imei: IMEI_BAD, model: 'FMC650' } })).id;
     await prisma.deviceOwnership.create({ data: { kind: 'IMEI', identifier: IMEI, deviceId, validFrom: at(-60) } });
     await prisma.deviceOwnership.create({ data: { kind: 'IMEI', identifier: IMEI_BAD, deviceId: badDeviceId, validFrom: at(-60) } });
+    vehicleId = (await prisma.vehicle.create({ data: { name: 'Importtraktor', type: 'TRACTOR', model: 'X' } })).id;
+    impl6 = (await prisma.implement.create({ data: { name: 'Kultivaator 6 m', type: 'CULTIVATOR', workingWidthM: 6 } })).id;
+    impl12 = (await prisma.implement.create({ data: { name: 'Kultivaator 12 m', type: 'CULTIVATOR', workingWidthM: 12 } })).id;
+    await prisma.deviceAssignment.create({ data: { deviceId, vehicleId, startedAt: at(-60) } });
+    implAsgId = (await prisma.implementAssignment.create({ data: { vehicleId, implementId: impl6, startedAt: at(-60) } })).id;
+    const field = await prisma.field.create({ data: { num: '1', name: 'Testpõld', fieldCode: `TI-${process.pid}` } });
+    fsId = (await prisma.fieldSeason.create({ data: { fieldId: field.id, year: 2026, areaHa: 5, crop: 'test', geometry: FIELD_GEOMETRY } })).id;
+    const wt = await prisma.workType.create({ data: { name: 'Testkultiveerimine', phase: 'PREPARATION' } });
+    fieldWorkId = (await prisma.fieldWork.create({ data: { fieldSeasonId: fsId, workTypeId: wt.id, phase: 'PREPARATION' } })).id;
   });
 });
 
 afterAll(async () => {
   await run(async () => {
+    await prisma.workEntry.deleteMany({});
+    await prisma.fieldWork.deleteMany({});
+    await prisma.workType.deleteMany({});
     await prisma.vehicleTrip.deleteMany({});
     await prisma.tripImportState.deleteMany({});
+    await prisma.fieldSeason.deleteMany({});
+    await prisma.field.deleteMany({});
+    await prisma.implementAssignment.deleteMany({});
+    await prisma.deviceAssignment.deleteMany({});
+    await prisma.implement.deleteMany({});
+    await prisma.vehicle.deleteMany({});
     await prisma.deviceOwnership.deleteMany({});
     await prisma.telemetryDevice.deleteMany({});
     await prisma.pointOfInterest.deleteMany({});
@@ -62,12 +92,14 @@ beforeEach(async () => {
   places = [];
   failImei = null;
   await run(async () => {
+    await prisma.workEntry.deleteMany({});
     await prisma.vehicleTrip.deleteMany({});
     await prisma.tripImportState.deleteMany({});
   });
 });
 
 const trips = () => run(() => prisma.vehicleTrip.findMany({ where: { deviceId }, orderBy: { startedAt: 'asc' } }));
+const fieldRows = () => run(() => prisma.vehicleTripField.findMany({ orderBy: { arriveAt: 'asc' } }));
 const dev = { id: '', imei: IMEI };
 const device = () => ({ ...dev, id: deviceId });
 
@@ -182,6 +214,37 @@ describe('importDeviceTrips', () => {
     expect((t.startPlace as any).place.label).toBe('Töökoda');
     expect(t.pointCount).toBe(31);
   });
+
+  it('sõidule tekivad põllured ja ha haakeriista laiusega', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const [t] = await trips();
+    const f = await fieldRows();
+    expect(f).toHaveLength(1);
+    expect(f[0]).toMatchObject({ tripId: t.id, fieldSeasonId: fsId, activeMinutes: 30, implementId: impl6, widthM: 6 });
+    expect(f[0].arriveAt).toEqual(at(0)); // esimene aken algab omandiperioodi algusest at(-60), punkt 0 on põllul
+    expect(f[0].leaveAt).toEqual(at(30));
+    expect(f[0].areaHa!).toBeGreaterThan(0.15);
+    expect(t.areaHa).toBe(f[0].areaHa);
+  });
+
+  it('kandega seotud sõidu id säilib liitumisel', async () => {
+    samples = [...range(0, 10), ...range(40, 50)];
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    expect(t).toHaveLength(2);
+    const entry = await run(() => prisma.workEntry.create({ data: { fieldWorkId, date: new Date('2026-10-22T00:00:00Z'), tripId: t[1].id } }));
+    samples = range(0, 50); // auk täitus
+    await run(() => importDeviceTrips(device(), deps));
+    const merged = await trips();
+    expect(merged).toHaveLength(1);
+    expect(merged[0].id).toBe(t[1].id);
+    const e = await run(() => prisma.workEntry.findUnique({ where: { id: entry.id } }));
+    expect(e!.tripId).toBe(t[1].id);
+  });
 });
 
 describe('importTenantTrips', () => {
@@ -219,5 +282,61 @@ describe('refreshTripPlaces', () => {
     expect(n).toBe(1);
     [t] = await trips();
     expect((t.startPlace as any).place.label).toBe('Kuivati (kuivati)');
+  });
+});
+
+describe('refreshTripAssignments', () => {
+  it('haakeriista vahetus haakimise registris arvutab lõpliku sõidu ha ümber', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    expect(await run(() => refreshTripAssignments(device(), deps))).toBe(0); // esimene kord: ainult sõrmejälg
+    const [before] = await fieldRows();
+    expect(before.widthM).toBe(6);
+    await run(() => prisma.tripImportState.update({ where: { deviceId }, data: { assignmentsCheckedAt: new Date() } }));
+    await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { implementId: impl12 } }));
+    try {
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(1);
+      const [after] = await fieldRows();
+      expect(after).toMatchObject({ implementId: impl12, widthM: 12 });
+      expect(after.areaHa!).toBeGreaterThan(before.areaHa! * 1.8);
+      expect((await trips())[0].areaHa).toBe(after.areaHa);
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(0); // muutuseta
+    } finally {
+      await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { implementId: impl6 } }));
+    }
+  });
+
+  it('kustutatud haakimine: põllurea haakeriist ei vasta enam registrile → ha tühjaks', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => refreshTripAssignments(device(), deps));
+    // Kontrollaeg päris kellaga: ainult põllurea võrdlus (mitte muudetud periood) leiab sõidu
+    await run(() => prisma.tripImportState.update({ where: { deviceId }, data: { assignmentsCheckedAt: new Date() } }));
+    await run(() => prisma.implementAssignment.delete({ where: { id: implAsgId } }));
+    try {
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(1);
+      const [f] = await fieldRows();
+      expect(f).toMatchObject({ implementId: null, widthM: null, areaHa: null });
+      expect((await trips())[0].areaHa).toBeNull();
+    } finally {
+      implAsgId = (await run(() => prisma.implementAssignment.create({ data: { vehicleId, implementId: impl6, startedAt: at(-60) } }))).id;
+    }
+  });
+
+  it('kohtade ümberarvutus kirjutab ka põllud', async () => {
+    samples = range(0, 30);
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => refreshTripPlaces(device(), deps)); // esimene kord: ainult sõrmejälg
+    expect(await fieldRows()).toHaveLength(0);
+    // Uus hooaja geomeetria muudab kohtade sõrmejälge; põld on nüüd kohtade hulgas
+    await run(() => prisma.fieldSeason.update({ where: { id: fsId }, data: { notes: `muudetud ${Date.now()}` } }));
+    places = [fieldPlace()];
+    expect(await run(() => refreshTripPlaces(device(), deps))).toBe(1);
+    expect(await fieldRows()).toHaveLength(1);
   });
 });

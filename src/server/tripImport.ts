@@ -1,12 +1,16 @@
 // src/server/tripImport.ts — sõitude taustaimport telemeetriast (iga 15 min).
-// Seadme kaupa: punktid (finalizedUntil, now] omandiperioodi piires → segmentTrips → kohad (buildRoute) → vehicle_trips.
-// Viimased 24 h arvutatakse igal käigul uuesti (seade puhverdab levita punkte ja saadab hiljem).
-// Kattuv vana sõit annab uuele oma id (märkus ja hilisemad seosed püsivad).
-import { prisma, tenantTransaction, authDb, runAsTenant, tsdb } from './db.ts';
+// Seadme kaupa: punktid (finalizedUntil, now] omandiperioodi piires → segmentTrips → kohad (buildRoute) ja põllud (computeTripFields)
+// → vehicle_trips + vehicle_trip_fields. Viimased 24 h arvutatakse igal käigul uuesti (seade puhverdab levita punkte ja saadab hiljem).
+// Kattuv vana sõit annab uuele oma id (märkus ja kande seos püsivad); kandega seotud vana sõit on eelistatud.
+// Lõplikud sõidud arvutatakse uuesti, kui kohad (põllud, huvipunktid) või seosed (seade, haakimine, haakeriist) muutuvad;
+// põllud kirjutatakse alati koos sõidu kohtadega.
+import { prisma, tenantTransaction, authDb, runAsTenant, tsdb, type TxClient } from './db.ts';
 import { ownershipWindows, fetchTripSamples } from './telemetryAccess.ts';
 import { segmentTrips, type SegmentedTrip, type TripSample } from './tripSegments.ts';
 import { buildRoute, DEFAULT_ROUTE_OPTIONS, type Place, type TripRoute } from './tripRoute.ts';
 import { loadPlaces } from './tripPlaces.ts';
+import { computeTripFields, tripAreaHa, type ImplementAt, type TripFieldCalc } from './tripFields.ts';
+import { loadAssignmentResolver, type AssignmentResolver } from './tripAssignments.ts';
 
 export type ImportDeps = {
   now: () => Date;
@@ -23,6 +27,7 @@ const PLACE_MARGIN_DEG = 0.003; // ~200–300 m: lähima koha otsingu raadius
 const MAX_ERROR_LEN = 500;
 
 type Device = { id: string; imei: string };
+type StoredTrip = { id: string; startedAt: Date; endedAt: Date; fuelLiters: number | null };
 
 function placesCache(deps: ImportDeps) {
   const cache = new Map<number, Promise<Place[]>>();
@@ -41,10 +46,27 @@ function routeOf(t: { points: TripSample[] }, places: Place[]): TripRoute | null
   }
 }
 
+const implementAtOf = (resolve: AssignmentResolver, deviceId: string): ImplementAt => (at) => {
+  const r = resolve(deviceId, at);
+  return { implementId: r.implementId, widthM: r.widthM };
+};
+
+function fieldsOf(samples: TripSample[], places: Place[], tripFuelL: number | null, implementAt: ImplementAt): TripFieldCalc[] {
+  try {
+    return computeTripFields(samples, places, tripFuelL, implementAt);
+  } catch (err) {
+    console.warn('trip import: fields failed', err);
+    return [];
+  }
+}
+
+// Sõidu ajavahemiku punktid koos süüte väljas punktidega (pausid)
+const samplesOf = (samples: TripSample[], t: SegmentedTrip) => samples.filter((s) => s.time >= t.startedAt && s.time <= t.endedAt);
+
 const placeJson = (stop: TripRoute['start'] | undefined) =>
   stop ? { place: stop.place, ...(stop.near ? { near: stop.near } : {}) } : { place: null };
 
-function tripData(t: SegmentedTrip, route: TripRoute | null, now: Date) {
+function tripData(t: SegmentedTrip, route: TripRoute | null, fields: TripFieldCalc[], now: Date) {
   const first = t.points[0];
   const last = t.points[t.points.length - 1];
   return {
@@ -58,32 +80,47 @@ function tripData(t: SegmentedTrip, route: TripRoute | null, now: Date) {
     fuelLiters: t.fuelLiters, fuelLevelStartPct: t.fuelLevelStartPct, fuelLevelEndPct: t.fuelLevelEndPct,
     engineHoursStart: t.engineHoursStart, engineHoursEnd: t.engineHoursEnd,
     minLat: t.minLat, minLng: t.minLng, maxLat: t.maxLat, maxLng: t.maxLng,
-    pointCount: t.pointCount, computedAt: now
+    pointCount: t.pointCount, areaHa: tripAreaHa(fields), computedAt: now
   };
 }
 
-async function writeChunk(deviceId: string, from: Date, to: Date, trips: SegmentedTrip[], routes: (TripRoute | null)[], now: Date, finalizedUntil: Date) {
+// Üheaegsed impordid (CLI ja ajastaja) ei tohi sama seadme sõite korraga kirjutada
+const lockDevice = (tx: TxClient, deviceId: string) =>
+  tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('trip-import:' || current_setting('app.tenant_id') || ':' || ${deviceId}))`;
+
+async function writeFields(tx: TxClient, tripId: string, fields: TripFieldCalc[], now: Date) {
+  await tx.vehicleTripField.deleteMany({ where: { tripId } });
+  if (fields.length) await tx.vehicleTripField.createMany({ data: fields.map((f) => ({ ...f, tripId, computedAt: now })) });
+}
+
+async function writeChunk(
+  deviceId: string, from: Date, to: Date, trips: SegmentedTrip[], routes: (TripRoute | null)[],
+  fields: TripFieldCalc[][], now: Date, finalizedUntil: Date
+) {
   await tenantTransaction(async (tx) => {
-    // Üheaegsed impordid (CLI ja ajastaja) ei tohi sama uut sõitu kaks korda luua
-    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('trip-import:' || current_setting('app.tenant_id') || ':' || ${deviceId}))`;
+    await lockDevice(tx, deviceId);
     const existing = await tx.vehicleTrip.findMany({
       where: { deviceId, startedAt: { gt: from, lte: to } },
       orderBy: { startedAt: 'asc' },
-      select: { id: true, startedAt: true, endedAt: true }
+      select: { id: true, startedAt: true, endedAt: true, _count: { select: { workEntries: true } } }
     });
     const used = new Set<string>();
     const matchIds = trips.map((t) => {
-      const m = existing.find((e) => !used.has(e.id) && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+      const overlapping = existing.filter((e) => !used.has(e.id) && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+      // Kandega seotud vana sõit on eelistatud: liitumisel kande seos ei kao
+      const m = overlapping.find((e) => e._count.workEntries > 0) ?? overlapping[0];
       if (m) used.add(m.id);
       return m?.id ?? null;
     });
     const stale = existing.filter((e) => !used.has(e.id)).map((e) => e.id);
     if (stale.length) await tx.vehicleTrip.deleteMany({ where: { id: { in: stale } } });
     for (let i = 0; i < trips.length; i++) {
-      const data = tripData(trips[i], routes[i], now);
+      const data = tripData(trips[i], routes[i], fields[i], now);
       const id = matchIds[i];
-      if (id) await tx.vehicleTrip.update({ where: { id }, data });
-      else await tx.vehicleTrip.create({ data: { deviceId, ...data } });
+      const saved = id
+        ? await tx.vehicleTrip.update({ where: { id }, data, select: { id: true } })
+        : await tx.vehicleTrip.create({ data: { deviceId, ...data }, select: { id: true } });
+      await writeFields(tx, saved.id, fields[i], now);
     }
     await tx.tripImportState.upsert({
       where: { deviceId },
@@ -98,6 +135,7 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
   if (windows.length === 0) return;
   const state = await prisma.tripImportState.findUnique({ where: { deviceId: device.id } });
   const placesFor = placesCache(deps);
+  const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
   const now = deps.now();
   let from = state?.finalizedUntil ?? new Date(Math.min(...windows.map((w) => w.from.getTime())));
   // Kui üle 24 h kestev sõit on aknas lõpetamata, ei liiguks lõplik piir edasi ja tsükkel jääks igavesti samale kohale.
@@ -107,8 +145,6 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
     const to = new Date(Math.min(from.getTime() + span, now.getTime()));
     const samples = await deps.fetchSamples(device.imei, from, to);
     const trips = segmentTrips(samples, to);
-    const routes: (TripRoute | null)[] = [];
-    for (const t of trips) routes.push(routeOf(t, await placesFor(t.startedAt.getUTCFullYear())));
     const finalCut = to.getTime() - FINAL_AFTER_MS;
     const firstOpen = trips.find((t) => t.status === 'ACTIVE' || t.endedAt.getTime() > finalCut);
     let next = firstOpen ? Math.min(finalCut, firstOpen.startedAt.getTime() - 1) : finalCut;
@@ -118,11 +154,42 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
       span *= 2;
       continue;
     }
-    await writeChunk(device.id, from, to, trips, routes, now, new Date(next));
+    const routes: (TripRoute | null)[] = [];
+    const fields: TripFieldCalc[][] = [];
+    for (const t of trips) {
+      const places = await placesFor(t.startedAt.getUTCFullYear());
+      routes.push(routeOf(t, places));
+      fields.push(fieldsOf(samplesOf(samples, t), places, t.fuelLiters, implementAt));
+    }
+    await writeChunk(device.id, from, to, trips, routes, fields, now, new Date(next));
     if (last) return;
     from = new Date(next);
     span = CHUNK_MS;
   }
+}
+
+/** Lõpliku sõidu kohad ja põllud uuesti (kohtade või seoste muutus). false = punkte pole, teekond ebaõnnestus või sõit kadus. */
+async function recomputeTrip(device: Device, t: StoredTrip, places: Place[], implementAt: ImplementAt, deps: ImportDeps, now: Date): Promise<boolean> {
+  const samples = await deps.fetchSamples(device.imei, new Date(t.startedAt.getTime() - 1), t.endedAt);
+  const points = samples.filter((s) => s.ignition !== false);
+  if (points.length === 0) return false;
+  const route = routeOf({ points }, places);
+  if (!route) return false;
+  const fields = fieldsOf(samples, places, t.fuelLiters, implementAt);
+  return tenantTransaction(async (tx) => {
+    await lockDevice(tx, device.id);
+    // Sõit võis vahepeal liitumisel kaduda
+    const updated = await tx.vehicleTrip.updateMany({
+      where: { id: t.id },
+      data: {
+        startPlace: placeJson(route.start), endPlace: placeJson(route.end), visits: route.visits as object[],
+        areaHa: tripAreaHa(fields), computedAt: now
+      }
+    });
+    if (updated.count === 0) return false;
+    await writeFields(tx, t.id, fields, now);
+    return true;
+  }, { timeout: 60_000 });
 }
 
 // --- Kohtade ümberarvutus --------------------------------------------------
@@ -178,26 +245,79 @@ export async function refreshTripPlaces(device: Device, deps: ImportDeps = defau
   if (state.placesCheckedAt && state.finalizedUntil) {
     const boxes = await changedPlaceBoxes(state.placesCheckedAt);
     const placesFor = placesCache(deps);
+    const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
     const trips = await prisma.vehicleTrip.findMany({ where: { deviceId: device.id, startedAt: { lte: state.finalizedUntil } } });
     for (const t of trips) {
-      const year = t.startedAt.getUTCFullYear();
-      const places = await placesFor(year);
+      const places = await placesFor(t.startedAt.getUTCFullYear());
       const known = new Set(places.map((p) => p.id));
       const hit = boxes.some((b) => overlaps(t, b)) || referencedIds(t).some((id) => !known.has(id));
       if (!hit) continue;
-      const samples = await deps.fetchSamples(device.imei, new Date(t.startedAt.getTime() - 1), t.endedAt);
-      const points = samples.filter((s) => s.ignition !== false);
-      if (points.length === 0) continue;
-      const route = routeOf({ points }, places);
-      if (!route) continue;
-      await prisma.vehicleTrip.update({
-        where: { id: t.id },
-        data: { startPlace: placeJson(route.start), endPlace: placeJson(route.end), visits: route.visits as object[], computedAt: now }
-      });
-      count++;
+      if (await recomputeTrip(device, t, places, implementAt, deps, now)) count++;
     }
   }
   await prisma.tripImportState.update({ where: { deviceId: device.id }, data: { placesFingerprint: fp, placesCheckedAt: now } });
+  return count;
+}
+
+// --- Seoste ümberarvutus (seade ↔ masin/haakeriist, haakimine, haakeriista laius) ---------
+
+async function assignmentsFingerprint(): Promise<string> {
+  const [da, ia, im] = await Promise.all([
+    prisma.deviceAssignment.aggregate({ _count: { _all: true }, _max: { updatedAt: true } }),
+    prisma.implementAssignment.aggregate({ _count: { _all: true }, _max: { updatedAt: true } }),
+    prisma.implement.aggregate({ _count: { _all: true }, _max: { updatedAt: true } })
+  ]);
+  return [da, ia, im].map((a) => `${a._count._all}:${a._max.updatedAt?.toISOString() ?? ''}`).join('|');
+}
+
+type Period = { startedAt: Date; endedAt: Date | null };
+const periodOverlaps = (p: Period, t: { startedAt: Date; endedAt: Date }) =>
+  p.startedAt <= t.endedAt && (!p.endedAt || p.endedAt >= t.startedAt);
+const normWidth = (w: number | null) => (w != null && w > 0 ? w : null);
+
+export async function refreshTripAssignments(device: Device, deps: ImportDeps = defaultDeps): Promise<number> {
+  const state = await prisma.tripImportState.findUnique({ where: { deviceId: device.id } });
+  if (!state) return 0;
+  const fp = await assignmentsFingerprint();
+  if (fp === state.assignmentsFingerprint) return 0;
+  const now = deps.now();
+  let count = 0;
+  if (state.assignmentsCheckedAt && state.finalizedUntil) {
+    const since = state.assignmentsCheckedAt;
+    const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
+    const deviceRows = await prisma.deviceAssignment.findMany({
+      where: { deviceId: device.id },
+      select: { vehicleId: true, implementId: true, startedAt: true, endedAt: true, updatedAt: true }
+    });
+    const vehicleIds = deviceRows.map((a) => a.vehicleId).filter((x): x is string => !!x);
+    const implementIds = deviceRows.map((a) => a.implementId).filter((x): x is string => !!x);
+    const [implRows, changedImplements] = await Promise.all([
+      prisma.implementAssignment.findMany({
+        where: { updatedAt: { gt: since }, OR: [{ vehicleId: { in: vehicleIds } }, { implementId: { in: implementIds } }] },
+        select: { startedAt: true, endedAt: true }
+      }),
+      prisma.implement.findMany({ where: { updatedAt: { gt: since } }, select: { id: true } })
+    ]);
+    const changedPeriods: Period[] = [...deviceRows.filter((a) => a.updatedAt > since), ...implRows];
+    const changedImpl = new Set(changedImplements.map((i) => i.id));
+    const trips = await prisma.vehicleTrip.findMany({
+      where: { deviceId: device.id, startedAt: { lte: state.finalizedUntil } },
+      include: { fields: { select: { arriveAt: true, implementId: true, widthM: true } } }
+    });
+    const placesFor = placesCache(deps);
+    for (const t of trips) {
+      const hit = changedPeriods.some((p) => periodOverlaps(p, t))
+        || t.fields.some((f) => f.implementId != null && changedImpl.has(f.implementId))
+        // Kustutatud seos: põllurea haakeriist või laius ei vasta enam seoste registrile
+        || t.fields.some((f) => {
+          const cur = implementAt(f.arriveAt);
+          return cur.implementId !== f.implementId || normWidth(cur.widthM) !== f.widthM;
+        });
+      if (!hit) continue;
+      if (await recomputeTrip(device, t, await placesFor(t.startedAt.getUTCFullYear()), implementAt, deps, now)) count++;
+    }
+  }
+  await prisma.tripImportState.update({ where: { deviceId: device.id }, data: { assignmentsFingerprint: fp, assignmentsCheckedAt: now } });
   return count;
 }
 
@@ -214,6 +334,7 @@ export async function importTenantTrips(deps: ImportDeps = defaultDeps): Promise
     try {
       await importDeviceTrips(device, deps);
       await refreshTripPlaces(device, deps);
+      await refreshTripAssignments(device, deps);
     } catch (err) {
       failed++;
       const msg = (err instanceof Error ? err.message : String(err)).slice(0, MAX_ERROR_LEN);
