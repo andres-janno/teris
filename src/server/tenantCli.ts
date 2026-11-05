@@ -2,8 +2,10 @@
 // Ettevõtete ja litsentside haldus käsurealt (kuni teenusepakkuja keskkonnani):
 //   npm run tenant -- list
 //   npm run tenant -- license <ettevõtte-id> --until YYYY-MM-DD --modules TELEMETRY,SATELLITE,WEATHER
+//   npm run tenant -- trips:import        (sõitude import kõigile TELEMETRY ettevõtetele kohe)
 // --modules "" eemaldab kõik lisamoodulid.
 import { authDb } from './db';
+import { runTripImport } from './tripImport';
 import { LICENSE_MODULES, parseLicenseDate, type LicenseModule } from './license';
 
 const db = authDb();
@@ -56,6 +58,11 @@ async function main(): Promise<void> {
       update: { validUntil, modules, updatedBy: 'cli' }
     });
     console.log(`Litsents: ${tenantId} kuni ${until} [${modules.join(', ') || '—'}]`);
+    return;
+  }
+  if (command === 'trips:import') {
+    await runTripImport();
+    console.log('Sõitude import tehtud');
     return;
   }
   throw new Error('Kasutus: npm run tenant -- <list | license <id> --until YYYY-MM-DD [--modules A,B]>');

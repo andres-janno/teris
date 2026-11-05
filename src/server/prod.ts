@@ -10,6 +10,7 @@ import { json } from './http';
 import { hasValidSession } from './authGate';
 import { decideLandingRoute, needsSessionCheck, PUBLIC_ONLY_FILES } from './landing/landingRoute';
 import { recordHit, startLandingRetention } from './landing/landingEvents';
+import { startTripImportScheduler } from './tripImport';
 
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
@@ -65,4 +66,5 @@ const server = http.createServer(async (req, res) => {
 server.listen(PORT, HOST, () => {
   console.log(`teris map kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
   startLandingRetention();
+  startTripImportScheduler();
 });
