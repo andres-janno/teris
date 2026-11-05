@@ -11088,6 +11088,35 @@ select.form-input:read-only {
   right: 26px;
 }
 
+/* Nupp loetakse brauseris alati :read-only alla — `.form-input:read-only` teeks triggeri paksuks, halliks
+   ja kustutaks noole. Tugevama valijaga taastatakse filtri välimus: vaikevalik tavaline, seatud filter paks. */
+.form-input.filter-select-trigger,
+.form-input.filter-select-trigger:read-only {
+  background-color: var(--input-bg);
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+  border-color: var(--input-border);
+  color: var(--input-color);
+  cursor: pointer;
+  font-weight: 400;
+}
+
+.form-input.filter-select-trigger.is-set {
+  font-weight: 700;
+}
+
+/* Seatud filtril asendab X noole ja on paremas servas */
+.filter-clear.active > .form-input.filter-select-trigger {
+  background-image: none;
+  padding-right: 30px;
+}
+
+.filter-clear.active:has(> .filter-select-trigger) .filter-clear-btn {
+  right: 6px;
+}
+
 /* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
 .history-filter-bar > div > .filter-clear {
   display: flex;
