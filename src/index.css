@@ -11178,3 +11178,14 @@ td.stock-qty-out { color: #dc2626; }
   font-size: 0.78rem;
   color: var(--text-secondary);
 }
+
+/* Sõitude register (Tehnika → Sõidud) */
+.trip-import-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+.register-table .num { text-align: right; font-variant-numeric: tabular-nums; }
+.register-table tr.clickable-row { cursor: pointer; }
+.register-table tr.clickable-row:hover td { background: var(--bg-card-hover); }
+.trip-dialog { max-width: 760px; }
+.trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
+.trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
+.trip-dialog-metrics th { text-align: left; font-weight: 500; color: var(--text-muted); padding: 3px 12px 3px 0; width: 40%; }
+.trip-dialog-visits { font-size: 13px; margin: 4px 0 12px 16px; }

@@ -193,3 +193,41 @@ export interface EnrichedVehicle extends Vehicle {
     isActive: boolean;
   };
 }
+
+// Sõitude register (taustaimport telemeetriast)
+export interface TripPlaceRef { id: string; kind: 'FIELD' | 'POI'; label: string }
+export interface TripStopInfo { lat: number; lng: number; place: TripPlaceRef | null; near?: TripPlaceRef & { distanceM: number } }
+export interface Trip {
+  id: string;
+  deviceId: string;
+  deviceLabel: string;
+  vehicleId: string | null;
+  vehicleName: string | null;
+  implementId: string | null;
+  implementName: string | null;
+  startedAt: string;
+  endedAt: string;
+  status: 'ACTIVE' | 'CLOSED';
+  start: TripStopInfo;
+  end: TripStopInfo;
+  visits: { place: TripPlaceRef; arrive: string; leave: string }[];
+  distanceKm: number;
+  movingMinutes: number;
+  idleMinutes: number;
+  pauseCount: number;
+  pauseMinutes: number;
+  maxSpeedKmh: number | null;
+  avgSpeedKmh: number | null;
+  fuelLiters: number | null;
+  fuelLevelStartPct: number | null;
+  fuelLevelEndPct: number | null;
+  engineHoursStart: number | null;
+  engineHoursEnd: number | null;
+  pointCount: number;
+  notes: string | null;
+}
+export interface TripImportStatus {
+  lastRunAt: string | null;
+  devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
+}
+export interface TripFilter { from: string; to: string; vehicleId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean }

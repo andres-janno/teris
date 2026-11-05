@@ -26,6 +26,7 @@ import {
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { DeviceAssignmentRegister } from './DeviceAssignmentRegister';
+import { TripRegister } from './TripRegister';
 import { formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime, combineDateAndTimeToIso } from './fleetDateTime';
 import type {
   Vehicle,
@@ -73,7 +74,7 @@ interface VehicleTrackerProps {
   canManageFinance?: boolean;      // tunnihinda näeb ja muudab ainult finantsõigusega kasutaja
   telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
 }
-type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory';
+type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory' | 'trips';
 
 const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   tractor: 'Traktor',
@@ -269,7 +270,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 }) => {
   const [selectedTab, setActiveTab] = useState<TabType>('vehicles');
   // Ilma telemeetriamoodulita seadmete tabid puuduvad → langeb tagasi masinate tabile
-  const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'deviceHistory') ? 'vehicles' : selectedTab;
+  const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'deviceHistory' || selectedTab === 'trips') ? 'vehicles' : selectedTab;
   const [isAddingNew, setIsAddingNew] = useState(false);
 
   // Kui mõni neist on seatud, käitub aktiivse vahekaardi vorm muutmisrežiimis
@@ -855,9 +856,17 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span className="count-pill">{deviceAssignments.length}</span>
           </button>
           )}
+          {telemetryEnabled && (
+          <button
+            className={`filter-tab ${activeTab === 'trips' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('trips'); closeForm(); }}
+          >
+            <span>🛣️ Sõidud</span>
+          </button>
+          )}
         </div>
 
-        {!isAddingNew && (
+        {!isAddingNew && activeTab !== 'trips' && (
           <button
             className="btn btn-primary btn-sm"
             onClick={openAddForm}
@@ -1913,6 +1922,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           onDetach={(deviceId) => assignDevice(deviceId, undefined, undefined)}
         />
       )}
+
+      {/* TAB 6: SÕITUDE REGISTER */}
+      {telemetryEnabled && activeTab === 'trips' && <TripRegister vehicles={vehicles} />}
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
       {activeTab === 'history' && (

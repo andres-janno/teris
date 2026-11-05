@@ -2,7 +2,7 @@
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import type { YearReplacementPlan } from './fieldYearReplace';
-import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput } from '../types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput, Trip, TripImportStatus, TripFilter } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -487,6 +487,38 @@ export const api = {
   async getDeviceAssignments(): Promise<DeviceAssignment[]> {
     const res = await apiFetch('/api/fleet/device-assignments');
     if (!res.ok) throw new Error(await errorMessage(res, 'Seadmete seoste registri laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async getTrips(f: TripFilter): Promise<Trip[]> {
+    const q = new URLSearchParams({ from: f.from, to: f.to });
+    if (f.vehicleId) q.set('vehicleId', f.vehicleId);
+    if (f.status) q.set('status', f.status);
+    if (f.unknownPlace) q.set('unknownPlace', '1');
+    const res = await apiFetch(`/api/fleet/trips?${q}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sõitude laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async getTripImportStatus(): Promise<TripImportStatus> {
+    const res = await apiFetch('/api/fleet/trips/import-status');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Impordi oleku laadimine ebaõnnestus'));
+    return res.json();
+  },
+
+  async getTripTrack(id: string): Promise<[number, number][]> {
+    const res = await apiFetch(`/api/fleet/trips/${id}/track`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu raja laadimine ebaõnnestus'));
+    return (await res.json()).points;
+  },
+
+  async updateTripNotes(id: string, notes: string | null): Promise<Trip> {
+    const res = await apiFetch(`/api/fleet/trips/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ notes })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Märkuse salvestamine ebaõnnestus'));
     return res.json();
   },
 
