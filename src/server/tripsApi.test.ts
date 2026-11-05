@@ -34,8 +34,12 @@ async function call(method: string, path: string, body?: unknown, tenant = T) {
 
 const d = (s: string) => new Date(s);
 let tripId = '';
+let activeTripId = '';
 let vehicleId = '';
 let deviceId = '';
+let fsId = 0;
+let entryId = '';
+let fieldWorkId = '';
 
 const tripRow = (startedAt: Date, endedAt: Date, extra: Record<string, unknown> = {}) => ({
   deviceId, startedAt, endedAt, status: 'CLOSED' as const,
@@ -53,15 +57,34 @@ beforeAll(async () => {
     deviceId = (await prisma.telemetryDevice.create({ data: { imei: IMEI, model: 'FMC650' } })).id;
     vehicleId = (await prisma.vehicle.create({ data: { name: 'Testtraktor', type: 'TRACTOR', model: 'X' } })).id;
     await prisma.deviceAssignment.create({ data: { deviceId, vehicleId, startedAt: d('2026-10-01T00:00:00Z') } });
-    tripId = (await prisma.vehicleTrip.create({ data: tripRow(d('2026-11-03T06:00:00Z'), d('2026-11-03T07:00:00Z')) })).id;
-    await prisma.vehicleTrip.create({ data: tripRow(d('2026-11-04T06:00:00Z'), d('2026-11-04T06:30:00Z'), { status: 'ACTIVE' }) });
+    tripId = (await prisma.vehicleTrip.create({ data: tripRow(d('2026-11-03T06:00:00Z'), d('2026-11-03T07:00:00Z'), { areaHa: 1.2 }) })).id;
+    activeTripId = (await prisma.vehicleTrip.create({ data: tripRow(d('2026-11-04T06:00:00Z'), d('2026-11-04T06:30:00Z'), { status: 'ACTIVE' }) })).id;
+    const field = await prisma.field.create({ data: { num: '7', name: 'Testpõld', fieldCode: 'TA-7' } });
+    fsId = (await prisma.fieldSeason.create({ data: { fieldId: field.id, year: 2026, areaHa: 5, crop: 'test', geometry: {} } })).id;
+    const wt = await prisma.workType.create({ data: { name: 'Testkünd', shortName: 'Künd', phase: 'PREPARATION' } });
+    fieldWorkId = (await prisma.fieldWork.create({ data: { fieldSeasonId: fsId, workTypeId: wt.id, phase: 'PREPARATION' } })).id;
+    const plow = (await prisma.implement.create({ data: { name: 'Adra', type: 'PLOW', workingWidthM: 2.5 } })).id;
+    await prisma.vehicleTripField.create({ data: {
+      tripId, fieldSeasonId: fsId, arriveAt: d('2026-11-03T06:10:00Z'), leaveAt: d('2026-11-03T06:50:00Z'),
+      activeMinutes: 38, areaHa: 1.2, implementId: plow, widthM: 2.5, fuelFieldL: 6, fuelSharedL: 7.5, computedAt: new Date()
+    } });
+    await prisma.vehicleTripField.create({ data: {
+      tripId: activeTripId, fieldSeasonId: fsId, arriveAt: d('2026-11-04T06:05:00Z'), leaveAt: d('2026-11-04T06:25:00Z'),
+      activeMinutes: 20, computedAt: new Date()
+    } });
+    entryId = (await prisma.workEntry.create({ data: { fieldWorkId, date: d('2026-11-03T00:00:00Z'), tripId } })).id;
     await prisma.tripImportState.create({ data: { deviceId, lastRunAt: d('2026-11-04T07:00:00Z'), lastError: 'tsdb maas', lastErrorAt: d('2026-11-04T07:00:00Z') } });
   });
 });
 
 afterAll(async () => {
   await run(async () => {
+    await prisma.workEntry.deleteMany({});
+    await prisma.fieldWork.deleteMany({});
+    await prisma.workType.deleteMany({});
     await prisma.vehicleTrip.deleteMany({});
+    await prisma.fieldSeason.deleteMany({});
+    await prisma.field.deleteMany({});
     await prisma.tripImportState.deleteMany({});
     await prisma.deviceAssignment.deleteMany({});
     await prisma.implementAssignment.deleteMany({});
@@ -127,6 +150,26 @@ describe('tripsApi', () => {
     const r = await call('GET', '/api/fleet/trips/import-status');
     expect(r.json.lastRunAt).toBe('2026-11-04T07:00:00.000Z');
     expect(r.json.devices[0].lastError).toBe('tsdb maas');
+  });
+
+  it('põllud: ha, haakeriist, kütus ja seotud kanne', async () => {
+    const r = await call('GET', `/api/fleet/trips${Q}`);
+    const closed = r.json.find((t: any) => t.id === tripId);
+    expect(closed.areaHa).toBe(1.2);
+    expect(closed.fields).toHaveLength(1);
+    expect(closed.fields[0]).toMatchObject({
+      fieldSeasonId: fsId, year: 2026, label: 'Nr 7 Testpõld', arriveAt: '2026-11-03T06:10:00.000Z', leaveAt: '2026-11-03T06:50:00.000Z',
+      activeMinutes: 38, areaHa: 1.2, implementName: 'Adra', widthM: 2.5, fuelFieldL: 6, fuelSharedL: 7.5
+    });
+    expect(closed.fields[0].entries).toEqual([{ id: entryId, fieldWorkId, workTypeName: 'Künd', date: '2026-11-03' }]);
+    const active = r.json.find((t: any) => t.id === activeTripId);
+    expect(active.areaHa).toBeNull();
+    expect(active.fields[0]).toMatchObject({ areaHa: null, implementName: null, entries: [] });
+  });
+
+  it('unlinkedOnly: ainult kandeta põllureaga sõidud', async () => {
+    const r = await call('GET', `/api/fleet/trips${Q}&unlinkedOnly=1`);
+    expect(r.json.map((t: any) => t.id)).toEqual([activeTripId]);
   });
 
   it('muud teed ei kuulu siia', async () => {

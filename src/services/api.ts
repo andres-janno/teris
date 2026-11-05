@@ -495,6 +495,7 @@ export const api = {
     if (f.vehicleId) q.set('vehicleId', f.vehicleId);
     if (f.status) q.set('status', f.status);
     if (f.unknownPlace) q.set('unknownPlace', '1');
+    if (f.unlinkedOnly) q.set('unlinkedOnly', '1');
     const res = await apiFetch(`/api/fleet/trips?${q}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Sõitude laadimine ebaõnnestus'));
     return res.json();

@@ -224,10 +224,28 @@ export interface Trip {
   engineHoursStart: number | null;
   engineHoursEnd: number | null;
   pointCount: number;
+  areaHa: number | null; // põldude ha summa; tühi = haakeriista laius puudub
   notes: string | null;
+  fields: TripField[];
+}
+export interface TripFieldEntry { id: string; fieldWorkId: string; workTypeName: string; date: string }
+// Sõidu osa ühel põllul (hooajal)
+export interface TripField {
+  fieldSeasonId: number;
+  year: number;
+  label: string;
+  arriveAt: string;
+  leaveAt: string;
+  activeMinutes: number;
+  areaHa: number | null;
+  implementName: string | null;
+  widthM: number | null;
+  fuelFieldL: number | null;
+  fuelSharedL: number | null;
+  entries: TripFieldEntry[];
 }
 export interface TripImportStatus {
   lastRunAt: string | null;
   devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
 }
-export interface TripFilter { from: string; to: string; vehicleId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean }
+export interface TripFilter { from: string; to: string; vehicleId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean }
