@@ -1928,7 +1928,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       )}
 
       {/* TAB 6: SÕITUDE REGISTER */}
-      {telemetryEnabled && activeTab === 'trips' && <TripRegister vehicles={vehicles} onOpenFieldWork={onOpenFieldWork} />}
+      {telemetryEnabled && activeTab === 'trips' && <TripRegister vehicles={vehicles} implementsList={implementsList} onOpenFieldWork={onOpenFieldWork} />}
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
       {activeTab === 'history' && (

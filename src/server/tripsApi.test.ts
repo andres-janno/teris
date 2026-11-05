@@ -117,7 +117,7 @@ describe('tripsApi', () => {
       await prisma.implementAssignment.create({ data: { vehicleId: v2, implementId: impl, startedAt: d('2026-12-10T00:00:00Z') } });
       await prisma.vehicleTrip.create({ data: { ...tripRow(d('2026-12-05T06:00:00Z'), d('2026-12-05T07:00:00Z')), deviceId: dev2 } });
       await prisma.vehicleTrip.create({ data: { ...tripRow(d('2026-12-12T06:00:00Z'), d('2026-12-12T07:00:00Z')), deviceId: dev2 } });
-      return { dev2 };
+      return { dev2, impl };
     });
     expect(ids.dev2).toBeTruthy();
     const r = await call('GET', '/api/fleet/trips?from=2026-12-01T00:00:00Z&to=2026-12-20T00:00:00Z');
@@ -125,6 +125,9 @@ describe('tripsApi', () => {
     expect(r.json[0].vehicleName).toBe('Teine traktor'); // hilisem sõit
     expect(r.json[1].vehicleName).toBe('Testtraktor');
     expect(r.json[1].implementName).toBe('Testhaake');
+    // haakeriista filter
+    expect((await call('GET', `/api/fleet/trips?from=2026-12-01T00:00:00Z&to=2026-12-20T00:00:00Z&implementId=${ids.impl}`)).json).toHaveLength(2);
+    expect((await call('GET', '/api/fleet/trips?from=2026-12-01T00:00:00Z&to=2026-12-20T00:00:00Z&implementId=muu')).json).toHaveLength(0);
   });
 
   it('filtrid: olek, masin, tundmatu koht', async () => {

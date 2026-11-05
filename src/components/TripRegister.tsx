@@ -2,7 +2,7 @@
 // Ainult vaatamine ja märkus; sõite ei lisata käsitsi.
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Filter, RotateCcw, Route } from 'lucide-react';
-import type { Trip, TripImportStatus, Vehicle } from '../types/fleet';
+import type { Implement, Trip, TripImportStatus, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
@@ -12,6 +12,7 @@ import { TripDialog, placeText } from './TripDialog';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
+  implementsList: Implement[];
   onOpenFieldWork?: (fieldWorkId: string, year: number) => void;
 }
 
@@ -38,10 +39,11 @@ const nextDayStartIso = (day: string) => {
   return d.toISOString();
 };
 
-export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFieldWork }) => {
+export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implementsList, onOpenFieldWork }) => {
   const [fromDay, setFromDay] = useState(defaultFrom);
   const [toDay, setToDay] = useState(defaultTo);
   const [vehicleId, setVehicleId] = useState('');
+  const [implementId, setImplementId] = useState('');
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'CLOSED'>('');
   const [unknownPlace, setUnknownPlace] = useState(false);
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
@@ -59,7 +61,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFiel
       const [list, st] = await Promise.all([
         api.getTrips({
           from: dayStartIso(fromDay), to: nextDayStartIso(toDay),
-          vehicleId: vehicleId || undefined, status: status || undefined, unknownPlace, unlinkedOnly
+          vehicleId: vehicleId || undefined, implementId: implementId || undefined,
+          status: status || undefined, unknownPlace, unlinkedOnly
         }),
         api.getTripImportStatus()
       ]);
@@ -70,12 +73,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFiel
     } finally {
       setLoading(false);
     }
-  }, [fromDay, toDay, vehicleId, status, unknownPlace, unlinkedOnly]);
+  }, [fromDay, toDay, vehicleId, implementId, status, unknownPlace, unlinkedOnly]);
 
   useEffect(() => { load(); }, [load]);
 
   const periodActive = fromDay !== defaultFrom() || toDay !== defaultTo();
-  const hasFilters = periodActive || !!vehicleId || !!status || unknownPlace || unlinkedOnly;
+  const hasFilters = periodActive || !!vehicleId || !!implementId || !!status || unknownPlace || unlinkedOnly;
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
@@ -106,6 +109,14 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFiel
             <select className="form-input" style={{ fontSize: '13px', height: '34px' }} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
               <option value="">Kõik masinad</option>
               {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
+            </select>
+          </FilterClear>
+        </div>
+        <div style={{ minWidth: '180px' }}>
+          <FilterClear active={!!implementId} onClear={() => setImplementId('')}>
+            <select className="form-input" style={{ fontSize: '13px', height: '34px' }} value={implementId} onChange={(e) => setImplementId(e.target.value)}>
+              <option value="">Kõik haakeriistad</option>
+              {implementsList.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
             </select>
           </FilterClear>
         </div>
@@ -155,7 +166,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFiel
             <thead>
               <tr>
                 <th>Kuupäev</th>
-                <th>Masin (haakeriist)</th>
+                <th>Masin</th>
+                <th>Haakeriist</th>
                 <th>Algus–lõpp</th>
                 <th className="num">Kestus</th>
                 <th>Kust → kuhu</th>
@@ -176,8 +188,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, onOpenFiel
                     <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
                     <td>
                       {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
-                      {t.implementName && <span className="text-muted"> ({t.implementName})</span>}
                     </td>
+                    <td>{t.implementName ?? <span className="text-muted">—</span>}</td>
                     <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</td>
                     <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
                     <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>

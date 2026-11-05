@@ -248,4 +248,4 @@ export interface TripImportStatus {
   lastRunAt: string | null;
   devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
 }
-export interface TripFilter { from: string; to: string; vehicleId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean }
+export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean }

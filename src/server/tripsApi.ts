@@ -139,6 +139,9 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     let list = rows.map((t) => toDto(t, target(t), fieldsOf(t.id)));
     const vehicleId = url.searchParams.get('vehicleId');
     if (vehicleId) list = list.filter((t) => t.vehicleId === vehicleId);
+    // Haakeriist seoste registri järgi sõidu alguses
+    const implementId = url.searchParams.get('implementId');
+    if (implementId) list = list.filter((t) => t.implementId === implementId);
     if (url.searchParams.get('unknownPlace') === '1') list = list.filter((t) => !t.start.place || !t.end.place);
     // Kirja panemata põllusõit: vähemalt ühel põllureal pole kannet
     if (url.searchParams.get('unlinkedOnly') === '1') list = list.filter((t) => t.fields.some((f) => f.entries.length === 0));

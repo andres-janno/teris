@@ -493,6 +493,7 @@ export const api = {
   async getTrips(f: TripFilter): Promise<Trip[]> {
     const q = new URLSearchParams({ from: f.from, to: f.to });
     if (f.vehicleId) q.set('vehicleId', f.vehicleId);
+    if (f.implementId) q.set('implementId', f.implementId);
     if (f.status) q.set('status', f.status);
     if (f.unknownPlace) q.set('unknownPlace', '1');
     if (f.unlinkedOnly) q.set('unlinkedOnly', '1');
