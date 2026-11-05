@@ -98,8 +98,11 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
   const placesFor = placesCache(deps);
   const now = deps.now();
   let from = state?.finalizedUntil ?? new Date(Math.min(...windows.map((w) => w.from.getTime())));
+  // Kui üle 24 h kestev sõit on aknas lõpetamata, ei liiguks lõplik piir edasi ja tsükkel jääks igavesti samale kohale.
+  // Siis laiendame akent (span kahekordistub), kuni sõit lõpeb või aken jõuab tänaseni; lõpptulemus on sama, mis kogu vahemiku korraga töötlemisel.
+  let span = CHUNK_MS;
   for (;;) {
-    const to = new Date(Math.min(from.getTime() + CHUNK_MS, now.getTime()));
+    const to = new Date(Math.min(from.getTime() + span, now.getTime()));
     const samples = await deps.fetchSamples(device.imei, from, to);
     const trips = segmentTrips(samples, to);
     const routes: (TripRoute | null)[] = [];
@@ -108,9 +111,15 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
     const firstOpen = trips.find((t) => t.status === 'ACTIVE' || t.endedAt.getTime() > finalCut);
     let next = firstOpen ? Math.min(finalCut, firstOpen.startedAt.getTime() - 1) : finalCut;
     if (next < from.getTime()) next = from.getTime();
+    const last = to.getTime() >= now.getTime();
+    if (!last && next <= from.getTime()) {
+      span *= 2;
+      continue;
+    }
     await writeChunk(device.id, from, to, trips, routes, now, new Date(next));
-    if (to.getTime() >= now.getTime()) return;
+    if (last) return;
     from = new Date(next);
+    span = CHUNK_MS;
   }
 }
 

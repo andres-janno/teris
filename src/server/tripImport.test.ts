@@ -139,6 +139,27 @@ describe('importDeviceTrips', () => {
     expect(await trips()).toHaveLength(3);
   });
 
+  it('3 päeva kestev sõit ei jää tsüklisse; üks lõppenud sõit', async () => {
+    samples = [...range(0, 3 * 1440), pt(3 * 1440 + 1, false)];
+    nowMin = 4 * 1440 + 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    expect(t).toHaveLength(1);
+    expect(t[0].startedAt).toEqual(at(0));
+    expect(t[0].endedAt).toEqual(at(3 * 1440));
+    expect(t[0].status).toBe('CLOSED');
+  }, 30_000);
+
+  it('üle 2 päeva kestev pooleli sõit jõuab tänaseni ja jääb ACTIVE', async () => {
+    samples = range(0, 3 * 1440);
+    nowMin = 3 * 1440 + 5;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    expect(t).toHaveLength(1);
+    expect(t[0].startedAt).toEqual(at(0));
+    expect(t[0].status).toBe('ACTIVE');
+  }, 30_000);
+
   it('mõõdikud ja kohad salvestuvad', async () => {
     places = [{ id: 'poi-x', kind: 'POI', label: 'Töökoda', lat: 58.1, lng: 26.1, radiusM: 50 }];
     samples = range(0, 30);
