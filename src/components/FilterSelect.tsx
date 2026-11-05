@@ -71,8 +71,9 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     const margin = 8;
     const below = window.innerHeight - r.bottom - margin;
     const above = r.top - margin;
+    // Loend kasutab kogu vaba kõrgust; kerib ainult siis, kui valikud ei mahu ekraanile
     const flip = below < 200 && above > below;
-    const maxHeight = Math.max(120, Math.min(320, flip ? above : below));
+    const maxHeight = Math.max(120, flip ? above : below);
     setPos({
       left: r.left,
       minWidth: r.width,
@@ -165,7 +166,13 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         onClick={() => (open ? close() : openList())}
         onKeyDown={onTriggerKeyDown}
       >
-        <span className="filter-select-label">{selected?.label ?? ''}</span>
+        {/* Laius = pikim valik paksus kirjas (nähtamatud mõõdusildid samas lahtris) — filter ei muuda valikul suurust */}
+        <span className="filter-select-label">
+          {options.map((o, i) => (
+            <span key={`${o.value}:${i}`} className="filter-select-sizer" aria-hidden="true">{o.label}</span>
+          ))}
+          <span className="filter-select-current">{selected?.label ?? ''}</span>
+        </span>
       </button>
       {open && pos && createPortal(
         <div

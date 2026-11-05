@@ -11107,14 +11107,27 @@ select.form-input:read-only {
   font-weight: 700;
 }
 
-/* Seatud filtril asendab X noole ja on paremas servas */
-.filter-clear.active > .form-input.filter-select-trigger {
-  background-image: none;
-  padding-right: 30px;
+/* Silt: kõik valikud nähtamatult samas ruudustiku lahtris (paksus kirjas) määravad laiuse,
+   nähtav on ainult valitud väärtus — trigger ei muuda valikul ega paksuse vahetusel suurust */
+.filter-select-trigger .filter-select-label {
+  display: grid;
+  overflow: hidden;
 }
 
-.filter-clear.active:has(> .filter-select-trigger) .filter-clear-btn {
-  right: 6px;
+.filter-select-sizer,
+.filter-select-current {
+  grid-area: 1 / 1;
+  white-space: nowrap;
+}
+
+.filter-select-sizer {
+  visibility: hidden;
+  font-weight: 700;
+}
+
+.filter-select-current {
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
