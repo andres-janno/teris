@@ -5,6 +5,7 @@ import { api } from '../services/api';
 import { formatQty } from '../services/units';
 import { alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 import { HarvestLotDialog } from './HarvestLotDialog';
 import type { Article } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
@@ -51,16 +52,12 @@ export const HarvestLotsPanel: React.FC<Props> = ({ warehouses, articles, onChan
     <>
       <div className="register-actions-bar">
         <FilterClear active={!!year} onClear={() => setYear('')}>
-          <select className="form-input" aria-label="Hooaeg" value={year} onChange={(e) => setYear(e.target.value)}>
-            <option value="">Kõik hooajad</option>
-            {years.map((y) => <option key={y} value={y}>{y}</option>)}
-          </select>
+          <FilterSelect ariaLabel="Hooaeg" value={year} onChange={setYear}
+            options={[{ value: '', label: 'Kõik hooajad' }, ...years.map((y) => ({ value: String(y), label: String(y) }))]} />
         </FilterClear>
         <FilterClear active={!!status} onClear={() => setStatus('')}>
-          <select className="form-input" aria-label="Staatus" value={status} onChange={(e) => setStatus(e.target.value as HarvestLotStatus | '')}>
-            <option value="">Kõik staatused</option>
-            {(Object.keys(HARVEST_LOT_STATUS_LABEL) as HarvestLotStatus[]).map((s) => <option key={s} value={s}>{HARVEST_LOT_STATUS_LABEL[s]}</option>)}
-          </select>
+          <FilterSelect ariaLabel="Staatus" value={status} onChange={(v) => setStatus(v as HarvestLotStatus | '')}
+            options={[{ value: '', label: 'Kõik staatused' }, ...(Object.keys(HARVEST_LOT_STATUS_LABEL) as HarvestLotStatus[]).map((s) => ({ value: s, label: HARVEST_LOT_STATUS_LABEL[s] }))]} />
         </FilterClear>
         <div className="register-io-buttons">
           <button className="btn btn-primary btn-sm" onClick={() => setDialog({ lotId: null })}><Plus size={14} /><span>Uus partii</span></button>

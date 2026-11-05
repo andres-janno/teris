@@ -7554,7 +7554,8 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .search-box-wrap .search-input,
-.fullpage-board-body .register-actions-bar select.form-input {
+.fullpage-board-body .register-actions-bar select.form-input,
+.fullpage-board-body .register-actions-bar .filter-select-trigger {
   height: 34px;
   font-size: 0.8rem;
 }
@@ -7685,7 +7686,8 @@ a.history-pill:hover {
 }
 
 .fw-main .search-box-wrap .search-input,
-.fw-main .register-actions-bar select.form-input {
+.fw-main .register-actions-bar select.form-input,
+.fw-main .register-actions-bar .filter-select-trigger {
   height: 34px;
   font-size: 0.8rem;
 }
@@ -10963,22 +10965,97 @@ select.form-input:read-only {
   padding-right: 30px;
 }
 
-.filter-clear > select.form-input {
+.filter-clear > select.form-input,
+.filter-clear > .filter-select-trigger {
   padding-right: 50px;
 }
 
-/* Filtri rippmenüü: tavaline kiri; paks ainult siis, kui filter on seatud (vaikevalik „Kõik …“ jääb tavaliseks).
-   Valikute loend on alati tavalise kirjaga. */
-.filter-clear > select {
+/* Filtri rippmenüü (FilterSelect): trigger tavalise kirjaga, paks ainult siis, kui filter on seatud
+   (vaikevalik „Kõik …“ jääb tavaliseks). Avatud loend on alati tavalise kirjaga. */
+.filter-select-trigger {
+  -webkit-appearance: none;
+  appearance: none;
+  display: inline-block;
+  text-align: left;
+  cursor: pointer;
   font-weight: 400;
+  padding-right: 50px;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
 }
 
-.filter-clear.active > select {
+.filter-select-trigger.is-set {
   font-weight: 700;
 }
 
-.filter-clear > select option {
+.filter-select-trigger:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.filter-select-label {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.filter-select-list {
+  position: fixed;
+  z-index: 9000;
+  overflow-y: auto;
+  padding: 4px;
+  background: var(--bg-modal);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-modal);
   font-weight: 400;
+}
+
+.filter-select-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  font-size: 0.84rem;
+  font-weight: 400;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.filter-select-option.active {
+  background: var(--btn-sec-hover);
+}
+
+.filter-select-option.checked {
+  background: var(--btn-sec-hover);
+}
+
+.filter-select-check {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--emerald-500);
+}
+
+.filter-select-group {
+  padding: 8px 10px 4px;
+  color: var(--text-secondary);
+  font-size: 0.72rem;
+  font-weight: 400;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  cursor: default;
 }
 
 /* Brauseri enda tühjendusnupp otsinguväljal asendub ühtse X-nupuga */
@@ -11006,7 +11083,8 @@ select.form-input:read-only {
 }
 
 /* Rippmenüül jääb X noolest vasakule */
-.filter-clear:has(> select) .filter-clear-btn {
+.filter-clear:has(> select) .filter-clear-btn,
+.filter-clear:has(> .filter-select-trigger) .filter-clear-btn {
   right: 26px;
 }
 
@@ -11016,7 +11094,8 @@ select.form-input:read-only {
   width: 100%;
 }
 
-.history-filter-bar > div > .filter-clear > select.form-input {
+.history-filter-bar > div > .filter-clear > select.form-input,
+.history-filter-bar > div > .filter-clear > .filter-select-trigger {
   width: 100%;
 }
 

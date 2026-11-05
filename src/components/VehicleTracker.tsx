@@ -41,6 +41,7 @@ import type {
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 
@@ -1942,33 +1943,25 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
             <div style={{ minWidth: '180px' }}>
               <FilterClear active={historyVehicleFilter !== 'all'} onClear={() => setHistoryVehicleFilter('all')}>
-                <select
-                  className="form-input"
+                <FilterSelect
                   value={historyVehicleFilter}
-                  onChange={(e) => setHistoryVehicleFilter(e.target.value)}
+                  defaultValue="all"
+                  onChange={setHistoryVehicleFilter}
                   style={{ fontSize: '13px', height: '34px' }}
-                >
-                  <option value="all">Kõik masinad</option>
-                  {vehicles.map((v) => (
-                    <option key={v.id} value={v.id}>{v.name}</option>
-                  ))}
-                </select>
+                  options={[{ value: 'all', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]}
+                />
               </FilterClear>
             </div>
 
             <div style={{ minWidth: '180px' }}>
               <FilterClear active={historyImplementFilter !== 'all'} onClear={() => setHistoryImplementFilter('all')}>
-                <select
-                  className="form-input"
+                <FilterSelect
                   value={historyImplementFilter}
-                  onChange={(e) => setHistoryImplementFilter(e.target.value)}
+                  defaultValue="all"
+                  onChange={setHistoryImplementFilter}
                   style={{ fontSize: '13px', height: '34px' }}
-                >
-                  <option value="all">Kõik haakeriistad</option>
-                  {implementsList.map((imp) => (
-                    <option key={imp.id} value={imp.id}>{imp.name}</option>
-                  ))}
-                </select>
+                  options={[{ value: 'all', label: 'Kõik haakeriistad' }, ...implementsList.map((imp) => ({ value: imp.id, label: imp.name }))]}
+                />
               </FilterClear>
             </div>
 

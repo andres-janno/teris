@@ -1,6 +1,7 @@
 // src/components/WarehouseOptions.tsx — lao valiku read: tavalised laod ja põllu laod eraldi grupis
 import React from 'react';
 import type { Warehouse } from '../types/stock';
+import type { FilterSelectOption } from './FilterSelect';
 
 interface Props {
   warehouses: Warehouse[];
@@ -18,4 +19,14 @@ export const WarehouseOptions: React.FC<Props> = ({ warehouses, inactiveSuffix }
       <optgroup label="Põllu laod">{fields.map(option)}</optgroup>
     </>
   );
+};
+
+// Sama loend filtri rippmenüü (FilterSelect) jaoks; „Kõik laod“ valik lisatakse väljaspool
+export const warehouseFilterOptions = (warehouses: Warehouse[], inactiveSuffix?: boolean): FilterSelectOption[] => {
+  const hasFieldWarehouses = warehouses.some((w) => w.fieldId);
+  return warehouses.filter((w) => !w.fieldId).concat(warehouses.filter((w) => w.fieldId)).map((w) => ({
+    value: w.id,
+    label: `${w.name}${inactiveSuffix && !w.isActive ? ' (mitteaktiivne)' : ''}`,
+    group: hasFieldWarehouses ? (w.fieldId ? 'Põllu laod' : 'Laod') : undefined
+  }));
 };

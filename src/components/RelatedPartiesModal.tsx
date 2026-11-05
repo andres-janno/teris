@@ -22,6 +22,7 @@ import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
@@ -492,31 +493,35 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
             {/* Role filter */}
             <FilterClear active={selectedRoleFilter !== 'all'} onClear={() => setSelectedRoleFilter('all')}>
-              <select
-                className="form-input filter-select"
+              <FilterSelect
+                className="filter-select"
                 value={selectedRoleFilter}
-                onChange={(e) => setSelectedRoleFilter(e.target.value)}
-              >
-                <option value="all">Kõik rollid ({parties.length})</option>
-                <option value="LANDOWNER">🏛️ Maaomanikud ({parties.filter(p => p.roles.includes('LANDOWNER')).length})</option>
-                <option value="DRIVER">👤 Töötajad ({parties.filter(p => p.roles.includes('DRIVER')).length})</option>
-                <option value="OPERATOR">🧑‍🌾 Operaatorid ({parties.filter(p => p.roles.includes('OPERATOR')).length})</option>
-                <option value="SUPPLIER">🚚 Tarnijad ({parties.filter(p => p.roles.includes('SUPPLIER')).length})</option>
-                <option value="OTHER">🤝 Muud seotud isikud ({parties.filter(p => p.roles.includes('OTHER')).length})</option>
-              </select>
+                defaultValue="all"
+                onChange={setSelectedRoleFilter}
+                options={[
+                  { value: 'all', label: `Kõik rollid (${parties.length})` },
+                  { value: 'LANDOWNER', label: `🏛️ Maaomanikud (${parties.filter(p => p.roles.includes('LANDOWNER')).length})` },
+                  { value: 'DRIVER', label: `👤 Töötajad (${parties.filter(p => p.roles.includes('DRIVER')).length})` },
+                  { value: 'OPERATOR', label: `🧑‍🌾 Operaatorid (${parties.filter(p => p.roles.includes('OPERATOR')).length})` },
+                  { value: 'SUPPLIER', label: `🚚 Tarnijad (${parties.filter(p => p.roles.includes('SUPPLIER')).length})` },
+                  { value: 'OTHER', label: `🤝 Muud seotud isikud (${parties.filter(p => p.roles.includes('OTHER')).length})` }
+                ]}
+              />
             </FilterClear>
 
             {/* Type filter */}
             <FilterClear active={selectedTypeFilter !== 'all'} onClear={() => setSelectedTypeFilter('all')}>
-              <select
-                className="form-input filter-select"
+              <FilterSelect
+                className="filter-select"
                 value={selectedTypeFilter}
-                onChange={(e) => setSelectedTypeFilter(e.target.value)}
-              >
-                <option value="all">Kõik liigid</option>
-                <option value="PERSON">👤 Eraisikud ({parties.filter(p => p.type === 'PERSON').length})</option>
-                <option value="LEGAL_ENTITY">🏢 Ettevõtted ({parties.filter(p => p.type === 'LEGAL_ENTITY').length})</option>
-              </select>
+                defaultValue="all"
+                onChange={setSelectedTypeFilter}
+                options={[
+                  { value: 'all', label: 'Kõik liigid' },
+                  { value: 'PERSON', label: `👤 Eraisikud (${parties.filter(p => p.type === 'PERSON').length})` },
+                  { value: 'LEGAL_ENTITY', label: `🏢 Ettevõtted (${parties.filter(p => p.type === 'LEGAL_ENTITY').length})` }
+                ]}
+              />
             </FilterClear>
 
             <div className="actions-right">

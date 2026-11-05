@@ -23,6 +23,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 
 interface Option {
   id: string;
@@ -750,24 +751,19 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           <label className="fw-filter">
             <span>Tegevus</span>
             <FilterClear active={activity !== 'all'} onClear={() => setActivity('all')}>
-              <select className="form-input" value={activity} onChange={(e) => setActivity(e.target.value)}>
-                <option value="all">Kõik tegevused</option>
-                {activityOptions.map((o) => (
-                  <option key={o.id} value={o.id}>{o.name}</option>
-                ))}
-              </select>
+              <FilterSelect value={activity} defaultValue="all" onChange={setActivity}
+                options={[{ value: 'all', label: 'Kõik tegevused' }, ...activityOptions.map((o) => ({ value: o.id, label: o.name }))]} />
             </FilterClear>
           </label>
           <label className="fw-filter">
             <span>Kultuur</span>
             <FilterClear active={cropFilter !== 'all'} onClear={() => setCropFilter('all')}>
-              <select className="form-input" value={cropFilter} onChange={(e) => setCropFilter(e.target.value)}>
-                <option value="all">Kõik kultuurid</option>
-                {cropOptions.map((name) => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-                {hasUndetermined && <option value={NO_CROP}>Kultuur valimata</option>}
-              </select>
+              <FilterSelect value={cropFilter} defaultValue="all" onChange={setCropFilter}
+                options={[
+                  { value: 'all', label: 'Kõik kultuurid' },
+                  ...cropOptions.map((name) => ({ value: name, label: name })),
+                  ...(hasUndetermined ? [{ value: NO_CROP, label: 'Kultuur valimata' }] : [])
+                ]} />
             </FilterClear>
           </label>
           <label className="fw-filter checkbox fw-filter-end">

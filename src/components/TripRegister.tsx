@@ -6,6 +6,7 @@ import type { Implement, Trip, TripImportStatus, Vehicle } from '../types/fleet'
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
@@ -16,7 +17,7 @@ interface TripRegisterProps {
   onOpenFieldWork?: (fieldWorkId: string, year: number) => void;
 }
 
-const DEFAULT_DAYS = 7;
+const DEFAULT_DAYS = 31;
 const isoDay = (d: Date) => {
   const y = d.getFullYear();
   const m = String(d.getMonth() + 1).padStart(2, '0');
@@ -29,7 +30,7 @@ const endText = (startIso: string, endIso: string) => {
   const e = formatDateTime(endIso);
   return s.slice(0, 10) === e.slice(0, 10) ? e.slice(11) : `${e.slice(0, 5)} ${e.slice(11)}`;
 };
-const defaultFrom = () => isoDay(new Date(Date.now() - (DEFAULT_DAYS - 1) * 86_400_000));
+const defaultFrom = () => isoDay(new Date(Date.now() - DEFAULT_DAYS * 86_400_000));
 const defaultTo = () => isoDay(new Date());
 // Kohalik (Tallinna) päev → ISO ajavahemik [alates päeva algusest, kuni järgmise päeva alguseni)
 const dayStartIso = (day: string) => new Date(`${day}T00:00:00`).toISOString();
@@ -106,27 +107,20 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         </FilterClear>
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={!!vehicleId} onClear={() => setVehicleId('')}>
-            <select className="form-input" style={{ fontSize: '13px', height: '34px' }} value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-              <option value="">Kõik masinad</option>
-              {vehicles.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-            </select>
+            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={vehicleId} onChange={setVehicleId}
+              options={[{ value: '', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]} />
           </FilterClear>
         </div>
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={!!implementId} onClear={() => setImplementId('')}>
-            <select className="form-input" style={{ fontSize: '13px', height: '34px' }} value={implementId} onChange={(e) => setImplementId(e.target.value)}>
-              <option value="">Kõik haakeriistad</option>
-              {implementsList.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-            </select>
+            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={implementId} onChange={setImplementId}
+              options={[{ value: '', label: 'Kõik haakeriistad' }, ...implementsList.map((i) => ({ value: i.id, label: i.name }))]} />
           </FilterClear>
         </div>
         <div style={{ minWidth: '150px' }}>
           <FilterClear active={!!status} onClear={() => setStatus('')}>
-            <select className="form-input" style={{ fontSize: '13px', height: '34px' }} value={status} onChange={(e) => setStatus(e.target.value as '' | 'ACTIVE' | 'CLOSED')}>
-              <option value="">Kõik olekud</option>
-              <option value="ACTIVE">Käimas</option>
-              <option value="CLOSED">Lõppenud</option>
-            </select>
+            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={status} onChange={(v) => setStatus(v as '' | 'ACTIVE' | 'CLOSED')}
+              options={[{ value: '', label: 'Kõik olekud' }, { value: 'ACTIVE', label: 'Käimas' }, { value: 'CLOSED', label: 'Lõppenud' }]} />
           </FilterClear>
         </div>
         <FilterClear className="filter-clear-inline" active={unknownPlace} onClear={() => setUnknownPlace(false)}>

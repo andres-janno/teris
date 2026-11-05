@@ -6,10 +6,11 @@ import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
+import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { WarehouseOptions } from './WarehouseOptions';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -65,10 +66,8 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
         <div className="modal-body">
           <div className="register-actions-bar">
             <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
-              <select className="form-input" aria-label="Ladu" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                <option value="">Kõik laod</option>
-                <WarehouseOptions warehouses={warehouses} />
-              </select>
+              <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
+                options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses)]} />
             </FilterClear>
           </div>
           {error && <div className="alert-box error">{error}</div>}

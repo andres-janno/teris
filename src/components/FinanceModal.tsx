@@ -23,6 +23,7 @@ import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -495,18 +496,16 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                     {uniqueFields.length > 1 && (
                       <FilterClear active={fieldFilter !== 'all'} onClear={() => setFieldFilter('all')}>
-                        <select
-                          className="form-input finance-field-select"
+                        <FilterSelect
+                          className="finance-field-select"
                           value={fieldFilter}
-                          onChange={(e) => setFieldFilter(e.target.value)}
-                        >
-                          <option value="all">Kõik põllud ({uniqueFields.length})</option>
-                          {uniqueFields.map((f) => (
-                            <option key={f.id} value={String(f.id)}>
-                              {f.num ? `Nr ${f.num} · ${f.name}` : f.name}
-                            </option>
-                          ))}
-                        </select>
+                          defaultValue="all"
+                          onChange={setFieldFilter}
+                          options={[
+                            { value: 'all', label: `Kõik põllud (${uniqueFields.length})` },
+                            ...uniqueFields.map((f) => ({ value: String(f.id), label: f.num ? `Nr ${f.num} · ${f.name}` : f.name }))
+                          ]}
+                        />
                       </FilterClear>
                     )}
                   </div>

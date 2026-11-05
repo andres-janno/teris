@@ -6,13 +6,14 @@ import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
+import { warehouseFilterOptions } from './WarehouseOptions';
 import { StockDocumentDialog } from './StockDocumentDialog';
 import { InventoryDialog } from './InventoryDialog';
 import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { WarehouseOptions } from './WarehouseOptions';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -61,22 +62,16 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
     <>
       <div className="register-actions-bar">
         <FilterClear active={!!filter.kind} onClear={() => setFilter({ ...filter, kind: '' })}>
-          <select className="form-input" aria-label="Liik" value={filter.kind ?? ''} onChange={(e) => setFilter({ ...filter, kind: e.target.value as StockDocumentKind | '' })}>
-            <option value="">Kõik liigid</option>
-            {(Object.keys(STOCK_DOC_KIND_LABEL) as StockDocumentKind[]).map((k) => <option key={k} value={k}>{STOCK_DOC_KIND_LABEL[k]}</option>)}
-          </select>
+          <FilterSelect ariaLabel="Liik" value={filter.kind ?? ''} onChange={(v) => setFilter({ ...filter, kind: v as StockDocumentKind | '' })}
+            options={[{ value: '', label: 'Kõik liigid' }, ...(Object.keys(STOCK_DOC_KIND_LABEL) as StockDocumentKind[]).map((k) => ({ value: k, label: STOCK_DOC_KIND_LABEL[k] }))]} />
         </FilterClear>
         <FilterClear active={!!filter.warehouseId} onClear={() => setFilter({ ...filter, warehouseId: '' })}>
-          <select className="form-input" aria-label="Ladu" value={filter.warehouseId ?? ''} onChange={(e) => setFilter({ ...filter, warehouseId: e.target.value })}>
-            <option value="">Kõik laod</option>
-            <WarehouseOptions warehouses={warehouses} />
-          </select>
+          <FilterSelect ariaLabel="Ladu" value={filter.warehouseId ?? ''} onChange={(v) => setFilter({ ...filter, warehouseId: v })}
+            options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses)]} />
         </FilterClear>
         <FilterClear active={!!filter.supplierId} onClear={() => setFilter({ ...filter, supplierId: '' })}>
-          <select className="form-input" aria-label="Tarnija" value={filter.supplierId ?? ''} onChange={(e) => setFilter({ ...filter, supplierId: e.target.value })}>
-            <option value="">Kõik tarnijad</option>
-            {suppliers.map((p) => <option key={p.id} value={p.id}>{p.name}</option>)}
-          </select>
+          <FilterSelect ariaLabel="Tarnija" value={filter.supplierId ?? ''} onChange={(v) => setFilter({ ...filter, supplierId: v })}
+            options={[{ value: '', label: 'Kõik tarnijad' }, ...suppliers.map((p) => ({ value: p.id, label: p.name }))]} />
         </FilterClear>
         <FilterClear active={!!filter.from} onClear={() => setFilter({ ...filter, from: '' })}>
           <DateInput value={filter.from ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, from: v })} />

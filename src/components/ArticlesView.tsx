@@ -12,6 +12,8 @@ import type { Article, ArticleCategory } from '../types/fieldWork';
 import { NEW_ARTICLE } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, isGoods, type ArticleGroup } from '../services/articleRules';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
+import { warehouseFilterOptions } from './WarehouseOptions';
 import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
 import { StockDocumentsPanel } from './StockDocumentsPanel';
@@ -19,7 +21,6 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { WarehouseOptions } from './WarehouseOptions';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -220,10 +221,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 </FilterClear>
               </div>
               <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
-                <select className="form-input" aria-label="Ladu" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                  <option value="">Kõik laod</option>
-                  <WarehouseOptions warehouses={warehouses} inactiveSuffix />
-                </select>
+                <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
+                  options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses, true)]} />
               </FilterClear>
               <div className="category-filter-tabs">
                 <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => { setGroup('all'); setCategoryId(''); }}>
@@ -239,10 +238,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 })}
               </div>
               <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
-                <select className="form-input" aria-label="Kategooria" value={categoryId} onChange={(e) => setCategoryId(e.target.value)}>
-                  <option value="">Kõik kategooriad</option>
-                  {categories.filter((c) => group === 'all' || c.group === group).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                </select>
+                <FilterSelect ariaLabel="Kategooria" value={categoryId} onChange={setCategoryId}
+                  options={[{ value: '', label: 'Kõik kategooriad' }, ...categories.filter((c) => group === 'all' || c.group === group).map((c) => ({ value: c.id, label: c.name }))]} />
               </FilterClear>
             </div>
 

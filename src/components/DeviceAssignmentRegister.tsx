@@ -10,6 +10,7 @@ import { DateInput } from './DateInput';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
 import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -203,29 +204,29 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
 
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={deviceFilter !== 'all'} onClear={() => setDeviceFilter('all')}>
-            <select
-              className="form-input"
+            <FilterSelect
               value={deviceFilter}
-              onChange={(e) => setDeviceFilter(e.target.value)}
+              defaultValue="all"
+              onChange={setDeviceFilter}
               style={{ fontSize: '13px', height: '34px' }}
-            >
-              <option value="all">Kõik seadmed</option>
-              {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
-            </select>
+              options={[{ value: 'all', label: 'Kõik seadmed' }, ...devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))]}
+            />
           </FilterClear>
         </div>
 
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={targetFilter !== 'all'} onClear={() => setTargetFilter('all')}>
-            <select
-              className="form-input"
+            <FilterSelect
               value={targetFilter}
-              onChange={(e) => setTargetFilter(e.target.value)}
+              defaultValue="all"
+              onChange={setTargetFilter}
               style={{ fontSize: '13px', height: '34px' }}
-            >
-              <option value="all">Kõik masinad ja haakeriistad</option>
-              {targetOptions}
-            </select>
+              options={[
+                { value: 'all', label: 'Kõik masinad ja haakeriistad' },
+                ...vehicles.map((v) => ({ value: `veh:${v.id}`, label: v.name, group: '🚜 Masinad' })),
+                ...implementsList.map((imp) => ({ value: `imp:${imp.id}`, label: imp.name, group: '🔧 Haakeriistad' }))
+              ]}
+            />
           </FilterClear>
         </div>
 
