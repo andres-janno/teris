@@ -4,6 +4,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { fetchTripSamples } from './telemetryAccess.ts';
+import { loadAssignmentResolver } from './tripAssignments.ts';
 
 const DEFAULT_DAYS = 7;
 const MAX_NOTES = 1000;
@@ -20,45 +21,19 @@ const deviceLabelOf = (d: { model: string; imei: string | null }) => (d.imei ? `
 
 async function resolveTargets(trips: TripRow[]) {
   const deviceIds = [...new Set(trips.map((t) => t.deviceId))];
-  const [devices, assignments] = await Promise.all([
+  const [devices, resolve] = await Promise.all([
     prisma.telemetryDevice.findMany({ where: { id: { in: deviceIds } }, select: { id: true, model: true, imei: true } }),
-    prisma.deviceAssignment.findMany({
-      where: { deviceId: { in: deviceIds } },
-      include: { vehicle: { select: { id: true, name: true } }, implement: { select: { id: true, name: true } } },
-      orderBy: { startedAt: 'desc' }
-    })
+    loadAssignmentResolver(deviceIds)
   ]);
-  const vehicleIds = [...new Set(assignments.map((a) => a.vehicleId).filter((x): x is string => !!x))];
-  const implementIds = [...new Set(assignments.filter((a) => !a.vehicleId).map((a) => a.implementId).filter((x): x is string => !!x))];
-  // Seadme seos võib olla haakeriistaga (ilma masinata); siis leiame masina haakeriista haakimise registrist.
-  const implAssignments = vehicleIds.length || implementIds.length
-    ? await prisma.implementAssignment.findMany({
-        where: { OR: [
-          ...(vehicleIds.length ? [{ vehicleId: { in: vehicleIds } }] : []),
-          ...(implementIds.length ? [{ implementId: { in: implementIds } }] : [])
-        ] },
-        include: { implement: { select: { id: true, name: true } }, vehicle: { select: { id: true, name: true } } },
-        orderBy: { startedAt: 'desc' }
-      })
-    : [];
-  const covers = (a: { startedAt: Date; endedAt: Date | null }, t: Date) => a.startedAt <= t && (!a.endedAt || a.endedAt >= t);
   return (t: TripRow) => {
     const dev = devices.find((d) => d.id === t.deviceId);
-    const a = assignments.find((x) => x.deviceId === t.deviceId && covers(x, t.startedAt));
-    let implement = a?.implement ?? null;
-    let vehicle = a?.vehicle ?? null;
-    if (!implement && a?.vehicleId) {
-      implement = implAssignments.find((x) => x.vehicleId === a.vehicleId && covers(x, t.startedAt))?.implement ?? null;
-    }
-    if (!vehicle && a?.implementId) {
-      vehicle = implAssignments.find((x) => x.implementId === a.implementId && covers(x, t.startedAt))?.vehicle ?? null;
-    }
+    const r = resolve(t.deviceId, t.startedAt);
     return {
       deviceLabel: dev ? deviceLabelOf(dev) : t.deviceId,
-      vehicleId: vehicle?.id ?? null,
-      vehicleName: vehicle?.name ?? null,
-      implementId: implement?.id ?? null,
-      implementName: implement?.name ?? null
+      vehicleId: r.vehicleId,
+      vehicleName: r.vehicleName,
+      implementId: r.implementId,
+      implementName: r.implementName
     };
   };
 }
