@@ -291,6 +291,7 @@ erDiagram
     String workerId FK "valikuline"
     Float areaHa "valikuline"
     Float telemetryAreaHa "valikuline"
+    String tripId FK "valikuline"
     Int occurrenceNo "valikuline"
     String vehicleId FK "valikuline"
     String implementId FK "valikuline"
@@ -606,8 +607,9 @@ Masinad, haakeriistad ja telemeetriaseadmed. Seadme omand (ettevõttele kuulumis
 | `DeviceOwnership` | `device_ownerships` | jah | Seadme kuulumine ettevõttele ajavahemikus |
 | `DeviceAssignment` | `device_assignments` | jah | Seadme paigaldus masinale/haakeriistale ajavahemikus |
 | `ImplementAssignment` | `implement_assignments` | jah | Haakeriista ühendus masinaga ajavahemikus |
-| `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; muudetav ainult märkus |
-| `TripImportState` | `trip_import_state` | jah | Seadme sõitude impordi olek (lõplik kuni, viimane viga, kohtade sõrmejälg) |
+| `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; põldude ha summa (`areaHa`); muudetav ainult märkus |
+| `VehicleTripField` | `vehicle_trip_fields` | jah | Sõidu osa ühel põllul (hooajal): põllul oldud aeg, ha haakeriista laiusega põllu piires, kütus põllul ja koos teekütuse osaga; haakeriist teabena (mitte FK) |
+| `TripImportState` | `trip_import_state` | jah | Seadme sõitude impordi olek (lõplik kuni, viimane viga, kohtade ja seoste sõrmejälg) |
 | `PointOfInterest` | `points_of_interest` | jah | Objekt (kuivati, ladu, töökoda jm): asukoht, raadius, kontakt |
 
 - Telemeetria (GPS, süüde, kiirus jm) on eraldi TimescaleDB andmebaasis (`measurements`), seotud seadme IMEI kaudu.
@@ -764,6 +766,9 @@ erDiagram
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   TelemetryDevice ||--o{ VehicleTrip : "device"
   TelemetryDevice ||--o| TripImportState : "device"
+  VehicleTrip ||--o{ VehicleTripField : "trip"
+  FieldSeason ||--o{ VehicleTripField : "fieldSeason"
+  VehicleTrip |o--o{ WorkEntry : "trip"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
   Vehicle ||--o{ ImplementAssignment : "vehicle"
@@ -1289,6 +1294,9 @@ erDiagram
   TelemetryDevice ||--o{ DeviceAssignment : "device"
   TelemetryDevice ||--o{ VehicleTrip : "device"
   TelemetryDevice ||--o| TripImportState : "device"
+  VehicleTrip ||--o{ VehicleTripField : "trip"
+  FieldSeason ||--o{ VehicleTripField : "fieldSeason"
+  VehicleTrip |o--o{ WorkEntry : "trip"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
   Implement |o--o{ DeviceAssignment : "implement"
   Vehicle ||--o{ ImplementAssignment : "vehicle"

@@ -1,7 +1,7 @@
 # Sõidu põllud, ha ja kande seos (disain)
 
 Kuupäev: 2026-11-05
-Staatus: disain kinnitatud, plaan koostamata
+Staatus: live 2026-11-05 (plaan: docs/superpowers/plans/2026-11-05-soidu-pollud.md)
 Eelmine etapp: `2026-11-04-soidud-design.md` (sõitude register, live)
 
 ## Eesmärk

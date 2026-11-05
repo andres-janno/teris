@@ -136,8 +136,8 @@ flowchart LR
 | `FieldOverviewPanel` / `SoilSamplesSection` / `FieldNdviSection` | mullaproovid ja NDVI | — (käivituse andmed, väline satelliidipilt) | `SoilSample` R |
 | `FieldEditDialog` | muudab põllu põhiandmeid ja hooaja andmeid (pindala, kultuur, sort, katastriüksused) | `POST /api/master-fields` (üks põld) | `Field` RU, `FieldSeason` CU (ainult muudetud aasta; lukus hooaeg keelatud), `Season` C (puuduv hooaeg), `CadastralParcel` CU, `FieldCadastralParcel` CUD |
 | `FieldWorkPlanDialog` (`FieldWorkPlanForm`) | lisab või muudab töö plaani (kuupäevad, pindala, plaaniread) | `POST /api/field-works`, `PATCH /api/field-works/:id` | `WorkType` R, `FieldWork` RCU, `FieldWorkLine` CD (read asendatakse), `WorkEntry` R |
-| `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak, materjali ladu); näitab valitud lao laoseisu | `POST /api/work-entries`, `PUT /api/work-entries/:id`, `GET /api/warehouses`, `GET /api/stock/levels` | `WorkEntry` RCU, `WorkEntryLine` CUD (ühikuhind ümberarvutusest), `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` RU, `Warehouse` RC (põhiladu), `MaterialStock` RCD, `StockDocumentLine` U |
-| `FieldWorkEntryDialog` | pakub telemeetriast sõite kande täitmiseks | `GET /api/field-works/telemetry-suggestions` | `FieldSeason` R, `WorkEntry` R, `DeviceAssignment` R, `TelemetryDevice` R, `Vehicle` R, `RelatedParty` R, `Implement` R, `ImplementAssignment` R, `DeviceOwnership` R, `Field` R, `PointOfInterest` R, tsdb R |
+| `FieldWorkEntryDialog` | lisab või muudab kande (tegelik töö, materjalid, tunnid, saak, materjali ladu); näitab valitud lao laoseisu | `POST /api/work-entries`, `PUT /api/work-entries/:id`, `GET /api/warehouses`, `GET /api/stock/levels` | `WorkEntry` RCU (sh sõidu seos `tripId`), `VehicleTripField` R (seose kontroll), `WorkEntryLine` CUD (ühikuhind ümberarvutusest), `FieldWork` RU (olek), `RelatedParty` R, `Vehicle` R, `Implement` R, `Material` RU, `Warehouse` RC (põhiladu), `MaterialStock` RCD, `StockDocumentLine` U |
+| `FieldWorkEntryDialog` | pakub sõitude registrist selle põllu sõite kande täitmiseks (aeg pausidega, ha, kütus koos teekütuse osaga); klõps seob kande sõiduga, „Eemalda seos“ eemaldab | `GET /api/field-works/telemetry-suggestions` | `VehicleTripField` R, `VehicleTrip` R, `WorkEntry` R, `FieldWork` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
 | App (`ensureWorkRefs`) | laeb dialoogide valikud | `GET /api/work-types`, `GET /api/materials` | `WorkType` R, `FieldWork` R (loend), `Material` R, `WorkEntryLine` R (loend) |
 
 ## Hooajad
@@ -388,10 +388,10 @@ flowchart LR
 | `VehicleTracker` (haakimise register) | näitab, lisab, muudab, kustutab haakimise kirjeid | `GET`/`POST /api/fleet/implement-assignments`, `PUT`/`DELETE /api/fleet/implement-assignments/:id` | `ImplementAssignment` RCUD, `Vehicle` R, `Implement` R |
 | `VehicleTracker` | paigaldab seadme masinale või haakeriistale (kaardi „Vaheta“) | `POST /api/fleet/devices/assign` | `TelemetryDevice` R, `DeviceAssignment` RCU, `Vehicle` U (viimane asukoht), `DeviceOwnership` R, tsdb R |
 | `VehicleTracker` / `DeviceAssignmentRegister` | seadmete seoste register | `GET`/`POST /api/fleet/device-assignments`, `PUT`/`DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` RCUD, `TelemetryDevice` R, `Vehicle` R, `Implement` R |
-| `TripRegister` | sõitude register: filtrid, impordi olek | `GET /api/fleet/trips`, `GET /api/fleet/trips/import-status` | `VehicleTrip` R, `TripImportState` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
-| `TripDialog` | sõidu rada, kohad, mõõdikud; märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id` | `VehicleTrip` RU, tsdb R |
+| `TripRegister` | sõitude register: ha ja Kanne (✓/—) veerg, filtrid (sh „ainult kandeta põllusõidud“), impordi olek | `GET /api/fleet/trips`, `GET /api/fleet/trips/import-status` | `VehicleTrip` R, `VehicleTripField` R, `WorkEntry` R, `FieldWork` R, `WorkType` R, `FieldSeason` R, `Field` R, `TripImportState` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
+| `TripDialog` | sõidu rada, kohad, mõõdikud, põldude tabel (põllul oldud aeg, ha koos haakeriista ja laiusega, kütus põllul / koos teega, kanne → avab põllu töö); märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id` | `VehicleTrip` RU, `VehicleTripField` R, `WorkEntry` R, tsdb R |
 
-**Taustaimport** (`tripImport.ts`, käivitab `prod.ts` iga 15 min; käsitsi `npm run tenant -- trips:import`): TELEMETRY mooduliga ettevõtete mobiilseadmete punktid (`measurements`, omandiperioodi piires) → sõidud (`VehicleTrip` CUD) ja impordi olek (`TripImportState` CU). Kohad: `FieldSeason` R, `PointOfInterest` R.
+**Taustaimport** (`tripImport.ts`, käivitab `prod.ts` iga 15 min; käsitsi `npm run tenant -- trips:import`): TELEMETRY mooduliga ettevõtete mobiilseadmete punktid (`measurements`, omandiperioodi piires) → sõidud (`VehicleTrip` CUD) koos põllu ridadega (`VehicleTripField` CD: põllul oldud aeg, ha haakeriista laiusega põllu piires, kütus põllul ja koos teekütuse osaga) ja impordi olek (`TripImportState` CU). Kohad: `FieldSeason` R, `PointOfInterest` R; haakeriist ja laius: `DeviceAssignment` R, `ImplementAssignment` R, `Implement` R. Lõplikud sõidud arvutatakse uuesti kohtade või seoste (sõrmejälg) muutusel; kandega seotud sõidu id säilib liitumisel (`WorkEntry` seos ei kao).
 
 ## Taristu
 
@@ -596,10 +596,10 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `PUT`/`PATCH /api/fleet/device-assignments/:id` | `TelemetryDevice`, `Vehicle`, `Implement` | U: `DeviceAssignment` | moodul TELEMETRY |
 | `DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` | D: `DeviceAssignment` | looja või admin |
 | `POST /api/fleet/devices/assign` | `TelemetryDevice`, `DeviceAssignment`, `DeviceOwnership`, tsdb `measurements` | C/U: `DeviceAssignment`; U: `Vehicle` | moodul TELEMETRY |
-| `GET /api/fleet/trips` | `VehicleTrip`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY |
+| `GET /api/fleet/trips` | `VehicleTrip`, `VehicleTripField`, `WorkEntry`, `FieldWork`, `WorkType`, `FieldSeason`, `Field`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY; `unlinkedOnly=1` = ainult kandeta põllureaga sõidud |
 | `GET /api/fleet/trips/import-status` | `TripImportState`, `TelemetryDevice` | — | moodul TELEMETRY |
 | `GET /api/fleet/trips/:id/track` | `VehicleTrip`, `TelemetryDevice`, `DeviceOwnership`, tsdb `measurements` | — | moodul TELEMETRY |
-| `PATCH /api/fleet/trips/:id` | `VehicleTrip` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
+| `PATCH /api/fleet/trips/:id` | `VehicleTrip`, `VehicleTripField`, `WorkEntry` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
 | `GET /api/weather/radar`, `GET /api/weather/radar.png` | — | — | väline KAIA; moodul WEATHER |
 | `GET /api/satellite/dates` | — | — | väline Satiladu; moodul SATELLITE |
 | `POST /api/satellite/cloud-check` | — | — | väline Satiladu; ainult lugev POST |
@@ -625,9 +625,9 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `POST /api/field-works/clear` | `FieldSeason`, `Season`, `WorkEntry`, `FieldWork` | D: `FieldWork`; kaskaad D: `FieldWorkLine` | lukus hooaeg keelatud |
 | `PATCH /api/field-works/:id` | `FieldWork`, `WorkEntry` | U: `FieldWork`; C/D: `FieldWorkLine` | `status` DONE/REOPEN |
 | `DELETE /api/field-works/:id` | `FieldWork`, `WorkEntry` | D: `FieldWork`; kaskaad D: `FieldWorkLine` | keelatud, kui kandeid on |
-| `GET /api/field-works/telemetry-suggestions` | `FieldWork`, `FieldSeason`, `WorkEntry`, `DeviceAssignment`, `TelemetryDevice`, `Vehicle`, `RelatedParty`, `Implement`, `ImplementAssignment`, `DeviceOwnership`, `Field`, `PointOfInterest`, tsdb `measurements` | — | moodul TELEMETRY |
-| `POST /api/work-entries` | `FieldWork`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `WorkEntry`, `Warehouse` | C: `WorkEntry`, `WorkEntryLine`; U: `FieldWork` (olek); laoseisu ümberarvutus | ladu salvestatakse alati (valimata → põhiladu); mitteaktiivne ladu → 400 |
-| `PUT /api/work-entries/:id` | `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `Warehouse` | U: `WorkEntry`, `FieldWork`; C/D: `WorkEntryLine`; laoseisu ümberarvutus | kinnitatud hinnad säilitatakse, finantsolek võib muutuda; senine mitteaktiivne ladu jääb, uueks laoks ainult aktiivne |
+| `GET /api/field-works/telemetry-suggestions` | `FieldWork`, `VehicleTripField`, `VehicleTrip`, `WorkEntry`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY; sõitude registrist (põllurida kattub Tallinna päevaga); sama hooaja teise kandega seotud sõit jäetakse välja |
+| `POST /api/work-entries` | `FieldWork`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `WorkEntry`, `Warehouse`, `VehicleTripField` | C: `WorkEntry`, `WorkEntryLine`; U: `FieldWork` (olek); laoseisu ümberarvutus | ladu salvestatakse alati (valimata → põhiladu); mitteaktiivne ladu → 400; `tripId`: sõidul peab olema selle hooaja põllurida ja sõit ei tohi olla sama hooaja teise kandega seotud (muidu 400) |
+| `PUT /api/work-entries/:id` | `WorkEntry`, `WorkEntryLine`, `RelatedParty`, `Vehicle`, `Implement`, `Material`, `Warehouse`, `VehicleTripField` | U: `WorkEntry`, `FieldWork`; C/D: `WorkEntryLine`; laoseisu ümberarvutus | kinnitatud hinnad säilitatakse, finantsolek võib muutuda; senine mitteaktiivne ladu jääb, uueks laoks ainult aktiivne; `tripId` puudub → seos jääb, `null` → eemaldub, uus väärtus kontrollitakse nagu POST-is |
 | `DELETE /api/work-entries/:id` | `WorkEntry` | D: `WorkEntry`; kaskaad D: `WorkEntryLine`; U: `FieldWork`; laoseisu ümberarvutus | kinnitatud kanne ainult finantsjuht |
 | `GET /api/warehouses` | `Warehouse`, `PointOfInterest` | C/U: `Warehouse` (põhilao loomine, kui puudub) | kõigile |
 | `POST /api/warehouses` | `Warehouse` | C/U: `Warehouse` | admin/finantsjuht; põhilao vahetus lukuga |
@@ -694,7 +694,8 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `DeviceOwnership` | R | R | | | | | R | | RCU | | | | RU |
 | `DeviceAssignment` | R | R | | | | | R | | RCUD | | | | |
 | `ImplementAssignment` | R | R | | | | | R | | RCUD | | | | |
-| `VehicleTrip` | | | | | | | | | RU | | | | |
+| `VehicleTrip` | | R | | | | | R | | RU | | | | |
+| `VehicleTripField` | | R | | D | | | R | | R | | | | |
 | `TripImportState` | | | | | | | | | R | | | | |
 | `WorkType` | | R | | RC | | | RCUD | | | | | | C |
 | `Material` | | RU | | RCU | U | | RCUD | RCUD | | | | | |
@@ -702,7 +703,7 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `WorkTemplateItem` | | | | | D | | D | | | | | | |
 | `FieldWork` | | RCU | | RCUD | | R | RCUD | R | | | U | U | |
 | `FieldWorkLine` | | RCD | | CD | | | RCD | R | | | | | |
-| `WorkEntry` | | RCU | | CD | | | RCUD | | U | | U | U | |
+| `WorkEntry` | | RCU | | CD | | | RCUD | | RU | | U | U | |
 | `WorkEntryLine` | | RCUD | | CUD | | | RCUD | RU | U | | | | |
 | `Warehouse` | R | RC | | RC | | | R | RCUD | | | | | |
 | `StockDocument` | | | | | | | | RCUD | | | | | |
