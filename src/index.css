@@ -7916,6 +7916,15 @@ a.history-pill:hover {
   right: 6px;
 }
 
+/* Põldude ja külvikorra tabeli nimelahter: kuju nupp nurgas, nimi ei jookse selle alla */
+.name-cell.has-corner-btn {
+  padding-right: 30px;
+}
+
+.name-cell.has-corner-btn:not(.sticky-name) {
+  position: relative;
+}
+
 .fw-field.has-crop {
   background: color-mix(in srgb, var(--crop-color) var(--crop-tint), transparent);
   box-shadow: inset 3px 0 0 var(--crop-color);

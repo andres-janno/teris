@@ -511,7 +511,18 @@ function cropSummaryKey(cropText: string): string {
 
                   return (
                     <tr key={field.id}>
-                      <td className="name-cell sticky-name">
+                      <td className="name-cell sticky-name has-corner-btn">
+                        {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
+                        {selectedRec?.geometry && (
+                          <button
+                            type="button"
+                            className="fw-field-shape-btn corner"
+                            title={`Näita ${selectedYear}. a põllu kuju`}
+                            onClick={() => setShapeView({ fieldId: field.id, year: selectedYear })}
+                          >
+                            <Crosshair size={13} />
+                          </button>
+                        )}
                         <div className="field-title-line">
                           {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
                           <span className="field-name">{field.name}</span>

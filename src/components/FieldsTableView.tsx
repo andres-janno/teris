@@ -343,20 +343,21 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     const hasCrop = !isCropUndetermined(rec.crop);
                     return (
                       <tr key={field.id}>
-                        <td className="name-cell sticky-name">
+                        <td className="name-cell sticky-name has-corner-btn">
+                          {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
+                          {rec.geometry && (
+                            <button
+                              type="button"
+                              className="fw-field-shape-btn corner"
+                              onClick={() => setShapeView({ field, record: rec })}
+                              title={`Näita ${selectedYear}. a põllu kuju`}
+                            >
+                              <Crosshair size={13} />
+                            </button>
+                          )}
                           <div className="field-title-line">
                             {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
                             <span className="field-name">{field.name}</span>
-                            {rec.geometry && (
-                              <button
-                                type="button"
-                                className="icon-btn-ghost field-info-btn"
-                                onClick={() => setShapeView({ field, record: rec })}
-                                title={`Näita ${selectedYear}. a põllu kuju`}
-                              >
-                                <Crosshair size={15} />
-                              </button>
-                            )}
                           </div>
                           <div className="field-sub-tags">
                             <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
