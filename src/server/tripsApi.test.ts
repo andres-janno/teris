@@ -172,6 +172,29 @@ describe('tripsApi', () => {
     expect(r.json.map((t: any) => t.id)).toEqual([activeTripId]);
   });
 
+  it('kanne teise hooaja (sama põld) tööl kuulub sõidu põllurea alla ega jää kirjapanemata', async () => {
+    let seasonTripId = '';
+    let seasonEntryId = '';
+    let seasonWorkId = '';
+    await run(async () => {
+      const fs26 = await prisma.fieldSeason.findUniqueOrThrow({ where: { id: fsId } });
+      const fs27 = await prisma.fieldSeason.create({ data: { fieldId: fs26.fieldId, year: 2027, areaHa: 5, crop: 'test', geometry: {} } });
+      const wt = await prisma.workType.create({ data: { name: 'Sügiskülv2', shortName: 'SK', phase: 'SOWING' } });
+      seasonWorkId = (await prisma.fieldWork.create({ data: { fieldSeasonId: fs27.id, workTypeId: wt.id, phase: 'SOWING' } })).id;
+      seasonTripId = (await prisma.vehicleTrip.create({ data: tripRow(d('2026-11-02T06:00:00Z'), d('2026-11-02T07:00:00Z')) })).id;
+      await prisma.vehicleTripField.create({ data: {
+        tripId: seasonTripId, fieldSeasonId: fsId, arriveAt: d('2026-11-02T06:10:00Z'), leaveAt: d('2026-11-02T06:50:00Z'),
+        activeMinutes: 30, computedAt: new Date()
+      } });
+      seasonEntryId = (await prisma.workEntry.create({ data: { fieldWorkId: seasonWorkId, date: d('2026-11-02T00:00:00Z'), tripId: seasonTripId } })).id;
+    });
+    const r = await call('GET', `/api/fleet/trips${Q}`);
+    const t = r.json.find((x: any) => x.id === seasonTripId);
+    expect(t.fields[0].entries.map((e: any) => e.id)).toEqual([seasonEntryId]);
+    const u = await call('GET', `/api/fleet/trips${Q}&unlinkedOnly=1`);
+    expect(u.json.map((x: any) => x.id)).not.toContain(seasonTripId);
+  });
+
   it('muud teed ei kuulu siia', async () => {
     expect((await call('GET', '/api/fleet/vehicles')).handled).toBe(false);
   });

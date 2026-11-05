@@ -83,9 +83,9 @@ Sõidu kohta, samade punktidega mis kohtade tuvastus:
 ## Kande soovitused
 
 `GET /api/field-works/telemetry-suggestions` (sama tee, sama vastuse kuju + lisad):
-- Allikas: `vehicle_trip_fields` selle hooaja kohta, mille `[arriveAt, leaveAt]` kattub
-  valitud Tallinna kalendripäevaga.
-- Välja jäetakse sõidud, mis on seotud **sama hooaja teise** kandega (`excludeEntryId`
+- Allikas: `vehicle_trip_fields` selle **põllu** kohta (mis tahes hooaeg), mille `[arriveAt, leaveAt]`
+  kattub valitud Tallinna kalendripäevaga.
+- Välja jäetakse sõidud, mis on seotud **sama põllu teise** kandega (`excludeEntryId`
   arvestades).
 - Soovitus: `tripId`, masin/haakeriist (seoste registrist), `startTime`/`endTime` =
   sõidu algus/lõpp; kui sõit käis enne/pärast teistel põldudel, siis vastavalt
@@ -98,8 +98,13 @@ Sõidu kohta, samade punktidega mis kohtade tuvastus:
 
 **Kande aken:** soovituse klõps täidab ka kütuse ja jätab meelde `tripId`; seotud
 soovitusel nupp „Eemalda seos“. Kande salvestus (`POST`/`PUT /api/work-entries`):
-`tripId` lubatud ainult siis, kui sõidul on selle hooaja põllurida ja sõit pole sama
-hooaja teise kandega seotud (muidu 400 eestikeelse veaga).
+`tripId` lubatud ainult siis, kui sõidul on selle põllu rida ja sõit pole sama
+põllu teise kandega seotud (muidu 400 eestikeelse veaga).
+
+**Seos põllu, mitte hooaja järgi:** sõidu põllurida arvutatakse sõidu kalendriaasta
+hooaja vastu, sügistööd (nt sügiskülv) kuuluvad aga järgmise aasta hooaja alla. Seepärast
+võrdlevad soovitused, kande salvestuse kontroll ja sõitude registri kandeseos füüsilist
+põldu (`Field.id`), mitte `FieldSeason.id`-d.
 
 ## Sõitude register
 
@@ -126,8 +131,8 @@ hooaja teise kandega seotud (muidu 400 eestikeelse veaga).
   sõidu kütus); läbisõit serva pealt välja.
 - `tripImport.test.ts`: sõidule tekivad põllured; seose muutus (haakeriist vahetub)
   arvutab lõpliku sõidu ha ümber; kandega seotud sõidu id säilib liitumisel.
-- `fieldWorks`/kande API: soovitus registrist (aeg pausidega, kütus); sama hooaja teise
-  kandega seotud sõitu ei pakuta; vale `tripId` → 400; eri põldude kanded samale sõidule OK.
+- `fieldWorks`/kande API: soovitus registrist (aeg pausidega, kütus); sama põllu teise
+  kandega seotud sõitu ei pakuta (ka teise hooaja kanne, sügistööd); vale `tripId` → 400; eri põldude kanded samale sõidule OK.
 - `tripsApi.test.ts`: `areaHa`, `fields` koos kannetega, `unlinkedOnly`.
 
 ## Dokumentatsioon

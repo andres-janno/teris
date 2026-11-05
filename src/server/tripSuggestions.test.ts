@@ -176,3 +176,41 @@ describe('kande sõidu seos', () => {
     expect((await call('GET', SUG(s.fsA))).json).toHaveLength(1);
   });
 });
+
+describe('sõidu ja kande seos põllu järgi (sügistööd järgmise aasta hooajal)', () => {
+  const x = { fs26: 0, fs27: 0, fw26: '', fw27: '', trip: '' };
+  const SUG27 = () => `/api/field-works/telemetry-suggestions?fieldSeasonId=${x.fs27}&date=2026-10-12`;
+
+  beforeAll(async () => {
+    await run(async () => {
+      const device = (await prisma.telemetryDevice.findFirstOrThrow({ where: { imei: IMEI } })).id;
+      const field = await prisma.field.create({ data: { num: '3', name: 'Sügis', fieldCode: 'S-3' } });
+      x.fs26 = (await prisma.fieldSeason.create({ data: { fieldId: field.id, year: 2026, areaHa: 10, crop: 'test', geometry: {} } })).id;
+      x.fs27 = (await prisma.fieldSeason.create({ data: { fieldId: field.id, year: 2027, areaHa: 10, crop: 'test', geometry: {} } })).id;
+      const wt = await prisma.workType.create({ data: { name: 'Sügiskülv', phase: 'SOWING' } });
+      x.fw26 = (await prisma.fieldWork.create({ data: { fieldSeasonId: x.fs26, workTypeId: wt.id, phase: 'SOWING' } })).id;
+      x.fw27 = (await prisma.fieldWork.create({ data: { fieldSeasonId: x.fs27, workTypeId: wt.id, phase: 'SOWING' } })).id;
+      x.trip = (await prisma.vehicleTrip.create({ data: tripRow(device, d('2026-10-12T06:00:00Z'), d('2026-10-12T09:00:00Z')) })).id;
+      // sõidu põllurida arvutatakse sõidu kalendriaasta (2026) hooaja vastu
+      await prisma.vehicleTripField.create({ data: {
+        tripId: x.trip, fieldSeasonId: x.fs26, arriveAt: d('2026-10-12T06:30:00Z'), leaveAt: d('2026-10-12T07:30:00Z'),
+        activeMinutes: 55, areaHa: 3, computedAt: new Date()
+      } });
+    });
+  });
+
+  it('2027. hooaja kandele pakutakse 2026. hooaja põllureaga sõitu', async () => {
+    const r = await call('GET', SUG27());
+    expect(r.json.map((q: any) => q.tripId)).toEqual([x.trip]);
+  });
+
+  it('kanne 2027. hooajal salvestub sõiduga; 2026. hooaja teine kanne samale sõidule → TRIP_TAKEN', async () => {
+    const ok = await call('POST', '/api/work-entries', { fieldWorkId: x.fw27, date: '2026-10-12', tripId: x.trip });
+    expect(ok.status).toBe(200);
+    expect(ok.json.tripId).toBe(x.trip);
+    const taken = await call('POST', '/api/work-entries', { fieldWorkId: x.fw26, date: '2026-10-12', tripId: x.trip });
+    expect(taken.status).toBe(400);
+    expect(taken.json.error).toBe(TRIP_TAKEN);
+    expect((await call('GET', SUG27())).json).toHaveLength(0);
+  });
+});

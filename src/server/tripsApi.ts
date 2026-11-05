@@ -56,21 +56,21 @@ async function resolveTargets(trips: TripRow[]) {
   };
 }
 
-// Sõitude põllured koos põllu nime, haakeriista nime ja selle põllu kannetega (kanne = sama sõit + sama hooaeg)
+// Sõitude põllured koos põllu nime, haakeriista nime ja selle põllu kannetega (kanne = sama sõit + sama põld; sügistööd on järgmise aasta hooajal)
 async function loadTripFields(trips: TripRow[]): Promise<(tripId: string) => TripFieldDto[]> {
   const tripIds = trips.map((t) => t.id);
   if (tripIds.length === 0) return () => [];
   const [rows, entries] = await Promise.all([
     prisma.vehicleTripField.findMany({
       where: { tripId: { in: tripIds } },
-      include: { fieldSeason: { select: { year: true, field: { select: { num: true, name: true } } } } },
+      include: { fieldSeason: { select: { year: true, fieldId: true, field: { select: { num: true, name: true } } } } },
       orderBy: { arriveAt: 'asc' }
     }),
     prisma.workEntry.findMany({
       where: { tripId: { in: tripIds } },
       select: {
         id: true, tripId: true, date: true, fieldWorkId: true,
-        fieldWork: { select: { fieldSeasonId: true, workType: { select: { name: true, shortName: true } } } }
+        fieldWork: { select: { fieldSeason: { select: { fieldId: true } }, workType: { select: { name: true, shortName: true } } } }
       },
       orderBy: { date: 'asc' }
     })
@@ -94,7 +94,7 @@ async function loadTripFields(trips: TripRow[]): Promise<(tripId: string) => Tri
       fuelFieldL: r.fuelFieldL,
       fuelSharedL: r.fuelSharedL,
       entries: entries
-        .filter((e) => e.tripId === r.tripId && e.fieldWork.fieldSeasonId === r.fieldSeasonId)
+        .filter((e) => e.tripId === r.tripId && e.fieldWork.fieldSeason.fieldId === r.fieldSeason.fieldId)
         .map((e) => ({ id: e.id, fieldWorkId: e.fieldWorkId, workTypeName: workTypeDisplayName(e.fieldWork.workType), date: e.date.toISOString().slice(0, 10) }))
     });
     byTrip.set(r.tripId, list);

@@ -1,5 +1,7 @@
 // src/server/tripSuggestions.ts — kande telemeetria soovitused sõitude registrist ja kande ↔ sõidu seose kontroll.
-// Soovitus = sõidu põllurida valitud põllul (hooajal), mis kattub valitud Tallinna kalendripäevaga.
+// Soovitus = sõidu põllurida valitud põllul (füüsiline põld, mis tahes hooaeg), mis kattub valitud Tallinna kalendripäevaga.
+// Sügistööd (nt sügiskülv) kuuluvad järgmise aasta hooaja alla, sõidu põllurida arvutatakse aga sõidu kalendriaasta hooaja vastu —
+// seepärast võrreldakse põldu, mitte hooaega.
 // Aeg, ha ja kütus tulevad registrist (sama, mida näitab Tehnika → Sõidud), mitte uuest GPS-arvutusest.
 import { prisma } from './db.ts';
 import { loadAssignmentResolver } from './tripAssignments.ts';
@@ -52,13 +54,16 @@ export async function getTelemetrySuggestionsForField(
   if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) return [];
   const dayStart = tallinnMidnightUtc(dateStr);
   const dayEnd = tallinnMidnightUtc(nextDay(dateStr));
+  const season = await prisma.fieldSeason.findUnique({ where: { id: fieldSeasonId }, select: { fieldId: true } });
+  if (!season) return [];
+  const fieldId = season.fieldId;
   const rows = await prisma.vehicleTripField.findMany({
-    where: { fieldSeasonId, arriveAt: { lt: dayEnd }, leaveAt: { gte: dayStart } },
+    where: { fieldSeason: { fieldId }, arriveAt: { lt: dayEnd }, leaveAt: { gte: dayStart } },
     include: {
       trip: {
         include: {
-          fields: { select: { fieldSeasonId: true, arriveAt: true, leaveAt: true } },
-          workEntries: { select: { id: true, fieldWork: { select: { fieldSeasonId: true } } } }
+          fields: { select: { arriveAt: true, leaveAt: true, fieldSeason: { select: { fieldId: true } } } },
+          workEntries: { select: { id: true, fieldWork: { select: { fieldSeason: { select: { fieldId: true } } } } } }
         }
       }
     },
@@ -69,12 +74,12 @@ export async function getTelemetrySuggestionsForField(
   const out: TelemetrySuggestion[] = [];
   for (const r of rows) {
     const t = r.trip;
-    const own = t.workEntries.filter((e) => e.fieldWork.fieldSeasonId === fieldSeasonId);
-    // Sama hooaja teise kandega seotud sõitu ei pakuta (teise põllu kanne ei sega)
+    const own = t.workEntries.filter((e) => e.fieldWork.fieldSeason.fieldId === fieldId);
+    // Sama põllu teise kandega seotud sõitu ei pakuta (teise põllu kanne ei sega)
     if (own.some((e) => e.id !== excludeEntryId)) continue;
     const target = resolve(t.deviceId, r.arriveAt);
     // Kui sõit käis enne/pärast teistel põldudel, jagatakse aeg põllu piiril
-    const others = t.fields.filter((f) => f.fieldSeasonId !== fieldSeasonId);
+    const others = t.fields.filter((f) => f.fieldSeason.fieldId !== fieldId);
     const fieldBefore = others.some((f) => f.arriveAt < r.arriveAt);
     const fieldAfter = others.some((f) => f.leaveAt > r.leaveAt);
     out.push({
@@ -105,12 +110,15 @@ export async function getTelemetrySuggestionsForField(
   return out.sort((a, b) => a.startTime.localeCompare(b.startTime));
 }
 
-/** Kande sõidu seose kontroll: sõidul peab olema selle hooaja põllurida ja sõit ei tohi olla sama hooaja teise kandega seotud. */
+/** Kande sõidu seose kontroll: sõidul peab olema selle põllu rida (mis tahes hooaeg) ja sõit ei tohi olla sama põllu teise kandega seotud. */
 export async function entryTripError(tripId: string, fieldSeasonId: number, entryId: string | null): Promise<string | null> {
-  const row = await prisma.vehicleTripField.findFirst({ where: { tripId, fieldSeasonId }, select: { id: true } });
+  const season = await prisma.fieldSeason.findUnique({ where: { id: fieldSeasonId }, select: { fieldId: true } });
+  if (!season) return TRIP_NOT_ON_FIELD;
+  const fieldId = season.fieldId;
+  const row = await prisma.vehicleTripField.findFirst({ where: { tripId, fieldSeason: { fieldId } }, select: { id: true } });
   if (!row) return TRIP_NOT_ON_FIELD;
   const other = await prisma.workEntry.findFirst({
-    where: { tripId, fieldWork: { fieldSeasonId }, ...(entryId ? { id: { not: entryId } } : {}) },
+    where: { tripId, fieldWork: { fieldSeason: { fieldId } }, ...(entryId ? { id: { not: entryId } } : {}) },
     select: { id: true }
   });
   return other ? TRIP_TAKEN : null;
