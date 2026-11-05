@@ -202,6 +202,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
   const [articles, setArticles] = useState<Article[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadedYear, setLoadedYear] = useState<number | null>(null); // aasta, mille tööde laadimine on lõppenud (ka veaga)
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [activity, setActivity] = useState<string>('all'); // töötüübi id või 'all'
@@ -257,6 +258,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       alertDialog(errorText(err));
     } finally {
       setLoading(false);
+      setLoadedYear(year);
     }
   }, [year]);
 
@@ -267,10 +269,18 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   // Mujalt avatud töö valitakse, kui tööd on laetud (enne laadimist id-d loendis pole)
   useEffect(() => {
-    if (!initialWorkId || !fieldWorks.some((w) => w.id === initialWorkId)) return;
-    setSelectedId(initialWorkId);
+    if (!initialWorkId || loadedYear !== year) return;
+    if (fieldWorks.some((w) => w.id === initialWorkId)) {
+      // Tahvli enda filtrid ei tohi töö kaarti peita
+      setSearch('');
+      setActivity('all');
+      setCropFilter('all');
+      setHideDone(false);
+      setSelectedId(initialWorkId);
+    }
+    // Ootel id tühjendatakse ka siis, kui tööd ei leitud (kustutatud, teine aasta, laadimisviga)
     onInitialWorkConsumed?.();
-  }, [initialWorkId, fieldWorks, onInitialWorkConsumed]);
+  }, [initialWorkId, loadedYear, year, fieldWorks, onInitialWorkConsumed]);
 
   // Põldude muutus (nt kultuuri valik või põllu kustutamine registris) → laeme tööd veidi hiljem uuesti.
   // Esmalaadimine on ülal; siin ainult päris muutus pärast seda (mitte esimene renderdus ega

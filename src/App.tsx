@@ -501,6 +501,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   });
   const changeMainView = (view: MainView) => {
     setMainView(view);
+    if (view !== 'works') setWorksFocusId(null); // ootel töö ei kehti pärast vaate vahetust
     try {
       localStorage.setItem(mainViewKey, view);
     } catch {
