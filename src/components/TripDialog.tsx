@@ -121,8 +121,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                     <th>Põld</th>
                     <th>Põllul</th>
                     <th className="num">ha</th>
-                    <th className="num">Kütus põllul l</th>
-                    <th className="num">Koos teega l</th>
+                    <th className="num" title="Põllu kütus koos osaga teel kulunud kütusest; all põllul kulunud kütus">Kütus l</th>
                     <th>Kanne</th>
                   </tr>
                 </thead>
@@ -137,9 +136,11 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                           {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
                         </div>
                       </td>
-                      <td className="num">{f.fuelFieldL == null ? '—' : formatQty(f.fuelFieldL)}</td>
-                      <td className="num">{f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}</td>
-                      <td>
+                      <td className="num">
+                        {f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}
+                        {f.fuelFieldL != null && <div className="text-muted">põllul {formatQty(f.fuelFieldL)}</div>}
+                      </td>
+                      <td className="trip-dialog-entry-cell">
                         {f.entries.length === 0 ? (
                           <span className="text-muted">kanne puudub</span>
                         ) : (
@@ -147,12 +148,13 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                             <button
                               key={e.id}
                               type="button"
-                              className="btn btn-ghost btn-sm"
+                              className="trip-dialog-entry"
                               title="Ava põllu töö"
                               disabled={!onOpenFieldWork}
                               onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
                             >
-                              {e.workTypeName} {formatDate(e.date)}
+                              <span>{e.workTypeName}</span>
+                              <span className="text-muted">{formatDate(e.date)}</span>
                             </button>
                           ))
                         )}

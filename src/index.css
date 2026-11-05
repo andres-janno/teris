@@ -11226,7 +11226,7 @@ td.stock-qty-out { color: #dc2626; }
 .register-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .register-table tr.clickable-row { cursor: pointer; }
 .register-table tr.clickable-row:hover td { background: var(--bg-card-hover); }
-.trip-dialog { max-width: 760px; }
+.trip-dialog { max-width: 860px; }
 .trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
 .trip-dialog-metrics th { text-align: left; font-weight: 500; color: var(--text-muted); padding: 3px 12px 3px 0; width: 40%; }
@@ -11234,3 +11234,14 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-fields { width: 100%; font-size: 13px; margin-bottom: 12px; }
 .trip-dialog-fields .text-muted { font-size: 12px; }
 .trip-dialog-fields .btn-sm { padding: 0 6px; }
+.trip-dialog-fields td { vertical-align: top; }
+.trip-dialog-entry-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
+/* Kanne: töö nimi ja kuupäev kahel real, link põllutööle */
+.trip-dialog-entry {
+  display: flex; flex-direction: column; align-items: flex-start;
+  padding: 0; border: 0; background: none; font: inherit; font-size: 13px;
+  color: var(--color-primary); text-align: left; cursor: pointer;
+}
+.trip-dialog-entry:hover span:first-child { text-decoration: underline; }
+.trip-dialog-entry:disabled { color: inherit; cursor: default; }
+.trip-dialog-entry:disabled:hover span:first-child { text-decoration: none; }
