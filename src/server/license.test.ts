@@ -54,6 +54,11 @@ describe('moduleForRoute', () => {
     ['/api/weather/radar.png', 'WEATHER']
   ])('%s → %s', (path, mod) => expect(moduleForRoute(path)).toBe(mod));
 
+  it('sõitude teed on TELEMETRY', () => {
+    expect(moduleForRoute('/api/fleet/trips')).toBe('TELEMETRY');
+    expect(moduleForRoute('/api/fleet/trips/abc/track')).toBe('TELEMETRY');
+  });
+
   it.each(['/api/fleet', '/api/fleet/vehicles', '/api/fleet/implements', '/api/fleet/implement-assignments', '/api/seasons', '/api/fleetdevices'])(
     '%s on põhimoodul', (path) => expect(moduleForRoute(path)).toBeNull()
   );

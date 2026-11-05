@@ -50,8 +50,8 @@ export function licenseState(license: { validUntil: Date; modules: string[] } | 
 const MODULE_ROUTES: { module: LicenseModule; exact: string[]; prefixes: string[] }[] = [
   {
     module: 'TELEMETRY',
-    exact: ['/api/fleet/devices', '/api/fleet/device-assignments', '/api/telemetry/history', '/api/field-works/telemetry-suggestions'],
-    prefixes: ['/api/fleet/devices/', '/api/fleet/device-assignments/', '/api/telemetry/']
+    exact: ['/api/fleet/devices', '/api/fleet/device-assignments', '/api/telemetry/history', '/api/field-works/telemetry-suggestions', '/api/fleet/trips'],
+    prefixes: ['/api/fleet/devices/', '/api/fleet/device-assignments/', '/api/fleet/trips/', '/api/telemetry/']
   },
   { module: 'SATELLITE', exact: [], prefixes: ['/api/satellite/'] },
   { module: 'WEATHER', exact: [], prefixes: ['/api/weather/'] }
