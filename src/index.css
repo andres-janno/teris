@@ -9333,6 +9333,22 @@ a.history-pill:hover {
   color: #ffffff;
 }
 
+.telemetry-pill-unlink {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--btn-sec-bg);
+  border: 1px solid var(--btn-sec-border);
+  border-radius: var(--radius-sm);
+  padding: 1px 8px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.telemetry-pill-unlink:hover {
+  background: var(--btn-sec-hover);
+}
+
 /* Sõidu teekond (TripRouteView) — soovituse nupu all täislaiuses */
 .telemetry-suggestion-pill {
   flex-wrap: wrap;

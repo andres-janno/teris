@@ -123,6 +123,7 @@ export interface WorkEntry {
   workerName: string | null;
   areaHa: number | null;
   telemetryAreaHa?: number | null;
+  tripId?: string | null; // sõitude registri sõit, millest kanne tehti
   occurrenceNo: number | null;
   vehicleId: string | null;
   vehicleName: string | null;
@@ -187,7 +188,8 @@ export interface FieldWorkPlanInput {
 }
 
 export interface TelemetrySuggestion {
-  id: string;
+  id: string; // = tripId
+  tripId: string; // sõitude registri sõit
   vehicleId: string | null;
   vehicleName: string | null;
   implementId: string | null;
@@ -199,8 +201,10 @@ export interface TelemetrySuggestion {
   fieldStartTime: string; // põllu piiridesse jõudmine
   fieldEndTime: string; // põllu piiridest lahkumine
   durationHours: number; // põllu piirides süüde sees oldud aeg
-  workedAreaHa: number | null;
+  workedAreaHa: number | null; // tühi = haakeriista laius puudub
+  fuelLiters: number | null; // põllu kütus + osa teekütusest
   pointCount: number;
+  linked: boolean; // muudetav kanne on juba selle sõiduga seotud
   route?: TripRoute; // sõidu teekond (algus, läbitud kohad, lõpp)
 }
 
@@ -237,6 +241,7 @@ export interface WorkEntryInput {
   workerId: string | null;
   areaHa: number | null;
   telemetryAreaHa?: number | null;
+  tripId?: string | null; // null = seos eemaldatakse
   occurrenceNo?: number | null;
   vehicleId: string | null;
   implementId: string | null;

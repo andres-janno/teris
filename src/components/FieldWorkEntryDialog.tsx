@@ -180,7 +180,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   const [telemetrySuggestions, setTelemetrySuggestions] = useState<TelemetrySuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
-  const [selectedSuggestionId, setSelectedSuggestionId] = useState<string | null>(null);
+  // Kande seos sõitude registri sõiduga (tühi = seoseta)
+  const [tripId, setTripId] = useState<string | null>(entry?.tripId ?? null);
 
   useEffect(() => {
     api.getWarehouses().then((ws) => {
@@ -213,35 +214,34 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   }, [telemetryEnabled, work.fieldSeasonId, date, entry?.id]);
 
   const applySuggestion = (s: TelemetrySuggestion) => {
-    setSelectedSuggestionId(s.id);
+    setTripId(s.tripId);
     if (s.vehicleId) setVehicleId(s.vehicleId);
     setImplementId(s.implementId || '');
     if (s.workerId) setWorkerId(s.workerId);
-    // Kande aeg, tööaeg ning masina ja haakeriista töötunnid süüte järgi (sisse → välja)
+    // Kande aeg, tööaeg ning masina ja haakeriista töötunnid sõidu järgi (pausid sees)
     setStartTime(s.startTime);
     setEndTime(s.endTime);
     const tripMins = timeToMinutes(s.endTime) - timeToMinutes(s.startTime);
     const hStr = tripMins > 0 ? fmt(Math.round((tripMins / 60) * 100) / 100) : '';
     setLaborHours(hStr);
     setEquipmentHours(hStr);
-    if (s.workedAreaHa != null) {
-      setTelemetryAreaHa(fmt(s.workedAreaHa));
-      // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); 0 ha (haakeriist puudub) ei kirjuta üle
-      if (s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
-    }
+    // Kütus: põllu kütus + osa teekütusest (sõitude registrist)
+    if (s.fuelLiters != null) setFuelLiters(fmt(s.fuelLiters, 1));
+    setTelemetryAreaHa(fmt(s.workedAreaHa));
+    // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); tühi/0 ha (laius puudub) ei kirjuta üle
+    if (s.workedAreaHa != null && s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
   };
 
-  // Sõidu seos kandega: täpselt sama masin ja aeg = valitud; sama masin ja kattuv aeg = kanne on sellest sõidust,
-  // aga väärtused erinevad (nt varem salvestatud põllul oldud aja järgi)
-  const suggestionState = (s: TelemetrySuggestion): 'selected' | 'linked' | null => {
-    if (selectedSuggestionId === s.id) return 'selected';
-    if (!vehicleId || s.vehicleId !== vehicleId || !startTime || !endTime) return null;
-    if (startTime === s.startTime && endTime === s.endTime) return 'selected';
-    const from = Math.min(timeToMinutes(s.startTime), timeToMinutes(s.fieldStartTime));
-    const to = Math.max(timeToMinutes(s.endTime), timeToMinutes(s.fieldEndTime));
-    return Math.max(from, timeToMinutes(startTime)) < Math.min(to, timeToMinutes(endTime)) ? 'linked' : null;
+  // Kande seos sõiduga: 'linked' = salvestatud seos, 'selected' = valitud (salvestamata)
+  const suggestionState = (s: TelemetrySuggestion): 'selected' | 'linked' | null =>
+    s.tripId !== tripId ? null : tripId === (entry?.tripId ?? null) ? 'linked' : 'selected';
+  const hasSelectedSuggestion = telemetrySuggestions.some((s) => suggestionState(s) !== null);
+  // Seose eemaldamine: nupp on soovituse sees — klõps ei tohi soovitust uuesti valida
+  const unlinkTrip = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    setTripId(null);
   };
-  const hasSelectedSuggestion = telemetrySuggestions.some((s) => suggestionState(s) === 'selected');
 
   const vehicleOptions = useMemo(() => {
     const list = [...vehicles];
@@ -356,6 +356,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           fuelLiters: parseNum(fuelLiters),
           areaHa: parseNum(areaHa),
           telemetryAreaHa: parseNum(telemetryAreaHa),
+          tripId,
           warehouseId: warehouseId || null,
           articles: rows
             .map((r) => ({ articleId: r.articleId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
@@ -441,7 +442,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               <div className="telemetry-suggestions-list">
                 {telemetrySuggestions.map((s) => {
                   const state = suggestionState(s);
-                  const isSelected = state === 'selected';
+                  const isSelected = state !== null;
                   return (
                     <button
                       key={s.id}
@@ -458,13 +459,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                         )}
                         <span className="telemetry-pill-time">
                           <Clock size={12} /> {s.startTime} – {s.endTime}
-                          {s.workedAreaHa != null && (
-                            (s.workedAreaHa > 0 && s.implementName) ? (
-                              <span> · {fmtHa(s.workedAreaHa)} ha</span>
-                            ) : (
-                              <span style={{ color: '#ef4444', fontWeight: 600 }}> · 0 ha</span>
-                            )
+                          {s.workedAreaHa != null && s.workedAreaHa > 0 ? (
+                            <span> · {fmtHa(s.workedAreaHa)} ha</span>
+                          ) : (
+                            <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
+                              {' · '}{s.workedAreaHa == null ? 'ha puudub' : '0 ha'}
+                            </span>
                           )}
+                          {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
                         </span>
                       </div>
                       <div className="telemetry-pill-meta">
@@ -473,8 +475,19 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           Põllul {s.fieldStartTime} – {s.fieldEndTime}
                         </span>
                         <span className="telemetry-pill-action">
-                          {isSelected ? '✓ Valitud' : state === 'linked' ? 'Uuenda selle sõidu järgi' : 'Vali see sõit'}
+                          {state === 'linked' ? '✓ Seotud' : state === 'selected' ? '✓ Valitud' : 'Vali see sõit'}
                         </span>
+                        {isSelected && (
+                          <span
+                            role="button"
+                            tabIndex={0}
+                            className="telemetry-pill-unlink"
+                            onClick={unlinkTrip}
+                            onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') unlinkTrip(e); }}
+                          >
+                            Eemalda seos
+                          </span>
+                        )}
                       </div>
                       {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                     </button>
