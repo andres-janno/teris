@@ -29,10 +29,15 @@ async function resolveTargets(trips: TripRow[]) {
     })
   ]);
   const vehicleIds = [...new Set(assignments.map((a) => a.vehicleId).filter((x): x is string => !!x))];
-  const implAssignments = vehicleIds.length
+  const implementIds = [...new Set(assignments.filter((a) => !a.vehicleId).map((a) => a.implementId).filter((x): x is string => !!x))];
+  // Seadme seos võib olla haakeriistaga (ilma masinata); siis leiame masina haakeriista haakimise registrist.
+  const implAssignments = vehicleIds.length || implementIds.length
     ? await prisma.implementAssignment.findMany({
-        where: { vehicleId: { in: vehicleIds } },
-        include: { implement: { select: { id: true, name: true } } },
+        where: { OR: [
+          ...(vehicleIds.length ? [{ vehicleId: { in: vehicleIds } }] : []),
+          ...(implementIds.length ? [{ implementId: { in: implementIds } }] : [])
+        ] },
+        include: { implement: { select: { id: true, name: true } }, vehicle: { select: { id: true, name: true } } },
         orderBy: { startedAt: 'desc' }
       })
     : [];
@@ -41,13 +46,17 @@ async function resolveTargets(trips: TripRow[]) {
     const dev = devices.find((d) => d.id === t.deviceId);
     const a = assignments.find((x) => x.deviceId === t.deviceId && covers(x, t.startedAt));
     let implement = a?.implement ?? null;
+    let vehicle = a?.vehicle ?? null;
     if (!implement && a?.vehicleId) {
       implement = implAssignments.find((x) => x.vehicleId === a.vehicleId && covers(x, t.startedAt))?.implement ?? null;
     }
+    if (!vehicle && a?.implementId) {
+      vehicle = implAssignments.find((x) => x.implementId === a.implementId && covers(x, t.startedAt))?.vehicle ?? null;
+    }
     return {
       deviceLabel: dev ? deviceLabelOf(dev) : t.deviceId,
-      vehicleId: a?.vehicle?.id ?? null,
-      vehicleName: a?.vehicle?.name ?? null,
+      vehicleId: vehicle?.id ?? null,
+      vehicleName: vehicle?.name ?? null,
       implementId: implement?.id ?? null,
       implementName: implement?.name ?? null
     };

@@ -46,6 +46,9 @@ const MIN_POINTS = 3;
 const MOVING_KMH = 2;
 const JITTER_M = 5;
 const EARTH_RADIUS_M = 6371000;
+// Kütusetaseme andur näitab pärast süüte sisselülitamist ~1–2 min valesid väärtusi (nt 0, 8, 18 enne tegelikku 85),
+// seepärast loeme algustaseme alles 2 min pärast sõidu algust.
+const FUEL_LEVEL_SETTLE_MS = 120 * 1000;
 
 const isOn = (s: TripSample) => s.ignition !== false;
 const round = (n: number, d: number) => Math.round(n * 10 ** d) / 10 ** d;
@@ -63,6 +66,11 @@ type Draft = { points: TripSample[]; breaks: Set<number>; pauseCount: number; pa
 const firstOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
   for (const p of pts) { const v = f(p); if (v != null) return v; }
   return null;
+};
+const fuelLevelStart = (pts: TripSample[]) => {
+  const settled = pts[0].time.getTime() + FUEL_LEVEL_SETTLE_MS;
+  for (const p of pts) if (p.fuelLevelPct != null && p.time.getTime() >= settled) return p.fuelLevelPct;
+  return firstOf(pts, (q) => q.fuelLevelPct); // sõit lühem kui 2 min või hiljem näite pole
 };
 const lastOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
   for (let i = pts.length - 1; i >= 0; i--) { const v = f(pts[i]); if (v != null) return v; }
@@ -126,7 +134,7 @@ function build(d: Draft, status: 'ACTIVE' | 'CLOSED'): SegmentedTrip {
     maxSpeedKmh: maxSpeed,
     avgSpeedKmh: movingMinutes > 0 ? round(distanceKm / (movingMinutes / 60), 1) : null,
     fuelLiters: fuelLiters(d),
-    fuelLevelStartPct: firstOf(pts, (p) => p.fuelLevelPct),
+    fuelLevelStartPct: fuelLevelStart(pts),
     fuelLevelEndPct: lastOf(pts, (p) => p.fuelLevelPct),
     engineHoursStart: firstOf(pts, (p) => p.engineHours),
     engineHoursEnd: lastOf(pts, (p) => p.engineHours),

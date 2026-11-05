@@ -84,6 +84,18 @@ describe('importDeviceTrips', () => {
     expect(t.every((x) => x.status === 'CLOSED')).toBe(true);
   });
 
+  it('üheaegsed impordid sama seadme kohta ei tekita duplikaate', async () => {
+    samples = [...range(0, 30), pt(31, false), ...range(60, 90), pt(91, false)];
+    nowMin = 120;
+    await Promise.all([
+      run(() => importDeviceTrips(device(), deps)),
+      run(() => importDeviceTrips(device(), deps))
+    ]);
+    const t = await trips();
+    expect(t).toHaveLength(2);
+    expect(new Set(t.map((x) => x.startedAt.getTime())).size).toBe(2);
+  });
+
   it('pooleli sõit on ACTIVE ja kasvab järgmisel käigul', async () => {
     samples = range(0, 20);
     nowMin = 25;

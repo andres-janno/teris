@@ -64,6 +64,8 @@ function tripData(t: SegmentedTrip, route: TripRoute | null, now: Date) {
 
 async function writeChunk(deviceId: string, from: Date, to: Date, trips: SegmentedTrip[], routes: (TripRoute | null)[], now: Date, finalizedUntil: Date) {
   await tenantTransaction(async (tx) => {
+    // Üheaegsed impordid (CLI ja ajastaja) ei tohi sama uut sõitu kaks korda luua
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('trip-import:' || current_setting('app.tenant_id') || ':' || ${deviceId}))`;
     const existing = await tx.vehicleTrip.findMany({
       where: { deviceId, startedAt: { gt: from, lte: to } },
       orderBy: { startedAt: 'asc' },

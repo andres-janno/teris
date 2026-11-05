@@ -21,6 +21,12 @@ const isoDay = (d: Date) => {
   const day = String(d.getDate()).padStart(2, '0');
   return `${y}-${m}-${day}`;
 };
+// Lõpp näidatakse koos kuupäevaga (pp.kk HH:MM), kui sõit lõpeb teisel kohalikul päeval kui algas
+const endText = (startIso: string, endIso: string) => {
+  const s = formatDateTime(startIso);
+  const e = formatDateTime(endIso);
+  return s.slice(0, 10) === e.slice(0, 10) ? e.slice(11) : `${e.slice(0, 5)} ${e.slice(11)}`;
+};
 const defaultFrom = () => isoDay(new Date(Date.now() - (DEFAULT_DAYS - 1) * 86_400_000));
 const defaultTo = () => isoDay(new Date());
 // Kohalik (Tallinna) päev → ISO ajavahemik [alates päeva algusest, kuni järgmise päeva alguseni)
@@ -162,7 +168,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles }) => {
                       {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
                       {t.implementName && <span className="text-muted"> ({t.implementName})</span>}
                     </td>
-                    <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : formatDateTime(t.endedAt).slice(11)}</td>
+                    <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</td>
                     <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
                     <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>
                     <td className="num">{formatQty(t.distanceKm)}</td>

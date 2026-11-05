@@ -64,6 +64,8 @@ afterAll(async () => {
     await prisma.vehicleTrip.deleteMany({});
     await prisma.tripImportState.deleteMany({});
     await prisma.deviceAssignment.deleteMany({});
+    await prisma.implementAssignment.deleteMany({});
+    await prisma.implement.deleteMany({});
     await prisma.telemetryDevice.deleteMany({});
     await prisma.vehicle.deleteMany({});
   }).catch((e) => console.error('Testi puhastus ebaõnnestus', e));
@@ -80,6 +82,26 @@ describe('tripsApi', () => {
     expect(r.json[0].status).toBe('ACTIVE');
     expect(r.json[1].vehicleName).toBe('Testtraktor');
     expect(r.json[1].start.place.label).toBe('Töökoda');
+  });
+
+  it('seade haakeriistal: masin leitakse haakimise registrist sõidu alguse ajal', async () => {
+    const ids = await run(async () => {
+      const dev2 = (await prisma.telemetryDevice.create({ data: { imei: `${IMEI.slice(0, 14)}9`, model: 'FMC650' } })).id;
+      const impl = (await prisma.implement.create({ data: { name: 'Testhaake', type: 'PLOW' } })).id;
+      const v2 = (await prisma.vehicle.create({ data: { name: 'Teine traktor', type: 'TRACTOR', model: 'Y' } })).id;
+      await prisma.deviceAssignment.create({ data: { deviceId: dev2, implementId: impl, startedAt: d('2026-10-01T00:00:00Z') } });
+      await prisma.implementAssignment.create({ data: { vehicleId, implementId: impl, startedAt: d('2026-12-01T00:00:00Z'), endedAt: d('2026-12-10T00:00:00Z') } });
+      await prisma.implementAssignment.create({ data: { vehicleId: v2, implementId: impl, startedAt: d('2026-12-10T00:00:00Z') } });
+      await prisma.vehicleTrip.create({ data: { ...tripRow(d('2026-12-05T06:00:00Z'), d('2026-12-05T07:00:00Z')), deviceId: dev2 } });
+      await prisma.vehicleTrip.create({ data: { ...tripRow(d('2026-12-12T06:00:00Z'), d('2026-12-12T07:00:00Z')), deviceId: dev2 } });
+      return { dev2 };
+    });
+    expect(ids.dev2).toBeTruthy();
+    const r = await call('GET', '/api/fleet/trips?from=2026-12-01T00:00:00Z&to=2026-12-20T00:00:00Z');
+    expect(r.json).toHaveLength(2);
+    expect(r.json[0].vehicleName).toBe('Teine traktor'); // hilisem sõit
+    expect(r.json[1].vehicleName).toBe('Testtraktor');
+    expect(r.json[1].implementName).toBe('Testhaake');
   });
 
   it('filtrid: olek, masin, tundmatu koht', async () => {

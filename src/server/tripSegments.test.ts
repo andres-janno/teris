@@ -106,10 +106,19 @@ describe('segmentTrips', () => {
     expect(segmentTrips(run(0, 10), LATER)[0].fuelLiters).toBeNull();
   });
 
+  it('kütusetaseme algus: anduri hüpe esimesel minutil jäetakse vahele', () => {
+    // 0, 8, 18 esimese minuti jooksul (sekundites), 85 alles 2 min pärast algust
+    const at = (sec: number) => new Date(T0 + sec * 1000);
+    const lv: [number, number][] = [[0, 0], [20, 8], [45, 18], [120, 85], [180, 85], [240, 84]];
+    const pts = lv.map(([sec, v], i) => ({ ...s(0), time: at(sec), lat: 58 + i * 0.0001, fuelLevelPct: v }));
+    const t = segmentTrips(pts, LATER)[0];
+    expect(t.fuelLevelStartPct).toBe(85);
+  });
+
   it('kütusetase ja mootoritunnid: esimene ja viimane näit', () => {
     const pts = run(0, 10).map((p, i) => ({ ...p, fuelLevelPct: i === 0 ? null : 80 - i, engineHours: i < 5 ? 2789 : 2790 }));
     const t = segmentTrips(pts, LATER)[0];
-    expect(t.fuelLevelStartPct).toBe(79);
+    expect(t.fuelLevelStartPct).toBe(78); // esimene näit vähemalt 2 min pärast algust (i=2)
     expect(t.fuelLevelEndPct).toBe(70);
     expect(t.engineHoursStart).toBe(2789);
     expect(t.engineHoursEnd).toBe(2790);

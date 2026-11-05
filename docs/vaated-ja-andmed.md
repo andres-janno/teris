@@ -47,7 +47,7 @@ Põhivaated on ülamenüüs (`MAIN_VIEWS` failis `src/components/Header.tsx`), v
 | Külvikord (`rotation`) | `FieldManagerModal` (täisleht) + `FieldShapeModal` | Põldude kultuurid aastate kaupa | `FieldSeason` (RCU), `Field` (RU) |
 | Põllutööd (`works`) | `FieldWorksBoard` (+ `AddFieldWorkDialog`, `FieldWorkPlanForm`, `FieldWorkEntryDialog`, `FinanceModal`, `WorkRegisterModal`) | Hooaja tööde tahvel, plaanid, kanded, finantside kinnitamine, tööliikide register | `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `WorkType`, `Material` (RCUD) |
 | Kulumaterjalid (`materials`) | `MaterialsView` (+ `MaterialFormDialog`, `MaterialStockCard`, `StockDocumentsPanel`, `WarehousesPanel`) | Materjalide register koos hooaja plaanitud ja kasutatud koguste ning laoseisuga; laokanded ja laod (finants) | `Material` (RCUD), `FieldWorkLine`, `WorkEntryLine` (R), `MaterialStock` (R), `StockDocument`, `StockDocumentLine`, `Warehouse` (RCUD) |
-| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU), `VehicleTrip` (RCUD), `TripImportState` (RCU) |
+| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU), `VehicleTrip` (RU), `TripImportState` (R) |
 | Taristu (`infrastructure`) | `PoiManagerModal` (täisleht) | Muud asukohad (kuivatid, laod, tanklad jm) | `PointOfInterest` (RCUD) |
 | Isikud (`parties`) | `RelatedPartiesModal` (täisleht) | Seotud isikud: maaomanikud, rentnikud, masinajuhid, partnerid | `RelatedParty` (RCUD) |
 | Konto (päise kasutajamenüü, sisselogimine) | `AuthGate`, `LoginPage`, `SetPasswordPage`, `UserMenu`, `ChangePasswordModal`, `UsersAdminModal`, `SupportAccessPanel` | Sisselogimine, parooli määramine ja vahetus, kasutajate haldus, kasutajatoe ligipääs | `User`, `Session`, `PasswordToken`, `SupportGrant` (RCUD) |
@@ -694,8 +694,8 @@ Veerud: **Kaart**, **Põld** (põllu aken koos dialoogidega), **Hooaj** (Hooajad
 | `DeviceOwnership` | R | R | | | | | R | | RCU | | | | RU |
 | `DeviceAssignment` | R | R | | | | | R | | RCUD | | | | |
 | `ImplementAssignment` | R | R | | | | | R | | RCUD | | | | |
-| `VehicleTrip` | | | | | | | | | RCUD | | | | |
-| `TripImportState` | | | | | | | | | RCU | | | | |
+| `VehicleTrip` | | | | | | | | | RU | | | | |
+| `TripImportState` | | | | | | | | | R | | | | |
 | `WorkType` | | R | | RC | | | RCUD | | | | | | C |
 | `Material` | | RU | | RCU | U | | RCUD | RCUD | | | | | |
 | `WorkTemplate` | | | | | D | | | | | | | | |

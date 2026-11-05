@@ -65,7 +65,7 @@ async function main(): Promise<void> {
     console.log('Sõitude import tehtud');
     return;
   }
-  throw new Error('Kasutus: npm run tenant -- <list | license <id> --until YYYY-MM-DD [--modules A,B]>');
+  throw new Error('Kasutus: npm run tenant -- <list | license <id> --until YYYY-MM-DD [--modules A,B] | trips:import>');
 }
 
 main()
