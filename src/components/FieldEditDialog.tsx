@@ -327,7 +327,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {/* General Master Field Data */}
       <div className="form-sub-header">
         <Landmark size={14} />
-        <span>1. Põllu põhiandmed ja massiiv</span>
+        <span>Põllu põhiandmed ja massiiv</span>
       </div>
       <div className="form-grid">
         <div className="form-row-3">
@@ -426,7 +426,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {/* Seasonal Yearly Data & Cadastral Parcels */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
         <Compass size={14} />
-        <span>2. Hooaja külvikord, pindala ja piirid</span>
+        <span>Hooaja külvikord, pindala ja piirid</span>
       </div>
 
       <div className="form-grid">
@@ -614,10 +614,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         </div>
       </div>
 
+      {/* Ainult vaatamiseks: põllu piiridesse jäävad mullaproovid kuni 6 aastat tagasi valitud hooajast */}
+      {seasonGeometry && (
+        <div className="field-edit-insights">
+          <SoilSamplesSection geometry={seasonGeometry} samples={recentSoilSamples} />
+        </div>
+      )}
+
       {/* Cadastral Parcels Management for Selected Year */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
         <Landmark size={14} />
-        <span>3. Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
+        <span>Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
         {!isEditSeasonLocked && (
           <button
             type="button"
@@ -776,12 +783,6 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         ))}
       </div>
 
-      {/* Ainult vaatamiseks: põllu piiridesse jäävad mullaproovid kuni 6 aastat tagasi valitud hooajast */}
-      {seasonGeometry && (
-        <div className="field-edit-insights">
-          <SoilSamplesSection geometry={seasonGeometry} samples={recentSoilSamples} />
-        </div>
-      )}
 
       </div>
 
