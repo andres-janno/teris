@@ -265,25 +265,44 @@ describe('importDeviceTrips', () => {
 });
 
 describe('kustutatud sõit', () => {
-  it('jääb kustutatuks ja hilinenud punktidega üle selle uut sõitu ei looda', async () => {
+  it('müra ise (≥ 80% kustutatud ajas) jääb kustutatuks ja uut sõitu selle peale ei looda', async () => {
+    samples = range(0, 10);
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    expect(t).toHaveLength(1);
+    await run(() => prisma.vehicleTrip.update({ where: { id: t[0].id }, data: { deletedAt: new Date(), deletedBy: 'test' } }));
+    samples = [...range(0, 10), ...range(11, 11)]; // hilinenud punkt pikendab müra veidi
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => importDeviceTrips(device(), deps));
+    const after = await trips();
+    expect(after).toHaveLength(1);
+    expect(after[0].deletedAt).not.toBeNull();
+    expect(after[0].endedAt).toEqual(at(10));
+  });
+
+  it('müra liitub pikema päris sõiduga: ühendatud sõit kirjutatakse, kustutatud jääb kustutatuks, kanne ei kao', async () => {
     samples = [...range(0, 10), ...range(40, 50)];
     nowMin = 120;
     await run(() => importDeviceTrips(device(), deps));
     let t = await trips();
     expect(t).toHaveLength(2);
-    await run(() => prisma.vehicleTrip.update({ where: { id: t[0].id }, data: { deletedAt: new Date(), deletedBy: 'test' } }));
-    samples = range(0, 50); // auk täitus: uus sõit katab kustutatud sõidu
+    const [noise, real] = t;
+    await run(async () => {
+      await prisma.vehicleTrip.update({ where: { id: noise.id }, data: { deletedAt: new Date(), deletedBy: 'test' } });
+      await prisma.workEntry.create({ data: { fieldWorkId, date: at(40), tripId: real.id } });
+    });
+    samples = range(0, 50); // auk täitus: müra on 10/50 = 20% ühendatud sõidust
     await run(() => importDeviceTrips(device(), deps));
     t = await trips();
-    // Uus ühendatud sõit kattub kustutatuga ja jäetakse kirjutamata; selle ajaga kattunud vana sõit eemaldatakse aegununa
-    expect(t).toHaveLength(1);
-    expect(t.filter((x) => x.deletedAt)).toHaveLength(1);
-    const gone = t.find((x) => x.deletedAt)!;
-    expect(gone.startedAt).toEqual(at(0));
-    expect(gone.endedAt).toEqual(at(10));
-    // uuesti importimine ei muuda midagi
-    await run(() => importDeviceTrips(device(), deps));
-    expect((await trips()).filter((x) => x.deletedAt)).toHaveLength(1);
+    expect(t).toHaveLength(2);
+    expect(t.find((x) => x.id === noise.id)?.deletedAt).not.toBeNull();
+    const live = t.filter((x) => !x.deletedAt);
+    expect(live).toHaveLength(1);
+    expect(live[0].id).toBe(real.id);
+    expect(live[0].startedAt).toEqual(at(0));
+    expect(live[0].endedAt).toEqual(at(50));
+    expect(await run(() => prisma.workEntry.count({ where: { tripId: real.id } }))).toBe(1);
   });
 });
 

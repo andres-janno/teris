@@ -93,6 +93,26 @@ async function writeFields(tx: TxClient, tripId: string, fields: TripFieldCalc[]
   if (fields.length) await tx.vehicleTripField.createMany({ data: fields.map((f) => ({ ...f, tripId, computedAt: now })) });
 }
 
+// Uus sõit jäetakse kirjutamata ainult siis, kui vähemalt see osa selle kestusest jääb kustutatud (müra) sõitude ajavahemikku.
+// Väiksema osa korral on tegu päris sõidu ja müra liitumisega ning päris sõit ei tohi kaduda.
+const DELETED_DROP_SHARE = 0.8;
+
+/** Sõidu kestuse osa (0–1), mis jääb kustutatud sõitude ajavahemikku; nullkestusega sõit: 1, kui algus on vahemikus. */
+function insideShare(t: { startedAt: Date; endedAt: Date }, ranges: { startedAt: Date; endedAt: Date }[]): number {
+  const s = t.startedAt.getTime();
+  const e = t.endedAt.getTime();
+  if (e <= s) return ranges.some((r) => r.startedAt.getTime() <= s && s <= r.endedAt.getTime()) ? 1 : 0;
+  const sorted = ranges.map((r) => [Math.max(s, r.startedAt.getTime()), Math.min(e, r.endedAt.getTime())] as const)
+    .filter(([a, b]) => b > a).sort((x, y) => x[0] - y[0]);
+  let covered = 0;
+  let cursor = s;
+  for (const [a, b] of sorted) {
+    const from = Math.max(a, cursor);
+    if (b > from) { covered += b - from; cursor = b; }
+  }
+  return covered / (e - s);
+}
+
 async function writeChunk(
   deviceId: string, from: Date, to: Date, trips: SegmentedTrip[], routes: (TripRoute | null)[],
   fields: TripFieldCalc[][], now: Date, finalizedUntil: Date
@@ -111,7 +131,7 @@ async function writeChunk(
     const skip = trips.map((t) => {
       const hit = deleted.filter((e) => e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
       hit.forEach((e) => used.add(e.id));
-      return hit.length > 0;
+      return hit.length > 0 && insideShare(t, hit) >= DELETED_DROP_SHARE;
     });
     const matchIds = trips.map((t, i) => {
       if (skip[i]) return null;
