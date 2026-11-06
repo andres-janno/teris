@@ -1,6 +1,6 @@
 // src/components/FieldWorkPlanForm.tsx — töö plaan: vaatamine (kompaktne, ainult lugemiseks) ja muutmine (vorm).
 // Ühine koht plaani valideerimisele ja salvestamisele (api.addFieldWork / api.updateFieldWork);
-// kasutavad FieldWorkPlanDialog (uus töö, täisvaade) ja põllutööde tahvli valitud töö aken.
+// kasutab põllutööde tahvli valitud töö aken.
 import React, { useState } from 'react';
 import { DateInput } from './DateInput';
 import { formatQty } from '../services/units';

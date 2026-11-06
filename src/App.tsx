@@ -1948,6 +1948,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenCrops={() => setIsCropsModalOpen(true)}
             onUpdateField={handleUpdateMasterField}
             onClose={closeEditField}
+            soilSamples={soilSamples}
+            satelliteDate={satelliteDate}
           />
         </Suspense>
       )}

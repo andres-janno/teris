@@ -7916,6 +7916,14 @@ a.history-pill:hover {
   right: 6px;
 }
 
+/* Põllu muutmise aken: NDVI ja mullaproovid katastriüksuste all */
+.field-edit-insights {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
 /* Põldude ja külvikorra tabeli nimelahter: kuju nupp nurgas, nimi ei jookse selle alla */
 .name-cell.has-corner-btn {
   padding-right: 30px;
