@@ -278,7 +278,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                       <td>{m.category.name}</td>
                       <td>{refinement(m)}</td>
                       <td className="name-cell" title={m.notes ?? undefined}>
-                        <span className="field-name">{m.name}</span>
+                        <span>{m.name}</span>
                         {m.isDefaultService && <span className="article-default-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</span>}
                         {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
                       </td>
