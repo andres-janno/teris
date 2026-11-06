@@ -54,6 +54,8 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   isFullPage = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
+  // Vaikimisi peidetakse põllud, millel valitud aasta kohta hooajakirjet pole (nt varasemad PRIA põllud)
+  const [showMissingInYear, setShowMissingInYear] = useState(false);
   const [cropFilter, setCropFilter] = useState('all');
   const [tenureFilter, setTenureFilter] = useState<'all' | 'OWNED' | 'RENTED'>('all');
 
@@ -168,11 +170,13 @@ function cropSummaryKey(cropText: string): string {
 
         // Ainult põllud, millel on tabeli perioodis (valitud hooaeg ±2) vähemalt üks kirje.
         const inPeriod = f.history.some((h) => tableYears.includes(h.year));
+        // Valitud aastal puuduvad põllud ainult lülitiga
+        const inSelectedYear = showMissingInYear || !!yearRecord;
 
-        return inPeriod && matchesSearch && matchesCrop && matchesTenure;
+        return inPeriod && inSelectedYear && matchesSearch && matchesCrop && matchesTenure;
       })
       .sort(compareFieldNumbers);
-  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, tableYears]);
+  }, [masterFields, selectedYear, searchQuery, cropFilter, tenureFilter, tableYears, showMissingInYear]);
 
   // Valitud hooaja pindalad kultuuride lõikes (tabeli kohal), suurimast väiksemani.
   // Grupeeritud kultuuride registri talivilja tunnuse järgi: sügiskülv (eelmine sügis) / kevadkülv.
@@ -454,6 +458,13 @@ function cropSummaryKey(cropText: string): string {
                 />
               </FilterClear>
             </div>
+
+            <FilterClear className="filter-clear-inline" active={showMissingInYear} onClear={() => setShowMissingInYear(false)}>
+              <label className="checkbox-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', whiteSpace: 'nowrap' }}>
+                <input type="checkbox" checked={showMissingInYear} onChange={(e) => setShowMissingInYear(e.target.checked)} />
+                Näita ka {selectedYear}. aastal puuduvaid põlde
+              </label>
+            </FilterClear>
 
             {(cropFilter !== 'all' || tenureFilter !== 'all') && (
               <button
