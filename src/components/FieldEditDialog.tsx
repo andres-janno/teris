@@ -11,6 +11,11 @@ import type { Crop } from '../types/crop';
 import { deriveOwnershipType, OWNERSHIP_LABELS } from '../services/landTenure';
 import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { isCropUndetermined } from '../types/season';
+
+// Kultuur valimata: sama väärtus ja värv mis mujal registris (fieldRegister.ts)
+const UNDETERMINED_CROP = 'Määramata';
+const UNDETERMINED_CROP_COLOR = '#94a3b8';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 
@@ -120,8 +125,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     const currentRec = field.history.find(h => h.year === selectedYear) || {
       year: selectedYear,
       areaHa: field.history[0]?.areaHa || 5.0,
-      crop: field.history[0]?.crop || 'Talinisu',
-      cropColor: field.history[0]?.cropColor || '#eab308'
+      // Aasta hooajakirjet pole: kultuur jääb määramata (teise aasta kultuuri ega vaikekultuuri ei pakuta)
+      crop: '',
+      cropColor: UNDETERMINED_CROP_COLOR
     };
 
     const rawParcels = currentRec.cadastralParcels
@@ -146,8 +152,8 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     setEditAreaHa(currentRec.areaHa);
     setEditEligibleAreaHa(currentRec.eligibleAreaHa || undefined);
     setEditAreaChangeReason(currentRec.areaChangeReason || '');
-    setEditCrop(currentRec.crop);
-    setEditCropColor(matchedCrop?.color || currentRec.cropColor || '#eab308');
+    setEditCrop(isCropUndetermined(currentRec.crop) ? '' : currentRec.crop);
+    setEditCropColor(matchedCrop?.color || currentRec.cropColor || UNDETERMINED_CROP_COLOR);
     setEditVariety(currentRec.cropVariety || '');
     setEditUndersowing(('undersowing' in currentRec && currentRec.undersowing) || 'NONE');
     setSavedPria({
@@ -169,7 +175,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     }
 
     const matchedCrop = findRegistryCrop(editCrop);
-    const finalCropColor = matchedCrop?.color || selectedCropObj?.color || editCropColor || '#22c55e';
+    const cropUndetermined = !editCrop.trim();
+    const finalCropColor = cropUndetermined
+      ? UNDETERMINED_CROP_COLOR
+      : matchedCrop?.color || selectedCropObj?.color || editCropColor || '#22c55e';
 
     onUpdateField(
       field.id,
@@ -186,7 +195,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         areaHa: Number(editAreaHa),
         eligibleAreaHa: editEligibleAreaHa ? Number(editEligibleAreaHa) : undefined,
         areaChangeReason: editAreaChangeReason.trim() || undefined,
-        crop: editCrop.trim() || 'Talinisu',
+        crop: editCrop.trim() || UNDETERMINED_CROP,
         cropVariety: editVariety.trim() || undefined,
         undersowing: editUndersowing,
         cropColor: finalCropColor,
@@ -519,6 +528,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             }}
             className="form-input"
           >
+            <option value="">– määramata –</option>
             {editCrop && !activeCrops.some(c => c.name === editCrop) && (
               <option value={editCrop}>
                 {selectedCropObj?.icon || '🌾'} {editCrop}
