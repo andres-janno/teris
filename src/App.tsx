@@ -1664,6 +1664,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onOpenParties={() => setIsPartiesModalOpen(true)}
             crops={crops}
             onOpenCrops={() => setIsCropsModalOpen(true)}
+            soilSamples={soilSamples}
           />
         </Suspense>
       )}
@@ -1949,7 +1950,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onUpdateField={handleUpdateMasterField}
             onClose={closeEditField}
             soilSamples={soilSamples}
-            satelliteDate={satelliteDate}
           />
         </Suspense>
       )}

@@ -13,7 +13,6 @@ import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../ser
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
-import { FieldNdviSection } from './FieldNdviSection';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -30,7 +29,6 @@ interface FieldEditDialogProps {
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onClose: () => void;
   soilSamples?: SoilSample[]; // põllu piiridesse jäävad näidatakse (ainult vaatamiseks)
-  satelliteDate?: string | null; // kaardil valitud satelliidipildi kuupäev NDVI jaoks
 }
 
 export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
@@ -43,14 +41,18 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   onOpenCrops,
   onUpdateField,
   onClose,
-  soilSamples = [],
-  satelliteDate = null
+  soilSamples = []
 }) => {
-  // Valitud hooaja põllukuju mullaproovide ja NDVI jaoks
+  // Valitud hooaja põllukuju mullaproovide jaoks
   const seasonGeometry = useMemo(() => {
     const g = field.history.find((h) => h.year === selectedYear)?.geometry as any;
     return g && (g.type === 'Polygon' || g.type === 'MultiPolygon') ? g : null;
   }, [field, selectedYear]);
+  const SOIL_SAMPLE_MAX_AGE_YEARS = 6;
+  const recentSoilSamples = useMemo(
+    () => soilSamples.filter((s) => s.year <= selectedYear && s.year >= selectedYear - SOIL_SAMPLE_MAX_AGE_YEARS),
+    [soilSamples, selectedYear]
+  );
   // Edit form state: Master Field details
   const [editName, setEditName] = useState('');
   const [editNum, setEditNum] = useState('');
@@ -774,15 +776,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         ))}
       </div>
 
-      {/* Ainult vaatamiseks: taimkate satelliidipildil ja põllu piiridesse jäävad mullaproovid */}
+      {/* Ainult vaatamiseks: põllu piiridesse jäävad mullaproovid kuni 6 aastat tagasi valitud hooajast */}
       {seasonGeometry && (
         <div className="field-edit-insights">
-          {satelliteDate ? (
-            <FieldNdviSection geometry={seasonGeometry} date={satelliteDate} />
-          ) : (
-            <p className="notes-text">NDVI nägemiseks lülita kaardil sisse satelliidipilt ja vali kuupäev.</p>
-          )}
-          <SoilSamplesSection geometry={seasonGeometry} samples={soilSamples} />
+          <SoilSamplesSection geometry={seasonGeometry} samples={recentSoilSamples} />
         </div>
       )}
 

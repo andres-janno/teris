@@ -9,6 +9,7 @@ import { isCropUndetermined, seasonSelectorYears } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
+import type { SoilSample } from '../types/soilSample';
 import { FieldEditDialog } from './FieldEditDialog';
 import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
@@ -32,6 +33,7 @@ interface FieldsTableViewProps {
   onOpenParties?: () => void;
   crops?: Crop[];
   onOpenCrops?: () => void;
+  soilSamples?: SoilSample[]; // põllu muutmise aknas näidatakse põllu piiridesse jäävad
 }
 
 type TenureKind = 'owned' | 'rented' | 'mixed' | 'unknown';
@@ -97,7 +99,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   parties = [],
   onOpenParties,
   crops = [],
-  onOpenCrops
+  onOpenCrops,
+  soilSamples = []
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [shapeView, setShapeView] = useState<{ field: MasterField; record: FieldYearlyRecord } | null>(null);
@@ -453,6 +456,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   onOpenCrops={onOpenCrops}
                   onUpdateField={onUpdateField}
                   onClose={closeEdit}
+                  soilSamples={soilSamples}
                 />
               )}
 
