@@ -10973,6 +10973,15 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
 
+/* Sõitude register: viimati avatud sõidu rida (järje hoidmiseks) */
+.register-table tr.trip-row-last-opened > td {
+  background: color-mix(in srgb, var(--emerald-500, #10b981) 12%, transparent);
+}
+
+.register-table tr.trip-row-last-opened > td:first-child {
+  box-shadow: inset 3px 0 0 var(--emerald-500, #10b981);
+}
+
 /* Sõidu aken: algus/lõpp, põhinumbrid, aja jaotus, lisanäitajad */
 .trip-dialog {
   --trip-moving: #2a78d6;

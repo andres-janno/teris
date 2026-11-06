@@ -55,6 +55,16 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [open, setOpen] = useState<Trip | null>(null);
+  // Viimati avatud sõit jääb esile ka pärast akna sulgemist (järje hoidmiseks)
+  const [lastOpenedId, setLastOpenedId] = useState<string | null>(null);
+  const openTrip = (t: Trip) => { setLastOpenedId(t.id); setOpen(t); };
+  const closeTrip = () => {
+    setOpen(null);
+    // Rida nähtavale, kui see on kerimisalast väljas
+    window.requestAnimationFrame(() => {
+      document.querySelector<HTMLElement>(`tr[data-trip-id="${lastOpenedId}"]`)?.scrollIntoView({ block: 'nearest' });
+    });
+  };
 
   const load = useCallback(async () => {
     if (!fromDay || !toDay) return;
@@ -186,7 +196,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                 const active = t.status === 'ACTIVE';
                 const engine = t.engineHoursStart != null && t.engineHoursEnd != null ? t.engineHoursEnd - t.engineHoursStart : null;
                 return (
-                  <tr key={t.id} className="clickable-row" style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => setOpen(t)}>
+                  <tr key={t.id} data-trip-id={t.id} className={`clickable-row${t.id === lastOpenedId ? ' trip-row-last-opened' : ''}`} style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => openTrip(t)}>
                     <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
                     <td>
                       {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
@@ -214,7 +224,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           trip={open}
           canDelete={canDelete}
           onOpenFieldWork={onOpenFieldWork}
-          onClose={() => setOpen(null)}
+          onClose={closeTrip}
           onChanged={() => { setOpen(null); void load(); }}
           onSaved={(saved) => { setTrips((list) => list.map((x) => (x.id === saved.id ? saved : x))); setOpen(saved); }}
         />
