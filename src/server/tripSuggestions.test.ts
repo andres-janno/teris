@@ -5,7 +5,7 @@ import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, authDb, runAsTenant } from './db';
 import { setSessionUserForTest } from './authGate';
 import { handleFieldWorks } from './fieldWorks';
-import { TRIP_NOT_ON_FIELD, TRIP_TAKEN } from './tripSuggestions';
+import { TRIP_NOT_ON_FIELD, TRIP_TAKEN, entryTripError } from './tripSuggestions';
 
 const T = `test-tenant-tripsug-${process.pid}`;
 const IMEI = `38${String(process.pid).padStart(13, '0')}`.slice(0, 15);
@@ -212,5 +212,15 @@ describe('sõidu ja kande seos põllu järgi (sügistööd järgmise aasta hooaj
     expect(taken.status).toBe(400);
     expect(taken.json.error).toBe(TRIP_TAKEN);
     expect((await call('GET', SUG27())).json).toHaveLength(0);
+  });
+});
+
+describe('kustutatud sõit', () => {
+  it('kustutatud sõitu ei pakuta ja see ei ole põllul', async () => {
+    expect((await call('GET', SUG(s.fsB))).json.some((x: any) => x.tripId === s.trip2)).toBe(true);
+    expect(await run(() => entryTripError(s.trip2, s.fsB, null))).toBeNull();
+    await run(() => prisma.vehicleTrip.update({ where: { id: s.trip2 }, data: { deletedAt: new Date(), deletedBy: 'test' } }));
+    expect((await call('GET', SUG(s.fsB))).json.some((x: any) => x.tripId === s.trip2)).toBe(false);
+    expect(await run(() => entryTripError(s.trip2, s.fsB, null))).toBe(TRIP_NOT_ON_FIELD);
   });
 });

@@ -58,7 +58,7 @@ export async function getTelemetrySuggestionsForField(
   if (!season) return [];
   const fieldId = season.fieldId;
   const rows = await prisma.vehicleTripField.findMany({
-    where: { fieldSeason: { fieldId }, arriveAt: { lt: dayEnd }, leaveAt: { gte: dayStart } },
+    where: { fieldSeason: { fieldId }, trip: { deletedAt: null }, arriveAt: { lt: dayEnd }, leaveAt: { gte: dayStart } },
     include: {
       trip: {
         include: {
@@ -115,7 +115,7 @@ export async function entryTripError(tripId: string, fieldSeasonId: number, entr
   const season = await prisma.fieldSeason.findUnique({ where: { id: fieldSeasonId }, select: { fieldId: true } });
   if (!season) return TRIP_NOT_ON_FIELD;
   const fieldId = season.fieldId;
-  const row = await prisma.vehicleTripField.findFirst({ where: { tripId, fieldSeason: { fieldId } }, select: { id: true } });
+  const row = await prisma.vehicleTripField.findFirst({ where: { tripId, trip: { deletedAt: null }, fieldSeason: { fieldId } }, select: { id: true } });
   if (!row) return TRIP_NOT_ON_FIELD;
   const other = await prisma.workEntry.findFirst({
     where: { tripId, fieldWork: { fieldSeason: { fieldId } }, ...(entryId ? { id: { not: entryId } } : {}) },

@@ -4,6 +4,7 @@
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma } from './db.ts';
 import { json, parseBody } from './http.ts';
+import { sessionUserOf } from './authGate.ts';
 import { fetchTripSamples } from './telemetryAccess.ts';
 import { fieldRuns } from './tripFields.ts';
 import type { Place } from './tripRoute.ts';
@@ -12,6 +13,8 @@ import { workTypeDisplayName } from '../services/workTypeName.ts';
 
 const DEFAULT_DAYS = 7;
 const MAX_NOTES = 1000;
+const DELETE_FORBIDDEN = 'Sõitu saab kustutada ja taastada ainult admin';
+const ENTRY_LINKED = 'Sõiduga on seotud kanne — eemalda enne kande seos';
 
 type TripRow = Awaited<ReturnType<typeof prisma.vehicleTrip.findMany>>[number];
 
@@ -143,6 +146,7 @@ function toDto(t: TripRow, target: ReturnType<Awaited<ReturnType<typeof resolveT
     fuelLevelStartPct: t.fuelLevelStartPct, fuelLevelEndPct: t.fuelLevelEndPct,
     engineHoursStart: t.engineHoursStart, engineHoursEnd: t.engineHoursEnd,
     pointCount: t.pointCount, areaHa: t.areaHa, notes: t.notes,
+    deletedAt: t.deletedAt ? t.deletedAt.toISOString() : null,
     fields
   };
 }
@@ -157,6 +161,7 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     const rows = await prisma.vehicleTrip.findMany({
       where: {
         startedAt: { gte: from, lt: to },
+        deletedAt: url.searchParams.get('deleted') === '1' ? { not: null } : null,
         ...(status === 'ACTIVE' || status === 'CLOSED' ? { status } : {})
       },
       orderBy: { startedAt: 'desc' }
@@ -195,6 +200,28 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     const samples = await fetchTripSamples(trip.device.imei, new Date(trip.startedAt.getTime() - 1), trip.endedAt);
     const points = samples.filter((s) => s.ignition !== false).map((s) => [s.lat, s.lng]);
     json(res, { points, swaths: await buildSwaths(trip.id, samples) });
+    return true;
+  }
+
+  // Sõidu kustutamine (müra) ja taastamine: ainult admin; telemeetria toorandmeid ei puututa
+  const restoreMatch = /^\/api\/fleet\/trips\/([^/]+)\/restore$/.exec(pathname);
+  const delMatch = /^\/api\/fleet\/trips\/([^/]+)$/.exec(pathname);
+  if ((restoreMatch && method === 'POST') || (delMatch && method === 'DELETE')) {
+    const user = sessionUserOf(req);
+    if (user?.isAdmin !== true) { json(res, { error: DELETE_FORBIDDEN }, 403); return true; }
+    const id = (restoreMatch ?? delMatch)![1];
+    const existing = await prisma.vehicleTrip.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) { json(res, { error: 'Sõitu ei leitud' }, 404); return true; }
+    if (restoreMatch) {
+      const saved = await prisma.vehicleTrip.update({ where: { id }, data: { deletedAt: null, deletedBy: null } });
+      const [target, fieldsOf] = await Promise.all([resolveTargets([saved]), loadTripFields([saved])]);
+      json(res, toDto(saved, target(saved), fieldsOf(saved.id)));
+      return true;
+    }
+    if (await prisma.workEntry.count({ where: { tripId: id } }) > 0) { json(res, { error: ENTRY_LINKED }, 409); return true; }
+    const saved = await prisma.vehicleTrip.update({ where: { id }, data: { deletedAt: new Date(), deletedBy: user.username } });
+    const [target, fieldsOf] = await Promise.all([resolveTargets([saved]), loadTripFields([saved])]);
+    json(res, toDto(saved, target(saved), fieldsOf(saved.id)));
     return true;
   }
 

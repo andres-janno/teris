@@ -226,6 +226,7 @@ export interface Trip {
   pointCount: number;
   areaHa: number | null; // põldude ha summa; tühi = haakeriista laius puudub
   notes: string | null;
+  deletedAt: string | null; // kustutatud kui müra
   fields: TripField[];
 }
 export interface TripFieldEntry { id: string; fieldWorkId: string; workTypeName: string; date: string }
@@ -248,7 +249,7 @@ export interface TripImportStatus {
   lastRunAt: string | null;
   devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
 }
-export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean }
+export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean; deleted?: boolean }
 
 /** Sõidu rada kaardil: peenike joon + põllulõigud haakeriista laiusega. */
 export type TripSwath = { fieldSeasonId: number; widthM: number; lines: [number, number][][] };

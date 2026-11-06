@@ -607,7 +607,7 @@ Masinad, haakeriistad ja telemeetriaseadmed. Seadme omand (ettevõttele kuulumis
 | `DeviceOwnership` | `device_ownerships` | jah | Seadme kuulumine ettevõttele ajavahemikus |
 | `DeviceAssignment` | `device_assignments` | jah | Seadme paigaldus masinale/haakeriistale ajavahemikus |
 | `ImplementAssignment` | `implement_assignments` | jah | Haakeriista ühendus masinaga ajavahemikus |
-| `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; põldude ha summa (`areaHa`); muudetav ainult märkus |
+| `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; põldude ha summa (`areaHa`); muudetav märkus; admin saab sõidu kustutada müraks (`deletedAt`, `deletedBy`) ja taastada, import kustutatud sõitu ei muuda ega loo selle ajale uut |
 | `VehicleTripField` | `vehicle_trip_fields` | jah | Sõidu osa ühel põllul (hooajal): põllul oldud aeg, ha haakeriista laiusega põllu piires, kütus põllul ja koos teekütuse osaga; haakeriist teabena (mitte FK) |
 | `TripImportState` | `trip_import_state` | jah | Seadme sõitude impordi olek (lõplik kuni, viimane viga, kohtade ja seoste sõrmejälg) |
 | `PointOfInterest` | `points_of_interest` | jah | Objekt (kuivati, ladu, töökoda jm): asukoht, raadius, kontakt |

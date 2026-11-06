@@ -524,6 +524,8 @@ model VehicleTrip {
   pointCount        Int
   areaHa            Float? // põldude kaetud pindala summa; tühi = ühelgi põllul pole haakeriista laiust
   notes             String?
+  deletedAt         DateTime? // kustutatud kui müra; import ei loo samale ajale uut sõitu
+  deletedBy         String? // kustutaja kasutajatunnus
   computedAt        DateTime
   createdAt         DateTime        @default(now())
   updatedAt         DateTime        @updatedAt

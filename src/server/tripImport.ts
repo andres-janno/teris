@@ -102,24 +102,34 @@ async function writeChunk(
     const existing = await tx.vehicleTrip.findMany({
       where: { deviceId, startedAt: { gt: from, lte: to } },
       orderBy: { startedAt: 'asc' },
-      select: { id: true, startedAt: true, endedAt: true, _count: { select: { workEntries: true } } }
+      select: { id: true, startedAt: true, endedAt: true, deletedAt: true, _count: { select: { workEntries: true } } }
     });
+    // Kustutatud (müra) sõitu import ei muuda ega eemalda; sellega kattuvat uut sõitu ei kirjutata
+    const deleted = existing.filter((e) => e.deletedAt);
+    const live = existing.filter((e) => !e.deletedAt);
     const used = new Set<string>();
-    const matchIds = trips.map((t) => {
-      const overlapping = existing.filter((e) => !used.has(e.id) && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+    const skip = trips.map((t) => {
+      const hit = deleted.filter((e) => e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+      hit.forEach((e) => used.add(e.id));
+      return hit.length > 0;
+    });
+    const matchIds = trips.map((t, i) => {
+      if (skip[i]) return null;
+      const overlapping = live.filter((e) => !used.has(e.id) && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
       // Kandega seotud vana sõit on eelistatud: liitumisel kande seos ei kao
       const m = overlapping.find((e) => e._count.workEntries > 0) ?? overlapping[0];
       if (m) used.add(m.id);
       return m?.id ?? null;
     });
-    const stale = existing.filter((e) => !used.has(e.id));
+    const stale = live.filter((e) => !used.has(e.id));
     // Liitumisel ei kao kande seos: kustutatava sõidu kanded kolivad uuele (kattuvale) sõidule
     for (const e of stale) {
-      const i = trips.findIndex((t) => e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
+      const i = trips.findIndex((t, k) => !skip[k] && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
       if (i >= 0 && matchIds[i]) await tx.workEntry.updateMany({ where: { tripId: e.id }, data: { tripId: matchIds[i] } });
     }
     if (stale.length) await tx.vehicleTrip.deleteMany({ where: { id: { in: stale.map((e) => e.id) } } });
     for (let i = 0; i < trips.length; i++) {
+      if (skip[i]) continue;
       const data = tripData(trips[i], routes[i], fields[i], now);
       const id = matchIds[i];
       const saved = id
@@ -251,7 +261,7 @@ export async function refreshTripPlaces(device: Device, deps: ImportDeps = defau
     const boxes = await changedPlaceBoxes(state.placesCheckedAt);
     const placesFor = placesCache(deps);
     const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
-    const trips = await prisma.vehicleTrip.findMany({ where: { deviceId: device.id, startedAt: { lte: state.finalizedUntil } } });
+    const trips = await prisma.vehicleTrip.findMany({ where: { deviceId: device.id, deletedAt: null, startedAt: { lte: state.finalizedUntil } } });
     for (const t of trips) {
       const places = await placesFor(t.startedAt.getUTCFullYear());
       const known = new Set(places.map((p) => p.id));
@@ -287,7 +297,7 @@ export async function refreshTripAssignments(device: Device, deps: ImportDeps = 
   if (state.assignmentsCheckedAt && state.finalizedUntil) {
     const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
     const trips = await prisma.vehicleTrip.findMany({
-      where: { deviceId: device.id, startedAt: { lte: state.finalizedUntil } },
+      where: { deviceId: device.id, deletedAt: null, startedAt: { lte: state.finalizedUntil } },
       include: { fields: { select: { arriveAt: true, implementId: true, widthM: true } } }
     });
     const placesFor = placesCache(deps);

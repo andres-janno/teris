@@ -497,6 +497,7 @@ export const api = {
     if (f.status) q.set('status', f.status);
     if (f.unknownPlace) q.set('unknownPlace', '1');
     if (f.unlinkedOnly) q.set('unlinkedOnly', '1');
+    if (f.deleted) q.set('deleted', '1');
     const res = await apiFetch(`/api/fleet/trips?${q}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Sõitude laadimine ebaõnnestus'));
     return res.json();
@@ -522,6 +523,18 @@ export const api = {
       body: JSON.stringify({ notes })
     });
     if (!res.ok) throw new Error(await errorMessage(res, 'Märkuse salvestamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async deleteTrip(id: string): Promise<Trip> {
+    const res = await apiFetch(`/api/fleet/trips/${id}`, { method: 'DELETE' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu kustutamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async restoreTrip(id: string): Promise<Trip> {
+    const res = await apiFetch(`/api/fleet/trips/${id}/restore`, { method: 'POST' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu taastamine ebaõnnestus'));
     return res.json();
   },
 

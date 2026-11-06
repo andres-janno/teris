@@ -264,6 +264,29 @@ describe('importDeviceTrips', () => {
   });
 });
 
+describe('kustutatud sõit', () => {
+  it('jääb kustutatuks ja hilinenud punktidega üle selle uut sõitu ei looda', async () => {
+    samples = [...range(0, 10), ...range(40, 50)];
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    let t = await trips();
+    expect(t).toHaveLength(2);
+    await run(() => prisma.vehicleTrip.update({ where: { id: t[0].id }, data: { deletedAt: new Date(), deletedBy: 'test' } }));
+    samples = range(0, 50); // auk täitus: uus sõit katab kustutatud sõidu
+    await run(() => importDeviceTrips(device(), deps));
+    t = await trips();
+    // Uus ühendatud sõit kattub kustutatuga ja jäetakse kirjutamata; selle ajaga kattunud vana sõit eemaldatakse aegununa
+    expect(t).toHaveLength(1);
+    expect(t.filter((x) => x.deletedAt)).toHaveLength(1);
+    const gone = t.find((x) => x.deletedAt)!;
+    expect(gone.startedAt).toEqual(at(0));
+    expect(gone.endedAt).toEqual(at(10));
+    // uuesti importimine ei muuda midagi
+    await run(() => importDeviceTrips(device(), deps));
+    expect((await trips()).filter((x) => x.deletedAt)).toHaveLength(1);
+  });
+});
+
 describe('importTenantTrips', () => {
   it('ühe seadme viga ei peata teist; viga salvestub', async () => {
     failImei = IMEI_BAD;

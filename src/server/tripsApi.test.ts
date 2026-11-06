@@ -16,12 +16,12 @@ const USER = (tenantId: string) => ({
   isAdmin: false, isFinanceManager: false, mustChangePassword: false, tenantId
 });
 
-async function call(method: string, path: string, body?: unknown, tenant = T) {
+async function call(method: string, path: string, body?: unknown, tenant = T, admin = false) {
   const raw = body === undefined ? '' : JSON.stringify(body);
   const req = Object.assign(Readable.from(raw ? [Buffer.from(raw)] : []), {
     method, url: path, headers: { host: 'localhost', 'content-type': 'application/json' }, socket: {}
   }) as unknown as IncomingMessage;
-  setSessionUserForTest(req, USER(tenant));
+  setSessionUserForTest(req, { ...USER(tenant), isAdmin: admin });
   const out = { status: 200, body: '' };
   const res = {
     statusCode: 200,
@@ -228,6 +228,36 @@ describe('tripsApi', () => {
       expect(sw[0]).toMatchObject({ fieldSeasonId: withW, widthM: 6 });
       expect(sw[0].lines.map((l) => l.length)).toEqual([3, 3]);
     });
+  });
+
+  it('kustutamine: pehme kustutus, peidus vaikeloendis, deleted=1 näitab, taastamine toob tagasi', async () => {
+    const Q9 = '?from=2026-09-01T00:00:00Z&to=2026-09-05T00:00:00Z';
+    const id = (await run(() => prisma.vehicleTrip.create({ data: tripRow(d('2026-09-02T06:00:00Z'), d('2026-09-02T07:00:00Z')) }))).id;
+    expect((await call('GET', `/api/fleet/trips${Q9}`)).json).toHaveLength(1);
+    const del = await call('DELETE', `/api/fleet/trips/${id}`, undefined, T, true);
+    expect(del.status).toBe(200);
+    expect(del.json.deletedAt).toBeTruthy();
+    expect((await call('GET', `/api/fleet/trips${Q9}`)).json).toHaveLength(0);
+    const listed = await call('GET', `/api/fleet/trips${Q9}&deleted=1`);
+    expect(listed.json.map((t: any) => t.id)).toEqual([id]);
+    expect((await run(() => prisma.vehicleTrip.findUnique({ where: { id } })))?.deletedBy).toBe(`tripsapi-${T}`);
+    const back = await call('POST', `/api/fleet/trips/${id}/restore`, undefined, T, true);
+    expect(back.status).toBe(200);
+    expect(back.json.deletedAt).toBeNull();
+    expect((await call('GET', `/api/fleet/trips${Q9}`)).json).toHaveLength(1);
+    expect((await call('GET', `/api/fleet/trips${Q9}&deleted=1`)).json).toHaveLength(0);
+  });
+
+  it('kustutamine: mitte-admin saab 403, kandega seotud sõit 409, tundmatu 404', async () => {
+    const id = (await run(() => prisma.vehicleTrip.create({ data: tripRow(d('2026-09-10T06:00:00Z'), d('2026-09-10T07:00:00Z')) }))).id;
+    expect((await call('DELETE', `/api/fleet/trips/${id}`)).status).toBe(403);
+    expect((await call('POST', `/api/fleet/trips/${id}/restore`)).status).toBe(403);
+    const r = await call('DELETE', `/api/fleet/trips/${tripId}`, undefined, T, true);
+    expect(r.status).toBe(409);
+    expect(r.json.error).toBe('Sõiduga on seotud kanne — eemalda enne kande seos');
+    expect((await run(() => prisma.vehicleTrip.findUnique({ where: { id: tripId } })))?.deletedAt).toBeNull();
+    expect((await call('DELETE', '/api/fleet/trips/olematu', undefined, T, true)).status).toBe(404);
+    expect((await call('DELETE', `/api/fleet/trips/${id}`, undefined, T2, true)).status).toBe(404);
   });
 
   it('muud teed ei kuulu siia', async () => {

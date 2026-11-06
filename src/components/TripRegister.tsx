@@ -15,6 +15,7 @@ interface TripRegisterProps {
   vehicles: Vehicle[];
   implementsList: Implement[];
   onOpenFieldWork?: (fieldWorkId: string, year: number) => void;
+  canDelete?: boolean; // admin: sõidu kustutamine ja taastamine
 }
 
 const DEFAULT_DAYS = 31;
@@ -40,7 +41,7 @@ const nextDayStartIso = (day: string) => {
   return d.toISOString();
 };
 
-export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implementsList, onOpenFieldWork }) => {
+export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implementsList, onOpenFieldWork, canDelete = false }) => {
   const [fromDay, setFromDay] = useState(defaultFrom);
   const [toDay, setToDay] = useState(defaultTo);
   const [vehicleId, setVehicleId] = useState('');
@@ -48,6 +49,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   const [status, setStatus] = useState<'' | 'ACTIVE' | 'CLOSED'>('');
   const [unknownPlace, setUnknownPlace] = useState(false);
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
+  const [showDeleted, setShowDeleted] = useState(false);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [importStatus, setImportStatus] = useState<TripImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -63,7 +65,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         api.getTrips({
           from: dayStartIso(fromDay), to: nextDayStartIso(toDay),
           vehicleId: vehicleId || undefined, implementId: implementId || undefined,
-          status: status || undefined, unknownPlace, unlinkedOnly
+          status: status || undefined, unknownPlace, unlinkedOnly, deleted: showDeleted
         }),
         api.getTripImportStatus()
       ]);
@@ -74,12 +76,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
     } finally {
       setLoading(false);
     }
-  }, [fromDay, toDay, vehicleId, implementId, status, unknownPlace, unlinkedOnly]);
+  }, [fromDay, toDay, vehicleId, implementId, status, unknownPlace, unlinkedOnly, showDeleted]);
 
   useEffect(() => { load(); }, [load]);
 
   const periodActive = fromDay !== defaultFrom() || toDay !== defaultTo();
-  const hasFilters = periodActive || !!vehicleId || !!implementId || !!status || unknownPlace || unlinkedOnly;
+  const hasFilters = periodActive || !!vehicleId || !!implementId || !!status || unknownPlace || unlinkedOnly || showDeleted;
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
@@ -135,6 +137,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
             Ainult kandeta põllusõidud
           </label>
         </FilterClear>
+        <FilterClear className="filter-clear-inline" active={showDeleted} onClear={() => setShowDeleted(false)}>
+          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
+            <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
+            Näita kustutatud sõite
+          </label>
+        </FilterClear>
         <button className="btn btn-secondary btn-sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
         </button>
@@ -178,7 +186,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                 const active = t.status === 'ACTIVE';
                 const engine = t.engineHoursStart != null && t.engineHoursEnd != null ? t.engineHoursEnd - t.engineHoursStart : null;
                 return (
-                  <tr key={t.id} className="clickable-row" onClick={() => setOpen(t)}>
+                  <tr key={t.id} className="clickable-row" style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => setOpen(t)}>
                     <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
                     <td>
                       {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
@@ -204,8 +212,10 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
       {open && (
         <TripDialog
           trip={open}
+          canDelete={canDelete}
           onOpenFieldWork={onOpenFieldWork}
           onClose={() => setOpen(null)}
+          onChanged={() => { setOpen(null); void load(); }}
           onSaved={(saved) => { setTrips((list) => list.map((x) => (x.id === saved.id ? saved : x))); setOpen(saved); }}
         />
       )}

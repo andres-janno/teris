@@ -9,11 +9,14 @@ import { BASE_MAPS } from '../services/maaAmetLayers';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
+import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface TripDialogProps {
   trip: Trip;
   onClose: () => void;
   onSaved: (trip: Trip) => void;
+  canDelete?: boolean; // admin: kustutamine ja taastamine
+  onChanged?: () => void; // sõit kustutati või taastati: sulge aken ja lae loend uuesti
   onOpenFieldWork?: (fieldWorkId: string, year: number) => void; // kande link: avab põllu töö
 }
 
@@ -26,7 +29,7 @@ export const placeText = (s: TripStopInfo): string => {
 const timeOnly = (iso: string) => formatDateTime(iso).slice(11);
 const minutesText = (m: number) => formatDuration(new Date(0).toISOString(), new Date(m * 60_000).toISOString());
 
-export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork }) => {
+export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork, canDelete = false, onChanged }) => {
   const mapDivRef = useRef<HTMLDivElement>(null);
   const [notes, setNotes] = useState(trip.notes ?? '');
   const [saving, setSaving] = useState(false);
@@ -88,6 +91,31 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
     }
   };
 
+  const remove = async () => {
+    if (!(await confirmDialog('Kustuta sõit? Sõit kaob registrist ja kande soovitustest. Telemeetria toorandmed jäävad alles; sõidu saab hiljem taastada.'))) return;
+    setSaving(true);
+    try {
+      await api.deleteTrip(trip.id);
+      (onChanged ?? onClose)();
+    } catch (e) {
+      alertDialog((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const restore = async () => {
+    setSaving(true);
+    try {
+      await api.restoreTrip(trip.id);
+      (onChanged ?? onClose)();
+    } catch (e) {
+      alertDialog((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const who = trip.vehicleName ?? `${trip.deviceLabel} — seos puudub`;
   const active = trip.status === 'ACTIVE';
   // Põhinumbrid: alati neli kasti (andmete puudumisel „—“), et paigutus ei hüppaks sõidult sõidule
@@ -128,6 +156,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           <button className="icon-btn-ghost" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
         </div>
         <div className="modal-body">
+          {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
           <div ref={mapDivRef} className="trip-dialog-map" />
           {trackError && <div className="auth-error-banner">{trackError}</div>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
@@ -253,6 +282,12 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           {error && <div className="auth-error-banner">{error}</div>}
         </div>
         <div className="modal-footer">
+          {canDelete && !trip.deletedAt && (
+            <button type="button" className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={remove} disabled={saving}>Kustuta sõit</button>
+          )}
+          {canDelete && trip.deletedAt && (
+            <button type="button" className="btn btn-secondary" style={{ marginRight: 'auto' }} onClick={restore} disabled={saving}>Taasta</button>
+          )}
           <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>Sulge</button>
           <button type="button" className="btn btn-primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
             {saving ? 'Salvestan...' : 'Salvesta märkus'}

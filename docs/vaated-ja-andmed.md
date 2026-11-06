@@ -384,7 +384,7 @@ flowchart LR
 | `VehicleTracker` | paigaldab seadme masinale või haakeriistale (kaardi „Vaheta“) | `POST /api/fleet/devices/assign` | `TelemetryDevice` R, `DeviceAssignment` RCU, `Vehicle` U (viimane asukoht), `DeviceOwnership` R, tsdb R |
 | `VehicleTracker` / `DeviceAssignmentRegister` | seadmete seoste register | `GET`/`POST /api/fleet/device-assignments`, `PUT`/`DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` RCUD, `TelemetryDevice` R, `Vehicle` R, `Implement` R |
 | `TripRegister` | sõitude register: ha ja Kanne (✓/—) veerg, filtrid (sh „ainult kandeta põllusõidud“), impordi olek | `GET /api/fleet/trips`, `GET /api/fleet/trips/import-status` | `VehicleTrip` R, `VehicleTripField` R, `WorkEntry` R, `FieldWork` R, `WorkType` R, `FieldSeason` R, `Field` R, `TripImportState` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
-| `TripDialog` | sõidu rada, kohad, mõõdikud, põldude tabel (põllul oldud aeg, ha koos haakeriista ja laiusega, kütus põllul / koos teega, kanne → avab põllu töö); märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id` | `VehicleTrip` RU, `VehicleTripField` R, `WorkEntry` R, tsdb R |
+| `TripDialog` | sõidu rada, kohad, mõõdikud, põldude tabel (põllul oldud aeg, ha koos haakeriista ja laiusega, kütus põllul / koos teega, kanne → avab põllu töö); märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id`, `DELETE /api/fleet/trips/:id`, `POST /api/fleet/trips/:id/restore` | `VehicleTrip` RU, `VehicleTripField` R, `WorkEntry` R, tsdb R |
 
 **Taustaimport** (`tripImport.ts`, käivitab `prod.ts` iga 15 min; käsitsi `npm run tenant -- trips:import`): TELEMETRY mooduliga ettevõtete mobiilseadmete punktid (`measurements`, omandiperioodi piires) → sõidud (`VehicleTrip` CUD) koos põllu ridadega (`VehicleTripField` CD: põllul oldud aeg, ha haakeriista laiusega põllu piires, kütus põllul ja koos teekütuse osaga) ja impordi olek (`TripImportState` CU). Kohad: `FieldSeason` R, `PointOfInterest` R; haakeriist ja laius: `DeviceAssignment` R, `ImplementAssignment` R, `Implement` R. Lõplikud sõidud arvutatakse uuesti kohtade või seoste (sõrmejälg) muutusel; kandega seotud sõidu id säilib liitumisel (`WorkEntry` seos ei kao).
 
@@ -591,10 +591,12 @@ Ettevõtte API (`src/server/apiHandler.ts`, `fieldWorks.ts`, `authGate.ts`, `adm
 | `PUT`/`PATCH /api/fleet/device-assignments/:id` | `TelemetryDevice`, `Vehicle`, `Implement` | U: `DeviceAssignment` | moodul TELEMETRY |
 | `DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` | D: `DeviceAssignment` | looja või admin |
 | `POST /api/fleet/devices/assign` | `TelemetryDevice`, `DeviceAssignment`, `DeviceOwnership`, tsdb `measurements` | C/U: `DeviceAssignment`; U: `Vehicle` | moodul TELEMETRY |
-| `GET /api/fleet/trips` | `VehicleTrip`, `VehicleTripField`, `WorkEntry`, `FieldWork`, `WorkType`, `FieldSeason`, `Field`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY; `unlinkedOnly=1` = ainult kandeta põllureaga sõidud |
+| `GET /api/fleet/trips` | `VehicleTrip`, `VehicleTripField`, `WorkEntry`, `FieldWork`, `WorkType`, `FieldSeason`, `Field`, `TelemetryDevice`, `DeviceAssignment`, `ImplementAssignment`, `Vehicle`, `Implement` | — | moodul TELEMETRY; `unlinkedOnly=1` = ainult kandeta põllureaga sõidud; kustutatud sõidud peidus, `deleted=1` = ainult kustutatud |
 | `GET /api/fleet/trips/import-status` | `TripImportState`, `TelemetryDevice` | — | moodul TELEMETRY |
 | `GET /api/fleet/trips/:id/track` | `VehicleTrip`, `TelemetryDevice`, `DeviceOwnership`, tsdb `measurements` | — | moodul TELEMETRY |
 | `PATCH /api/fleet/trips/:id` | `VehicleTrip`, `VehicleTripField`, `WorkEntry` | U: `VehicleTrip` (ainult `notes`) | moodul TELEMETRY |
+| `DELETE /api/fleet/trips/:id` | `VehicleTrip`, `WorkEntry` | U: `VehicleTrip` (`deletedAt`, `deletedBy`; pehme kustutus, telemeetria toorandmed jäävad) | moodul TELEMETRY; ainult admin (403); seotud kandega 409; ei tööta aegunud litsentsi (kirjutuskeeld) ega tugivaate korral |
+| `POST /api/fleet/trips/:id/restore` | `VehicleTrip`, `VehicleTripField`, `WorkEntry` | U: `VehicleTrip` (`deletedAt`, `deletedBy` tühjaks) | moodul TELEMETRY; ainult admin |
 | `GET /api/weather/radar`, `GET /api/weather/radar.png` | — | — | väline KAIA; moodul WEATHER |
 | `GET /api/satellite/dates` | — | — | väline Satiladu; moodul SATELLITE |
 | `POST /api/satellite/cloud-check` | — | — | väline Satiladu; ainult lugev POST |
