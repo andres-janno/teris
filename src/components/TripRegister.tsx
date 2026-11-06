@@ -58,6 +58,20 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   // Viimati avatud sõit jääb esile ka pärast akna sulgemist (järje hoidmiseks)
   const [lastOpenedId, setLastOpenedId] = useState<string | null>(null);
   const openTrip = (t: Trip) => { setLastOpenedId(t.id); setOpen(t); };
+  // Kustutatud (või taastatud) sõit kaob nimekirjast: järg liigub ajaliselt eelnevale sõidule
+  // (uuemad ees → järgmine rida allpool), selle puudumisel ülemisele naabrile
+  const removedFromList = async (t: Trip) => {
+    const idx = trips.findIndex((x) => x.id === t.id);
+    const neighbour = idx >= 0 ? trips[idx + 1] ?? trips[idx - 1] ?? null : null;
+    setLastOpenedId(neighbour?.id ?? null);
+    setOpen(null);
+    await load();
+    if (neighbour) {
+      window.requestAnimationFrame(() => {
+        document.querySelector<HTMLElement>(`tr[data-trip-id="${neighbour.id}"]`)?.scrollIntoView({ block: 'nearest' });
+      });
+    }
+  };
   const closeTrip = () => {
     setOpen(null);
     // Rida nähtavale, kui see on kerimisalast väljas
@@ -225,7 +239,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           canDelete={canDelete}
           onOpenFieldWork={onOpenFieldWork}
           onClose={closeTrip}
-          onChanged={() => { setOpen(null); void load(); }}
+          onChanged={() => { if (open) void removedFromList(open); }}
           onSaved={(saved) => { setTrips((list) => list.map((x) => (x.id === saved.id ? saved : x))); setOpen(saved); }}
         />
       )}
