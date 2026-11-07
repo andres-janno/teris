@@ -81,15 +81,6 @@ export const Header: React.FC<HeaderProps> = ({
           <nav className="main-view-switch" aria-label="Põhivaade">
             <button
               type="button"
-              className={mainView === 'seasons' ? 'active' : ''}
-              aria-current={mainView === 'seasons' ? 'page' : undefined}
-              onClick={() => onChangeMainView('seasons')}
-            >
-              <CalendarDays size={15} />
-              <span>Hooajad</span>
-            </button>
-            <button
-              type="button"
               className={mainView === 'map' ? 'active' : ''}
               aria-current={mainView === 'map' ? 'page' : undefined}
               onClick={() => onChangeMainView('map')}
@@ -168,6 +159,15 @@ export const Header: React.FC<HeaderProps> = ({
             >
               <Users size={15} />
               <span>Isikud</span>
+            </button>
+            <button
+              type="button"
+              className={mainView === 'seasons' ? 'active' : ''}
+              aria-current={mainView === 'seasons' ? 'page' : undefined}
+              onClick={() => onChangeMainView('seasons')}
+            >
+              <CalendarDays size={15} />
+              <span>Hooajad</span>
             </button>
           </nav>
         )}
