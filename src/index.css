@@ -8678,20 +8678,51 @@ a.history-pill:hover {
 }
 
 .fw-entry {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+  container-type: inline-size;
   padding: 9px 11px;
   border: 1px solid var(--border-card);
   border-radius: 8px;
   background: var(--stat-bg);
 }
 
-.fw-entry-head {
+/* Kanderida ühel real: aeg | kes ja mis | pindala | finants | tegevused (kitsas paneelis murdub kaheks) */
+.fw-entry-grid {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto auto;
+  align-items: center;
+  column-gap: 18px;
+  row-gap: 6px;
+}
+
+.fw-entry-when,
+.fw-entry-area {
   display: flex;
-  justify-content: space-between;
+  flex-direction: column;
+  gap: 1px;
+  white-space: nowrap;
+}
+
+.fw-entry-when strong,
+.fw-entry-area strong {
   font-size: 0.82rem;
   color: var(--text-primary);
+}
+
+.fw-entry-when span,
+.fw-entry-area span {
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.fw-entry-area {
+  align-items: flex-end;
+}
+
+.fw-entry-what {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .fw-entry-line {
@@ -8703,11 +8734,31 @@ a.history-pill:hover {
   color: var(--text-secondary);
 }
 
-.fw-entry-foot {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: 2px;
+.fw-entry-actions:empty {
+  display: none;
+}
+
+@container (max-width: 560px) {
+  .fw-entry-grid {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+  }
+  .fw-entry-what {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+  .fw-entry-area {
+    grid-column: 2 / -1;
+    grid-row: 1;
+  }
+  .fw-entry-finance {
+    grid-row: 3;
+    grid-column: 1 / 3;
+  }
+  .fw-entry-actions {
+    grid-row: 3;
+    grid-column: 3;
+    justify-self: end;
+  }
 }
 
 .fw-entry-actions {

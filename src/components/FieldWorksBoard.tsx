@@ -1275,53 +1275,57 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   )}
                   {selected.entries.map((e) => (
                     <div key={e.id} className="fw-entry">
-                      <div className="fw-entry-head">
-                        <strong>
-                          {formatDate(e.date)}
-                          {e.startTime && e.endTime ? ` · ${e.startTime}–${e.endTime}` : ''}
-                        </strong>
-                        <span>
-                          {e.areaHa ? `${fmtHa(e.areaHa)} ha` : ''}
-                          {e.telemetryAreaHa ? <small style={{ marginLeft: 6, color: 'var(--text-secondary)' }}>({fmtHa(e.telemetryAreaHa)} ha GPS)</small> : null}
+                      <div className="fw-entry-grid">
+                        <div className="fw-entry-when">
+                          <strong>{formatDate(e.date)}</strong>
+                          {e.startTime && e.endTime && <span>{e.startTime}–{e.endTime}</span>}
+                        </div>
+                        <div className="fw-entry-what">
+                          <div className="fw-entry-line">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
+                          <div className="fw-entry-line muted">
+                            {[
+                              fmtNum(e.laborHours, 'h tööaeg'),
+                              fmtNum(e.equipmentHours, 'h masin'),
+                              fmtNum(e.fuelLiters, 'l kütust'),
+                              ...e.articles.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
+                              fmtQtyUnit(e.harvestTonnes, 't saaki')
+                            ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
+                          </div>
+                        </div>
+                        <div className="fw-entry-area num">
+                          <strong>{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
+                          {e.telemetryAreaHa ? <span>{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
+                        </div>
+                        <div className="fw-entry-finance">
+                          {canManageFinance ? (
+                            <button
+                              type="button"
+                              className={`fw-finance-chip clickable ${e.financeStatus.toLowerCase()}`}
+                              title="Ava kande finants ja määra ühikuhinnad"
+                              onClick={() => {
+                                setFinanceEntryId(e.id);
+                                setIsFinanceOpen(true);
+                              }}
+                            >
+                              <Euro size={10} />
+                              <span>{FINANCE_LABEL[e.financeStatus]}</span>
+                            </button>
+                          ) : (
+                            <span className={`fw-finance-chip ${e.financeStatus.toLowerCase()}`}>{FINANCE_LABEL[e.financeStatus]}</span>
+                          )}
+                        </div>
+                        <span className="fw-entry-actions">
+                          {!workLocked && (
+                            <>
+                              <button type="button" className="icon-btn-ghost" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
+                                <Edit2 size={14} />
+                              </button>
+                              <button type="button" className="icon-btn-danger" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
+                                <Trash2 size={14} />
+                              </button>
+                            </>
+                          )}
                         </span>
-                      </div>
-                      <div className="fw-entry-line">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
-                      <div className="fw-entry-line muted">
-                        {[
-                          fmtNum(e.laborHours, 'h tööaeg'),
-                          fmtNum(e.equipmentHours, 'h masin'),
-                          fmtNum(e.fuelLiters, 'l kütust'),
-                          ...e.articles.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
-                          fmtQtyUnit(e.harvestTonnes, 't saaki')
-                        ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
-                      </div>
-                      <div className="fw-entry-foot">
-                        {canManageFinance ? (
-                          <button
-                            type="button"
-                            className={`fw-finance-chip clickable ${e.financeStatus.toLowerCase()}`}
-                            title="Ava kande finants ja määra ühikuhinnad"
-                            onClick={() => {
-                              setFinanceEntryId(e.id);
-                              setIsFinanceOpen(true);
-                            }}
-                          >
-                            <Euro size={10} />
-                            <span>{FINANCE_LABEL[e.financeStatus]}</span>
-                          </button>
-                        ) : (
-                          <span className={`fw-finance-chip ${e.financeStatus.toLowerCase()}`}>{FINANCE_LABEL[e.financeStatus]}</span>
-                        )}
-                        {!workLocked && (
-                          <span className="fw-entry-actions">
-                            <button type="button" className="icon-btn-ghost" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
-                              <Edit2 size={14} />
-                            </button>
-                            <button type="button" className="icon-btn-danger" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
-                              <Trash2 size={14} />
-                            </button>
-                          </span>
-                        )}
                       </div>
                     </div>
                   ))}
