@@ -47,7 +47,7 @@ Põhivaated on ülamenüüs (`MAIN_VIEWS` failis `src/components/Header.tsx`), v
 | Külvikord (`rotation`) | `FieldManagerModal` (täisleht) + `FieldShapeModal` | Põldude kultuurid aastate kaupa | `FieldSeason` (RCU), `Field` (RU) |
 | Põllutööd (`works`) | `FieldWorksBoard` (+ `AddFieldWorkDialog`, `FieldWorkPlanForm`, `FieldWorkEntryDialog`, `FinanceModal`, `WorkRegisterModal`) | Hooaja tööde tahvel, plaanid, kanded, finantside kinnitamine, tööliikide register | `FieldWork`, `FieldWorkLine`, `WorkEntry`, `WorkEntryLine`, `WorkType`, `Material` (RCUD) |
 | Kulumaterjalid (`materials`) | `MaterialsView` (+ `MaterialFormDialog`, `MaterialStockCard`, `StockDocumentsPanel`, `WarehousesPanel`) | Materjalide register koos hooaja plaanitud ja kasutatud koguste ning laoseisuga; laokanded ja laod (finants) | `Material` (RCUD), `FieldWorkLine`, `WorkEntryLine` (R), `MaterialStock` (R), `StockDocument`, `StockDocumentLine`, `Warehouse` (RCUD) |
-| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `LinkRegister` | Masinad, haakeriistad, telemeetriaseadmed, seadmete seosed (haakimised + seadmete paigaldused ühes registris) | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU), `VehicleTrip` (RU), `TripImportState` (R) |
+| Tehnika (`fleet`) | `VehicleTracker` (täisleht) + `DeviceAssignmentRegister` | Masinad, haakeriistad, telemeetriaseadmed, haakimise ja seadmete seoste registrid | `Vehicle`, `Implement`, `TelemetryDevice`, `ImplementAssignment`, `DeviceAssignment` (RCUD), `DeviceOwnership` (RCU), `VehicleTrip` (RU), `TripImportState` (R) |
 | Taristu (`infrastructure`) | `PoiManagerModal` (täisleht) | Muud asukohad (kuivatid, laod, tanklad jm) | `PointOfInterest` (RCUD) |
 | Isikud (`parties`) | `RelatedPartiesModal` (täisleht) | Seotud isikud: maaomanikud, rentnikud, masinajuhid, partnerid | `RelatedParty` (RCUD) |
 | Konto (päise kasutajamenüü, sisselogimine) | `AuthGate`, `LoginPage`, `SetPasswordPage`, `UserMenu`, `ChangePasswordModal`, `UsersAdminModal`, `SupportAccessPanel` | Sisselogimine, parooli määramine ja vahetus, kasutajate haldus, kasutajatoe ligipääs | `User`, `Session`, `PasswordToken`, `SupportGrant` (RCUD) |
@@ -344,7 +344,7 @@ Tehnika leht (`VehicleTracker`, `isFullPage`) haldab masinaid, haakeriistu ja te
 ```mermaid
 flowchart LR
   V["Tehnika"] --> VT["VehicleTracker"]
-  VT --> DAR["LinkRegister"]
+  VT --> DAR["DeviceAssignmentRegister"]
   VT --> A1["GET /api/fleet"]
   VT --> A2["POST, DELETE /api/fleet/vehicles"]
   VT --> A3["POST, DELETE /api/fleet/implements"]
@@ -382,7 +382,7 @@ flowchart LR
 | `VehicleTracker` | haagib, vahetab või haagib lahti haakeriista (kaardi nupud) | `POST /api/fleet/implements/assign` | `ImplementAssignment` RCU |
 | `VehicleTracker` (haakimise register) | näitab, lisab, muudab, kustutab haakimise kirjeid | `GET`/`POST /api/fleet/implement-assignments`, `PUT`/`DELETE /api/fleet/implement-assignments/:id` | `ImplementAssignment` RCUD, `Vehicle` R, `Implement` R |
 | `VehicleTracker` | paigaldab seadme masinale või haakeriistale (kaardi „Vaheta“) | `POST /api/fleet/devices/assign` | `TelemetryDevice` R, `DeviceAssignment` RCU, `Vehicle` U (viimane asukoht), `DeviceOwnership` R, tsdb R |
-| `VehicleTracker` / `LinkRegister` | seadmete seosed (haakimised + seadmete paigaldused) | `GET`/`POST /api/fleet/device-assignments`, `PUT`/`DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` RCUD, `TelemetryDevice` R, `Vehicle` R, `Implement` R |
+| `VehicleTracker` / `DeviceAssignmentRegister` | seadmete seoste register | `GET`/`POST /api/fleet/device-assignments`, `PUT`/`DELETE /api/fleet/device-assignments/:id` | `DeviceAssignment` RCUD, `TelemetryDevice` R, `Vehicle` R, `Implement` R |
 | `TripRegister` | sõitude register: ha ja Kanne (✓/—) veerg, filtrid (sh „ainult kandeta põllusõidud“), impordi olek | `GET /api/fleet/trips`, `GET /api/fleet/trips/import-status` | `VehicleTrip` R, `VehicleTripField` R, `WorkEntry` R, `FieldWork` R, `WorkType` R, `FieldSeason` R, `Field` R, `TripImportState` R, `TelemetryDevice` R, `DeviceAssignment` R, `ImplementAssignment` R, `Vehicle` R, `Implement` R |
 | `TripDialog` | sõidu rada, kohad, mõõdikud, põldude tabel (põllul oldud aeg, ha koos haakeriista ja laiusega, kütus põllul / koos teega, kanne → avab põllu töö); märkuse muutmine | `GET /api/fleet/trips/:id/track`, `PATCH /api/fleet/trips/:id`, `DELETE /api/fleet/trips/:id`, `POST /api/fleet/trips/:id/restore` | `VehicleTrip` RU, `VehicleTripField` R, `WorkEntry` R, tsdb R |
 
