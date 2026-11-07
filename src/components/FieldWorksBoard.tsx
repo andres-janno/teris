@@ -1230,7 +1230,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   <section className="fw-plan-section">
                     <div className="fw-plan-section-head">
                       <span>Plaan</span>
-                      {!workLocked && !editingPlan && (
+                      {!workLocked && (
                         <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingPlan(true)}>
                           <Pencil size={13} />
                           <span>Muuda</span>
@@ -1246,14 +1246,45 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       articles={articles}
                       workers={workers}
                       seedCheck={selectedSeedCheck}
-                      mode={editingPlan && !workLocked ? 'edit' : 'view'}
-                      onSaved={() => {
-                        setEditingPlan(false);
-                        void reload();
-                      }}
-                      onCancel={() => setEditingPlan(false)}
+                      mode="view"
+                      onSaved={() => undefined}
+                      onCancel={() => undefined}
                     />
                   </section>
+
+                  {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
+                  {editingPlan && !workLocked && (
+                    <div className="modal-backdrop sub-modal">
+                      <div className="modal-content animate-scale-up work-entry-modal" role="dialog" aria-modal="true" aria-label="Muuda plaani">
+                        <div className="modal-header">
+                          <div>
+                            <h3>{isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: {selected.workTypeName}</h3>
+                            <p className="modal-subtitle">{activeLabel}</p>
+                          </div>
+                          <button type="button" className="icon-btn-ghost" onClick={() => setEditingPlan(false)} title="Sulge (Esc)">
+                            <X size={20} />
+                          </button>
+                        </div>
+                        <FieldWorkPlanForm
+                          key={`edit-${selected.id}`}
+                          fieldSeasonId={selected.fieldSeasonId}
+                          fieldAreaHa={activeArea}
+                          work={selected}
+                          workTypes={workTypes}
+                          articles={articles}
+                          workers={workers}
+                          seedCheck={selectedSeedCheck}
+                          mode="edit"
+                          layout="dialog"
+                          onSaved={() => {
+                            setEditingPlan(false);
+                            void reload();
+                          }}
+                          onCancel={() => setEditingPlan(false)}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   {activeArea > 0 && (() => {
                     const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);

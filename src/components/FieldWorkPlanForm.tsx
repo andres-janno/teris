@@ -10,6 +10,8 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
+import { FilterSelect } from './FilterSelect';
+import { FilterClear } from './FilterClear';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -193,28 +195,30 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
         <div className="work-entry-grid work-plan-top-grid">
           <div className="form-group">
             <label htmlFor="wp-type">Tegevus *</label>
-            <select id="wp-type" className="form-input" value={workTypeId} disabled={!!work} onChange={(e) => setWorkTypeId(e.target.value)}>
-              <option value="">– vali –</option>
-              {ordered.map((w) => <option key={w.id} value={w.id}>{w.shortName?.trim() ? `${w.shortName.trim()} (${w.name})` : w.name}</option>)}
-            </select>
+            <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
+              { value: '', label: '– vali –' },
+              ...ordered.map((w) => ({ value: w.id, label: w.shortName?.trim() ? `${w.shortName.trim()} (${w.name})` : w.name }))
+            ]} />
           </div>
           {activity === PRIA_ACTIVITY.FERTILIZING && (
             <div className="form-group">
               <label htmlFor="wp-method">Väetamisviis</label>
-              <select id="wp-method" className="form-input" value={method} onChange={(e) => setMethod(e.target.value)}>
-                <option value="">– vali –</option>
-                {FERTILIZING_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                {method && !(FERTILIZING_METHODS as readonly string[]).includes(method) && <option value={method}>{method}</option>}
-              </select>
+              <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
+                <FilterSelect fill id="wp-method" value={method} onChange={setMethod} options={[
+                  { value: '', label: '– vali –' },
+                  ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
+                  ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
+                ]} />
+              </FilterClear>
             </div>
           )}
           {activity === PRIA_ACTIVITY.PLANT_PROTECTION && (
             <div className="form-group">
               <label htmlFor="wp-worker">Teostaja</label>
-              <select id="wp-worker" className="form-input" value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
-                <option value="">– valimata –</option>
-                {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
+              <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
+                <FilterSelect fill id="wp-worker" value={workerId} onChange={setWorkerId}
+                  options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
+              </FilterClear>
             </div>
           )}
           {/* Ligikaudset aega vormis ei küsita; olemasolev väärtus (nt mallist "Sügis 2025") jääb salvestamisel alles */}

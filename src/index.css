@@ -8405,7 +8405,7 @@ a.history-pill:hover {
 
 /* Valitud töö hüpikaken (modal): vaates ja plaani muutmisel sama lai (materjaliread mahuvad ühele reale, ei vilgu) */
 .modal-content.fw-work-modal {
-  width: min(1180px, 96vw);
+  width: min(720px, 96vw);
   max-height: 90vh;
 }
 
