@@ -20,13 +20,14 @@ import {
   Activity,
   Pencil,
   FileText,
+  Filter,
   History
 } from 'lucide-react';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
-import { LinkRegister } from './LinkRegister';
+import { DeviceAssignmentRegister } from './DeviceAssignmentRegister';
 import { TripRegister } from './TripRegister';
-import { formatDateTime, getTimeOptions, splitIsoToDateAndTime, combineDateAndTimeToIso } from './fleetDateTime';
+import { formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime, combineDateAndTimeToIso } from './fleetDateTime';
 import type {
   Vehicle,
   Implement,
@@ -39,6 +40,8 @@ import type {
   ImplementAssignment
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { FilterClear } from './FilterClear';
+import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 
@@ -93,7 +96,7 @@ interface VehicleTrackerProps {
   telemetryEnabled?: boolean;      // false: telemeetria moodul pole litsentsis → seadmete tabid peidetud
   onOpenFieldWork?: (fieldWorkId: string, year: number) => void; // sõidu põllurea kanne → põllutööde vaade
 }
-type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'trips';
+type TabType = 'vehicles' | 'implements' | 'devices' | 'history' | 'deviceHistory' | 'trips';
 
 const VEHICLE_TYPE_LABELS: Record<VehicleType, string> = {
   tractor: 'Traktor',
@@ -292,12 +295,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // Vaikimisi sõidud; ilma telemeetriamoodulita langeb activeTab masinatele
   const [selectedTab, setActiveTab] = useState<TabType>('trips');
   // Ilma telemeetriamoodulita seadmete tabid puuduvad → langeb tagasi masinate tabile
-  const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'trips') ? 'vehicles' : selectedTab;
+  const activeTab: TabType = !telemetryEnabled && (selectedTab === 'devices' || selectedTab === 'deviceHistory' || selectedTab === 'trips') ? 'vehicles' : selectedTab;
   const [isAddingNew, setIsAddingNew] = useState(false);
-  // Seadmete seoste vahekaardil: kumb vorm on avatud (haakimine või seadme seos)
-  const [linkFormKind, setLinkFormKind] = useState<'hitch' | 'device'>('hitch');
-  // Kaardi ajaloo nupp: seadmete seosed filtreeritakse selle masina/haakeriista järgi
-  const [linkPreset, setLinkPreset] = useState<{ vehicleId?: string; implementId?: string; key: number } | null>(null);
 
   // Kui mõni neist on seatud, käitub aktiivse vahekaardi vorm muutmisrežiimis
   // (eeltäidetud väljad, "Salvesta muudatused") lisamise asemel.
@@ -384,6 +383,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   // 4. Implement Assignment History & Form State
   const [implementAssignments, setImplementAssignments] = useState<ImplementAssignment[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [historyVehicleFilter, setHistoryVehicleFilter] = useState<string>('all');
+  const [historyImplementFilter, setHistoryImplementFilter] = useState<string>('all');
+  const [historyStatusFilter, setHistoryStatusFilter] = useState<'all' | 'active' | 'ended'>('all');
 
   const [assignVehicleId, setAssignVehicleId] = useState('');
   const [assignImplementId, setAssignImplementId] = useState('');
@@ -429,7 +431,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
     setAssignNotes(assignment.notes || '');
     setAssignmentError(null);
-    setLinkFormKind('hitch');
     setIsAddingNew(true);
   };
 
@@ -545,6 +546,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     onAssignDevice(deviceId, vehicleId, implementId);
     setTimeout(loadDeviceAssignments, 400);
   };
+
+  const filteredAssignments = useMemo(() => {
+    return implementAssignments.filter((a) => {
+      if (historyVehicleFilter !== 'all' && a.vehicleId !== historyVehicleFilter) return false;
+      if (historyImplementFilter !== 'all' && a.implementId !== historyImplementFilter) return false;
+      if (historyStatusFilter === 'active' && a.endedAt) return false;
+      if (historyStatusFilter === 'ended' && !a.endedAt) return false;
+      return true;
+    });
+  }, [implementAssignments, historyVehicleFilter, historyImplementFilter, historyStatusFilter]);
 
   const handleDeleteAssignment = async (id: string) => {
     if (!await confirmDialog('Kas soovid kindlasti selle haakimise kirje ajaloost kustutada?')) return;
@@ -852,6 +863,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <span className="count-pill">{implementsList.length}</span>
           </button>
 
+          <button
+            className={`filter-tab ${activeTab === 'history' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('history'); closeForm(); loadImplementAssignments(); }}
+          >
+            <span>📜 Haakimiste register</span>
+            <span className="count-pill">{implementAssignments.length}</span>
+          </button>
+
           {telemetryEnabled && (
           <button
             className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
@@ -862,30 +881,18 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           </button>
           )}
 
+          {telemetryEnabled && (
           <button
-            className={`filter-tab ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('history'); closeForm(); loadImplementAssignments(); loadDeviceAssignments(); }}
+            className={`filter-tab ${activeTab === 'deviceHistory' ? 'active' : ''}`}
+            onClick={() => { setActiveTab('deviceHistory'); closeForm(); loadDeviceAssignments(); }}
           >
             <span>🔗 Seadmete seosed</span>
-            <span className="count-pill">{implementAssignments.length + (telemetryEnabled ? deviceAssignments.length : 0)}</span>
+            <span className="count-pill">{deviceAssignments.length}</span>
           </button>
+          )}
         </div>
 
-        {!isAddingNew && activeTab === 'history' && (
-          <div style={{ display: 'flex', gap: '6px' }}>
-            <button className="btn btn-primary btn-sm" onClick={() => { resetAssignmentForm(); setLinkFormKind('hitch'); setIsAddingNew(true); }}>
-              <Plus size={14} />
-              <span>Lisa haakimine</span>
-            </button>
-            {telemetryEnabled && (
-              <button className="btn btn-primary btn-sm" onClick={() => { setLinkFormKind('device'); setIsAddingNew(true); }}>
-                <Plus size={14} />
-                <span>Lisa seadme seos</span>
-              </button>
-            )}
-          </div>
-        )}
-        {!isAddingNew && activeTab !== 'trips' && activeTab !== 'history' && (
+        {!isAddingNew && activeTab !== 'trips' && (
           <button
             className="btn btn-primary btn-sm"
             onClick={openAddForm}
@@ -893,7 +900,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             <Plus size={14} />
             <span>
               {activeTab === 'vehicles' ? 'Lisa uus masin' : (
-                activeTab === 'implements' ? 'Lisa uus haakeriist' : 'Registreeri telemeetriaseade'
+                activeTab === 'implements' ? 'Lisa uus haakeriist' : (
+                  activeTab === 'devices' ? 'Registreeri telemeetriaseade' : (
+                    activeTab === 'deviceHistory' ? 'Lisa seadme seose kanne' : 'Lisa haakimise kanne'
+                  )
+                )
               )}
             </span>
           </button>
@@ -1304,7 +1315,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         document.body
       )}
 
-      {isAddingNew && activeTab === 'history' && linkFormKind === 'hitch' && createPortal(
+      {isAddingNew && activeTab === 'history' && createPortal(
         <div className="modal-backdrop sub-modal">
           <form onSubmit={handleSaveAssignment} className="modal-content fleet-edit-modal animate-scale-up">
             <div className="modal-header">
@@ -1474,10 +1485,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <div className="card-header-actions">
                       <button
                         className="icon-btn-ghost"
-                        title="Vaata selle masina seadmete seoseid"
+                        title="Vaata selle masina haakimise ajalugu"
                         onClick={(e) => {
                           e.stopPropagation();
-                          setLinkPreset({ vehicleId: v.id, key: Date.now() });
+                          setHistoryVehicleFilter(v.id);
+                          setHistoryImplementFilter('all');
+                          setHistoryStatusFilter('all');
                           setActiveTab('history');
                           loadImplementAssignments();
                         }}
@@ -1661,9 +1674,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <div className="card-header-actions">
                     <button
                       className="icon-btn-ghost"
-                      title="Vaata selle haakeriista seadmete seoseid"
+                      title="Vaata selle haakeriista haakimise ajalugu"
                       onClick={() => {
-                        setLinkPreset({ implementId: imp.id, key: Date.now() });
+                        setHistoryImplementFilter(imp.id);
+                        setHistoryVehicleFilter('all');
+                        setHistoryStatusFilter('all');
                         setActiveTab('history');
                         loadImplementAssignments();
                       }}
@@ -1943,32 +1958,246 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         </div>
       )}
 
-      {/* TAB 6: SÕITUDE REGISTER */}
-      {telemetryEnabled && activeTab === 'trips' && <TripRegister canDelete={isAdmin} vehicles={vehicles} implementsList={implementsList} onOpenFieldWork={onOpenFieldWork} />}
-
-      {/* TAB 4: SEADMETE SEOSED (haakimised + seadmete paigaldused) */}
-      {activeTab === 'history' && (
-        <LinkRegister
-          telemetryEnabled={telemetryEnabled}
-          preset={linkPreset}
-          hitches={implementAssignments}
-          hitchLoading={historyLoading}
-          onReloadHitches={loadImplementAssignments}
-          onEditHitch={handleStartEditAssignment}
-          onDeleteHitch={handleDeleteAssignment}
-          onDetachHitch={handleDetachActiveAssignment}
+      {/* TAB 5: TELEMEETRIASEADMETE SEOSTE REGISTER */}
+      {telemetryEnabled && activeTab === 'deviceHistory' && (
+        <DeviceAssignmentRegister
           vehicles={vehicles}
           implementsList={implementsList}
           devices={devices}
           assignments={deviceAssignments}
           loading={deviceHistoryLoading}
           onReload={loadDeviceAssignments}
-          formOpen={isAddingNew && linkFormKind === 'device'}
-          onOpenForm={() => { setLinkFormKind('device'); setIsAddingNew(true); }}
+          formOpen={isAddingNew}
+          onOpenForm={() => setIsAddingNew(true)}
           onCloseForm={closeForm}
           onChanged={() => { onRegisterChanged(); loadDeviceAssignments(); }}
           onDetach={(deviceId) => assignDevice(deviceId, undefined, undefined)}
         />
+      )}
+
+      {/* TAB 6: SÕITUDE REGISTER */}
+      {telemetryEnabled && activeTab === 'trips' && <TripRegister canDelete={isAdmin} vehicles={vehicles} implementsList={implementsList} onOpenFieldWork={onOpenFieldWork} />}
+
+      {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
+      {activeTab === 'history' && (
+        <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          {/* Filter bar */}
+          <div className="history-filter-bar glass-card" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '12px 16px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <Filter size={15} className="text-muted" />
+              <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
+            </div>
+
+            <div style={{ minWidth: '180px' }}>
+              <FilterClear active={historyVehicleFilter !== 'all'} onClear={() => setHistoryVehicleFilter('all')}>
+                <FilterSelect
+                  value={historyVehicleFilter}
+                  defaultValue="all"
+                  onChange={setHistoryVehicleFilter}
+                  style={{ fontSize: '13px', height: '34px' }}
+                  options={[{ value: 'all', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]}
+                />
+              </FilterClear>
+            </div>
+
+            <div style={{ minWidth: '180px' }}>
+              <FilterClear active={historyImplementFilter !== 'all'} onClear={() => setHistoryImplementFilter('all')}>
+                <FilterSelect
+                  value={historyImplementFilter}
+                  defaultValue="all"
+                  onChange={setHistoryImplementFilter}
+                  style={{ fontSize: '13px', height: '34px' }}
+                  options={[{ value: 'all', label: 'Kõik haakeriistad' }, ...implementsList.map((imp) => ({ value: imp.id, label: imp.name }))]}
+                />
+              </FilterClear>
+            </div>
+
+            <div style={{ display: 'flex', gap: '4px' }}>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('all')}
+              >
+                Kõik ({implementAssignments.length})
+              </button>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'active' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('active')}
+              >
+                Aktiivsed ({implementAssignments.filter(a => !a.endedAt).length})
+              </button>
+              <button
+                className={`btn btn-sm ${historyStatusFilter === 'ended' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setHistoryStatusFilter('ended')}
+              >
+                Ajalugu ({implementAssignments.filter(a => !!a.endedAt).length})
+              </button>
+            </div>
+
+            {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all') && (
+              <button
+                className="btn btn-ghost btn-sm"
+                onClick={() => {
+                  setHistoryVehicleFilter('all');
+                  setHistoryImplementFilter('all');
+                  setHistoryStatusFilter('all');
+                }}
+                style={{ fontSize: '12px', marginLeft: 'auto' }}
+              >
+                Tühjenda filtrid
+              </button>
+            )}
+
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={loadImplementAssignments}
+              title="Värskenda registrit"
+              style={{ marginLeft: (historyVehicleFilter === 'all' && historyImplementFilter === 'all' && historyStatusFilter === 'all') ? 'auto' : undefined }}
+            >
+              <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
+              <span>Värskenda</span>
+            </button>
+          </div>
+
+          {/* Data Table */}
+          {historyLoading && implementAssignments.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
+              Laen haakimise registri andmeid...
+            </div>
+          ) : filteredAssignments.length === 0 ? (
+            <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
+              <Wrench size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+                Ühtegi haakimise kirjet ei leitud
+              </div>
+              <p style={{ fontSize: '13px', margin: 0 }}>
+                {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all')
+                  ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
+                  : 'Haakeriistade ja masinate sidumiste ajalugu salvestatakse siia automaatselt, kui masinapargis või töödes haakeriistu vahetatakse.'}
+              </p>
+            </div>
+          ) : (
+            <div className="register-table-wrap glass-card" style={{ overflowX: 'auto' }}>
+              <table className="register-table">
+                <thead>
+                  <tr>
+                    <th>Haakeriist</th>
+                    <th>Masin</th>
+                    <th>Haagitud (algus)</th>
+                    <th>Lahti haagitud (lõpp)</th>
+                    <th>Kestus</th>
+                    <th>Märkused</th>
+                    <th style={{ textAlign: 'right' }}>Tegevused</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAssignments.map((a) => {
+                    const isActive = !a.endedAt;
+                    const duration = formatDuration(a.startedAt, a.endedAt);
+                    return (
+                      <tr key={a.id} style={{ background: isActive ? 'rgba(16, 185, 129, 0.05)' : undefined }}>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              background: 'rgba(234, 179, 8, 0.15)',
+                              color: '#eab308',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '14px'
+                            }}>
+                              🔧
+                            </div>
+                            <div>
+                              <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.implementName || a.implementId}</div>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.implementCategory || ''}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              width: '28px',
+                              height: '28px',
+                              borderRadius: '6px',
+                              background: 'rgba(16, 185, 129, 0.15)',
+                              color: '#10b981',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center'
+                            }}>
+                              <Tractor size={15} />
+                            </div>
+                            <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.vehicleName || a.vehicleId}</div>
+                          </div>
+                        </td>
+                        <td>
+                          <div style={{ fontSize: '13px', fontWeight: 500 }}>{formatDateTime(a.startedAt)}</div>
+                        </td>
+                        <td>
+                          {isActive ? (
+                            <span className="status-badge status-working" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                              Hetkel küljes (Aktiivne)
+                            </span>
+                          ) : (
+                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatDateTime(a.endedAt)}</div>
+                          )}
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', fontWeight: 500, color: isActive ? 'var(--color-primary)' : 'var(--text-muted)' }}>
+                            {duration}
+                          </span>
+                        </td>
+                        <td>
+                          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: a.notes ? 'normal' : 'italic' }}>
+                            {a.notes || '—'}
+                          </span>
+                        </td>
+                        <td style={{ textAlign: 'right' }}>
+                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                            {isActive && (
+                              <button
+                                type="button"
+                                className="btn btn-secondary btn-sm"
+                                title="Haagi see riist masinalt lahti"
+                                onClick={() => handleDetachActiveAssignment(a.implementId)}
+                                style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
+                              >
+                                <Unlink size={12} />
+                                <span>Haagi lahti</span>
+                              </button>
+                            )}
+                            <button
+                              type="button"
+                              className="icon-btn-ghost"
+                              title="Muuda haakimise kirjet"
+                              onClick={() => handleStartEditAssignment(a)}
+                              style={{ width: '26px', height: '26px' }}
+                            >
+                              <Pencil size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              className="icon-btn-danger"
+                              title="Kustuta logikirje"
+                              onClick={() => handleDeleteAssignment(a.id)}
+                              style={{ width: '26px', height: '26px' }}
+                            >
+                              <Trash2 size={13} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
       )}
 
       {/* Quick Swap Sub-Modal */}

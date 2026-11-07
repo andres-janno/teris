@@ -2974,29 +2974,6 @@ body {
   align-items: center;
 }
 
-/* Seadmete seosed: seose liigi märk */
-.link-kind-pill {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-}
-
-.link-kind-pill.hitch {
-  color: #a16207;
-  background: rgba(234, 179, 8, 0.15);
-}
-
-.link-kind-pill.device {
-  color: #2563eb;
-  background: rgba(59, 130, 246, 0.14);
-}
-
-:root[data-theme="dark"] .link-kind-pill.hitch { color: #facc15; }
-:root[data-theme="dark"] .link-kind-pill.device { color: #60a5fa; }
-
 .dev-telemetry-time {
   grid-column: 1 / -1;
   padding-top: 5px;
