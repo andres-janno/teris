@@ -895,7 +895,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           assignedImplementId: deviceLinks.byDevice.get(d.id)?.implementId,
           status,
           notes: (d as any).notes ?? undefined,
-          lastUpdate: lastUpdate ?? ''
+          lastUpdate: lastUpdate ?? '',
+          // Viimane seadmelt saadud pakett (ka enne praegust paigaldust)
+          lastReceivedAt: live?.lastUpdate ? new Date(live.lastUpdate).toISOString() : null
         };
 
         if (isEye) {

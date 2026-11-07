@@ -159,6 +159,7 @@ export interface TelemetryDevice {
   speedKmH: number;              // km/h
   status: VehicleStatus;
   lastUpdate: string;            // ISO timestamp
+  lastReceivedAt?: string | null; // viimane seadmelt saadud andmepakett (ISO)
 }
 
 /**

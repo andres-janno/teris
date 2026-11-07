@@ -1906,6 +1906,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <span className="text-muted" style={{ fontSize: '0.68rem' }}>
                     {isEyeSensor ? 'Eye Sensor (BLE)' : `Firmware: ${dev.firmwareVersion || 'v03.28'}`}
                   </span>
+                  <span className="text-muted" style={{ fontSize: '0.68rem' }} title="Viimane seadmelt saadud andmepakett">
+                    Viimati: {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : 'andmeid pole'}
+                  </span>
                 </div>
               </div>
             );
