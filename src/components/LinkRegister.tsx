@@ -1,10 +1,11 @@
-// src/components/DeviceAssignmentRegister.tsx — telemeetriaseadmete seoste register (Tehnika all).
-// Register on seadme ↔ masina/haakeriista seose ainus tõeallikas: kaardid näitavad
-// seost registri kehtiva kirje järgi ja kaardi „Vaheta“ teeb registrisse uue kirje.
+// src/components/LinkRegister.tsx — „Seadmete seosed“ (Tehnika all): haakimised (haakeriist ↔ masin) ja
+// telemeetriaseadmete paigaldused (seade ↔ masin/haakeriist) ühes tabelis. Andmed jäävad eraldi tabelitesse;
+// haakimise vorm ja tegevused on VehicleTrackeris, seadme seose vorm siin.
+// Seadmete seoste register on seadme ↔ masina/haakeriista seose ainus tõeallikas.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Activity, Filter, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench, X } from 'lucide-react';
-import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../types/fleet';
+import type { DeviceAssignment, Implement, ImplementAssignment, TelemetryDevice, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
@@ -12,7 +13,15 @@ import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 
-interface DeviceAssignmentRegisterProps {
+interface LinkRegisterProps {
+  telemetryEnabled: boolean;
+  preset?: { vehicleId?: string; implementId?: string; key: number } | null; // kaardilt avamisel eelfilter
+  hitches: ImplementAssignment[];        // haakimised
+  hitchLoading: boolean;
+  onReloadHitches: () => void;
+  onEditHitch: (a: ImplementAssignment) => void;
+  onDeleteHitch: (id: string) => void;
+  onDetachHitch: (implementId: string) => void;
   vehicles: Vehicle[];
   implementsList: Implement[];
   devices: TelemetryDevice[];
@@ -27,6 +36,8 @@ interface DeviceAssignmentRegisterProps {
 }
 
 type StatusFilter = 'all' | 'active' | 'ended';
+type KindFilter = 'all' | 'hitch' | 'device';
+type LinkRow = { kind: 'hitch'; a: ImplementAssignment } | { kind: 'device'; a: DeviceAssignment };
 
 export const deviceLabel = (d: { model?: string; imei?: string; macAddress?: string }) => {
   const ident = d.imei ?? d.macAddress;
@@ -45,7 +56,15 @@ const iconBox = (bg: string, color: string): React.CSSProperties => ({
   flexShrink: 0
 });
 
-export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> = ({
+export const LinkRegister: React.FC<LinkRegisterProps> = ({
+  telemetryEnabled,
+  preset,
+  hitches,
+  hitchLoading,
+  onReloadHitches,
+  onEditHitch,
+  onDeleteHitch,
+  onDetachHitch,
   vehicles,
   implementsList,
   devices,
@@ -58,9 +77,21 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
   onChanged,
   onDetach
 }) => {
+  const [kindFilter, setKindFilter] = useState<KindFilter>('all');
+  const [vehicleFilter, setVehicleFilter] = useState('all');
+  const [implementFilter, setImplementFilter] = useState('all');
   const [deviceFilter, setDeviceFilter] = useState('all');
-  const [targetFilter, setTargetFilter] = useState('all'); // 'all' | 'veh:<id>' | 'imp:<id>'
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+
+  // Masina/haakeriista kaardi ajaloo nupp: näita ainult selle seoseid
+  useEffect(() => {
+    if (!preset) return;
+    setKindFilter('all');
+    setDeviceFilter('all');
+    setStatusFilter('all');
+    setVehicleFilter(preset.vehicleId ?? 'all');
+    setImplementFilter(preset.implementId ?? 'all');
+  }, [preset]);
 
   // Vorm
   const editingIdRef = useRef<string | null>(null);
@@ -169,18 +200,26 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
     }
   };
 
-  const filtered = useMemo(() => assignments.filter((a) => {
-    if (deviceFilter !== 'all' && a.deviceId !== deviceFilter) return false;
-    if (targetFilter !== 'all') {
-      const [kind, id] = targetFilter.split(':');
-      if (kind === 'veh' ? a.vehicleId !== id : a.implementId !== id) return false;
-    }
-    if (statusFilter === 'active' && a.endedAt) return false;
-    if (statusFilter === 'ended' && !a.endedAt) return false;
-    return true;
-  }), [assignments, deviceFilter, targetFilter, statusFilter]);
+  // Ühine tabel: haakimised ja seadmete seosed; uuemad eespool
+  const rows = useMemo<LinkRow[]>(() => [
+    ...hitches.map((a): LinkRow => ({ kind: 'hitch', a })),
+    ...(telemetryEnabled ? assignments.map((a): LinkRow => ({ kind: 'device', a })) : [])
+  ].sort((x, y) => new Date(y.a.startedAt).getTime() - new Date(x.a.startedAt).getTime()), [hitches, assignments, telemetryEnabled]);
 
-  const hasFilters = deviceFilter !== 'all' || targetFilter !== 'all' || statusFilter !== 'all';
+  const filtered = useMemo(() => rows.filter((r) => {
+    if (kindFilter !== 'all' && r.kind !== kindFilter) return false;
+    if (vehicleFilter !== 'all' && r.a.vehicleId !== vehicleFilter) return false;
+    if (implementFilter !== 'all' && r.a.implementId !== implementFilter) return false;
+    if (deviceFilter !== 'all' && (r.kind !== 'device' || r.a.deviceId !== deviceFilter)) return false;
+    if (statusFilter === 'active' && r.a.endedAt) return false;
+    if (statusFilter === 'ended' && !r.a.endedAt) return false;
+    return true;
+  }), [rows, kindFilter, vehicleFilter, implementFilter, deviceFilter, statusFilter]);
+
+  const hasFilters = kindFilter !== 'all' || vehicleFilter !== 'all' || implementFilter !== 'all' || deviceFilter !== 'all' || statusFilter !== 'all';
+  const clearFilters = () => { setKindFilter('all'); setVehicleFilter('all'); setImplementFilter('all'); setDeviceFilter('all'); setStatusFilter('all'); };
+  const isLoading = loading || hitchLoading;
+  const reloadAll = () => { onReloadHitches(); if (telemetryEnabled) onReload(); };
 
   const targetOptions = (
     <>
@@ -193,6 +232,26 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
     </>
   );
 
+  const activeBadge = (text: string) => (
+    <span className="status-badge status-working" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
+      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+      {text}
+    </span>
+  );
+
+  const nameCell = (icon: React.ReactNode, title: string, sub?: string) => (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      {icon}
+      <div>
+        <div style={{ fontWeight: 600, fontSize: '13px' }}>{title}</div>
+        {sub ? <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{sub}</div> : null}
+      </div>
+    </div>
+  );
+
+  const vehicleIcon = <div style={iconBox('rgba(16, 185, 129, 0.15)', '#10b981')}><Tractor size={15} /></div>;
+  const implementIcon = <div style={iconBox('rgba(234, 179, 8, 0.15)', '#eab308')}><Wrench size={15} /></div>;
+
   return (
     <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Filtrid */}
@@ -202,82 +261,102 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
         </div>
 
+        {telemetryEnabled && (
+          <div style={{ minWidth: '160px' }}>
+            <FilterClear active={kindFilter !== 'all'} onClear={() => setKindFilter('all')}>
+              <FilterSelect
+                value={kindFilter}
+                defaultValue="all"
+                onChange={(v) => setKindFilter(v as KindFilter)}
+                style={{ fontSize: '13px', height: '34px' }}
+                options={[{ value: 'all', label: 'Kõik seosed' }, { value: 'hitch', label: 'Haakimised' }, { value: 'device', label: 'Seadmed' }]}
+              />
+            </FilterClear>
+          </div>
+        )}
+
         <div style={{ minWidth: '180px' }}>
-          <FilterClear active={deviceFilter !== 'all'} onClear={() => setDeviceFilter('all')}>
+          <FilterClear active={vehicleFilter !== 'all'} onClear={() => setVehicleFilter('all')}>
             <FilterSelect
-              value={deviceFilter}
+              value={vehicleFilter}
               defaultValue="all"
-              onChange={setDeviceFilter}
+              onChange={setVehicleFilter}
               style={{ fontSize: '13px', height: '34px' }}
-              options={[{ value: 'all', label: 'Kõik seadmed' }, ...devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))]}
+              options={[{ value: 'all', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]}
             />
           </FilterClear>
         </div>
 
         <div style={{ minWidth: '180px' }}>
-          <FilterClear active={targetFilter !== 'all'} onClear={() => setTargetFilter('all')}>
+          <FilterClear active={implementFilter !== 'all'} onClear={() => setImplementFilter('all')}>
             <FilterSelect
-              value={targetFilter}
+              value={implementFilter}
               defaultValue="all"
-              onChange={setTargetFilter}
+              onChange={setImplementFilter}
               style={{ fontSize: '13px', height: '34px' }}
-              options={[
-                { value: 'all', label: 'Kõik masinad ja haakeriistad' },
-                ...vehicles.map((v) => ({ value: `veh:${v.id}`, label: v.name, group: '🚜 Masinad' })),
-                ...implementsList.map((imp) => ({ value: `imp:${imp.id}`, label: imp.name, group: '🔧 Haakeriistad' }))
-              ]}
+              options={[{ value: 'all', label: 'Kõik haakeriistad' }, ...implementsList.map((imp) => ({ value: imp.id, label: imp.name }))]}
             />
           </FilterClear>
         </div>
+
+        {telemetryEnabled && (
+          <div style={{ minWidth: '180px' }}>
+            <FilterClear active={deviceFilter !== 'all'} onClear={() => setDeviceFilter('all')}>
+              <FilterSelect
+                value={deviceFilter}
+                defaultValue="all"
+                onChange={setDeviceFilter}
+                style={{ fontSize: '13px', height: '34px' }}
+                options={[{ value: 'all', label: 'Kõik seadmed' }, ...devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))]}
+              />
+            </FilterClear>
+          </div>
+        )}
 
         <div style={{ display: 'flex', gap: '4px' }}>
           <button className={`btn btn-sm ${statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('all')}>
-            Kõik ({assignments.length})
+            Kõik ({rows.length})
           </button>
           <button className={`btn btn-sm ${statusFilter === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('active')}>
-            Aktiivsed ({assignments.filter((a) => !a.endedAt).length})
+            Aktiivsed ({rows.filter((r) => !r.a.endedAt).length})
           </button>
           <button className={`btn btn-sm ${statusFilter === 'ended' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('ended')}>
-            Ajalugu ({assignments.filter((a) => !!a.endedAt).length})
+            Ajalugu ({rows.filter((r) => !!r.a.endedAt).length})
           </button>
         </div>
 
         {hasFilters && (
-          <button
-            className="btn btn-ghost btn-sm"
-            onClick={() => { setDeviceFilter('all'); setTargetFilter('all'); setStatusFilter('all'); }}
-            style={{ fontSize: '12px', marginLeft: 'auto' }}
-          >
+          <button className="btn btn-ghost btn-sm" onClick={clearFilters} style={{ fontSize: '12px', marginLeft: 'auto' }}>
             Tühjenda filtrid
           </button>
         )}
 
         <button
           className="btn btn-secondary btn-sm"
-          onClick={onReload}
+          onClick={reloadAll}
           title="Värskenda registrit"
           style={{ marginLeft: hasFilters ? undefined : 'auto' }}
         >
-          <RotateCcw size={14} className={loading ? 'spin' : ''} />
+          <RotateCcw size={14} className={isLoading ? 'spin' : ''} />
           <span>Värskenda</span>
         </button>
       </div>
 
       {/* Tabel */}
-      {loading && assignments.length === 0 ? (
+      {isLoading && rows.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-          Laen seadmete seoste registrit...
+          Laen seadmete seoseid...
         </div>
       ) : filtered.length === 0 ? (
         <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
-          <Radio size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
+          <Link size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
           <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
             Ühtegi seose kirjet ei leitud
           </div>
           <p style={{ fontSize: '13px', margin: 0 }}>
             {hasFilters
               ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
-              : 'Seadmete paigaldused masinatele ja haakeriistadele salvestuvad siia, kui seade kaardilt paigaldatakse või vahetatakse.'}
+              : 'Haakimised ja seadmete paigaldused salvestuvad siia, kui haakeriista või seadet kaardilt vahetatakse.'}
           </p>
         </div>
       ) : (
@@ -285,62 +364,54 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
           <table className="register-table">
             <thead>
               <tr>
-                <th>Seade</th>
-                <th>Masin / haakeriist</th>
-                <th>Paigaldatud (algus)</th>
-                <th>Eemaldatud (lõpp)</th>
+                <th>Liik</th>
+                <th>Mis</th>
+                <th>Kuhu</th>
+                <th>Algus</th>
+                <th>Lõpp</th>
                 <th>Kestus</th>
                 <th>Märkused</th>
                 <th style={{ textAlign: 'right' }}>Tegevused</th>
               </tr>
             </thead>
             <tbody>
-              {filtered.map((a) => {
+              {filtered.map((r) => {
+                const a = r.a;
                 const isActive = !a.endedAt;
-                const isEye = a.deviceConnectivity === 'eye_sensor';
+                const isHitch = r.kind === 'hitch';
+                const isEye = r.kind === 'device' && r.a.deviceConnectivity === 'eye_sensor';
                 return (
-                  <tr key={a.id} style={{ background: isActive ? 'rgba(16, 185, 129, 0.05)' : undefined }}>
+                  <tr key={`${r.kind}:${a.id}`} style={{ background: isActive ? 'rgba(16, 185, 129, 0.05)' : undefined }}>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={iconBox('rgba(59, 130, 246, 0.15)', '#3b82f6')}>
-                          {isEye ? <Activity size={15} /> : <Radio size={15} />}
-                        </div>
-                        <div>
-                          <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.deviceModel || a.deviceId}</div>
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            {a.deviceIdentifier ? `${isEye ? 'MAC' : 'IMEI'}: ${a.deviceIdentifier}` : ''}
-                          </div>
-                        </div>
-                      </div>
+                      <span className={`link-kind-pill ${r.kind}`}>{isHitch ? 'Haakimine' : 'Seade'}</span>
                     </td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        {a.vehicleId ? (
-                          <div style={iconBox('rgba(16, 185, 129, 0.15)', '#10b981')}><Tractor size={15} /></div>
-                        ) : (
-                          <div style={iconBox('rgba(234, 179, 8, 0.15)', '#eab308')}><Wrench size={15} /></div>
-                        )}
-                        <div style={{ fontWeight: 600, fontSize: '13px' }}>
-                          {a.vehicleId ? (a.vehicleName || a.vehicleId) : (a.implementName || a.implementId)}
-                        </div>
-                      </div>
+                      {r.kind === 'hitch'
+                        ? nameCell(implementIcon, r.a.implementName || r.a.implementId, r.a.implementCategory)
+                        : nameCell(
+                            <div style={iconBox('rgba(59, 130, 246, 0.15)', '#3b82f6')}>{isEye ? <Activity size={15} /> : <Radio size={15} />}</div>,
+                            r.a.deviceModel || r.a.deviceId,
+                            r.a.deviceIdentifier ? `${isEye ? 'MAC' : 'IMEI'}: ${r.a.deviceIdentifier}` : undefined
+                          )}
+                    </td>
+                    <td>
+                      {r.kind === 'hitch'
+                        ? nameCell(vehicleIcon, r.a.vehicleName || r.a.vehicleId)
+                        : r.a.vehicleId
+                          ? nameCell(vehicleIcon, r.a.vehicleName || r.a.vehicleId)
+                          : nameCell(implementIcon, r.a.implementName || r.a.implementId || '')}
                     </td>
                     <td>
                       <div style={{ fontSize: '13px', fontWeight: 500 }}>{formatDateTime(a.startedAt)}</div>
                     </td>
                     <td>
-                      {isActive ? (
-                        <span className="status-badge status-working" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
-                          Paigaldatud (Aktiivne)
-                        </span>
-                      ) : (
-                        <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatDateTime(a.endedAt)}</div>
-                      )}
+                      {isActive
+                        ? activeBadge(isHitch ? 'Hetkel küljes' : 'Paigaldatud')
+                        : <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatDateTime(a.endedAt ?? undefined)}</div>}
                     </td>
                     <td>
                       <span style={{ fontSize: '12px', fontWeight: 500, color: isActive ? 'var(--color-primary)' : 'var(--text-muted)' }}>
-                        {formatDuration(a.startedAt, a.endedAt)}
+                        {formatDuration(a.startedAt, a.endedAt ?? undefined)}
                       </span>
                     </td>
                     <td>
@@ -354,19 +425,19 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                           <button
                             type="button"
                             className="btn btn-secondary btn-sm"
-                            title="Seo seade masinast / haakeriistast lahti"
-                            onClick={() => onDetach(a.deviceId)}
+                            title={isHitch ? 'Haagi see riist masinalt lahti' : 'Seo seade masinast / haakeriistast lahti'}
+                            onClick={() => (r.kind === 'hitch' ? onDetachHitch(r.a.implementId) : onDetach(r.a.deviceId))}
                             style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
                           >
                             <Unlink size={12} />
-                            <span>Seo lahti</span>
+                            <span>{isHitch ? 'Haagi lahti' : 'Seo lahti'}</span>
                           </button>
                         )}
                         <button
                           type="button"
                           className="icon-btn-ghost"
-                          title="Muuda seose kirjet"
-                          onClick={() => startEdit(a)}
+                          title="Muuda kirjet"
+                          onClick={() => (r.kind === 'hitch' ? onEditHitch(r.a) : startEdit(r.a))}
                           style={{ width: '26px', height: '26px' }}
                         >
                           <Pencil size={14} />
@@ -374,8 +445,8 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         <button
                           type="button"
                           className="icon-btn-danger"
-                          title="Kustuta seose kirje"
-                          onClick={() => handleDelete(a.id)}
+                          title="Kustuta kirje"
+                          onClick={() => (r.kind === 'hitch' ? onDeleteHitch(r.a.id) : handleDelete(r.a.id))}
                           style={{ width: '26px', height: '26px' }}
                         >
                           <Trash2 size={13} />
