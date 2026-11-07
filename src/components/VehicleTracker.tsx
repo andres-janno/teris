@@ -45,6 +45,25 @@ import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 
+// Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
+const FRESHNESS_LEGEND = [
+  { cls: 'fresh-live', label: 'alla 1 h' },
+  { cls: 'fresh-day', label: 'alla 24 h' },
+  { cls: 'fresh-week', label: 'alla 7 päeva' },
+  { cls: 'fresh-old', label: 'vanem' },
+  { cls: 'fresh-none', label: 'andmeid pole' }
+];
+
+const deviceFreshness = (iso?: string | null): { cls: string; text: string } => {
+  if (!iso) return { cls: 'fresh-none', text: '' };
+  const min = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
+  const text = min < 60 ? `${Math.max(1, Math.round(min))} min tagasi`
+    : min < 48 * 60 ? `${Math.round(min / 60)} h tagasi`
+    : `${Math.round(min / 1440)} päeva tagasi`;
+  const cls = min < 60 ? 'fresh-live' : min < 24 * 60 ? 'fresh-day' : min < 7 * 1440 ? 'fresh-week' : 'fresh-old';
+  return { cls, text };
+};
+
 interface VehicleTrackerProps {
   isOpen?: boolean;
   isFullPage?: boolean;
@@ -1770,15 +1789,17 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 3: TELEMEETRIASEADMETE REGISTER */}
       {telemetryEnabled && activeTab === 'devices' && (
-        <div className="devices-grid">
-          {devices.map((dev) => {
+        <div className="devices-sections">
+          {(() => {
+            const renderDevice = (dev: TelemetryDevice) => {
             const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
             const assignedImplement = implementsList.find((imp) => imp.assignedDeviceId === dev.id || dev.assignedImplementId === imp.id);
             const isEyeSensor = dev.connectivityType === 'eye_sensor';
+            const fresh = deviceFreshness(dev.lastReceivedAt);
             const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
 
             return (
-              <div key={dev.id} className="device-card glass-card">
+              <div key={dev.id} className={`device-card glass-card ${fresh.cls}`}>
                 <div className="dev-card-header">
                   <div className="dev-icon-wrap">
                     {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
@@ -1786,9 +1807,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <div className="dev-title-wrap">
                     <div className="dev-header-line">
                       <h4 className="dev-model">{dev.model}</h4>
-                      <span className={`status-badge status-${dev.status}`}>
-                        {(assignedVehicle || assignedImplement) ? 'Paigaldatud' : 'Riiulis'}
-                      </span>
                     </div>
                     <span className="dev-imei">
                       {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
@@ -1835,7 +1853,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       </div>
                     )}
                     <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
-                      Andmed seisuga {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : '– andmeid pole'}
+                      <span className="dev-fresh-dot" aria-hidden="true" />
+                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
                   </div>
                 ) : (
@@ -1855,7 +1874,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       </strong>
                     </div>
                     <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
-                      Andmed seisuga {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : '– andmeid pole'}
+                      <span className="dev-fresh-dot" aria-hidden="true" />
+                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
                   </div>
                 )}
@@ -1910,7 +1930,31 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               </div>
             );
-          })}
+            };
+            // Värskeimad andmed eespool; andmeteta seadmed lõpus
+            const lastMs = (d: TelemetryDevice) => (d.lastReceivedAt ? new Date(d.lastReceivedAt).getTime() : -Infinity);
+            const byFresh = (a: TelemetryDevice, b: TelemetryDevice) => lastMs(b) - lastMs(a);
+            const groups = [
+              { key: 'gps', title: 'GPS-seadmed', list: devices.filter((d) => d.connectivityType !== 'eye_sensor').sort(byFresh) },
+              { key: 'sensors', title: 'Sensorid', list: devices.filter((d) => d.connectivityType === 'eye_sensor').sort(byFresh) }
+            ];
+            return (
+              <>
+                <div className="dev-fresh-legend">
+                  <span>Viimased andmed:</span>
+                  {FRESHNESS_LEGEND.map((l) => (
+                    <span key={l.cls} className={`dev-fresh-legend-item ${l.cls}`}><span className="dev-fresh-dot" aria-hidden="true" />{l.label}</span>
+                  ))}
+                </div>
+                {groups.filter((g) => g.list.length > 0).map((g) => (
+                  <section key={g.key} className="devices-section">
+                    <h3 className="devices-section-title">{g.title} <span>{g.list.length}</span></h3>
+                    <div className="devices-grid">{g.list.map(renderDevice)}</div>
+                  </section>
+                ))}
+              </>
+            );
+          })()}
         </div>
       )}
 

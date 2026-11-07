@@ -2893,6 +2893,87 @@ body {
   color: var(--text-secondary);
 }
 
+/* Seadmete register: GPS-seadmed ja sensorid eraldi, värv näitab viimaste andmete vanust */
+.devices-sections {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.devices-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.devices-section-title {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.devices-section-title span {
+  margin-left: 4px;
+  font-weight: 400;
+  color: var(--text-secondary);
+}
+
+:root {
+  --fresh-live: #1baf7a;
+  --fresh-day: #2a78d6;
+  --fresh-week: #e0a100;
+  --fresh-old: #d64545;
+  --fresh-none: #94a3b8;
+}
+
+:root[data-theme="dark"] {
+  --fresh-live: #199e70;
+  --fresh-day: #3987e5;
+  --fresh-week: #d9a21c;
+  --fresh-old: #e05a5a;
+  --fresh-none: #64748b;
+}
+
+.fresh-live { --fresh: var(--fresh-live); }
+.fresh-day { --fresh: var(--fresh-day); }
+.fresh-week { --fresh: var(--fresh-week); }
+.fresh-old { --fresh: var(--fresh-old); }
+.fresh-none { --fresh: var(--fresh-none); }
+
+.device-card[class*="fresh-"] {
+  border-left: 4px solid var(--fresh);
+}
+
+.dev-fresh-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 6px;
+  border-radius: 50%;
+  background: var(--fresh, var(--fresh-none));
+  vertical-align: middle;
+}
+
+.dev-telemetry-time strong {
+  color: var(--fresh);
+  font-weight: 700;
+}
+
+.dev-fresh-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 14px;
+  font-size: 0.72rem;
+  color: var(--text-secondary);
+}
+
+.dev-fresh-legend-item {
+  display: inline-flex;
+  align-items: center;
+}
+
 .dev-telemetry-time {
   grid-column: 1 / -1;
   padding-top: 5px;
