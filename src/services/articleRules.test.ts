@@ -159,8 +159,14 @@ describe('entryLineWarehouseId', () => {
   it('vaikimisi laota kütus kande laost', () => {
     expect(entryLineWarehouseId('FUEL', null, 'main')).toBe('main');
   });
-  it('kulumaterjal alati kande laost', () => {
+  it('kulumaterjal kande laost, kui real ladu puudub', () => {
     expect(entryLineWarehouseId('MATERIAL', 'tank', 'main')).toBe('main');
+  });
+  it('kulumaterjal rea laost', () => {
+    expect(entryLineWarehouseId('MATERIAL', 'tank', 'main', 'side')).toBe('side');
+  });
+  it('kütusel rea ladu ei loe — kütus artikli vaikimisi laost', () => {
+    expect(entryLineWarehouseId('FUEL', 'tank', 'main', 'side')).toBe('tank');
   });
 });
 

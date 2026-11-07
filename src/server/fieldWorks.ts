@@ -17,7 +17,7 @@ import {
   type StoredLine
 } from './fieldWorkRules.ts';
 import { articleSeasonTotals } from './articleUsage.ts';
-import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, StockValidationError } from './stock.ts';
+import { getDefaultWarehouseId, inventoryNotice, entryStockTouches, recomputeArticleStock, articleStockSummary, resolveEntryWarehouseId, validateLineWarehouses, StockValidationError } from './stock.ts';
 import { articleStockFields } from './stockRules.ts';
 import { convertQty } from '../services/units.ts';
 import { lotCostShares } from '../services/harvestLotRules.ts';
@@ -98,7 +98,7 @@ async function resolveEntryInput(body: any) {
     vehicleId ? prisma.vehicle.findUnique({ where: { id: vehicleId }, select: { id: true, name: true } }) : null,
     implementId ? prisma.implement.findUnique({ where: { id: implementId }, select: { id: true, name: true } }) : null
   ]);
-  const articlesIn: { articleId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any }[] = Array.isArray(body?.articles) ? body.articles : [];
+  const articlesIn: { articleId?: unknown; quantity?: unknown; ratePerHa?: unknown; pria?: any; warehouseId?: unknown }[] = Array.isArray(body?.articles) ? body.articles : [];
   const articleIds = articlesIn.map((m) => String(m.articleId ?? '')).filter(Boolean);
   const articleRows = articleIds.length
     ? await prisma.article.findMany({ where: { id: { in: articleIds } }, select: { id: true, name: true, unit: true } })
@@ -110,10 +110,10 @@ async function resolveEntryInput(body: any) {
       const row = byId.get(String(m.articleId ?? ''));
       const quantity = num(m.quantity);
       return row && quantity !== null
-        ? { ...row, quantity, ratePerHa: num(m.ratePerHa), pria: priaAttrsIn(m.pria) }
+        ? { ...row, quantity, ratePerHa: num(m.ratePerHa), pria: priaAttrsIn(m.pria), warehouseId: text(m.warehouseId, 64) }
         : null;
     })
-    .filter((m): m is { id: string; name: string; unit: string; quantity: number; ratePerHa: number | null; pria: PriaAttrs } => m !== null);
+    .filter((m): m is { id: string; name: string; unit: string; quantity: number; ratePerHa: number | null; pria: PriaAttrs; warehouseId: string | null } => m !== null);
 
   const equipmentHours = num(body?.equipmentHours);
   const fuelLiters = num(body?.fuelLiters);
@@ -214,7 +214,7 @@ function entryDto(e: any, withFinance: boolean) {
     articles: lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({
       articleId: l.articleId, name: l.label, unit: l.unit, quantity: l.quantity, ratePerHa: l.ratePerHa,
       priaRegister: l.priaRegister, priaKind: l.priaKind, priaSpec: l.priaSpec, activeIngredient: l.activeIngredient,
-      nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa
+      nKgHa: l.nKgHa, pKgHa: l.pKgHa, kKgHa: l.kKgHa, warehouseId: l.warehouseId ?? null
     })),
     // Koguseta saagirida (ainult saagi/kultuuri tüüp) → kogus puudub
     harvestTonnes: lines.find((l) => l.kind === 'HARVEST')?.quantity || null,
@@ -326,6 +326,7 @@ const toStored = (l: any): StoredLine => ({
   nKgHa: l.nKgHa ?? null,
   pKgHa: l.pKgHa ?? null,
   kKgHa: l.kKgHa ?? null,
+  warehouseId: l.warehouseId ?? null,
   unitPrice: decimalToNumber(l.unitPrice),
   confirmedQuantity: l.confirmedQuantity
 });
@@ -1049,6 +1050,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
             bunkers: data.harvestBunkers, manual: harvestTonnesManual, requestedLotId: harvestLotIdIn, old: null
           });
         }
+        await validateLineWarehouses(tx, drafts.map((l) => l.warehouseId), []);
         const created = await tx.workEntry.create({
           data: {
             ...data, tripId: tripId ?? null, harvestLotId, harvestTonnesManual, date: data.date!, warehouseId: await resolveEntryWarehouseId(tx, warehouseId, null),
@@ -1103,6 +1105,7 @@ export async function handleFieldWorks(req: IncomingMessage, res: ServerResponse
     try {
       saved = await tenantTransaction(async (tx) => {
         const entryWarehouseId = await resolveEntryWarehouseId(tx, warehouseId, old.warehouseId);
+        await validateLineWarehouses(tx, drafts.map((l) => l.warehouseId), [old.warehouseId, ...old.lines.map((l) => l.warehouseId)]);
         const oldHarvest = old.lines.find((l) => l.kind === 'HARVEST');
         const typed = (drafts.find((l) => l.kind === 'HARVEST')?.quantity ?? 0) > 0;
         // Puuduv lukustus jääb endiseks; saagireata kandele uus käsitsi sisestatud saak lukustab

@@ -145,7 +145,11 @@ export function pickFuelArticleId(vehicleFuelId: string | null, activeFuelIds: s
   return activeFuelIds.length === 1 ? activeFuelIds[0] : null;
 }
 
-/** Ladu, kust kanderida maha kantakse: kütus artikli vaikimisi laost (nt mahuti), kulumaterjal kande laost. */
-export function entryLineWarehouseId(kind: 'MATERIAL' | 'FUEL', articleDefaultWarehouseId: string | null, entryWarehouseId: string): string {
-  return kind === 'FUEL' && articleDefaultWarehouseId ? articleDefaultWarehouseId : entryWarehouseId;
+/** Ladu, kust kanderida maha kantakse: kütus artikli vaikimisi laost (nt mahuti), kulumaterjal rea laost
+ *  (vanadel ridadel puudub — siis kande laost). */
+export function entryLineWarehouseId(
+  kind: 'MATERIAL' | 'FUEL', articleDefaultWarehouseId: string | null, entryWarehouseId: string, lineWarehouseId: string | null = null
+): string {
+  if (kind === 'FUEL') return articleDefaultWarehouseId ?? entryWarehouseId;
+  return lineWarehouseId ?? entryWarehouseId;
 }

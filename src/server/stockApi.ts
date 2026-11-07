@@ -97,7 +97,7 @@ export async function handleStock(req: IncomingMessage, res: ServerResponse, pat
     }
     const [docs, entries, lots] = await Promise.all([
       prisma.stockDocument.count({ where: { OR: [{ warehouseId: id }, { toWarehouseId: id }] } }),
-      prisma.workEntry.count({ where: { warehouseId: id } }),
+      prisma.workEntry.count({ where: { OR: [{ warehouseId: id }, { lines: { some: { warehouseId: id } } }] } }),
       prisma.harvestLot.count({ where: { warehouseId: id } })
     ]);
     if (w.fieldId) {

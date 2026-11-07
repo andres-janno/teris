@@ -3,7 +3,7 @@ import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant, tenantTransaction } from './db';
 import {
   getDefaultWarehouseId, recomputeArticleStock, transferShortageKeys, saveStockDocument, deleteStockDocument, StockValidationError,
-  saveWarehouse, resolveEntryWarehouseId
+  saveWarehouse, resolveEntryWarehouseId, validateLineWarehouses
 } from './stock';
 import { systemCategoryId } from './articleCategories';
 
@@ -200,6 +200,40 @@ describe('ülekande puudujääk arvele võtmise muutmisel ja kustutamisel', () =
     expect(s?.qty).toBe(60);
     expect(s?.pricedQty).toBe(60);
     expect(Number(s?.value)).toBe(120);
+  });
+
+  it('kulumaterjali rea ladu on tähtsam kui kande ladu', async () => {
+    const created = await run(() => tenantTransaction(async (tx) => {
+      const e = await tx.workEntry.create({
+        data: {
+          fieldWorkId, date: d('2026-04-02'), warehouseId: mainWh,
+          lines: { create: [{ kind: 'MATERIAL', articleId: seedId, label: 'Testseeme', quantity: 10000, unit: 'g', warehouseId: otherWh }] }
+        }
+      });
+      await recomputeArticleStock(tx, [seedId]);
+      return e.id;
+    }));
+    const s = await run(() => prisma.articleStock.findUnique({ where: { articleId_warehouseId: { articleId: seedId, warehouseId: otherWh } } }));
+    expect(s?.qty).toBe(50);
+    // Järgmised testid eeldavad seisu ilma selle kandeta
+    await run(() => tenantTransaction(async (tx) => {
+      await tx.workEntry.delete({ where: { id: created } });
+      await recomputeArticleStock(tx, [seedId]);
+    }));
+  });
+
+  it('rea ladu: põllu ladu ja uus mitteaktiivne ladu lükatakse tagasi, senine jääb', async () => {
+    const [fieldWh, inactiveWh] = await run(async () => {
+      const f = await prisma.field.findFirstOrThrow();
+      return [
+        (await prisma.warehouse.create({ data: { name: 'Põllu ladu test', fieldId: f.id } })).id,
+        (await prisma.warehouse.create({ data: { name: 'Suletud ladu', isActive: false } })).id
+      ];
+    });
+    await expect(run(() => tenantTransaction((tx) => validateLineWarehouses(tx, [fieldWh], [])))).rejects.toThrow(StockValidationError);
+    await expect(run(() => tenantTransaction((tx) => validateLineWarehouses(tx, [inactiveWh], [])))).rejects.toThrow(StockValidationError);
+    await expect(run(() => tenantTransaction((tx) => validateLineWarehouses(tx, [inactiveWh, otherWh, null], [inactiveWh])))).resolves.toBeUndefined();
+    await run(() => prisma.warehouse.deleteMany({ where: { id: { in: [fieldWh, inactiveWh] } } }));
   });
 });
 

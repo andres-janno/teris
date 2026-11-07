@@ -10,10 +10,12 @@ import {
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
+import { FilterSelect, type FilterSelectOption } from './FilterSelect';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
   priaRegister: string; priaKind: string; priaSpec: string; activeIngredient: string; nKgHa: string; pKgHa: string; kKgHa: string;
+  warehouseId: string; // kande real: ladu, kust materjal maha kantakse
 }
 
 export interface HarvestRow { ratePerHa: string; total: string; priaKind: string; priaSpec: string; bunkers?: string }
@@ -25,7 +27,7 @@ const parseNum = (s: string): number | null => {
 const fmt = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
 
 export const emptyPriaRow = (): PriaRow => ({
-  articleId: '', label: '', unit: 'kg', ratePerHa: '', total: '', priaRegister: '', priaKind: '', priaSpec: '', activeIngredient: '', nKgHa: '', pKgHa: '', kKgHa: ''
+  articleId: '', label: '', unit: 'kg', ratePerHa: '', total: '', priaRegister: '', priaKind: '', priaSpec: '', activeIngredient: '', nKgHa: '', pKgHa: '', kKgHa: '', warehouseId: ''
 });
 
 // Plaanirida (FieldWorkPlanLine) või kande materjal (WorkEntryArticle) vormireaks
@@ -38,7 +40,8 @@ export const planLineToRow = (l: FieldWorkPlanLine | WorkEntryArticle, areaHa: n
     ratePerHa: fmt(ratePerHa ?? rateFromTotal(quantity, areaHa)),
     total: fmt(quantity ?? totalFromRate(ratePerHa, areaHa)),
     priaRegister: l.priaRegister ?? '', priaKind: l.priaKind ?? '', priaSpec: l.priaSpec ?? '', activeIngredient: l.activeIngredient ?? '',
-    nKgHa: fmt(l.nKgHa), pKgHa: fmt(l.pKgHa), kKgHa: fmt(l.kKgHa)
+    nKgHa: fmt(l.nKgHa), pKgHa: fmt(l.pKgHa), kKgHa: fmt(l.kKgHa),
+    warehouseId: ('warehouseId' in l ? l.warehouseId : null) ?? ''
   };
 };
 
@@ -86,9 +89,22 @@ interface PriaLinesEditorProps {
   areaHa: number;
   showTotals: boolean; // kandel kogus kokku, plaanil ainult norm
   seedCheck?: SeedCheck; // külvil: hoiatus, kui seemne sort on teise kultuuri oma
+  // Kandel: laod rea laovalikuks (veerg ainult siis, kui ladu on rohkem kui üks) ja uue rea vaikimisi ladu
+  warehouses?: { id: string; name: string; isActive: boolean }[];
+  defaultWarehouseId?: string;
 }
 
-export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals, seedCheck }) => {
+// Valikute loend; senine väärtus, mida loendis pole (nt vana kande väärtus), jääb valikuks
+const optionsOf = (empty: string, values: readonly string[], current: string): FilterSelectOption[] => [
+  { value: '', label: empty },
+  ...values.map((x) => ({ value: x, label: x })),
+  ...(current && !values.includes(current) ? [{ value: current, label: current }] : [])
+];
+
+export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows, onChange, articles, areaHa, showTotals, seedCheck, warehouses, defaultWarehouseId }) => {
+  const showWarehouse = !!warehouses && warehouses.length > 1;
+  const warehouseOptions = (current: string): FilterSelectOption[] =>
+    (warehouses ?? []).filter((w) => w.isActive || w.id === current).map((w) => ({ value: w.id, label: w.name }));
   const kind = priaArticleKindFor(activity);
   const options = articles.filter((m) => (matchesPriaKind(m.category, kind) && m.isActive) || rows.some((r) => r.articleId === m.id));
   const isSeed = activity === PRIA_ACTIVITY.SOWING;
@@ -112,7 +128,10 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
       priaKind: m.priaKind || r.priaKind,
       priaSpec: m.priaSpec || r.priaSpec,
       activeIngredient: m.activeIngredient || r.activeIngredient,
-      ...npkFor(m, r.ratePerHa)
+      ...npkFor(m, r.ratePerHa),
+      // Materjali vaikimisi ladu (kui see on valitav), muidu rea senine ladu
+      ...(showWarehouse && m.defaultWarehouseId && warehouses!.some((w) => w.id === m.defaultWarehouseId && w.isActive)
+        ? { warehouseId: m.defaultWarehouseId } : {})
     });
   };
 
@@ -123,6 +142,7 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
     { label: isSeed ? 'Liik' : isTkv ? 'Liik' : 'Väetise liik', width: 'minmax(110px, 1fr)' },
     ...(isSeed ? [{ label: 'Kategooria', width: '90px' }] : []),
     ...(isTkv ? [{ label: 'Toimeaine', width: 'minmax(110px, 1fr)' }] : []),
+    ...(showWarehouse ? [{ label: 'Ladu', width: 'minmax(100px, 0.9fr)' }] : []),
     { label: 'Kogus/ha', width: '84px', num: true },
     ...(showTotals ? [{ label: 'Kokku', width: '92px', num: true }] : []),
     ...(isFert ? [{ label: 'N kg/ha', width: '70px', num: true }, { label: 'P kg/ha', width: '70px', num: true }, { label: 'K kg/ha', width: '70px', num: true }] : []),
@@ -150,25 +170,22 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
       )}
       {rows.map((r, i) => (
         <div key={i} className="pria-grid" style={grid}>
-          <select className="form-input" aria-label="Register/materjal" value={r.priaRegister} onChange={(e) => set(i, { priaRegister: e.target.value })}>
-            <option value="">– vali –</option>
-            {registersFor(activity).map((x) => <option key={x} value={x}>{x}</option>)}
-            {r.priaRegister && !registersFor(activity).includes(r.priaRegister) && <option value={r.priaRegister}>{r.priaRegister}</option>}
-          </select>
+          <FilterSelect fill ariaLabel="Register/materjal" value={r.priaRegister} onChange={(v) => set(i, { priaRegister: v })}
+            options={optionsOf('– vali –', registersFor(activity), r.priaRegister)} />
           <div className="pria-article-cell">
-            <select className="form-input" aria-label={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(e) => pickArticle(i, e.target.value)}>
-              <option value="">{r.label && !r.articleId ? r.label : '– Kulumaterjalidest –'}</option>
-              {options.map((m) => <option key={m.id} value={m.id}>{m.name}</option>)}
-            </select>
+            <FilterSelect fill ariaLabel={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(v) => pickArticle(i, v)}
+              options={[{ value: '', label: r.label && !r.articleId ? r.label : '– Kulumaterjalidest –' }, ...options.map((m) => ({ value: m.id, label: m.name }))]} />
           </div>
           <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
-            <select className="form-input" aria-label="Seemne kategooria" value={r.priaSpec} onChange={(e) => set(i, { priaSpec: e.target.value })}>
-              <option value="">–</option>
-              {SEED_CATEGORIES.map((x) => <option key={x} value={x}>{x}</option>)}
-            </select>
+            <FilterSelect fill ariaLabel="Seemne kategooria" value={r.priaSpec} onChange={(v) => set(i, { priaSpec: v })}
+              options={optionsOf('–', SEED_CATEGORIES, r.priaSpec)} />
           )}
           {isTkv && <input className="form-input" aria-label="Toimeaine" value={r.activeIngredient} onChange={(e) => set(i, { activeIngredient: e.target.value })} />}
+          {showWarehouse && (
+            <FilterSelect fill ariaLabel="Ladu" value={r.warehouseId} defaultValue={defaultWarehouseId} onChange={(v) => set(i, { warehouseId: v })}
+              options={warehouseOptions(r.warehouseId)} />
+          )}
           <input className="form-input num" aria-label="Kogus ha kohta" inputMode="decimal" placeholder={`${r.unit}/ha`} value={r.ratePerHa} onChange={(e) => setRate(i, e.target.value)} />
           {showTotals && <input className="form-input num" aria-label="Kogus kokku" inputMode="decimal" placeholder={r.unit} value={r.total} onChange={(e) => setTotal(i, e.target.value)} />}
           {isFert && (
@@ -183,7 +200,7 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
           </button>
         </div>
       ))}
-      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange([...rows, emptyPriaRow()])}>
+      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange([...rows, { ...emptyPriaRow(), warehouseId: defaultWarehouseId ?? '' }])}>
         <Plus size={13} /> Lisa {isSeed ? 'seeme' : 'materjal'}
       </button>
     </div>
@@ -208,14 +225,10 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
             </>}
       </div>
       <div className="pria-grid" style={grid}>
-        <select className="form-input" aria-label="Kultuuri tüüp" value={value.priaSpec} onChange={(e) => onChange({ ...value, priaSpec: e.target.value })}>
-          <option value="">– vali –</option>
-          {CROP_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
-        </select>
-        <select className="form-input" aria-label="Saagi tüüp" value={value.priaKind} onChange={(e) => onChange({ ...value, priaKind: e.target.value })}>
-          <option value="">– vali –</option>
-          {YIELD_TYPES.map((x) => <option key={x} value={x}>{x}</option>)}
-        </select>
+        <FilterSelect fill ariaLabel="Kultuuri tüüp" value={value.priaSpec} onChange={(v) => onChange({ ...value, priaSpec: v })}
+          options={optionsOf('– vali –', CROP_TYPES, value.priaSpec)} />
+        <FilterSelect fill ariaLabel="Saagi tüüp" value={value.priaKind} onChange={(v) => onChange({ ...value, priaKind: v })}
+          options={optionsOf('– vali –', YIELD_TYPES, value.priaKind)} />
         {showBunkers && (
           <input className="form-input num" aria-label="Punkreid" required inputMode="decimal" placeholder="tk" value={value.bunkers ?? ''}
             onChange={(e) => onChange({ ...value, bunkers: e.target.value })} />
@@ -254,10 +267,8 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
       const set = (p: Partial<WorkEntryObservation>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
       return (
         <div key={i} className="pria-grid" style={OBS_GRID}>
-          <select className="form-input" aria-label="Seire liik" value={o.priaRegister ?? ''} onChange={(e) => set({ priaRegister: e.target.value || null, unit: OBSERVATION_UNITS[e.target.value] ?? '' })}>
-            <option value="">– vali –</option>
-            {Object.keys(OBSERVATION_UNITS).map((x) => <option key={x} value={x}>{x}</option>)}
-          </select>
+          <FilterSelect fill ariaLabel="Seire liik" value={o.priaRegister ?? ''} onChange={(v) => set({ priaRegister: v || null, unit: OBSERVATION_UNITS[v] ?? '' })}
+            options={optionsOf('– vali –', Object.keys(OBSERVATION_UNITS), o.priaRegister ?? '')} />
           <input className="form-input" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
           <ObservationQuantity value={o.quantity} unit={o.unit} onChange={(quantity) => set({ quantity })} />
           <span className="work-entry-unit">{o.unit}</span>

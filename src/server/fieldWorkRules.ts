@@ -15,6 +15,7 @@ export interface LineDraft extends PriaAttrs {
   sortOrder: number;
   ratePerHa: number | null; // kogus ha kohta (PRIA)
   unitPrice: number | null; // tööaja real pakutud teenuse hind; kütusel ja materjalil tuleb hind laost (FIFO)
+  warehouseId?: string | null; // kulumaterjali rea ladu; tühi = kande ladu
 }
 
 export interface StoredLine extends LineDraft {
@@ -38,7 +39,7 @@ export interface EntryQuantities {
   implement?: { id: string; name: string } | null;
   equipmentHours?: number | null; // masina ja haakeriista töötunnid sisestatakse korraga
   fuelLiters?: number | null;
-  articles?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs> }[];
+  articles?: { id: string; name: string; unit: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaAttrs>; warehouseId?: string | null }[];
   harvestTonnes?: number | null; // lihtne saak (vana vorm)
   harvest?: { tonnes: number | null; ratePerHa: number | null; priaKind: string | null; priaSpec: string | null; withBunkers?: boolean } | null;
   observations?: { label: string; quantity: number; unit: string; priaRegister: string | null }[];
@@ -108,7 +109,7 @@ export function buildEntryLines(q: EntryQuantities): LineDraft[] {
   if (positive(q.fuelLiters)) push({ kind: 'FUEL', articleId: q.fuelArticle?.id ?? null, label: q.fuelArticle?.name ?? 'Kütus', quantity: q.fuelLiters, unit: 'l' });
   for (const m of q.articles ?? []) {
     if (positive(m.quantity)) {
-      push({ kind: 'MATERIAL', articleId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria });
+      push({ kind: 'MATERIAL', articleId: m.id, label: m.name, quantity: m.quantity, unit: m.unit, ratePerHa: m.ratePerHa ?? null, ...m.pria, warehouseId: m.warehouseId ?? null });
     }
   }
   // Saagi ja kultuuri tüüp salvestatakse ka siis, kui kogus pole veel teada (kogus 0)

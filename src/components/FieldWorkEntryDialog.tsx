@@ -11,6 +11,10 @@ import TripRouteView from './TripRouteView';
 import { formatQty } from '../services/units';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
 import type { SeedCheck } from '../services/seedCropCheck';
+import { FilterSelect, type FilterSelectOption } from './FilterSelect';
+import { FilterClear } from './FilterClear';
+
+const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 
 interface Option {
@@ -150,7 +154,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   // Materjalid: olemasolevast kandest või uue kande puhul töö plaanist (norm ha kohta; kogus kokku 0, kuni pindala on sisestatud)
   const [rows, setRows] = useState<PriaRow[]>(() =>
     entry
-      ? entry.articles.map((m) => planLineToRow(m, entry.areaHa ?? fieldAreaHa))
+      ? entry.articles.map((m) => ({ ...planLineToRow(m, entry.areaHa ?? fieldAreaHa), warehouseId: m.warehouseId ?? entry.warehouseId ?? '' }))
       : work.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, 0))
   );
   const [harvest, setHarvest] = useState<HarvestRow>(() => {
@@ -175,6 +179,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [observations, setObservations] = useState<WorkEntryObservation[]>(entry?.observations ?? []);
   const [warehouses, setWarehouses] = useState<Warehouse[]>([]);
   const [warehouseId, setWarehouseId] = useState<string>(entry?.warehouseId ?? '');
+  const defaultWarehouseId = warehouses.find((w) => w.isDefault)?.id ?? '';
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -186,8 +191,16 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   useEffect(() => {
     api.getWarehouses().then((ws) => {
-      setWarehouses(ws.filter((w) => !w.fieldId)); // põllu laod on ainult punkrite jaoks
-      setWarehouseId((cur) => cur || ws.find((w) => w.isDefault)?.id || '');
+      const usable = ws.filter((w) => !w.fieldId); // põllu laod on ainult punkrite jaoks
+      const def = ws.find((w) => w.isDefault)?.id || '';
+      setWarehouses(usable);
+      setWarehouseId((cur) => cur || def);
+      // Ladu puudub (uus kanne plaanist): materjali vaikimisi ladu, muidu põhiladu
+      setRows((rs) => rs.map((r) => {
+        if (r.warehouseId) return r;
+        const artWh = articles.find((m) => m.id === r.articleId)?.defaultWarehouseId;
+        return { ...r, warehouseId: artWh && usable.some((w) => w.id === artWh && w.isActive) ? artWh : def };
+      }));
     }).catch(() => setWarehouses([]));
   }, []);
 
@@ -347,6 +360,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (rows.some((r) => !r.articleId && r.label.trim())) return setError('Vali toode Kulumaterjalidest');
     // Valitud toode ilma koguseta jääks salvestamisel kõrvale (ka imporditud PRIA rida) — nõua kogust
     const noQuantity = rows.find((r) => r.articleId && !((parseNum(r.total) ?? 0) > 0));
+    if (isHarvest && !manual && !entry?.harvestLotId && openLots.length > 1 && !lotId) return setError('Vali saagipartii');
     if (isHarvest && !manual && parseNum(harvest.bunkers ?? '') == null) return setError('Sisesta punkrite arv');
     // Materjali kogus kokku arvutatakse pindalast — ilma pindalata oleks see 0
     if (noQuantity && !(areaNum > 0) && parseNum(noQuantity.ratePerHa) != null) return setError('Sisesta tehtud pindala');
@@ -371,7 +385,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           tripId,
           warehouseId: warehouseId || null,
           articles: rows
-            .map((r) => ({ articleId: r.articleId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r) }))
+            .map((r) => ({ articleId: r.articleId, quantity: parseNum(r.total) ?? 0, ratePerHa: parseNum(r.ratePerHa), pria: rowPria(r), warehouseId: r.warehouseId || null }))
             .filter((r) => r.articleId && r.quantity > 0),
           // Saagi ja kultuuri tüüp salvestuvad ka ilma koguseta
           harvest: isHarvest && (manual ? (parseNum(harvest.total) != null || harvest.priaKind || harvest.priaSpec) : (harvest.priaKind || harvest.priaSpec))
@@ -516,49 +530,31 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             {activity === PRIA_ACTIVITY.FERTILIZING && (
               <div className="form-group">
                 <label htmlFor="we-method">Väetamisviis</label>
-                <select id="we-method" className="form-input" value={method} onChange={(e) => setMethod(e.target.value)}>
-                  <option value="">– vali –</option>
-                  {FERTILIZING_METHODS.map((m) => <option key={m} value={m}>{m}</option>)}
-                  {method && !(FERTILIZING_METHODS as readonly string[]).includes(method) && <option value={method}>{method}</option>}
-                </select>
+                <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
+                  <FilterSelect fill id="we-method" value={method} onChange={setMethod} options={[
+                    { value: '', label: '– vali –' },
+                    ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
+                    ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
+                  ]} />
+                </FilterClear>
               </div>
             )}
             <div className="form-group">
               <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
-              <select id="we-worker" className="form-input" required={!imported} value={workerId} onChange={(e) => setWorkerId(e.target.value)}>
-                <option value="">– valimata –</option>
-                {workerOptions.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
+              <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
+                <FilterSelect fill id="we-worker" value={workerId} onChange={setWorkerId}
+                  options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
+              </FilterClear>
             </div>
             <div className="form-group">
               <label htmlFor="we-start-time">Algus{imported ? '' : ' *'}</label>
-              <select
-                id="we-start-time"
-                required={!imported}
-                className="form-input time-select"
-                value={startTime}
-                onChange={(e) => handleStartTimeChange(e.target.value)}
-              >
-                <option value="">– algus –</option>
-                {startOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <FilterSelect fill id="we-start-time" className="time-select" value={startTime} onChange={handleStartTimeChange}
+                options={timeOptions('– algus –', startOptions)} />
             </div>
             <div className="form-group">
               <label htmlFor="we-end-time">Lõpp{imported ? '' : ' *'}</label>
-              <select
-                id="we-end-time"
-                required={!imported}
-                className="form-input time-select"
-                value={endTime}
-                onChange={(e) => handleEndTimeChange(e.target.value)}
-              >
-                <option value="">– lõpp –</option>
-                {endOptions.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
+              <FilterSelect fill id="we-end-time" className="time-select" value={endTime} onChange={handleEndTimeChange}
+                options={timeOptions('– lõpp –', endOptions)} />
             </div>
             <div className="form-group">
               <label htmlFor="we-labor">Tööaeg, h</label>
@@ -662,17 +658,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <div className="work-entry-grid four">
               <div className="form-group">
                 <label htmlFor="we-vehicle">Masin</label>
-                <select id="we-vehicle" className="form-input" value={vehicleId} onChange={(e) => setVehicleId(e.target.value)}>
-                  <option value="">– pole –</option>
-                  {vehicleOptions.map((v) => <option key={v.id} value={v.id}>{v.name}</option>)}
-                </select>
+                <FilterClear className="filter-clear-fill" active={!!vehicleId} onClear={() => setVehicleId('')}>
+                  <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
+                    options={[{ value: '', label: '– pole –' }, ...vehicleOptions.map((v) => ({ value: v.id, label: v.name }))]} />
+                </FilterClear>
               </div>
               <div className="form-group">
                 <label htmlFor="we-impl">Haakeriist</label>
-                <select id="we-impl" className="form-input" value={implementId} onChange={(e) => setImplementId(e.target.value)}>
-                  <option value="">– pole –</option>
-                  {implementOptions.map((i) => <option key={i.id} value={i.id}>{i.name}</option>)}
-                </select>
+                <FilterClear className="filter-clear-fill" active={!!implementId} onClear={() => setImplementId('')}>
+                  <FilterSelect fill id="we-impl" value={implementId} onChange={setImplementId}
+                    options={[{ value: '', label: '– pole –' }, ...implementOptions.map((i) => ({ value: i.id, label: i.name }))]} />
+                </FilterClear>
               </div>
               <div className="form-group">
                 <label htmlFor="we-eqh">Töötunnid</label>
@@ -689,15 +685,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           {(work.usesMaterials || rows.length > 0) && (
             <section className="work-entry-section">
               <h4>Materjalid</h4>
-              {warehouses.length > 1 && (
-                <div className="form-group">
-                  <label htmlFor="we-warehouse">Ladu</label>
-                  <select id="we-warehouse" className="form-input" value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                    {warehouses.filter((w) => w.isActive || w.id === warehouseId).map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-                  </select>
-                </div>
-              )}
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck} />
+              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck}
+                warehouses={warehouses} defaultWarehouseId={defaultWarehouseId} />
             </section>
           )}
 
@@ -707,13 +696,11 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
                 <div className="form-group">
                   <label htmlFor="we-lot">Saagipartii</label>
-                  <select id="we-lot" className="form-input" required={!entry?.harvestLotId && !manual} value={lotId} onChange={(e) => setLotId(e.target.value)}>
-                    {!entry?.harvestLotId && <option value="">– vali partii –</option>}
-                    {entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) && (
-                      <option value={entry.harvestLotId}>{entry.harvestLotName}</option>
-                    )}
-                    {openLots.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
-                  </select>
+                  <FilterSelect fill id="we-lot" value={lotId} onChange={setLotId} options={[
+                    ...(!entry?.harvestLotId ? [{ value: '', label: '– vali partii –' }] : []),
+                    ...(entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) ? [{ value: entry.harvestLotId, label: entry.harvestLotName ?? '' }] : []),
+                    ...openLots.map((l) => ({ value: l.id, label: l.name }))
+                  ]} />
                 </div>
               )}
               {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (

@@ -77,6 +77,21 @@ export async function resolveEntryWarehouseId(tx: TxClient, requested: string | 
   return requested;
 }
 
+/** Kulumaterjali ridade laod: peab olema olemas ja mitte põllu ladu; mitteaktiivne ainult siis, kui oli kandel juba kasutusel. */
+export async function validateLineWarehouses(tx: TxClient, requested: (string | null | undefined)[], current: (string | null | undefined)[]): Promise<void> {
+  const keep = new Set(current.filter(Boolean));
+  const ids = [...new Set(requested.filter((x): x is string => !!x))];
+  if (!ids.length) return;
+  const rows = await tx.warehouse.findMany({ where: { id: { in: ids } }, select: { id: true, name: true, isActive: true, fieldId: true } });
+  for (const id of ids) {
+    const w = rows.find((r) => r.id === id);
+    if (!w) throw new StockValidationError('Materjali ladu ei leitud');
+    if (keep.has(id)) continue;
+    if (!w.isActive) throw new StockValidationError(`Ladu „${w.name}“ ei ole aktiivne. Vali aktiivne ladu.`);
+    if (w.fieldId) throw new StockValidationError(`Põllu ladu („${w.name}“) ei saa olla materjali ladu`);
+  }
+}
+
 export interface ArticleMovements {
   articleId: string;
   unit: string;
@@ -101,7 +116,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
     }),
     tx.workEntryLine.findMany({
       where: { kind: { in: ['MATERIAL', 'FUEL'] }, articleId: { in: articleIds } },
-      select: { id: true, articleId: true, kind: true, quantity: true, unit: true, sortOrder: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
+      select: { id: true, articleId: true, kind: true, quantity: true, unit: true, sortOrder: true, warehouseId: true, entry: { select: { date: true, warehouseId: true, createdAt: true } } }
     }),
     tx.harvestLotWeighing.findMany({
       where: { lot: { articleId: { in: articleIds } } },
@@ -140,7 +155,7 @@ export async function loadMovements(tx: TxClient, articleIds: string[]): Promise
       out.movements.push({
         ref, date: isoDay(l.entry.date), seq: l.entry.createdAt.getTime() * 1000 + l.sortOrder,
         // Tühi ladu (vana kanne enne ühekordset täitmist) — varuvariandina põhiladu; kütus artikli vaikimisi laost
-        kind: 'OUT', warehouseId: entryLineWarehouseId(l.kind as 'MATERIAL' | 'FUEL', m.defaultWarehouseId, l.entry.warehouseId ?? defaultWh), quantity: qty
+        kind: 'OUT', warehouseId: entryLineWarehouseId(l.kind as 'MATERIAL' | 'FUEL', m.defaultWarehouseId, l.entry.warehouseId ?? defaultWh, l.warehouseId), quantity: qty
       });
     }
     // Saagi kaalumine: hinnata sissetulek partii laos (tonnid artikli ühikus)
@@ -386,11 +401,11 @@ export async function inventoryNotice(
 
 /** Põllutöö kande kaubaread (artikkel + ladu, kust maha kantakse) inventuuri hoiatuse jaoks. */
 export async function entryStockTouches(
-  tx: TxClient, lines: { kind: string; articleId: string | null }[], entryWarehouseId: string
+  tx: TxClient, lines: { kind: string; articleId: string | null; warehouseId?: string | null }[], entryWarehouseId: string
 ): Promise<{ articleId: string; warehouseId: string }[]> {
-  const goods = lines.filter((l): l is { kind: 'MATERIAL' | 'FUEL'; articleId: string } => (l.kind === 'MATERIAL' || l.kind === 'FUEL') && !!l.articleId);
+  const goods = lines.filter((l): l is { kind: 'MATERIAL' | 'FUEL'; articleId: string; warehouseId?: string | null } => (l.kind === 'MATERIAL' || l.kind === 'FUEL') && !!l.articleId);
   if (!goods.length) return [];
   const arts = await tx.article.findMany({ where: { id: { in: goods.map((l) => l.articleId) } }, select: { id: true, defaultWarehouseId: true } });
   const dw = new Map(arts.map((a) => [a.id, a.defaultWarehouseId]));
-  return goods.map((l) => ({ articleId: l.articleId, warehouseId: entryLineWarehouseId(l.kind, dw.get(l.articleId) ?? null, entryWarehouseId) }));
+  return goods.map((l) => ({ articleId: l.articleId, warehouseId: entryLineWarehouseId(l.kind, dw.get(l.articleId) ?? null, entryWarehouseId, l.warehouseId ?? null) }));
 }

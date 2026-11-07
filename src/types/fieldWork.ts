@@ -94,6 +94,7 @@ export interface WorkEntryArticle extends Partial<PriaLineFields> {
   name: string;
   unit: string;
   quantity: number;
+  warehouseId?: string | null; // rea ladu; tühi = kande ladu
 }
 
 export interface WorkEntryLine {
@@ -250,7 +251,7 @@ export interface WorkEntryInput {
   laborHours: number | null;
   startTime?: string | null;
   endTime?: string | null;
-  articles: { articleId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields> }[];
+  articles: { articleId: string; quantity: number; ratePerHa?: number | null; pria?: Partial<PriaLineFields>; warehouseId?: string | null }[];
   harvestTonnes: number | null;
   harvestBunkers?: number | null;
   harvestLotId?: string | null;

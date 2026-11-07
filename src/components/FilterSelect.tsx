@@ -20,6 +20,8 @@ interface FilterSelectProps {
   title?: string;
   disabled?: boolean;
   ariaLabel?: string;
+  id?: string; // vormiväljal sildi (label htmlFor) jaoks
+  fill?: boolean; // vormiväljal täidab lahtri laiuse (laius ei sõltu valikutest)
 }
 
 // Tähe järgi hüpe: leiab järgmise valiku (alates start+1, tsükliliselt), mille silt algab antud tähega
@@ -35,7 +37,7 @@ export const findTypeaheadIndex = (labels: string[], start: number, char: string
 interface ListPos { left: number; top?: number; bottom?: number; minWidth: number; maxHeight: number }
 
 export const FilterSelect: React.FC<FilterSelectProps> = ({
-  value, onChange, options, defaultValue = '', className, style, title, disabled, ariaLabel
+  value, onChange, options, defaultValue = '', className, style, title, disabled, ariaLabel, id, fill
 }) => {
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
@@ -154,8 +156,9 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
     <>
       <button
         ref={triggerRef}
+        id={id}
         type="button"
-        className={`form-input filter-select-trigger${isDefault ? '' : ' is-set'}${className ? ` ${className}` : ''}`}
+        className={`form-input filter-select-trigger${fill ? ' filter-select-fill' : ''}${isDefault ? '' : ' is-set'}${className ? ` ${className}` : ''}`}
         style={style}
         title={title}
         disabled={disabled}
@@ -168,10 +171,10 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
       >
         {/* Laius = pikim valik paksus kirjas (nähtamatud mõõdusildid samas lahtris) — filter ei muuda valikul suurust */}
         <span className="filter-select-label">
-          {options.map((o, i) => (
+          {!fill && options.map((o, i) => (
             <span key={`${o.value}:${i}`} className="filter-select-sizer" aria-hidden="true">{o.label}</span>
           ))}
-          <span className="filter-select-current">{selected?.label ?? ''}</span>
+          <span className="filter-select-current">{selected?.label || '\u00a0'}</span>
         </span>
       </button>
       {open && pos && createPortal(

@@ -10740,6 +10740,18 @@ select.form-input:read-only {
   width: 100%;
 }
 
+/* Vormiväli (FilterSelect fill): täidab lahtri laiuse, laius ei sõltu valikute pikkusest */
+.form-input.filter-select-trigger.filter-select-fill {
+  display: block;
+  width: 100%;
+  min-width: 0;
+}
+
+.filter-clear.filter-clear-fill {
+  display: flex;
+  width: 100%;
+}
+
 /* Liitfilter (kuupäevavahemik, linnuke): X-nupp sisu järel, mitte välja peal (seal on kalendri ikoon / tekst) */
 .filter-clear.filter-clear-inline {
   gap: 4px;
