@@ -1817,7 +1817,22 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.
           </div>
         )}
-        <MapView 
+        <MapView
+          selectedFieldCard={selectedField ? (
+            <Suspense fallback={null}>
+            <FieldMapCard
+              field={selectedField}
+              onClose={handleCloseFieldDetails}
+              onOpenWorks={(f) => {
+                setSelectedYear(f.properties.year ?? selectedYear);
+                setWorksSearch(f.properties.name);
+                setSelectedFieldId(null);
+                changeMainView('works');
+              }}
+              onEditField={setEditFieldId}
+            />
+          </Suspense>
+          ) : null}
           onOpenWarehouse={openWarehouse}
           onFieldContextMenu={openFieldMenu}
           visibility={visibility}
@@ -1862,23 +1877,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           />
 
         </div>
-
-        {/* Valitud põllu väike infokast kaardi all vasakul */}
-        {selectedField && (
-          <Suspense fallback={null}>
-            <FieldMapCard
-              field={selectedField}
-              onClose={handleCloseFieldDetails}
-              onOpenWorks={(f) => {
-                setSelectedYear(f.properties.year ?? selectedYear);
-                setWorksSearch(f.properties.name);
-                setSelectedFieldId(null);
-                changeMainView('works');
-              }}
-              onEditField={setEditFieldId}
-            />
-          </Suspense>
-        )}
 
         {/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel (MapView portaal) */}
         <div className="map-top-right-stack">

@@ -11212,7 +11212,8 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-entry:disabled:hover span:first-child { text-decoration: none; }
 
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
-.field-map-card { position: absolute; left: 16px; bottom: 44px; width: 300px; z-index: 900; background: var(--bg-modal); color: var(--text-primary); border: 1px solid var(--border-card); border-radius: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
+.field-map-card { position: relative; width: 300px; background: var(--bg-modal); color: var(--text-primary); border: 1px solid var(--border-card); border-radius: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
 .fmc-header { display: flex; align-items: center; gap: 8px; }
 .fmc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fmc-rows { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }

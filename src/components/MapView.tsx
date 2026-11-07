@@ -72,6 +72,8 @@ interface MapViewProps {
   onOpenWarehouse?: (warehouseId: string) => void;
   /** Põllul parem hiireklõps: kontekstimenüü avamine (ekraani koordinaadid) */
   onFieldContextMenu?: (field: FieldFeature, point: { x: number; y: number }) => void;
+  /** Valitud põllu infokast: kuvatakse kaardil põllu juures ja liigub kaardiga kaasa */
+  selectedFieldCard?: React.ReactNode;
 }
 
 export const MapView: React.FC<MapViewProps> = ({
@@ -100,9 +102,14 @@ export const MapView: React.FC<MapViewProps> = ({
   onSelectSatelliteDate,
   satellitePanelHost,
   onOpenWarehouse,
-  onFieldContextMenu
+  onFieldContextMenu,
+  selectedFieldCard
 }) => {
   const mapContainerRef = useRef<HTMLDivElement>(null);
+  // Põllu infokasti ankur: klõpsatud koht (muidu põllu keskpunkt) ja selle asukoht ekraanil
+  const fieldClickLatLngRef = useRef<L.LatLng | null>(null);
+  const fieldCardRef = useRef<HTMLDivElement>(null);
+  const [fieldCardPos, setFieldCardPos] = useState<{ left: number; top: number; below: boolean } | null>(null);
   // Kaart on teiste vaadete ajal peidus (display: none, suurus 0×0). Peidetud kaardile Leaflet
   // õiget vaadet arvutada ei saa — mahutamine/fookus jäetakse ootele ja tehakse nähtavaks muutumisel.
   const isMapVisible = () => (mapContainerRef.current?.clientWidth ?? 0) > 0 && (mapContainerRef.current?.clientHeight ?? 0) > 0;
@@ -399,6 +406,7 @@ export const MapView: React.FC<MapViewProps> = ({
         layer.on({
           click: (e) => {
             L.DomEvent.stopPropagation(e);
+            fieldClickLatLngRef.current = (e as L.LeafletMouseEvent).latlng ?? null;
             onSelectField(feature);
           },
           contextmenu: (e: L.LeafletMouseEvent) => {
@@ -988,8 +996,65 @@ export const MapView: React.FC<MapViewProps> = ({
     handleFitAllBounds();
   }, [vehicleTracks, handleFitAllBounds]);
 
+  // Infokast põllu juures: klõpsukoha (või põllu keskpunkti) kohal, liigub kaardi nihutamise ja suumiga kaasa.
+  // Kast hoitakse kaardi piires; kui ülal pole ruumi, kuvatakse see punkti all.
+  const selectedFieldKey = selectedField ? String(selectedField.properties.id ?? selectedField.id) : null;
+  useEffect(() => {
+    const map = mapInstanceRef.current;
+    if (!map || !selectedField || !selectedFieldCard) {
+      setFieldCardPos(null);
+      return;
+    }
+    let anchor = fieldClickLatLngRef.current;
+    if (!anchor) {
+      try {
+        anchor = L.geoJSON(selectedField as any).getBounds().getCenter();
+      } catch {
+        anchor = null;
+      }
+    }
+    fieldClickLatLngRef.current = null;
+    if (!anchor) {
+      setFieldCardPos(null);
+      return;
+    }
+    const at = anchor;
+    const update = () => {
+      const size = map.getSize();
+      if (!size.x || !size.y) return;
+      const pt = map.latLngToContainerPoint(at);
+      const w = fieldCardRef.current?.offsetWidth ?? 300;
+      const h = fieldCardRef.current?.offsetHeight ?? 150;
+      const gap = 14;
+      const margin = 8;
+      const below = pt.y - gap - h < margin;
+      const left = Math.min(Math.max(pt.x - w / 2, margin), Math.max(margin, size.x - w - margin));
+      const rawTop = below ? pt.y + gap : pt.y - gap - h;
+      const top = Math.min(Math.max(rawTop, margin), Math.max(margin, size.y - h - margin));
+      setFieldCardPos({ left, top, below });
+    };
+    update();
+    // Kasti mõõdud on teada alles pärast esimest joonistust
+    const raf = requestAnimationFrame(update);
+    map.on('move zoom resize', update);
+    return () => {
+      cancelAnimationFrame(raf);
+      map.off('move zoom resize', update);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedFieldKey, !!selectedFieldCard, mapInstance]);
+
   return (
     <div className="map-wrapper">
+      {selectedField && selectedFieldCard && (
+        <div
+          ref={fieldCardRef}
+          className={`field-map-card-anchor${fieldCardPos?.below ? ' below' : ''}`}
+          style={fieldCardPos ? { left: fieldCardPos.left, top: fieldCardPos.top } : { visibility: 'hidden', left: 0, top: 0 }}
+        >
+          {selectedFieldCard}
+        </div>
+      )}
       <div
         ref={mapContainerRef}
         className={`leaflet-map-container ${isAddPoiMode ? 'cursor-crosshair' : ''}`}
