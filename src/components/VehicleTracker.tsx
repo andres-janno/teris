@@ -1834,6 +1834,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <strong>{dev.eyeHumidityPercent}%</strong>
                       </div>
                     )}
+                    <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
+                      Andmed seisuga {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : '– andmeid pole'}
+                    </div>
                   </div>
                 ) : (
                   <div className="dev-telemetry-summary">
@@ -1850,6 +1853,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
                         {dev.ignition ? 'SEES' : 'VÄLJAS'}
                       </strong>
+                    </div>
+                    <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
+                      Andmed seisuga {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : '– andmeid pole'}
                     </div>
                   </div>
                 )}
@@ -1902,14 +1908,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 )}
 
-                <div className="dev-card-footer">
-                  <span className="text-muted" style={{ fontSize: '0.68rem' }}>
-                    {isEyeSensor ? 'Eye Sensor (BLE)' : `Firmware: ${dev.firmwareVersion || '–'}`}
-                  </span>
-                  <span className="text-muted" style={{ fontSize: '0.68rem' }} title="Viimane seadmelt saadud andmepakett">
-                    Viimati: {dev.lastReceivedAt ? formatDateTime(dev.lastReceivedAt) : 'andmeid pole'}
-                  </span>
-                </div>
               </div>
             );
           })}

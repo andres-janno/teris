@@ -2893,6 +2893,14 @@ body {
   color: var(--text-secondary);
 }
 
+.dev-telemetry-time {
+  grid-column: 1 / -1;
+  padding-top: 5px;
+  border-top: 1px solid var(--border-card);
+  font-size: 0.62rem;
+  color: var(--text-secondary);
+}
+
 .dev-assignment-box {
   display: flex;
   flex-direction: column;
