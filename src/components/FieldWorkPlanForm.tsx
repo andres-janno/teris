@@ -82,11 +82,11 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
   return (
     <div className="fw-plan-view">
       <dl className="fw-plan-rows">
-        <dt>Tegevus</dt><dd title={work.priaName}>{work.workTypeName}</dd>
-        <dt>Planeeritud</dt><dd>{planned}</dd>
-        <dt>Pindala</dt><dd className="num">{fmtNum(work.plannedAreaHa ?? fieldAreaHa)} ha</dd>
-        {method && <><dt>Väetamisviis</dt><dd>{method}</dd></>}
-        {workerName && <><dt>Teostaja</dt><dd>{workerName}</dd></>}
+        <div><dt>Tegevus</dt><dd title={work.priaName}>{work.workTypeName}</dd></div>
+        <div><dt>Planeeritud</dt><dd>{planned}</dd></div>
+        <div><dt>Pindala</dt><dd className="num">{fmtNum(work.plannedAreaHa ?? fieldAreaHa)} ha</dd></div>
+        {method && <div><dt>Väetamisviis</dt><dd>{method}</dd></div>}
+        {workerName && <div><dt>Teostaja</dt><dd>{workerName}</dd></div>}
       </dl>
       {articleLines.length > 0 && (
         <div className="fw-plan-block">

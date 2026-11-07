@@ -8449,17 +8449,28 @@ a.history-pill:hover {
   gap: 10px;
 }
 
+/* Plaani päis ühel real: silt väikselt väärtuse kohal */
 .fw-plan-rows {
-  display: grid;
-  grid-template-columns: max-content minmax(0, 1fr);
-  gap: 4px 14px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 32px;
   margin: 0;
   font-size: 0.8rem;
 }
 
+.fw-plan-rows > div {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
 .fw-plan-rows dt {
   color: var(--text-secondary);
+  font-size: 0.68rem;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .fw-plan-rows dd {
