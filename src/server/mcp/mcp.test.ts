@@ -202,6 +202,15 @@ describe('ladu', () => {
   });
 });
 
+describe('ilm', () => {
+  it('weather_summary ainult WEATHER mooduliga', async () => {
+    const client = await connect(A.plainKey);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.map((t) => t.name)).not.toContain('weather_summary');
+  });
+});
+
 describe('tehnika', () => {
   it('list_vehicles: soetusmaksumus ainult finantsjuhile, asukoht ainult telemeetriaga', async () => {
     const plain = (await call(A.plainKey, 'list_vehicles')).data;

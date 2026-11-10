@@ -6,8 +6,9 @@ import { fieldTools } from './tools/fields.ts';
 import { workTools } from './tools/works.ts';
 import { stockTools } from './tools/stock.ts';
 import { fleetTools } from './tools/fleet.ts';
+import { weatherTools } from './tools/weather.ts';
 
-export const ALL_TOOLS: ToolDef[] = [...accountTools, ...fieldTools, ...workTools, ...stockTools, ...fleetTools];
+export const ALL_TOOLS: ToolDef[] = [...accountTools, ...fieldTools, ...workTools, ...stockTools, ...fleetTools, ...weatherTools];
 
 export function createMcpServer(ctx: McpContext, instructions: string): McpServer {
   const server = new McpServer({ name: 'teris', title: 'Teris', version: '1.0.0' }, { instructions });
