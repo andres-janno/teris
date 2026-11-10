@@ -5,7 +5,7 @@ export type HourlyWeather = {
   time: Date;
   tempC: number | null;
   precipMm: number | null;
-  potEvapMm: number | null;
+  solarJm2: number | null; // päikesekiirgus J/m² tunni kohta, mis lõpeb ajal `time`
   soil1: number | null;
   soil2: number | null;
 };

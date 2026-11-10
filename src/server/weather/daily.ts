@@ -1,6 +1,7 @@
 // src/server/weather/daily.ts — ERA5-Landi tunniandmed → Tallinna kalendripäevad.
 // Temperatuur ja mullaniiskus on hetkeväärtused (päev = Tallinna päev ajast `time`);
-// sademed ja aurumine on tunni kogused, mis lõpevad ajal `time` (päev = Tallinna päev ajast time − 30 min).
+// sademed ja päikesekiirgus on tunni kogused, mis lõpevad ajal `time` (päev = Tallinna päev ajast time − 30 min).
+// Potentsiaalne aurumine arvutatakse päeva kaupa Makkinki valemiga (päikesekiirgus + keskmine temperatuur); ERA5 pev-i ei kasutata.
 import type { DailyWeather, HourlyWeather } from './types';
 
 const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit', day: '2-digit' });
@@ -19,10 +20,18 @@ export function deaccumulate(values: { time: Date; value: number | null }[]): { 
   });
 }
 
-type Acc = { temps: number[]; precip: number[]; evap: number[]; s1: number[]; s2: number[] };
-const empty = (): Acc => ({ temps: [], precip: [], evap: [], s1: [], s2: [] });
+type Acc = { temps: number[]; precip: number[]; solar: number[]; s1: number[]; s2: number[] };
+const empty = (): Acc => ({ temps: [], precip: [], solar: [], s1: [], s2: [] });
 const sum = (a: number[]) => a.reduce((s, x) => s + x, 0);
 const avg = (a: number[]) => (a.length ? sum(a) / a.length : null);
+
+/** Makkinki võrdlusaurumine (mm/päevas) päeva keskmisest temperatuurist ja päikesekiirgusest (MJ/m²). */
+export function makkinkEt0(tMeanC: number, solarMJm2: number): number {
+  const es = 0.6108 * Math.exp((17.27 * tMeanC) / (tMeanC + 237.3));
+  const delta = (4098 * es) / (tMeanC + 237.3) ** 2; // küllastusrõhu kõvera tõus, kPa/°C
+  const gamma = 0.066; // psühromeetriline konstant, kPa/°C
+  return Math.max(0, 0.61 * (delta / (delta + gamma)) * (solarMJm2 / 2.45) - 0.12);
+}
 
 export function hourlyToDaily(hours: HourlyWeather[]): DailyWeather[] {
   const byDay = new Map<string, Acc>();
@@ -34,7 +43,7 @@ export function hourlyToDaily(hours: HourlyWeather[]): DailyWeather[] {
     if (h.soil2 !== null) instant.s2.push(h.soil2);
     const amount = get(tallinnDate(new Date(h.time.getTime() - 30 * 60_000)));
     if (h.precipMm !== null) amount.precip.push(h.precipMm);
-    if (h.potEvapMm !== null) amount.evap.push(h.potEvapMm);
+    if (h.solarJm2 !== null) amount.solar.push(h.solarJm2);
   }
   const out: DailyWeather[] = [];
   for (const [date, a] of [...byDay.entries()].sort(([x], [y]) => x.localeCompare(y))) {
@@ -45,7 +54,7 @@ export function hourlyToDaily(hours: HourlyWeather[]): DailyWeather[] {
       tMax: Math.max(...a.temps),
       tMean: sum(a.temps) / a.temps.length,
       precipMm: sum(a.precip),
-      potEvapMm: a.evap.length >= MIN_HOURS ? sum(a.evap) : null,
+      potEvapMm: a.solar.length >= MIN_HOURS ? makkinkEt0(sum(a.temps) / a.temps.length, sum(a.solar) / 1e6) : null,
       soilMoisture1: avg(a.s1),
       soilMoisture2: avg(a.s2)
     });

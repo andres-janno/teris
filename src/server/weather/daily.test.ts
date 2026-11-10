@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { deaccumulate, tallinnDate, hourlyToDaily } from './daily';
+import { deaccumulate, tallinnDate, hourlyToDaily, makkinkEt0 } from './daily';
 import type { HourlyWeather } from './types';
 
 const h = (iso: string) => new Date(iso);
@@ -36,7 +36,7 @@ describe('tallinnDate', () => {
 function day(tempOf: (i: number) => number, precip = 0.1): HourlyWeather[] {
   return Array.from({ length: 25 }, (_, i) => ({
     time: new Date(Date.UTC(2025, 5, 1, 21 + i)),
-    tempC: tempOf(i), precipMm: precip, potEvapMm: 0.2, soil1: 0.3, soil2: 0.35
+    tempC: tempOf(i), precipMm: precip, solarJm2: 1e6, soil1: 0.3, soil2: 0.35
   }));
 }
 
@@ -48,7 +48,7 @@ describe('hourlyToDaily', () => {
     expect(d.tMax).toBe(23);
     expect(d.tMean).toBeCloseTo(11.5, 5);
     expect(d.precipMm).toBeCloseTo(2.4, 5);
-    expect(d.potEvapMm).toBeCloseTo(4.8, 5);
+    expect(d.potEvapMm).toBeCloseTo(makkinkEt0(11.5, 24), 5); // 24 tundi × 1 MJ
     expect(d.soilMoisture2).toBeCloseTo(0.35, 5);
   });
   it('mittetäielik päev jäetakse välja', () => {
@@ -61,8 +61,17 @@ describe('hourlyToDaily', () => {
     expect(d.precipMm).toBeCloseTo(7, 5);
   });
   it('mullaniiskuse puudumisel null', () => {
-    const [d] = hourlyToDaily(day(() => 5).map((x) => ({ ...x, soil1: null, soil2: null, potEvapMm: null })));
+    const [d] = hourlyToDaily(day(() => 5).map((x) => ({ ...x, soil1: null, soil2: null, solarJm2: null })));
     expect(d.soilMoisture1).toBeNull();
     expect(d.potEvapMm).toBeNull();
+  });
+});
+
+describe('makkinkEt0', () => {
+  it('suvepäev 15 °C, 20 MJ/m² → ~3 mm', () => {
+    expect(makkinkEt0(15, 20)).toBeCloseTo(2.99, 2);
+  });
+  it('külm ja pime → 0 (ei lähe negatiivseks)', () => {
+    expect(makkinkEt0(-5, 1)).toBe(0);
   });
 });
