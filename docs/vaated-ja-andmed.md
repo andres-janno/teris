@@ -437,9 +437,10 @@ flowchart LR
 - **Põllud tabel:** mooduliga ettevõttel veerud „GDD“ ja „Sademed, mm“ (külvist koristuseni) valitud aasta kohta.
 - **Kultuurid:** kultuuri vormis väli „GDD baastemperatuur (°C)“ (`Crop.gddBaseC`, vaikimisi 5; platvormi kataloogi mais 10).
 - **Ruuduga sidumine:** hooaeg seotakse oma keskpunktile lähima andmetega ruuduga öises töös ja ilmavaate avamisel, kui sidumata hooaegu on. Põllu salvestus ega import sidumist ei muuda.
-- **Laadimine** (`src/server/weather/loader.ts`): taustatöö Tallinna aja järgi kell 3–6, ainult `WEATHER` mooduliga ettevõtete punktid. Esmalaadimine alates 01.01.2015 aasta kaupa; edasi ainult puuduvad päevad. Esmaspäeviti kirjutatakse viimased 90 esialgset (ERA5T) päeva lõplike väärtustega üle. Ebaõnnestumine jätab punkti vahele, järgmine öö proovib uuesti. Võrdlusaurumine arvutatakse Makkinki valemiga päikesekiirgusest ja keskmisest temperatuurist.
+- **Laadimine** (`src/server/weather/loader.ts`): taustatöö Tallinna aja järgi kell 3–6, ainult `WEATHER` mooduliga ettevõtete punktid. Esmalaadimine alates 01.01.2015 aasta kaupa; edasi ainult puuduvad päevad. Esmaspäeviti kirjutatakse viimased 90 esialgset (ERA5T) päeva lõplike väärtustega üle. Laadimiseks kasutatakse ettevõtte enda Copernicuse võtit (vt „Ilmaandmete ühendus“ allpool): punkti laeb mistahes ettevõtte võti, kellel on kehtiv `WEATHER` litsents, punktiga seotud hooaegu ja salvestatud võti (viimati kasutatud esimesena; 401/403 korral proovitakse järgmist). Ruut, mille ettevõtetel pole võtit, jäetakse vahele (viga ei kasva). Ebaõnnestumine jätab punkti vahele, järgmine öö proovib uuesti. Võrdlusaurumine arvutatakse Makkinki valemiga päikesekiirgusest ja keskmisest temperatuurist.
+- **Ilmaandmete ühendus** (`WeatherCredentialModal`, kasutajamenüü, ainult admin ja `WEATHER` moodul): ettevõtte Copernicuse API võtme salvestamine. Juhis (konto loomine, profiil, ERA5-Land litsentsi aktsepteerimine, „Personal Access Token“), oleku plokk (salvestatud/puudub, muudetud, viimati kasutatud, viimane viga), nupud „Kontrolli ja salvesta“ (server teeb CDS-ile minimaalse katsepäringu) ja „Eemalda võti“. Võtit ei näidata kunagi. API: `GET /api/weather/credential` (olek, kõigile `WEATHER` kasutajatele), `PUT`/`DELETE` ainult admin; kirjutab `TenantWeatherCredential`. Ilmaandmed on ühised: kui ruudul on teise ettevõtte võti, näeb andmeid ka võtmeta ettevõte.
 - **AI ühendus:** lugemistööriist `weather_summary` (ainult mooduliga `WEATHER`): ilma põlluta aastate võrdlus pikaajalise keskmisega, põlluga selle hooaja kokkuvõte.
-- **Admin (admin.teris.ee):** vaade „Ilmaandmed“ — punktide loend, laetud vahemik, viimane õnnestumine ja viga, hoiatus kolme ebaõnnestumise järel, nupp „Lae uuesti“.
+- **Admin (admin.teris.ee):** vaade „Ilmaandmed“ — punktide loend, laetud vahemik, viimane õnnestumine ja viga, hoiatus kolme ebaõnnestumise järel, nupp „Lae uuesti“; veerg „Võti“ (ettevõte, kelle võtit punkti jaoks kasutatakse, või „puudub“) ja hoiatus, kui ühelgi ettevõttel pole võtit.
 
 | Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
 |---|---|---|---|
@@ -447,7 +448,8 @@ flowchart LR
 | `WeatherView` | aastate tabel, kuude jaotus, kumulatiivne graafik | `GET /api/weather/years`, `.../months`, `.../cumulative` | `WeatherPoint` R, `WeatherDaily` R, `Crop` R |
 | `WeatherSeasonSection` | põllu hooaja ilmakokkuvõte | `GET /api/weather/season/:fieldSeasonId` | `FieldSeason` R, `Crop` R, `WeatherDaily` R |
 | `FieldsTableView` | GDD ja sademete veerud | `GET /api/weather/seasons?year=` | `FieldSeason` R, `Crop` R, `WeatherDaily` R |
-| `WeatherAdminView` (admin) | punktide olek; laeb punkti uuesti | `GET /api/platform/weather`, `POST /api/platform/weather/:id/reload` | `WeatherPoint` RU, `WeatherDaily` CU, `FieldSeason` R |
+| `WeatherAdminView` (admin) | punktide olek ja kasutatav võti; laeb punkti uuesti | `GET /api/platform/weather`, `POST /api/platform/weather/:id/reload` | `WeatherPoint` RU, `WeatherDaily` CU, `FieldSeason` R, `TenantWeatherCredential` RU |
+| `WeatherCredentialModal` | ettevõtte CDS võtme olek ja salvestamine | `GET/PUT/DELETE /api/weather/credential` | `TenantWeatherCredential` CRUD |
 
 ## Isikud
 

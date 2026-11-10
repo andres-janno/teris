@@ -18,7 +18,7 @@ Etapp 2 jääb välja, kuid andmemudel ja „külvist koristuseni“ arvutus ehi
 - Litsents CC BY 4.0 — äriline kasutus lubatud viitega. Open-Meteo tasuta API ei sobi (ainult mitteäriline).
 - Eelistatud andmestik: ERA5-Landi **punkti aegrida** (üks punkt, pikk periood, üks päring). **Esimene teostussamm on katse päris CDS kontoga**, mis kinnitab: kas punkti aegrida pakub kõiki vajalikke muutujaid (sh mullaniiskus kahes kihis ja potentsiaalne aurumine), mis vormingus vastus tuleb ja kui suure viitega andmestikku uuendatakse.
 - Tagavara: tavaline ERA5-Land tunniandmete päring väikese ala (bounding box) kohta, vastuse (NetCDF/GRIB) lahtipakkimine serveris.
-- CDS võti serveri `.env`-is.
+- **CDS võti on ettevõtte oma** (muudetud 2026-11-10; varem platvormi `CDS_API_KEY` `.env`-is, see on kasutusest väljas): ettevõtte admin salvestab Copernicuse Personal Access Tokeni menüüs „Ilmaandmete ühendus“; võti on andmebaasis AES-256-GCM-iga krüpteeritud (`SECRETS_KEY`) ja kliendile ei tagastata. Andmed on endiselt ühised: punkti laeb mistahes ettevõtte võti, kellel on kehtiv `WEATHER` litsents, punktiga seotud hooaegu ja võti (viimati kasutatud esimesena, 401/403 korral järgmine). Vt `TenantWeatherCredential` dokumendis `docs/andmemudel.md`.
 
 ### Katse tulemus
 

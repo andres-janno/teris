@@ -942,13 +942,15 @@ erDiagram
 
 ## Ilm
 
-ERA5-Landi ilmaandmed ruutude (0,1° ruudustik, ~9 km) kaupa. Tabelid on **ettevõtteülesed**: neil pole `tenant_id`-d ega RLS-i, sama ruudu põllud kasutavad ühte punkti. Hooaeg seotakse ruuduga (`FieldSeason.weatherPointId`, nullimine kustutamisel), kokkuvõtted arvutatakse päevaandmetest päringu ajal ega salvestu.
+ERA5-Landi ilmaandmed ruutude (0,1° ruudustik, ~9 km) kaupa. Tabelid `WeatherPoint` ja `WeatherDaily` on **ettevõtteülesed**: neil pole `tenant_id`-d ega RLS-i, sama ruudu põllud kasutavad ühte punkti. Hooaeg seotakse ruuduga (`FieldSeason.weatherPointId`, nullimine kustutamisel), kokkuvõtted arvutatakse päevaandmetest päringu ajal ega salvestu.
 
 | Mudel | Tabel | Ettevõttepõhine | Sisu |
 |---|---|---|---|
 | `WeatherPoint` | `weather_points` | ei | Ilmaruut: keskpunkt (`lat`, `lon`, unikaalne paar), `hasData` (false = üle vee), laetud vahemik (`loadedFrom`, `loadedUntil`), `finalUntil` (kuni selle päevani andmed lõplikud), laadimise olek (`lastAttemptAt`, `lastSuccessAt`, `lastError`, `failCount`) |
+| `TenantWeatherCredential` | `tenant_weather_credentials` | jah (RLS) | Ettevõtte oma Copernicuse (CDS) API võti: `tenantId` (unikaalne, üks võti ettevõtte kohta), `cdsKeyEnc` (AES-256-GCM, võti `SECRETS_KEY`; kliendile ei tagastata kunagi), `updatedAt`/`updatedBy` (kes ja millal salvestas), `lastUsedAt` (viimane edukas laadimine), `lastError` (viimane 401/403 selle võtmega) |
 | `WeatherDaily` | `weather_daily` | ei | Punkti päev (võti `pointId` + `date`, Tallinna kalendripäev): `tMin`, `tMax`, `tMean` °C, `precipMm`, `potEvapMm` (Makkinki valem päikesekiirgusest ja keskmisest temperatuurist), `soilMoisture1` (0–7 cm), `soilMoisture2` (7–28 cm), `isFinal` (false = ERA5T esialgne) |
 
+- **CDS võtme voog:** ilmaandmed on ühised, aga laadimiseks on vaja võtit. Ettevõtte admin salvestab võtme menüüs „Ilmaandmete ühendus“ (`PUT /api/weather/credential`; server kontrollib võtit CDS-is ja salvestab krüpteeritult). Laadija valib punkti jaoks võtme ettevõtete seast, kellel on (a) kehtiv `WEATHER` litsents, (b) selle punktiga seotud hooaegu ja (c) salvestatud võti; järjekord: viimati kasutatud esimesena. 401/403 märgitakse võtme `lastError`-iks ja proovitakse järgmist; edu seab `lastUsedAt`. Kui ühelgi kandidaadil võtit pole, jääb punkti `lastError` = „Ühelgi selle ruudu ettevõttel pole CDS võtit“ ja `failCount` ei kasva. Võtmeid loetakse üle ettevõtete `authDb()` kaudu (BYPASSRLS). Keskkonnamuutuja `CDS_API_KEY` ei kasutata.
 - `Crop.gddBaseC` ja `CatalogCrop.gddBaseC` (Float, vaikimisi 5): temperatuurisumma (GDD) baas °C; platvormi kataloogist loodud kultuur pärib selle (nt mais 10).
 
 ```mermaid
@@ -978,6 +980,15 @@ erDiagram
     Float soilMoisture1 "valikuline"
     Float soilMoisture2 "valikuline"
     Boolean isFinal
+  }
+  TenantWeatherCredential {
+    String id PK
+    String tenantId UK
+    String cdsKeyEnc
+    DateTime updatedAt
+    String updatedBy "valikuline"
+    DateTime lastUsedAt "valikuline"
+    String lastError "valikuline"
   }
   FieldSeason {
     Int id PK
