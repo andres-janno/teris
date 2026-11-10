@@ -31,6 +31,7 @@
 .admin-expired { color: #dc2626; font-weight: 600; }
 .admin-soon { color: #b45309; font-weight: 600; }
 .admin-muted { color: var(--text-muted); }
+.admin-warning-text { color: #b45309; font-weight: 600; }
 .admin-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
 .admin-meta div span { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; }
 .admin-subform { padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-card); border-radius: 8px; }

@@ -18,6 +18,7 @@ let fail = false;
 let pointId = 0;
 const deps: LoaderDeps = {
   now: () => new Date('2015-03-10T12:00:00Z'),
+  keyCandidates: async () => [{ tenantId: 'test-no-such-tenant', key: 'test-key' }],
   fetchHourly: async (_c, from, to) => {
     calls.push([from, to]);
     if (fail) throw new Error('CDS maas');

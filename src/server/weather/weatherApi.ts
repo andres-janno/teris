@@ -1,8 +1,12 @@
 // src/server/weather/weatherApi.ts — ilmaandmete API (/api/weather/*, v.a radar). Kokkuvõtted arvutatakse päringu ajal.
 // Ettevõtte punktid = punktid, millega on seotud ettevõtte hooajad; „all“ = nende päevade keskmine.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma } from '../db.ts';
-import { json } from '../http.ts';
+import { prisma, requireTenantId } from '../db.ts';
+import { json, parseBody } from '../http.ts';
+import { sessionUserOf } from '../authGate.ts';
+import { encryptSecret } from '../secretBox.ts';
+import { checkCdsKey } from './cdsClient.ts';
+import { secretsKey, NO_SECRETS_KEY_MESSAGE } from './credentials.ts';
 import { bindWeatherPoints } from './points.ts';
 import { tallinnDate } from './daily.ts';
 import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd, addDays, SEASON_FROST_DAYS } from './summary.ts';
@@ -200,7 +204,57 @@ const parseYear = (v: string | null): number | null => (v && /^\d{4}$/.test(v) ?
 const SEASON_ROUTE = /^\/api\/weather\/season\/(\d+)$/;
 const SEASON_HISTORY_ROUTE = /^\/api\/weather\/season\/(\d+)\/history$/;
 
-export async function handleWeather(_req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL): Promise<boolean> {
+const CREDENTIAL_ROUTE = '/api/weather/credential';
+const KEY_MIN = 20;
+const KEY_MAX = 200;
+const KEY_ADMIN_ONLY = 'Ilmaandmete ühendust saab muuta ainult administraator';
+
+/** Ettevõtte CDS võtme olek; võtit ennast ei tagastata kunagi. */
+async function credentialStatus(canEdit: boolean) {
+  const c = await prisma.tenantWeatherCredential.findFirst();
+  return {
+    configured: !!c,
+    updatedAt: c?.updatedAt.toISOString() ?? null,
+    updatedBy: c?.updatedBy ?? null,
+    lastUsedAt: c?.lastUsedAt?.toISOString() ?? null,
+    lastError: c?.lastError ?? null,
+    canEdit
+  };
+}
+
+async function handleCredential(req: IncomingMessage, res: ServerResponse, method: string): Promise<boolean> {
+  const user = sessionUserOf(req);
+  if (!user) { json(res, { error: 'Pole sisse logitud' }, 401); return true; }
+  const canEdit = user.isAdmin === true && user.supportView !== true;
+  if (method === 'GET') { json(res, await credentialStatus(canEdit)); return true; }
+  if (method !== 'PUT' && method !== 'DELETE') { json(res, { error: 'Meetod pole lubatud' }, 405); return true; }
+  if (!canEdit) { json(res, { error: KEY_ADMIN_ONLY }, 403); return true; }
+  if (method === 'DELETE') {
+    await prisma.tenantWeatherCredential.deleteMany({});
+    json(res, await credentialStatus(canEdit));
+    return true;
+  }
+  const sk = secretsKey();
+  if (!sk) { json(res, { error: NO_SECRETS_KEY_MESSAGE }, 503); return true; }
+  let body: { key?: unknown };
+  try { body = (await parseBody(req, 4 * 1024)) ?? {}; } catch { json(res, { error: 'Vigane päring' }, 400); return true; }
+  const key = typeof body.key === 'string' ? body.key.trim() : '';
+  if (key.length < KEY_MIN || key.length > KEY_MAX) { json(res, { error: `Võti peab olema ${KEY_MIN}–${KEY_MAX} märki` }, 400); return true; }
+  const check = await checkCdsKey(key);
+  if (!check.ok) { json(res, { error: check.message }, 400); return true; }
+  const enc = encryptSecret(key, sk);
+  const by = user.username;
+  await prisma.tenantWeatherCredential.upsert({
+    where: { tenantId: requireTenantId() },
+    create: { cdsKeyEnc: enc, updatedBy: by },
+    update: { cdsKeyEnc: enc, updatedBy: by, lastUsedAt: null, lastError: null }
+  });
+  json(res, await credentialStatus(canEdit));
+  return true;
+}
+
+export async function handleWeather(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL): Promise<boolean> {
+  if (pathname === CREDENTIAL_ROUTE) return handleCredential(req, res, method);
   if (!pathname.startsWith('/api/weather/') || pathname.startsWith('/api/weather/radar') || method !== 'GET') return false;
   const q = url.searchParams;
   try {

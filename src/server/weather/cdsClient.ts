@@ -10,7 +10,37 @@ const DATASET = 'reanalysis-era5-land-timeseries';
 const VARIABLES = ['2m_temperature', 'total_precipitation', 'surface_solar_radiation_downwards', 'volumetric_soil_water_level_1', 'volumetric_soil_water_level_2'];
 const REQUIRED = ['t2m', 'tp', 'ssrd'];
 
-export class CdsError extends Error {}
+export class CdsError extends Error {
+  /** HTTP-olek, kui viga tuli CDS-i vastusest (401/403 = vigane võti või litsents aktsepteerimata). */
+  status?: number;
+  constructor(message: string, status?: number) { super(message); this.status = status; }
+}
+
+/** Eestikeelne selgitus võtmega seotud HTTP-veale (kasutajale ja credential.lastError-ile; ei sisalda CDS vastuse keha). */
+export function cdsKeyProblem(status: number): string {
+  if (status === 401) return 'Võti ei kehti';
+  if (status === 403) return 'Copernicuse kontol pole ERA5-Land litsentsi aktsepteeritud. Ava ERA5-Land timeseries andmestiku leht (cds.climate.copernicus.eu), logi sisse ja aktsepteeri litsents.';
+  return `Copernicuse päring ebaõnnestus (HTTP ${status})`;
+}
+
+const CHECK_URL = `https://cds.climate.copernicus.eu/api/retrieve/v1/processes/reanalysis-era5-land-timeseries/execution`;
+
+/**
+ * Kontrollib võtit: saadab ühe minimaalse päringu ja vaatab ainult saatmise vastust (ei oota tulemust).
+ * Tagastab { ok: true } või { ok: false, message, status }. Võtit ei kirjutata kunagi tulemusse.
+ */
+export async function checkCdsKey(key: string, fetchImpl: typeof fetch = fetch): Promise<{ ok: true } | { ok: false; message: string; status?: number }> {
+  const d = new Date(Date.now() - 8 * 86_400_000).toISOString().slice(0, 10);
+  const inputs = { variable: ['2m_temperature'], location: { latitude: 58.4, longitude: 26.7 }, date: [`${d}/${d}`], data_format: 'csv' };
+  let res: Response;
+  try {
+    res = await fetchImpl(CHECK_URL, { method: 'POST', headers: { 'PRIVATE-TOKEN': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ inputs }) });
+  } catch {
+    return { ok: false, message: 'Copernicuse teenusega ei saanud ühendust, proovi hiljem uuesti' };
+  }
+  if (res.ok) return { ok: true };
+  return { ok: false, message: cdsKeyProblem(res.status), status: res.status };
+}
 
 const num = (s: string | undefined): number | null => {
   if (s === undefined || s.trim() === '') return null;
@@ -68,7 +98,7 @@ const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** CDS vastus JSON-ina; HTTP-viga või mitte-JSON keha → CdsError. */
 async function cdsJson<T>(res: Response, what: string): Promise<T> {
   const text = await res.text();
-  if (!res.ok) throw new CdsError(`CDS ${what} ${res.status}: ${text.slice(0, 300)}`);
+  if (!res.ok) throw new CdsError(`CDS ${what} ${res.status}: ${text.slice(0, 300)}`, res.status);
   try {
     return JSON.parse(text) as T;
   } catch {
@@ -76,14 +106,27 @@ async function cdsJson<T>(res: Response, what: string): Promise<T> {
   }
 }
 
+/** Võti antakse kutsujalt (ettevõtte oma); vea sõnumist eemaldatakse võti igaks juhuks. */
 export async function fetchHourly(
   cell: { lat: number; lon: number }, from: string, to: string,
-  opts: { fetchImpl?: typeof fetch; pollMs?: number; timeoutMs?: number } = {}
+  opts: { key: string; fetchImpl?: typeof fetch; pollMs?: number; timeoutMs?: number }
+): Promise<HourlyWeather[]> {
+  try {
+    return await fetchHourlyWith(cell, from, to, opts);
+  } catch (err) {
+    if (err instanceof CdsError && opts.key && err.message.includes(opts.key)) {
+      throw new CdsError(err.message.split(opts.key).join('***'), err.status);
+    }
+    throw err;
+  }
+}
+
+async function fetchHourlyWith(
+  cell: { lat: number; lon: number }, from: string, to: string,
+  opts: { key: string; fetchImpl?: typeof fetch; pollMs?: number; timeoutMs?: number }
 ): Promise<HourlyWeather[]> {
   const f = opts.fetchImpl ?? fetch;
-  const key = process.env.CDS_API_KEY;
-  if (!key && !opts.fetchImpl) throw new CdsError('CDS_API_KEY puudub');
-  const headers = { 'PRIVATE-TOKEN': key ?? 'test', 'Content-Type': 'application/json' };
+  const headers = { 'PRIVATE-TOKEN': opts.key, 'Content-Type': 'application/json' };
   const inputs = { variable: VARIABLES, location: { latitude: cell.lat, longitude: cell.lon }, date: [`${from}/${to}`], data_format: 'csv' };
   const sub = await f(`${BASE}/processes/${DATASET}/execution`, { method: 'POST', headers, body: JSON.stringify({ inputs }) });
   const { jobID } = await cdsJson<{ jobID?: unknown }>(sub, 'päring');
@@ -101,6 +144,6 @@ export async function fetchHourly(
   const href = res.asset?.value?.href;
   if (typeof href !== 'string' || !href) throw new CdsError('CDS tulemus: vastuses puudub allalaadimise link');
   const file = await f(href);
-  if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`);
+  if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`, file.status);
   return parseCdsCsvFiles(await unpack(await file.arrayBuffer()));
 }

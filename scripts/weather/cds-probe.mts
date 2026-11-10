@@ -3,8 +3,8 @@
 import { writeFile } from 'node:fs/promises';
 
 const BASE = 'https://cds.climate.copernicus.eu/api/retrieve/v1';
-const KEY = process.env.CDS_API_KEY;
-if (!KEY) throw new Error('CDS_API_KEY puudub');
+const KEY = process.env.CDS_KEY;
+if (!KEY) throw new Error('CDS_KEY puudub');
 const dataset = process.argv[2] ?? 'reanalysis-era5-land-timeseries';
 const dateRange = process.argv[3] ?? '2025-06-01/2025-06-03';
 const out = process.argv[4] ?? '/tmp/cds-probe.bin';

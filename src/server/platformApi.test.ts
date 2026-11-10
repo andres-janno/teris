@@ -451,7 +451,8 @@ describe('seadmed teenusepakkuja keskkonnas', () => {
     const r = await call('GET', '/api/platform/weather');
     expect(r.status).toBe(200);
     expect(Array.isArray(r.data.points)).toBe(true);
-    expect(typeof r.data.keyConfigured).toBe('boolean');
+    expect(typeof r.data.tenantsWithKey).toBe('number');
+    expect(r.data).not.toHaveProperty('keyConfigured');
     expect(r.data.failWarn).toBeGreaterThan(0);
     expect((await call('GET', '/api/platform/weather', undefined, { cookie: '' })).status).toBe(401);
     expect((await call('POST', '/api/platform/weather/1/reload', {}, { cookie: '' })).status).toBe(401);

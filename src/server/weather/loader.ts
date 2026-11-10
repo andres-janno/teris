@@ -2,7 +2,8 @@
 // Esmalaadimine alates 2015 aasta kaupa; edasi ainult puuduvad päevad. ERA5T (esialgne) = viimased 90 päeva:
 // need laetakse kord nädalas (esmaspäeval) uuesti ja kirjutatakse üle. Viga ei kustuta midagi; järgmine käik proovib uuesti.
 import { prisma, authDb, runAsTenant } from '../db.ts';
-import { fetchHourly as cdsFetchHourly } from './cdsClient.ts';
+import { fetchHourly as cdsFetchHourly, cdsKeyProblem } from './cdsClient.ts';
+import { keyCandidatesForPoint, markKeyUsed, markKeyFailed, secretsKey, NO_KEY_ERROR, type KeyCandidate } from './credentials.ts';
 import { hourlyToDaily, tallinnDate } from './daily.ts';
 import { addDays } from './summary.ts';
 import { bindWeatherPoints } from './points.ts';
@@ -18,9 +19,11 @@ const MAX_ERROR_LEN = 500;
 
 export type LoaderDeps = {
   now: () => Date;
-  fetchHourly: (cell: { lat: number; lon: number }, from: string, to: string) => Promise<HourlyWeather[]>;
+  fetchHourly: (cell: { lat: number; lon: number }, from: string, to: string, key: string) => Promise<HourlyWeather[]>;
+  /** Punkti võtmekandidaadid (järjekorras); vaikimisi ettevõtete salvestatud võtmed. Testides saab asendada. */
+  keyCandidates?: (pointId: number, now: Date) => Promise<KeyCandidate[]>;
 };
-export const defaultLoaderDeps: LoaderDeps = { now: () => new Date(), fetchHourly: (c, f, t) => cdsFetchHourly(c, f, t) };
+export const defaultLoaderDeps: LoaderDeps = { now: () => new Date(), fetchHourly: (c, f, t, key) => cdsFetchHourly(c, f, t, { key }), keyCandidates: keyCandidatesForPoint };
 
 const iso = (d: Date | null) => (d ? d.toISOString().slice(0, 10) : null);
 const asDate = (s: string) => new Date(`${s}T00:00:00Z`);
@@ -51,7 +54,34 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
   }
   if (from > yesterday) return { days: 0 };
 
+  const candidates = await (deps.keyCandidates ?? keyCandidatesForPoint)(pointId, now);
+  if (!candidates.length) {
+    // Võtmeta ruut pole laadimisviga: failCount ei kasva, kui keegi võtme lisab, läheb laadimine edasi
+    await prisma.weatherPoint.update({ where: { id: pointId }, data: { lastAttemptAt: now, lastError: NO_KEY_ERROR } });
+    return { days: 0 };
+  }
   await prisma.weatherPoint.update({ where: { id: pointId }, data: { lastAttemptAt: now } });
+  // Proovib võtmeid järjest: 401/403 (vigane võti või litsents aktsepteerimata) märgitakse võtmele ja minnakse järgmise juurde
+  let keyIdx = 0;
+  const usedOk = new Set<number>();
+  const fetchWithKeys = async (cell: { lat: number; lon: number }, a: string, b: string): Promise<HourlyWeather[]> => {
+    let lastErr: unknown = new Error('CDS võtmeid pole');
+    while (keyIdx < candidates.length) {
+      const c = candidates[keyIdx];
+      try {
+        const rows = await deps.fetchHourly(cell, a, b, c.key);
+        if (!usedOk.has(keyIdx)) { usedOk.add(keyIdx); await markKeyUsed(c.tenantId).catch((e) => console.error('weather: võtme kasutuse märkimine ebaõnnestus', e)); }
+        return rows;
+      } catch (err) {
+        const status = (err as { status?: number }).status;
+        if (status !== 401 && status !== 403) throw err;
+        await markKeyFailed(c.tenantId, cdsKeyProblem(status)).catch((e) => console.error('weather: võtme vea märkimine ebaõnnestus', e));
+        lastErr = err;
+        keyIdx++;
+      }
+    }
+    throw lastErr;
+  };
   let total = 0;
   let loadedFromSet = p.loadedFrom !== null; // loadedFrom seatakse ainult esimese õnnestunud tüki juures
   let finalSoFar = finalUntil; // viimane päev, mille rida on tegelikult isFinal=true
@@ -59,7 +89,7 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
     for (const [a, b] of yearChunks(from, yesterday)) {
       // CDS tunnid on UTC ja algavad päeva 00:00 UTC-st; Tallinna päev `a` algab aga eelmisel UTC-päeval (21/22 UTC),
       // seega küsime ühe päeva varem — see lisapäev täidab ainult päeva `a`, filter jätab ülejäänu välja.
-      const days = hourlyToDaily(await deps.fetchHourly({ lat: p.lat, lon: p.lon }, addDays(a, -1), b)).filter((d) => d.date >= a && d.date <= b);
+      const days = hourlyToDaily(await fetchWithKeys({ lat: p.lat, lon: p.lon }, addDays(a, -1), b)).filter((d) => d.date >= a && d.date <= b);
       if (days.length === 0) {
         if (!loadedUntil && total === 0) {
           await prisma.weatherPoint.update({ where: { id: pointId }, data: { hasData: false, lastSuccessAt: now, failCount: 0, lastError: null } });
@@ -139,7 +169,7 @@ export async function wantedPointIds(licenses: { tenantId: string; modules: stri
 /** Kõigi WEATHER mooduliga ettevõtete hooajad seotakse punktidega, siis laetakse kõik punktid. */
 export async function runWeatherLoad(deps: LoaderDeps = defaultLoaderDeps, opts: { force?: boolean } = {}): Promise<void> {
   if (running) return;
-  if (!process.env.CDS_API_KEY && deps === defaultLoaderDeps) { console.warn('weather: CDS_API_KEY puudub, laadimine vahele'); return; }
+  if (!secretsKey() && !deps.keyCandidates) { console.warn('weather: SECRETS_KEY puudub või on vigane, laadimine vahele'); return; }
   running = true;
   try {
     const licenses = await authDb().tenantLicense.findMany({ select: { tenantId: true, modules: true, validUntil: true } });

@@ -1727,3 +1727,17 @@ model WeatherDaily {
   @@id([pointId, date])
   @@map("weather_daily")
 }
+
+// Ettevõtte oma Copernicuse (CDS) API võti ilmaandmete laadimiseks. Võti on AES-256-GCM-iga krüpteeritud (SECRETS_KEY),
+// kliendile ei tagastata kunagi. Ilmaandmed ise on ühised: punkti laeb mistahes ettevõtte võti, kellel on sellel ruudul hooaegu.
+model TenantWeatherCredential {
+  id         String    @id @default(cuid())
+  tenantId   String    @unique @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  cdsKeyEnc  String // krüpteeritud võti (iv.tag.ciphertext)
+  updatedAt  DateTime  @updatedAt
+  updatedBy  String? // kasutajatunnus, kes võtme salvestas
+  lastUsedAt DateTime? // viimane edukas laadimine selle võtmega
+  lastError  String? // viimane võtmega seotud viga (401/403)
+
+  @@map("tenant_weather_credentials")
+}

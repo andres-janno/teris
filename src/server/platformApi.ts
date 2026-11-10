@@ -18,6 +18,7 @@ import { landingStats, parseDay } from './landing/landingStats.ts';
 import { listInterest, parseInterestPatch, updateInterest, deleteInterest } from './landing/interestAdmin.ts';
 import { getMcpInstructionsAdmin, saveMcpInstructions, resetMcpInstructions } from './mcp/instructions.ts';
 import { loadPoint, isWeatherLoadRunning, FAIL_WARN } from './weather/loader.ts';
+import { credentialsByPoint } from './weather/credentials.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
@@ -610,14 +611,16 @@ const day = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
 /** Ilmapunktide laadimise olek; authDb on BYPASSRLS, seega hooaegade arv hõlmab kõiki ettevõtteid. */
 async function weatherStatus() {
   const points = await authDb().weatherPoint.findMany({ orderBy: { id: 'asc' }, include: { _count: { select: { fieldSeasons: true } } } });
+  const keys = await credentialsByPoint(new Date());
   return {
-    keyConfigured: !!process.env.CDS_API_KEY,
+    tenantsWithKey: await authDb().tenantWeatherCredential.count(),
     failWarn: FAIL_WARN,
     points: points.map((p) => ({
       id: p.id, lat: p.lat, lon: p.lon, hasData: p.hasData,
       loadedFrom: day(p.loadedFrom), loadedUntil: day(p.loadedUntil),
       lastSuccessAt: p.lastSuccessAt?.toISOString() ?? null, lastError: p.lastError, failCount: p.failCount,
-      fieldSeasonCount: p._count.fieldSeasons
+      fieldSeasonCount: p._count.fieldSeasons,
+      keyTenant: keys.get(p.id)?.[0]?.name ?? null // ettevõte, kelle võtit selle ruudu laadimisel esimesena kasutatakse
     }))
   };
 }

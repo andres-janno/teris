@@ -3,7 +3,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type WeatherPointRow } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
 
-type WeatherStatus = { points: WeatherPointRow[]; failWarn: number; keyConfigured: boolean };
+type WeatherStatus = { points: WeatherPointRow[]; failWarn: number; tenantsWithKey: number };
 
 export function WeatherAdminView() {
   const [data, setData] = useState<WeatherStatus | null>(null);
@@ -46,7 +46,7 @@ export function WeatherAdminView() {
       <h2>Ilmaandmed (ERA5-Land)</h2>
       {error && <div className="alert-box error">{error}</div>}
       {notice && <div className="alert-box">{notice}</div>}
-      {data && !data.keyConfigured && <div className="alert-box error">CDS_API_KEY puudub serveri seadistuses, laadimine ei tööta.</div>}
+      {data && data.tenantsWithKey === 0 && <div className="alert-box error">Ühelgi ettevõttel pole Copernicuse (CDS) võtit, ilmaandmeid ei laeta. Võtme lisab ettevõtte administraator menüüs „Ilmaandmete ühendus“.</div>}
       {data && data.points.some(warn) && <div className="alert-box warning">Mõne punkti laadimine on ebaõnnestunud {data.failWarn}+ korda järjest.</div>}
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && (
@@ -56,6 +56,7 @@ export function WeatherAdminView() {
               <tr>
                 <th>Punkt</th>
                 <th className="num">Hooaegu</th>
+                <th>Võti</th>
                 <th>Andmed</th>
                 <th>Viimati õnnestus</th>
                 <th className="num">Vigu järjest</th>
@@ -68,6 +69,7 @@ export function WeatherAdminView() {
                 <tr key={p.id} className={warn(p) ? 'row-warning' : ''}>
                   <td>{p.lat.toFixed(1)}° N, {p.lon.toFixed(1)}° E{p.hasData === false && ' (üle vee, andmeid pole)'}</td>
                   <td className="num">{p.fieldSeasonCount}</td>
+                  <td>{p.keyTenant ?? <span className="admin-warning-text">puudub</span>}</td>
                   <td>{p.loadedFrom && p.loadedUntil ? `${formatDate(p.loadedFrom)} – ${formatDate(p.loadedUntil)}` : 'laadimata'}</td>
                   <td>{p.lastSuccessAt ? formatTallinn(p.lastSuccessAt) : '–'}</td>
                   <td className="num">{p.failCount}</td>
@@ -80,7 +82,7 @@ export function WeatherAdminView() {
                 </tr>
               ))}
               {data.points.length === 0 && (
-                <tr><td colSpan={7} className="admin-muted">Ilmapunkte pole</td></tr>
+                <tr><td colSpan={8} className="admin-muted">Ilmapunkte pole</td></tr>
               )}
             </tbody>
           </table>

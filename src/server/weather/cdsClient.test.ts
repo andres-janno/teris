@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import JSZip from 'jszip';
-import { parseCdsCsvFiles, fetchHourly, CdsError } from './cdsClient';
+import { parseCdsCsvFiles, fetchHourly, checkCdsKey, CdsError } from './cdsClient';
 
 const fx = (name: string) => readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), 'utf8');
 const T2M = 'valid_time,d2m,t2m,latitude,longitude\n2025-06-10 00:00:00,280,283.15,58.1,25.8\n2025-06-10 01:00:00,280,282.15,58.1,25.8\n';
@@ -62,7 +62,7 @@ describe('fetchHourly', () => {
       if (url === 'https://dl/x.zip') return new Response(zip);
       throw new Error(url);
     }) as typeof fetch;
-    const r = await fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 });
+    const r = await fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 });
     expect(r).toHaveLength(2);
     expect(polls).toBe(2);
   });
@@ -71,7 +71,7 @@ describe('fetchHourly', () => {
       if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j2' }), { status: 201 });
       return new Response(JSON.stringify({ status: 'failed', detail: 'boom' }));
     }) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/boom|failed/);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/boom|failed/);
   });
   const statusFake = (statusRes: () => Response) => (async (url: string) => {
     if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j3' }), { status: 201 });
@@ -80,32 +80,32 @@ describe('fetchHourly', () => {
   it('staatuse päring 500 JSON-vastusega → kohe viga, mitte ajaleotus', async () => {
     const t0 = Date.now();
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
-      fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'internal' }), { status: 500 })), pollMs: 1, timeoutMs: 60_000
+      key: 'test-key', fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'internal' }), { status: 500 })), pollMs: 1, timeoutMs: 60_000
     })).rejects.toThrow(/500/);
     expect(Date.now() - t0).toBeLessThan(5000);
   });
   it('staatuse päring 502 mitte-JSON-vastusega → CdsError', async () => {
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
-      fetchImpl: statusFake(() => new Response('Bad Gateway', { status: 502 })), pollMs: 1
+      key: 'test-key', fetchImpl: statusFake(() => new Response('Bad Gateway', { status: 502 })), pollMs: 1
     })).rejects.toBeInstanceOf(CdsError);
   });
   it('staatuse vastus ilma status-väljata → kohe CdsError', async () => {
     const t0 = Date.now();
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
-      fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'x' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
+      key: 'test-key', fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'x' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
     })).rejects.toBeInstanceOf(CdsError);
     expect(Date.now() - t0).toBeLessThan(5000);
   });
   it('tundmatu staatuse väärtus → kohe CdsError', async () => {
     const t0 = Date.now();
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
-      fetchImpl: statusFake(() => new Response(JSON.stringify({ status: 'weird' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
+      key: 'test-key', fetchImpl: statusFake(() => new Response(JSON.stringify({ status: 'weird' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
     })).rejects.toBeInstanceOf(CdsError);
     expect(Date.now() - t0).toBeLessThan(5000);
   });
   it('päring 201 ilma jobID-ta → CdsError', async () => {
     const fake = (async () => new Response(JSON.stringify({}), { status: 201 })) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/jobID/);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/jobID/);
   });
   it('tulemusest puudub allalaadimise link → CdsError', async () => {
     const fake = (async (url: string) => {
@@ -113,7 +113,7 @@ describe('fetchHourly', () => {
       if (url.endsWith('/jobs/j5/results')) return new Response(JSON.stringify({}));
       return new Response(JSON.stringify({ status: 'successful' }));
     }) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
   });
   it('allalaaditud keha on üks rida ei-CSV teksti → CdsError', async () => {
     const fake = (async (url: string) => {
@@ -122,10 +122,55 @@ describe('fetchHourly', () => {
       if (url === 'https://dl/err') return new Response('Request failed: quota exceeded');
       return new Response(JSON.stringify({ status: 'successful' }));
     }) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
   });
   it('litsents nõustumata (403) → selge viga', async () => {
     const fake = (async () => new Response('required licences not accepted', { status: 403 })) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/403/);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { key: 'test-key', fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/403/);
+  });
+});
+
+describe('checkCdsKey', () => {
+  const fakeStatus = (status: number, seen?: { headers?: unknown; body?: unknown }) => (async (_url: string, init?: RequestInit) => {
+    if (seen) { seen.headers = init?.headers; seen.body = JSON.parse(String(init?.body)); }
+    return new Response(status < 300 ? JSON.stringify({ jobID: 'x' }) : 'nope', { status });
+  }) as unknown as typeof fetch;
+  it('2xx → ok ja saadab minimaalse päringu võtmega päises', async () => {
+    const seen: { headers?: any; body?: any } = {};
+    expect(await checkCdsKey('abc-key', fakeStatus(201, seen))).toEqual({ ok: true });
+    expect(seen.headers['PRIVATE-TOKEN']).toBe('abc-key');
+    expect(seen.body.inputs.variable).toEqual(['2m_temperature']);
+    expect(seen.body.inputs.data_format).toBe('csv');
+  });
+  it('401 → Võti ei kehti', async () => {
+    expect(await checkCdsKey('k', fakeStatus(401))).toEqual({ ok: false, message: 'Võti ei kehti', status: 401 });
+  });
+  it('403 → litsentsi juhis', async () => {
+    const r = await checkCdsKey('k', fakeStatus(403));
+    expect(r.ok).toBe(false);
+    if (!r.ok) { expect(r.message).toContain('litsentsi aktsepteeritud'); expect(r.message).toContain('aktsepteeri litsents'); }
+  });
+  it('muu olek → üldine teade koos olekuga', async () => {
+    const r = await checkCdsKey('k', fakeStatus(500));
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).toContain('500');
+  });
+  it('võrgutõrge → teade ilma võtmeta', async () => {
+    const r = await checkCdsKey('secret-key-123', (async () => { throw new Error('boom secret-key-123'); }) as unknown as typeof fetch);
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.message).not.toContain('secret-key-123');
+  });
+});
+
+describe('CdsError staatus ja võtme eemaldus', () => {
+  it('HTTP 401 päringu vastusest annab CdsError.status', async () => {
+    const fake = (async () => new Response('bad', { status: 401 })) as unknown as typeof fetch;
+    await expect(fetchHourly({ lat: 1, lon: 2 }, '2025-06-10', '2025-06-10', { key: 'k', fetchImpl: fake, pollMs: 1 })).rejects.toMatchObject({ status: 401 });
+  });
+  it('võti vea sõnumis asendatakse', async () => {
+    const fake = (async () => new Response('token my-secret-token invalid', { status: 403 })) as unknown as typeof fetch;
+    const err = await fetchHourly({ lat: 1, lon: 2 }, '2025-06-10', '2025-06-10', { key: 'my-secret-token', fetchImpl: fake, pollMs: 1 }).catch((e) => e);
+    expect(err.status).toBe(403);
+    expect(err.message).not.toContain('my-secret-token');
   });
 });
