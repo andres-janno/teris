@@ -35,7 +35,10 @@ afterAll(async () => {
 
 describe('bindWeatherPoints', () => {
   it('seob lähima ruuduga, sama ruut jagatakse', async () => {
+    const before = await run(() => prisma.fieldSeason.findMany({ where: { id: { in: [fsA, fsB, fsC] } }, select: { id: true, updatedAt: true, updatedBy: true } }));
     await run(() => bindWeatherPoints());
+    const after = await run(() => prisma.fieldSeason.findMany({ where: { id: { in: [fsA, fsB, fsC] } }, select: { id: true, updatedAt: true, updatedBy: true } }));
+    expect(after).toEqual(before); // seostamine ei puutu updatedAt/updatedBy külge
     const rows = await run(() => prisma.fieldSeason.findMany({ where: { id: { in: [fsA, fsB, fsC] } }, include: { weatherPoint: true } }));
     const by = new Map(rows.map((r) => [r.id, r.weatherPoint]));
     expect(by.get(fsA)).toMatchObject({ lat: 10.1, lon: 20.1 });

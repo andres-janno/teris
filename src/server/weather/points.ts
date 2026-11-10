@@ -1,7 +1,7 @@
 // src/server/weather/points.ts — põllu hooaeg → lähim ERA5-Landi ruut (ilmapunkt).
 // Käivitatakse ettevõtte kontekstis igal ööl enne laadimist ja ilmavaate avamisel, kui leidub sidumata hooaegu.
 // Ruut, millel andmeid pole (hasData = false, nt üle vee), asendatakse lähima naaberruuduga.
-import { prisma } from '../db';
+import { prisma, tenantTransaction } from '../db';
 import { snapToCell, neighborCells, geometryCenter, type Cell } from './grid';
 
 async function pointFor(cell: Cell): Promise<number> {
@@ -21,7 +21,8 @@ async function pointFor(cell: Cell): Promise<number> {
 export async function bindWeatherPoints(): Promise<{ bound: number; changed: number }> {
   const seasons = await prisma.fieldSeason.findMany({ select: { id: true, geometry: true, weatherPointId: true } });
   const cache = new Map<string, number>();
-  let bound = 0, changed = 0;
+  let bound = 0;
+  const updates: { id: number; pointId: number }[] = [];
   for (const s of seasons) {
     const center = geometryCenter(s.geometry);
     if (!center) continue;
@@ -30,10 +31,14 @@ export async function bindWeatherPoints(): Promise<{ bound: number; changed: num
     if (!cache.has(key)) cache.set(key, await pointFor(cell));
     const pointId = cache.get(key)!;
     bound++;
-    if (s.weatherPointId !== pointId) {
-      await prisma.fieldSeason.update({ where: { id: s.id }, data: { weatherPointId: pointId } });
-      changed++;
-    }
+    if (s.weatherPointId !== pointId) updates.push({ id: s.id, pointId });
   }
-  return { bound, changed };
+  // Toores UPDATE: Prisma update muudaks updatedAt/updatedBy, mis nihutaks sõitude kohtade sõrmejälge
+  // (ümberarvutus) ja märgiks vaataja hooaja viimaseks muutjaks. Seos pole kasutaja muudatus.
+  if (updates.length) {
+    await tenantTransaction(async (tx) => {
+      for (const u of updates) await tx.$executeRaw`UPDATE "field_seasons" SET "weatherPointId" = ${u.pointId} WHERE id = ${u.id}`;
+    });
+  }
+  return { bound, changed: updates.length };
 }
