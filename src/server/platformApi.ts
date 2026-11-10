@@ -17,6 +17,7 @@ import { hashToken } from './auth.ts';
 import { landingStats, parseDay } from './landing/landingStats.ts';
 import { listInterest, parseInterestPatch, updateInterest, deleteInterest } from './landing/interestAdmin.ts';
 import { getMcpInstructionsAdmin, saveMcpInstructions, resetMcpInstructions } from './mcp/instructions.ts';
+import { loadPoint, isWeatherLoadRunning, FAIL_WARN } from './weather/loader.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
@@ -31,6 +32,7 @@ class HttpError extends Error {
 
 const NOT_FOUND = 'Ettevõtet ei leitud';
 const DEVICE_NOT_FOUND = 'Seadet ei leitud';
+const WEATHER_RELOAD_ROUTE = /^\/api\/platform\/weather\/(\d{1,9})\/reload$/;
 const DEVICE_RELEASE_ROUTE = /^\/api\/platform\/devices\/([^/]+)\/release$/;
 const INTEREST_ROUTE = /^\/api\/platform\/interest\/([^/]+)$/;
 const INTEREST_NOT_FOUND = 'Huvilist ei leitud';
@@ -603,6 +605,36 @@ async function routeCatalog(req: IncomingMessage, res: ServerResponse, pathname:
   return false;
 }
 
+const day = (d: Date | null) => d?.toISOString().slice(0, 10) ?? null;
+
+/** Ilmapunktide laadimise olek; authDb on BYPASSRLS, seega hooaegade arv hõlmab kõiki ettevõtteid. */
+async function weatherStatus() {
+  const points = await authDb().weatherPoint.findMany({ orderBy: { id: 'asc' }, include: { _count: { select: { fieldSeasons: true } } } });
+  return {
+    keyConfigured: !!process.env.CDS_API_KEY,
+    failWarn: FAIL_WARN,
+    points: points.map((p) => ({
+      id: p.id, lat: p.lat, lon: p.lon, hasData: p.hasData,
+      loadedFrom: day(p.loadedFrom), loadedUntil: day(p.loadedUntil),
+      lastSuccessAt: p.lastSuccessAt?.toISOString() ?? null, lastError: p.lastError, failCount: p.failCount,
+      fieldSeasonCount: p._count.fieldSeasons
+    }))
+  };
+}
+
+/** Punktid, mida käsitsi uuesti laetakse (selles protsessis). Öise lepingu (claimPoint) tahtlikult ei kasuta: operaator peab saama pärast ebaõnnestunud öist katset kohe uuesti proovida. */
+const reloading = new Set<number>();
+
+async function weatherReload(res: ServerResponse, id: number) {
+  if (!(await authDb().weatherPoint.findUnique({ where: { id }, select: { id: true } }))) return json(res, { error: 'Ilmapunkti ei leitud' }, 404);
+  if (reloading.has(id) || isWeatherLoadRunning()) return json(res, { error: 'Laadimine juba käib' }, 409);
+  reloading.add(id);
+  loadPoint(id, undefined, { refreshRecent: true })
+    .catch((err) => console.error('weather reload failed:', err))
+    .finally(() => reloading.delete(id));
+  return json(res, { started: true });
+}
+
 async function route(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL) {
   const pu = platformUserOf(req)!;
 
@@ -613,6 +645,9 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
   if (pathname === '/api/platform/audit' && method === 'GET') return json(res, await listAudit(url));
   if (pathname === '/api/platform/devices' && method === 'GET') return json(res, await listDevices());
   if (pathname === '/api/platform/devices/registrations' && method === 'GET') return json(res, await listRegistrations(url));
+  if (pathname === '/api/platform/weather' && method === 'GET') return json(res, await weatherStatus());
+  const wr = WEATHER_RELOAD_ROUTE.exec(pathname);
+  if (wr && method === 'POST') return weatherReload(res, Number(wr[1]));
   const dr = DEVICE_RELEASE_ROUTE.exec(pathname);
   if (dr && method === 'POST') {
     await releaseDevice(decodeId(dr[1], DEVICE_NOT_FOUND), pu);

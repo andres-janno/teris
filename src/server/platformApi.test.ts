@@ -447,6 +447,20 @@ describe('seadmed teenusepakkuja keskkonnas', () => {
     await db.tenant.deleteMany({ where: { id: { in: ids } } }).catch(log('ettevõtted'));
   });
 
+  it('GET weather: punktide olek platvormi kasutajale, ilma sessioonita 401', async () => {
+    const r = await call('GET', '/api/platform/weather');
+    expect(r.status).toBe(200);
+    expect(Array.isArray(r.data.points)).toBe(true);
+    expect(typeof r.data.keyConfigured).toBe('boolean');
+    expect(r.data.failWarn).toBeGreaterThan(0);
+    expect((await call('GET', '/api/platform/weather', undefined, { cookie: '' })).status).toBe(401);
+    expect((await call('POST', '/api/platform/weather/1/reload', {}, { cookie: '' })).status).toBe(401);
+  });
+
+  it('POST weather reload: tundmatu punkt 404', async () => {
+    expect((await call('POST', '/api/platform/weather/2147483000/reload', {})).status).toBe(404);
+  });
+
   it('ilma sessioonita 401', async () => {
     expect((await call('GET', '/api/platform/devices', undefined, { cookie: '' })).status).toBe(401);
     expect((await call('POST', `/api/platform/devices/${DEV_ID}/release`, {}, { cookie: '' })).status).toBe(401);

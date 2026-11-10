@@ -210,6 +210,8 @@ export interface InterestRow {
   referrerHost: string | null;
 }
 
+export interface WeatherPointRow { id: number; lat: number; lon: number; hasData: boolean | null; loadedFrom: string | null; loadedUntil: string | null; lastSuccessAt: string | null; lastError: string | null; failCount: number; fieldSeasonCount: number }
+
 async function request<T>(method: string, path: string, body?: unknown, fallback = 'Päring ebaõnnestus'): Promise<T> {
   const res = await fetch(`/api/platform${path}`, {
     method,
@@ -233,6 +235,8 @@ export const platformApi = {
     return (await request<{ user: { username: string } }>('POST', '/auth/login', { username, password, code }, 'Vale kasutajanimi, parool või kood')).user;
   },
   logout: () => request<unknown>('POST', '/auth/logout', {}),
+  weatherStatus: () => request<{ points: WeatherPointRow[]; failWarn: number; keyConfigured: boolean }>('GET', '/weather'),
+  reloadWeatherPoint: (id: number) => request<{ started: boolean }>('POST', `/weather/${id}/reload`, {}),
   listTenants: () => request<TenantSummary[]>('GET', '/tenants'),
   createTenant: (input: NewTenantInput) => request<{ id: string; inviteSent: boolean; catalog?: CatalogCounts }>('POST', '/tenants', input),
   getTenant: (id: string) => request<TenantDetailData>('GET', `/tenants/${enc(id)}`),

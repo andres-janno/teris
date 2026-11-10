@@ -118,3 +118,6 @@ body { overflow: auto; }
 .ai-instructions-input { width: 100%; font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 13px; line-height: 1.5; resize: vertical; }
 .ai-instructions-footer { display: flex; gap: 8px; align-items: center; justify-content: flex-end; margin-top: 12px; }
 .ai-instructions-footer .muted { margin-right: auto; }
+.admin-table th.num, .admin-table td.num { text-align: right; font-variant-numeric: tabular-nums; }
+.admin-table tr.row-warning td { background: rgba(245, 158, 11, 0.12); }
+.alert-box.warning { background: rgba(245, 158, 11, 0.15); color: #b45309; border-color: rgba(245, 158, 11, 0.4); }

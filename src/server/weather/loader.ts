@@ -99,6 +99,9 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
 
 let running = false;
 
+/** Kas selles protsessis käib parajasti kogu punktide laadimine (öine ajasti või CLI). */
+export const isWeatherLoadRunning = (): boolean => running;
+
 /**
  * Punkti "laenutus": üks atomaarne UPDATE võtab punkti enda kätte ainult siis, kui viimasest katsest on piisavalt aega.
  * Annab ühe katse öö kohta (ka vea korral) ning takistab CLI ja serveri ajasti samaaegset laadimist.
