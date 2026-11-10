@@ -27,7 +27,7 @@ export const WeatherSeasonSection: React.FC<{ fieldSeasonId: number | undefined;
       {rep?.reason === 'NO_SEEDING' && (
         <p className="hint">Ilmakokkuvõte vajab külvikuupäeva.{onEditSeeding && <> <button type="button" className="link-button" onClick={onEditSeeding}>Sisesta külvikuupäev</button></>}</p>
       )}
-      {rep?.reason === 'NOT_STARTED' && <p className="hint">Külv on tulevikus — ilmaandmeid veel pole.</p>}
+      {rep?.reason === 'NOT_STARTED' && <p className="hint">Külvist alates ilmaandmeid veel pole — need jõuavad umbes nädalase viitega.</p>}
       {rep?.reason === 'INVALID_DATES' && <p className="hint">Koristuskuupäev on enne külvi — kontrolli kuupäevi.</p>}
       {rep?.reason === 'LOADING' && <p className="hint">Ilmaandmeid laetakse.</p>}
       {rep?.reason === 'NO_POINT' && <p className="hint">Põllul pole kuju, ilma ei saa siduda.</p>}
