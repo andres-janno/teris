@@ -1,9 +1,23 @@
 // src/components/WeatherCharts.tsx — ilmavaate SVG graafikud: kuude tulbad (aasta vs keskmine) ja kumulatiivsed jooned.
-import React from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import type { WeatherMonth, WeatherCumulativeSeries } from '../types/weather';
 import { MONTH_NAMES, fmt0 } from '../services/weatherFormat';
 
-const W = 560, H = 220, M = { top: 12, right: 12, bottom: 28, left: 44 };
+const H = 220, M = { top: 12, right: 12, bottom: 28, left: 44 };
+
+// Graafik joonistatakse tegeliku laiusega (mitte viewBox-skaleerimisega), et tekst jääks rakenduse fondisuurusesse
+function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
+  const ref = useRef<HTMLDivElement | null>(null);
+  const [w, setW] = useState(560);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(240, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w];
+}
 const niceTop = (max: number) => {
   if (max <= 0) return 10;
   const pow = 10 ** Math.floor(Math.log10(max));
@@ -11,13 +25,14 @@ const niceTop = (max: number) => {
 };
 
 export const MonthBars: React.FC<{ months: WeatherMonth[]; metric: 'precipMm' | 'gdd'; unit: string; year: number }> = ({ months, metric, unit, year }) => {
+  const [ref, W] = useWidth();
   const normalKey = metric === 'precipMm' ? 'normalPrecipMm' : 'normalGdd';
   const top = niceTop(Math.max(0, ...months.flatMap((m) => [m[metric] ?? 0, m[normalKey] ?? 0])));
   const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
-  const slot = iw / months.length, bw = slot * 0.32;
+  const slot = iw / months.length, bw = Math.min(28, slot * 0.32);
   const y = (v: number) => M.top + ih - (v / top) * ih;
   return (
-    <svg className="weather-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`}>
+    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`}>
       {[0, 0.5, 1].map((f) => (
         <g key={f}>
           <line x1={M.left} x2={W - M.right} y1={y(top * f)} y2={y(top * f)} className="weather-grid" />
@@ -35,11 +50,12 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; metric: 'precipMm' | 
           </g>
         );
       })}
-    </svg>
+    </svg></div>
   );
 };
 
 export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; metric: 'gdd' | 'precipMm'; unit: string }> = ({ series, metric, unit }) => {
+  const [ref, W] = useWidth();
   const maxDay = 152; // 01.04–31.08
   const top = niceTop(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p[metric]))));
   const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
@@ -47,7 +63,7 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; metr
   const y = (v: number) => M.top + ih - (v / top) * ih;
   const ticks = [{ d: 0, l: '1. apr' }, { d: 30, l: '1. mai' }, { d: 61, l: '1. juuni' }, { d: 91, l: '1. juuli' }, { d: 122, l: '1. aug' }];
   return (
-    <svg className="weather-chart" viewBox={`0 0 ${W} ${H}`} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'}>
+    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'}>
       {[0, 0.5, 1].map((f) => (
         <g key={f}>
           <line x1={M.left} x2={W - M.right} y1={y(top * f)} y2={y(top * f)} className="weather-grid" />
@@ -61,6 +77,6 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; metr
           <title>{`${s.year}: ${fmt0(s.points[s.points.length - 1]?.[metric] ?? 0)} ${unit}`}</title>
         </polyline>
       ))}
-    </svg>
+    </svg></div>
   );
 };
