@@ -94,6 +94,7 @@ export async function fetchHourly(
     const st = await cdsJson<{ status?: unknown; detail?: unknown }>(await f(`${BASE}/jobs/${jobID}`, { headers }), 'töö staatus');
     if (st.status === 'successful') break;
     if (st.status === 'failed' || st.status === 'dismissed') throw new CdsError(`CDS töö ${st.status}: ${JSON.stringify(st.detail ?? st).slice(0, 300)}`);
+    if (st.status !== 'accepted' && st.status !== 'running') throw new CdsError(`CDS töö staatus tundmatu: ${JSON.stringify(st).slice(0, 300)}`);
     if (Date.now() > deadline) throw new CdsError('CDS töö ei valminud ajaga');
   }
   const res = await cdsJson<{ asset?: { value?: { href?: unknown } } }>(await f(`${BASE}/jobs/${jobID}/results`, { headers }), 'tulemus');

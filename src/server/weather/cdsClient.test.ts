@@ -89,6 +89,20 @@ describe('fetchHourly', () => {
       fetchImpl: statusFake(() => new Response('Bad Gateway', { status: 502 })), pollMs: 1
     })).rejects.toBeInstanceOf(CdsError);
   });
+  it('staatuse vastus ilma status-väljata → kohe CdsError', async () => {
+    const t0 = Date.now();
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
+      fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'x' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
+    })).rejects.toBeInstanceOf(CdsError);
+    expect(Date.now() - t0).toBeLessThan(5000);
+  });
+  it('tundmatu staatuse väärtus → kohe CdsError', async () => {
+    const t0 = Date.now();
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
+      fetchImpl: statusFake(() => new Response(JSON.stringify({ status: 'weird' }), { status: 200 })), pollMs: 1, timeoutMs: 60_000
+    })).rejects.toBeInstanceOf(CdsError);
+    expect(Date.now() - t0).toBeLessThan(5000);
+  });
   it('päring 201 ilma jobID-ta → CdsError', async () => {
     const fake = (async () => new Response(JSON.stringify({}), { status: 201 })) as typeof fetch;
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/jobID/);
