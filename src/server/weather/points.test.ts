@@ -24,7 +24,12 @@ beforeAll(async () => {
 });
 
 afterAll(async () => {
-  await authDb().tenant.delete({ where: { id: T } }).catch(() => {});
+  // Tenant ei kaskaadi põldudele (tenantId on lihtne string) — kustuta ise
+  await run(async () => {
+    await prisma.fieldSeason.deleteMany({});
+    await prisma.field.deleteMany({});
+  }).catch((e) => console.error('points.test puhastus (põllud):', e));
+  await authDb().tenant.delete({ where: { id: T } }).catch((e) => console.error('points.test puhastus (ettevõte):', e));
   await authDb().weatherPoint.deleteMany({ where: { lat: { gte: 9.95, lt: 10.65 } } });
 });
 

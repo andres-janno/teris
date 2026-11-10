@@ -7,7 +7,11 @@ import { snapToCell, neighborCells, geometryCenter, type Cell } from './grid';
 async function pointFor(cell: Cell): Promise<number> {
   const candidates = [cell, ...neighborCells(cell)];
   for (const c of candidates) {
-    const p = await prisma.weatherPoint.upsert({ where: { lat_lon: c }, create: c, update: {} });
+    // Samaaegne upsert (öötöö + vaate avamine) võib anda P2002 — loe siis olemasolev rida
+    const p = await prisma.weatherPoint.upsert({ where: { lat_lon: c }, create: c, update: {} }).catch(async (e) => {
+      if (e?.code !== 'P2002') throw e;
+      return prisma.weatherPoint.findUniqueOrThrow({ where: { lat_lon: c } });
+    });
     if (p.hasData !== false) return p.id;
   }
   // Kõik naabrid andmeteta — jääb esimese ruudu juurde (UI näitab „andmeid pole“)
