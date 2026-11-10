@@ -1667,6 +1667,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             crops={crops}
             onOpenCrops={() => setIsCropsModalOpen(true)}
             soilSamples={soilSamples}
+            weatherEnabled={hasModule(user, 'WEATHER')}
           />
         </Suspense>
       )}
@@ -1957,6 +1958,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onUpdateField={handleUpdateMasterField}
             onClose={closeEditField}
             soilSamples={soilSamples}
+            weatherEnabled={hasModule(user, 'WEATHER')}
           />
         </Suspense>
       )}

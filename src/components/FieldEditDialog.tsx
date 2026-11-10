@@ -18,6 +18,7 @@ const UNDETERMINED_CROP = 'Määramata';
 const UNDETERMINED_CROP_COLOR = '#94a3b8';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
+import { WeatherSeasonSection } from './WeatherSeasonSection';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -34,6 +35,7 @@ interface FieldEditDialogProps {
   onUpdateField: (fieldId: number | string, fieldData: Partial<MasterField>, seasonData?: FieldYearlyRecord) => void;
   onClose: () => void;
   soilSamples?: SoilSample[]; // põllu piiridesse jäävad näidatakse (ainult vaatamiseks)
+  weatherEnabled?: boolean; // ilmamoodul: hooaja ilmakokkuvõtte plokk
 }
 
 export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
@@ -46,8 +48,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   onOpenCrops,
   onUpdateField,
   onClose,
-  soilSamples = []
+  soilSamples = [],
+  weatherEnabled = false
 }) => {
+  const seasonRec = field.history.find((h) => h.year === selectedYear);
   // Valitud hooaja põllukuju mullaproovide jaoks
   const seasonGeometry = useMemo(() => {
     const g = field.history.find((h) => h.year === selectedYear)?.geometry as any;
@@ -628,6 +632,11 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       {seasonGeometry && (
         <div className="field-edit-insights">
           <SoilSamplesSection geometry={seasonGeometry} samples={recentSoilSamples} />
+        </div>
+      )}
+      {weatherEnabled && (
+        <div className="field-edit-insights">
+          <WeatherSeasonSection fieldSeasonId={seasonRec?.fieldSeasonId} actualYieldTonsHa={seasonRec?.actualYieldTonsHa} />
         </div>
       )}
 

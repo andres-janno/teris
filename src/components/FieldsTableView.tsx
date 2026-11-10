@@ -1,5 +1,5 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Layers, Calendar, Search, Lock, Download, Crosshair, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
@@ -16,6 +16,7 @@ import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
+import { fmt0 } from '../services/weatherFormat';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -34,6 +35,7 @@ interface FieldsTableViewProps {
   crops?: Crop[];
   onOpenCrops?: () => void;
   soilSamples?: SoilSample[]; // põllu muutmise aknas näidatakse põllu piiridesse jäävad
+  weatherEnabled?: boolean; // ilmamoodul: GDD ja sademete veerud
 }
 
 type TenureKind = 'owned' | 'rented' | 'mixed' | 'unknown';
@@ -100,8 +102,19 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   onOpenParties,
   crops = [],
   onOpenCrops,
-  soilSamples = []
+  soilSamples = [],
+  weatherEnabled = false
 }) => {
+  // Hooaja ilmakokkuvõte (külvist koristuseni) põllu hooaja kirje järgi
+  const [weatherBySeason, setWeatherBySeason] = useState<Map<number, { gdd: number; precipMm: number }>>(new Map());
+  useEffect(() => {
+    if (!weatherEnabled) return;
+    let cancelled = false;
+    api.getWeatherSeasons(selectedYear)
+      .then((rows) => { if (!cancelled) setWeatherBySeason(new Map(rows.map((r) => [r.fieldSeasonId, r]))); })
+      .catch(() => { if (!cancelled) setWeatherBySeason(new Map()); });
+    return () => { cancelled = true; };
+  }, [weatherEnabled, selectedYear]);
   const [searchQuery, setSearchQuery] = useState('');
   const [shapeView, setShapeView] = useState<{ field: MasterField; record: FieldYearlyRecord } | null>(null);
   const [editingFieldId, setEditingFieldId] = useState<number | string | null>(null);
@@ -329,6 +342,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <th className="num-col">Pindala</th>
                     <th className="num-col">PRIA pind</th>
                     <th>Kultuur {selectedYear}</th>
+                    {weatherEnabled && <th className="num-col" title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</th>}
+                    {weatherEnabled && <th className="num-col" title="Sademed külvist koristuseni">Sademed, mm</th>}
                     <th>Omandisuhe</th>
                     <th>Omanik / rendileandja</th>
                     <th>Katastriüksused</th>
@@ -378,6 +393,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           ) : <span className="muted">–</span>}
                           {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
                         </td>
+                        {weatherEnabled && <td className="num-col">{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</td>}
+                        {weatherEnabled && <td className="num-col">{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</td>}
                         <td>
                           <span className={`tenure-badge ${r.tenure}`}>{TENURE_LABEL[r.tenure]}</span>
                           {r.tenure === 'mixed' && (
@@ -419,6 +436,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <td className="num-col"><strong>{fmtHa(totals.areaHa)} ha</strong></td>
                       <td className="num-col">{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</td>
                       <td></td>
+                      {weatherEnabled && <td></td>}
+                      {weatherEnabled && <td></td>}
                       <td>
                         <div className="cell-sub">Oma: {fmtHa(totals.ownedHa)} ha</div>
                         <div className="cell-sub">Rent: {fmtHa(totals.rentedHa)} ha</div>
@@ -457,6 +476,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   onUpdateField={onUpdateField}
                   onClose={closeEdit}
                   soilSamples={soilSamples}
+                  weatherEnabled={weatherEnabled}
                 />
               )}
 
