@@ -42,11 +42,17 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
   const provisionalFrom = addDays(tallinnDate(now), -PROVISIONAL_DAYS);
   const loadedUntil = iso(p.loadedUntil);
   let from = loadedUntil ? addDays(loadedUntil, 1) : WEATHER_START;
-  if (opts.refreshRecent && loadedUntil) from = provisionalFrom < WEATHER_START ? WEATHER_START : provisionalFrom;
+  const finalUntil = iso(p.finalUntil);
+  if (opts.refreshRecent && loadedUntil) {
+    // Uuesti tuleb laadida ka päevad, mis on vahepeal 90-päevasest aknast välja vanunud (siis saavad isFinal=true).
+    from = finalUntil && addDays(finalUntil, 1) < provisionalFrom ? addDays(finalUntil, 1) : provisionalFrom;
+    if (from < WEATHER_START) from = WEATHER_START;
+  }
   if (from > yesterday) return { days: 0 };
 
   await prisma.weatherPoint.update({ where: { id: pointId }, data: { lastAttemptAt: now } });
   let total = 0;
+  let finalSoFar = finalUntil; // viimane päev, mille rida on tegelikult isFinal=true
   try {
     for (const [a, b] of yearChunks(from, yesterday)) {
       // CDS tunnid on UTC ja algavad päeva 00:00 UTC-st; Tallinna päev `a` algab aga eelmisel UTC-päeval (21/22 UTC),
@@ -60,8 +66,13 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
         continue; // CDS-is pole veel neid päevi (viide)
       }
       const last = days[days.length - 1].date;
+      const finalDays = days.filter((d) => d.date < provisionalFrom);
+      if (finalDays.length > 0) {
+        const lastFinal = finalDays[finalDays.length - 1].date;
+        if (!finalSoFar || lastFinal > finalSoFar) finalSoFar = lastFinal;
+      }
       await prisma.$transaction([
-        prisma.weatherDaily.deleteMany({ where: { pointId, date: { gte: asDate(days[0].date), lte: asDate(last) } } }),
+        prisma.weatherDaily.deleteMany({ where: { pointId, date: { in: days.map((d) => asDate(d.date)) } } }),
         prisma.weatherDaily.createMany({
           data: days.map((d) => ({ pointId, ...d, date: asDate(d.date), isFinal: d.date < provisionalFrom }))
         }),
@@ -71,7 +82,7 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
             hasData: true,
             loadedFrom: p.loadedFrom ?? asDate(days[0].date),
             ...(loadedUntil === null || last > loadedUntil ? { loadedUntil: asDate(last) } : {}),
-            finalUntil: asDate(addDays(provisionalFrom, -1) < last ? addDays(provisionalFrom, -1) : last)
+            ...(finalSoFar ? { finalUntil: asDate(finalSoFar) } : {})
           }
         })
       ]);
@@ -88,6 +99,19 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
 
 let running = false;
 
+/**
+ * Punkti "laenutus": üks atomaarne UPDATE võtab punkti enda kätte ainult siis, kui viimasest katsest on piisavalt aega.
+ * Annab ühe katse öö kohta (ka vea korral) ning takistab CLI ja serveri ajasti samaaegset laadimist.
+ * Valitud advisory-lukule eelistatult: Prismal pole garanteeritud sama ühendus tundide kaupa, rida-põhine claim töötab ilma selleta.
+ */
+export async function claimPoint(pointId: number, now: Date): Promise<boolean> {
+  const { count } = await prisma.weatherPoint.updateMany({
+    where: { id: pointId, OR: [{ lastAttemptAt: null }, { lastAttemptAt: { lt: new Date(now.getTime() - MIN_HOURS_BETWEEN_RUNS * 3_600_000) } }] },
+    data: { lastAttemptAt: now }
+  });
+  return count > 0;
+}
+
 /** Kõigi WEATHER mooduliga ettevõtete hooajad seotakse punktidega, siis laetakse kõik punktid. */
 export async function runWeatherLoad(deps: LoaderDeps = defaultLoaderDeps, opts: { force?: boolean } = {}): Promise<void> {
   if (running) return;
@@ -103,8 +127,7 @@ export async function runWeatherLoad(deps: LoaderDeps = defaultLoaderDeps, opts:
     // Prisma `not: false` jätaks NULL-id välja (SQL kolmeväärtuseloogika), seetõttu OR
     const points = await prisma.weatherPoint.findMany({ where: { OR: [{ hasData: null }, { hasData: true }] } });
     for (const p of points) {
-      const recent = p.lastSuccessAt && now.getTime() - p.lastSuccessAt.getTime() < MIN_HOURS_BETWEEN_RUNS * 3_600_000;
-      if (recent && !opts.force) continue;
+      if (!opts.force && !(await claimPoint(p.id, now))) continue;
       try { await loadPoint(p.id, deps, { refreshRecent: monday || opts.force }); } catch (err) { console.error(`weather: point ${p.id} failed:`, err); }
     }
   } finally {

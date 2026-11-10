@@ -1,7 +1,7 @@
 // src/server/weather/loader.test.ts — live-andmebaas; CDS on võltsitud; ainult punkt lat 10.7.
 import { describe, it, expect, afterAll, beforeEach } from 'vitest';
 import { prisma } from '../db';
-import { loadPoint, type LoaderDeps } from './loader';
+import { loadPoint, claimPoint, type LoaderDeps } from './loader';
 import type { HourlyWeather } from './types';
 
 const hoursFor = (from: string, to: string): HourlyWeather[] => {
@@ -73,5 +73,24 @@ describe('loadPoint', () => {
   it('tühjad temperatuurid → hasData false', async () => {
     await loadPoint(pointId, { ...deps, fetchHourly: async (_c, f, t) => hoursFor(f, t).map((h) => ({ ...h, tempC: null })) });
     expect((await prisma.weatherPoint.findUniqueOrThrow({ where: { id: pointId } })).hasData).toBe(false);
+  });
+
+  it('vanunenud päevad saavad refreshRecentiga lõplikuks', async () => {
+    await loadPoint(pointId, { ...deps, now: () => new Date('2015-06-10T12:00:00Z') });
+    expect((await prisma.weatherPoint.findUniqueOrThrow({ where: { id: pointId } })).finalUntil!.toISOString().slice(0, 10)).toBe('2015-03-11');
+    await loadPoint(pointId, { ...deps, now: () => new Date('2015-06-24T12:00:00Z') }, { refreshRecent: true });
+    const p = await prisma.weatherPoint.findUniqueOrThrow({ where: { id: pointId } });
+    expect(p.finalUntil!.toISOString().slice(0, 10)).toBe('2015-03-25');
+    const d = (s: string) => prisma.weatherDaily.findUniqueOrThrow({ where: { pointId_date: { pointId, date: new Date(`${s}T00:00:00Z`) } } });
+    expect((await d('2015-03-12')).isFinal).toBe(true);
+    expect((await d('2015-03-25')).isFinal).toBe(true);
+    expect((await d('2015-03-26')).isFinal).toBe(false);
+  });
+
+  it('claimPoint annab punkti ühele katsele 20 tunni jooksul', async () => {
+    const t = new Date('2015-03-10T12:00:00Z');
+    expect(await claimPoint(pointId, t)).toBe(true);
+    expect(await claimPoint(pointId, new Date(t.getTime() + 3_600_000))).toBe(false);
+    expect(await claimPoint(pointId, new Date(t.getTime() + 21 * 3_600_000))).toBe(true);
   });
 });
