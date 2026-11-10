@@ -72,6 +72,7 @@ const PoiManagerModal = lazy(() => import('./components/PoiManagerModal').then((
 const SeasonManagerModal = lazy(() => import('./components/SeasonManagerModal').then((m) => ({ default: m.SeasonManagerModal })));
 const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal').then((m) => ({ default: m.RelatedPartiesModal })));
 const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
+const WeatherView = lazy(() => import('./components/WeatherView').then((m) => ({ default: m.WeatherView })));
 const ArticlesView = lazy(() => import('./components/ArticlesView').then((m) => ({ default: m.ArticlesView })));
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
@@ -1628,6 +1629,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenAiConnection={() => setIsAiConnectionOpen(true)}
         onOpenUsers={user.isAdmin ? () => setIsUsersAdminOpen(true) : undefined}
         onLogout={onLogout}
+        showWeather={hasModule(user, 'WEATHER')}
       />
 
       {mainView === 'seasons' && (
@@ -1807,6 +1809,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             initialWarehouseId={articlesWarehouseId}
             onInitialWarehouseConsumed={clearArticlesWarehouse}
           />
+        </Suspense>
+      )}
+
+      {mainView === 'weather' && hasModule(user, 'WEATHER') && (
+        <Suspense fallback={null}>
+          <WeatherView />
         </Suspense>
       )}
 

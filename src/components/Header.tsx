@@ -9,7 +9,8 @@ import {
   SquareKanban,
   Users,
   Package,
-  Repeat
+  Repeat,
+  CloudSun
 } from 'lucide-react';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
@@ -18,7 +19,7 @@ import type { FarmingSeason } from '../types/season';
 import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
-export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'stock'] as const;
+export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'stock', 'weather'] as const;
 export type MainView = typeof MAIN_VIEWS[number];
 
 interface HeaderProps {
@@ -51,6 +52,7 @@ interface HeaderProps {
   onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
   onLogout?: () => void;
+  showWeather?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -66,7 +68,8 @@ export const Header: React.FC<HeaderProps> = ({
   onChangePassword,
   onOpenAiConnection,
   onOpenUsers,
-  onLogout
+  onLogout,
+  showWeather = false
 }) => {
   return (
     <header className="app-header">
@@ -160,6 +163,17 @@ export const Header: React.FC<HeaderProps> = ({
               <Users size={15} />
               <span>Isikud</span>
             </button>
+            {showWeather && (
+              <button
+                type="button"
+                className={mainView === 'weather' ? 'active' : ''}
+                aria-current={mainView === 'weather' ? 'page' : undefined}
+                onClick={() => onChangeMainView('weather')}
+              >
+                <CloudSun size={15} />
+                <span>Ilm</span>
+              </button>
+            )}
             <button
               type="button"
               className={mainView === 'seasons' ? 'active' : ''}
