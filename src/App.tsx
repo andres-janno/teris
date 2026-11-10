@@ -8,6 +8,7 @@ import { VehicleTracker } from './components/VehicleTracker';
 import { MapYearSelector } from './components/MapYearSelector';
 import { ChangePasswordModal } from './components/ChangePasswordModal';
 import { AiConnectionModal } from './components/AiConnectionModal';
+import { WeatherCredentialModal } from './components/WeatherCredentialModal';
 
 import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId } from './types/map';
@@ -453,6 +454,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isPartiesModalOpen, setIsPartiesModalOpen] = useState(false);
   const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
   const [isAiConnectionOpen, setIsAiConnectionOpen] = useState(false);
+  const [isWeatherCredentialOpen, setIsWeatherCredentialOpen] = useState(false);
   const [isUsersAdminOpen, setIsUsersAdminOpen] = useState(false);
 
   const handleSaveParty = (partyToSave: RelatedParty) => {
@@ -1629,6 +1631,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onChangePassword={() => setIsChangePasswordOpen(true)}
         onOpenAiConnection={() => setIsAiConnectionOpen(true)}
         onOpenUsers={user.isAdmin ? () => setIsUsersAdminOpen(true) : undefined}
+        onOpenWeatherCredential={user.isAdmin && hasModule(user, 'WEATHER') ? () => setIsWeatherCredentialOpen(true) : undefined}
         onLogout={onLogout}
         showWeather={hasModule(user, 'WEATHER')}
       />
@@ -2068,6 +2071,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
       <ChangePasswordModal isOpen={isChangePasswordOpen} onClose={() => setIsChangePasswordOpen(false)} />
       <AiConnectionModal isOpen={isAiConnectionOpen} onClose={() => setIsAiConnectionOpen(false)} />
+      <WeatherCredentialModal isOpen={isWeatherCredentialOpen} onClose={() => setIsWeatherCredentialOpen(false)} readOnly={!!user.supportView} />
       <DeferredMount when={isUsersAdminOpen}>
         <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} readOnly={!!user.supportView} />
       </DeferredMount>

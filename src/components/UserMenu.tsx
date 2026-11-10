@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot } from 'lucide-react';
+import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot, CloudSun } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
 import { COPYRIGHT_TEXT } from '../copyright';
 
@@ -10,6 +10,7 @@ interface UserMenuProps {
   onChangePassword?: () => void;
   onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
+  onOpenWeatherCredential?: () => void;
   onLogout?: () => void;
   dbConnected: boolean;
 }
@@ -23,6 +24,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   onChangePassword,
   onOpenAiConnection,
   onOpenUsers,
+  onOpenWeatherCredential,
   onLogout,
   dbConnected
 }) => {
@@ -92,6 +94,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             <button type="button" role="menuitem" className="user-menu-item" onClick={run(onOpenUsers)}>
               <Users size={15} />
               <span>Kasutajad</span>
+            </button>
+          )}
+          {user.isAdmin && onOpenWeatherCredential && (
+            <button type="button" role="menuitem" className="user-menu-item" onClick={run(onOpenWeatherCredential)}>
+              <CloudSun size={15} />
+              <span>Ilmaandmete ühendus</span>
             </button>
           )}
           <button type="button" role="menuitem" className="user-menu-item" onClick={run(onToggleTheme)}>

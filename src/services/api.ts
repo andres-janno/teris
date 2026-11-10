@@ -12,7 +12,7 @@ import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../t
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
-import type { WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
+import type { WeatherCredentialStatus, WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -325,6 +325,28 @@ export const api = {
   async getWeatherRadar(): Promise<{ bounds: [[number, number], [number, number]]; frames: { time: string; imageUrl: string }[] }> {
     const res = await apiFetch('/api/weather/radar');
     if (!res.ok) throw new Error(await errorMessage(res, 'Radari andmed pole saadaval'));
+    return res.json();
+  },
+
+  async getWeatherCredential(): Promise<WeatherCredentialStatus> {
+    const res = await apiFetch('/api/weather/credential');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmete ühenduse olek pole saadaval'));
+    return res.json();
+  },
+
+  async saveWeatherCredential(key: string): Promise<WeatherCredentialStatus> {
+    const res = await apiFetch('/api/weather/credential', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ key })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Võtme salvestamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async deleteWeatherCredential(): Promise<WeatherCredentialStatus> {
+    const res = await apiFetch('/api/weather/credential', { method: 'DELETE' });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Võtme eemaldamine ebaõnnestus'));
     return res.json();
   },
 

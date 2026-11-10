@@ -51,6 +51,7 @@ interface HeaderProps {
   onChangePassword?: () => void;
   onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
+  onOpenWeatherCredential?: () => void;
   onLogout?: () => void;
   showWeather?: boolean;
 }
@@ -68,6 +69,7 @@ export const Header: React.FC<HeaderProps> = ({
   onChangePassword,
   onOpenAiConnection,
   onOpenUsers,
+  onOpenWeatherCredential,
   onLogout,
   showWeather = false
 }) => {
@@ -201,6 +203,7 @@ export const Header: React.FC<HeaderProps> = ({
             onChangePassword={onChangePassword}
             onOpenAiConnection={onOpenAiConnection}
             onOpenUsers={onOpenUsers}
+            onOpenWeatherCredential={onOpenWeatherCredential}
             onLogout={onLogout}
             dbConnected={dbConnected}
           />

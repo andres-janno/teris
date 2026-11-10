@@ -6572,7 +6572,21 @@ a.history-pill:hover {
   border: 1px solid rgba(217, 130, 43, 0.3);
 }
 
-.login-page .login-forgot-link {
+.login-page .modal-content.weather-credential-modal { max-width: 640px; width: min(640px, 94vw); }
+.weather-credential-status { margin: 12px 0; font-size: 13px; }
+.weather-credential-state { font-weight: 600; margin-bottom: 6px; }
+.weather-credential-ok { color: var(--accent-emerald, #059669); }
+.weather-credential-missing { color: #b45309; }
+.weather-credential-status dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
+.weather-credential-status dt { color: var(--text-muted); }
+.weather-credential-status dd { margin: 0; }
+.weather-credential-error { color: #dc2626; }
+.weather-credential-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
+.weather-credential-form .form-input { flex: 1 1 260px; min-width: 0; }
+.weather-credential-help { font-size: 13px; }
+.weather-credential-help ol { margin: 6px 0 8px 18px; padding: 0; }
+
+.login-forgot-link {
   color: var(--login-ink-soft);
 }
 

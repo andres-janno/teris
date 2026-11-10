@@ -21,3 +21,11 @@ export interface WeatherCumulativeSeries { year: number; points: { day: number; 
 export type WeatherSeasonReason = 'NO_SEEDING' | 'NOT_STARTED' | 'INVALID_DATES' | 'NO_POINT' | 'LOADING';
 export interface WeatherSeasonReport { summary: WeatherSummary | null; reason: WeatherSeasonReason | null; gddBaseC: number; harvested: boolean }
 export interface WeatherSeasonHistoryRow { year: number; crop: string | null; actualYieldTonsHa: number | null; ownDates: boolean; gddBaseC: number; summary: WeatherSummary }
+export interface WeatherCredentialStatus {
+  configured: boolean;
+  updatedAt: string | null;
+  updatedBy: string | null;
+  lastUsedAt: string | null;
+  lastError: string | null;
+  canEdit: boolean;
+}
