@@ -6,6 +6,7 @@ import { fetchHourly as cdsFetchHourly } from './cdsClient';
 import { hourlyToDaily, tallinnDate } from './daily';
 import { addDays } from './summary';
 import { bindWeatherPoints } from './points';
+import { licenseState, tallinnToday } from '../license';
 import type { HourlyWeather } from './types';
 
 export const WEATHER_START = '2015-01-01';
@@ -52,6 +53,7 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
 
   await prisma.weatherPoint.update({ where: { id: pointId }, data: { lastAttemptAt: now } });
   let total = 0;
+  let loadedFromSet = p.loadedFrom !== null; // loadedFrom seatakse ainult esimese õnnestunud tüki juures
   let finalSoFar = finalUntil; // viimane päev, mille rida on tegelikult isFinal=true
   try {
     for (const [a, b] of yearChunks(from, yesterday)) {
@@ -80,12 +82,13 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
           where: { id: pointId },
           data: {
             hasData: true,
-            loadedFrom: p.loadedFrom ?? asDate(days[0].date),
+            ...(loadedFromSet ? {} : { loadedFrom: asDate(days[0].date) }),
             ...(loadedUntil === null || last > loadedUntil ? { loadedUntil: asDate(last) } : {}),
             ...(finalSoFar ? { finalUntil: asDate(finalSoFar) } : {})
           }
         })
       ]);
+      loadedFromSet = true;
       total += days.length;
     }
     await prisma.weatherPoint.update({ where: { id: pointId }, data: { lastSuccessAt: now, failCount: 0, lastError: null } });
@@ -115,20 +118,37 @@ export async function claimPoint(pointId: number, now: Date): Promise<boolean> {
   return count > 0;
 }
 
+/**
+ * Seob ja kogub punktid, mida laadida: ainult need, mis on seotud ettevõtete hooaegadega, kelle litsents sisaldab
+ * WEATHER moodulit ja kehtib praegu (validUntil on viimane kehtiv päev). Teiste ettevõtete punkte ei laeta.
+ */
+export async function wantedPointIds(licenses: { tenantId: string; modules: string[]; validUntil: Date }[], today: string): Promise<Set<number>> {
+  const wanted = new Set<number>();
+  for (const l of licenses.filter((x) => x.modules.includes('WEATHER') && !licenseState(x, today).readOnly)) {
+    try {
+      await runAsTenant(l.tenantId, async () => {
+        await bindWeatherPoints();
+        const rows = await prisma.fieldSeason.findMany({ where: { weatherPointId: { not: null } }, select: { weatherPointId: true }, distinct: ['weatherPointId'] });
+        for (const r of rows) wanted.add(r.weatherPointId!);
+      });
+    } catch (err) { console.error(`weather: bind ${l.tenantId} failed:`, err); }
+  }
+  return wanted;
+}
+
 /** Kõigi WEATHER mooduliga ettevõtete hooajad seotakse punktidega, siis laetakse kõik punktid. */
 export async function runWeatherLoad(deps: LoaderDeps = defaultLoaderDeps, opts: { force?: boolean } = {}): Promise<void> {
   if (running) return;
   if (!process.env.CDS_API_KEY && deps === defaultLoaderDeps) { console.warn('weather: CDS_API_KEY puudub, laadimine vahele'); return; }
   running = true;
   try {
-    const licenses = await authDb().tenantLicense.findMany({ select: { tenantId: true, modules: true } });
-    for (const l of licenses.filter((x) => x.modules.includes('WEATHER'))) {
-      try { await runAsTenant(l.tenantId, () => bindWeatherPoints()); } catch (err) { console.error(`weather: bind ${l.tenantId} failed:`, err); }
-    }
+    const licenses = await authDb().tenantLicense.findMany({ select: { tenantId: true, modules: true, validUntil: true } });
     const now = deps.now();
+    const today = tallinnToday(now);
+    const wanted = await wantedPointIds(licenses, today);
     const monday = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Tallinn' })).getDay() === 1;
     // Prisma `not: false` jätaks NULL-id välja (SQL kolmeväärtuseloogika), seetõttu OR
-    const points = await prisma.weatherPoint.findMany({ where: { OR: [{ hasData: null }, { hasData: true }] } });
+    const points = await prisma.weatherPoint.findMany({ where: { id: { in: [...wanted] }, OR: [{ hasData: null }, { hasData: true }] } });
     for (const p of points) {
       if (!opts.force && !(await claimPoint(p.id, now))) continue;
       try { await loadPoint(p.id, deps, { refreshRecent: monday || opts.force }); } catch (err) { console.error(`weather: point ${p.id} failed:`, err); }

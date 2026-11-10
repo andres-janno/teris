@@ -1,7 +1,7 @@
 // src/server/weather/loader.test.ts — live-andmebaas; CDS on võltsitud; ainult punkt lat 10.7.
-import { describe, it, expect, afterAll, beforeEach } from 'vitest';
-import { prisma } from '../db';
-import { loadPoint, claimPoint, type LoaderDeps } from './loader';
+import { describe, it, expect, afterAll, afterEach, beforeAll, beforeEach } from 'vitest';
+import { prisma, authDb, runAsTenant } from '../db';
+import { loadPoint, claimPoint, wantedPointIds, type LoaderDeps } from './loader';
 import type { HourlyWeather } from './types';
 
 const hoursFor = (from: string, to: string): HourlyWeather[] => {
@@ -44,6 +44,13 @@ describe('loadPoint', () => {
     expect(await prisma.weatherDaily.count({ where: { pointId } })).toBe(68);
     const first = await prisma.weatherDaily.findMany({ where: { pointId }, orderBy: { date: 'asc' }, take: 1 });
     expect(first[0].date.toISOString().slice(0, 10)).toBe('2015-01-01');
+  });
+
+  it('loadedFrom jääb esimese laetud päeva peale ka mitme aastatüki korral', async () => {
+    await loadPoint(pointId, { ...deps, now: () => new Date('2017-02-10T12:00:00Z') });
+    expect(calls.length).toBe(3); // 2015, 2016, 2017
+    const p = await prisma.weatherPoint.findUniqueOrThrow({ where: { id: pointId } });
+    expect(p.loadedFrom!.toISOString().slice(0, 10)).toBe('2015-01-01');
   });
 
   it('järgmine käik küsib ainult uusi päevi', async () => {
@@ -92,5 +99,40 @@ describe('loadPoint', () => {
     expect(await claimPoint(pointId, t)).toBe(true);
     expect(await claimPoint(pointId, new Date(t.getTime() + 3_600_000))).toBe(false);
     expect(await claimPoint(pointId, new Date(t.getTime() + 21 * 3_600_000))).toBe(true);
+  });
+});
+
+describe('wantedPointIds', () => {
+  const T = `test-tenant-loader-${process.pid}`;
+  const run = <R>(fn: () => PromiseLike<R>): Promise<R> => runAsTenant(T, async () => await fn());
+  const lic = (modules: string[], validUntil: string) => [{ tenantId: T, modules, validUntil: new Date(`${validUntil}T00:00:00Z`) }];
+  beforeAll(async () => {
+    await authDb().tenant.create({ data: { id: T, name: 'Laadija test' } });
+    await run(async () => {
+      const f = await prisma.field.create({ data: { num: '1', name: 'L', fieldCode: 'WL' } });
+      const g = { type: 'Polygon', coordinates: [[[20.7, 10.7], [20.71, 10.7], [20.71, 10.71], [20.7, 10.71], [20.7, 10.7]]] };
+      await prisma.fieldSeason.create({ data: { fieldId: f.id, year: 2025, areaHa: 1, crop: 'Oder', geometry: g } });
+    });
+  });
+  afterAll(async () => {
+    await run(async () => { await prisma.fieldSeason.deleteMany({}); await prisma.field.deleteMany({}); }).catch(() => {});
+    await authDb().tenant.delete({ where: { id: T } }).catch(() => {});
+  });
+
+  afterEach(async () => { await run(() => prisma.fieldSeason.updateMany({ data: { weatherPointId: null } })); });
+
+  it('kehtiv litsents + WEATHER → punkt kaasatakse', async () => {
+    const ids = await wantedPointIds(lic(['WEATHER'], '2030-01-01'), '2026-06-01');
+    expect(ids.size).toBe(1);
+    expect((await prisma.weatherPoint.findUniqueOrThrow({ where: { id: [...ids][0] } })).lat).toBe(10.7);
+  });
+  it('aegunud litsents → vahele', async () => {
+    expect((await wantedPointIds(lic(['WEATHER'], '2026-05-31'), '2026-06-01')).size).toBe(0);
+  });
+  it('viimane kehtiv päev loeb veel kehtivaks', async () => {
+    expect((await wantedPointIds(lic(['WEATHER'], '2026-06-01'), '2026-06-01')).size).toBe(1);
+  });
+  it('WEATHER moodulita → vahele', async () => {
+    expect((await wantedPointIds(lic(['SATELLITE'], '2030-01-01'), '2026-06-01')).size).toBe(0);
   });
 });
