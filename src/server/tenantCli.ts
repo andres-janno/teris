@@ -3,9 +3,11 @@
 //   npm run tenant -- list
 //   npm run tenant -- license <ettevõtte-id> --until YYYY-MM-DD --modules TELEMETRY,SATELLITE,WEATHER
 //   npm run tenant -- trips:import        (sõitude import kõigile TELEMETRY ettevõtetele kohe)
+//   npm run tenant -- weather:load [--force]  (ilmapunktide sidumine ja laadimine kohe)
 // --modules "" eemaldab kõik lisamoodulid.
 import { authDb } from './db';
 import { runTripImport } from './tripImport';
+import { runWeatherLoad } from './weather/loader';
 import { LICENSE_MODULES, parseLicenseDate, type LicenseModule } from './license';
 
 const db = authDb();
@@ -65,7 +67,12 @@ async function main(): Promise<void> {
     console.log('Sõitude import tehtud');
     return;
   }
-  throw new Error('Kasutus: npm run tenant -- <list | license <id> --until YYYY-MM-DD [--modules A,B] | trips:import>');
+  if (command === 'weather:load') {
+    await runWeatherLoad(undefined, { force: process.argv.includes('--force') });
+    console.log('Ilmaandmete laadimine tehtud');
+    return;
+  }
+  throw new Error('Kasutus: npm run tenant -- <list | license <id> --until YYYY-MM-DD [--modules A,B] | trips:import | weather:load [--force]>');
 }
 
 main()

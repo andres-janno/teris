@@ -11,6 +11,7 @@ import { hasValidSession } from './authGate';
 import { decideLandingRoute, needsSessionCheck, PUBLIC_ONLY_FILES } from './landing/landingRoute';
 import { recordHit, startLandingRetention } from './landing/landingEvents';
 import { startTripImportScheduler } from './tripImport';
+import { startWeatherScheduler } from './weather/loader';
 
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
@@ -67,4 +68,5 @@ server.listen(PORT, HOST, () => {
   console.log(`teris map kuulab http://${HOST}:${PORT} (dist: ${DIST_DIR})`);
   startLandingRetention();
   startTripImportScheduler();
+  startWeatherScheduler();
 });
