@@ -22,11 +22,13 @@ export const WeatherSeasonSection: React.FC<{ fieldSeasonId: number | undefined;
   if (!fieldSeasonId) return null;
   return (
     <section className="weather-season">
-      <h4>Ilm külvist {rep?.summary?.to && rep.summary.complete && rep.summary.dataUntil === rep.summary.to ? 'koristuseni' : 'tänaseni'}</h4>
+      <h4>Ilm külvist {rep?.harvested && rep.summary?.dataUntil && rep.summary.dataUntil >= rep.summary.to ? 'koristuseni' : 'tänaseni'}</h4>
       {error && <p className="hint">{error}</p>}
       {rep?.reason === 'NO_SEEDING' && (
         <p className="hint">Ilmakokkuvõte vajab külvikuupäeva.{onEditSeeding && <> <button type="button" className="link-button" onClick={onEditSeeding}>Sisesta külvikuupäev</button></>}</p>
       )}
+      {rep?.reason === 'NOT_STARTED' && <p className="hint">Külv on tulevikus — ilmaandmeid veel pole.</p>}
+      {rep?.reason === 'INVALID_DATES' && <p className="hint">Koristuskuupäev on enne külvi — kontrolli kuupäevi.</p>}
       {rep?.reason === 'LOADING' && <p className="hint">Ilmaandmeid laetakse.</p>}
       {rep?.reason === 'NO_POINT' && <p className="hint">Põllul pole kuju, ilma ei saa siduda.</p>}
       {rep?.summary && (

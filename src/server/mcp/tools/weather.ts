@@ -8,6 +8,8 @@ import { yearsReport, seasonReport } from '../../weather/weatherApi.ts';
 const SOURCE = 'Copernicus Climate Change Service, ERA5-Land';
 const REASON_MESSAGES = {
   NO_SEEDING: 'Hooajal pole külvikuupäeva, ilmakokkuvõtet ei saa arvutada.',
+  NOT_STARTED: 'Külv on tulevikus — ilmaandmeid veel pole.',
+  INVALID_DATES: 'Koristuskuupäev on enne külvi — kontrolli kuupäevi.',
   NO_POINT: 'Põllul pole kuju, ilmapunkti ei saa siduda.',
   LOADING: 'Selle põllu ilmaandmeid alles laetakse.'
 } as const;

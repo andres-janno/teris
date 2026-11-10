@@ -54,7 +54,8 @@ export async function yearsReport(point: 'all' | number, base: number) {
     if (p.from > today) break;
     years.push({ year: y, summary: summarizeWeather(days, { ...p, gddBaseC: base }) });
   }
-  const full = years.filter((y) => y.summary.complete);
+  // Pikaajaline keskmine = 2015 … eelmine täisaasta; jooksev aasta ei lähe sisse (nagu monthsReport)
+  const full = years.filter((y) => y.summary.complete && y.year < lastYear);
   const normal: Record<string, number | null> = {};
   const sd: Record<string, number | null> = {};
   for (const k of NUMERIC) {
@@ -109,12 +110,18 @@ export async function seasonReport(fieldSeasonId: number) {
     select: { seedingDate: true, harvestDate: true, weatherPointId: true, weatherPoint: { select: { loadedUntil: true } }, cropEntity: { select: { gddBaseC: true } } }
   });
   const gddBaseC = s.cropEntity?.gddBaseC ?? 5;
-  const period = seasonPeriod(s, tallinnDate(new Date()));
-  if (!period) return { summary: null, reason: 'NO_SEEDING' as const, gddBaseC };
-  if (!s.weatherPointId) return { summary: null, reason: 'NO_POINT' as const, gddBaseC };
-  if (!s.weatherPoint?.loadedUntil) return { summary: null, reason: 'LOADING' as const, gddBaseC };
+  const today = tallinnDate(new Date());
+  if (!s.seedingDate) return { summary: null, reason: 'NO_SEEDING' as const, gddBaseC, harvested: false };
+  const harvested = !!s.harvestDate;
+  if (s.harvestDate && tallinnDate(s.harvestDate) < tallinnDate(s.seedingDate)) return { summary: null, reason: 'INVALID_DATES' as const, gddBaseC, harvested };
+  if (tallinnDate(s.seedingDate) > today) return { summary: null, reason: 'NOT_STARTED' as const, gddBaseC, harvested };
+  const period = seasonPeriod(s, today)!; // külv olemas ja koristus pole külvist varasem
+  if (!s.weatherPointId) return { summary: null, reason: 'NO_POINT' as const, gddBaseC, harvested };
+  if (!s.weatherPoint?.loadedUntil) return { summary: null, reason: 'LOADING' as const, gddBaseC, harvested };
+  // Külv on hilisem kui viimane laetud päev (andmeviide) — päevi veel pole
+  if (s.weatherPoint.loadedUntil.toISOString().slice(0, 10) < period.from) return { summary: null, reason: 'NOT_STARTED' as const, gddBaseC, harvested };
   const days = await loadDays([s.weatherPointId], period.from, period.to);
-  return { summary: summarizeWeather(days, { ...period, gddBaseC }), reason: null, gddBaseC };
+  return { summary: summarizeWeather(days, { ...period, gddBaseC }), reason: null, gddBaseC, harvested };
 }
 
 export async function seasonsReport(year: number) {
