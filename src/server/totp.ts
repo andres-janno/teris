@@ -1,5 +1,6 @@
 // src/server/totp.ts — TOTP (RFC 6238: SHA-1, 6 numbrit, 30 s) teenusepakkuja sisselogimiseks.
-import { createHmac, randomBytes, createCipheriv, createDecipheriv, timingSafeEqual } from 'node:crypto';
+import { createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
+import { encryptSecret, decryptSecret } from './secretBox.ts';
 
 const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
 const STEP_SECONDS = 30;
@@ -65,25 +66,5 @@ export function otpauthUri(account: string, secretBase32: string): string {
   return `otpauth://totp/Teris:${encodeURIComponent(account)}?secret=${secretBase32}&issuer=Teris&algorithm=SHA1&digits=${DIGITS}&period=${STEP_SECONDS}`;
 }
 
-function keyOf(keyHex: string): Buffer {
-  const key = Buffer.from(keyHex, 'hex');
-  if (key.length !== 32) throw new Error('PLATFORM_TOTP_KEY peab olema 32 baiti (64 hex-märki)');
-  return key;
-}
-
-export function encryptTotpSecret(secret: string, keyHex: string): string {
-  const iv = randomBytes(12);
-  const cipher = createCipheriv('aes-256-gcm', keyOf(keyHex), iv);
-  const ct = Buffer.concat([cipher.update(secret, 'utf8'), cipher.final()]);
-  return [iv, cipher.getAuthTag(), ct].map((b) => b.toString('base64url')).join('.');
-}
-
-export function decryptTotpSecret(enc: string, keyHex: string): string {
-  const parts = enc.split('.');
-  if (parts.length !== 3) throw new Error('Vigane krüpteeritud TOTP saladus');
-  const [iv, tag, ct] = parts.map((p) => Buffer.from(p, 'base64url'));
-  if (iv.length !== 12 || tag.length !== 16) throw new Error('Vigane krüpteeritud TOTP saladus');
-  const decipher = createDecipheriv('aes-256-gcm', keyOf(keyHex), iv, { authTagLength: 16 });
-  decipher.setAuthTag(tag);
-  return Buffer.concat([decipher.update(ct), decipher.final()]).toString('utf8');
-}
+export const encryptTotpSecret = encryptSecret;
+export const decryptTotpSecret = decryptSecret;
