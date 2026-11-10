@@ -13,6 +13,7 @@ let server: http.Server;
 let base = '';
 let A: TestTenant;
 let B: TestTenant;
+let W: TestTenant;
 
 async function connect(key: string): Promise<Client> {
   const client = new Client({ name: 'test', version: '1.0.0' });
@@ -37,11 +38,13 @@ beforeAll(async () => {
   base = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
   A = await createTestTenant('a', { modules: ['TELEMETRY'] });
   B = await createTestTenant('b');
+  W = await createTestTenant('w', { modules: ['WEATHER'] });
 }, 60_000);
 
 afterAll(async () => {
   await A?.cleanup();
   await B?.cleanup();
+  await W?.cleanup();
   await new Promise<void>((r) => server.close(() => r()));
 });
 
@@ -208,6 +211,21 @@ describe('ilm', () => {
     const { tools } = await client.listTools();
     await client.close();
     expect(tools.map((t) => t.name)).not.toContain('weather_summary');
+  });
+  it('WEATHER mooduliga: tööriist on olemas, majandi vaade ja põllu vaade ilma külvikuupäevata', async () => {
+    const client = await connect(W.plainKey);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.map((t) => t.name)).toContain('weather_summary');
+    const farm = (await call(W.plainKey, 'weather_summary', {})).data;
+    expect(farm.source).toBe('Copernicus Climate Change Service, ERA5-Land');
+    expect(Array.isArray(farm.years)).toBe(true);
+    const field = (await call(W.plainKey, 'weather_summary', { field: 'Toosi' })).data;
+    expect(field.field).toContain('Toosi');
+    expect(field.reason).toBe('NO_SEEDING');
+    expect(field.summary).toBeNull();
+    expect(field.message).toBe('Hooajal pole külvikuupäeva, ilmakokkuvõtet ei saa arvutada.');
+    expect(field.source).toBe('Copernicus Climate Change Service, ERA5-Land');
   });
 });
 

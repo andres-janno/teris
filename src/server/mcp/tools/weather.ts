@@ -5,6 +5,13 @@ import { tallinnYear } from '../format.ts';
 import { resolveFieldSeason } from './fields.ts';
 import { yearsReport, seasonReport } from '../../weather/weatherApi.ts';
 
+const SOURCE = 'Copernicus Climate Change Service, ERA5-Land';
+const REASON_MESSAGES = {
+  NO_SEEDING: 'Hooajal pole külvikuupäeva, ilmakokkuvõtet ei saa arvutada.',
+  NO_POINT: 'Põllul pole kuju, ilmapunkti ei saa siduda.',
+  LOADING: 'Selle põllu ilmaandmeid alles laetakse.'
+} as const;
+
 const hasWeather = (ctx: McpContext) => ctx.license.modules.includes('WEATHER');
 
 export const weatherTools = [
@@ -21,10 +28,11 @@ export const weatherTools = [
     run: async (a) => {
       if (a.field) {
         const fs = await resolveFieldSeason(a.field, a.year ?? tallinnYear());
-        return { field: fs.label, ...(await seasonReport(fs.id)) };
+        const rep = await seasonReport(fs.id);
+        return { field: fs.label, ...rep, ...(rep.reason ? { message: REASON_MESSAGES[rep.reason] } : {}), source: SOURCE };
       }
       const r = await yearsReport('all', a.base ?? 5);
-      return { ...r, years: a.year ? r.years.filter((y) => y.year === a.year) : r.years, source: 'Copernicus Climate Change Service, ERA5-Land' };
+      return { ...r, years: a.year ? r.years.filter((y) => y.year === a.year) : r.years, source: SOURCE };
     }
   })
 ];
