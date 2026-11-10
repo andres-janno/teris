@@ -98,7 +98,8 @@ export async function runWeatherLoad(deps: LoaderDeps = defaultLoaderDeps, opts:
     }
     const now = deps.now();
     const monday = new Date(now.toLocaleString('en-US', { timeZone: 'Europe/Tallinn' })).getDay() === 1;
-    const points = await prisma.weatherPoint.findMany({ where: { hasData: { not: false } } });
+    // Prisma `not: false` jätaks NULL-id välja (SQL kolmeväärtuseloogika), seetõttu OR
+    const points = await prisma.weatherPoint.findMany({ where: { OR: [{ hasData: null }, { hasData: true }] } });
     for (const p of points) {
       const recent = p.lastSuccessAt && now.getTime() - p.lastSuccessAt.getTime() < MIN_HOURS_BETWEEN_RUNS * 3_600_000;
       if (recent && !opts.force) continue;
