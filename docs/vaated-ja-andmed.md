@@ -2,7 +2,7 @@
 
 See dokument näitab, millised TERISe vaated ja komponendid kuvavad, lisavad, muudavad või kustutavad andmeid millistes andmebaasi tabelites. Ahel on alati sama: **vaade → komponent → API päring (`src/services/api.ts`) → serveri käsitleja (`src/server/*`) → Prisma mudel (tabel)**. Mudelite ja tabelite nimed on samad mis andmemudeli dokumendis [andmemudel.md](andmemudel.md).
 
-Koostatud koodi põhjal 26.10.2026 (laoarvestus lisatud 28.10.2026), uuendada käsitsi koodimuudatuste järel.
+Koostatud koodi põhjal 26.10.2026 (laoarvestus lisatud 28.10.2026, ilm 10.11.2026), uuendada käsitsi koodimuudatuste järel.
 
 **Lugemisjuhend**
 - `R` = loeb, `C` = lisab, `U` = muudab, `D` = kustutab.
@@ -24,14 +24,15 @@ Koostatud koodi põhjal 26.10.2026 (laoarvestus lisatud 28.10.2026), uuendada k�
 9. [Kulumaterjalid](#kulumaterjalid)
 10. [Tehnika (masinapark)](#tehnika-masinapark)
 11. [Taristu](#taristu)
-12. [Isikud](#isikud)
-13. [Konto: sisselogimine, kasutajad ja kasutajatugi](#konto-sisselogimine-kasutajad-ja-kasutajatugi)
-14. [Platvormi haldus (admin.teris.ee)](#platvormi-haldus-adminterisee)
-15. [Avaleht (landing)](#avaleht-landing)
-16. [API → tabelid](#api--tabelid)
-17. [CRUD-maatriks](#crud-maatriks)
-18. [Rakenduse käivitusel laetavad andmed](#rakenduse-käivitusel-laetavad-andmed)
-19. [Tähelepanekud ja ebakindlused](#tähelepanekud-ja-ebakindlused)
+12. [Ilm](#ilm)
+13. [Isikud](#isikud)
+14. [Konto: sisselogimine, kasutajad ja kasutajatugi](#konto-sisselogimine-kasutajad-ja-kasutajatugi)
+15. [Platvormi haldus (admin.teris.ee)](#platvormi-haldus-adminterisee)
+16. [Avaleht (landing)](#avaleht-landing)
+17. [API → tabelid](#api--tabelid)
+18. [CRUD-maatriks](#crud-maatriks)
+19. [Rakenduse käivitusel laetavad andmed](#rakenduse-käivitusel-laetavad-andmed)
+20. [Tähelepanekud ja ebakindlused](#tähelepanekud-ja-ebakindlused)
 
 ## Ülevaade
 
@@ -409,6 +410,44 @@ flowchart LR
 | `PoiManagerModal` | näitab asukohti | — (käivituse andmed, `GET /api/poi`) | `PointOfInterest` R |
 | `PoiManagerModal` | lisab või muudab asukoha (nimi, liik, koordinaadid, raadius, kontakt) | `POST /api/poi` | `PointOfInterest` CU |
 | `PoiManagerModal` | kustutab asukoha (looja või admin) | `DELETE /api/poi/:id` | `PointOfInterest` RD |
+
+## Ilm
+
+Vaade „Ilm“ (`WeatherView`; ainult litsentsimooduliga `WEATHER`) näitab ERA5-Landi (Copernicus) ajaloolist ilma 2015. aastast. Andmed on ~9 km ruudu väärtused, mitte põllu mõõtmine, ja jäävad tänasest ~5–6 päeva maha. Ilmaandmed on ettevõtteülesed (`WeatherPoint`, `WeatherDaily` ilma RLS-ita); kokkuvõtted arvutatakse päringu ajal ega salvestu.
+
+```mermaid
+flowchart LR
+  V["Ilm"] --> WV["WeatherView"]
+  V2["Põllu aken"] --> WS["WeatherSeasonSection"]
+  V3["Põllud"] --> FT["FieldsTableView"]
+  WV --> A1["GET /api/weather/points, years, months, cumulative"]
+  WS --> A2["GET /api/weather/season/id"]
+  FT --> A3["GET /api/weather/seasons"]
+  A1 -->|R| T1["WeatherPoint, WeatherDaily"]
+  A2 -->|R| T1
+  A3 -->|R| T1
+  A2 -->|R| T2["FieldSeason, Crop"]
+  A1 -->|U sidumine| T2
+```
+
+- **Vaate sisu:** aastate tabel (rida = aasta 2015…jooksev, viimane rida pikaajaline keskmine) perioodil 01.04–31.08: sademed, temperatuurisumma (GDD), veebilanss (sademed miinus potentsiaalne aurumine), pikim kuiv periood (päevad sademetega alla 1 mm), kuumapäevad (üle 28 °C), öökülmad aprill–juuni. Valitud aasta kuude sademed ja GDD pikaajalise keskmise kõrval (tulpdiagramm) ning GDD ja sademete kumulatiivne kasv 01.04-st (mitu aastat kõrvuti).
+- **Esiletõst:** väärtus, mis erineb pikaajalisest keskmisest rohkem kui ühe standardhälbe võrra, on värvitud (kuiv/märg, soe/jahe).
+- **Filtrid:** ilmapunkt (vaikimisi majandi keskmine) ja GDD baas (vaikimisi 5 °C). Jalus näitab allikat ja „Andmed kuni“ kuupäeva; esmalaadimise ajal teade „Ilmaandmeid laetakse“.
+- **Põllu hooaja plokk** (`WeatherSeasonSection` põllu aknas): ilm külvikuupäevast koristuseni (koristuseta tänaseni) kultuuri GDD baasiga: periood, GDD, sademed, veebilanss, pikim kuiv periood, öökülmad 60 päeva jooksul pärast külvi, saak kõrval. Külvikuupäevata „Ilmakokkuvõte vajab külvikuupäeva“ koos lingiga sisestamiseks.
+- **Põllud tabel:** mooduliga ettevõttel veerud „GDD“ ja „Sademed, mm“ (külvist koristuseni) valitud aasta kohta.
+- **Kultuurid:** kultuuri vormis väli „GDD baastemperatuur (°C)“ (`Crop.gddBaseC`, vaikimisi 5; platvormi kataloogi mais 10).
+- **Ruuduga sidumine:** hooaeg seotakse oma keskpunktile lähima andmetega ruuduga öises töös ja ilmavaate avamisel, kui sidumata hooaegu on. Põllu salvestus ega import sidumist ei muuda.
+- **Laadimine** (`src/server/weather/loader.ts`): taustatöö Tallinna aja järgi kell 3–6, ainult `WEATHER` mooduliga ettevõtete punktid. Esmalaadimine alates 01.01.2015 aasta kaupa; edasi ainult puuduvad päevad. Esmaspäeviti kirjutatakse viimased 90 esialgset (ERA5T) päeva lõplike väärtustega üle. Ebaõnnestumine jätab punkti vahele, järgmine öö proovib uuesti. Võrdlusaurumine arvutatakse Makkinki valemiga päikesekiirgusest ja keskmisest temperatuurist.
+- **AI ühendus:** lugemistööriist `weather_summary` (ainult mooduliga `WEATHER`): ilma põlluta aastate võrdlus pikaajalise keskmisega, põlluga selle hooaja kokkuvõte.
+- **Admin (admin.teris.ee):** vaade „Ilmaandmed“ — punktide loend, laetud vahemik, viimane õnnestumine ja viga, hoiatus kolme ebaõnnestumise järel, nupp „Lae uuesti“.
+
+| Komponent | Tegevus (kasutaja vaates) | API | Tabelid (R/C/U/D) |
+|---|---|---|---|
+| `WeatherView` | ilmapunktide loend ja laadimise olek | `GET /api/weather/points` | `WeatherPoint` R, `FieldSeason` RU (sidumata hooaegude sidumine) |
+| `WeatherView` | aastate tabel, kuude jaotus, kumulatiivne graafik | `GET /api/weather/years`, `.../months`, `.../cumulative` | `WeatherPoint` R, `WeatherDaily` R, `Crop` R |
+| `WeatherSeasonSection` | põllu hooaja ilmakokkuvõte | `GET /api/weather/season/:fieldSeasonId` | `FieldSeason` R, `Crop` R, `WeatherDaily` R |
+| `FieldsTableView` | GDD ja sademete veerud | `GET /api/weather/seasons?year=` | `FieldSeason` R, `Crop` R, `WeatherDaily` R |
+| `WeatherAdminView` (admin) | punktide olek; laeb punkti uuesti | `GET /api/platform/weather`, `POST /api/platform/weather/:id/reload` | `WeatherPoint` RU, `WeatherDaily` CU, `FieldSeason` R |
 
 ## Isikud
 

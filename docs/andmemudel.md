@@ -16,10 +16,11 @@ Millised vaated ja komponendid neid tabeleid loevad ja muudavad, vaata [vaated-j
 3. [Artiklid](#artiklid)
 4. [Masinapark, telemeetria ja objektid](#masinapark-telemeetria-ja-objektid)
 5. [Laoarvestus](#laoarvestus)
-6. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
-7. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
-8. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
-9. [Loendid (enum)](#loendid-enum)
+6. [Ilm](#ilm)
+7. [Isikud, kasutajad ja tugi](#isikud-kasutajad-ja-tugi)
+8. [Platvorm (teenusepakkuja)](#platvorm-teenusepakkuja)
+9. [Kõik seosed (ülevaade)](#kõik-seosed-ülevaade)
+10. [Loendid (enum)](#loendid-enum)
 
 ## Põllud, hooajad ja kultuurid
 
@@ -29,10 +30,10 @@ Põld on püsiv kirje; iga hooaja andmed (pindala, kultuur, piir, saak) on erald
 |---|---|---|---|
 | `Season` | `seasons` | jah | Hooaeg (aasta); lukustatud hooaja andmeid ei muudeta |
 | `Field` | `fields` | jah | Põld (püsiv): PRIA põllu nr, massiiv, nimi, operaator |
-| `FieldSeason` | `field_seasons` | jah | Põllu hooaja andmed: pindala, kultuur, sort, piir (GeoJSON), saak, staatus |
+| `FieldSeason` | `field_seasons` | jah | Põllu hooaja andmed: pindala, kultuur, sort, piir (GeoJSON), saak, staatus; `weatherPointId` = lähim ilmaruut (vt [Ilm](#ilm)) |
 | `CadastralParcel` | `cadastral_parcels` | jah | Katastriüksus (tunnus, nimi) |
 | `FieldCadastralParcel` | `field_cadastral_parcels` | jah | Hooaja põllu ja katastriüksuse seos: põllu osa pindala, omand/rent, maamaks, rent |
-| `Crop` | `crops` | jah | Kultuur (ettevõtte register; PRIA kood, talivili, värv) |
+| `Crop` | `crops` | jah | Kultuur (ettevõtte register; PRIA kood, talivili, värv, temperatuurisumma baas `gddBaseC`, vaikimisi 5 °C) |
 | `CropVariety` | `crop_varieties` | jah | Sort kultuuri all |
 | `SoilSample` | `soil_samples` | jah | Mullaproov (pH, P, K, Ca, Mg, Corg; asukoht) |
 
@@ -68,6 +69,7 @@ erDiagram
     Int id PK
     Int fieldId FK
     Int seasonId FK "valikuline"
+    Int weatherPointId FK "valikuline"
     Int year
     Float areaHa
     Float eligibleAreaHa "valikuline"
@@ -127,6 +129,7 @@ erDiagram
     Float defaultYieldTonsHa "valikuline"
     String description "valikuline"
     Boolean isWinterCrop
+    Float gddBaseC
     DateTime createdAt
     DateTime updatedAt
   }
@@ -198,6 +201,10 @@ erDiagram
   Field ||--o{ FieldSeason : "field"
   Season |o--o{ FieldSeason : "season"
   Crop |o--o{ FieldSeason : "cropEntity"
+  WeatherPoint {
+    Int id PK
+  }
+  WeatherPoint |o--o{ FieldSeason : "weatherPoint"
   CropVariety |o--o{ FieldSeason : "varietyEntity"
   FieldSeason ||--o{ FieldCadastralParcel : "fieldSeason"
   CadastralParcel ||--o{ FieldCadastralParcel : "cadastralParcel"
@@ -933,6 +940,52 @@ erDiagram
   HarvestLot |o--o{ WorkEntry : "harvestLot"
 ```
 
+## Ilm
+
+ERA5-Landi ilmaandmed ruutude (0,1° ruudustik, ~9 km) kaupa. Tabelid on **ettevõtteülesed**: neil pole `tenant_id`-d ega RLS-i, sama ruudu põllud kasutavad ühte punkti. Hooaeg seotakse ruuduga (`FieldSeason.weatherPointId`, nullimine kustutamisel), kokkuvõtted arvutatakse päevaandmetest päringu ajal ega salvestu.
+
+| Mudel | Tabel | Ettevõttepõhine | Sisu |
+|---|---|---|---|
+| `WeatherPoint` | `weather_points` | ei | Ilmaruut: keskpunkt (`lat`, `lon`, unikaalne paar), `hasData` (false = üle vee), laetud vahemik (`loadedFrom`, `loadedUntil`), `finalUntil` (kuni selle päevani andmed lõplikud), laadimise olek (`lastAttemptAt`, `lastSuccessAt`, `lastError`, `failCount`) |
+| `WeatherDaily` | `weather_daily` | ei | Punkti päev (võti `pointId` + `date`, Tallinna kalendripäev): `tMin`, `tMax`, `tMean` °C, `precipMm`, `potEvapMm` (Makkinki valem päikesekiirgusest ja keskmisest temperatuurist), `soilMoisture1` (0–7 cm), `soilMoisture2` (7–28 cm), `isFinal` (false = ERA5T esialgne) |
+
+- `Crop.gddBaseC` ja `CatalogCrop.gddBaseC` (Float, vaikimisi 5): temperatuurisumma (GDD) baas °C; platvormi kataloogist loodud kultuur pärib selle (nt mais 10).
+
+```mermaid
+erDiagram
+  WeatherPoint {
+    Int id PK
+    Float lat UK
+    Float lon UK
+    Boolean hasData "valikuline"
+    DateTime loadedFrom "valikuline"
+    DateTime loadedUntil "valikuline"
+    DateTime finalUntil "valikuline"
+    DateTime lastAttemptAt "valikuline"
+    DateTime lastSuccessAt "valikuline"
+    String lastError "valikuline"
+    Int failCount
+    DateTime createdAt
+  }
+  WeatherDaily {
+    Int pointId PK,FK
+    DateTime date PK
+    Float tMin
+    Float tMax
+    Float tMean
+    Float precipMm
+    Float potEvapMm "valikuline"
+    Float soilMoisture1 "valikuline"
+    Float soilMoisture2 "valikuline"
+    Boolean isFinal
+  }
+  FieldSeason {
+    Int id PK
+  }
+  WeatherPoint ||--o{ WeatherDaily : "point"
+  WeatherPoint |o--o{ FieldSeason : "weatherPoint"
+```
+
 ## Isikud, kasutajad ja tugi
 
 Seotud isikud (töötajad, omanikud, operaatorid, partnerid) ja rakenduse kasutajad. Tugiligipääs lubab teenusepakkujal ettevõtte andmeid ajutiselt vaadata.
@@ -1281,6 +1334,8 @@ erDiagram
   Field ||--o{ FieldSeason : "field"
   Season |o--o{ FieldSeason : "season"
   Crop |o--o{ FieldSeason : "cropEntity"
+  WeatherPoint |o--o{ FieldSeason : "weatherPoint"
+  WeatherPoint ||--o{ WeatherDaily : "point"
   CropVariety |o--o{ FieldSeason : "varietyEntity"
   Article |o--o{ RelatedParty : "serviceArticle"
   FieldSeason ||--o{ FieldCadastralParcel : "fieldSeason"
