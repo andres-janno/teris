@@ -636,7 +636,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       )}
       {weatherEnabled && (
         <div className="field-edit-insights">
-          <WeatherSeasonSection fieldSeasonId={seasonRec?.fieldSeasonId} actualYieldTonsHa={seasonRec?.actualYieldTonsHa} />
+          <WeatherSeasonSection fieldSeasonId={seasonRec?.fieldSeasonId} year={seasonRec?.year} crop={seasonRec?.crop} actualYieldTonsHa={seasonRec?.actualYieldTonsHa} />
         </div>
       )}
 

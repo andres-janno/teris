@@ -5,7 +5,7 @@ import { prisma } from '../db.ts';
 import { json } from '../http.ts';
 import { bindWeatherPoints } from './points.ts';
 import { tallinnDate } from './daily.ts';
-import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd } from './summary.ts';
+import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd, addDays, SEASON_FROST_DAYS } from './summary.ts';
 import { WEATHER_START } from './loader.ts';
 import type { DailyWeather, WeatherSummary } from './types.ts';
 
@@ -124,6 +124,55 @@ export async function seasonReport(fieldSeasonId: number) {
   return { summary: summarizeWeather(days, { ...period, gddBaseC }), reason: null, gddBaseC, harvested };
 }
 
+const HISTORY_YEARS = 5;
+
+// Kuupäeva nihutamine teise aastasse (29.02 → 28.02)
+function shiftYear(date: string, year: number): string {
+  const md = date.slice(5) === '02-29' ? '02-28' : date.slice(5);
+  return `${year}-${md}`;
+}
+
+/** Sama põllu eelmise viie aasta ilm. Aasta oma külvi- ja koristuskuupäevaga, kui need on;
+ *  muidu valitud hooaja periood nihutatuna sellesse aastasse (ownDates=false). */
+export async function seasonHistoryReport(fieldSeasonId: number) {
+  const cur = await prisma.fieldSeason.findUniqueOrThrow({
+    where: { id: fieldSeasonId },
+    select: { fieldId: true, year: true, seedingDate: true, harvestDate: true, weatherPointId: true }
+  });
+  const today = tallinnDate(new Date());
+  const curPeriod = cur.seedingDate && tallinnDate(cur.seedingDate) <= today ? seasonPeriod(cur, today) : null;
+  const past = await prisma.fieldSeason.findMany({
+    where: { fieldId: cur.fieldId, year: { gte: cur.year - HISTORY_YEARS, lt: cur.year } },
+    select: { year: true, crop: true, actualYieldTonsHa: true, seedingDate: true, harvestDate: true, weatherPointId: true, cropEntity: { select: { gddBaseC: true } } }
+  });
+  const byYear = new Map(past.map((p) => [p.year, p]));
+  const rows = [];
+  for (let year = cur.year - 1; year >= cur.year - HISTORY_YEARS; year--) {
+    const s = byYear.get(year);
+    const own = s?.seedingDate && tallinnDate(s.seedingDate) <= today ? seasonPeriod(s, today) : null;
+    let period = own;
+    if (!period && curPeriod) {
+      // Valitud hooaja periood selles aastas; avatud hooaja „tänaseni“ nihutatakse samuti
+      // Mõlemad kuupäevad nihkuvad sama arvu aastate võrra (talikultuuri külv on eelmisel aastal)
+      const back = cur.year - year;
+      const from = shiftYear(curPeriod.from, Number(curPeriod.from.slice(0, 4)) - back);
+      const to = shiftYear(curPeriod.to, Number(curPeriod.to.slice(0, 4)) - back);
+      period = { from, to, frostFrom: from, frostTo: addDays(from, SEASON_FROST_DAYS) };
+    }
+    if (!period || period.from < WEATHER_START) continue;
+    const pointId = s?.weatherPointId ?? cur.weatherPointId;
+    if (!pointId) continue;
+    const gddBaseC = s?.cropEntity?.gddBaseC ?? 5;
+    const days = await loadDays([pointId], period.from, period.to);
+    if (!days.length) continue;
+    rows.push({
+      year, crop: s?.crop ?? null, actualYieldTonsHa: s?.actualYieldTonsHa ?? null, ownDates: !!own, gddBaseC,
+      summary: summarizeWeather(days, { ...period, gddBaseC })
+    });
+  }
+  return { rows };
+}
+
 export async function seasonsReport(year: number) {
   const rows = await prisma.fieldSeason.findMany({ where: { year, seedingDate: { not: null } }, select: { id: true } });
   const out = [];
@@ -149,6 +198,7 @@ const parsePoint = (v: string | null): 'all' | number => (v && v !== 'all' && Nu
 const parseBase = (v: string | null): number => { const n = Number(v); return v !== null && Number.isFinite(n) && n >= 0 && n <= 15 ? n : 5; };
 const parseYear = (v: string | null): number | null => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 const SEASON_ROUTE = /^\/api\/weather\/season\/(\d+)$/;
+const SEASON_HISTORY_ROUTE = /^\/api\/weather\/season\/(\d+)\/history$/;
 
 export async function handleWeather(_req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL): Promise<boolean> {
   if (!pathname.startsWith('/api/weather/') || pathname.startsWith('/api/weather/radar') || method !== 'GET') return false;
@@ -171,6 +221,13 @@ export async function handleWeather(_req: IncomingMessage, res: ServerResponse, 
       const y = parseYear(q.get('year'));
       if (!y) { json(res, { error: 'Aasta puudub' }, 400); return true; }
       json(res, await seasonsReport(y));
+      return true;
+    }
+    const h = SEASON_HISTORY_ROUTE.exec(pathname);
+    if (h) {
+      const exists = await prisma.fieldSeason.count({ where: { id: Number(h[1]) } });
+      if (!exists) { json(res, { error: 'Hooaega ei leitud' }, 404); return true; }
+      json(res, await seasonHistoryReport(Number(h[1])));
       return true;
     }
     const m = SEASON_ROUTE.exec(pathname);

@@ -215,4 +215,8 @@
 .weather-line-5 { stroke: #64748b; background: #64748b; }
 .weather-view .legend { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; }
 .weather-source { font-size: 12px; color: var(--text-muted); }
-.soil-row.weather-season-row { grid-template-columns: 2.2fr repeat(6, 1fr); }
+.soil-row.weather-season-row { grid-template-columns: 1.5fr 2.2fr repeat(6, 1fr); }
+.weather-season-crop { font-weight: 400; color: var(--text-secondary); margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.soil-row.weather-season-past { border-top: 1px solid var(--border-card); color: var(--text-secondary); }
+.soil-row.weather-season-past .soil-value { font-weight: 400; }
+.weather-season-shifted { font-style: italic; }

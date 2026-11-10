@@ -1,7 +1,7 @@
 // src/server/weather/weatherApi.test.ts — live-andmebaas: ajutine ettevõte, punkt lat 10.9 sünteetiliste päevadega.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant } from '../db';
-import { yearsReport, seasonReport, loadDays } from './weatherApi';
+import { yearsReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
 import { addDays } from './summary';
 
 const T = `test-tenant-weatherapi-${process.pid}`;
@@ -74,5 +74,36 @@ describe('weather API', () => {
   });
   it('külvikuupäevata', async () => {
     expect((await run(() => seasonReport(unseeded))).reason).toBe('NO_SEEDING');
+  });
+  it('eelmiste aastate ajalugu: kuupäevata aasta saab valitud hooaja perioodi', async () => {
+    const r = await run(() => seasonHistoryReport(seeded));
+    // 2016 hooaeg → eelmised 2011–2015; andmed on alates 2015, 2015 külvikuupäevata → nihutatud 01.05–10.05
+    expect(r.rows).toHaveLength(1);
+    const y = r.rows[0];
+    expect(y.year).toBe(2015);
+    expect(y.ownDates).toBe(false);
+    expect(y.summary.from).toBe('2015-05-01');
+    expect(y.summary.to).toBe('2015-05-10');
+    expect(y.gddBaseC).toBe(5);           // 2015 kultuuril pole registri seost → baas 5
+    expect(y.summary.gdd).toBe(50);       // 10 päeva × (10 − 5)
+    expect(y.summary.precipMm).toBe(10);
+  });
+  it('ajalugu: aasta oma külvikuupäevaga', async () => {
+    const r = await run(() => seasonHistoryReport(future));
+    // 2017 hooaeg (külv tulevikus) → 2016 oma kuupäevadega; 2015 kuupäevata ja nihutatav periood puudub → välja
+    expect(r.rows.map((x) => [x.year, x.ownDates])).toEqual([[2016, true]]);
+    expect(r.rows[0].summary.gdd).toBe(20);
+  });
+  it('ajalugu: talikultuur — külv eelmisel aastal nihkub koos koristusega', async () => {
+    const id = await run(async () => {
+      const f = await prisma.field.create({ data: { num: '2', name: 'B', fieldCode: 'WB' } });
+      const g = { type: 'Polygon', coordinates: [[[20.9, 10.9], [20.91, 10.9], [20.91, 10.91], [20.9, 10.9]]] };
+      return (await prisma.fieldSeason.create({ data: { fieldId: f.id, year: 2017, areaHa: 1, crop: 'Talinisu', geometry: g, weatherPointId: pointId, seedingDate: new Date('2016-10-08T00:00:00Z'), harvestDate: new Date('2017-08-17T00:00:00Z') } })).id;
+    });
+    const r = await run(() => seasonHistoryReport(id));
+    // 2016 hooaeg (kirjet pole) → 08.10.2015 – 17.08.2016; 2015 hooaeg algaks 2014 → välja
+    expect(r.rows.map((x) => [x.year, x.summary.from, x.summary.to])).toEqual([[2016, '2015-10-08', '2016-08-17']]);
+    expect(r.rows[0].ownDates).toBe(false);
+    expect(r.rows[0].crop).toBeNull();
   });
 });

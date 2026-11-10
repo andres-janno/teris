@@ -12,7 +12,7 @@ import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../t
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
-import type { WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherSeasonReport } from '../types/weather';
+import type { WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -356,6 +356,12 @@ export const api = {
     const res = await apiFetch(`/api/weather/season/${fieldSeasonId}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Ilmakokkuvõte pole saadaval'));
     return res.json();
+  },
+
+  async getWeatherSeasonHistory(fieldSeasonId: number): Promise<WeatherSeasonHistoryRow[]> {
+    const res = await apiFetch(`/api/weather/season/${fieldSeasonId}/history`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaajalugu pole saadaval'));
+    return (await res.json()).rows;
   },
 
   async getWeatherSeasons(year: number): Promise<{ fieldSeasonId: number; gdd: number; precipMm: number }[]> {
