@@ -55,7 +55,7 @@ Võti `(pointId, date)`. Päev = Tallinna aja kalendripäev, koondatud tunniandm
 | `precipMm` | mm päevas |
 | `soilMoisture1` | m³/m³, kiht 0–7 cm |
 | `soilMoisture2` | m³/m³, kiht 7–28 cm |
-| `potEvapMm` | mm päevas, potentsiaalne aurumine (positiivne arv) |
+| `potEvapMm` | mm päevas, võrdlusaurumine **Makkinki valemiga** päikesekiirgusest (`ssrd`) ja päeva keskmisest temperatuurist (ERA5-Landi aegrida `pev`-i ei paku) |
 | `isFinal` | false = ERA5T esialgne |
 
 ### Seos põlluga

@@ -607,74 +607,137 @@ Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"'
 
 ---
 
-### Task 5: CDS klient
+### Task 5: CDS klient (muudetud pärast Task 1 katset)
+
+**Katse tulemus (Task 1, commit 3930967), mis seda taski muudab:**
+- Andmestik `reanalysis-era5-land-timeseries` töötab. Vastus on **zip mitme CSV-ga** muutujagruppide kaupa, igaühel päis `valid_time,<muutujad>,latitude,longitude`; `valid_time` kujul `YYYY-MM-DD HH:MM:SS` UTC. Failid ühendatakse `valid_time` järgi, muutuja tuvastatakse **veeru nime** järgi (mitte faili nime järgi).
+- `potential_evaporation` timeseries'is **puudub**. Otsus: potentsiaalne aurumine arvutatakse päeva kaupa **Makkinki valemiga** päikesekiirgusest (`ssrd`) ja keskmisest temperatuurist (vt allpool). ERA5 `pev`-i ei kasutata.
+- `tp` (sademed, m) ja `ssrd` (J/m²) on **tunnipõhised** (kogus tunni kohta, mis lõpeb ajal `valid_time`), mitte kumulatiivsed → `deaccumulate` siin ei kasutata. `tp`-s võib olla mikroskoopilisi negatiivseid väärtusi → kärbi 0-ni.
+- Muutujate nimed päringus: `2m_temperature`, `total_precipitation`, `surface_solar_radiation_downwards`, `volumetric_soil_water_level_1`, `volumetric_soil_water_level_2` (veerud vastuses `t2m`, `tp`, `ssrd`, `swvl1`, `swvl2`). **Tundmatud muutujanimed jäetakse vastusest vaikselt välja** (HTTP 201) → klient peab kontrollima, et veerud `t2m`, `tp`, `ssrd` on olemas, muidu `CdsError`.
+- Andmete viide ~5–6 päeva.
+- Fikstuurid: `src/server/weather/__fixtures__/cds-sample-{t2m,tp,ssrd,swvl,wind}.csv` (2025-06-10…12, 72 tundi).
 
 **Files:**
+- Modify: `src/server/weather/types.ts` (`HourlyWeather.potEvapMm` → `solarJm2`)
+- Modify: `src/server/weather/daily.ts`, `src/server/weather/daily.test.ts` (Makkink, kiirguse koondamine)
 - Create: `src/server/weather/cdsClient.ts`
-- Test: `src/server/weather/cdsClient.test.ts` (kasutab Task 1 näidist `__fixtures__/cds-sample*.csv`)
+- Test: `src/server/weather/cdsClient.test.ts`
 
 **Interfaces:**
-- Consumes: `HourlyWeather`, `deaccumulate` (Task 4).
+- Consumes: `hourlyToDaily`, `tallinnDate` (Task 4).
 - Produces:
-  - `parseCdsCsv(text: string): HourlyWeather[]`
-  - `fetchHourly(cell: { lat: number; lon: number }, from: string, to: string, opts?: { fetchImpl?: typeof fetch; pollMs?: number; timeoutMs?: number }): Promise<HourlyWeather[]>` — `from`/`to` AAAA-KK-PP (kaasa arvatud).
+  - `HourlyWeather = { time: Date; tempC: number | null; precipMm: number | null; solarJm2: number | null; soil1: number | null; soil2: number | null }` — `precipMm`/`solarJm2` on tunni kogus, mis lõpeb ajal `time`. (`DailyWeather` jääb muutmata; `potEvapMm` arvutatakse päeva kaupa.)
+  - `makkinkEt0(tMeanC: number, solarMJm2: number): number` (daily.ts) — mm/päevas, ≥ 0.
+  - `parseCdsCsvFiles(texts: string[]): HourlyWeather[]`
+  - `fetchHourly(cell, from, to, opts?)` — signatuur nagu varem.
   - `class CdsError extends Error`
 
-**NB:** Allolev kood eeldab Task 1 oodatud vastust (CSV veergudega `valid_time,t2m,tp,pev,swvl1,swvl2`, võimalik zip, `tp`/`pev` kumulatiivsed alates 00 UTC, meetrites; `t2m` kelvinites). Kui Task 1 tulemus erineb, kohanda **ainult** `parseCdsCsv` / `unpack` ja `ACCUMULATED` lippu — `fetchHourly` signatuur jääb samaks.
+- [ ] **Step 1: Tüübi ja päevakoondamise muutus (TDD)**
 
-- [ ] **Step 1: Failiv test**
+`types.ts`: `HourlyWeather`-is asenda `potEvapMm: number | null;` reaga
+```ts
+  solarJm2: number | null; // päikesekiirgus J/m² tunni kohta, mis lõpeb ajal `time`
+```
+
+`daily.test.ts`: fixture `day()`-s asenda `potEvapMm: 0.2` → `solarJm2: 1e6`; esimeses testis asenda `expect(d.potEvapMm).toBeCloseTo(4.8, 5);` →
+```ts
+    expect(d.potEvapMm).toBeCloseTo(makkinkEt0(11.5, 24), 5); // 24 tundi × 1 MJ
+```
+(import `makkinkEt0`), midnight-testi `potEvapMm: 0` → `solarJm2: 0` kui see seal esineb; mullaniiskuse testis `potEvapMm: null` → `solarJm2: null`. Lisa:
+```ts
+describe('makkinkEt0', () => {
+  it('suvepäev 15 °C, 20 MJ/m² → ~3 mm', () => {
+    expect(makkinkEt0(15, 20)).toBeCloseTo(2.99, 2);
+  });
+  it('külm ja pime → 0 (ei lähe negatiivseks)', () => {
+    expect(makkinkEt0(-5, 1)).toBe(0);
+  });
+});
+```
+Run `npx vitest run src/server/weather/daily.test.ts` → FAIL.
+
+`daily.ts`: `Acc.evap` asemel `solar: number[]`; amount-päevale `if (h.solarJm2 !== null) amount.solar.push(h.solarJm2);`; väljundis
+```ts
+      potEvapMm: a.solar.length >= MIN_HOURS ? makkinkEt0(sum(a.temps) / a.temps.length, sum(a.solar) / 1e6) : null,
+```
+ja lisa
+```ts
+/** Makkinki võrdlusaurumine (mm/päevas) päeva keskmisest temperatuurist ja päikesekiirgusest (MJ/m²). */
+export function makkinkEt0(tMeanC: number, solarMJm2: number): number {
+  const es = 0.6108 * Math.exp((17.27 * tMeanC) / (tMeanC + 237.3));
+  const delta = (4098 * es) / (tMeanC + 237.3) ** 2; // küllastusrõhu kõvera tõus, kPa/°C
+  const gamma = 0.066; // psühromeetriline konstant, kPa/°C
+  return Math.max(0, 0.61 * (delta / (delta + gamma)) * (solarMJm2 / 2.45) - 0.12);
+}
+```
+Run → PASS. Uuenda faili päisekommentaar (aurumine = Makkink kiirgusest).
+
+- [ ] **Step 2: Kliendi failiv test**
 
 ```ts
 // src/server/weather/cdsClient.test.ts
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { parseCdsCsv, fetchHourly } from './cdsClient';
+import JSZip from 'jszip';
+import { parseCdsCsvFiles, fetchHourly } from './cdsClient';
 
-const CSV = `valid_time,latitude,longitude,t2m,tp,pev,swvl1,swvl2
-2025-06-02 00:00:00,58.1,25.8,283.15,0.006,-0.004,0.30,0.35
-2025-06-02 01:00:00,58.1,25.8,282.15,0.0005,-0.0001,0.30,0.35
-2025-06-02 02:00:00,58.1,25.8,281.15,0.0010,-0.0002,0.31,0.35
-`;
+const fx = (name: string) => readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), 'utf8');
+const T2M = 'valid_time,d2m,t2m,latitude,longitude\n2025-06-10 00:00:00,280,283.15,58.1,25.8\n2025-06-10 01:00:00,280,282.15,58.1,25.8\n';
+const TP = 'valid_time,tp,latitude,longitude\n2025-06-10 00:00:00,0.0005,58.1,25.8\n2025-06-10 01:00:00,-1e-9,58.1,25.8\n';
+const SSRD = 'valid_time,ssrd,latitude,longitude\n2025-06-10 00:00:00,0.0,58.1,25.8\n2025-06-10 01:00:00,360000,58.1,25.8\n';
+const SWVL = 'valid_time,swvl1,swvl2,latitude,longitude\n2025-06-10 00:00:00,0.43,0.39,58.1,25.8\n2025-06-10 01:00:00,0.42,0.40,58.1,25.8\n';
 
-describe('parseCdsCsv', () => {
-  it('teisendab ühikud ja deakumuleerib', () => {
-    const r = parseCdsCsv(CSV);
-    expect(r).toHaveLength(3);
-    expect(r[0].time.toISOString()).toBe('2025-06-02T00:00:00.000Z');
+describe('parseCdsCsvFiles', () => {
+  it('ühendab failid aja järgi ja teisendab ühikud', () => {
+    const r = parseCdsCsvFiles([TP, T2M, SWVL, SSRD]);
+    expect(r).toHaveLength(2);
+    expect(r[0].time.toISOString()).toBe('2025-06-10T00:00:00.000Z');
     expect(r[0].tempC).toBeCloseTo(10, 5);
-    expect(r[0].precipMm).toBeNull(); // eelmine tund puudub
-    expect(r[1].precipMm).toBeCloseTo(0.5, 5);
-    expect(r[2].precipMm).toBeCloseTo(0.5, 5);
-    expect(r[2].potEvapMm).toBeCloseTo(0.1, 5);
-    expect(r[2].soil1).toBeCloseTo(0.31, 5);
+    expect(r[0].precipMm).toBeCloseTo(0.5, 5);
+    expect(r[1].precipMm).toBe(0); // negatiivne müra kärbitud
+    expect(r[1].solarJm2).toBe(360000);
+    expect(r[1].soil2).toBeCloseTo(0.40, 5);
   });
-  it('päris näidisvastus parsitakse', () => {
-    const sample = readFileSync(new URL('./__fixtures__/cds-sample.csv', import.meta.url), 'utf8');
-    const r = parseCdsCsv(sample);
-    expect(r.length).toBeGreaterThan(24);
-    expect(r.every((x) => x.tempC === null || (x.tempC > -50 && x.tempC < 50))).toBe(true);
+  it('mullaniiskuse puudumisel null', () => {
+    const r = parseCdsCsvFiles([T2M, TP, SSRD]);
+    expect(r[0].soil1).toBeNull();
+  });
+  it('kohustuslik veerg puudu → viga', () => {
+    expect(() => parseCdsCsvFiles([T2M, SSRD])).toThrow(/tp/);
+  });
+  it('päris näidisvastus: 72 tundi, mõistlikud väärtused', () => {
+    const r = parseCdsCsvFiles(['t2m', 'tp', 'ssrd', 'swvl', 'wind'].map((n) => fx(`cds-sample-${n}.csv`)));
+    expect(r).toHaveLength(72);
+    expect(r.every((x) => x.tempC !== null && x.tempC > -40 && x.tempC < 40)).toBe(true);
+    expect(r.every((x) => x.precipMm !== null && x.precipMm >= 0 && x.precipMm < 50)).toBe(true);
+    expect(r.every((x) => x.soil1 !== null)).toBe(true);
   });
 });
 
 describe('fetchHourly', () => {
-  it('saadab päringu, ootab tööd ja laeb tulemuse', async () => {
-    const calls: string[] = [];
+  const zipOf = async (files: Record<string, string>) => {
+    const z = new JSZip();
+    for (const [n, t] of Object.entries(files)) z.file(n, t);
+    return z.generateAsync({ type: 'arraybuffer' });
+  };
+  it('saadab päringu, ootab tööd, laeb zip-i', async () => {
     let polls = 0;
+    const zip = await zipOf({ 'a.csv': T2M, 'b.csv': TP, 'c.csv': SSRD, 'd.csv': SWVL });
     const fake = (async (url: string, init?: RequestInit) => {
-      calls.push(`${init?.method ?? 'GET'} ${url}`);
       if (url.endsWith('/execution')) {
         const body = JSON.parse(String(init!.body));
         expect(body.inputs.location).toEqual({ latitude: 58.1, longitude: 25.8 });
-        expect(body.inputs.date).toEqual(['2025-06-01/2025-06-03']);
+        expect(body.inputs.date).toEqual(['2025-06-10/2025-06-10']);
+        expect(body.inputs.variable).toContain('surface_solar_radiation_downwards');
         return new Response(JSON.stringify({ jobID: 'j1' }), { status: 201 });
       }
       if (url.endsWith('/jobs/j1')) return new Response(JSON.stringify({ status: ++polls < 2 ? 'running' : 'successful' }));
-      if (url.endsWith('/jobs/j1/results')) return new Response(JSON.stringify({ asset: { value: { href: 'https://dl/x.csv' } } }));
-      if (url === 'https://dl/x.csv') return new Response(CSV);
+      if (url.endsWith('/jobs/j1/results')) return new Response(JSON.stringify({ asset: { value: { href: 'https://dl/x.zip' } } }));
+      if (url === 'https://dl/x.zip') return new Response(zip);
       throw new Error(url);
     }) as typeof fetch;
-    const r = await fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-01', '2025-06-03', { fetchImpl: fake, pollMs: 1 });
-    expect(r).toHaveLength(3);
+    const r = await fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 });
+    expect(r).toHaveLength(2);
     expect(polls).toBe(2);
   });
   it('ebaõnnestunud töö → CdsError', async () => {
@@ -682,29 +745,30 @@ describe('fetchHourly', () => {
       if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j2' }), { status: 201 });
       return new Response(JSON.stringify({ status: 'failed', detail: 'boom' }));
     }) as typeof fetch;
-    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-01', '2025-06-01', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/boom|failed/);
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/boom|failed/);
+  });
+  it('litsents nõustumata (403) → selge viga', async () => {
+    const fake = (async () => new Response('required licences not accepted', { status: 403 })) as typeof fetch;
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/403/);
   });
 });
 ```
-
-- [ ] **Step 2: Kukub**
-
-Run: `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx vitest run src/server/weather/cdsClient.test.ts'`
-Oodatud: FAIL.
+Run `npx vitest run src/server/weather/cdsClient.test.ts` → FAIL (moodul puudub).
 
 - [ ] **Step 3: Teostus**
 
 ```ts
-// src/server/weather/cdsClient.ts — Copernicus Climate Data Store: ERA5-Landi punkti aegrida.
-// Päring läheb järjekorda: saada → oota (status) → lae tulemus. Vastus CSV (võib olla zip-is).
+// src/server/weather/cdsClient.ts — Copernicus Climate Data Store: ERA5-Landi punkti aegrida (reanalysis-era5-land-timeseries).
+// Päring läheb järjekorda: saada → oota (status) → lae tulemus. Vastus on zip mitme CSV-ga (muutujagrupi kaupa),
+// mis ühendatakse valid_time järgi; muutuja tuvastatakse veeru nime järgi. tp ja ssrd on tunnipõhised (mitte kumulatiivsed).
+// Tundmatud muutujanimed jätab CDS vaikselt välja, seega kontrollitakse kohustuslike veergude olemasolu.
 import JSZip from 'jszip';
-import { deaccumulate } from './daily';
 import type { HourlyWeather } from './types';
 
 const BASE = 'https://cds.climate.copernicus.eu/api/retrieve/v1';
 const DATASET = 'reanalysis-era5-land-timeseries';
-const VARIABLES = ['2m_temperature', 'total_precipitation', 'potential_evaporation', 'volumetric_soil_water_layer_1', 'volumetric_soil_water_layer_2'];
-const ACCUMULATED = true; // tp ja pev kogunevad alates 00 UTC (Task 1 kinnitab)
+const VARIABLES = ['2m_temperature', 'total_precipitation', 'surface_solar_radiation_downwards', 'volumetric_soil_water_level_1', 'volumetric_soil_water_level_2'];
+const REQUIRED = ['t2m', 'tp', 'ssrd'];
 
 export class CdsError extends Error {}
 
@@ -714,37 +778,45 @@ const num = (s: string | undefined): number | null => {
   return Number.isFinite(n) ? n : null;
 };
 
-export function parseCdsCsv(text: string): HourlyWeather[] {
-  const lines = text.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
-  if (lines.length < 2) return [];
-  const head = lines[0].split(',').map((h) => h.trim());
-  const col = (name: string) => head.indexOf(name);
-  const [iT, iTemp, iTp, iPev, iS1, iS2] = ['valid_time', 't2m', 'tp', 'pev', 'swvl1', 'swvl2'].map(col);
-  if (iT < 0 || iTemp < 0 || iTp < 0) throw new CdsError(`Tundmatu CSV päis: ${lines[0]}`);
-  const rows = lines.slice(1).map((l) => l.split(',')).map((c) => ({
-    time: new Date(c[iT].trim().replace(' ', 'T') + 'Z'),
-    t2m: num(c[iTemp]), tp: num(c[iTp]), pev: iPev >= 0 ? num(c[iPev]) : null,
-    s1: iS1 >= 0 ? num(c[iS1]) : null, s2: iS2 >= 0 ? num(c[iS2]) : null
-  })).sort((a, b) => a.time.getTime() - b.time.getTime());
-  const tp = ACCUMULATED ? deaccumulate(rows.map((r) => ({ time: r.time, value: r.tp }))) : rows.map((r) => ({ time: r.time, value: r.tp }));
-  const pev = ACCUMULATED ? deaccumulate(rows.map((r) => ({ time: r.time, value: r.pev === null ? null : -r.pev }))) : rows.map((r) => ({ time: r.time, value: r.pev === null ? null : -r.pev }));
-  return rows.map((r, i) => ({
-    time: r.time,
-    tempC: r.t2m === null ? null : r.t2m - 273.15,
-    precipMm: tp[i].value === null ? null : tp[i].value! * 1000,
-    potEvapMm: pev[i].value === null ? null : Math.max(0, pev[i].value! * 1000),
-    soil1: r.s1,
-    soil2: r.s2
-  }));
+/** Mitu CSV-d (sama ajatelg) → tunniread. */
+export function parseCdsCsvFiles(texts: string[]): HourlyWeather[] {
+  const byTime = new Map<string, Record<string, number | null>>();
+  for (const text of texts) {
+    const lines = text.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
+    if (lines.length < 2) continue;
+    const head = lines[0].split(',').map((h) => h.trim());
+    const iT = head.indexOf('valid_time');
+    if (iT < 0) throw new CdsError(`Tundmatu CSV päis: ${lines[0]}`);
+    for (const line of lines.slice(1)) {
+      const c = line.split(',');
+      const key = c[iT].trim();
+      const row = byTime.get(key) ?? byTime.set(key, {}).get(key)!;
+      head.forEach((h, i) => { if (i !== iT && h !== 'latitude' && h !== 'longitude') row[h] = num(c[i]); });
+    }
+  }
+  const seen = new Set([...byTime.values()].flatMap((r) => Object.keys(r)));
+  const missing = REQUIRED.filter((v) => !seen.has(v));
+  if (byTime.size && missing.length) throw new CdsError(`CDS vastusest puuduvad veerud: ${missing.join(', ')}`);
+  return [...byTime.entries()]
+    .map(([t, r]) => ({ time: new Date(t.replace(' ', 'T') + 'Z'), r }))
+    .sort((a, b) => a.time.getTime() - b.time.getTime())
+    .map(({ time, r }) => ({
+      time,
+      tempC: r.t2m == null ? null : r.t2m - 273.15,
+      precipMm: r.tp == null ? null : Math.max(0, r.tp * 1000),
+      solarJm2: r.ssrd == null ? null : Math.max(0, r.ssrd),
+      soil1: r.swvl1 ?? null,
+      soil2: r.swvl2 ?? null
+    }));
 }
 
-async function unpack(buf: ArrayBuffer): Promise<string> {
+async function unpack(buf: ArrayBuffer): Promise<string[]> {
   const bytes = new Uint8Array(buf);
-  if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) return new TextDecoder().decode(bytes); // pole zip
+  if (bytes[0] !== 0x50 || bytes[1] !== 0x4b) return [new TextDecoder().decode(bytes)]; // pole zip
   const zip = await JSZip.loadAsync(buf);
   const csv = Object.values(zip.files).filter((f) => !f.dir && f.name.endsWith('.csv'));
-  if (csv.length !== 1) throw new CdsError(`Ootasin ühte CSV-d, zip-is: ${Object.keys(zip.files).join(', ')}`);
-  return csv[0].async('string');
+  if (!csv.length) throw new CdsError(`Zip-is pole CSV-faile: ${Object.keys(zip.files).join(', ')}`);
+  return Promise.all(csv.map((f) => f.async('string')));
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
@@ -772,21 +844,30 @@ export async function fetchHourly(
   const res = (await (await f(`${BASE}/jobs/${jobID}/results`, { headers })).json()) as { asset: { value: { href: string } } };
   const file = await f(res.asset.value.href);
   if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`);
-  return parseCdsCsv(await unpack(await file.arrayBuffer()));
+  return parseCdsCsvFiles(await unpack(await file.arrayBuffer()));
 }
 ```
 
+`daily.ts` `deaccumulate` jääb alles (testitud, kuid praegu kasutamata) — **ära eemalda**, ERA5-Landi tavaandmestiku varuvariant vajaks seda.
+
 - [ ] **Step 4: Läbib**
 
-Run: `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx vitest run src/server/weather/cdsClient.test.ts'`
-Oodatud: PASS (ka päris näidis).
+Run: `ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && npx vitest run src/server/weather && npx tsc --noEmit -p tsconfig.app.json'`
+Oodatud: PASS, tüübivigu pole.
 
-- [ ] **Step 5: Commit**
+- [ ] **Step 5: Päris päring (üks päev)**
 
 ```bash
-ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && git add src/server/weather && git commit -m "feat(ilm): CDS klient
+ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && set -a && . ./.env && set +a && npx tsx -e "import { fetchHourly } from \"./src/server/weather/cdsClient.ts\"; import { hourlyToDaily } from \"./src/server/weather/daily.ts\"; const h = await fetchHourly({ lat: 58.1, lon: 25.8 }, \"2025-06-09\", \"2025-06-11\"); console.log(h.length, JSON.stringify(hourlyToDaily(h)));"'
+```
+Oodatud: ~72 tundi; 2025-06-10 päevarida mõistlike väärtustega (temperatuur 5–25 °C, sademed 0–30 mm, potEvapMm 0,5–6 mm, mullaniiskus 0,1–0,5).
 
-Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>"'
+- [ ] **Step 6: Commit**
+
+```bash
+ssh debian@uvn-243-120.tll07.zonevs.eu 'cd /home/debian/teris && git add src/server/weather && git commit -m "feat(ilm): CDS klient ja Makkinki aurumine
+
+Co-Authored-By: <mudel> <noreply@anthropic.com>"'
 ```
 
 ---
@@ -1170,7 +1251,7 @@ const hoursFor = (from: string, to: string): HourlyWeather[] => {
   const out: HourlyWeather[] = [];
   // Tallinna päevad from..to: UTC 21:00 eelmisel päeval (suvi) — testis piisab, et kõik tunnid kaetud oleks
   for (let t = Date.parse(`${from}T00:00:00Z`) - 3 * 3_600_000; t <= Date.parse(`${to}T23:00:00Z`); t += 3_600_000) {
-    out.push({ time: new Date(t), tempC: 10, precipMm: 0.1, potEvapMm: 0.1, soil1: 0.3, soil2: 0.3 });
+    out.push({ time: new Date(t), tempC: 10, precipMm: 0.1, solarJm2: 100000, soil1: 0.3, soil2: 0.3 });
   }
   return out;
 };
