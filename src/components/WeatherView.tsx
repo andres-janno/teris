@@ -23,16 +23,33 @@ export const WeatherView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { api.getWeatherPoints().then((r) => { setPoints(r.points); setLoading(r.loading); }).catch((e) => setError(e.message)); }, []);
+  // Iga päring: viga puhastatakse alguses ja hilinenud vastus (vana valik) ignoreeritakse
   useEffect(() => {
+    setError(null);
+    let cancelled = false;
     api.getWeatherYears(point, base).then((r) => {
+      if (cancelled) return;
       setData(r);
       const last = r.years[r.years.length - 1]?.year ?? null;
       setYear((y) => y ?? last);
       setCompare((c) => (c.length ? c : r.years.slice(-3).map((x) => x.year)));
-    }).catch((e) => setError(e.message));
+    }).catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
   }, [point, base]);
-  useEffect(() => { if (year) api.getWeatherMonths(year, point, base).then(setMonths).catch((e) => setError(e.message)); }, [year, point, base]);
-  useEffect(() => { if (compare.length) api.getWeatherCumulative(compare, point, base).then(setSeries).catch((e) => setError(e.message)); else setSeries([]); }, [compare, point, base]);
+  useEffect(() => {
+    if (!year) return;
+    setError(null);
+    let cancelled = false;
+    api.getWeatherMonths(year, point, base).then((r) => { if (!cancelled) setMonths(r); }).catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [year, point, base]);
+  useEffect(() => {
+    if (!compare.length) { setSeries([]); return; }
+    setError(null);
+    let cancelled = false;
+    api.getWeatherCumulative(compare, point, base).then((r) => { if (!cancelled) setSeries(r); }).catch((e) => { if (!cancelled) setError(e.message); });
+    return () => { cancelled = true; };
+  }, [compare, point, base]);
 
   const rows = useMemo(() => [...(data?.years ?? [])].reverse(), [data]);
   const toggleCompare = (y: number) => setCompare((c) => (c.includes(y) ? c.filter((x) => x !== y) : [...c, y].sort()));

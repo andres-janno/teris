@@ -494,6 +494,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [mainView, setMainView] = useState<MainView>(() => {
     try {
       const saved = localStorage.getItem(mainViewKey);
+      if (saved === 'weather' && !hasModule(user, 'WEATHER')) return 'map'; // moodulita vaade jätaks lehe tühjaks
       return saved && (MAIN_VIEWS as readonly string[]).includes(saved) ? (saved as MainView) : 'map';
     } catch {
       return 'map';
