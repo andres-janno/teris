@@ -1,6 +1,6 @@
 // src/server/weather/types.ts — ilmaandmete ühised tüübid (ERA5-Land).
 
-/** Üks tund ühes punktis. Kogused (sademed, aurumine) on tunni kohta, mis lõpeb ajal `time` (UTC). */
+/** Üks tund ühes punktis. Kogused (sademed, päikesekiirgus) on tunni kohta, mis lõpeb ajal `time` (UTC). */
 export type HourlyWeather = {
   time: Date;
   tempC: number | null;

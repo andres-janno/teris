@@ -21,19 +21,23 @@ const num = (s: string | undefined): number | null => {
 /** Mitu CSV-d (sama ajatelg) → tunniread. */
 export function parseCdsCsvFiles(texts: string[]): HourlyWeather[] {
   const byTime = new Map<string, Record<string, number | null>>();
+  let csvFiles = 0;
   for (const text of texts) {
     const lines = text.split(/\r?\n/).filter((l) => l.trim() && !l.startsWith('#'));
-    if (lines.length < 2) continue;
+    if (!lines.length) continue;
     const head = lines[0].split(',').map((h) => h.trim());
     const iT = head.indexOf('valid_time');
-    if (iT < 0) throw new CdsError(`Tundmatu CSV päis: ${lines[0]}`);
+    if (iT < 0) throw new CdsError(`Tundmatu CSV päis: ${lines[0].slice(0, 300)}`);
+    csvFiles++;
     for (const line of lines.slice(1)) {
       const c = line.split(',');
-      const key = c[iT].trim();
+      const key = (c[iT] ?? '').trim();
+      if (!key) continue;
       const row = byTime.get(key) ?? byTime.set(key, {}).get(key)!;
       head.forEach((h, i) => { if (i !== iT && h !== 'latitude' && h !== 'longitude') row[h] = num(c[i]); });
     }
   }
+  if (!csvFiles) throw new CdsError('CDS vastus ei sisaldanud ühtegi CSV-d');
   const seen = new Set([...byTime.values()].flatMap((r) => Object.keys(r)));
   const missing = REQUIRED.filter((v) => !seen.has(v));
   if (byTime.size && missing.length) throw new CdsError(`CDS vastusest puuduvad veerud: ${missing.join(', ')}`);
@@ -61,6 +65,17 @@ async function unpack(buf: ArrayBuffer): Promise<string[]> {
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** CDS vastus JSON-ina; HTTP-viga või mitte-JSON keha → CdsError. */
+async function cdsJson<T>(res: Response, what: string): Promise<T> {
+  const text = await res.text();
+  if (!res.ok) throw new CdsError(`CDS ${what} ${res.status}: ${text.slice(0, 300)}`);
+  try {
+    return JSON.parse(text) as T;
+  } catch {
+    throw new CdsError(`CDS ${what} ${res.status}: vastus ei ole JSON: ${text.slice(0, 300)}`);
+  }
+}
+
 export async function fetchHourly(
   cell: { lat: number; lon: number }, from: string, to: string,
   opts: { fetchImpl?: typeof fetch; pollMs?: number; timeoutMs?: number } = {}
@@ -71,18 +86,20 @@ export async function fetchHourly(
   const headers = { 'PRIVATE-TOKEN': key ?? 'test', 'Content-Type': 'application/json' };
   const inputs = { variable: VARIABLES, location: { latitude: cell.lat, longitude: cell.lon }, date: [`${from}/${to}`], data_format: 'csv' };
   const sub = await f(`${BASE}/processes/${DATASET}/execution`, { method: 'POST', headers, body: JSON.stringify({ inputs }) });
-  if (!sub.ok) throw new CdsError(`CDS päring ${sub.status}: ${(await sub.text()).slice(0, 300)}`);
-  const { jobID } = (await sub.json()) as { jobID: string };
+  const { jobID } = await cdsJson<{ jobID?: unknown }>(sub, 'päring');
+  if (typeof jobID !== 'string' || !jobID) throw new CdsError('CDS päring: vastuses puudub jobID');
   const deadline = Date.now() + (opts.timeoutMs ?? 30 * 60_000);
   for (;;) {
     await sleep(opts.pollMs ?? 10_000);
-    const st = (await (await f(`${BASE}/jobs/${jobID}`, { headers })).json()) as { status: string; detail?: unknown };
+    const st = await cdsJson<{ status?: unknown; detail?: unknown }>(await f(`${BASE}/jobs/${jobID}`, { headers }), 'töö staatus');
     if (st.status === 'successful') break;
     if (st.status === 'failed' || st.status === 'dismissed') throw new CdsError(`CDS töö ${st.status}: ${JSON.stringify(st.detail ?? st).slice(0, 300)}`);
     if (Date.now() > deadline) throw new CdsError('CDS töö ei valminud ajaga');
   }
-  const res = (await (await f(`${BASE}/jobs/${jobID}/results`, { headers })).json()) as { asset: { value: { href: string } } };
-  const file = await f(res.asset.value.href);
+  const res = await cdsJson<{ asset?: { value?: { href?: unknown } } }>(await f(`${BASE}/jobs/${jobID}/results`, { headers }), 'tulemus');
+  const href = res.asset?.value?.href;
+  if (typeof href !== 'string' || !href) throw new CdsError('CDS tulemus: vastuses puudub allalaadimise link');
+  const file = await f(href);
   if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`);
   return parseCdsCsvFiles(await unpack(await file.arrayBuffer()));
 }

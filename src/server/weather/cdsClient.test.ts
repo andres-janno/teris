@@ -2,7 +2,7 @@
 import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import JSZip from 'jszip';
-import { parseCdsCsvFiles, fetchHourly } from './cdsClient';
+import { parseCdsCsvFiles, fetchHourly, CdsError } from './cdsClient';
 
 const fx = (name: string) => readFileSync(new URL(`./__fixtures__/${name}`, import.meta.url), 'utf8');
 const T2M = 'valid_time,d2m,t2m,latitude,longitude\n2025-06-10 00:00:00,280,283.15,58.1,25.8\n2025-06-10 01:00:00,280,282.15,58.1,25.8\n';
@@ -24,6 +24,9 @@ describe('parseCdsCsvFiles', () => {
   it('mullaniiskuse puudumisel null', () => {
     const r = parseCdsCsvFiles([T2M, TP, SSRD]);
     expect(r[0].soil1).toBeNull();
+  });
+  it('ei ole CSV (üks rida tekst) → CdsError', () => {
+    expect(() => parseCdsCsvFiles(['Request failed: quota exceeded'])).toThrow(CdsError);
   });
   it('kohustuslik veerg puudu → viga', () => {
     expect(() => parseCdsCsvFiles([T2M, SSRD])).toThrow(/tp/);
@@ -69,6 +72,43 @@ describe('fetchHourly', () => {
       return new Response(JSON.stringify({ status: 'failed', detail: 'boom' }));
     }) as typeof fetch;
     await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/boom|failed/);
+  });
+  const statusFake = (statusRes: () => Response) => (async (url: string) => {
+    if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j3' }), { status: 201 });
+    return statusRes();
+  }) as typeof fetch;
+  it('staatuse päring 500 JSON-vastusega → kohe viga, mitte ajaleotus', async () => {
+    const t0 = Date.now();
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
+      fetchImpl: statusFake(() => new Response(JSON.stringify({ detail: 'internal' }), { status: 500 })), pollMs: 1, timeoutMs: 60_000
+    })).rejects.toThrow(/500/);
+    expect(Date.now() - t0).toBeLessThan(5000);
+  });
+  it('staatuse päring 502 mitte-JSON-vastusega → CdsError', async () => {
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', {
+      fetchImpl: statusFake(() => new Response('Bad Gateway', { status: 502 })), pollMs: 1
+    })).rejects.toBeInstanceOf(CdsError);
+  });
+  it('päring 201 ilma jobID-ta → CdsError', async () => {
+    const fake = (async () => new Response(JSON.stringify({}), { status: 201 })) as typeof fetch;
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toThrow(/jobID/);
+  });
+  it('tulemusest puudub allalaadimise link → CdsError', async () => {
+    const fake = (async (url: string) => {
+      if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j5' }), { status: 201 });
+      if (url.endsWith('/jobs/j5/results')) return new Response(JSON.stringify({}));
+      return new Response(JSON.stringify({ status: 'successful' }));
+    }) as typeof fetch;
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
+  });
+  it('allalaaditud keha on üks rida ei-CSV teksti → CdsError', async () => {
+    const fake = (async (url: string) => {
+      if (url.endsWith('/execution')) return new Response(JSON.stringify({ jobID: 'j4' }), { status: 201 });
+      if (url.endsWith('/jobs/j4/results')) return new Response(JSON.stringify({ asset: { value: { href: 'https://dl/err' } } }));
+      if (url === 'https://dl/err') return new Response('Request failed: quota exceeded');
+      return new Response(JSON.stringify({ status: 'successful' }));
+    }) as typeof fetch;
+    await expect(fetchHourly({ lat: 58.1, lon: 25.8 }, '2025-06-10', '2025-06-10', { fetchImpl: fake, pollMs: 1 })).rejects.toBeInstanceOf(CdsError);
   });
   it('litsents nõustumata (403) → selge viga', async () => {
     const fake = (async () => new Response('required licences not accepted', { status: 403 })) as typeof fetch;
