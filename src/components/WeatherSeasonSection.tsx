@@ -19,7 +19,7 @@ const WeatherRow: React.FC<{ year: number; crop: string | null | undefined; sum:
   <div className={`soil-row weather-season-row${current ? '' : ' weather-season-past'}`}>
     <span className="soil-year-cell">{year}{crop && <span className="weather-season-crop">{crop}</span>}</span>
     <span
-      className={shifted ? 'weather-season-shifted' : undefined}
+      className={`weather-season-period${shifted ? ' weather-season-shifted' : ''}`}
       title={shifted ? 'Selle aasta külvikuupäev puudub — kasutatud valitud hooaja kuupäevi' : undefined}
     >
       {formatDate(sum.from)} – {formatDate(sum.to)}
@@ -79,7 +79,7 @@ export const WeatherSeasonSection: React.FC<Props> = ({ fieldSeasonId, year, cro
         <div className="soil-table">
           <div className="soil-row soil-row-head weather-season-row">
             <span>Hooaeg</span>
-            <span>Periood</span>
+            <span className="weather-season-period">Periood</span>
             <span title="Temperatuurisumma kultuuri baastemperatuuriga">GDD</span>
             <span>Sademed</span>
             <span title="Sademed miinus potentsiaalne aurumine">Veebilanss</span>
