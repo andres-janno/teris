@@ -1,5 +1,6 @@
 // src/components/WeatherSeasonSection.tsx — põllu hooaja ilmakokkuvõte külvist koristuseni (või tänaseni) saagikuse kõrval.
 import React, { useEffect, useState } from 'react';
+import { CloudSun } from 'lucide-react';
 import { api } from '../services/api';
 import type { WeatherSeasonReport } from '../types/weather';
 import { fmt0, fmt1, WEATHER_SOURCE } from '../services/weatherFormat';
@@ -20,31 +21,53 @@ export const WeatherSeasonSection: React.FC<{ fieldSeasonId: number | undefined;
     return () => { cancelled = true; };
   }, [fieldSeasonId]);
   if (!fieldSeasonId) return null;
+  const sum = rep?.summary;
+  const toHarvest = rep?.harvested && sum?.dataUntil && sum.dataUntil >= sum.to;
+  const hint = error
+    ?? (rep?.reason === 'NO_SEEDING' ? 'Ilmakokkuvõte vajab külvikuupäeva.'
+      : rep?.reason === 'NOT_STARTED' ? 'Külvist alates ilmaandmeid veel pole — need jõuavad umbes nädalase viitega.'
+      : rep?.reason === 'INVALID_DATES' ? 'Koristuskuupäev on enne külvi — kontrolli kuupäevi.'
+      : rep?.reason === 'LOADING' ? 'Ilmaandmeid laetakse.'
+      : rep?.reason === 'NO_POINT' ? 'Põllul pole kuju, ilma ei saa siduda.'
+      : null);
   return (
-    <section className="weather-season">
-      <h4>Ilm külvist {rep?.harvested && rep.summary?.dataUntil && rep.summary.dataUntil >= rep.summary.to ? 'koristuseni' : 'tänaseni'}</h4>
-      {error && <p className="hint">{error}</p>}
-      {rep?.reason === 'NO_SEEDING' && (
-        <p className="hint">Ilmakokkuvõte vajab külvikuupäeva.{onEditSeeding && <> <button type="button" className="link-button" onClick={onEditSeeding}>Sisesta külvikuupäev</button></>}</p>
+    <div className="detail-section">
+      <div className="section-subtitle">
+        <CloudSun size={14} />
+        <span>Ilm külvist {toHarvest ? 'koristuseni' : 'tänaseni'}</span>
+      </div>
+      {hint && (
+        <p className="notes-text">
+          {hint}
+          {rep?.reason === 'NO_SEEDING' && onEditSeeding && <> <button type="button" className="link-button" onClick={onEditSeeding}>Sisesta külvikuupäev</button></>}
+        </p>
       )}
-      {rep?.reason === 'NOT_STARTED' && <p className="hint">Külvist alates ilmaandmeid veel pole — need jõuavad umbes nädalase viitega.</p>}
-      {rep?.reason === 'INVALID_DATES' && <p className="hint">Koristuskuupäev on enne külvi — kontrolli kuupäevi.</p>}
-      {rep?.reason === 'LOADING' && <p className="hint">Ilmaandmeid laetakse.</p>}
-      {rep?.reason === 'NO_POINT' && <p className="hint">Põllul pole kuju, ilma ei saa siduda.</p>}
-      {rep?.summary && (
-        <>
-          <dl>
-            <dt>Periood</dt><dd>{formatDate(rep.summary.from)} – {formatDate(rep.summary.to)}</dd>
-            <dt>Temperatuurisumma (baas {rep.gddBaseC} °C)</dt><dd className="num">{fmt0(rep.summary.gdd)} °C</dd>
-            <dt>Sademed</dt><dd className="num">{fmt0(rep.summary.precipMm)} mm</dd>
-            <dt>Veebilanss</dt><dd className="num">{fmt0(rep.summary.waterBalanceMm)} mm</dd>
-            <dt>Pikim kuiv periood</dt><dd className="num">{rep.summary.longestDrySpell} p</dd>
-            <dt>Öökülmi 60 päeva jooksul pärast külvi</dt><dd className="num">{rep.summary.frostDays}</dd>
-            {actualYieldTonsHa != null && <><dt>Saak</dt><dd className="num">{fmt1(actualYieldTonsHa)} t/ha</dd></>}
-          </dl>
-          <p className="hint">{!rep.summary.complete && rep.summary.dataUntil && `Andmed kuni ${formatDate(rep.summary.dataUntil)}. `}{WEATHER_SOURCE}.</p>
-        </>
+      {sum && (
+        <div className="soil-table">
+          <div className="soil-row soil-row-head weather-season-row">
+            <span>Periood</span>
+            <span title={`Temperatuurisumma, baas ${rep?.gddBaseC} °C`}>GDD</span>
+            <span>Sademed</span>
+            <span title="Sademed miinus potentsiaalne aurumine">Veebilanss</span>
+            <span title="Pikim järjestikuste kuivade päevade arv">Kuiv per.</span>
+            <span title="Öökülmapäevad 60 päeva jooksul pärast külvi">Öökülm</span>
+            {actualYieldTonsHa != null && <span>Saak</span>}
+          </div>
+          <div className="soil-row weather-season-row">
+            <span>{formatDate(sum.from)} – {formatDate(sum.to)}</span>
+            <span className="soil-value">{fmt0(sum.gdd)}</span>
+            <span className="soil-value">{fmt0(sum.precipMm)}</span>
+            <span className="soil-value">{fmt0(sum.waterBalanceMm)}</span>
+            <span className="soil-value">{sum.longestDrySpell}</span>
+            <span className="soil-value">{sum.frostDays}</span>
+            {actualYieldTonsHa != null && <span className="soil-value">{fmt1(actualYieldTonsHa)}</span>}
+          </div>
+          <div className="soil-footnote">
+            {!sum.complete && sum.dataUntil && `Andmed kuni ${formatDate(sum.dataUntil)} · `}
+            GDD °C (baas {rep?.gddBaseC} °C) · sademed ja veebilanss mm · kuiv periood ja öökülm päevi{actualYieldTonsHa != null && ' · saak t/ha'} · {WEATHER_SOURCE}
+          </div>
+        </div>
       )}
-    </section>
+    </div>
   );
 };
