@@ -12,6 +12,7 @@ import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../t
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
+import type { WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherSeasonReport } from '../types/weather';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -325,6 +326,42 @@ export const api = {
     const res = await apiFetch('/api/weather/radar');
     if (!res.ok) throw new Error(await errorMessage(res, 'Radari andmed pole saadaval'));
     return res.json();
+  },
+
+  async getWeatherPoints(): Promise<{ points: WeatherPointInfo[]; loading: boolean }> {
+    const res = await apiFetch('/api/weather/points');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmapunktid pole saadaval'));
+    return res.json();
+  },
+
+  async getWeatherYears(point: WeatherPointRef, base: number): Promise<WeatherYears> {
+    const res = await apiFetch(`/api/weather/years?${new URLSearchParams({ point: String(point), base: String(base) })}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
+    return res.json();
+  },
+
+  async getWeatherMonths(year: number, point: WeatherPointRef, base: number): Promise<WeatherMonth[]> {
+    const res = await apiFetch(`/api/weather/months?${new URLSearchParams({ year: String(year), point: String(point), base: String(base) })}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
+    return (await res.json()).months;
+  },
+
+  async getWeatherCumulative(years: number[], point: WeatherPointRef, base: number): Promise<WeatherCumulativeSeries[]> {
+    const res = await apiFetch(`/api/weather/cumulative?${new URLSearchParams({ years: years.join(','), point: String(point), base: String(base) })}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
+    return (await res.json()).series;
+  },
+
+  async getWeatherSeason(fieldSeasonId: number): Promise<WeatherSeasonReport> {
+    const res = await apiFetch(`/api/weather/season/${fieldSeasonId}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmakokkuvõte pole saadaval'));
+    return res.json();
+  },
+
+  async getWeatherSeasons(year: number): Promise<{ fieldSeasonId: number; gdd: number; precipMm: number }[]> {
+    const res = await apiFetch(`/api/weather/seasons?year=${year}`);
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmakokkuvõte pole saadaval'));
+    return (await res.json()).rows;
   },
 
   /** Satiladu Sentinel-2 päevapiltide kuupäevad (AAAA-KK-PP, uusim ees) */
