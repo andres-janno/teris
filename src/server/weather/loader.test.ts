@@ -36,26 +36,30 @@ afterAll(async () => { await prisma.weatherPoint.deleteMany({ where: { lat: 10.7
 describe('loadPoint', () => {
   it('esmalaadimine alates 2015-01-01 aasta kaupa kuni eilseni', async () => {
     await loadPoint(pointId, deps);
-    expect(calls).toEqual([['2015-01-01', '2015-03-09']]);
+    expect(calls).toEqual([['2014-12-31', '2015-03-09']]);
     const p = await prisma.weatherPoint.findUniqueOrThrow({ where: { id: pointId } });
     expect(p.hasData).toBe(true);
     expect(p.loadedUntil!.toISOString().slice(0, 10)).toBe('2015-03-09');
     expect(p.failCount).toBe(0);
     expect(await prisma.weatherDaily.count({ where: { pointId } })).toBe(68);
+    const first = await prisma.weatherDaily.findMany({ where: { pointId }, orderBy: { date: 'asc' }, take: 1 });
+    expect(first[0].date.toISOString().slice(0, 10)).toBe('2015-01-01');
   });
 
   it('järgmine käik küsib ainult uusi päevi', async () => {
     await loadPoint(pointId, deps);
     calls = [];
     await loadPoint(pointId, { ...deps, now: () => new Date('2015-03-12T12:00:00Z') });
-    expect(calls).toEqual([['2015-03-10', '2015-03-11']]);
+    expect(calls).toEqual([['2015-03-09', '2015-03-11']]);
+    expect(await prisma.weatherDaily.count({ where: { pointId, date: new Date('2015-03-10T00:00:00Z') } })).toBe(1);
+    expect(await prisma.weatherDaily.count({ where: { pointId } })).toBe(70);
   });
 
   it('refreshRecent laeb viimased 90 päeva üle', async () => {
     await loadPoint(pointId, deps);
     calls = [];
     await loadPoint(pointId, deps, { refreshRecent: true });
-    expect(calls[0][0]).toBe('2015-01-01'); // 90 päeva tagasi < algus → algusest
+    expect(calls[0][0]).toBe('2014-12-31'); // 90 päeva tagasi < algus → algusest (+1 päev UTC-nihke tõttu)
   });
 
   it('viga: failCount kasvab, andmed jäävad alles', async () => {

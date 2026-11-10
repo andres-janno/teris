@@ -49,7 +49,9 @@ export async function loadPoint(pointId: number, deps: LoaderDeps = defaultLoade
   let total = 0;
   try {
     for (const [a, b] of yearChunks(from, yesterday)) {
-      const days = hourlyToDaily(await deps.fetchHourly({ lat: p.lat, lon: p.lon }, a, b)).filter((d) => d.date >= a && d.date <= b);
+      // CDS tunnid on UTC ja algavad päeva 00:00 UTC-st; Tallinna päev `a` algab aga eelmisel UTC-päeval (21/22 UTC),
+      // seega küsime ühe päeva varem — see lisapäev täidab ainult päeva `a`, filter jätab ülejäänu välja.
+      const days = hourlyToDaily(await deps.fetchHourly({ lat: p.lat, lon: p.lon }, addDays(a, -1), b)).filter((d) => d.date >= a && d.date <= b);
       if (days.length === 0) {
         if (!loadedUntil && total === 0) {
           await prisma.weatherPoint.update({ where: { id: pointId }, data: { hasData: false, lastSuccessAt: now, failCount: 0, lastError: null } });
