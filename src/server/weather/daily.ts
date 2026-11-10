@@ -2,7 +2,7 @@
 // Temperatuur ja mullaniiskus on hetkeväärtused (päev = Tallinna päev ajast `time`);
 // sademed ja päikesekiirgus on tunni kogused, mis lõpevad ajal `time` (päev = Tallinna päev ajast time − 30 min).
 // Potentsiaalne aurumine arvutatakse päeva kaupa Makkinki valemiga (päikesekiirgus + keskmine temperatuur); ERA5 pev-i ei kasutata.
-import type { DailyWeather, HourlyWeather } from './types';
+import type { DailyWeather, HourlyWeather } from './types.ts';
 
 const fmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn', year: 'numeric', month: '2-digit', day: '2-digit' });
 export const tallinnDate = (d: Date): string => fmt.format(d);

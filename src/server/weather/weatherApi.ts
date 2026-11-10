@@ -1,13 +1,13 @@
 // src/server/weather/weatherApi.ts — ilmaandmete API (/api/weather/*, v.a radar). Kokkuvõtted arvutatakse päringu ajal.
 // Ettevõtte punktid = punktid, millega on seotud ettevõtte hooajad; „all“ = nende päevade keskmine.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma } from '../db';
-import { json } from '../http';
-import { bindWeatherPoints } from './points';
-import { tallinnDate } from './daily';
-import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd } from './summary';
-import { WEATHER_START } from './loader';
-import type { DailyWeather, WeatherSummary } from './types';
+import { prisma } from '../db.ts';
+import { json } from '../http.ts';
+import { bindWeatherPoints } from './points.ts';
+import { tallinnDate } from './daily.ts';
+import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd } from './summary.ts';
+import { WEATHER_START } from './loader.ts';
+import type { DailyWeather, WeatherSummary } from './types.ts';
 
 const MONTHS = [4, 5, 6, 7, 8];
 const asDate = (s: string) => new Date(`${s}T00:00:00Z`);

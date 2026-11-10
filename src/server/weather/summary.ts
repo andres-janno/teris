@@ -1,6 +1,6 @@
 // src/server/weather/summary.ts — ilmakokkuvõte päevaandmetest (arvutatakse päringu ajal, ei salvestata).
-import { tallinnDate } from './daily';
-import type { DailyWeather, WeatherSummary } from './types';
+import { tallinnDate } from './daily.ts';
+import type { DailyWeather, WeatherSummary } from './types.ts';
 
 export const RAIN_MM = 1;
 export const HOT_C = 28;

@@ -1,8 +1,8 @@
 // src/server/weather/points.ts — põllu hooaeg → lähim ERA5-Landi ruut (ilmapunkt).
 // Käivitatakse ettevõtte kontekstis igal ööl enne laadimist ja ilmavaate avamisel, kui leidub sidumata hooaegu.
 // Ruut, millel andmeid pole (hasData = false, nt üle vee), asendatakse lähima naaberruuduga.
-import { prisma, tenantTransaction } from '../db';
-import { snapToCell, neighborCells, geometryCenter, type Cell } from './grid';
+import { prisma, tenantTransaction } from '../db.ts';
+import { snapToCell, neighborCells, geometryCenter, type Cell } from './grid.ts';
 
 async function pointFor(cell: Cell): Promise<number> {
   const candidates = [cell, ...neighborCells(cell)];

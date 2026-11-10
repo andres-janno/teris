@@ -3,7 +3,7 @@
 // mis ühendatakse valid_time järgi; muutuja tuvastatakse veeru nime järgi. tp ja ssrd on tunnipõhised (mitte kumulatiivsed).
 // Tundmatud muutujanimed jätab CDS vaikselt välja, seega kontrollitakse kohustuslike veergude olemasolu.
 import JSZip from 'jszip';
-import type { HourlyWeather } from './types';
+import type { HourlyWeather } from './types.ts';
 
 const BASE = 'https://cds.climate.copernicus.eu/api/retrieve/v1';
 const DATASET = 'reanalysis-era5-land-timeseries';

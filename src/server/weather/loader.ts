@@ -1,13 +1,13 @@
 // src/server/weather/loader.ts — ilmapunktide laadimine CDS-ist (ERA5-Land) ja öine ajasti.
 // Esmalaadimine alates 2015 aasta kaupa; edasi ainult puuduvad päevad. ERA5T (esialgne) = viimased 90 päeva:
 // need laetakse kord nädalas (esmaspäeval) uuesti ja kirjutatakse üle. Viga ei kustuta midagi; järgmine käik proovib uuesti.
-import { prisma, authDb, runAsTenant } from '../db';
-import { fetchHourly as cdsFetchHourly } from './cdsClient';
-import { hourlyToDaily, tallinnDate } from './daily';
-import { addDays } from './summary';
-import { bindWeatherPoints } from './points';
-import { licenseState, tallinnToday } from '../license';
-import type { HourlyWeather } from './types';
+import { prisma, authDb, runAsTenant } from '../db.ts';
+import { fetchHourly as cdsFetchHourly } from './cdsClient.ts';
+import { hourlyToDaily, tallinnDate } from './daily.ts';
+import { addDays } from './summary.ts';
+import { bindWeatherPoints } from './points.ts';
+import { licenseState, tallinnToday } from '../license.ts';
+import type { HourlyWeather } from './types.ts';
 
 export const WEATHER_START = '2015-01-01';
 export const PROVISIONAL_DAYS = 90;
