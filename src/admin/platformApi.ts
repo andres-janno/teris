@@ -117,6 +117,7 @@ export interface CatalogCrop {
   defaultYieldTonsHa: number | null;
   description: string | null;
   isWinterCrop: boolean;
+  gddBaseC: number;
   priaName: string | null;
   priaUndersowing: boolean;
   varieties: CatalogVariety[];

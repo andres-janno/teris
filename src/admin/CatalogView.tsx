@@ -54,6 +54,7 @@ interface CropDraft {
   yieldT: string;
   description: string;
   isWinterCrop: boolean;
+  gddBaseC: number | null;
   priaName: string;
   priaUndersowing: boolean;
 }
@@ -70,6 +71,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
     yieldT: numStr(crop?.defaultYieldTonsHa),
     description: crop?.description ?? '',
     isWinterCrop: crop?.isWinterCrop ?? false,
+    gddBaseC: crop?.gddBaseC ?? 5,
     priaName: crop?.priaName ?? '',
     priaUndersowing: crop?.priaUndersowing ?? false
   });
@@ -92,6 +94,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
       defaultYieldTonsHa: numOrNull(d.yieldT),
       description: textOrNull(d.description),
       isWinterCrop: d.isWinterCrop,
+      gddBaseC: d.gddBaseC ?? 5,
       priaName: textOrNull(d.priaName),
       priaUndersowing: d.priaUndersowing
     };
@@ -145,6 +148,9 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
       </Field>
       <Field id="cc-pria-name" label="PRIA nimetus">
         <input id="cc-pria-name" className="form-input" value={d.priaName} onChange={(e) => set('priaName', e.target.value)} maxLength={300} placeholder={d.name} />
+      </Field>
+      <Field id="cc-gdd" label="GDD baastemperatuur (°C)">
+        <NumberInput id="cc-gdd" className="num" min={0} max={15} value={d.gddBaseC} onChange={(v) => set('gddBaseC', v)} />
       </Field>
       <Check label="Talikultuur" checked={d.isWinterCrop} onChange={(v) => set('isWinterCrop', v)} />
       <Check label="PRIA eristab allakülvi" checked={d.priaUndersowing} onChange={(v) => set('priaUndersowing', v)} />

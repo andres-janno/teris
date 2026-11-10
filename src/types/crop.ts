@@ -35,6 +35,7 @@ export interface Crop {
   defaultYieldTonsHa?: number;          // Baas-saagiootus t/ha
   description?: string;                 // Agrotehniline kirjeldus või märkmed
   isWinterCrop?: boolean;               // Talivili (külv sügisel) — hooaeg algab eelmisel sügisel
+  gddBaseC?: number;                    // Temperatuurisumma (GDD) baastemperatuur °C (vaikimisi 5)
   priaName?: string | null;             // PRIA nimetuse alus (nt 'Talinisu', 'Muu põlduba'); tühi = kultuuri nimi
   priaUndersowing?: boolean;            // PRIA eristab allakülvi (nimele lisandub allakülvi variant)
   priaNameWithoutUndersowing?: string | null;    // erandnimi; tühi = alus + " allakülvita"

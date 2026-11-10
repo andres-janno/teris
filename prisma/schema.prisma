@@ -195,6 +195,7 @@ model FieldSeason {
   perimeterM          Float? // Ümbermõõt meetrites
   notes               String?
   geometry            Json // GeoJSON Polygon | MultiPolygon
+  weatherPointId      Int? // lähim ERA5-Landi ruut (öine sidumine, src/server/weather/points.ts)
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
   createdBy           String? // looja kasutajatunnus (täidetakse automaatselt)
@@ -203,6 +204,7 @@ model FieldSeason {
   field            Field                  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
   season           Season?                @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   cadastralParcels FieldCadastralParcel[]
+  weatherPoint     WeatherPoint?          @relation(fields: [weatherPointId], references: [id], onDelete: SetNull)
   cropEntity       Crop?                  @relation(fields: [cropId], references: [id], onDelete: SetNull)
   varietyEntity    CropVariety?           @relation(fields: [varietyId], references: [id], onDelete: SetNull)
   fieldWorks       FieldWork[]
@@ -215,6 +217,7 @@ model FieldSeason {
   @@index([cropId])
   @@index([varietyId])
   @@index([tenantId])
+  @@index([weatherPointId])
   @@map("field_seasons")
 }
 
@@ -634,6 +637,7 @@ model Crop {
   defaultYieldTonsHa            Float?
   description                   String?
   isWinterCrop                  Boolean   @default(false) // Talivili: külvatakse sügisel (hooaeg algab eelmise aasta sügisel)
+  gddBaseC                      Float     @default(5) // temperatuurisumma (GDD) baastemperatuur °C
   // PRIA nimetus: hooaja PRIA kultuur tuletatakse neist (services/priaCropName.ts). Tühi = kultuuri nimi.
   priaName                      String? // PRIA nimetuse alus (nt "talinisu", "muu põlduba")
   priaUndersowing               Boolean   @default(false) // PRIA eristab allakülvi (nimele lisandub allakülvi variant)
@@ -1554,6 +1558,7 @@ model CatalogCrop {
   defaultYieldTonsHa  Float?
   description         String?
   isWinterCrop        Boolean   @default(false)
+  gddBaseC            Float     @default(5) // temperatuurisumma (GDD) baastemperatuur °C
   priaName            String? // PRIA nimetuse alus
   priaUndersowing     Boolean   @default(false) // PRIA eristab allakülvi
   createdAt           DateTime  @default(now())
@@ -1678,4 +1683,47 @@ model InterestRequest {
 
   @@index([status])
   @@map("interest_requests")
+}
+
+// ============================================================================
+// ILMAANDMED (ERA5-Land) — ettevõtteülesed, ilma tenantId ja RLS-ita
+// ============================================================================
+
+model WeatherPoint {
+  id            Int       @id @default(autoincrement())
+  lat           Float // ERA5-Landi ruudu keskpunkt (0,1° ruudustik)
+  lon           Float
+  hasData       Boolean? // null = veel teadmata; false = ruut üle vee (andmeid pole)
+  loadedFrom    DateTime? @db.Date
+  loadedUntil   DateTime? @db.Date
+  finalUntil    DateTime? @db.Date // kuni selle kuupäevani on andmed lõplikud (mitte ERA5T)
+  lastAttemptAt DateTime?
+  lastSuccessAt DateTime?
+  lastError     String?
+  failCount     Int       @default(0)
+  createdAt     DateTime  @default(now())
+
+  days         WeatherDaily[]
+  fieldSeasons FieldSeason[]
+
+  @@unique([lat, lon])
+  @@map("weather_points")
+}
+
+model WeatherDaily {
+  pointId       Int
+  date          DateTime @db.Date // Tallinna kalendripäev
+  tMin          Float
+  tMax          Float
+  tMean         Float
+  precipMm      Float
+  potEvapMm     Float? // potentsiaalne aurumine mm (positiivne)
+  soilMoisture1 Float? // m³/m³, 0–7 cm
+  soilMoisture2 Float? // m³/m³, 7–28 cm
+  isFinal       Boolean  @default(false)
+
+  point WeatherPoint @relation(fields: [pointId], references: [id], onDelete: Cascade)
+
+  @@id([pointId, date])
+  @@map("weather_daily")
 }

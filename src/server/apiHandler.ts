@@ -1629,6 +1629,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
           description: crop.description ?? null,
           isWinterCrop: crop.isWinterCrop === true,
+          gddBaseC: Number.isFinite(Number(crop.gddBaseC)) ? Number(crop.gddBaseC) : 5,
           ...cropPriaFields(crop)
         },
         create: {
@@ -1643,6 +1644,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           defaultYieldTonsHa: crop.defaultYieldTonsHa ? Number(crop.defaultYieldTonsHa) : null,
           description: crop.description ?? null,
           isWinterCrop: crop.isWinterCrop === true,
+          gddBaseC: Number.isFinite(Number(crop.gddBaseC)) ? Number(crop.gddBaseC) : 5,
           ...cropPriaFields(crop)
         }
       });

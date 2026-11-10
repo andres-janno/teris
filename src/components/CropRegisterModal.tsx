@@ -77,6 +77,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editCropYield, setEditCropYield] = useState<number | ''>('');
   const [editCropDescription, setEditCropDescription] = useState('');
   const [editCropIsWinter, setEditCropIsWinter] = useState(false);
+  const [editCropGddBase, setEditCropGddBase] = useState<number | undefined>(5);
   // PRIA nimetuse reegel; erandnimed tühjad = vaikimisi alus + allakülvi järelliide
   const [editCropPria, setEditCropPria] = useState({ name: '', undersowing: false, NONE: '', OTHER: '', LEGUME: '' });
   // Uuele kultuurile värv automaatselt (talivili külm, suvivili soe toon); kasutaja võib üle kirjutada.
@@ -201,6 +202,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropYield('');
     setEditCropDescription('');
     setEditCropIsWinter(false);
+    setEditCropGddBase(5);
     setEditCropPria({ name: '', undersowing: group === 'CEREAL' || group === 'OILSEED', NONE: '', OTHER: '', LEGUME: '' });
     setIsEditingCrop(true);
     setIsEditingVariety(false);
@@ -219,6 +221,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     setEditCropYield(crop.defaultYieldTonsHa ?? '');
     setEditCropDescription(crop.description || '');
     setEditCropIsWinter(crop.isWinterCrop === true);
+    setEditCropGddBase(crop.gddBaseC ?? 5);
     setEditCropPria({
       name: crop.priaName || '',
       undersowing: crop.priaUndersowing === true,
@@ -247,6 +250,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
       defaultYieldTonsHa: editCropYield !== '' ? Number(editCropYield) : undefined,
       description: editCropDescription.trim() || undefined,
       isWinterCrop: editCropIsWinter,
+      gddBaseC: editCropGddBase ?? 5,
       priaName: editCropPria.name.trim() || null,
       priaUndersowing: editCropPria.undersowing,
       priaNameWithoutUndersowing: (editCropPria.undersowing && editCropPria.NONE.trim()) || null,
@@ -502,6 +506,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     />
                     <span>Talivili (külvatakse sügisel)</span>
                   </label>
+                </div>
+
+                <div className="form-group">
+                  <label>GDD baastemperatuur (°C)</label>
+                  <NumberInput value={editCropGddBase} onChange={(v) => setEditCropGddBase(v ?? undefined)} min={0} max={15} className="num" />
+                  <small className="hint">Temperatuurisumma arvutatakse päeva keskmisest miinus see väärtus. Teravili ja raps 5, mais 10.</small>
                 </div>
 
                 <div className="form-group">
