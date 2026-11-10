@@ -50,7 +50,7 @@ Võti `(pointId, date)`. Päev = Tallinna aja kalendripäev, koondatud tunniandm
 
 ### Seos põlluga
 
-`FieldSeason.weatherPointId` (nullable). Arvutatakse hooaja geomeetria keskpunktist lähima andmetega ruuduna geomeetria salvestamisel ja ühekordse täitmisskriptiga olemasolevatele. Keskpunkti nihkumisel teise ruutu seos uueneb; uue punkti puudumisel luuakse see ja käivitub esmalaadimine.
+`FieldSeason.weatherPointId` (nullable). Arvutatakse hooaja geomeetria keskpunktist lähima andmetega ruuduna **öise töö alguses** (kõik WEATHER-mooduliga ettevõtted) ja ilmavaate avamisel, kui leidub sidumata hooaegu. Salvestusteid (põllu salvestus, import, hooaja kopeerimine) ei muudeta — sidumine ei sõltu sellest, kust geomeetria tuli. Keskpunkti nihkumisel teise ruutu seos uueneb järgmisel ööl; uus punkt laetakse samas öises käigus.
 
 Seos on hooajal (mitte põllul), sest geomeetria on hooajapõhine.
 
@@ -62,6 +62,8 @@ Seos on hooajal (mitte põllul), sest geomeetria on hooajapõhine.
 - Sordi „vajalik temperatuurisumma valmimiseni“ **ei kuulu sellesse etappi** (etapp 2).
 
 ## Laadimine
+
+- Laaditakse ainult `WEATHER` litsentsimooduliga ettevõtete punktid; `/api/weather/*` on juba selle mooduli all (`src/server/license.ts`). Seisuga 10.11.2026 on moodul kõigil kolmel ettevõttel.
 
 - Taustatöö serveris, sama muster mis `src/server/tripImport.ts`: öine käivitus, olekukirje, vigade logimine.
 - **Esmalaadimine:** uuele punktile andmed alates 01.01.2015, **aasta kaupa** eraldi päringutena (vea korral korratakse ainult seda aastat).
