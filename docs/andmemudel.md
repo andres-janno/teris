@@ -616,6 +616,7 @@ Masinad, haakeriistad ja telemeetriaseadmed. Seadme omand (ettevõttele kuulumis
 | `ImplementAssignment` | `implement_assignments` | jah | Haakeriista ühendus masinaga ajavahemikus |
 | `VehicleTrip` | `vehicle_trips` | jah | Seadme sõit (süüde sisse → välja), tuletatud telemeetriast; põldude ha summa (`areaHa`); muudetav märkus; admin saab sõidu kustutada müraks (`deletedAt`, `deletedBy`) ja taastada, import kustutatud sõitu ei muuda ega loo selle ajale uut |
 | `VehicleTripField` | `vehicle_trip_fields` | jah | Sõidu osa ühel põllul (hooajal): põllul oldud aeg, ha haakeriista laiusega põllu piires, kütus põllul ja koos teekütuse osaga; haakeriist teabena (mitte FK) |
+| `VehicleTripGap` | `vehicle_trip_gaps` | jah | Kahe järjestikuse kustutamata sõidu vahe, kus on jälgimata töö märke (toide < 6 V, seade vaikis, paagitase langes, asukoht hüppas, CAN mootoritunnid kasvasid); võti järgmine sõit (`nextTripId`); tuletatud impordis; kontrolli märge (`reviewedAt`, `reviewedBy`, `reviewNote`) jääb ümberarvutusel alles, kontrollitud vahet ei kustutata |
 | `TripImportState` | `trip_import_state` | jah | Seadme sõitude impordi olek (lõplik kuni, viimane viga, kohtade ja seoste sõrmejälg) |
 | `PointOfInterest` | `points_of_interest` | jah | Objekt (kuivati, ladu, töökoda jm): asukoht, raadius, kontakt |
 
@@ -774,6 +775,9 @@ erDiagram
   TelemetryDevice ||--o{ VehicleTrip : "device"
   TelemetryDevice ||--o| TripImportState : "device"
   VehicleTrip ||--o{ VehicleTripField : "trip"
+  VehicleTrip ||--o| VehicleTripGap : "nextTrip"
+  VehicleTrip |o--o{ VehicleTripGap : "prevTrip"
+  TelemetryDevice ||--o{ VehicleTripGap : "device"
   FieldSeason ||--o{ VehicleTripField : "fieldSeason"
   VehicleTrip |o--o{ WorkEntry : "trip"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
@@ -1361,6 +1365,9 @@ erDiagram
   TelemetryDevice ||--o{ VehicleTrip : "device"
   TelemetryDevice ||--o| TripImportState : "device"
   VehicleTrip ||--o{ VehicleTripField : "trip"
+  VehicleTrip ||--o| VehicleTripGap : "nextTrip"
+  VehicleTrip |o--o{ VehicleTripGap : "prevTrip"
+  TelemetryDevice ||--o{ VehicleTripGap : "device"
   FieldSeason ||--o{ VehicleTripField : "fieldSeason"
   VehicleTrip |o--o{ WorkEntry : "trip"
   Vehicle |o--o{ DeviceAssignment : "vehicle"
