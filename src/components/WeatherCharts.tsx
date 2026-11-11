@@ -1,9 +1,10 @@
 // src/components/WeatherCharts.tsx — ilmavaate SVG graafikud: kuude tulbad (võrreldavad aastad + keskmine) ja kumulatiivsed jooned (aastad + keskmine).
+// Hiirega liikudes näitab punktiirjoon kursori asukoha väärtust mõlemal teljel.
 import React, { useEffect, useRef, useState } from 'react';
 import type { WeatherMonth, WeatherCumulativeSeries, WeatherCumulativePoint } from '../types/weather';
 import { MONTH_NAMES, MONTH_SHORT, fmt0 } from '../services/weatherFormat';
 
-const H = 220, M = { top: 12, right: 12, bottom: 28, left: 44 };
+const H = 240, M = { top: 12, right: 12, bottom: 28, left: 48 };
 
 // Graafik joonistatakse tegeliku laiusega (mitte viewBox-skaleerimisega), et tekst jääks rakenduse fondisuurusesse
 function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
@@ -18,35 +19,81 @@ function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
   }, []);
   return [ref, w];
 }
-const niceTop = (max: number) => {
-  if (max <= 0) return 10;
-  const pow = 10 ** Math.floor(Math.log10(max));
-  return Math.ceil(max / pow) * pow;
+
+// Y-telje samm 1/2/2,5/5 × 10^k, umbes 5–8 jaotist
+function niceScale(max: number): { top: number; step: number } {
+  if (max <= 0) return { top: 10, step: 2 };
+  const raw = max / 6;
+  const pow = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((k) => k * pow).find((s) => s >= raw)!;
+  return { top: Math.ceil(max / step) * step, step };
+}
+
+const Grid: React.FC<{ top: number; step: number; y: (v: number) => number; W: number }> = ({ top, step, y, W }) => {
+  const ticks = [];
+  for (let v = 0; v <= top + step / 2; v += step) ticks.push(v);
+  return (
+    <>
+      {ticks.map((v) => (
+        <g key={v}>
+          <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="weather-grid" />
+          <text x={M.left - 6} y={y(v) + 4} textAnchor="end" className="weather-axis">{fmt0(v)}</text>
+        </g>
+      ))}
+      <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className="weather-axis-line" />
+    </>
+  );
 };
 
-const Grid: React.FC<{ top: number; y: (v: number) => number; W: number }> = ({ top, y, W }) => (
-  <>
-    {[0, 0.5, 1].map((f) => (
-      <g key={f}>
-        <line x1={M.left} x2={W - M.right} y1={y(top * f)} y2={y(top * f)} className="weather-grid" />
-        <text x={M.left - 6} y={y(top * f) + 4} textAnchor="end" className="weather-axis">{fmt0(top * f)}</text>
-      </g>
-    ))}
-  </>
-);
+type Hover = { x: number; y: number } | null;
+function useHover(W: number): [Hover, { onMouseMove: (e: React.MouseEvent<SVGSVGElement>) => void; onMouseLeave: () => void }] {
+  const [hover, setHover] = useState<Hover>(null);
+  return [hover, {
+    onMouseMove: (e) => {
+      const r = e.currentTarget.getBoundingClientRect();
+      const x = e.clientX - r.left, y = e.clientY - r.top;
+      setHover(x >= M.left && x <= W - M.right && y >= M.top && y <= H - M.bottom ? { x, y } : null);
+    },
+    onMouseLeave: () => setHover(null)
+  }];
+}
+
+// Punktiirjooned kursorist telgedele ja väärtussildid telgedel
+const Crosshair: React.FC<{ hover: Hover; yLabel: string; xLabel: string; W: number }> = ({ hover, yLabel, xLabel, W }) => {
+  if (!hover) return null;
+  const bottom = H - M.bottom;
+  const yw = yLabel.length * 6.6 + 10, xw = xLabel.length * 6.6 + 12;
+  const xl = Math.min(Math.max(hover.x, M.left + xw / 2), W - M.right - xw / 2);
+  return (
+    <g className="weather-crosshair" pointerEvents="none">
+      <line x1={M.left} x2={hover.x} y1={hover.y} y2={hover.y} />
+      <line x1={hover.x} x2={hover.x} y1={hover.y} y2={bottom} />
+      <rect x={M.left - yw - 2} y={hover.y - 9} width={yw} height={18} rx={3} className="weather-crosshair-label" />
+      <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className="weather-crosshair-text">{yLabel}</text>
+      <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className="weather-crosshair-label" />
+      <text x={xl} y={bottom + 17} textAnchor="middle" className="weather-crosshair-text">{xLabel}</text>
+    </g>
+  );
+};
 
 // Värv = aasta järjekord võrdluses, sama tulpades ja joontes
 export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metric: 'precipMm' | 'gdd'; unit: string }> = ({ months, years, metric, unit }) => {
   const [ref, W] = useWidth();
+  const [hover, handlers] = useHover(W);
   const normalKey = metric === 'precipMm' ? 'normalPrecipMm' : 'normalGdd';
-  const top = niceTop(Math.max(0, ...months.flatMap((m) => [...m.years.map((y) => y[metric] ?? 0), m[normalKey] ?? 0])));
+  const { top, step } = niceScale(Math.max(0, ...months.flatMap((m) => [...m.years.map((y) => y[metric] ?? 0), m[normalKey] ?? 0])));
   const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
   const slot = iw / months.length, n = years.length + 1;
   const bw = Math.max(2, Math.min(18, (slot * 0.8) / n - 1));
   const y = (v: number) => M.top + ih - (v / top) * ih;
+  const hoverMonth = hover ? months[Math.min(months.length - 1, Math.floor((hover.x - M.left) / slot))] : null;
   return (
-    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`}>
-      <Grid top={top} y={y} W={W} />
+    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`} {...handlers}>
+      <Grid top={top} step={step} y={y} W={W} />
+      {months.map((m, i) => (
+        <line key={m.month} x1={M.left + i * slot} x2={M.left + i * slot} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />
+      ))}
+      <line x1={W - M.right} x2={W - M.right} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />
       {months.map((m, i) => {
         const x0 = M.left + i * slot + slot / 2 - (n * (bw + 1)) / 2;
         const nv = m[normalKey];
@@ -65,27 +112,37 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
           </g>
         );
       })}
+      <Crosshair hover={hover} W={W} yLabel={hover ? `${fmt0(((y(0) - hover.y) / ih) * top)} ${unit}` : ''} xLabel={hoverMonth ? MONTH_NAMES[hoverMonth.month] : ''} />
     </svg></div>
   );
 };
 
-// Päevanumber perioodi algusest; teljemärgid kuu alguses (mitteliigaasta järgi)
+// Päevanumber perioodi algusest (mitteliigaasta järgi)
 const dayOf = (month: number, firstMonth: number) => Math.round((Date.UTC(2025, month - 1, 1) - Date.UTC(2025, firstMonth - 1, 1)) / 86_400_000);
+const dateOfDay = (d: number, firstMonth: number) => {
+  const t = new Date(Date.UTC(2025, firstMonth - 1, 1 + d));
+  return `${String(t.getUTCDate()).padStart(2, '0')}.${String(t.getUTCMonth() + 1).padStart(2, '0')}`;
+};
 
 export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; normal: WeatherCumulativePoint[] | null; metric: 'gdd' | 'precipMm'; unit: string; firstMonth: number; lastMonth: number }> = ({ series, normal, metric, unit, firstMonth, lastMonth }) => {
   const [ref, W] = useWidth();
+  const [hover, handlers] = useHover(W);
   const maxDay = dayOf(lastMonth + 1, firstMonth) - 1;
-  const top = niceTop(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p[metric])), ...(normal ?? []).map((p) => p[metric])));
+  const { top, step } = niceScale(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p[metric])), ...(normal ?? []).map((p) => p[metric])));
   const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
   const x = (d: number) => M.left + (d / maxDay) * iw;
   const y = (v: number) => M.top + ih - (v / top) * ih;
-  const ticks = [];
-  for (let m = firstMonth; m <= lastMonth; m++) ticks.push({ d: dayOf(m, firstMonth), l: lastMonth - firstMonth > 6 ? MONTH_SHORT[m] : `1. ${MONTH_SHORT[m]}` });
+  // Kuu piirid (markerid) ja kuu nimi kuu keskel
+  const bounds: number[] = [];
+  for (let m = firstMonth; m <= lastMonth + 1; m++) bounds.push(Math.min(maxDay, dayOf(m, firstMonth)));
+  const labels = bounds.slice(0, -1).map((d, i) => ({ d: (d + bounds[i + 1]) / 2, l: MONTH_SHORT[firstMonth + i] }));
   const path = (pts: WeatherCumulativePoint[]) => pts.map((p) => `${x(p.day)},${y(p[metric])}`).join(' ');
+  const hoverDay = hover ? Math.round(((hover.x - M.left) / iw) * maxDay) : 0;
   return (
-    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'}>
-      <Grid top={top} y={y} W={W} />
-      {ticks.map((t) => <text key={t.d} x={x(t.d)} y={H - 8} textAnchor="middle" className="weather-axis">{t.l}</text>)}
+    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'} {...handlers}>
+      <Grid top={top} step={step} y={y} W={W} />
+      {bounds.map((d) => <line key={d} x1={x(d)} x2={x(d)} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />)}
+      {labels.map((t) => <text key={t.l} x={x(t.d)} y={H - 8} textAnchor="middle" className="weather-axis">{t.l}</text>)}
       {normal && normal.length > 0 && (
         <polyline fill="none" className="weather-line weather-line-normal" points={path(normal)}>
           <title>{`Keskmine: ${fmt0(normal[normal.length - 1][metric])} ${unit}`}</title>
@@ -96,6 +153,7 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; norm
           <title>{`${s.year}: ${fmt0(s.points[s.points.length - 1]?.[metric] ?? 0)} ${unit}`}</title>
         </polyline>
       ))}
+      <Crosshair hover={hover} W={W} yLabel={hover ? `${fmt0(((y(0) - hover.y) / ih) * top)} ${unit}` : ''} xLabel={hover ? dateOfDay(hoverDay, firstMonth) : ''} />
     </svg></div>
   );
 };

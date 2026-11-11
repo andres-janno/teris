@@ -11258,6 +11258,12 @@ td.stock-qty-out { color: #dc2626; }
 .weather-chart-box { width: 100%; }
 .weather-chart { display: block; }
 .weather-grid { stroke: var(--border-card); stroke-width: 1; }
+.weather-axis-line { stroke: var(--text-secondary); stroke-width: 1; opacity: 0.5; }
+.weather-month-tick { stroke: var(--text-secondary); stroke-width: 1; }
+.weather-chart { cursor: crosshair; }
+.weather-crosshair line { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 3 3; }
+.weather-crosshair-label { fill: var(--text-primary, #334155); }
+.weather-crosshair-text { font-size: 11px; font-weight: 600; fill: var(--bg-modal, #fff); }
 .weather-axis { font-size: 11px; fill: var(--text-secondary); }
 .weather-bar-year { fill: #2563eb; background: #2563eb; }
 .weather-bar-normal { fill: #cbd5e1; background: #cbd5e1; }
