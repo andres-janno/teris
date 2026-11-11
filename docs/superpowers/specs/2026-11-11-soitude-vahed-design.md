@@ -1,0 +1,138 @@
+# Sõitude vahede kontroll (jälgimata töö märgid) — disain
+
+Kuupäev: 2026-11-11
+Staatus: kinnitatud arutelus, ootab ülevaatust
+
+## Eesmärk
+
+Märgata olukordi, kus masin töötas, aga telemeetriaseade oli lahti ühendatud või muul põhjusel ei salvestanud
+(„mootoritundidega petmine“). Kasutaja näeb sõitude registris kahe sõidu vahel hoiatust, saab selle läbi vaadata ja
+märkida kontrollituks koos selgitusega. AI (MCP) näeb kontrollimata hoiatusi.
+
+## Taust ja piirang
+
+- Seadme mootoritunnid (`engine_worktime_counted_min`, varem `io_103`) loeb **seade ise**, mitte traktor. Seadme
+  lahtiühendamisel jääb ka see lugeja seisma, seega mootoritundide võrdlus pettust ei näita.
+- Traktori enda tunnilugejat (CAN koguaeg või käsitsi näit) ei ole ega tule (kasutaja otsus 2026-11-11).
+- Seetõttu kasutame **kaudseid märke**. Need on vihjed, mitte tõend; seepärast on hoiatusel kontrolli märge.
+- Seadmel on sisemine aku: toitest lahti olles saadab see edasi ja `external_voltage_v` langeb ~0-ni.
+
+Andmete eelkontroll 2026-11-11 (kõik seadmed, kustutamata sõidud): toitekatkestusi 1 (Claas 03.11 14:58, 1,8 V),
+asukohahüppeid > 300 m 2, andmeauke > 3 h 0, kütuse langusi 2 — mõlemad valed (vt „Kütuse lõpunäit“).
+
+## Mõisted
+
+**Vahe** — ajavahemik sama seadme kahe järjestikuse **kustutamata** sõidu vahel: eelmise sõidu `endedAt` →
+järgmise sõidu `startedAt`. Kustutatud (müra) sõidu aeg kuulub vahe sisse — ka kustutatud sõit, mille ajal mootor
+töötas, on jälgimata töö kandidaat.
+
+Vahe seotakse **järgmise sõiduga** (`nextTripId`). Import säilitab sõidu id ümberarvutamisel (kattuv vana sõit annab
+oma id uuele), seega püsib ka vahe ja selle kontrolli märge.
+
+## Märgid ja piirid
+
+| Märk | Väli | Piir | Allikas |
+|---|---|---|---|
+| Toide kadus | `powerLostMinutes` | pinge < 6 V, kokku ≥ 5 min | seadme punktid vahe ajal (`external_voltage_v`) |
+| Seade vaikis | `silentMinutes` | pikim paus järjestikuste punktide vahel ≥ 3 h | seadme punktid vahe ajal (mistahes väli) |
+| Kütus kadus | `fuelDropPct` | eelmise sõidu lõpunäit − järgmise algusnäit ≥ 5 | sõitude `fuelLevelEndPct` / `fuelLevelStartPct` |
+| Asukoht hüppas | `jumpM` | ≥ 500 m | eelmise sõidu `endLat/Lng` → järgmise `startLat/Lng` |
+
+- Toitekatkestuse kestus: järjestikuste pingepunktide vahed, kus vahe alguspunkti pinge < 6 V; vahe otsad lõigatakse
+  vahe piiridele. Seade vaikimise ajal (punktide vahe > 3 h) toitekatkestuse kestust ei loeta (teadmata).
+- Seade vaikis: arvestatakse ka vahe algusest esimese punktini ja viimasest punktist vahe lõpuni.
+- Kütuse tõus (tankimine) hoiatust ei anna. Kui kumbki näit puudub, märki ei arvutata.
+- Vahe salvestatakse ainult siis, kui **vähemalt üks märk ületab piiri**. Salvestatakse kõigi nelja märgi väärtused
+  (ka piiri alla jäänud, `null` = ei saanud arvutada), et kuvada täit pilti.
+- Piirid on konstandid ühes moodulis (`tripGaps.ts`), mitte seaded.
+
+## Kütuse lõpunäit
+
+Kütusetaseme andur annab süüte sisse- ja väljalülitamise hetkel valesid väärtusi (sh 0). Algusnäidul on juba 2 min
+settimine. Lõpunäit muutub: `fuelLevelEndPct` = viimane näit, mis ei ole 0 ega jää sõidu viimase 60 s sisse; kui
+sellist pole, viimane nullist erinev näit; kui ka seda pole, `null`. Sama reegel (0 välja) kehtib algusnäidule.
+Olemasolevad sõidud arvutatakse uuesti (`finalizedUntil = NULL`, nagu varasematel ümberarvutustel).
+
+## Andmemudel
+
+### `VehicleTripGap` (`vehicle_trip_gaps`)
+
+| väli | tähendus |
+|---|---|
+| `id` | cuid |
+| `tenantId` | ettevõte (nagu teistel ettevõtte tabelitel, RLS) |
+| `deviceId` | seade (FK, cascade) |
+| `prevTripId` | eelmine sõit (FK, `onDelete: SetNull`) |
+| `nextTripId` | järgmine sõit (FK, cascade), **unikaalne** |
+| `startedAt`, `endedAt` | vahe piirid |
+| `powerLostMinutes`, `silentMinutes`, `fuelDropPct`, `jumpM` | märkide väärtused (Float?) |
+| `reviewedAt`, `reviewedBy`, `reviewNote` | kontrolli märge (kõik tühjad = kontrollimata) |
+| `computedAt` | viimane arvutus |
+| `createdAt`, `updatedAt` | |
+
+Indeksid: `(deviceId, startedAt)`, `(tenantId, reviewedAt)`.
+
+## Arvutus
+
+Uus puhas moodul `src/server/tripGaps.ts`:
+
+```ts
+computeGaps(trips: GapTrip[], samples: GapSample[]): GapCalc[]
+```
+
+- `trips` — ajas kasvavalt kustutamata sõidud (id, aeg, otsapunktid, kütuse otsanäidud).
+- `samples` — vahe ajale jäävad seadme punktid (aeg, pinge või `null`).
+- Tagastab ainult piiri ületanud vahed.
+
+Telemeetriast uus päring `fetchGapSamples(imei, from, to)` (`telemetryAccess.ts`): iga punkti aeg ja
+`external_voltage_v`, omandiperioodide piires, ajas kasvavalt. Asukohta ei nõuta (erinevalt `fetchTripSamples`).
+
+Impordis (`tripImport.ts`): pärast iga `writeChunk`-i arvutatakse vahed seadme sõitudele, mille algus on
+vahemikus (`from`, `to`], koos sellele eelneva viimase kustutamata sõiduga. Kirjutamine:
+
+- piiri ületav vahe → upsert `nextTripId` järgi; märkide väärtused, piirid ja `prevTripId` uuenevad, **kontrolli märge jääb**;
+- vahemikus olevad olemasolevad vahed, mida uus arvutus ei andnud → kustutatakse, **v.a. kontrollitud** vahed
+  (läbivaadatud otsust ei kustutata; need jäävad, kuni järgmine sõit ise kaob).
+- Sama tehing ja sama seadme lukk mis sõitudel.
+
+Sõidu kustutamine müraks või taastamine registris muudab vahesid: pärast kustutamist/taastamist arvutatakse selle
+seadme vahed ümber kustutatud sõidu ümbruses (eelmine ja järgmine kustutamata sõit).
+
+## API
+
+- `GET /api/trips` — iga sõidu juures `gapBefore` (vahe, mis lõpeb selle sõidu algusega, või `null`).
+  Uus filter `gaps=all|unreviewed`: ainult sõidud, mille ees on vahe (kõik / kontrollimata).
+- `GET /api/trips/gaps/count` — kontrollimata vahede arv (praegustel filtritel, v.a. vahe filter).
+- `PATCH /api/trips/gaps/:id` — `{ reviewed: boolean, note?: string }`; `reviewed: true` nõuab mittetühja selgitust;
+  `false` tühjendab märke. Õigus: sama mis sõidu märkuse muutmisel.
+
+## UI (`TripRegister.tsx`)
+
+- Kahe sõidu vahel hoiatusrida (kogu tabeli laiuses), nt
+  „⚠ Sõitude vahel 14 h 05 min: toide kadus 2 h 10 min · kütus −12% · asukoht +1,4 km“.
+  Kuvatakse ainult piiri ületanud märgid; numbrid Eesti formaadis.
+- Real nupp „Märgi kontrollituks“ → väike dialoog selgitusega (kohustuslik). Kontrollitud rida on hall:
+  „Kontrollitud pp.kk.aaaa HH:MM, <kasutaja>: <selgitus>“ ja nupp „Ava uuesti“.
+- Filtriribal valik „Hoiatused: kõik / kontrollimata“ (`FilterClear`-iga), selle kõrval kontrollimata vahede arv.
+- Menüüs loendurit ei tule (menüüs pole loendurite mehhanismi).
+
+## MCP
+
+Sõitude/sõidukite tööriistadesse (`src/server/mcp/tools/fleet.ts`): uus tööriist `list_trip_gaps`
+(seade või sõiduk, periood, `unreviewedOnly` vaikimisi `true`) — vahe piirid, sõiduk, märkide väärtused, kontrolli
+märge. Kirjeldus ütleb, et need on jälgimata töö **kaudsed märgid**, mitte tõend. Juhis admin.teris.ee-s täiendatakse.
+
+## Testid
+
+- `tripGaps.test.ts`: iga märk eraldi piiril ja piiri all; tankimine ei anna hoiatust; kustutatud sõit vahe sees;
+  puuduvad näidud (`null`); seade vaikis ka vahe otstes; toitekatkestus vaikimise ajal ei loe.
+- `tripSegments.test.ts`: kütuse lõpunäit ignoreerib 0 ja viimast 60 s.
+- `tripImport.test.ts`: ümberarvutus säilitab kontrolli märke; kontrollitud vahe ei kao, kui märk langeb piiri alla;
+  kontrollimata vahe kaob.
+- `tripsApi.test.ts`: `gapBefore`, filter `gaps`, PATCH valideerimine.
+
+## Väljas (YAGNI)
+
+- Traktori enda tunnilugeja (CAN või käsitsi) — kasutaja ei saa seda pakkuda.
+- Seadistatavad piirid.
+- Teavitused (e-post, push).
