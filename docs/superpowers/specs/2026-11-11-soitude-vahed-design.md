@@ -13,12 +13,16 @@ märkida kontrollituks koos selgitusega. AI (MCP) näeb kontrollimata hoiatusi.
 
 - Seadme mootoritunnid (`engine_worktime_counted_min`, varem `io_103`) loeb **seade ise**, mitte traktor. Seadme
   lahtiühendamisel jääb ka see lugeja seisma, seega mootoritundide võrdlus pettust ei näita.
-- Traktori enda tunnilugejat (CAN koguaeg või käsitsi näit) ei ole ega tule (kasutaja otsus 2026-11-11).
-- Seetõttu kasutame **kaudseid märke**. Need on vihjed, mitte tõend; seepärast on hoiatusel kontrolli märge.
+- Käsitsi tunnilugeja näitu ei tule (kasutaja otsus 2026-11-11).
+- Masina enda mootori koguaega CAN-ist (`engine_total_hours_h`) saadab praegu ainult **kombain** (FMC650), täistundide
+  täpsusega. Suur Claas (FMC150) saadab ainult seadme enda lugejat; kui selle seadistuses CAN koguaeg sisse lülitada ja
+  Claas seda annab, hakkab tunnimärk ka seal tööle ilma koodimuudatuseta. Väike Claas (FMC125) tunde ei saada.
+- Seetõttu kasutame peamiselt **kaudseid märke**; CAN tunnid on ainus otsene märk, kus need olemas on. Need on vihjed, mitte tõend; seepärast on hoiatusel kontrolli märge.
 - Seadmel on sisemine aku: toitest lahti olles saadab see edasi ja `external_voltage_v` langeb ~0-ni.
 
 Andmete eelkontroll 2026-11-11 (kõik seadmed, kustutamata sõidud): toitekatkestusi 1 (Claas 03.11 14:58, 1,8 V),
 asukohahüppeid > 300 m 2, andmeauke > 3 h 0, kütuse langusi 2 — mõlemad valed (vt „Kütuse lõpunäit“).
+Kombaini CAN tundide kasv sõitude vahel: 1 juhtum, 23.10 10:16 → 25.10 09:50 +1 h, samal ajal asukoht +800 m.
 
 ## Mõisted
 
@@ -37,13 +41,18 @@ oma id uuele), seega püsib ka vahe ja selle kontrolli märge.
 | Seade vaikis | `silentMinutes` | pikim paus järjestikuste punktide vahel ≥ 3 h | seadme punktid vahe ajal (mistahes väli) |
 | Kütus kadus | `fuelDropPct` | eelmise sõidu lõpunäit − järgmise algusnäit ≥ 5 | sõitude `fuelLevelEndPct` / `fuelLevelStartPct` |
 | Asukoht hüppas | `jumpM` | ≥ 500 m | eelmise sõidu `endLat/Lng` → järgmise `startLat/Lng` |
+| Mootoritunnid kasvasid | `engineHoursGrowth` | ≥ 2 h | CAN `engine_total_hours_h`: viimane näit ≤ vahe algus, esimene näit ≥ vahe lõpp |
 
 - Toitekatkestuse kestus: järjestikuste pingepunktide vahed, kus vahe alguspunkti pinge < 6 V; vahe otsad lõigatakse
   vahe piiridele. Seade vaikimise ajal (punktide vahe > 3 h) toitekatkestuse kestust ei loeta (teadmata).
 - Seade vaikis: arvestatakse ka vahe algusest esimese punktini ja viimasest punktist vahe lõpuni.
+- Mootoritunnid: ainult `engine_total_hours_h` (masina CAN koguaeg), **mitte** seadme enda lugeja
+  (`engine_worktime_counted_min` / `io_103`) — see seisab koos seadmega. Näit on täistundides, seepärast üksi annab
+  hoiatuse alles ≥ 2 h; kasv +1 h salvestatakse ja kuvatakse, kui mõni teine märk ületab piiri, aga üksi vahet ei tekita.
+  Näitu otsitakse kuni 1 h väljapoole vahe piire; kui kummalgi poolel pole, märki ei arvutata.
 - Kütuse tõus (tankimine) hoiatust ei anna. Kui kumbki näit puudub, märki ei arvutata.
-- Vahe salvestatakse ainult siis, kui **vähemalt üks märk ületab piiri**. Salvestatakse kõigi nelja märgi väärtused
-  (ka piiri alla jäänud, `null` = ei saanud arvutada), et kuvada täit pilti.
+- Vahe salvestatakse ainult siis, kui **vähemalt üks märk ületab piiri**. Salvestatakse kõigi märkide väärtused
+  (ka piiri alla jäänud, `null` = ei saanud arvutada; kõigi viie), et kuvada täit pilti.
 - Piirid on konstandid ühes moodulis (`tripGaps.ts`), mitte seaded.
 
 ## Kütuse lõpunäit
@@ -65,7 +74,7 @@ Olemasolevad sõidud arvutatakse uuesti (`finalizedUntil = NULL`, nagu varasemat
 | `prevTripId` | eelmine sõit (FK, `onDelete: SetNull`) |
 | `nextTripId` | järgmine sõit (FK, cascade), **unikaalne** |
 | `startedAt`, `endedAt` | vahe piirid |
-| `powerLostMinutes`, `silentMinutes`, `fuelDropPct`, `jumpM` | märkide väärtused (Float?) |
+| `powerLostMinutes`, `silentMinutes`, `fuelDropPct`, `jumpM`, `engineHoursGrowth` | märkide väärtused (Float?) |
 | `reviewedAt`, `reviewedBy`, `reviewNote` | kontrolli märge (kõik tühjad = kontrollimata) |
 | `computedAt` | viimane arvutus |
 | `createdAt`, `updatedAt` | |
@@ -81,11 +90,12 @@ computeGaps(trips: GapTrip[], samples: GapSample[]): GapCalc[]
 ```
 
 - `trips` — ajas kasvavalt kustutamata sõidud (id, aeg, otsapunktid, kütuse otsanäidud).
-- `samples` — vahe ajale jäävad seadme punktid (aeg, pinge või `null`).
+- `samples` — vahe ajale jäävad seadme punktid (aeg, pinge või `null`, CAN mootoritunnid või `null`), sh kuni 1 h
+  enne ja pärast vahet tunninäitude jaoks.
 - Tagastab ainult piiri ületanud vahed.
 
-Telemeetriast uus päring `fetchGapSamples(imei, from, to)` (`telemetryAccess.ts`): iga punkti aeg ja
-`external_voltage_v`, omandiperioodide piires, ajas kasvavalt. Asukohta ei nõuta (erinevalt `fetchTripSamples`).
+Telemeetriast uus päring `fetchGapSamples(imei, from, to)` (`telemetryAccess.ts`): iga punkti aeg,
+`external_voltage_v` ja `engine_total_hours_h`, omandiperioodide piires, ajas kasvavalt. Asukohta ei nõuta (erinevalt `fetchTripSamples`).
 
 Impordis (`tripImport.ts`): pärast iga `writeChunk`-i arvutatakse vahed seadme sõitudele, mille algus on
 vahemikus (`from`, `to`], koos sellele eelneva viimase kustutamata sõiduga. Kirjutamine:
@@ -109,8 +119,8 @@ seadme vahed ümber kustutatud sõidu ümbruses (eelmine ja järgmine kustutamat
 ## UI (`TripRegister.tsx`)
 
 - Kahe sõidu vahel hoiatusrida (kogu tabeli laiuses), nt
-  „⚠ Sõitude vahel 14 h 05 min: toide kadus 2 h 10 min · kütus −12% · asukoht +1,4 km“.
-  Kuvatakse ainult piiri ületanud märgid; numbrid Eesti formaadis.
+  „⚠ Sõitude vahel 14 h 05 min: toide kadus 2 h 10 min · kütus −12% · asukoht +1,4 km · mootoritunnid +3 h“.
+  Kuvatakse piiri ületanud märgid ja mootoritundide kasv alates +1 h; numbrid Eesti formaadis.
 - Real nupp „Märgi kontrollituks“ → väike dialoog selgitusega (kohustuslik). Kontrollitud rida on hall:
   „Kontrollitud pp.kk.aaaa HH:MM, <kasutaja>: <selgitus>“ ja nupp „Ava uuesti“.
 - Filtriribal valik „Hoiatused: kõik / kontrollimata“ (`FilterClear`-iga), selle kõrval kontrollimata vahede arv.
@@ -124,7 +134,8 @@ märge. Kirjeldus ütleb, et need on jälgimata töö **kaudsed märgid**, mitte
 
 ## Testid
 
-- `tripGaps.test.ts`: iga märk eraldi piiril ja piiri all; tankimine ei anna hoiatust; kustutatud sõit vahe sees;
+- `tripGaps.test.ts`: iga märk eraldi piiril ja piiri all; mootoritunnid +1 h üksi ei tekita vahet, koos teise märgiga
+  kuvatakse; seadme enda lugejat ei kasutata; tankimine ei anna hoiatust; kustutatud sõit vahe sees;
   puuduvad näidud (`null`); seade vaikis ka vahe otstes; toitekatkestus vaikimise ajal ei loe.
 - `tripSegments.test.ts`: kütuse lõpunäit ignoreerib 0 ja viimast 60 s.
 - `tripImport.test.ts`: ümberarvutus säilitab kontrolli märke; kontrollitud vahe ei kao, kui märk langeb piiri alla;
@@ -133,6 +144,6 @@ märge. Kirjeldus ütleb, et need on jälgimata töö **kaudsed märgid**, mitte
 
 ## Väljas (YAGNI)
 
-- Traktori enda tunnilugeja (CAN või käsitsi) — kasutaja ei saa seda pakkuda.
+- Käsitsi tunnilugeja näit — kasutaja ei saa seda pakkuda.
 - Seadistatavad piirid.
 - Teavitused (e-post, push).
