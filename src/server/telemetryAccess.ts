@@ -386,7 +386,8 @@ export async function fetchTripSamples(imei: string, fromExclusive: Date, toIncl
 
 /**
  * Sõitude vahede jaoks: iga seadme punkti aeg, toitepinge ja masina CAN mootori koguaeg (fromExclusive, toInclusive],
- * omandiperioodide piires, ajas kasvavalt. Asukohta ei nõuta — ka asukohata punkt näitab, et seade saatis.
+ * omandiperioodide piires, ajas kasvavalt. Punkt loeb saadetuks, kui sellel on pinge, CAN tunnid või asukoht
+ * (asukoha rida jääb päringusse vaid selleks; asukohta ennast ei loeta).
  */
 export async function fetchGapSamples(imei: string, fromExclusive: Date, toInclusive: Date): Promise<GapSample[]> {
   if (!tsdb) return [];
@@ -405,6 +406,7 @@ export async function fetchGapSamples(imei: string, fromExclusive: Date, toInclu
       WHERE m.device = ${imei}
         AND m.time > ${fromExclusive} AND m.time <= ${toInclusive}
         AND m.measurement = 'data'
+        AND m.field IN ('external_voltage_v', 'engine_total_hours_h', 'latitude')
     )
     SELECT time,
       max(v) FILTER (WHERE field = 'external_voltage_v') AS voltage,

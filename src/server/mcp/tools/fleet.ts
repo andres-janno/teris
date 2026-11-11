@@ -9,6 +9,7 @@ import { defineTool, canSeeFinance, hasTelemetry } from '../context.ts';
 import { parseDateInput, dayAfter, fieldLabel, fmtDate, fmtDateTime, round2, ToolInputError } from '../format.ts';
 import { resolveVehicleId } from './works.ts';
 import { loadAssignmentResolver } from '../../tripAssignments.ts';
+import { GAP_LIMITS } from '../../../services/tripGapLimits.ts';
 import { ignitionHoursByDay, tallinnMidnightUtc } from '../ignitionHours.ts';
 
 const MAX_DAYS = 31;
@@ -155,7 +156,7 @@ export const fleetTools = [
         .filter((x) => !vehicleId || x.target.vehicleId === vehicleId);
       return {
         from: fmtDate(from), to: fmtDate(to), unreviewedOnly, total: all.length, shown: Math.min(all.length, GAP_LIMIT),
-        note: 'Kaudsed märgid, mitte tõend. silentMinutes = pikim paus, mil seade midagi ei saatnud; engineHoursGrowth on täistundides (+1 h võib olla ümardus).',
+        note: `Kaudsed märgid, mitte tõend. Hoiatus on märk, mis ületab piiri: toide kadus ≥ ${GAP_LIMITS.powerLostMinutes} min, seade vaikis ≥ ${GAP_LIMITS.silentMinutes} min, kütus langes ≥ ${GAP_LIMITS.fuelDropPct} protsendipunkti, asukoht ≥ ${GAP_LIMITS.jumpM} m, mootoritunnid ≥ ${GAP_LIMITS.engineHoursGrowth} h; väiksemad väärtused on taustaks. silentMinutes = pikim paus, mil seade midagi ei saatnud; engineHoursGrowth on täistundides (+1 h võib olla ümardus).`,
         gaps: all.slice(0, GAP_LIMIT).map(({ g, target }) => ({
           vehicle: target.vehicleName, from: fmtDateTime(g.startedAt), to: fmtDateTime(g.endedAt),
           hours: round2((g.endedAt.getTime() - g.startedAt.getTime()) / 3_600_000),

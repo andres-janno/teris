@@ -81,7 +81,12 @@ async function recomputeGapsAround(trip: TripRow): Promise<void> {
   const next = await prisma.vehicleTrip.findFirst({
     where: { deviceId: trip.deviceId, deletedAt: null, startedAt: { gt: trip.startedAt } }, orderBy: { startedAt: 'asc' }, select: { startedAt: true }
   });
-  await recomputeGaps({ id: device.id, imei: device.imei }, new Date(trip.startedAt.getTime() - 1), next?.startedAt ?? trip.startedAt, fetchGapSamples);
+  try {
+    await recomputeGaps({ id: device.id, imei: device.imei }, new Date(trip.startedAt.getTime() - 1), next?.startedAt ?? trip.startedAt, fetchGapSamples);
+  } catch (err) {
+    // Sõidu muudatus on salvestatud; vahe paraneb järgmisel impordil (viimased 24 h)
+    console.error('trip gaps: ümberarvutus ebaõnnestus', err);
+  }
 }
 
 const parseIso = (v: string | null): Date | null => {
