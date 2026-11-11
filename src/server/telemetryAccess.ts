@@ -4,6 +4,7 @@
 import { prisma, tsdb } from './db.ts';
 import { resolveHistoryWindow, HISTORY_MAX_POINTS } from './historyWindow.ts';
 import type { TripSample } from './tripSegments.ts';
+import type { GapSample } from './tripGaps.ts';
 
 export type OwnershipWindow = { from: Date; to: Date | null };
 
@@ -381,4 +382,40 @@ export async function fetchTripSamples(imei: string, fromExclusive: Date, toIncl
     });
   }
   return out;
+}
+
+/**
+ * Sõitude vahede jaoks: iga seadme punkti aeg, toitepinge ja masina CAN mootori koguaeg (fromExclusive, toInclusive],
+ * omandiperioodide piires, ajas kasvavalt. Asukohta ei nõuta — ka asukohata punkt näitab, et seade saatis.
+ */
+export async function fetchGapSamples(imei: string, fromExclusive: Date, toInclusive: Date): Promise<GapSample[]> {
+  if (!tsdb) return [];
+  const segments = clampWindow((await ownershipWindows('IMEI', [imei])).get(imei) ?? [], fromExclusive, toInclusive);
+  if (segments.length === 0) return [];
+  const froms = segments.map((s) => s.from.toISOString());
+  const tos = segments.map((s) => s.to.toISOString());
+  const incl = segments.map((s) => s.toInclusive);
+  const rows = await tsdb.$queryRaw<{ time: Date; voltage: number | null; can_hours: number | null }[]>`
+    WITH pts AS (
+      SELECT m.time, m.field,
+        COALESCE(m.value_double, m.value_int::double precision, m.value_bigint::double precision) AS v
+      FROM measurements m
+      JOIN unnest(${froms}::timestamptz[], ${tos}::timestamptz[], ${incl}::boolean[]) AS s(seg_from, seg_to, seg_incl)
+        ON m.time >= s.seg_from AND (m.time < s.seg_to OR (s.seg_incl AND m.time = s.seg_to))
+      WHERE m.device = ${imei}
+        AND m.time > ${fromExclusive} AND m.time <= ${toInclusive}
+        AND m.measurement = 'data'
+    )
+    SELECT time,
+      max(v) FILTER (WHERE field = 'external_voltage_v') AS voltage,
+      max(v) FILTER (WHERE field = 'engine_total_hours_h') AS can_hours
+    FROM pts
+    GROUP BY time
+    ORDER BY time ASC
+  `;
+  return rows.map((r) => ({
+    time: r.time,
+    voltage: r.voltage == null ? null : Number(r.voltage),
+    canHours: r.can_hours == null ? null : Number(r.can_hours)
+  }));
 }

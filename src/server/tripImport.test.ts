@@ -4,6 +4,7 @@ import { prisma, authDb, runAsTenant } from './db';
 import { importDeviceTrips, refreshTripPlaces, refreshTripAssignments, importTenantTrips, type ImportDeps } from './tripImport';
 import type { TripSample } from './tripSegments';
 import type { Place } from './tripRoute';
+import type { GapSample } from './tripGaps';
 
 const T = `test-tenant-trips-${process.pid}`;
 const T2 = `test-tenant-trips2-${process.pid}`;
@@ -28,12 +29,14 @@ let samples: TripSample[] = [];
 let places: Place[] = [];
 let nowMin = 0;
 let failImei: string | null = null;
+let gapSamples: GapSample[] = [];
 const deps: ImportDeps = {
   now: () => at(nowMin),
   fetchSamples: async (imei, from, to) => {
     if (imei === failImei) throw new Error('tsdb maas');
     return samples.filter((s) => s.time > from && s.time <= to);
   },
+  fetchGapSamples: async (_imei, from, to) => gapSamples.filter((s) => s.time > from && s.time <= to),
   loadPlaces: async () => places
 };
 
@@ -91,6 +94,7 @@ beforeEach(async () => {
   samples = [];
   places = [];
   failImei = null;
+  gapSamples = [];
   await run(async () => {
     await prisma.workEntry.deleteMany({});
     await prisma.vehicleTrip.deleteMany({});
@@ -451,5 +455,69 @@ describe('refreshTripAssignments', () => {
     places = [fieldPlace()];
     expect(await run(() => refreshTripPlaces(device(), deps))).toBe(1);
     expect(await fieldRows()).toHaveLength(1);
+  });
+});
+
+describe('sõitude vahed', () => {
+  const gapRows = () => run(() => prisma.vehicleTripGap.findMany({ orderBy: { startedAt: 'asc' } }));
+  // Sõit 0–30 ja 60–90; vahe 30 → 60. Toide < 6 V minutitel 35–50 (15 min), kui powerLost = true
+  const setup = (powerLost: boolean) => {
+    samples = [...range(0, 30), pt(31, false), ...range(60, 90), pt(91, false)];
+    gapSamples = [30, 35, 40, 45, 50, 55, 60].map((m) => ({ time: at(m), voltage: powerLost && m >= 35 && m < 50 ? 0 : 13, canHours: null }));
+  };
+
+  it('toitekatkestusega vahe salvestub järgmise sõidu külge', async () => {
+    setup(true);
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const [t, g] = [await trips(), await gapRows()];
+    expect(g).toHaveLength(1);
+    expect(g[0]).toMatchObject({ deviceId, prevTripId: t[0].id, nextTripId: t[1].id, powerLostMinutes: 15, startedAt: at(30), endedAt: at(60) });
+    expect(g[0].reviewedAt).toBeNull();
+  });
+
+  it('kontrolli märge jääb ümberarvutusel alles; kontrollitud vahe ei kao, kui märk langeb piiri alla', async () => {
+    setup(true);
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    const g0 = (await gapRows())[0];
+    await run(() => prisma.vehicleTripGap.update({ where: { id: g0.id }, data: { reviewedAt: at(100), reviewedBy: 'mari', reviewNote: 'remont' } }));
+    nowMin = 150;
+    await run(() => importDeviceTrips(device(), deps));
+    let g = await gapRows();
+    expect(g).toHaveLength(1);
+    expect(g[0]).toMatchObject({ id: g0.id, reviewNote: 'remont', reviewedBy: 'mari' });
+    setup(false);
+    nowMin = 180;
+    await run(() => importDeviceTrips(device(), deps));
+    g = await gapRows();
+    expect(g).toHaveLength(1);
+    expect(g[0].id).toBe(g0.id);
+  });
+
+  it('kontrollimata vahe kaob, kui märk enam piiri ei ületa', async () => {
+    setup(true);
+    nowMin = 120;
+    await run(() => importDeviceTrips(device(), deps));
+    expect(await gapRows()).toHaveLength(1);
+    setup(false);
+    nowMin = 150;
+    await run(() => importDeviceTrips(device(), deps));
+    expect(await gapRows()).toHaveLength(0);
+  });
+
+  it('kustutatud sõit on vahe sees: vahe tekib kustutamata naabrite vahele', async () => {
+    // Sõidud 0–30, 60–90, 120–150; keskmine kustutatakse, toide kadus minutitel 35–50
+    samples = [...range(0, 30), pt(31, false), ...range(60, 90), pt(91, false), ...range(120, 150), pt(151, false)];
+    gapSamples = [30, 35, 40, 45, 50, 55, 60, 95, 100, 105, 110, 115, 120].map((m) => ({ time: at(m), voltage: m >= 35 && m < 50 ? 0 : 13, canHours: null }));
+    nowMin = 200;
+    await run(() => importDeviceTrips(device(), deps));
+    const t = await trips();
+    await run(() => prisma.vehicleTrip.update({ where: { id: t[1].id }, data: { deletedAt: at(190), deletedBy: 'mari' } }));
+    nowMin = 230;
+    await run(() => importDeviceTrips(device(), deps));
+    const g = await gapRows();
+    expect(g.map((x) => [x.prevTripId, x.nextTripId])).toEqual([[t[0].id, t[2].id]]);
+    expect(g[0].powerLostMinutes).toBe(15);
   });
 });

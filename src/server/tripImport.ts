@@ -2,10 +2,12 @@
 // Seadme kaupa: punktid (finalizedUntil, now] omandiperioodi piires → segmentTrips → kohad (buildRoute) ja põllud (computeTripFields)
 // → vehicle_trips + vehicle_trip_fields. Viimased 24 h arvutatakse igal käigul uuesti (seade puhverdab levita punkte ja saadab hiljem).
 // Kattuv vana sõit annab uuele oma id (märkus ja kande seos püsivad); kandega seotud vana sõit on eelistatud.
+// Pärast iga akna kirjutamist arvutatakse sama akna sõitude vahed (jälgimata töö märgid, tripGapStore.ts).
 // Lõplikud sõidud arvutatakse uuesti, kui kohad (põllud, huvipunktid) või seosed (seade, haakimine, haakeriist) muutuvad;
 // põllud kirjutatakse alati koos sõidu kohtadega.
 import { prisma, tenantTransaction, authDb, runAsTenant, tsdb, type TxClient } from './db.ts';
-import { ownershipWindows, fetchTripSamples } from './telemetryAccess.ts';
+import { ownershipWindows, fetchTripSamples, fetchGapSamples } from './telemetryAccess.ts';
+import { lockDevice, recomputeGaps, type FetchGapSamples } from './tripGapStore.ts';
 import { segmentTrips, type SegmentedTrip, type TripSample } from './tripSegments.ts';
 import { buildRoute, DEFAULT_ROUTE_OPTIONS, type Place, type TripRoute } from './tripRoute.ts';
 import { loadPlaces } from './tripPlaces.ts';
@@ -15,10 +17,11 @@ import { loadAssignmentResolver, type AssignmentResolver } from './tripAssignmen
 export type ImportDeps = {
   now: () => Date;
   fetchSamples: (imei: string, fromExclusive: Date, toInclusive: Date) => Promise<TripSample[]>;
+  fetchGapSamples: FetchGapSamples;
   loadPlaces: (year: number) => Promise<Place[]>;
 };
 
-export const defaultDeps: ImportDeps = { now: () => new Date(), fetchSamples: fetchTripSamples, loadPlaces };
+export const defaultDeps: ImportDeps = { now: () => new Date(), fetchSamples: fetchTripSamples, fetchGapSamples, loadPlaces };
 
 export const FINAL_AFTER_MS = 24 * 60 * 60 * 1000;
 const CHUNK_MS = 2 * 24 * 60 * 60 * 1000;
@@ -83,10 +86,6 @@ function tripData(t: SegmentedTrip, route: TripRoute | null, fields: TripFieldCa
     pointCount: t.pointCount, areaHa: tripAreaHa(fields), computedAt: now
   };
 }
-
-// Üheaegsed impordid (CLI ja ajastaja) ei tohi sama seadme sõite korraga kirjutada
-const lockDevice = (tx: TxClient, deviceId: string) =>
-  tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext('trip-import:' || current_setting('app.tenant_id') || ':' || ${deviceId}))`;
 
 async function writeFields(tx: TxClient, tripId: string, fields: TripFieldCalc[], now: Date) {
   await tx.vehicleTripField.deleteMany({ where: { tripId } });
@@ -197,6 +196,7 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
       fields.push(fieldsOf(samplesOf(samples, t), places, t.fuelLiters, implementAt));
     }
     await writeChunk(device.id, from, to, trips, routes, fields, now, new Date(next));
+    await recomputeGaps(device, from, to, deps.fetchGapSamples, now);
     if (last) return;
     from = new Date(next);
     span = CHUNK_MS;
