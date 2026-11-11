@@ -23,7 +23,7 @@ export const WeatherPointMap: React.FC<Props> = ({ points, fields, selected, onS
 
   useEffect(() => {
     if (!divRef.current) return;
-    const map = L.map(divRef.current, { zoomControl: true, attributionControl: true, scrollWheelZoom: false });
+    const map = L.map(divRef.current, { zoomControl: true, attributionControl: true, scrollWheelZoom: true });
     const base = BASE_MAPS['maaamet-pohikaart'];
     L.tileLayer(base.url, { tms: base.tms ?? false, attribution: base.attribution, maxZoom: base.maxZoom || 19, minZoom: base.minZoom || 5, subdomains: base.subdomains || [] }).addTo(map);
     mapRef.current = map;
