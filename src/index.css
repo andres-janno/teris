@@ -4384,8 +4384,17 @@ input[type="number"],
 }
 
 .register-table .size-cell .season-ha-val {
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+
+/* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
+.register-table .name-cell .field-name {
+  font-size: 0.85rem;
+  font-weight: 400;
+}
+.register-table .name-cell .field-num-badge {
+  font-weight: 500;
 }
 
 .register-table .size-cell.muted .season-ha-val {
