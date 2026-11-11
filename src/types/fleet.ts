@@ -229,6 +229,7 @@ export interface Trip {
   notes: string | null;
   deletedAt: string | null; // kustutatud kui müra
   fields: TripField[];
+  gapBefore: TripGap | null; // jälgimata töö märgid eelmise sõidu ja selle sõidu vahel
 }
 export interface TripFieldEntry { id: string; fieldWorkId: string; workTypeName: string; date: string }
 // Sõidu osa ühel põllul (hooajal)
@@ -246,11 +247,26 @@ export interface TripField {
   fuelSharedL: number | null;
   entries: TripFieldEntry[];
 }
+// Sõitude vahe: jälgimata töö märgid (null = ei saanud arvutada); kontrolli märge
+export interface TripGap {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  powerLostMinutes: number | null;
+  silentMinutes: number | null;
+  fuelDropPct: number | null;
+  jumpM: number | null;
+  engineHoursGrowth: number | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+}
+
 export interface TripImportStatus {
   lastRunAt: string | null;
   devices: { deviceId: string; deviceLabel: string; lastError: string | null; lastErrorAt: string | null }[];
 }
-export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean; deleted?: boolean }
+export interface TripFilter { from: string; to: string; vehicleId?: string; implementId?: string; status?: 'ACTIVE' | 'CLOSED'; unknownPlace?: boolean; unlinkedOnly?: boolean; deleted?: boolean; gaps?: 'all' | 'unreviewed' }
 
 /** Sõidu rada kaardil: peenike joon + põllulõigud haakeriista laiusega. */
 export type TripSwath = { fieldSeasonId: number; widthM: number; lines: [number, number][][] };

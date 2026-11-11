@@ -2,7 +2,7 @@
 // Ainult vaatamine ja märkus; sõite ei lisata käsitsi.
 import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Filter, RotateCcw, Route } from 'lucide-react';
-import type { Implement, Trip, TripImportStatus, Vehicle } from '../types/fleet';
+import type { Implement, Trip, TripGap, TripImportStatus, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
 import { FilterClear } from './FilterClear';
@@ -10,6 +10,8 @@ import { FilterSelect } from './FilterSelect';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
+import { TripGapReviewDialog } from './TripGapReviewDialog';
+import { gapParts } from './tripGapText';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -50,6 +52,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   const [unknownPlace, setUnknownPlace] = useState(false);
   const [unlinkedOnly, setUnlinkedOnly] = useState(false);
   const [showDeleted, setShowDeleted] = useState(false);
+  const [gapsFilter, setGapsFilter] = useState<'' | 'all' | 'unreviewed'>('');
+  const [reviewing, setReviewing] = useState<TripGap | null>(null);
   const [trips, setTrips] = useState<Trip[]>([]);
   const [importStatus, setImportStatus] = useState<TripImportStatus | null>(null);
   const [loading, setLoading] = useState(false);
@@ -89,7 +93,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         api.getTrips({
           from: dayStartIso(fromDay), to: nextDayStartIso(toDay),
           vehicleId: vehicleId || undefined, implementId: implementId || undefined,
-          status: status || undefined, unknownPlace, unlinkedOnly, deleted: showDeleted
+          status: status || undefined, unknownPlace, unlinkedOnly, deleted: showDeleted, gaps: gapsFilter || undefined
         }),
         api.getTripImportStatus()
       ]);
@@ -100,12 +104,25 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
     } finally {
       setLoading(false);
     }
-  }, [fromDay, toDay, vehicleId, implementId, status, unknownPlace, unlinkedOnly, showDeleted]);
+  }, [fromDay, toDay, vehicleId, implementId, status, unknownPlace, unlinkedOnly, showDeleted, gapsFilter]);
 
   useEffect(() => { load(); }, [load]);
 
   const periodActive = fromDay !== defaultFrom() || toDay !== defaultTo();
-  const hasFilters = periodActive || !!vehicleId || !!implementId || !!status || unknownPlace || unlinkedOnly || showDeleted;
+  const hasFilters = periodActive || !!vehicleId || !!implementId || !!status || unknownPlace || unlinkedOnly || showDeleted || !!gapsFilter;
+  const unreviewedGaps = trips.filter((t) => t.gapBefore && !t.gapBefore.reviewedAt).length;
+  // Vahe kontrolli märke muutus: uuenda sõidu gapBefore nimekirjas
+  const gapSaved = (g: TripGap) => {
+    setTrips((list) => list.map((t) => (t.gapBefore?.id === g.id ? { ...t, gapBefore: g } : t)));
+    setReviewing(null);
+  };
+  const reopenGap = async (g: TripGap) => {
+    try {
+      gapSaved(await api.reviewTripGap(g.id, false));
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
@@ -149,6 +166,12 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
               options={[{ value: '', label: 'Kõik olekud' }, { value: 'ACTIVE', label: 'Käimas' }, { value: 'CLOSED', label: 'Lõppenud' }]} />
           </FilterClear>
         </div>
+        <div style={{ minWidth: '200px' }}>
+          <FilterClear active={!!gapsFilter} onClear={() => setGapsFilter('')}>
+            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={gapsFilter} onChange={(v) => setGapsFilter(v as '' | 'all' | 'unreviewed')}
+              options={[{ value: '', label: 'Kõik sõidud' }, { value: 'all', label: 'Hoiatustega' }, { value: 'unreviewed', label: 'Kontrollimata hoiatused' }]} />
+          </FilterClear>
+        </div>
         <FilterClear className="filter-clear-inline" active={unknownPlace} onClear={() => setUnknownPlace(false)}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             <input type="checkbox" checked={unknownPlace} onChange={(e) => setUnknownPlace(e.target.checked)} />
@@ -167,6 +190,11 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
             Näita kustutatud sõite
           </label>
         </FilterClear>
+        {unreviewedGaps > 0 && (
+          <span className="trip-gap-count" title="Kontrollimata hoiatusi valitud perioodis">
+            <AlertTriangle size={14} /> {unreviewedGaps} kontrollimata
+          </span>
+        )}
         <button className="btn btn-secondary btn-sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
         </button>
@@ -210,24 +238,45 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
               {trips.map((t) => {
                 const active = t.status === 'ACTIVE';
                 const engine = t.engineHoursStart != null && t.engineHoursEnd != null ? t.engineHoursEnd - t.engineHoursStart : null;
+                const g = t.gapBefore;
                 return (
-                  <tr key={t.id} data-trip-id={t.id} className={`clickable-row${t.id === lastOpenedId ? ' trip-row-last-opened' : ''}`} style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => openTrip(t)}>
-                    <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
-                    <td>
-                      {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
-                    </td>
-                    <td>{t.implementName ?? <span className="text-muted">—</span>}</td>
-                    <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</td>
-                    <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
-                    <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>
-                    <td className="num">{formatQty(t.distanceKm)}</td>
-                    <td className="num">{t.areaHa == null ? '—' : formatQty(t.areaHa)}</td>
-                    <td className="num">{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</td>
-                    <td className="num">{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</td>
-                    <td className="num">{engine == null ? '—' : formatQty(engine)}</td>
-                    <td>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</td>
-                    <td>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</td>
-                  </tr>
+                  <React.Fragment key={t.id}>
+                    <tr data-trip-id={t.id} className={`clickable-row${t.id === lastOpenedId ? ' trip-row-last-opened' : ''}`} style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => openTrip(t)}>
+                      <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
+                      <td>
+                        {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
+                      </td>
+                      <td>{t.implementName ?? <span className="text-muted">—</span>}</td>
+                      <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</td>
+                      <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
+                      <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>
+                      <td className="num">{formatQty(t.distanceKm)}</td>
+                      <td className="num">{t.areaHa == null ? '—' : formatQty(t.areaHa)}</td>
+                      <td className="num">{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</td>
+                      <td className="num">{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</td>
+                      <td className="num">{engine == null ? '—' : formatQty(engine)}</td>
+                      <td>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</td>
+                      <td>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</td>
+                    </tr>
+                    {g && (
+                      <tr className={`trip-gap-row${g.reviewedAt ? ' reviewed' : ''}`}>
+                        <td colSpan={13}>
+                          <span className="trip-gap-text">
+                            <AlertTriangle size={14} className="trip-gap-icon" />
+                            Sõitude vahel {formatDuration(g.startedAt, g.endedAt)}: {gapParts(g).join(' · ') || 'märke pole'}
+                          </span>
+                          {g.reviewedAt ? (
+                            <>
+                              <span className="trip-gap-review">Kontrollitud {formatDateTime(g.reviewedAt)}{g.reviewedBy ? `, ${g.reviewedBy}` : ''}: {g.reviewNote}</span>
+                              <button type="button" className="btn btn-secondary btn-sm" onClick={() => reopenGap(g)}>Ava uuesti</button>
+                            </>
+                          ) : (
+                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(g)}>Märgi kontrollituks</button>
+                          )}
+                        </td>
+                      </tr>
+                    )}
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -245,6 +294,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           onSaved={(saved) => { setTrips((list) => list.map((x) => (x.id === saved.id ? saved : x))); setOpen(saved); }}
         />
       )}
+      {reviewing && <TripGapReviewDialog gap={reviewing} onClose={() => setReviewing(null)} onSaved={gapSaved} />}
     </div>
   );
 };

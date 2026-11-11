@@ -2,7 +2,7 @@
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import type { YearReplacementPlan } from './fieldYearReplace';
-import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput, Trip, TripTrack, TripImportStatus, TripFilter } from '../types/fleet';
+import type { Vehicle, Implement, TelemetryDevice, ImplementAssignment, DeviceAssignment, DeviceAssignmentInput, Trip, TripTrack, TripImportStatus, TripFilter, TripGap } from '../types/fleet';
 import type { PointOfInterest } from '../types/poi';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
@@ -569,6 +569,7 @@ export const api = {
     if (f.unknownPlace) q.set('unknownPlace', '1');
     if (f.unlinkedOnly) q.set('unlinkedOnly', '1');
     if (f.deleted) q.set('deleted', '1');
+    if (f.gaps) q.set('gaps', f.gaps);
     const res = await apiFetch(`/api/fleet/trips?${q}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Sõitude laadimine ebaõnnestus'));
     return res.json();
@@ -606,6 +607,16 @@ export const api = {
   async restoreTrip(id: string): Promise<Trip> {
     const res = await apiFetch(`/api/fleet/trips/${id}/restore`, { method: 'POST' });
     if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu taastamine ebaõnnestus'));
+    return res.json();
+  },
+
+  async reviewTripGap(id: string, reviewed: boolean, note?: string): Promise<TripGap> {
+    const res = await apiFetch(`/api/fleet/trips/gaps/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reviewed, note })
+    });
+    if (!res.ok) throw new Error(await errorMessage(res, 'Hoiatuse kontrolli salvestamine ebaõnnestus'));
     return res.json();
   },
 
