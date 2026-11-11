@@ -105,7 +105,7 @@ export const WeatherView: React.FC = () => {
                     </thead>
                     <tbody>
                       {rows.map(({ year: y, summary: s }) => (
-                        <tr key={y} className={compare.includes(y) ? 'selected' : ''} onClick={() => toggleCompare(y)}>
+                        <tr key={y} onClick={() => toggleCompare(y)}>
                           <td>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</td>
                           <td className={`num-col weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</td>
                           <td className={`num-col weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</td>

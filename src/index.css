@@ -11246,7 +11246,6 @@ td.stock-qty-out { color: #dc2626; }
 .weather-point-map { min-height: 360px; height: 100%; border: 1px solid var(--border-card); border-radius: var(--radius-sm); z-index: 0; }
 @media (max-width: 1100px) { .weather-years-layout { grid-template-columns: 1fr; } .weather-point-map { height: 360px; } }
 .weather-years tbody tr { cursor: pointer; }
-.register-table.weather-years tbody tr.selected td { background: var(--stat-bg-hover); }
 .register-table.weather-years tr.weather-normal-row td { font-weight: 700; border-top: 2px solid var(--border-card); cursor: default; }
 .weather-muted { color: var(--text-secondary); font-size: 0.72rem; }
 .register-table.weather-years td.weather-wet { background: rgba(59, 130, 246, 0.16); }
