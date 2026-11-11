@@ -435,6 +435,7 @@ model TelemetryDevice {
   assignments DeviceAssignment[]
   trips       VehicleTrip[]
   importState TripImportState?
+  tripGaps    VehicleTripGap[]
 
   @@index([tenantId])
   @@map("telemetry_devices")
@@ -540,6 +541,8 @@ model VehicleTrip {
   updatedBy         String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
   fields            VehicleTripField[]
   workEntries       WorkEntry[]
+  gapBefore         VehicleTripGap?    @relation("TripGapNext")
+  gapsAfter         VehicleTripGap[]   @relation("TripGapPrev")
 
   @@index([deviceId, startedAt])
   @@index([tenantId, startedAt])
@@ -569,6 +572,37 @@ model VehicleTripField {
   @@index([fieldSeasonId, arriveAt])
   @@index([tenantId])
   @@map("vehicle_trip_fields")
+}
+
+// Sõitude vahe: kahe järjestikuse kustutamata sõidu vaheline aeg, kus on jälgimata töö märke (toide kadus, seade vaikis,
+// kütus kadus, asukoht hüppas, CAN mootoritunnid kasvasid). Tuletatud impordis; võti on järgmine sõit.
+// Kontrolli märge (reviewed*) jääb ümberarvutusel alles; kontrollitud vahet ümberarvutus ei kustuta.
+model VehicleTripGap {
+  id                String          @id @default(cuid())
+  tenantId          String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  deviceId          String
+  device            TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  prevTripId        String?
+  prevTrip          VehicleTrip?    @relation("TripGapPrev", fields: [prevTripId], references: [id], onDelete: SetNull)
+  nextTripId        String          @unique
+  nextTrip          VehicleTrip     @relation("TripGapNext", fields: [nextTripId], references: [id], onDelete: Cascade)
+  startedAt         DateTime // eelmise sõidu lõpp
+  endedAt           DateTime // järgmise sõidu algus
+  powerLostMinutes  Float? // toitepinge < 6 V kokku; tühi = pingenäite polnud
+  silentMinutes     Float? // pikim paus seadme punktide vahel (vahe otsad kaasa)
+  fuelDropPct       Float? // eelmise lõpu − järgmise alguse paagitase (positiivne = langus); tühi = näit puudub
+  jumpM             Float? // eelmise sõidu lõpu ja järgmise alguse kaugus
+  engineHoursGrowth Float? // masina CAN mootori koguaja kasv; tühi = masin ei saada või näit puudub
+  reviewedAt        DateTime? // kontrollitud; tühi = kontrollimata
+  reviewedBy        String? // kontrollija kasutajatunnus
+  reviewNote        String? // selgitus
+  computedAt        DateTime
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+
+  @@index([deviceId, startedAt])
+  @@index([tenantId, reviewedAt])
+  @@map("vehicle_trip_gaps")
 }
 
 // Seadme sõitude impordi olek: milleni on sõidud lõplikud, viimane käivitus ja viga, kohtade sõrmejälg.
