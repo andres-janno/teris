@@ -7,7 +7,7 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 import { handleMcpRequest, isOAuthDiscoveryPath } from './handler';
 import { createTestTenant, type TestTenant } from './testTenant';
 import { MCP_INSTRUCTIONS_KEY, saveMcpInstructions, resetMcpInstructions, getMcpInstructionsAdmin, DEFAULT_MCP_INSTRUCTIONS } from './instructions';
-import { authDb } from '../db';
+import { authDb, prisma, runAsTenant } from '../db';
 
 let server: http.Server;
 let base = '';
@@ -304,5 +304,61 @@ describe('piirang', () => {
     const client = await connect(A.plainKey);
     expect((await client.listTools()).tools.length).toBeGreaterThan(0);
     await client.close();
+  });
+});
+
+describe('sõitude vahed (MCP)', () => {
+  let deviceId = '';
+  beforeAll(async () => {
+    await runAsTenant(A.tenantId, async () => {
+      deviceId = (await prisma.telemetryDevice.create({ data: { imei: `39${String(process.pid).padStart(13, '0')}`.slice(0, 15), model: 'FMC650' } })).id;
+      await prisma.deviceAssignment.create({ data: { deviceId, vehicleId: A.ids.vehicleId, startedAt: new Date('2026-10-01T00:00:00Z') } });
+      const row = (s: string, e: string) => ({
+        deviceId, startedAt: new Date(s), endedAt: new Date(e), status: 'CLOSED' as const,
+        startLat: 58, startLng: 26, endLat: 58, endLng: 26, distanceKm: 1, movingMinutes: 10, idleMinutes: 0, pauseCount: 0, pauseMinutes: 0,
+        minLat: 58, minLng: 26, maxLat: 58, maxLng: 26, pointCount: 10, computedAt: new Date()
+      });
+      const t1 = await prisma.vehicleTrip.create({ data: row('2026-10-23T10:00:00Z', '2026-10-23T13:16:00Z') });
+      const t2 = await prisma.vehicleTrip.create({ data: row('2026-10-25T11:50:00Z', '2026-10-25T14:00:00Z') });
+      const t3 = await prisma.vehicleTrip.create({ data: row('2026-10-26T08:00:00Z', '2026-10-26T09:00:00Z') });
+      await prisma.vehicleTripGap.create({ data: {
+        deviceId, prevTripId: t1.id, nextTripId: t2.id, startedAt: t1.endedAt, endedAt: t2.startedAt,
+        powerLostMinutes: null, silentMinutes: 30, fuelDropPct: null, jumpM: 800, engineHoursGrowth: 1, computedAt: new Date()
+      } });
+      await prisma.vehicleTripGap.create({ data: {
+        deviceId, prevTripId: t2.id, nextTripId: t3.id, startedAt: t2.endedAt, endedAt: t3.startedAt,
+        powerLostMinutes: 40, silentMinutes: 10, fuelDropPct: 2, jumpM: 0, engineHoursGrowth: null,
+        reviewedAt: new Date('2026-10-27T08:00:00Z'), reviewedBy: 'mari', reviewNote: 'aku vahetus', computedAt: new Date()
+      } });
+    });
+  });
+  afterAll(async () => {
+    await runAsTenant(A.tenantId, async () => {
+      await prisma.vehicleTrip.deleteMany({ where: { deviceId } });
+      await prisma.deviceAssignment.deleteMany({ where: { deviceId } });
+      await prisma.telemetryDevice.deleteMany({ where: { id: deviceId } });
+    });
+  });
+
+  it('ainult TELEMETRY mooduliga', async () => {
+    const client = await connect(B.plainKey);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.map((t) => t.name)).not.toContain('list_trip_gaps');
+  });
+
+  it('vaikimisi ainult kontrollimata; masin ja märgid', async () => {
+    const r = (await call(A.plainKey, 'list_trip_gaps', { from: '01.10.2026', to: '31.10.2026' })).data;
+    expect(r.total).toBe(1);
+    expect(r.gaps[0]).toMatchObject({
+      vehicle: 'Valtra T1', from: '23.10.2026 16:16', to: '25.10.2026 13:50',
+      signs: { jumpM: 800, engineHoursGrowth: 1, silentMinutes: 30, powerLostMinutes: null, fuelDropPct: null }, reviewed: false
+    });
+  });
+
+  it('unreviewedOnly=false annab ka kontrollitud koos selgitusega; masina filter', async () => {
+    const r = (await call(A.plainKey, 'list_trip_gaps', { vehicle: 'Valtra', from: '01.10.2026', to: '31.10.2026', unreviewedOnly: false })).data;
+    expect(r.total).toBe(2);
+    expect(r.gaps[1]).toMatchObject({ reviewed: true, reviewNote: 'aku vahetus', reviewedBy: 'mari' });
   });
 });

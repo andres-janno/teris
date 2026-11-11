@@ -8,9 +8,12 @@ import { loadPlaces } from '../../tripPlaces.ts';
 import { defineTool, canSeeFinance, hasTelemetry } from '../context.ts';
 import { parseDateInput, dayAfter, fieldLabel, fmtDate, fmtDateTime, round2, ToolInputError } from '../format.ts';
 import { resolveVehicleId } from './works.ts';
+import { loadAssignmentResolver } from '../../tripAssignments.ts';
 import { ignitionHoursByDay, tallinnMidnightUtc } from '../ignitionHours.ts';
 
 const MAX_DAYS = 31;
+const GAP_MAX_DAYS = 92;
+const GAP_LIMIT = 200;
 const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' });
 
 const financeOut = (r: { acquisitionCost: number | null; acquisitionDate: Date | null; depreciationRate: number | null; depreciationMethod: string | null }) => ({
@@ -121,6 +124,48 @@ export const fleetTools = [
       }
       result.telemetry = { devices: links.filter((l) => l.device.imei).length, totalEngineHours: round2(days.reduce((s, d) => s + d.engineHours, 0)), days };
       return result;
+    }
+  }),
+  defineTool({
+    name: 'list_trip_gaps',
+    title: 'Sõitude vahed (jälgimata töö märgid)',
+    description: `Kahe järjestikuse sõidu vahelised hoiatused (kuni ${GAP_MAX_DAYS} päeva): toide kadus (seade lahti ühendatud), seade vaikis, paagitase langes, asukoht hüppas, masina CAN mootoritunnid kasvasid. Need on kaudsed märgid, et masin võis töötada ilma telemeetriata — mitte tõend. Vaikimisi ainult kontrollimata; kontrollitul on kasutaja selgitus.`,
+    input: {
+      vehicle: z.string().optional().describe('Masina nimi või reg nr (tühi = kõik)'),
+      from: z.string().describe('Alates (pp.kk.aaaa)'),
+      to: z.string().describe('Kuni, kaasa arvatud (pp.kk.aaaa)'),
+      unreviewedOnly: z.boolean().optional().describe('Ainult kontrollimata (vaikimisi true)')
+    },
+    when: hasTelemetry,
+    run: async (a) => {
+      const from = parseDateInput(a.from, 'from')!;
+      const to = parseDateInput(a.to, 'to')!;
+      if (from > to) throw new ToolInputError('Algus on hilisem kui lõpp');
+      const end = dayAfter(to);
+      if ((end.getTime() - from.getTime()) / 86_400_000 > GAP_MAX_DAYS) throw new ToolInputError(`Vahemik võib olla kuni ${GAP_MAX_DAYS} päeva`);
+      const unreviewedOnly = a.unreviewedOnly ?? true;
+      const vehicleId = a.vehicle ? await resolveVehicleId(a.vehicle) : null;
+      const rows = await prisma.vehicleTripGap.findMany({
+        where: { endedAt: { gte: from, lt: end }, ...(unreviewedOnly ? { reviewedAt: null } : {}), nextTrip: { deletedAt: null } },
+        orderBy: { startedAt: 'asc' }
+      });
+      const resolve = await loadAssignmentResolver(rows.map((g) => g.deviceId));
+      const all = rows
+        .map((g) => ({ g, target: resolve(g.deviceId, g.endedAt) }))
+        .filter((x) => !vehicleId || x.target.vehicleId === vehicleId);
+      return {
+        from: fmtDate(from), to: fmtDate(to), unreviewedOnly, total: all.length, shown: Math.min(all.length, GAP_LIMIT),
+        note: 'Kaudsed märgid, mitte tõend. silentMinutes = pikim paus, mil seade midagi ei saatnud; engineHoursGrowth on täistundides (+1 h võib olla ümardus).',
+        gaps: all.slice(0, GAP_LIMIT).map(({ g, target }) => ({
+          vehicle: target.vehicleName, from: fmtDateTime(g.startedAt), to: fmtDateTime(g.endedAt),
+          hours: round2((g.endedAt.getTime() - g.startedAt.getTime()) / 3_600_000),
+          signs: {
+            powerLostMinutes: g.powerLostMinutes, silentMinutes: g.silentMinutes, fuelDropPct: g.fuelDropPct,
+            jumpM: g.jumpM, engineHoursGrowth: g.engineHoursGrowth
+          },
+          reviewed: !!g.reviewedAt, reviewedAt: fmtDateTime(g.reviewedAt), reviewedBy: g.reviewedBy, reviewNote: g.reviewNote
+        }))
+      };
     }
   })
 ];
