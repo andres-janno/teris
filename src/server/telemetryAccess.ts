@@ -325,7 +325,8 @@ export async function fetchDevicePackets(device: string, startUtc: Date, endUtc:
 /** fuel_consumed_counted väärtuse ühik liitrites (Teltonika loendur 0,1 l sammuga). */
 export const FUEL_CONSUMED_COUNTED_L = 0.1;
 
-const TRIP_FIELDS = ['latitude', 'longitude', 'ignition', 'speed', 'fuel_consumed_counted', 'fuel_rate_lph', 'fuel_level_percent', 'engine_total_hours_h'];
+// Mootoriaeg: CAN-i koguaja (h) või FMC150 loendatud tööaeg (AVL 103, minutid; enne nimetamist io_103) — seade saadab ühte neist
+const TRIP_FIELDS = ['latitude', 'longitude', 'ignition', 'speed', 'fuel_consumed_counted', 'fuel_rate_lph', 'fuel_level_percent', 'engine_total_hours_h', 'engine_worktime_counted_min', 'io_103'];
 
 /**
  * Ühe seadme punktid (fromExclusive, toInclusive] ettevõtte omandiperioodide piires, ajas kasvavalt.
@@ -340,7 +341,7 @@ export async function fetchTripSamples(imei: string, fromExclusive: Date, toIncl
   const incl = segments.map((s) => s.toInclusive);
   const rows = await tsdb.$queryRaw<{
     time: Date; lat: number | null; lng: number | null; ign: boolean | null; speed: number | null;
-    fuel_used: number | null; fuel_rate: number | null; fuel_level: number | null; engine_hours: number | null;
+    fuel_used: number | null; fuel_rate: number | null; fuel_level: number | null; engine_hours: number | null; engine_min: number | null;
   }[]>`
     WITH pts AS (
       SELECT m.time, m.field, m.value_bool,
@@ -361,7 +362,8 @@ export async function fetchTripSamples(imei: string, fromExclusive: Date, toIncl
       max(v) FILTER (WHERE field = 'fuel_consumed_counted') AS fuel_used,
       max(v) FILTER (WHERE field = 'fuel_rate_lph') AS fuel_rate,
       max(v) FILTER (WHERE field = 'fuel_level_percent') AS fuel_level,
-      max(v) FILTER (WHERE field = 'engine_total_hours_h') AS engine_hours
+      max(v) FILTER (WHERE field = 'engine_total_hours_h') AS engine_hours,
+      max(v) FILTER (WHERE field IN ('engine_worktime_counted_min', 'io_103')) AS engine_min
     FROM pts
     GROUP BY time
     HAVING bool_or(field = 'latitude') AND bool_or(field = 'longitude')
@@ -375,7 +377,7 @@ export async function fetchTripSamples(imei: string, fromExclusive: Date, toIncl
     out.push({
       time: r.time, lat: Number(r.lat), lng: Number(r.lng), ignition: r.ign ?? null,
       speedKmh: num(r.speed), fuelUsedL: used == null ? null : used * FUEL_CONSUMED_COUNTED_L,
-      fuelRateLph: num(r.fuel_rate), fuelLevelPct: num(r.fuel_level), engineHours: num(r.engine_hours)
+      fuelRateLph: num(r.fuel_rate), fuelLevelPct: num(r.fuel_level), engineHours: num(r.engine_hours) ?? (r.engine_min == null ? null : Number(r.engine_min) / 60)
     });
   }
   return out;

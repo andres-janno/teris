@@ -200,7 +200,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                 <th className="num">km</th>
                 <th className="num">ha</th>
                 <th className="num">Kütus l</th>
-                <th className="num">Mootoritunnid</th>
+                <th className="num" title="Mootoritundide loenduri näit sõidu alguses">Mootoritunnid algus</th>
+                <th className="num" title="Sõidu jooksul töötatud mootoritunnid">Mootoritunnid</th>
                 <th title="✓ = vähemalt ühel põllul on kanne; — = põllusõit on kirja panemata">Kanne</th>
                 <th>Olek</th>
               </tr>
@@ -222,6 +223,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                     <td className="num">{formatQty(t.distanceKm)}</td>
                     <td className="num">{t.areaHa == null ? '—' : formatQty(t.areaHa)}</td>
                     <td className="num">{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</td>
+                    <td className="num">{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</td>
                     <td className="num">{engine == null ? '—' : formatQty(engine)}</td>
                     <td>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</td>
                     <td>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</td>
