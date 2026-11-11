@@ -19,6 +19,7 @@ import { listInterest, parseInterestPatch, updateInterest, deleteInterest } from
 import { getMcpInstructionsAdmin, saveMcpInstructions, resetMcpInstructions } from './mcp/instructions.ts';
 import { loadPoint, isWeatherLoadRunning, FAIL_WARN } from './weather/loader.ts';
 import { credentialsByPoint } from './weather/credentials.ts';
+import { deleteTenantData } from './tenantDelete.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
@@ -184,6 +185,22 @@ async function setStatus(id: string, status: 'ACTIVE' | 'SUSPENDED', platformUse
       }
     });
   });
+}
+
+// Jäädav kustutamine: ainult peatatud ettevõte ja kinnituseks täpne nimi. Kõik ühes tehingus.
+async function deleteTenant(id: string, body: any, platformUser: { id: string }) {
+  await authDb().$transaction(async (tx) => {
+    const t = await tx.tenant.findUnique({ where: { id }, select: { name: true, registryCode: true, status: true } });
+    if (!t) throw new HttpError(404, NOT_FOUND);
+    if (t.status !== 'SUSPENDED') throw new HttpError(400, 'Kustutada saab ainult peatatud ettevõtet');
+    if (typeof body?.confirmName !== 'string' || body.confirmName.trim() !== t.name.trim()) {
+      throw new HttpError(400, 'Kinnituseks sisestatud nimi ei vasta ettevõtte nimele');
+    }
+    const deleted = await deleteTenantData(tx, id);
+    await tx.platformAuditLog.create({
+      data: { action: 'TENANT_DELETE', platformUserId: platformUser.id, targetTenantId: id, details: { name: t.name, registryCode: t.registryCode, deleted } }
+    });
+  }, { timeout: 120_000, maxWait: 10_000 });
 }
 
 async function resendInvite(id: string, body: any, platformUser: { id: string }) {
@@ -726,6 +743,10 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
           hasPassword: u.passwordHash !== ''
         }))
       });
+    }
+    if (!action && method === 'DELETE') {
+      await deleteTenant(id, await readBody(req), pu);
+      return json(res, { success: true });
     }
     if (action === 'license' && method === 'PATCH') {
       await updateLicense(id, await readBody(req), pu);

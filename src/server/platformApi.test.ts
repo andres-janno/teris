@@ -597,3 +597,48 @@ describe('tugivaate avamine (üleandmistoken)', () => {
     expect(r.data.error).toBe('Ettevõte on peatatud');
   });
 });
+
+describe('ettevõtte kustutamine', () => {
+  it('kustutab peatatud ettevõtte koos kõigi andmetega; logikirje jääb', async () => {
+    const delAdmin = `zz-del-${PID}`;
+    const r = await call('POST', '/api/platform/tenants', validBody({ adminUsername: delAdmin, adminEmail: `${delAdmin}@example.invalid` }));
+    expect(r.status).toBe(201);
+    const id = r.data.id as string;
+    createdTenantIds.add(id);
+    const user = await authDb().user.findUnique({ where: { username: delAdmin } });
+    await authDb().session.create({ data: { userId: user!.id, tokenHash: hashToken(generateSessionToken()), expiresAt: new Date(Date.now() + 3600_000) } });
+    await runAsTenant(id, async () => {
+      const season = await prisma.season.create({ data: { year: 2026, name: '2026' } });
+      const field = await prisma.field.create({ data: { num: '1', name: 'Kustutatav', fieldCode: 'K-1' } });
+      await prisma.fieldSeason.create({ data: { fieldId: field.id, seasonId: season.id, year: 2026, areaHa: 3, crop: 'Oder', geometry: {} } });
+      const wh = await prisma.warehouse.create({ data: { name: 'Ladu', isDefault: true } });
+      await prisma.stockDocument.create({ data: { kind: 'RECEIPT', date: new Date('2026-04-01'), warehouseId: wh.id } });
+    });
+
+    // Aktiivset ei kustuta
+    const active = await call('DELETE', `/api/platform/tenants/${id}`, { confirmName: `Test Agro ${PID}` });
+    expect(active.status).toBe(400);
+    expect((await call('POST', `/api/platform/tenants/${id}/suspend`)).status).toBe(200);
+    // Vale nimi
+    expect((await call('DELETE', `/api/platform/tenants/${id}`, { confirmName: 'Muu' })).status).toBe(400);
+    expect((await call('DELETE', `/api/platform/tenants/${id}`, {})).status).toBe(400);
+    expect(await authDb().tenant.count({ where: { id } })).toBe(1);
+
+    const ok = await call('DELETE', `/api/platform/tenants/${id}`, { confirmName: `Test Agro ${PID}` });
+    expect(ok.status).toBe(200);
+    const db = authDb();
+    expect(await db.tenant.count({ where: { id } })).toBe(0);
+    expect(await db.tenantLicense.count({ where: { tenantId: id } })).toBe(0);
+    expect(await db.user.count({ where: { tenantId: id } })).toBe(0);
+    expect(await db.session.count({ where: { userId: user!.id } })).toBe(0);
+    for (const n of [db.field, db.fieldSeason, db.season, db.warehouse, db.stockDocument, db.crop, db.workType, db.articleCategory, db.relatedParty] as any[]) {
+      expect(await n.count({ where: { tenantId: id } })).toBe(0);
+    }
+    // Teise ettevõtte andmed puutumata
+    expect(await db.field.count({ where: { tenantId: LOISU } })).toBeGreaterThan(0);
+    const log = await db.platformAuditLog.findFirst({ where: { targetTenantId: id, action: 'TENANT_DELETE' } });
+    expect((log?.details as any)?.name).toBe(`Test Agro ${PID}`);
+    expect((log?.details as any)?.deleted?.fields).toBe(1);
+    expect((await call('DELETE', `/api/platform/tenants/${id}`, { confirmName: 'x' })).status).toBe(404);
+  });
+});

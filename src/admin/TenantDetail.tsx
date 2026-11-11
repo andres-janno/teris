@@ -7,7 +7,7 @@ import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
 import { DateInput } from '../components/DateInput.tsx';
 
-export function TenantDetail({ id, initialNotice, onBack }: { id: string; initialNotice?: string; onBack: () => void }) {
+export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
   const [error, setError] = useState('');
   const [supportUrl, setSupportUrl] = useState<string | null>(null);
@@ -16,6 +16,7 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
   const [validUntil, setValidUntil] = useState('');
   const [modules, setModules] = useState<LicenseModule[]>([]);
   const [auditKey, setAuditKey] = useState(0);
+  const [confirmName, setConfirmName] = useState('');
 
   const load = useCallback(async () => {
     try {
@@ -63,6 +64,21 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
       else await platformApi.activate(id);
       return suspend ? 'Ettevõte peatatud.' : 'Ettevõte taasaktiveeritud.';
     });
+  };
+
+  const deleteTenant = async () => {
+    if (!tenant) return;
+    if (!window.confirm(`Ettevõte „${tenant.name}" ja KÕIK tema andmed kustutatakse jäädavalt. Seda ei saa tagasi võtta.\n\nKas kustutan?`)) return;
+    setBusy(true);
+    setError('');
+    setNotice('');
+    try {
+      await platformApi.deleteTenant(id, confirmName);
+      onDeleted(`Ettevõte „${tenant.name}" ja tema andmed on kustutatud.`);
+    } catch (err) {
+      setError((err as Error).message);
+      setBusy(false);
+    }
   };
 
   const resend = (username: string) =>
@@ -208,6 +224,31 @@ export function TenantDetail({ id, initialNotice, onBack }: { id: string; initia
           <div className="glass-card admin-card">
             <h2>Ettevõtte logi</h2>
             <AuditView key={auditKey} tenantId={id} />
+          </div>
+
+          <div className="glass-card admin-card admin-danger-card">
+            <h2>Ettevõtte kustutamine</h2>
+            {tenant.status === 'ACTIVE' ? (
+              <p className="admin-hint">Kustutada saab ainult peatatud ettevõtet. Peata ettevõte enne kustutamist.</p>
+            ) : (
+              <>
+                <p className="admin-hint">
+                  Kustutab jäädavalt ettevõtte, tema kasutajad, litsentsi ja kõik andmed (põllud, tööd, laoarvestus, masinad, seadmed, sõidud jm).
+                  Seadmete tunnused vabanevad teistele ettevõtetele. Teenusepakkuja logisse jääb kustutamise kirje. Tagasi võtta ei saa.
+                </p>
+                <div className="admin-split admin-danger-row">
+                  <div className="admin-field">
+                    <label className="admin-field-label" htmlFor="td-confirm">Kinnituseks sisesta ettevõtte nimi: <strong>{tenant.name}</strong></label>
+                    <input id="td-confirm" className="form-input" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} autoComplete="off" />
+                  </div>
+                  <div className="admin-actions">
+                    <button type="button" className="btn btn-danger" onClick={() => void deleteTenant()} disabled={busy || confirmName.trim() !== tenant.name.trim()}>
+                      Kustuta jäädavalt
+                    </button>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         </>
       )}

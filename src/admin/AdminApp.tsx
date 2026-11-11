@@ -13,7 +13,7 @@ import { AiInstructionsView } from './AiInstructionsView.tsx';
 import { LandingStatsView } from './LandingStatsView.tsx';
 import { InterestView } from './InterestView.tsx';
 
-type View = { kind: 'tenants' } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'weather' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' };
+type View = { kind: 'tenants'; notice?: string } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'weather' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' };
 
 export function AdminApp() {
   const [user, setUser] = useState<string | null>(null);
@@ -79,11 +79,11 @@ export function AdminApp() {
           Logi
         </button>
       </nav>
-      {view.kind === 'tenants' && <TenantsView onOpen={(id) => setView({ kind: 'detail', id })} onNew={() => setView({ kind: 'new' })} />}
+      {view.kind === 'tenants' && <TenantsView notice={view.notice} onOpen={(id) => setView({ kind: 'detail', id })} onNew={() => setView({ kind: 'new' })} />}
       {view.kind === 'new' && (
         <NewTenantForm onCreated={(id, notice) => setView({ kind: 'detail', id, notice })} onCancel={() => setView({ kind: 'tenants' })} />
       )}
-      {view.kind === 'detail' && <TenantDetail key={view.id} id={view.id} initialNotice={view.notice} onBack={() => setView({ kind: 'tenants' })} />}
+      {view.kind === 'detail' && <TenantDetail key={view.id} id={view.id} initialNotice={view.notice} onBack={() => setView({ kind: 'tenants' })} onDeleted={(notice) => setView({ kind: 'tenants', notice })} />}
       {view.kind === 'catalog' && <CatalogView />}
       {view.kind === 'devices' && <DevicesView />}
       {view.kind === 'weather' && <WeatherAdminView />}

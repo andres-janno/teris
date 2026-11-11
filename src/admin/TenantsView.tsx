@@ -7,7 +7,7 @@ export function StatusBadge({ status }: { status: TenantSummary['status'] }) {
   return status === 'ACTIVE' ? <span className="admin-badge ok">Aktiivne</span> : <span className="admin-badge off">Peatatud</span>;
 }
 
-export function TenantsView({ onOpen, onNew }: { onOpen: (id: string) => void; onNew: () => void }) {
+export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) => void; onNew: () => void; notice?: string }) {
   const [tenants, setTenants] = useState<TenantSummary[] | null>(null);
   const [error, setError] = useState('');
 
@@ -30,6 +30,7 @@ export function TenantsView({ onOpen, onNew }: { onOpen: (id: string) => void; o
           Uus ettevõte
         </button>
       </div>
+      {notice && <div className="alert-box">{notice}</div>}
       {error && <div className="alert-box error">{error}</div>}
       {!tenants && !error && <div className="admin-muted">Laadin…</div>}
       {tenants && (

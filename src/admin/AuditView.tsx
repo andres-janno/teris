@@ -7,6 +7,7 @@ const ACTIONS: Record<string, string> = {
   LICENSE_UPDATE: 'Litsents muudetud',
   TENANT_SUSPEND: 'Ettevõte peatatud',
   TENANT_ACTIVATE: 'Ettevõte taasaktiveeritud',
+  TENANT_DELETE: 'Ettevõte kustutatud',
   INVITE_RESEND: 'Kutse saadetud uuesti',
   CATALOG_UPDATE: 'Algkataloogi muudatus',
   HELP_UPDATE: 'Juhend muudetud',

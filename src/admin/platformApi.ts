@@ -243,6 +243,7 @@ export const platformApi = {
   updateLicense: (id: string, validUntil: string, modules: LicenseModule[]) =>
     request<{ license: LicenseInfo }>('PATCH', `/tenants/${enc(id)}/license`, { validUntil, modules }),
   suspend: (id: string) => request<unknown>('POST', `/tenants/${enc(id)}/suspend`, {}),
+  deleteTenant: (id: string, confirmName: string) => request<unknown>('DELETE', `/tenants/${enc(id)}`, { confirmName }),
   activate: (id: string) => request<unknown>('POST', `/tenants/${enc(id)}/activate`, {}),
   resendInvite: (id: string, username: string) =>
     request<{ inviteSent: boolean }>('POST', `/tenants/${enc(id)}/resend-invite`, { username }),
