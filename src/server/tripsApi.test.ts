@@ -264,3 +264,54 @@ describe('tripsApi', () => {
     expect((await call('GET', '/api/fleet/vehicles')).handled).toBe(false);
   });
 });
+
+describe('sõitude vahed', () => {
+  let gapId = '';
+  beforeAll(async () => {
+    // Varasemad kustutamise/taastamise testid võisid vahesid ümber arvutada (testi IMEI-l pole telemeetriat → „seade vaikis“)
+    await run(() => prisma.vehicleTripGap.deleteMany({}));
+    gapId = (await run(() => prisma.vehicleTripGap.create({ data: {
+      deviceId, prevTripId: tripId, nextTripId: activeTripId, startedAt: d('2026-11-03T07:00:00Z'), endedAt: d('2026-11-04T06:00:00Z'),
+      powerLostMinutes: 15, silentMinutes: 20, fuelDropPct: 1, jumpM: 30, engineHoursGrowth: null, computedAt: new Date()
+    } }))).id;
+  });
+  const list = (q = '') => call('GET', `/api/fleet/trips?from=2026-11-01T00:00:00Z&to=2026-11-05T00:00:00Z${q}`);
+
+  it('sõidul on gapBefore; vaheta sõidul null', async () => {
+    const r = await list();
+    const active = r.json.find((t: any) => t.id === activeTripId);
+    const closed = r.json.find((t: any) => t.id === tripId);
+    expect(active.gapBefore).toMatchObject({ id: gapId, powerLostMinutes: 15, startedAt: '2026-11-03T07:00:00.000Z', reviewedAt: null });
+    expect(closed.gapBefore).toBeNull();
+  });
+
+  it('filter gaps=all ja gaps=unreviewed', async () => {
+    const all = (await list('&gaps=all')).json;
+    expect(all.map((t: any) => t.id)).toContain(activeTripId);
+    expect(all.map((t: any) => t.id)).not.toContain(tripId);
+    expect(all.every((t: any) => t.gapBefore)).toBe(true);
+    expect((await list('&gaps=unreviewed')).json.map((t: any) => t.id)).toContain(activeTripId);
+  });
+
+  it('PATCH: selgituseta kontroll → 400', async () => {
+    const r = await call('PATCH', `/api/fleet/trips/gaps/${gapId}`, { reviewed: true, note: '  ' });
+    expect(r.status).toBe(400);
+    expect(r.json.error).toBe('Lisa selgitus, miks hoiatus on kontrollitud');
+  });
+
+  it('PATCH: kontrollituks ja tagasi; kontrollitud vahe kaob filtrist unreviewed', async () => {
+    const ok = await call('PATCH', `/api/fleet/trips/gaps/${gapId}`, { reviewed: true, note: 'Treileriga remonti' });
+    expect(ok.status).toBe(200);
+    expect(ok.json).toMatchObject({ id: gapId, reviewNote: 'Treileriga remonti', reviewedBy: `tripsapi-${T}` });
+    expect(ok.json.reviewedAt).not.toBeNull();
+    expect((await list('&gaps=unreviewed')).json.map((t: any) => t.id)).not.toContain(activeTripId);
+    expect((await list('&gaps=all')).json.map((t: any) => t.id)).toContain(activeTripId);
+    const back = await call('PATCH', `/api/fleet/trips/gaps/${gapId}`, { reviewed: false });
+    expect(back.json).toMatchObject({ reviewedAt: null, reviewedBy: null, reviewNote: null });
+  });
+
+  it('PATCH: tundmatu vahe → 404; teise ettevõtte vahe → 404', async () => {
+    expect((await call('PATCH', '/api/fleet/trips/gaps/puudub', { reviewed: false })).status).toBe(404);
+    expect((await call('PATCH', `/api/fleet/trips/gaps/${gapId}`, { reviewed: false }, T2)).status).toBe(404);
+  });
+});

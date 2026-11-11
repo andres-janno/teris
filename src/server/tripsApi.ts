@@ -1,11 +1,12 @@
-// src/server/tripsApi.ts — sõitude register (HTTP): loend, impordi olek, sõidu rada, märkuse muutmine.
+// src/server/tripsApi.ts — sõitude register (HTTP): loend, impordi olek, sõidu rada, märkuse muutmine, sõitude vahed (jälgimata töö märgid) ja nende kontroll.
 // Sõidud tulevad taustaimpordist (tripImport.ts); masin/haakeriist liidetakse lugemisel seoste registrist sõidu alguse ajal.
 // Sõidu põllud (ha, kütus) ja nendega seotud kanded: vehicle_trip_fields + work_entries.tripId.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma } from './db.ts';
+import { prisma, tsdb } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
-import { fetchTripSamples } from './telemetryAccess.ts';
+import { fetchTripSamples, fetchGapSamples } from './telemetryAccess.ts';
+import { recomputeGaps } from './tripGapStore.ts';
 import { fieldRuns } from './tripFields.ts';
 import type { Place } from './tripRoute.ts';
 import { loadAssignmentResolver } from './tripAssignments.ts';
@@ -14,6 +15,7 @@ import { workTypeDisplayName } from '../services/workTypeName.ts';
 const DEFAULT_DAYS = 7;
 const MAX_NOTES = 1000;
 const DELETE_FORBIDDEN = 'Sõitu saab kustutada ja taastada ainult admin';
+const GAP_NOTE_REQUIRED = 'Lisa selgitus, miks hoiatus on kontrollitud';
 const ENTRY_LINKED = 'Sõiduga on seotud kanne — eemalda enne kande seos';
 
 type TripRow = Awaited<ReturnType<typeof prisma.vehicleTrip.findMany>>[number];
@@ -33,6 +35,54 @@ export type TripFieldDto = {
   fuelSharedL: number | null;
   entries: TripFieldEntryDto[];
 };
+
+export type TripGapDto = {
+  id: string;
+  startedAt: string;
+  endedAt: string;
+  powerLostMinutes: number | null;
+  silentMinutes: number | null;
+  fuelDropPct: number | null;
+  jumpM: number | null;
+  engineHoursGrowth: number | null;
+  reviewedAt: string | null;
+  reviewedBy: string | null;
+  reviewNote: string | null;
+};
+
+type GapRow = Awaited<ReturnType<typeof prisma.vehicleTripGap.findMany>>[number];
+
+const gapDto = (g: GapRow): TripGapDto => ({
+  id: g.id, startedAt: g.startedAt.toISOString(), endedAt: g.endedAt.toISOString(),
+  powerLostMinutes: g.powerLostMinutes, silentMinutes: g.silentMinutes, fuelDropPct: g.fuelDropPct,
+  jumpM: g.jumpM, engineHoursGrowth: g.engineHoursGrowth,
+  reviewedAt: g.reviewedAt ? g.reviewedAt.toISOString() : null, reviewedBy: g.reviewedBy, reviewNote: g.reviewNote
+});
+
+// Vahe, mis lõpeb sõidu algusega (vahe võti on järgmine sõit)
+async function loadGaps(trips: TripRow[]): Promise<(tripId: string) => TripGapDto | null> {
+  if (trips.length === 0) return () => null;
+  const rows = await prisma.vehicleTripGap.findMany({ where: { nextTripId: { in: trips.map((t) => t.id) } } });
+  const byTrip = new Map(rows.map((g) => [g.nextTripId, gapDto(g)]));
+  return (tripId) => byTrip.get(tripId) ?? null;
+}
+
+/** Sõidud → DTO-d koos masina, põldude ja vahega. */
+async function toDtos(trips: TripRow[]) {
+  const [target, fieldsOf, gapOf] = await Promise.all([resolveTargets(trips), loadTripFields(trips), loadGaps(trips)]);
+  return trips.map((t) => toDto(t, target(t), fieldsOf(t.id), gapOf(t.id)));
+}
+
+// Sõidu kustutamine/taastamine muudab naabrite vahet: arvuta selle sõidu ja järgmise kustutamata sõidu vahed uuesti
+async function recomputeGapsAround(trip: TripRow): Promise<void> {
+  if (!tsdb) return; // telemeetriata oleks „seade vaikis“ igal vahel vale
+  const device = await prisma.telemetryDevice.findUnique({ where: { id: trip.deviceId }, select: { id: true, imei: true } });
+  if (!device?.imei) return;
+  const next = await prisma.vehicleTrip.findFirst({
+    where: { deviceId: trip.deviceId, deletedAt: null, startedAt: { gt: trip.startedAt } }, orderBy: { startedAt: 'asc' }, select: { startedAt: true }
+  });
+  await recomputeGaps({ id: device.id, imei: device.imei }, new Date(trip.startedAt.getTime() - 1), next?.startedAt ?? trip.startedAt, fetchGapSamples);
+}
 
 const parseIso = (v: string | null): Date | null => {
   if (!v) return null;
@@ -131,7 +181,7 @@ async function loadTripFields(trips: TripRow[]): Promise<(tripId: string) => Tri
   return (tripId) => byTrip.get(tripId) ?? [];
 }
 
-function toDto(t: TripRow, target: ReturnType<Awaited<ReturnType<typeof resolveTargets>>>, fields: TripFieldDto[]) {
+function toDto(t: TripRow, target: ReturnType<Awaited<ReturnType<typeof resolveTargets>>>, fields: TripFieldDto[], gapBefore: TripGapDto | null) {
   const sp = (t.startPlace ?? { place: null }) as any;
   const ep = (t.endPlace ?? { place: null }) as any;
   return {
@@ -147,7 +197,8 @@ function toDto(t: TripRow, target: ReturnType<Awaited<ReturnType<typeof resolveT
     engineHoursStart: t.engineHoursStart, engineHoursEnd: t.engineHoursEnd,
     pointCount: t.pointCount, areaHa: t.areaHa, notes: t.notes,
     deletedAt: t.deletedAt ? t.deletedAt.toISOString() : null,
-    fields
+    fields,
+    gapBefore
   };
 }
 
@@ -166,8 +217,7 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
       },
       orderBy: { startedAt: 'desc' }
     });
-    const [target, fieldsOf] = await Promise.all([resolveTargets(rows), loadTripFields(rows)]);
-    let list = rows.map((t) => toDto(t, target(t), fieldsOf(t.id)));
+    let list = await toDtos(rows);
     const vehicleId = url.searchParams.get('vehicleId');
     if (vehicleId) list = list.filter((t) => t.vehicleId === vehicleId);
     // Haakeriist seoste registri järgi sõidu alguses
@@ -176,6 +226,10 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     if (url.searchParams.get('unknownPlace') === '1') list = list.filter((t) => !t.start.place || !t.end.place);
     // Kirja panemata põllusõit: vähemalt ühel põllureal pole kannet
     if (url.searchParams.get('unlinkedOnly') === '1') list = list.filter((t) => t.fields.some((f) => f.entries.length === 0));
+    // Sõitude vahed: ainult sõidud, mille ees on hoiatus (kõik / kontrollimata)
+    const gaps = url.searchParams.get('gaps');
+    if (gaps === 'all') list = list.filter((t) => t.gapBefore);
+    if (gaps === 'unreviewed') list = list.filter((t) => t.gapBefore && !t.gapBefore.reviewedAt);
     json(res, list);
     return true;
   }
@@ -203,6 +257,26 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     return true;
   }
 
+  // Vahe kontrolli märge: kontrollituks (kohustuslik selgitus) või tagasi kontrollimata; õigus sama mis märkusel
+  const gapMatch = /^\/api\/fleet\/trips\/gaps\/([^/]+)$/.exec(pathname);
+  if (gapMatch && method === 'PATCH') {
+    const id = gapMatch[1];
+    const existing = await prisma.vehicleTripGap.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) { json(res, { error: 'Hoiatust ei leitud' }, 404); return true; }
+    const body = await parseBody(req);
+    const reviewed = body?.reviewed === true;
+    const note = String(body?.note ?? '').trim().slice(0, MAX_NOTES);
+    if (reviewed && !note) { json(res, { error: GAP_NOTE_REQUIRED }, 400); return true; }
+    const saved = await prisma.vehicleTripGap.update({
+      where: { id },
+      data: reviewed
+        ? { reviewedAt: new Date(), reviewedBy: sessionUserOf(req)?.username ?? null, reviewNote: note }
+        : { reviewedAt: null, reviewedBy: null, reviewNote: null }
+    });
+    json(res, gapDto(saved));
+    return true;
+  }
+
   // Sõidu kustutamine (müra) ja taastamine: ainult admin; telemeetria toorandmeid ei puututa
   const restoreMatch = /^\/api\/fleet\/trips\/([^/]+)\/restore$/.exec(pathname);
   const delMatch = /^\/api\/fleet\/trips\/([^/]+)$/.exec(pathname);
@@ -214,14 +288,14 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     if (!existing) { json(res, { error: 'Sõitu ei leitud' }, 404); return true; }
     if (restoreMatch) {
       const saved = await prisma.vehicleTrip.update({ where: { id }, data: { deletedAt: null, deletedBy: null } });
-      const [target, fieldsOf] = await Promise.all([resolveTargets([saved]), loadTripFields([saved])]);
-      json(res, toDto(saved, target(saved), fieldsOf(saved.id)));
+      await recomputeGapsAround(saved);
+      json(res, (await toDtos([saved]))[0]);
       return true;
     }
     if (await prisma.workEntry.count({ where: { tripId: id } }) > 0) { json(res, { error: ENTRY_LINKED }, 409); return true; }
     const saved = await prisma.vehicleTrip.update({ where: { id }, data: { deletedAt: new Date(), deletedBy: user.username } });
-    const [target, fieldsOf] = await Promise.all([resolveTargets([saved]), loadTripFields([saved])]);
-    json(res, toDto(saved, target(saved), fieldsOf(saved.id)));
+    await recomputeGapsAround(saved);
+    json(res, (await toDtos([saved]))[0]);
     return true;
   }
 
@@ -233,8 +307,7 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
     const body = await parseBody(req);
     const notes = String(body?.notes ?? '').trim().slice(0, MAX_NOTES) || null;
     const saved = await prisma.vehicleTrip.update({ where: { id }, data: { notes } });
-    const [target, fieldsOf] = await Promise.all([resolveTargets([saved]), loadTripFields([saved])]);
-    json(res, toDto(saved, target(saved), fieldsOf(saved.id)));
+    json(res, (await toDtos([saved]))[0]);
     return true;
   }
 
