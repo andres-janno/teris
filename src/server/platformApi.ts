@@ -613,7 +613,8 @@ async function weatherStatus() {
   const points = await authDb().weatherPoint.findMany({ orderBy: { id: 'asc' }, include: { _count: { select: { fieldSeasons: true } } } });
   const keys = await credentialsByPoint(new Date());
   return {
-    tenantsWithKey: await authDb().tenantWeatherCredential.count(),
+    // Ainult kasutatavad võtmed: kehtiv WEATHER litsents ja põllud mõnes ruudus
+    tenantsWithKey: new Set([...keys.values()].flat().map((c) => c.tenantId)).size,
     failWarn: FAIL_WARN,
     points: points.map((p) => ({
       id: p.id, lat: p.lat, lon: p.lon, hasData: p.hasData,

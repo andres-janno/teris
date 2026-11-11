@@ -6572,7 +6572,7 @@ a.history-pill:hover {
   border: 1px solid rgba(217, 130, 43, 0.3);
 }
 
-.login-page .modal-content.weather-credential-modal { max-width: 640px; width: min(640px, 94vw); }
+.modal-content.weather-credential-modal { max-width: 640px; width: min(640px, 94vw); }
 .weather-credential-status { margin: 12px 0; font-size: 13px; }
 .weather-credential-state { font-weight: 600; margin-bottom: 6px; }
 .weather-credential-ok { color: var(--accent-emerald, #059669); }
@@ -6586,7 +6586,7 @@ a.history-pill:hover {
 .weather-credential-help { font-size: 13px; }
 .weather-credential-help ol { margin: 6px 0 8px 18px; padding: 0; }
 
-.login-forgot-link {
+.login-page .login-forgot-link {
   color: var(--login-ink-soft);
 }
 

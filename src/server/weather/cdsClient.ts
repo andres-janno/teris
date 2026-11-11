@@ -34,7 +34,7 @@ export async function checkCdsKey(key: string, fetchImpl: typeof fetch = fetch):
   const inputs = { variable: ['2m_temperature'], location: { latitude: 58.4, longitude: 26.7 }, date: [`${d}/${d}`], data_format: 'csv' };
   let res: Response;
   try {
-    res = await fetchImpl(CHECK_URL, { method: 'POST', headers: { 'PRIVATE-TOKEN': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ inputs }) });
+    res = await fetchImpl(CHECK_URL, { method: 'POST', headers: { 'PRIVATE-TOKEN': key, 'Content-Type': 'application/json' }, body: JSON.stringify({ inputs }), signal: AbortSignal.timeout(15_000) });
   } catch {
     return { ok: false, message: 'Copernicuse teenusega ei saanud ühendust, proovi hiljem uuesti' };
   }
@@ -144,6 +144,6 @@ async function fetchHourlyWith(
   const href = res.asset?.value?.href;
   if (typeof href !== 'string' || !href) throw new CdsError('CDS tulemus: vastuses puudub allalaadimise link');
   const file = await f(href);
-  if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`, file.status);
+  if (!file.ok) throw new CdsError(`CDS allalaadimine ${file.status}`); // lingi viga, mitte võtme viga
   return parseCdsCsvFiles(await unpack(await file.arrayBuffer()));
 }
