@@ -11253,6 +11253,7 @@ td.stock-qty-out { color: #dc2626; }
 .register-table.weather-years td.weather-dry { background: rgba(249, 115, 22, 0.18); }
 .register-table.weather-years td.weather-warm { background: rgba(239, 68, 68, 0.16); }
 .register-table.weather-years td.weather-cool { background: rgba(14, 165, 233, 0.12); }
+.fullpage-subtitle.weather-source { font-size: 0.72rem; margin-top: 2px; }
 .weather-note { margin: 6px 0 0; font-size: 0.72rem; }
 .weather-legend-row { margin: 6px 0 0; font-size: 0.72rem; }
 .weather-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }

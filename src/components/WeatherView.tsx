@@ -62,6 +62,7 @@ export const WeatherView: React.FC = () => {
             <div>
               <h2>Ilm</h2>
               <p className="fullpage-subtitle">Aastate võrdlus ERA5-Landi ilmaandmete põhjal (2015-st)</p>
+              <p className="fullpage-subtitle weather-source">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
             </div>
           </div>
           <div className="weather-filters">
@@ -154,7 +155,6 @@ export const WeatherView: React.FC = () => {
               </div>
             ))}
 
-            <p className="notes-text weather-note">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
           </div>
         </div>
       </main>
