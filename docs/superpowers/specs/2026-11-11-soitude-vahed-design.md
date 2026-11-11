@@ -57,9 +57,9 @@ oma id uuele), seega püsib ka vahe ja selle kontrolli märge.
 
 ## Kütuse lõpunäit
 
-Kütusetaseme andur annab süüte sisse- ja väljalülitamise hetkel valesid väärtusi (sh 0). Algusnäidul on juba 2 min
-settimine. Lõpunäit muutub: `fuelLevelEndPct` = viimane näit, mis ei ole 0 ega jää sõidu viimase 60 s sisse; kui
-sellist pole, viimane nullist erinev näit; kui ka seda pole, `null`. Sama reegel (0 välja) kehtib algusnäidule.
+Kütusetaseme andur annab süüte sisselülitamise hetkel valesid väärtusi (sh 0). Algusnäidul on juba 2 min settimine.
+Kontrollitud 09.11 Suure Claasi sõidul: pärast pausi lühike taaskäivitus (üks punkt) andis 0, mis jäi sõidu lõpunäiduks.
+Reegel: näit **0 ei loe** ei algus- ega lõpunäiduks (paak 0% ei ole päris olukord); muu jääb samaks.
 Olemasolevad sõidud arvutatakse uuesti (`finalizedUntil = NULL`, nagu varasematel ümberarvutustel).
 
 ## Andmemudel
@@ -110,11 +110,11 @@ seadme vahed ümber kustutatud sõidu ümbruses (eelmine ja järgmine kustutamat
 
 ## API
 
-- `GET /api/trips` — iga sõidu juures `gapBefore` (vahe, mis lõpeb selle sõidu algusega, või `null`).
+- `GET /api/fleet/trips` — iga sõidu juures `gapBefore` (vahe, mis lõpeb selle sõidu algusega, või `null`).
   Uus filter `gaps=all|unreviewed`: ainult sõidud, mille ees on vahe (kõik / kontrollimata).
-- `GET /api/trips/gaps/count` — kontrollimata vahede arv (praegustel filtritel, v.a. vahe filter).
-- `PATCH /api/trips/gaps/:id` — `{ reviewed: boolean, note?: string }`; `reviewed: true` nõuab mittetühja selgitust;
-  `false` tühjendab märke. Õigus: sama mis sõidu märkuse muutmisel.
+- `PATCH /api/fleet/trips/gaps/:id` — `{ reviewed: boolean, note?: string }`; `reviewed: true` nõuab mittetühja
+  selgitust (kuni 1000 märki); `false` tühjendab märke. Õigus: sama mis sõidu märkuse muutmisel (iga kasutaja).
+- Kontrollimata vahede arv loetakse kliendis laaditud sõitudest (eraldi päringut pole).
 
 ## UI (`TripRegister.tsx`)
 
@@ -123,7 +123,8 @@ seadme vahed ümber kustutatud sõidu ümbruses (eelmine ja järgmine kustutamat
   Kuvatakse piiri ületanud märgid ja mootoritundide kasv alates +1 h; numbrid Eesti formaadis.
 - Real nupp „Märgi kontrollituks“ → väike dialoog selgitusega (kohustuslik). Kontrollitud rida on hall:
   „Kontrollitud pp.kk.aaaa HH:MM, <kasutaja>: <selgitus>“ ja nupp „Ava uuesti“.
-- Filtriribal valik „Hoiatused: kõik / kontrollimata“ (`FilterClear`-iga), selle kõrval kontrollimata vahede arv.
+- Filtriribal valik „Kõik sõidud / Hoiatustega / Kontrollimata hoiatused“ (`FilterClear`-iga); filtririba kõrval
+  kontrollimata vahede arv laaditud perioodis.
 - Menüüs loendurit ei tule (menüüs pole loendurite mehhanismi).
 
 ## MCP
