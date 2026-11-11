@@ -129,6 +129,12 @@ export const WeatherView: React.FC = () => {
               <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele.</p>
             </div>
 
+            {compare.length > 0 && cumulative && (
+              <p className="notes-text weather-legend-row">
+                {compare.map((y, i) => <span key={y}><span className={`legend weather-line-${i % 6}`} /> {y} </span>)}
+                <span className="legend weather-bar-normal" /> keskmine{cumulative.normal && ` ${cumulative.normal.years[0]}–${cumulative.normal.years[cumulative.normal.years.length - 1]}`}
+              </p>
+            )}
             {compare.length > 0 && months.length > 0 && cumulative && ([
               { metric: 'precipMm' as const, title: 'Sademed', unit: 'mm', icon: <Droplets size={14} /> },
               { metric: 'gdd' as const, title: 'Temperatuurisumma', unit: '°C', icon: <Thermometer size={14} /> }
@@ -141,12 +147,6 @@ export const WeatherView: React.FC = () => {
                 </div>
               </div>
             ))}
-            {compare.length > 0 && cumulative && (
-              <p className="notes-text weather-legend-row">
-                {compare.map((y, i) => <span key={y}><span className={`legend weather-line-${i % 6}`} /> {y} </span>)}
-                <span className="legend weather-bar-normal" /> keskmine{cumulative.normal && ` ${cumulative.normal.years[0]}–${cumulative.normal.years[cumulative.normal.years.length - 1]}`}
-              </p>
-            )}
 
             <p className="notes-text weather-note">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
           </div>
