@@ -4200,7 +4200,7 @@ input[type="number"],
   padding: 1px 8px;
   border-radius: 999px;
   font-size: 0.7rem;
-  font-weight: 600;
+  font-weight: 400;
   background: var(--stat-bg);
   color: var(--text-secondary);
 }
@@ -4389,11 +4389,15 @@ input[type="number"],
 }
 
 /* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
-.register-table .name-cell .field-name {
+.register-table .name-cell .field-name,
+.fields-table .field-name,
+.fw-field-title .field-name {
   font-size: 0.85rem;
   font-weight: 400;
 }
-.register-table .name-cell .field-num-badge {
+.register-table .name-cell .field-num-badge,
+.fields-table .field-num-badge,
+.fw-field-title .field-num-badge {
   font-weight: 500;
 }
 
@@ -8015,8 +8019,8 @@ a.history-pill:hover {
 }
 
 .fw-field-name {
-  font-size: 0.86rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--text-primary);
   line-height: 1.25;
   max-width: 100%;
@@ -8071,8 +8075,8 @@ a.history-pill:hover {
 .fw-field-ha {
   white-space: nowrap;
   flex-shrink: 0;
-  font-size: 0.92rem;
-  font-weight: 700;
+  font-size: 0.85rem;
+  font-weight: 400;
   color: var(--text-primary);
   margin-left: auto;
 }
@@ -8264,7 +8268,7 @@ a.history-pill:hover {
   align-items: center;
   gap: 6px;
   font-size: 0.8rem;
-  font-weight: 700;
+  font-weight: 400;
 }
 
 .fw-card-method {

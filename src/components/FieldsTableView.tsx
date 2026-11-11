@@ -382,7 +382,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           </div>
                         </td>
                         <td className="num-col" title={rec.areaChangeReason || undefined}>
-                          <strong>{fmtHa(rec.areaHa || 0)} ha</strong>
+                          {fmtHa(rec.areaHa || 0)} ha
                         </td>
                         <td className="num-col">{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</td>
                         <td>
