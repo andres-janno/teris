@@ -1,7 +1,7 @@
 // src/server/weather/weatherApi.test.ts — live-andmebaas: ajutine ettevõte, punkt lat 10.9 sünteetiliste päevadega.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant } from '../db';
-import { yearsReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
+import { yearsReport, monthsReport, cumulativeReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
 import { addDays } from './summary';
 
 const T = `test-tenant-weatherapi-${process.pid}`;
@@ -61,6 +61,19 @@ describe('weather API', () => {
     expect(r.years.find((x) => x.year === thisYear)!.summary.complete).toBe(true);
     expect(r.normalYears).toEqual([2015, 2016]);
     expect(r.normal.precipMm).toBeCloseTo(382.5, 1);
+  });
+  it('kuud mitme aastaga ja keskmisega', async () => {
+    const r = await run(() => monthsReport([2015, 2016], 'all', 5));
+    const apr = r.months.find((m) => m.month === 4)!;
+    expect(apr.years).toEqual([{ year: 2015, precipMm: 30, gdd: 150 }, { year: 2016, precipMm: 120, gdd: 150 }]);
+    expect(apr.normalPrecipMm).toBe(75);
+  });
+  it('kasvukõverad ja keskmine kõver täisaastatest', async () => {
+    const r = await run(() => cumulativeReport([2016], 'all', 5));
+    expect(r.series[0].points.at(-1)).toEqual({ day: 152, gdd: 765, precipMm: 612 });
+    expect(r.normal!.years).toEqual([2015, 2016]);
+    expect(r.normal!.points).toHaveLength(153);
+    expect(r.normal!.points.at(-1)).toEqual({ day: 152, gdd: 765, precipMm: 382.5 });
   });
   it('põllu hooaeg kultuuri baasiga', async () => {
     const r = await run(() => seasonReport(seeded));

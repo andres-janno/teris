@@ -16,8 +16,10 @@ export interface WeatherYears {
   normalYears: number[];
   dataUntil: string | null;
 }
-export interface WeatherMonth { month: number; precipMm: number | null; gdd: number | null; normalPrecipMm: number | null; normalGdd: number | null }
-export interface WeatherCumulativeSeries { year: number; points: { day: number; gdd: number; precipMm: number }[] }
+export interface WeatherMonth { month: number; years: { year: number; precipMm: number | null; gdd: number | null }[]; normalPrecipMm: number | null; normalGdd: number | null }
+export interface WeatherCumulativePoint { day: number; gdd: number; precipMm: number }
+export interface WeatherCumulativeSeries { year: number; points: WeatherCumulativePoint[] }
+export interface WeatherCumulative { series: WeatherCumulativeSeries[]; normal: { years: number[]; points: WeatherCumulativePoint[] } | null }
 export type WeatherSeasonReason = 'NO_SEEDING' | 'NOT_STARTED' | 'INVALID_DATES' | 'NO_POINT' | 'LOADING';
 export interface WeatherSeasonReport { summary: WeatherSummary | null; reason: WeatherSeasonReason | null; gddBaseC: number; harvested: boolean }
 export interface WeatherSeasonHistoryRow { year: number; crop: string | null; actualYieldTonsHa: number | null; ownDates: boolean; gddBaseC: number; summary: WeatherSummary }

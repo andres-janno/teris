@@ -71,18 +71,19 @@ export async function yearsReport(point: 'all' | number, base: number) {
   return { years, normal, sd, normalYears: full.map((y) => y.year), dataUntil: days.length ? days[days.length - 1].date : null };
 }
 
-export async function monthsReport(year: number, point: 'all' | number, base: number) {
+export async function monthsReport(years: number[], point: 'all' | number, base: number) {
   const ids = await resolvePoints(point);
   const days = ids.length ? await loadDays(ids, `${firstYear}-01-01`, tallinnDate(new Date())) : [];
   const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
   const monthOf = (y: number, m: number) => summarizeWeather(days, { from: `${y}-${String(m).padStart(2, '0')}-01`, to: lastDay(y, m), gddBaseC: base });
+  const thisYear = Number(tallinnDate(new Date()).slice(0, 4));
   return {
     months: MONTHS.map((m) => {
-      const cur = monthOf(year, m);
       const past = [];
-      for (let y = firstYear; y < Number(tallinnDate(new Date()).slice(0, 4)); y++) { const s = monthOf(y, m); if (s.complete) past.push(s); }
+      for (let y = firstYear; y < thisYear; y++) { const s = monthOf(y, m); if (s.complete) past.push(s); }
       return {
-        month: m, precipMm: cur.days ? cur.precipMm : null, gdd: cur.days ? cur.gdd : null,
+        month: m,
+        years: years.map((y) => { const s = monthOf(y, m); return { year: y, precipMm: s.days ? s.precipMm : null, gdd: s.days ? s.gdd : null }; }),
         normalPrecipMm: past.length ? r1(meanAndSd(past.map((s) => s.precipMm)).mean) : null,
         normalGdd: past.length ? r1(meanAndSd(past.map((s) => s.gdd)).mean) : null
       };
@@ -90,22 +91,35 @@ export async function monthsReport(year: number, point: 'all' | number, base: nu
   };
 }
 
+type CumulativePoint = { day: number; gdd: number; precipMm: number };
+function cumulate(days: DailyWeather[], from: string, base: number): CumulativePoint[] {
+  let gdd = 0, precip = 0;
+  return days.map((d) => {
+    gdd += Math.max(0, d.tMean - base); precip += d.precipMm;
+    return { day: Math.round((Date.parse(d.date) - Date.parse(from)) / 86_400_000), gdd, precipMm: precip };
+  });
+}
+const round = (pts: CumulativePoint[]) => pts.map((p) => ({ day: p.day, gdd: r1(p.gdd), precipMm: r1(p.precipMm) }));
+
 export async function cumulativeReport(years: number[], point: 'all' | number, base: number) {
   const ids = await resolvePoints(point);
-  const series = [];
-  for (const y of years) {
-    const p = calendarPeriod(y);
-    const days = ids.length ? await loadDays(ids, p.from, p.to) : [];
-    let gdd = 0, precip = 0;
-    series.push({
-      year: y,
-      points: days.map((d) => {
-        gdd += Math.max(0, d.tMean - base); precip += d.precipMm;
-        return { day: Math.round((Date.parse(d.date) - Date.parse(p.from)) / 86_400_000), gdd: r1(gdd), precipMm: r1(precip) };
-      })
-    });
+  const today = tallinnDate(new Date());
+  const thisYear = Number(today.slice(0, 4));
+  const all = ids.length ? await loadDays(ids, `${firstYear}-01-01`, today) : [];
+  const ofYear = (y: number) => { const p = calendarPeriod(y); return { p, days: all.filter((d) => d.date >= p.from && d.date <= p.to) }; };
+  const series = years.map((y) => { const { p, days } = ofYear(y); return { year: y, points: round(cumulate(days, p.from, base)) }; });
+  // Keskmine kasvukõver = täisaastad kuni eelmise aastani (nagu aastate tabeli keskmine), päevade kaupa
+  const full: { year: number; pts: CumulativePoint[] }[] = [];
+  for (let y = firstYear; y < thisYear; y++) {
+    const { p, days } = ofYear(y);
+    const len = Math.round((Date.parse(p.to) - Date.parse(p.from)) / 86_400_000) + 1;
+    if (days.length === len) full.push({ year: y, pts: cumulate(days, p.from, base) });
   }
-  return { series };
+  const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
+  const normal = full.length
+    ? { years: full.map((f) => f.year), points: full[0].pts.map((pt, i) => ({ day: pt.day, gdd: r1(mean(full.map((f) => f.pts[i].gdd))), precipMm: r1(mean(full.map((f) => f.pts[i].precipMm))) })) }
+    : null;
+  return { series, normal };
 }
 
 export async function seasonReport(fieldSeasonId: number) {
@@ -261,9 +275,9 @@ export async function handleWeather(req: IncomingMessage, res: ServerResponse, p
     if (pathname === '/api/weather/points') { json(res, await pointsReport()); return true; }
     if (pathname === '/api/weather/years') { json(res, await yearsReport(parsePoint(q.get('point')), parseBase(q.get('base')))); return true; }
     if (pathname === '/api/weather/months') {
-      const y = parseYear(q.get('year'));
-      if (!y) { json(res, { error: 'Aasta puudub' }, 400); return true; }
-      json(res, await monthsReport(y, parsePoint(q.get('point')), parseBase(q.get('base'))));
+      const years = (q.get('years') ?? q.get('year') ?? '').split(',').map(parseYear).filter((y): y is number => y !== null).slice(0, 12);
+      if (!years.length) { json(res, { error: 'Aasta puudub' }, 400); return true; }
+      json(res, await monthsReport(years, parsePoint(q.get('point')), parseBase(q.get('base'))));
       return true;
     }
     if (pathname === '/api/weather/cumulative') {

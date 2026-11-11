@@ -1,8 +1,8 @@
 // src/components/WeatherView.tsx — majandi ilmavaade: aastate võrdlus (01.04–31.08), kuude jaotus ja kumulatiivne graafik.
 import React, { useEffect, useMemo, useState } from 'react';
-import { CloudSun, CalendarRange, BarChart3, TrendingUp } from 'lucide-react';
+import { CloudSun, CalendarRange, Droplets, Thermometer } from 'lucide-react';
 import { api } from '../services/api';
-import type { WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulativeSeries, WeatherPointRef } from '../types/weather';
+import type { WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, WEATHER_SOURCE } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
 import { FilterClear } from './FilterClear';
@@ -17,10 +17,9 @@ export const WeatherView: React.FC = () => {
   const [point, setPoint] = useState<WeatherPointRef>('all');
   const [base, setBase] = useState(5);
   const [data, setData] = useState<WeatherYears | null>(null);
-  const [year, setYear] = useState<number | null>(null);
   const [months, setMonths] = useState<WeatherMonth[]>([]);
   const [compare, setCompare] = useState<number[]>([]);
-  const [series, setSeries] = useState<WeatherCumulativeSeries[]>([]);
+  const [cumulative, setCumulative] = useState<WeatherCumulative | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { api.getWeatherPoints().then((r) => { setPoints(r.points); setLoading(r.loading); }).catch((e) => setError(e.message)); }, []);
@@ -31,24 +30,18 @@ export const WeatherView: React.FC = () => {
     api.getWeatherYears(point, base).then((r) => {
       if (cancelled) return;
       setData(r);
-      const last = r.years[r.years.length - 1]?.year ?? null;
-      setYear((y) => y ?? last);
       setCompare((c) => (c.length ? c : r.years.slice(-3).map((x) => x.year)));
     }).catch((e) => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
   }, [point, base]);
+  // Võrreldavad aastad (linnukesed) lähevad nii kuude tulpadesse kui kasvujoontesse; keskmine on alati kõrval
   useEffect(() => {
-    if (!year) return;
+    if (!compare.length) { setMonths([]); setCumulative(null); return; }
     setError(null);
     let cancelled = false;
-    api.getWeatherMonths(year, point, base).then((r) => { if (!cancelled) setMonths(r); }).catch((e) => { if (!cancelled) setError(e.message); });
-    return () => { cancelled = true; };
-  }, [year, point, base]);
-  useEffect(() => {
-    if (!compare.length) { setSeries([]); return; }
-    setError(null);
-    let cancelled = false;
-    api.getWeatherCumulative(compare, point, base).then((r) => { if (!cancelled) setSeries(r); }).catch((e) => { if (!cancelled) setError(e.message); });
+    Promise.all([api.getWeatherMonths(compare, point, base), api.getWeatherCumulative(compare, point, base)])
+      .then(([m, c]) => { if (!cancelled) { setMonths(m); setCumulative(c); } })
+      .catch((e) => { if (!cancelled) setError(e.message); });
     return () => { cancelled = true; };
   }, [compare, point, base]);
 
@@ -101,7 +94,7 @@ export const WeatherView: React.FC = () => {
                   </thead>
                   <tbody>
                     {rows.map(({ year: y, summary: s }) => (
-                      <tr key={y} className={y === year ? 'selected' : ''} onClick={() => setYear(y)}>
+                      <tr key={y} className={compare.includes(y) ? 'selected' : ''} onClick={() => toggleCompare(y)}>
                         <td>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</td>
                         <td className={`num-col weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</td>
                         <td className={`num-col weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</td>
@@ -127,29 +120,26 @@ export const WeatherView: React.FC = () => {
                   </tbody>
                 </table>
               </div>
-              <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps näitab aasta kuude jaotust, linnuke lisab aasta kasvugraafikule.</p>
+              <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele.</p>
             </div>
 
-            {year && months.length > 0 && (
-              <div className="detail-section">
-                <div className="section-subtitle"><BarChart3 size={14} /><span>{year} kuude kaupa</span></div>
+            {compare.length > 0 && months.length > 0 && cumulative && ([
+              { metric: 'precipMm' as const, title: 'Sademed', unit: 'mm', icon: <Droplets size={14} /> },
+              { metric: 'gdd' as const, title: 'Temperatuurisumma', unit: '°C', icon: <Thermometer size={14} /> }
+            ]).map((c) => (
+              <div key={c.metric} className="detail-section">
+                <div className="section-subtitle">{c.icon}<span>{c.title}, {c.unit}</span></div>
                 <div className="weather-chart-grid">
-                  <div className="weather-chart-card"><div className="weather-chart-title">Sademed, mm</div><MonthBars months={months} metric="precipMm" unit="mm" year={year} /></div>
-                  <div className="weather-chart-card"><div className="weather-chart-title">Temperatuurisumma, °C</div><MonthBars months={months} metric="gdd" unit="°C" year={year} /></div>
+                  <div className="weather-chart-card"><div className="weather-chart-title">Kuude kaupa</div><MonthBars months={months} years={compare} metric={c.metric} unit={c.unit} /></div>
+                  <div className="weather-chart-card"><div className="weather-chart-title">Kasv hooaja jooksul</div><CumulativeLines series={cumulative.series} normal={cumulative.normal?.points ?? null} metric={c.metric} unit={c.unit} /></div>
                 </div>
-                <p className="notes-text weather-legend-row"><span className="legend weather-bar-year" /> {year} <span className="legend weather-bar-normal" /> keskmine</p>
               </div>
-            )}
-
-            {series.length > 0 && (
-              <div className="detail-section">
-                <div className="section-subtitle"><TrendingUp size={14} /><span>Kasv hooaja jooksul</span></div>
-                <div className="weather-chart-grid">
-                  <div className="weather-chart-card"><div className="weather-chart-title">Temperatuurisumma, °C</div><CumulativeLines series={series} metric="gdd" unit="°C" /></div>
-                  <div className="weather-chart-card"><div className="weather-chart-title">Sademed, mm</div><CumulativeLines series={series} metric="precipMm" unit="mm" /></div>
-                </div>
-                <p className="notes-text weather-legend-row">{series.map((s, i) => <span key={s.year}><span className={`legend weather-line-${i % 6}`} /> {s.year} </span>)}</p>
-              </div>
+            ))}
+            {compare.length > 0 && cumulative && (
+              <p className="notes-text weather-legend-row">
+                {compare.map((y, i) => <span key={y}><span className={`legend weather-line-${i % 6}`} /> {y} </span>)}
+                <span className="legend weather-bar-normal" /> keskmine{cumulative.normal && ` ${cumulative.normal.years[0]}–${cumulative.normal.years[cumulative.normal.years.length - 1]}`}
+              </p>
             )}
 
             <p className="notes-text weather-note">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
