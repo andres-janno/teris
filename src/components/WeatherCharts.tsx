@@ -62,13 +62,13 @@ function useHover(W: number): [Hover, { onMouseMove: (e: React.MouseEvent<SVGSVG
 const Crosshair: React.FC<{ hover: Hover; yLabel: string; xLabel: string; W: number }> = ({ hover, yLabel, xLabel, W }) => {
   if (!hover) return null;
   const bottom = H - M.bottom;
-  const yw = yLabel.length * 6.6 + 10, xw = xLabel.length * 6.6 + 12;
+  const yw = Math.min(M.left - 3, yLabel.length * 6.6 + 10), xw = xLabel.length * 6.6 + 12;
   const xl = Math.min(Math.max(hover.x, M.left + xw / 2), W - M.right - xw / 2);
   return (
     <g className="weather-crosshair" pointerEvents="none">
       <line x1={M.left} x2={hover.x} y1={hover.y} y2={hover.y} />
       <line x1={hover.x} x2={hover.x} y1={hover.y} y2={bottom} />
-      <rect x={M.left - yw - 2} y={hover.y - 9} width={yw} height={18} rx={3} className="weather-crosshair-label" />
+      <rect x={Math.max(1, M.left - yw - 2)} y={hover.y - 9} width={yw} height={18} rx={3} className="weather-crosshair-label" />
       <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className="weather-crosshair-text">{yLabel}</text>
       <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className="weather-crosshair-label" />
       <text x={xl} y={bottom + 17} textAnchor="middle" className="weather-crosshair-text">{xLabel}</text>
@@ -112,7 +112,7 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
           </g>
         );
       })}
-      <Crosshair hover={hover} W={W} yLabel={hover ? `${fmt0(((y(0) - hover.y) / ih) * top)} ${unit}` : ''} xLabel={hoverMonth ? MONTH_NAMES[hoverMonth.month] : ''} />
+      <Crosshair hover={hover} W={W} yLabel={hover ? fmt0(((y(0) - hover.y) / ih) * top) : ''} xLabel={hoverMonth ? MONTH_NAMES[hoverMonth.month] : ''} />
     </svg></div>
   );
 };
@@ -153,7 +153,7 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; norm
           <title>{`${s.year}: ${fmt0(s.points[s.points.length - 1]?.[metric] ?? 0)} ${unit}`}</title>
         </polyline>
       ))}
-      <Crosshair hover={hover} W={W} yLabel={hover ? `${fmt0(((y(0) - hover.y) / ih) * top)} ${unit}` : ''} xLabel={hover ? dateOfDay(hoverDay, firstMonth) : ''} />
+      <Crosshair hover={hover} W={W} yLabel={hover ? fmt0(((y(0) - hover.y) / ih) * top) : ''} xLabel={hover ? dateOfDay(hoverDay, firstMonth) : ''} />
     </svg></div>
   );
 };
