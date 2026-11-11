@@ -1,25 +1,20 @@
-// src/components/WorkRegisterModal.tsx — tööde register: tööd ja kulumaterjalid.
+// src/components/WorkRegisterModal.tsx — tööde register: põllutööde liigid (kulumaterjalid on laoarvestuse artiklites).
 import React, { useCallback, useEffect, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { X, ListChecks, Plus, Edit2, Trash2 } from 'lucide-react';
+import { X, ListChecks, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import {
   WORK_PHASES,
   WORK_PHASE_META,
-  NEW_ARTICLE,
-  type Article,
   type WorkPhase,
   type WorkType
 } from '../types/fieldWork';
-import { ArticleFormDialog } from './ArticleFormDialog';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
   onClose: () => void;
 }
-
-type Tab = 'works' | 'articles';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -42,17 +37,12 @@ const PhaseBadge: React.FC<{ phase: WorkPhase }> = ({ phase }) => {
 };
 
 export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, onClose }) => {
-  const [tab, setTab] = useState<Tab>('works');
   const [workTypes, setWorkTypes] = useState<WorkType[]>([]);
-  const [articles, setArticles] = useState<Article[]>([]);
   const [busy, setBusy] = useState(false);
 
   const reload = useCallback(async () => {
     try {
-      const [w, m] = await Promise.all([api.getWorkTypes(), api.getArticles()]);
-      setWorkTypes(w);
-      // Kulumaterjalide sakk näitab ainult kulumaterjale (teenused ja toodang on artiklite registris)
-      setArticles(m.filter((x) => x.category.group === 'CONSUMABLE'));
+      setWorkTypes(await api.getWorkTypes());
     } catch (err) {
       alertDialog(errorText(err));
     }
@@ -89,13 +79,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     void run(() => api.deleteWorkType(w.id));
   };
 
-  // --- Materjali vorm ---
-  const [articleForm, setArticleForm] = useState<Partial<Article> | null>(null);
-  const deleteArticle = async (m: Article) => {
-    if (!await confirmDialog(`Kas soovid kindlasti kustutada materjali "${m.name}"?`)) return;
-    void run(() => api.deleteArticle(m.id));
-  };
-
   if (!isOpen) return null;
 
   return (
@@ -108,17 +91,10 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
             </div>
             <div>
               <h3>Tööde register</h3>
-              <p className="modal-subtitle">Põllutööde liigid ja kulumaterjalid. PRIA põlluraamatust lahus.</p>
+              <p className="modal-subtitle">Põllutööde liigid. PRIA põlluraamatust lahus. Kulumaterjalid on laoarvestuse artiklites.</p>
             </div>
           </div>
           <div className="season-header-actions">
-            <div className="work-register-tabs" role="tablist">
-              {([['works', 'Tööd'], ['articles', 'Kulumaterjalid']] as [Tab, string][]).map(([k, label]) => (
-                <button key={k} type="button" role="tab" aria-selected={tab === k} className={tab === k ? 'active' : ''} onClick={() => setTab(k)}>
-                  {label}
-                </button>
-              ))}
-            </div>
             <button className="icon-btn" onClick={onClose} title="Sulge">
               <X size={18} />
             </button>
@@ -126,107 +102,52 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         </div>
 
         <div className="modal-body work-register-body">
-          {tab === 'works' && (
-            <>
-              {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
-              <div className="register-table-wrap">
-                <table className="register-table work-register-table">
-                  <thead>
-                    <tr>
-                      <th>PRIA tegevus</th>
-                      <th>Lühinimi</th>
-                      <th>Faas</th>
-                      <th>Kandes küsitakse (kogused)</th>
-                      <th className="num">Põldudel</th>
-                      <th className="actions-col">Tegevused</th>
+          {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
+          <div className="register-table-wrap">
+            <table className="register-table work-register-table">
+              <thead>
+                <tr>
+                  <th>PRIA tegevus</th>
+                  <th>Lühinimi</th>
+                  <th>Faas</th>
+                  <th>Kandes küsitakse (kogused)</th>
+                  <th className="num">Põldudel</th>
+                  <th className="actions-col">Tegevused</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...workTypes]
+                  .sort((a, b) => WORK_PHASES.indexOf(a.phase) - WORK_PHASES.indexOf(b.phase) || a.sortOrder - b.sortOrder)
+                  .map((w) => (
+                    <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
+                      <td className="work-name-cell">
+                        {w.name}
+                        {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+                      </td>
+                      <td>{w.shortName?.trim() || '–'}</td>
+                      <td><PhaseBadge phase={w.phase} /></td>
+                      <td>
+                        <div className="field-sub-tags">
+                          {entryInputs(w).map((i) => <span key={i} className="sub-tag">{i}</span>)}
+                        </div>
+                      </td>
+                      <td className="num">{w.fieldWorkCount ?? 0}</td>
+                      <td className="actions-col">
+                        <div className="row-actions">
+                          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setWorkForm(w)}>
+                            <Edit2 size={15} />
+                          </button>
+                          <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteWork(w)}>
+                            <Trash2 size={15} />
+                          </button>
+                        </div>
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {[...workTypes]
-                      .sort((a, b) => WORK_PHASES.indexOf(a.phase) - WORK_PHASES.indexOf(b.phase) || a.sortOrder - b.sortOrder)
-                      .map((w) => (
-                        <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
-                          <td className="work-name-cell">
-                            {w.name}
-                            {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-                          </td>
-                          <td>{w.shortName?.trim() || '–'}</td>
-                          <td><PhaseBadge phase={w.phase} /></td>
-                          <td>
-                            <div className="field-sub-tags">
-                              {entryInputs(w).map((i) => <span key={i} className="sub-tag">{i}</span>)}
-                            </div>
-                          </td>
-                          <td className="num">{w.fieldWorkCount ?? 0}</td>
-                          <td className="actions-col">
-                            <div className="row-actions">
-                              <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setWorkForm(w)}>
-                                <Edit2 size={15} />
-                              </button>
-                              <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteWork(w)}>
-                                <Trash2 size={15} />
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
+                  ))}
+              </tbody>
+            </table>
+          </div>
 
-          {tab === 'articles' && (
-            <>
-              <div className="work-register-toolbar">
-                <button className="btn btn-primary btn-sm" onClick={() => setArticleForm(NEW_ARTICLE)}>
-                  <Plus size={14} />
-                  <span>Lisa materjal</span>
-                </button>
-              </div>
-              <div className="register-table-wrap">
-                <table className="register-table work-register-table">
-                  <thead>
-                    <tr>
-                      <th>Materjal</th>
-                      <th>Kategooria</th>
-                      <th>Ühik</th>
-                      <th className="num">Kandeid</th>
-                      <th>Märkus</th>
-                      <th className="actions-col">Tegevused</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {articles.length === 0 && (
-                      <tr><td colSpan={6} className="muted">Materjale pole. Lisa seemned, väetised ja taimekaitsevahendid, et töötajad saaksid neid kannetes valida.</td></tr>
-                    )}
-                    {articles.map((m) => (
-                      <tr key={m.id} className={m.isActive ? '' : 'inactive'}>
-                        <td className="work-name-cell">
-                          {m.name}
-                          {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-                        </td>
-                        <td>{m.category.name}</td>
-                        <td>{m.unit}</td>
-                        <td className="num">{m.usageCount ?? 0}</td>
-                        <td className="muted">{m.notes ?? ''}</td>
-                        <td className="actions-col">
-                          <div className="row-actions">
-                            <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setArticleForm(m)}>
-                              <Edit2 size={15} />
-                            </button>
-                            <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteArticle(m)}>
-                              <Trash2 size={15} />
-                            </button>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </>
-          )}
         </div>
       </div>
 
@@ -275,17 +196,6 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         document.body
       )}
 
-      {articleForm && (
-        <ArticleFormDialog
-          initial={articleForm}
-          canManageFinance={false}
-          onClose={() => setArticleForm(null)}
-          onSaved={() => {
-            setArticleForm(null);
-            void reload();
-          }}
-        />
-      )}
     </div>
   );
 };
