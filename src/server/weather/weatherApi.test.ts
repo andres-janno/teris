@@ -75,6 +75,18 @@ describe('weather API', () => {
     expect(r.normal!.points).toHaveLength(153);
     expect(r.normal!.points.at(-1)).toEqual({ day: 152, gdd: 765, precipMm: 382.5 });
   });
+  it('perioodi valik: kogu aasta ja taliviljad', async () => {
+    const y = await run(() => yearsReport('all', 5, 'year'));
+    const by = Object.fromEntries(y.years.map((x) => [x.year, x.summary]));
+    expect(by[2015].precipMm).toBe(365);
+    expect(by[2016].precipMm).toBe(1464);  // liigaasta 366 × 4 mm
+    expect(by[2015].frostDays).toBe(0);
+    const w = await run(() => monthsReport([2015], 'all', 5, 'winter'));
+    expect(w.months.map((m) => m.month)).toEqual([7, 8, 9, 10, 11]);
+    const c = await run(() => cumulativeReport([2016], 'all', 5, 'year'));
+    expect(c.series[0].points).toHaveLength(366);
+    expect(c.normal!.points).toHaveLength(365);
+  });
   it('põllu hooaeg kultuuri baasiga', async () => {
     const r = await run(() => seasonReport(seeded));
     expect(r.gddBaseC).toBe(8);

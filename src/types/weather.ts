@@ -9,6 +9,7 @@ export interface WeatherSummary {
 export type WeatherPointRef = 'all' | number;
 export interface WeatherPointInfo { id: number; lat: number; lon: number; hasData: boolean | null; loadedUntil: string | null; fieldCount: number }
 export type WeatherNumericKey = 'gdd' | 'precipMm' | 'rainDays' | 'waterBalanceMm' | 'longestDrySpell' | 'hotDays' | 'frostDays';
+export type WeatherPeriod = 'growing' | 'winter' | 'year';
 export interface WeatherYears {
   years: { year: number; summary: WeatherSummary }[];
   normal: Partial<Record<WeatherNumericKey, number | null>>;

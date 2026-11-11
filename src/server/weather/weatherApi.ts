@@ -9,11 +9,11 @@ import { checkCdsKey } from './cdsClient.ts';
 import { secretsKey, NO_SECRETS_KEY_MESSAGE } from './credentials.ts';
 import { bindWeatherPoints } from './points.ts';
 import { tallinnDate } from './daily.ts';
-import { summarizeWeather, averageDays, calendarPeriod, seasonPeriod, meanAndSd, addDays, SEASON_FROST_DAYS } from './summary.ts';
+import { summarizeWeather, averageDays, calendarPeriod, periodMonths, isWeatherPeriod, seasonPeriod, meanAndSd, addDays, SEASON_FROST_DAYS } from './summary.ts';
+import type { WeatherPeriod } from './summary.ts';
 import { WEATHER_START } from './loader.ts';
 import type { DailyWeather, WeatherSummary } from './types.ts';
 
-const MONTHS = [4, 5, 6, 7, 8];
 const asDate = (s: string) => new Date(`${s}T00:00:00Z`);
 const firstYear = Number(WEATHER_START.slice(0, 4));
 const r1 = (x: number) => Math.round(x * 10) / 10;
@@ -47,14 +47,14 @@ async function resolvePoints(point: 'all' | number): Promise<number[]> {
 
 const NUMERIC: (keyof WeatherSummary)[] = ['gdd', 'precipMm', 'rainDays', 'waterBalanceMm', 'longestDrySpell', 'hotDays', 'frostDays'];
 
-export async function yearsReport(point: 'all' | number, base: number) {
+export async function yearsReport(point: 'all' | number, base: number, period: WeatherPeriod = 'growing') {
   const ids = await resolvePoints(point);
   const today = tallinnDate(new Date());
   const lastYear = Number(today.slice(0, 4));
   const days = ids.length ? await loadDays(ids, `${firstYear}-01-01`, today) : [];
   const years = [];
   for (let y = firstYear; y <= lastYear; y++) {
-    const p = calendarPeriod(y);
+    const p = calendarPeriod(y, period);
     if (p.from > today) break;
     years.push({ year: y, summary: summarizeWeather(days, { ...p, gddBaseC: base }) });
   }
@@ -71,14 +71,14 @@ export async function yearsReport(point: 'all' | number, base: number) {
   return { years, normal, sd, normalYears: full.map((y) => y.year), dataUntil: days.length ? days[days.length - 1].date : null };
 }
 
-export async function monthsReport(years: number[], point: 'all' | number, base: number) {
+export async function monthsReport(years: number[], point: 'all' | number, base: number, period: WeatherPeriod = 'growing') {
   const ids = await resolvePoints(point);
   const days = ids.length ? await loadDays(ids, `${firstYear}-01-01`, tallinnDate(new Date())) : [];
   const lastDay = (y: number, m: number) => new Date(Date.UTC(y, m, 0)).toISOString().slice(0, 10);
   const monthOf = (y: number, m: number) => summarizeWeather(days, { from: `${y}-${String(m).padStart(2, '0')}-01`, to: lastDay(y, m), gddBaseC: base });
   const thisYear = Number(tallinnDate(new Date()).slice(0, 4));
   return {
-    months: MONTHS.map((m) => {
+    months: periodMonths(period).map((m) => {
       const past = [];
       for (let y = firstYear; y < thisYear; y++) { const s = monthOf(y, m); if (s.complete) past.push(s); }
       return {
@@ -101,12 +101,12 @@ function cumulate(days: DailyWeather[], from: string, base: number): CumulativeP
 }
 const round = (pts: CumulativePoint[]) => pts.map((p) => ({ day: p.day, gdd: r1(p.gdd), precipMm: r1(p.precipMm) }));
 
-export async function cumulativeReport(years: number[], point: 'all' | number, base: number) {
+export async function cumulativeReport(years: number[], point: 'all' | number, base: number, period: WeatherPeriod = 'growing') {
   const ids = await resolvePoints(point);
   const today = tallinnDate(new Date());
   const thisYear = Number(today.slice(0, 4));
   const all = ids.length ? await loadDays(ids, `${firstYear}-01-01`, today) : [];
-  const ofYear = (y: number) => { const p = calendarPeriod(y); return { p, days: all.filter((d) => d.date >= p.from && d.date <= p.to) }; };
+  const ofYear = (y: number) => { const p = calendarPeriod(y, period); return { p, days: all.filter((d) => d.date >= p.from && d.date <= p.to) }; };
   const series = years.map((y) => { const { p, days } = ofYear(y); return { year: y, points: round(cumulate(days, p.from, base)) }; });
   // Keskmine kasvukõver = täisaastad kuni eelmise aastani (nagu aastate tabeli keskmine), päevade kaupa
   const full: { year: number; pts: CumulativePoint[] }[] = [];
@@ -117,7 +117,8 @@ export async function cumulativeReport(years: number[], point: 'all' | number, b
   }
   const mean = (xs: number[]) => xs.reduce((a, b) => a + b, 0) / xs.length;
   const normal = full.length
-    ? { years: full.map((f) => f.year), points: full[0].pts.map((pt, i) => ({ day: pt.day, gdd: r1(mean(full.map((f) => f.pts[i].gdd))), precipMm: r1(mean(full.map((f) => f.pts[i].precipMm))) })) }
+    // Liigaasta on päeva võrra pikem — keskmine kõver lühima aasta pikkuseni
+    ? { years: full.map((f) => f.year), points: full.reduce((a, f) => (f.pts.length < a.pts.length ? f : a)).pts.map((pt, i) => ({ day: pt.day, gdd: r1(mean(full.map((f) => f.pts[i].gdd))), precipMm: r1(mean(full.map((f) => f.pts[i].precipMm))) })) }
     : null;
   return { series, normal };
 }
@@ -214,6 +215,7 @@ async function pointsReport() {
 
 const parsePoint = (v: string | null): 'all' | number => (v && v !== 'all' && Number.isInteger(Number(v)) ? Number(v) : 'all');
 const parseBase = (v: string | null): number => { const n = Number(v); return v !== null && Number.isFinite(n) && n >= 0 && n <= 15 ? n : 5; };
+const parsePeriod = (v: string | null): WeatherPeriod => (isWeatherPeriod(v) ? v : 'growing');
 const parseYear = (v: string | null): number | null => (v && /^\d{4}$/.test(v) ? Number(v) : null);
 const SEASON_ROUTE = /^\/api\/weather\/season\/(\d+)$/;
 const SEASON_HISTORY_ROUTE = /^\/api\/weather\/season\/(\d+)\/history$/;
@@ -273,16 +275,16 @@ export async function handleWeather(req: IncomingMessage, res: ServerResponse, p
   const q = url.searchParams;
   try {
     if (pathname === '/api/weather/points') { json(res, await pointsReport()); return true; }
-    if (pathname === '/api/weather/years') { json(res, await yearsReport(parsePoint(q.get('point')), parseBase(q.get('base')))); return true; }
+    if (pathname === '/api/weather/years') { json(res, await yearsReport(parsePoint(q.get('point')), parseBase(q.get('base')), parsePeriod(q.get('period')))); return true; }
     if (pathname === '/api/weather/months') {
       const years = (q.get('years') ?? q.get('year') ?? '').split(',').map(parseYear).filter((y): y is number => y !== null).slice(0, 12);
       if (!years.length) { json(res, { error: 'Aasta puudub' }, 400); return true; }
-      json(res, await monthsReport(years, parsePoint(q.get('point')), parseBase(q.get('base'))));
+      json(res, await monthsReport(years, parsePoint(q.get('point')), parseBase(q.get('base')), parsePeriod(q.get('period'))));
       return true;
     }
     if (pathname === '/api/weather/cumulative') {
       const years = (q.get('years') ?? '').split(',').map(parseYear).filter((y): y is number => y !== null).slice(0, 12);
-      json(res, await cumulativeReport(years, parsePoint(q.get('point')), parseBase(q.get('base'))));
+      json(res, await cumulativeReport(years, parsePoint(q.get('point')), parseBase(q.get('base')), parsePeriod(q.get('period'))));
       return true;
     }
     if (pathname === '/api/weather/seasons') {

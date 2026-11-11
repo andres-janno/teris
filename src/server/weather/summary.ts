@@ -59,8 +59,25 @@ export function averageDays(series: DailyWeather[][]): DailyWeather[] {
   }));
 }
 
-export function calendarPeriod(year: number) {
-  return { from: `${year}-04-01`, to: `${year}-08-31`, frostFrom: `${year}-04-01`, frostTo: `${year}-06-30` };
+// Ilmavaate võrdlusperioodid (kõik ühe kalendriaasta sees). Öökülmi loetakse kasvuperioodil ainult apr–juunis, mujal kogu perioodil.
+export type WeatherPeriod = 'growing' | 'winter' | 'year';
+export const WEATHER_PERIODS: Record<WeatherPeriod, { from: string; to: string; frostFrom?: string; frostTo?: string }> = {
+  growing: { from: '04-01', to: '08-31', frostFrom: '04-01', frostTo: '06-30' },
+  winter: { from: '07-01', to: '11-30' },
+  year: { from: '01-01', to: '12-31' }
+};
+export const isWeatherPeriod = (v: string | null): v is WeatherPeriod => v === 'growing' || v === 'winter' || v === 'year';
+
+export function calendarPeriod(year: number, period: WeatherPeriod = 'growing') {
+  const d = WEATHER_PERIODS[period];
+  const from = `${year}-${d.from}`, to = `${year}-${d.to}`;
+  return { from, to, frostFrom: d.frostFrom ? `${year}-${d.frostFrom}` : from, frostTo: d.frostTo ? `${year}-${d.frostTo}` : to };
+}
+export function periodMonths(period: WeatherPeriod): number[] {
+  const d = WEATHER_PERIODS[period];
+  const out = [];
+  for (let m = Number(d.from.slice(0, 2)); m <= Number(d.to.slice(0, 2)); m++) out.push(m);
+  return out;
 }
 
 export function seasonPeriod(s: { seedingDate: Date | null; harvestDate: Date | null }, today: string) {

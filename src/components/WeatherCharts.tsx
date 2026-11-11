@@ -1,7 +1,7 @@
 // src/components/WeatherCharts.tsx — ilmavaate SVG graafikud: kuude tulbad (võrreldavad aastad + keskmine) ja kumulatiivsed jooned (aastad + keskmine).
 import React, { useEffect, useRef, useState } from 'react';
 import type { WeatherMonth, WeatherCumulativeSeries, WeatherCumulativePoint } from '../types/weather';
-import { MONTH_NAMES, fmt0 } from '../services/weatherFormat';
+import { MONTH_NAMES, MONTH_SHORT, fmt0 } from '../services/weatherFormat';
 
 const H = 220, M = { top: 12, right: 12, bottom: 28, left: 44 };
 
@@ -69,14 +69,18 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
   );
 };
 
-export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; normal: WeatherCumulativePoint[] | null; metric: 'gdd' | 'precipMm'; unit: string }> = ({ series, normal, metric, unit }) => {
+// Päevanumber perioodi algusest; teljemärgid kuu alguses (mitteliigaasta järgi)
+const dayOf = (month: number, firstMonth: number) => Math.round((Date.UTC(2025, month - 1, 1) - Date.UTC(2025, firstMonth - 1, 1)) / 86_400_000);
+
+export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; normal: WeatherCumulativePoint[] | null; metric: 'gdd' | 'precipMm'; unit: string; firstMonth: number; lastMonth: number }> = ({ series, normal, metric, unit, firstMonth, lastMonth }) => {
   const [ref, W] = useWidth();
-  const maxDay = 152; // 01.04–31.08
+  const maxDay = dayOf(lastMonth + 1, firstMonth) - 1;
   const top = niceTop(Math.max(0, ...series.flatMap((s) => s.points.map((p) => p[metric])), ...(normal ?? []).map((p) => p[metric])));
   const iw = W - M.left - M.right, ih = H - M.top - M.bottom;
   const x = (d: number) => M.left + (d / maxDay) * iw;
   const y = (v: number) => M.top + ih - (v / top) * ih;
-  const ticks = [{ d: 0, l: '1. apr' }, { d: 30, l: '1. mai' }, { d: 61, l: '1. juuni' }, { d: 91, l: '1. juuli' }, { d: 122, l: '1. aug' }];
+  const ticks = [];
+  for (let m = firstMonth; m <= lastMonth; m++) ticks.push({ d: dayOf(m, firstMonth), l: lastMonth - firstMonth > 6 ? MONTH_SHORT[m] : `1. ${MONTH_SHORT[m]}` });
   const path = (pts: WeatherCumulativePoint[]) => pts.map((p) => `${x(p.day)},${y(p[metric])}`).join(' ');
   return (
     <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'}>

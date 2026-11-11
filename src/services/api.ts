@@ -12,7 +12,7 @@ import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../t
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
-import type { WeatherCredentialStatus, WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
+import type { WeatherCredentialStatus, WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherPeriod, WeatherMonth, WeatherCumulative, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -356,20 +356,20 @@ export const api = {
     return res.json();
   },
 
-  async getWeatherYears(point: WeatherPointRef, base: number): Promise<WeatherYears> {
-    const res = await apiFetch(`/api/weather/years?${new URLSearchParams({ point: String(point), base: String(base) })}`);
+  async getWeatherYears(point: WeatherPointRef, base: number, period: WeatherPeriod = 'growing'): Promise<WeatherYears> {
+    const res = await apiFetch(`/api/weather/years?${new URLSearchParams({ point: String(point), base: String(base), period })}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
     return res.json();
   },
 
-  async getWeatherMonths(years: number[], point: WeatherPointRef, base: number): Promise<WeatherMonth[]> {
-    const res = await apiFetch(`/api/weather/months?${new URLSearchParams({ years: years.join(','), point: String(point), base: String(base) })}`);
+  async getWeatherMonths(years: number[], point: WeatherPointRef, base: number, period: WeatherPeriod = 'growing'): Promise<WeatherMonth[]> {
+    const res = await apiFetch(`/api/weather/months?${new URLSearchParams({ years: years.join(','), point: String(point), base: String(base), period })}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
     return (await res.json()).months;
   },
 
-  async getWeatherCumulative(years: number[], point: WeatherPointRef, base: number): Promise<WeatherCumulative> {
-    const res = await apiFetch(`/api/weather/cumulative?${new URLSearchParams({ years: years.join(','), point: String(point), base: String(base) })}`);
+  async getWeatherCumulative(years: number[], point: WeatherPointRef, base: number, period: WeatherPeriod = 'growing'): Promise<WeatherCumulative> {
+    const res = await apiFetch(`/api/weather/cumulative?${new URLSearchParams({ years: years.join(','), point: String(point), base: String(base), period })}`);
     if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
     return await res.json();
   },

@@ -430,7 +430,7 @@ flowchart LR
   A1 -->|U sidumine| T2
 ```
 
-- **Vaate sisu:** aastate tabel (rida = aasta 2015…jooksev, viimane rida pikaajaline keskmine) perioodil 01.04–31.08: sademed, temperatuurisumma (GDD), veebilanss (sademed miinus potentsiaalne aurumine), pikim kuiv periood (päevad sademetega alla 1 mm), kuumapäevad (üle 28 °C), öökülmad aprill–juuni. Valitud aasta kuude sademed ja GDD pikaajalise keskmise kõrval (tulpdiagramm) ning GDD ja sademete kumulatiivne kasv 01.04-st (mitu aastat kõrvuti).
+- **Vaate sisu:** perioodi valik — kasvuperiood 01.04–31.08 (vaikimisi), taliviljad 01.07–30.11, kogu aasta 01.01–31.12. Aastate tabel (rida = aasta 2015…jooksev, viimane rida pikaajaline keskmine) valitud perioodil: sademed, temperatuurisumma (GDD), veebilanss (sademed miinus potentsiaalne aurumine), pikim kuiv periood (päevad sademetega alla 1 mm), kuumapäevad (üle 28 °C), öökülmad (kasvuperioodil aprill–juuni, muidu kogu perioodil). Iga näitaja (sademed, GDD) kohta kõrvuti: kuude tulpdiagramm ja kumulatiivne kasv perioodi algusest — mõlemas linnukesega valitud aastad ja pikaajaline keskmine.
 - **Esiletõst:** väärtus, mis erineb pikaajalisest keskmisest rohkem kui ühe standardhälbe võrra, on värvitud (kuiv/märg, soe/jahe).
 - **Filtrid:** ilmapunkt (vaikimisi majandi keskmine) ja GDD baas (vaikimisi 5 °C). Jalus näitab allikat ja „Andmed kuni“ kuupäeva; esmalaadimise ajal teade „Ilmaandmeid laetakse“.
 - **Põllu hooaja plokk** (`WeatherSeasonSection` põllu aknas): ilm külvikuupäevast koristuseni (koristuseta tänaseni) kultuuri GDD baasiga: periood, GDD, sademed, veebilanss, pikim kuiv periood, öökülmad 60 päeva jooksul pärast külvi, saak kõrval. Külvikuupäevata „Ilmakokkuvõte vajab külvikuupäeva“ koos lingiga sisestamiseks.
