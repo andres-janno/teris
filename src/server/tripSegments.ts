@@ -67,10 +67,12 @@ const firstOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
   for (const p of pts) { const v = f(p); if (v != null) return v; }
   return null;
 };
+// Kütusetaseme andur annab süüte lülitamise hetkel 0 — päris paak 0% ei ole, seega 0 ei loe näiduks
+const fuelOf = (p: TripSample) => (p.fuelLevelPct == null || p.fuelLevelPct === 0 ? null : p.fuelLevelPct);
 const fuelLevelStart = (pts: TripSample[]) => {
   const settled = pts[0].time.getTime() + FUEL_LEVEL_SETTLE_MS;
-  for (const p of pts) if (p.fuelLevelPct != null && p.time.getTime() >= settled) return p.fuelLevelPct;
-  return firstOf(pts, (q) => q.fuelLevelPct); // sõit lühem kui 2 min või hiljem näite pole
+  for (const p of pts) if (fuelOf(p) != null && p.time.getTime() >= settled) return fuelOf(p);
+  return firstOf(pts, fuelOf); // sõit lühem kui 2 min või hiljem näite pole
 };
 const lastOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
   for (let i = pts.length - 1; i >= 0; i--) { const v = f(pts[i]); if (v != null) return v; }
@@ -135,7 +137,7 @@ function build(d: Draft, status: 'ACTIVE' | 'CLOSED'): SegmentedTrip {
     avgSpeedKmh: movingMinutes > 0 ? round(distanceKm / (movingMinutes / 60), 1) : null,
     fuelLiters: fuelLiters(d),
     fuelLevelStartPct: fuelLevelStart(pts),
-    fuelLevelEndPct: lastOf(pts, (p) => p.fuelLevelPct),
+    fuelLevelEndPct: lastOf(pts, fuelOf),
     engineHoursStart: firstOf(pts, (p) => p.engineHours),
     engineHoursEnd: lastOf(pts, (p) => p.engineHours),
     minLat, minLng, maxLat, maxLng,

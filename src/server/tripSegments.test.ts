@@ -124,6 +124,21 @@ describe('segmentTrips', () => {
     expect(t.engineHoursEnd).toBe(2790);
   });
 
+  it('kütusetaseme näit 0 (süüte lülitamise hetk) ei loe algus- ega lõpunäiduks', () => {
+    const lv = [null, null, 0, 81, 80, 80, 79, 79, 78, 78, 0];
+    const pts = run(0, 10).map((p, i) => ({ ...p, fuelLevelPct: lv[i] }));
+    const t = segmentTrips(pts, LATER)[0];
+    expect(t.fuelLevelStartPct).toBe(81); // i=2 on 0 → järgmine
+    expect(t.fuelLevelEndPct).toBe(78);
+  });
+
+  it('ainult nullnäidud → kütusetase tühi', () => {
+    const pts = run(0, 10).map((p) => ({ ...p, fuelLevelPct: 0 }));
+    const t = segmentTrips(pts, LATER)[0];
+    expect(t.fuelLevelStartPct).toBeNull();
+    expect(t.fuelLevelEndPct).toBeNull();
+  });
+
   it('raja ristkülik', () => {
     const t = segmentTrips(run(0, 10), LATER)[0];
     expect(t.minLat).toBeCloseTo(58, 6);
