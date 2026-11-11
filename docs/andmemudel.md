@@ -29,8 +29,8 @@ Põld on püsiv kirje; iga hooaja andmed (pindala, kultuur, piir, saak) on erald
 | Mudel | Tabel | Ettevõttepõhine | Sisu |
 |---|---|---|---|
 | `Season` | `seasons` | jah | Hooaeg (aasta); lukustatud hooaja andmeid ei muudeta |
-| `Field` | `fields` | jah | Põld (püsiv): PRIA põllu nr, massiiv, nimi, operaator |
-| `FieldSeason` | `field_seasons` | jah | Põllu hooaja andmed: pindala, kultuur, sort, piir (GeoJSON), saak, staatus; `weatherPointId` = lähim ilmaruut (vt [Ilm](#ilm)) |
+| `Field` | `fields` | jah | Põld (püsiv): massiiv, nimi; PRIA põllu nr ja operaator = viimase hooaja omad. Identiteet üle aastate = massiiv + kuju kattuvus (`src/services/fieldIdentity.ts`), mitte number/operaator |
+| `FieldSeason` | `field_seasons` | jah | Põllu hooaja andmed: selle aasta PRIA põllu nr (`num`) ja operaator (`operatorId`), pindala, kultuur, sort, piir (GeoJSON), saak, staatus; `weatherPointId` = lähim ilmaruut (vt [Ilm](#ilm)) |
 | `CadastralParcel` | `cadastral_parcels` | jah | Katastriüksus (tunnus, nimi) |
 | `FieldCadastralParcel` | `field_cadastral_parcels` | jah | Hooaja põllu ja katastriüksuse seos: põllu osa pindala, omand/rent, maamaks, rent |
 | `Crop` | `crops` | jah | Kultuur (ettevõtte register; PRIA kood, talivili, värv, temperatuurisumma baas `gddBaseC`, vaikimisi 5 °C) |

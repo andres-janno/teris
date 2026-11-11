@@ -30,6 +30,7 @@ import { getDefaultWarehouseId, recomputeAllArticleStock } from './stock.ts';
 import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } from './fieldBookImport.ts';
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
+import { normalizeFieldNum } from '../services/fieldIdentity.ts';
 import { loadCropsForLink, resolveSeasonCrop, relinkSeasonCrops } from './seasonCropLink.ts';
 import { derivePriaCropName } from '../services/priaCropName.ts';
 import { deriveOwnershipType } from '../services/landTenure.ts';
@@ -311,9 +312,13 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
       ? await db.field.findUnique({ where: { id: itemId } })
       : null;
     if (!existingField) {
-      existingField = await db.field.findFirst({
-        where: { fieldCode, num, operatorId }
-      });
+      // Klient sobitab PRIA impordil massiivi + kuju järgi (fieldIdentity.ts); siin ainult kordusimpordi kaitse:
+      // sama massiivi põld, millel sama aasta hooaeg on juba sama numbriga olemas.
+      const years = Array.isArray(item.history) ? item.history.map((h: any) => Number(h.year)) : [];
+      const again = years.length
+        ? await db.fieldSeason.findFirst({ where: { year: { in: years }, num, field: { fieldCode } }, select: { fieldId: true } })
+        : null;
+      if (again) existingField = await db.field.findUnique({ where: { id: again.fieldId } });
     }
     const fieldUpdateData = {
       num,
@@ -337,8 +342,11 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
         const seasonId = (await ensureSeasons([h.year], db)).get(Number(h.year)) ?? null;
         const existingSeason = await db.fieldSeason.findUnique({
           where: { fieldId_year: { fieldId: upsertedField.id, year: Number(h.year) } },
-          select: { cropId: true, cropVariety: true, undersowing: true, priaCropName: true }
+          select: { cropId: true, cropVariety: true, undersowing: true, priaCropName: true, num: true, operatorId: true }
         });
+        // Aasta number ja operaator: saadetud väärtus, muidu hooaja senine, muidu põllu oma
+        const seasonNum: string = h.num !== undefined ? (String(h.num || '').trim() || num) : (existingSeason?.num ?? num);
+        const seasonOperatorId: string | null = h.operatorId !== undefined ? (h.operatorId || null) : (existingSeason ? existingSeason.operatorId : operatorId);
         const cropFields = resolveSeasonCrop(
           { crop: h.crop, cropId: h.cropId, cropVariety: h.cropVariety, undersowing: h.undersowing }, crops, existingSeason
         );
@@ -351,6 +359,8 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
           },
           update: {
             seasonId,
+            num: seasonNum,
+            operatorId: seasonOperatorId,
             areaHa: Number(h.areaHa) || 0,
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
@@ -371,6 +381,8 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             fieldId: upsertedField.id,
             seasonId,
             year: Number(h.year),
+            num: seasonNum,
+            operatorId: seasonOperatorId,
             areaHa: Number(h.areaHa) || 0,
             eligibleAreaHa: h.eligibleAreaHa != null ? Number(h.eligibleAreaHa) : null,
             areaChangeReason: h.areaChangeReason ?? null,
@@ -394,6 +406,11 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
         }
       }
     }
+  // Põllu number ja operaator = viimase hooaja omad
+  const latest = await db.fieldSeason.findFirst({ where: { fieldId: upsertedField.id }, orderBy: { year: 'desc' }, select: { num: true, operatorId: true } });
+  if (latest && (latest.num !== upsertedField.num || latest.operatorId !== upsertedField.operatorId)) {
+    await db.field.update({ where: { id: upsertedField.id }, data: { num: latest.num ?? upsertedField.num, operatorId: latest.operatorId } });
+  }
   // Omanik või operaator võis muutuda
   await refreshParcelOwnership(db, upsertedField.id);
 
@@ -561,6 +578,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
             orderBy: { year: 'desc' },
             include: {
               _count: { select: { fieldWorks: true } },
+              operator: { select: { name: true } },
               cadastralParcels: { include: { cadastralParcel: true }, orderBy: { id: 'asc' } }
             }
           },
@@ -583,6 +601,9 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         history: f.fieldSeasons.map((fs) => ({
           fieldSeasonId: fs.id,
           year: fs.year,
+          num: fs.num ?? f.num,
+          operatorId: fs.operatorId ?? undefined,
+          operatorName: fs.operator?.name ?? undefined,
           areaHa: fs.areaHa,
           eligibleAreaHa: fs.eligibleAreaHa,
           areaChangeReason: fs.areaChangeReason,
@@ -661,10 +682,11 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         if (await tx.season.findFirst({ where: { year, isLocked: true }, select: { id: true } })) return null;
         const seasons = await tx.fieldSeason.findMany({
           where: { year },
-          select: { id: true, fieldId: true, _count: { select: { fieldWorks: true } }, field: { select: { num: true, name: true, operatorId: true } } }
+          select: { id: true, fieldId: true, num: true, operatorId: true, _count: { select: { fieldWorks: true } }, field: { select: { num: true, name: true } } }
         });
+        // Ulatus = selle aasta operaator (operaator võib aastati muutuda)
         const plan = planYearReplacement(
-          seasons.map((s) => ({ id: s.fieldId, num: s.field.num, name: s.field.name, operatorId: s.field.operatorId, history: [{ year, worksCount: s._count.fieldWorks }] })),
+          seasons.map((s) => ({ id: s.fieldId, num: s.num ?? s.field.num, name: s.field.name, operatorId: s.operatorId, history: [{ year, worksCount: s._count.fieldWorks }] })),
           year, operatorId, keepFieldIds
         );
         const removeIds = new Set(plan.removed.map((r) => r.fieldId));
@@ -1778,13 +1800,12 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           );
 
           for (const f of fieldsIn) {
-            const field = await tx.field.findFirst({ where: { fieldCode: String(f.fieldCode), num: String(f.num), operatorId } });
-            const fieldSeason = field
-              ? await tx.fieldSeason.findUnique({
-                  where: { fieldId_year: { fieldId: field.id, year: Number(f.season) } },
-                  include: { season: { select: { isLocked: true } } }
-                })
-              : null;
+            // Sama massiivi selle aasta hooaeg, mille number (kirjapildist sõltumata) ja operaator klapivad
+            const candidates = await tx.fieldSeason.findMany({
+              where: { year: Number(f.season), field: { fieldCode: String(f.fieldCode) } },
+              include: { season: { select: { isLocked: true } }, field: { select: { num: true, operatorId: true } } }
+            });
+            const fieldSeason = candidates.find((c) => normalizeFieldNum(c.num ?? c.field.num) === normalizeFieldNum(String(f.num)) && (c.operatorId ?? c.field.operatorId) === operatorId) ?? null;
             if (!fieldSeason) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'põldu ei leitud' }); continue; }
             if (lockedIds.has(seasonIds.get(Number(f.season))!) || fieldSeason.season?.isLocked) { skipped.push({ fieldCode: f.fieldCode, num: f.num, season: f.season, reason: 'hooaeg on lukus' }); continue; }
             const seasonId = seasonIds.get(Number(f.season));

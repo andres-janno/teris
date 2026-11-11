@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { planYearReplacement, matchImportedField, inReplaceScope, type ReplaceCandidateField } from './fieldYearReplace';
+import { planYearReplacement, inReplaceScope, type ReplaceCandidateField } from './fieldYearReplace';
 
 const f = (id: number, num: string, operatorId: string | undefined, history: { year: number; worksCount?: number }[], fieldCode = '100'): ReplaceCandidateField => ({
   id, num, name: `Põld ${num}`, fieldCode, operatorId, history
@@ -31,22 +31,20 @@ describe('planYearReplacement', () => {
     const plan = planYearReplacement([f(10, '10', 'A', [{ year: 2026 }]), f(9, '9', 'A', [{ year: 2026 }]), f(8, '8', 'A', [{ year: 2026 }])], 2026, 'A', ['8']);
     expect(plan.removed.map((r) => r.num)).toEqual(['9', '10']);
   });
+
+  it('ulatus selle aasta operaatori järgi', () => {
+    const fld = { id: 1, num: '1', name: 'P', fieldCode: '100', operatorId: 'B', history: [{ year: 2025, operatorId: 'A' }, { year: 2026, operatorId: 'B' }] };
+    expect(planYearReplacement([fld], 2025, 'A', []).removed).toHaveLength(1);
+    expect(planYearReplacement([fld], 2026, 'A', []).removed).toHaveLength(0);
+  });
 });
 
-describe('inReplaceScope / matchImportedField', () => {
+describe('inReplaceScope', () => {
   it('ulatus', () => {
     expect(inReplaceScope('A', 'A')).toBe(true);
     expect(inReplaceScope('B', 'A')).toBe(false);
     expect(inReplaceScope(undefined, 'A')).toBe(false);
     expect(inReplaceScope(null, undefined)).toBe(true);
     expect(inReplaceScope('A', undefined)).toBe(false);
-  });
-
-  it('vaste: sama operaator, siis operaatorita, teist operaatorit mitte', () => {
-    const list = [f(1, '1', 'B', []), f(2, '1', undefined, []), f(3, '1', 'A', [])];
-    expect(matchImportedField(list, '100', '1', 'A')?.id).toBe(3);
-    expect(matchImportedField(list.slice(0, 2), '100', '1', 'A')?.id).toBe(2);
-    expect(matchImportedField(list.slice(0, 1), '100', '1', 'A')).toBeUndefined();
-    expect(matchImportedField(list, '100', '1')?.id).toBe(1);
   });
 });

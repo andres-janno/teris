@@ -9,6 +9,9 @@ import type { Undersowing } from '../services/priaCropName';
 export interface FieldYearlyRecord {
   fieldSeasonId?: number;       // andmebaasi field_seasons.id (serverist; uuel kirjel puudub)
   year: number;                 // Hooaja aasta (nt 2026, 2025, 2024, 2027)
+  num?: string;                 // PRIA põllu number sel aastal (kirjapilt muutub aastati)
+  operatorId?: string | null;   // Operaator sel aastal
+  operatorName?: string;        // Operaatori nimi (serverist, kuvamiseks)
   areaHa: number;               // Põllu pindala sellel aastal (hektarites)
   eligibleAreaHa?: number | null; // PRIA toetusõiguslik pindala ha
   areaChangeReason?: string | null; // Pindala muutuse põhjus (nt võsa pealekasv, kraavihooldus)

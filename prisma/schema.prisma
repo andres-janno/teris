@@ -139,13 +139,13 @@ model CadastralParcel {
 model Field {
   id             Int      @id @default(autoincrement())
   tenantId       String   @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  num            String // PRIA põllu number impordist / kasutaja antud (nt "4", "4-1", "x") — võib massiivi siseselt korduda eri operaatoritel
+  num            String // PRIA põllu number — viimase hooaja oma (hooajal FieldSeason.num); kirjapilt muutub aastati
   name           String // Kasutaja määratud nimi (nt "Murikatsi Mirka", "Toosi")
   fieldCode      String // PRIA massiivi number (nt "60844249726") — võib korduda, kui massiiv on jagatud mitme operaatori vahel
   cadastralCode  String? // Peamine katastritunnus (tagasiühilduvuse jaoks)
   soilType       String? // Mullastik (nt "Leostunud liivsavi (LP)")
   drainageSystem Boolean  @default(false)
-  operatorId     String? // Põllu operaator (seotud isikute registrist)
+  operatorId     String? // Viimase hooaja operaator (hooajal FieldSeason.operatorId; maad võib eri aastatel harida eri ettevõte)
   notes          String?
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
@@ -156,9 +156,8 @@ model Field {
   operator     RelatedParty? @relation(fields: [operatorId], references: [id], onDelete: SetNull)
   warehouse    Warehouse? // põllu ladu: koristatud punkrid enne vedu (luuakse esimesel koristusel)
 
-  @@unique([tenantId, fieldCode, num, operatorId])
-  // Massiivinumber + põllunumber võivad korduda (nt kui operaator vahetub),
-  // aga sama operaator ei saa sama massiivi+põllu numbrit kaks korda omada.
+  // Põllu identiteet = massiiv + kuju kattuvus üle aastate (src/services/fieldIdentity.ts), mitte number/operaator
+  @@index([tenantId, fieldCode])
   @@index([operatorId])
   @@index([tenantId])
   @@map("fields")
@@ -174,6 +173,8 @@ model FieldSeason {
   fieldId             Int
   seasonId            Int?
   year                Int
+  num                 String? // PRIA põllu number sel aastal (eri aastatel eri kirjapilt)
+  operatorId          String? // Operaator sel aastal (seotud isikute registrist)
   areaHa              Float // Selle hooaja haritav pindala
   eligibleAreaHa      Float? // PRIA toetusõiguslik pindala
   areaChangeReason    String? // Pindala muutuse põhjus (nt võsastumine, kraavihooldus)
@@ -202,6 +203,7 @@ model FieldSeason {
   updatedBy           String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
   field            Field                  @relation(fields: [fieldId], references: [id], onDelete: Cascade)
+  operator         RelatedParty?          @relation("FieldSeasonOperator", fields: [operatorId], references: [id], onDelete: SetNull)
   season           Season?                @relation(fields: [seasonId], references: [id], onDelete: SetNull)
   cadastralParcels FieldCadastralParcel[]
   weatherPoint     WeatherPoint?          @relation(fields: [weatherPointId], references: [id], onDelete: SetNull)
@@ -218,6 +220,7 @@ model FieldSeason {
   @@index([varietyId])
   @@index([tenantId])
   @@index([weatherPointId])
+  @@index([operatorId])
   @@map("field_seasons")
 }
 
@@ -253,6 +256,7 @@ model RelatedParty {
 
   cadastralParcels  FieldCadastralParcel[]
   fieldsAsOperator  Field[]
+  seasonsAsOperator FieldSeason[]          @relation("FieldSeasonOperator")
   workEntries       WorkEntry[]
   plannedFieldWorks FieldWork[]            @relation("FieldWorkPlannedWorker")
   stockDocuments    StockDocument[]        @relation("StockDocSupplier")
@@ -300,24 +304,24 @@ model FieldCadastralParcel {
 // ============================================================================
 
 model PointOfInterest {
-  id             String      @id @default(cuid())
-  tenantId       String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  name           String
-  category       PoiCategory
-  latitude       Float
-  longitude      Float
-  radiusM        Int         @default(25) // raadius (m), mille piires sõidu punkt loetakse selle objekti juures olevaks
-  description    String?
-  capacity       String?
-  contactPerson  String?
-  phone          String?
-  accessNotes    String?
-  createdAt      DateTime    @default(now())
-  updatedAt      DateTime    @updatedAt
-  createdBy      String? // looja kasutajatunnus (täidetakse automaatselt)
-  updatedBy      String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
+  id            String      @id @default(cuid())
+  tenantId      String      @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  name          String
+  category      PoiCategory
+  latitude      Float
+  longitude     Float
+  radiusM       Int         @default(25) // raadius (m), mille piires sõidu punkt loetakse selle objekti juures olevaks
+  description   String?
+  capacity      String?
+  contactPerson String?
+  phone         String?
+  accessNotes   String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+  createdBy     String? // looja kasutajatunnus (täidetakse automaatselt)
+  updatedBy     String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
 
-  warehouse    Warehouse?
+  warehouse Warehouse?
 
   @@index([tenantId])
   @@map("points_of_interest")
@@ -494,10 +498,10 @@ enum TripStatus {
 // Sõit = seadme süüde sisse → välja (lühikesed pausid ≤ 10 min sees). Tuletatud telemeetriast taustaimpordiga;
 // masin/haakeriist leitakse lugemisel seoste registrist (ei salvestata). Muudetav ainult märkus.
 model VehicleTrip {
-  id                String          @id @default(cuid())
-  tenantId          String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  id                String             @id @default(cuid())
+  tenantId          String             @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
   deviceId          String
-  device            TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  device            TelemetryDevice    @relation(fields: [deviceId], references: [id], onDelete: Cascade)
   startedAt         DateTime
   endedAt           DateTime
   status            TripStatus
@@ -530,8 +534,8 @@ model VehicleTrip {
   deletedAt         DateTime? // kustutatud kui müra; import ei loo samale ajale uut sõitu
   deletedBy         String? // kustutaja kasutajatunnus
   computedAt        DateTime
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
   createdBy         String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy         String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
   fields            VehicleTripField[]
@@ -569,13 +573,13 @@ model VehicleTripField {
 
 // Seadme sõitude impordi olek: milleni on sõidud lõplikud, viimane käivitus ja viga, kohtade sõrmejälg.
 model TripImportState {
-  deviceId          String          @id
-  device            TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
-  tenantId          String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  finalizedUntil    DateTime?
-  lastRunAt         DateTime?
-  lastError         String?
-  lastErrorAt       DateTime?
+  deviceId               String          @id
+  device                 TelemetryDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  tenantId               String          @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  finalizedUntil         DateTime?
+  lastRunAt              DateTime?
+  lastError              String?
+  lastErrorAt            DateTime?
   placesFingerprint      String?
   placesCheckedAt        DateTime?
   assignmentsFingerprint String? // seoste (seade, haakimine, haakeriist) arv + viimane muutmisaeg
@@ -584,6 +588,7 @@ model TripImportState {
   @@index([tenantId])
   @@map("trip_import_state")
 }
+
 model ImplementAssignment {
   id          String    @id @default(cuid())
   tenantId    String    @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
@@ -916,12 +921,12 @@ model WorkTemplate {
 }
 
 model WorkTemplateItem {
-  id            String  @id @default(cuid())
-  tenantId      String  @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
-  templateId    String
-  workTypeId    String
-  sortOrder     Int     @default(0)
-  plannedCount  Int? // korduva töö plaanitud kordi (tühi = töö liigi järgi)
+  id           String @id @default(cuid())
+  tenantId     String @default(dbgenerated("current_setting('app.tenant_id')")) @map("tenant_id") // Ettevõte; täitub päringu kontekstist
+  templateId   String
+  workTypeId   String
+  sortOrder    Int    @default(0)
+  plannedCount Int? // korduva töö plaanitud kordi (tühi = töö liigi järgi)
 
   template WorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
   workType WorkType     @relation(fields: [workTypeId], references: [id], onDelete: Restrict)
@@ -1620,10 +1625,10 @@ model CatalogWorkTemplate {
 }
 
 model CatalogWorkTemplateItem {
-  id                String  @id @default(cuid())
+  id                String @id @default(cuid())
   templateId        String
   catalogWorkTypeId String
-  sortOrder         Int     @default(0)
+  sortOrder         Int    @default(0)
   plannedCount      Int?
 
   template CatalogWorkTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)

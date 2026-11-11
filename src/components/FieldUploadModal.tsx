@@ -12,7 +12,8 @@ import type { FieldCollection } from '../types/field';
 import type { RelatedParty } from '../types/party';
 import type { MasterField } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import { matchImportedField, planYearReplacement } from '../services/fieldYearReplace';
+import { planYearReplacement } from '../services/fieldYearReplace';
+import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
 
@@ -147,12 +148,8 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
         masterFields,
         importYear,
         operatorId || undefined,
-        parsedPreview.features.flatMap((f, idx) => {
-          const p = f.properties;
-          if (!p.fieldCode) return [];
-          const match = matchImportedField(masterFields, String(p.fieldCode), p.num ? String(p.num) : String(idx + 1), operatorId || undefined);
-          return match ? [match.id] : [];
-        })
+        matchImportedFields(masterFields, parsedPreview.features.map((f) => ({ fieldCode: String(f.properties.fieldCode ?? ''), geometry: f.geometry })), importYear)
+          .flatMap((m) => (m ? [m.id] : []))
       )
     : null;
   const fieldLabel = (r: { num: string; name: string }) => `${r.num ? `${r.num} ` : ''}${r.name}`;

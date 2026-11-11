@@ -6,6 +6,8 @@ export const UNDETERMINED_CROP_COLOR = '#94a3b8';
 /** Hooaja kirje väljad, mis uude aastasse kopeeritakse. */
 export interface SeasonSource {
   year: number;
+  num?: string | null;
+  operatorId?: string | null;
   areaHa: number;
   eligibleAreaHa: number | null;
   geometry: unknown;
@@ -45,6 +47,8 @@ export function buildCopiedSeason(src: SeasonSource, fieldId: number, year: numb
     fieldId,
     seasonId,
     year,
+    num: src.num ?? null,
+    operatorId: src.operatorId ?? null,
     areaHa: src.areaHa,
     eligibleAreaHa: src.eligibleAreaHa,
     crop: 'Teadmata kultuur',

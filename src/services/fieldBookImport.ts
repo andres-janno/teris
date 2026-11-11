@@ -1,6 +1,7 @@
 // src/services/fieldBookImport.ts
 // Põlluraamatu parsitud lehtede sobitamine registriga ja impordi API keha koostamine.
 import type { MasterField } from '../types/fieldRegister';
+import { normalizeFieldNum } from './fieldIdentity';
 import type { RelatedParty } from '../types/party';
 import type { FarmingSeason } from '../types/season';
 import type {
@@ -42,13 +43,12 @@ export function buildFieldBookImport(
       continue;
     }
 
-    const field = ctx.masterFields.find(
-      (f) =>
-        f.fieldCode === s.fieldCode &&
-        (f.num || '') === s.num &&
-        f.operatorId === ctx.operatorId &&
-        f.history.some((h) => h.year === s.season)
-    );
+    // Selle aasta hooaja number (kirjapildist sõltumata) ja operaator — need muutuvad aastati
+    const field = ctx.masterFields.find((f) => {
+      if (f.fieldCode !== s.fieldCode) return false;
+      const h = f.history.find((x) => x.year === s.season);
+      return !!h && normalizeFieldNum(h.num ?? f.num) === normalizeFieldNum(s.num) && (h.operatorId ?? f.operatorId) === ctx.operatorId;
+    });
 
     const unmatched = new Set<string>();
     const operations = s.operations.map((op) => {

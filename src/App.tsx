@@ -32,7 +32,7 @@ import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimu
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
 import { api, setLicenseErrorHandler, isLicenseError } from './services/api';
-import { matchImportedField } from './services/fieldYearReplace';
+import { matchImportedFields } from './services/fieldIdentity';
 import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
@@ -268,9 +268,13 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const operatorMasterFields = React.useMemo(
     () =>
       operatorFilter.length
-        ? masterFields.filter((f) => !!f.operatorId && operatorFilter.includes(f.operatorId))
+        ? masterFields.filter((f) => {
+            // Operaator valitud aasta hooajalt (maad võib eri aastatel harida eri ettevõte)
+            const op = f.history.find((h) => h.year === selectedYear)?.operatorId ?? f.operatorId;
+            return !!op && operatorFilter.includes(op);
+          })
         : masterFields,
-    [masterFields, operatorFilter]
+    [masterFields, operatorFilter, selectedYear]
   );
 
   // Derive FieldCollection for the active year (with that year's specific area and crop)
@@ -1480,20 +1484,21 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     const existingMaxId = Math.max(0, ...masterFields.map((f) => Number(f.id) || 0));
     let nextId = existingMaxId + 1;
 
+    // Vaste: sama massiiv + kuju kattub (number ja operaator muutuvad aastati) — src/services/fieldIdentity.ts
+    const matches = matchImportedFields(
+      masterFields,
+      importedCollection.features.map((f) => ({ fieldCode: String(f.properties.fieldCode ?? ''), geometry: f.geometry })),
+      importYear
+    );
     const newMasterFields: MasterField[] = importedCollection.features.map((feature, idx) => {
       const p = feature.properties;
       const area = p.areaHa || 5.0;
       const num = p.num ? String(p.num) : String(idx + 1);
       const fieldCode = p.fieldCode ? String(p.fieldCode) : `61044${1000 + existingMaxId + idx + 1}`;
 
-      // Kui see massiiv+põllunumber juba registris on, säilitame olemasoleva
-      // põhiregistri (nimi, mullastik, kataster, märkused) — import ei tohi
-      // neid PRIA faili üldiste/puuduvate väärtustega üle kirjutada, vaid
-      // ainult värskendab geomeetriat ja valitud aasta kultuuri.
-      // Operaatori valimisel on vasteks sama operaatori põld või operaatorita
-      // põld; teise operaatori sama massiivi+numbriga põld on eraldi põld
-      // (jagatud massiiv) ja seda ei puututa.
-      const existing = matchImportedField(masterFields, fieldCode, num, importOperatorId);
+      // Olemasoleva põllu põhiregister (nimi, mullastik, kataster, märkused) säilib — import
+      // värskendab ainult selle aasta kuju, kultuuri, numbrit ja operaatorit.
+      const existing = matches[idx];
 
       const id = existing ? existing.id : nextId++;
       const name = existing?.name || p.name || `Põld ${num}`;
@@ -1502,7 +1507,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       // Drenaaži PRIA fail ei sisalda: uuel põllul jääb see määramata (varem vaikimisi true).
       const drainageSystem = existing ? existing.drainageSystem : (p.rawProperties?.drainageSystem ?? false);
       const notes = existing?.notes || p.notes || '';
-      const operatorId = importOperatorId || existing?.operatorId;
+      const operatorId = importOperatorId || existing?.history.find((h) => h.year === importYear)?.operatorId || existing?.operatorId;
       const otherYearsHistory = existing?.history.filter((h) => h.year !== importYear) || [];
 
       return {
@@ -1519,6 +1524,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         history: [
           {
             year: importYear,
+            num,
+            operatorId: operatorId ?? null,
             areaHa: area,
             crop: p.crop || 'Määramata',
             // PRIA sulgudes täpsustus ("vähemalt 80% ristikut…") on osa kultuuri

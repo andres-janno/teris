@@ -145,12 +145,15 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     }));
 
     setEditName(field.name);
-    setEditNum(field.num || '');
+    // Number ja operaator on aasta kaupa (eri aastatel eri kirjapilt / harija)
+    const recOperatorId = (currentRec as { operatorId?: string | null }).operatorId;
+    const yearOperatorId = (recOperatorId !== undefined ? recOperatorId : field.operatorId) || '';
+    setEditNum((currentRec as { num?: string }).num || field.num || '');
     setEditFieldCode(field.fieldCode);
     setEditCadastralCode(field.cadastralCode || (initialParcels[0]?.cadastralCode) || '');
-    setEditOperatorId(field.operatorId || '');
+    setEditOperatorId(yearOperatorId);
     setEditSoilType(field.soilType || '');
-    setEditCadastralParcels(initialParcels.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(field.operatorId || '')) })));
+    setEditCadastralParcels(initialParcels.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(yearOperatorId)) })));
 
     const matchedCrop = findRegistryCrop(currentRec.crop);
     setEditAreaHa(currentRec.areaHa);
@@ -188,14 +191,15 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       field.id,
       {
         name: editName.trim() || `Põld ${editNum || field.id}`,
-        num: editNum.trim() || undefined,
         fieldCode: editFieldCode.trim(),
         cadastralCode: editCadastralCode.trim() || (editCadastralParcels[0]?.cadastralCode) || undefined,
-        operatorId: editOperatorId || undefined,
         soilType: editSoilType.trim() || undefined
       },
       {
         year: editYear,
+        // Põllu number ja operaator salvestuvad sellele aastale; põllu enda omad = viimase aasta omad (server)
+        num: editNum.trim() || undefined,
+        operatorId: editOperatorId || null,
         areaHa: Number(editAreaHa),
         eligibleAreaHa: editEligibleAreaHa ? Number(editEligibleAreaHa) : undefined,
         areaChangeReason: editAreaChangeReason.trim() || undefined,
@@ -358,7 +362,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           </div>
 
           <div className="form-group">
-            <label>Põllu number (PRIA impordist)</label>
+            <label>Põllu number {editYear} (PRIA)</label>
             <input
               type="text"
               placeholder="nt 4, 4-1, 1"
@@ -413,7 +417,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         </div>
 
         <div className="form-group">
-          <label>Operaator</label>
+          <label>Operaator {editYear}</label>
           <select
             disabled={isEditSeasonLocked}
             value={editOperatorId}
