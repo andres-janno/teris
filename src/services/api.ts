@@ -12,7 +12,7 @@ import type { AuthUser, AdminUser, SupportGrant, SupportAccessEntry } from '../t
 import type { WorkType, Article, ArticleCategory, FieldWork, WorkEntry, WorkEntryInput, FinanceEntry, FieldResult, FinanceStatus, TelemetrySuggestion, FieldWorkPlanInput, FieldSeasonWorks } from '../types/fieldWork';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import type { HarvestLotSummary, HarvestLotDetail, HarvestLotInput, HarvestLotWeighing, HarvestLotCost } from '../types/harvestLot';
-import type { WeatherCredentialStatus, WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherPeriod, WeatherMonth, WeatherCumulative, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
+import type { WeatherCredentialStatus, WeatherPointRef, WeatherPointInfo, WeatherYears, WeatherMap, WeatherPeriod, WeatherMonth, WeatherCumulative, WeatherSeasonReport, WeatherSeasonHistoryRow } from '../types/weather';
 import type { Warehouse, StockDocument, StockDocumentInput, StockDocumentFilter, ArticleMovements, StockLevel, InventoryPreviewRow } from '../types/stock';
 
 let unauthorizedHandler: (() => void) | null = null;
@@ -354,6 +354,12 @@ export const api = {
     const res = await apiFetch('/api/weather/points');
     if (!res.ok) throw new Error(await errorMessage(res, 'Ilmapunktid pole saadaval'));
     return res.json();
+  },
+
+  async getWeatherMap(): Promise<WeatherMap> {
+    const res = await apiFetch('/api/weather/map');
+    if (!res.ok) throw new Error(await errorMessage(res, 'Ilmaandmed pole saadaval'));
+    return await res.json();
   },
 
   async getWeatherYears(point: WeatherPointRef, base: number, period: WeatherPeriod = 'growing'): Promise<WeatherYears> {

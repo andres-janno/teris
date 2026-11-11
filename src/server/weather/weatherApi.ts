@@ -202,11 +202,35 @@ export async function seasonsReport(year: number) {
   return { rows: out };
 }
 
+// Iga põllu viimane ilmapunktiga seotud hooaeg — põllu asukoht ja ruut nii kaardil kui punktide põlluarvus
+async function latestFieldSeasons() {
+  const rows = await prisma.fieldSeason.findMany({
+    where: { weatherPointId: { not: null } },
+    select: { fieldId: true, year: true, weatherPointId: true, geometry: true, crop: true, field: { select: { num: true, name: true } } },
+    orderBy: [{ fieldId: 'asc' }, { year: 'desc' }]
+  });
+  const latest = new Map<number, (typeof rows)[number]>();
+  for (const r of rows) if (!latest.has(r.fieldId)) latest.set(r.fieldId, r);
+  return [...latest.values()];
+}
+
+export async function mapReport() {
+  const fields = await latestFieldSeasons();
+  return {
+    type: 'FeatureCollection' as const,
+    features: fields.map((f) => ({
+      type: 'Feature' as const,
+      geometry: f.geometry,
+      properties: { fieldId: f.fieldId, pointId: f.weatherPointId!, year: f.year, num: f.field.num, name: f.field.name, crop: f.crop }
+    }))
+  };
+}
+
 async function pointsReport() {
   const ids = await tenantPointIds();
   const points = await prisma.weatherPoint.findMany({ where: { id: { in: ids } }, orderBy: [{ lat: 'desc' }, { lon: 'asc' }] });
-  const counts = await prisma.fieldSeason.groupBy({ by: ['weatherPointId'], where: { weatherPointId: { in: ids } }, _count: { _all: true } });
-  const cnt = new Map(counts.map((c) => [c.weatherPointId, c._count._all]));
+  const cnt = new Map<number, number>();
+  for (const f of await latestFieldSeasons()) cnt.set(f.weatherPointId!, (cnt.get(f.weatherPointId!) ?? 0) + 1);
   return {
     points: points.map((p) => ({ id: p.id, lat: p.lat, lon: p.lon, hasData: p.hasData, loadedUntil: p.loadedUntil?.toISOString().slice(0, 10) ?? null, fieldCount: cnt.get(p.id) ?? 0 })),
     loading: points.some((p) => p.hasData !== false && !p.loadedUntil)
@@ -275,6 +299,7 @@ export async function handleWeather(req: IncomingMessage, res: ServerResponse, p
   const q = url.searchParams;
   try {
     if (pathname === '/api/weather/points') { json(res, await pointsReport()); return true; }
+    if (pathname === '/api/weather/map') { json(res, await mapReport()); return true; }
     if (pathname === '/api/weather/years') { json(res, await yearsReport(parsePoint(q.get('point')), parseBase(q.get('base')), parsePeriod(q.get('period')))); return true; }
     if (pathname === '/api/weather/months') {
       const years = (q.get('years') ?? q.get('year') ?? '').split(',').map(parseYear).filter((y): y is number => y !== null).slice(0, 12);

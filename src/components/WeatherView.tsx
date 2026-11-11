@@ -2,17 +2,19 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { CloudSun, CalendarRange, Droplets, Thermometer } from 'lucide-react';
 import { api } from '../services/api';
-import type { WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
-import { deviation, fmt0, fmt1, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
+import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
+import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
+import { WeatherPointMap } from './WeatherPointMap';
 
 const BASES = [0, 5, 6, 8, 10];
 
 export const WeatherView: React.FC = () => {
   const [points, setPoints] = useState<WeatherPointInfo[]>([]);
+  const [mapFields, setMapFields] = useState<WeatherMap | null>(null);
   const [loading, setLoading] = useState(false);
   const [point, setPoint] = useState<WeatherPointRef>('all');
   const [base, setBase] = useState(5);
@@ -24,6 +26,7 @@ export const WeatherView: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => { api.getWeatherPoints().then((r) => { setPoints(r.points); setLoading(r.loading); }).catch((e) => setError(e.message)); }, []);
+  useEffect(() => { api.getWeatherMap().then(setMapFields).catch(() => setMapFields(null)); }, []);
   // Iga päring: viga puhastatakse alguses ja hilinenud vastus (vana valik) ignoreeritakse
   useEffect(() => {
     setError(null);
@@ -68,7 +71,7 @@ export const WeatherView: React.FC = () => {
             </FilterClear>
             <FilterClear active={point !== 'all'} onClear={() => setPoint('all')}>
               <FilterSelect style={{ fontSize: '13px', height: '34px' }} ariaLabel="Ilmapunkt" value={String(point)} onChange={(v) => setPoint(v === 'all' ? 'all' : Number(v))}
-                options={[{ value: 'all', label: 'Majandi keskmine' }, ...points.map((p) => ({ value: String(p.id), label: `${p.lat.toFixed(1)}° N, ${p.lon.toFixed(1)}° E (${p.fieldCount} põldu)` }))]} />
+                options={[{ value: 'all', label: 'Majandi keskmine' }, ...points.map((p) => ({ value: String(p.id), label: `${p.lat.toFixed(1)}° N, ${p.lon.toFixed(1)}° E (${p.fieldCount} põldu)`, color: pointColor(points, p.id) }))]} />
             </FilterClear>
             <FilterClear active={base !== 5} onClear={() => setBase(5)}>
               <FilterSelect style={{ fontSize: '13px', height: '34px' }} ariaLabel="GDD baastemperatuur" value={String(base)} onChange={(v) => setBase(Number(v))}
@@ -84,49 +87,52 @@ export const WeatherView: React.FC = () => {
 
             <div className="detail-section">
               <div className="section-subtitle"><CalendarRange size={14} /><span>Aastad · {per.label.toLowerCase()} {per.range}</span></div>
-              <div className="register-table-wrap weather-years-wrap">
-                <table className="register-table weather-years">
-                  <thead>
-                    <tr>
-                      <th>Aasta</th>
-                      <th className="num-col">Sademed, mm</th>
-                      <th className="num-col">GDD, °C</th>
-                      <th className="num-col">Veebilanss, mm</th>
-                      <th className="num-col">Pikim kuiv periood, p</th>
-                      <th className="num-col">Kuumapäevi</th>
-                      <th className="num-col">{per.frostLabel}</th>
-                      <th>Võrdle</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {rows.map(({ year: y, summary: s }) => (
-                      <tr key={y} className={compare.includes(y) ? 'selected' : ''} onClick={() => toggleCompare(y)}>
-                        <td>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</td>
-                        <td className={`num-col weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</td>
-                        <td className={`num-col weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</td>
-                        <td className={`num-col weather-${deviation(s.waterBalanceMm, data?.normal.waterBalanceMm, data?.sd.waterBalanceMm, 'precip') ?? 'normal'}`}>{fmt0(s.waterBalanceMm)}</td>
-                        <td className="num-col">{s.longestDrySpell}</td>
-                        <td className="num-col">{s.hotDays}</td>
-                        <td className="num-col">{s.frostDays}</td>
-                        <td onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={compare.includes(y)} onChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></td>
+              <div className="weather-years-layout">
+                <div className="register-table-wrap weather-years-wrap">
+                  <table className="register-table weather-years">
+                    <thead>
+                      <tr>
+                        <th>Aasta</th>
+                        <th className="num-col">Sademed, mm</th>
+                        <th className="num-col">GDD, °C</th>
+                        <th className="num-col">Veebilanss, mm</th>
+                        <th className="num-col">Pikim kuiv periood, p</th>
+                        <th className="num-col">Kuumapäevi</th>
+                        <th className="num-col">{per.frostLabel}</th>
+                        <th>Võrdle</th>
                       </tr>
-                    ))}
-                    {data && data.normalYears.length > 0 && (
-                      <tr className="weather-normal-row">
-                        <td>Keskmine {data.normalYears[0]}–{data.normalYears[data.normalYears.length - 1]}</td>
-                        <td className="num-col">{fmt0(data.normal.precipMm)}</td>
-                        <td className="num-col">{fmt0(data.normal.gdd)}</td>
-                        <td className="num-col">{fmt0(data.normal.waterBalanceMm)}</td>
-                        <td className="num-col">{fmt1(data.normal.longestDrySpell)}</td>
-                        <td className="num-col">{fmt1(data.normal.hotDays)}</td>
-                        <td className="num-col">{fmt1(data.normal.frostDays)}</td>
-                        <td />
-                      </tr>
-                    )}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {rows.map(({ year: y, summary: s }) => (
+                        <tr key={y} className={compare.includes(y) ? 'selected' : ''} onClick={() => toggleCompare(y)}>
+                          <td>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</td>
+                          <td className={`num-col weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</td>
+                          <td className={`num-col weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</td>
+                          <td className={`num-col weather-${deviation(s.waterBalanceMm, data?.normal.waterBalanceMm, data?.sd.waterBalanceMm, 'precip') ?? 'normal'}`}>{fmt0(s.waterBalanceMm)}</td>
+                          <td className="num-col">{s.longestDrySpell}</td>
+                          <td className="num-col">{s.hotDays}</td>
+                          <td className="num-col">{s.frostDays}</td>
+                          <td onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={compare.includes(y)} onChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></td>
+                        </tr>
+                      ))}
+                      {data && data.normalYears.length > 0 && (
+                        <tr className="weather-normal-row">
+                          <td>Keskmine {data.normalYears[0]}–{data.normalYears[data.normalYears.length - 1]}</td>
+                          <td className="num-col">{fmt0(data.normal.precipMm)}</td>
+                          <td className="num-col">{fmt0(data.normal.gdd)}</td>
+                          <td className="num-col">{fmt0(data.normal.waterBalanceMm)}</td>
+                          <td className="num-col">{fmt1(data.normal.longestDrySpell)}</td>
+                          <td className="num-col">{fmt1(data.normal.hotDays)}</td>
+                          <td className="num-col">{fmt1(data.normal.frostDays)}</td>
+                          <td />
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <WeatherPointMap points={points} fields={mapFields} selected={point} onSelect={setPoint} />
               </div>
-              <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele.</p>
+              <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele. Kaardil on ilmaandmete ruudud (0,1°) ja põllud ruudu värviga — klõps ruudul või põllul valib selle ilmapunkti, uus klõps viib tagasi majandi keskmisele.</p>
             </div>
 
             {compare.length > 0 && cumulative && (

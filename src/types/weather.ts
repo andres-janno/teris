@@ -9,6 +9,8 @@ export interface WeatherSummary {
 export type WeatherPointRef = 'all' | number;
 export interface WeatherPointInfo { id: number; lat: number; lon: number; hasData: boolean | null; loadedUntil: string | null; fieldCount: number }
 export type WeatherNumericKey = 'gdd' | 'precipMm' | 'rainDays' | 'waterBalanceMm' | 'longestDrySpell' | 'hotDays' | 'frostDays';
+export interface WeatherMapFieldProps { fieldId: number; pointId: number; year: number; num: string; name: string; crop: string | null }
+export type WeatherMap = GeoJSON.FeatureCollection<GeoJSON.Geometry, WeatherMapFieldProps>;
 export type WeatherPeriod = 'growing' | 'winter' | 'year';
 export interface WeatherYears {
   years: { year: number; summary: WeatherSummary }[];

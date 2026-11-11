@@ -1,5 +1,5 @@
 // src/services/weatherFormat.ts — ilmanäitajate vorming ja keskmisest erinevuse tuvastus (±1 standardhälve).
-import type { WeatherPeriod } from '../types/weather';
+import type { WeatherPeriod, WeatherPointInfo } from '../types/weather';
 export type DeviationKind = 'precip' | 'gdd';
 export type Deviation = 'wet' | 'dry' | 'warm' | 'cool' | null;
 
@@ -25,3 +25,7 @@ export const WEATHER_PERIOD_OPTIONS: { value: WeatherPeriod; label: string; rang
   { value: 'winter', label: 'Taliviljad', range: '01.07–30.11', firstMonth: 7, lastMonth: 11, frostLabel: 'Öökülmi' },
   { value: 'year', label: 'Kogu aasta', range: '01.01–31.12', firstMonth: 1, lastMonth: 12, frostLabel: 'Öökülmi' }
 ];
+
+// Ilmapunkti värv kaardil ja punktivalikus (järjekord = punktide nimekiri)
+const POINT_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#0891b2', '#ca8a04', '#db2777', '#475569'];
+export const pointColor = (points: WeatherPointInfo[], id: number) => POINT_COLORS[Math.max(0, points.findIndex((p) => p.id === id)) % POINT_COLORS.length];

@@ -8,6 +8,7 @@ export interface FilterSelectOption {
   value: string;
   label: string;
   group?: string; // järjestikused sama grupiga valikud saavad väikese grupipäise
+  color?: string; // värvitäpp sildi ees (nt kaardi värv)
 }
 
 interface FilterSelectProps {
@@ -174,7 +175,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
           {!fill && options.map((o, i) => (
             <span key={`${o.value}:${i}`} className="filter-select-sizer" aria-hidden="true">{o.label}</span>
           ))}
-          <span className="filter-select-current">{selected?.label || '\u00a0'}</span>
+          <span className="filter-select-current">{selected?.color && <span className="filter-select-dot" style={{ background: selected.color }} />}{selected?.label || '\u00a0'}</span>
         </span>
       </button>
       {open && pos && createPortal(
@@ -201,7 +202,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
                   onClick={() => choose(i)}
                 >
                   <span className="filter-select-check">{i === selectedIndex && <Check size={14} strokeWidth={2.5} />}</span>
-                  <span className="filter-select-option-label">{o.label}</span>
+                  <span className="filter-select-option-label">{o.color && <span className="filter-select-dot" style={{ background: o.color }} />}{o.label}</span>
                 </div>
               </React.Fragment>
             );

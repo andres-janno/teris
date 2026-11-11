@@ -1,7 +1,7 @@
 // src/server/weather/weatherApi.test.ts — live-andmebaas: ajutine ettevõte, punkt lat 10.9 sünteetiliste päevadega.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant } from '../db';
-import { yearsReport, monthsReport, cumulativeReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
+import { yearsReport, monthsReport, cumulativeReport, mapReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
 import { addDays } from './summary';
 
 const T = `test-tenant-weatherapi-${process.pid}`;
@@ -86,6 +86,12 @@ describe('weather API', () => {
     const c = await run(() => cumulativeReport([2016], 'all', 5, 'year'));
     expect(c.series[0].points).toHaveLength(366);
     expect(c.normal!.points).toHaveLength(365);
+  });
+  it('kaart: iga põld üks kord, viimase hooajaga', async () => {
+    const r = await run(() => mapReport());
+    const a = r.features.filter((f) => f.properties.name === 'A');
+    expect(a).toHaveLength(1);
+    expect(a[0].properties).toMatchObject({ year: 2018, pointId });
   });
   it('põllu hooaeg kultuuri baasiga', async () => {
     const r = await run(() => seasonReport(seeded));
