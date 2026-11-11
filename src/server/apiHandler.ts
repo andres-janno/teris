@@ -919,6 +919,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           assignedImplementId: deviceLinks.byDevice.get(d.id)?.implementId,
           status,
           notes: (d as any).notes ?? undefined,
+          reportsWhenParked: d.reportsWhenParked,
           lastUpdate: lastUpdate ?? '',
           // Viimane seadmelt saadud pakett (ka enne praegust paigaldust)
           lastReceivedAt: live?.lastUpdate ? new Date(live.lastUpdate).toISOString() : null
@@ -1103,19 +1104,24 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         firmware: d.firmwareVersion || null,
         acquisitionDate: dateOnlyIn(d.acquisitionDate),
         status: (d.status || 'offline').toUpperCase() as any,
-        notes: d.notes ?? null
+        notes: d.notes ?? null,
+        reportsWhenParked: d.reportsWhenParked === true
       };
       const deviceId = d.id || `tel-${Date.now()}`;
 
       let saved;
       try {
         saved = await tenantTransaction(async (tx) => {
-          const before = await tx.telemetryDevice.findUnique({ where: { id: deviceId }, select: { imei: true, macAddress: true } });
+          const before = await tx.telemetryDevice.findUnique({ where: { id: deviceId }, select: { imei: true, macAddress: true, reportsWhenParked: true } });
           const row = await tx.telemetryDevice.upsert({
             where: { id: deviceId },
             update: dData,
             create: { id: deviceId, ...dData }
           });
+          // Märke muutus muudab sõitude vahede toite/vaikimise kontrolli: järgmine import arvutab seadme sõidud ja vahed uuesti
+          if (before && before.reportsWhenParked !== row.reportsWhenParked) {
+            await tx.tripImportState.updateMany({ where: { deviceId: row.id }, data: { finalizedUntil: null } });
+          }
           await syncOwnership(tx, before, row);
           return row;
         });

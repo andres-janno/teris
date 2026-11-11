@@ -364,6 +364,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [devNotes, setDevNotes] = useState('');
   const [devSaving, setDevSaving] = useState(false);
   const [devAcqDate, setDevAcqDate] = useState('');
+  const [devReportsWhenParked, setDevReportsWhenParked] = useState(false);
 
   const handleConnectivityChange = (next: DeviceConnectivity) => {
     setDevConnectivity(next);
@@ -653,6 +654,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevMac('');
     setDevNotes('');
     setDevAcqDate('');
+    setDevReportsWhenParked(false);
   };
 
   const openAddForm = () => {
@@ -757,6 +759,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       satelliteCount: devConnectivity === 'eye_sensor' ? 0 : 16,
       hdop: devConnectivity === 'eye_sensor' ? 0 : 0.8,
       acquisitionDate: devAcqDate || undefined,
+      reportsWhenParked: devConnectivity === 'cellular' ? devReportsWhenParked : false,
       notes: devNotes.trim() || undefined
     };
     if (devSaving) return;
@@ -829,6 +832,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevMac(dev.macAddress || '');
     setDevNotes(dev.notes || '');
     setDevAcqDate(dev.acquisitionDate || '');
+    setDevReportsWhenParked(dev.reportsWhenParked === true);
     setEditingDeviceId(dev.id);
     setIsAddingNew(true);
   };
@@ -1294,6 +1298,17 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <label>Soetamise kuupäev</label>
                   <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
                 </div>
+                {devConnectivity === 'cellular' && (
+                  <div className="form-group full-width">
+                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                      <input type="checkbox" checked={devReportsWhenParked} onChange={(e) => setDevReportsWhenParked(e.target.checked)} />
+                      Saadab andmeid ka seisu ajal (pidev toide)
+                    </label>
+                    <small style={{ color: 'var(--text-muted, #6b7280)' }}>
+                      Siis kontrollitakse sõitude vahel ka toitekatkestust ja seadme vaikimist. Ära märgi, kui seade seisu ajal ei saada või on süütega toitel.
+                    </small>
+                  </div>
+                )}
                 <div className="form-group full-width">
                   <label>Märkused</label>
                   <AutoResizeTextarea

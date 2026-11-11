@@ -89,6 +89,18 @@ describe('computeGaps', () => {
   });
 });
 
+describe('seisu ajal saatmata seade', () => {
+  it('seade ei saada seisu ajal (parkedSigns: false) → toide ja vaikimine tühjad, vaikimine üksi hoiatust ei anna', () => {
+    expect(computeGaps([trip('a', 0, 60), trip('b', 300, 360)], [], { parkedSigns: false })).toEqual([]);
+    const samples = every5(60, 120).map((s) => ({ ...s, voltage: 0 }));
+    expect(computeGaps([trip('a', 0, 60), trip('b', 120, 180)], samples, { parkedSigns: false })).toEqual([]);
+    const g = computeGaps([trip('a', 0, 60), trip('b', 300, 360, { startLat: 58.11 })], [], { parkedSigns: false })[0];
+    expect(g.powerLostMinutes).toBeNull();
+    expect(g.silentMinutes).toBeNull();
+    expect(g.jumpM).toBeGreaterThan(1100);
+  });
+});
+
 describe('isFlagged', () => {
   const none = { powerLostMinutes: null, silentMinutes: 0, fuelDropPct: null, jumpM: 0, engineHoursGrowth: null };
   it('piirid', () => {
@@ -96,6 +108,7 @@ describe('isFlagged', () => {
     expect(isFlagged({ ...none, powerLostMinutes: 5 })).toBe(true);
     expect(isFlagged({ ...none, silentMinutes: 180 })).toBe(true);
     expect(isFlagged({ ...none, silentMinutes: 179.9 })).toBe(false);
+    expect(isFlagged({ ...none, silentMinutes: null })).toBe(false);
     expect(isFlagged({ ...none, fuelDropPct: 5 })).toBe(true);
     expect(isFlagged({ ...none, jumpM: 500 })).toBe(true);
     expect(isFlagged({ ...none, engineHoursGrowth: 2 })).toBe(true);

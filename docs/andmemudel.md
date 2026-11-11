@@ -610,7 +610,7 @@ Masinad, haakeriistad ja telemeetriaseadmed. Seadme omand (ettevõttele kuulumis
 |---|---|---|---|
 | `Vehicle` | `vehicles` | jah | Masin (traktor, kombain jm): andmed, amortisatsioon, viimane asukoht, juht |
 | `Implement` | `implements` | jah | Haakeriist (laius, tüüp) |
-| `TelemetryDevice` | `telemetry_devices` | jah | Telemeetriaseade (IMEI vms) |
+| `TelemetryDevice` | `telemetry_devices` | jah | Telemeetriaseade (IMEI vms); `reportsWhenParked` — saadab ka seisu ajal (sõitude vahedes toite ja vaikimise kontroll) |
 | `DeviceOwnership` | `device_ownerships` | jah | Seadme kuulumine ettevõttele ajavahemikus |
 | `DeviceAssignment` | `device_assignments` | jah | Seadme paigaldus masinale/haakeriistale ajavahemikus |
 | `ImplementAssignment` | `implement_assignments` | jah | Haakeriista ühendus masinaga ajavahemikus |

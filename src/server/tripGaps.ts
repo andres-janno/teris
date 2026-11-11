@@ -1,4 +1,5 @@
 // src/server/tripGaps.ts — sõitude vahede kontroll: kahe järjestikuse sõidu vahelised jälgimata töö märgid.
+// Toide kadus ja seade vaikis arvutatakse ainult seadmetele, mis saadavad andmeid ka seisu ajal (parkedSigns); teistel on need tühjad.
 // Puhas: andmebaasi ei puutu. Vahe = eelmise sõidu lõpp → järgmise sõidu algus; tagastatakse ainult piiri ületanud vahed.
 import { GAP_LIMITS } from '../services/tripGapLimits.ts';
 
@@ -19,7 +20,7 @@ export type GapSample = { time: Date; voltage: number | null; canHours: number |
 
 export type GapSigns = {
   powerLostMinutes: number | null;
-  silentMinutes: number;
+  silentMinutes: number | null;
   fuelDropPct: number | null;
   jumpM: number;
   engineHoursGrowth: number | null;
@@ -43,12 +44,12 @@ function distanceM(aLat: number, aLng: number, bLat: number, bLng: number): numb
 
 export const isFlagged = (g: GapSigns): boolean =>
   (g.powerLostMinutes ?? 0) >= GAP_LIMITS.powerLostMinutes ||
-  g.silentMinutes >= GAP_LIMITS.silentMinutes ||
+  (g.silentMinutes ?? 0) >= GAP_LIMITS.silentMinutes ||
   (g.fuelDropPct ?? 0) >= GAP_LIMITS.fuelDropPct ||
   g.jumpM >= GAP_LIMITS.jumpM ||
   (g.engineHoursGrowth ?? 0) >= GAP_LIMITS.engineHoursGrowth;
 
-function signsOf(prev: GapTrip, next: GapTrip, samples: GapSample[]): GapSigns {
+function signsOf(prev: GapTrip, next: GapTrip, samples: GapSample[], parkedSigns: boolean): GapSigns {
   const s = prev.endedAt.getTime();
   const e = next.startedAt.getTime();
   const inside = samples.filter((p) => p.time.getTime() >= s && p.time.getTime() <= e);
@@ -65,7 +66,7 @@ function signsOf(prev: GapTrip, next: GapTrip, samples: GapSample[]): GapSigns {
   // Toide kadus: pingepunktist järgmiseni (viimasest vahe lõpuni), kui pinge < 6 V; vaikimise aega (≥ 3 h) ei loeta
   const volt = inside.filter((p) => p.voltage != null);
   let powerLostMinutes: number | null = null;
-  if (volt.length) {
+  if (parkedSigns && volt.length) {
     let ms = 0;
     for (let i = 0; i < volt.length; i++) {
       const t = volt[i].time.getTime();
@@ -91,7 +92,7 @@ function signsOf(prev: GapTrip, next: GapTrip, samples: GapSample[]): GapSigns {
 
   return {
     powerLostMinutes,
-    silentMinutes: round(silentMs / 60_000, 1),
+    silentMinutes: parkedSigns ? round(silentMs / 60_000, 1) : null,
     fuelDropPct,
     jumpM: Math.round(distanceM(prev.endLat, prev.endLng, next.startLat, next.startLng)),
     engineHoursGrowth: before != null && after != null ? round(after - before, 2) : null
@@ -99,13 +100,13 @@ function signsOf(prev: GapTrip, next: GapTrip, samples: GapSample[]): GapSigns {
 }
 
 /** Kustutamata sõidud (ajas kasvavalt) ja seadme punktid (ajas kasvavalt) → piiri ületanud vahed. */
-export function computeGaps(trips: GapTrip[], samples: GapSample[]): GapCalc[] {
+export function computeGaps(trips: GapTrip[], samples: GapSample[], opts: { parkedSigns: boolean } = { parkedSigns: true }): GapCalc[] {
   const out: GapCalc[] = [];
   for (let i = 1; i < trips.length; i++) {
     const prev = trips[i - 1];
     const next = trips[i];
     if (next.startedAt.getTime() <= prev.endedAt.getTime()) continue;
-    const signs = signsOf(prev, next, samples);
+    const signs = signsOf(prev, next, samples, opts.parkedSigns);
     if (!isFlagged(signs)) continue;
     out.push({ prevTripId: prev.id, nextTripId: next.id, startedAt: prev.endedAt, endedAt: next.startedAt, ...signs });
   }

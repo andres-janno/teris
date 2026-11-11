@@ -106,6 +106,14 @@ describe('segmentTrips', () => {
     expect(segmentTrips(run(0, 10), LATER)[0].fuelLiters).toBeNull();
   });
 
+  it('kütusetaseme algus: alla 2 min sõidul viimane näit (käivitusväärtused jäetakse vahele)', () => {
+    const at = (sec: number) => new Date(T0 + sec * 1000);
+    const lv: [number, number][] = [[0, 0], [20, 6], [45, 18], [100, 29]];
+    const pts = lv.map(([sec, v], i) => ({ ...s(0), time: at(sec), lat: 58 + i * 0.0001, fuelLevelPct: v }));
+    const t = segmentTrips(pts, LATER)[0];
+    expect(t.fuelLevelStartPct).toBe(29);
+  });
+
   it('kütusetaseme algus: anduri hüpe esimesel minutil jäetakse vahele', () => {
     // 0, 8, 18 esimese minuti jooksul (sekundites), 85 alles 2 min pärast algust
     const at = (sec: number) => new Date(T0 + sec * 1000);

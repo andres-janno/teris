@@ -133,6 +133,7 @@ export interface TelemetryDevice {
   assignedVehicleId?: string;    // Millisesse masinasse paigaldatud (kui on paigaldatud)
   assignedImplementId?: string;  // Millise haakeriista külge paigaldatud (kui on paigaldatud)
   notes?: string;
+  reportsWhenParked?: boolean; // saadab ka seisu ajal → toite ja vaikimise kontroll sõitude vahedes
 
   // Reaalaja telemeetria
   // 'eye_sensor' seadmetel hoiab batteryVoltage aku TASET %-des (mitte V),

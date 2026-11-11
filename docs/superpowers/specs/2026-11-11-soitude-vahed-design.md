@@ -53,6 +53,7 @@ oma id uuele), seega püsib ka vahe ja selle kontrolli märge.
 - Kütuse tõus (tankimine) hoiatust ei anna. Kui kumbki näit puudub, märki ei arvutata.
 - Vahe salvestatakse ainult siis, kui **vähemalt üks märk ületab piiri**. Salvestatakse kõigi märkide väärtused
   (ka piiri alla jäänud, `null` = ei saanud arvutada; kõigi viie), et kuvada täit pilti.
+- Toide kadus ja seade vaikis arvutatakse ainult seadmetele, millel on märge „saadab ka seisu ajal“ (`TelemetryDevice.reportsWhenParked`, vaikimisi väljas). Live-kontroll 2026-11-11: kombain (FMC650) ei saada pargitult (vaikis kuni 12 p), Väike Claas (FMC125) on süütega toitel (pinge seisus 3–9 V) — mõlemal oleksid need märgid igaöised valehäired. Märke muutmisel arvutab järgmine import seadme sõidud ja vahed uuesti.
 - Piirid on konstandid ühes moodulis (`tripGaps.ts`), mitte seaded.
 
 ## Kütuse lõpunäit
@@ -60,6 +61,7 @@ oma id uuele), seega püsib ka vahe ja selle kontrolli märge.
 Kütusetaseme andur annab süüte sisselülitamise hetkel valesid väärtusi (sh 0). Algusnäidul on juba 2 min settimine.
 Kontrollitud 09.11 Suure Claasi sõidul: pärast pausi lühike taaskäivitus (üks punkt) andis 0, mis jäi sõidu lõpunäiduks.
 Reegel: näit **0 ei loe** ei algus- ega lõpunäiduks (paak 0% ei ole päris olukord); muu jääb samaks.
+Alla 2 min sõidul (settinud näitu pole) on algusnäit sõidu viimane nullist erinev näit.
 Olemasolevad sõidud arvutatakse uuesti (`finalizedUntil = NULL`, nagu varasematel ümberarvutustel).
 
 ## Andmemudel

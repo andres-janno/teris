@@ -69,16 +69,15 @@ const firstOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
 };
 // Kütusetaseme andur annab süüte lülitamise hetkel 0 — päris paak 0% ei ole, seega 0 ei loe näiduks
 const fuelOf = (p: TripSample) => (p.fuelLevelPct == null || p.fuelLevelPct === 0 ? null : p.fuelLevelPct);
-const fuelLevelStart = (pts: TripSample[]) => {
-  const settled = pts[0].time.getTime() + FUEL_LEVEL_SETTLE_MS;
-  for (const p of pts) if (fuelOf(p) != null && p.time.getTime() >= settled) return fuelOf(p);
-  return firstOf(pts, fuelOf); // sõit lühem kui 2 min või hiljem näite pole
-};
 const lastOf = (pts: TripSample[], f: (p: TripSample) => number | null) => {
   for (let i = pts.length - 1; i >= 0; i--) { const v = f(pts[i]); if (v != null) return v; }
   return null;
 };
-
+const fuelLevelStart = (pts: TripSample[]) => {
+  const settled = pts[0].time.getTime() + FUEL_LEVEL_SETTLE_MS;
+  for (const p of pts) if (fuelOf(p) != null && p.time.getTime() >= settled) return fuelOf(p);
+  return lastOf(pts, fuelOf); // sõit lühem kui 2 min: anduri käivitusväärtused (nt 6, 18) on valed, viimane näit on lähim settinud väärtusele
+};
 function fuelLiters(d: Draft): number | null {
   const counter = d.points.filter((p) => p.fuelUsedL != null);
   if (counter.length >= 2) {

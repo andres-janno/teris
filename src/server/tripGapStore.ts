@@ -19,7 +19,8 @@ const TRIP_SELECT = {
 export async function recomputeGaps(
   device: { id: string; imei: string }, from: Date, to: Date, fetchGapSamples: FetchGapSamples, now = new Date()
 ): Promise<void> {
-  const [prev, inWindow] = await Promise.all([
+  const [dev, prev, inWindow] = await Promise.all([
+    prisma.telemetryDevice.findUnique({ where: { id: device.id }, select: { reportsWhenParked: true } }),
     prisma.vehicleTrip.findFirst({
       where: { deviceId: device.id, deletedAt: null, startedAt: { lte: from } }, orderBy: { startedAt: 'desc' }, select: TRIP_SELECT
     }),
@@ -35,7 +36,7 @@ export async function recomputeGaps(
       new Date(trips[0].endedAt.getTime() - HOURS_LOOKAROUND_MS),
       new Date(trips[trips.length - 1].startedAt.getTime() + HOURS_LOOKAROUND_MS)
     );
-    calcs = computeGaps(trips, samples);
+    calcs = computeGaps(trips, samples, { parkedSigns: dev?.reportsWhenParked === true });
   }
   await tenantTransaction(async (tx) => {
     await lockDevice(tx, device.id);

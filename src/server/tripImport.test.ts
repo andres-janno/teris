@@ -459,6 +459,8 @@ describe('refreshTripAssignments', () => {
 });
 
 describe('sõitude vahed', () => {
+  beforeAll(() => run(() => prisma.telemetryDevice.update({ where: { id: deviceId }, data: { reportsWhenParked: true } })));
+  afterAll(() => run(() => prisma.telemetryDevice.update({ where: { id: deviceId }, data: { reportsWhenParked: false } })));
   const gapRows = () => run(() => prisma.vehicleTripGap.findMany({ orderBy: { startedAt: 'asc' } }));
   // Sõit 0–30 ja 60–90; vahe 30 → 60. Toide < 6 V minutitel 35–50 (15 min), kui powerLost = true
   const setup = (powerLost: boolean) => {
@@ -474,6 +476,18 @@ describe('sõitude vahed', () => {
     expect(g).toHaveLength(1);
     expect(g[0]).toMatchObject({ deviceId, prevTripId: t[0].id, nextTripId: t[1].id, powerLostMinutes: 15, startedAt: at(30), endedAt: at(60) });
     expect(g[0].reviewedAt).toBeNull();
+  });
+
+  it('seade ei saada seisu ajal → toitekatkestus ei anna hoiatust', async () => {
+    await run(() => prisma.telemetryDevice.update({ where: { id: deviceId }, data: { reportsWhenParked: false } }));
+    try {
+      setup(true);
+      nowMin = 120;
+      await run(() => importDeviceTrips(device(), deps));
+      expect(await gapRows()).toHaveLength(0);
+    } finally {
+      await run(() => prisma.telemetryDevice.update({ where: { id: deviceId }, data: { reportsWhenParked: true } }));
+    }
   });
 
   it('kontrolli märge jääb ümberarvutusel alles; kontrollitud vahe ei kao, kui märk langeb piiri alla', async () => {
