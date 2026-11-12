@@ -23,7 +23,8 @@ interface SelectProps {
 }
 
 export const Select: React.FC<SelectProps> = ({ value, onValueChange, options, placeholder = 'Vali…', disabled, className, id, ...aria }) => (
-  <SelectPrimitive.Root value={value || undefined} onValueChange={onValueChange} disabled={disabled}>
+  // '' jääb kontrollituks; Radix näitab '' korral placeholderit (shouldShowPlaceholder), undefined läheks üle kontrollimatuks.
+  <SelectPrimitive.Root value={value} onValueChange={onValueChange} disabled={disabled}>
     <SelectPrimitive.Trigger
       id={id}
       aria-label={aria['aria-label']}
