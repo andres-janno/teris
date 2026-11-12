@@ -8,6 +8,9 @@ import type { AuthUser } from './types/auth';
 import { api, ApiError, setUnauthorizedHandler } from './services/api';
 import { alertDialog } from './components/ConfirmDialog';
 
+// Ühiste komponentide näidiste leht (/ui, ainult admin) — eraldi tükk, tavakasutaja seda ei lae.
+const UiGallery = React.lazy(() => import('./components/ui/UiGallery').then((m) => ({ default: m.UiGallery })));
+
 // /support#<token> — kasutajatoe üleandmislink (vana alias /tugi). Token loetakse ja fragment eemaldatakse kohe
 // (enne päringut), et token ei jääks aadressiribale ega ajalukku.
 const SUPPORT_PATHS = ['/support', '/tugi'];
@@ -141,6 +144,14 @@ export const AuthGate: React.FC = () => {
           onLogout={logout}
         />
       </div>
+    );
+  }
+
+  if (user.isAdmin && window.location.pathname === '/ui') {
+    return (
+      <React.Suspense fallback={null}>
+        <UiGallery />
+      </React.Suspense>
     );
   }
 
