@@ -15,6 +15,28 @@ describe('auditCss', () => {
   it('loeb ka margin-top ja column-gap', () => {
     expect(auditCss('.a{margin-top:-4px;column-gap:0.5rem}').spacing).toEqual(['-4px', '0.5rem']);
   });
+  it('kirjasuurustes ja nurkades jätab välja muutujad, inherit ja 0, lõikab nurga lühendi tükkideks', () => {
+    const r = auditCss(
+      '.a{font-size:var(--x);font-size:inherit;font-size:0.8rem;border-radius:6px 6px 0 0;border-radius:50%}'
+    );
+    expect(r.fontSizes).toEqual(['0.8rem']);
+    expect(r.radii).toEqual(['6px', '6px', '50%']);
+  });
+  it('eemaldab kirjasuuruse ja nurga väärtusest !important', () => {
+    const r = auditCss('.a{font-size:13px !important;border-radius:4px!important}');
+    expect(r.fontSizes).toEqual(['13px']);
+    expect(r.radii).toEqual(['4px']);
+  });
+  it('kogub rgba, rgb ja hsl värvid normaliseeritult (väikesed tähed, tühikud välja) ja järjekorras', () => {
+    expect(auditCss('.a{color:rgba(0, 0, 0, 0.5);background:#FFF;border-color:hsl(0 0% 50%)}').colors).toEqual([
+      'rgba(0,0,0,0.5)',
+      '#fff',
+      'hsl(00%50%)',
+    ]);
+  });
+  it('ei loe värvina muutujaga määratud värvi', () => {
+    expect(auditCss('.a{color:rgb(var(--r) 0 0)}').colors).toEqual([]);
+  });
 });
 
 describe('auditTsx', () => {
@@ -29,6 +51,15 @@ describe('auditTsx', () => {
   it('loeb rgba ja rgb', () => {
     expect(auditTsx("const c = 'rgba(0,0,0,.5)'; const d = 'rgb(1,2,3)';").colors).toBe(2);
   });
+  it('ei loe HTML-i numbrilist võrdlusmärki (&#8212;) värvina', () => {
+    expect(auditTsx('<p>a&#8212;b</p>').colors).toBe(0);
+  });
+  it('keelatud klassid: negatiivsed ja loogilised vahed, ei võta w-, max-w- ega data- klasse', () => {
+    const r = auditTsx(
+      '<p className="text-[13px] -mt-[4px] -m-[2px] ps-[3px] -ms-[1px] max-w-[640px] w-[min(640px,94vw)] md:p-[3px] data-[state=open]:bg-muted" />'
+    );
+    expect(r.arbitrary).toEqual(['text-[13px]', '-mt-[4px]', '-m-[2px]', 'ps-[3px]', '-ms-[1px]', 'p-[3px]']);
+  });
 });
 
 describe('summarize', () => {
@@ -41,5 +72,12 @@ describe('summarize', () => {
     expect(r.fontSizes).toEqual(['12px', '13px']);
     expect(r.inlineStyles).toBe(1);
     expect(r.arbitrary).toEqual([{ path: 'c.tsx', cls: 'm-[3px]' }]);
+  });
+  it('loeb tühikuga ja tühikuta kirjutatud sama rgba värvi üheks', () => {
+    const r = summarize([
+      { path: 'a.css', content: '.a{color:rgba(0, 0, 0, 0.5)}' },
+      { path: 'b.css', content: '.b{color:rgba(0,0,0,0.5)}' },
+    ]);
+    expect(r.cssColors).toEqual(['rgba(0,0,0,0.5)']);
   });
 });

@@ -12,31 +12,46 @@ export interface AuditReport {
   arbitrary: { path: string; cls: string }[];
 }
 
-const HEX = /#[0-9a-fA-F]{3,8}\b/g;
+// Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
+const COLOR = /(?<!&)#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?)\((?:[^()]|\([^()]*\))*\)/gi;
 const SPACING_DECL =
   /(?:^|[\s;{])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?\s*:\s*([^;}]+)/g;
-// Keelatud ainult skaalaga seotud suvalised väärtused; suurused (w-[…]) ja olekuvariandid (data-[…]:) on lubatud.
-const ARBITRARY = /(?<![\w-])(?:text|p[xytrbl]?|m[xytrbl]?|gap(?:-[xy])?|rounded(?:-[a-z]{1,2})?|bg|border)-\[[^\]\s]*\]/g;
+// Keelatud ainult skaalaga seotud suvalised väärtused (sh negatiivsed ja loogilised vahed); suurused (w-[…])
+// ja olekuvariandid (data-[…]:) on lubatud. Eesliide "md:" jätab klassi ilma, sest koolon ei kuulu lookbehindi.
+const ARBITRARY =
+  /(?<![\w-])-?(?:text|p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|rounded(?:-[a-z]{1,2})?|bg|border)-\[[^\]\s]*\]/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
 const uniqueSorted = (list: string[]) => [...new Set(list)].sort();
+const withoutImportant = (v: string) => v.replace(/!important/g, '').trim();
+const isNonZeroNumber = (t: string, unit: RegExp) => unit.test(t) && parseFloat(t) !== 0;
+const LENGTH_PCT = /^-?\d*\.?\d+(px|rem|em|%)$/;
+const LENGTH = /^-?\d*\.?\d+(px|rem|em)$/;
+// Kirjasuurus ja nurk: lühendist (nt "6px 6px 0 0") jäävad alles ainult arvulised väärtused; muutujad, inherit, 0 välja.
+const lengthTokens = (css: string, prop: RegExp) =>
+  values(css, prop)
+    .flatMap((v) => withoutImportant(v).split(/\s+/))
+    .filter((t) => isNonZeroNumber(t, LENGTH_PCT));
+
+const colors = (src: string) =>
+  (src.match(COLOR) ?? []).filter((c) => !/var\(/i.test(c)).map((c) => c.toLowerCase().replace(/\s+/g, ''));
 
 export function auditCss(css: string) {
   const spacing = values(css, SPACING_DECL)
-    .flatMap((v) => v.replace(/!important/, '').trim().split(/\s+/))
-    .filter((t) => /^-?\d*\.?\d+(px|rem|em)$/.test(t) && parseFloat(t) !== 0);
+    .flatMap((v) => withoutImportant(v).split(/\s+/))
+    .filter((t) => isNonZeroNumber(t, LENGTH));
   return {
-    fontSizes: values(css, /font-size\s*:\s*([^;}]+)/g),
-    radii: values(css, /border-radius\s*:\s*([^;}]+)/g),
+    fontSizes: lengthTokens(css, /font-size\s*:\s*([^;}]+)/g),
+    radii: lengthTokens(css, /border-radius\s*:\s*([^;}]+)/g),
     spacing,
-    colors: css.match(HEX) ?? [],
+    colors: colors(css),
   };
 }
 
 export function auditTsx(src: string) {
   return {
     inlineStyles: (src.match(/style=\{\{/g) ?? []).length,
-    colors: (src.match(HEX) ?? []).length + (src.match(/rgba?\(/g) ?? []).length,
+    colors: colors(src).length,
     arbitrary: src.match(ARBITRARY) ?? [],
   };
 }
