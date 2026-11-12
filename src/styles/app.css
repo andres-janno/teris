@@ -1,0 +1,80 @@
+/* src/styles/app.css — rakenduse stiilide sisenemispunkt.
+   Kihid: kihistamata CSS võidaks alati kihis olevat, seega vana index.css on kihis `legacy`
+   (enne `utilities`-t), muidu ei mõjuks ükski Tailwindi vahe (index.css: `* { margin: 0; padding: 0 }`).
+   Leaflet on `legacy` ees, et index.css-i Leafleti ülekirjutused jääksid kehtima.
+   Preflight (Tailwindi vaikestiilid) jäetakse teadlikult välja. */
+@layer theme, base, vendor, legacy, components, utilities;
+
+@import 'tailwindcss/theme.css' layer(theme);
+@import 'leaflet/dist/leaflet.css' layer(vendor);
+@import '../index.css' layer(legacy);
+@import 'tailwindcss/utilities.css' layer(utilities);
+
+/* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
+@custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
+
+/* Skaalad (spec 1. osa). Vaikeskaalad nullitakse, et suvalist suurust/värvi ei saaks kasutada. */
+@theme {
+  --text-*: initial;
+  --text-2xs: 11px;
+  --text-2xs--line-height: 16px;
+  --text-xs: 12px;
+  --text-xs--line-height: 16px;
+  --text-sm: 13px;
+  --text-sm--line-height: 18px;
+  --text-base: 14px;
+  --text-base--line-height: 20px;
+  --text-lg: 16px;
+  --text-lg--line-height: 22px;
+  --text-xl: 20px;
+  --text-xl--line-height: 28px;
+
+  --radius-*: initial;
+  --radius-sm: 6px;
+  --radius-md: 10px;
+  --radius-lg: 16px;
+  --radius-full: 9999px;
+
+  --shadow-primary: 0 4px 14px rgba(34, 197, 94, 0.35);
+  --shadow-primary-hover: 0 6px 20px rgba(34, 197, 94, 0.5);
+}
+
+/* Tähenduspõhised värvid — viitavad index.css-i muutujatele, seega järgivad heledat/tumedat teemat.
+   `inline`: utiliit kasutab otse var(--…) väärtust (teema vahetus töötab). Nimed ei tohi kattuda
+   index.css-i muutujatega (nt --shadow-glass), muidu tekiks tsükkel. */
+@theme inline {
+  --color-*: initial;
+  --color-white: #ffffff;
+  --color-black: #000000;
+
+  --color-background: var(--bg-dark);
+  --color-foreground: var(--text-primary);
+  --color-card: var(--bg-card);
+  --color-card-hover: var(--bg-card-hover);
+  --color-popover: var(--bg-modal);
+  --color-muted: var(--stat-bg);
+  --color-muted-hover: var(--stat-bg-hover);
+  --color-muted-foreground: var(--text-secondary);
+  --color-subtle: var(--text-muted);
+  --color-border: var(--border-card);
+  --color-input: var(--input-border);
+  --color-field: var(--input-bg);
+  --color-secondary: var(--btn-sec-bg);
+  --color-secondary-hover: var(--btn-sec-hover);
+  --color-secondary-border: var(--btn-sec-border);
+  --color-overlay: rgba(5, 8, 15, 0.6);
+
+  --color-primary: var(--emerald-500);
+  --color-primary-strong: var(--emerald-600);
+  /* Põhinupu gradient on mõlemas teemas sama (nagu praegune .btn-primary) */
+  --color-primary-from: #16a34a;
+  --color-primary-to: #22c55e;
+  --color-info: var(--blue-500);
+  --color-warning: var(--amber-500);
+  --color-destructive: var(--rose-500);
+  --color-danger-solid: #dc2626;
+  --color-accent: var(--purple-500);
+
+  --shadow-card: var(--shadow-glass);
+  --shadow-dialog: var(--shadow-modal);
+}

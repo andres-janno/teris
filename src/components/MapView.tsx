@@ -1,7 +1,6 @@
 // src/components/MapView.tsx
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 import proj4 from 'proj4';
 import type { LayerVisibility, VehicleDisplayFilter } from '../types/map';
 import type { FieldCollection, FieldFeature } from '../types/field';

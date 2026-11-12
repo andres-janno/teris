@@ -2,6 +2,7 @@ import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 import { dbApiPlugin } from './src/server/dbApiPlugin.ts';
 import { landingHtmlPlugin } from './src/landing/landingHtmlPlugin.ts';
 
@@ -18,7 +19,7 @@ function gitCommit(): string {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), dbApiPlugin(), landingHtmlPlugin()],
+  plugins: [react(), tailwindcss(), dbApiPlugin(), landingHtmlPlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(gitCommit())
