@@ -88,7 +88,9 @@ kaardikihtide ja kultuuride värvid on andmed, need jäävad dünaamiliseks.
 
 ### Fondid
 
-Jäävad: Plus Jakarta Sans (põhitekst), Outfit (pealkirjad/logo).
+Jäävad nagu praegu: põhitekst süsteemifondiga (`Tahoma, Verdana, 'Segoe UI', …` `body`-l), Outfit ainult
+logosõnas. (Parandus 2026-11-12: algselt oli siin ekslikult Plus Jakarta Sans — see pakett on paigaldatud, aga
+rakenduses kasutamata.)
 
 ## 2. Ühised komponendid (`src/components/ui/`)
 
@@ -151,8 +153,10 @@ uus). Iga samm = commit + release.
 
 ## Riskid ja lahtised asjad
 
-- Tailwindi ja vana CSS-i kooselu: preflight väljas; kui mõni vana reegel (nt üldine `button {…}`) mõjutab uut
-  komponenti, piiratakse vana reegel klassiga.
+- Tailwindi ja vana CSS-i kooselu: preflight väljas. Kihistamata CSS võidab alati kihis olevat, seega `index.css`
+  (mis sisaldab nt `* { margin: 0; padding: 0 }`) pannakse kihti `legacy`, mis on enne `utilities`-kihti — muidu
+  ei mõjuks ükski Tailwindi vahe. Leafleti CSS läheb kihti `vendor` enne `legacy`-t, et `index.css`-i Leafleti
+  ülekirjutused (3 reeglit) jääksid kehtima.
 - Suured failid (VehicleTracker, FieldWorksBoard, MapView) võivad sisaldada erilahendusi; kui `ui/` vajab uut varianti,
   kooskõlastatakse kasutajaga enne lisamist.
 - Radix Select ei toeta otsingut; otsinguga valikud jäävad FilterSelect peale.
