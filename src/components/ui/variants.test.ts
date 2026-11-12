@@ -30,6 +30,18 @@ describe('variants', () => {
   it('ükski variant ei kasuta keelatud suvalisi väärtusi', () => {
     for (const cls of allClassStrings()) expect(auditTsx(`className="${cls}"`).arbitrary).toEqual([]);
   });
+  it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger'] as const)
+      for (const size of ['sm', 'md', 'icon-sm', 'icon'] as const) {
+        const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
+        const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border');
+        expect(colors, `${variant}/${size}`).toHaveLength(1);
+      }
+    expect(v.buttonVariants({ variant: 'secondary' })).toContain('border-secondary-border');
+    expect(v.buttonVariants({ variant: 'secondary' })).not.toContain('border-transparent');
+    for (const variant of ['primary', 'ghost', 'danger'] as const)
+      expect(v.buttonVariants({ variant })).toContain('border-transparent');
+  });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
     const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|background)$/;

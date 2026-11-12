@@ -5,15 +5,15 @@ import { cva } from 'class-variance-authority';
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
 export const buttonVariants = cva(
-  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border border-transparent font-semibold transition-all cursor-pointer select-none disabled:pointer-events-none disabled:opacity-50 ${focusRing}`,
+  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-semibold transition-all cursor-pointer select-none disabled:pointer-events-none disabled:opacity-50 ${focusRing}`,
   {
     variants: {
       variant: {
         primary:
-          'bg-linear-135 from-primary-from to-primary-to text-white shadow-primary hover:from-primary-strong hover:to-primary-from hover:shadow-primary-hover hover:-translate-y-px',
+          'border-transparent bg-linear-135 from-primary-from to-primary-to text-white shadow-primary hover:from-primary-strong hover:to-primary-from hover:shadow-primary-hover hover:-translate-y-px',
         secondary: 'bg-secondary border-secondary-border text-foreground hover:bg-secondary-hover',
-        ghost: 'bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
-        danger: 'bg-danger-solid text-white hover:bg-danger-solid/90',
+        ghost: 'border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
+        danger: 'border-transparent bg-danger-solid text-white hover:bg-danger-solid/90',
       },
       size: {
         sm: 'h-7 px-3 text-xs',
