@@ -37,6 +37,9 @@ describe('auditCss', () => {
   it('ei loe värvina muutujaga määratud värvi', () => {
     expect(auditCss('.a{color:rgb(var(--r) 0 0)}').colors).toEqual([]);
   });
+  it('ei loe HTML-i numbrilist võrdlusmärki (&#8212;) värvina ka CSS-is', () => {
+    expect(auditCss('.a{content:"&#8212;";color:#fff}').colors).toEqual(['#fff']);
+  });
 });
 
 describe('auditTsx', () => {
