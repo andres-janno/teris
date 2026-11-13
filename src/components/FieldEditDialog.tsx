@@ -1,8 +1,7 @@
 // src/components/FieldEditDialog.tsx — põllu põhiandmete ja valitud hooaja kirje muutmise aken
 import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import { NumberInput } from './NumberInput';
-import { X, Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
+import { Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
 import type { FieldCadastralLink } from '../types/cadastre';
@@ -19,7 +18,7 @@ const UNDETERMINED_CROP_COLOR = '#94a3b8';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -314,33 +313,16 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     loadForm(field);
   }, [field.id, selectedYear]);
 
-  // Esc sulgeb muutmisakna
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation(); // ei jõua window'ni — alusvaade (nt põllu infokast kaardil) jääb avatuks
-      onClose();
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [onClose]);
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <DialogContent size="lg" className="field-edit-modal">
+    <DialogForm onSubmit={handleSaveEdit}>
+      <DialogHeader
+        icon={isEditSeasonLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
+        title={`${isEditSeasonLocked ? 'Lukus' : 'Muuda'}: ${editNum ? `Nr ${editNum} ` : ''}${editName || `Põld ${field.id}`} · ${selectedYear}`}
+      />
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-    <form onSubmit={handleSaveEdit} className="modal-content field-edit-modal animate-scale-up">
-      <div className="modal-header">
-        <div className="modal-title-group">
-          {isEditSeasonLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
-          <h3>
-            {isEditSeasonLocked ? 'Lukus' : 'Muuda'}: {editNum ? `Nr ${editNum} ` : ''}{editName || `Põld ${field.id}`} · {selectedYear}
-          </h3>
-        </div>
-        <Button variant="ghost" size="icon-sm" type="button" onClick={() => onClose()} title="Sulge (Esc)">
-          <X size={20} />
-        </Button>
-      </div>
-
-      <div className="modal-body">
+      <DialogBody>
 
       {/* General Master Field Data */}
       <div className="form-sub-header">
@@ -813,18 +795,18 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       </div>
 
 
-      </div>
+      </DialogBody>
 
       {!isEditSeasonLocked && (
-        <div className="modal-footer">
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={() => onClose()}>Loobu</Button>
           <Button type="submit" variant="primary">
             Salvesta muudatused
           </Button>
-        </div>
+        </DialogFooter>
       )}
-    </form>
-    </div>,
-    document.body
+    </DialogForm>
+    </DialogContent>
+    </Dialog>
   );
 };

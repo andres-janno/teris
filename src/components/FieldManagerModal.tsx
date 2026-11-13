@@ -1,7 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
-  Layers,
   Calendar,
   Search,
   Edit2,
@@ -29,7 +28,6 @@ const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mulla
 
 interface FieldManagerModalProps {
   isOpen: boolean;
-  onClose: () => void;
   masterFields: MasterField[];
   selectedYear: number;
   onSelectYear: (year: number) => void;
@@ -38,12 +36,10 @@ interface FieldManagerModalProps {
   onOpenSeasonManager?: () => void;
   crops?: Crop[];
   baseMap?: BaseMapLayerId;
-  isFullPage?: boolean;
 }
 
 export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   isOpen,
-  onClose,
   masterFields,
   selectedYear,
   onSelectYear,
@@ -52,7 +48,6 @@ export const FieldManagerModal: React.FC<FieldManagerModalProps> = ({
   onOpenSeasonManager,
   crops = [],
   baseMap = 'maaamet-pohikaart',
-  isFullPage = false,
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   // Vaikimisi peidetakse põllud, millel valitud aasta kohta hooajakirjet pole (nt varasemad PRIA põllud)
@@ -239,7 +234,7 @@ function cropSummaryKey(cropText: string): string {
   // Põllu ühe aasta kuju eraldi aknas.
   const [shapeView, setShapeView] = useState<{ fieldId: number | string; year: number } | null>(null);
 
-  if (!isOpen && !isFullPage) return null;
+  if (!isOpen) return null;
 
   // Miks lahtri kultuuri ei saa otse muuta (null = saab).
   const cropEditBlockReason = (field: MasterField, rec: FieldYearlyRecord | undefined, year: number): string | null => {
@@ -378,7 +373,7 @@ function cropSummaryKey(cropText: string): string {
   );
 
   const bodyContent = (
-    <div className="modal-body">
+    <div className="fullpage-board-content">
           {/* Top Row: Year Season Switcher & Global Stats */}
           <div className="register-header-controls">
             {/* Year Selector Tabs */}
@@ -677,48 +672,22 @@ function cropSummaryKey(cropText: string): string {
         </div>
   );
 
-  if (isFullPage) {
-    return (
-      <div className="fullpage-board-view">
-        <main className="fullpage-board-main wide">
-          <div className="fullpage-board-header">
-            <div className="fullpage-title-wrap">
-              <Repeat className="text-emerald" size={26} />
-              <div>
-                <h2>Külvikord</h2>
-                <p className="fullpage-subtitle">Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
-              </div>
-            </div>
-          </div>
-          <div className="fullpage-board-body">
-            {bodyContent}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card field-register-modal animate-scale-up">
-        {/* Header */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Layers className="text-emerald" size={24} />
+    <div className="fullpage-board-view">
+      <main className="fullpage-board-main wide">
+        <div className="fullpage-board-header">
+          <div className="fullpage-title-wrap">
+            <Repeat className="text-emerald" size={26} />
             <div>
-              <h3>Põldude register</h3>
-              <p className="modal-subtitle">
-                Aastatepõhine külvikord, PRIA pindalade muutused.
-              </p>
+              <h2>Külvikord</h2>
+              <p className="fullpage-subtitle">Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
         </div>
-
-        {bodyContent}
-      </div>
+        <div className="fullpage-board-body">
+          {bodyContent}
+        </div>
+      </main>
     </div>
   );
 };

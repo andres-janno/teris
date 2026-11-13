@@ -241,7 +241,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
         </div>
 
         <div className="fullpage-board-body">
-          <div className="modal-body">
+          <div className="fullpage-board-content">
             <div className="register-header-controls">
               <div className="year-selector-group">
                 <span className="year-label">

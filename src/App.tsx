@@ -1685,8 +1685,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         <Suspense fallback={null}>
           <FieldManagerModal
             isOpen={true}
-            isFullPage={true}
-            onClose={() => changeMainView('map')}
             masterFields={operatorMasterFields}
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
@@ -2051,7 +2049,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           masterFields={masterFields}
           vehicles={vehicles}
           selectedYear={selectedYear}
-          stacked={mainView === 'fields'}
         />
       </DeferredMount>
 
@@ -2068,7 +2065,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onDeleteCrop={handleDeleteCrop}
           masterFields={operatorMasterFields}
           selectedYear={selectedYear}
-          stacked={mainView === 'fields'}
         />
       </DeferredMount>
 

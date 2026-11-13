@@ -4168,10 +4168,6 @@ input[type="number"],
   background: var(--btn-sec-hover);
 }
 
-.modal-content.field-shape-modal {
-  width: min(760px, 94vw);
-}
-
 .field-shape-body {
   padding: 0;
 }
@@ -4442,39 +4438,6 @@ input[type="number"],
 }
 
 /* Edit Card */
-.modal-content.field-edit-modal {
-  width: min(980px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.field-edit-modal .modal-body {
-  overflow-y: auto;
-}
-
-.modal-content.crop-edit-modal {
-  width: min(720px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.crop-edit-modal .modal-body {
-  overflow-y: auto;
-}
-
-.modal-content.party-edit-modal {
-  width: min(720px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.party-edit-modal .modal-body {
-  overflow-y: auto;
-}
-
 .modal-content.season-edit-modal {
   width: min(560px, 96vw);
   max-height: 92vh;

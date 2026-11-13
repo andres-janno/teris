@@ -1,8 +1,6 @@
 // src/components/RelatedPartiesModal.tsx
 import React, { useState, useMemo, useEffect } from 'react';
-import { createPortal } from 'react-dom';
 import {
-  X,
   Users,
   Search,
   Plus,
@@ -26,7 +24,7 @@ import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -37,8 +35,6 @@ interface RelatedPartiesModalProps {
   masterFields?: MasterField[];
   vehicles?: Vehicle[];
   selectedYear?: number;
-  // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
-  stacked?: boolean;
   isFullPage?: boolean;
   canManageFinance?: boolean; // tunnihinda näeb ja muudab ainult finantsõigusega kasutaja
 }
@@ -54,7 +50,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   masterFields = [],
   vehicles = [],
   selectedYear = 2026,
-  stacked = false,
   isFullPage = false,
   canManageFinance = false,
 }) => {
@@ -246,34 +241,18 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     };
   }, [enrichedParties]);
 
-  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
-  useEffect(() => {
-    if (!isEditing) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsEditing(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isEditing]);
-
   if (!isOpen && !isFullPage) return null;
 
-  const editForm = isEditing && createPortal(
-    <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
-    <form onSubmit={handleSaveForm} className="modal-content party-edit-modal animate-scale-up">
-      <div className="modal-header">
-        <div className="modal-title-group">
-          <Edit2 size={20} className="text-emerald" />
-          <h3>
-            {editId ? `Muuda isikut: ${editName}` : 'Lisa uus seotud isik'}
-          </h3>
-        </div>
-        <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditing(false)} title="Sulge (Esc)">
-          <X size={20} />
-        </Button>
-      </div>
+  const editForm = isEditing && (
+    <Dialog open onOpenChange={(open) => { if (!open) setIsEditing(false); }}>
+    <DialogContent size="lg" className="party-edit-modal">
+    <DialogForm onSubmit={handleSaveForm}>
+      <DialogHeader
+        icon={<Edit2 size={20} className="text-emerald" />}
+        title={editId ? `Muuda isikut: ${editName}` : 'Lisa uus seotud isik'}
+      />
 
-      <div className="modal-body">
+      <DialogBody>
 
       {/* 1. Põhiandmed */}
       <div className="form-sub-header">
@@ -432,9 +411,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
       </div>
 
-      </div>
+      </DialogBody>
 
-      <div className="modal-footer">
+      <DialogFooter>
         <Button
           type="button"
           variant="ghost"
@@ -445,14 +424,14 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         <Button type="submit" variant="primary">
           Salvesta isik
         </Button>
-      </div>
-    </form>
-    </div>,
-    document.body
+      </DialogFooter>
+    </DialogForm>
+    </DialogContent>
+    </Dialog>
   );
 
   const bodyContent = (
-    <div className="modal-body">
+    <>
       {/* Top Row: Quick Stats Bar (Identical pills to FieldManagerModal) */}
           <div className="register-header-controls">
             <div className="register-stats-pills">
@@ -656,7 +635,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
             </div>
           )}
-        </div>
+    </>
   );
 
   if (isFullPage) {
@@ -684,7 +663,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           </div>
           <div className="fullpage-board-body">
             {editForm}
-            {bodyContent}
+            <div className="fullpage-board-content">
+              {bodyContent}
+            </div>
           </div>
           <div className="fullpage-board-footer">
             <span>
@@ -697,29 +678,22 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   }
 
   return (
-    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
-      <div className="modal-content glass-card field-register-modal parties-register-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Users className="text-emerald" size={24} />
-            <div>
-              <h3>Seotud isikute register</h3>
-              <p className="modal-subtitle">
-                Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid ({parties.length} isikut)
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge register">
-            <X size={20} />
-          </Button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="full" className="field-register-modal parties-register-modal">
+        <DialogHeader
+          icon={<Users className="text-emerald" size={24} />}
+          title="Seotud isikute register"
+          description={`Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid (${parties.length} isikut)`}
+        />
 
-        {bodyContent}
+        <DialogBody>
+          {bodyContent}
+        </DialogBody>
 
         {editForm}
 
-        <div className="modal-footer">
-          <div className="footer-left-info">
+        <DialogFooter>
+          <div className="footer-left-info" style={{ marginRight: 'auto' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
@@ -727,8 +701,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           <Button variant="ghost" onClick={onClose}>
             Sulge
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

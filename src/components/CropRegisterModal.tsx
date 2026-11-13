@@ -1,9 +1,7 @@
 // src/components/CropRegisterModal.tsx
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo } from 'react';
 import { NumberInput } from './NumberInput';
-import { createPortal } from 'react-dom';
 import {
-  X,
   Sprout,
   Search,
   Plus,
@@ -24,7 +22,7 @@ import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -35,7 +33,6 @@ interface CropRegisterModalProps {
   masterFields?: MasterField[];
   selectedYear?: number;
   // Avatud teise akna (nt põllu muutmise) pealt — kuvatakse kõige peal.
-  stacked?: boolean;
   isFullPage?: boolean;
   // Hooaja valik nagu Põldude registris (ilma selleta näidatakse ainult valitud aasta andmeid)
   seasons?: FarmingSeason[];
@@ -58,7 +55,6 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   onDeleteCrop,
   masterFields = [],
   selectedYear = 2026,
-  stacked = false,
   isFullPage = false,
   seasons = [],
   onSelectYear
@@ -347,31 +343,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     }
   };
 
-  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
-  useEffect(() => {
-    if (!isEditingCrop) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsEditingCrop(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isEditingCrop]);
-
-  useEffect(() => {
-    if (!isEditingVariety) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setIsEditingVariety(false);
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isEditingVariety]);
-
   if (!isOpen && !isFullPage) return null;
 
   const targetCropForVariety = crops.find((c) => c.id === varietyTargetCropId);
 
   const bodyContent = (
-    <div className="modal-body">
+    <>
       {/* Quick Stats Bar */}
           <div className="register-header-controls">
             <div className="year-selector-group">
@@ -435,22 +412,17 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             </span>
           </div>
 
-          {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
-              glass-card, mille backdrop-filter piiraks muidu position: fixed tausta) */}
-          {isEditingCrop && createPortal(
-            <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
-            <form onSubmit={handleSaveCropForm} className="modal-content crop-edit-modal animate-scale-up">
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  <Edit2 size={20} className="text-emerald" />
-                  <h3>{editCropId ? `Muuda kultuuri: ${editCropName}` : 'Lisa uus kultuur'}</h3>
-                </div>
-                <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditingCrop(false)} title="Sulge (Esc)">
-                  <X size={20} />
-                </Button>
-              </div>
+          {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal */}
+          {isEditingCrop && (
+            <Dialog open onOpenChange={(open) => { if (!open) setIsEditingCrop(false); }}>
+            <DialogContent size="lg" className="crop-edit-modal">
+            <DialogForm onSubmit={handleSaveCropForm}>
+              <DialogHeader
+                icon={<Edit2 size={20} className="text-emerald" />}
+                title={editCropId ? `Muuda kultuuri: ${editCropName}` : 'Lisa uus kultuur'}
+              />
 
-              <div className="modal-body">
+              <DialogBody>
 
               <div className="form-sub-header">
                 <Sprout size={14} />
@@ -629,38 +601,32 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 ))}
               </div>
 
-              </div>
+              </DialogBody>
 
-              <div className="modal-footer">
+              <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setIsEditingCrop(false)}>
                   Loobu
                 </Button>
                 <Button type="submit" variant="primary">
                   Salvesta kultuur
                 </Button>
-              </div>
-            </form>
-            </div>,
-            document.body
+              </DialogFooter>
+            </DialogForm>
+            </DialogContent>
+            </Dialog>
           )}
 
           {/* 2. Sordi lisamine/muutmine eraldi aknas registri peal */}
-          {isEditingVariety && targetCropForVariety && createPortal(
-            <div className={`modal-backdrop sub-modal ${stacked ? 'stacked' : ''}`}>
-            <form onSubmit={handleSaveVarietyForm} className="modal-content crop-edit-modal animate-scale-up" style={{ borderTop: '4px solid var(--blue-500)' }}>
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  <Tag size={20} className="text-blue" />
-                  <h3>
-                    {editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa sort: ${targetCropForVariety.name}`}
-                  </h3>
-                </div>
-                <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditingVariety(false)} title="Sulge (Esc)">
-                  <X size={20} />
-                </Button>
-              </div>
+          {isEditingVariety && targetCropForVariety && (
+            <Dialog open onOpenChange={(open) => { if (!open) setIsEditingVariety(false); }}>
+            <DialogContent size="lg" className="crop-edit-modal" style={{ borderTop: '4px solid var(--blue-500)' }}>
+            <DialogForm onSubmit={handleSaveVarietyForm}>
+              <DialogHeader
+                icon={<Tag size={20} className="text-blue" />}
+                title={editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa sort: ${targetCropForVariety.name}`}
+              />
 
-              <div className="modal-body">
+              <DialogBody>
 
               <div className="form-sub-header">
                 <Sparkles size={14} />
@@ -768,19 +734,19 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </div>
               </div>
 
-              </div>
+              </DialogBody>
 
-              <div className="modal-footer">
+              <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setIsEditingVariety(false)}>
                   Loobu
                 </Button>
                 <Button type="submit" variant="primary">
                   Salvesta sort
                 </Button>
-              </div>
-            </form>
-            </div>,
-            document.body
+              </DialogFooter>
+            </DialogForm>
+            </DialogContent>
+            </Dialog>
           )}
 
           {/* Kultuurid neljas veerus (teraviljad, õlikultuurid, kaunviljad, muud);
@@ -950,7 +916,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               );
             })}
           </div>
-        </div>
+    </>
   );
 
   if (isFullPage) {
@@ -967,7 +933,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             </div>
           </div>
           <div className="fullpage-board-body">
-            {bodyContent}
+            <div className="fullpage-board-content">
+              {bodyContent}
+            </div>
           </div>
           <div className="fullpage-board-footer">
             <span>
@@ -980,27 +948,20 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   }
 
   return (
-    <div className={`modal-backdrop ${stacked ? 'stacked' : ''}`}>
-      <div className="modal-content glass-card field-register-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Sprout className="text-emerald" size={24} />
-            <div>
-              <h3>Kultuuride ja Sortide Register</h3>
-              <p className="modal-subtitle">
-                Põllukultuurid, sortide alamregistrid, külvinormid ja saagiootused ({stats.totalCrops} kultuuri, {stats.totalVarieties} sorti)
-              </p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge register">
-            <X size={20} />
-          </Button>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="full" className="field-register-modal">
+        <DialogHeader
+          icon={<Sprout className="text-emerald" size={24} />}
+          title="Kultuuride ja Sortide Register"
+          description={`Põllukultuurid, sortide alamregistrid, külvinormid ja saagiootused (${stats.totalCrops} kultuuri, ${stats.totalVarieties} sorti)`}
+        />
 
-        {bodyContent}
+        <DialogBody>
+          {bodyContent}
+        </DialogBody>
 
-        <div className="modal-footer">
-          <div className="footer-left-info">
+        <DialogFooter>
+          <div className="footer-left-info" style={{ marginRight: 'auto' }}>
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
@@ -1008,8 +969,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           <Button variant="ghost" onClick={onClose}>
             Sulge
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
