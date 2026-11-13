@@ -1,13 +1,16 @@
 /* src/styles/app.css — rakenduse stiilide sisenemispunkt.
    Kihid: kihistamata CSS võidaks alati kihis olevat, seega vana index.css on kihis `legacy`
    (enne `utilities`-t), muidu ei mõjuks ükski Tailwindi vahe (index.css: `* { margin: 0; padding: 0 }`).
-   Leaflet on `legacy` ees, et index.css-i Leafleti ülekirjutused jääksid kehtima.
+   Leaflet on `legacy` JÄREL: kihtide vahel võidab hilisem kiht olenemata spetsiifilisusest, seega kui
+   Leaflet oleks ees, tühistaks index.css-i `*`-reegel Leafleti veeriste/polsterduste reeglid.
+   index.css-i enda Leafleti ülekirjutused on `!important`, ja `!important` puhul võidab VARASEM kiht — need
+   kehtivad endiselt, kuigi `legacy` on `vendor`-ist ees.
    Preflight (Tailwindi vaikestiilid) jäetakse teadlikult välja. */
-@layer theme, base, vendor, legacy, components, utilities;
+@layer theme, base, legacy, vendor, components, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
-@import 'leaflet/dist/leaflet.css' layer(vendor);
 @import '../index.css' layer(legacy);
+@import 'leaflet/dist/leaflet.css' layer(vendor);
 @import 'tailwindcss/utilities.css' layer(utilities);
 
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */

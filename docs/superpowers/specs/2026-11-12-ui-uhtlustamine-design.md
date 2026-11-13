@@ -155,8 +155,10 @@ uus). Iga samm = commit + release.
 
 - Tailwindi ja vana CSS-i kooselu: preflight väljas. Kihistamata CSS võidab alati kihis olevat, seega `index.css`
   (mis sisaldab nt `* { margin: 0; padding: 0 }`) pannakse kihti `legacy`, mis on enne `utilities`-kihti — muidu
-  ei mõjuks ükski Tailwindi vahe. Leafleti CSS läheb kihti `vendor` enne `legacy`-t, et `index.css`-i Leafleti
-  ülekirjutused (3 reeglit) jääksid kehtima.
+  ei mõjuks ükski Tailwindi vahe. Leafleti CSS läheb kihti `vendor` PÄRAST `legacy`-t: kihtide vahel võidab
+  hilisem kiht olenemata spetsiifilisusest, seega muidu tühistaks `index.css`-i `*`-reegel Leafleti veerised ja
+  polsterdused. `index.css`-i Leafleti ülekirjutused on `!important` ja nende puhul võidab varasem kiht (`legacy`),
+  seega need kehtivad endiselt.
 - Suured failid (VehicleTracker, FieldWorksBoard, MapView) võivad sisaldada erilahendusi; kui `ui/` vajab uut varianti,
   kooskõlastatakse kasutajaga enne lisamist.
 - Radix Select ei toeta otsingut; otsinguga valikud jäävad FilterSelect peale.
