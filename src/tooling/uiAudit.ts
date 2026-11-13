@@ -10,6 +10,10 @@ export interface AuditReport {
   inlineStyles: number;
   tsxColors: number;
   arbitrary: { path: string; cls: string }[];
+  offScaleSpacing: { path: string; cls: string }[];
+  inlineFontSizes: string[];
+  tsxColorFiles: { path: string; count: number }[];
+  legacyComponentClasses: string[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -18,8 +22,15 @@ const SPACING_DECL =
   /(?:^|[\s;{])(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?\s*:\s*([^;}]+)/g;
 // Keelatud ainult skaalaga seotud suvalised väärtused (sh negatiivsed ja loogilised vahed); suurused (w-[…])
 // ja olekuvariandid (data-[…]:) on lubatud. Eesliide "md:" jätab klassi ilma, sest koolon ei kuulu lookbehindi.
+// Hõlmab ka Tailwind v4 muutujasüntaksit (text-(--x)) ja külgpiiret (border-t-[…]).
 const ARBITRARY =
-  /(?<![\w-])-?(?:text|p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|rounded(?:-[a-z]{1,2})?|bg|border)-\[[^\]\s]*\]/g;
+  /(?<![\w-])-?(?:text|p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?|rounded(?:-[a-z]{1,2})?|bg|border(?:-[xytrbl])?)-(?:\[[^\]\s]*\]|\(--[\w-]+\))/g;
+// Vahe-klass arvuga (p-5, -mt-3.5, md:gap-x-7); `size-`, `h-`, `w-`, `translate-x-` jne ei lähe lookbehindist läbi.
+const SPACING_CLASS = /(?<![\w-])(-?(?:p[xytrblse]?|m[xytrblse]?|gap(?:-[xy])?)-(\d+(?:\.\d+)?|px))(?![\w.[(-])/g;
+const SPACING_SCALE = new Set(['0', 'px', '0.5', '1', '1.5', '2', '2.5', '3', '4', '6', '8']);
+// Vana komponendi klassiselektor CSS-is (spec: nupu/dialoogi/tabeli klassid kustutatakse).
+const LEGACY_COMPONENT = /\.((?:btn|modal|badge|pill|tab|data-table|table)[\w-]*)/g;
+const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
 const uniqueSorted = (list: string[]) => [...new Set(list)].sort();
@@ -45,6 +56,7 @@ export function auditCss(css: string) {
     radii: lengthTokens(css, /border-radius\s*:\s*([^;}]+)/g),
     spacing,
     colors: colors(css),
+    componentClasses: [...new Set([...css.matchAll(LEGACY_COMPONENT)].map((m) => `.${m[1]}`))],
   };
 }
 
@@ -53,6 +65,8 @@ export function auditTsx(src: string) {
     inlineStyles: (src.match(/style=\{\{/g) ?? []).length,
     colors: colors(src).length,
     arbitrary: src.match(ARBITRARY) ?? [],
+    offScaleSpacing: [...src.matchAll(SPACING_CLASS)].filter((m) => !SPACING_SCALE.has(m[2])).map((m) => m[1]),
+    inlineFontSizes: [...src.matchAll(INLINE_FONT_SIZE)].map((m) => (m[1] ? `${m[1]}px` : m[2])),
   };
 }
 
@@ -67,5 +81,9 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     inlineStyles: tsx.reduce((s, t) => s + t.inlineStyles, 0),
     tsxColors: tsx.reduce((s, t) => s + t.colors, 0),
     arbitrary: tsx.flatMap((t) => t.arbitrary.map((cls) => ({ path: t.path, cls }))),
+    offScaleSpacing: tsx.flatMap((t) => [...new Set(t.offScaleSpacing)].map((cls) => ({ path: t.path, cls }))),
+    inlineFontSizes: uniqueSorted(tsx.flatMap((t) => t.inlineFontSizes)),
+    tsxColorFiles: tsx.filter((t) => t.colors > 0).map((t) => ({ path: t.path, count: t.colors })),
+    legacyComponentClasses: uniqueSorted(css.flatMap((c) => c.componentClasses)),
   };
 }

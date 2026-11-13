@@ -65,7 +65,63 @@ describe('auditTsx', () => {
   });
 });
 
+describe('auditTsx: skaalaväline vahe', () => {
+  it('märgib skaalavälised vahe-klassid (ka negatiivsed ja variandiga)', () => {
+    const r = auditTsx('<p className="p-5 -mt-3.5 md:gap-x-7 hover:px-9 m-0 p-px gap-2.5 py-8 -mb-px pl-12" />');
+    expect(r.offScaleSpacing).toEqual(['p-5', '-mt-3.5', 'gap-x-7', 'px-9', 'pl-12']);
+  });
+  it('ei märgi suurusi ega muid klasse', () => {
+    const r = auditTsx('<p className="size-7 h-7 w-72 min-w-40 translate-x-0.5 -mb-px top-5 inset-3 max-h-96" />');
+    expect(r.offScaleSpacing).toEqual([]);
+  });
+});
+
+describe('auditTsx: keelatud suvalised, v4 muutujasüntaks', () => {
+  it('püüab text-(--x), bg-(--x), p-(--x), rounded-(--x) ja border-x-[…], lubab min-w-(--radix-…)', () => {
+    const r = auditTsx(
+      '<p className="text-(--x) bg-(--y) p-(--z) border-(--b) rounded-(--r) border-t-[3px] border-x-[1px] min-w-(--radix-select-trigger-width) w-[10px] max-h-[60vh]" />'
+    );
+    expect(r.arbitrary).toEqual([
+      'text-(--x)', 'bg-(--y)', 'p-(--z)', 'border-(--b)', 'rounded-(--r)', 'border-t-[3px]', 'border-x-[1px]',
+    ]);
+  });
+});
+
+describe('auditTsx: inline kirjasuurused ja värvid failis', () => {
+  it('kogub fontSize väärtused pikslitena', () => {
+    const r = auditTsx("<p style={{ fontSize: 13 }} /><p style={{ fontSize: '11px' }} /><p style={{ fontSize: '0.8rem' }} />");
+    expect(r.inlineFontSizes).toEqual(['13px', '11px', '0.8rem']);
+  });
+  it('summarize annab värvid failide kaupa ja kordumatud inline-kirjasuurused', () => {
+    const r = summarize([
+      { path: 'a.tsx', content: "const c = '#fff'; const d = '#000'; <p style={{ fontSize: 13 }} />" },
+      { path: 'b.tsx', content: "const c = '#fff'; <p style={{ fontSize: 13 }} />" },
+      { path: 'c.tsx', content: '<p />' },
+    ]);
+    expect(r.tsxColorFiles).toEqual([{ path: 'a.tsx', count: 2 }, { path: 'b.tsx', count: 1 }]);
+    expect(r.inlineFontSizes).toEqual(['13px']);
+  });
+});
+
+describe('vanad komponendiklassid CSS-is', () => {
+  it('loeb eri klassiselektorid', () => {
+    const r = auditCss('.btn{} .btn:hover{} .btn-primary{} .modal-overlay .badge{} .data-table td{} .other{} .tabs-x{}');
+    expect(r.componentClasses).toEqual(['.btn', '.btn-primary', '.modal-overlay', '.badge', '.data-table', '.tabs-x']);
+  });
+  it('summarize annab kordumatu arvu', () => {
+    const r = summarize([
+      { path: 'a.css', content: '.btn{}' },
+      { path: 'b.css', content: '.btn{} .pill-x{}' },
+    ]);
+    expect(r.legacyComponentClasses).toEqual(['.btn', '.pill-x']);
+  });
+});
+
 describe('summarize', () => {
+  it('annab skaalaväliste vahede loendi failidega', () => {
+    const r = summarize([{ path: 'c.tsx', content: '<p className="p-5 p-2" />' }]);
+    expect(r.offScaleSpacing).toEqual([{ path: 'c.tsx', cls: 'p-5' }]);
+  });
   it('ühendab failid ja eemaldab korduvad väärtused', () => {
     const r = summarize([
       { path: 'a.css', content: '.a{font-size:12px}' },
