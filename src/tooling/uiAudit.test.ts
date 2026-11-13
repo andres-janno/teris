@@ -140,3 +140,29 @@ describe('summarize', () => {
     expect(r.cssColors).toEqual(['rgba(0,0,0,0.5)']);
   });
 });
+
+describe('auditTsx: vanad nupuklassid', () => {
+  it('loeb üldised nupuklassid klassistringides', () => {
+    const src = `<button className="btn btn-primary btn-sm">a</button>
+<button className={\`btn btn-sm \${x ? 'btn-primary' : 'btn-secondary'}\`}>b</button>
+<button className="icon-btn-ghost">c</button><button className="icon-btn-danger" /><button className="icon-btn" />
+<button className="icon-btn-ghost-sm" /><button className="btn btn-secondary btn-xs btn-icon-only" />`;
+    expect(auditTsx(src).legacyButtons).toEqual([
+      'btn', 'btn-primary', 'btn-sm', 'btn', 'btn-sm', 'btn-primary', 'btn-secondary',
+      'icon-btn-ghost', 'icon-btn-danger', 'icon-btn', 'icon-btn-ghost-sm',
+      'btn', 'btn-secondary', 'btn-xs', 'btn-icon-only',
+    ]);
+  });
+  it('ei loe erinuppe, btn-full ega modifikaatoreid', () => {
+    const src = `<button className="basemap-btn active" /><button className="btn-full fw-crop-delete-btn" />
+<button className="year-widget-btn locked-btn" /><span className="has-corner-btn" />`;
+    expect(auditTsx(src).legacyButtons).toEqual([]);
+  });
+  it('summarize annab failid, kus vanu nupuklasse on', () => {
+    const r = summarize([
+      { path: 'a.tsx', content: '<button className="btn btn-ghost" />' },
+      { path: 'b.tsx', content: '<Button variant="ghost" />' },
+    ]);
+    expect(r.legacyButtonFiles).toEqual([{ path: 'a.tsx', count: 2 }]);
+  });
+});

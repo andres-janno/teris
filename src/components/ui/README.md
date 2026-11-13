@@ -60,3 +60,30 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 
 Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` (põhinupu gradient),
 `overlay` (dialoogi taust).
+
+## Nupud: vana → uus
+
+Üldnupud on ainult `<Button>` (`./ui`). Vanad klassid `btn*`, `icon-btn*` tuleb asendada; `npm run ui-audit` loeb neid kohti.
+
+| Vana | Uus |
+| --- | --- |
+| `<button className="btn btn-primary">` | `<Button variant="primary">` |
+| `btn btn-secondary` | `<Button>` (vaikimisi `secondary`, `md`) |
+| `btn btn-ghost` | `<Button variant="ghost">` |
+| `btn btn-danger` | `<Button variant="danger">` |
+| `+ btn-sm` või `+ btn-xs` | `size="sm"` |
+| `btn btn-secondary btn-icon-only` | `<Button size="icon">` |
+| `icon-btn-ghost`, `icon-btn` | `<Button variant="ghost" size="icon-sm">` |
+| `icon-btn-danger` | `<Button variant="danger-ghost" size="icon-sm">` |
+| `icon-btn-ghost-sm` | `<Button variant="ghost" size="icon-xs">` |
+| `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
+| `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
+| `btn-full` | jääb `className="btn-full"` (ainult laius 100%) |
+
+Reeglid:
+
+1. **`type`:** `Button` paneb vaikimisi `type="button"`. Vormi sees olev nupp, mis vajab saatmist, saab `type="submit"`.
+2. Muud atribuudid (`onClick`, `disabled`, `title`, `aria-*`, `ref`, `style`, `key`, `form`) jäävad muutmata.
+3. Vaatepõhine modifikaator (nt `fw-crop-delete-btn`) jääb alles. Kui vana reegel kannab tähendust (olek, hoiatusvärv),
+   lisa reeglile `!important`. Muidu kaovad Buttoni omadused (padding, kõrgus, kirjasuurus, värv, taust, nurk) ja see
+   on ühtlustamise eesmärk.

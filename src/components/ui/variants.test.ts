@@ -1,10 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { auditTsx } from '../../tooling/uiAudit';
+import { cn } from './cn';
 import * as v from './variants';
 
 const allClassStrings = (): string[] => [
-  ...(['primary', 'secondary', 'ghost', 'danger'] as const).flatMap((variant) =>
-    (['sm', 'md', 'icon-sm', 'icon'] as const).map((size) => v.buttonVariants({ variant, size }))
+  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const).flatMap((variant) =>
+    (['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => v.badgeVariants({ tone })),
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
@@ -30,16 +31,31 @@ describe('variants', () => {
   it('ükski variant ei kasuta keelatud suvalisi väärtusi', () => {
     for (const cls of allClassStrings()) expect(auditTsx(`className="${cls}"`).arbitrary).toEqual([]);
   });
+  it('läbipaistev ohunupp: punane ikoon, hõljudes kerge punane taust', () => {
+    const c = v.buttonVariants({ variant: 'danger-ghost', size: 'icon-sm' });
+    expect(c).toContain('text-destructive');
+    expect(c).toContain('bg-transparent');
+    expect(c).toContain('hover:bg-destructive/15');
+  });
+  it('ikoonnupud on 6px nurgaga (nagu vanad icon-btn), tekstinupud 10px', () => {
+    for (const size of ['icon-xs', 'icon-sm', 'icon'] as const) {
+      const c = cn(v.buttonVariants({ size }));
+      expect(c, size).toContain('rounded-sm');
+      expect(c, size).not.toContain('rounded-md');
+    }
+    expect(cn(v.buttonVariants({ size: 'sm' }))).toContain('rounded-md');
+    expect(v.buttonVariants({ size: 'icon-xs' })).toContain('size-5');
+  });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger'] as const)
-      for (const size of ['sm', 'md', 'icon-sm', 'icon'] as const) {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
+      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border');
         expect(colors, `${variant}/${size}`).toHaveLength(1);
       }
     expect(v.buttonVariants({ variant: 'secondary' })).toContain('border-secondary-border');
     expect(v.buttonVariants({ variant: 'secondary' })).not.toContain('border-transparent');
-    for (const variant of ['primary', 'ghost', 'danger'] as const)
+    for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost'] as const)
       expect(v.buttonVariants({ variant })).toContain('border-transparent');
   });
   it('kirjasuurused ainult skaalast', () => {

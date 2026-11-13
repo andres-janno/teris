@@ -14,12 +14,16 @@ export const buttonVariants = cva(
         secondary: 'bg-secondary border-secondary-border text-foreground hover:bg-secondary-hover',
         ghost: 'border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
         danger: 'border-transparent bg-danger-solid text-white hover:bg-danger-solid/90',
+        // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
+        'danger-ghost': 'border-transparent bg-transparent text-destructive hover:bg-destructive/15',
       },
       size: {
         sm: 'h-7 px-3 text-xs',
         md: 'h-8 px-4 text-sm',
-        'icon-sm': 'size-7',
-        icon: 'size-8',
+        // Ikoonnupud: 6px nurk nagu vanadel .icon-btn-* (tekstinupud 10px).
+        'icon-xs': 'size-5 rounded-sm',
+        'icon-sm': 'size-7 rounded-sm',
+        icon: 'size-8 rounded-sm',
       },
     },
     defaultVariants: { variant: 'secondary', size: 'md' },

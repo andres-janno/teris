@@ -50,6 +50,8 @@ export const UiGallery: React.FC = () => {
           <Button size="sm">Väike</Button>
           <Button size="icon" aria-label="Muuda"><Pencil size={16} /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
+          <Button variant="danger-ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
+          <Button variant="ghost" size="icon-xs" aria-label="Muuda"><Pencil size={12} /></Button>
           <Button variant="primary" disabled>Keelatud</Button>
         </Section>
 

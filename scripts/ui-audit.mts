@@ -31,3 +31,8 @@ row('Kirjasuurusi inline (tsx)', r.inlineFontSizes.length, r.inlineFontSizes);
 row('Vanu komponendiklasse (CSS)', r.legacyComponentClasses.length, r.legacyComponentClasses);
 row('Keelatud suvalisi klasse (tsx)', r.arbitrary.length, r.arbitrary.map((a) => `${a.path}: ${a.cls}`));
 row('Skaalaväliseid vahe-klasse (tsx)', r.offScaleSpacing.length, r.offScaleSpacing.map((a) => `${a.path}: ${a.cls}`));
+row(
+  'Vanu nupuklasse (tsx)',
+  r.legacyButtonFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyButtonFiles.map((f) => `${f.path}: ${f.count}`)
+);
