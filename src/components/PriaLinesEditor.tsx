@@ -11,6 +11,7 @@ import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
 import { FilterSelect, type FilterSelectOption } from './FilterSelect';
+import { Button } from './ui';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -195,14 +196,14 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
               <input className="form-input num" aria-label="K kg/ha" inputMode="decimal" value={r.kKgHa} onChange={(e) => set(i, { kKgHa: e.target.value })} />
             </>
           )}
-          <button type="button" className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}>
+          <Button type="button" variant="danger-ghost" size="icon-sm" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}>
             <Trash2 size={14} />
-          </button>
+          </Button>
         </div>
       ))}
-      <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange([...rows, { ...emptyPriaRow(), warehouseId: defaultWarehouseId ?? '' }])}>
+      <Button type="button" variant="ghost" size="sm" onClick={() => onChange([...rows, { ...emptyPriaRow(), warehouseId: defaultWarehouseId ?? '' }])}>
         <Plus size={13} /> Lisa {isSeed ? 'seeme' : 'materjal'}
-      </button>
+      </Button>
     </div>
   );
 };
@@ -272,13 +273,13 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
           <input className="form-input" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
           <ObservationQuantity value={o.quantity} unit={o.unit} onChange={(quantity) => set({ quantity })} />
           <span className="work-entry-unit">{o.unit}</span>
-          <button type="button" className="icon-btn-danger" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></button>
+          <Button type="button" variant="danger-ghost" size="icon-sm" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></Button>
         </div>
       );
     })}
-    <button type="button" className="btn btn-ghost btn-sm" onClick={() => onChange([...rows, { label: '', quantity: 0, unit: '', priaRegister: null }])}>
+    <Button type="button" variant="ghost" size="sm" onClick={() => onChange([...rows, { label: '', quantity: 0, unit: '', priaRegister: null }])}>
       <Plus size={13} /> Lisa leid
-    </button>
+    </Button>
   </div>
 );
 

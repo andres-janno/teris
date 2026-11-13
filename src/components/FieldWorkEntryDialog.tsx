@@ -16,6 +16,7 @@ import { FilterClear } from './FilterClear';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
+import { Button } from './ui';
 
 interface Option {
   id: string;
@@ -424,9 +425,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <h3>{entry ? 'Muuda kannet' : 'Lisa kanne'}: {work.workTypeName}</h3>
             <p className="modal-subtitle">{fieldLabel}</p>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)">
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)">
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="modal-body work-entry-body">
@@ -748,10 +749,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>
+          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+          <Button type="submit" variant="primary" disabled={busy}>
             {finish ? 'Salvesta ja lõpeta töö' : 'Salvesta kanne'}
-          </button>
+          </Button>
         </div>
       </form>
     </div>,

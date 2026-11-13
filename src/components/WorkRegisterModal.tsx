@@ -10,6 +10,7 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { Button } from './ui';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -95,9 +96,9 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
             </div>
           </div>
           <div className="season-header-actions">
-            <button className="icon-btn" onClick={onClose} title="Sulge">
+            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
               <X size={18} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -134,12 +135,12 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                       <td className="num">{w.fieldWorkCount ?? 0}</td>
                       <td className="actions-col">
                         <div className="row-actions">
-                          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setWorkForm(w)}>
+                          <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setWorkForm(w)}>
                             <Edit2 size={15} />
-                          </button>
-                          <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteWork(w)}>
+                          </Button>
+                          <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteWork(w)}>
                             <Trash2 size={15} />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -159,7 +160,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                 <Edit2 size={20} className="text-emerald" />
                 <h3>Muuda tööd: {workForm.name}</h3>
               </div>
-              <button type="button" className="icon-btn-ghost" onClick={() => setWorkForm(null)} title="Sulge"><X size={20} /></button>
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setWorkForm(null)} title="Sulge"><X size={20} /></Button>
             </div>
             <div className="modal-body">
               <div className="form-grid">
@@ -188,8 +189,8 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setWorkForm(null)}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+              <Button type="button" variant="ghost" onClick={() => setWorkForm(null)}>Loobu</Button>
+              <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
             </div>
           </form>
         </div>,

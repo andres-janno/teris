@@ -12,6 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 import { FilterSelect } from './FilterSelect';
 import { FilterClear } from './FilterClear';
+import { Button } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -248,8 +249,8 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
         {error && <div className="alert-box error">{error}</div>}
       </div>
       <div className={dialog ? 'modal-footer' : 'fw-plan-actions'}>
-        <button type="button" className="btn btn-ghost" onClick={onCancel}>Loobu</button>
-        <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+        <Button type="button" variant="ghost" onClick={onCancel}>Loobu</Button>
+        <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
       </div>
     </form>
   );

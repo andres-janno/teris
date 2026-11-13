@@ -24,6 +24,7 @@ import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
+import { Button } from './ui';
 
 interface Option {
   id: string;
@@ -721,14 +722,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               })}
             </div>
             <div className="register-io-buttons">
-              <button type="button" className="btn btn-secondary btn-sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd ja kulumaterjalid">
+              <Button type="button" size="sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd ja kulumaterjalid">
                 <ListChecks size={14} />
                 <span>Tööde register</span>
-              </button>
+              </Button>
               {canManageFinance && (
-                <button
+                <Button
                   type="button"
-                  className="btn btn-secondary btn-sm"
+                  size="sm"
                   onClick={() => {
                     setFinanceEntryId(null);
                     setIsFinanceOpen(true);
@@ -738,7 +739,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   <Euro size={14} />
                   <span>Finantsid</span>
                   {pendingFinanceCount > 0 && <span className="finance-tab-badge">{pendingFinanceCount}</span>}
-                </button>
+                </Button>
               )}
             </div>
           </div>
@@ -927,9 +928,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
                           </div>
                           {!locked && row.works.length > 0 && !hasCurrentEntries(row) && (
-                            <button
+                            <Button
                               type="button"
-                              className="btn btn-secondary btn-xs fw-crop-delete-btn"
+                              size="sm"
+                              className="fw-crop-delete-btn"
                               title={`Eemalda kultuuri "${row.undetermined ? 'valimata' : row.rec.crop}" tööd (${row.works.length} tk)`}
                               aria-label="Kustuta plaanitud tööd"
                               disabled={busy}
@@ -940,7 +942,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             >
                               <Trash2 size={11} style={{ color: '#dc2626' }} />
                               <span>Kustuta plaanitud tööd</span>
-                            </button>
+                            </Button>
                           )}
                         </div>
 
@@ -958,9 +960,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               <span className="fw-crop-name">{row.nextCropName}</span>
                             </div>
                             {!locked && row.nextWorks.length > 0 && !hasNextEntries(row) && row.nextRec?.fieldSeasonId && (
-                              <button
+                              <Button
                                 type="button"
-                                className="btn btn-secondary btn-xs fw-crop-delete-btn"
+                                size="sm"
+                                className="fw-crop-delete-btn"
                                 title={`Eemalda järgmise kultuuri "${row.nextCropName}" sügistööd (${row.nextWorks.length} tk)`}
                                 aria-label="Kustuta plaanitud tööd"
                                 disabled={busy}
@@ -971,7 +974,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               >
                                 <Trash2 size={11} style={{ color: '#dc2626' }} />
                                 <span>Kustuta plaanitud tööd</span>
-                              </button>
+                              </Button>
                             )}
                           </div>
                         ) : (
@@ -1186,9 +1189,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 <div className="fw-panel-head">
                   <div className="fw-panel-top">
                     <span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>
-                    <button type="button" className="icon-btn-ghost" aria-label="Sulge (Esc)" title="Sulge (Esc)" onClick={() => setSelectedId(null)}>
+                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Sulge (Esc)" title="Sulge (Esc)" onClick={() => setSelectedId(null)}>
                       <X size={18} />
-                    </button>
+                    </Button>
                   </div>
                   <h2 title={selected.priaName}>{selected.workTypeName}</h2>
                   <div className="fw-panel-field">{activeLabel}</div>
@@ -1231,10 +1234,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     <div className="fw-plan-section-head">
                       <span>Plaan</span>
                       {!workLocked && (
-                        <button type="button" className="btn btn-ghost btn-sm" onClick={() => setEditingPlan(true)}>
+                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPlan(true)}>
                           <Pencil size={13} />
                           <span>Muuda</span>
-                        </button>
+                        </Button>
                       )}
                     </div>
                     <FieldWorkPlanForm
@@ -1261,9 +1264,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <h3>{isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: {selected.workTypeName}</h3>
                             <p className="modal-subtitle">{activeLabel}</p>
                           </div>
-                          <button type="button" className="icon-btn-ghost" onClick={() => setEditingPlan(false)} title="Sulge (Esc)">
+                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => setEditingPlan(false)} title="Sulge (Esc)">
                             <X size={20} />
-                          </button>
+                          </Button>
                         </div>
                         <FieldWorkPlanForm
                           key={`edit-${selected.id}`}
@@ -1348,12 +1351,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <span className="fw-entry-actions">
                           {!workLocked && (
                             <>
-                              <button type="button" className="icon-btn-ghost" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
+                              <Button type="button" variant="ghost" size="icon-sm" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
                                 <Edit2 size={14} />
-                              </button>
-                              <button type="button" className="icon-btn-danger" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
+                              </Button>
+                              <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
                                 <Trash2 size={14} />
-                              </button>
+                              </Button>
                             </>
                           )}
                         </span>
@@ -1361,50 +1364,53 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   ))}
                   {!workLocked && (
-                    <button type="button" className="btn btn-secondary fw-add-entry" onClick={() => openNewEntry(selected)}>
+                    <Button type="button" className="fw-add-entry" onClick={() => openNewEntry(selected)}>
                       <Plus size={13} />
                       <span>Lisa kanne…</span>
-                    </button>
+                    </Button>
                   )}
                 </div>
 
                 {!locked && (
                   <div className="fw-panel-foot">
                     {selected.status === 'DONE' ? (
-                      <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
+                      <Button type="button" className="fw-panel-foot-btn" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
                         <RotateCcw size={14} />
                         <span>Ava uuesti</span>
-                      </button>
+                      </Button>
                     ) : (
-                      <button type="button" className="btn btn-primary" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
+                      <Button type="button" variant="primary" className="fw-panel-foot-btn" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
                         <Check size={14} />
                         <span>Märgi lõpetatuks</span>
-                      </button>
+                      </Button>
                     )}
-                    {selected.status !== 'DONE' && <button
+                    {selected.status !== 'DONE' && <Button
                       type="button"
-                      className="icon-btn-danger"
+                      variant="danger-ghost"
+                      size="icon-sm"
                       title={selected.entries.length ? 'Kannetega tööd ei saa eemaldada' : 'Eemalda töö põllult'}
                       aria-label="Eemalda töö põllult"
                       disabled={busy || selected.entries.length > 0}
                       onClick={() => removeWork(selected)}
                     >
                       <Trash2 size={16} />
-                    </button>}
+                    </Button>}
                   </div>
                 )}
 
                 {!locked && !hasAnyEntries(selectedRow) && getRowVisibleWorks(selectedRow).length > 1 && (
                   <div className="fw-panel-clear-wrap">
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-ghost btn-xs fw-panel-clear-btn"
+                      variant="ghost"
+                      size="sm"
+                      className="fw-panel-clear-btn"
                       disabled={busy}
                       onClick={() => clearFieldWorks(selectedRow)}
                     >
                       <Trash2 size={12} />
                       <span>Eemalda kõik selle põllu tööd ({getRowVisibleWorks(selectedRow).length})</span>
-                    </button>
+                    </Button>
                   </div>
                 )}
               </div>

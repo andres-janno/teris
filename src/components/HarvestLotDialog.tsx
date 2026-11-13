@@ -12,6 +12,7 @@ import type { Crop } from '../types/crop';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
+import { Button } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -151,7 +152,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
               {lot && <p className="modal-subtitle">{lot.cropName} · {lot.seasonYear} · {HARVEST_LOT_STATUS_LABEL[lot.status]}</p>}
             </div>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <form onSubmit={save} className="harvest-lot-head">
@@ -185,7 +186,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
               <label htmlFor="hl-notes">Märkus</label>
               <input id="hl-notes" className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </div>
-            <button type="submit" className="btn btn-secondary btn-sm" disabled={busy}>{lot ? 'Salvesta' : 'Loo partii'}</button>
+            <Button type="submit" size="sm" disabled={busy}>{lot ? 'Salvesta' : 'Loo partii'}</Button>
           </form>
 
           {lot && (
@@ -240,8 +241,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                           <td className="actions-col">
                             {!closed && (
                               <div className="row-actions">
-                                <button type="button" className="icon-btn-danger" title="Kustuta" aria-label="Kustuta kaalumine" disabled={busy}
-                                  onClick={() => void run(async () => { await api.deleteHarvestLotWeighing(lot.id, w.id); })}><Trash2 size={15} /></button>
+                                <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kaalumine" disabled={busy}
+                                  onClick={() => void run(async () => { await api.deleteHarvestLotWeighing(lot.id, w.id); })}><Trash2 size={15} /></Button>
                               </div>
                             )}
                           </td>
@@ -264,7 +265,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                       <label htmlFor="hl-w-notes">Märkus</label>
                       <input id="hl-w-notes" className="form-input" value={wNotes} onChange={(e) => setWNotes(e.target.value)} />
                     </div>
-                    <button type="submit" className="btn btn-secondary btn-sm" disabled={busy}>Lisa kaalumine</button>
+                    <Button type="submit" size="sm" disabled={busy}>Lisa kaalumine</Button>
                   </form>
                 )}
               </section>
@@ -290,8 +291,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                           <td className="num">{c.total == null ? <span className="muted">hindamata</span> : fmtEur(c.total)}</td>
                           <td className="actions-col">
                             <div className="row-actions">
-                              <button type="button" className="icon-btn-danger" title="Kustuta" aria-label="Kustuta kuivatuskulu" disabled={busy}
-                                onClick={() => void run(async () => { await api.deleteHarvestLotCost(lot.id, c.id); })}><Trash2 size={15} /></button>
+                              <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kuivatuskulu" disabled={busy}
+                                onClick={() => void run(async () => { await api.deleteHarvestLotCost(lot.id, c.id); })}><Trash2 size={15} /></Button>
                             </div>
                           </td>
                         </tr>
@@ -319,7 +320,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                     <label htmlFor="hl-c-notes">Märkus</label>
                     <input id="hl-c-notes" className="form-input" value={cNotes} onChange={(e) => setCNotes(e.target.value)} />
                   </div>
-                  <button type="submit" className="btn btn-secondary btn-sm" disabled={busy}>Lisa kulu</button>
+                  <Button type="submit" size="sm" disabled={busy}>Lisa kulu</Button>
                 </form>
               </section>
             </>
@@ -328,11 +329,11 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
         {lot && (
           <div className="modal-footer">
             {lot.entries.length === 0 && (
-              <button type="button" className="btn btn-ghost" disabled={busy} onClick={() => void removeLot()}>Kustuta partii</button>
+              <Button type="button" variant="ghost" disabled={busy} onClick={() => void removeLot()}>Kustuta partii</Button>
             )}
             {closed
-              ? <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void run(async () => { await api.reopenHarvestLot(lot.id); })}>Ava uuesti</button>
-              : <button type="button" className="btn btn-primary" disabled={busy} onClick={() => void closeLot()}>Sulge partii</button>}
+              ? <Button type="button" disabled={busy} onClick={() => void run(async () => { await api.reopenHarvestLot(lot.id); })}>Ava uuesti</Button>
+              : <Button type="button" variant="primary" disabled={busy} onClick={() => void closeLot()}>Sulge partii</Button>}
           </div>
         )}
       </div>

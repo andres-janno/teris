@@ -8940,7 +8940,8 @@ a.history-pill:hover {
   align-items: center;
 }
 
-.fw-panel-foot .btn {
+/* Ainult peamised nupud (mitte ikoonnupp „Eemalda töö põllult“) */
+.fw-panel-foot > .fw-panel-foot-btn {
   flex: 1;
   justify-content: center;
 }

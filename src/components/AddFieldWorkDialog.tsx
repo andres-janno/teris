@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
+import { Button } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -111,9 +112,9 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
               <p className="modal-subtitle">{fieldLabel}</p>
             </div>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)">
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="modal-body add-work-body">
           {phases.map((phase) => {
@@ -176,15 +177,15 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
           {error && <div className="alert-box error">{error}</div>}
           <div className="add-work-actions">
             <span className="add-work-count">{summaryText}</span>
-            <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-            <button
+            <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+            <Button
               type="button"
-              className="btn btn-primary"
+              variant="primary"
               disabled={busy || toAdd.size === 0}
               onClick={() => void save()}
             >
               {busy ? 'Salvestan...' : 'Lisa tööd'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
