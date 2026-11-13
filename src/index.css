@@ -6572,13 +6572,15 @@ a.history-pill:hover {
   box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.18);
 }
 
-.login-page .login-card .btn-primary {
-  background: linear-gradient(135deg, #3f8a22, #5aa832);
-  box-shadow: 0 6px 18px rgba(76, 154, 42, 0.35);
+/* Sisselogimise lehe põhinupp: lehe oma roheline (erand ühtsest nupust, kasutaja otsus 2026-11-13).
+   !important, sest muidu võidab ui/Buttoni gradient (Tailwindi utiliidid on hilisemas kihis). */
+.login-page .login-card .login-primary-btn {
+  background: linear-gradient(135deg, #3f8a22, #5aa832) !important;
+  box-shadow: 0 6px 18px rgba(76, 154, 42, 0.35) !important;
 }
 
-.login-page .login-card .btn-primary:hover {
-  background: linear-gradient(135deg, #357a1c, #4c9a2a);
+.login-page .login-card .login-primary-btn:hover {
+  background: linear-gradient(135deg, #357a1c, #4c9a2a) !important;
 }
 
 .login-page .login-card .alert-box:not(.error) {

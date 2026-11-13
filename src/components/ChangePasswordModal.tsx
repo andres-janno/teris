@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { X, KeyRound, AlertCircle, Check } from 'lucide-react';
 import { api } from '../services/api';
+import { Button } from './ui';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -60,9 +61,9 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
             <h3>{forced ? 'Määra uus parool' : 'Muuda parooli'}</h3>
           </div>
           {!forced && (
-            <button type="button" className="icon-btn-ghost" onClick={close}>
+            <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
               <X size={20} />
-            </button>
+            </Button>
           )}
         </div>
         <div className="modal-body">
@@ -97,15 +98,15 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         </div>
         <div className="modal-footer">
           {forced ? (
-            <button type="button" className="btn btn-ghost" onClick={onLogout}>Logi välja</button>
+            <Button type="button" variant="ghost" onClick={onLogout}>Logi välja</Button>
           ) : (
-            <button type="button" className="btn btn-ghost" onClick={close}>{done ? 'Sulge' : 'Loobu'}</button>
+            <Button type="button" variant="ghost" onClick={close}>{done ? 'Sulge' : 'Loobu'}</Button>
           )}
           {!done && (
-            <button type="submit" className="btn btn-primary" disabled={busy}>
+            <Button type="submit" variant="primary" disabled={busy}>
               <Check size={16} />
               <span>Salvesta</span>
-            </button>
+            </Button>
           )}
         </div>
       </form>

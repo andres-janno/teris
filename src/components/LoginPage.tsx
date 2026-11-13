@@ -6,6 +6,7 @@ import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
+import { Button } from './ui';
 
 interface LoginPageProps {
   notice?: string | null;
@@ -76,10 +77,10 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </div>
-          <button type="submit" className="btn btn-primary btn-full" disabled={busy}>
+          <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
             <LogIn size={16} />
             <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
-          </button>
+          </Button>
           <button type="button" className="login-forgot-link" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
             Unustasid parooli?
           </button>
@@ -92,9 +93,8 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
                   <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
                   <div className="login-forgot-row">
                     <input id="forgot-login" className="form-input" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
-                    <button
+                    <Button
                       type="button"
-                      className="btn btn-secondary"
                       disabled={!forgotLogin.trim()}
                       onClick={async () => {
                         setError(null);
@@ -107,7 +107,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
                       }}
                     >
                       Saada link
-                    </button>
+                    </Button>
                   </div>
                 </>
               )}

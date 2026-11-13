@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
+import { Button } from './ui';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
@@ -89,9 +90,9 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
             <Bot className="text-emerald" size={22} />
             <h3>AI ühendus</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={close}>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="modal-body">
           <p className="modal-subtitle">
@@ -112,10 +113,10 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
               </div>
               <div className="ai-key-url">
                 <input className="form-input" readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
-                <button type="button" className="btn btn-primary" onClick={() => void copy()}>
+                <Button type="button" variant="primary" onClick={() => void copy()}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                   <span>{copied ? 'Kopeeritud' : 'Kopeeri'}</span>
-                </button>
+                </Button>
               </div>
             </div>
           )}
@@ -128,10 +129,10 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
               value={name}
               onChange={(e) => setName(e.target.value)}
             />
-            <button type="submit" className="btn btn-secondary" disabled={busy}>
+            <Button type="submit" disabled={busy}>
               <Plus size={16} />
               <span>Loo uus võti</span>
-            </button>
+            </Button>
           </form>
 
           <table className="ai-key-table">
@@ -157,9 +158,9 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
                   <td>{formatDateTimeTallinn(k.createdAt)}</td>
                   <td>{formatDateTimeTallinn(k.lastUsedAt)}</td>
                   <td>
-                    <button type="button" className="icon-btn-ghost" title="Tühista" aria-label={`Tühista ${k.name}`} onClick={() => void revoke(k)}>
+                    <Button type="button" variant="ghost" size="icon-sm" title="Tühista" aria-label={`Tühista ${k.name}`} onClick={() => void revoke(k)}>
                       <Trash2 size={16} />
-                    </button>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -176,7 +177,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={close}>Sulge</button>
+          <Button type="button" variant="ghost" onClick={close}>Sulge</Button>
         </div>
       </div>
     </div>

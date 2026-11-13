@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { WeatherCredentialStatus } from '../types/weather';
+import { Button } from './ui';
 
 interface WeatherCredentialModalProps {
   isOpen: boolean;
@@ -85,9 +86,9 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
             <CloudSun className="text-emerald" size={22} />
             <h3>Ilmaandmete ühendus</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={close}>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="modal-body">
           <p className="modal-subtitle">
@@ -135,15 +136,15 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
               />
-              <button type="submit" className="btn btn-primary" disabled={busy || key.trim().length === 0}>
+              <Button type="submit" variant="primary" disabled={busy || key.trim().length === 0}>
                 <Check size={16} />
                 <span>Kontrolli ja salvesta</span>
-              </button>
+              </Button>
               {status?.configured && (
-                <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => void remove()}>
+                <Button type="button" disabled={busy} onClick={() => void remove()}>
                   <Trash2 size={16} />
                   <span>Eemalda võti</span>
-                </button>
+                </Button>
               )}
             </form>
           )}
@@ -161,7 +162,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={close}>Sulge</button>
+          <Button type="button" variant="ghost" onClick={close}>Sulge</Button>
         </div>
       </div>
     </div>

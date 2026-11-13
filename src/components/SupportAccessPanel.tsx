@@ -4,6 +4,7 @@ import { LifeBuoy, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { SupportGrant, SupportAccessEntry } from '../types/auth';
 import { formatDateTimeTallinn } from '../services/dateFormat';
+import { Button } from './ui';
 
 const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '1h', label: '1 tund' },
@@ -66,9 +67,9 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
         <div className="support-panel-row">
           <span className="support-panel-until">Ligipääs kehtib kuni <strong>{formatDateTimeTallinn(active.validUntil)}</strong></span>
           {!readOnly && (
-            <button type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
+            <Button type="button" size="sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
               Tühista
-            </button>
+            </Button>
           )}
         </div>
       ) : (
@@ -77,9 +78,9 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
             <span className="support-panel-label">Anna ligipääs:</span>
             <div className="support-panel-actions">
               {DURATIONS.map((d) => (
-                <button key={d.value} type="button" className="btn btn-secondary btn-sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>
+                <Button key={d.value} type="button" size="sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>
                   {d.label}
-                </button>
+                </Button>
               ))}
             </div>
           </div>

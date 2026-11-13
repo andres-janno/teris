@@ -5,6 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
+import { Button } from './ui';
 
 export interface ConfirmOptions {
   title?: string;
@@ -66,18 +67,18 @@ const Dialog: React.FC<DialogProps> = ({ kind, message, options, onResult }) => 
         </div>
         <div className="modal-footer">
           {kind === 'confirm' && (
-            <button type="button" className="btn btn-ghost" onClick={() => onResult(false)}>
+            <Button type="button" variant="ghost" onClick={() => onResult(false)}>
               {options.cancelLabel ?? 'Loobu'}
-            </button>
+            </Button>
           )}
-          <button
+          <Button
             ref={confirmRef}
             type="button"
-            className={`btn ${danger ? 'btn-danger' : 'btn-primary'}`}
+            variant={danger ? 'danger' : 'primary'}
             onClick={() => onResult(true)}
           >
             {confirmLabel}
-          </button>
+          </Button>
         </div>
       </div>
     </div>

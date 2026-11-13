@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot, CloudSun } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
 import { COPYRIGHT_TEXT } from '../copyright';
+import { Button } from './ui';
 
 interface UserMenuProps {
   user: AuthUser;
@@ -66,9 +67,9 @@ export const UserMenu: React.FC<UserMenuProps> = ({
         <ChevronDown size={14} className="user-menu-chevron" />
       </button>
 
-      <button className="btn btn-secondary btn-icon-only" onClick={onLogout} title="Logi välja" aria-label="Logi välja">
+      <Button size="icon" onClick={onLogout} title="Logi välja" aria-label="Logi välja">
         <LogOut size={16} />
-      </button>
+      </Button>
 
       {open && (
         <div className="user-menu-dropdown glass-card animate-scale-up" role="menu">

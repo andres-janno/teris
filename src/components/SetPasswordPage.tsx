@@ -5,6 +5,7 @@ import { TerisLogo } from './TerisLogo';
 import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { api } from '../services/api';
+import { Button } from './ui';
 
 interface SetPasswordPageProps {
   token: string;
@@ -58,7 +59,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 <span>{invalid}</span>
               </div>
               <p className="modal-subtitle">Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
-              <button type="button" className="btn btn-primary btn-full" onClick={onCancel}>Sisselogimise lehele</button>
+              <Button type="button" variant="primary" className="btn-full login-primary-btn" onClick={onCancel}>Sisselogimise lehele</Button>
             </>
           ) : username === null ? (
             <p className="modal-subtitle">Kontrollin linki…</p>
@@ -82,10 +83,10 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 <label htmlFor="sp-repeat">Korda parooli</label>
                 <input id="sp-repeat" type="password" className="form-input" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
               </div>
-              <button type="submit" className="btn btn-primary btn-full" disabled={busy}>
+              <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
                 {busy ? <KeyRound size={16} /> : <Check size={16} />}
                 <span>{busy ? 'Salvestan…' : 'Määra parool'}</span>
-              </button>
+              </Button>
             </>
           )}
         </form>

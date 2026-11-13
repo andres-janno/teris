@@ -2,6 +2,7 @@
 import type { AuthUser } from '../types/auth';
 import { licenseBannerText } from '../services/license';
 import { formatDateTimeTallinn } from '../services/dateFormat';
+import { Button } from './ui';
 
 // Tugivaate riba: alati nähtav tugivaates, litsentsiriba kohal.
 export function SupportBanner({ user, onLogout }: { user: AuthUser; onLogout: () => void }) {
@@ -9,9 +10,9 @@ export function SupportBanner({ user, onLogout }: { user: AuthUser; onLogout: ()
   return (
     <div className="license-banner support-banner" role="status">
       Tugivaade: {user.tenantName} — ainult lugemiseks, kehtib kuni {formatDateTimeTallinn(user.supportValidUntil)}
-      <button type="button" className="btn btn-secondary support-banner-end" onClick={onLogout}>
+      <Button type="button" className="support-banner-end" onClick={onLogout}>
         Lõpeta tugivaade
-      </button>
+      </Button>
     </div>
   );
 }

@@ -7,6 +7,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
+import { Button } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -158,14 +159,14 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
           </div>
           <div className="users-admin-header-actions">
             {!readOnly && (
-              <button type="button" className="btn btn-primary btn-sm" onClick={() => openForm({ kind: 'add' })}>
+              <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>
                 <UserPlus size={15} />
                 <span>Lisa kasutaja</span>
-              </button>
+              </Button>
             )}
-            <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge">
+            <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
               <X size={20} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -234,26 +235,26 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       <td className="users-admin-actions-cell">
                         <div className="users-admin-actions">
                           {!readOnly && (
-                          <button type="button" className="icon-btn-ghost" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
+                          <Button type="button" variant="ghost" size="icon-sm" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
                             <Pencil size={15} />
-                          </button>
+                          </Button>
                           )}
                           {!readOnly && !self && (
                             <>
                               {u.email && u.isActive && (
-                                <button type="button" className="icon-btn-ghost" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
+                                <Button type="button" variant="ghost" size="icon-sm" title="Saada parooli link e-postile" disabled={busy} onClick={() => sendLink(u)}>
                                   <Mail size={15} />
-                                </button>
+                                </Button>
                               )}
-                              <button type="button" className="icon-btn-ghost" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
+                              <Button type="button" variant="ghost" size="icon-sm" title="Lähtesta parool" disabled={busy} onClick={() => openForm({ kind: 'reset', user: u })}>
                                 <KeyRound size={15} />
-                              </button>
-                              <button type="button" className="icon-btn-ghost" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
+                              </Button>
+                              <Button type="button" variant="ghost" size="icon-sm" title={u.isActive ? 'Keela' : 'Luba'} disabled={busy} onClick={() => toggleActive(u)}>
                                 {u.isActive ? <Ban size={15} /> : <CheckCircle2 size={15} />}
-                              </button>
-                              <button type="button" className="icon-btn-danger" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
+                              </Button>
+                              <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" disabled={busy} onClick={() => remove(u)}>
                                 <Trash2 size={15} />
-                              </button>
+                              </Button>
                             </>
                           )}
                         </div>
@@ -269,7 +270,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
         </div>
 
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Sulge</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Sulge</Button>
         </div>
       </div>
 
@@ -284,9 +285,9 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                 <FormIcon size={20} className="text-emerald" />
                 <h3>{formTitle}</h3>
               </div>
-              <button type="button" className="icon-btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }} title="Sulge (Esc)">
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => { setError(null); setMode({ kind: 'list' }); }} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -354,11 +355,11 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={busy}>
+              <Button type="button" variant="ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</Button>
+              <Button type="submit" variant="primary" disabled={busy}>
                 <Check size={16} />
                 <span>Salvesta</span>
-              </button>
+              </Button>
             </div>
           </form>
         </div>,
