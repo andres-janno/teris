@@ -783,7 +783,7 @@ export const MapView: React.FC<MapViewProps> = ({
           ${poi.capacity ? `<div class="popup-row"><span>Mahutavus:</span> <strong>${poi.capacity}</strong></div>` : ''}
           ${poi.phone ? `<div class="popup-row"><span>Telefon:</span> <strong>${poi.phone}</strong></div>` : ''}
           ${poi.accessNotes ? `<div class="popup-note">${poi.accessNotes}</div>` : ''}
-          ${poi.warehouse ? `<div class="popup-row"><span>Ladu:</span> <strong>${escapeHtml(poi.warehouse.name)}</strong></div><button type="button" class="btn btn-secondary btn-sm poi-warehouse-link">Ava laoseis</button>` : ''}
+          ${poi.warehouse ? `<div class="popup-row"><span>Ladu:</span> <strong>${escapeHtml(poi.warehouse.name)}</strong></div><button type="button" class="map-popup-btn poi-warehouse-link">Ava laoseis</button>` : ''}
         </div>
       `);
 
@@ -791,8 +791,8 @@ export const MapView: React.FC<MapViewProps> = ({
         const whId = poi.warehouse.id;
         // onclick omistamine (mitte addEventListener): hüpik taaskasutab elementi, nupp töötab korduvalt ka avatud hüpikus
         marker.on('popupopen', (ev) => {
-          const btn = ev.popup.getElement()?.querySelector<HTMLButtonElement>('.poi-warehouse-link');
-          if (btn) btn.onclick = () => onOpenWarehouseRef.current?.(whId);
+          const linkButton = ev.popup.getElement()?.querySelector<HTMLButtonElement>('.poi-warehouse-link');
+          if (linkButton) linkButton.onclick = () => onOpenWarehouseRef.current?.(whId);
         });
       }
 

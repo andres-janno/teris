@@ -401,98 +401,11 @@ body {
   gap: 10px;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 8px 16px;
-  border-radius: var(--radius-md);
-  font-family: inherit;
-  font-size: 0.84rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-}
-
-.btn-primary {
-  background: linear-gradient(135deg, #16a34a, #22c55e);
-  color: #ffffff;
-  box-shadow: 0 4px 14px rgba(34, 197, 94, 0.35);
-}
-
-.btn-primary:hover {
-  background: linear-gradient(135deg, #15803d, #16a34a);
-  box-shadow: 0 6px 20px rgba(34, 197, 94, 0.5);
-  transform: translateY(-1px);
-}
-
-.btn-secondary {
-  background: var(--btn-sec-bg);
-  color: var(--text-primary);
-  border: 1px solid var(--btn-sec-border);
-}
-
-.btn-secondary:hover {
-  background: var(--btn-sec-hover);
-  border-color: rgba(34, 197, 94, 0.4);
-}
-
-.btn-ghost {
-  background: transparent;
-  color: var(--text-secondary);
-}
-
-.btn-ghost:hover {
-  color: var(--text-primary);
-  background: var(--btn-sec-bg);
-}
-
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 0.78rem;
-}
-
-.btn-xs {
-  padding: 4px 10px;
-  font-size: 0.72rem;
-  border-radius: 5px;
-}
-
 .btn-full {
   width: 100%;
 }
 
-/* Välja lülitatud nupp peab olema nähtavalt erinev */
-.btn:disabled,
-.btn:disabled:hover {
-  opacity: 0.5;
-  cursor: not-allowed;
-  box-shadow: none;
-  transform: none;
-  pointer-events: auto;
-}
-
-.icon-btn-ghost {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
 /* Ikoon jääb nähtavaks ka heledas teemas; taust tumeneb nagu kustutamisnupul */
-.icon-btn-ghost:hover {
-  color: var(--text-primary);
-  background: color-mix(in srgb, var(--text-primary) 10%, transparent);
-}
-
 .usage-count-badge {
   font-size: 0.65rem;
   font-weight: 700;
@@ -502,23 +415,6 @@ body {
   border-radius: 999px;
   padding: 2px 5px;
   margin-left: 4px;
-}
-
-.icon-btn-danger {
-  background: transparent;
-  border: none;
-  color: var(--rose-500);
-  cursor: pointer;
-  padding: 6px;
-  border-radius: var(--radius-sm);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.icon-btn-danger:hover {
-  background: rgba(244, 63, 94, 0.15);
 }
 
 /* Main Map Content Area */
@@ -693,18 +589,6 @@ body {
   width: 100%;
   min-width: 0;
   box-sizing: border-box;
-}
-.satellite-play-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  padding: 4px 8px;
-}
-.satellite-date-row .icon-btn-ghost:disabled {
-  opacity: 0.35;
-  cursor: default;
 }
 .satellite-cloudfree {
   display: flex;
@@ -1376,22 +1260,6 @@ body {
   font-size: 0.76rem;
   font-weight: 700;
   color: var(--text-primary);
-}
-
-.icon-btn-ghost-sm {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 4px;
-}
-
-.icon-btn-ghost-sm:hover {
-  color: var(--text-primary);
-  background: var(--stat-bg);
 }
 
 .widget-legend-content {
@@ -3063,17 +2931,6 @@ body {
   display: flex;
   justify-content: flex-end;
   gap: 8px;
-}
-
-.btn-danger {
-  background: #dc2626;
-  border-color: #dc2626;
-  color: #ffffff;
-}
-
-.btn-danger:hover:not(:disabled) {
-  background: #b91c1c;
-  border-color: #b91c1c;
 }
 
 .swap-modal-card {
@@ -5224,24 +5081,6 @@ input[type="number"],
   gap: 6px;
 }
 
-.icon-btn-ghost-xs {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 2px 4px;
-  border-radius: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.15s;
-}
-
-.icon-btn-ghost-xs:hover {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-}
-
 .pill-lock-icon,
 .tab-lock-icon {
   margin-left: 4px;
@@ -6067,11 +5906,6 @@ input[type="number"],
   padding-bottom: 2px;
 }
 
-.btn-disabled {
-  opacity: 0.5;
-  cursor: not-allowed !important;
-}
-
 .rent-tag {
   background: rgba(59, 130, 246, 0.12);
   color: var(--blue-500);
@@ -6234,10 +6068,6 @@ a.history-pill:hover {
   font-weight: 600;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-}
-
-.crop-group-block-header .icon-btn-ghost {
-  padding: 4px;
 }
 
 .crop-group-block-header h4 + button {
@@ -6671,10 +6501,6 @@ a.history-pill:hover {
 
 .user-menu-trigger.open .user-menu-chevron {
   transform: rotate(180deg);
-}
-
-.btn-icon-only {
-  padding: 8px 10px;
 }
 
 .user-menu-dropdown {
@@ -7304,12 +7130,6 @@ a.history-pill:hover {
 .fullpage-board-body .register-actions-bar .filter-select-trigger {
   height: 34px;
   font-size: 0.8rem;
-}
-
-.fullpage-board-body .register-actions-bar .btn,
-.fullpage-board-body .poi-top-actions .btn,
-.fleet-board-body .fleet-top-bar .btn {
-  height: 34px;
 }
 
 /* Põldude lehe kultuuride kokkuvõte */
@@ -8930,10 +8750,6 @@ a.history-pill:hover {
 .fw-finance-chip.changed {
   color: #1d4ed8;
   background: rgba(59, 130, 246, 0.15);
-}
-
-.fw-add-entry {
-  justify-content: center;
 }
 
 .fw-panel-foot {
@@ -11269,7 +11085,6 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-visits { font-size: 13px; margin: 4px 0 12px 16px; }
 .trip-dialog-fields { width: 100%; font-size: 13px; margin-bottom: 12px; }
 .trip-dialog-fields .text-muted { font-size: 12px; }
-.trip-dialog-fields .btn-sm { padding: 0 6px; }
 .trip-dialog-fields td { vertical-align: top; }
 .trip-dialog-entry-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 /* Kanne: töö nimi ja kuupäev kahel real, link põllutööle */
@@ -11346,3 +11161,27 @@ polyline.weather-line { fill: none; }
 .soil-row.weather-season-past { border-top: 1px solid var(--border-card); color: var(--text-secondary); }
 .soil-row.weather-season-past .soil-value { font-weight: 400; }
 .weather-season-shifted { font-style: italic; }
+
+/* Leaflet hüpiku nupp: hüpiku sisu on HTML-string (mitte React), seega ui/Button siia ei sobi.
+   Väärtused kopeeritud vanast .btn + .btn-secondary + .btn-sm kujundusest. */
+.map-popup-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: var(--radius-md);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--btn-sec-bg);
+  color: var(--text-primary);
+  border: 1px solid var(--btn-sec-border);
+}
+
+.map-popup-btn:hover {
+  background: var(--btn-sec-hover);
+  border-color: rgba(34, 197, 94, 0.4);
+}
