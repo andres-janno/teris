@@ -116,9 +116,9 @@ describe('dialogContentClass', () => {
       expect(c, size).not.toMatch(/(^|\s)-?translate-|(^|\s)(blur|backdrop-blur|scale-|rotate-)/);
     }
   });
-  it('kiht: tavaline z-2000, kinnitus z-2200 (menüüde 2100 kohal)', () => {
+  it('kiht: tavaline z-2000, kinnitus z-5000 (vanade modaalide ja menüüde kohal)', () => {
     expect(v.dialogLayerClass('default')).toBe('z-2000');
-    expect(v.dialogLayerClass('alert')).toBe('z-2200');
+    expect(v.dialogLayerClass('alert')).toBe('z-5000');
   });
   it('ei kasuta keelatud suvalisi väärtusi', () => {
     for (const size of ['sm', 'md', 'lg', 'xl', 'full', 'fit'] as const)
@@ -171,10 +171,10 @@ const DIALOG_SIZES = {
 } as const;
 export type DialogSize = keyof typeof DIALOG_SIZES;
 
-const DIALOG_LAYERS = { default: 'z-2000', alert: 'z-2200' } as const;
+const DIALOG_LAYERS = { default: 'z-2000', alert: 'z-5000' } as const;
 export type DialogLayer = keyof typeof DIALOG_LAYERS;
 
-/** Dialoogi kiht: tavaline 2000 (Leafleti ≤1000 kohal), kinnitus/teade 2200 (ka menüüde 2100 kohal). */
+/** Dialoogi kiht: tavaline 2000 (Leafleti ≤1000 kohal), kinnitus/teade 5000 (kõigi vanade modaalide ja menüüde kohal). */
 export const dialogLayerClass = (layer: DialogLayer): string => DIALOG_LAYERS[layer];
 
 /** Dialoogi sisu: ilma transformi/filtrita, et position:fixed hüpikud sees jääksid akna suhtes paika. */
