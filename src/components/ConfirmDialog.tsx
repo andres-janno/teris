@@ -5,7 +5,7 @@
 import React, { useEffect, useRef } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from './ui';
 
 export interface ConfirmOptions {
   title?: string;
@@ -24,7 +24,7 @@ interface DialogProps {
 
 const isDeleteText = (message: string) => /kustut|eemald/i.test(message);
 
-const Dialog: React.FC<DialogProps> = ({ kind, message, options, onResult }) => {
+const ConfirmView: React.FC<DialogProps> = ({ kind, message, options, onResult }) => {
   const confirmRef = useRef<HTMLButtonElement>(null);
   const danger = options.danger ?? (kind === 'confirm' && isDeleteText(message));
   const confirmLabel = options.confirmLabel
@@ -33,7 +33,6 @@ const Dialog: React.FC<DialogProps> = ({ kind, message, options, onResult }) => 
   const Icon = kind === 'alert' ? Info : danger ? Trash2 : AlertTriangle;
 
   useEffect(() => {
-    confirmRef.current?.focus();
     // window capture jõuab enne teiste akende document-taseme kuulajaid: Esc sulgeb ainult selle dialoogi
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -47,41 +46,40 @@ const Dialog: React.FC<DialogProps> = ({ kind, message, options, onResult }) => 
   }, [kind, onResult]);
 
   return (
-    <div className="modal-backdrop confirm-dialog-backdrop" onClick={() => onResult(kind === 'alert')}>
-      <div
-        className="modal-content confirm-dialog animate-scale-up"
+    <Dialog open onOpenChange={(open) => { if (!open) onResult(kind === 'alert'); }}>
+      <DialogContent
+        size="sm"
+        layer="alert"
+        closeOnOutsideClick
+        className="confirm-dialog"
         role={kind === 'alert' ? 'alertdialog' : 'dialog'}
-        aria-modal="true"
-        aria-labelledby="confirm-dialog-title"
-        aria-describedby="confirm-dialog-message"
-        onClick={(e) => e.stopPropagation()}
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          confirmRef.current?.focus();
+        }}
+        onCloseAutoFocus={(e) => e.preventDefault()}
       >
         <div className="confirm-dialog-body">
           <span className={`confirm-dialog-icon ${danger ? 'danger' : kind === 'alert' ? 'info' : 'warning'}`}>
             <Icon size={20} />
           </span>
           <div>
-            <h3 id="confirm-dialog-title">{title}</h3>
-            <p id="confirm-dialog-message">{message}</p>
+            <DialogTitle asChild><h3>{title}</h3></DialogTitle>
+            <DialogDescription asChild><p>{message}</p></DialogDescription>
           </div>
         </div>
-        <div className="modal-footer">
+        <DialogFooter>
           {kind === 'confirm' && (
             <Button type="button" variant="ghost" onClick={() => onResult(false)}>
               {options.cancelLabel ?? 'Loobu'}
             </Button>
           )}
-          <Button
-            ref={confirmRef}
-            type="button"
-            variant={danger ? 'danger' : 'primary'}
-            onClick={() => onResult(true)}
-          >
+          <Button ref={confirmRef} type="button" variant={danger ? 'danger' : 'primary'} onClick={() => onResult(true)}>
             {confirmLabel}
           </Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
 
@@ -106,7 +104,7 @@ function show(kind: DialogProps['kind'], message: string, options: ConfirmOption
           previousFocus?.focus?.();
           resolve(ok);
         };
-        root!.render(<Dialog kind={kind} message={message} options={options} onResult={finish} />);
+        root!.render(<ConfirmView kind={kind} message={message} options={options} onResult={finish} />);
       })
   );
   queue = next.catch(() => undefined);
