@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { PointOfInterest } from '../types/poi';
 import type { Warehouse } from '../types/stock';
+import { Button } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -76,8 +77,8 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
       <td className="muted">{w.notes ?? ''}</td>
       <td className="actions-col">
         <div className="row-actions">
-          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></button>
-          {!w.isDefault && !w.fieldId && <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></button>}
+          <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></Button>
+          {!w.isDefault && !w.fieldId && <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></Button>}
         </div>
       </td>
     </tr>
@@ -87,7 +88,7 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
     <>
       <div className="register-actions-bar">
         <div className="register-io-buttons">
-          <button className="btn btn-primary btn-sm" onClick={() => setForm({ isActive: true, isDefault: false })}><Plus size={14} /><span>Lisa ladu</span></button>
+          <Button variant="primary" size="sm" onClick={() => setForm({ isActive: true, isDefault: false })}><Plus size={14} /><span>Lisa ladu</span></Button>
         </div>
       </div>
       <div className="register-table-wrap">
@@ -123,7 +124,7 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
                 <WarehouseIcon size={20} className="text-emerald" />
                 <h3>{form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'}</h3>
               </div>
-              <button type="button" className="icon-btn-ghost" onClick={() => setForm(null)} title="Sulge (Esc)"><X size={20} /></button>
+              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setForm(null)} title="Sulge (Esc)"><X size={20} /></Button>
             </div>
             <div className="modal-body">
               <div className="form-grid">
@@ -153,8 +154,8 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
               </div>
             </div>
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={() => setForm(null)}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+              <Button type="button" variant="ghost" onClick={() => setForm(null)}>Loobu</Button>
+              <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
             </div>
           </form>
         </div>,

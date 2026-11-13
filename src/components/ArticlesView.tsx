@@ -21,6 +21,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
+import { Button } from './ui';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -190,19 +191,19 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 </div>
                 <div className="register-io-buttons">
                   {canManageFinance && (
-                    <button className="btn btn-secondary btn-sm" onClick={() => setShowCategories(true)} title="Artikli kategooriate haldus">
+                    <Button size="sm" onClick={() => setShowCategories(true)} title="Artikli kategooriate haldus">
                       <Tags size={14} />
                       <span>Kategooriad</span>
-                    </button>
+                    </Button>
                   )}
-                  <button className="btn btn-secondary btn-sm" onClick={exportCsv} title="Ekspordi materjalide register CSV failina">
+                  <Button size="sm" onClick={exportCsv} title="Ekspordi materjalide register CSV failina">
                     <Download size={14} />
                     <span>CSV Eksport</span>
-                  </button>
-                  <button className="btn btn-primary btn-sm" onClick={() => setForm(NEW_ARTICLE)}>
+                  </Button>
+                  <Button variant="primary" size="sm" onClick={() => setForm(NEW_ARTICLE)}>
                     <Plus size={14} />
                     <span>Lisa artikkel</span>
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -304,15 +305,15 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                       <td className="num">{m.usageCount ?? 0}</td>
                       <td className="actions-col">
                         <div className="row-actions">
-                          <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
+                          <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
                             <Edit2 size={15} />
-                          </button>
-                          <button className="icon-btn-ghost" title="Asenda teise materjaliga (nt kirjaviga nimes)" aria-label="Asenda" onClick={(e) => { e.stopPropagation(); setMerge(m); }}>
+                          </Button>
+                          <Button variant="ghost" size="icon-sm" title="Asenda teise materjaliga (nt kirjaviga nimes)" aria-label="Asenda" onClick={(e) => { e.stopPropagation(); setMerge(m); }}>
                             <GitMerge size={15} />
-                          </button>
-                          <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
+                          </Button>
+                          <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
                             <Trash2 size={15} />
-                          </button>
+                          </Button>
                         </div>
                       </td>
                     </tr>

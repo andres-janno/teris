@@ -5,6 +5,7 @@ import { GitMerge, X } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import type { Article } from '../types/fieldWork';
+import { Button } from './ui';
 
 // Võrdlusvõti: tõstutundetu, tühikute ja kirjavahemärkideta ("Stabilan 750SL" = "Stabilan 750 SL")
 const looseKey = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -69,7 +70,7 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
             <GitMerge size={20} className="text-emerald" />
             <h3>Asenda materjal: {source.name}</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <div className="form-group">
@@ -86,8 +87,8 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
           </p>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy || !target}>Asenda</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+          <Button type="submit" variant="primary" disabled={busy || !target}>Asenda</Button>
         </div>
       </form>
     </div>,

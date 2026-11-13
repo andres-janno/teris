@@ -12,6 +12,7 @@ import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { InventoryPreviewRow, StockDocument, Warehouse } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
+import { Button } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -127,7 +128,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
             <ClipboardCheck size={20} className="text-emerald" />
             <h3>{initial ? 'Muuda: ' : ''}Inventuur</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <div className="form-grid">
@@ -200,8 +201,8 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy || loading}>Salvesta</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+          <Button type="submit" variant="primary" disabled={busy || loading}>Salvesta</Button>
         </div>
       </form>
     </div>,

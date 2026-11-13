@@ -11,6 +11,7 @@ import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
+import { Button } from './ui';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -61,7 +62,7 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
             <Package size={20} className="text-emerald" />
             <h3>Laokaart: {article.name}</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <div className="register-actions-bar">

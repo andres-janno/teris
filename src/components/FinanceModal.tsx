@@ -24,6 +24,7 @@ import { formatQty } from '../services/units';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
+import { Button } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -444,9 +445,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 <span>Põldude tasuvus</span>
               </button>
             </div>
-            <button className="icon-btn" onClick={onClose} title="Sulge">
+            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
               <X size={18} />
-            </button>
+            </Button>
           </div>
         </div>
 
@@ -774,25 +775,27 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                     {/* Actions */}
                     <div className="finance-actions-bar">
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-secondary btn-sm"
+                        size="sm"
                         disabled={saving}
                         onClick={() => handleSave(false)}
                       >
                         <Save size={14} />
                         <span>Salvesta mustand</span>
-                      </button>
+                      </Button>
 
-                      <button
+                      <Button
                         type="button"
-                        className="btn btn-primary btn-sm finance-confirm-btn"
+                        variant="primary"
+                        size="sm"
+                        className="finance-confirm-btn"
                         disabled={saving || lineCalculations.length === 0}
                         onClick={() => handleSave(true)}
                       >
                         <CheckCircle2 size={14} />
                         <span>Kinnita finants</span>
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ) : (
@@ -859,16 +862,16 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   </span>
                 </div>
                 {resultsSummary.totalEntries > resultsSummary.totalConfirmed && (
-                  <button
+                  <Button
                     type="button"
-                    className="btn btn-secondary btn-xs"
+                    size="sm"
                     onClick={() => {
                       setStatusFilter('ACTION_NEEDED');
                       setTab('entries');
                     }}
                   >
                     Kinnita puuduvad kanded ({resultsSummary.totalEntries - resultsSummary.totalConfirmed}) →
-                  </button>
+                  </Button>
                 )}
               </div>
 

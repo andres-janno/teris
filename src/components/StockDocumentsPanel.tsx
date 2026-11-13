@@ -14,6 +14,7 @@ import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
+import { Button } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -81,10 +82,10 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
           <DateInput value={filter.to ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, to: v })} />
         </FilterClear>
         <div className="register-io-buttons">
-          <button className="btn btn-primary btn-sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'WRITE_OFF', initial: null })}><PackageMinus size={14} /><span>Mahakandmine</span></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={!canTransfer} title={canTransfer ? undefined : 'Ülekandeks on vaja vähemalt kahte aktiivset ladu'}><ArrowRightLeft size={14} /><span>Ülekanne</span></button>
-          <button className="btn btn-secondary btn-sm" onClick={() => setForm({ kind: 'INVENTORY', initial: null })}><ClipboardCheck size={14} /><span>Inventuur</span></button>
+          <Button variant="primary" size="sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></Button>
+          <Button size="sm" onClick={() => setForm({ kind: 'WRITE_OFF', initial: null })}><PackageMinus size={14} /><span>Mahakandmine</span></Button>
+          <Button size="sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={!canTransfer} title={canTransfer ? undefined : 'Ülekandeks on vaja vähemalt kahte aktiivset ladu'}><ArrowRightLeft size={14} /><span>Ülekanne</span></Button>
+          <Button size="sm" onClick={() => setForm({ kind: 'INVENTORY', initial: null })}><ClipboardCheck size={14} /><span>Inventuur</span></Button>
         </div>
       </div>
 
@@ -118,8 +119,8 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
                 </td>
                 <td className="actions-col">
                   <div className="row-actions">
-                    <button className="icon-btn-ghost" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></button>
-                    <button className="icon-btn-danger" title="Kustuta" aria-label="Kustuta" onClick={() => remove(d)}><Trash2 size={15} /></button>
+                    <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></Button>
+                    <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(d)}><Trash2 size={15} /></Button>
                   </div>
                 </td>
               </tr>

@@ -13,6 +13,7 @@ import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
+import { Button } from './ui';
 
 interface Row { articleId: string; quantity: string; amount: string }
 const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
@@ -115,7 +116,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             <ArrowRightLeft size={20} className="text-emerald" />
             <h3>{initial ? 'Muuda: ' : ''}{STOCK_DOC_KIND_LABEL[kind]}</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <div className="form-grid">
@@ -215,9 +216,9 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                     )}
                     <td className="actions-col">
                       {/* Tab jätab kustutamisnupu vahele */}
-                      <button type="button" tabIndex={-1} className="icon-btn-danger" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
+                      <Button type="button" tabIndex={-1} variant="danger-ghost" size="icon-sm" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
                         <Trash2 size={15} />
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 );
@@ -225,15 +226,15 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </tbody>
           </table>
           <div className="stock-doc-footer-row">
-            <button type="button" ref={addRowRef} className="btn btn-secondary btn-sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
+            <Button type="button" ref={addRowRef} size="sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
               <Plus size={14} /><span>Lisa rida</span>
-            </button>
+            </Button>
             {kind === 'RECEIPT' && <span>Kokku: <strong>{fmtEur(total)}</strong></span>}
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+          <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
         </div>
       </form>
     </div>,

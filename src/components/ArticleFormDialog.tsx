@@ -9,6 +9,7 @@ import type { Warehouse } from '../types/stock';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, articleFieldRules, sanitizeArticleFields, type ArticleSystemKind } from '../services/articleRules';
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
+import { Button } from './ui';
 
 // Tekstiväli kasvab sisu järgi; field-sizing'ut mittetoetavas brauseris seatakse kõrgus käsitsi
 const autoGrow = (el: HTMLTextAreaElement | null) => {
@@ -141,7 +142,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             <Edit2 size={20} className="text-emerald" />
             <h3>{form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'}</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <div className="form-grid">
@@ -282,8 +283,8 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
           </div>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Loobu</button>
-          <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+          <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
         </div>
       </form>
     </div>,

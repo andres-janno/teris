@@ -7,6 +7,7 @@ import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { ArticleCategory } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
+import { Button } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -73,7 +74,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
             <Tags size={20} className="text-emerald" />
             <h3>Artikli kategooriad</h3>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           {ARTICLE_GROUPS.map((g) => (
@@ -101,7 +102,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
                       <td className="actions-col">
                         {c.systemKind
                           ? <span title="Süsteemne kategooria: süsteem kasutab seda (PRIA, laoarvestus, kanded)"><Lock size={14} /></span>
-                          : <button type="button" className="icon-btn-ghost" title="Kustuta kategooria" onClick={() => void remove(c)} disabled={(c.articleCount ?? 0) > 0}><Trash2 size={14} /></button>}
+                          : <Button type="button" variant="ghost" size="icon-sm" title="Kustuta kategooria" onClick={() => void remove(c)} disabled={(c.articleCount ?? 0) > 0}><Trash2 size={14} /></Button>}
                       </td>
                     </tr>
                   ))}
@@ -114,11 +115,11 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
               {ARTICLE_GROUPS.map((g) => <option key={g} value={g}>{ARTICLE_GROUP_LABEL[g]}</option>)}
             </select>
             <input className="form-input" placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
-            <button type="submit" className="btn btn-primary btn-sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></button>
+            <Button type="submit" variant="primary" size="sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></Button>
           </form>
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={onClose}>Sulge</button>
+          <Button type="button" variant="ghost" onClick={onClose}>Sulge</Button>
         </div>
       </div>
     </div>,

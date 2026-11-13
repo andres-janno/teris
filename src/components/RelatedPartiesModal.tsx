@@ -26,6 +26,7 @@ import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
+import { Button } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -267,9 +268,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             {editId ? `Muuda isikut: ${editName}` : 'Lisa uus seotud isik'}
           </h3>
         </div>
-        <button className="icon-btn-ghost" type="button" onClick={() => setIsEditing(false)} title="Sulge (Esc)">
+        <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditing(false)} title="Sulge (Esc)">
           <X size={20} />
-        </button>
+        </Button>
       </div>
 
       <div className="modal-body">
@@ -434,16 +435,16 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       </div>
 
       <div className="modal-footer">
-        <button
+        <Button
           type="button"
-          className="btn btn-ghost"
+          variant="ghost"
           onClick={() => setIsEditing(false)}
         >
           Loobu
-        </button>
-        <button type="submit" className="btn btn-primary">
+        </Button>
+        <Button type="submit" variant="primary">
           Salvesta isik
-        </button>
+        </Button>
       </div>
     </form>
     </div>,
@@ -525,10 +526,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             </FilterClear>
 
             <div className="actions-right">
-              <button className="btn btn-primary btn-sm" onClick={startCreate}>
+              <Button variant="primary" size="sm" onClick={startCreate}>
                 <Plus size={14} />
                 <span>Lisa uus seotud isik</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -559,8 +560,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                       </div>
                     </div>
                     <div className="card-header-actions">
-                      <button
-                        className="icon-btn-ghost"
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
                         onClick={(e) => {
                           e.stopPropagation();
                           startEdit(party);
@@ -569,10 +571,11 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                         aria-label="Muuda"
                       >
                         <Edit2 size={14} />
-                      </button>
+                      </Button>
                       {party.usageCount ? (
-                        <button
-                          className="icon-btn-ghost"
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={(e) => {
                             e.stopPropagation();
                             const parts: string[] = [];
@@ -584,10 +587,11 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                         >
                           <Link2 size={14} />
                           <span className="usage-count-badge">{party.usageCount}</span>
-                        </button>
+                        </Button>
                       ) : (
-                        <button
-                          className="icon-btn-danger"
+                        <Button
+                          variant="danger-ghost"
+                          size="icon-sm"
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (await confirmDialog(`Kas soovid kindlasti eemaldada isiku "${party.name}"?`)) {
@@ -598,7 +602,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           aria-label="Kustuta"
                         >
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       )}
                     </div>
                   </div>
@@ -668,14 +672,14 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               </div>
             </div>
             {!isEditing && (
-              <button
+              <Button
                 type="button"
-                className="btn btn-primary"
+                variant="primary"
                 onClick={startCreate}
               >
                 <Plus size={16} />
                 <span>Lisa uus isik</span>
-              </button>
+              </Button>
             )}
           </div>
           <div className="fullpage-board-body">
@@ -705,9 +709,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
+          <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge register">
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {bodyContent}
@@ -720,9 +724,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>
-          <button className="btn btn-ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             Sulge
-          </button>
+          </Button>
         </div>
       </div>
     </div>
