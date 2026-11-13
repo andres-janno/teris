@@ -19,6 +19,7 @@ const UNDETERMINED_CROP_COLOR = '#94a3b8';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
+import { Button } from './ui';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -334,9 +335,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             {isEditSeasonLocked ? 'Lukus' : 'Muuda'}: {editNum ? `Nr ${editNum} ` : ''}{editName || `Põld ${field.id}`} · {selectedYear}
           </h3>
         </div>
-        <button className="icon-btn-ghost" type="button" onClick={() => onClose()} title="Sulge (Esc)">
+        <Button variant="ghost" size="icon-sm" type="button" onClick={() => onClose()} title="Sulge (Esc)">
           <X size={20} />
-        </button>
+        </Button>
       </div>
 
       <div className="modal-body">
@@ -499,11 +500,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               )}
             </label>
             {onOpenCrops && (
-              <button
+              <Button
                 type="button"
                 onClick={onOpenCrops}
                 title="Ava kultuuride register"
-                className="icon-btn-ghost"
+                variant="ghost"
+                size="icon-sm"
                 style={{
                   background: 'transparent',
                   border: 'none',
@@ -515,7 +517,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 }}
               >
                 <ExternalLink size={14} />
-              </button>
+              </Button>
             )}
           </div>
           <select
@@ -649,14 +651,16 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         <Landmark size={14} />
         <span>Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
         {!isEditSeasonLocked && (
-          <button
+          <Button
             type="button"
-            className="btn btn-ghost btn-xs add-cad-btn"
+            variant="ghost"
+            size="sm"
+            className="add-cad-btn"
             onClick={handleAddCadastralParcelToEdit}
           >
             <Plus size={12} />
             <span>Lisa katastriüksus</span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -697,11 +701,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                     </span>
                   </label>
                   {onOpenParties && (
-                    <button
+                    <Button
                       type="button"
                       onClick={onOpenParties}
                       title="Ava seotud isikute register"
-                      className="icon-btn-ghost"
+                      variant="ghost"
+                      size="icon-sm"
                       style={{
                         background: 'transparent',
                         border: 'none',
@@ -713,7 +718,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                       }}
                     >
                       <ExternalLink size={14} />
-                    </button>
+                    </Button>
                   )}
                 </div>
                 <input
@@ -791,14 +796,15 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                     <Lock size={14} />
                   </span>
                 ) : (
-                  <button
+                  <Button
                     type="button"
-                    className="icon-btn-danger"
+                    variant="danger-ghost"
+                    size="icon-sm"
                     onClick={() => handleRemoveCadastralParcelFromEdit(pIdx)}
                     title="Eemalda see katastriüksus"
                   >
                     <Trash2 size={14} />
-                  </button>
+                  </Button>
                 )}
               </div>
             </div>
@@ -811,10 +817,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
       {!isEditSeasonLocked && (
         <div className="modal-footer">
-          <button type="button" className="btn btn-ghost" onClick={() => onClose()}>Loobu</button>
-          <button type="submit" className="btn btn-primary">
+          <Button type="button" variant="ghost" onClick={() => onClose()}>Loobu</Button>
+          <Button type="submit" variant="primary">
             Salvesta muudatused
-          </button>
+          </Button>
         </div>
       )}
     </form>

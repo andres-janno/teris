@@ -3,6 +3,7 @@ import React, { useEffect } from 'react';
 import { X, Pencil, ListChecks } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
 import { formatQty } from '../services/units';
+import { Button } from './ui';
 
 interface FieldMapCardProps {
   field: FieldFeature;
@@ -28,7 +29,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || '#22c55e' }} />
         {p.num && <span className="field-num-badge">Nr {p.num}</span>}
         <strong className="fmc-name" title={p.name}>{p.name}</strong>
-        <button type="button" className="icon-btn-ghost fmc-close" onClick={onClose} title="Sulge (Esc)"><X size={16} /></button>
+        <Button type="button" variant="ghost" size="icon-sm" className="fmc-close" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
       </div>
       <div className="fmc-rows">
         <div className="fmc-row">
@@ -44,8 +45,8 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         </div>
       </div>
       <div className="fmc-actions">
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onOpenWorks(field)}><ListChecks size={14} /> Ava põllutööd</button>
-        <button type="button" className="btn btn-ghost btn-sm" onClick={() => onEditField(Number(p.id))}><Pencil size={14} /> Muuda põldu</button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onOpenWorks(field)}><ListChecks size={14} /> Ava põllutööd</Button>
+        <Button type="button" variant="ghost" size="sm" onClick={() => onEditField(Number(p.id))}><Pencil size={14} /> Muuda põldu</Button>
       </div>
     </div>
   );

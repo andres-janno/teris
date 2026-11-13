@@ -9,6 +9,7 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { Button } from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -111,9 +112,9 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
               <p className="modal-subtitle">e-PRIA "Põlluraamatu väljavõte" (.xls) — iga leht on üks põld</p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="modal-body">
@@ -226,12 +227,12 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Loobu</button>
+          <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {built && matched.length > 0 && (
-            <button className="btn btn-primary" onClick={handleConfirm} disabled={isSaving}>
+            <Button variant="primary" onClick={handleConfirm} disabled={isSaving}>
               {isSaving ? <RefreshCw size={16} className="animate-spin" /> : <Check size={16} />}
               <span>Impordi {matched.length} põllu tööd hooajale {seasonsInFile.join(', ')}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

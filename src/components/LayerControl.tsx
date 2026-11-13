@@ -16,6 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
+import { Button } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -90,9 +91,9 @@ export const LayerControl: React.FC<LayerControlProps> = ({
           <Layers size={18} className="text-emerald" />
           <span>Kaardikihid</span>
         </div>
-        <button className="icon-btn-ghost" title={isOpen ? 'Ahenda' : 'Laienda'}>
+        <Button variant="ghost" size="icon-sm" title={isOpen ? 'Ahenda' : 'Laienda'}>
           {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-        </button>
+        </Button>
       </div>
 
       {isOpen && (
@@ -436,14 +437,15 @@ export const LayerControl: React.FC<LayerControlProps> = ({
           {/* Quick Fit Action */}
           {onFitAll && (
             <div className="layer-fit-section">
-              <button
-                className="btn btn-secondary btn-full btn-sm"
+              <Button
+                size="sm"
+                className="btn-full"
                 onClick={onFitAll}
                 title="Kohanda kaardi vaade kõigi aktiivsete kihtide elementide mahutamiseks"
               >
                 <Maximize2 size={14} className="text-emerald" />
                 <span>Mahuta valitud kihid ekraanile</span>
-              </button>
+              </Button>
             </div>
           )}
         </div>

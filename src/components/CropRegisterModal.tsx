@@ -24,6 +24,7 @@ import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
+import { Button } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -399,18 +400,18 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 </>
               )}
               <div className="register-io-buttons">
-                <button
-                  className="btn btn-secondary btn-sm"
+                <Button
+                  size="sm"
                   onClick={handleExportCsv}
                   title="Ekspordi kultuuride register CSV failina"
                 >
                   <Download size={14} />
                   <span>CSV Eksport</span>
-                </button>
-                <button className="btn btn-primary btn-sm" onClick={() => startCreateCrop()}>
+                </Button>
+                <Button variant="primary" size="sm" onClick={() => startCreateCrop()}>
                   <Plus size={14} />
                   <span>Lisa uus kultuur</span>
-                </button>
+                </Button>
               </div>
             </div>
           </div>
@@ -444,9 +445,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   <Edit2 size={20} className="text-emerald" />
                   <h3>{editCropId ? `Muuda kultuuri: ${editCropName}` : 'Lisa uus kultuur'}</h3>
                 </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingCrop(false)} title="Sulge (Esc)">
+                <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditingCrop(false)} title="Sulge (Esc)">
                   <X size={20} />
-                </button>
+                </Button>
               </div>
 
               <div className="modal-body">
@@ -631,12 +632,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setIsEditingCrop(false)}>
+                <Button type="button" variant="ghost" onClick={() => setIsEditingCrop(false)}>
                   Loobu
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button type="submit" variant="primary">
                   Salvesta kultuur
-                </button>
+                </Button>
               </div>
             </form>
             </div>,
@@ -654,9 +655,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     {editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa sort: ${targetCropForVariety.name}`}
                   </h3>
                 </div>
-                <button className="icon-btn-ghost" type="button" onClick={() => setIsEditingVariety(false)} title="Sulge (Esc)">
+                <Button variant="ghost" size="icon-sm" type="button" onClick={() => setIsEditingVariety(false)} title="Sulge (Esc)">
                   <X size={20} />
-                </button>
+                </Button>
               </div>
 
               <div className="modal-body">
@@ -770,12 +771,12 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               </div>
 
               <div className="modal-footer">
-                <button type="button" className="btn btn-ghost" onClick={() => setIsEditingVariety(false)}>
+                <Button type="button" variant="ghost" onClick={() => setIsEditingVariety(false)}>
                   Loobu
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button type="submit" variant="primary">
                   Salvesta sort
-                </button>
+                </Button>
               </div>
             </form>
             </div>,
@@ -801,14 +802,15 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                       <span className="crop-group-count">{blockCrops.length}</span>
                     </h4>
                     {blockHa > 0 && <span className="crop-group-ha">{blockHa.toFixed(2)} ha</span>}
-                    <button
+                    <Button
                       type="button"
-                      className="icon-btn-ghost"
+                      variant="ghost"
+                      size="icon-sm"
                       onClick={() => startCreateCrop(block.groups[0])}
                       title={`Lisa uus kultuur: ${block.label}`}
                     >
                       <Plus size={15} />
-                    </button>
+                    </Button>
                   </div>
 
                   {blockCrops.length > 0 ? (
@@ -856,18 +858,20 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                   </td>
                                   <td className="actions-col">
                                     <div className="row-actions">
-                                      <button
-                                        className="icon-btn-ghost"
+                                      <Button
+                                        variant="ghost"
+                                        size="icon-sm"
                                         onClick={() => startCreateVariety(crop)}
                                         title={`Lisa uus sort kultuurile "${crop.name}"`}
                                       >
                                         <Plus size={14} />
-                                      </button>
-                                      <button className="icon-btn-ghost" onClick={() => startEditCrop(crop)} title="Muuda">
+                                      </Button>
+                                      <Button variant="ghost" size="icon-sm" onClick={() => startEditCrop(crop)} title="Muuda">
                                         <Edit2 size={14} />
-                                      </button>
-                                      <button
-                                        className="icon-btn-danger"
+                                      </Button>
+                                      <Button
+                                        variant="danger-ghost"
+                                        size="icon-sm"
                                         onClick={async () => {
                                           if (await confirmDialog(`Kas soovid kindlasti kustutada kultuuri "${crop.name}" ja kõik selle sordid?`)) {
                                             onDeleteCrop(crop.id);
@@ -876,7 +880,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                         title="Kustuta kultuur registrist"
                                       >
                                         <Trash2 size={14} />
-                                      </button>
+                                      </Button>
                                     </div>
                                   </td>
                                 </tr>
@@ -908,22 +912,24 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                       </td>
                                       <td className="actions-col">
                                         <div className="row-actions">
-                                          <button
+                                          <Button
                                             type="button"
-                                            className="icon-btn-ghost"
+                                            variant="ghost"
+                                            size="icon-sm"
                                             onClick={() => startEditVariety(crop, variety)}
                                             title="Muuda sordi andmeid"
                                           >
                                             <Edit2 size={12} />
-                                          </button>
-                                          <button
+                                          </Button>
+                                          <Button
                                             type="button"
-                                            className="icon-btn-danger"
+                                            variant="danger-ghost"
+                                            size="icon-sm"
                                             onClick={() => handleDeleteVariety(crop, variety.id, variety.name)}
                                             title="Kustuta sort"
                                           >
                                             <Trash2 size={12} />
-                                          </button>
+                                          </Button>
                                         </div>
                                       </td>
                                     </tr>
@@ -986,9 +992,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               </p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose} title="Sulge register">
+          <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge register">
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {bodyContent}
@@ -999,9 +1005,9 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>
-          <button className="btn btn-ghost" onClick={onClose}>
+          <Button variant="ghost" onClick={onClose}>
             Sulge
-          </button>
+          </Button>
         </div>
       </div>
     </div>

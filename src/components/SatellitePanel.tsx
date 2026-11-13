@@ -11,6 +11,7 @@ import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
+import { Button } from './ui';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -298,15 +299,16 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
       </div>
 
       <div className="satellite-date-row">
-        <button
+        <Button
           type="button"
-          className="icon-btn-ghost"
+          variant="ghost"
+          size="icon-sm"
           title="Eelmine pilt"
           disabled={idx < 0 || idx >= dates.length - 1}
           onClick={() => onSelectDate(dates[idx + 1])}
         >
           <ChevronLeft size={16} />
-        </button>
+        </Button>
         <select
           className="form-input satellite-date-select"
           value={date ?? ''}
@@ -325,21 +327,24 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
             );
           })}
         </select>
-        <button
+        <Button
           type="button"
-          className="icon-btn-ghost"
+          variant="ghost"
+          size="icon-sm"
           title="Järgmine pilt"
           disabled={idx <= 0}
           onClick={() => onSelectDate(dates[idx - 1])}
         >
           <ChevronRight size={16} />
-        </button>
+        </Button>
       </div>
 
       <div className="satellite-date-row satellite-play-row">
-        <button
+        <Button
           type="button"
-          className={`icon-btn-ghost satellite-play-btn ${playing ? 'active' : ''}`}
+          variant="ghost"
+          size="sm"
+          className={`satellite-play-btn ${playing ? 'active' : ''}`}
           title={playing ? 'Peata' : 'Mängi pildid läbi vanimast uusimani'}
           aria-pressed={playing}
           disabled={dates.length < 2}
@@ -347,7 +352,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         >
           {playing ? <Pause size={16} /> : <Play size={16} />}
           <span>{playing ? 'Peata' : 'Esita'}</span>
-        </button>
+        </Button>
         <select
           className="form-input satellite-period-select"
           value={period}

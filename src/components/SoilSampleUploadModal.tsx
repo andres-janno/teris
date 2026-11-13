@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
+import { Button } from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -97,9 +98,9 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
               <p className="modal-subtitle">Toetatud on punktikujunditega .ZIP Shapefile arhiivid (WGS84 / EPSG:4326)</p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="modal-body">
@@ -179,12 +180,12 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Loobu</button>
+          <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {parsedPreview && (
-            <button className="btn btn-primary" onClick={handleConfirmImport}>
+            <Button variant="primary" onClick={handleConfirmImport}>
               <Check size={16} />
               <span>Lisa {parsedPreview.length} mullaproovi</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>

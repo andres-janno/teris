@@ -6,6 +6,7 @@ import { X, Map as MapIcon } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { BaseMapLayerId } from '../types/map';
 import { BASE_MAPS } from '../services/maaAmetLayers';
+import { Button } from './ui';
 
 interface FieldShapeModalProps {
   field: MasterField;
@@ -71,9 +72,9 @@ export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record,
               </p>
             </div>
           </div>
-          <button type="button" className="icon-btn-ghost" onClick={onClose} title="Sulge (Esc)">
+          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)">
             <X size={20} />
-          </button>
+          </Button>
         </div>
         <div className="modal-body field-shape-body">
           {geometry ? (

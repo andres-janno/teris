@@ -17,6 +17,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { fmt0 } from '../services/weatherFormat';
+import { Button } from './ui';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -264,43 +265,43 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   })}
                 </div>
                 <div className="register-io-buttons">
-                  <button className="btn btn-secondary btn-sm" onClick={handleExportCsv} title="Ekspordi tabel CSV failina">
+                  <Button size="sm" onClick={handleExportCsv} title="Ekspordi tabel CSV failina">
                     <Download size={14} />
                     <span>CSV Eksport</span>
-                  </button>
+                  </Button>
                   {onOpenSoilUpload && (
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      size="sm"
                       onClick={onOpenSoilUpload}
                       title="Impordi mullaproovide punktid Shapefile ZIP-ist"
                     >
                       <Plus size={14} />
                       <span>Impordi mullaproovid</span>
                       <HelpHint helpKey="fields.register.import-soil-samples" inline />
-                    </button>
+                    </Button>
                   )}
 
                   {onOpenFieldBookUpload && (
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      size="sm"
                       onClick={onOpenFieldBookUpload}
                       title="Impordi e-PRIA põlluraamatu väljavõte (.xls)"
                     >
                       <Plus size={14} />
                       <span>Impordi põlluraamat</span>
                       <HelpHint helpKey="fields.register.import-field-book" inline />
-                    </button>
+                    </Button>
                   )}
 
                   {onOpenUpload && (
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    <Button
+                      size="sm"
                       onClick={onOpenUpload}
                     >
                       <Plus size={14} />
                       <span>Impordi PRIA ZIP</span>
                       <HelpHint helpKey="fields.register.import-pria-zip" inline />
-                    </button>
+                    </Button>
                   )}
                 </div>
               </div>
@@ -417,12 +418,12 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                         <td>{field.operatorName || <span className="muted">–</span>}</td>
                         <td className="actions-col">
                           <div className="row-actions">
-                            <button className="icon-btn-ghost" onClick={() => setEditingFieldId(field.id)} title="Muuda">
+                            <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
                               <Edit2 size={15} />
-                            </button>
-                            <button className="icon-btn-danger" onClick={() => handleDelete(field)} title="Kustuta">
+                            </Button>
+                            <Button variant="danger-ghost" size="icon-sm" onClick={() => handleDelete(field)} title="Kustuta">
                               <Trash2 size={15} />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>

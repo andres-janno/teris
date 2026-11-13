@@ -3,6 +3,7 @@ import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-r
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/cropColors';
+import { Button } from './ui';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -121,9 +122,9 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
             <Sprout size={13} className="text-emerald" />
             <span>Kultuuride jaotus</span>
           </div>
-          <button className="icon-btn-ghost-sm" type="button">
+          <Button variant="ghost" size="icon-xs" type="button">
             {isLegendOpen ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-          </button>
+          </Button>
         </div>
 
         {isLegendOpen && (
@@ -176,13 +177,14 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
 
             {selectedCropFilter && onSelectCropFilter && (
               <div className="legend-filter-reset">
-                <button
-                  className="btn btn-secondary btn-xs btn-full"
+                <Button
+                  size="sm"
+                  className="btn-full"
                   onClick={() => onSelectCropFilter(null)}
                 >
                   <Filter size={11} />
                   <span>Näita kõiki kultuure</span>
-                </button>
+                </Button>
               </div>
             )}
           </div>

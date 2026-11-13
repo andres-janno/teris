@@ -22,6 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
+import { Button } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -404,15 +405,15 @@ function cropSummaryKey(cropText: string): string {
                 })}
               </div>
               <div className="register-io-buttons">
-                <button
-                  className="btn btn-secondary btn-sm"
+                <Button
+                  size="sm"
                   onClick={handleExportCsv}
                   title="Ekspordi tabel CSV failina"
                 >
                   <Download size={14} />
                   <span>CSV Eksport</span>
                   <HelpHint helpKey="fields.register.export-csv" inline />
-                </button>
+                </Button>
 
               </div>
             </div>
@@ -429,12 +430,14 @@ function cropSummaryKey(cropText: string): string {
                 </span>
               </div>
               {onOpenSeasonManager && (
-                <button
-                  className="btn btn-ghost btn-xs btn-alert-action"
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="btn-alert-action"
                   onClick={onOpenSeasonManager}
                 >
                   Ava hooajahaldur
-                </button>
+                </Button>
               )}
             </div>
           )}
@@ -467,9 +470,10 @@ function cropSummaryKey(cropText: string): string {
             </FilterClear>
 
             {(cropFilter !== 'all' || tenureFilter !== 'all') && (
-              <button
+              <Button
                 type="button"
-                className="btn btn-ghost btn-sm"
+                variant="ghost"
+                size="sm"
                 onClick={() => {
                   setCropFilter('all');
                   setTenureFilter('all');
@@ -477,7 +481,7 @@ function cropSummaryKey(cropText: string): string {
               >
                 <X size={14} />
                 <span>Eemalda filtrid</span>
-              </button>
+              </Button>
             )}
           </div>
 
@@ -604,12 +608,12 @@ function cropSummaryKey(cropText: string): string {
                                   </select>
                                 )}
                                 <div className="crop-inline-edit-actions">
-                                  <button type="button" className="icon-btn-ghost" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
+                                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
                                     <X size={15} />
-                                  </button>
-                                  <button type="button" className="icon-btn-ghost save" onClick={saveCropEdit} title="Salvesta">
+                                  </Button>
+                                  <Button type="button" variant="ghost" size="icon-sm" className="save" onClick={saveCropEdit} title="Salvesta">
                                     <Check size={15} />
-                                  </button>
+                                  </Button>
                                 </div>
                               </div>
                             </td>
@@ -708,9 +712,9 @@ function cropSummaryKey(cropText: string): string {
               </p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {bodyContent}

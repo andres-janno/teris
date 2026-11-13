@@ -4358,7 +4358,7 @@ input[type="number"],
 }
 
 .crop-inline-edit-actions .save {
-  color: var(--emerald-500);
+  color: var(--emerald-500) !important;
 }
 
 .register-table .year-crop {
@@ -5455,10 +5455,13 @@ input[type="number"],
 .seasons-table tr.current .season-delta,
 .seasons-table tr.current .season-notes-icon,
 .seasons-table tr.current .season-cell-name,
-.seasons-table tr.current .season-cell-notes,
-.seasons-table tr.current .icon-btn-ghost,
-.seasons-table tr.current .icon-btn-danger {
+.seasons-table tr.current .season-cell-notes {
   color: #ffffff;
+}
+
+/* Ikoonnupud valitud real: !important, et Buttoni variandivärv ei võidaks */
+.seasons-table tr.current td > button {
+  color: #ffffff !important;
 }
 
 .seasons-table tr.current .season-status-badge {
@@ -5466,9 +5469,8 @@ input[type="number"],
   background: rgba(255, 255, 255, 0.2) !important;
 }
 
-.seasons-table tr.current .icon-btn-ghost:hover,
-.seasons-table tr.current .icon-btn-danger:hover {
-  background: rgba(255, 255, 255, 0.2);
+.seasons-table tr.current td > button:hover {
+  background: rgba(255, 255, 255, 0.2) !important;
 }
 
 .seasons-table .num {
@@ -6238,7 +6240,7 @@ a.history-pill:hover {
   padding: 4px;
 }
 
-.crop-group-block-header h4 + .icon-btn-ghost {
+.crop-group-block-header h4 + button {
   margin-left: auto;
 }
 
@@ -11287,7 +11289,7 @@ td.stock-qty-out { color: #dc2626; }
 .fmc-row { display: flex; justify-content: space-between; gap: 12px; }
 .fmc-crop { text-align: right; }
 .fmc-actions { display: flex; gap: 8px; }
-.fmc-actions .btn { flex: 1; justify-content: center; }
+.fmc-actions > button { flex: 1; justify-content: center; }
 
 /* Ilm */
 .weather-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

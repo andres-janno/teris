@@ -19,6 +19,7 @@ import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
 import { createSatelliteLayer, type ClipField, type SatelliteProductId } from '../services/satelliteLayer';
 import { SatellitePanel } from './SatellitePanel';
+import { Button } from './ui';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -1122,9 +1123,9 @@ export const MapView: React.FC<MapViewProps> = ({
       {isAddPoiMode && (
         <div className="add-poi-banner glass-card animate-pulse">
           <span>📍 Klõpsa kaardile, et määrata asukoht. Kaardil on ajutiselt näha ainult kiht „Muud asukohad“.</span>
-          <button type="button" className="btn btn-secondary btn-xs" onClick={onCancelAddPoi} title="Katkesta (Esc)">
+          <Button type="button" size="sm" onClick={onCancelAddPoi} title="Katkesta (Esc)">
             Katkesta
-          </button>
+          </Button>
         </div>
       )}
     </div>

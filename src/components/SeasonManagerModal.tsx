@@ -15,6 +15,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
+import { Button } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -157,14 +158,15 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       : editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'}
                   </h3>
                 </div>
-                <button
+                <Button
                   type="button"
-                  className="icon-btn-ghost"
+                  variant="ghost"
+                  size="icon-sm"
                   onClick={() => { setIsAdding(false); setEditingYear(null); }}
                   title="Sulge (Esc)"
                 >
                   <X size={20} />
-                </button>
+                </Button>
               </div>
 
               <div className="modal-body">
@@ -214,16 +216,16 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               </div>
 
               {!editingLocked && <div className="modal-footer">
-                <button
+                <Button
                   type="button"
-                  className="btn btn-ghost"
+                  variant="ghost"
                   onClick={() => { setIsAdding(false); setEditingYear(null); }}
                 >
                   Loobu
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button type="submit" variant="primary">
                   {editingYear ? 'Salvesta muudatused' : 'Loo hooaeg'}
-                </button>
+                </Button>
               </div>}
             </form>
             </div>,
@@ -279,32 +281,35 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       <td className="num mono">{formatNum(areaHa, 1)}</td>
                       <td className="num mono">{formatNum(totals?.count ?? null, 0)}</td>
                       <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
-                        <button
+                        <Button
                           type="button"
-                          className="icon-btn-ghost"
+                          variant="ghost"
+                          size="icon-sm"
                           onClick={() => handleStartEdit(season)}
                           title={season.isLocked ? 'Vaata hooaja andmeid' : 'Muuda hooaja parameetreid'}
                         >
                           <Edit2 size={15} />
-                        </button>
+                        </Button>
                         {season.isLocked ? (
-                          <button
+                          <Button
                             type="button"
-                            className="icon-btn-ghost"
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => onReopenSeason(season.year)}
                             title={`Hooaeg on lukus${season.closedAt ? ` (suletud ${formatDateTimeTallinn(season.closedAt)}${season.closedBy ? `, ${season.closedBy}` : ''})` : ''} – klõpsa avamiseks`}
                           >
                             <Lock size={15} />
-                          </button>
+                          </Button>
                         ) : (
-                          <button
+                          <Button
                             type="button"
-                            className="icon-btn-ghost"
+                            variant="ghost"
+                            size="icon-sm"
                             onClick={() => onCloseSeason(season.year)}
                             title="Hooaeg on avatud – klõpsa lukustamiseks (lõpeta koristus ja sulge muudatusteks)"
                           >
                             <Unlock size={15} />
-                          </button>
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -343,10 +348,10 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               </div>
             </div>
             {!isAdding && (
-              <button className="btn btn-primary" onClick={handleStartAdd}>
+              <Button variant="primary" onClick={handleStartAdd}>
                 <Plus size={16} />
                 <span>Loo uus hooaeg</span>
-              </button>
+              </Button>
             )}
           </div>
           <div className="fullpage-board-body">
@@ -374,14 +379,14 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
           </div>
           <div className="season-header-actions">
             {!isAdding && (
-              <button className="btn btn-primary btn-sm" onClick={handleStartAdd}>
+              <Button variant="primary" size="sm" onClick={handleStartAdd}>
                 <Plus size={14} />
                 <span>Loo uus hooaeg</span>
-              </button>
+              </Button>
             )}
-            <button className="icon-btn" onClick={onClose} title="Sulge">
+            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
               <X size={18} />
-            </button>
+            </Button>
           </div>
         </div>
 

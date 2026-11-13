@@ -16,6 +16,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
+import { Button } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -183,9 +184,9 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               <p className="modal-subtitle">Toetatud on PRIA allalaaditud .ZIP Shapefile arhiivid (L-EST97 / EPSG:3301)</p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         <div className="modal-body">
@@ -331,12 +332,12 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
         </div>
 
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Loobu</button>
+          <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {parsedPreview && (
-            <button className="btn btn-primary" onClick={handleConfirmImport} disabled={!!replacePlan && importYearLocked}>
+            <Button variant="primary" onClick={handleConfirmImport} disabled={!!replacePlan && importYearLocked}>
               <Check size={16} />
               <span>Lisa {parsedPreview.features.length} põldu hooaega {importYear}</span>
-            </button>
+            </Button>
           )}
         </div>
       </div>
