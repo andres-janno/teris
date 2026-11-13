@@ -6,6 +6,7 @@ import { CircleHelp } from 'lucide-react';
 import { HELP_SPOTS, type HelpKey } from '../help/helpRegistry';
 import { useHelpArticle } from '../help/helpStore';
 import { sanitizeHelp } from '../help/sanitizeHelp';
+import { usePopupContainer } from './ui';
 
 const OPEN_DELAY = 150;
 const CLOSE_DELAY = 200;
@@ -14,6 +15,7 @@ const MARGIN = 8;
 
 /** inline: ikoon on teise nupu sees (span rolliga button, klõps ei käivita välimist nuppu) */
 export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ helpKey, inline = false }) => {
+  const popupContainer = usePopupContainer();
   const html = useHelpArticle(helpKey);
   const safe = useMemo(() => (html ? sanitizeHelp(html) : ''), [html]);
   const [open, setOpen] = useState(false);
@@ -58,15 +60,21 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
 
   useEffect(() => {
     if (!open) return;
-    const onKey = (e: KeyboardEvent) => e.key === 'Escape' && close();
+    // Esc sulgeb ainult vihje, mitte ümbritsevat akent (window capture jõuab enne dialoogi kuulajaid)
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'Escape') return;
+      e.stopPropagation();
+      e.preventDefault();
+      close();
+    };
     const onDown = (e: PointerEvent) => {
       const t = e.target as Node;
       if (!btnRef.current?.contains(t) && !popRef.current?.contains(t)) close();
     };
-    document.addEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey, true);
     document.addEventListener('pointerdown', onDown);
     return () => {
-      document.removeEventListener('keydown', onKey);
+      window.removeEventListener('keydown', onKey, true);
       document.removeEventListener('pointerdown', onDown);
     };
   }, [open, close]);
@@ -134,7 +142,7 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
             <div className="help-hint-title">{HELP_SPOTS[helpKey].label}</div>
             <div className="help-content" dangerouslySetInnerHTML={{ __html: safe }} />
           </div>,
-          document.body
+          popupContainer
         )}
     </>
   );

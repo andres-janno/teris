@@ -3,6 +3,7 @@
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Check } from 'lucide-react';
+import { usePopupContainer } from './ui';
 
 export interface FilterSelectOption {
   value: string;
@@ -40,6 +41,7 @@ interface ListPos { left: number; top?: number; bottom?: number; minWidth: numbe
 export const FilterSelect: React.FC<FilterSelectProps> = ({
   value, onChange, options, defaultValue = '', className, style, title, disabled, ariaLabel, id, fill
 }) => {
+  const popupContainer = usePopupContainer();
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(-1);
   const [pos, setPos] = useState<ListPos | null>(null);
@@ -208,7 +210,7 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
             );
           })}
         </div>,
-        document.body
+        popupContainer
       )}
     </>
   );

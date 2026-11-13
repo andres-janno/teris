@@ -10,6 +10,7 @@ import {
   TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Tooltip,
 } from './index';
 import { DateInput } from '../DateInput';
+import { FilterSelect } from '../FilterSelect';
 import { confirmDialog } from '../ConfirmDialog';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -32,6 +33,7 @@ export const UiGallery: React.FC = () => {
   const [checked, setChecked] = useState(true);
   const [on, setOn] = useState(false);
   const [date, setDate] = useState('');
+  const [filterValue, setFilterValue] = useState('');
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -117,6 +119,7 @@ export const UiGallery: React.FC = () => {
                 <Field label="Nimi" htmlFor="d-name"><Input id="d-name" defaultValue="Kaasiku" /></Field>
                 <Field label="Kultuur" htmlFor="d-crop"><Select id="d-crop" value={crop} onValueChange={setCrop} options={[{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }]} /></Field>
                 <Field label="Kuupäev" htmlFor="d-date"><DateInput id="d-date" value={date} onChange={setDate} /></Field>
+                <Field label="Otsingvalik" htmlFor="d-filter"><FilterSelect id="d-filter" fill value={filterValue} onChange={setFilterValue} options={[{ value: '', label: 'Kõik' }, { value: 'a', label: 'Kaasiku' }, { value: 'b', label: 'Männiku' }, { value: 'c', label: 'Põllu 12' }]} /></Field>
               </DialogBody>
               <DialogFooter><Button>Tühista</Button><Button variant="primary">Salvesta</Button></DialogFooter>
             </DialogContent>

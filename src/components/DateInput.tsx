@@ -3,6 +3,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 're
 import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate, parseEtDate } from '../services/dateFormat';
+import { usePopupContainer } from './ui';
 
 interface DateInputProps {
   value: string; // ISO 'YYYY-MM-DD' või ''
@@ -36,6 +37,7 @@ export const DateInput: React.FC<DateInputProps> = ({
   id,
   popupPlacement = 'bottom'
 }) => {
+  const popupContainer = usePopupContainer();
   const [text, setText] = useState(toText(value));
   const [invalid, setInvalid] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
@@ -80,16 +82,19 @@ export const DateInput: React.FC<DateInputProps> = ({
         setIsOpen(false);
       }
     };
+    // Esc sulgeb ainult kalendri, mitte ümbritsevat akent (window capture jõuab enne dialoogi kuulajaid)
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        e.stopPropagation();
+        e.preventDefault();
         setIsOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keydown', handleKeyDown, true);
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keydown', handleKeyDown, true);
     };
   }, [isOpen]);
 
@@ -336,7 +341,7 @@ export const DateInput: React.FC<DateInputProps> = ({
             ))}
           </div>
         </div>,
-        document.body
+        popupContainer
       )}
     </div>
   );
