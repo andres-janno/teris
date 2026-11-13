@@ -15,8 +15,9 @@
 
 /* Tailwind genereerib utiliite ainult siit kataloogist. Muidu skaneeriks ta kogu src/ ja vanad klassinimed
    (nt `text-muted`, `text-secondary`, `py-6`) saaksid ootamatult utiliidi stiili. Üleviidud fail lisatakse siia
-   ükshaaval, pärast kontrolli, et failis pole Tailwindi utiliitidega kattuvaid vanu klassinimesid. */
+   ükshaaval (README ja testid on välja jäetud, sest need nimetavad vanu klasse), pärast kontrolli, et failis pole Tailwindi utiliitidega kattuvaid vanu klassinimesid. */
 @source '../components/ui';
+@source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
