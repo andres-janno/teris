@@ -3,13 +3,17 @@
 import React from 'react';
 import { cn } from './cn';
 
-export const Table: React.FC<React.ComponentProps<'table'>> = ({ className, ...props }) => (
-  <div className="w-full overflow-x-auto">
+// containerClassName läheb kerimise ümbrisele (nt max-height + kleepuv päis); className jääb <table>-ile.
+export const Table: React.FC<React.ComponentProps<'table'> & { containerClassName?: string }> = ({ className, containerClassName, ...props }) => (
+  <div className={cn('w-full overflow-x-auto', containerClassName)}>
     <table className={cn('w-full border-collapse text-xs', className)} {...props} />
   </div>
 );
 
-export const TableHeader: React.FC<React.ComponentProps<'thead'>> = (props) => <thead {...props} />;
+// Päiserea hover on välja lülitatud (TableRow hover:bg-muted on mõeldud andmeridadele).
+export const TableHeader: React.FC<React.ComponentProps<'thead'>> = ({ className, ...props }) => (
+  <thead className={cn('[&_tr]:hover:bg-transparent', className)} {...props} />
+);
 export const TableBody: React.FC<React.ComponentProps<'tbody'>> = (props) => <tbody {...props} />;
 export const TableFooter: React.FC<React.ComponentProps<'tfoot'>> = ({ className, ...props }) => (
   <tfoot className={cn('bg-muted font-semibold', className)} {...props} />

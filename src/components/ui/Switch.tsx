@@ -8,6 +8,8 @@ interface SwitchProps {
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
   id?: string;
+  name?: string;
+  'aria-describedby'?: string;
   className?: string;
   'aria-label'?: string;
 }

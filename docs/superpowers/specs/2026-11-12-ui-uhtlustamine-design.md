@@ -57,10 +57,10 @@ Lubatud: 2, 4, 6, 8, 10, 12, 16, 24, 32 px (Tailwindi `0.5, 1, 1.5, 2, 2.5, 3, 4
 
 | Token | Väärtus | Kasutus |
 |---|---|---|
-| `rounded-sm` | 6px | märgid, väikesed nupud |
-| `rounded-md` | 10px | nupud, väljad, kaardid |
-| `rounded-lg` | 16px | dialoogid, suured paneelid |
-| `rounded-full` | 999px | ümmargused ikoonnupud, pill-märgid |
+| `rounded-sm` | 6px | väljad (nagu praegune .form-input), sakid, menüükirjed |
+| `rounded-md` | 10px | nupud, menüüd, hüpikud |
+| `rounded-lg` | 16px | kaardid ja paneelid (nagu praegune .glass-card), dialoogid |
+| `rounded-full` | 9999px | märgid (Badge), ümmargused ikoonnupud |
 
 2, 4 ja 8 px koonduvad nende alla. Väärtused vastavad praegustele `--radius-sm/md/lg` muutujatele.
 

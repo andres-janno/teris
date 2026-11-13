@@ -15,10 +15,17 @@ const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title
 );
 
 export const UiGallery: React.FC = () => {
-  const [theme, setTheme] = useState<'light' | 'dark'>(() =>
-    document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'
-  );
-  useEffect(() => document.documentElement.setAttribute('data-theme', theme), [theme]);
+  // Algteema sama võtme alt, mida App.tsx kasutab (agrimap_theme); siin seda ei kirjutata.
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    try {
+      return localStorage.getItem('agrimap_theme') === 'dark' ? 'dark' : 'light';
+    } catch {
+      return 'light';
+    }
+  });
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
   const [crop, setCrop] = useState('');
   const [checked, setChecked] = useState(true);
   const [on, setOn] = useState(false);

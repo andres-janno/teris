@@ -20,6 +20,8 @@ interface SelectProps {
   className?: string;
   id?: string;
   'aria-label'?: string;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
 }
 
 export const Select: React.FC<SelectProps> = ({ value, onValueChange, options, placeholder = 'Vali…', disabled, className, id, ...aria }) => (
@@ -28,6 +30,8 @@ export const Select: React.FC<SelectProps> = ({ value, onValueChange, options, p
     <SelectPrimitive.Trigger
       id={id}
       aria-label={aria['aria-label']}
+      aria-invalid={aria['aria-invalid']}
+      aria-describedby={aria['aria-describedby']}
       className={cn(fieldControlClass, 'flex h-8 items-center justify-between gap-2 px-2.5 text-left data-[placeholder]:text-subtle', className)}
     >
       <SelectPrimitive.Value placeholder={placeholder} />
@@ -39,7 +43,7 @@ export const Select: React.FC<SelectProps> = ({ value, onValueChange, options, p
       <SelectPrimitive.Content position="popper" sideOffset={4} className={cn(menuContentClass, 'max-h-72 min-w-(--radix-select-trigger-width)')}>
         <SelectPrimitive.Viewport>
           {options.map((o) => (
-            <SelectPrimitive.Item key={o.value} value={o.value} disabled={o.disabled} className={cn(menuItemClass, 'pr-7 relative')}>
+            <SelectPrimitive.Item key={o.value} value={o.value} disabled={o.disabled} className={cn(menuItemClass, 'pr-8 relative')}>
               <SelectPrimitive.ItemText>{o.label}</SelectPrimitive.ItemText>
               <SelectPrimitive.ItemIndicator className="absolute right-2 inline-flex">
                 <Check size={14} className="text-primary" />
