@@ -11,6 +11,7 @@ import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
+import { Button } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -231,36 +232,32 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
         </div>
 
         <div style={{ display: 'flex', gap: '4px' }}>
-          <button className={`btn btn-sm ${statusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('all')}>
+          <Button variant={statusFilter === 'all' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('all')}>
             Kõik ({assignments.length})
-          </button>
-          <button className={`btn btn-sm ${statusFilter === 'active' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('active')}>
+          </Button>
+          <Button variant={statusFilter === 'active' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('active')}>
             Aktiivsed ({assignments.filter((a) => !a.endedAt).length})
-          </button>
-          <button className={`btn btn-sm ${statusFilter === 'ended' ? 'btn-primary' : 'btn-secondary'}`} onClick={() => setStatusFilter('ended')}>
+          </Button>
+          <Button variant={statusFilter === 'ended' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('ended')}>
             Ajalugu ({assignments.filter((a) => !!a.endedAt).length})
-          </button>
+          </Button>
         </div>
 
         {hasFilters && (
-          <button
-            className="btn btn-ghost btn-sm"
+          <Button variant="ghost" size="sm"
             onClick={() => { setDeviceFilter('all'); setTargetFilter('all'); setStatusFilter('all'); }}
-            style={{ fontSize: '12px', marginLeft: 'auto' }}
-          >
+            style={{ fontSize: '12px', marginLeft: 'auto' }}>
             Tühjenda filtrid
-          </button>
+          </Button>
         )}
 
-        <button
-          className="btn btn-secondary btn-sm"
+        <Button size="sm"
           onClick={onReload}
           title="Värskenda registrit"
-          style={{ marginLeft: hasFilters ? undefined : 'auto' }}
-        >
+          style={{ marginLeft: hasFilters ? undefined : 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
           <span>Värskenda</span>
-        </button>
+        </Button>
       </div>
 
       {/* Tabel */}
@@ -351,35 +348,29 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                     <td style={{ textAlign: 'right' }}>
                       <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                         {isActive && (
-                          <button
-                            type="button"
-                            className="btn btn-secondary btn-sm"
+                          <Button type="button"
+                            size="sm"
                             title="Seo seade masinast / haakeriistast lahti"
                             onClick={() => onDetach(a.deviceId)}
-                            style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
-                          >
+                            style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}>
                             <Unlink size={12} />
                             <span>Seo lahti</span>
-                          </button>
+                          </Button>
                         )}
-                        <button
-                          type="button"
-                          className="icon-btn-ghost"
+                        <Button type="button"
+                          variant="ghost" size="icon-sm"
                           title="Muuda seose kirjet"
                           onClick={() => startEdit(a)}
-                          style={{ width: '26px', height: '26px' }}
-                        >
+                          style={{ width: '26px', height: '26px' }}>
                           <Pencil size={14} />
-                        </button>
-                        <button
-                          type="button"
-                          className="icon-btn-danger"
+                        </Button>
+                        <Button type="button"
+                          variant="danger-ghost" size="icon-sm"
                           title="Kustuta seose kirje"
                           onClick={() => handleDelete(a.id)}
-                          style={{ width: '26px', height: '26px' }}
-                        >
+                          style={{ width: '26px', height: '26px' }}>
                           <Trash2 size={13} />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                   </tr>
@@ -399,9 +390,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                 <Link size={20} className="text-emerald" />
                 <h3>{editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'}</h3>
               </div>
-              <button className="icon-btn-ghost" type="button" onClick={onCloseForm} title="Sulge (Esc)">
+              <Button variant="ghost" size="icon-sm" type="button" onClick={onCloseForm} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -480,10 +471,10 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={onCloseForm} disabled={submitting}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={submitting}>
+              <Button type="button" variant="ghost" onClick={onCloseForm} disabled={submitting}>Loobu</Button>
+              <Button type="submit" variant="primary" disabled={submitting}>
                 {submitting ? 'Salvestan...' : (editingId ? 'Salvesta muudatused' : 'Salvesta kanne')}
-              </button>
+              </Button>
             </div>
           </form>
         </div>,

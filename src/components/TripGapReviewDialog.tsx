@@ -6,6 +6,7 @@ import type { TripGap } from '../types/fleet';
 import { api } from '../services/api';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { gapParts } from './tripGapText';
+import { Button } from './ui';
 
 interface Props {
   gap: TripGap;
@@ -46,7 +47,7 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
             <AlertTriangle size={20} className="trip-gap-icon" />
             <h3>Märgi hoiatus kontrollituks</h3>
           </div>
-          <button className="icon-btn-ghost" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button variant="ghost" size="icon-sm" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           <p style={{ marginTop: 0 }}>
@@ -64,8 +65,8 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
           {error && <div className="auth-error-banner">{error}</div>}
         </div>
         <div className="modal-footer">
-          <button type="button" className="btn btn-secondary" onClick={onClose}>Loobu</button>
-          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || !note.trim()}>Märgi kontrollituks</button>
+          <Button type="button" onClick={onClose}>Loobu</Button>
+          <Button type="button" variant="primary" onClick={save} disabled={saving || !note.trim()}>Märgi kontrollituks</Button>
         </div>
       </div>
     </div>,

@@ -12,6 +12,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
+import { Button } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -195,9 +196,9 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
             <AlertTriangle size={14} /> {unreviewedGaps} kontrollimata
           </span>
         )}
-        <button className="btn btn-secondary btn-sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
+        <Button size="sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
-        </button>
+        </Button>
       </div>
 
       {error && <div className="auth-error-banner">{error}</div>}
@@ -268,10 +269,10 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                           {g.reviewedAt ? (
                             <>
                               <span className="trip-gap-review">Kontrollitud {formatDateTime(g.reviewedAt)}{g.reviewedBy ? `, ${g.reviewedBy}` : ''}: {g.reviewNote}</span>
-                              <button type="button" className="btn btn-secondary btn-sm" onClick={() => reopenGap(g)}>Ava uuesti</button>
+                              <Button type="button" size="sm" onClick={() => reopenGap(g)}>Ava uuesti</Button>
                             </>
                           ) : (
-                            <button type="button" className="btn btn-secondary btn-sm" onClick={() => setReviewing(g)}>Märgi kontrollituks</button>
+                            <Button type="button" size="sm" onClick={() => setReviewing(g)}>Märgi kontrollituks</Button>
                           )}
                         </td>
                       </tr>

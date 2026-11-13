@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { Button } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -254,21 +255,17 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
             </div>
 
             <div className="poi-top-actions">
-              <button
-                className="btn btn-secondary btn-sm"
+              <Button size="sm"
                 onClick={handleExportJson}
-                title="Ekspordi JSON failina"
-              >
+                title="Ekspordi JSON failina">
                 <Download size={14} />
                 <span>Ekspordi</span>
-              </button>
-              <button
-                className="btn btn-primary btn-sm"
-                onClick={handleStartAdd}
-              >
+              </Button>
+              <Button variant="primary" size="sm"
+                onClick={handleStartAdd}>
                 <Plus size={14} />
                 <span>Lisa uus asukoht</span>
-              </button>
+              </Button>
             </div>
           </div>
 
@@ -282,28 +279,24 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                   {editingId ? <Edit2 size={20} className="text-emerald" /> : <Plus size={20} className="text-emerald" />}
                   <h3>{editingId ? `Muuda asukohta: ${name}` : 'Lisa uus asukoht'}</h3>
                 </div>
-                <button
-                  className="icon-btn-ghost"
+                <Button variant="ghost" size="icon-sm"
                   type="button"
                   onClick={() => { setIsAdding(false); setEditingId(null); }}
-                  title="Sulge (Esc)"
-                >
+                  title="Sulge (Esc)">
                   <X size={20} />
-                </button>
+                </Button>
               </div>
 
               <div className="modal-body">
 
               <div className="form-header-row">
-                <button
-                  type="button"
-                  className="btn btn-secondary btn-sm btn-pick-map-highlight"
+                <Button type="button"
+                  size="sm" className="btn-pick-map-highlight"
                   onClick={handlePickOnMap}
-                  title="Vali täpne asukoht kaardilt klõpsates"
-                >
+                  title="Vali täpne asukoht kaardilt klõpsates">
                   <Crosshair size={14} className="text-emerald" />
                   <span>Vali asukoht kaardilt</span>
-                </button>
+                </Button>
               </div>
 
               <div className="form-grid">
@@ -413,20 +406,18 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               </div>
 
               <div className="modal-footer">
-                <button
-                  type="button"
-                  className="btn btn-ghost"
+                <Button type="button"
+                  variant="ghost"
                   onClick={() => {
                     setIsAdding(false);
                     setEditingId(null);
-                  }}
-                >
+                  }}>
                   Loobu
-                </button>
-                <button type="submit" className="btn btn-primary">
+                </Button>
+                <Button type="submit" variant="primary">
                   <Check size={14} />
                   <span>{editingId ? 'Salvesta muudatused' : 'Lisa asukoht'}</span>
-                </button>
+                </Button>
               </div>
             </form>
             </div>,
@@ -454,40 +445,34 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                         </div>
                       </div>
                       <div className="card-header-actions">
-                        <button
-                          className="icon-btn-ghost"
+                        <Button variant="ghost" size="icon-sm"
                           title="Näita kaardil"
                           aria-label="Näita kaardil"
                           onClick={(e) => {
                             e.stopPropagation();
                             onFocusPoi(p);
                             onClose();
-                          }}
-                        >
+                          }}>
                           <Crosshair size={14} />
-                        </button>
-                        <button
-                          className="icon-btn-ghost"
+                        </Button>
+                        <Button variant="ghost" size="icon-sm"
                           title="Muuda andmeid või asukohta"
                           aria-label="Muuda"
                           onClick={(e) => {
                             e.stopPropagation();
                             handleStartEdit(p);
-                          }}
-                        >
+                          }}>
                           <Edit2 size={14} />
-                        </button>
-                        <button
-                          className="icon-btn-danger"
+                        </Button>
+                        <Button variant="danger-ghost" size="icon-sm"
                           title="Kustuta"
                           aria-label="Kustuta"
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (await confirmDialog(`Kas soovid kindlasti kustutada asukoha "${p.name}"?`)) onDeletePoi(p.id);
-                          }}
-                        >
+                          }}>
                           <Trash2 size={14} />
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -554,15 +539,15 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
             </div>
           </div>
-          <button className="icon-btn-ghost" onClick={onClose}>
+          <Button variant="ghost" size="icon-sm" onClick={onClose}>
             <X size={20} />
-          </button>
+          </Button>
         </div>
 
         {bodyContent}
 
         <div className="modal-footer">
-          <button className="btn btn-ghost" onClick={onClose}>Sulge</button>
+          <Button variant="ghost" onClick={onClose}>Sulge</Button>
         </div>
       </div>
     </div>

@@ -10,6 +10,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
+import { Button } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -153,7 +154,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
             <Route size={20} className="text-emerald" />
             <h3>{who}{trip.implementName ? ` + ${trip.implementName}` : ''}</h3>
           </div>
-          <button className="icon-btn-ghost" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></button>
+          <Button variant="ghost" size="icon-sm" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
         </div>
         <div className="modal-body">
           {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
@@ -283,15 +284,15 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
         </div>
         <div className="modal-footer">
           {canDelete && !trip.deletedAt && (
-            <button type="button" className="btn btn-danger" style={{ marginRight: 'auto' }} onClick={remove} disabled={saving}>Kustuta sõit</button>
+            <Button type="button" variant="danger" style={{ marginRight: 'auto' }} onClick={remove} disabled={saving}>Kustuta sõit</Button>
           )}
           {canDelete && trip.deletedAt && (
-            <button type="button" className="btn btn-secondary" style={{ marginRight: 'auto' }} onClick={restore} disabled={saving}>Taasta</button>
+            <Button type="button" style={{ marginRight: 'auto' }} onClick={restore} disabled={saving}>Taasta</Button>
           )}
-          <button type="button" className="btn btn-ghost" onClick={onClose} disabled={saving}>Sulge</button>
-          <button type="button" className="btn btn-primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
+          <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Sulge</Button>
+          <Button type="button" variant="primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
             {saving ? 'Salvestan...' : 'Salvesta märkus'}
-          </button>
+          </Button>
         </div>
       </div>
     </div>,

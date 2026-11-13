@@ -44,6 +44,7 @@ import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
+import { Button } from './ui';
 
 // Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
 const FRESHNESS_LEGEND = [
@@ -897,10 +898,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         </div>
 
         {!isAddingNew && activeTab !== 'trips' && (
-          <button
-            className="btn btn-primary btn-sm"
-            onClick={openAddForm}
-          >
+          <Button variant="primary" size="sm"
+            onClick={openAddForm}>
             <Plus size={14} />
             <span>
               {activeTab === 'vehicles' ? 'Lisa uus masin' : (
@@ -911,7 +910,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )
               )}
             </span>
-          </button>
+          </Button>
         )}
       </div>
 
@@ -925,9 +924,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Tractor size={20} className="text-emerald" />
                 <h3>{editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'}</h3>
               </div>
-              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -1067,8 +1066,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-              <button type="submit" className="btn btn-primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</button>
+              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+              <Button type="submit" variant="primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</Button>
             </div>
           </form>
         </div>,
@@ -1083,9 +1082,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Wrench size={20} className="text-emerald" />
                 <h3>{editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'}</h3>
               </div>
-              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -1186,8 +1185,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-              <button type="submit" className="btn btn-primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</button>
+              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+              <Button type="submit" variant="primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</Button>
             </div>
           </form>
         </div>,
@@ -1202,9 +1201,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Radio size={20} className="text-emerald" />
                 <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'}</h3>
               </div>
-              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -1322,8 +1321,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={closeForm}>Loobu</button>
-              <button type="submit" className="btn btn-primary" disabled={devSaving}>{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</button>
+              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+              <Button type="submit" variant="primary" disabled={devSaving}>{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</Button>
             </div>
           </form>
         </div>,
@@ -1338,9 +1337,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Link size={20} className="text-emerald" />
                 <h3>{editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'}</h3>
               </div>
-              <button className="icon-btn-ghost" type="button" onClick={closeForm} title="Sulge (Esc)">
+              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
                 <X size={20} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -1456,12 +1455,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div className="modal-footer">
-              <button type="button" className="btn btn-ghost" onClick={closeForm} disabled={assignmentSubmitting}>
+              <Button type="button" variant="ghost" onClick={closeForm} disabled={assignmentSubmitting}>
                 Loobu
-              </button>
-              <button type="submit" className="btn btn-primary" disabled={assignmentSubmitting}>
+              </Button>
+              <Button type="submit" variant="primary" disabled={assignmentSubmitting}>
                 {assignmentSubmitting ? 'Salvestan...' : (editingAssignmentId ? 'Salvesta muudatused' : 'Salvesta kanne')}
-              </button>
+              </Button>
             </div>
           </form>
         </div>,
@@ -1498,8 +1497,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
                     </span>
                     <div className="card-header-actions">
-                      <button
-                        className="icon-btn-ghost"
+                      <Button variant="ghost" size="icon-sm"
                         title="Vaata selle masina haakimise ajalugu"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1508,32 +1506,27 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           setHistoryStatusFilter('all');
                           setActiveTab('history');
                           loadImplementAssignments();
-                        }}
-                      >
+                        }}>
                         <History size={14} />
-                      </button>
-                      <button
-                        className="icon-btn-ghost"
+                      </Button>
+                      <Button variant="ghost" size="icon-sm"
                         title="Muuda masina andmeid"
                         onClick={(e) => {
                           e.stopPropagation();
                           startEditVehicle(v);
-                        }}
-                      >
+                        }}>
                         <Pencil size={14} />
-                      </button>
-                      <button
-                        className="icon-btn-danger"
+                      </Button>
+                      <Button variant="danger-ghost" size="icon-sm"
                         title="Kustuta masin"
                         onClick={async (e) => {
                           e.stopPropagation();
                           if (await confirmDialog(`Kas soovid kindlasti kustutada masina "${v.name}"?`)) {
                             onDeleteVehicle(v.id);
                           }
-                        }}
-                      >
+                        }}>
                         <Trash2 size={14} />
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 </div>
@@ -1646,8 +1639,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
 
                   <div className="card-actions-group">
-                    <button
-                      className="btn btn-secondary btn-sm"
+                    <Button size="sm"
                       disabled={!v.position}
                       title={!v.position ? 'GPS asukoht puudub' : 'Näita kaardil'}
                       onClick={(e) => {
@@ -1656,11 +1648,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           onFocusVehicle(v);
                           onClose?.();
                         }
-                      }}
-                    >
+                      }}>
                       <Crosshair size={13} />
                       <span>Kaardile</span>
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
@@ -1687,8 +1678,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <span className="imp-meta">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
                   </div>
                   <div className="card-header-actions">
-                    <button
-                      className="icon-btn-ghost"
+                    <Button variant="ghost" size="icon-sm"
                       title="Vaata selle haakeriista haakimise ajalugu"
                       onClick={() => {
                         setHistoryImplementFilter(imp.id);
@@ -1696,28 +1686,23 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         setHistoryStatusFilter('all');
                         setActiveTab('history');
                         loadImplementAssignments();
-                      }}
-                    >
+                      }}>
                       <History size={14} />
-                    </button>
-                    <button
-                      className="icon-btn-ghost"
+                    </Button>
+                    <Button variant="ghost" size="icon-sm"
                       title="Muuda haakeriista andmeid"
-                      onClick={() => startEditImplement(imp)}
-                    >
+                      onClick={() => startEditImplement(imp)}>
                       <Pencil size={14} />
-                    </button>
-                    <button
-                      className="icon-btn-danger"
+                    </Button>
+                    <Button variant="danger-ghost" size="icon-sm"
                       title="Kustuta haakeriist"
                       onClick={async () => {
                         if (await confirmDialog(`Kas soovid kindlasti kustutada haakeriista "${imp.name}"?`)) {
                           onDeleteImplement(imp.id);
                         }
-                      }}
-                    >
+                      }}>
                       <Trash2 size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -1828,24 +1813,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </span>
                   </div>
                   <div className="card-header-actions">
-                    <button
-                      className="icon-btn-ghost"
+                    <Button variant="ghost" size="icon-sm"
                       title="Muuda seadme andmeid"
-                      onClick={() => startEditDevice(dev)}
-                    >
+                      onClick={() => startEditDevice(dev)}>
                       <Pencil size={14} />
-                    </button>
-                    <button
-                      className="icon-btn-danger"
+                    </Button>
+                    <Button variant="danger-ghost" size="icon-sm"
                       title="Kustuta seade"
                       onClick={async () => {
                         if (await confirmDialog(`Kas soovid kindlasti kustutada seadme "${dev.model}"?`)) {
                           onDeleteDevice(dev.id);
                         }
-                      }}
-                    >
+                      }}>
                       <Trash2 size={14} />
-                    </button>
+                    </Button>
                   </div>
                 </div>
 
@@ -2028,49 +2009,39 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
 
             <div style={{ display: 'flex', gap: '4px' }}>
-              <button
-                className={`btn btn-sm ${historyStatusFilter === 'all' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setHistoryStatusFilter('all')}
-              >
+              <Button variant={historyStatusFilter === 'all' ? 'primary' : 'secondary'} size="sm"
+                onClick={() => setHistoryStatusFilter('all')}>
                 Kõik ({implementAssignments.length})
-              </button>
-              <button
-                className={`btn btn-sm ${historyStatusFilter === 'active' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setHistoryStatusFilter('active')}
-              >
+              </Button>
+              <Button variant={historyStatusFilter === 'active' ? 'primary' : 'secondary'} size="sm"
+                onClick={() => setHistoryStatusFilter('active')}>
                 Aktiivsed ({implementAssignments.filter(a => !a.endedAt).length})
-              </button>
-              <button
-                className={`btn btn-sm ${historyStatusFilter === 'ended' ? 'btn-primary' : 'btn-secondary'}`}
-                onClick={() => setHistoryStatusFilter('ended')}
-              >
+              </Button>
+              <Button variant={historyStatusFilter === 'ended' ? 'primary' : 'secondary'} size="sm"
+                onClick={() => setHistoryStatusFilter('ended')}>
                 Ajalugu ({implementAssignments.filter(a => !!a.endedAt).length})
-              </button>
+              </Button>
             </div>
 
             {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all') && (
-              <button
-                className="btn btn-ghost btn-sm"
+              <Button variant="ghost" size="sm"
                 onClick={() => {
                   setHistoryVehicleFilter('all');
                   setHistoryImplementFilter('all');
                   setHistoryStatusFilter('all');
                 }}
-                style={{ fontSize: '12px', marginLeft: 'auto' }}
-              >
+                style={{ fontSize: '12px', marginLeft: 'auto' }}>
                 Tühjenda filtrid
-              </button>
+              </Button>
             )}
 
-            <button
-              className="btn btn-secondary btn-sm"
+            <Button size="sm"
               onClick={loadImplementAssignments}
               title="Värskenda registrit"
-              style={{ marginLeft: (historyVehicleFilter === 'all' && historyImplementFilter === 'all' && historyStatusFilter === 'all') ? 'auto' : undefined }}
-            >
+              style={{ marginLeft: (historyVehicleFilter === 'all' && historyImplementFilter === 'all' && historyStatusFilter === 'all') ? 'auto' : undefined }}>
               <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
               <span>Värskenda</span>
-            </button>
+            </Button>
           </div>
 
           {/* Data Table */}
@@ -2174,35 +2145,29 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <td style={{ textAlign: 'right' }}>
                           <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                             {isActive && (
-                              <button
-                                type="button"
-                                className="btn btn-secondary btn-sm"
+                              <Button type="button"
+                                size="sm"
                                 title="Haagi see riist masinalt lahti"
                                 onClick={() => handleDetachActiveAssignment(a.implementId)}
-                                style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}
-                              >
+                                style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}>
                                 <Unlink size={12} />
                                 <span>Haagi lahti</span>
-                              </button>
+                              </Button>
                             )}
-                            <button
-                              type="button"
-                              className="icon-btn-ghost"
+                            <Button type="button"
+                              variant="ghost" size="icon-sm"
                               title="Muuda haakimise kirjet"
                               onClick={() => handleStartEditAssignment(a)}
-                              style={{ width: '26px', height: '26px' }}
-                            >
+                              style={{ width: '26px', height: '26px' }}>
                               <Pencil size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              className="icon-btn-danger"
+                            </Button>
+                            <Button type="button"
+                              variant="danger-ghost" size="icon-sm"
                               title="Kustuta logikirje"
                               onClick={() => handleDeleteAssignment(a.id)}
-                              style={{ width: '26px', height: '26px' }}
-                            >
+                              style={{ width: '26px', height: '26px' }}>
                               <Trash2 size={13} />
-                            </button>
+                            </Button>
                           </div>
                         </td>
                       </tr>
@@ -2223,9 +2188,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               <h4>
                 {swapModal.type === 'device' ? '📡 Telemeetriaseadme valik' : '🔧 Haakeriista Haakimine'}
               </h4>
-              <button className="icon-btn-ghost" onClick={() => setSwapModal(null)}>
+              <Button variant="ghost" size="icon-sm" onClick={() => setSwapModal(null)}>
                 <X size={18} />
-              </button>
+              </Button>
             </div>
 
             <div className="modal-body">
@@ -2366,9 +2331,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
           </div>
           {onClose && (
-            <button className="icon-btn-ghost" onClick={onClose}>
+            <Button variant="ghost" size="icon-sm" onClick={onClose}>
               <X size={20} />
-            </button>
+            </Button>
           )}
         </div>
 
@@ -2377,7 +2342,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         </div>
 
         <div className="modal-footer">
-          {onClose && <button className="btn btn-ghost" onClick={onClose}>Sulge</button>}
+          {onClose && <Button variant="ghost" onClick={onClose}>Sulge</Button>}
         </div>
       </div>
     </div>
