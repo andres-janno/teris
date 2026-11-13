@@ -1,7 +1,6 @@
 // src/components/FieldUploadModal.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
-  X, 
   UploadCloud, 
   FileArchive, 
   Check, 
@@ -16,7 +15,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -174,22 +173,14 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
     : 0;
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <UploadCloud className="text-emerald" size={24} />
-            <div>
-              <h3>Impordi PRIA Põldude SHP Fail</h3>
-              <p className="modal-subtitle">Toetatud on PRIA allalaaditud .ZIP Shapefile arhiivid (L-EST97 / EPSG:3301)</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
-        </div>
-
-        <div className="modal-body">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="glass-card" dismissible={!isProcessing}>
+        <DialogHeader
+          icon={<UploadCloud className="text-emerald" size={24} />}
+          title="Impordi PRIA Põldude SHP Fail"
+          description="Toetatud on PRIA allalaaditud .ZIP Shapefile arhiivid (L-EST97 / EPSG:3301)"
+        />
+        <DialogBody>
           {/* Dropzone */}
           <div 
             className={`dropzone ${isDragging ? 'dragging' : ''} ${parsedPreview ? 'has-file' : ''}`}
@@ -268,7 +259,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                   ))}
                 </select>
                 {detectedYear && (
-                  <span className="modal-subtitle" style={{ display: 'block', marginTop: '4px' }}>
+                  <span className="hint-text" style={{ display: 'block', marginTop: '4px' }}>
                     Failist tuvastatud: {detectedYear.year} ({detectedYear.count}/{detectedYear.total} põllu PRIA muutmiskuupäeva järgi) — kontrolli enne kinnitamist
                   </span>
                 )}
@@ -300,10 +291,10 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                         {replacePlan.skipped.length > 0 && <>; töödega jäetakse alles: <strong>{replacePlan.skipped.length}</strong></>}
                       </span>
                       {replacePlan.removed.length > 0 && (
-                        <span className="modal-subtitle">Eemaldatakse: {replacePlan.removed.map(fieldLabel).join(', ')}</span>
+                        <span className="hint-text">Eemaldatakse: {replacePlan.removed.map(fieldLabel).join(', ')}</span>
                       )}
                       {replacePlan.skipped.length > 0 && (
-                        <span className="modal-subtitle">Jäetakse alles (töid): {replacePlan.skipped.map((r) => `${fieldLabel(r)} (${r.works})`).join(', ')}</span>
+                        <span className="hint-text">Jäetakse alles (töid): {replacePlan.skipped.map((r) => `${fieldLabel(r)} (${r.works})`).join(', ')}</span>
                       )}
                     </>
                   )}
@@ -329,9 +320,9 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
             </div>
           )}
 
-        </div>
+        </DialogBody>
 
-        <div className="modal-footer">
+        <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {parsedPreview && (
             <Button variant="primary" onClick={handleConfirmImport} disabled={!!replacePlan && importYearLocked}>
@@ -339,8 +330,8 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               <span>Lisa {parsedPreview.features.length} põldu hooaega {importYear}</span>
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

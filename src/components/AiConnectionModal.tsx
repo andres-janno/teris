@@ -1,12 +1,12 @@
 // src/components/AiConnectionModal.tsx — „AI ühendus“: kasutaja enda API-võtmed AI-kliendi (MCP) jaoks.
 // Täielikku linki näidatakse ainult kohe pärast loomist.
 import React, { useCallback, useEffect, useState } from 'react';
-import { X, Bot, AlertCircle, Copy, Check, Trash2, Plus } from 'lucide-react';
+import { Bot, AlertCircle, Copy, Check, Trash2, Plus } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
@@ -83,21 +83,14 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
   };
 
   return (
-    <div className="modal-backdrop" onClick={close}>
-      <div className="modal-content animate-scale-up ai-connection-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Bot className="text-emerald" size={22} />
-            <h3>AI ühendus</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
-            <X size={20} />
-          </Button>
-        </div>
-        <div className="modal-body">
-          <p className="modal-subtitle">
-            Ühenda oma Terise andmed AI-assistendiga (nt Claude). AI saab andmeid ainult lugeda ja näeb sama, mida sina Terises.
-          </p>
+    <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
+      <DialogContent size="lg" className="ai-connection-modal" dismissible={!busy}>
+        <DialogHeader
+          icon={<Bot className="text-emerald" size={22} />}
+          title="AI ühendus"
+          description="Ühenda oma Terise andmed AI-assistendiga (nt Claude). AI saab andmeid ainult lugeda ja näeb sama, mida sina Terises."
+        />
+        <DialogBody>
           {error && (
             <div className="alert-box error">
               <AlertCircle size={16} />
@@ -175,11 +168,11 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
               <li>Kleebi link URL-i väljale ja salvesta. Seejärel küsi AI-lt näiteks „Mis põllud mul tänavu on?“</li>
             </ol>
           </div>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={close}>Sulge</Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

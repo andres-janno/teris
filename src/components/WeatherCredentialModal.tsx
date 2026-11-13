@@ -1,12 +1,12 @@
 // src/components/WeatherCredentialModal.tsx — „Ilmaandmete ühendus“: ettevõtte oma Copernicuse (CDS) API võti ilmaandmete laadimiseks.
 // Võtit ei näidata kunagi: server tagastab ainult oleku. Ainult administraatorile.
 import React, { useCallback, useEffect, useState } from 'react';
-import { X, CloudSun, AlertCircle, Check, Trash2 } from 'lucide-react';
+import { CloudSun, AlertCircle, Check, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { WeatherCredentialStatus } from '../types/weather';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface WeatherCredentialModalProps {
   isOpen: boolean;
@@ -79,21 +79,14 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
   };
 
   return (
-    <div className="modal-backdrop" onClick={close}>
-      <div className="modal-content animate-scale-up weather-credential-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <CloudSun className="text-emerald" size={22} />
-            <h3>Ilmaandmete ühendus</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
-            <X size={20} />
-          </Button>
-        </div>
-        <div className="modal-body">
-          <p className="modal-subtitle">
-            Ilmaandmed tulevad Copernicuse ERA5-Landist. Selleks on vaja ettevõtte Copernicuse konto isiklikku API võtit.
-          </p>
+    <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
+      <DialogContent size="md" className="weather-credential-modal" dismissible={!busy}>
+        <DialogHeader
+          icon={<CloudSun className="text-emerald" size={22} />}
+          title="Ilmaandmete ühendus"
+          description="Ilmaandmed tulevad Copernicuse ERA5-Landist. Selleks on vaja ettevõtte Copernicuse konto isiklikku API võtit."
+        />
+        <DialogBody>
           {error && (
             <div className="alert-box error">
               <AlertCircle size={16} />
@@ -148,7 +141,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
               )}
             </form>
           )}
-          {status && !canEdit && <p className="modal-subtitle">Võtit saab muuta ainult administraator.</p>}
+          {status && !canEdit && <p className="hint-text">Võtit saab muuta ainult administraator.</p>}
 
           <div className="weather-credential-help">
             <strong>Kuidas võtit saada</strong>
@@ -160,11 +153,11 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
             </ol>
             <p>Ilmaandmed on ühised: kui sama ruudu teisel ettevõttel on võti, näed andmeid ka ilma oma võtmeta.</p>
           </div>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={close}>Sulge</Button>
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

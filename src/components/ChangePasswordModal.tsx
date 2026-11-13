@@ -1,8 +1,8 @@
 // src/components/ChangePasswordModal.tsx
 import React, { useState } from 'react';
-import { X, KeyRound, AlertCircle, Check } from 'lucide-react';
+import { KeyRound, AlertCircle, Check } from 'lucide-react';
 import { api } from '../services/api';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogForm, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -53,21 +53,16 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
   };
 
   return (
-    <div className="modal-backdrop" onClick={forced ? undefined : close}>
-      <form className="modal-content animate-scale-up change-password-modal" onClick={(e) => e.stopPropagation()} onSubmit={submit}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <KeyRound className="text-emerald" size={22} />
-            <h3>{forced ? 'Määra uus parool' : 'Muuda parooli'}</h3>
-          </div>
-          {!forced && (
-            <Button type="button" variant="ghost" size="icon-sm" onClick={close}>
-              <X size={20} />
-            </Button>
-          )}
-        </div>
-        <div className="modal-body">
-          {forced && <p className="modal-subtitle">Sinu parool on ajutine. Määra endale uus parool, et jätkata.</p>}
+    <Dialog open onOpenChange={(open) => { if (!open && !forced) close(); }}>
+      <DialogContent size="sm" className="change-password-modal" dismissible={!forced && !busy}>
+        <DialogForm onSubmit={submit}>
+        <DialogHeader
+          icon={<KeyRound className="text-emerald" size={22} />}
+          title={forced ? 'Määra uus parool' : 'Muuda parooli'}
+          description={forced ? 'Sinu parool on ajutine. Määra endale uus parool, et jätkata.' : undefined}
+          showClose={!forced}
+        />
+        <DialogBody>
           {done ? (
             <div className="alert-box">
               <Check size={16} />
@@ -95,8 +90,8 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               </div>
             </>
           )}
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           {forced ? (
             <Button type="button" variant="ghost" onClick={onLogout}>Logi välja</Button>
           ) : (
@@ -108,8 +103,9 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
               <span>Salvesta</span>
             </Button>
           )}
-        </div>
-      </form>
-    </div>
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };

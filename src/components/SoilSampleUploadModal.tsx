@@ -1,7 +1,6 @@
 // src/components/SoilSampleUploadModal.tsx
 import React, { useState, useRef } from 'react';
 import {
-  X,
   UploadCloud,
   FileArchive,
   Check,
@@ -10,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -88,22 +87,14 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
   const distinctFields = parsedPreview ? new Set(parsedPreview.map((s) => s.fieldCode)).size : 0;
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <UploadCloud className="text-emerald" size={24} />
-            <div>
-              <h3>Impordi Mullaproovide SHP Fail</h3>
-              <p className="modal-subtitle">Toetatud on punktikujunditega .ZIP Shapefile arhiivid (WGS84 / EPSG:4326)</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
-        </div>
-
-        <div className="modal-body">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="glass-card" dismissible={!isProcessing}>
+        <DialogHeader
+          icon={<UploadCloud className="text-emerald" size={24} />}
+          title="Impordi Mullaproovide SHP Fail"
+          description="Toetatud on punktikujunditega .ZIP Shapefile arhiivid (WGS84 / EPSG:4326)"
+        />
+        <DialogBody>
           <div
             className={`dropzone ${isDragging ? 'dragging' : ''} ${parsedPreview ? 'has-file' : ''}`}
             onDragOver={handleDragOver}
@@ -177,9 +168,9 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
               </div>
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <div className="modal-footer">
+        <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {parsedPreview && (
             <Button variant="primary" onClick={handleConfirmImport}>
@@ -187,8 +178,8 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
               <span>Lisa {parsedPreview.length} mullaproovi</span>
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

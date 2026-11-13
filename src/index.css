@@ -2175,6 +2175,12 @@ body {
   color: var(--text-secondary);
 }
 
+/* Väike hajutatud selgitustekst (sisu sees) */
+.hint-text {
+  font-size: 0.78rem;
+  color: var(--text-secondary);
+}
+
 .modal-body {
   padding: 20px 24px;
   overflow-y: auto;

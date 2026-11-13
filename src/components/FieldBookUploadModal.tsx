@@ -1,6 +1,6 @@
 // src/components/FieldBookUploadModal.tsx
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { X, UploadCloud, FileSpreadsheet, Check, AlertCircle, RefreshCw, Lock } from 'lucide-react';
+import { UploadCloud, FileSpreadsheet, Check, AlertCircle, RefreshCw, Lock } from 'lucide-react';
 import type { MasterField } from '../types/fieldRegister';
 import type { RelatedParty } from '../types/party';
 import type { FarmingSeason } from '../types/season';
@@ -9,7 +9,7 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -102,22 +102,14 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
   const opsTotal = matched.reduce((n, r) => n + r.operationsCount, 0);
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <FileSpreadsheet className="text-emerald" size={24} />
-            <div>
-              <h3>Impordi põlluraamat</h3>
-              <p className="modal-subtitle">e-PRIA "Põlluraamatu väljavõte" (.xls) — iga leht on üks põld</p>
-            </div>
-          </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
-        </div>
-
-        <div className="modal-body">
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="glass-card" dismissible={!isSaving}>
+        <DialogHeader
+          icon={<FileSpreadsheet className="text-emerald" size={24} />}
+          title="Impordi põlluraamat"
+          description={'e-PRIA "Põlluraamatu väljavõte" (.xls) — iga leht on üks põld'}
+        />
+        <DialogBody>
           <div
             className={`dropzone ${isDragging ? 'dragging' : ''} ${results ? 'has-file' : ''}`}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
@@ -224,9 +216,9 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
               )}
             </div>
           )}
-        </div>
+        </DialogBody>
 
-        <div className="modal-footer">
+        <DialogFooter>
           <Button variant="ghost" onClick={onClose}>Loobu</Button>
           {built && matched.length > 0 && (
             <Button variant="primary" onClick={handleConfirm} disabled={isSaving}>
@@ -234,8 +226,8 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
               <span>Impordi {matched.length} põllu tööd hooajale {seasonsInFile.join(', ')}</span>
             </Button>
           )}
-        </div>
-      </div>
-    </div>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };
