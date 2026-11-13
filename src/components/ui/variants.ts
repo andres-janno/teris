@@ -5,17 +5,17 @@ import { cva } from 'class-variance-authority';
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
 export const buttonVariants = cva(
-  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-semibold transition-all cursor-pointer select-none disabled:pointer-events-none disabled:opacity-50 ${focusRing}`,
+  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-semibold transition-all cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
   {
     variants: {
       variant: {
         primary:
-          'border-transparent bg-linear-135 from-primary-from to-primary-to text-white shadow-primary hover:from-primary-strong hover:to-primary-from hover:shadow-primary-hover hover:-translate-y-px',
-        secondary: 'bg-secondary border-secondary-border text-foreground hover:bg-secondary-hover',
-        ghost: 'border-transparent bg-transparent text-muted-foreground hover:bg-muted hover:text-foreground',
-        danger: 'border-transparent bg-danger-solid text-white hover:bg-danger-solid/90',
+          'border-transparent bg-linear-135 from-primary-from to-primary-to text-white shadow-primary enabled:hover:from-primary-strong enabled:hover:to-primary-from enabled:hover:shadow-primary-hover enabled:hover:-translate-y-px',
+        secondary: 'bg-secondary border-secondary-border text-foreground enabled:hover:bg-secondary-hover',
+        ghost: 'border-transparent bg-transparent text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground',
+        danger: 'border-transparent bg-danger-solid text-white enabled:hover:bg-danger-solid/90',
         // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
-        'danger-ghost': 'border-transparent bg-transparent text-destructive hover:bg-destructive/15',
+        'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
       },
       size: {
         sm: 'h-7 px-3 text-xs',

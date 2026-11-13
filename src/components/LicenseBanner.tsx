@@ -10,7 +10,7 @@ export function SupportBanner({ user, onLogout }: { user: AuthUser; onLogout: ()
   return (
     <div className="license-banner support-banner" role="status">
       Tugivaade: {user.tenantName} — ainult lugemiseks, kehtib kuni {formatDateTimeTallinn(user.supportValidUntil)}
-      <Button type="button" className="support-banner-end" onClick={onLogout}>
+      <Button type="button" size="sm" className="support-banner-end" onClick={onLogout}>
         Lõpeta tugivaade
       </Button>
     </div>

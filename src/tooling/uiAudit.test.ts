@@ -146,11 +146,13 @@ describe('auditTsx: vanad nupuklassid', () => {
     const src = `<button className="btn btn-primary btn-sm">a</button>
 <button className={\`btn btn-sm \${x ? 'btn-primary' : 'btn-secondary'}\`}>b</button>
 <button className="icon-btn-ghost">c</button><button className="icon-btn-danger" /><button className="icon-btn" />
-<button className="icon-btn-ghost-sm" /><button className="btn btn-secondary btn-xs btn-icon-only" />`;
+<button className="icon-btn-ghost-sm" /><button className="btn btn-secondary btn-xs btn-icon-only" />
+<button className="icon-btn-ghost-xs btn-disabled" />`;
     expect(auditTsx(src).legacyButtons).toEqual([
       'btn', 'btn-primary', 'btn-sm', 'btn', 'btn-sm', 'btn-primary', 'btn-secondary',
       'icon-btn-ghost', 'icon-btn-danger', 'icon-btn', 'icon-btn-ghost-sm',
       'btn', 'btn-secondary', 'btn-xs', 'btn-icon-only',
+      'icon-btn-ghost-xs', 'btn-disabled',
     ]);
   });
   it('ei loe erinuppe, btn-full ega modifikaatoreid', () => {

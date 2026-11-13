@@ -29,7 +29,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || '#22c55e' }} />
         {p.num && <span className="field-num-badge">Nr {p.num}</span>}
         <strong className="fmc-name" title={p.name}>{p.name}</strong>
-        <Button type="button" variant="ghost" size="icon-sm" className="fmc-close" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
+        <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
       </div>
       <div className="fmc-rows">
         <div className="fmc-row">

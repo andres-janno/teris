@@ -58,6 +58,16 @@ describe('variants', () => {
     for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost'] as const)
       expect(v.buttonVariants({ variant })).toContain('border-transparent');
   });
+  it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
+      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const) {
+        const c = v.buttonVariants({ variant, size });
+        const tokens = c.split(/\s+/);
+        expect(c, `${variant}/${size}`).not.toContain('pointer-events-none');
+        expect(tokens, `${variant}/${size}`).toContain('disabled:cursor-not-allowed');
+        expect(tokens.filter((t) => t.startsWith('hover:')), `${variant}/${size}`).toEqual([]);
+      }
+  });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
     const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|background)$/;

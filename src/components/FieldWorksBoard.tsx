@@ -1364,7 +1364,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   ))}
                   {!workLocked && (
-                    <Button type="button" className="fw-add-entry" onClick={() => openNewEntry(selected)}>
+                    <Button type="button" onClick={() => openNewEntry(selected)}>
                       <Plus size={13} />
                       <span>Lisa kanne…</span>
                     </Button>

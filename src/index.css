@@ -405,7 +405,6 @@ body {
   width: 100%;
 }
 
-/* Ikoon jääb nähtavaks ka heledas teemas; taust tumeneb nagu kustutamisnupul */
 .usage-count-badge {
   font-size: 0.65rem;
   font-weight: 700;
@@ -7545,9 +7544,9 @@ a.history-pill:hover {
 }
 
 .fw-crop-delete-btn:hover {
-  background: color-mix(in srgb, #dc2626 12%, var(--bg-surface));
-  border-color: color-mix(in srgb, #dc2626 40%, var(--border-card));
-  color: #dc2626;
+  background: color-mix(in srgb, #dc2626 12%, var(--bg-surface)) !important;
+  border-color: color-mix(in srgb, #dc2626 40%, var(--border-card)) !important;
+  color: #dc2626 !important;
 }
 
 .fw-crop-banner+.fw-crop-banner {
@@ -8780,8 +8779,8 @@ a.history-pill:hover {
 }
 
 .fw-panel-clear-btn:hover {
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
+  color: #dc2626 !important;
+  background: rgba(220, 38, 38, 0.1) !important;
 }
 
 /* Kande aken */
