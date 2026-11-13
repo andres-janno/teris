@@ -1,4 +1,4 @@
-// src/components/ui/Dialog.tsx — ühine dialoog (asendab .modal-backdrop/.modal-content ja vaatepõhised modaalid).
+// src/components/ui/Dialog.tsx — ühine dialoog (asendab vanad modaaliklassid ja vaatepõhised modaalid).
 // Radix: fookuse lõks, Esc, taustakerimise lukk; pesastatud aknad kihistuvad DOM-järjekorra järgi.
 // Sulgemine (kasutaja otsus 2026-11-13): Esc sulgeb; taustaklõps ainult siis, kui closeOnOutsideClick (kinnitus/teade).
 import React, { createContext, useContext, useState } from 'react';
@@ -63,7 +63,7 @@ export const DialogContent: React.FC<DialogContentProps> = ({
 interface DialogHeaderProps {
   title: React.ReactNode;
   description?: React.ReactNode;
-  /** Ikoon pealkirja ees (vana .modal-title-group). */
+  /** Ikoon pealkirja ees (vana pealkirjagrupp). */
   icon?: React.ReactNode;
   /** false: sulgemisnuppu pole (nt sundparool). */
   showClose?: boolean;
