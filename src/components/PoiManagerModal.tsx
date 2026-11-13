@@ -1,9 +1,7 @@
 // src/components/PoiManagerModal.tsx
 import React, { useState, useEffect } from 'react';
 import { NumberInput } from './NumberInput';
-import { createPortal } from 'react-dom';
 import {
-  X,
   MapPin,
   Plus,
   Trash2,
@@ -15,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -50,7 +48,6 @@ interface PoiManagerModalProps {
     radiusM?: number;
   } | null;
   initialCoords?: [number, number] | null;
-  isFullPage?: boolean;
 }
 
 const CATEGORY_META: Record<PoiCategory, { label: string; emoji: string }> = {
@@ -73,7 +70,6 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   onStartPickLocation,
   initialDraft,
   initialCoords,
-  isFullPage = false,
 }) => {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [isAdding, setIsAdding] = useState(false);
@@ -115,17 +111,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
     }
   }, [initialDraft, initialCoords, isOpen]);
 
-  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
-  useEffect(() => {
-    if (!isAdding) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setIsAdding(false); setEditingId(null); }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isAdding]);
-
-  if (!isOpen && !isFullPage) return null;
+  if (!isOpen) return null;
 
   const filteredPois = selectedCategory === 'all'
     ? pois
@@ -228,7 +214,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   };
 
   const bodyContent = (
-    <div className="modal-body">
+    <div className="fullpage-board-content">
           {/* Action Bar */}
           <div className="poi-top-bar">
             {/* Category tabs */}
@@ -269,25 +255,16 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
             </div>
           </div>
 
-          {/* Asukoha lisamine/muutmine eraldi aknas registri peal (portal: registri aken on
-              glass-card, mille backdrop-filter piiraks muidu position: fixed tausta) */}
-          {isAdding && createPortal(
-            <div className="modal-backdrop sub-modal">
-            <form onSubmit={handleSubmit} className="modal-content poi-edit-modal animate-scale-up">
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  {editingId ? <Edit2 size={20} className="text-emerald" /> : <Plus size={20} className="text-emerald" />}
-                  <h3>{editingId ? `Muuda asukohta: ${name}` : 'Lisa uus asukoht'}</h3>
-                </div>
-                <Button variant="ghost" size="icon-sm"
-                  type="button"
-                  onClick={() => { setIsAdding(false); setEditingId(null); }}
-                  title="Sulge (Esc)">
-                  <X size={20} />
-                </Button>
-              </div>
-
-              <div className="modal-body">
+          {/* Asukoha lisamine/muutmine eraldi aknas registri peal */}
+          {isAdding && (
+            <Dialog open onOpenChange={(open) => { if (!open) { setIsAdding(false); setEditingId(null); } }}>
+              <DialogContent size="lg" className="poi-edit-modal">
+                <DialogForm onSubmit={handleSubmit}>
+                  <DialogHeader
+                    icon={editingId ? <Edit2 size={20} className="text-emerald" /> : <Plus size={20} className="text-emerald" />}
+                    title={editingId ? `Muuda asukohta: ${name}` : 'Lisa uus asukoht'}
+                  />
+                  <DialogBody>
 
               <div className="form-header-row">
                 <Button type="button"
@@ -403,25 +380,25 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 </div>
               </div>
 
-              </div>
+                  </DialogBody>
 
-              <div className="modal-footer">
-                <Button type="button"
-                  variant="ghost"
-                  onClick={() => {
-                    setIsAdding(false);
-                    setEditingId(null);
-                  }}>
-                  Loobu
-                </Button>
-                <Button type="submit" variant="primary">
-                  <Check size={14} />
-                  <span>{editingId ? 'Salvesta muudatused' : 'Lisa asukoht'}</span>
-                </Button>
-              </div>
-            </form>
-            </div>,
-            document.body
+                  <DialogFooter>
+                    <Button type="button"
+                      variant="ghost"
+                      onClick={() => {
+                        setIsAdding(false);
+                        setEditingId(null);
+                      }}>
+                      Loobu
+                    </Button>
+                    <Button type="submit" variant="primary">
+                      <Check size={14} />
+                      <span>{editingId ? 'Salvesta muudatused' : 'Lisa asukoht'}</span>
+                    </Button>
+                  </DialogFooter>
+                </DialogForm>
+              </DialogContent>
+            </Dialog>
           )}
 
           {/* Asukohad kaartidena (sama stiil nagu Tehnika lehel) */}
@@ -507,49 +484,22 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
         </div>
   );
 
-  if (isFullPage) {
-    return (
-      <div className="fullpage-board-view">
-        <main className="fullpage-board-main wide">
-          <div className="fullpage-board-header">
-            <div className="fullpage-title-wrap">
-              <MapPin className="text-emerald" size={26} />
-              <div>
-                <h2>Taristu</h2>
-                <p className="fullpage-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
-              </div>
-            </div>
-          </div>
-          <div className="fullpage-board-body">
-            {bodyContent}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card poi-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <MapPin className="text-emerald" size={24} />
+    <div className="fullpage-board-view">
+      <main className="fullpage-board-main wide">
+        <div className="fullpage-board-header">
+          <div className="fullpage-title-wrap">
+            <MapPin className="text-emerald" size={26} />
             <div>
-              <h3>Muud asukohad ja taristu</h3>
-              <p className="modal-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
+              <h2>Taristu</h2>
+              <p className="fullpage-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>
             </div>
           </div>
-          <Button variant="ghost" size="icon-sm" onClick={onClose}>
-            <X size={20} />
-          </Button>
         </div>
-
-        {bodyContent}
-
-        <div className="modal-footer">
-          <Button variant="ghost" onClick={onClose}>Sulge</Button>
+        <div className="fullpage-board-body">
+          {bodyContent}
         </div>
-      </div>
+      </main>
     </div>
   );
 };

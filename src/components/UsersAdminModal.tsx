@@ -1,13 +1,12 @@
 // src/components/UsersAdminModal.tsx — kasutajate haldus (ainult adminile).
 import React, { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check, Mail } from 'lucide-react';
+import { Users, UserPlus, Pencil, KeyRound, Ban, CheckCircle2, Trash2, AlertCircle, Check, Mail } from 'lucide-react';
 import { api } from '../services/api';
 import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -52,16 +51,6 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
     setNotice(null);
     void load();
   }, [isOpen, load]);
-
-  // Esc sulgeb ainult muutmis-/lisamisvormi (kasutajate nimekiri jääb avatuks).
-  useEffect(() => {
-    if (mode.kind === 'list') return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setError(null); setMode({ kind: 'list' }); }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [mode.kind]);
 
   if (!isOpen) return null;
 
@@ -150,27 +139,18 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
   const FormIcon = mode.kind === 'reset' ? KeyRound : mode.kind === 'edit' ? Pencil : UserPlus;
 
   return (
-    <div className="modal-backdrop" onClick={onClose}>
-      <div className="modal-content animate-scale-up users-admin-modal" onClick={(e) => e.stopPropagation()}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Users className="text-emerald" size={22} />
-            <h3>Kasutajad</h3>
-          </div>
-          <div className="users-admin-header-actions">
-            {!readOnly && (
-              <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>
-                <UserPlus size={15} />
-                <span>Lisa kasutaja</span>
-              </Button>
-            )}
-            <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
-              <X size={20} />
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="xl" className="users-admin-modal">
+        <DialogHeader icon={<Users className="text-emerald" size={22} />} title="Kasutajad">
+          {!readOnly && (
+            <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>
+              <UserPlus size={15} />
+              <span>Lisa kasutaja</span>
             </Button>
-          </div>
-        </div>
+          )}
+        </DialogHeader>
 
-        <div className="modal-body">
+        <DialogBody>
           {error && mode.kind === 'list' && (
             <div className="alert-box error">
               <AlertCircle size={16} />
@@ -267,30 +247,20 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
           </div>
 
           <SupportAccessPanel readOnly={readOnly} />
-        </div>
+        </DialogBody>
 
-        <div className="modal-footer">
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Sulge</Button>
-        </div>
-      </div>
+        </DialogFooter>
+      </DialogContent>
 
-      {/* Kasutaja lisamine/muutmine/parooli lähtestamine eraldi aknas registri peal
-          (portal: registri aken on modal-backdrop sees, list jääb all nähtavaks) */}
-      {mode.kind !== 'list' && createPortal(
-        // Portaali klõpsud mullivad Reacti puus registri taustani (onClick={onClose}) — peata siin.
-        <div className="modal-backdrop sub-modal" onClick={(e) => e.stopPropagation()}>
-          <form id="users-admin-form" className="modal-content users-edit-modal animate-scale-up" onSubmit={submit}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <FormIcon size={20} className="text-emerald" />
-                <h3>{formTitle}</h3>
-              </div>
-              <Button type="button" variant="ghost" size="icon-sm" onClick={() => { setError(null); setMode({ kind: 'list' }); }} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
-
-            <div className="modal-body">
+      {/* Kasutaja lisamine/muutmine/parooli lähtestamine eraldi aknas registri peal */}
+      {mode.kind !== 'list' && (
+        <Dialog open onOpenChange={(open) => { if (!open) { setError(null); setMode({ kind: 'list' }); } }}>
+          <DialogContent size="md" dismissible={!busy} className="users-edit-modal">
+            <DialogForm id="users-admin-form" onSubmit={submit}>
+              <DialogHeader icon={<FormIcon size={20} className="text-emerald" />} title={formTitle} />
+              <DialogBody>
               {error && (
                 <div className="alert-box error">
                   <AlertCircle size={16} />
@@ -337,7 +307,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                     <label htmlFor="ua-repeat">Korda parooli</label>
                     <input id="ua-repeat" type="password" className="form-input" required autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
                   </div>
-                  <p className="modal-subtitle">Kasutaja peab parooli esimesel sisselogimisel vahetama.</p>
+                  <p className="hint-text">Kasutaja peab parooli esimesel sisselogimisel vahetama.</p>
                 </>
               )}
               {(mode.kind === 'add' || (mode.kind === 'edit' && mode.user.id !== currentUserId)) && (
@@ -352,19 +322,19 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   <span>Finantsjuht (kannete ühiku kulud, kinnitamine, põldude tulemus)</span>
                 </label>
               )}
-            </div>
+              </DialogBody>
 
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</Button>
-              <Button type="submit" variant="primary" disabled={busy}>
-                <Check size={16} />
-                <span>Salvesta</span>
-              </Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => { setError(null); setMode({ kind: 'list' }); }}>Loobu</Button>
+                <Button type="submit" variant="primary" disabled={busy}>
+                  <Check size={16} />
+                  <span>Salvesta</span>
+                </Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
-    </div>
+    </Dialog>
   );
 };

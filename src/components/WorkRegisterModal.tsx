@@ -1,7 +1,6 @@
 // src/components/WorkRegisterModal.tsx — tööde register: põllutööde liigid (kulumaterjalid on laoarvestuse artiklites).
 import React, { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, ListChecks, Edit2, Trash2 } from 'lucide-react';
+import { ListChecks, Edit2, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import {
   WORK_PHASES,
@@ -10,7 +9,7 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -83,26 +82,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
   if (!isOpen) return null;
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content work-register-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-with-icon">
-            <div className="modal-icon-badge season-icon-badge">
-              <ListChecks size={20} />
-            </div>
-            <div>
-              <h3>Tööde register</h3>
-              <p className="modal-subtitle">Põllutööde liigid. PRIA põlluraamatust lahus. Kulumaterjalid on laoarvestuse artiklites.</p>
-            </div>
-          </div>
-          <div className="season-header-actions">
-            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
-              <X size={18} />
-            </Button>
-          </div>
-        </div>
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="xl" className="work-register-modal">
+        <DialogHeader
+          icon={<ListChecks size={20} className="text-emerald" />}
+          title="Tööde register"
+          description="Põllutööde liigid. PRIA põlluraamatust lahus. Kulumaterjalid on laoarvestuse artiklites."
+        />
 
-        <div className="modal-body work-register-body">
+        <DialogBody className="work-register-body">
           {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
           <div className="register-table-wrap">
             <table className="register-table work-register-table">
@@ -148,21 +136,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
               </tbody>
             </table>
           </div>
+        </DialogBody>
+      </DialogContent>
 
-        </div>
-      </div>
-
-      {workForm && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form className="modal-content animate-scale-up work-form-modal" onSubmit={saveWork}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Edit2 size={20} className="text-emerald" />
-                <h3>Muuda tööd: {workForm.name}</h3>
-              </div>
-              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setWorkForm(null)} title="Sulge"><X size={20} /></Button>
-            </div>
-            <div className="modal-body">
+      {workForm && (
+        <Dialog open onOpenChange={(open) => { if (!open) setWorkForm(null); }}>
+          <DialogContent size="md" dismissible={!busy} className="work-form-modal">
+            <DialogForm onSubmit={saveWork}>
+              <DialogHeader icon={<Edit2 size={20} className="text-emerald" />} title={`Muuda tööd: ${workForm.name}`} />
+              <DialogBody>
               <div className="form-grid">
                 <div className="form-group full-width">
                   <label htmlFor="wt-name">PRIA tegevus</label>
@@ -187,16 +169,15 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                   <span>Aktiivne (mitteaktiivset tööd põldudele ei lisata)</span>
                 </label>
               </div>
-            </div>
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={() => setWorkForm(null)}>Loobu</Button>
-              <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+              </DialogBody>
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={() => setWorkForm(null)}>Loobu</Button>
+                <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
-
-    </div>
+    </Dialog>
   );
 };

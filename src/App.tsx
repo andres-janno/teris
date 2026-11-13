@@ -1647,8 +1647,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         <Suspense fallback={null}>
           <SeasonManagerModal
             isOpen={true}
-            isFullPage={true}
-            onClose={() => changeMainView('map')}
             seasons={seasons}
             masterFields={masterFields}
             selectedYear={selectedYear}
@@ -1775,7 +1773,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         <Suspense fallback={null}>
           <PoiManagerModal
             isOpen={true}
-            isFullPage={true}
             onClose={() => changeMainView('map')}
             pois={pois}
             onAddPoi={handleAddPoi}

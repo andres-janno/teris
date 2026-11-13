@@ -1,9 +1,7 @@
 // src/components/SeasonManagerModal.tsx
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { NumberInput } from './NumberInput';
-import { createPortal } from 'react-dom';
 import {
-  X,
   Lock,
   Unlock,
   Plus,
@@ -15,14 +13,13 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
 interface SeasonManagerModalProps {
   isOpen: boolean;
-  onClose: () => void;
   seasons: FarmingSeason[];
   masterFields: MasterField[];
   selectedYear: number;
@@ -30,20 +27,17 @@ interface SeasonManagerModalProps {
   onCloseSeason: (year: number) => void;
   onReopenSeason: (year: number) => void;
   onCreateSeason: (season: FarmingSeason) => void;
-  isFullPage?: boolean;
 }
 
 export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   isOpen,
-  onClose,
   seasons,
   masterFields,
   selectedYear,
   onUpdateSeason,
   onCloseSeason,
   onReopenSeason,
-  onCreateSeason,
-  isFullPage = false
+  onCreateSeason
 }) => {
   const [isAdding, setIsAdding] = useState(false);
   const [editingYear, setEditingYear] = useState<number | null>(null);
@@ -53,16 +47,6 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   const [formYear, setFormYear] = useState<number | null>(2027);
   const [formName, setFormName] = useState<string>('Hooaeg 2027');
   const [formNotes, setFormNotes] = useState<string>('');
-
-  // Esc sulgeb ainult muutmisakna (register jääb avatuks).
-  useEffect(() => {
-    if (!isAdding) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { setIsAdding(false); setEditingYear(null); }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isAdding]);
 
   if (!isOpen) return null;
 
@@ -141,36 +125,22 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
     setEditingYear(null);
   };
 
-  if (!isOpen && !isFullPage) return null;
-
   const bodyContent = (
     <>
       {/* Add / Edit Form eraldi aknas registri peal */}
-      {isAdding && createPortal(
-        <div className="modal-backdrop sub-modal">
-        <form className="modal-content season-edit-modal animate-scale-up" onSubmit={handleSaveForm}>
-              <div className="modal-header">
-                <div className="modal-title-group">
-                  {editingLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
-                  <h3>
-                    {editingLocked
-                      ? `Lukus hooaeg: ${editingYear}`
-                      : editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'}
-                  </h3>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="icon-sm"
-                  onClick={() => { setIsAdding(false); setEditingYear(null); }}
-                  title="Sulge (Esc)"
-                >
-                  <X size={20} />
-                </Button>
-              </div>
-
-              <div className="modal-body">
-
+      {isAdding && (
+        <Dialog open onOpenChange={(open) => { if (!open) { setIsAdding(false); setEditingYear(null); } }}>
+          <DialogContent size="md" className="season-edit-modal">
+            <DialogForm onSubmit={handleSaveForm}>
+              <DialogHeader
+                icon={editingLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
+                title={
+                  editingLocked
+                    ? `Lukus hooaeg: ${editingYear}`
+                    : editingYear ? `Muuda hooaega: ${editingYear}` : 'Lisa uus hooaeg'
+                }
+              />
+              <DialogBody>
               <fieldset className="season-form-fieldset" disabled={editingLocked}>
               <div className="form-grid season-form-grid">
                 <div className="form-group">
@@ -212,25 +182,26 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 </div>
               </div>
               </fieldset>
+              </DialogBody>
 
-              </div>
-
-              {!editingLocked && <div className="modal-footer">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => { setIsAdding(false); setEditingYear(null); }}
-                >
-                  Loobu
-                </Button>
-                <Button type="submit" variant="primary">
-                  {editingYear ? 'Salvesta muudatused' : 'Loo hooaeg'}
-                </Button>
-              </div>}
-            </form>
-            </div>,
-            document.body
-          )}
+              {!editingLocked && (
+                <DialogFooter>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={() => { setIsAdding(false); setEditingYear(null); }}
+                  >
+                    Loobu
+                  </Button>
+                  <Button type="submit" variant="primary">
+                    {editingYear ? 'Salvesta muudatused' : 'Loo hooaeg'}
+                  </Button>
+                </DialogFooter>
+              )}
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
+      )}
 
           {/* Hooaegade tabel: üks rida hooaja kohta, et hooaegu oleks lihtne võrrelda */}
           <div className="seasons-table-wrap">
@@ -335,65 +306,28 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
     </>
   );
 
-  if (isFullPage) {
-    return (
-      <div className="fullpage-board-view">
-        <main className="fullpage-board-main">
-          <div className="fullpage-board-header">
-            <div className="fullpage-title-wrap">
-              <CalendarDays className="text-emerald" size={26} />
-              <div>
-                <h2>Hooajad</h2>
-                <p className="fullpage-subtitle">Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt.</p>
-              </div>
-            </div>
-            {!isAdding && (
-              <Button variant="primary" onClick={handleStartAdd}>
-                <Plus size={16} />
-                <span>Loo uus hooaeg</span>
-              </Button>
-            )}
-          </div>
-          <div className="fullpage-board-body">
-            {bodyContent}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content season-manager-modal glass-modal">
-        <div className="modal-header">
-          <div className="modal-title-with-icon">
-            <div className="modal-icon-badge season-icon-badge">
-              <CalendarDays size={20} />
-            </div>
+    <div className="fullpage-board-view">
+      <main className="fullpage-board-main">
+        <div className="fullpage-board-header">
+          <div className="fullpage-title-wrap">
+            <CalendarDays className="text-emerald" size={26} />
             <div>
-              <h3>Hooaegade register</h3>
-              <p className="modal-subtitle">
-                Lukus hooaeg on muudatusteks suletud. Importimisel luuakse puuduv hooaeg automaatselt.
-              </p>
+              <h2>Hooajad</h2>
+              <p className="fullpage-subtitle">Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt.</p>
             </div>
           </div>
-          <div className="season-header-actions">
-            {!isAdding && (
-              <Button variant="primary" size="sm" onClick={handleStartAdd}>
-                <Plus size={14} />
-                <span>Loo uus hooaeg</span>
-              </Button>
-            )}
-            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
-              <X size={18} />
+          {!isAdding && (
+            <Button variant="primary" onClick={handleStartAdd}>
+              <Plus size={16} />
+              <span>Loo uus hooaeg</span>
             </Button>
-          </div>
+          )}
         </div>
-
-        <div className="modal-body season-modal-body">
+        <div className="fullpage-board-body">
           {bodyContent}
         </div>
-      </div>
+      </main>
     </div>
   );
 };
