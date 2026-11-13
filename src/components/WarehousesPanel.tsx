@@ -1,12 +1,11 @@
 // src/components/WarehousesPanel.tsx — ladude register (finantsjuht ja admin): nimi, põhiladu, aktiivsus, asukoht kaardil
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Plus, Edit2, Trash2, X, Warehouse as WarehouseIcon, MapPin } from 'lucide-react';
+import { Plus, Edit2, Trash2, Warehouse as WarehouseIcon, MapPin } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { PointOfInterest } from '../types/poi';
 import type { Warehouse } from '../types/stock';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -23,13 +22,6 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
   useEffect(() => {
     api.getPois().then(setPois).catch(() => setPois([]));
   }, []);
-
-  useEffect(() => {
-    if (!form) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); setForm(null); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [form]);
 
   // Laohooned eespool; juba teise laoga seotud huvipunktid välja
   const takenPoi = new Set(warehouses.filter((w) => w.id !== form?.id && w.poiId).map((w) => w.poiId));
@@ -116,17 +108,12 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
         </table>
       </div>
 
-      {form && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form className="modal-content animate-scale-up work-form-modal" onSubmit={save}>
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <WarehouseIcon size={20} className="text-emerald" />
-                <h3>{form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'}</h3>
-              </div>
-              <Button type="button" variant="ghost" size="icon-sm" onClick={() => setForm(null)} title="Sulge (Esc)"><X size={20} /></Button>
-            </div>
-            <div className="modal-body">
+      {form && (
+        <Dialog open onOpenChange={(open) => { if (!open) setForm(null); }}>
+          <DialogContent size="md" dismissible={!busy}>
+            <DialogForm onSubmit={save}>
+            <DialogHeader icon={<WarehouseIcon size={20} className="text-emerald" />} title={form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'} />
+            <DialogBody>
               <div className="form-grid">
                 <div className="form-group full-width">
                   <label htmlFor="wh-name">Nimi *</label>
@@ -152,14 +139,14 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
                   <span>Aktiivne (kannetes valitav)</span>
                 </label>
               </div>
-            </div>
-            <div className="modal-footer">
+            </DialogBody>
+            <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setForm(null)}>Loobu</Button>
               <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+            </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
     </>
   );

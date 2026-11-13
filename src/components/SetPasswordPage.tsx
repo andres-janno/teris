@@ -58,14 +58,14 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 <AlertCircle size={16} />
                 <span>{invalid}</span>
               </div>
-              <p className="modal-subtitle">Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
+              <p className="hint-text">Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
               <Button type="button" variant="primary" className="btn-full login-primary-btn" onClick={onCancel}>Sisselogimise lehele</Button>
             </>
           ) : username === null ? (
-            <p className="modal-subtitle">Kontrollin linki…</p>
+            <p className="hint-text">Kontrollin linki…</p>
           ) : (
             <>
-              <p className="modal-subtitle">
+              <p className="hint-text">
                 Määra parool kasutajale <strong>{username}</strong>.
               </p>
               {error && (

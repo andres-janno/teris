@@ -1,11 +1,10 @@
 // src/components/ArticleMergeDialog.tsx — kulumaterjali asendamine teisega (nt PRIA kirjaviga "Stabilan 750SL" → "Stabilan 750 SL")
-import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { GitMerge, X } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { GitMerge } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import type { Article } from '../types/fieldWork';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
 
 // Võrdlusvõti: tõstutundetu, tühikute ja kirjavahemärkideta ("Stabilan 750SL" = "Stabilan 750 SL")
 const looseKey = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -36,17 +35,6 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
   const [busy, setBusy] = useState(false);
   const target = options.find((m) => m.id === targetId);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
   const merge = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!target) return;
@@ -62,17 +50,12 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up work-form-modal" onSubmit={merge}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <GitMerge size={20} className="text-emerald" />
-            <h3>Asenda materjal: {source.name}</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" dismissible={!busy}>
+        <DialogForm onSubmit={merge}>
+        <DialogHeader icon={<GitMerge size={20} className="text-emerald" />} title={`Asenda materjal: ${source.name}`} />
+        <DialogBody>
           <div className="form-group">
             <label htmlFor="mm-target">Asenda materjaliga *</label>
             <select id="mm-target" className="form-input" required autoFocus value={targetId} onChange={(e) => setTargetId(e.target.value)}>
@@ -85,13 +68,13 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
             „{source.name}“ kustutatakse ja tema nimi jääb valitud materjalile varunimeks, et PRIA uuesti importimisel seotaks see kohe õige materjaliga.
             {target && target.unit !== source.unit && ` Ühikud erinevad (${source.unit} → ${target.unit}): laokannete kogused teisendatakse, kannete kogused jäävad oma ühikusse.`}
           </p>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
           <Button type="submit" variant="primary" disabled={busy || !target}>Asenda</Button>
-        </div>
-      </form>
-    </div>,
-    document.body
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };

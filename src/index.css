@@ -10841,7 +10841,7 @@ td.stock-qty-out { color: #dc2626; }
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */
 .article-form-modal .form-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 .article-form-modal .form-input { width: 100%; min-width: 0; box-sizing: border-box; text-overflow: ellipsis; }
-.article-form-modal .modal-body { overflow-x: hidden; }
+.article-form-body { overflow-x: hidden; }
 
 /* Kulumaterjali vormi PRIA plokk */
 .form-section-title {
@@ -10860,8 +10860,9 @@ td.stock-qty-out { color: #dc2626; }
 .article-merge-info { margin-top: 10px; font-size: 0.8rem; line-height: 1.45; }
 
 /* Saagipartii aken: plokid ei tohi kerimisaknas kokku tõmbuda (muidu jääb tabelist üks rida) */
-.harvest-lot-modal .modal-body > * { flex-shrink: 0; }
-.harvest-lot-modal .modal-body { gap: 20px; }
+.harvest-lot-body > * { flex-shrink: 0; }
+/* !important: ui/DialogBody gap-4 utiliit võidaks legacy-kihi reegli */
+.harvest-lot-body { gap: 20px !important; }
 .harvest-lot-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; gap: 12px; align-items: end; }
 .harvest-lot-head .form-input { width: 100%; min-width: 0; box-sizing: border-box; }
 .harvest-lot-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }

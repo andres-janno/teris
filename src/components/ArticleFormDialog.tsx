@@ -1,7 +1,6 @@
 // src/components/ArticleFormDialog.tsx — artikli lisamine/muutmine (Artiklite leht ja Tööde register)
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Edit2, X } from 'lucide-react';
+import { Edit2 } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { Article, ArticleCategory } from '../types/fieldWork';
@@ -9,7 +8,7 @@ import type { Warehouse } from '../types/stock';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, articleFieldRules, sanitizeArticleFields, type ArticleSystemKind } from '../services/articleRules';
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
 
 // Tekstiväli kasvab sisu järgi; field-sizing'ut mittetoetavas brauseris seatakse kõrgus käsitsi
 const autoGrow = (el: HTMLTextAreaElement | null) => {
@@ -90,17 +89,6 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
     api.getWarehouses().then(setWarehouses).catch(() => setWarehouses([]));
   }, []);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
   const save = async (e: React.FormEvent) => {
     e.preventDefault();
     // Liigiga mittesobivad väljad tühjendatakse (nt liigi muutmisel)
@@ -134,17 +122,12 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up work-form-modal article-form-modal" onSubmit={save}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Edit2 size={20} className="text-emerald" />
-            <h3>{form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'}</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="article-form-modal" dismissible={!busy}>
+        <DialogForm onSubmit={save}>
+        <DialogHeader icon={<Edit2 size={20} className="text-emerald" />} title={form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'} />
+        <DialogBody className="article-form-body">
           <div className="form-grid">
             <div className="form-group full-width">
               <label htmlFor="mt-name">Nimi *</label>
@@ -281,13 +264,13 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
               <span>Aktiivne (kannetes valitav)</span>
             </label>
           </div>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
           <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
-        </div>
-      </form>
-    </div>,
-    document.body
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };

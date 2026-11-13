@@ -1,7 +1,6 @@
 // src/components/StockDocumentDialog.tsx — laokande vorm: arvele võtmine, mahakandmine, ülekanne (päis + read)
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Plus, Trash2, X, ArrowRightLeft } from 'lucide-react';
+import { Plus, Trash2, ArrowRightLeft } from 'lucide-react';
 import { formatQty } from '../services/units';
 import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
@@ -13,7 +12,7 @@ import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
 
 interface Row { articleId: string; quantity: string; amount: string }
 const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
@@ -68,12 +67,6 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
       .catch(() => setLevels(new Map()));
   }, [warehouseId]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
   // Viimase rea viimaselt väljalt viib Tab "Lisa rida" nupule (Safari jätab nupud Tab-iga muidu vahele)
   const addRowRef = useRef<HTMLButtonElement>(null);
   const tabToAddRow = (i: number) => (e: React.KeyboardEvent) => {
@@ -108,17 +101,12 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up stock-doc-modal" onSubmit={save}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <ArrowRightLeft size={20} className="text-emerald" />
-            <h3>{initial ? 'Muuda: ' : ''}{STOCK_DOC_KIND_LABEL[kind]}</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+        <DialogForm onSubmit={save}>
+        <DialogHeader icon={<ArrowRightLeft size={20} className="text-emerald" />} title={`${initial ? 'Muuda: ' : ''}${STOCK_DOC_KIND_LABEL[kind]}`} />
+        <DialogBody>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="sd-date">Kuupäev *</label>
@@ -231,13 +219,13 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </Button>
             {kind === 'RECEIPT' && <span>Kokku: <strong>{fmtEur(total)}</strong></span>}
           </div>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
           <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
-        </div>
-      </form>
-    </div>,
-    document.body
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };

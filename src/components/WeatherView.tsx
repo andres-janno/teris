@@ -82,7 +82,7 @@ export const WeatherView: React.FC = () => {
         </div>
 
         <div className="fullpage-board-body">
-          <div className="modal-body weather-body">
+          <div className="fullpage-board-content weather-body">
             {error && <div className="alert-box error">{error}</div>}
             {loading && <div className="alert-box info">Ilmaandmeid laetakse — esmalaadimine võtab kuni mõne tunni.</div>}
 

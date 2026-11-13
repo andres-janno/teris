@@ -1,7 +1,6 @@
 // src/components/HarvestLotDialog.tsx — saagipartii vaade: kanded, kaalumised, kuivatuskulud, sulgemine
 import React, { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Wheat, X, Trash2 } from 'lucide-react';
+import { Wheat, Trash2 } from 'lucide-react';
 import { api } from '../services/api';
 import { formatQty } from '../services/units';
 import { formatDate, todayTallinn } from '../services/dateFormat';
@@ -12,7 +11,7 @@ import type { Crop } from '../types/crop';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -56,12 +55,6 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
     if (lotId) load(lotId).catch((e) => void alertDialog(errorText(e)));
     else api.getCrops().then(setCrops).catch(() => setCrops([]));
   }, [lotId, load]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); if (!busy) onClose(); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose, busy]);
 
   // Tegevus: lukk (busy), vea korral dialoog, õnnestumisel uuesti laadimine
   const run = async (fn: () => Promise<void>, refresh = true) => {
@@ -141,20 +134,15 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
     <div className="finance-kpi-card"><span className="finance-kpi-label">{label}</span><span className="finance-kpi-value num">{value}</span></div>
   );
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content animate-scale-up stock-doc-modal harvest-lot-modal">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Wheat size={20} className="text-emerald" />
-            <div>
-              <h3>{lot ? `Saagipartii: ${lot.name}` : 'Uus saagipartii'}</h3>
-              {lot && <p className="modal-subtitle">{lot.cropName} · {lot.seasonYear} · {HARVEST_LOT_STATUS_LABEL[lot.status]}</p>}
-            </div>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+        <DialogHeader
+          icon={<Wheat size={20} className="text-emerald" />}
+          title={lot ? `Saagipartii: ${lot.name}` : 'Uus saagipartii'}
+          description={lot ? `${lot.cropName} · ${lot.seasonYear} · ${HARVEST_LOT_STATUS_LABEL[lot.status]}` : undefined}
+        />
+        <DialogBody className="harvest-lot-body">
           <form onSubmit={save} className="harvest-lot-head">
             <div className="form-group">
               <label htmlFor="hl-name">Nimi *</label>
@@ -325,19 +313,18 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
               </section>
             </>
           )}
-        </div>
+        </DialogBody>
         {lot && (
-          <div className="modal-footer">
+          <DialogFooter>
             {lot.entries.length === 0 && (
               <Button type="button" variant="ghost" disabled={busy} onClick={() => void removeLot()}>Kustuta partii</Button>
             )}
             {closed
               ? <Button type="button" disabled={busy} onClick={() => void run(async () => { await api.reopenHarvestLot(lot.id); })}>Ava uuesti</Button>
               : <Button type="button" variant="primary" disabled={busy} onClick={() => void closeLot()}>Sulge partii</Button>}
-          </div>
+          </DialogFooter>
         )}
-      </div>
-    </div>,
-    document.body
+      </DialogContent>
+    </Dialog>
   );
 };

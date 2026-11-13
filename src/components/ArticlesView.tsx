@@ -154,7 +154,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
         </div>
 
         <div className="fullpage-board-body">
-          <div className="modal-body">
+          <div className="fullpage-board-content">
             {canManageFinance && (
               <div className="category-filter-tabs articles-tabs">
                 <button type="button" className={`filter-tab ${tab === 'articles' ? 'active' : ''}`} onClick={() => setTab('articles')}>Artiklid</button>

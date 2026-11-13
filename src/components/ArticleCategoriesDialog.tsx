@@ -1,13 +1,12 @@
 // src/components/ArticleCategoriesDialog.tsx — artikli liikide haldus (finantsjuht / admin).
 // Süsteemset liiki saab ümber nimetada ja peita, mitte kustutada ega teise rühma viia.
 import React, { useCallback, useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Tags, X, Plus, Trash2, Lock } from 'lucide-react';
+import { Tags, Plus, Trash2, Lock } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { ArticleCategory } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -24,17 +23,6 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
     api.getArticleCategories().then(setRows).catch((err) => alertDialog(errorText(err)));
   }, []);
   useEffect(() => { reload(); }, [reload]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
 
   const save = async (c: Partial<ArticleCategory>) => {
     try {
@@ -66,17 +54,11 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content animate-scale-up article-categories-modal">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Tags size={20} className="text-emerald" />
-            <h3>Artikli kategooriad</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="article-categories-modal">
+        <DialogHeader icon={<Tags size={20} className="text-emerald" />} title="Artikli kategooriad" />
+        <DialogBody>
           {ARTICLE_GROUPS.map((g) => (
             <section key={g} className="article-categories-group">
               <h4>{ARTICLE_GROUP_LABEL[g]}</h4>
@@ -117,12 +99,11 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
             <input className="form-input" placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <Button type="submit" variant="primary" size="sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></Button>
           </form>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Sulge</Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

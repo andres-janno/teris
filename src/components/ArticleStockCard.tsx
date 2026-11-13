@@ -1,7 +1,6 @@
 // src/components/ArticleStockCard.tsx — materjali laokaart: liikumised kuupäeva järjekorras, jooksev seis, maksumus
 import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Package, AlertTriangle } from 'lucide-react';
+import { Package, AlertTriangle } from 'lucide-react';
 import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
@@ -11,7 +10,7 @@ import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Button } from './ui';
+import { Dialog, DialogBody, DialogContent, DialogHeader } from './ui';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -48,23 +47,11 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
     return () => { alive = false; };
   }, [article.id, warehouseId]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); onClose(); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content animate-scale-up stock-card-modal">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Package size={20} className="text-emerald" />
-            <h3>Laokaart: {article.name}</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="stock-card-modal">
+        <DialogHeader icon={<Package size={20} className="text-emerald" />} title={`Laokaart: ${article.name}`} />
+        <DialogBody>
           <div className="register-actions-bar">
             <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
               <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
@@ -116,9 +103,8 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
               </tbody>
             </table>
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 };

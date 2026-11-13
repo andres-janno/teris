@@ -1,8 +1,7 @@
 // src/components/InventoryDialog.tsx — inventuur: lao kaubad arvestusliku seisuga, tegelik seis sisestusväljas.
 // Tühi tegelik seis = rida ei salvestata; 0 = kogu seis maha. Vahe ja maksumuse arvutab server ümberarvutusel.
 import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { ClipboardCheck, X } from 'lucide-react';
+import { ClipboardCheck } from 'lucide-react';
 import { formatQty } from '../services/units';
 import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
@@ -12,7 +11,7 @@ import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { InventoryPreviewRow, StockDocument, Warehouse } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -53,12 +52,6 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
       .catch((e) => { if (alive) { setLoading(false); void alertDialog(e instanceof Error ? e.message : 'Arvestusliku seisu laadimine ebaõnnestus'); } });
     return () => { alive = false; };
   }, [warehouseId, date, initial?.id]);
-
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') { e.stopPropagation(); if (!busy) onClose(); } };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose, busy]);
 
   const rows = useMemo(() => {
     const listed = new Set(preview.map((p) => p.articleId));
@@ -120,17 +113,12 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up stock-doc-modal" onSubmit={save}>
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <ClipboardCheck size={20} className="text-emerald" />
-            <h3>{initial ? 'Muuda: ' : ''}Inventuur</h3>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+        <DialogForm onSubmit={save}>
+        <DialogHeader icon={<ClipboardCheck size={20} className="text-emerald" />} title={`${initial ? 'Muuda: ' : ''}Inventuur`} />
+        <DialogBody>
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="inv-date">Kuupäev *</label>
@@ -199,13 +187,13 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
             </select>
             <span>Puudujääk: <strong>{fmtEur(shortage)}</strong> · Ülejääk: <strong>{fmtEur(surplus)}</strong></span>
           </div>
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
           <Button type="submit" variant="primary" disabled={busy || loading}>Salvesta</Button>
-        </div>
-      </form>
-    </div>,
-    document.body
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };
