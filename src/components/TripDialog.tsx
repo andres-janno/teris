@@ -1,8 +1,7 @@
 // src/components/TripDialog.tsx — ühe sõidu aken: rada kaardil, läbitud kohad, mõõdikud ja märkus (ainus muudetav väli).
-import React, { useEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useState } from 'react';
 import L from 'leaflet';
-import { Route, X } from 'lucide-react';
+import { Route } from 'lucide-react';
 import type { Trip, TripStopInfo } from '../types/fleet';
 import { api } from '../services/api';
 import { BASE_MAPS } from '../services/maaAmetLayers';
@@ -10,7 +9,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -31,23 +30,16 @@ const timeOnly = (iso: string) => formatDateTime(iso).slice(11);
 const minutesText = (m: number) => formatDuration(new Date(0).toISOString(), new Date(m * 60_000).toISOString());
 
 export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork, canDelete = false, onChanged }) => {
-  const mapDivRef = useRef<HTMLDivElement>(null);
+  // Kaardi element olekus: dialoogi sisu portaalitakse alles pärast esimest renderdust, siis pole ref veel olemas.
+  const [mapEl, setMapEl] = useState<HTMLDivElement | null>(null);
   const [notes, setNotes] = useState(trip.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trackError, setTrackError] = useState<string | null>(null);
 
   useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
-    };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [onClose]);
-
-  useEffect(() => {
-    if (!mapDivRef.current) return;
-    const map = L.map(mapDivRef.current, { zoomControl: true, attributionControl: true });
+    if (!mapEl) return;
+    const map = L.map(mapEl, { zoomControl: true, attributionControl: true });
     const base = BASE_MAPS['maaamet-pohikaart'];
     L.tileLayer(base.url, {
       tms: base.tms ?? false, attribution: base.attribution,
@@ -78,7 +70,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
     }).catch((e) => { if (!cancelled) setTrackError(e.message); });
     const t = window.setTimeout(() => map.invalidateSize(), 250);
     return () => { cancelled = true; window.clearTimeout(t); if (onZoom) map.off('zoomend', onZoom); map.remove(); };
-  }, [trip.id, trip.start.lat, trip.start.lng, trip.end.lat, trip.end.lng]);
+  }, [mapEl, trip.id, trip.start.lat, trip.start.lng, trip.end.lat, trip.end.lng]);
 
   const save = async () => {
     setSaving(true);
@@ -146,19 +138,13 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
     details.push(['Mootoritunnid', `${formatQty(trip.engineHoursStart)} → ${formatQty(trip.engineHoursEnd ?? trip.engineHoursStart)} h`]);
   }
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content fleet-edit-modal animate-scale-up trip-dialog">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Route size={20} className="text-emerald" />
-            <h3>{who}{trip.implementName ? ` + ${trip.implementName}` : ''}</h3>
-          </div>
-          <Button variant="ghost" size="icon-sm" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="fleet-edit-modal trip-dialog" dismissible={!saving}>
+        <DialogHeader icon={<Route size={20} className="text-emerald" />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
+        <DialogBody>
           {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
-          <div ref={mapDivRef} className="trip-dialog-map" />
+          <div ref={setMapEl} className="trip-dialog-map" />
           {trackError && <div className="auth-error-banner">{trackError}</div>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
           <div className="trip-stops">
@@ -281,8 +267,8 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
             <textarea className="form-input" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </div>
           {error && <div className="auth-error-banner">{error}</div>}
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           {canDelete && !trip.deletedAt && (
             <Button type="button" variant="danger" style={{ marginRight: 'auto' }} onClick={remove} disabled={saving}>Kustuta sõit</Button>
           )}
@@ -293,9 +279,8 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           <Button type="button" variant="primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
             {saving ? 'Salvestan...' : 'Salvesta märkus'}
           </Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

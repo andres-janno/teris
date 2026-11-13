@@ -1744,7 +1744,6 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           canManageFinance={user.isAdmin || user.isFinanceManager}
           isAdmin={user.isAdmin}
           isOpen={true}
-          isFullPage={true}
           vehicles={rawVehicles}
           implementsList={implementsList}
           devices={devices}

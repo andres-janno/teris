@@ -1,9 +1,7 @@
 // src/components/VehicleTracker.tsx
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { createPortal } from 'react-dom';
 import { NumberInput } from './NumberInput';
 import {
-  X,
   Tractor,
   Fuel,
   Battery,
@@ -44,7 +42,7 @@ import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 // Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
 const FRESHNESS_LEGEND = [
@@ -67,7 +65,6 @@ const deviceFreshness = (iso?: string | null): { cls: string; text: string } => 
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
-  isFullPage?: boolean;
   onClose?: () => void;
   vehicles: Vehicle[];
   implementsList: Implement[];
@@ -267,7 +264,6 @@ const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
 
 export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   isOpen = true,
-  isFullPage = false,
   onClose,
   vehicles,
   implementsList,
@@ -515,10 +511,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   }, []);
 
   useEffect(() => {
-    if (isOpen || isFullPage) {
+    if (isOpen) {
       loadImplementAssignments();
     }
-  }, [isOpen, isFullPage, loadImplementAssignments]);
+  }, [isOpen, loadImplementAssignments]);
 
   // Telemeetriaseadmete seoste register
   const [deviceAssignments, setDeviceAssignments] = useState<DeviceAssignment[]>([]);
@@ -537,10 +533,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   }, [telemetryEnabled]);
 
   useEffect(() => {
-    if (isOpen || isFullPage) {
+    if (isOpen) {
       loadDeviceAssignments();
     }
-  }, [isOpen, isFullPage, loadDeviceAssignments]);
+  }, [isOpen, loadDeviceAssignments]);
 
   // Kaardilt seadme paigaldamine/vahetamine/eemaldamine → kirje seoste registrisse
   const assignDevice = (deviceId: string, vehicleId?: string, implementId?: string) => {
@@ -578,23 +574,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     }, 400);
   };
 
-  // Esc sulgeb ainult lisamis-/muutmisvormi (register jääb avatuks).
-  useEffect(() => {
-    if (!isAddingNew) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setIsAddingNew(false);
-        setEditingVehicleId(null);
-        setEditingImplementId(null);
-        setEditingDeviceId(null);
-        setEditingAssignmentId(null);
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [isAddingNew]);
-
-  if (!isOpen && !isFullPage) return null;
+  if (!isOpen) return null;
 
   const closeForm = () => {
     setIsAddingNew(false);
@@ -914,557 +894,528 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         )}
       </div>
 
-      {/* ADD FORMS eraldi aknas registri peal (portal: registri aken on glass-card,
-              mille backdrop-filter piiraks muidu position: fixed tausta) */}
-      {isAddingNew && activeTab === 'vehicles' && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form onSubmit={handleCreateVehicle} className="modal-content fleet-edit-modal animate-scale-up">
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Tractor size={20} className="text-emerald" />
-                <h3>{editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'}</h3>
-              </div>
-              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
+      {/* ADD FORMS eraldi aknas registri peal */}
+      {isAddingNew && activeTab === 'vehicles' && (
+        <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
+          <DialogContent size="lg" className="fleet-edit-modal">
+            <DialogForm onSubmit={handleCreateVehicle}>
+              <DialogHeader icon={<Tractor size={20} className="text-emerald" />} title={editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'} />
 
-            <div className="modal-body">
+              <DialogBody>
 
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Masina nimi *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="nt John Deere 8R 410"
-                    value={vName}
-                    onChange={(e) => setVName(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Liik</label>
-                  <CategoryInput
-                    id="vehicle-category-options"
-                    value={vCategory}
-                    onChange={setVCategory}
-                    options={vehicleCategories}
-                    placeholder="Vali olemasolev või sisesta uus"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Tootja & Mudel</label>
-                  <div className="input-split">
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Masina nimi *</label>
                     <input
                       type="text"
-                      placeholder="John Deere"
-                      value={vManufacturer}
-                      onChange={(e) => setVManufacturer(e.target.value)}
-                      className="form-input"
-                    />
-                    <input
-                      type="text"
-                      placeholder="8R 410"
-                      value={vModel}
-                      onChange={(e) => setVModel(e.target.value)}
+                      required
+                      placeholder="nt John Deere 8R 410"
+                      value={vName}
+                      onChange={(e) => setVName(e.target.value)}
                       className="form-input"
                     />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>Võimsus (kW)</label>
-                  <NumberInput
-                    min={0}
-                    placeholder="nt 302"
-                    value={vPowerKw === '' ? null : Number(vPowerKw)}
-                    onChange={(v) => setVPowerKw(v == null ? '' : String(v))}
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Masina tüüp ja värv</label>
-                  <div className="input-split">
-                    <select
-                      value={vType}
-                      onChange={(e) => setVType(e.target.value as VehicleType)}
-                      className="form-input"
-                    >
-                      {(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[]).map((t) => (
-                        <option key={t} value={t}>{VEHICLE_TYPE_LABELS[t]}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="color"
-                      value={vColor}
-                      onChange={(e) => setVColor(e.target.value)}
-                      className="form-input"
-                      style={{ padding: '2px', height: '36px' }}
-                      title="Kaardimarkeri värv"
+                  <div className="form-group">
+                    <label>Liik</label>
+                    <CategoryInput
+                      id="vehicle-category-options"
+                      value={vCategory}
+                      onChange={setVCategory}
+                      options={vehicleCategories}
+                      placeholder="Vali olemasolev või sisesta uus"
                     />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>Registrinumber</label>
-                  <input
-                    type="text"
-                    placeholder="4821 TH"
-                    value={vPlate}
-                    onChange={(e) => setVPlate(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>VIN / Seerianumber</label>
-                  <input
-                    type="text"
-                    placeholder="nt 1RW8R410JKD012345"
-                    value={vSerial}
-                    onChange={(e) => setVSerial(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="v-year">Väljalaskeaasta</label>
-                  <NumberInput id="v-year" integer min={1900} max={2100} placeholder="nt 2012" value={vYear} onChange={setVYear} />
-                </div>
-                <DepreciationFields
-                  date={vAcqDate}
-                  onDateChange={setVAcqDate}
-                  cost={vCost}
-                  onCostChange={setVCost}
-                  rate={vDepRate}
-                  onRateChange={setVDepRate}
-                  method={vDepMethod}
-                  onMethodChange={setVDepMethod}
-                />
-                <ResourceCostFields
-                  serviceKind="MACHINE_TIME" articles={costArticles}
-                  serviceArticleId={vServiceId} onServiceChange={setVServiceId}
-                  hourlyRate={vRate} onRateChange={setVRate} canManageFinance={canManageFinance}
-                  fuelArticleId={vFuelId} onFuelChange={setVFuelId}
-                />
-                <div className="form-group">
-                  <label htmlFor="v-tank">Paagi maht (l)</label>
-                  <NumberInput
-                    id="v-tank"
-                    min={0}
-                    placeholder="nt 600"
-                    value={vTankL === '' ? null : Number(vTankL)}
-                    onChange={(v) => setVTankL(v == null ? '' : String(v))}
-                  />
-                </div>
-                <div className="form-group full-width">
-                  <label>Märkused</label>
-                  <AutoResizeTextarea
-                    placeholder="Märkused masina kohta (nt hooldusvajadus, eriseadistus jne)..."
-                    value={vNotes}
-                    onChange={(e) => setVNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-
-            </div>
-
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
-              <Button type="submit" variant="primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</Button>
-            </div>
-          </form>
-        </div>,
-        document.body
-      )}
-
-      {isAddingNew && activeTab === 'implements' && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form onSubmit={handleCreateImplement} className="modal-content fleet-edit-modal animate-scale-up">
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Wrench size={20} className="text-emerald" />
-                <h3>{editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'}</h3>
-              </div>
-              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
-
-            <div className="modal-body">
-
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Haakeriista nimi *</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="nt Väderstad Tempo L 16"
-                    value={impName}
-                    onChange={(e) => setImpName(e.target.value)}
-                    className="form-input"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Liik</label>
-                  <CategoryInput
-                    id="implement-category-options"
-                    value={impCategory}
-                    onChange={setImpCategory}
-                    options={implementCategories}
-                    placeholder="Vali olemasolev või sisesta uus"
-                  />
-                </div>
-                <div className="form-group">
-                  <label>Tootja & Mudel</label>
-                  <div className="input-split">
-                    <input
-                      type="text"
-                      placeholder="Väderstad"
-                      value={impManufacturer}
-                      onChange={(e) => setImpManufacturer(e.target.value)}
-                      className="form-input"
+                  <div className="form-group">
+                    <label>Tootja & Mudel</label>
+                    <div className="input-split">
+                      <input
+                        type="text"
+                        placeholder="John Deere"
+                        value={vManufacturer}
+                        onChange={(e) => setVManufacturer(e.target.value)}
+                        className="form-input"
+                      />
+                      <input
+                        type="text"
+                        placeholder="8R 410"
+                        value={vModel}
+                        onChange={(e) => setVModel(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Võimsus (kW)</label>
+                    <NumberInput
+                      min={0}
+                      placeholder="nt 302"
+                      value={vPowerKw === '' ? null : Number(vPowerKw)}
+                      onChange={(v) => setVPowerKw(v == null ? '' : String(v))}
                     />
+                  </div>
+                  <div className="form-group">
+                    <label>Masina tüüp ja värv</label>
+                    <div className="input-split">
+                      <select
+                        value={vType}
+                        onChange={(e) => setVType(e.target.value as VehicleType)}
+                        className="form-input"
+                      >
+                        {(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[]).map((t) => (
+                          <option key={t} value={t}>{VEHICLE_TYPE_LABELS[t]}</option>
+                        ))}
+                      </select>
+                      <input
+                        type="color"
+                        value={vColor}
+                        onChange={(e) => setVColor(e.target.value)}
+                        className="form-input"
+                        style={{ padding: '2px', height: '36px' }}
+                        title="Kaardimarkeri värv"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Registrinumber</label>
                     <input
                       type="text"
-                      placeholder="Tempo L 16"
-                      value={impModel}
-                      onChange={(e) => setImpModel(e.target.value)}
+                      placeholder="4821 TH"
+                      value={vPlate}
+                      onChange={(e) => setVPlate(e.target.value)}
                       className="form-input"
                     />
                   </div>
-                </div>
-                <div className="form-group">
-                  <label>Töölaius (m)</label>
-                  <NumberInput
-                    decimals={1}
-                    min={0}
-                    value={impWidth}
-                    onChange={setImpWidth}
+                  <div className="form-group">
+                    <label>VIN / Seerianumber</label>
+                    <input
+                      type="text"
+                      placeholder="nt 1RW8R410JKD012345"
+                      value={vSerial}
+                      onChange={(e) => setVSerial(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="v-year">Väljalaskeaasta</label>
+                    <NumberInput id="v-year" integer min={1900} max={2100} placeholder="nt 2012" value={vYear} onChange={setVYear} />
+                  </div>
+                  <DepreciationFields
+                    date={vAcqDate}
+                    onDateChange={setVAcqDate}
+                    cost={vCost}
+                    onCostChange={setVCost}
+                    rate={vDepRate}
+                    onRateChange={setVDepRate}
+                    method={vDepMethod}
+                    onMethodChange={setVDepMethod}
                   />
-                </div>
-                <div className="form-group">
-                  <label>VIN / Seerianumber</label>
-                  <input
-                    type="text"
-                    placeholder="nt TPL16-88902"
-                    value={impSerial}
-                    onChange={(e) => setImpSerial(e.target.value)}
-                    className="form-input"
+                  <ResourceCostFields
+                    serviceKind="MACHINE_TIME" articles={costArticles}
+                    serviceArticleId={vServiceId} onServiceChange={setVServiceId}
+                    hourlyRate={vRate} onRateChange={setVRate} canManageFinance={canManageFinance}
+                    fuelArticleId={vFuelId} onFuelChange={setVFuelId}
                   />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="imp-plate">Registrinumber</label>
-                  <input id="imp-plate" type="text" placeholder="nt 123 XYZ" value={impPlate} onChange={(e) => setImpPlate(e.target.value)} className="form-input" />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="imp-year">Väljalaskeaasta</label>
-                  <NumberInput id="imp-year" integer min={1900} max={2100} placeholder="nt 2018" value={impYear} onChange={setImpYear} />
-                </div>
-                <DepreciationFields
-                  date={impAcqDate}
-                  onDateChange={setImpAcqDate}
-                  cost={impCost}
-                  onCostChange={setImpCost}
-                  rate={impDepRate}
-                  onRateChange={setImpDepRate}
-                  method={impDepMethod}
-                  onMethodChange={setImpDepMethod}
-                />
-                <ResourceCostFields
-                  serviceKind="IMPLEMENT_TIME" articles={costArticles}
-                  serviceArticleId={impServiceId} onServiceChange={setImpServiceId}
-                  hourlyRate={impRate} onRateChange={setImpRate} canManageFinance={canManageFinance}
-                />
-                <div className="form-group full-width">
-                  <label>Märkused</label>
-                  <AutoResizeTextarea
-                    placeholder="Märkused haakeriista kohta (nt kuluosad, asukoht jne)..."
-                    value={impNotes}
-                    onChange={(e) => setImpNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-
-            </div>
-
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
-              <Button type="submit" variant="primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</Button>
-            </div>
-          </form>
-        </div>,
-        document.body
-      )}
-
-      {isAddingNew && activeTab === 'devices' && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form onSubmit={handleCreateDevice} className="modal-content fleet-edit-modal animate-scale-up">
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Radio size={20} className="text-emerald" />
-                <h3>{editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'}</h3>
-              </div>
-              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
-
-            <div className="modal-body">
-
-              <div className="form-group connectivity-type-picker">
-                <label>Seadme tüüp</label>
-                <div className="segmented-control">
-                  <button
-                    type="button"
-                    className={`segmented-option ${devConnectivity === 'cellular' ? 'active' : ''}`}
-                    onClick={() => handleConnectivityChange('cellular')}
-                  >
-                    <Radio size={14} />
-                    <span>Mobiilne GPS (IMEI/SIM)</span>
-                  </button>
-                  <button
-                    type="button"
-                    className={`segmented-option ${devConnectivity === 'eye_sensor' ? 'active' : ''}`}
-                    onClick={() => handleConnectivityChange('eye_sensor')}
-                  >
-                    <Activity size={14} />
-                    <span>Eye Sensor (MAC)</span>
-                  </button>
-                </div>
-              </div>
-              <div className="form-grid">
-                {devConnectivity === 'cellular' ? (
-                  <>
-                    <div className="form-group">
-                      <label>Seadme mudel</label>
-                      <input
-                        type="text"
-                        placeholder="nt Teltonika FMC650 4G LTE"
-                        value={devModel}
-                        onChange={(e) => setDevModel(e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>IMEI kood (15 numbrit) *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="861234058812001"
-                        value={devImei}
-                        onChange={(e) => setDevImei(e.target.value)}
-                        inputMode="numeric"
-                        maxLength={15}
-                        className="form-input"
-                      />
-                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>15 numbrit</small>
-                    </div>
-                    <div className="form-group">
-                      <label>SIM kaardi number</label>
-                      <input
-                        type="text"
-                        placeholder="+372 5311 8812"
-                        value={devSim}
-                        onChange={(e) => setDevSim(e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="form-group">
-                      <label>Seadme mudel</label>
-                      <input
-                        type="text"
-                        placeholder="nt Teltonika EYE Sensor"
-                        value={devModel}
-                        onChange={(e) => setDevModel(e.target.value)}
-                        className="form-input"
-                      />
-                    </div>
-                    <div className="form-group">
-                      <label>MAC aadress *</label>
-                      <input
-                        type="text"
-                        required
-                        placeholder="AA:BB:CC:DD:EE:FF"
-                        value={devMac}
-                        onChange={(e) => setDevMac(e.target.value)}
-                        className="form-input"
-                      />
-                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>nt AA:BB:CC:DD:EE:FF</small>
-                    </div>
-                  </>
-                )}
-                <div className="form-group">
-                  <label>Soetamise kuupäev</label>
-                  <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
-                </div>
-                {devConnectivity === 'cellular' && (
+                  <div className="form-group">
+                    <label htmlFor="v-tank">Paagi maht (l)</label>
+                    <NumberInput
+                      id="v-tank"
+                      min={0}
+                      placeholder="nt 600"
+                      value={vTankL === '' ? null : Number(vTankL)}
+                      onChange={(v) => setVTankL(v == null ? '' : String(v))}
+                    />
+                  </div>
                   <div className="form-group full-width">
-                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                      <input type="checkbox" checked={devReportsWhenParked} onChange={(e) => setDevReportsWhenParked(e.target.checked)} />
-                      Saadab andmeid ka seisu ajal (pidev toide)
-                    </label>
-                    <small style={{ color: 'var(--text-muted, #6b7280)' }}>
-                      Siis kontrollitakse sõitude vahel ka toitekatkestust ja seadme vaikimist. Ära märgi, kui seade seisu ajal ei saada või on süütega toitel.
-                    </small>
+                    <label>Märkused</label>
+                    <AutoResizeTextarea
+                      placeholder="Märkused masina kohta (nt hooldusvajadus, eriseadistus jne)..."
+                      value={vNotes}
+                      onChange={(e) => setVNotes(e.target.value)}
+                    />
                   </div>
-                )}
-                <div className="form-group full-width">
-                  <label>Märkused</label>
-                  <AutoResizeTextarea
-                    placeholder="Märkused seadme kohta (nt paigalduskoht masinas, antenn jne)..."
-                    value={devNotes}
-                    onChange={(e) => setDevNotes(e.target.value)}
-                  />
                 </div>
-              </div>
 
-            </div>
+              </DialogBody>
 
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
-              <Button type="submit" variant="primary" disabled={devSaving}>{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+                <Button type="submit" variant="primary">{editingVehicleId ? 'Salvesta muudatused' : 'Salvesta masin'}</Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
 
-      {isAddingNew && activeTab === 'history' && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form onSubmit={handleSaveAssignment} className="modal-content fleet-edit-modal animate-scale-up">
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Link size={20} className="text-emerald" />
-                <h3>{editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'}</h3>
-              </div>
-              <Button variant="ghost" size="icon-sm" type="button" onClick={closeForm} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
+      {isAddingNew && activeTab === 'implements' && (
+        <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
+          <DialogContent size="lg" className="fleet-edit-modal">
+            <DialogForm onSubmit={handleCreateImplement}>
+              <DialogHeader icon={<Wrench size={20} className="text-emerald" />} title={editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'} />
 
-            <div className="modal-body">
-              {assignmentError && (
-                <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
-                  {assignmentError}
-                </div>
-              )}
+              <DialogBody>
 
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Masin *</label>
-                  <select
-                    required
-                    value={assignVehicleId}
-                    onChange={(e) => setAssignVehicleId(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="" disabled>Vali masin...</option>
-                    {vehicles.map((v) => (
-                      <option key={v.id} value={v.id}>
-                        {v.name} ({VEHICLE_TYPE_LABELS[v.type] || v.type})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Haakeriist *</label>
-                  <select
-                    required
-                    value={assignImplementId}
-                    onChange={(e) => setAssignImplementId(e.target.value)}
-                    className="form-input"
-                  >
-                    <option value="" disabled>Vali haakeriist...</option>
-                    {implementsList.map((imp) => (
-                      <option key={imp.id} value={imp.id}>
-                        {imp.name}{imp.category ? ` (${imp.category})` : ''}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Haagitud (algusaeg) *</label>
-                  <div className="assign-datetime">
-                    <DateInput
-                      value={assignStartDate}
-                      onChange={setAssignStartDate}
-                      className="form-input"
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Haakeriista nimi *</label>
+                    <input
+                      type="text"
                       required
-                    />
-                    <select
-                      className="form-input time-select"
-                      value={assignStartTime}
-                      onChange={(e) => setAssignStartTime(e.target.value)}
-                      required
-                    >
-                      {getTimeOptions(assignStartTime).map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
-                  </div>
-                </div>
-
-                <div className="form-group">
-                  <label>Lahti haagitud (lõppaeg)</label>
-                  <div className="assign-datetime">
-                    <DateInput
-                      value={assignEndDate}
-                      onChange={(date) => {
-                        setAssignEndDate(date);
-                        if (!date) setAssignEndTime('');
-                        else if (!assignEndTime) setAssignEndTime('17:00');
-                      }}
+                      placeholder="nt Väderstad Tempo L 16"
+                      value={impName}
+                      onChange={(e) => setImpName(e.target.value)}
                       className="form-input"
                     />
-                    <select
-                      className="form-input time-select"
-                      value={assignEndTime}
-                      onChange={(e) => setAssignEndTime(e.target.value)}
-                      disabled={!assignEndDate}
-                    >
-                      {!assignEndDate && <option value="">--:--</option>}
-                      {getTimeOptions(assignEndTime || undefined).map((t) => (
-                        <option key={t} value={t}>{t}</option>
-                      ))}
-                    </select>
                   </div>
-                  <span className="assign-hint">
-                    {assignEndDate ? (
-                      <button type="button" className="assign-hint-link" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
-                        Tühjenda lõppaeg (haakeriist on praegu küljes)
-                      </button>
-                    ) : (
-                      <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
-                    )}
-                  </span>
-                </div>
-
-                <div className="form-group full-width">
-                  <label>Märkused</label>
-                  <AutoResizeTextarea
-                    placeholder="Lisa märkused, tööülesanne või lisainfo..."
-                    value={assignNotes}
-                    onChange={(e) => setAssignNotes(e.target.value)}
-                    className="form-input"
-                    rows={2}
+                  <div className="form-group">
+                    <label>Liik</label>
+                    <CategoryInput
+                      id="implement-category-options"
+                      value={impCategory}
+                      onChange={setImpCategory}
+                      options={implementCategories}
+                      placeholder="Vali olemasolev või sisesta uus"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>Tootja & Mudel</label>
+                    <div className="input-split">
+                      <input
+                        type="text"
+                        placeholder="Väderstad"
+                        value={impManufacturer}
+                        onChange={(e) => setImpManufacturer(e.target.value)}
+                        className="form-input"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Tempo L 16"
+                        value={impModel}
+                        onChange={(e) => setImpModel(e.target.value)}
+                        className="form-input"
+                      />
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>Töölaius (m)</label>
+                    <NumberInput
+                      decimals={1}
+                      min={0}
+                      value={impWidth}
+                      onChange={setImpWidth}
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label>VIN / Seerianumber</label>
+                    <input
+                      type="text"
+                      placeholder="nt TPL16-88902"
+                      value={impSerial}
+                      onChange={(e) => setImpSerial(e.target.value)}
+                      className="form-input"
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="imp-plate">Registrinumber</label>
+                    <input id="imp-plate" type="text" placeholder="nt 123 XYZ" value={impPlate} onChange={(e) => setImpPlate(e.target.value)} className="form-input" />
+                  </div>
+                  <div className="form-group">
+                    <label htmlFor="imp-year">Väljalaskeaasta</label>
+                    <NumberInput id="imp-year" integer min={1900} max={2100} placeholder="nt 2018" value={impYear} onChange={setImpYear} />
+                  </div>
+                  <DepreciationFields
+                    date={impAcqDate}
+                    onDateChange={setImpAcqDate}
+                    cost={impCost}
+                    onCostChange={setImpCost}
+                    rate={impDepRate}
+                    onRateChange={setImpDepRate}
+                    method={impDepMethod}
+                    onMethodChange={setImpDepMethod}
                   />
+                  <ResourceCostFields
+                    serviceKind="IMPLEMENT_TIME" articles={costArticles}
+                    serviceArticleId={impServiceId} onServiceChange={setImpServiceId}
+                    hourlyRate={impRate} onRateChange={setImpRate} canManageFinance={canManageFinance}
+                  />
+                  <div className="form-group full-width">
+                    <label>Märkused</label>
+                    <AutoResizeTextarea
+                      placeholder="Märkused haakeriista kohta (nt kuluosad, asukoht jne)..."
+                      value={impNotes}
+                      onChange={(e) => setImpNotes(e.target.value)}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
 
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={closeForm} disabled={assignmentSubmitting}>
-                Loobu
-              </Button>
-              <Button type="submit" variant="primary" disabled={assignmentSubmitting}>
-                {assignmentSubmitting ? 'Salvestan...' : (editingAssignmentId ? 'Salvesta muudatused' : 'Salvesta kanne')}
-              </Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+              </DialogBody>
+
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+                <Button type="submit" variant="primary">{editingImplementId ? 'Salvesta muudatused' : 'Salvesta haakeriist'}</Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {isAddingNew && activeTab === 'devices' && (
+        <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
+          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!devSaving}>
+            <DialogForm onSubmit={handleCreateDevice}>
+              <DialogHeader icon={<Radio size={20} className="text-emerald" />} title={editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'} />
+
+              <DialogBody>
+
+                <div className="form-group connectivity-type-picker">
+                  <label>Seadme tüüp</label>
+                  <div className="segmented-control">
+                    <button
+                      type="button"
+                      className={`segmented-option ${devConnectivity === 'cellular' ? 'active' : ''}`}
+                      onClick={() => handleConnectivityChange('cellular')}
+                    >
+                      <Radio size={14} />
+                      <span>Mobiilne GPS (IMEI/SIM)</span>
+                    </button>
+                    <button
+                      type="button"
+                      className={`segmented-option ${devConnectivity === 'eye_sensor' ? 'active' : ''}`}
+                      onClick={() => handleConnectivityChange('eye_sensor')}
+                    >
+                      <Activity size={14} />
+                      <span>Eye Sensor (MAC)</span>
+                    </button>
+                  </div>
+                </div>
+                <div className="form-grid">
+                  {devConnectivity === 'cellular' ? (
+                    <>
+                      <div className="form-group">
+                        <label>Seadme mudel</label>
+                        <input
+                          type="text"
+                          placeholder="nt Teltonika FMC650 4G LTE"
+                          value={devModel}
+                          onChange={(e) => setDevModel(e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>IMEI kood (15 numbrit) *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="861234058812001"
+                          value={devImei}
+                          onChange={(e) => setDevImei(e.target.value)}
+                          inputMode="numeric"
+                          maxLength={15}
+                          className="form-input"
+                        />
+                        <small style={{ color: 'var(--text-muted, #6b7280)' }}>15 numbrit</small>
+                      </div>
+                      <div className="form-group">
+                        <label>SIM kaardi number</label>
+                        <input
+                          type="text"
+                          placeholder="+372 5311 8812"
+                          value={devSim}
+                          onChange={(e) => setDevSim(e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="form-group">
+                        <label>Seadme mudel</label>
+                        <input
+                          type="text"
+                          placeholder="nt Teltonika EYE Sensor"
+                          value={devModel}
+                          onChange={(e) => setDevModel(e.target.value)}
+                          className="form-input"
+                        />
+                      </div>
+                      <div className="form-group">
+                        <label>MAC aadress *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="AA:BB:CC:DD:EE:FF"
+                          value={devMac}
+                          onChange={(e) => setDevMac(e.target.value)}
+                          className="form-input"
+                        />
+                        <small style={{ color: 'var(--text-muted, #6b7280)' }}>nt AA:BB:CC:DD:EE:FF</small>
+                      </div>
+                    </>
+                  )}
+                  <div className="form-group">
+                    <label>Soetamise kuupäev</label>
+                    <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
+                  </div>
+                  {devConnectivity === 'cellular' && (
+                    <div className="form-group full-width">
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+                        <input type="checkbox" checked={devReportsWhenParked} onChange={(e) => setDevReportsWhenParked(e.target.checked)} />
+                        Saadab andmeid ka seisu ajal (pidev toide)
+                      </label>
+                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>
+                        Siis kontrollitakse sõitude vahel ka toitekatkestust ja seadme vaikimist. Ära märgi, kui seade seisu ajal ei saada või on süütega toitel.
+                      </small>
+                    </div>
+                  )}
+                  <div className="form-group full-width">
+                    <label>Märkused</label>
+                    <AutoResizeTextarea
+                      placeholder="Märkused seadme kohta (nt paigalduskoht masinas, antenn jne)..."
+                      value={devNotes}
+                      onChange={(e) => setDevNotes(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+              </DialogBody>
+
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={closeForm}>Loobu</Button>
+                <Button type="submit" variant="primary" disabled={devSaving}>{editingDeviceId ? 'Salvesta muudatused' : 'Registreeri seade'}</Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
+      )}
+
+      {isAddingNew && activeTab === 'history' && (
+        <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
+          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!assignmentSubmitting}>
+            <DialogForm onSubmit={handleSaveAssignment}>
+              <DialogHeader icon={<Link size={20} className="text-emerald" />} title={editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'} />
+
+              <DialogBody>
+                {assignmentError && (
+                  <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
+                    {assignmentError}
+                  </div>
+                )}
+
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Masin *</label>
+                    <select
+                      required
+                      value={assignVehicleId}
+                      onChange={(e) => setAssignVehicleId(e.target.value)}
+                      className="form-input"
+                    >
+                      <option value="" disabled>Vali masin...</option>
+                      {vehicles.map((v) => (
+                        <option key={v.id} value={v.id}>
+                          {v.name} ({VEHICLE_TYPE_LABELS[v.type] || v.type})
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Haakeriist *</label>
+                    <select
+                      required
+                      value={assignImplementId}
+                      onChange={(e) => setAssignImplementId(e.target.value)}
+                      className="form-input"
+                    >
+                      <option value="" disabled>Vali haakeriist...</option>
+                      {implementsList.map((imp) => (
+                        <option key={imp.id} value={imp.id}>
+                          {imp.name}{imp.category ? ` (${imp.category})` : ''}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Haagitud (algusaeg) *</label>
+                    <div className="assign-datetime">
+                      <DateInput
+                        value={assignStartDate}
+                        onChange={setAssignStartDate}
+                        className="form-input"
+                        required
+                      />
+                      <select
+                        className="form-input time-select"
+                        value={assignStartTime}
+                        onChange={(e) => setAssignStartTime(e.target.value)}
+                        required
+                      >
+                        {getTimeOptions(assignStartTime).map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Lahti haagitud (lõppaeg)</label>
+                    <div className="assign-datetime">
+                      <DateInput
+                        value={assignEndDate}
+                        onChange={(date) => {
+                          setAssignEndDate(date);
+                          if (!date) setAssignEndTime('');
+                          else if (!assignEndTime) setAssignEndTime('17:00');
+                        }}
+                        className="form-input"
+                      />
+                      <select
+                        className="form-input time-select"
+                        value={assignEndTime}
+                        onChange={(e) => setAssignEndTime(e.target.value)}
+                        disabled={!assignEndDate}
+                      >
+                        {!assignEndDate && <option value="">--:--</option>}
+                        {getTimeOptions(assignEndTime || undefined).map((t) => (
+                          <option key={t} value={t}>{t}</option>
+                        ))}
+                      </select>
+                    </div>
+                    <span className="assign-hint">
+                      {assignEndDate ? (
+                        <button type="button" className="assign-hint-link" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
+                          Tühjenda lõppaeg (haakeriist on praegu küljes)
+                        </button>
+                      ) : (
+                        <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Märkused</label>
+                    <AutoResizeTextarea
+                      placeholder="Lisa märkused, tööülesanne või lisainfo..."
+                      value={assignNotes}
+                      onChange={(e) => setAssignNotes(e.target.value)}
+                      className="form-input"
+                      rows={2}
+                    />
+                  </div>
+                </div>
+              </DialogBody>
+
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={closeForm} disabled={assignmentSubmitting}>
+                  Loobu
+                </Button>
+                <Button type="submit" variant="primary" disabled={assignmentSubmitting}>
+                  {assignmentSubmitting ? 'Salvestan...' : (editingAssignmentId ? 'Salvesta muudatused' : 'Salvesta kanne')}
+                </Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
 
       {/* TAB 1: SÕIDUKID / MASINAD */}
@@ -2181,19 +2132,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       )}
 
       {/* Quick Swap Sub-Modal */}
-      {swapModal && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <div className="modal-content glass-card swap-modal-card animate-scale-up">
-            <div className="modal-header">
-              <h4>
-                {swapModal.type === 'device' ? '📡 Telemeetriaseadme valik' : '🔧 Haakeriista Haakimine'}
-              </h4>
-              <Button variant="ghost" size="icon-sm" onClick={() => setSwapModal(null)}>
-                <X size={18} />
-              </Button>
-            </div>
+      {swapModal && (
+        <Dialog open onOpenChange={(open) => { if (!open) setSwapModal(null); }}>
+          <DialogContent size="sm" className="swap-modal-card">
+            <DialogHeader title={swapModal.type === 'device' ? '📡 Telemeetriaseadme valik' : '🔧 Haakeriista Haakimine'} />
 
-            <div className="modal-body">
+            <DialogBody>
               <p className="swap-modal-desc">
                 Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'telemeetriaseade' : 'haakeriist'}:
               </p>
@@ -2290,61 +2234,29 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   })}
                 </div>
               )}
-            </div>
-          </div>
-        </div>
-        , document.body)}
+            </DialogBody>
+          </DialogContent>
+        </Dialog>
+      )}
     </>
   );
 
-  if (isFullPage) {
-    return (
-      <div className="fleet-board-view">
-        <main className="fleet-board-main">
-          <div className="fleet-board-header">
-            <div className="fleet-title-wrap">
-              <Tractor className="text-emerald" size={26} />
-              <div>
-                <h2>Masinapark, haakeriistad ja muu tehnika</h2>
-                <p className="fleet-subtitle">Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus</p>
-              </div>
-            </div>
-          </div>
-          <div className="fleet-board-body">
-            {bodyContent}
-          </div>
-        </main>
-      </div>
-    );
-  }
-
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content glass-card vehicle-modal animate-scale-up">
-        {/* Header with Title and Tabs */}
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Tractor className="text-emerald" size={24} />
+    <div className="fleet-board-view">
+      <main className="fleet-board-main">
+        <div className="fleet-board-header">
+          <div className="fleet-title-wrap">
+            <Tractor className="text-emerald" size={26} />
             <div>
-              <h3>Masinapargi ja Seadmete Haldus</h3>
-              <p className="modal-subtitle">Eraldi registrid masinatele, haakeriistadele, haakimistele, telemeetria seadmetele ja seadmete seostele</p>
+              <h2>Masinapark, haakeriistad ja muu tehnika</h2>
+              <p className="fleet-subtitle">Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus</p>
             </div>
           </div>
-          {onClose && (
-            <Button variant="ghost" size="icon-sm" onClick={onClose}>
-              <X size={20} />
-            </Button>
-          )}
         </div>
-
-        <div className="modal-body">
+        <div className="fleet-board-body">
           {bodyContent}
         </div>
-
-        <div className="modal-footer">
-          {onClose && <Button variant="ghost" onClick={onClose}>Sulge</Button>}
-        </div>
-      </div>
+      </main>
     </div>
   );
 };

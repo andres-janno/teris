@@ -1,12 +1,11 @@
 // src/components/TripGapReviewDialog.tsx — sõitude vahe hoiatuse kontrolli märge koos kohustusliku selgitusega.
-import React, { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { AlertTriangle, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { AlertTriangle } from 'lucide-react';
 import type { TripGap } from '../types/fleet';
 import { api } from '../services/api';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { gapParts } from './tripGapText';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface Props {
   gap: TripGap;
@@ -18,14 +17,6 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
   const [note, setNote] = useState('');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') { e.stopPropagation(); onClose(); }
-    };
-    document.addEventListener('keydown', onKeyDown, true);
-    return () => document.removeEventListener('keydown', onKeyDown, true);
-  }, [onClose]);
 
   const save = async () => {
     setSaving(true);
@@ -39,17 +30,11 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content fleet-edit-modal animate-scale-up">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <AlertTriangle size={20} className="trip-gap-icon" />
-            <h3>Märgi hoiatus kontrollituks</h3>
-          </div>
-          <Button variant="ghost" size="icon-sm" type="button" onClick={onClose} title="Sulge (Esc)"><X size={20} /></Button>
-        </div>
-        <div className="modal-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="lg" className="fleet-edit-modal" dismissible={!saving}>
+        <DialogHeader icon={<AlertTriangle size={20} className="trip-gap-icon" />} title="Märgi hoiatus kontrollituks" />
+        <DialogBody>
           <p style={{ marginTop: 0 }}>
             Sõitude vahel {formatDateTime(gap.startedAt)} – {formatDateTime(gap.endedAt)} ({formatDuration(gap.startedAt, gap.endedAt)}):{' '}
             {gapParts(gap).join(' · ')}
@@ -63,13 +48,12 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
             />
           </div>
           {error && <div className="auth-error-banner">{error}</div>}
-        </div>
-        <div className="modal-footer">
+        </DialogBody>
+        <DialogFooter>
           <Button type="button" onClick={onClose}>Loobu</Button>
           <Button type="button" variant="primary" onClick={save} disabled={saving || !note.trim()}>Märgi kontrollituks</Button>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

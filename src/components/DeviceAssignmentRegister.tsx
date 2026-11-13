@@ -2,8 +2,7 @@
 // Register on seadme ↔ masina/haakeriista seose ainus tõeallikas: kaardid näitavad
 // seost registri kehtiva kirje järgi ja kaardi „Vaheta“ teeb registrisse uue kirje.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Activity, Filter, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench, X } from 'lucide-react';
+import { Activity, Filter, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench } from 'lucide-react';
 import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { DateInput } from './DateInput';
@@ -11,7 +10,7 @@ import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -382,103 +381,96 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
       )}
 
       {/* Lisamise / muutmise vorm */}
-      {formOpen && createPortal(
-        <div className="modal-backdrop sub-modal">
-          <form onSubmit={handleSave} className="modal-content fleet-edit-modal animate-scale-up">
-            <div className="modal-header">
-              <div className="modal-title-group">
-                <Link size={20} className="text-emerald" />
-                <h3>{editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'}</h3>
-              </div>
-              <Button variant="ghost" size="icon-sm" type="button" onClick={onCloseForm} title="Sulge (Esc)">
-                <X size={20} />
-              </Button>
-            </div>
+      {formOpen && (
+        <Dialog open onOpenChange={(open) => { if (!open) onCloseForm(); }}>
+          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!submitting}>
+            <DialogForm onSubmit={handleSave}>
+              <DialogHeader icon={<Link size={20} className="text-emerald" />} title={editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'} />
 
-            <div className="modal-body">
-              {error && (
-                <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
-                  {error}
-                </div>
-              )}
+              <DialogBody>
+                {error && (
+                  <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
+                    {error}
+                  </div>
+                )}
 
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Seade *</label>
-                  <select required value={formDeviceId} onChange={(e) => setFormDeviceId(e.target.value)} className="form-input">
-                    <option value="" disabled>Vali seade...</option>
-                    {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Masin / haakeriist *</label>
-                  <select required value={formTarget} onChange={(e) => setFormTarget(e.target.value)} className="form-input">
-                    <option value="" disabled>Vali masin või haakeriist...</option>
-                    {targetOptions}
-                  </select>
-                </div>
-
-                <div className="form-group">
-                  <label>Paigaldatud (algusaeg) *</label>
-                  <div className="assign-datetime">
-                    <DateInput value={startDate} onChange={setStartDate} className="form-input" required />
-                    <select className="form-input time-select" value={startTime} onChange={(e) => setStartTime(e.target.value)} required>
-                      {getTimeOptions(startTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
+                <div className="form-grid">
+                  <div className="form-group">
+                    <label>Seade *</label>
+                    <select required value={formDeviceId} onChange={(e) => setFormDeviceId(e.target.value)} className="form-input">
+                      <option value="" disabled>Vali seade...</option>
+                      {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
                     </select>
                   </div>
-                </div>
 
-                <div className="form-group">
-                  <label>Eemaldatud (lõppaeg)</label>
-                  <div className="assign-datetime">
-                    <DateInput
-                      value={endDate}
-                      onChange={(date) => {
-                        setEndDate(date);
-                        if (!date) setEndTime('');
-                        else if (!endTime) setEndTime('17:00');
-                      }}
+                  <div className="form-group">
+                    <label>Masin / haakeriist *</label>
+                    <select required value={formTarget} onChange={(e) => setFormTarget(e.target.value)} className="form-input">
+                      <option value="" disabled>Vali masin või haakeriist...</option>
+                      {targetOptions}
+                    </select>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Paigaldatud (algusaeg) *</label>
+                    <div className="assign-datetime">
+                      <DateInput value={startDate} onChange={setStartDate} className="form-input" required />
+                      <select className="form-input time-select" value={startTime} onChange={(e) => setStartTime(e.target.value)} required>
+                        {getTimeOptions(startTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className="form-group">
+                    <label>Eemaldatud (lõppaeg)</label>
+                    <div className="assign-datetime">
+                      <DateInput
+                        value={endDate}
+                        onChange={(date) => {
+                          setEndDate(date);
+                          if (!date) setEndTime('');
+                          else if (!endTime) setEndTime('17:00');
+                        }}
+                        className="form-input"
+                      />
+                      <select className="form-input time-select" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={!endDate}>
+                        {!endDate && <option value="">--:--</option>}
+                        {getTimeOptions(endTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
+                      </select>
+                    </div>
+                    <span className="assign-hint">
+                      {endDate ? (
+                        <button type="button" className="assign-hint-link" onClick={() => { setEndDate(''); setEndTime(''); }}>
+                          Tühjenda lõppaeg (seade on praegu paigaldatud)
+                        </button>
+                      ) : (
+                        <span className="assign-hint-active">Lõppaeg tühi — seade on praegu paigaldatud</span>
+                      )}
+                    </span>
+                  </div>
+
+                  <div className="form-group full-width">
+                    <label>Märkused</label>
+                    <textarea
                       className="form-input"
+                      rows={2}
+                      placeholder="Lisa märkused (nt paigalduskoht, antenn)..."
+                      value={notes}
+                      onChange={(e) => setNotes(e.target.value)}
                     />
-                    <select className="form-input time-select" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={!endDate}>
-                      {!endDate && <option value="">--:--</option>}
-                      {getTimeOptions(endTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
-                    </select>
                   </div>
-                  <span className="assign-hint">
-                    {endDate ? (
-                      <button type="button" className="assign-hint-link" onClick={() => { setEndDate(''); setEndTime(''); }}>
-                        Tühjenda lõppaeg (seade on praegu paigaldatud)
-                      </button>
-                    ) : (
-                      <span className="assign-hint-active">Lõppaeg tühi — seade on praegu paigaldatud</span>
-                    )}
-                  </span>
                 </div>
+              </DialogBody>
 
-                <div className="form-group full-width">
-                  <label>Märkused</label>
-                  <textarea
-                    className="form-input"
-                    rows={2}
-                    placeholder="Lisa märkused (nt paigalduskoht, antenn)..."
-                    value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="modal-footer">
-              <Button type="button" variant="ghost" onClick={onCloseForm} disabled={submitting}>Loobu</Button>
-              <Button type="submit" variant="primary" disabled={submitting}>
-                {submitting ? 'Salvestan...' : (editingId ? 'Salvesta muudatused' : 'Salvesta kanne')}
-              </Button>
-            </div>
-          </form>
-        </div>,
-        document.body
+              <DialogFooter>
+                <Button type="button" variant="ghost" onClick={onCloseForm} disabled={submitting}>Loobu</Button>
+                <Button type="submit" variant="primary" disabled={submitting}>
+                  {submitting ? 'Salvestan...' : (editingId ? 'Salvesta muudatused' : 'Salvesta kanne')}
+                </Button>
+              </DialogFooter>
+            </DialogForm>
+          </DialogContent>
+        </Dialog>
       )}
     </div>
   );
