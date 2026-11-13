@@ -20,6 +20,19 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `legacy` on
   `utilities`-ist ees) — eemalda vana reegel.
 
+## Dialoog
+
+- `<Dialog open onOpenChange>` + `DialogContent size="sm|md|lg|xl|full|fit"` (vaikimisi `md`): sm 440, md 640, lg 840,
+  xl 1240, full min(1600px, 96vw), fit sisu järgi. `fillHeight` annab fikseeritud kõrguse, `layer="alert"` z-5000.
+- Sulgemine: Esc sulgeb alati; taustaklõps sulgeb ainult `closeOnOutsideClick` (kinnitus/teade) korral;
+  `dismissible={false}` keelab mõlemad (sundparool, salvestamine käib).
+- Vorm sisu juurena: `<DialogContent><DialogForm onSubmit>päis, keha, jalus</DialogForm></DialogContent>`.
+- `DialogHeader icon title description` (+ lisanupud lastena; `showClose={false}` peidab sulgemisnupu).
+- Hüpikud (kuupäev, otsinguga valik) portaali `usePopupContainer()` elementi, mitte `document.body`-sse.
+- Üleminek: `modal-backdrop`/`modal-content` -> `Dialog`/`DialogContent`; `modal-header` -> `DialogHeader`;
+  `modal-body`/`modal-footer` -> `DialogBody`/`DialogFooter`; Esc-kuulaja, taustaklõps, `createPortal`, `sub-modal`
+  eemaldada (alamaken on oma `<Dialog>`). Vaates Tailwindi klasse ei lisata.
+
 ## Tailwindi skaneerimine
 
 Tailwind genereerib utiliite ainult kataloogist `src/components/ui` (`@source` failis `src/styles/app.css`).

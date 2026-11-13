@@ -15,6 +15,7 @@ export interface AuditReport {
   tsxColorFiles: { path: string; count: number }[];
   legacyComponentClasses: string[];
   legacyButtonFiles: { path: string; count: number }[];
+  legacyModalFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -34,6 +35,9 @@ const LEGACY_COMPONENT = /\.((?:btn|modal|badge|pill|tab|data-table|table)[\w-]*
 // Üldised vanad nupuklassid (etapp 2.1). Erinupud (basemap-btn jne) ja paigutusklass btn-full ei loe.
 const LEGACY_BUTTON =
   /(?<![\w-])(btn|btn-primary|btn-secondary|btn-ghost|btn-danger|btn-sm|btn-xs|btn-icon-only|icon-btn|icon-btn-ghost|icon-btn-danger|icon-btn-ghost-sm|icon-btn-ghost-xs|btn-disabled)(?![\w-])/g;
+// Vanad modaaliklassid (etapp 2.2). Vaatepõhised sisuklassid (finance-modal jne) ei loe.
+const LEGACY_MODAL =
+  /(?<![\w-])(modal-backdrop|sub-modal|confirm-dialog-backdrop|modal-content|modal-header|modal-title-group|modal-title-with-icon|modal-icon-badge|modal-subtitle|modal-body|modal-footer)(?![\w-])/g;
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -72,6 +76,7 @@ export function auditTsx(src: string) {
     offScaleSpacing: [...src.matchAll(SPACING_CLASS)].filter((m) => !SPACING_SCALE.has(m[2])).map((m) => m[1]),
     inlineFontSizes: [...src.matchAll(INLINE_FONT_SIZE)].map((m) => (m[1] ? `${m[1]}px` : m[2])),
     legacyButtons: [...src.matchAll(LEGACY_BUTTON)].map((m) => m[1]),
+    legacyModals: [...src.matchAll(LEGACY_MODAL)].map((m) => m[1]),
   };
 }
 
@@ -91,5 +96,6 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     tsxColorFiles: tsx.filter((t) => t.colors > 0).map((t) => ({ path: t.path, count: t.colors })),
     legacyComponentClasses: uniqueSorted(css.flatMap((c) => c.componentClasses)),
     legacyButtonFiles: tsx.filter((t) => t.legacyButtons.length > 0).map((t) => ({ path: t.path, count: t.legacyButtons.length })),
+    legacyModalFiles: tsx.filter((t) => t.legacyModals.length > 0).map((t) => ({ path: t.path, count: t.legacyModals.length })),
   };
 }

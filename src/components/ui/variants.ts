@@ -88,3 +88,28 @@ export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-
 
 /** Klaasikaart (praegune .glass-card). */
 export const cardClass = 'rounded-lg border border-border bg-card text-foreground shadow-card backdrop-blur-lg';
+
+const DIALOG_SIZES = {
+  sm: 'w-[min(440px,94vw)]',
+  md: 'w-[min(640px,94vw)]',
+  lg: 'w-[min(840px,96vw)]',
+  xl: 'w-[min(1240px,96vw)]',
+  full: 'w-[min(1600px,96vw)]',
+  // Sisu järgi (hooaegade register): kitsamal ekraanil kerib.
+  fit: 'w-max max-w-[98vw]',
+} as const;
+export type DialogSize = keyof typeof DIALOG_SIZES;
+
+const DIALOG_LAYERS = { default: 'z-2000', alert: 'z-5000' } as const;
+export type DialogLayer = keyof typeof DIALOG_LAYERS;
+
+/** Dialoogi kiht: tavaline 2000 (Leafleti ≤1000 kohal), kinnitus/teade 5000 (kõigi vanade modaalide ja menüüde kohal). */
+export const dialogLayerClass = (layer: DialogLayer): string => DIALOG_LAYERS[layer];
+
+/** Dialoogi sisu: ilma transformi/filtrita, et position:fixed hüpikud sees jääksid akna suhtes paika. */
+export const dialogContentClass = ({ size = 'md', fillHeight = false }: { size?: DialogSize; fillHeight?: boolean }): string =>
+  [
+    'pointer-events-auto flex max-h-[92vh] flex-col overflow-hidden rounded-lg border border-border bg-popover text-foreground shadow-dialog focus:outline-none',
+    DIALOG_SIZES[size],
+    fillHeight ? 'h-[min(880px,92vh)]' : '',
+  ].filter(Boolean).join(' ');

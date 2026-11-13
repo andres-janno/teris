@@ -74,3 +74,34 @@ describe('variants', () => {
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });
+
+describe('dialogContentClass', () => {
+  it('suurused annavad kokkulepitud laiused', () => {
+    expect(v.dialogContentClass({ size: 'sm' })).toContain('w-[min(440px,94vw)]');
+    expect(v.dialogContentClass({ size: 'md' })).toContain('w-[min(640px,94vw)]');
+    expect(v.dialogContentClass({ size: 'lg' })).toContain('w-[min(840px,96vw)]');
+    expect(v.dialogContentClass({ size: 'xl' })).toContain('w-[min(1240px,96vw)]');
+    expect(v.dialogContentClass({ size: 'full' })).toContain('w-[min(1600px,96vw)]');
+    expect(v.dialogContentClass({ size: 'fit' })).toContain('w-max');
+    expect(v.dialogContentClass({})).toContain('w-[min(640px,94vw)]');
+  });
+  it('kõrgus: max 92vh, fillHeight annab fikseeritud kõrguse', () => {
+    expect(v.dialogContentClass({})).toContain('max-h-[92vh]');
+    expect(v.dialogContentClass({ fillHeight: true })).toContain('h-[min(880px,92vh)]');
+    expect(v.dialogContentClass({})).not.toContain('h-[min(880px,92vh)]');
+  });
+  it('sisu ei kasuta transformi ega filtrit (fixed hüpikud sees peavad jääma akna suhtes paika)', () => {
+    for (const size of ['sm', 'md', 'lg', 'xl', 'full', 'fit'] as const) {
+      const c = v.dialogContentClass({ size });
+      expect(c, size).not.toMatch(/(^|\s)-?translate-|(^|\s)(blur|backdrop-blur|scale-|rotate-)/);
+    }
+  });
+  it('kiht: tavaline z-2000, kinnitus z-5000 (vanade modaalide ja menüüde kohal)', () => {
+    expect(v.dialogLayerClass('default')).toBe('z-2000');
+    expect(v.dialogLayerClass('alert')).toBe('z-5000');
+  });
+  it('ei kasuta keelatud suvalisi väärtusi', () => {
+    for (const size of ['sm', 'md', 'lg', 'xl', 'full', 'fit'] as const)
+      expect(auditTsx(`className="${v.dialogContentClass({ size, fillHeight: true })}"`).arbitrary).toEqual([]);
+  });
+});

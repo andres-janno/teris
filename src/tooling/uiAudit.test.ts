@@ -168,3 +168,27 @@ describe('auditTsx: vanad nupuklassid', () => {
     expect(r.legacyButtonFiles).toEqual([{ path: 'a.tsx', count: 2 }]);
   });
 });
+
+describe('auditTsx: vanad modaaliklassid', () => {
+  it('loeb vanad modaali osad', () => {
+    const src = `<div className="modal-backdrop sub-modal"><div className="modal-content animate-scale-up x">
+<div className="modal-header"><div className="modal-title-group"><p className="modal-subtitle" /></div></div>
+<div className="modal-body" /><div className="modal-footer" /></div></div>
+<div className="modal-backdrop confirm-dialog-backdrop" /><span className="modal-title-with-icon modal-icon-badge" />`;
+    expect(auditTsx(src).legacyModals).toEqual([
+      'modal-backdrop', 'sub-modal', 'modal-content', 'modal-header', 'modal-title-group', 'modal-subtitle',
+      'modal-body', 'modal-footer', 'modal-backdrop', 'confirm-dialog-backdrop', 'modal-title-with-icon', 'modal-icon-badge',
+    ]);
+  });
+  it('ei loe vaatepõhiseid klasse ega ui komponente', () => {
+    const src = `<DialogContent className="finance-modal fleet-edit-modal" /><div className="finance-modal-body season-modal-body" />`;
+    expect(auditTsx(src).legacyModals).toEqual([]);
+  });
+  it('summarize annab failid', () => {
+    const r = summarize([
+      { path: 'a.tsx', content: '<div className="modal-backdrop"><div className="modal-content" /></div>' },
+      { path: 'b.tsx', content: '<DialogContent size="md" />' },
+    ]);
+    expect(r.legacyModalFiles).toEqual([{ path: 'a.tsx', count: 2 }]);
+  });
+});

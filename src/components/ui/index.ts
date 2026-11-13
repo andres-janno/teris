@@ -10,7 +10,10 @@ export { Checkbox } from './Checkbox';
 export { RadioGroup, RadioGroupItem } from './RadioGroup';
 export { Switch } from './Switch';
 export { Field } from './Field';
-export { Dialog, DialogTrigger, DialogClose, DialogContent, DialogHeader, DialogBody, DialogFooter } from './Dialog';
+export {
+  Dialog, DialogTrigger, DialogClose, DialogTitle, DialogDescription, DialogContent, DialogHeader, DialogForm, DialogBody,
+  DialogFooter, usePopupContainer,
+} from './Dialog';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,

@@ -9,6 +9,8 @@ import {
   PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Tooltip,
 } from './index';
+import { DateInput } from '../DateInput';
+import { confirmDialog } from '../ConfirmDialog';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Panel title={title} bodyClassName="flex flex-wrap items-start gap-3">{children}</Panel>
@@ -29,6 +31,7 @@ export const UiGallery: React.FC = () => {
   const [crop, setCrop] = useState('');
   const [checked, setChecked] = useState(true);
   const [on, setOn] = useState(false);
+  const [date, setDate] = useState('');
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -110,13 +113,23 @@ export const UiGallery: React.FC = () => {
             <DialogTrigger asChild><Button variant="primary">Ava dialoog</Button></DialogTrigger>
             <DialogContent>
               <DialogHeader title="Muuda põldu" description="Kaasiku · 12,40 ha" />
-              <DialogBody className="flex flex-col gap-3">
+              <DialogBody>
                 <Field label="Nimi" htmlFor="d-name"><Input id="d-name" defaultValue="Kaasiku" /></Field>
                 <Field label="Kultuur" htmlFor="d-crop"><Select id="d-crop" value={crop} onValueChange={setCrop} options={[{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }]} /></Field>
+                <Field label="Kuupäev" htmlFor="d-date"><DateInput id="d-date" value={date} onChange={setDate} /></Field>
               </DialogBody>
               <DialogFooter><Button>Tühista</Button><Button variant="primary">Salvesta</Button></DialogFooter>
             </DialogContent>
           </Dialog>
+          <Dialog>
+            <DialogTrigger asChild><Button>Ava suur dialoog</Button></DialogTrigger>
+            <DialogContent size="xl" fillHeight>
+              <DialogHeader title="Suur dialoog" description="size=xl, fillHeight" />
+              <DialogBody>Sisu täidab akna.</DialogBody>
+              <DialogFooter><Button>Sulge</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
+          <Button onClick={() => void confirmDialog('Kas soovid kindlasti kustutada?')}>Kinnitus</Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild><Button>Rippmenüü</Button></DropdownMenuTrigger>
             <DropdownMenuContent>

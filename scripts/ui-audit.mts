@@ -36,3 +36,8 @@ row(
   r.legacyButtonFiles.reduce((s, f) => s + f.count, 0),
   r.legacyButtonFiles.map((f) => `${f.path}: ${f.count}`)
 );
+row(
+  'Vanu modaaliklasse (tsx)',
+  r.legacyModalFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyModalFiles.map((f) => `${f.path}: ${f.count}`)
+);
