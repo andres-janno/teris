@@ -3,6 +3,7 @@
 // Kasutus: `if (!(await confirmDialog('Kas soovid kindlasti kustutada …?'))) return;`
 //          `alertDialog('Hooaeg on lukus.');`
 import React, { useEffect, useRef } from 'react';
+import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
 import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from './ui';
@@ -100,7 +101,8 @@ function show(kind: DialogProps['kind'], message: string, options: ConfirmOption
         }
         const previousFocus = document.activeElement as HTMLElement | null;
         const finish = (ok: boolean) => {
-          root?.render(null);
+          // flushSync: Radixi fookuslõks eemaldub enne fookuse tagastamist (muidu tõmbab lõks fookuse tagasi dialoogi)
+          flushSync(() => root?.render(null));
           previousFocus?.focus?.();
           resolve(ok);
         };
