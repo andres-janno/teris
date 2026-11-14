@@ -811,7 +811,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                 <div className="finance-kpi-card">
                   <span className="finance-kpi-label">Kulud kokku</span>
-                  <div className="finance-kpi-value text-red-600">
+                  <div className="finance-kpi-value kpi-cost">
                     {fmtCur(resultsSummary.totalCost)}
                   </div>
                   <div className="finance-kpi-sub">
@@ -821,7 +821,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                 <div className="finance-kpi-card">
                   <span className="finance-kpi-label">Saagitulu kokku</span>
-                  <div className="finance-kpi-value text-emerald-600">
+                  <div className="finance-kpi-value kpi-revenue">
                     {fmtCur(resultsSummary.totalRevenue)}
                   </div>
                   <div className="finance-kpi-sub">

@@ -9404,6 +9404,10 @@ select.form-input:read-only {
   font-weight: 700;
 }
 
+/* KPI kaardid: kulud punasega, tulu rohelisega */
+.finance-kpi-value.kpi-cost { color: var(--rose-500); }
+.finance-kpi-value.kpi-revenue { color: var(--emerald-500); }
+
 .finance-results-table .profit-neg,
 .finance-summary-card .cost-neg {
   color: var(--rose-500);
