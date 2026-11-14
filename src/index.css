@@ -4169,7 +4169,7 @@ input[type="number"],
 }
 
 .field-shape-body {
-  padding: 0;
+  padding: 0 !important; /* DialogBody utiliidid on kõrgemas kihis */
 }
 
 .field-shape-map {
