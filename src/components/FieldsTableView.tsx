@@ -1,6 +1,6 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
 import React, { useEffect, useMemo, useState } from 'react';
-import { Layers, Calendar, Search, Lock, Download, Crosshair, AlertCircle, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Layers, Calendar, Search, Lock, Download, Crosshair, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FieldCadastralLink } from '../types/cadastre';
@@ -17,7 +17,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow } from './ui';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -335,158 +335,155 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               </div>
             </div>
 
-            <>
-              <Table scroll="fill" bordered className="fields-table">
-                <TableHeader>
-                  <TableRow>
-                    <TableHead pin="start" className="sticky-name">Põld</TableHead>
-                    <TableHead numeric>Pindala</TableHead>
-                    <TableHead numeric>PRIA pind</TableHead>
-                    <TableHead>Kultuur {selectedYear}</TableHead>
-                    {weatherEnabled && <TableHead numeric title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</TableHead>}
-                    {weatherEnabled && <TableHead numeric title="Sademed külvist koristuseni">Sademed, mm</TableHead>}
-                    <TableHead>Omandisuhe</TableHead>
-                    <TableHead>Omanik / rendileandja</TableHead>
-                    <TableHead>Katastriüksused</TableHead>
-                    <TableHead numeric>Maamaks</TableHead>
-                    <TableHead numeric>Rent</TableHead>
-                    <TableHead>Mullastik</TableHead>
-                    <TableHead>Drenaaž</TableHead>
-                    <TableHead>Operaator</TableHead>
-                    <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRows.map((r) => {
-                    const { field, rec } = r;
-                    const hasCrop = !isCropUndetermined(rec.crop);
-                    return (
-                      <TableRow key={field.id}>
-                        <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
-                          {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
-                          {rec.geometry && (
-                            <button
-                              type="button"
-                              className="fw-field-shape-btn corner"
-                              onClick={() => setShapeView({ field, record: rec })}
-                              title={`Näita ${selectedYear}. a põllu kuju`}
-                            >
-                              <Crosshair size={13} />
-                            </button>
-                          )}
-                          <div className="field-title-line">
-                            {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
-                            <span className="field-name">{field.name}</span>
-                          </div>
-                          <div className="field-sub-tags">
-                            <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell numeric title={rec.areaChangeReason || undefined}>
-                          {fmtHa(rec.areaHa || 0)} ha
-                        </TableCell>
-                        <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</TableCell>
-                        <TableCell>
-                          {hasCrop ? (
-                            <span className="fields-table-crop" style={{ '--crop-color': rec.cropColor } as React.CSSProperties}>
-                              {rec.crop}
-                            </span>
-                          ) : <span className="muted">–</span>}
-                          {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
-                        </TableCell>
-                        {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
-                        {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
-                        <TableCell>
-                          <span className={`tenure-badge ${r.tenure}`}>{TENURE_LABEL[r.tenure]}</span>
-                          {r.tenure === 'mixed' && (
-                            <div className="cell-sub">{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
-                          )}
-                        </TableCell>
-                        <TableCell wrap className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</TableCell>
-                        <TableCell>
-                          {r.parcels.length ? r.parcels.map((p, i) => (
-                            <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
-                              {p.cadastralCode}
-                              {r.parcels.length > 1 && <span className="cell-sub-inline"> · {fmtHa(p.fieldAreaHa)} ha</span>}
-                            </div>
-                          )) : <span className="muted">–</span>}
-                        </TableCell>
-                        <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className="muted">–</span>}</TableCell>
-                        <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</TableCell>
-                        <TableCell wrap className="wrap-cell">{field.soilType || <span className="muted">–</span>}</TableCell>
-                        <TableCell>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
-                        <TableCell>{field.operatorName || <span className="muted">–</span>}</TableCell>
-                        <TableCell actions>
-                          <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
-                            <Edit2 size={15} />
-                          </Button>
-                          <Button variant="danger-ghost" size="icon-sm" onClick={() => handleDelete(field)} title="Kustuta">
-                            <Trash2 size={15} />
-                          </Button>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-                {filteredRows.length > 0 && (
-                  <TableFooter sticky>
-                    <TableRow>
-                      <TableCell pin="start" className="sticky-name"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
-                      <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
-                      <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
-                      <TableCell />
-                      {weatherEnabled && <TableCell />}
-                      {weatherEnabled && <TableCell />}
-                      <TableCell>
-                        <div className="cell-sub">Oma: {fmtHa(totals.ownedHa)} ha</div>
-                        <div className="cell-sub">Rent: {fmtHa(totals.rentedHa)} ha</div>
-                      </TableCell>
-                      <TableCell />
-                      <TableCell />
-                      <TableCell numeric><strong>{fmtEur(totals.landTaxEur)}</strong></TableCell>
-                      <TableCell numeric><strong>{fmtEur(totals.rentFeeEur)}</strong></TableCell>
-                      <TableCell />
-                      <TableCell />
-                      <TableCell />
-                      <TableCell actions />
-                    </TableRow>
-                  </TableFooter>
+            <Table scroll="fill" bordered className="fields-table">
+              <TableHeader>
+                <TableRow>
+                  <TableHead pin="start" className="sticky-name">Põld</TableHead>
+                  <TableHead numeric>Pindala</TableHead>
+                  <TableHead numeric>PRIA pind</TableHead>
+                  <TableHead>Kultuur {selectedYear}</TableHead>
+                  {weatherEnabled && <TableHead numeric title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</TableHead>}
+                  {weatherEnabled && <TableHead numeric title="Sademed külvist koristuseni">Sademed, mm</TableHead>}
+                  <TableHead>Omandisuhe</TableHead>
+                  <TableHead>Omanik / rendileandja</TableHead>
+                  <TableHead>Katastriüksused</TableHead>
+                  <TableHead numeric>Maamaks</TableHead>
+                  <TableHead numeric>Rent</TableHead>
+                  <TableHead>Mullastik</TableHead>
+                  <TableHead>Drenaaž</TableHead>
+                  <TableHead>Operaator</TableHead>
+                  <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredRows.length === 0 && (
+                  <TableEmpty colSpan={weatherEnabled ? 15 : 13}>
+                    {rows.length === 0
+                      ? `Hooajal ${selectedYear} pole põlde. Vali teine hooaeg või impordi põllud PRIA ZIP-failist.`
+                      : 'Otsingule vastavaid põlde ei leitud. Proovi muuta otsingusõna või omandisuhte filtrit.'}
+                  </TableEmpty>
                 )}
-              </Table>
-
-              {shapeView && (
-                <FieldShapeModal
-                  field={shapeView.field}
-                  record={shapeView.record}
-                  baseMap={baseMap}
-                  onClose={() => setShapeView(null)}
-                />
+                {filteredRows.map((r) => {
+                  const { field, rec } = r;
+                  const hasCrop = !isCropUndetermined(rec.crop);
+                  return (
+                    <TableRow key={field.id}>
+                      <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
+                        {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
+                        {rec.geometry && (
+                          <button
+                            type="button"
+                            className="fw-field-shape-btn corner"
+                            onClick={() => setShapeView({ field, record: rec })}
+                            title={`Näita ${selectedYear}. a põllu kuju`}
+                          >
+                            <Crosshair size={13} />
+                          </button>
+                        )}
+                        <div className="field-title-line">
+                          {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                          <span className="field-name">{field.name}</span>
+                        </div>
+                        <div className="field-sub-tags">
+                          <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell numeric title={rec.areaChangeReason || undefined}>
+                        {fmtHa(rec.areaHa || 0)} ha
+                      </TableCell>
+                      <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</TableCell>
+                      <TableCell>
+                        {hasCrop ? (
+                          <span className="fields-table-crop" style={{ '--crop-color': rec.cropColor } as React.CSSProperties}>
+                            {rec.crop}
+                          </span>
+                        ) : <span className="muted">–</span>}
+                        {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                      </TableCell>
+                      {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
+                      {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
+                      <TableCell>
+                        <span className={`tenure-badge ${r.tenure}`}>{TENURE_LABEL[r.tenure]}</span>
+                        {r.tenure === 'mixed' && (
+                          <div className="cell-sub">{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
+                        )}
+                      </TableCell>
+                      <TableCell wrap className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</TableCell>
+                      <TableCell>
+                        {r.parcels.length ? r.parcels.map((p, i) => (
+                          <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
+                            {p.cadastralCode}
+                            {r.parcels.length > 1 && <span className="cell-sub-inline"> · {fmtHa(p.fieldAreaHa)} ha</span>}
+                          </div>
+                        )) : <span className="muted">–</span>}
+                      </TableCell>
+                      <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className="muted">–</span>}</TableCell>
+                      <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</TableCell>
+                      <TableCell wrap className="wrap-cell">{field.soilType || <span className="muted">–</span>}</TableCell>
+                      <TableCell>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
+                      <TableCell>{field.operatorName || <span className="muted">–</span>}</TableCell>
+                      <TableCell actions>
+                        <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
+                          <Edit2 size={15} />
+                        </Button>
+                        <Button variant="danger-ghost" size="icon-sm" onClick={() => handleDelete(field)} title="Kustuta">
+                          <Trash2 size={15} />
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+              {filteredRows.length > 0 && (
+                <TableFooter sticky>
+                  <TableRow>
+                    <TableCell pin="start" className="sticky-name"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
+                    <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
+                    <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
+                    <TableCell />
+                    {weatherEnabled && <TableCell />}
+                    {weatherEnabled && <TableCell />}
+                    <TableCell>
+                      <div className="cell-sub">Oma: {fmtHa(totals.ownedHa)} ha</div>
+                      <div className="cell-sub">Rent: {fmtHa(totals.rentedHa)} ha</div>
+                    </TableCell>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell numeric><strong>{fmtEur(totals.landTaxEur)}</strong></TableCell>
+                    <TableCell numeric><strong>{fmtEur(totals.rentFeeEur)}</strong></TableCell>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell />
+                    <TableCell actions />
+                  </TableRow>
+                </TableFooter>
               )}
+            </Table>
 
-              {editingField && (
-                <FieldEditDialog
-                  field={editingField}
-                  selectedYear={selectedYear}
-                  seasons={seasons}
-                  parties={parties}
-                  onOpenParties={onOpenParties}
-                  crops={crops}
-                  onOpenCrops={onOpenCrops}
-                  onUpdateField={onUpdateField}
-                  onClose={closeEdit}
-                  soilSamples={soilSamples}
-                  weatherEnabled={weatherEnabled}
-                />
-              )}
+            {shapeView && (
+              <FieldShapeModal
+                field={shapeView.field}
+                record={shapeView.record}
+                baseMap={baseMap}
+                onClose={() => setShapeView(null)}
+              />
+            )}
 
-              {filteredRows.length === 0 && (
-                <div className="empty-register-state glass-card">
-                  <AlertCircle size={28} className="text-amber" />
-                  <h4>{rows.length === 0 ? `Hooajal ${selectedYear} pole põlde` : 'Otsingule vastavaid põlde ei leitud'}</h4>
-                  <p>{rows.length === 0 ? 'Vali teine hooaeg või impordi põllud PRIA ZIP-failist.' : 'Proovi muuta otsingusõna või omandisuhte filtrit.'}</p>
-                </div>
-              )}
-            </>
+            {editingField && (
+              <FieldEditDialog
+                field={editingField}
+                selectedYear={selectedYear}
+                seasons={seasons}
+                parties={parties}
+                onOpenParties={onOpenParties}
+                crops={crops}
+                onOpenCrops={onOpenCrops}
+                onUpdateField={onUpdateField}
+                onClose={closeEdit}
+                soilSamples={soilSamples}
+                weatherEnabled={weatherEnabled}
+              />
+            )}
           </div>
         </div>
       </main>

@@ -180,4 +180,8 @@ export const tableRowClass = ({ tone, clickable = false }: { tone?: TableRowTone
   );
 
 export const tableFooterClass = ({ sticky = false }: { sticky?: boolean } = {}): string =>
-  cn('bg-muted font-semibold', sticky && '[&>tr>td]:sticky [&>tr>td]:bottom-0 [&>tr>td]:z-[2] [&>tr>td]:bg-table-head');
+  cn(
+    'bg-muted font-semibold [&_tr]:hover:bg-transparent',
+    // Jaluse kinnitatud lahtrid jäävad hover'il päise toonis (PIN_BG group-hover muidu värviks need).
+    sticky && '[&>tr>td]:sticky [&>tr>td]:bottom-0 [&>tr>td]:z-[2] [&>tr>td]:bg-table-head [&>tr>td]:group-hover:bg-table-head'
+  );

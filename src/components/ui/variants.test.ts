@@ -35,6 +35,10 @@ describe('variants', () => {
     expect(v.badgeVariants({ tone: 'warning' })).toContain('text-warning');
     expect(v.badgeVariants()).toContain('text-muted-foreground');
   });
+  it('jaluse kinnitatud lahter jääb hover\'il päise toonis', () => {
+    expect(v.tableFooterClass({ sticky: true })).toContain('group-hover:bg-table-head');
+    expect(v.tableFooterClass()).toContain('[&_tr]:hover:bg-transparent');
+  });
   it('ükski variant ei kasuta keelatud suvalisi väärtusi', () => {
     for (const cls of allClassStrings()) expect(auditTsx(`className="${cls}"`).arbitrary).toEqual([]);
   });

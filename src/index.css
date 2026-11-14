@@ -4048,6 +4048,9 @@ input[type="number"],
 [data-slot="table"] td.year-cell.selected {
   border-left: 1px solid #16a34a;
   border-right: 1px solid #16a34a;
+  /* ui lahtri border-border seab värvi kõigile külgedele utiliidikihis; roheline peab !important-iga võitma */
+  border-left-color: #16a34a !important;
+  border-right-color: #16a34a !important;
 }
 
 .register-table td.year-cell.editable,

@@ -7,7 +7,6 @@ import {
   Crosshair,
   Check,
   Download,
-  AlertCircle,
   Lock,
   Repeat
 } from 'lucide-react';
@@ -21,7 +20,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -495,179 +494,176 @@ function cropSummaryKey(cropText: string): string {
             );
           })()}
 
-            <Table scroll="fill" bordered>
-              <TableHeader>
-                <TableRow>
-                  <TableHead pin="start" className="sticky-name">Põld</TableHead>
-                  <TableHead pin="start" className="sticky-size">Suurus</TableHead>
-                  {tableYears.map((yr) => (
-                    <TableHead
-                      key={yr}
-                      className={`year-col ${yr === selectedYear ? 'selected' : ''}`}
-                      onClick={() => onSelectYear(yr)}
-                      title={`Vali hooaeg ${yr}`}
-                    >
-                      <span className="year-col-label">{yr}</span>
-                    </TableHead>
-                  ))}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredFields.map((field) => {
-                  const selectedRec = field.history.find((h) => h.year === selectedYear);
-                  const latestRec = [...field.history].sort((a, b) => b.year - a.year)[0];
-                  const sizeRec = selectedRec || latestRec;
+          <Table scroll="fill" bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead pin="start" className="sticky-name">Põld</TableHead>
+                <TableHead pin="start" className="sticky-size">Suurus</TableHead>
+                {tableYears.map((yr) => (
+                  <TableHead
+                    key={yr}
+                    className={`year-col ${yr === selectedYear ? 'selected' : ''}`}
+                    onClick={() => onSelectYear(yr)}
+                    title={`Vali hooaeg ${yr}`}
+                  >
+                    <span className="year-col-label">{yr}</span>
+                  </TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {filteredFields.length === 0 && (
+                <TableEmpty colSpan={2 + tableYears.length}>
+                  Otsingule vastavaid põlde ei leitud. Proovi muuta otsingusõna või eemalda kultuuri-/omandifilter.
+                </TableEmpty>
+              )}
+              {filteredFields.map((field) => {
+                const selectedRec = field.history.find((h) => h.year === selectedYear);
+                const latestRec = [...field.history].sort((a, b) => b.year - a.year)[0];
+                const sizeRec = selectedRec || latestRec;
 
-                  return (
-                    <TableRow key={field.id}>
-                      <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
-                        {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
-                        {selectedRec?.geometry && (
-                          <button
-                            type="button"
-                            className="fw-field-shape-btn corner"
-                            title={`Näita ${selectedYear}. a põllu kuju`}
-                            onClick={() => setShapeView({ fieldId: field.id, year: selectedYear })}
-                          >
-                            <Crosshair size={13} />
-                          </button>
-                        )}
-                        <div className="field-title-line">
-                          {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
-                          <span className="field-name">{field.name}</span>
-                        </div>
-                        <div className="field-sub-tags">
-                          <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
-                          {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
-                          {field.soilType && <span className="sub-tag soil-tag" title={SOIL_AUTO_HINT}>🌱 {field.soilType}</span>}
-                        </div>
-                      </TableCell>
-                      <TableCell
-                        pin="start"
-                        className={`size-cell sticky-size ${selectedRec ? '' : 'muted'}`}
-                        title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
-                      >
-                        <div className="season-area-box">
-                          <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
-                          {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
-                        </div>
-                      </TableCell>
-                      {tableYears.map((yr) => {
-                        const rec = field.history.find((h) => h.year === yr);
-                        const hasCrop = !!rec && !isCropUndetermined(rec.crop);
-                        const blockReason = cropEditBlockReason(field, rec, yr);
-                        const editable = !blockReason;
-                        const isEditing = cropEdit !== null && cropEdit.fieldId === field.id && cropEdit.year === yr;
-                        if (isEditing && cropEdit) {
-                          const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
-                          const varietyOptions =
-                            cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
-                          return (
-                            <TableCell key={yr} wrap className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
-                              <div ref={cropEditRef} className="crop-inline-edit">
-                                <select
-                                  className="form-input"
-                                  value={cropEdit.crop}
-                                  autoFocus
-                                  onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '', undersowing: 'NONE' })}
-                                >
-                                  <option value="">– Kultuur määramata –</option>
-                                  {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
-                                    <option value={cropEdit.crop}>{cropEdit.crop}</option>
-                                  )}
-                                  {activeCrops.map((c) => (
-                                    <option key={c.id} value={c.name}>{c.name}</option>
-                                  ))}
-                                </select>
-                                <select
-                                  className="form-input"
-                                  value={cropEdit.variety}
-                                  onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
-                                  disabled={varietyOptions.length === 0}
-                                >
-                                  <option value="">{varietyOptions.length === 0 ? 'Sorte pole' : 'Sort määramata'}</option>
-                                  {varietyOptions.map((v) => (
-                                    <option key={v} value={v}>{v}</option>
-                                  ))}
-                                </select>
-                                {findRegistryCrop(cropEdit.crop)?.priaUndersowing && (
-                                  <select
-                                    className="form-input"
-                                    value={cropEdit.undersowing}
-                                    onChange={(e) => setCropEdit({ ...cropEdit, undersowing: e.target.value as Undersowing })}
-                                    title="Allakülv"
-                                  >
-                                    {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
-                                      <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
-                                    ))}
-                                  </select>
-                                )}
-                                <div className="crop-inline-edit-actions">
-                                  <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
-                                    <X size={15} />
-                                  </Button>
-                                  <Button type="button" variant="ghost" size="icon-sm" className="save" onClick={saveCropEdit} title="Salvesta">
-                                    <Check size={15} />
-                                  </Button>
-                                </div>
-                              </div>
-                            </TableCell>
-                          );
-                        }
+                return (
+                  <TableRow key={field.id}>
+                    <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
+                      {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
+                      {selectedRec?.geometry && (
+                        <button
+                          type="button"
+                          className="fw-field-shape-btn corner"
+                          title={`Näita ${selectedYear}. a põllu kuju`}
+                          onClick={() => setShapeView({ fieldId: field.id, year: selectedYear })}
+                        >
+                          <Crosshair size={13} />
+                        </button>
+                      )}
+                      <div className="field-title-line">
+                        {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                        <span className="field-name">{field.name}</span>
+                      </div>
+                      <div className="field-sub-tags">
+                        <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
+                        {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
+                        {field.soilType && <span className="sub-tag soil-tag" title={SOIL_AUTO_HINT}>🌱 {field.soilType}</span>}
+                      </div>
+                    </TableCell>
+                    <TableCell
+                      pin="start"
+                      className={`size-cell sticky-size ${selectedRec ? '' : 'muted'}`}
+                      title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
+                    >
+                      <div className="season-area-box">
+                        <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
+                        {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
+                      </div>
+                    </TableCell>
+                    {tableYears.map((yr) => {
+                      const rec = field.history.find((h) => h.year === yr);
+                      const hasCrop = !!rec && !isCropUndetermined(rec.crop);
+                      const blockReason = cropEditBlockReason(field, rec, yr);
+                      const editable = !blockReason;
+                      const isEditing = cropEdit !== null && cropEdit.fieldId === field.id && cropEdit.year === yr;
+                      if (isEditing && cropEdit) {
+                        const varieties = (findRegistryCrop(cropEdit.crop)?.varieties || []).map((v) => v.name);
+                        const varietyOptions =
+                          cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
                         return (
-                          <TableCell
-                            key={yr}
-                            className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${hasCrop ? 'has-crop' : ''}`}
-                            style={hasCrop ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
-                            title={editable ? (hasCrop ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
-                            onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
-                          >
-                            {rec ? (
-                              <>
-                                <div className="year-crop">
-                                  {hasCrop
-                                    ? <span className="year-crop-name" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
-                                    : <span className="muted">–</span>}
-                                  {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
-                                  <button
-                                    type="button"
-                                    className="year-shape-btn"
-                                    title={`Näita ${yr}. a põllu kuju`}
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      setShapeView({ fieldId: field.id, year: yr });
-                                    }}
-                                  >
-                                    <Crosshair size={13} />
-                                  </button>
-                                </div>
-                                {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
-                                {hasCrop && rec.undersowing && rec.undersowing !== 'NONE' && (
-                                  <div className="cell-sub">{UNDERSOWING_LABELS[rec.undersowing]}</div>
+                          <TableCell key={yr} wrap className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
+                            <div ref={cropEditRef} className="crop-inline-edit">
+                              <select
+                                className="form-input"
+                                value={cropEdit.crop}
+                                autoFocus
+                                onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '', undersowing: 'NONE' })}
+                              >
+                                <option value="">– Kultuur määramata –</option>
+                                {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
+                                  <option value={cropEdit.crop}>{cropEdit.crop}</option>
                                 )}
-                              </>
-                            ) : (
-                              <div className="year-crop">
-                                <span className="muted">–</span>
-                                {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                                {activeCrops.map((c) => (
+                                  <option key={c.id} value={c.name}>{c.name}</option>
+                                ))}
+                              </select>
+                              <select
+                                className="form-input"
+                                value={cropEdit.variety}
+                                onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
+                                disabled={varietyOptions.length === 0}
+                              >
+                                <option value="">{varietyOptions.length === 0 ? 'Sorte pole' : 'Sort määramata'}</option>
+                                {varietyOptions.map((v) => (
+                                  <option key={v} value={v}>{v}</option>
+                                ))}
+                              </select>
+                              {findRegistryCrop(cropEdit.crop)?.priaUndersowing && (
+                                <select
+                                  className="form-input"
+                                  value={cropEdit.undersowing}
+                                  onChange={(e) => setCropEdit({ ...cropEdit, undersowing: e.target.value as Undersowing })}
+                                  title="Allakülv"
+                                >
+                                  {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
+                                    <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
+                                  ))}
+                                </select>
+                              )}
+                              <div className="crop-inline-edit-actions">
+                                <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
+                                  <X size={15} />
+                                </Button>
+                                <Button type="button" variant="ghost" size="icon-sm" className="save" onClick={saveCropEdit} title="Salvesta">
+                                  <Check size={15} />
+                                </Button>
                               </div>
-                            )}
+                            </div>
                           </TableCell>
                         );
-                      })}
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-
-            {filteredFields.length === 0 && (
-              <div className="empty-register-state glass-card">
-                <AlertCircle size={28} className="text-amber" />
-                <h4>Otsingule vastavaid põlde ei leitud</h4>
-                <p>Proovi muuta otsingusõna või eemalda kultuuri-/omandifilter.</p>
-              </div>
-            )}
+                      }
+                      return (
+                        <TableCell
+                          key={yr}
+                          className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${hasCrop ? 'has-crop' : ''}`}
+                          style={hasCrop ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
+                          title={editable ? (hasCrop ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
+                          onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
+                        >
+                          {rec ? (
+                            <>
+                              <div className="year-crop">
+                                {hasCrop
+                                  ? <span className="year-crop-name" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
+                                  : <span className="muted">–</span>}
+                                {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                                <button
+                                  type="button"
+                                  className="year-shape-btn"
+                                  title={`Näita ${yr}. a põllu kuju`}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setShapeView({ fieldId: field.id, year: yr });
+                                  }}
+                                >
+                                  <Crosshair size={13} />
+                                </button>
+                              </div>
+                              {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                              {hasCrop && rec.undersowing && rec.undersowing !== 'NONE' && (
+                                <div className="cell-sub">{UNDERSOWING_LABELS[rec.undersowing]}</div>
+                              )}
+                            </>
+                          ) : (
+                            <div className="year-crop">
+                              <span className="muted">–</span>
+                              {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                            </div>
+                          )}
+                        </TableCell>
+                      );
+                    })}
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
         </div>
   );
 
