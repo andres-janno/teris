@@ -9,7 +9,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -202,54 +202,56 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           {trip.fields.length > 0 && (
             <>
               <h4>Põllud</h4>
-              <table className="register-table trip-dialog-fields">
-                <thead>
-                  <tr>
-                    <th>Põld</th>
-                    <th>Põllul</th>
-                    <th className="num">ha</th>
-                    <th className="num" title="Põllu kütus koos osaga teel kulunud kütusest; all põllul kulunud kütus">Kütus l</th>
-                    <th>Kanne</th>
-                  </tr>
-                </thead>
-                <tbody>
+              <Table scroll="none" containerClassName="trip-dialog-fields-wrap" className="trip-dialog-fields">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Põld</TableHead>
+                    <TableHead>Põllul</TableHead>
+                    <TableHead numeric>ha</TableHead>
+                    <TableHead numeric title="Põllu kütus koos osaga teel kulunud kütusest; all põllul kulunud kütus">Kütus l</TableHead>
+                    <TableHead>Kanne</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {trip.fields.map((f) => (
-                    <tr key={f.fieldSeasonId}>
-                      <td>{f.label}</td>
-                      <td>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</td>
-                      <td className="num">
+                    <TableRow key={f.fieldSeasonId}>
+                      <TableCell>{f.label}</TableCell>
+                      <TableCell>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</TableCell>
+                      <TableCell numeric>
                         {f.areaHa == null ? '—' : formatQty(f.areaHa)}
                         <div className="text-muted">
                           {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
                         </div>
-                      </td>
-                      <td className="num">
+                      </TableCell>
+                      <TableCell numeric>
                         {f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}
                         {f.fuelFieldL != null && <div className="text-muted">põllul {formatQty(f.fuelFieldL)}</div>}
-                      </td>
-                      <td className="trip-dialog-entry-cell">
-                        {f.entries.length === 0 ? (
-                          <span className="text-muted">kanne puudub</span>
-                        ) : (
-                          f.entries.map((e) => (
-                            <button
-                              key={e.id}
-                              type="button"
-                              className="trip-dialog-entry"
-                              title="Ava põllu töö"
-                              disabled={!onOpenFieldWork}
-                              onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
-                            >
-                              <span>{e.workTypeName}</span>
-                              <span className="text-muted">{formatDate(e.date)}</span>
-                            </button>
-                          ))
-                        )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                      <TableCell>
+                        <div className="trip-dialog-entry-cell">
+                          {f.entries.length === 0 ? (
+                            <span className="text-muted">kanne puudub</span>
+                          ) : (
+                            f.entries.map((e) => (
+                              <button
+                                key={e.id}
+                                type="button"
+                                className="trip-dialog-entry"
+                                title="Ava põllu töö"
+                                disabled={!onOpenFieldWork}
+                                onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
+                              >
+                                <span>{e.workTypeName}</span>
+                                <span className="text-muted">{formatDate(e.date)}</span>
+                              </button>
+                            ))
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </>
           )}
           {trip.visits.length > 0 && (

@@ -9,7 +9,7 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -92,50 +92,46 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
         <DialogBody className="work-register-body">
           {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
-          <div className="register-table-wrap">
-            <table className="register-table work-register-table">
-              <thead>
-                <tr>
-                  <th>PRIA tegevus</th>
-                  <th>Lühinimi</th>
-                  <th>Faas</th>
-                  <th>Kandes küsitakse (kogused)</th>
-                  <th className="num">Põldudel</th>
-                  <th className="actions-col">Tegevused</th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table scroll="md" bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>PRIA tegevus</TableHead>
+                <TableHead>Lühinimi</TableHead>
+                <TableHead>Faas</TableHead>
+                <TableHead>Kandes küsitakse (kogused)</TableHead>
+                <TableHead numeric>Põldudel</TableHead>
+                <TableHead actions>Tegevused</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {[...workTypes]
                   .sort((a, b) => WORK_PHASES.indexOf(a.phase) - WORK_PHASES.indexOf(b.phase) || a.sortOrder - b.sortOrder)
                   .map((w) => (
-                    <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
-                      <td className="work-name-cell">
+                    <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
+                      <TableCell wrap className="work-name-cell">
                         {w.name}
                         {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-                      </td>
-                      <td>{w.shortName?.trim() || '–'}</td>
-                      <td><PhaseBadge phase={w.phase} /></td>
-                      <td>
+                      </TableCell>
+                      <TableCell>{w.shortName?.trim() || '–'}</TableCell>
+                      <TableCell><PhaseBadge phase={w.phase} /></TableCell>
+                      <TableCell>
                         <div className="field-sub-tags">
                           {entryInputs(w).map((i) => <span key={i} className="sub-tag">{i}</span>)}
                         </div>
-                      </td>
-                      <td className="num">{w.fieldWorkCount ?? 0}</td>
-                      <td className="actions-col">
-                        <div className="row-actions">
+                      </TableCell>
+                      <TableCell numeric>{w.fieldWorkCount ?? 0}</TableCell>
+                      <TableCell actions>
                           <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setWorkForm(w)}>
                             <Edit2 size={15} />
                           </Button>
                           <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" disabled={busy} onClick={() => deleteWork(w)}>
                             <Trash2 size={15} />
                           </Button>
-                        </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-              </tbody>
-            </table>
-          </div>
+            </TableBody>
+          </Table>
         </DialogBody>
       </DialogContent>
 

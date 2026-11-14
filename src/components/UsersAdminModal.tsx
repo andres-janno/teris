@@ -6,7 +6,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -161,34 +161,33 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
             <div className="alert-box">{notice}</div>
           )}
 
-          <div className="users-admin-table-wrap">
-            <table className="users-admin-table">
-              <thead>
-                <tr>
-                  <th>Nimi</th>
-                  <th>Kasutajanimi</th>
-                  <th>E-post</th>
-                  <th>Roll</th>
-                  <th>Olek</th>
-                  <th>Viimati sees</th>
-                  <th className="users-admin-actions-cell"></th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nimi</TableHead>
+                <TableHead>Kasutajanimi</TableHead>
+                <TableHead>E-post</TableHead>
+                <TableHead>Roll</TableHead>
+                <TableHead>Olek</TableHead>
+                <TableHead>Viimati sees</TableHead>
+                <TableHead actions />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
                 {users.map((u) => {
                   const self = u.id === currentUserId;
                   return (
-                    <tr key={u.id} className={u.isActive ? '' : 'inactive'}>
-                      <td className="users-admin-wrap">{u.displayName ?? '–'}</td>
-                      <td>{u.username}</td>
-                      <td className="users-admin-wrap">{u.email ?? '–'}</td>
-                      <td>
+                    <TableRow key={u.id} tone={u.isActive ? undefined : 'muted'}>
+                      <TableCell wrap className="users-admin-wrap">{u.displayName ?? '–'}</TableCell>
+                      <TableCell>{u.username}</TableCell>
+                      <TableCell wrap className="users-admin-wrap">{u.email ?? '–'}</TableCell>
+                      <TableCell>
                         <span className="users-admin-roles">
                           <span>{u.isAdmin ? 'Admin' : 'Kasutaja'}</span>
                           {u.isFinanceManager && <span>Finantsjuht</span>}
                         </span>
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         {!u.isActive ? (
                           <span className="user-status-pill status-inactive">
                             <span className="user-status-dot" />
@@ -210,10 +209,9 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                             Aktiivne
                           </span>
                         )}
-                      </td>
-                      <td className="users-admin-date">{formatDateTime(u.lastSeenAt ?? u.lastLoginAt)}</td>
-                      <td className="users-admin-actions-cell">
-                        <div className="users-admin-actions">
+                      </TableCell>
+                      <TableCell>{formatDateTime(u.lastSeenAt ?? u.lastLoginAt)}</TableCell>
+                      <TableCell actions>
                           {!readOnly && (
                           <Button type="button" variant="ghost" size="icon-sm" title="Muuda" disabled={busy} onClick={() => openForm({ kind: 'edit', user: u })}>
                             <Pencil size={15} />
@@ -237,14 +235,12 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                               </Button>
                             </>
                           )}
-                        </div>
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+            </TableBody>
+          </Table>
 
           <SupportAccessPanel readOnly={readOnly} />
         </DialogBody>

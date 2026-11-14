@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { ArticleCategory } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableRow } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -62,34 +62,34 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
           {ARTICLE_GROUPS.map((g) => (
             <section key={g} className="article-categories-group">
               <h4>{ARTICLE_GROUP_LABEL[g]}</h4>
-              <table className="register-table">
-                <tbody>
+              <Table scroll="none">
+                <TableBody>
                   {rows.filter((r) => r.group === g).map((c) => (
-                    <tr key={c.id} className={c.isActive ? '' : 'inactive'}>
-                      <td>
+                    <TableRow key={c.id} tone={c.isActive ? undefined : 'muted'}>
+                      <TableCell>
                         <input
                           className="form-input"
                           aria-label="Kategooria nimi"
                           defaultValue={c.name}
                           onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== c.name && void save({ ...c, name: e.target.value.trim() })}
                         />
-                      </td>
-                      <td className="num">{c.articleCount ?? 0}</td>
-                      <td>
+                      </TableCell>
+                      <TableCell numeric>{c.articleCount ?? 0}</TableCell>
+                      <TableCell>
                         <label className="users-admin-checkbox">
                           <input type="checkbox" checked={c.isActive} onChange={(e) => void save({ ...c, isActive: e.target.checked })} />
                           <span>Aktiivne</span>
                         </label>
-                      </td>
-                      <td className="actions-col">
+                      </TableCell>
+                      <TableCell actions>
                         {c.systemKind
                           ? <span title="Süsteemne kategooria: süsteem kasutab seda (PRIA, laoarvestus, kanded)"><Lock size={14} /></span>
                           : <Button type="button" variant="ghost" size="icon-sm" title="Kustuta kategooria" onClick={() => void remove(c)} disabled={(c.articleCount ?? 0) > 0}><Trash2 size={14} /></Button>}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                   ))}
-                </tbody>
-              </table>
+                </TableBody>
+              </Table>
             </section>
           ))}
           <form className="article-categories-add" onSubmit={add}>

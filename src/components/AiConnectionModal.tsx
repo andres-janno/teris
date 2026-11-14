@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
@@ -128,37 +128,33 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
             </Button>
           </form>
 
-          <table className="ai-key-table">
-            <thead>
-              <tr>
-                <th>Nimi</th>
-                <th>Võti</th>
-                <th>Loodud</th>
-                <th>Viimati kasutatud</th>
-                <th />
-              </tr>
-            </thead>
-            <tbody>
-              {keys?.length === 0 && (
-                <tr>
-                  <td colSpan={5} className="muted">Võtmeid pole</td>
-                </tr>
-              )}
+          <Table containerClassName="ai-key-table-wrap" className="ai-key-table">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nimi</TableHead>
+                <TableHead>Võti</TableHead>
+                <TableHead>Loodud</TableHead>
+                <TableHead>Viimati kasutatud</TableHead>
+                <TableHead actions />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {keys?.length === 0 && <TableEmpty colSpan={5}>Võtmeid pole</TableEmpty>}
               {keys?.map((k) => (
-                <tr key={k.id}>
-                  <td>{k.name}</td>
-                  <td><code>{k.keyPrefix}…</code></td>
-                  <td>{formatDateTimeTallinn(k.createdAt)}</td>
-                  <td>{formatDateTimeTallinn(k.lastUsedAt)}</td>
-                  <td>
+                <TableRow key={k.id}>
+                  <TableCell>{k.name}</TableCell>
+                  <TableCell><code>{k.keyPrefix}…</code></TableCell>
+                  <TableCell>{formatDateTimeTallinn(k.createdAt)}</TableCell>
+                  <TableCell>{formatDateTimeTallinn(k.lastUsedAt)}</TableCell>
+                  <TableCell actions>
                     <Button type="button" variant="ghost" size="icon-sm" title="Tühista" aria-label={`Tühista ${k.name}`} onClick={() => void revoke(k)}>
                       <Trash2 size={16} />
                     </Button>
-                  </td>
-                </tr>
+                  </TableCell>
+                </TableRow>
               ))}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
 
           <div className="ai-key-help">
             <strong>Kuidas ühendada</strong>

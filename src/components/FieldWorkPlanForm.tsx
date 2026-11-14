@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 import { FilterSelect } from './FilterSelect';
 import { FilterClear } from './FilterClear';
-import { Button, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -93,27 +93,29 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
       {articleLines.length > 0 && (
         <div className="fw-plan-block">
           <div className="fw-plan-block-title">Planeeritud materjalid</div>
-          <div className="fw-plan-table-wrap">
-            <table className="fw-plan-table">
-              <thead><tr>{columns.map((c) => <th key={c.label} className={c.num ? 'num' : undefined}>{c.label}</th>)}</tr></thead>
-              <tbody>
-                {articleLines.map((l, i) => (
-                  <tr key={l.id ?? i}>{columns.map((c) => <td key={c.label} className={c.num ? 'num' : undefined}>{c.value(l)}</td>)}</tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table dense>
+            <TableHeader>
+              <TableRow>{columns.map((c) => <TableHead key={c.label} numeric={c.num}>{c.label}</TableHead>)}</TableRow>
+            </TableHeader>
+            <TableBody>
+              {articleLines.map((l, i) => (
+                <TableRow key={l.id ?? i}>{columns.map((c) => <TableCell key={c.label} numeric={c.num}>{c.value(l)}</TableCell>)}</TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </div>
       )}
       {harvestLine && (
         <div className="fw-plan-block">
           <div className="fw-plan-block-title">Planeeritud saak</div>
-          <div className="fw-plan-table-wrap">
-            <table className="fw-plan-table">
-              <thead><tr><th>Kultuuri tüüp</th><th>Saagi tüüp</th><th className="num">Saak t/ha</th></tr></thead>
-              <tbody><tr><td>{dash(harvestLine.priaSpec)}</td><td>{dash(harvestLine.priaKind)}</td><td className="num">{fmtQ(harvestLine.ratePerHa)}</td></tr></tbody>
-            </table>
-          </div>
+          <Table dense>
+            <TableHeader>
+              <TableRow><TableHead>Kultuuri tüüp</TableHead><TableHead>Saagi tüüp</TableHead><TableHead numeric>Saak t/ha</TableHead></TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow><TableCell>{dash(harvestLine.priaSpec)}</TableCell><TableCell>{dash(harvestLine.priaKind)}</TableCell><TableCell numeric>{fmtQ(harvestLine.ratePerHa)}</TableCell></TableRow>
+            </TableBody>
+          </Table>
         </div>
       )}
       {work.notes && (
