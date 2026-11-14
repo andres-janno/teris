@@ -1,7 +1,7 @@
 // src/components/FieldWorkPlanForm.tsx — töö plaan: vaatamine (kompaktne, ainult lugemiseks) ja muutmine (vorm).
 // Ühine koht plaani valideerimisele ja salvestamisele (api.addFieldWork / api.updateFieldWork);
 // kasutab põllutööde tahvli valitud töö aken.
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { DateInput } from './DateInput';
 import { formatQty } from '../services/units';
 import { api } from '../services/api';
@@ -22,6 +22,7 @@ export interface FieldWorkPlanFormProps {
   articles: Article[];
   workers: { id: string; name: string }[];
   mode: 'view' | 'edit';
+  onBusyChange?: (busy: boolean) => void; // salvestamise ajal: kutsuja keelab akna sulgemise
   layout?: 'dialog' | 'inline'; // dialog: DialogBody + DialogFooter (kutsuja paneb DialogContenti ja DialogHeaderi); inline: paneeli sees
   onSaved: () => void;
   onCancel?: () => void;
@@ -127,7 +128,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
 
 // --- Muutmine ---
 
-const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, fieldAreaHa, work, workTypes, articles, workers, layout = 'inline', onSaved, onCancel, seedCheck }) => {
+const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, fieldAreaHa, work, workTypes, articles, workers, layout = 'inline', onBusyChange, onSaved, onCancel, seedCheck }) => {
   // PRIA tegevused tööloogika järjekorras; muudetava töö tüüp jääb valikusse ka siis, kui see pole enam aktiivne
   const ordered = workTypes.filter((w) => (w.isActive && w.priaCode) || w.id === work?.workTypeId)
     .sort((a, b) => PRIA_ACTIVITIES.findIndex((p) => p.name === a.priaCode) - PRIA_ACTIVITIES.findIndex((p) => p.name === b.priaCode));
@@ -153,6 +154,9 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
     setHarvest((h) => recomputeHarvestTotal(h, a));
   };
   const [busy, setBusy] = useState(false);
+  useEffect(() => { onBusyChange?.(busy); }, [busy, onBusyChange]);
+  // Akna sulgumisel (lahtiühendamine) vabasta kutsuja sulgemislukk
+  useEffect(() => () => onBusyChange?.(false), [onBusyChange]);
   const [error, setError] = useState<string | null>(null);
 
   const usesMaterials = workType?.usesMaterials ?? work?.usesMaterials ?? false;

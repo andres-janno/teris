@@ -302,7 +302,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     return list;
   }, [workers, telemetrySuggestions, entry?.workerId, entry?.workerName]);
 
-
   const areaNum = parseNum(areaHa) ?? 0;
   const totalAfter = doneBefore + areaNum;
 
@@ -410,332 +409,332 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="xl" className="work-entry-modal" dismissible={!busy}>
         <DialogForm onSubmit={save}>
-        <DialogHeader title={`${entry ? 'Muuda kannet' : 'Lisa kanne'}: ${work.workTypeName}`} description={fieldLabel} />
+          <DialogHeader title={`${entry ? 'Muuda kannet' : 'Lisa kanne'}: ${work.workTypeName}`} description={fieldLabel} />
 
-        <DialogBody className="work-entry-body">
-          {(others.length > 0 || fieldAreaHa > 0) && (
-            <div className="work-entry-progress">
-              <div className="work-entry-progress-head">
-                <strong>Varasemad kanded: {others.length}</strong>
-                {fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
-              </div>
-              {fieldAreaHa > 0 && (
-                <div className="work-progress-bar"><div style={{ width: `${Math.min(100, (doneBefore / fieldAreaHa) * 100)}%` }} /></div>
-              )}
-            </div>
-          )}
-
-          {entry?.financeStatus === 'CONFIRMED' && (
-            <div className="work-entry-warning">
-              <Info size={14} />
-              <span>Kande finants on kinnitatud. Koguste muutmisel tuleb finantsjuhil kanne uuesti kinnitada.</span>
-            </div>
-          )}
-
-          {loadingSuggestions && (
-            <div className="telemetry-loading-notice">
-              <Radio size={14} className="telemetry-pulse-icon" />
-              <span>Kontrollin telemeetriat...</span>
-            </div>
-          )}
-
-          {telemetrySuggestions.length > 0 && (
-            <div className="telemetry-suggestions-card">
-              <div className="telemetry-suggestions-head">
-                <div className="telemetry-suggestions-title">
-                  <Radio size={14} className="telemetry-pulse-icon" />
-                  <span>Telemeetria tuvastatud põllusõidud ({telemetrySuggestions.length}):</span>
+          <DialogBody className="work-entry-body">
+            {(others.length > 0 || fieldAreaHa > 0) && (
+              <div className="work-entry-progress">
+                <div className="work-entry-progress-head">
+                  <strong>Varasemad kanded: {others.length}</strong>
+                  {fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
                 </div>
-                <span className="telemetry-suggestions-hint">Klõpsa kande eeltäitmiseks</span>
-              </div>
-              <div className="telemetry-suggestions-list">
-                {telemetrySuggestions.map((s) => {
-                  const state = suggestionState(s);
-                  const isSelected = state !== null;
-                  return (
-                    <div key={s.id} className="telemetry-suggestion-item">
-                    <button
-                      type="button"
-                      className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
-                      onClick={() => applySuggestion(s)}
-                    >
-                      <div className="telemetry-pill-row">
-                        <span className="telemetry-pill-vehicle">🚜 {s.vehicleName || 'Tehnika'}</span>
-                        {s.implementName ? (
-                          <span className="telemetry-pill-impl">+{s.implementName}</span>
-                        ) : (
-                          <span className="telemetry-pill-impl" style={{ color: '#ef4444', fontWeight: 600 }}>(haakeriist puudub)</span>
-                        )}
-                        <span className="telemetry-pill-time">
-                          <Clock size={12} /> {s.startTime} – {s.endTime}
-                          {s.workedAreaHa != null && s.workedAreaHa > 0 ? (
-                            <span> · {fmtHa(s.workedAreaHa)} ha</span>
-                          ) : (
-                            s.workedAreaHa == null ? (
-                              <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
-                                {' · '}ha puudub
-                              </span>
-                            ) : (
-                              <span title="GPS järgi kaetud pindala ~0 ha">{' · '}0 ha</span>
-                            )
-                          )}
-                          {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
-                        </span>
-                      </div>
-                      <div className="telemetry-pill-meta">
-                        {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
-                        <span className="telemetry-pill-field" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
-                          Põllul {s.fieldStartTime} – {s.fieldEndTime}
-                        </span>
-                        <span className="telemetry-pill-action">
-                          {state === 'linked' ? '✓ Seotud' : state === 'selected' ? '✓ Valitud' : 'Vali see sõit'}
-                        </span>
-                      </div>
-                      {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
-                    </button>
-                    {isSelected && (
-                      <button type="button" className="telemetry-pill-unlink" onClick={unlinkTrip}>
-                        Eemalda seos
-                      </button>
-                    )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          <div className="work-entry-grid work-entry-top-grid">
-            <div className="form-group">
-              <label htmlFor="we-date">Kuupäev *</label>
-              <DateInput id="we-date" value={date} onChange={setDate} className="form-input" />
-            </div>
-            {activity === PRIA_ACTIVITY.FERTILIZING && (
-              <div className="form-group">
-                <label htmlFor="we-method">Väetamisviis</label>
-                <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
-                  <FilterSelect fill id="we-method" value={method} onChange={setMethod} options={[
-                    { value: '', label: '– vali –' },
-                    ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
-                    ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
-                  ]} />
-                </FilterClear>
+                {fieldAreaHa > 0 && (
+                  <div className="work-progress-bar"><div style={{ width: `${Math.min(100, (doneBefore / fieldAreaHa) * 100)}%` }} /></div>
+                )}
               </div>
             )}
-            <div className="form-group">
-              <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
-              <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
-                <FilterSelect fill id="we-worker" value={workerId} onChange={setWorkerId}
-                  options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
-              </FilterClear>
-            </div>
-            <div className="form-group">
-              <label htmlFor="we-start-time">Algus{imported ? '' : ' *'}</label>
-              <FilterSelect fill id="we-start-time" className="time-select" value={startTime} onChange={handleStartTimeChange}
-                options={timeOptions('– algus –', startOptions)} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="we-end-time">Lõpp{imported ? '' : ' *'}</label>
-              <FilterSelect fill id="we-end-time" className="time-select" value={endTime} onChange={handleEndTimeChange}
-                options={timeOptions('– lõpp –', endOptions)} />
-            </div>
-            <div className="form-group">
-              <label htmlFor="we-labor">Tööaeg, h</label>
-              <input
-                id="we-labor"
-                className="form-input num readonly"
-                readOnly
-                tabIndex={-1}
-                value={laborHours}
-                placeholder="–"
-                title="Arvutatakse alguse ja lõpu kellaajast"
-              />
-            </div>
-          </div>
 
-          {/* Tehtud pindala enne masinat ja materjale: materjalide kogused arvutatakse selle pealt */}
-          <div className="work-entry-section">
-            <div className="work-entry-grid work-entry-area-grid">
-              <div className="form-group">
-                <label htmlFor="we-area">Tehtud pindala, ha</label>
-                <input
-                  id="we-area"
-                  className="form-input num"
-                  inputMode="decimal"
-                  value={areaHa}
-                  onChange={(e) => changeArea(e.target.value)}
-                  placeholder="0,00"
-                  title="Sisesta pindala või vali allolevatest kiirvalikutest (10% – 100%)"
-                />
+            {entry?.financeStatus === 'CONFIRMED' && (
+              <div className="work-entry-warning">
+                <Info size={14} />
+                <span>Kande finants on kinnitatud. Koguste muutmisel tuleb finantsjuhil kanne uuesti kinnitada.</span>
               </div>
-              <div className="form-group">
-                <label htmlFor="we-telemetry-area">Telemeetria pindala, ha</label>
-                <input
-                  id="we-telemetry-area"
-                  className="form-input num readonly"
-                  readOnly
-                  tabIndex={-1}
-                  value={telemetryAreaHa}
-                  placeholder="–"
-                  style={
-                    (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
-                      ? { color: '#ef4444', borderColor: '#ef4444', fontWeight: 600, background: 'rgba(239, 68, 68, 0.08)' }
-                      : undefined
-                  }
-                  title={
-                    (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
-                      ? 'Haakeriista või selle töölaiust pole seoste registris'
-                      : (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
-                        ? 'GPS järgi kaetud pindala ~0 ha'
-                        : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
-                  }
-                />
-              </div>
-              {fieldAreaHa > 0 && (
-                <p className="work-entry-hint align-end">Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
-              )}
-            </div>
+            )}
 
-            {fieldAreaHa > 0 && (() => {
-              // Märgitakse protsent, mis on kogu põllu täitumisele (varasemad + see kanne) kõige lähemal
-              const totalPct = (totalAfter / fieldAreaHa) * 100;
-              const enabledPcts = AREA_PERCENTAGES.filter((pct) => pct === 100 || doneBefore < (fieldAreaHa * pct) / 100);
-              const nearestPct = areaNum > 0 && enabledPcts.length
-                ? enabledPcts.reduce((best, pct) => (Math.abs(pct - totalPct) < Math.abs(best - totalPct) ? pct : best))
-                : null;
-              return (
-              <div className="work-entry-area-presets">
-                <span className="work-entry-presets-label">Põllust tehtud:</span>
-                <div className="work-entry-presets-buttons">
-                  {AREA_PERCENTAGES.map((pct) => {
-                    const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
-                    const needed = Math.max(0, targetTotal - doneBefore);
-                    const roundedNeeded = Math.round(needed * 100) / 100;
-                    const isExceeded = doneBefore >= targetTotal && pct < 100;
-                    const isSelected = pct === nearestPct;
+            {loadingSuggestions && (
+              <div className="telemetry-loading-notice">
+                <Radio size={14} className="telemetry-pulse-icon" />
+                <span>Kontrollin telemeetriat...</span>
+              </div>
+            )}
+
+            {telemetrySuggestions.length > 0 && (
+              <div className="telemetry-suggestions-card">
+                <div className="telemetry-suggestions-head">
+                  <div className="telemetry-suggestions-title">
+                    <Radio size={14} className="telemetry-pulse-icon" />
+                    <span>Telemeetria tuvastatud põllusõidud ({telemetrySuggestions.length}):</span>
+                  </div>
+                  <span className="telemetry-suggestions-hint">Klõpsa kande eeltäitmiseks</span>
+                </div>
+                <div className="telemetry-suggestions-list">
+                  {telemetrySuggestions.map((s) => {
+                    const state = suggestionState(s);
+                    const isSelected = state !== null;
                     return (
+                      <div key={s.id} className="telemetry-suggestion-item">
                       <button
-                        key={pct}
                         type="button"
-                        className={`area-preset-btn ${isSelected ? 'active' : ''}`}
-                        disabled={isExceeded}
-                        onClick={() => applyPercentage(pct)}
-                        title={
-                          isExceeded
-                            ? `Varasemate kannetega on juba tehtud ${fmtHa(doneBefore)} ha (rohkem kui ${pct}%)`
-                            : `Vali ${pct}% (${fmtHa(targetTotal)} ha) → sellesse kandesse ${fmtHa(roundedNeeded)} ha`
-                        }
+                        className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
+                        onClick={() => applySuggestion(s)}
                       >
-                        {pct}%
+                        <div className="telemetry-pill-row">
+                          <span className="telemetry-pill-vehicle">🚜 {s.vehicleName || 'Tehnika'}</span>
+                          {s.implementName ? (
+                            <span className="telemetry-pill-impl">+{s.implementName}</span>
+                          ) : (
+                            <span className="telemetry-pill-impl" style={{ color: '#ef4444', fontWeight: 600 }}>(haakeriist puudub)</span>
+                          )}
+                          <span className="telemetry-pill-time">
+                            <Clock size={12} /> {s.startTime} – {s.endTime}
+                            {s.workedAreaHa != null && s.workedAreaHa > 0 ? (
+                              <span> · {fmtHa(s.workedAreaHa)} ha</span>
+                            ) : (
+                              s.workedAreaHa == null ? (
+                                <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
+                                  {' · '}ha puudub
+                                </span>
+                              ) : (
+                                <span title="GPS järgi kaetud pindala ~0 ha">{' · '}0 ha</span>
+                              )
+                            )}
+                            {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
+                          </span>
+                        </div>
+                        <div className="telemetry-pill-meta">
+                          {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
+                          <span className="telemetry-pill-field" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
+                            Põllul {s.fieldStartTime} – {s.fieldEndTime}
+                          </span>
+                          <span className="telemetry-pill-action">
+                            {state === 'linked' ? '✓ Seotud' : state === 'selected' ? '✓ Valitud' : 'Vali see sõit'}
+                          </span>
+                        </div>
+                        {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                       </button>
+                      {isSelected && (
+                        <button type="button" className="telemetry-pill-unlink" onClick={unlinkTrip}>
+                          Eemalda seos
+                        </button>
+                      )}
+                      </div>
                     );
                   })}
                 </div>
               </div>
-              );
-            })()}
-          </div>
+            )}
 
-          <section className="work-entry-section">
-            <h4>Masin ja haakeriist</h4>
-            <div className="work-entry-grid four">
+            <div className="work-entry-grid work-entry-top-grid">
               <div className="form-group">
-                <label htmlFor="we-vehicle">Masin</label>
-                <FilterClear className="filter-clear-fill" active={!!vehicleId} onClear={() => setVehicleId('')}>
-                  <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
-                    options={[{ value: '', label: '– pole –' }, ...vehicleOptions.map((v) => ({ value: v.id, label: v.name }))]} />
-                </FilterClear>
+                <label htmlFor="we-date">Kuupäev *</label>
+                <DateInput id="we-date" value={date} onChange={setDate} className="form-input" />
               </div>
-              <div className="form-group">
-                <label htmlFor="we-impl">Haakeriist</label>
-                <FilterClear className="filter-clear-fill" active={!!implementId} onClear={() => setImplementId('')}>
-                  <FilterSelect fill id="we-impl" value={implementId} onChange={setImplementId}
-                    options={[{ value: '', label: '– pole –' }, ...implementOptions.map((i) => ({ value: i.id, label: i.name }))]} />
-                </FilterClear>
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-eqh">Töötunnid</label>
-                <input id="we-eqh" className="form-input num" inputMode="decimal" value={equipmentHours} onChange={(e) => setEquipmentHours(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-fuel">Kütus, l</label>
-                <input id="we-fuel" className="form-input num" inputMode="decimal" value={fuelLiters} onChange={(e) => setFuelLiters(e.target.value)} />
-              </div>
-            </div>
-            <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
-          </section>
-
-          {(work.usesMaterials || rows.length > 0) && (
-            <section className="work-entry-section">
-              <h4>Materjalid</h4>
-              <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck}
-                warehouses={warehouses} defaultWarehouseId={defaultWarehouseId} />
-            </section>
-          )}
-
-          {isHarvest && (
-            <section className="work-entry-section">
-              <h4>Saak</h4>
-              {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
+              {activity === PRIA_ACTIVITY.FERTILIZING && (
                 <div className="form-group">
-                  <label htmlFor="we-lot">Saagipartii</label>
-                  <FilterSelect fill id="we-lot" value={lotId} onChange={setLotId} options={[
-                    ...(!entry?.harvestLotId ? [{ value: '', label: '– vali partii –' }] : []),
-                    ...(entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) ? [{ value: entry.harvestLotId, label: entry.harvestLotName ?? '' }] : []),
-                    ...openLots.map((l) => ({ value: l.id, label: l.name }))
-                  ]} />
+                  <label htmlFor="we-method">Väetamisviis</label>
+                  <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
+                    <FilterSelect fill id="we-method" value={method} onChange={setMethod} options={[
+                      { value: '', label: '– vali –' },
+                      ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
+                      ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
+                    ]} />
+                  </FilterClear>
                 </div>
               )}
-              {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
-                <p className="muted">Partii: {entry.harvestLotName}</p>
-              )}
-              <label className="users-admin-checkbox">
-                <input type="checkbox" checked={manual} disabled={imported} onChange={(e) => setManual(e.target.checked)} />
-                <span>Sisesta tonnid käsitsi</span>
-              </label>
-              <HarvestEditor
-                value={harvest}
-                onChange={setHarvest}
-                areaHa={areaNum}
-                showTotals
-                showBunkers
-                tonnesText={manual ? undefined : (entry?.harvest?.tonnes ?? entry?.harvestTonnes ?? 0) > 0 ? `${formatQty(entry!.harvest?.tonnes ?? entry!.harvestTonnes ?? 0)} t` : 'kaalumata'}
-              />
-            </section>
-          )}
+              <div className="form-group">
+                <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
+                <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
+                  <FilterSelect fill id="we-worker" value={workerId} onChange={setWorkerId}
+                    options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
+                </FilterClear>
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-start-time">Algus{imported ? '' : ' *'}</label>
+                <FilterSelect fill id="we-start-time" className="time-select" value={startTime} onChange={handleStartTimeChange}
+                  options={timeOptions('– algus –', startOptions)} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-end-time">Lõpp{imported ? '' : ' *'}</label>
+                <FilterSelect fill id="we-end-time" className="time-select" value={endTime} onChange={handleEndTimeChange}
+                  options={timeOptions('– lõpp –', endOptions)} />
+              </div>
+              <div className="form-group">
+                <label htmlFor="we-labor">Tööaeg, h</label>
+                <input
+                  id="we-labor"
+                  className="form-input num readonly"
+                  readOnly
+                  tabIndex={-1}
+                  value={laborHours}
+                  placeholder="–"
+                  title="Arvutatakse alguse ja lõpu kellaajast"
+                />
+              </div>
+            </div>
 
-          {activity === PRIA_ACTIVITY.MONITORING && (
+            {/* Tehtud pindala enne masinat ja materjale: materjalide kogused arvutatakse selle pealt */}
+            <div className="work-entry-section">
+              <div className="work-entry-grid work-entry-area-grid">
+                <div className="form-group">
+                  <label htmlFor="we-area">Tehtud pindala, ha</label>
+                  <input
+                    id="we-area"
+                    className="form-input num"
+                    inputMode="decimal"
+                    value={areaHa}
+                    onChange={(e) => changeArea(e.target.value)}
+                    placeholder="0,00"
+                    title="Sisesta pindala või vali allolevatest kiirvalikutest (10% – 100%)"
+                  />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="we-telemetry-area">Telemeetria pindala, ha</label>
+                  <input
+                    id="we-telemetry-area"
+                    className="form-input num readonly"
+                    readOnly
+                    tabIndex={-1}
+                    value={telemetryAreaHa}
+                    placeholder="–"
+                    style={
+                      (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
+                        ? { color: '#ef4444', borderColor: '#ef4444', fontWeight: 600, background: 'rgba(239, 68, 68, 0.08)' }
+                        : undefined
+                    }
+                    title={
+                      (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
+                        ? 'Haakeriista või selle töölaiust pole seoste registris'
+                        : (parseNum(telemetryAreaHa) === 0 && hasSelectedSuggestion)
+                          ? 'GPS järgi kaetud pindala ~0 ha'
+                          : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
+                    }
+                  />
+                </div>
+                {fieldAreaHa > 0 && (
+                  <p className="work-entry-hint align-end">Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
+                )}
+              </div>
+
+              {fieldAreaHa > 0 && (() => {
+                // Märgitakse protsent, mis on kogu põllu täitumisele (varasemad + see kanne) kõige lähemal
+                const totalPct = (totalAfter / fieldAreaHa) * 100;
+                const enabledPcts = AREA_PERCENTAGES.filter((pct) => pct === 100 || doneBefore < (fieldAreaHa * pct) / 100);
+                const nearestPct = areaNum > 0 && enabledPcts.length
+                  ? enabledPcts.reduce((best, pct) => (Math.abs(pct - totalPct) < Math.abs(best - totalPct) ? pct : best))
+                  : null;
+                return (
+                <div className="work-entry-area-presets">
+                  <span className="work-entry-presets-label">Põllust tehtud:</span>
+                  <div className="work-entry-presets-buttons">
+                    {AREA_PERCENTAGES.map((pct) => {
+                      const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
+                      const needed = Math.max(0, targetTotal - doneBefore);
+                      const roundedNeeded = Math.round(needed * 100) / 100;
+                      const isExceeded = doneBefore >= targetTotal && pct < 100;
+                      const isSelected = pct === nearestPct;
+                      return (
+                        <button
+                          key={pct}
+                          type="button"
+                          className={`area-preset-btn ${isSelected ? 'active' : ''}`}
+                          disabled={isExceeded}
+                          onClick={() => applyPercentage(pct)}
+                          title={
+                            isExceeded
+                              ? `Varasemate kannetega on juba tehtud ${fmtHa(doneBefore)} ha (rohkem kui ${pct}%)`
+                              : `Vali ${pct}% (${fmtHa(targetTotal)} ha) → sellesse kandesse ${fmtHa(roundedNeeded)} ha`
+                          }
+                        >
+                          {pct}%
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                );
+              })()}
+            </div>
+
             <section className="work-entry-section">
-              <h4>Seire leiud</h4>
-              <ObservationsEditor rows={observations} onChange={setObservations} />
+              <h4>Masin ja haakeriist</h4>
+              <div className="work-entry-grid four">
+                <div className="form-group">
+                  <label htmlFor="we-vehicle">Masin</label>
+                  <FilterClear className="filter-clear-fill" active={!!vehicleId} onClear={() => setVehicleId('')}>
+                    <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
+                      options={[{ value: '', label: '– pole –' }, ...vehicleOptions.map((v) => ({ value: v.id, label: v.name }))]} />
+                  </FilterClear>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="we-impl">Haakeriist</label>
+                  <FilterClear className="filter-clear-fill" active={!!implementId} onClear={() => setImplementId('')}>
+                    <FilterSelect fill id="we-impl" value={implementId} onChange={setImplementId}
+                      options={[{ value: '', label: '– pole –' }, ...implementOptions.map((i) => ({ value: i.id, label: i.name }))]} />
+                  </FilterClear>
+                </div>
+                <div className="form-group">
+                  <label htmlFor="we-eqh">Töötunnid</label>
+                  <input id="we-eqh" className="form-input num" inputMode="decimal" value={equipmentHours} onChange={(e) => setEquipmentHours(e.target.value)} />
+                </div>
+                <div className="form-group">
+                  <label htmlFor="we-fuel">Kütus, l</label>
+                  <input id="we-fuel" className="form-input num" inputMode="decimal" value={fuelLiters} onChange={(e) => setFuelLiters(e.target.value)} />
+                </div>
+              </div>
+              <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
             </section>
-          )}
 
-          <div className="form-group">
-            <label htmlFor="we-notes">Märkus</label>
-            <textarea id="we-notes" rows={2} className="form-input" placeholder="nt mullaniiskus, katkestused, tähelepanekud" value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
+            {(work.usesMaterials || rows.length > 0) && (
+              <section className="work-entry-section">
+                <h4>Materjalid</h4>
+                <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck}
+                  warehouses={warehouses} defaultWarehouseId={defaultWarehouseId} />
+              </section>
+            )}
 
-          <label className={`work-entry-finish ${finish ? 'on' : ''}`}>
-            <input type="checkbox" checked={finish} onChange={(e) => setFinish(e.target.checked)} />
-            <span>
-              <strong>Töö on sellega lõpetatud</strong>
-              <small>Märgi ainult siis, kui rohkem kandeid ei tule. 100% puhul lõpetatakse automaatselt.</small>
-            </span>
-          </label>
+            {isHarvest && (
+              <section className="work-entry-section">
+                <h4>Saak</h4>
+                {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
+                  <div className="form-group">
+                    <label htmlFor="we-lot">Saagipartii</label>
+                    <FilterSelect fill id="we-lot" value={lotId} onChange={setLotId} options={[
+                      ...(!entry?.harvestLotId ? [{ value: '', label: '– vali partii –' }] : []),
+                      ...(entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) ? [{ value: entry.harvestLotId, label: entry.harvestLotName ?? '' }] : []),
+                      ...openLots.map((l) => ({ value: l.id, label: l.name }))
+                    ]} />
+                  </div>
+                )}
+                {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
+                  <p className="muted">Partii: {entry.harvestLotName}</p>
+                )}
+                <label className="users-admin-checkbox">
+                  <input type="checkbox" checked={manual} disabled={imported} onChange={(e) => setManual(e.target.checked)} />
+                  <span>Sisesta tonnid käsitsi</span>
+                </label>
+                <HarvestEditor
+                  value={harvest}
+                  onChange={setHarvest}
+                  areaHa={areaNum}
+                  showTotals
+                  showBunkers
+                  tonnesText={manual ? undefined : (entry?.harvest?.tonnes ?? entry?.harvestTonnes ?? 0) > 0 ? `${formatQty(entry!.harvest?.tonnes ?? entry!.harvestTonnes ?? 0)} t` : 'kaalumata'}
+                />
+              </section>
+            )}
 
-          <p className="work-entry-hint">
-            <Info size={13} /> Sisesta ainult kogused. Finantskulu lisab finantsjuht selle kande juurde.
-          </p>
-          {error && <div className="alert-box error">{error}</div>}
-        </DialogBody>
+            {activity === PRIA_ACTIVITY.MONITORING && (
+              <section className="work-entry-section">
+                <h4>Seire leiud</h4>
+                <ObservationsEditor rows={observations} onChange={setObservations} />
+              </section>
+            )}
 
-        <DialogFooter>
-          <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
-          <Button type="submit" variant="primary" disabled={busy}>
-            {finish ? 'Salvesta ja lõpeta töö' : 'Salvesta kanne'}
-          </Button>
-        </DialogFooter>
+            <div className="form-group">
+              <label htmlFor="we-notes">Märkus</label>
+              <textarea id="we-notes" rows={2} className="form-input" placeholder="nt mullaniiskus, katkestused, tähelepanekud" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </div>
+
+            <label className={`work-entry-finish ${finish ? 'on' : ''}`}>
+              <input type="checkbox" checked={finish} onChange={(e) => setFinish(e.target.checked)} />
+              <span>
+                <strong>Töö on sellega lõpetatud</strong>
+                <small>Märgi ainult siis, kui rohkem kandeid ei tule. 100% puhul lõpetatakse automaatselt.</small>
+              </span>
+            </label>
+
+            <p className="work-entry-hint">
+              <Info size={13} /> Sisesta ainult kogused. Finantskulu lisab finantsjuht selle kande juurde.
+            </p>
+            {error && <div className="alert-box error">{error}</div>}
+          </DialogBody>
+
+          <DialogFooter>
+            <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
+            <Button type="submit" variant="primary" disabled={busy}>
+              {finish ? 'Salvesta ja lõpeta töö' : 'Salvesta kanne'}
+            </Button>
+          </DialogFooter>
         </DialogForm>
       </DialogContent>
     </Dialog>

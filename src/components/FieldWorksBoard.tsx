@@ -216,6 +216,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const [collapsedGroups, setCollapsedGroups] = useState<Record<string, boolean>>({});
   const [entryDialog, setEntryDialog] = useState<{ work: FieldWork; entry: WorkEntry | null } | null>(null);
   const [editingPlan, setEditingPlan] = useState(false);
+  const [planBusy, setPlanBusy] = useState(false); // plaani salvestamine käib: Esc ei sulge
   const [addDialog, setAddDialog] = useState<{ row: Row; phase: WorkPhase; isNextCrop?: boolean; plannedText?: string } | null>(null);
   const [isFinanceOpen, setIsFinanceOpen] = useState(false);
   const [financeEntryId, setFinanceEntryId] = useState<string | null>(null);
@@ -1232,10 +1233,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
                   {editingPlan && !workLocked && (
                     <Dialog open onOpenChange={(open) => { if (!open) setEditingPlan(false); }}>
-                      <DialogContent size="xl" className="work-entry-modal">
+                      <DialogContent size="xl" className="work-entry-modal" dismissible={!planBusy}>
                         <DialogHeader
                           title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
                           description={activeLabel}
+                          showClose={!planBusy}
                         />
                         <FieldWorkPlanForm
                           key={`edit-${selected.id}`}
@@ -1248,6 +1250,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           seedCheck={selectedSeedCheck}
                           mode="edit"
                           layout="dialog"
+                          onBusyChange={setPlanBusy}
                           onSaved={() => {
                             setEditingPlan(false);
                             void reload();
