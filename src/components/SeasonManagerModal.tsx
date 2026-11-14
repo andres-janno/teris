@@ -13,7 +13,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -204,18 +204,17 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
       )}
 
           {/* Hooaegade tabel: üks rida hooaja kohta, et hooaegu oleks lihtne võrrelda */}
-          <div className="seasons-table-wrap">
-            <table className="seasons-table">
-              <thead>
-                <tr>
-                  <th>Hooaeg</th>
-                  <th>Olek</th>
-                  <th className="num">Pindala, ha</th>
-                  <th className="num">Põlde</th>
-                  <th><span className="sr-only">Tegevused</span></th>
-                </tr>
-              </thead>
-              <tbody>
+          <Table scroll="fill" bordered>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Hooaeg</TableHead>
+                  <TableHead>Olek</TableHead>
+                  <TableHead numeric>Pindala, ha</TableHead>
+                  <TableHead numeric>Põlde</TableHead>
+                  <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {sortedSeasons.map((season) => {
                   const isCurrent = season.year === selectedYear;
                   const notesOpen = expandedYears.has(season.year);
@@ -223,15 +222,15 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                   const areaHa = totals?.areaHa ?? null;
                   const meta = SEASON_PHASE_META[deriveSeasonPhase(season.isLocked, seasonCrops(season.year))];
 
-                  const rowClass = `${isCurrent ? 'current' : ''} ${season.isLocked ? 'locked' : ''}`;
                   return (
                     <React.Fragment key={season.year}>
-                    <tr
-                      className={`${rowClass} ${season.notes ? 'has-notes' : ''} ${notesOpen && season.notes ? 'notes-open' : ''}`}
-                      onClick={() => season.notes && toggleNotes(season.year)}
+                    <TableRow
+                      selected={isCurrent}
+                      className={notesOpen && season.notes ? 'notes-open' : undefined}
+                      onClick={season.notes ? () => toggleNotes(season.year) : undefined}
                       title={season.notes && !notesOpen ? 'Klõpsa märkuse nägemiseks' : undefined}
                     >
-                      <td className="season-cell">
+                      <TableCell wrap className="season-cell">
                         <div className="season-cell-head">
                           <span className="season-year">{season.year}</span>
                           {season.notes && <Info size={13} className="season-notes-icon" />}
@@ -239,8 +238,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         {season.name !== `Hooaeg ${season.year}` && (
                           <div className="season-cell-name">{season.name}</div>
                         )}
-                      </td>
-                      <td>
+                      </TableCell>
+                      <TableCell>
                         <span
                           className="season-status-badge"
                           style={{ color: meta.color, backgroundColor: meta.bg }}
@@ -248,10 +247,10 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         >
                           {meta.label}
                         </span>
-                      </td>
-                      <td className="num mono">{formatNum(areaHa, 1)}</td>
-                      <td className="num mono">{formatNum(totals?.count ?? null, 0)}</td>
-                      <td className="season-row-actions" onClick={(e) => e.stopPropagation()}>
+                      </TableCell>
+                      <TableCell numeric className="mono">{formatNum(areaHa, 1)}</TableCell>
+                      <TableCell numeric className="mono">{formatNum(totals?.count ?? null, 0)}</TableCell>
+                      <TableCell actions onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"
                           variant="ghost"
@@ -282,24 +281,23 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                             <Unlock size={15} />
                           </Button>
                         )}
-                      </td>
-                    </tr>
+                      </TableCell>
+                    </TableRow>
                     {notesOpen && season.notes && (
-                      <tr className={`${rowClass} has-notes season-notes-row`} onClick={() => toggleNotes(season.year)}>
-                        <td colSpan={5}>
+                      <TableRow selected={isCurrent} className="season-notes-row" onClick={() => toggleNotes(season.year)}>
+                        <TableCell colSpan={5} wrap>
                           <div className="season-cell-notes">
                             <Info size={13} />
                             <span>{season.notes}</span>
                           </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                     </React.Fragment>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
+              </TableBody>
+          </Table>
           <p className="seasons-table-hint">
             Märkusega real (<Info size={11} />) näitab klõps märkust. Pindala ja põldude arv tulevad põldude andmetest. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>

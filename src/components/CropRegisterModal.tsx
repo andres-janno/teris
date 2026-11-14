@@ -22,7 +22,7 @@ import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -780,18 +780,17 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </div>
 
                   {blockCrops.length > 0 ? (
-                    <div className="register-table-wrap">
-                      <table className="register-table crop-register-table">
-                        <thead>
-                          <tr>
-                            <th>Kultuur</th>
-                            <th className="num-col">Pind</th>
-                            <th className="num-col">Külvinorm</th>
-                            <th className="num-col">Saagiootus</th>
-                            <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-                          </tr>
-                        </thead>
-                        <tbody>
+                    <Table scroll="fill" bordered containerClassName="crop-register-wrap" className="crop-register-table">
+                        <TableHeader>
+                          <TableRow>
+                            <TableHead>Kultuur</TableHead>
+                            <TableHead numeric>Pind</TableHead>
+                            <TableHead numeric>Külvinorm</TableHead>
+                            <TableHead numeric>Saagiootus</TableHead>
+                            <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                          </TableRow>
+                        </TableHeader>
+                        <TableBody>
                           {blockCrops.map((crop) => {
                             const groupCfg = CROP_GROUP_CONFIG[crop.group] || CROP_GROUP_CONFIG.OTHER;
                             const acreageHa = cropAcreageMap[crop.id] || 0;
@@ -799,8 +798,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                             return (
                               <React.Fragment key={crop.id}>
-                                <tr className={`crop-row ${crop.varieties.length > 0 ? 'has-varieties' : ''}`}>
-                                  <td className="name-cell crop-name-cell" style={cropStyle} title={crop.description || undefined}>
+                                <TableRow className={`crop-row ${crop.varieties.length > 0 ? 'has-varieties' : ''}`}>
+                                  <TableCell wrap className="crop-name-cell" style={cropStyle} title={crop.description || undefined}>
                                     <div className="field-title-line">
                                       <span className="field-name">{crop.name}</span>
                                     </div>
@@ -812,18 +811,17 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                       {crop.priaCode && <span className="field-code-badge" title="PRIA toetuse kultuurikood">{crop.priaCode}</span>}
                                       {showGroupTag && <span className="sub-tag">{groupCfg.icon} {groupCfg.label}</span>}
                                     </div>
-                                  </td>
-                                  <td className={`num-col ${acreageHa > 0 ? '' : 'muted'}`}>
+                                  </TableCell>
+                                  <TableCell numeric className={`${acreageHa > 0 ? '' : 'muted'}`}>
                                     {acreageHa > 0 ? <strong>{acreageHa.toFixed(2)} ha</strong> : '–'}
-                                  </td>
-                                  <td className={`num-col ${crop.defaultSeedRateKgHa ? '' : 'muted'}`}>
+                                  </TableCell>
+                                  <TableCell numeric className={`${crop.defaultSeedRateKgHa ? '' : 'muted'}`}>
                                     {crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : '–'}
-                                  </td>
-                                  <td className={`num-col ${crop.defaultYieldTonsHa ? '' : 'muted'}`}>
+                                  </TableCell>
+                                  <TableCell numeric className={`${crop.defaultYieldTonsHa ? '' : 'muted'}`}>
                                     {crop.defaultYieldTonsHa ? `${crop.defaultYieldTonsHa} t/ha` : '–'}
-                                  </td>
-                                  <td className="actions-col">
-                                    <div className="row-actions">
+                                  </TableCell>
+                                  <TableCell actions>
                                       <Button
                                         variant="ghost"
                                         size="icon-sm"
@@ -847,9 +845,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                       >
                                         <Trash2 size={14} />
                                       </Button>
-                                    </div>
-                                  </td>
-                                </tr>
+</TableCell>
+                                </TableRow>
 
                                 {/* Sordid kohe kultuuri all, nihkega */}
                                 {crop.varieties.map((variety, vIdx) => {
@@ -862,22 +859,21 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                   const isLast = vIdx === crop.varieties.length - 1;
                                   const varietyHa = cropAcreageMap[`${crop.id}|${variety.name.toLowerCase().trim()}`] || 0;
                                   return (
-                                    <tr key={variety.id} className={`variety-row ${isLast ? 'last' : ''}`}>
-                                      <td className="name-cell variety-name-cell" style={cropStyle} title={variety.notes || undefined}>
+                                    <TableRow key={variety.id} className={`variety-row ${isLast ? 'last' : ''}`}>
+                                      <TableCell wrap className="variety-name-cell" style={cropStyle} title={variety.notes || undefined}>
                                         <span className="variety-name">{variety.name}</span>
                                         {details && <div className="cell-sub">{details}</div>}
-                                      </td>
-                                      <td className={`num-col ${varietyHa > 0 ? '' : 'muted'}`}>
+                                      </TableCell>
+                                      <TableCell numeric className={`${varietyHa > 0 ? '' : 'muted'}`}>
                                         {varietyHa > 0 ? `${varietyHa.toFixed(2)} ha` : '–'}
-                                      </td>
-                                      <td className={`num-col ${variety.recommendedSeedRateKgHa ? '' : 'muted'}`}>
+                                      </TableCell>
+                                      <TableCell numeric className={`${variety.recommendedSeedRateKgHa ? '' : 'muted'}`}>
                                         {variety.recommendedSeedRateKgHa ? `${variety.recommendedSeedRateKgHa} kg/ha` : '–'}
-                                      </td>
-                                      <td className={`num-col ${variety.potentialYieldTonsHa ? '' : 'muted'}`}>
+                                      </TableCell>
+                                      <TableCell numeric className={`${variety.potentialYieldTonsHa ? '' : 'muted'}`}>
                                         {variety.potentialYieldTonsHa ? `${variety.potentialYieldTonsHa} t/ha` : '–'}
-                                      </td>
-                                      <td className="actions-col">
-                                        <div className="row-actions">
+                                      </TableCell>
+                                      <TableCell actions>
                                           <Button
                                             type="button"
                                             variant="ghost"
@@ -896,17 +892,15 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                           >
                                             <Trash2 size={12} />
                                           </Button>
-                                        </div>
-                                      </td>
-                                    </tr>
+</TableCell>
+                                    </TableRow>
                                   );
                                 })}
                               </React.Fragment>
                             );
                           })}
-                        </tbody>
-                      </table>
-                    </div>
+                        </TableBody>
+                      </Table>
                   ) : (
                     <div className="crop-group-empty">
                       {searchQuery ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}

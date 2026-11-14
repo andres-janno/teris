@@ -5035,104 +5035,7 @@ input[type="number"],
   gap: 12px;
 }
 
-/* Seasons Table */
-.seasons-table-wrap {
-  overflow-x: auto;
-  border: 1px solid var(--border-card);
-  border-radius: 10px;
-  background: var(--bg-card);
-}
-
-.seasons-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.82rem;
-}
-
-.seasons-table th {
-  text-align: left;
-  font-size: 0.68rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
-  color: var(--text-secondary);
-  background: linear-gradient(var(--stat-bg), var(--stat-bg)), var(--bg-modal);
-  padding: 8px 8px;
-  border-bottom: 1px solid var(--border-card);
-  white-space: nowrap;
-  position: sticky;
-  top: 0;
-  z-index: 1;
-}
-
-.seasons-table td {
-  padding: 8px 8px;
-  border-bottom: 1px solid var(--border-card);
-  color: var(--text-primary);
-  vertical-align: middle;
-  white-space: nowrap;
-}
-
-.seasons-table tbody tr:last-child td {
-  border-bottom: none;
-}
-
-.seasons-table tbody tr:hover td {
-  background: var(--bg-card-hover);
-}
-
-.seasons-table tr.has-notes {
-  cursor: pointer;
-}
-
-/* Valitud hooaeg: sama värv nagu kaardi hooajavalikus (.year-widget-btn.active) */
-.seasons-table tr.current td,
-.seasons-table tbody tr.current:hover td {
-  background: #16a34a;
-  border-bottom-color: #15803d;
-  color: #ffffff;
-}
-
-.seasons-table tr.current .muted,
-.seasons-table tr.current .actual,
-.seasons-table tr.current .season-delta,
-.seasons-table tr.current .season-notes-icon,
-.seasons-table tr.current .season-cell-name,
-.seasons-table tr.current .season-cell-notes {
-  color: #ffffff;
-}
-
-/* Ikoonnupud valitud real: !important, et Buttoni variandivärv ei võidaks */
-.seasons-table tr.current td > button {
-  color: #ffffff !important;
-}
-
-.seasons-table tr.current .season-status-badge {
-  color: #ffffff !important;
-  background: rgba(255, 255, 255, 0.2) !important;
-}
-
-.seasons-table tr.current td > button:hover {
-  background: rgba(255, 255, 255, 0.2) !important;
-}
-
-.seasons-table .num {
-  text-align: right;
-}
-
-.seasons-table .mono {
-  font-variant-numeric: tabular-nums;
-}
-
-.seasons-table .muted {
-  color: var(--text-muted);
-}
-
-.seasons-table .actual {
-  color: var(--emerald-600);
-  font-weight: 600;
-}
-
+/* Hooaegade tabel: struktuur tuleb ui/Table'ilt; siin ainult sisureeglid */
 .season-cell {
   white-space: normal !important;
   min-width: 110px;
@@ -5158,13 +5061,13 @@ input[type="number"],
   color: var(--text-secondary);
 }
 
-.seasons-table tr.notes-open td {
-  border-bottom-color: transparent;
+/* !important: ui/Table'i utiliit (border-color, py) ei tohi võita */
+tr.notes-open > td {
+  border-bottom-color: transparent !important;
 }
 
-.seasons-table tr.season-notes-row td {
-  padding-top: 0;
-  white-space: normal;
+tr.season-notes-row > td {
+  padding-top: 0 !important;
 }
 
 .season-cell-notes {
@@ -5201,15 +5104,6 @@ input[type="number"],
 
 .season-delta.down {
   color: #ef4444;
-}
-
-.season-row-actions {
-  text-align: right;
-}
-
-.season-row-actions>button {
-  display: inline-flex;
-  margin-left: 2px;
 }
 
 .seasons-table-hint {
@@ -5797,7 +5691,6 @@ a.history-pill:hover {
   min-height: 0;
 }
 
-.crop-group-columns .register-table-wrap,
 .crop-group-columns .crop-total-area {
   font-size: 0.85rem;
   color: var(--text-secondary);
@@ -5821,7 +5714,7 @@ a.history-pill:hover {
     align-items: start;
   }
 
-  .crop-group-columns .register-table-wrap {
+  .crop-group-columns .crop-register-wrap {
     max-height: 62vh;
   }
 }
@@ -5888,9 +5781,10 @@ a.history-pill:hover {
   border-radius: var(--radius-md);
 }
 
+/* !important: ui/Table'i utiliit (padding, border-color) ei tohi võita */
 .crop-register-table .crop-name-cell {
   box-shadow: inset 4px 0 0 var(--crop-color);
-  padding-left: 12px;
+  padding-left: 12px !important;
 }
 
 .crop-register-table .crop-latin {
@@ -5900,22 +5794,22 @@ a.history-pill:hover {
 /* Sordid kultuuri all: sama värvitriip, nimi nihkega, kultuuri ja sortide vahel joont pole */
 .crop-register-table tr.crop-row.has-varieties td,
 .crop-register-table tr.variety-row:not(.last) td {
-  border-bottom-color: transparent;
+  border-bottom-color: transparent !important;
 }
 
 .crop-register-table tr.variety-row td {
-  padding-top: 3px;
-  padding-bottom: 3px;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
   font-size: 0.76rem;
 }
 
 .crop-register-table tr.variety-row.last td {
-  padding-bottom: 8px;
+  padding-bottom: 8px !important;
 }
 
 .crop-register-table .variety-name-cell {
   box-shadow: inset 4px 0 0 var(--crop-color);
-  padding-left: 28px;
+  padding-left: 28px !important;
 }
 
 .crop-register-table .variety-name {
@@ -6868,8 +6762,7 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .register-table-wrap,
-.fullpage-board-body .register-fields-list,
-.fullpage-board-body .seasons-table-wrap {
+.fullpage-board-body .register-fields-list {
   flex: 1 1 0;
   min-height: 220px;
   max-height: none;
@@ -10787,8 +10680,6 @@ td.stock-qty-out { color: #dc2626; }
 .weather-years-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 12px; align-items: stretch; }
 .weather-point-map { min-height: 360px; height: 100%; border: 1px solid var(--border-card); border-radius: var(--radius-sm); z-index: 0; }
 @media (max-width: 1100px) { .weather-years-layout { grid-template-columns: 1fr; } .weather-point-map { height: 360px; } }
-.weather-years tbody tr { cursor: pointer; }
-.register-table.weather-years tr.weather-normal-row td { font-weight: 700; border-top: 2px solid var(--border-card); cursor: default; }
 .weather-muted { color: var(--text-secondary); font-size: 0.72rem; }
 .register-table.weather-years td.weather-wet,
 [data-slot="table"].weather-years td.weather-wet { background: rgba(59, 130, 246, 0.16); }

@@ -22,7 +22,7 @@ import { formatQty } from '../services/units';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -390,6 +390,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
     }
   };
 
+  const sortState = (col: SortCol): 'asc' | 'desc' | 'none' => (sortCol === col ? (sortAsc ? 'asc' : 'desc') : 'none');
+
   const actionNeededCount = useMemo(
     () => entries.filter((e) => e.financeStatus === 'PENDING' || e.financeStatus === 'CHANGED').length,
     [entries]
@@ -643,18 +645,17 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                           <span>Töötaja ei sisestanud sellele kandele tunde, kütust ega materjale. Hinnastatavaid ridu pole.</span>
                         </div>
                       ) : (
-                        <div className="finance-lines-table-wrap">
-                          <table className="finance-lines-table">
-                            <thead>
-                              <tr>
-                                <th>Liik</th>
-                                <th>Nimetus / Kirjeldus</th>
-                                <th className="num">Kogus</th>
-                                <th>Ühikuhind (€)</th>
-                                <th className="num">Summa kokku</th>
-                              </tr>
-                            </thead>
-                            <tbody>
+                          <Table scroll="none" bordered>
+                            <TableHeader>
+                              <TableRow>
+                                <TableHead>Liik</TableHead>
+                                <TableHead>Nimetus / Kirjeldus</TableHead>
+                                <TableHead numeric>Kogus</TableHead>
+                                <TableHead>Ühikuhind (€)</TableHead>
+                                <TableHead numeric>Summa kokku</TableHead>
+                              </TableRow>
+                            </TableHeader>
+                            <TableBody>
                               {lineCalculations.map((line) => {
                                 const info = LINE_KIND_INFO[line.kind] || LINE_KIND_INFO.MATERIAL;
                                 const Icon = info.icon;
@@ -662,8 +663,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                 const isMissing = line.parsedPrice == null;
 
                                 return (
-                                  <tr key={line.id} className={isHarvest ? 'harvest-row' : ''}>
-                                    <td>
+                                  <TableRow key={line.id} tone={isHarvest ? 'success' : undefined}>
+                                    <TableCell>
                                       <span
                                         className="finance-kind-badge"
                                         style={{ color: info.color, backgroundColor: info.bg }}
@@ -671,15 +672,15 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                         <Icon size={12} />
                                         <span>{info.label}</span>
                                       </span>
-                                    </td>
-                                    <td className="finance-line-label">
+                                    </TableCell>
+                                    <TableCell wrap className="finance-line-label">
                                       <strong>{line.label}</strong>
-                                    </td>
-                                    <td className="num finance-line-qty">
+                                    </TableCell>
+                                    <TableCell numeric className="finance-line-qty">
                                       <span>{formatQty(line.quantity)}</span>
                                       <span className="finance-line-unit">{line.unit}</span>
-                                    </td>
-                                    <td className="finance-price-cell">
+                                    </TableCell>
+                                    <TableCell className="finance-price-cell">
                                       {line.kind === 'MATERIAL' || line.kind === 'FUEL' ? (
                                         <span className={`finance-fifo-price ${isMissing || (line.kind === 'FUEL' && !line.articleId) ? 'missing' : ''}`} title="Hind tuleb laost (FIFO)">
                                           {line.kind === 'FUEL' && !line.articleId
@@ -703,16 +704,15 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                         <span className="finance-unit-suffix">€/{line.unit}</span>
                                       </div>
                                       )}
-                                    </td>
-                                    <td className={`num finance-line-total ${isHarvest ? 'revenue-text' : ''}`}>
+                                    </TableCell>
+                                    <TableCell numeric className={`finance-line-total ${isHarvest ? 'revenue-text' : ''}`}>
                                       {isHarvest ? '+' : ''}{fmtCur(line.total)}
-                                    </td>
-                                  </tr>
+                                    </TableCell>
+                                  </TableRow>
                                 );
                               })}
-                            </tbody>
-                          </table>
-                        </div>
+                            </TableBody>
+                          </Table>
                       )}
                     </div>
 
@@ -911,76 +911,72 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               </div>
 
               {/* Field Results Table */}
-              <div className="finance-results-table-wrap" aria-busy={loadingResults}>
-                <table className="finance-results-table">
-                  <thead>
-                    <tr>
-                      <th onClick={() => toggleSort('field')} className="sortable">
+              <Table bordered className="finance-results-table" aria-busy={loadingResults}>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead onClick={() => toggleSort('field')} sort={sortState('field')}>
                         <div className="th-content">
                           <span>Põld</span>
                           {sortCol === 'field' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th onClick={() => toggleSort('crop')} className="sortable">
+                      </TableHead>
+                      <TableHead onClick={() => toggleSort('crop')} sort={sortState('crop')}>
                         <div className="th-content">
                           <span>Kultuur</span>
                           {sortCol === 'crop' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th onClick={() => toggleSort('area')} className="num sortable">
+                      </TableHead>
+                      <TableHead numeric onClick={() => toggleSort('area')} sort={sortState('area')}>
                         <div className="th-content num">
                           <span>Pindala</span>
                           {sortCol === 'area' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th className="num">Tööjõud</th>
-                      <th className="num">Masinad</th>
-                      <th className="num">Kütus</th>
-                      <th className="num">Materjalid</th>
-                      <th className="num">Kuivatamine</th>
-                      <th onClick={() => toggleSort('cost')} className="num sortable">
+                      </TableHead>
+                      <TableHead numeric>Tööjõud</TableHead>
+                      <TableHead numeric>Masinad</TableHead>
+                      <TableHead numeric>Kütus</TableHead>
+                      <TableHead numeric>Materjalid</TableHead>
+                      <TableHead numeric>Kuivatamine</TableHead>
+                      <TableHead numeric onClick={() => toggleSort('cost')} sort={sortState('cost')}>
                         <div className="th-content num">
                           <span>Kulu kokku</span>
                           {sortCol === 'cost' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th onClick={() => toggleSort('revenue')} className="num sortable">
+                      </TableHead>
+                      <TableHead numeric onClick={() => toggleSort('revenue')} sort={sortState('revenue')}>
                         <div className="th-content num">
                           <span>Saagitulu</span>
                           {sortCol === 'revenue' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th onClick={() => toggleSort('profit')} className="num sortable">
+                      </TableHead>
+                      <TableHead numeric onClick={() => toggleSort('profit')} sort={sortState('profit')}>
                         <div className="th-content num">
                           <span>Tulemus (€)</span>
                           {sortCol === 'profit' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th onClick={() => toggleSort('profitPerHa')} className="num sortable">
+                      </TableHead>
+                      <TableHead numeric onClick={() => toggleSort('profitPerHa')} sort={sortState('profitPerHa')}>
                         <div className="th-content num">
                           <span>Tulemus (€/ha)</span>
                           {sortCol === 'profitPerHa' && <ArrowUpDown size={12} />}
                         </div>
-                      </th>
-                      <th className="num">Kanded</th>
-                    </tr>
-                  </thead>
-                  <tbody>
+                      </TableHead>
+                      <TableHead numeric>Kanded</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
                     {sortedResults.length === 0 ? (
-                      <tr>
-                        <td colSpan={13} className="text-center py-6 text-muted">
-                          {resultsError ? resultsError : 'Tulemusi ei leitud.'}
-                        </td>
-                      </tr>
+                      <TableEmpty colSpan={13}>
+                        {resultsError ? resultsError : 'Tulemusi ei leitud.'}
+                      </TableEmpty>
                     ) : (
                       sortedResults.map((r) => {
                         const profitPerHa = r.areaHa > 0 ? r.profit / r.areaHa : 0;
                         const isProfitable = r.profit >= 0;
 
                         return (
-                          <tr
+                          <TableRow
                             key={r.fieldSeasonId}
-                            className="clickable-row"
                             onClick={() => {
                               setFieldFilter(String(r.fieldSeasonId));
                               setStatusFilter('ALL');
@@ -988,44 +984,45 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             }}
                             title="Klõpsa, et näha selle põllu kandeid hinnastamises"
                           >
-                            <td className="finance-field-cell">
-                              {r.fieldNum && <span className="field-num-badge">Nr {r.fieldNum}</span>}
-                              <strong>{r.fieldName}</strong>
-                            </td>
-                            <td>
+                            <TableCell>
+                              <div className="finance-field-cell">
+                                {r.fieldNum && <span className="field-num-badge">Nr {r.fieldNum}</span>}
+                                <strong>{r.fieldName}</strong>
+                              </div>
+                            </TableCell>
+                            <TableCell>
                               <span
                                 className="finance-crop-pill"
                                 style={r.cropColor ? { borderLeftColor: r.cropColor } : undefined}
                               >
                                 {r.crop}
                               </span>
-                            </td>
-                            <td className="num">{fmtHa(r.areaHa)} ha</td>
-                            <td className="num text-muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</td>
-                            <td className="num text-muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</td>
-                            <td className="num text-muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</td>
-                            <td className="num text-muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</td>
-                            <td className="num text-muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</td>
-                            <td className="num font-semibold">{fmtCur(r.costTotal)}</td>
-                            <td className="num text-emerald-700 font-semibold">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</td>
-                            <td className={`num font-bold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
+                            </TableCell>
+                            <TableCell numeric>{fmtHa(r.areaHa)} ha</TableCell>
+                            <TableCell numeric className="text-muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
+                            <TableCell numeric className="text-muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</TableCell>
+                            <TableCell numeric className="text-muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</TableCell>
+                            <TableCell numeric className="text-muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</TableCell>
+                            <TableCell numeric className="text-muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</TableCell>
+                            <TableCell numeric className="font-semibold">{fmtCur(r.costTotal)}</TableCell>
+                            <TableCell numeric className="text-emerald-700 font-semibold">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</TableCell>
+                            <TableCell numeric className={`font-bold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
                               {isProfitable && r.profit > 0 ? '+' : ''}{fmtCur(r.profit)}
-                            </td>
-                            <td className={`num font-semibold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
+                            </TableCell>
+                            <TableCell numeric className={`font-semibold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
                               {isProfitable && profitPerHa > 0 ? '+' : ''}{fmtCur(profitPerHa)}
-                            </td>
-                            <td className="num">
+                            </TableCell>
+                            <TableCell numeric>
                               <span className={`finance-count-badge ${r.entriesConfirmed === r.entriesTotal ? 'all-done' : ''}`}>
                                 {r.entriesConfirmed}/{r.entriesTotal}
                               </span>
-                            </td>
-                          </tr>
+                            </TableCell>
+                          </TableRow>
                         );
                       })
                     )}
-                  </tbody>
-                </table>
-              </div>
+                  </TableBody>
+              </Table>
             </div>
           )}
         </DialogBody>

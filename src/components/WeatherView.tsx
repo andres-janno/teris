@@ -7,6 +7,7 @@ import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIO
 import { formatDate } from '../services/dateFormat';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -89,48 +90,46 @@ export const WeatherView: React.FC = () => {
             <div className="detail-section">
               <div className="section-subtitle"><CalendarRange size={14} /><span>Aastad · {per.label.toLowerCase()} {per.range}</span></div>
               <div className="weather-years-layout">
-                <div className="register-table-wrap weather-years-wrap">
-                  <table className="register-table weather-years">
-                    <thead>
-                      <tr>
-                        <th>Aasta</th>
-                        <th className="num-col">Sademed, mm</th>
-                        <th className="num-col">GDD, °C</th>
-                        <th className="num-col">Veebilanss, mm</th>
-                        <th className="num-col">Pikim kuiv periood, p</th>
-                        <th className="num-col">Kuumapäevi</th>
-                        <th className="num-col">{per.frostLabel}</th>
-                        <th>Võrdle</th>
-                      </tr>
-                    </thead>
-                    <tbody>
+                <Table scroll="fill" bordered containerClassName="weather-years-wrap" className="weather-years">
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Aasta</TableHead>
+                        <TableHead numeric>Sademed, mm</TableHead>
+                        <TableHead numeric>GDD, °C</TableHead>
+                        <TableHead numeric>Veebilanss, mm</TableHead>
+                        <TableHead numeric>Pikim kuiv periood, p</TableHead>
+                        <TableHead numeric>Kuumapäevi</TableHead>
+                        <TableHead numeric>{per.frostLabel}</TableHead>
+                        <TableHead>Võrdle</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
                       {rows.map(({ year: y, summary: s }) => (
-                        <tr key={y} onClick={() => toggleCompare(y)}>
-                          <td>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</td>
-                          <td className={`num-col weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</td>
-                          <td className={`num-col weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</td>
-                          <td className={`num-col weather-${deviation(s.waterBalanceMm, data?.normal.waterBalanceMm, data?.sd.waterBalanceMm, 'precip') ?? 'normal'}`}>{fmt0(s.waterBalanceMm)}</td>
-                          <td className="num-col">{s.longestDrySpell}</td>
-                          <td className="num-col">{s.hotDays}</td>
-                          <td className="num-col">{s.frostDays}</td>
-                          <td onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={compare.includes(y)} onChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></td>
-                        </tr>
+                        <TableRow key={y} onClick={() => toggleCompare(y)}>
+                          <TableCell>{y}{!s.complete && <span className="weather-muted"> (kuni {formatDate(s.dataUntil)})</span>}</TableCell>
+                          <TableCell numeric className={`weather-${deviation(s.precipMm, data?.normal.precipMm, data?.sd.precipMm, 'precip') ?? 'normal'}`}>{fmt0(s.precipMm)}</TableCell>
+                          <TableCell numeric className={`weather-${deviation(s.gdd, data?.normal.gdd, data?.sd.gdd, 'gdd') ?? 'normal'}`}>{fmt0(s.gdd)}</TableCell>
+                          <TableCell numeric className={`weather-${deviation(s.waterBalanceMm, data?.normal.waterBalanceMm, data?.sd.waterBalanceMm, 'precip') ?? 'normal'}`}>{fmt0(s.waterBalanceMm)}</TableCell>
+                          <TableCell numeric>{s.longestDrySpell}</TableCell>
+                          <TableCell numeric>{s.hotDays}</TableCell>
+                          <TableCell numeric>{s.frostDays}</TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={compare.includes(y)} onChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></TableCell>
+                        </TableRow>
                       ))}
                       {data && data.normalYears.length > 0 && (
-                        <tr className="weather-normal-row">
-                          <td>Keskmine {data.normalYears[0]}–{data.normalYears[data.normalYears.length - 1]}</td>
-                          <td className="num-col">{fmt0(data.normal.precipMm)}</td>
-                          <td className="num-col">{fmt0(data.normal.gdd)}</td>
-                          <td className="num-col">{fmt0(data.normal.waterBalanceMm)}</td>
-                          <td className="num-col">{fmt1(data.normal.longestDrySpell)}</td>
-                          <td className="num-col">{fmt1(data.normal.hotDays)}</td>
-                          <td className="num-col">{fmt1(data.normal.frostDays)}</td>
-                          <td />
-                        </tr>
+                        <TableRow tone="total">
+                          <TableCell>Keskmine {data.normalYears[0]}–{data.normalYears[data.normalYears.length - 1]}</TableCell>
+                          <TableCell numeric>{fmt0(data.normal.precipMm)}</TableCell>
+                          <TableCell numeric>{fmt0(data.normal.gdd)}</TableCell>
+                          <TableCell numeric>{fmt0(data.normal.waterBalanceMm)}</TableCell>
+                          <TableCell numeric>{fmt1(data.normal.longestDrySpell)}</TableCell>
+                          <TableCell numeric>{fmt1(data.normal.hotDays)}</TableCell>
+                          <TableCell numeric>{fmt1(data.normal.frostDays)}</TableCell>
+                          <TableCell />
+                        </TableRow>
                       )}
-                    </tbody>
-                  </table>
-                </div>
+                    </TableBody>
+                  </Table>
                 <WeatherPointMap points={points} fields={mapFields} selected={point} onSelect={setPoint} />
               </div>
               <p className="notes-text weather-note">Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele. Kaardil on ilmaandmete ruudud (0,1°) ja põllud ruudu värviga — klõps ruudul või põllul valib selle ilmapunkti, uus klõps viib tagasi majandi keskmisele.</p>
