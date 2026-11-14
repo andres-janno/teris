@@ -162,7 +162,7 @@ describe('märk', () => {
   it('soft on vaikimisi, solid on täisvärv valge tekstiga', () => {
     expect(v.badgeVariants({ tone: 'success' })).toContain('bg-primary/15');
     const solid = v.badgeVariants({ tone: 'success', variant: 'solid' });
-    expect(solid).toContain('bg-primary');
+    expect(solid).toContain('bg-primary-strong');
     expect(solid).toContain('text-white');
     expect(solid).not.toContain('bg-primary/15');
   });
