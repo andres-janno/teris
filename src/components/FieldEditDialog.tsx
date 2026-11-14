@@ -12,13 +12,18 @@ import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../ser
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { isCropUndetermined } from '../types/season';
 
+// Omandivormi märgi toon
+const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
+
 // Kultuur valimata: sama väärtus ja värv mis mujal registris (fieldRegister.ts)
 const UNDETERMINED_CROP = 'Määramata';
 const UNDETERMINED_CROP_COLOR = '#94a3b8';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge } from './ui';
+import type { BadgeTone } from './ui';
+import type { LandTenureType } from '../types/cadastre';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -678,9 +683,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
                   <label style={{ margin: 0 }}>
                     Maaomanik
-                    <span className={`cad-tenure-tag ${parcel.ownershipType.toLowerCase()}`} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
+                    <Badge tone={OWNERSHIP_TONE[parcel.ownershipType]} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
                       {OWNERSHIP_LABELS[parcel.ownershipType]}
-                    </span>
+                    </Badge>
                   </label>
                   {onOpenParties && (
                     <Button

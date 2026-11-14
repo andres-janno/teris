@@ -20,7 +20,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -381,23 +381,21 @@ function cropSummaryKey(cropText: string): string {
                 <Calendar size={15} className="text-blue" />
                 <span>Hooaeg:</span>
               </span>
-              <div className="year-tabs">
+              <ToggleGroup aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
                 {availableYearsList.map((yr) => {
-                  const sObj = seasons.find((s) => s.year === yr);
-                  const isLocked = sObj?.isLocked ?? false;
+                  const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
                   return (
-                    <button
+                    <ToggleGroupItem
                       key={yr}
-                      className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
-                      onClick={() => onSelectYear(yr)}
+                      value={String(yr)}
                       title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                     >
-                      <span>{yr}</span>
-                      {isLocked && <Lock size={10} className="tab-lock-icon" />}
-                    </button>
+                      {yr}
+                      {isLocked && <Lock size={10} />}
+                    </ToggleGroupItem>
                   );
                 })}
-              </div>
+              </ToggleGroup>
               <div className="register-io-buttons">
                 <Button
                   size="sm"
@@ -537,13 +535,13 @@ function cropSummaryKey(cropText: string): string {
                         </button>
                       )}
                       <div className="field-title-line">
-                        {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                        {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}
                         <span className="field-name">{field.name}</span>
                       </div>
                       <div className="field-sub-tags">
-                        <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
-                        {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
-                        {field.soilType && <span className="sub-tag soil-tag" title={SOIL_AUTO_HINT}>🌱 {field.soilType}</span>}
+                        <Badge tone="info" className="num" title="PRIA massiivi number">{field.fieldCode}</Badge>
+                        {field.operatorName && <Badge>👤 {field.operatorName}</Badge>}
+                        {field.soilType && <Badge title={SOIL_AUTO_HINT}>🌱 {field.soilType}</Badge>}
                       </div>
                     </TableCell>
                     <TableCell

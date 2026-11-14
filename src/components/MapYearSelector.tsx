@@ -3,7 +3,7 @@ import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-r
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/cropColors';
-import { Button } from './ui';
+import { Badge, Button, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -84,32 +84,28 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           <span>Hooaeg:</span>
         </div>
         <div className="year-header-right">
-          <span className="year-widget-stat">
+          <Badge className="num">
             {fields.features.length} põldu &bull; {totalAreaHa.toFixed(1)} ha
-          </span>
+          </Badge>
         </div>
       </div>
 
       {/* Season Selection Pills */}
-      <div className="year-widget-pills">
+      <ToggleGroup className="year-widget-pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
         {availableYears.map((year) => {
-          const isActive = selectedYear === year;
-          const sObj = seasons.find((s) => s.year === year);
-          const isLocked = sObj?.isLocked ?? false;
-
+          const isLocked = seasons.find((s) => s.year === year)?.isLocked ?? false;
           return (
-            <button
+            <ToggleGroupItem
               key={year}
-              className={`year-widget-btn ${isActive ? 'active' : ''} ${isLocked ? 'locked-btn' : ''}`}
-              onClick={() => onSelectYear(year)}
+              value={String(year)}
               title={`${year}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
             >
-              <span className="year-num">{year}</span>
-              {isLocked && <Lock size={10} className="pill-lock-icon" />}
-            </button>
+              {year}
+              {isLocked && <Lock size={10} />}
+            </ToggleGroupItem>
           );
         })}
-      </div>
+      </ToggleGroup>
 
       {/* Integrated Crop Legend Section */}
       <div className="widget-crop-legend-section">

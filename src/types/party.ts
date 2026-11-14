@@ -1,4 +1,5 @@
 // src/types/party.ts
+import type { BadgeTone } from './badgeTone.ts';
 
 export type PartyType = 'PERSON' | 'LEGAL_ENTITY';
 
@@ -33,35 +34,35 @@ export interface RelatedParty {
   usageCount?: number;            // Kõigi eelnevate loenduste summa — kui > 0, ei tohi kustutada
 }
 
-export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string; color: string; bgColor: string }> = {
+export const PARTY_ROLE_CONFIG: Record<PartyRole, { label: string; icon: string; color: string; tone: BadgeTone }> = {
   LANDOWNER: {
     label: 'Maaomanik',
     icon: '🏛️',
     color: '#059669',
-    bgColor: 'rgba(16, 185, 129, 0.12)'
+    tone: 'success'
   },
   DRIVER: {
     label: 'Töötaja',
     icon: '👤',
     color: '#d97706',
-    bgColor: 'rgba(245, 158, 11, 0.12)'
+    tone: 'warning'
   },
   OPERATOR: {
     label: 'Operaator',
     icon: '🧑‍🌾',
     color: '#15803d',
-    bgColor: 'rgba(34, 197, 94, 0.12)'
+    tone: 'accent'
   },
   SUPPLIER: {
     label: 'Tarnija',
     icon: '🚚',
     color: '#2563eb',
-    bgColor: 'rgba(37, 99, 235, 0.12)'
+    tone: 'info'
   },
   OTHER: {
     label: 'Muu seotud isik',
     icon: '🤝',
     color: '#64748b',
-    bgColor: 'rgba(100, 116, 139, 0.12)'
+    tone: 'neutral'
   }
 };

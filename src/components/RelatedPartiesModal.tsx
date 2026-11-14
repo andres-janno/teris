@@ -24,7 +24,7 @@ import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -565,7 +565,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           title={`Ei saa kustutada — ${party.usageCount} seost süsteemis. Klõpsa, et näha, millised.`}
                         >
                           <Link2 size={14} />
-                          <span className="usage-count-badge">{party.usageCount}</span>
+                          <Badge tone="danger">{party.usageCount}</Badge>
                         </Button>
                       ) : (
                         <Button
@@ -593,13 +593,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           const cfg = PARTY_ROLE_CONFIG[role];
                           if (!cfg) return null;
                           return (
-                            <span
-                              key={role}
-                              className="sub-tag"
-                              style={{ color: cfg.color, backgroundColor: cfg.bgColor, borderColor: `${cfg.color}40`, fontWeight: 600 }}
-                            >
+                            <Badge key={role} tone={cfg.tone}>
                               {cfg.icon} {cfg.label}
-                            </span>
+                            </Badge>
                           );
                         })}
                       </div>

@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { X, Pencil, ListChecks } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
 import { formatQty } from '../services/units';
-import { Button } from './ui';
+import { Badge, Button } from './ui';
 
 interface FieldMapCardProps {
   field: FieldFeature;
@@ -27,7 +27,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
     <div className="field-map-card" role="region" aria-label={`Põld ${p.name}`}>
       <div className="fmc-header">
         <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || '#22c55e' }} />
-        {p.num && <span className="field-num-badge">Nr {p.num}</span>}
+        {p.num && <Badge tone="success" variant="outline" size="md" className="num">Nr {p.num}</Badge>}
         <strong className="fmc-name" title={p.name}>{p.name}</strong>
         <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
       </div>

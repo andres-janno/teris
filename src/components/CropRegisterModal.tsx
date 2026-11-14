@@ -22,7 +22,7 @@ import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -358,22 +358,21 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     <Calendar size={15} className="text-blue" />
                     <span>Hooaeg:</span>
                   </span>
-                  <div className="year-tabs">
+                  <ToggleGroup aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
                     {availableYearsList.map((yr) => {
                       const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
                       return (
-                        <button
+                        <ToggleGroupItem
                           key={yr}
-                          className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
-                          onClick={() => onSelectYear(yr)}
+                          value={String(yr)}
                           title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                         >
-                          <span>{yr}</span>
-                          {isLocked && <Lock size={10} className="tab-lock-icon" />}
-                        </button>
+                          {yr}
+                          {isLocked && <Lock size={10} />}
+                        </ToggleGroupItem>
                       );
                     })}
-                  </div>
+                  </ToggleGroup>
                 </>
               )}
               <div className="register-io-buttons">
@@ -765,7 +764,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                     <h4>
                       <span>{block.icon}</span>
                       <span>{block.label}</span>
-                      <span className="crop-group-count">{blockCrops.length}</span>
+                      <Badge>{blockCrops.length}</Badge>
                     </h4>
                     {blockHa > 0 && <span className="crop-group-ha">{blockHa.toFixed(2)} ha</span>}
                     <Button
@@ -805,11 +804,11 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                     </div>
                                     {crop.scientificName && <div className="cell-sub crop-latin">{crop.scientificName}</div>}
                                     <div className="field-sub-tags">
-                                      <span className={`sub-tag ${crop.isWinterCrop ? 'winter-tag' : 'spring-tag'}`}>
+                                      <Badge tone={crop.isWinterCrop ? 'info' : 'neutral'}>
                                         {crop.isWinterCrop ? '❄️ Talivili' : '☀️ Suvivili'}
-                                      </span>
-                                      {crop.priaCode && <span className="field-code-badge" title="PRIA toetuse kultuurikood">{crop.priaCode}</span>}
-                                      {showGroupTag && <span className="sub-tag">{groupCfg.icon} {groupCfg.label}</span>}
+                                      </Badge>
+                                      {crop.priaCode && <Badge tone="info" className="num" title="PRIA toetuse kultuurikood">{crop.priaCode}</Badge>}
+                                      {showGroupTag && <Badge>{groupCfg.icon} {groupCfg.label}</Badge>}
                                     </div>
                                   </TableCell>
                                   <TableCell numeric className={`${acreageHa > 0 ? '' : 'muted'}`}>

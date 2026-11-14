@@ -1184,9 +1184,8 @@ body {
 }
 
 .year-widget-pills {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
+  /* ToggleGroup kaardi veerus: ei veni kogu laiuseks, rida murdub vidina laiuses */
+  align-self: flex-start;
 }
 
 .year-widget-btn {

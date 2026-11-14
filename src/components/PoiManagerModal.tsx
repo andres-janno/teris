@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -218,27 +218,18 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           {/* Action Bar */}
           <div className="poi-top-bar">
             {/* Category tabs */}
-            <div className="category-filter-tabs">
-              <button
-                className={`filter-tab ${selectedCategory === 'all' ? 'active' : ''}`}
-                onClick={() => setSelectedCategory('all')}
-              >
-                Kõik ({pois.length})
-              </button>
+            <ToggleGroup aria-label="Huvipunkti kategooria" value={selectedCategory} onValueChange={setSelectedCategory}>
+              <ToggleGroupItem value="all">Kõik ({pois.length})</ToggleGroupItem>
               {(Object.keys(CATEGORY_META) as PoiCategory[]).map((cat) => {
                 const count = pois.filter(p => p.category === cat).length;
                 return (
-                  <button
-                    key={cat}
-                    className={`filter-tab ${selectedCategory === cat ? 'active' : ''}`}
-                    onClick={() => setSelectedCategory(cat)}
-                  >
+                  <ToggleGroupItem key={cat} value={cat}>
                     <span>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label.split('/')[0]}</span>
-                    <span className="count-pill">{count}</span>
-                  </button>
+                    <Badge>{count}</Badge>
+                  </ToggleGroupItem>
                 );
               })}
-            </div>
+            </ToggleGroup>
 
             <div className="poi-top-actions">
               <Button size="sm"

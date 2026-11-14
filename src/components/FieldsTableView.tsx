@@ -17,7 +17,8 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem } from './ui';
+import type { BadgeTone } from './ui';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -47,6 +48,14 @@ const TENURE_LABEL: Record<TenureKind, string> = {
   rented: 'Rendimaa',
   mixed: 'Oma + rent',
   unknown: 'Teadmata'
+};
+
+// Omandivormi märgi toon
+const TENURE_TONE: Record<TenureKind, BadgeTone> = {
+  owned: 'success',
+  rented: 'info',
+  mixed: 'warning',
+  unknown: 'neutral'
 };
 
 interface FieldRow {
@@ -248,22 +257,21 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   <Calendar size={15} className="text-blue" />
                   <span>Hooaeg:</span>
                 </span>
-                <div className="year-tabs">
+                <ToggleGroup aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
                   {availableYearsList.map((yr) => {
                     const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
                     return (
-                      <button
+                      <ToggleGroupItem
                         key={yr}
-                        className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
-                        onClick={() => onSelectYear(yr)}
+                        value={String(yr)}
                         title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                       >
-                        <span>{yr}</span>
-                        {isLocked && <Lock size={10} className="tab-lock-icon" />}
-                      </button>
+                        {yr}
+                        {isLocked && <Lock size={10} />}
+                      </ToggleGroupItem>
                     );
                   })}
-                </div>
+                </ToggleGroup>
                 <div className="register-io-buttons">
                   <Button size="sm" onClick={handleExportCsv} title="Ekspordi tabel CSV failina">
                     <Download size={14} />
@@ -320,19 +328,13 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   />
                 </FilterClear>
               </div>
-              <div className="category-filter-tabs">
+              <ToggleGroup aria-label="Omandivorm" value={tenureFilter} onValueChange={(v) => setTenureFilter(v as TenureFilter)}>
                 {tenureFilters.map((t) => (
-                  <button
-                    key={t}
-                    type="button"
-                    className={`filter-tab ${tenureFilter === t ? 'active' : ''}`}
-                    onClick={() => setTenureFilter(t)}
-                    disabled={t !== 'all' && tenureCounts[t] === 0}
-                  >
+                  <ToggleGroupItem key={t} value={t} disabled={t !== 'all' && tenureCounts[t] === 0}>
                     {t === 'all' ? `Kõik (${rows.length})` : `${TENURE_LABEL[t]} (${tenureCounts[t]})`}
-                  </button>
+                  </ToggleGroupItem>
                 ))}
-              </div>
+              </ToggleGroup>
             </div>
 
             <Table scroll="fill" bordered className="fields-table">
@@ -381,11 +383,11 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           </button>
                         )}
                         <div className="field-title-line">
-                          {field.num && <span className="field-num-badge" title="PRIA põllu number">Nr {field.num}</span>}
+                          {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}
                           <span className="field-name">{field.name}</span>
                         </div>
                         <div className="field-sub-tags">
-                          <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
+                          <Badge tone="info" className="num" title="PRIA massiivi number">{field.fieldCode}</Badge>
                         </div>
                       </TableCell>
                       <TableCell numeric title={rec.areaChangeReason || undefined}>
@@ -403,7 +405,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
                       <TableCell>
-                        <span className={`tenure-badge ${r.tenure}`}>{TENURE_LABEL[r.tenure]}</span>
+                        <Badge tone={TENURE_TONE[r.tenure]}>{TENURE_LABEL[r.tenure]}</Badge>
                         {r.tenure === 'mixed' && (
                           <div className="cell-sub">{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
                         )}
