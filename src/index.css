@@ -567,6 +567,9 @@ body {
   flex: 1;
   justify-content: center;
   min-width: 0;
+  /* viis toodet peavad kitsas paneelis mahtuma; ToggleGroupItem px-2.5 utiliit on kõrgemas kihis */
+  padding-left: 4px !important;
+  padding-right: 4px !important;
 }
 .satellite-date-row {
   display: grid;

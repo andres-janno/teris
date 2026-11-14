@@ -829,7 +829,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     <>
       {/* Main Navigation Tabs */}
       <div className="fleet-top-bar">
-        <Tabs
+        <Tabs activationMode="manual"
           value={activeTab}
           onValueChange={(next) => {
             setActiveTab(next as typeof activeTab);
