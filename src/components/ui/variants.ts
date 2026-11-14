@@ -31,24 +31,40 @@ export const buttonVariants = cva(
   }
 );
 
-export const badgeVariants = cva(
-  'inline-flex items-center gap-1 whitespace-nowrap rounded-full px-2 py-0.5 text-2xs font-semibold',
-  {
-    variants: {
-      tone: {
-        success: 'bg-primary/15 text-primary',
-        info: 'bg-info/15 text-info',
-        warning: 'bg-warning/15 text-warning',
-        danger: 'bg-destructive/15 text-destructive',
-        accent: 'bg-accent/15 text-accent',
-        neutral: 'bg-muted text-muted-foreground',
-      },
-    },
-    defaultVariants: { tone: 'neutral' },
-  }
-);
+export type BadgeTone = 'success' | 'info' | 'warning' | 'danger' | 'accent' | 'neutral';
 
-export const tabsListVariants = cva('inline-flex items-center', {
+// Märk: soft (hele toon, vaikimisi), solid (täisvärv — rõhutatud olek, kasutaja otsus 2026-11-14), outline (ääris).
+export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-semibold', {
+  variants: {
+    tone: { success: '', info: '', warning: '', danger: '', accent: '', neutral: '' },
+    variant: { soft: 'border-transparent', solid: 'border-transparent text-white', outline: 'bg-popover text-foreground' },
+    size: { sm: 'px-2 py-0.5 text-2xs', md: 'px-2.5 py-1 text-xs' },
+  },
+  compoundVariants: [
+    { variant: 'soft', tone: 'success', class: 'bg-primary/15 text-primary' },
+    { variant: 'soft', tone: 'info', class: 'bg-info/15 text-info' },
+    { variant: 'soft', tone: 'warning', class: 'bg-warning/15 text-warning' },
+    { variant: 'soft', tone: 'danger', class: 'bg-destructive/15 text-destructive' },
+    { variant: 'soft', tone: 'accent', class: 'bg-accent/15 text-accent' },
+    { variant: 'soft', tone: 'neutral', class: 'bg-muted text-muted-foreground' },
+    { variant: 'solid', tone: 'success', class: 'bg-primary' },
+    { variant: 'solid', tone: 'info', class: 'bg-info' },
+    { variant: 'solid', tone: 'warning', class: 'bg-warning' },
+    { variant: 'solid', tone: 'danger', class: 'bg-danger-solid' },
+    { variant: 'solid', tone: 'accent', class: 'bg-accent' },
+    { variant: 'solid', tone: 'neutral', class: 'bg-muted-foreground' },
+    { variant: 'outline', tone: 'success', class: 'border-primary' },
+    { variant: 'outline', tone: 'info', class: 'border-info' },
+    { variant: 'outline', tone: 'warning', class: 'border-warning' },
+    { variant: 'outline', tone: 'danger', class: 'border-destructive text-destructive' },
+    { variant: 'outline', tone: 'accent', class: 'border-accent' },
+    { variant: 'outline', tone: 'neutral', class: 'border-border' },
+  ],
+  defaultVariants: { tone: 'neutral', variant: 'soft', size: 'sm' },
+});
+
+// Rida murdub (aastaid ja gruppe võib olla palju). Segmenteeritud = ka ToggleGroup'i raam.
+export const tabsListVariants = cva('inline-flex max-w-full flex-wrap items-center', {
   variants: {
     variant: {
       line: 'gap-1 border-b border-border',
@@ -58,13 +74,16 @@ export const tabsListVariants = cva('inline-flex items-center', {
   defaultVariants: { variant: 'line' },
 });
 
+// Keelatud sakk/valik jääb hõljutatavaks (vihjetekst) — enabled:hover, mitte disabled:pointer-events-none.
+// Aktiivne: Radix Tabs data-state=active, Radix ToggleGroup data-state=on.
 export const tabsTriggerVariants = cva(
-  `inline-flex items-center gap-1.5 whitespace-nowrap font-semibold text-muted-foreground transition-colors cursor-pointer hover:text-foreground disabled:pointer-events-none disabled:opacity-50 ${focusRing}`,
+  `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-semibold text-muted-foreground transition-colors cursor-pointer enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
   {
     variants: {
       variant: {
         line: '-mb-px border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:border-primary data-[state=active]:text-foreground',
-        segmented: 'rounded-sm px-2.5 py-1 text-xs data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm',
+        segmented:
+          'rounded-sm px-2.5 py-1 text-xs data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm',
       },
     },
     defaultVariants: { variant: 'line' },

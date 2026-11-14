@@ -46,3 +46,8 @@ row(
   r.legacyTableFiles.reduce((s, f) => s + f.count, 0),
   r.legacyTableFiles.map((f) => `${f.path}: ${f.count}`)
 );
+row(
+  'Vanu märke/sakke (tsx)',
+  r.legacyBadgeTabFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyBadgeTabFiles.map((f) => `${f.path}: ${f.count}`)
+);

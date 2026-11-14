@@ -55,6 +55,18 @@ Märkused:
 - **Kinnitatud (`pin`) ja tegevuste (`actions`) lahter** hoiab läbipaistmatut tausta ega võta rea tooni värvi
   (`tone`, `selected`).
 
+## Märk, sakk, valikurida
+
+- **`Badge`**: `tone` success / info / warning / danger / accent / neutral (vaikimisi neutral); `variant` soft (vaikimisi) /
+  solid (täisvärv, ainult rõhutatud olekutele: lõpetatud, kinnitatud, aktiivne, ootel arv) / outline; `size` sm (11px) / md (12px);
+  `dot` = olekupunkt (`dot="#e11d48"` = punkti värv andmetest). Andmevärv (nt kultuur) ainult punktina, mitte märgi taustana.
+  Toonid: success = tehtud/aktiivne/oma, info = plaanis/renditud, warning = ootel/kontrolli, danger = viga/puudus, neutral = muu.
+  Meta-objekti tüüp: `BadgeTone`.
+- **`Tabs`** (`variant="line"`): ainult paneeli vahetavad sakid. `TabsContent` on valikuline — kui paneeli paigutus sõltub
+  otsesest flex-lapsest, jäta tingimuslik renderdus ja kasuta ainult `TabsList` + `TabsTrigger`. Loendur = `<Badge>` lapsena.
+- **`ToggleGroup`** + `ToggleGroupItem`: aasta valik, filtrid, vormi valik (paneel ei vahetu). `value` on string,
+  `onValueChange` ei anna kunagi tühja väärtust. `aria-label` on kohustuslik. Rida murdub, üks hall raam.
+
 ## Tailwindi skaneerimine
 
 Tailwind genereerib utiliite ainult kataloogist `src/components/ui` (`@source` failis `src/styles/app.css`).

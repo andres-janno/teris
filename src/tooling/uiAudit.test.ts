@@ -213,3 +213,22 @@ describe('auditTsx: vanad tabelid', () => {
     expect(r.legacyTableFiles).toEqual([{ path: 'src/components/X.tsx', count: 1 }]);
   });
 });
+
+describe('auditTsx: vanad märgid ja sakid', () => {
+  it('loeb vanad märgi-, saki- ja segmendiklassid', () => {
+    const r = auditTsx(
+      '<div className="category-filter-tabs"><button className="filter-tab active">A <span className="count-pill">2</span></button></div><span className="status-badge status-working" /><div className="year-tabs"><button className="year-tab" /></div>'
+    );
+    expect(r.legacyBadgeTabs).toEqual(['category-filter-tabs', 'filter-tab', 'count-pill', 'status-badge', 'year-tabs', 'year-tab']);
+  });
+  it('ei loe ui komponente ega sarnaseid nimesid', () => {
+    expect(auditTsx('<Badge tone="success" /><TabsTrigger value="a" /><span className="fw-status-dot" />').legacyBadgeTabs).toEqual([]);
+  });
+  it('summarize jätab ui kausta välja', () => {
+    const r = summarize([
+      { path: 'src/components/ui/UiGallery.tsx', content: 'className="mini-badge"' },
+      { path: 'src/components/X.tsx', content: 'className="mini-badge"' },
+    ]);
+    expect(r.legacyBadgeTabFiles).toEqual([{ path: 'src/components/X.tsx', count: 1 }]);
+  });
+});

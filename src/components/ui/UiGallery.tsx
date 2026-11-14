@@ -1,13 +1,14 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Moon, Pencil, Plus, Sun, Trash2 } from 'lucide-react';
+import { Clock, Lock, Moon, Pencil, Plus, Sun, Trash2 } from 'lucide-react';
 import {
   Badge, Button, Card, Checkbox, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
-  TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Tooltip,
+  TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
+  ToggleGroupItem, Tooltip,
 } from './index';
 import { DateInput } from '../DateInput';
 import { FilterSelect } from '../FilterSelect';
@@ -34,6 +35,7 @@ export const UiGallery: React.FC = () => {
   const [on, setOn] = useState(false);
   const [date, setDate] = useState('');
   const [filterValue, setFilterValue] = useState('');
+  const [year, setYear] = useState('2026');
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -61,17 +63,29 @@ export const UiGallery: React.FC = () => {
         </Section>
 
         <Section title="Märgid">
-          <Badge tone="success">Tehtud</Badge>
-          <Badge tone="info">Plaanis</Badge>
-          <Badge tone="warning">Kontrolli</Badge>
-          <Badge tone="danger">Viga</Badge>
-          <Badge tone="accent">PRIA</Badge>
-          <Badge>Mustand</Badge>
+          {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => (
+            <div key={tone} className="flex w-full flex-wrap items-center gap-3">
+              <Badge tone={tone}>{tone}</Badge>
+              <Badge tone={tone} variant="solid">{tone}</Badge>
+              <Badge tone={tone} variant="outline">{tone}</Badge>
+            </div>
+          ))}
+          <div className="flex w-full flex-wrap items-center gap-3">
+            <Badge tone="success" size="md">Suurus md</Badge>
+            <Badge tone="success" dot>Punktiga</Badge>
+            <Badge dot="#e11d48">Andmevärv</Badge>
+            <Badge tone="info"><Clock size={12} />Ikooniga</Badge>
+            <Badge tone="danger" variant="outline">Puudus</Badge>
+          </div>
         </Section>
 
         <Section title="Sakid">
           <Tabs defaultValue="a">
-            <TabsList><TabsTrigger value="a">Ülevaade</TabsTrigger><TabsTrigger value="b">Tööd</TabsTrigger><TabsTrigger value="c">Kulud</TabsTrigger></TabsList>
+            <TabsList>
+              <TabsTrigger value="a">Ülevaade</TabsTrigger>
+              <TabsTrigger value="b">Tööd <Badge tone="warning" variant="solid">3</Badge></TabsTrigger>
+              <TabsTrigger value="c" disabled>Kulud</TabsTrigger>
+            </TabsList>
             <TabsContent value="a" className="pt-3 text-sm">Ülevaate sisu</TabsContent>
             <TabsContent value="b" className="pt-3 text-sm">Tööde sisu</TabsContent>
             <TabsContent value="c" className="pt-3 text-sm">Kulude sisu</TabsContent>
@@ -79,6 +93,15 @@ export const UiGallery: React.FC = () => {
           <Tabs defaultValue="ha" variant="segmented">
             <TabsList><TabsTrigger value="ha">ha</TabsTrigger><TabsTrigger value="t">t</TabsTrigger><TabsTrigger value="eur">€</TabsTrigger></TabsList>
           </Tabs>
+        </Section>
+
+        <Section title="Valikurida">
+          <ToggleGroup aria-label="Hooaasta" value={year} onValueChange={setYear}>
+            <ToggleGroupItem value="2024" title="Hooaeg on lukus">2024<Lock size={10} /></ToggleGroupItem>
+            <ToggleGroupItem value="2025">2025</ToggleGroupItem>
+            <ToggleGroupItem value="2026">2026</ToggleGroupItem>
+            <ToggleGroupItem value="2027" disabled>2027</ToggleGroupItem>
+          </ToggleGroup>
         </Section>
 
         <Section title="Vormiväljad">

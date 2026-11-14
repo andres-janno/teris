@@ -7,7 +7,11 @@ const allClassStrings = (): string[] => [
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const).flatMap((variant) =>
     (['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
-  ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => v.badgeVariants({ tone })),
+  ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
+    (['soft', 'solid', 'outline'] as const).flatMap((variant) =>
+      (['sm', 'md'] as const).map((size) => v.badgeVariants({ tone, variant, size }))
+    )
+  ),
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
   v.fieldControlClass, v.menuContentClass, v.menuItemClass, v.menuSeparatorClass, v.menuLabelClass,
   v.popoverContentClass, v.tooltipContentClass, v.cardClass,
@@ -151,5 +155,42 @@ describe('tabel', () => {
     expect(v.tableRowClass({ tone: 'muted' })).toContain('text-subtle');
     expect(v.tableRowClass({ clickable: true })).toContain('cursor-pointer');
     expect(v.tableRowClass({})).not.toContain('cursor-pointer');
+  });
+});
+
+describe('märk', () => {
+  it('soft on vaikimisi, solid on täisvärv valge tekstiga', () => {
+    expect(v.badgeVariants({ tone: 'success' })).toContain('bg-primary/15');
+    const solid = v.badgeVariants({ tone: 'success', variant: 'solid' });
+    expect(solid).toContain('bg-primary');
+    expect(solid).toContain('text-white');
+    expect(solid).not.toContain('bg-primary/15');
+  });
+  it('outline: ääris toonivärviga, taust popover', () => {
+    const c = v.badgeVariants({ tone: 'success', variant: 'outline' });
+    expect(c).toContain('border-primary');
+    expect(c).toContain('bg-popover');
+  });
+  it('suurus md on suurem kiri', () => {
+    expect(v.badgeVariants({})).toContain('text-2xs');
+    expect(v.badgeVariants({ size: 'md' })).toContain('text-xs');
+    expect(v.badgeVariants({ size: 'md' })).not.toContain('text-2xs');
+  });
+});
+
+describe('sakk ja valikurida', () => {
+  it('keelatud sakk jääb hõljutatavaks, hover ainult lubatul', () => {
+    const c = v.tabsTriggerVariants();
+    expect(c).toContain('enabled:hover:text-foreground');
+    expect(c).not.toContain('disabled:pointer-events-none');
+    expect(c).toContain('disabled:cursor-not-allowed');
+    expect(c).toContain('shrink-0');
+  });
+  it('segmenteeritud: aktiivne nii saki (active) kui valiku (on) olekus, rida murdub', () => {
+    const c = v.tabsTriggerVariants({ variant: 'segmented' });
+    expect(c).toContain('data-[state=active]:bg-card');
+    expect(c).toContain('data-[state=on]:bg-card');
+    expect(v.tabsListVariants({ variant: 'segmented' })).toContain('flex-wrap');
+    expect(v.tabsListVariants({ variant: 'line' })).toContain('flex-wrap');
   });
 });

@@ -17,6 +17,7 @@ export interface AuditReport {
   legacyButtonFiles: { path: string; count: number }[];
   legacyModalFiles: { path: string; count: number }[];
   legacyTableFiles: { path: string; count: number }[];
+  legacyBadgeTabFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -42,6 +43,9 @@ const LEGACY_MODAL =
 // Toored tabelielemendid ja vanad tabeliklassid (etapp 2.3). ui/ kausta ei loeta (seal on ui/Table ise).
 const LEGACY_TABLE =
   /<(table|thead|tbody|tfoot|tr|th|td)(?=[\s>])|(?<![\w-])(register-table-wrap|register-table|num-col|actions-col|row-actions|clickable-row)(?![\w-])/g;
+// Vanad märgi-, saki- ja segmendiklassid (etapp 2.4). ui/ kausta ei loeta.
+const LEGACY_BADGE_TAB =
+  /(?<![\w-])(status-badge|fleet-active-badge|active-pill|user-status-pill|user-status-dot|fw-status-pill|fw-finance-chip|season-status-badge|work-phase-badge|support-panel-status|stock-shortage-badge|users-admin-badge|article-default-badge|tenure-badge|cad-tenure-tag|weather-credential-ok|weather-credential-missing|count-pill|finance-count-badge|finance-tab-badge|crop-group-count|usage-count-badge|finance-year-badge|mini-badge|badge-list|sub-tag|winter-tag|field-num-badge|finance-field-badge|field-code-badge|equipment-tag|finance-kind-badge|finance-crop-pill|year-widget-stat|telemetry-pill-impl|telemetry-pill-time|telemetry-pill-action|category-filter-tabs|filter-tab|year-tabs|year-tab|work-register-tabs|finance-filter-chips|finance-filter-chip|segmented-control|segmented-option|cc-segmented|year-widget-pills|year-widget-btn|area-preset-btn|tab-lock-icon|pill-lock-icon)(?![\w-])/g;
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -82,6 +86,7 @@ export function auditTsx(src: string) {
     legacyButtons: [...src.matchAll(LEGACY_BUTTON)].map((m) => m[1]),
     legacyModals: [...src.matchAll(LEGACY_MODAL)].map((m) => m[1]),
     legacyTables: [...src.matchAll(LEGACY_TABLE)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
+    legacyBadgeTabs: [...src.matchAll(LEGACY_BADGE_TAB)].map((m) => m[1]),
   };
 }
 
@@ -105,5 +110,8 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     legacyTableFiles: tsx
       .filter((t) => t.legacyTables.length > 0 && !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: t.legacyTables.length })),
+    legacyBadgeTabFiles: tsx
+      .filter((t) => t.legacyBadgeTabs.length > 0 && !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: t.legacyBadgeTabs.length })),
   };
 }
