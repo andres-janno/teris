@@ -560,14 +560,12 @@ body {
   color: var(--text-secondary);
 }
 .satellite-product-row {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 4px;
+  display: flex;
+  width: 100%;
 }
-.satellite-product-row .basemap-btn {
+.satellite-product-row > button {
+  flex: 1;
   justify-content: center;
-  padding-left: 2px;
-  padding-right: 2px;
   min-width: 0;
 }
 .satellite-date-row {
@@ -1770,36 +1768,13 @@ body {
   flex-wrap: wrap;
 }
 
-.cc-segmented {
-  display: inline-flex;
+/* Kaardi juhtpaneeli nupurida: kõrgus ühtib teiste juhtnuppudega (--cc-h) */
+.cc-toggle {
   height: var(--cc-h);
-  padding: 2px;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
 }
 
-.cc-segmented button {
-  padding: 0 12px;
-  border: none;
-  border-radius: calc(var(--radius-sm) - 2px);
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background-color 0.15s ease, color 0.15s ease;
-}
-
-.cc-segmented button:hover {
-  color: var(--text-primary);
-}
-
-.cc-segmented button.active {
-  background: var(--emerald-600);
-  color: #ffffff;
+.cc-toggle > button {
+  align-self: stretch;
 }
 
 .cc-date {
@@ -2046,10 +2021,6 @@ body {
   min-width: 32px;
 }
 
-.cc-speed button {
-  padding: 0 9px;
-}
-
 /* Teated mängija real (laadimine / andmed puuduvad) */
 .cc-notice {
   display: flex;
@@ -2268,23 +2239,16 @@ body {
   margin-top: 4px;
 }
 
-.equipment-tag {
-  display: flex;
-  align-items: center;
+/* Seadme/haakeriista pesa masinakaardil (Badge): täislaius, nupp paremal, pikk nimi lõigatakse ellipsiga */
+.equipment-slot {
+  width: 100%;
+  min-width: 0;
   justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  font-size: 0.72rem;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  gap: 6px;
 }
 
-.equipment-tag .tag-text {
+.equipment-slot .tag-text {
   flex: 1;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -3029,46 +2993,6 @@ body {
 
 .connectivity-type-picker {
   margin-bottom: 2px;
-}
-
-.segmented-control {
-  display: flex;
-  gap: 4px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  padding: 3px;
-}
-
-.segmented-option {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  padding: 7px 10px;
-  font-size: 0.76rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: transparent;
-  border: none;
-  border-radius: calc(var(--radius-sm) - 2px);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.segmented-option:hover {
-  color: var(--text-primary);
-}
-
-.segmented-option.active {
-  background: #0f172a;
-  color: #ffffff;
-}
-
-:root[data-theme="dark"] .segmented-option.active {
-  background: #1e293b;
-  border: 1px solid #38bdf8;
 }
 
 .form-input {

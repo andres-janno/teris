@@ -12,7 +12,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -256,7 +256,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                       <TableCell numeric>{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</TableCell>
                       <TableCell numeric>{engine == null ? '—' : formatQty(engine)}</TableCell>
                       <TableCell>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</TableCell>
-                      <TableCell>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</TableCell>
+                      <TableCell>{active ? <Badge tone="success">käimas</Badge> : 'lõppenud'}</TableCell>
                     </TableRow>
                     {g && (
                       <TableRow className={`trip-gap-row${g.reviewedAt ? ' reviewed' : ''}`} tone={g.reviewedAt ? 'muted' : 'warning'}>

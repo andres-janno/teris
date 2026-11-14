@@ -10,7 +10,7 @@ import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -218,17 +218,11 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
           </FilterClear>
         </div>
 
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <Button variant={statusFilter === 'all' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('all')}>
-            Kõik ({assignments.length})
-          </Button>
-          <Button variant={statusFilter === 'active' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('active')}>
-            Aktiivsed ({assignments.filter((a) => !a.endedAt).length})
-          </Button>
-          <Button variant={statusFilter === 'ended' ? 'primary' : 'secondary'} size="sm" onClick={() => setStatusFilter('ended')}>
-            Ajalugu ({assignments.filter((a) => !!a.endedAt).length})
-          </Button>
-        </div>
+        <ToggleGroup aria-label="Seoste filter" value={statusFilter} onValueChange={(next) => setStatusFilter(next as StatusFilter)}>
+          <ToggleGroupItem value="all">Kõik ({assignments.length})</ToggleGroupItem>
+          <ToggleGroupItem value="active">Aktiivsed ({assignments.filter((a) => !a.endedAt).length})</ToggleGroupItem>
+          <ToggleGroupItem value="ended">Ajalugu ({assignments.filter((a) => !!a.endedAt).length})</ToggleGroupItem>
+        </ToggleGroup>
 
         {hasFilters && (
           <Button variant="ghost" size="sm"
@@ -313,10 +307,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                     </TableCell>
                     <TableCell>
                       {isActive ? (
-                        <span className="status-badge status-working fleet-active-badge">
-                          <span className="fleet-active-dot"></span>
-                          Paigaldatud (Aktiivne)
-                        </span>
+                        <Badge tone="success" dot>Paigaldatud (Aktiivne)</Badge>
                       ) : (
                         <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
                       )}

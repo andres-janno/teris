@@ -35,14 +35,21 @@ import type {
   VehicleType,
   DepreciationMethod,
   DeviceConnectivity,
-  ImplementAssignment
+  ImplementAssignment,
+  VehicleStatus
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
+import type { BadgeTone } from './ui';
+
+// Masina oleku märgi toon
+const VEHICLE_STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
+  working: 'success', moving: 'info', idling: 'warning', stopped: 'neutral', offline: 'neutral'
+};
 
 // Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
 const FRESHNESS_LEGEND = [
@@ -822,60 +829,24 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     <>
       {/* Main Navigation Tabs */}
       <div className="fleet-top-bar">
-        <div className="category-filter-tabs">
-          {telemetryEnabled && (
-          <button
-            className={`filter-tab ${activeTab === 'trips' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('trips'); closeForm(); }}
-          >
-            <span>🛣️ Sõidud</span>
-          </button>
-          )}
-
-          <button
-            className={`filter-tab ${activeTab === 'vehicles' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('vehicles'); closeForm(); }}
-          >
-            <span>🚜 Masinad</span>
-            <span className="count-pill">{vehicles.length}</span>
-          </button>
-
-          <button
-            className={`filter-tab ${activeTab === 'implements' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('implements'); closeForm(); }}
-          >
-            <span>🔧 Haakeriistad</span>
-            <span className="count-pill">{implementsList.length}</span>
-          </button>
-
-          <button
-            className={`filter-tab ${activeTab === 'history' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('history'); closeForm(); loadImplementAssignments(); }}
-          >
-            <span>📜 Haakimiste register</span>
-            <span className="count-pill">{implementAssignments.length}</span>
-          </button>
-
-          {telemetryEnabled && (
-          <button
-            className={`filter-tab ${activeTab === 'devices' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('devices'); closeForm(); }}
-          >
-            <span>📡 Telemeetria seadmed</span>
-            <span className="count-pill">{devices.length}</span>
-          </button>
-          )}
-
-          {telemetryEnabled && (
-          <button
-            className={`filter-tab ${activeTab === 'deviceHistory' ? 'active' : ''}`}
-            onClick={() => { setActiveTab('deviceHistory'); closeForm(); loadDeviceAssignments(); }}
-          >
-            <span>🔗 Seadmete seosed</span>
-            <span className="count-pill">{deviceAssignments.length}</span>
-          </button>
-          )}
-        </div>
+        <Tabs
+          value={activeTab}
+          onValueChange={(next) => {
+            setActiveTab(next as typeof activeTab);
+            closeForm();
+            if (next === 'history') loadImplementAssignments();
+            if (next === 'deviceHistory') loadDeviceAssignments();
+          }}
+        >
+          <TabsList>
+            {telemetryEnabled && <TabsTrigger value="trips">🛣️ Sõidud</TabsTrigger>}
+            <TabsTrigger value="vehicles">🚜 Masinad <Badge>{vehicles.length}</Badge></TabsTrigger>
+            <TabsTrigger value="implements">🔧 Haakeriistad <Badge>{implementsList.length}</Badge></TabsTrigger>
+            <TabsTrigger value="history">📜 Haakimiste register <Badge>{implementAssignments.length}</Badge></TabsTrigger>
+            {telemetryEnabled && <TabsTrigger value="devices">📡 Telemeetria seadmed <Badge>{devices.length}</Badge></TabsTrigger>}
+            {telemetryEnabled && <TabsTrigger value="deviceHistory">🔗 Seadmete seosed <Badge>{deviceAssignments.length}</Badge></TabsTrigger>}
+          </TabsList>
+        </Tabs>
 
         {!isAddingNew && activeTab !== 'trips' && (
           <Button variant="primary" size="sm"
@@ -1168,24 +1139,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 <div className="form-group connectivity-type-picker">
                   <label>Seadme tüüp</label>
-                  <div className="segmented-control">
-                    <button
-                      type="button"
-                      className={`segmented-option ${devConnectivity === 'cellular' ? 'active' : ''}`}
-                      onClick={() => handleConnectivityChange('cellular')}
-                    >
-                      <Radio size={14} />
-                      <span>Mobiilne GPS (IMEI/SIM)</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`segmented-option ${devConnectivity === 'eye_sensor' ? 'active' : ''}`}
-                      onClick={() => handleConnectivityChange('eye_sensor')}
-                    >
-                      <Activity size={14} />
-                      <span>Eye Sensor (MAC)</span>
-                    </button>
-                  </div>
+                  <ToggleGroup
+                    aria-label="Seadme tüüp"
+                    value={devConnectivity}
+                    onValueChange={(next) => handleConnectivityChange(next as typeof devConnectivity)}
+                  >
+                    <ToggleGroupItem value="cellular"><Radio size={14} />Mobiilne GPS (IMEI/SIM)</ToggleGroupItem>
+                    <ToggleGroupItem value="eye_sensor"><Activity size={14} />Eye Sensor (MAC)</ToggleGroupItem>
+                  </ToggleGroup>
                 </div>
                 <div className="form-grid">
                   {devConnectivity === 'cellular' ? (
@@ -1444,9 +1405,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
 
                   <div className="card-header-right">
-                    <span className={`status-badge status-${v.status}`}>
+                    <Badge tone={VEHICLE_STATUS_TONE[v.status]}>
                       {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
-                    </span>
+                    </Badge>
                     <div className="card-header-actions">
                       <Button variant="ghost" size="icon-sm"
                         title="Vaata selle masina haakimise ajalugu"
@@ -1487,7 +1448,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <div className="v-equipment-badge-row">
                     {/* Device Badge */}
                     {telemetryEnabled && (
-                    <div className="equipment-tag device-tag">
+                    <Badge size="md" className="equipment-slot">
                       <Radio size={12} className="text-blue" />
                       <span className="tag-text">
                         {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
@@ -1503,11 +1464,11 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <RotateCcw size={11} />
                         <span>Vaheta</span>
                       </button>
-                    </div>
+                    </Badge>
                     )}
 
                     {/* Implement Badge */}
-                    <div className="equipment-tag implement-tag">
+                    <Badge size="md" className="equipment-slot">
                       <Wrench size={12} className="text-emerald" />
                       <span className="tag-text">
                         {attachedImplement ? `${attachedImplement.name}${attachedImplement.workingWidthM ? ` (${attachedImplement.workingWidthM}m)` : ''}` : 'Haakeriist puudub'}
@@ -1523,7 +1484,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <Link size={11} />
                         <span>Haagi</span>
                       </button>
-                    </div>
+                    </Badge>
                   </div>
                 </div>
 
@@ -2055,10 +2016,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         </TableCell>
                         <TableCell>
                           {isActive ? (
-                            <span className="status-badge status-working fleet-active-badge">
-                              <span className="fleet-active-dot"></span>
-                              Hetkel küljes (Aktiivne)
-                            </span>
+                            <Badge tone="success" dot>Hetkel küljes (Aktiivne)</Badge>
                           ) : (
                             <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
                           )}
@@ -2156,7 +2114,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             )}
                           </p>
                         </div>
-                        {isCurrent && <span className="active-pill">Aktiivne</span>}
+                        {isCurrent && <Badge tone="success" variant="solid">Aktiivne</Badge>}
                       </div>
                     );
                   })}
@@ -2202,7 +2160,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             )}
                           </p>
                         </div>
-                        {isCurrent && <span className="active-pill">Haagitud</span>}
+                        {isCurrent && <Badge tone="success" variant="solid">Haagitud</Badge>}
                       </div>
                     );
                   })}

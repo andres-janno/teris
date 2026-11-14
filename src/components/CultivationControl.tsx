@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
 import { DateInput } from './DateInput';
+import { ToggleGroup, ToggleGroupItem } from './ui';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -182,24 +183,15 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
       <div className="cc-period">
         <Clock size={14} className="cc-period-icon" aria-hidden="true" />
         {onSimTimeModeChange && (
-          <div className="cc-segmented" role="group" aria-label="Ajavahemiku režiim">
-            <button
-              type="button"
-              className={simTimeMode === 'rolling' ? 'active' : ''}
-              onClick={() => onSimTimeModeChange('rolling')}
-              title="Viimased tunnid praegusest hetkest tagasi"
-            >
-              Viimased tunnid
-            </button>
-            <button
-              type="button"
-              className={simTimeMode === 'custom' ? 'active' : ''}
-              onClick={() => onSimTimeModeChange('custom')}
-              title="Konkreetne kuupäev, kellaaeg ja kestus"
-            >
-              Kuupäev ja kell
-            </button>
-          </div>
+          <ToggleGroup
+            className="cc-toggle"
+            aria-label="Ajavahemiku režiim"
+            value={simTimeMode}
+            onValueChange={(next) => onSimTimeModeChange(next as typeof simTimeMode)}
+          >
+            <ToggleGroupItem value="rolling" title="Viimased tunnid praegusest hetkest tagasi">Viimased tunnid</ToggleGroupItem>
+            <ToggleGroupItem value="custom" title="Konkreetne kuupäev, kellaaeg ja kestus">Kuupäev ja kell</ToggleGroupItem>
+          </ToggleGroup>
         )}
 
         {simTimeMode === 'custom' ? (
@@ -363,13 +355,16 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               <span className="cc-now-pct">{Math.round(progressPct)}%</span>
             </div>
 
-            <div className="cc-segmented cc-speed" role="group" aria-label="Taasesituse kiirus">
+            <ToggleGroup
+              className="cc-toggle"
+              aria-label="Taasesituse kiirus"
+              value={String(playbackSpeed)}
+              onValueChange={(next) => onSpeedChange(Number(next))}
+            >
               {SPEEDS.map((s) => (
-                <button key={s} type="button" className={playbackSpeed === s ? 'active' : ''} onClick={() => onSpeedChange(s)}>
-                  {s}×
-                </button>
+                <ToggleGroupItem key={s} value={String(s)}>{s}×</ToggleGroupItem>
               ))}
-            </div>
+            </ToggleGroup>
           </>
         )}
       </div>

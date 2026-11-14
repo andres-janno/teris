@@ -11,7 +11,7 @@ import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
-import { Button } from './ui';
+import { Button, ToggleGroup, ToggleGroupItem } from './ui';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -282,21 +282,18 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         {loading && <Loader2 size={12} className="layer-loading-spinner" aria-label="Laadimine" />}
       </div>
 
-      <div className="satellite-product-row" role="radiogroup" aria-label="Toode">
+      <ToggleGroup
+        className="satellite-product-row"
+        aria-label="Satelliidi toode"
+        value={product}
+        onValueChange={(next) => onSelectProduct(next as SatelliteProductId)}
+      >
         {(Object.keys(SATELLITE_PRODUCTS) as SatelliteProductId[]).map((id) => (
-          <button
-            key={id}
-            type="button"
-            role="radio"
-            aria-checked={product === id}
-            className={`basemap-btn ${product === id ? 'active' : ''}`}
-            title={SATELLITE_PRODUCTS[id].title}
-            onClick={() => onSelectProduct(id)}
-          >
+          <ToggleGroupItem key={id} value={id} title={SATELLITE_PRODUCTS[id].title}>
             {SATELLITE_PRODUCTS[id].label}
-          </button>
+          </ToggleGroupItem>
         ))}
-      </div>
+      </ToggleGroup>
 
       <div className="satellite-date-row">
         <Button
