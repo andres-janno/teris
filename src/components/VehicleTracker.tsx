@@ -42,7 +42,7 @@ import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 // Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
 const FRESHNESS_LEGEND = [
@@ -2013,94 +2013,72 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               </p>
             </div>
           ) : (
-            <div className="register-table-wrap glass-card" style={{ overflowX: 'auto' }}>
-              <table className="register-table">
-                <thead>
-                  <tr>
-                    <th>Haakeriist</th>
-                    <th>Masin</th>
-                    <th>Haagitud (algus)</th>
-                    <th>Lahti haagitud (lõpp)</th>
-                    <th>Kestus</th>
-                    <th>Märkused</th>
-                    <th style={{ textAlign: 'right' }}>Tegevused</th>
-                  </tr>
-                </thead>
-                <tbody>
+            <Table scroll="fill" bordered>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Haakeriist</TableHead>
+                    <TableHead>Masin</TableHead>
+                    <TableHead>Haagitud (algus)</TableHead>
+                    <TableHead>Lahti haagitud (lõpp)</TableHead>
+                    <TableHead>Kestus</TableHead>
+                    <TableHead>Märkused</TableHead>
+                    <TableHead actions>Tegevused</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredAssignments.map((a) => {
                     const isActive = !a.endedAt;
                     const duration = formatDuration(a.startedAt, a.endedAt);
                     return (
-                      <tr key={a.id} style={{ background: isActive ? 'rgba(16, 185, 129, 0.05)' : undefined }}>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '6px',
-                              background: 'rgba(234, 179, 8, 0.15)',
-                              color: '#eab308',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center',
-                              fontSize: '14px'
-                            }}>
+                      <TableRow key={a.id} tone={isActive ? 'success' : undefined}>
+                        <TableCell>
+                          <div className="fleet-cell-main">
+                            <div className="fleet-icon-box is-warning">
                               🔧
                             </div>
                             <div>
-                              <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.implementName || a.implementId}</div>
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{a.implementCategory || ''}</div>
+                              <div className="fleet-cell-title">{a.implementName || a.implementId}</div>
+                              <div className="fleet-cell-sub">{a.implementCategory || ''}</div>
                             </div>
                           </div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <div style={{
-                              width: '28px',
-                              height: '28px',
-                              borderRadius: '6px',
-                              background: 'rgba(16, 185, 129, 0.15)',
-                              color: '#10b981',
-                              display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'center'
-                            }}>
+                        </TableCell>
+                        <TableCell>
+                          <div className="fleet-cell-main">
+                            <div className="fleet-icon-box is-success">
                               <Tractor size={15} />
                             </div>
-                            <div style={{ fontWeight: 600, fontSize: '13px' }}>{a.vehicleName || a.vehicleId}</div>
+                            <div className="fleet-cell-title">{a.vehicleName || a.vehicleId}</div>
                           </div>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: '13px', fontWeight: 500 }}>{formatDateTime(a.startedAt)}</div>
-                        </td>
-                        <td>
+                        </TableCell>
+                        <TableCell>
+                          <div className="fleet-cell-date">{formatDateTime(a.startedAt)}</div>
+                        </TableCell>
+                        <TableCell>
                           {isActive ? (
-                            <span className="status-badge status-working" style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', background: 'rgba(16, 185, 129, 0.15)', color: '#10b981', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-                              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981' }}></span>
+                            <span className="status-badge status-working fleet-active-badge">
+                              <span className="fleet-active-dot"></span>
                               Hetkel küljes (Aktiivne)
                             </span>
                           ) : (
-                            <div style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>{formatDateTime(a.endedAt)}</div>
+                            <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
                           )}
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '12px', fontWeight: 500, color: isActive ? 'var(--color-primary)' : 'var(--text-muted)' }}>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`fleet-cell-duration${isActive ? ' is-active' : ''}`}>
                             {duration}
                           </span>
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: a.notes ? 'normal' : 'italic' }}>
+                        </TableCell>
+                        <TableCell>
+                          <span className={`fleet-cell-notes${a.notes ? '' : ' is-empty'}`}>
                             {a.notes || '—'}
                           </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                        </TableCell>
+                        <TableCell actions>
                             {isActive && (
                               <Button type="button"
                                 size="sm"
                                 title="Haagi see riist masinalt lahti"
-                                onClick={() => handleDetachActiveAssignment(a.implementId)}
-                                style={{ fontSize: '11px', padding: '4px 8px', height: '26px' }}>
+                                onClick={() => handleDetachActiveAssignment(a.implementId)}>
                                 <Unlink size={12} />
                                 <span>Haagi lahti</span>
                               </Button>
@@ -2108,25 +2086,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             <Button type="button"
                               variant="ghost" size="icon-sm"
                               title="Muuda haakimise kirjet"
-                              onClick={() => handleStartEditAssignment(a)}
-                              style={{ width: '26px', height: '26px' }}>
+                              onClick={() => handleStartEditAssignment(a)}>
                               <Pencil size={14} />
                             </Button>
                             <Button type="button"
                               variant="danger-ghost" size="icon-sm"
                               title="Kustuta logikirje"
-                              onClick={() => handleDeleteAssignment(a.id)}
-                              style={{ width: '26px', height: '26px' }}>
+                              onClick={() => handleDeleteAssignment(a.id)}>
                               <Trash2 size={13} />
                             </Button>
-                          </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
-              </table>
-            </div>
+                </TableBody>
+              </Table>
           )}
         </div>
       )}

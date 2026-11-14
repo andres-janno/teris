@@ -12,7 +12,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Button } from './ui';
+import { Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -216,52 +216,51 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           </p>
         </div>
       ) : (
-        <div className="register-table-wrap glass-card" style={{ overflowX: 'auto' }}>
-          <table className="register-table">
-            <thead>
-              <tr>
-                <th>Kuupäev</th>
-                <th>Masin</th>
-                <th>Haakeriist</th>
-                <th>Algus–lõpp</th>
-                <th className="num">Kestus</th>
-                <th>Kust → kuhu</th>
-                <th className="num">km</th>
-                <th className="num">ha</th>
-                <th className="num">Kütus l</th>
-                <th className="num" title="Mootoritundide loenduri näit sõidu alguses">Mootoritunnid algus</th>
-                <th className="num" title="Sõidu jooksul töötatud mootoritunnid">Mootoritunnid</th>
-                <th title="✓ = vähemalt ühel põllul on kanne; — = põllusõit on kirja panemata">Kanne</th>
-                <th>Olek</th>
-              </tr>
-            </thead>
-            <tbody>
+        <Table scroll="fill" bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Kuupäev</TableHead>
+                <TableHead>Masin</TableHead>
+                <TableHead>Haakeriist</TableHead>
+                <TableHead>Algus–lõpp</TableHead>
+                <TableHead numeric>Kestus</TableHead>
+                <TableHead>Kust → kuhu</TableHead>
+                <TableHead numeric>km</TableHead>
+                <TableHead numeric>ha</TableHead>
+                <TableHead numeric>Kütus l</TableHead>
+                <TableHead numeric title="Mootoritundide loenduri näit sõidu alguses">Mootoritunnid algus</TableHead>
+                <TableHead numeric title="Sõidu jooksul töötatud mootoritunnid">Mootoritunnid</TableHead>
+                <TableHead title="✓ = vähemalt ühel põllul on kanne; — = põllusõit on kirja panemata">Kanne</TableHead>
+                <TableHead>Olek</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {trips.map((t) => {
                 const active = t.status === 'ACTIVE';
                 const engine = t.engineHoursStart != null && t.engineHoursEnd != null ? t.engineHoursEnd - t.engineHoursStart : null;
                 const g = t.gapBefore;
                 return (
                   <React.Fragment key={t.id}>
-                    <tr data-trip-id={t.id} className={`clickable-row${t.id === lastOpenedId ? ' trip-row-last-opened' : ''}`} style={t.deletedAt ? { opacity: 0.55 } : undefined} onClick={() => openTrip(t)}>
-                      <td>{formatDateTime(t.startedAt).slice(0, 10)}</td>
-                      <td>
+                    <TableRow data-trip-id={t.id} selected={t.id === lastOpenedId} tone={t.deletedAt ? 'muted' : undefined} onClick={() => openTrip(t)}>
+                      <TableCell>{formatDateTime(t.startedAt).slice(0, 10)}</TableCell>
+                      <TableCell wrap>
                         {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
-                      </td>
-                      <td>{t.implementName ?? <span className="text-muted">—</span>}</td>
-                      <td>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</td>
-                      <td className="num">{formatDuration(t.startedAt, t.endedAt)}</td>
-                      <td>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</td>
-                      <td className="num">{formatQty(t.distanceKm)}</td>
-                      <td className="num">{t.areaHa == null ? '—' : formatQty(t.areaHa)}</td>
-                      <td className="num">{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</td>
-                      <td className="num">{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</td>
-                      <td className="num">{engine == null ? '—' : formatQty(engine)}</td>
-                      <td>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</td>
-                      <td>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</td>
-                    </tr>
+                      </TableCell>
+                      <TableCell wrap>{t.implementName ?? <span className="text-muted">—</span>}</TableCell>
+                      <TableCell>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</TableCell>
+                      <TableCell numeric>{formatDuration(t.startedAt, t.endedAt)}</TableCell>
+                      <TableCell wrap>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</TableCell>
+                      <TableCell numeric>{formatQty(t.distanceKm)}</TableCell>
+                      <TableCell numeric>{t.areaHa == null ? '—' : formatQty(t.areaHa)}</TableCell>
+                      <TableCell numeric>{t.fuelLiters == null ? '—' : formatQty(t.fuelLiters)}</TableCell>
+                      <TableCell numeric>{t.engineHoursStart == null ? '—' : formatQty(t.engineHoursStart)}</TableCell>
+                      <TableCell numeric>{engine == null ? '—' : formatQty(engine)}</TableCell>
+                      <TableCell>{t.fields.length === 0 ? '' : t.fields.some((f) => f.entries.length > 0) ? '✓' : '—'}</TableCell>
+                      <TableCell>{active ? <span className="status-badge status-working">käimas</span> : 'lõppenud'}</TableCell>
+                    </TableRow>
                     {g && (
-                      <tr className={`trip-gap-row${g.reviewedAt ? ' reviewed' : ''}`}>
-                        <td colSpan={13}>
+                      <TableRow className={`trip-gap-row${g.reviewedAt ? ' reviewed' : ''}`} tone={g.reviewedAt ? 'muted' : 'warning'}>
+                        <TableCell wrap colSpan={13}>
                           <span className="trip-gap-text">
                             <AlertTriangle size={14} className="trip-gap-icon" />
                             Sõitude vahel {formatDuration(g.startedAt, g.endedAt)}: {gapParts(g).join(' · ') || 'märke pole'}
@@ -274,15 +273,14 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                           ) : (
                             <Button type="button" size="sm" onClick={() => setReviewing(g)}>Märgi kontrollituks</Button>
                           )}
-                        </td>
-                      </tr>
+                        </TableCell>
+                      </TableRow>
                     )}
                   </React.Fragment>
                 );
               })}
-            </tbody>
-          </table>
-        </div>
+            </TableBody>
+          </Table>
       )}
 
       {open && (

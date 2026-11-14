@@ -6868,7 +6868,6 @@ a.history-pill:hover {
 }
 
 .fullpage-board-body .register-table-wrap,
-.fleet-board-body .implement-history-section .register-table-wrap,
 .fullpage-board-body .register-fields-list,
 .fullpage-board-body .seasons-table-wrap {
   flex: 1 1 0;
@@ -10636,19 +10635,9 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
 
-/* Sõitude register: viimati avatud sõidu rida (järje hoidmiseks) */
-.register-table tr.trip-row-last-opened > td {
-  background: color-mix(in srgb, var(--emerald-500, #10b981) 12%, transparent);
-}
-
-.register-table tr.trip-row-last-opened > td:first-child {
-  box-shadow: inset 3px 0 0 var(--emerald-500, #10b981);
-}
-
 /* Sõitude vahe hoiatus: rida kahe sõidu vahel; kontrollitud = hall */
 .register-table tr.trip-gap-row > td,
 [data-slot="table"] tr.trip-gap-row > td {
-  background: color-mix(in srgb, var(--amber-500, #f59e0b) 10%, transparent);
   font-size: 13px;
   padding-top: 6px;
   padding-bottom: 6px;
@@ -10659,11 +10648,38 @@ td.stock-qty-out { color: #dc2626; }
   margin-left: 12px;
 }
 
-.register-table tr.trip-gap-row.reviewed > td,
-[data-slot="table"] tr.trip-gap-row.reviewed > td {
-  background: transparent;
-  color: var(--text-muted);
+/* Tehnika registrite (haakimised, seadmete seosed) lahtrite sisu */
+.fleet-icon-box {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 14px;
 }
+.fleet-icon-box.is-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+.fleet-icon-box.is-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.fleet-icon-box.is-warning { background: rgba(234, 179, 8, 0.15); color: #eab308; }
+.fleet-cell-main { display: flex; align-items: center; gap: 8px; }
+.fleet-cell-title { font-weight: 600; font-size: 13px; }
+.fleet-cell-sub { font-size: 11px; color: var(--text-muted); }
+.fleet-cell-date { font-size: 13px; font-weight: 500; }
+.fleet-cell-date-end { font-size: 13px; color: var(--text-secondary); }
+.fleet-cell-duration { font-size: 12px; font-weight: 500; color: var(--text-muted); }
+.fleet-cell-duration.is-active { color: var(--color-primary); }
+.fleet-cell-notes { font-size: 12px; color: var(--text-muted); }
+.fleet-cell-notes.is-empty { font-style: italic; }
+.fleet-active-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: rgba(16, 185, 129, 0.15);
+  color: #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
+}
+.fleet-active-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
 
 .trip-gap-text {
   display: inline-flex;
