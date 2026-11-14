@@ -15,7 +15,7 @@ import { FilterClear } from './FilterClear';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface Option {
   id: string;
@@ -461,17 +461,17 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                         <div className="telemetry-pill-row">
                           <span className="telemetry-pill-vehicle">🚜 {s.vehicleName || 'Tehnika'}</span>
                           {s.implementName ? (
-                            <span className="telemetry-pill-impl">+{s.implementName}</span>
+                            <Badge tone="info" size="md">+{s.implementName}</Badge>
                           ) : (
-                            <span className="telemetry-pill-impl" style={{ color: '#ef4444', fontWeight: 600 }}>(haakeriist puudub)</span>
+                            <Badge tone="danger" size="md">(haakeriist puudub)</Badge>
                           )}
-                          <span className="telemetry-pill-time">
+                          <Badge tone="success" size="md">
                             <Clock size={12} /> {s.startTime} – {s.endTime}
                             {s.workedAreaHa != null && s.workedAreaHa > 0 ? (
                               <span> · {fmtHa(s.workedAreaHa)} ha</span>
                             ) : (
                               s.workedAreaHa == null ? (
-                                <span style={{ color: '#ef4444', fontWeight: 600 }} title="Haakeriista või selle töölaiust pole seoste registris">
+                                <span className="telemetry-pill-missing" title="Haakeriista või selle töölaiust pole seoste registris">
                                   {' · '}ha puudub
                                 </span>
                               ) : (
@@ -479,23 +479,23 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                               )
                             )}
                             {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
-                          </span>
+                          </Badge>
                         </div>
                         <div className="telemetry-pill-meta">
                           {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
                           <span className="telemetry-pill-field" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
                             Põllul {s.fieldStartTime} – {s.fieldEndTime}
                           </span>
-                          <span className="telemetry-pill-action">
+                          <Badge tone="success" variant={isSelected ? 'solid' : 'soft'}>
                             {state === 'linked' ? '✓ Seotud' : state === 'selected' ? '✓ Valitud' : 'Vali see sõit'}
-                          </span>
+                          </Badge>
                         </div>
                         {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                       </button>
                       {isSelected && (
-                        <button type="button" className="telemetry-pill-unlink" onClick={unlinkTrip}>
+                        <Button type="button" size="sm" className="telemetry-pill-unlink" onClick={unlinkTrip}>
                           Eemalda seos
-                        </button>
+                        </Button>
                       )}
                       </div>
                     );
@@ -605,18 +605,18 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                 return (
                 <div className="work-entry-area-presets">
                   <span className="work-entry-presets-label">Põllust tehtud:</span>
-                  <div className="work-entry-presets-buttons">
+                  {/* Eelseadistus ei ole püsiv valik: klõps täidab pindala välja, märgitud on väljaväärtusele lähim.
+                      Seepärast rakendab klõps ka märgitud eelseadistuse uuesti (onClick), onValueChange ei tee midagi. */}
+                  <ToggleGroup aria-label="Pindala osa" value={nearestPct == null ? '' : String(nearestPct)} onValueChange={() => undefined}>
                     {AREA_PERCENTAGES.map((pct) => {
                       const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
                       const needed = Math.max(0, targetTotal - doneBefore);
                       const roundedNeeded = Math.round(needed * 100) / 100;
                       const isExceeded = doneBefore >= targetTotal && pct < 100;
-                      const isSelected = pct === nearestPct;
                       return (
-                        <button
+                        <ToggleGroupItem
                           key={pct}
-                          type="button"
-                          className={`area-preset-btn ${isSelected ? 'active' : ''}`}
+                          value={String(pct)}
                           disabled={isExceeded}
                           onClick={() => applyPercentage(pct)}
                           title={
@@ -626,10 +626,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           }
                         >
                           {pct}%
-                        </button>
+                        </ToggleGroupItem>
                       );
                     })}
-                  </div>
+                  </ToggleGroup>
                 </div>
                 );
               })()}

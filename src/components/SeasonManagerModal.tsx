@@ -13,7 +13,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -240,13 +240,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                         )}
                       </TableCell>
                       <TableCell>
-                        <span
-                          className="season-status-badge"
-                          style={{ color: meta.color, backgroundColor: meta.bg }}
-                          title={meta.description}
-                        >
-                          {meta.label}
-                        </span>
+                        <Badge tone={meta.tone} title={meta.description}>{meta.label}</Badge>
                       </TableCell>
                       <TableCell numeric className="mono">{formatNum(areaHa, 1)}</TableCell>
                       <TableCell numeric className="mono">{formatNum(totals?.count ?? null, 0)}</TableCell>

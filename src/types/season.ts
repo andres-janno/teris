@@ -1,4 +1,5 @@
 // src/types/season.ts
+import type { BadgeTone } from '../components/ui';
 
 /**
  * Põllumajandusliku hooaja master-kirje: aasta, nimi ja märkmed.
@@ -40,29 +41,25 @@ export const seasonSelectorYears = (seasons: Pick<FarmingSeason, 'year'>[], curr
  */
 export type SeasonPhase = 'unopened' | 'planning' | 'active' | 'closed';
 
-export const SEASON_PHASE_META: Record<SeasonPhase, { label: string; color: string; bg: string; description: string }> = {
+export const SEASON_PHASE_META: Record<SeasonPhase, { label: string; tone: BadgeTone; description: string }> = {
   unopened: {
     label: 'Avamata',
-    color: '#64748b',
-    bg: 'rgba(100, 116, 139, 0.12)',
+    tone: 'neutral',
     description: 'Hooaja põldudele pole veel ühtegi kultuuri määratud.'
   },
   planning: {
     label: 'Planeerimisel',
-    color: '#3b82f6',
-    bg: 'rgba(59, 130, 246, 0.15)',
+    tone: 'info',
     description: 'Osal hooaja põldudel on kultuur veel määramata.'
   },
   active: {
     label: 'Aktiivne',
-    color: '#10b981',
-    bg: 'rgba(16, 185, 129, 0.15)',
+    tone: 'success',
     description: 'Kõigil hooaja põldudel on kultuur määratud.'
   },
   closed: {
     label: 'Suletud',
-    color: '#94a3b8',
-    bg: 'rgba(148, 163, 184, 0.15)',
+    tone: 'neutral',
     description: 'Hooaeg on muudatusteks suletud.'
   }
 };

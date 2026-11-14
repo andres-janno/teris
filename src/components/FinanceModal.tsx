@@ -19,10 +19,10 @@ import {
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
-import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
+import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -36,22 +36,26 @@ type Tab = 'entries' | 'results';
 type StatusFilter = 'ACTION_NEEDED' | 'ALL' | 'PENDING' | 'CONFIRMED' | 'CHANGED';
 type SortCol = 'field' | 'crop' | 'area' | 'cost' | 'revenue' | 'profit' | 'profitPerHa';
 
-const LINE_KIND_INFO: Record<WorkEntryLineKind, { label: string; icon: React.FC<{ size?: number; className?: string }>; color: string; bg: string; defaultUnitHint: string }> = {
-  LABOR: { label: 'Tööjõud', icon: Clock, color: '#0284c7', bg: '#e0f2fe', defaultUnitHint: '€/h' },
-  MACHINE: { label: 'Masin', icon: Tractor, color: '#d97706', bg: '#fef3c7', defaultUnitHint: '€/h' },
-  IMPLEMENT: { label: 'Haakeriist', icon: Wrench, color: '#475569', bg: '#f1f5f9', defaultUnitHint: '€/h' },
-  FUEL: { label: 'Kütus', icon: Fuel, color: '#ea580c', bg: '#ffedd5', defaultUnitHint: '€/l' },
-  MATERIAL: { label: 'Kulumaterjal', icon: Package, color: '#16a34a', bg: '#dcfce7', defaultUnitHint: '€/ühik' },
-  HARVEST: { label: 'Saagitulu', icon: Wheat, color: '#059669', bg: '#ecfdf5', defaultUnitHint: '€/t' },
+const LINE_KIND_INFO: Record<WorkEntryLineKind, { label: string; icon: React.FC<{ size?: number; className?: string }>; defaultUnitHint: string }> = {
+  LABOR: { label: 'Tööjõud', icon: Clock, defaultUnitHint: '€/h' },
+  MACHINE: { label: 'Masin', icon: Tractor, defaultUnitHint: '€/h' },
+  IMPLEMENT: { label: 'Haakeriist', icon: Wrench, defaultUnitHint: '€/h' },
+  FUEL: { label: 'Kütus', icon: Fuel, defaultUnitHint: '€/l' },
+  MATERIAL: { label: 'Kulumaterjal', icon: Package, defaultUnitHint: '€/ühik' },
+  HARVEST: { label: 'Saagitulu', icon: Wheat, defaultUnitHint: '€/t' },
   // Seire leid (hinnata, finantsridades ei kuvata)
-  OBSERVATION: { label: 'Seire leid', icon: Package, color: '#64748b', bg: '#f1f5f9', defaultUnitHint: '' }
+  OBSERVATION: { label: 'Seire leid', icon: Package, defaultUnitHint: '' }
 };
 
-const STATUS_LABELS: Record<FinanceStatus, { label: string; className: string }> = {
-  PENDING: { label: 'Ootab finantsi', className: 'pending' },
-  CHANGED: { label: 'Muudetud – kinnita uuesti', className: 'changed' },
-  CONFIRMED: { label: 'Kinnitatud', className: 'confirmed' }
+const STATUS_LABELS: Record<FinanceStatus, string> = {
+  PENDING: 'Ootab finantsi',
+  CHANGED: 'Muudetud – kinnita uuesti',
+  CONFIRMED: 'Kinnitatud'
 };
+
+const FinanceStatusBadge: React.FC<{ status: FinanceStatus }> = ({ status }) => (
+  <Badge tone={FINANCE_STATUS_BADGE[status].tone} variant={FINANCE_STATUS_BADGE[status].variant}>{STATUS_LABELS[status]}</Badge>
+);
 
 const fmtCur = (n: number | null | undefined): string => {
   if (n == null || !Number.isFinite(n)) return '0,00 €';
@@ -407,37 +411,26 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
           title={
             <span className="finance-title-row">
               <span>Põllutööde finantsid ja kuluarvestus</span>
-              <span className="finance-year-badge">{year}. a hooaeg</span>
+              <Badge>{year}. a hooaeg</Badge>
             </span>
           }
           description="Kannete ühikuhindade määramine, kinnitamine ja põllupõhine tasuvus."
         >
           <div className="season-header-actions">
-            <div className="work-register-tabs" role="tablist">
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === 'entries'}
-                className={tab === 'entries' ? 'active' : ''}
-                onClick={() => setTab('entries')}
-              >
-                <span>Hinnastamine</span>
-                {actionNeededCount > 0 && (
-                  <span className="finance-tab-badge" title={`${actionNeededCount} kannet ootab tegevust`}>
-                    {actionNeededCount}
-                  </span>
-                )}
-              </button>
-              <button
-                type="button"
-                role="tab"
-                aria-selected={tab === 'results'}
-                className={tab === 'results' ? 'active' : ''}
-                onClick={() => setTab('results')}
-              >
-                <span>Põldude tasuvus</span>
-              </button>
-            </div>
+            {/* Käsitsi aktiveerimine: sakivahetus laeb andmeid, nooleklahv ei tohi seda käivitada */}
+            <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} activationMode="manual">
+              <TabsList>
+                <TabsTrigger value="entries">
+                  Hinnastamine
+                  {actionNeededCount > 0 && (
+                    <Badge tone="warning" variant="solid" title={`${actionNeededCount} kannet ootab tegevust`}>
+                      {actionNeededCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="results">Põldude tasuvus</TabsTrigger>
+              </TabsList>
+            </Tabs>
           </div>
         </DialogHeader>
 
@@ -460,29 +453,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   </div>
 
                   <div className="finance-filter-row">
-                    <div className="finance-filter-chips">
-                      <button
-                        type="button"
-                        className={`finance-filter-chip ${statusFilter === 'ACTION_NEEDED' ? 'active' : ''}`}
-                        onClick={() => setStatusFilter('ACTION_NEEDED')}
-                      >
-                        Ootab ({actionNeededCount})
-                      </button>
-                      <button
-                        type="button"
-                        className={`finance-filter-chip ${statusFilter === 'ALL' ? 'active' : ''}`}
-                        onClick={() => setStatusFilter('ALL')}
-                      >
-                        Kõik ({entries.length})
-                      </button>
-                      <button
-                        type="button"
-                        className={`finance-filter-chip ${statusFilter === 'CONFIRMED' ? 'active' : ''}`}
-                        onClick={() => setStatusFilter('CONFIRMED')}
-                      >
-                        Kinnitatud
-                      </button>
-                    </div>
+                    <ToggleGroup aria-label="Kannete olek" value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
+                      <ToggleGroupItem value="ACTION_NEEDED">Ootab ({actionNeededCount})</ToggleGroupItem>
+                      <ToggleGroupItem value="ALL">Kõik ({entries.length})</ToggleGroupItem>
+                      <ToggleGroupItem value="CONFIRMED">Kinnitatud</ToggleGroupItem>
+                    </ToggleGroup>
 
                     {uniqueFields.length > 1 && (
                       <FilterClear active={fieldFilter !== 'all'} onClear={() => setFieldFilter('all')}>
@@ -523,7 +498,6 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                   {filteredEntries.map((e) => {
                     const isSelected = e.id === selectedEntryId;
-                    const st = STATUS_LABELS[e.financeStatus];
                     const entryCost = (e.lines || [])
                       .filter((l) => l.kind !== 'HARVEST')
                       .reduce((acc, l) => acc + l.quantity * (l.unitPrice ?? 0), 0);
@@ -538,10 +512,10 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       >
                         <div className="finance-entry-card-header">
                           <div className="finance-entry-field-name">
-                            {e.fieldNum && <span className="finance-field-badge">Nr {e.fieldNum}</span>}
+                            {e.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {e.fieldNum}</Badge>}
                             <strong>{e.fieldName}</strong>
                           </div>
-                          <span className={`fw-finance-chip ${st.className}`}>{st.label}</span>
+                          <FinanceStatusBadge status={e.financeStatus} />
                         </div>
 
                         <div className="finance-entry-card-body">
@@ -582,9 +556,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             {selectedEntry.fieldName}
                           </h4>
                           <span className="finance-detail-work-type">{selectedEntry.workTypeName}</span>
-                          <span className={`fw-finance-chip ${STATUS_LABELS[selectedEntry.financeStatus].className}`}>
-                            {STATUS_LABELS[selectedEntry.financeStatus].label}
-                          </span>
+                          <FinanceStatusBadge status={selectedEntry.financeStatus} />
                         </div>
 
                         <div className="finance-detail-sub-meta">
@@ -665,13 +637,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                 return (
                                   <TableRow key={line.id} tone={isHarvest ? 'success' : undefined}>
                                     <TableCell>
-                                      <span
-                                        className="finance-kind-badge"
-                                        style={{ color: info.color, backgroundColor: info.bg }}
-                                      >
-                                        <Icon size={12} />
-                                        <span>{info.label}</span>
-                                      </span>
+                                      <Badge><Icon size={12} />{info.label}</Badge>
                                     </TableCell>
                                     <TableCell wrap className="finance-line-label">
                                       <strong>{line.label}</strong>
@@ -986,17 +952,12 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                           >
                             <TableCell>
                               <div className="finance-field-cell">
-                                {r.fieldNum && <span className="field-num-badge">Nr {r.fieldNum}</span>}
+                                {r.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {r.fieldNum}</Badge>}
                                 <strong>{r.fieldName}</strong>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <span
-                                className="finance-crop-pill"
-                                style={r.cropColor ? { borderLeftColor: r.cropColor } : undefined}
-                              >
-                                {r.crop}
-                              </span>
+                              <Badge dot={r.cropColor || undefined}>{r.crop}</Badge>
                             </TableCell>
                             <TableCell numeric>{fmtHa(r.areaHa)} ha</TableCell>
                             <TableCell numeric className="muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
@@ -1013,9 +974,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                               {isProfitable && profitPerHa > 0 ? '+' : ''}{fmtCur(profitPerHa)}
                             </TableCell>
                             <TableCell numeric>
-                              <span className={`finance-count-badge ${r.entriesConfirmed === r.entriesTotal ? 'all-done' : ''}`}>
+                              <Badge tone={r.entriesConfirmed === r.entriesTotal ? 'success' : 'neutral'}>
                                 {r.entriesConfirmed}/{r.entriesTotal}
-                              </span>
+                              </Badge>
                             </TableCell>
                           </TableRow>
                         );

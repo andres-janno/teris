@@ -1,4 +1,5 @@
 // src/types/fieldWork.ts — põllutööde register (PRIA põlluraamatust lahus)
+import type { BadgeTone } from '../components/ui';
 import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules.ts';
 
 export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
@@ -18,11 +19,19 @@ export interface WorkEntryHarvest { tonnes: number | null; ratePerHa: number | n
 
 export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'];
 
-export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; bg: string }> = {
-  PREPARATION: { label: 'Ettevalmistus', color: '#1d4ed8', bg: '#e8efff' },
-  SOWING: { label: 'Külv', color: '#15803d', bg: '#dcf5e4' },
-  CARE: { label: 'Hooldamine', color: '#7c3aed', bg: '#efe8fe' },
-  HARVEST: { label: 'Koristus', color: '#9a5b00', bg: '#fdf1d8' }
+// tone = märgi toon (Badge); color = värvitekst mujal (tööde tahvel, lisamisdialoog).
+export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; tone: BadgeTone }> = {
+  PREPARATION: { label: 'Ettevalmistus', color: '#1d4ed8', tone: 'info' },
+  SOWING: { label: 'Külv', color: '#15803d', tone: 'success' },
+  CARE: { label: 'Hooldamine', color: '#7c3aed', tone: 'accent' },
+  HARVEST: { label: 'Koristus', color: '#9a5b00', tone: 'warning' }
+};
+
+// Kande finantsoleku märk: kinnitatud on rõhutatud (täisvärv).
+export const FINANCE_STATUS_BADGE: Record<FinanceStatus, { tone: BadgeTone; variant: 'soft' | 'solid' }> = {
+  PENDING: { tone: 'warning', variant: 'soft' },
+  CONFIRMED: { tone: 'success', variant: 'solid' },
+  CHANGED: { tone: 'info', variant: 'soft' }
 };
 
 // Artikli liik

@@ -7933,39 +7933,21 @@ a.history-pill:hover {
   gap: 2px;
 }
 
-.fw-finance-chip {
-  font-size: 0.66rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  color: #9a5b00;
-  background: rgba(245, 158, 11, 0.15);
-  border: none;
-  font-family: inherit;
-}
-
-.fw-finance-chip.clickable {
-  cursor: pointer;
+.fw-finance-chip-btn {
   display: inline-flex;
-  align-items: center;
-  gap: 4px;
+  padding: 0;
+  border: none;
+  background: none;
+  font: inherit;
+  cursor: pointer;
+  border-radius: 999px;
   transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
 }
 
-.fw-finance-chip.clickable:hover {
+.fw-finance-chip-btn:hover {
   transform: translateY(-1px);
   filter: brightness(0.92);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
-}
-
-.fw-finance-chip.confirmed {
-  color: #ffffff;
-  background: #16a34a;
-}
-
-.fw-finance-chip.changed {
-  color: #1d4ed8;
-  background: rgba(59, 130, 246, 0.15);
 }
 
 .fw-panel-foot {
@@ -8196,20 +8178,11 @@ a.history-pill:hover {
 
 .telemetry-pill-unlink {
   align-self: flex-end;
-  font-family: inherit;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--btn-sec-bg);
-  border: 1px solid var(--btn-sec-border);
-  border-radius: var(--radius-sm);
-  padding: 1px 8px;
-  cursor: pointer;
-  white-space: nowrap;
 }
 
-.telemetry-pill-unlink:hover {
-  background: var(--btn-sec-hover);
+/* Puuduv ha väärtus soovituse märgis */
+.telemetry-pill-missing {
+  color: var(--color-destructive);
 }
 
 /* Sõidu teekond (TripRouteView) — soovituse nupu all täislaiuses */
@@ -8430,46 +8403,6 @@ select.form-input:read-only {
   font-weight: 600;
   color: var(--text-secondary);
   margin-right: 2px;
-}
-
-.work-entry-presets-buttons {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
-}
-
-.area-preset-btn {
-  appearance: none;
-  border: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.12));
-  background: var(--card-bg, #ffffff);
-  color: var(--text-primary);
-  border-radius: 6px;
-  padding: 3px 9px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  font-family: inherit;
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1.3;
-}
-
-.area-preset-btn:hover:not(:disabled) {
-  border-color: #10b981;
-  background: var(--stat-bg-hover);
-  color: #059669;
-}
-
-.area-preset-btn.active {
-  background: #10b981;
-  border-color: #10b981;
-  color: #ffffff;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.25);
-}
-
-.area-preset-btn:disabled {
-  opacity: 0.38;
-  cursor: not-allowed;
-  border-style: dashed;
 }
 
 .add-work-body {

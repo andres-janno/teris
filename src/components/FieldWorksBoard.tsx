@@ -12,7 +12,7 @@ import { isCropUndetermined, type FarmingSeason } from '../types/season';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { Crop } from '../types/crop';
 import type { RelatedParty } from '../types/party';
-import { WORK_PHASE_META, type FieldWork, type Article, type WorkEntry, type WorkPhase, type WorkType } from '../types/fieldWork';
+import { WORK_PHASE_META, FINANCE_STATUS_BADGE, type FieldWork, type Article, type WorkEntry, type WorkPhase, type WorkType } from '../types/fieldWork';
 import { FieldWorkEntryDialog } from './FieldWorkEntryDialog';
 import { FieldWorkPlanForm } from './FieldWorkPlanForm';
 import { AddFieldWorkDialog } from './AddFieldWorkDialog';
@@ -23,7 +23,7 @@ import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone } from './ui';
 
 interface Option {
   id: string;
@@ -93,6 +93,11 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
 }
 
 const STATUS_LABEL = { PLANNED: 'Planeeritud', IN_PROGRESS: 'Töös', DONE: 'Lõpetatud' } as const;
+const WORK_STATUS_TONE: Record<FieldWork['status'], { tone: BadgeTone; variant: 'soft' | 'solid' }> = {
+  PLANNED: { tone: 'neutral', variant: 'soft' },
+  IN_PROGRESS: { tone: 'success', variant: 'soft' },
+  DONE: { tone: 'success', variant: 'solid' }
+};
 const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatud', CHANGED: 'Muudetud – kinnita uuesti' } as const;
 
 const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
@@ -691,23 +696,21 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               <Calendar size={15} className="text-blue" />
               <span>Hooaeg:</span>
             </span>
-            <div className="year-tabs">
+            <ToggleGroup aria-label="Hooaeg" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>
               {availableYears.map((y) => {
                 const isLocked = seasons.find((x) => x.year === y)?.isLocked ?? false;
                 return (
-                  <button
+                  <ToggleGroupItem
                     key={y}
-                    type="button"
-                    className={`year-tab ${y === year ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
-                    onClick={() => onSelectYear(y)}
+                    value={String(y)}
                     title={`${y}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                   >
-                    <span>{y}</span>
-                    {isLocked && <Lock size={10} className="tab-lock-icon" />}
-                  </button>
+                    {y}
+                    {isLocked && <Lock size={10} />}
+                  </ToggleGroupItem>
                 );
               })}
-            </div>
+            </ToggleGroup>
             <div className="register-io-buttons">
               <Button type="button" size="sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd ja kulumaterjalid">
                 <ListChecks size={14} />
@@ -725,7 +728,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 >
                   <Euro size={14} />
                   <span>Finantsid</span>
-                  {pendingFinanceCount > 0 && <span className="finance-tab-badge">{pendingFinanceCount}</span>}
+                  {pendingFinanceCount > 0 && <Badge tone="warning" variant="solid">{pendingFinanceCount}</Badge>}
                 </Button>
               )}
             </div>
@@ -894,7 +897,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <Crosshair size={13} />
                           </button>
                           <div className="fw-field-title">
-                            {row.field.num && <span className="field-num-badge">Nr {row.field.num}</span>}
+                            {row.field.num && <Badge tone="success" variant="outline" size="md">Nr {row.field.num}</Badge>}
                             <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>
                           </div>
                           <div className="fw-field-sub">
@@ -1175,9 +1178,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 <DialogBody className="fw-panel-body">
                   <div className="fw-panel-status">
                     {isUnplanned(selected) ? (
-                      <span className="fw-status-pill unplanned">Planeerimata</span>
+                      <Badge tone="warning" size="md">Planeerimata</Badge>
                     ) : (
-                      <span className={`fw-status-pill ${selected.status.toLowerCase()}`}>{STATUS_LABEL[selected.status]}</span>
+                      <Badge tone={WORK_STATUS_TONE[selected.status].tone} variant={WORK_STATUS_TONE[selected.status].variant} size="md">{STATUS_LABEL[selected.status]}</Badge>
                     )}
                     <span className="fw-muted">
                       {selected.status === 'PLANNED' && (isUnplanned(selected) ? 'Lisa plaan: aeg, materjalid või töötaja.' : 'Esimene kanne muudab töö olekuks „Töös“.')}
@@ -1305,18 +1308,20 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           {canManageFinance ? (
                             <button
                               type="button"
-                              className={`fw-finance-chip clickable ${e.financeStatus.toLowerCase()}`}
+                              className="fw-finance-chip-btn"
                               title="Ava kande finants ja määra ühikuhinnad"
                               onClick={() => {
                                 setFinanceEntryId(e.id);
                                 setIsFinanceOpen(true);
                               }}
                             >
-                              <Euro size={10} />
-                              <span>{FINANCE_LABEL[e.financeStatus]}</span>
+                              <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>
+                                <Euro size={10} />
+                                {FINANCE_LABEL[e.financeStatus]}
+                              </Badge>
                             </button>
                           ) : (
-                            <span className={`fw-finance-chip ${e.financeStatus.toLowerCase()}`}>{FINANCE_LABEL[e.financeStatus]}</span>
+                            <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
                           )}
                         </div>
                         <span className="fw-entry-actions">

@@ -9,7 +9,7 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -29,11 +29,7 @@ const entryInputs = (w: WorkType) => [
 
 const PhaseBadge: React.FC<{ phase: WorkPhase }> = ({ phase }) => {
   const m = WORK_PHASE_META[phase];
-  return (
-    <span className="work-phase-badge" style={{ color: m.color, backgroundColor: m.bg }}>
-      {m.label}
-    </span>
-  );
+  return <Badge tone={m.tone}>{m.label}</Badge>;
 };
 
 export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, onClose }) => {
@@ -110,13 +106,13 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                     <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
                       <TableCell wrap className="work-name-cell">
                         {w.name}
-                        {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+                        {!w.isActive && <Badge>Mitteaktiivne</Badge>}
                       </TableCell>
                       <TableCell>{w.shortName?.trim() || '–'}</TableCell>
                       <TableCell><PhaseBadge phase={w.phase} /></TableCell>
                       <TableCell>
                         <div className="field-sub-tags">
-                          {entryInputs(w).map((i) => <span key={i} className="sub-tag">{i}</span>)}
+                          {entryInputs(w).map((i) => <Badge key={i}>{i}</Badge>)}
                         </div>
                       </TableCell>
                       <TableCell numeric>{w.fieldWorkCount ?? 0}</TableCell>
