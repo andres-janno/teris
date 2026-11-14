@@ -215,9 +215,9 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                 <TableBody>
                   {trip.fields.map((f) => (
                     <TableRow key={f.fieldSeasonId}>
-                      <TableCell>{f.label}</TableCell>
+                      <TableCell wrap>{f.label}</TableCell>
                       <TableCell>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</TableCell>
-                      <TableCell numeric>
+                      <TableCell numeric wrap>
                         {f.areaHa == null ? '—' : formatQty(f.areaHa)}
                         <div className="text-muted">
                           {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
