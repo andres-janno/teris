@@ -283,7 +283,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                 const isEye = a.deviceConnectivity === 'eye_sensor';
                 return (
                   <TableRow key={a.id} tone={isActive ? 'success' : undefined}>
-                    <TableCell>
+                    <TableCell wrap>
                       <div className="fleet-cell-main">
                         <div className="fleet-icon-box is-info">
                           {isEye ? <Activity size={15} /> : <Radio size={15} />}
@@ -296,7 +296,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>
+                    <TableCell wrap>
                       <div className="fleet-cell-main">
                         {a.vehicleId ? (
                           <div className="fleet-icon-box is-success"><Tractor size={15} /></div>
@@ -326,33 +326,33 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         {formatDuration(a.startedAt, a.endedAt)}
                       </span>
                     </TableCell>
-                    <TableCell>
+                    <TableCell wrap>
                       <span className={`fleet-cell-notes${a.notes ? '' : ' is-empty'}`}>
                         {a.notes || '—'}
                       </span>
                     </TableCell>
                     <TableCell actions>
-                        {isActive && (
-                          <Button type="button"
-                            size="sm"
-                            title="Seo seade masinast / haakeriistast lahti"
-                            onClick={() => onDetach(a.deviceId)}>
-                            <Unlink size={12} />
-                            <span>Seo lahti</span>
-                          </Button>
-                        )}
+                      {isActive && (
                         <Button type="button"
-                          variant="ghost" size="icon-sm"
-                          title="Muuda seose kirjet"
-                          onClick={() => startEdit(a)}>
-                          <Pencil size={14} />
+                          size="sm"
+                          title="Seo seade masinast / haakeriistast lahti"
+                          onClick={() => onDetach(a.deviceId)}>
+                          <Unlink size={12} />
+                          <span>Seo lahti</span>
                         </Button>
-                        <Button type="button"
-                          variant="danger-ghost" size="icon-sm"
-                          title="Kustuta seose kirje"
-                          onClick={() => handleDelete(a.id)}>
-                          <Trash2 size={13} />
-                        </Button>
+                      )}
+                      <Button type="button"
+                        variant="ghost" size="icon-sm"
+                        title="Muuda seose kirjet"
+                        onClick={() => startEdit(a)}>
+                        <Pencil size={14} />
+                      </Button>
+                      <Button type="button"
+                        variant="danger-ghost" size="icon-sm"
+                        title="Kustuta seose kirje"
+                        onClick={() => handleDelete(a.id)}>
+                        <Trash2 size={13} />
+                      </Button>
                     </TableCell>
                   </TableRow>
                 );

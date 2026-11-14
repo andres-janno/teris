@@ -2031,7 +2031,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     const duration = formatDuration(a.startedAt, a.endedAt);
                     return (
                       <TableRow key={a.id} tone={isActive ? 'success' : undefined}>
-                        <TableCell>
+                        <TableCell wrap>
                           <div className="fleet-cell-main">
                             <div className="fleet-icon-box is-warning">
                               🔧
@@ -2042,7 +2042,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell>
+                        <TableCell wrap>
                           <div className="fleet-cell-main">
                             <div className="fleet-icon-box is-success">
                               <Tractor size={15} />
@@ -2068,33 +2068,33 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             {duration}
                           </span>
                         </TableCell>
-                        <TableCell>
+                        <TableCell wrap>
                           <span className={`fleet-cell-notes${a.notes ? '' : ' is-empty'}`}>
                             {a.notes || '—'}
                           </span>
                         </TableCell>
                         <TableCell actions>
-                            {isActive && (
-                              <Button type="button"
-                                size="sm"
-                                title="Haagi see riist masinalt lahti"
-                                onClick={() => handleDetachActiveAssignment(a.implementId)}>
-                                <Unlink size={12} />
-                                <span>Haagi lahti</span>
-                              </Button>
-                            )}
+                          {isActive && (
                             <Button type="button"
-                              variant="ghost" size="icon-sm"
-                              title="Muuda haakimise kirjet"
-                              onClick={() => handleStartEditAssignment(a)}>
-                              <Pencil size={14} />
+                              size="sm"
+                              title="Haagi see riist masinalt lahti"
+                              onClick={() => handleDetachActiveAssignment(a.implementId)}>
+                              <Unlink size={12} />
+                              <span>Haagi lahti</span>
                             </Button>
-                            <Button type="button"
-                              variant="danger-ghost" size="icon-sm"
-                              title="Kustuta logikirje"
-                              onClick={() => handleDeleteAssignment(a.id)}>
-                              <Trash2 size={13} />
-                            </Button>
+                          )}
+                          <Button type="button"
+                            variant="ghost" size="icon-sm"
+                            title="Muuda haakimise kirjet"
+                            onClick={() => handleStartEditAssignment(a)}>
+                            <Pencil size={14} />
+                          </Button>
+                          <Button type="button"
+                            variant="danger-ghost" size="icon-sm"
+                            title="Kustuta logikirje"
+                            onClick={() => handleDeleteAssignment(a.id)}>
+                            <Trash2 size={13} />
+                          </Button>
                         </TableCell>
                       </TableRow>
                     );
