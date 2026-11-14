@@ -399,7 +399,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" fillHeight className="finance-modal">
+      <DialogContent size="xl" fillHeight className="finance-modal" dismissible={!saving}>
         <DialogHeader
           icon={<div className="finance-icon-badge"><Euro size={20} /></div>}
           title={

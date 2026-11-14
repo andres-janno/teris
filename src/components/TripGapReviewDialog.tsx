@@ -50,7 +50,7 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
           {error && <div className="auth-error-banner">{error}</div>}
         </DialogBody>
         <DialogFooter>
-          <Button type="button" onClick={onClose}>Loobu</Button>
+          <Button type="button" onClick={onClose} disabled={saving}>Loobu</Button>
           <Button type="button" variant="primary" onClick={save} disabled={saving || !note.trim()}>Märgi kontrollituks</Button>
         </DialogFooter>
       </DialogContent>

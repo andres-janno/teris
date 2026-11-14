@@ -103,7 +103,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="md" className="glass-card" dismissible={!isSaving}>
+      <DialogContent size="md" dismissible={!isSaving && !isProcessing}>
         <DialogHeader
           icon={<FileSpreadsheet className="text-emerald" size={24} />}
           title="Impordi põlluraamat"

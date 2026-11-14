@@ -679,7 +679,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="full" className="field-register-modal parties-register-modal">
+      <DialogContent size="fit" className="field-register-modal parties-register-modal">
         <DialogHeader
           icon={<Users className="text-emerald" size={24} />}
           title="Seotud isikute register"
@@ -693,7 +693,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         {editForm}
 
         <DialogFooter>
-          <div className="footer-left-info" style={{ marginRight: 'auto' }}>
+          <div className="footer-left-info">
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>

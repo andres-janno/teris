@@ -140,7 +140,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" className="users-admin-modal">
+      <DialogContent size="xl" className="users-admin-modal" dismissible={!busy}>
         <DialogHeader icon={<Users className="text-emerald" size={22} />} title="Kasutajad">
           {!readOnly && (
             <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>

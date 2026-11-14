@@ -961,7 +961,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
         </DialogBody>
 
         <DialogFooter>
-          <div className="footer-left-info" style={{ marginRight: 'auto' }}>
+          <div className="footer-left-info">
             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
               Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>

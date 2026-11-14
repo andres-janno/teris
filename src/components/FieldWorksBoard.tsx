@@ -1237,7 +1237,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <DialogHeader
                           title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
                           description={activeLabel}
-                          showClose={!planBusy}
                         />
                         <FieldWorkPlanForm
                           key={`edit-${selected.id}`}

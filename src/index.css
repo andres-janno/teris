@@ -3668,9 +3668,6 @@ input[type="number"],
    ========================================================================== */
 
 .field-register-modal {
-  width: 96vw;
-  max-width: 1600px;
-  max-height: 90vh;
   display: flex;
   flex-direction: column;
 }
@@ -4169,9 +4166,7 @@ input[type="number"],
 
 /* Seotud isikute register: aken sisu laiune (tabelis on vähe veerge) */
 .field-register-modal.parties-register-modal {
-  width: max-content;
   min-width: min(900px, 96vw);
-  max-width: 96vw;
 }
 
 .register-table .row-actions {
@@ -6542,8 +6537,6 @@ a.history-pill:hover {
    Tööde register (tööd, kulumaterjalid)
    ========================================================================== */
 .work-register-modal {
-  width: min(1240px, 96vw);
-  max-height: 92vh;
   display: flex;
   flex-direction: column;
 }
@@ -6551,7 +6544,7 @@ a.history-pill:hover {
 .work-register-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 12px !important;
   overflow-y: auto;
   min-height: 420px;
 }
@@ -6622,9 +6615,6 @@ a.history-pill:hover {
   letter-spacing: 0.05em;
 }
 
-.work-form-modal {
-  width: min(560px, 94vw);
-}
 
 /* ==========================================================================
    Põhivaate lüliti (Kaart | Põllutööd)
@@ -10502,7 +10492,6 @@ select.form-input:read-only {
 
 /* Laoarvestus */
 .articles-table tr.clickable-row { cursor: pointer; }
-.stock-card-modal { width: min(960px, 96vw); }
 .stock-card-table td, .stock-card-table th { white-space: nowrap; }
 .stock-card-table td:nth-child(2) { white-space: normal; }
 /* Numbrid tabelites alati paremale joondatud */
@@ -10517,7 +10506,6 @@ td.stock-qty-in { color: var(--emerald-500); }
 td.stock-qty-out { color: #dc2626; }
 
 .articles-tabs { margin-bottom: 12px; }
-.stock-doc-modal { width: min(980px, 96vw); }
 .stock-doc-lines { margin-top: 12px; }
 .stock-doc-lines input.num { text-align: right; width: 110px; }
 /* Read keskele; materjali valik võtab ülejäänud laiuse, et tabel mahuks aknasse ilma kerimisribata */
@@ -10531,7 +10519,6 @@ td.stock-qty-out { color: #dc2626; }
 .stock-doc-lines .stock-doc-unit { display: inline-block; width: 2.5em; text-align: left; }
 .stock-doc-lines td > .stock-doc-unit { margin-left: 6px; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
-.article-categories-modal { max-width: 640px; }
 .article-categories-group h4 { margin: 12px 0 6px; }
 .article-categories-group .register-table td:first-child { width: 60%; }
 .article-categories-add { display: flex; gap: 8px; margin-top: 16px; }
@@ -10691,7 +10678,7 @@ td.stock-qty-out { color: #dc2626; }
 .register-table .num { text-align: right; font-variant-numeric: tabular-nums; }
 .register-table tr.clickable-row { cursor: pointer; }
 .register-table tr.clickable-row:hover td { background: var(--bg-card-hover); }
-.trip-dialog { max-width: 860px; }
+.footer-left-info { margin-right: auto; }
 .trip-dialog-map { height: 320px; border-radius: 8px; margin-bottom: 12px; }
 .trip-dialog-metrics { width: 100%; font-size: 13px; margin-bottom: 12px; }
 

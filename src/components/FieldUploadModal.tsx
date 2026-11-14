@@ -174,7 +174,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="md" className="glass-card" dismissible={!isProcessing}>
+      <DialogContent size="md" dismissible={!isProcessing}>
         <DialogHeader
           icon={<UploadCloud className="text-emerald" size={24} />}
           title="Impordi PRIA Põldude SHP Fail"
