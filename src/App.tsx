@@ -1019,7 +1019,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   const handleCloseFieldDetails = React.useCallback(() => setSelectedFieldId(null), []);
 
-  // Kaardi põllukastist avatud põllu muutmise dialoog (Esc sulgeb ainult dialoogi, vt FieldEditDialog)
+  // Kaardi põllukastist avatud põllu muutmise dialoog (ui/Dialog: Esc sulgeb ainult pealmise akna)
   const [editFieldId, setEditFieldId] = useState<number | null>(null);
   const editFieldMaster = React.useMemo(
     () => (editFieldId === null ? null : masterFields.find((f) => String(f.id) === String(editFieldId)) ?? null),

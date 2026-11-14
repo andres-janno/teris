@@ -1374,13 +1374,6 @@ body {
   margin-bottom: 6px;
 }
 
-/* Põllu info keskmine aken (kaks veergu: põllu andmed | põllutööd) */
-.modal-content.field-detail-modal {
-  width: min(1100px, 92vw);
-  height: min(88vh, 900px);
-  font-family: Tahoma, Verdana, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
-}
-
 .field-detail-header {
   padding: 16px 22px;
   border-bottom: 1px solid var(--border-card);
@@ -2119,83 +2112,10 @@ body {
   }
 }
 
-/* Modals & Backdrops */
-.modal-backdrop {
-  position: fixed;
-  inset: 0;
-  background: rgba(5, 8, 15, 0.6);
-  backdrop-filter: blur(8px);
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-}
-
-.modal-content {
-  width: min(640px, 94vw);
-  max-height: 88vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  background: var(--bg-modal);
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  color: var(--text-primary);
-}
-
-.modal-content.vehicle-modal,
-.modal-content.poi-modal {
-  width: min(840px, 94vw);
-}
-
-.modal-header {
-  padding: 18px 24px;
-  border-bottom: 1px solid var(--border-card);
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.modal-title-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-title-group h3 {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.modal-subtitle {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-}
-
 /* Väike hajutatud selgitustekst (sisu sees) */
 .hint-text {
   font-size: 0.78rem;
   color: var(--text-secondary);
-}
-
-.modal-body {
-  padding: 20px 24px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.modal-footer {
-  padding: 14px 24px;
-  border-top: 1px solid var(--border-card);
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
 }
 
 /* Dropzone */
@@ -2861,30 +2781,6 @@ body {
   gap: 4px;
 }
 
-/* Swap Sub-Modal */
-.modal-backdrop.sub-modal {
-  z-index: 2500;
-  background: rgba(0, 0, 0, 0.5);
-}
-
-/* Teise akna pealt avatud register (nt seotud isikud põllu muutmisest) ja selle alamaken — kõige peal */
-.modal-backdrop.stacked {
-  z-index: 3000;
-}
-
-.modal-backdrop.sub-modal.stacked {
-  z-index: 3500;
-}
-
-/* Kinnitus- ja teatedialoog (brauseri confirm/alert asemel) — alati kõige peal */
-.modal-backdrop.confirm-dialog-backdrop {
-  z-index: 5000;
-}
-
-.modal-content.confirm-dialog {
-  width: min(440px, 92vw);
-}
-
 .confirm-dialog-body {
   display: flex;
   gap: 14px;
@@ -2930,16 +2826,6 @@ body {
 .confirm-dialog-icon.info {
   background: rgba(16, 185, 129, 0.12);
   color: var(--emerald-600);
-}
-
-.confirm-dialog .modal-footer {
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.swap-modal-card {
-  width: min(520px, 92vw);
 }
 
 .swap-modal-desc {
@@ -4437,42 +4323,6 @@ input[type="number"],
   gap: 8px;
 }
 
-/* Edit Card */
-.modal-content.season-edit-modal {
-  width: min(560px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.season-edit-modal .modal-body {
-  overflow-y: auto;
-}
-
-.modal-content.poi-edit-modal {
-  width: min(720px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.poi-edit-modal .modal-body {
-  overflow-y: auto;
-}
-
-.modal-content.fleet-edit-modal {
-  width: min(720px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.fleet-edit-modal .modal-body {
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding-bottom: 32px;
-}
-
 /* Veerud ja väljad tohivad kahaneda alla sisu laiuse (pikad <select> valikud,
    kõrvuti väljad), muidu venib vorm modaalist laiemaks ja tekib kerimisriba. */
 .fleet-edit-modal .form-grid {
@@ -4501,17 +4351,6 @@ input[type="number"],
   .fleet-edit-modal .form-grid {
     grid-template-columns: minmax(0, 1fr);
   }
-}
-
-.modal-content.users-edit-modal {
-  width: min(560px, 96vw);
-  max-height: 92vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-content.users-edit-modal .modal-body {
-  overflow-y: auto;
 }
 
 .field-edit-season-card {
@@ -5094,32 +4933,6 @@ input[type="number"],
   cursor: pointer;
 }
 
-/* Season Manager Modal */
-.season-manager-modal {
-  /* laius tabeli järgi, et kerimisribasid ei tekiks (kitsamal ekraanil kerib) */
-  width: max-content;
-  max-width: 98vw;
-  max-height: 96vh;
-  display: flex;
-  flex-direction: column;
-}
-
-.modal-title-with-icon {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.modal-icon-badge {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border-radius: 10px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .season-header-actions {
   display: flex;
   align-items: center;
@@ -5140,14 +4953,6 @@ input[type="number"],
   border-radius: 6px;
   background: var(--bg-card);
   border: 1px solid var(--border-card);
-}
-
-.season-modal-body {
-  padding: 16px 18px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
 }
 
 /* Form Card */
@@ -6387,7 +6192,6 @@ a.history-pill:hover {
   border: 1px solid rgba(217, 130, 43, 0.3);
 }
 
-.modal-content.weather-credential-modal { max-width: 640px; width: min(640px, 94vw); }
 .weather-credential-status { margin: 12px 0; font-size: 13px; }
 .weather-credential-state { font-weight: 600; margin-bottom: 6px; }
 .weather-credential-ok { color: var(--accent-emerald, #059669); }
@@ -6552,11 +6356,6 @@ a.history-pill:hover {
   box-shadow: 0 0 6px #10b981;
 }
 
-.modal-content.change-password-modal {
-  width: min(420px, 94vw);
-}
-
-.modal-content.ai-connection-modal { max-width: 720px; width: min(720px, 94vw); }
 .ai-key-created { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .ai-key-url, .ai-key-new { display: flex; gap: 8px; }
 .ai-key-url .form-input, .ai-key-new .form-input { flex: 1; min-width: 0; }
@@ -6608,16 +6407,6 @@ a.history-pill:hover {
 .forced-password-page {
   min-height: 100vh;
   background: var(--bg-dark);
-}
-
-.modal-content.users-admin-modal {
-  width: min(1100px, 96vw);
-}
-
-.users-admin-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
 }
 
 .users-admin-table-wrap {
@@ -7019,9 +6808,7 @@ a.history-pill:hover {
 }
 
 /* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
-.fullpage-board-body > .modal-body,
-.fullpage-board-body > .fullpage-board-content,
-.fleet-board-body > .modal-body {
+.fullpage-board-body > .fullpage-board-content {
   flex: 1 1 auto;
   min-height: 0;
   padding: 0;
@@ -10430,8 +10217,6 @@ select.form-input:read-only {
 }
 
 /* Põllu täisvaade (FieldFullView) — päise (.app-header) all kogu ekraanil */
-
-/* Põlluregistri modaali (.modal-backdrop 2000) peal; alammodaalid (.sub-modal 2500) jäävad selle peale. Tavaliselt 950, et päise rippmenüüd jääksid peale. */
 
 /* PRIA materjali-, saagi- ja seireread töö plaani ja kande vormis */
 .pria-lines { display: flex; flex-direction: column; gap: 6px; }
