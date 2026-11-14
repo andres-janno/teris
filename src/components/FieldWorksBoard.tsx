@@ -2,8 +2,7 @@
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
 // Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { Search, Plus, Lock, Calendar, SquareKanban, Check, X, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
+import { Search, Plus, Lock, Calendar, SquareKanban, Check, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
 import { seasonRegistryCrop, isWinterSeason } from '../services/cropMatch';
 import { getCropColor } from '../services/cropColors';
@@ -24,7 +23,7 @@ import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody } from './ui';
 
 interface Option {
   id: string;
@@ -226,19 +225,6 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   const toggleGroup = (key: string) => {
     setCollapsedGroups((prev) => ({ ...prev, [key]: !prev[key] }));
   };
-
-  useEffect(() => {
-    if (!selectedId || entryDialog || isFinanceOpen) return;
-    const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        // Plaani muutmisel katkestab esimene Esc muutmise, järgmine sulgeb akna
-        if (editingPlan) setEditingPlan(false);
-        else setSelectedId(null);
-      }
-    };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [selectedId, entryDialog, isFinanceOpen, editingPlan]);
 
 
   const pendingFinanceCount = useMemo(() => {
@@ -1166,8 +1152,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         </div>
       </main>
 
-      {selected && selectedRow && createPortal(
-        (() => {
+      {selected && selectedRow && (() => {
           const isSelectedNext = selected.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === selected.fieldSeasonId);
           const activeLabel = isSelectedNext
             ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1}) · ${fmtHa(selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa)} ha`
@@ -1178,26 +1163,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           const workLocked = locked || selected.status === 'DONE';
 
           return (
-            <div className="modal-backdrop" onClick={() => setSelectedId(null)}>
-              <div
-                className="modal-content animate-scale-up fw-work-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-label="Valitud töö"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="fw-panel-head">
-                  <div className="fw-panel-top">
-                    <span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>
-                    <Button type="button" variant="ghost" size="icon-sm" aria-label="Sulge (Esc)" title="Sulge (Esc)" onClick={() => setSelectedId(null)}>
-                      <X size={18} />
-                    </Button>
-                  </div>
-                  <h2 title={selected.priaName}>{selected.workTypeName}</h2>
-                  <div className="fw-panel-field">{activeLabel}</div>
-                </div>
+            <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
+              <DialogContent size="lg" className="fw-work-modal" dismissible={!busy}>
+                <DialogHeader
+                  icon={<span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
+                  title={<span title={selected.priaName}>{selected.workTypeName}</span>}
+                  description={activeLabel}
+                />
 
-                <div className="fw-panel-body">
+                <DialogBody className="fw-panel-body">
                   <div className="fw-panel-status">
                     {isUnplanned(selected) ? (
                       <span className="fw-status-pill unplanned">Planeerimata</span>
@@ -1257,17 +1231,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
                   {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
                   {editingPlan && !workLocked && (
-                    <div className="modal-backdrop sub-modal">
-                      <div className="modal-content animate-scale-up work-entry-modal" role="dialog" aria-modal="true" aria-label="Muuda plaani">
-                        <div className="modal-header">
-                          <div>
-                            <h3>{isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: {selected.workTypeName}</h3>
-                            <p className="modal-subtitle">{activeLabel}</p>
-                          </div>
-                          <Button type="button" variant="ghost" size="icon-sm" onClick={() => setEditingPlan(false)} title="Sulge (Esc)">
-                            <X size={20} />
-                          </Button>
-                        </div>
+                    <Dialog open onOpenChange={(open) => { if (!open) setEditingPlan(false); }}>
+                      <DialogContent size="xl" className="work-entry-modal">
+                        <DialogHeader
+                          title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
+                          description={activeLabel}
+                        />
                         <FieldWorkPlanForm
                           key={`edit-${selected.id}`}
                           fieldSeasonId={selected.fieldSeasonId}
@@ -1285,8 +1254,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           }}
                           onCancel={() => setEditingPlan(false)}
                         />
-                      </div>
-                    </div>
+                      </DialogContent>
+                    </Dialog>
                   )}
 
                   {activeArea > 0 && (() => {
@@ -1369,7 +1338,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       <span>Lisa kanne…</span>
                     </Button>
                   )}
-                </div>
+                </DialogBody>
 
                 {!locked && (
                   <div className="fw-panel-foot">
@@ -1413,12 +1382,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </Button>
                   </div>
                 )}
-              </div>
-            </div>
+              </DialogContent>
+            </Dialog>
           );
-        })(),
-        document.body
-      )}
+        })()}
 
       {entryDialog && entryRow && (() => {
         const selectedRow = entryRow;

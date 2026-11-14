@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
 import { FilterSelect } from './FilterSelect';
 import { FilterClear } from './FilterClear';
-import { Button } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -22,7 +22,7 @@ export interface FieldWorkPlanFormProps {
   articles: Article[];
   workers: { id: string; name: string }[];
   mode: 'view' | 'edit';
-  layout?: 'dialog' | 'inline'; // dialog: modal-body + modal-footer; inline: paneeli sees
+  layout?: 'dialog' | 'inline'; // dialog: DialogBody + DialogFooter (kutsuja paneb DialogContenti ja DialogHeaderi); inline: paneeli sees
   onSaved: () => void;
   onCancel?: () => void;
   seedCheck?: SeedCheck; // seemne ja põllu kultuuri võrdlus
@@ -190,9 +190,12 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   };
 
   const dialog = layout === 'dialog';
+  const Form = dialog ? DialogForm : 'form';
+  const Body = dialog ? DialogBody : 'div';
+  const Footer = dialog ? DialogFooter : 'div';
   return (
-    <form className={`fw-plan-form ${layout}`} onSubmit={save}>
-      <div className={dialog ? 'modal-body work-entry-body' : 'work-entry-body'}>
+    <Form className={`fw-plan-form ${layout}`} onSubmit={save}>
+      <Body className="work-entry-body">
         <div className="work-entry-grid work-plan-top-grid">
           <div className="form-group">
             <label htmlFor="wp-type">Tegevus *</label>
@@ -247,11 +250,11 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
           <textarea id="wp-notes" rows={3} maxLength={1000} className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
         </div>
         {error && <div className="alert-box error">{error}</div>}
-      </div>
-      <div className={dialog ? 'modal-footer' : 'fw-plan-actions'}>
+      </Body>
+      <Footer className={dialog ? undefined : 'fw-plan-actions'}>
         <Button type="button" variant="ghost" onClick={onCancel}>Loobu</Button>
         <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
-      </div>
-    </form>
+      </Footer>
+    </Form>
   );
 };

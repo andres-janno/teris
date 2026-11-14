@@ -1,12 +1,11 @@
 // src/components/AddFieldWorkDialog.tsx — põllule tööde lisamine (sama tegevust võib lisada mitu korda; eemaldamine tahvli töö paneelist).
-import React, { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Check, Plus } from 'lucide-react';
+import React, { useMemo, useState } from 'react';
+import { Check, Plus } from 'lucide-react';
 import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -49,17 +48,6 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
     return i < 0 ? PRIA_ACTIVITIES.length : i;
   };
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
-
   const toggle = (workTypeId: string) => {
     setToAdd((prev) => {
       const next = new Set(prev);
@@ -101,22 +89,11 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
 
   const summaryText = toAdd.size === 0 ? 'Vali põllule lisatavad tööd' : `+${toAdd.size} lisatakse`;
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content animate-scale-up add-work-modal">
-        <div className="modal-header">
-          <div className="modal-title-group">
-            <Plus size={20} className="text-emerald" />
-            <div>
-              <h3>Lisa põllule töid</h3>
-              <p className="modal-subtitle">{fieldLabel}</p>
-            </div>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)">
-            <X size={20} />
-          </Button>
-        </div>
-        <div className="modal-body add-work-body">
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="md" className="add-work-modal" dismissible={!busy}>
+        <DialogHeader icon={<Plus size={20} className="text-emerald" />} title="Lisa põllule töid" description={fieldLabel} />
+        <DialogBody className="add-work-body">
           {phases.map((phase) => {
             const list = workTypes
               .filter((w) => w.phase === phase && w.isActive)
@@ -166,8 +143,8 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
               </section>
             );
           })}
-        </div>
-        <div className="modal-footer add-work-footer">
+        </DialogBody>
+        <DialogFooter className="add-work-footer">
           {toAdd.size > 0 && (
             <div className="form-group animate-slide-in">
               <label htmlFor="aw-planned">Planeeritud aeg (uutele töödele)</label>
@@ -187,9 +164,8 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
               {busy ? 'Salvestan...' : 'Lisa tööd'}
             </Button>
           </div>
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 };

@@ -1,7 +1,6 @@
 // src/components/FieldWorkEntryDialog.tsx — kande lisamine/muutmine: töötaja sisestab ainult kogused.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
-import { X, Info, Radio, Clock } from 'lucide-react';
+import { Info, Radio, Clock } from 'lucide-react';
 import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
@@ -16,7 +15,7 @@ import { FilterClear } from './FilterClear';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter } from './ui';
 
 interface Option {
   id: string;
@@ -303,16 +302,6 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     return list;
   }, [workers, telemetrySuggestions, entry?.workerId, entry?.workerName]);
 
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.stopPropagation();
-        onClose();
-      }
-    };
-    document.addEventListener('keydown', onKey, true);
-    return () => document.removeEventListener('keydown', onKey, true);
-  }, [onClose]);
 
   const areaNum = parseNum(areaHa) ?? 0;
   const totalAfter = doneBefore + areaNum;
@@ -417,20 +406,13 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     }
   };
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <form className="modal-content animate-scale-up work-entry-modal" onSubmit={save}>
-        <div className="modal-header">
-          <div>
-            <h3>{entry ? 'Muuda kannet' : 'Lisa kanne'}: {work.workTypeName}</h3>
-            <p className="modal-subtitle">{fieldLabel}</p>
-          </div>
-          <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)">
-            <X size={20} />
-          </Button>
-        </div>
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="xl" className="work-entry-modal" dismissible={!busy}>
+        <DialogForm onSubmit={save}>
+        <DialogHeader title={`${entry ? 'Muuda kannet' : 'Lisa kanne'}: ${work.workTypeName}`} description={fieldLabel} />
 
-        <div className="modal-body work-entry-body">
+        <DialogBody className="work-entry-body">
           {(others.length > 0 || fieldAreaHa > 0) && (
             <div className="work-entry-progress">
               <div className="work-entry-progress-head">
@@ -746,16 +728,16 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <Info size={13} /> Sisesta ainult kogused. Finantskulu lisab finantsjuht selle kande juurde.
           </p>
           {error && <div className="alert-box error">{error}</div>}
-        </div>
+        </DialogBody>
 
-        <div className="modal-footer">
+        <DialogFooter>
           <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
           <Button type="submit" variant="primary" disabled={busy}>
             {finish ? 'Salvesta ja lõpeta töö' : 'Salvesta kanne'}
           </Button>
-        </div>
-      </form>
-    </div>,
-    document.body
+        </DialogFooter>
+        </DialogForm>
+      </DialogContent>
+    </Dialog>
   );
 };

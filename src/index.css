@@ -8312,12 +8312,6 @@ a.history-pill:hover {
   color: #1d4ed8;
 }
 
-/* Valitud töö hüpikaken (modal): vaates ja plaani muutmisel sama lai (materjaliread mahuvad ühele reale, ei vilgu) */
-.modal-content.fw-work-modal {
-  width: min(720px, 96vw);
-  max-height: 90vh;
-}
-
 /* Plaani päise väljad (tegevus, kuupäevad, aeg, pindala, viis/teostaja) ühel real */
 .work-entry-grid.work-plan-top-grid {
   grid-template-columns: none;
@@ -8460,36 +8454,10 @@ a.history-pill:hover {
   margin-top: 10px;
 }
 
-.fw-panel-head {
-  padding: 18px 22px 14px 22px;
-  border-bottom: 1px solid var(--border-card);
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.fw-panel-top {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
 .fw-panel-phase {
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.06em;
-}
-
-.fw-panel-head h2 {
-  margin: 0;
-  font-size: 1.3rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.fw-panel-field {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
 }
 
 .fw-panel-body {
@@ -8753,16 +8721,10 @@ a.history-pill:hover {
   background: rgba(220, 38, 38, 0.1) !important;
 }
 
-/* Kande aken */
-.work-entry-modal {
-  width: min(1180px, 96vw);
-  max-height: 94vh;
-}
-
 .work-entry-body {
   display: flex;
   flex-direction: column;
-  gap: 14px;
+  gap: 14px !important;
   overflow-y: auto;
 }
 
@@ -9238,16 +9200,10 @@ select.form-input:read-only {
   border-style: dashed;
 }
 
-/* Töö lisamise aken */
-.add-work-modal {
-  width: min(600px, 96vw);
-  max-height: 92vh;
-}
-
 .add-work-body {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 12px !important;
   overflow-y: auto;
 }
 
@@ -9374,8 +9330,8 @@ select.form-input:read-only {
 
 .add-work-footer {
   flex-direction: column;
-  align-items: stretch;
-  gap: 10px;
+  align-items: stretch !important;
+  gap: 10px !important;
 }
 
 .add-work-actions {
@@ -9395,14 +9351,14 @@ select.form-input:read-only {
 /* ==========================================================================
    Põllutööde finantsid ja kuluarvestus (FinanceModal)
    ========================================================================== */
-.finance-modal {
-  width: min(1320px, 96vw);
-  height: min(880px, 92vh);
-  display: flex;
-  flex-direction: column;
-}
-
 .finance-icon-badge {
+  width: 38px;
+  height: 38px;
+  flex-shrink: 0;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   background: rgba(16, 185, 129, 0.15);
   color: #10b981;
 }

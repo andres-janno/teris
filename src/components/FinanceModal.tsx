@@ -1,8 +1,6 @@
 // src/components/FinanceModal.tsx — põllutööde finantsid ja kuluarvestus (finantsjuht / admin).
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import {
-  X,
   Euro,
   CheckCircle2,
   AlertCircle,
@@ -24,7 +22,7 @@ import { formatQty } from '../services/units';
 import type { FinanceEntry, FieldResult, WorkEntryLineKind, FinanceStatus } from '../types/fieldWork';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Button } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -399,26 +397,19 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
   if (!isOpen) return null;
 
-  return createPortal(
-    <div className="modal-backdrop sub-modal">
-      <div className="modal-content finance-modal animate-scale-up">
-        {/* Modal Header */}
-        <div className="modal-header">
-          <div className="modal-title-with-icon">
-            <div className="modal-icon-badge finance-icon-badge">
-              <Euro size={20} />
-            </div>
-            <div>
-              <div className="finance-title-row">
-                <h3>Põllutööde finantsid ja kuluarvestus</h3>
-                <span className="finance-year-badge">{year}. a hooaeg</span>
-              </div>
-              <p className="modal-subtitle">
-                Kannete ühikuhindade määramine, kinnitamine ja põllupõhine tasuvus.
-              </p>
-            </div>
-          </div>
-
+  return (
+    <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+      <DialogContent size="xl" fillHeight className="finance-modal">
+        <DialogHeader
+          icon={<div className="finance-icon-badge"><Euro size={20} /></div>}
+          title={
+            <span className="finance-title-row">
+              <span>Põllutööde finantsid ja kuluarvestus</span>
+              <span className="finance-year-badge">{year}. a hooaeg</span>
+            </span>
+          }
+          description="Kannete ühikuhindade määramine, kinnitamine ja põllupõhine tasuvus."
+        >
           <div className="season-header-actions">
             <div className="work-register-tabs" role="tablist">
               <button
@@ -445,14 +436,10 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 <span>Põldude tasuvus</span>
               </button>
             </div>
-            <Button variant="ghost" size="icon-sm" onClick={onClose} title="Sulge">
-              <X size={18} />
-            </Button>
           </div>
-        </div>
+        </DialogHeader>
 
-        {/* Modal Body */}
-        <div className="modal-body finance-modal-body">
+        <DialogBody className="finance-modal-body">
           {tab === 'entries' && (
             <div className="finance-entries-layout">
               {/* Left Column: Entries List & Filters */}
@@ -1041,9 +1028,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               </div>
             </div>
           )}
-        </div>
-      </div>
-    </div>,
-    document.body
+        </DialogBody>
+      </DialogContent>
+    </Dialog>
   );
 };
