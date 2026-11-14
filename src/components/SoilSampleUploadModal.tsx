@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -127,11 +127,11 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
                 <UploadCloud size={44} className="dropzone-icon" />
                 <h4>Lohista mullaproovide .ZIP fail siia</h4>
                 <p>või klõpsa faili valimiseks arvutist</p>
-                <div className="badge-list">
-                  <span className="mini-badge">.SHP</span>
-                  <span className="mini-badge">.DBF</span>
-                  <span className="mini-badge">.PRJ</span>
-                  <span className="mini-badge">WGS84</span>
+                <div className="upload-format-list">
+                  <Badge>.SHP</Badge>
+                  <Badge>.DBF</Badge>
+                  <Badge>.PRJ</Badge>
+                  <Badge>WGS84</Badge>
                 </div>
               </div>
             )}

@@ -15,7 +15,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -214,11 +214,11 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                 <UploadCloud size={44} className="dropzone-icon" />
                 <h4>Lohista PRIA .ZIP fail siia</h4>
                 <p>või klõpsa faili valimiseks arvutist</p>
-                <div className="badge-list">
-                  <span className="mini-badge">.SHP</span>
-                  <span className="mini-badge">.DBF</span>
-                  <span className="mini-badge">.PRJ</span>
-                  <span className="mini-badge">L-EST97</span>
+                <div className="upload-format-list">
+                  <Badge>.SHP</Badge>
+                  <Badge>.DBF</Badge>
+                  <Badge>.PRJ</Badge>
+                  <Badge>L-EST97</Badge>
                 </div>
               </div>
             )}

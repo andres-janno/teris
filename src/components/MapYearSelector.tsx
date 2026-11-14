@@ -91,7 +91,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       </div>
 
       {/* Season Selection Pills */}
-      <ToggleGroup className="year-widget-pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
+      <ToggleGroup className="year-widget-season" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
         {availableYears.map((year) => {
           const isLocked = seasons.find((s) => s.year === year)?.isLocked ?? false;
           return (

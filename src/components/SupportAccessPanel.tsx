@@ -4,7 +4,7 @@ import { LifeBuoy, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { SupportGrant, SupportAccessEntry } from '../types/auth';
 import { formatDateTimeTallinn } from '../services/dateFormat';
-import { Button } from './ui';
+import { Badge, Button } from './ui';
 
 const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '1h', label: '1 tund' },
@@ -53,7 +53,7 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
           <h4 className="support-panel-title">Kasutajatoe ligipääs</h4>
           <p className="support-panel-desc">Kasutajatugi saab teie keskkonda vaadata ainult lugemiseks. Iga sisenemine logitakse.</p>
         </div>
-        <span className={`support-panel-status${active ? ' is-active' : ''}`}>{active ? 'Lubatud' : 'Suletud'}</span>
+        <Badge tone={active ? 'success' : 'neutral'}>{active ? 'Lubatud' : 'Suletud'}</Badge>
       </div>
 
       {error && (

@@ -21,7 +21,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -156,11 +156,15 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
         <div className="fullpage-board-body">
           <div className="fullpage-board-content">
             {canManageFinance && (
-              <div className="category-filter-tabs articles-tabs">
-                <button type="button" className={`filter-tab ${tab === 'articles' ? 'active' : ''}`} onClick={() => setTab('articles')}>Artiklid</button>
-                <button type="button" className={`filter-tab ${tab === 'documents' ? 'active' : ''}`} onClick={() => setTab('documents')}>Laokanded</button>
-                {canManageFinance && <button type="button" className={`filter-tab ${tab === 'lots' ? 'active' : ''}`} onClick={() => setTab('lots')}>Saagipartiid</button>}
-                <button type="button" className={`filter-tab ${tab === 'warehouses' ? 'active' : ''}`} onClick={() => setTab('warehouses')}>Laod</button>
+              <div className="articles-tabs">
+                <Tabs activationMode="manual" value={tab} onValueChange={(next) => setTab(next as typeof tab)}>
+                  <TabsList>
+                    <TabsTrigger value="articles">Artiklid</TabsTrigger>
+                    <TabsTrigger value="documents">Laokanded</TabsTrigger>
+                    <TabsTrigger value="lots">Saagipartiid</TabsTrigger>
+                    <TabsTrigger value="warehouses">Laod</TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
             )}
             {tab === 'documents' && canManageFinance && <StockDocumentsPanel warehouses={warehouses} articles={articles} onChanged={() => void reload()} />}
@@ -173,22 +177,21 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   <Calendar size={15} className="text-blue" />
                   <span>Hooaeg:</span>
                 </span>
-                <div className="year-tabs">
+                <ToggleGroup aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
                   {availableYearsList.map((yr) => {
                     const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
                     return (
-                      <button
+                      <ToggleGroupItem
                         key={yr}
-                        className={`year-tab ${selectedYear === yr ? 'active' : ''} ${isLocked ? 'locked' : ''}`}
-                        onClick={() => onSelectYear(yr)}
+                        value={String(yr)}
                         title={`${yr}. a hooaeg ${isLocked ? '(Suletud muudatusteks)' : '(Aktiivne)'}`}
                       >
-                        <span>{yr}</span>
-                        {isLocked && <Lock size={10} className="tab-lock-icon" />}
-                      </button>
+                        {yr}
+                        {isLocked && <Lock size={10} />}
+                      </ToggleGroupItem>
                     );
                   })}
-                </div>
+                </ToggleGroup>
                 <div className="register-io-buttons">
                   {canManageFinance && (
                     <Button size="sm" onClick={() => setShowCategories(true)} title="Artikli kategooriate haldus">
@@ -225,19 +228,17 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                 <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
                   options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses, true)]} />
               </FilterClear>
-              <div className="category-filter-tabs">
-                <button type="button" className={`filter-tab ${group === 'all' ? 'active' : ''}`} onClick={() => { setGroup('all'); setCategoryId(''); }}>
-                  Kõik ({articles.length})
-                </button>
+              <ToggleGroup aria-label="Artikli grupp" value={group} onValueChange={(v) => { setGroup(v as typeof group); setCategoryId(''); }}>
+                <ToggleGroupItem value="all">Kõik ({articles.length})</ToggleGroupItem>
                 {ARTICLE_GROUPS.map((g) => {
                   const count = articles.filter((m) => m.category.group === g).length;
                   return (
-                    <button key={g} type="button" className={`filter-tab ${group === g ? 'active' : ''}`} onClick={() => { setGroup(g); setCategoryId(''); }} disabled={count === 0}>
+                    <ToggleGroupItem key={g} value={g} disabled={count === 0}>
                       {ARTICLE_GROUP_LABEL[g]} ({count})
-                    </button>
+                    </ToggleGroupItem>
                   );
                 })}
-              </div>
+              </ToggleGroup>
               <FilterClear active={!!categoryId} onClear={() => setCategoryId('')}>
                 <FilterSelect ariaLabel="Kategooria" value={categoryId} onChange={setCategoryId}
                   options={[{ value: '', label: 'Kõik kategooriad' }, ...categories.filter((c) => group === 'all' || c.group === group).map((c) => ({ value: c.id, label: c.name }))]} />
@@ -277,8 +278,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <TableCell wrap>{refinement(m)}</TableCell>
                     <TableCell wrap className="name-cell" title={m.notes ?? undefined}>
                       <span>{m.name}</span>
-                      {m.isDefaultService && <span className="article-default-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</span>}
-                      {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+                      {m.isDefaultService && <Badge className="cell-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</Badge>}
+                      {!m.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
                     </TableCell>
                     <TableCell wrap>{m.manufacturer ?? ''}</TableCell>
                     <TableCell>{m.unit}</TableCell>

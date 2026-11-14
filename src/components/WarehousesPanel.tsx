@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { PointOfInterest } from '../types/poi';
 import type { Warehouse } from '../types/stock';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -62,8 +62,8 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
     <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
       <TableCell wrap className="name-cell">
         <span className="field-name">{w.name}</span>
-        {w.isDefault && <span className="users-admin-badge">Põhiladu</span>}
-        {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+        {w.isDefault && <Badge tone="info" className="cell-badge">Põhiladu</Badge>}
+        {!w.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
       </TableCell>
       <TableCell>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</TableCell>
       <TableCell wrap className="muted">{w.notes ?? ''}</TableCell>

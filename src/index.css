@@ -1183,7 +1183,7 @@ body {
   border-radius: 4px;
 }
 
-.year-widget-pills {
+.year-widget-season {
   /* ToggleGroup kaardi veerus: ei veni kogu laiuseks, rida murdub vidina laiuses */
   align-self: flex-start;
 }
@@ -2124,19 +2124,10 @@ body {
   color: var(--text-secondary);
 }
 
-.badge-list {
+.upload-format-list {
   display: flex;
   gap: 6px;
   margin-top: 8px;
-}
-
-.mini-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 4px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-secondary);
 }
 
 .file-reupload-hint {
@@ -2866,62 +2857,6 @@ body {
   align-items: center;
   flex-wrap: wrap;
   gap: 10px;
-}
-
-.category-filter-tabs {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.filter-tab {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  padding: 6px 12px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
-
-.filter-tab:hover {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-  border-color: var(--border-card-hover);
-}
-
-.filter-tab.active {
-  background: #0f172a !important;
-  border-color: #2563eb !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.35);
-}
-
-:root[data-theme="dark"] .filter-tab.active {
-  background: #1e293b !important;
-  border-color: #38bdf8 !important;
-  color: #ffffff !important;
-}
-
-.count-pill {
-  font-size: 0.65rem;
-  background: var(--btn-sec-bg);
-  border: 1px solid var(--border-card);
-  padding: 1px 6px;
-  border-radius: 6px;
-  color: var(--text-secondary);
-}
-
-.filter-tab.active .count-pill {
-  background: rgba(255, 255, 255, 0.22);
-  border-color: rgba(255, 255, 255, 0.3);
-  color: #ffffff !important;
-  font-weight: 700;
 }
 
 .poi-top-actions {
@@ -4027,43 +3962,6 @@ input[type="number"],
   color: var(--text-primary);
 }
 
-.year-tabs {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  background: var(--bg-input);
-  padding: 4px;
-  border-radius: var(--radius-md);
-  border: 1px solid var(--border-color);
-}
-
-.year-tab {
-  padding: 5px 14px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  border-radius: var(--radius-sm);
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all var(--transition-fast);
-}
-
-.year-tab:hover {
-  color: var(--text-primary);
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.year-tab.active {
-  background: #15803d !important;
-  border-color: #15803d !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(21, 128, 61, 0.35);
-}
-
 .reg-stat-pill {
   padding: 6px 12px;
   background: var(--bg-input);
@@ -4681,19 +4579,9 @@ input[type="number"],
   gap: 6px;
 }
 
-.pill-lock-icon,
-.tab-lock-icon {
-  margin-left: 4px;
-  opacity: 0.7;
-}
-
 .year-widget-btn.locked-btn {
   border-color: rgba(148, 163, 184, 0.2);
   opacity: 0.9;
-}
-
-.year-tab.locked {
-  border-color: rgba(148, 163, 184, 0.2);
 }
 
 /* Drawer Season Locked Alert */
@@ -5813,8 +5701,6 @@ a.history-pill:hover {
 
 .weather-credential-status { margin: 12px 0; font-size: 13px; }
 .weather-credential-state { font-weight: 600; margin-bottom: 6px; }
-.weather-credential-ok { color: var(--accent-emerald, #059669); }
-.weather-credential-missing { color: #b45309; }
 .weather-credential-status dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
 .weather-credential-status dt { color: var(--text-muted); }
 .weather-credential-status dd { margin: 0; }
@@ -6036,61 +5922,6 @@ a.history-pill:hover {
   display: flex;
   flex-direction: column;
   line-height: 1.3;
-}
-
-.user-status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.73rem;
-  font-weight: 600;
-  padding: 3px 9px;
-  border-radius: 9999px;
-  white-space: nowrap;
-  line-height: 1.3;
-}
-
-.user-status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background-color: currentColor;
-}
-
-.user-status-pill.status-active {
-  background: rgba(34, 197, 94, 0.14);
-  color: var(--emerald-500);
-  border: 1px solid rgba(34, 197, 94, 0.28);
-}
-
-.user-status-pill.status-invited {
-  background: rgba(245, 158, 11, 0.14);
-  color: var(--amber-500);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
-.user-status-pill.status-pending {
-  background: rgba(249, 115, 22, 0.14);
-  color: #ea580c;
-  border: 1px solid rgba(249, 115, 22, 0.3);
-}
-
-.user-status-pill.status-inactive {
-  background: rgba(244, 63, 94, 0.14);
-  color: var(--rose-500);
-  border: 1px solid rgba(244, 63, 94, 0.28);
-}
-
-.users-admin-badge {
-  display: inline-block;
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  white-space: nowrap;
-  background: rgba(217, 119, 6, 0.14);
-  color: var(--amber-500);
 }
 
 .users-admin-checkbox {
@@ -6380,42 +6211,6 @@ a.history-pill:hover {
 
 .fullpage-board-body .register-actions-bar {
   gap: 10px;
-}
-
-.fullpage-board-body .year-tabs,
-.fw-toolbar .year-tabs {
-  gap: 4px;
-  padding: 0;
-  background: none;
-  border: none;
-  flex-wrap: wrap;
-}
-
-.fullpage-board-body .year-tab,
-.fw-toolbar .year-tab,
-.fullpage-board-body .filter-tab,
-.fleet-board-body .filter-tab {
-  height: 30px;
-  padding: 0 10px;
-  border: 1px solid var(--border-card);
-  border-radius: 6px;
-  background: var(--stat-bg);
-  color: var(--text-primary);
-  font-size: 0.8rem;
-  font-weight: 700;
-  white-space: nowrap;
-}
-
-.fullpage-board-body .year-tab.active,
-.fw-toolbar .year-tab.active,
-.fullpage-board-body .filter-tab.active,
-.fleet-board-body .filter-tab.active,
-:root[data-theme="dark"] .fullpage-board-body .filter-tab.active,
-:root[data-theme="dark"] .fleet-board-body .filter-tab.active {
-  background: #16a34a !important;
-  border-color: #15803d !important;
-  color: #ffffff !important;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
 }
 
 .fullpage-board-body .search-box-wrap {
@@ -9412,21 +9207,6 @@ select.form-input:read-only {
   color: var(--text-secondary);
 }
 
-.support-panel-status {
-  flex: none;
-  padding: 3px 10px;
-  border-radius: 999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--stat-bg-hover);
-}
-
-.support-panel-status.is-active {
-  color: var(--emerald-600);
-  background: rgba(34, 197, 94, 0.14);
-}
-
 .support-panel-row {
   display: flex;
   align-items: center;
@@ -9586,18 +9366,9 @@ select.form-input:read-only {
   font-weight: 600;
 }
 
-/* Laokannete registris puudujäägiga ülekande märge */
-.stock-shortage-badge {
-  display: inline-block;
-  margin-right: 6px;
-  padding: 1px 6px;
-  border-radius: 10px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #dc2626;
-  background: rgba(220, 38, 38, 0.1);
-  border: 1px solid rgba(220, 38, 38, 0.3);
-}
+/* Märgi vahe nime/summa kõrval tabeli lahtris */
+.cell-badge { margin-left: 6px; }
+.cell-badge-lead { margin-right: 6px; }
 
 /* Filtri tühjendamise X-nupp (FilterClear): ühtne kõigil rippmenüü- ja otsingufiltritel */
 .filter-clear {
@@ -9866,7 +9637,6 @@ td.stock-qty-out { color: #dc2626; }
 
 .finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
 .finance-fifo-price.missing { color: #d97706; }
-.article-default-badge { margin-left: 6px; padding: 1px 6px; border-radius: 8px; font-size: 11px; background: var(--color-surface-muted, #eef2f7); color: var(--color-text-muted, #475569); }
 .pria-article-cell { display: flex; flex-direction: column; min-width: 0; }
 
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */

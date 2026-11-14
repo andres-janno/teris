@@ -6,7 +6,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -189,25 +189,13 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                       </TableCell>
                       <TableCell>
                         {!u.isActive ? (
-                          <span className="user-status-pill status-inactive">
-                            <span className="user-status-dot" />
-                            Keelatud
-                          </span>
+                          <Badge tone="danger" dot>Keelatud</Badge>
                         ) : !u.hasPassword ? (
-                          <span className="user-status-pill status-invited">
-                            <span className="user-status-dot" />
-                            Kutse saadetud
-                          </span>
+                          <Badge tone="warning" dot>Kutse saadetud</Badge>
                         ) : u.mustChangePassword ? (
-                          <span className="user-status-pill status-pending">
-                            <span className="user-status-dot" />
-                            Parool vahetamata
-                          </span>
+                          <Badge tone="warning" dot>Parool vahetamata</Badge>
                         ) : (
-                          <span className="user-status-pill status-active">
-                            <span className="user-status-dot" />
-                            Aktiivne
-                          </span>
+                          <Badge tone="success" dot>Aktiivne</Badge>
                         )}
                       </TableCell>
                       <TableCell>{formatDateTime(u.lastSeenAt ?? u.lastLoginAt)}</TableCell>

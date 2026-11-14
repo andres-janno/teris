@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { WeatherCredentialStatus } from '../types/weather';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface WeatherCredentialModalProps {
   isOpen: boolean;
@@ -103,7 +103,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
           {status && (
             <div className="weather-credential-status">
               <div className="weather-credential-state">
-                {status.configured ? <span className="weather-credential-ok">Võti salvestatud</span> : <span className="weather-credential-missing">Võti puudub</span>}
+                {status.configured ? <Badge tone="success">Võti salvestatud</Badge> : <Badge tone="warning">Võti puudub</Badge>}
               </div>
               {status.configured && (
                 <dl>
