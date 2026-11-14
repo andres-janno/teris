@@ -304,6 +304,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   const areaNum = parseNum(areaHa) ?? 0;
   const totalAfter = doneBefore + areaNum;
+  // Eelseadistuse siht: kogu põllu täitumine (varasemad + see kanne) hektarites
+  const presetTarget = (pct: number) => (pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100);
 
   // Tehtud pindala muutmine (käsitsi või telemeetriast): kogu põllu täitumisel märgitakse töö lõpetatuks
   // Kande pindala muutmine (käsitsi, kiirvalik, telemeetria): read ja saak arvutatakse normist uuesti
@@ -323,7 +325,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   const applyPercentage = (pct: number) => {
     if (fieldAreaHa <= 0) return;
-    const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
+    const targetTotal = presetTarget(pct);
     const needed = Math.max(0, targetTotal - doneBefore);
     const roundedNeeded = Math.round(needed * 100) / 100;
     setArea(fmt(roundedNeeded));
@@ -596,20 +598,18 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </div>
 
               {fieldAreaHa > 0 && (() => {
-                // Märgitakse protsent, mis on kogu põllu täitumisele (varasemad + see kanne) kõige lähemal
-                const totalPct = (totalAfter / fieldAreaHa) * 100;
-                const enabledPcts = AREA_PERCENTAGES.filter((pct) => pct === 100 || doneBefore < (fieldAreaHa * pct) / 100);
-                const nearestPct = areaNum > 0 && enabledPcts.length
-                  ? enabledPcts.reduce((best, pct) => (Math.abs(pct - totalPct) < Math.abs(best - totalPct) ? pct : best))
+                // Märgitakse eelseadistus ainult siis, kui kogu põllu täitumine (varasemad + see kanne) võrdub selle sihiga
+                const matchedPct = areaNum > 0
+                  ? AREA_PERCENTAGES.find((pct) => Math.abs(totalAfter - presetTarget(pct)) < 0.005) ?? null
                   : null;
                 return (
                 <div className="work-entry-area-presets">
                   <span className="work-entry-presets-label">Põllust tehtud:</span>
-                  {/* Eelseadistus ei ole püsiv valik: klõps täidab pindala välja, märgitud on väljaväärtusele lähim.
-                      Seepärast rakendab klõps ka märgitud eelseadistuse uuesti (onClick), onValueChange ei tee midagi. */}
-                  <ToggleGroup aria-label="Pindala osa" value={nearestPct == null ? '' : String(nearestPct)} onValueChange={() => undefined}>
+                  {/* Eelseadistus ei ole püsiv valik: klõps täidab pindala välja, märgitud on ainult täpne vaste.
+                      Klõps rakendab eelseadistuse alati (onClick), ka märgitud oma uuesti; onValueChange ei tee midagi. */}
+                  <ToggleGroup aria-label="Pindala osa" value={matchedPct == null ? '' : String(matchedPct)} onValueChange={() => undefined}>
                     {AREA_PERCENTAGES.map((pct) => {
-                      const targetTotal = pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100;
+                      const targetTotal = presetTarget(pct);
                       const needed = Math.max(0, targetTotal - doneBefore);
                       const roundedNeeded = Math.round(needed * 100) / 100;
                       const isExceeded = doneBefore >= targetTotal && pct < 100;

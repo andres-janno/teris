@@ -7944,6 +7944,11 @@ a.history-pill:hover {
   transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
 }
 
+.fw-finance-chip-btn:focus-visible {
+  outline: 2px solid var(--emerald-500);
+  outline-offset: 2px;
+}
+
 .fw-finance-chip-btn:hover {
   transform: translateY(-1px);
   filter: brightness(0.92);
