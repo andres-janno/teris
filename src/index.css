@@ -329,29 +329,6 @@ body {
   gap: 12px;
 }
 
-.stat-pill {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  padding: 6px 14px;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  position: relative;
-  overflow: hidden;
-  transition: all 0.2s ease;
-}
-
-.stat-pill.clickable {
-  cursor: pointer;
-}
-
-.stat-pill.clickable:hover {
-  background: var(--stat-bg-hover);
-  border-color: rgba(34, 197, 94, 0.3);
-  transform: translateY(-1px);
-}
-
 .stat-icon {
   color: var(--emerald-500);
 }
@@ -403,17 +380,6 @@ body {
 
 .btn-full {
   width: 100%;
-}
-
-.usage-count-badge {
-  font-size: 0.65rem;
-  font-weight: 700;
-  line-height: 1;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 999px;
-  padding: 2px 5px;
-  margin-left: 4px;
 }
 
 /* Main Map Content Area */
@@ -1095,36 +1061,6 @@ body {
   color: var(--text-secondary);
 }
 
-.layer-year-pills {
-  display: flex;
-  gap: 4px;
-  flex-wrap: wrap;
-}
-
-.layer-year-pill {
-  padding: 3px 8px;
-  border-radius: 4px;
-  font-size: 0.72rem;
-  font-weight: 700;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.layer-year-pill:hover {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-}
-
-.layer-year-pill.active {
-  background: #16a34a;
-  border-color: #15803d;
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(22, 163, 74, 0.35);
-}
-
 /* Map Top-Left Stack (Season Widget + Selected Field Card) */
 .map-top-left-stack {
   position: absolute;
@@ -1174,58 +1110,9 @@ body {
   color: var(--text-primary);
 }
 
-.year-widget-stat {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  background: var(--stat-bg);
-  padding: 2px 6px;
-  border-radius: 4px;
-}
-
 .year-widget-season {
   /* ToggleGroup kaardi veerus: ei veni kogu laiuseks, rida murdub vidina laiuses */
   align-self: flex-start;
-}
-
-.year-widget-btn {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 6px 4px;
-  border-radius: 6px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  min-height: 38px;
-}
-
-.year-widget-btn:hover {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-  transform: translateY(-1px);
-}
-
-.year-widget-btn .year-num {
-  font-size: 0.84rem;
-  font-weight: 800;
-}
-
-.year-widget-btn .year-active-tag {
-  font-size: 0.58rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-}
-
-.year-widget-btn.active {
-  background: #16a34a;
-  border-color: #15803d;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.4);
 }
 
 /* Integrated Crop Legend inside Season Widget */
@@ -1335,16 +1222,6 @@ body {
 .field-code {
   font-size: 0.72rem;
   color: var(--text-secondary);
-}
-
-.field-season-badge {
-  font-size: 0.64rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 4px;
-  background: var(--basemap-active-bg);
-  border: 1px solid var(--basemap-active-border);
-  color: var(--basemap-active-color);
 }
 
 .header-button-group {
@@ -2370,13 +2247,6 @@ body {
   color: var(--text-secondary);
 }
 
-.status-badge {
-  font-size: 0.68rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
 .status-working {
   background: rgba(34, 197, 94, 0.15);
   color: var(--emerald-600);
@@ -2841,15 +2711,6 @@ body {
   margin-top: 2px;
 }
 
-.active-pill {
-  font-size: 0.65rem;
-  font-weight: 700;
-  background: var(--emerald-500);
-  color: #ffffff;
-  padding: 2px 8px;
-  border-radius: 10px;
-}
-
 /* POI Manager */
 .poi-top-bar {
   display: flex;
@@ -3171,26 +3032,11 @@ input[type="number"],
   transform: translateY(-1px);
 }
 
-.meta-tag.coords {
-  font-family: monospace;
-  color: var(--blue-500);
-  background: rgba(59, 130, 246, 0.12);
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
 .poi-meta-line {
   display: flex;
   gap: 10px;
   margin-top: 4px;
   font-size: 0.7rem;
-}
-
-.meta-tag {
-  color: #cbd5e1;
-}
-
-.meta-tag.note {
-  color: var(--amber-400);
 }
 
 .kpi-card {
@@ -3719,31 +3565,6 @@ input[type="number"],
   flex-shrink: 0;
 }
 
-.tenure-badge {
-  display: inline-block;
-  padding: 1px 8px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 400;
-  background: var(--stat-bg);
-  color: var(--text-secondary);
-}
-
-.tenure-badge.owned {
-  background: color-mix(in srgb, var(--emerald-500) 14%, transparent);
-  color: var(--emerald-500);
-}
-
-.tenure-badge.rented {
-  background: color-mix(in srgb, var(--blue-500) 14%, transparent);
-  color: var(--blue-500);
-}
-
-.tenure-badge.mixed {
-  background: color-mix(in srgb, var(--amber-500) 14%, transparent);
-  color: var(--amber-500);
-}
-
 /* Jalus on ui/TableFooter sticky (taust, kleepumine, z-index 2); siin ainult ülajoon.
    Kinnitatud nurgalahtrid (Põld, tegevused) peavad olema ülejäänud jaluselahtrite kohal (z 3 vs 2),
    muidu kerimisel katavad hilisemad lahtrid need; !important, sest ui utiliit z-[2] on legacy kihist kõrgemal. */
@@ -3908,11 +3729,6 @@ input[type="number"],
 .fw-field-title .field-name {
   font-size: 0.85rem;
   font-weight: 400;
-}
-[data-slot="table"] .name-cell .field-num-badge,
-.fields-table .field-num-badge,
-.fw-field-title .field-num-badge {
-  font-weight: 500;
 }
 
 [data-slot="table"] .size-cell.muted .season-ha-val {
@@ -4135,53 +3951,6 @@ input[type="number"],
   margin: 0;
 }
 
-.field-id-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  background: rgba(148, 163, 184, 0.16);
-  color: var(--text-secondary);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  border-radius: 4px;
-  font-family: monospace;
-}
-
-.field-num-badge {
-  display: inline-flex;
-  align-items: center;
-  font-size: 0.82rem;
-  font-weight: 800;
-  padding: 2px 7px;
-  background: #ffffff;
-  color: #065f46;
-  border: 1.5px solid #10b981;
-  border-radius: 5px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-  font-variant-numeric: tabular-nums;
-  letter-spacing: -0.01em;
-  line-height: 1.25;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-:root[data-theme="dark"] .field-num-badge {
-  background: #0f172a;
-  color: #4ade80;
-  border-color: #22c55e;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
-}
-
-.field-code-badge {
-  font-size: 0.72rem;
-  font-weight: 600;
-  padding: 2px 7px;
-  background: rgba(37, 99, 235, 0.12);
-  color: var(--blue-400);
-  border: 1px solid rgba(37, 99, 235, 0.25);
-  border-radius: 4px;
-  font-family: monospace;
-}
-
 .cadastre-code {
   font-size: 0.7rem;
   color: var(--text-muted);
@@ -4220,21 +3989,6 @@ input[type="number"],
   color: var(--text-secondary);
 }
 
-.sub-tag.winter-tag {
-  color: #0369a1;
-  border-color: rgba(3, 105, 161, 0.35);
-  background: rgba(14, 165, 233, 0.1);
-}
-
-.sub-tag {
-  font-size: 0.68rem;
-  padding: 2px 6px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 4px;
-  color: var(--text-secondary);
-}
-
 .field-active-season-col {
   display: flex;
   align-items: center;
@@ -4256,17 +4010,6 @@ input[type="number"],
   font-size: 1.1rem;
   color: var(--text-primary);
   font-weight: 800;
-}
-
-.season-crop-badge {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
-  border-radius: 999px;
-  border: 1px solid;
-  font-size: 0.78rem;
-  font-weight: 600;
 }
 
 .field-card-actions {
@@ -4292,58 +4035,6 @@ input[type="number"],
   font-size: 0.72rem;
   color: var(--text-secondary);
   font-weight: 600;
-}
-
-.history-pills-list {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
-}
-
-.history-pill {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 3px 8px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.72rem;
-  cursor: pointer;
-  transition: all var(--transition-fast);
-}
-
-.history-pill:hover {
-  border-color: var(--blue-400);
-  background: rgba(37, 99, 235, 0.08);
-}
-
-.history-pill.current {
-  border-color: var(--emerald-500);
-  background: rgba(16, 185, 129, 0.12);
-}
-
-.history-pill .h-year {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.history-pill .h-ha {
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.history-pill .h-crop {
-  font-weight: 500;
-}
-
-.history-pill .h-yield {
-  font-size: 0.65rem;
-  padding: 1px 4px;
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  color: var(--text-secondary);
 }
 
 .empty-register-state {
@@ -4391,17 +4082,6 @@ input[type="number"],
   display: flex;
   align-items: center;
   gap: 8px;
-}
-
-.legend-icon-badge {
-  width: 28px;
-  height: 28px;
-  border-radius: 6px;
-  background: rgba(16, 185, 129, 0.12);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
 }
 
 .legend-title {
@@ -4524,53 +4204,8 @@ input[type="number"],
    Season Register & Season Manager Modal Styles
    ========================================================================== */
 
-/* Header Season Stat Pill */
-.season-stat-pill {
-  border-color: rgba(16, 185, 129, 0.2);
-}
-
-.season-stat-pill:hover {
-  border-color: var(--emerald-500);
-}
-
-.season-locked-pill {
-  border-color: rgba(148, 163, 184, 0.25);
-}
-
 .season-icon {
   color: var(--emerald-500);
-}
-
-.stat-status-tag {
-  font-size: 0.62rem;
-  font-weight: 700;
-  padding: 1px 5px;
-  border-radius: 4px;
-  margin-left: 5px;
-}
-
-.stat-status-tag.active {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--emerald-600);
-}
-
-.stat-status-tag.locked {
-  background: rgba(148, 163, 184, 0.2);
-  color: var(--text-secondary);
-}
-
-/* Map Year Selector Season Badges & Lock Icons */
-.locked-inline-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 0.65rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  background: rgba(148, 163, 184, 0.18);
-  padding: 1px 5px;
-  border-radius: 4px;
-  margin-left: 4px;
 }
 
 .year-header-right {
@@ -4578,13 +4213,6 @@ input[type="number"],
   align-items: center;
   gap: 6px;
 }
-
-.year-widget-btn.locked-btn {
-  border-color: rgba(148, 163, 184, 0.2);
-  opacity: 0.9;
-}
-
-/* Drawer Season Locked Alert */
 
 /* Global Locked Alert Banner in Field Manager */
 .season-locked-global-alert {
@@ -4618,22 +4246,6 @@ input[type="number"],
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-.season-icon-badge {
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--emerald-600);
-}
-
-.season-stat-pill {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border-radius: 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
 }
 
 /* Form Card */
@@ -4731,15 +4343,6 @@ input[type="number"],
 .season-cell-notes svg {
   flex-shrink: 0;
   margin-top: 2px;
-}
-
-.season-status-badge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  border-radius: 12px;
-  white-space: nowrap;
 }
 
 .seasons-table-hint {
@@ -4846,21 +4449,6 @@ input[type="number"],
   letter-spacing: 0.01em;
 }
 
-.live-count-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  background: rgba(34, 197, 94, 0.15);
-  border: 1px solid rgba(34, 197, 94, 0.35);
-  color: var(--emerald-600);
-  font-size: 0.68rem;
-  font-weight: 800;
-  padding: 1px 6px;
-  border-radius: 10px;
-  margin-left: auto;
-  margin-right: 6px;
-}
-
 .live-dot-pulse {
   width: 6px;
   height: 6px;
@@ -4938,58 +4526,6 @@ input[type="number"],
   border-radius: 6px;
   border: 1px solid var(--border-card);
   margin-top: 2px;
-}
-
-.v-filter-pill {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 5px;
-  padding: 4px 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  border-radius: 4px;
-  border: 1px solid transparent;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  white-space: nowrap;
-}
-
-.v-filter-pill:hover {
-  color: var(--text-primary);
-  background: var(--stat-bg-hover);
-}
-
-.v-filter-pill.active {
-  background: var(--emerald-500);
-  color: #ffffff;
-  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
-}
-
-[data-theme='dark'] .v-filter-pill.active {
-  background: var(--emerald-500);
-  color: #0f172a;
-  font-weight: 800;
-}
-
-.v-filter-pill .dot-live {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: #22c55e;
-  box-shadow: 0 0 4px #22c55e;
-}
-
-.v-filter-pill.active .dot-live {
-  background: #ffffff;
-  box-shadow: 0 0 4px #ffffff;
-}
-
-[data-theme='dark'] .v-filter-pill.active .dot-live {
-  background: #0f172a;
 }
 
 /* Individual Vehicles / Devices in LayerControl */
@@ -5132,12 +4668,6 @@ input[type="number"],
    CADASTRAL PARCELS, TENURE & GEOMETRY INSPECTOR STYLES
    ========================================================================== */
 
-/* Tenure Pill Badges */
-
-/* Drawer Cadastral Parcels List */
-
-/* Geometry Inspector Box in Drawer */
-
 /* Field Manager Modal Stats Pills (Tenure) */
 .reg-stat-pill.tenure-owned {
   border-left: 3px solid var(--emerald-500);
@@ -5217,33 +4747,12 @@ input[type="number"],
 }
 
 /* Tuletatud omandivorm maaomaniku sildi kõrval */
-.cad-tenure-tag {
-  margin-left: 6px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  font-size: 0.7rem;
-  font-weight: 600;
-}
-.cad-tenure-tag.owned {
-  background: color-mix(in srgb, var(--emerald-500) 15%, transparent);
-  color: var(--emerald-500);
-}
-.cad-tenure-tag.rented {
-  background: color-mix(in srgb, var(--amber-500) 15%, transparent);
-  color: var(--amber-500);
-}
 
 .edit-cad-action {
   display: flex;
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 2px;
-}
-
-.rent-tag {
-  background: rgba(59, 130, 246, 0.12);
-  color: var(--blue-500);
-  border: 1px solid rgba(59, 130, 246, 0.2);
 }
 
 .field-change-reason-line {
@@ -5266,16 +4775,6 @@ input[type="number"],
 /* ==========================================================================
    Seotud Isikute Register (Harmonized with Field Register design)
    ========================================================================== */
-
-a.history-pill {
-  text-decoration: none;
-  color: var(--text-primary);
-}
-
-a.history-pill:hover {
-  border-color: var(--color-primary, #10b981);
-  color: var(--color-primary, #10b981);
-}
 
 .party-roles-checkbox-grid {
   display: grid;
@@ -5385,16 +4884,6 @@ a.history-pill:hover {
   color: var(--text-primary);
 }
 
-.crop-group-count {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 999px;
-  padding: 0 7px;
-}
-
 .crop-group-ha {
   margin-left: auto;
   font-size: 0.78rem;
@@ -5490,47 +4979,6 @@ a.history-pill:hover {
 
 .variety-empty-cell {
   color: var(--text-muted);
-}
-
-.variety-badge-sm {
-  font-size: 0.70rem;
-  padding: 3px 8px;
-  border-radius: 4px;
-  display: inline-block;
-  white-space: nowrap;
-  font-weight: 600;
-}
-
-.variety-badge-yield {
-  background: rgba(16, 185, 129, 0.14);
-  color: #15803d;
-  /* dark green for strong contrast on light bg */
-  border: 1px solid rgba(16, 185, 129, 0.35);
-  font-weight: 700;
-}
-
-:root[data-theme="dark"] .variety-badge-yield {
-  background: rgba(16, 185, 129, 0.18);
-  color: var(--emerald-400);
-}
-
-.variety-badge-quality {
-  background: rgba(37, 99, 235, 0.12);
-  color: #1d4ed8;
-  /* dark blue for strong contrast on light bg */
-  border: 1px solid rgba(37, 99, 235, 0.3);
-}
-
-:root[data-theme="dark"] .variety-badge-quality {
-  background: rgba(59, 130, 246, 0.18);
-  color: var(--blue-400);
-}
-
-.variety-badge-maturity {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  color: var(--text-primary);
-  font-weight: 500;
 }
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -5948,32 +5396,6 @@ a.history-pill:hover {
   min-height: 420px;
 }
 
-.work-register-tabs {
-  display: flex;
-  gap: 2px;
-  padding: 3px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-}
-
-.work-register-tabs button {
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-}
-
-.work-register-tabs button.active {
-  background: #16a34a;
-  color: #ffffff;
-}
-
 .work-register-toolbar {
   display: flex;
   justify-content: flex-end;
@@ -5983,21 +5405,11 @@ a.history-pill:hover {
   font-weight: 700;
 }
 
-.work-phase-badge {
-  display: inline-block;
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 9px;
-  border-radius: 999px;
-  white-space: nowrap;
-}
-
 .add-work-phase-label {
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.05em;
 }
-
 
 /* ==========================================================================
    Põhivaate lüliti (Kaart | Põllutööd)
@@ -6142,43 +5554,6 @@ a.history-pill:hover {
 }
 
 /* Jaotised (nt Taristu: punktid / seotud isikud) — samas stiilis nagu aastanupud */
-.fullpage-tabs {
-  display: inline-flex;
-  gap: 4px;
-}
-
-.fullpage-tab {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border: 1px solid var(--border-card);
-  border-radius: 6px;
-  background: var(--stat-bg);
-  color: var(--text-primary);
-  font: inherit;
-  font-size: 0.8rem;
-  font-weight: 700;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.fullpage-tab:hover {
-  background: var(--stat-bg-hover);
-}
-
-.fullpage-tab.active {
-  background: #16a34a;
-  border-color: #15803d;
-  color: #ffffff;
-  box-shadow: 0 2px 8px rgba(22, 163, 74, 0.35);
-}
-
-.fullpage-tab svg {
-  width: 14px;
-  height: 14px;
-}
 
 /* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
 .fullpage-board-body > .fullpage-board-content {
@@ -6664,21 +6039,6 @@ a.history-pill:hover {
   text-overflow: ellipsis;
 }
 
-.fw-crop-badge-tag {
-  font-size: 0.67rem;
-  font-weight: 600;
-  padding: 1px 6px;
-  border-radius: 9999px;
-  background: rgba(0, 0, 0, 0.06);
-  color: var(--text-secondary);
-  white-space: nowrap;
-  margin-left: auto;
-}
-
-:root[data-theme="dark"] .fw-crop-badge-tag {
-  background: rgba(255, 255, 255, 0.08);
-}
-
 .fw-cell.fw-cell-carried {
   display: flex;
   align-items: center;
@@ -6802,45 +6162,6 @@ a.history-pill:hover {
   color: var(--text-secondary);
 }
 
-.fw-group-badge {
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 9999px;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.fw-group-badge.winter {
-  background: #e0f2fe;
-  color: #0369a1;
-}
-
-.fw-group-badge.spring {
-  background: #dcfce7;
-  color: #15803d;
-}
-
-.fw-group-badge.undetermined {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-:root[data-theme="dark"] .fw-group-badge.winter {
-  background: rgba(2, 132, 199, 0.22);
-  color: #38bdf8;
-}
-
-:root[data-theme="dark"] .fw-group-badge.spring {
-  background: rgba(22, 163, 74, 0.22);
-  color: #4ade80;
-}
-
-:root[data-theme="dark"] .fw-group-badge.undetermined {
-  background: rgba(148, 163, 184, 0.22);
-  color: #cbd5e1;
-}
-
 .fw-group-meta {
   display: flex;
   align-items: center;
@@ -6848,21 +6169,6 @@ a.history-pill:hover {
   font-size: 0.78rem;
   color: var(--text-secondary);
   flex-shrink: 0;
-}
-
-.fw-group-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.fw-group-stat strong {
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
-.fw-group-stat-sep {
-  color: var(--border-card);
 }
 
 .fw-group-action-btn {
@@ -7298,81 +6604,6 @@ a.history-pill:hover {
   background: #0284c7;
 }
 
-.fw-carried-to-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: rgba(245, 158, 11, 0.12);
-  border: 1px dashed #f59e0b;
-  border-radius: 6px;
-  color: #9a5b00;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.fw-carried-to-pill button {
-  border: none;
-  background: #d97706;
-  color: #ffffff;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.fw-carried-to-pill button:hover {
-  background: #b45309;
-}
-
-.fw-carried-from-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px;
-  background: rgba(22, 163, 74, 0.1);
-  border: 1px dashed #86efac;
-  border-radius: 6px;
-  color: #166534;
-  font-size: 0.72rem;
-  font-weight: 600;
-}
-
-.fw-carried-from-pill.done {
-  background: rgba(22, 163, 74, 0.15);
-  border: 1px dashed #4ade80;
-  color: #14532d;
-}
-
-.fw-carried-from-pill.missing {
-  background: var(--stat-bg);
-  border: 1px dashed var(--border-card);
-  color: var(--text-secondary);
-  font-weight: 500;
-}
-
-.fw-carried-from-pill button {
-  border: none;
-  background: #16a34a;
-  color: #ffffff;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.fw-carried-from-pill.done button {
-  background: #15803d;
-}
-
-.fw-carried-from-pill button:hover {
-  background: #15803d;
-}
-
 .fw-field-kind.winter {
   color: #0284c7;
   font-weight: 700;
@@ -7546,35 +6777,6 @@ a.history-pill:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.fw-status-pill {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-  white-space: nowrap;
-  color: var(--text-secondary);
-  background: var(--stat-bg);
-}
-
-.fw-status-pill.in_progress {
-  color: #15803d;
-  background: rgba(22, 163, 74, 0.15);
-}
-
-.fw-status-pill.done {
-  color: #ffffff;
-  background: #16a34a;
-}
-
-.fw-status-pill.unplanned {
-  color: #b45309;
-  background: rgba(245, 158, 11, 0.18);
-}
-
-[data-theme='dark'] .fw-status-pill.unplanned {
-  color: #fbbf24;
 }
 
 .fw-panel-grid {
@@ -7915,27 +7117,6 @@ a.history-pill:hover {
   color: var(--text-primary);
 }
 
-.telemetry-pill-impl {
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: #2563eb;
-  background: rgba(37, 99, 235, 0.08);
-  padding: 1px 6px;
-  border-radius: 4px;
-}
-
-.telemetry-pill-time {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #047857;
-  background: rgba(16, 185, 129, 0.15);
-  padding: 2px 8px;
-  border-radius: 6px;
-}
-
 .telemetry-pill-meta {
   display: flex;
   align-items: center;
@@ -7947,25 +7128,10 @@ a.history-pill:hover {
   color: var(--text-secondary);
 }
 
-.telemetry-pill-action {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: #059669;
-  background: rgba(16, 185, 129, 0.1);
-  padding: 2px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-}
-
 .telemetry-pill-field {
   font-size: 0.75rem;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
-}
-
-.telemetry-suggestion-pill.selected .telemetry-pill-action {
-  background: #059669;
-  color: #ffffff;
 }
 
 .telemetry-suggestion-item {
@@ -8373,30 +7539,6 @@ select.form-input:read-only {
   gap: 10px;
 }
 
-.finance-year-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 8px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 999px;
-  color: var(--text-secondary);
-}
-
-.finance-tab-badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.68rem;
-  font-weight: 700;
-  background: #f59e0b;
-  color: #ffffff;
-  padding: 1px 6px;
-  border-radius: 999px;
-  margin-left: 6px;
-  line-height: 1;
-}
-
 .finance-modal-body {
   flex: 1;
   display: flex;
@@ -8456,37 +7598,6 @@ select.form-input:read-only {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.finance-filter-chips {
-  display: flex;
-  gap: 4px;
-}
-
-.finance-filter-chip {
-  flex: 1;
-  font: inherit;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 4px 8px;
-  border: 1px solid var(--border-card);
-  background: var(--stat-bg);
-  color: var(--text-secondary);
-  border-radius: 6px;
-  cursor: pointer;
-  white-space: nowrap;
-  text-align: center;
-  transition: all 0.15s ease;
-}
-
-.finance-filter-chip:hover {
-  background: var(--hover-bg, rgba(0, 0, 0, 0.04));
-}
-
-.finance-filter-chip.active {
-  background: #16a34a;
-  border-color: #16a34a;
-  color: #ffffff;
 }
 
 .finance-field-select {
@@ -8572,17 +7683,6 @@ select.form-input:read-only {
 .finance-entry-field-name strong {
   overflow: hidden;
   text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.finance-field-badge {
-  font-size: 0.68rem;
-  font-weight: 800;
-  color: #065f46;
-  background: #ffffff;
-  border: 1px solid #10b981;
-  border-radius: 4px;
-  padding: 0 4px;
   white-space: nowrap;
 }
 
@@ -8742,17 +7842,6 @@ select.form-input:read-only {
   border-radius: 8px;
   font-size: 0.8rem;
   color: var(--text-secondary);
-}
-
-.finance-kind-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.7rem;
-  font-weight: 700;
-  padding: 2px 7px;
-  border-radius: 999px;
-  white-space: nowrap;
 }
 
 .finance-line-label {
@@ -9079,29 +8168,6 @@ select.form-input:read-only {
   gap: 6px;
 }
 
-.finance-crop-pill {
-  display: inline-block;
-  font-size: 0.74rem;
-  font-weight: 600;
-  padding: 2px 8px;
-  border-left: 3px solid #10b981;
-  background: var(--stat-bg);
-  border-radius: 0 4px 4px 0;
-}
-
-.finance-count-badge {
-  font-size: 0.72rem;
-  font-weight: 700;
-  padding: 2px 6px;
-  border-radius: 999px;
-  background: var(--stat-bg);
-  color: var(--text-secondary);
-}
-
-.finance-count-badge.all-done {
-  background: #dcfce7;
-  color: #15803d;
-}
 /* Haakimise registri vorm: kuupäev + kellaaeg ühel real, lõppaja vihje välja all */
 .assign-datetime {
   display: grid;
@@ -9765,10 +8831,7 @@ td.stock-qty-out { color: #dc2626; }
 .v-info-rows .field-sub-tags { margin-bottom: 2px; }
 
 /* Teadmata omandivorm (maaomanik või operaator sisestamata) */
-.cad-tenure-tag.unknown {
-  background: color-mix(in srgb, var(--text-muted) 15%, transparent);
-  color: var(--text-secondary);
-}
+
 .cad-tenure-hint {
   align-self: center;
   font-size: 0.78rem;
@@ -9809,15 +8872,6 @@ td.stock-qty-out { color: #dc2626; }
 .fleet-cell-duration.is-active { color: var(--color-primary); }
 .fleet-cell-notes { font-size: 12px; color: var(--text-muted); }
 .fleet-cell-notes.is-empty { font-style: italic; }
-.fleet-active-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-.fleet-active-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; }
 
 .trip-gap-text {
   display: inline-flex;
