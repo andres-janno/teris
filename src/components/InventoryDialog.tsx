@@ -11,7 +11,7 @@ import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { InventoryPreviewRow, StockDocument, Warehouse } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -142,25 +142,25 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
           </div>
           <p className="muted">Tühi tegelik seis: rida ei arvestata. 0: kogu seis kantakse maha.</p>
 
-          <table className="register-table stock-doc-lines">
-            <thead>
-              <tr>
-                <th>Artikkel</th>
-                <th className="num">Arvestuslik</th>
-                <th className="num">Tegelik</th>
-                <th className="num">Vahe</th>
-                <th className="num">Eeldatav väärtus</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rows.length === 0 && <tr><td colSpan={5} className="muted">{loading ? 'Laen…' : 'Selles laos pole kaupu. Lisa artikkel allpool.'}</td></tr>}
+          <Table scroll="none" className="stock-doc-lines">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Artikkel</TableHead>
+                <TableHead numeric>Arvestuslik</TableHead>
+                <TableHead numeric>Tegelik</TableHead>
+                <TableHead numeric>Vahe</TableHead>
+                <TableHead numeric>Eeldatav väärtus</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {rows.length === 0 && <TableEmpty colSpan={5}>{loading ? 'Laen…' : 'Selles laos pole kaupu. Lisa artikkel allpool.'}</TableEmpty>}
               {rows.map((r, i) => {
                 const x = results[i];
                 return (
-                  <tr key={r.articleId}>
-                    <td>{r.articleName}</td>
-                    <td className={`num ${r.bookQty < 0 ? 'article-overuse' : ''}`}>{formatQty(r.bookQty)}<span className="stock-doc-unit">{r.unit}</span></td>
-                    <td className="num">
+                  <TableRow key={r.articleId}>
+                    <TableCell wrap>{r.articleName}</TableCell>
+                    <TableCell numeric className={r.bookQty < 0 ? 'article-overuse' : ''}>{formatQty(r.bookQty)}<span className="stock-doc-unit">{r.unit}</span></TableCell>
+                    <TableCell numeric>
                       <span className="input-with-unit">
                         <input
                           className="form-input num" inputMode="decimal" aria-label={`Tegelik seis: ${r.articleName}`}
@@ -170,16 +170,16 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
                         />
                         <span className="stock-doc-unit">{r.unit}</span>
                       </span>
-                    </td>
-                    <td className={`num ${x && x.diff < 0 ? 'stock-qty-out' : x && x.diff > 0 ? 'stock-qty-in' : ''}`}>
+                    </TableCell>
+                    <TableCell numeric className={x && x.diff < 0 ? 'stock-qty-out' : x && x.diff > 0 ? 'stock-qty-in' : ''}>
                       {x ? `${x.diff > 0 ? '+' : ''}${formatQty(x.diff)}` : '–'}
-                    </td>
-                    <td className="num">{!x || x.diff === 0 ? '–' : x.value == null ? <span className="muted">hindamata</span> : fmtEur(x.value)}</td>
-                  </tr>
+                    </TableCell>
+                    <TableCell numeric>{!x || x.diff === 0 ? '–' : x.value == null ? <span className="muted">hindamata</span> : fmtEur(x.value)}</TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           <div className="stock-doc-footer-row">
             <select className="form-input" aria-label="Lisa artikkel" value="" onChange={(e) => e.target.value && setAdded([...added, e.target.value])}>
               <option value="">+ Lisa artikkel, mida nimekirjas pole</option>

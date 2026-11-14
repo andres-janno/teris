@@ -12,7 +12,7 @@ import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface Row { articleId: string; quantity: string; amount: string }
 const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
@@ -156,63 +156,63 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </div>
           </div>
 
-          <table className="register-table stock-doc-lines">
-            <thead>
-              <tr>
-                <th>Materjal</th>
-                <th className="num">Laos</th>
-                <th className="num">Kogus</th>
-                {kind === 'RECEIPT' && <th className="num">Summa km-ta (€)</th>}
-                {kind === 'RECEIPT' && <th className="num">Ühikuhind</th>}
-                {kind !== 'RECEIPT' && initial && <th className="num">Maksumus</th>}
-                <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-              </tr>
-            </thead>
-            <tbody>
+          <Table scroll="none" className="stock-doc-lines">
+            <TableHeader>
+              <TableRow>
+                <TableHead>Materjal</TableHead>
+                <TableHead numeric>Laos</TableHead>
+                <TableHead numeric>Kogus</TableHead>
+                {kind === 'RECEIPT' && <TableHead numeric>Summa km-ta (€)</TableHead>}
+                {kind === 'RECEIPT' && <TableHead numeric>Ühikuhind</TableHead>}
+                {kind !== 'RECEIPT' && initial && <TableHead numeric>Maksumus</TableHead>}
+                <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
               {rows.map((r, i) => {
                 const m = articles.find((x) => x.id === r.articleId);
                 const qty = parseNum(r.quantity);
                 const amount = parseNum(r.amount);
                 const saved = initial?.lines.find((l) => l.articleId === r.articleId);
                 return (
-                  <tr key={i}>
-                    <td>
+                  <TableRow key={i}>
+                    <TableCell>
                       <select className="form-input" aria-label="Materjal" value={r.articleId} onChange={(e) => setRow(i, { articleId: e.target.value })}>
                         <option value="">– vali –</option>
                         {options.map((x) => <option key={x.id} value={x.id}>{x.name}</option>)}
                       </select>
-                    </td>
-                    <td className={`num ${(levels.get(r.articleId) ?? 0) < 0 ? 'article-overuse' : ''}`}>
+                    </TableCell>
+                    <TableCell numeric className={(levels.get(r.articleId) ?? 0) < 0 ? 'article-overuse' : ''}>
                       {m ? <>{fmtQty(levels.get(m.id) ?? 0)}<span className="stock-doc-unit">{m.unit}</span></> : '–'}
-                    </td>
-                    <td className="num">
+                    </TableCell>
+                    <TableCell numeric>
                       <span className="input-with-unit">
                         <input className="form-input num" inputMode="decimal" aria-label="Kogus" value={r.quantity} onChange={(e) => setRow(i, { quantity: e.target.value })} onBlur={() => setRow(i, { quantity: fmtInput(r.quantity) })} onKeyDown={kind === 'RECEIPT' ? undefined : tabToAddRow(i)} />
                         <span className="stock-doc-unit">{m?.unit ?? ''}</span>
                       </span>
-                    </td>
+                    </TableCell>
                     {kind === 'RECEIPT' && (
-                      <td className="num">
+                      <TableCell numeric>
                         <input className="form-input num" inputMode="decimal" aria-label="Summa" value={r.amount} onChange={(e) => setRow(i, { amount: e.target.value })} onBlur={() => setRow(i, { amount: fmtInput(r.amount) })} onKeyDown={tabToAddRow(i)} />
-                      </td>
+                      </TableCell>
                     )}
                     {kind === 'RECEIPT' && (
-                      <td className="num stock-doc-unit-price">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</td>
+                      <TableCell numeric className="stock-doc-unit-price">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</TableCell>
                     )}
                     {kind !== 'RECEIPT' && initial && (
-                      <td className="num">{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</td>
+                      <TableCell numeric>{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</TableCell>
                     )}
-                    <td className="actions-col">
+                    <TableCell actions>
                       {/* Tab jätab kustutamisnupu vahele */}
                       <Button type="button" tabIndex={-1} variant="danger-ghost" size="icon-sm" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => setRows(rows.length > 1 ? rows.filter((_, j) => j !== i) : [{ ...emptyRow }])}>
                         <Trash2 size={15} />
                       </Button>
-                    </td>
-                  </tr>
+                    </TableCell>
+                  </TableRow>
                 );
               })}
-            </tbody>
-          </table>
+            </TableBody>
+          </Table>
           <div className="stock-doc-footer-row">
             <Button type="button" ref={addRowRef} size="sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
               <Plus size={14} /><span>Lisa rida</span>

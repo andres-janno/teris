@@ -21,7 +21,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -244,83 +244,77 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               </FilterClear>
             </div>
 
-            <div className="register-table-wrap">
-              <table className="register-table articles-table">
-                <thead>
-                  <tr>
-                    <th>Kategooria</th>
-                    <th title="Terade kultuur, väetise ja taimekaitsevahendi täpsustus (PRIA)">Täpsustus</th>
-                    <th>Nimetus</th>
-                    <th>Tootja</th>
-                    <th>Ühik</th>
-                    {canManageFinance && <th className="num">Hind</th>}
-                    <th className="num" title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</th>
-                    {canManageFinance && <th className="num">Laoväärtus</th>}
-                    {canManageFinance && <th className="num" title="Laoväärtus / hinnatud laoseis">Keskm. hind</th>}
-                    <th className="num">Planeeritud</th>
-                    <th className="num">Kasutatud</th>
-                    <th className="num" title="Planeeritud miinus kasutatud; negatiivne = ülekulu">Ala/ülekulu</th>
-                    <th className="num">Kandeid</th>
-                    <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {!loading && filtered.length === 0 && (
-                    <tr>
-                      <td colSpan={canManageFinance ? 14 : 11} className="muted">
-                        {articles.length === 0
-                          ? 'Artikleid pole. Lisa seemned, väetised, taimekaitsevahendid ja teenused.'
-                          : 'Otsingule vastavaid artikleid ei leitud.'}
-                      </td>
-                    </tr>
-                  )}
-                  {filtered.map((m) => (
-                    <tr key={m.id} className={`clickable-row ${m.isActive ? '' : 'inactive'}`} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
-                      <td>{m.category.name}</td>
-                      <td>{refinement(m)}</td>
-                      <td className="name-cell" title={m.notes ?? undefined}>
-                        <span>{m.name}</span>
-                        {m.isDefaultService && <span className="article-default-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</span>}
-                        {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-                      </td>
-                      <td>{m.manufacturer ?? ''}</td>
-                      <td>{m.unit}</td>
-                      {canManageFinance && (
-                        <td className="num">{!isGoods(m.category.group) && m.price != null ? `${fmtEur(m.price)} / ${m.unit}` : ''}</td>
-                      )}
-                      {isGoods(m.category.group) ? (
-                        <td className={`num stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
-                          {fmtQty(m.stockQty ?? 0)}
-                        </td>
-                      ) : <td className="num">–</td>}
-                      {canManageFinance && <td className="num">{isGoods(m.category.group) ? fmtEur(m.stockValue ?? 0) : '–'}</td>}
-                      {canManageFinance && (
-                        <td className="num">
-                          {isGoods(m.category.group) && (m.pricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / m.pricedQty!) : '–'}
-                        </td>
-                      )}
-                      <td className="num">{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</td>
-                      <td className="num">{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</td>
-                      <td className={`num ${diffQty(m) < 0 ? 'article-overuse' : ''}`}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</td>
-                      <td className="num">{m.usageCount ?? 0}</td>
-                      <td className="actions-col">
-                        <div className="row-actions">
-                          <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
-                            <Edit2 size={15} />
-                          </Button>
-                          <Button variant="ghost" size="icon-sm" title="Asenda teise materjaliga (nt kirjaviga nimes)" aria-label="Asenda" onClick={(e) => { e.stopPropagation(); setMerge(m); }}>
-                            <GitMerge size={15} />
-                          </Button>
-                          <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
-                            <Trash2 size={15} />
-                          </Button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table scroll="fill" bordered>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kategooria</TableHead>
+                  <TableHead title="Terade kultuur, väetise ja taimekaitsevahendi täpsustus (PRIA)">Täpsustus</TableHead>
+                  <TableHead>Nimetus</TableHead>
+                  <TableHead>Tootja</TableHead>
+                  <TableHead>Ühik</TableHead>
+                  {canManageFinance && <TableHead numeric>Hind</TableHead>}
+                  <TableHead numeric title="Tänane laoseis laoühikus (hooajast sõltumatu)">Laoseis</TableHead>
+                  {canManageFinance && <TableHead numeric>Laoväärtus</TableHead>}
+                  {canManageFinance && <TableHead numeric title="Laoväärtus / hinnatud laoseis">Keskm. hind</TableHead>}
+                  <TableHead numeric>Planeeritud</TableHead>
+                  <TableHead numeric>Kasutatud</TableHead>
+                  <TableHead numeric title="Planeeritud miinus kasutatud; negatiivne = ülekulu">Ala/ülekulu</TableHead>
+                  <TableHead numeric>Kandeid</TableHead>
+                  <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {!loading && filtered.length === 0 && (
+                  <TableEmpty colSpan={canManageFinance ? 14 : 11}>
+                    {articles.length === 0
+                      ? 'Artikleid pole. Lisa seemned, väetised, taimekaitsevahendid ja teenused.'
+                      : 'Otsingule vastavaid artikleid ei leitud.'}
+                  </TableEmpty>
+                )}
+                {filtered.map((m) => (
+                  <TableRow key={m.id} tone={m.isActive ? undefined : 'muted'} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
+                    <TableCell wrap>{m.category.name}</TableCell>
+                    <TableCell wrap>{refinement(m)}</TableCell>
+                    <TableCell wrap className="name-cell" title={m.notes ?? undefined}>
+                      <span>{m.name}</span>
+                      {m.isDefaultService && <span className="article-default-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</span>}
+                      {!m.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
+                    </TableCell>
+                    <TableCell wrap>{m.manufacturer ?? ''}</TableCell>
+                    <TableCell>{m.unit}</TableCell>
+                    {canManageFinance && (
+                      <TableCell numeric>{!isGoods(m.category.group) && m.price != null ? `${fmtEur(m.price)} / ${m.unit}` : ''}</TableCell>
+                    )}
+                    {isGoods(m.category.group) ? (
+                      <TableCell numeric className={`stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
+                        {fmtQty(m.stockQty ?? 0)}
+                      </TableCell>
+                    ) : <TableCell numeric>–</TableCell>}
+                    {canManageFinance && <TableCell numeric>{isGoods(m.category.group) ? fmtEur(m.stockValue ?? 0) : '–'}</TableCell>}
+                    {canManageFinance && (
+                      <TableCell numeric>
+                        {isGoods(m.category.group) && (m.pricedQty ?? 0) > 0 ? fmtEur((m.stockValue ?? 0) / m.pricedQty!) : '–'}
+                      </TableCell>
+                    )}
+                    <TableCell numeric>{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</TableCell>
+                    <TableCell numeric>{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</TableCell>
+                    <TableCell numeric className={diffQty(m) < 0 ? 'article-overuse' : ''}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</TableCell>
+                    <TableCell numeric>{m.usageCount ?? 0}</TableCell>
+                    <TableCell actions>
+                      <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>
+                        <Edit2 size={15} />
+                      </Button>
+                      <Button variant="ghost" size="icon-sm" title="Asenda teise materjaliga (nt kirjaviga nimes)" aria-label="Asenda" onClick={(e) => { e.stopPropagation(); setMerge(m); }}>
+                        <GitMerge size={15} />
+                      </Button>
+                      <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={(e) => { e.stopPropagation(); void remove(m); }}>
+                        <Trash2 size={15} />
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
             </>)}
           </div>
         </div>

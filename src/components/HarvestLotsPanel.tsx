@@ -11,7 +11,7 @@ import type { Article } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotStatus, HarvestLotSummary } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -65,37 +65,35 @@ export const HarvestLotsPanel: React.FC<Props> = ({ warehouses, articles, onChan
         </div>
       </div>
 
-      <div className="register-table-wrap">
-        <table className="register-table">
-          <thead>
-            <tr>
-              <th>Nimi</th>
-              <th>Kultuur</th>
-              <th>Hooaeg</th>
-              <th className="num">Punkreid</th>
-              <th className="num">Kaalutud, t</th>
-              <th className="num">Punkri kaal, t</th>
-              <th>Staatus</th>
-              <th className="num">Kandeid</th>
-            </tr>
-          </thead>
-          <tbody>
-            {shown.length === 0 && <tr><td colSpan={8} className="muted">Saagipartiisid pole.</td></tr>}
-            {shown.map((l) => (
-              <tr key={l.id} style={{ cursor: 'pointer' }} onClick={() => setDialog({ lotId: l.id })}>
-                <td>{l.name}</td>
-                <td>{l.cropName}</td>
-                <td>{l.seasonYear}</td>
-                <td className="num">{l.bunkers}</td>
-                <td className="num">{formatQty(l.weighedTonnes)}</td>
-                <td className="num">{l.bunkerTonnes == null ? '–' : formatQty(l.bunkerTonnes)}</td>
-                <td>{HARVEST_LOT_STATUS_LABEL[l.status]}</td>
-                <td className="num">{l.entryCount}</td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table scroll="fill" bordered>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nimi</TableHead>
+            <TableHead>Kultuur</TableHead>
+            <TableHead>Hooaeg</TableHead>
+            <TableHead numeric>Punkreid</TableHead>
+            <TableHead numeric>Kaalutud, t</TableHead>
+            <TableHead numeric>Punkri kaal, t</TableHead>
+            <TableHead>Staatus</TableHead>
+            <TableHead numeric>Kandeid</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {shown.length === 0 && <TableEmpty colSpan={8}>Saagipartiisid pole.</TableEmpty>}
+          {shown.map((l) => (
+            <TableRow key={l.id} onClick={() => setDialog({ lotId: l.id })}>
+              <TableCell wrap>{l.name}</TableCell>
+              <TableCell>{l.cropName}</TableCell>
+              <TableCell>{l.seasonYear}</TableCell>
+              <TableCell numeric>{l.bunkers}</TableCell>
+              <TableCell numeric>{formatQty(l.weighedTonnes)}</TableCell>
+              <TableCell numeric>{l.bunkerTonnes == null ? '–' : formatQty(l.bunkerTonnes)}</TableCell>
+              <TableCell>{HARVEST_LOT_STATUS_LABEL[l.status]}</TableCell>
+              <TableCell numeric>{l.entryCount}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {dialog && (
         <HarvestLotDialog

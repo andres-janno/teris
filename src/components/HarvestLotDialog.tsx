@@ -11,7 +11,7 @@ import type { Crop } from '../types/crop';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -188,57 +188,51 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
 
               <section className="harvest-lot-section">
                 <h4>Kanded</h4>
-                <div className="register-table-wrap">
-                  <table className="register-table">
-                    <thead>
-                      <tr><th>Kuupäev</th><th>Põld</th><th className="num">Punkreid</th><th className="num">Tonnid</th><th>Finants</th></tr>
-                    </thead>
-                    <tbody>
-                      {lot.entries.length === 0 && <tr><td colSpan={5} className="muted">Kandeid pole.</td></tr>}
-                      {lot.entries.map((e) => (
-                        <tr key={e.id}>
-                          <td>{formatDate(e.date)}</td>
-                          <td>{e.fieldName}</td>
-                          <td className="num">{e.bunkers ?? '–'}</td>
-                          <td className="num">
-                            {e.manual && <span className="muted" title="Tonnid sisestatud käsitsi">käsitsi </span>}
-                            {!e.manual && !(e.tonnes != null && e.tonnes > 0) ? <span className="muted">kaalumata</span> : formatQty(e.tonnes ?? 0)}
-                          </td>
-                          <td>{e.financeStatus ?? ''}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table scroll="sm" bordered>
+                  <TableHeader>
+                    <TableRow><TableHead>Kuupäev</TableHead><TableHead>Põld</TableHead><TableHead numeric>Punkreid</TableHead><TableHead numeric>Tonnid</TableHead><TableHead>Finants</TableHead></TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lot.entries.length === 0 && <TableEmpty colSpan={5}>Kandeid pole.</TableEmpty>}
+                    {lot.entries.map((e) => (
+                      <TableRow key={e.id}>
+                        <TableCell>{formatDate(e.date)}</TableCell>
+                        <TableCell wrap>{e.fieldName}</TableCell>
+                        <TableCell numeric>{e.bunkers ?? '–'}</TableCell>
+                        <TableCell numeric>
+                          {e.manual && <span className="muted" title="Tonnid sisestatud käsitsi">käsitsi </span>}
+                          {!e.manual && !(e.tonnes != null && e.tonnes > 0) ? <span className="muted">kaalumata</span> : formatQty(e.tonnes ?? 0)}
+                        </TableCell>
+                        <TableCell>{e.financeStatus ?? ''}</TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
               </section>
 
               <section className="harvest-lot-section">
                 <h4>Kaalumised</h4>
-                <div className="register-table-wrap">
-                  <table className="register-table">
-                    <thead>
-                      <tr><th>Kuupäev</th><th className="num">Tonnid</th><th>Märkus</th><th className="actions-col"><span className="sr-only">Tegevused</span></th></tr>
-                    </thead>
-                    <tbody>
-                      {lot.weighings.length === 0 && <tr><td colSpan={4} className="muted">Kaalumisi pole.</td></tr>}
-                      {lot.weighings.map((w) => (
-                        <tr key={w.id}>
-                          <td>{formatDate(w.date)}</td>
-                          <td className="num">{formatQty(w.tonnes)}</td>
-                          <td>{w.notes ?? ''}</td>
-                          <td className="actions-col">
-                            {!closed && (
-                              <div className="row-actions">
-                                <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kaalumine" disabled={busy}
-                                  onClick={() => void run(async () => { await api.deleteHarvestLotWeighing(lot.id, w.id); })}><Trash2 size={15} /></Button>
-                              </div>
-                            )}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table scroll="sm" bordered>
+                  <TableHeader>
+                    <TableRow><TableHead>Kuupäev</TableHead><TableHead numeric>Tonnid</TableHead><TableHead>Märkus</TableHead><TableHead actions><span className="sr-only">Tegevused</span></TableHead></TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lot.weighings.length === 0 && <TableEmpty colSpan={4}>Kaalumisi pole.</TableEmpty>}
+                    {lot.weighings.map((w) => (
+                      <TableRow key={w.id}>
+                        <TableCell>{formatDate(w.date)}</TableCell>
+                        <TableCell numeric>{formatQty(w.tonnes)}</TableCell>
+                        <TableCell wrap>{w.notes ?? ''}</TableCell>
+                        <TableCell actions>
+                          {!closed && (
+                            <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kaalumine" disabled={busy}
+                              onClick={() => void run(async () => { await api.deleteHarvestLotWeighing(lot.id, w.id); })}><Trash2 size={15} /></Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
                 {!closed && (
                   <form className="harvest-lot-add harvest-lot-add-weighing" onSubmit={addWeighing}>
                     <div className="form-group">
@@ -260,34 +254,30 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
 
               <section className="harvest-lot-section">
                 <h4>Kuivatuskulud</h4>
-                <div className="register-table-wrap">
-                  <table className="register-table">
-                    <thead>
-                      <tr>
-                        <th>Kuupäev</th><th>Artikkel</th><th className="num">Kogus</th><th className="num">Ühikuhind</th><th className="num">Summa</th>
-                        <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {lot.costs.length === 0 && <tr><td colSpan={6} className="muted">Kuivatuskulusid pole.</td></tr>}
-                      {lot.costs.map((c) => (
-                        <tr key={c.id}>
-                          <td>{formatDate(c.date)}</td>
-                          <td>{c.articleName}</td>
-                          <td className="num">{formatQty(c.quantity)} {c.unit}</td>
-                          <td className="num">{c.unitPrice == null ? <span className="muted">hindamata</span> : fmtEur(c.unitPrice)}</td>
-                          <td className="num">{c.total == null ? <span className="muted">hindamata</span> : fmtEur(c.total)}</td>
-                          <td className="actions-col">
-                            <div className="row-actions">
-                              <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kuivatuskulu" disabled={busy}
-                                onClick={() => void run(async () => { await api.deleteHarvestLotCost(lot.id, c.id); })}><Trash2 size={15} /></Button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                <Table scroll="sm" bordered>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Kuupäev</TableHead><TableHead>Artikkel</TableHead><TableHead numeric>Kogus</TableHead><TableHead numeric>Ühikuhind</TableHead><TableHead numeric>Summa</TableHead>
+                      <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {lot.costs.length === 0 && <TableEmpty colSpan={6}>Kuivatuskulusid pole.</TableEmpty>}
+                    {lot.costs.map((c) => (
+                      <TableRow key={c.id}>
+                        <TableCell>{formatDate(c.date)}</TableCell>
+                        <TableCell wrap>{c.articleName}</TableCell>
+                        <TableCell numeric>{formatQty(c.quantity)} {c.unit}</TableCell>
+                        <TableCell numeric>{c.unitPrice == null ? <span className="muted">hindamata</span> : fmtEur(c.unitPrice)}</TableCell>
+                        <TableCell numeric>{c.total == null ? <span className="muted">hindamata</span> : fmtEur(c.total)}</TableCell>
+                        <TableCell actions>
+                          <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kuivatuskulu" disabled={busy}
+                            onClick={() => void run(async () => { await api.deleteHarvestLotCost(lot.id, c.id); })}><Trash2 size={15} /></Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
                 <form className="harvest-lot-add harvest-lot-add-cost" onSubmit={addCost}>
                   <div className="form-group">
                     <label htmlFor="hl-c-date">Kuupäev</label>

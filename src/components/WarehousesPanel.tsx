@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { PointOfInterest } from '../types/poi';
 import type { Warehouse } from '../types/stock';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -59,21 +59,19 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
   const editingField = !!form?.id && !!warehouses.find((w) => w.id === form.id)?.fieldId;
 
   const row = (w: Warehouse) => (
-    <tr key={w.id} className={w.isActive ? '' : 'inactive'}>
-      <td className="name-cell">
+    <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
+      <TableCell wrap className="name-cell">
         <span className="field-name">{w.name}</span>
         {w.isDefault && <span className="users-admin-badge">Põhiladu</span>}
         {!w.isActive && <span className="users-admin-badge">Mitteaktiivne</span>}
-      </td>
-      <td>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</td>
-      <td className="muted">{w.notes ?? ''}</td>
-      <td className="actions-col">
-        <div className="row-actions">
-          <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></Button>
-          {!w.isDefault && !w.fieldId && <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></Button>}
-        </div>
-      </td>
-    </tr>
+      </TableCell>
+      <TableCell>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</TableCell>
+      <TableCell wrap className="muted">{w.notes ?? ''}</TableCell>
+      <TableCell actions>
+        <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></Button>
+        {!w.isDefault && !w.fieldId && <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></Button>}
+      </TableCell>
+    </TableRow>
   );
 
   return (
@@ -83,30 +81,28 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
           <Button variant="primary" size="sm" onClick={() => setForm({ isActive: true, isDefault: false })}><Plus size={14} /><span>Lisa ladu</span></Button>
         </div>
       </div>
-      <div className="register-table-wrap">
-        <table className="register-table">
-          <thead>
-            <tr>
-              <th>Ladu</th>
-              <th>Asukoht</th>
-              <th>Märkus</th>
-              <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {mainWarehouses.map(row)}
-            {fieldWarehouses.length > 0 && (
-              <tr className="register-group-row">
-                <td colSpan={4}>
-                  <strong>Põllu laod</strong>
-                  <span className="muted"> — koristatud punkrid enne vedu; tekivad esimesel koristusel automaatselt</span>
-                </td>
-              </tr>
-            )}
-            {fieldWarehouses.map(row)}
-          </tbody>
-        </table>
-      </div>
+      <Table scroll="fill" bordered>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Ladu</TableHead>
+            <TableHead>Asukoht</TableHead>
+            <TableHead>Märkus</TableHead>
+            <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {mainWarehouses.map(row)}
+          {fieldWarehouses.length > 0 && (
+            <TableRow tone="group">
+              <TableCell wrap colSpan={4}>
+                <strong>Põllu laod</strong>
+                <span className="muted"> — koristatud punkrid enne vedu; tekivad esimesel koristusel automaatselt</span>
+              </TableCell>
+            </TableRow>
+          )}
+          {fieldWarehouses.map(row)}
+        </TableBody>
+      </Table>
 
       {form && (
         <Dialog open onOpenChange={(open) => { if (!open) setForm(null); }}>

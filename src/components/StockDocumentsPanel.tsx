@@ -14,7 +14,7 @@ import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -89,45 +89,41 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
         </div>
       </div>
 
-      <div className="register-table-wrap">
-        <table className="register-table">
-          <thead>
-            <tr>
-              <th>Kuupäev</th>
-              <th>Liik</th>
-              <th>Ladu</th>
-              <th>Tarnija / põhjus</th>
-              <th>Dokument</th>
-              <th className="num">Ridu</th>
-              <th className="num">Summa</th>
-              <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-            </tr>
-          </thead>
-          <tbody>
-            {docs.length === 0 && <tr><td colSpan={8} className="muted">Laokandeid pole.</td></tr>}
-            {docs.map((d) => (
-              <tr key={d.id}>
-                <td>{formatDate(d.date)}</td>
-                <td>{STOCK_DOC_KIND_LABEL[d.kind]}</td>
-                <td>{d.kind === 'TRANSFER' ? `${d.warehouseName} → ${d.toWarehouseName}` : d.warehouseName}</td>
-                <td>{party(d)}</td>
-                <td>{d.documentNo ?? ''}</td>
-                <td className="num">{d.lines.length}</td>
-                <td className="num">
-                  {d.hasShortage && <span className="stock-shortage-badge" title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</span>}
-                  {fmtEur(d.total)}{d.hasUnpriced && <span className="muted" title="Osa ridu on hindamata"> *</span>}
-                </td>
-                <td className="actions-col">
-                  <div className="row-actions">
-                    <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></Button>
-                    <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(d)}><Trash2 size={15} /></Button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+      <Table scroll="fill" bordered>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Kuupäev</TableHead>
+            <TableHead>Liik</TableHead>
+            <TableHead>Ladu</TableHead>
+            <TableHead>Tarnija / põhjus</TableHead>
+            <TableHead>Dokument</TableHead>
+            <TableHead numeric>Ridu</TableHead>
+            <TableHead numeric>Summa</TableHead>
+            <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {docs.length === 0 && <TableEmpty colSpan={8}>Laokandeid pole.</TableEmpty>}
+          {docs.map((d) => (
+            <TableRow key={d.id}>
+              <TableCell>{formatDate(d.date)}</TableCell>
+              <TableCell>{STOCK_DOC_KIND_LABEL[d.kind]}</TableCell>
+              <TableCell wrap>{d.kind === 'TRANSFER' ? `${d.warehouseName} → ${d.toWarehouseName}` : d.warehouseName}</TableCell>
+              <TableCell wrap>{party(d)}</TableCell>
+              <TableCell>{d.documentNo ?? ''}</TableCell>
+              <TableCell numeric>{d.lines.length}</TableCell>
+              <TableCell numeric>
+                {d.hasShortage && <span className="stock-shortage-badge" title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</span>}
+                {fmtEur(d.total)}{d.hasUnpriced && <span className="muted" title="Osa ridu on hindamata"> *</span>}
+              </TableCell>
+              <TableCell actions>
+                <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></Button>
+                <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(d)}><Trash2 size={15} /></Button>
+              </TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
 
       {form && form.kind === 'INVENTORY' && (
         <InventoryDialog

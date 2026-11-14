@@ -10,7 +10,7 @@ import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Dialog, DialogBody, DialogContent, DialogHeader } from './ui';
+import { Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -67,42 +67,40 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
               </ul>
             </div>
           )}
-          <div className="register-table-wrap">
-            <table className="register-table stock-card-table">
-              <thead>
-                <tr>
-                  <th>Kuupäev</th>
-                  <th>Liikumine</th>
-                  {!warehouseId && <th>Ladu</th>}
-                  <th className="num">Muutus ({data?.unit ?? article.unit})</th>
-                  {warehouseId && <th className="num">Seis</th>}
-                  {canSeeMoney && <th className="num">Maksumus</th>}
-                </tr>
-              </thead>
-              <tbody>
-                {data && data.movements.length === 0 && (
-                  <tr><td colSpan={5} className="muted">Liikumisi pole.</td></tr>
-                )}
-                {data?.movements.map((m) => (
-                  <tr key={m.ref}>
-                    <td>{formatDate(m.date)}</td>
-                    <td>
-                      {describe(m)}
-                      {!!m.shortageQty && <span className="article-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
-                    </td>
-                    {!warehouseId && <td>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</td>}
-                    <td className={`num stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
-                      {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
-                    </td>
-                    {warehouseId && <td className={`num ${m.balance < 0 ? 'article-overuse' : ''}`}>{fmtQty(m.balance)}</td>}
-                    {canSeeMoney && (
-                      <td className="num">{m.cost == null ? <span className="muted" title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</td>
-                    )}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table scroll="md" bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Kuupäev</TableHead>
+                <TableHead>Liikumine</TableHead>
+                {!warehouseId && <TableHead>Ladu</TableHead>}
+                <TableHead numeric>Muutus ({data?.unit ?? article.unit})</TableHead>
+                {warehouseId && <TableHead numeric>Seis</TableHead>}
+                {canSeeMoney && <TableHead numeric>Maksumus</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {data && data.movements.length === 0 && (
+                <TableEmpty colSpan={4 + (canSeeMoney ? 1 : 0)}>Liikumisi pole.</TableEmpty>
+              )}
+              {data?.movements.map((m) => (
+                <TableRow key={m.ref}>
+                  <TableCell>{formatDate(m.date)}</TableCell>
+                  <TableCell wrap>
+                    {describe(m)}
+                    {!!m.shortageQty && <span className="article-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
+                  </TableCell>
+                  {!warehouseId && <TableCell>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</TableCell>}
+                  <TableCell numeric className={`stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
+                    {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
+                  </TableCell>
+                  {warehouseId && <TableCell numeric className={m.balance < 0 ? 'article-overuse' : ''}>{fmtQty(m.balance)}</TableCell>}
+                  {canSeeMoney && (
+                    <TableCell numeric>{m.cost == null ? <span className="muted" title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</TableCell>
+                  )}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </DialogBody>
       </DialogContent>
     </Dialog>

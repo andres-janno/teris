@@ -10189,12 +10189,6 @@ select.form-input:read-only {
   .pria-grid-head { display: none; }
 }
 
-.articles-table th.num,
-.articles-table td.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
 .article-overuse {
   color: #dc2626;
   font-weight: 600;
@@ -10455,9 +10449,6 @@ select.form-input:read-only {
 }
 
 /* Laoarvestus */
-.articles-table tr.clickable-row { cursor: pointer; }
-.stock-card-table td, .stock-card-table th { white-space: nowrap; }
-.stock-card-table td:nth-child(2) { white-space: normal; }
 /* Numbrid tabelites alati paremale joondatud */
 th.num, td.num {
   text-align: right;
@@ -10524,7 +10515,6 @@ td.stock-qty-out { color: #dc2626; }
 .harvest-lot-tiles .finance-kpi-value { font-size: 1.15rem; font-weight: 700; text-align: left; }
 .harvest-lot-section { display: flex; flex-direction: column; gap: 8px; }
 .harvest-lot-section h4 { margin: 0; }
-.harvest-lot-section .register-table-wrap { max-height: 40vh; }
 .harvest-lot-add { display: grid; gap: 10px; align-items: end; padding: 10px 12px; border: 1px dashed var(--border-card); border-radius: var(--radius-md); }
 .harvest-lot-add .form-group label { font-size: 0.72rem; color: var(--text-secondary); }
 .harvest-lot-add .form-input { width: 100%; min-width: 0; box-sizing: border-box; }
