@@ -170,7 +170,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                 <TableHead>Roll</TableHead>
                 <TableHead>Olek</TableHead>
                 <TableHead>Viimati sees</TableHead>
-                <TableHead actions />
+                <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

@@ -89,7 +89,7 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
                     {describe(m)}
                     {!!m.shortageQty && <span className="article-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
                   </TableCell>
-                  {!warehouseId && <TableCell>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</TableCell>}
+                  {!warehouseId && <TableCell wrap>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</TableCell>}
                   <TableCell numeric className={`stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
                     {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
                   </TableCell>

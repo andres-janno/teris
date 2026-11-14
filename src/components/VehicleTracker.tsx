@@ -2020,9 +2020,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <TableHead>Masin</TableHead>
                     <TableHead>Haagitud (algus)</TableHead>
                     <TableHead>Lahti haagitud (lõpp)</TableHead>
-                    <TableHead>Kestus</TableHead>
+                    <TableHead numeric>Kestus</TableHead>
                     <TableHead>Märkused</TableHead>
-                    <TableHead actions>Tegevused</TableHead>
+                    <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -2063,7 +2063,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
                           )}
                         </TableCell>
-                        <TableCell>
+                        <TableCell numeric>
                           <span className={`fleet-cell-duration${isActive ? ' is-active' : ''}`}>
                             {duration}
                           </span>

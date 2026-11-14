@@ -742,12 +742,12 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       <div className="finance-summary-card">
                         <div className="finance-summary-row">
                           <span className="text-muted">Kulud kokku:</span>
-                          <strong className="text-red-700">{fmtCur(entryCostTotal)}</strong>
+                          <strong className="cost-neg">{fmtCur(entryCostTotal)}</strong>
                         </div>
                         {entryRevenueTotal > 0 && (
                           <div className="finance-summary-row">
                             <span className="text-muted">Saagitulu kokku:</span>
-                            <strong className="text-emerald-700">+{fmtCur(entryRevenueTotal)}</strong>
+                            <strong className="profit-pos">+{fmtCur(entryRevenueTotal)}</strong>
                           </div>
                         )}
                         <div className="finance-summary-divider" />
@@ -999,17 +999,17 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                               </span>
                             </TableCell>
                             <TableCell numeric>{fmtHa(r.areaHa)} ha</TableCell>
-                            <TableCell numeric className="text-muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
-                            <TableCell numeric className="text-muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</TableCell>
-                            <TableCell numeric className="text-muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</TableCell>
-                            <TableCell numeric className="text-muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</TableCell>
-                            <TableCell numeric className="text-muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</TableCell>
-                            <TableCell numeric className="font-semibold">{fmtCur(r.costTotal)}</TableCell>
-                            <TableCell numeric className="text-emerald-700 font-semibold">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</TableCell>
-                            <TableCell numeric className={`font-bold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
+                            <TableCell numeric className="muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
+                            <TableCell numeric className="muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</TableCell>
+                            <TableCell numeric className="muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</TableCell>
+                            <TableCell numeric className="muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</TableCell>
+                            <TableCell numeric className="muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</TableCell>
+                            <TableCell numeric className="cost-total">{fmtCur(r.costTotal)}</TableCell>
+                            <TableCell numeric className="profit-pos">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</TableCell>
+                            <TableCell numeric className={isProfitable ? 'profit-pos' : 'profit-neg'}>
                               {isProfitable && r.profit > 0 ? '+' : ''}{fmtCur(r.profit)}
                             </TableCell>
-                            <TableCell numeric className={`font-semibold ${isProfitable ? 'text-emerald-700' : 'text-red-700'}`}>
+                            <TableCell numeric className={isProfitable ? 'profit-pos' : 'profit-neg'}>
                               {isProfitable && profitPerHa > 0 ? '+' : ''}{fmtCur(profitPerHa)}
                             </TableCell>
                             <TableCell numeric>

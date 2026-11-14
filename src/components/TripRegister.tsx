@@ -244,9 +244,9 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                     <TableRow data-trip-id={t.id} selected={t.id === lastOpenedId} tone={t.deletedAt ? 'muted' : undefined} onClick={() => openTrip(t)}>
                       <TableCell>{formatDateTime(t.startedAt).slice(0, 10)}</TableCell>
                       <TableCell wrap>
-                        {t.vehicleName ?? <span className="text-muted">{t.deviceLabel} — seos puudub</span>}
+                        {t.vehicleName ?? <span className="muted">{t.deviceLabel} — seos puudub</span>}
                       </TableCell>
-                      <TableCell wrap>{t.implementName ?? <span className="text-muted">—</span>}</TableCell>
+                      <TableCell wrap>{t.implementName ?? <span className="muted">—</span>}</TableCell>
                       <TableCell>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell numeric>{formatDuration(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell wrap>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</TableCell>

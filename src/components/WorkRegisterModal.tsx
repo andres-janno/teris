@@ -100,7 +100,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                 <TableHead>Faas</TableHead>
                 <TableHead>Kandes küsitakse (kogused)</TableHead>
                 <TableHead numeric>Põldudel</TableHead>
-                <TableHead actions>Tegevused</TableHead>
+                <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>

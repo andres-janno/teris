@@ -36,7 +36,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 ## Tabel
 
 Vaates ei ole toorest `<table>`-it: kasuta `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`,
-`TableCell`, `TableEmpty` (import `./ui` kaudu). Päis kleepub alati; numbrid paremale (`numeric`), kogused vormindab
+`TableCell`, `TableEmpty` (import `./ui` kaudu). Päis kleepub tabeli enda kerimisalas (vt allpool); numbrid paremale (`numeric`), kogused vormindab
 kutsuja (`formatQty`). `<table>` kannab `data-slot="table"`, et vanad sisuklassid (`.muted`, `.cell-sub`) toimiksid.
 
 | Komponent | Prop'id |
@@ -47,6 +47,13 @@ kutsuja (`formatQty`). `<table>` kannab `data-slot="table"`, et vanad sisuklassi
 | `TableHead` | `numeric`; `pin`: `start` / `end`; `actions` (tegevuste veerg); `sort`: `asc` / `desc` / `none` (+ `aria-sort`, ikoon kutsuja) |
 | `TableCell` | `numeric`; `wrap` (murdub, vaikimisi ei murdu); `pin`; `actions` (kleepub paremale, nupud keskel reas) |
 | `TableEmpty` | `colSpan` = veergude arv; `children` = tühja tabeli tekst |
+
+Märkused:
+
+- **Millal päis kleepub:** ainult kõrgusega piiratud ümbrises (`sm` / `md`, või `fill`, mille vanem on flex-veerg).
+  Variandiga `x` / `none` päis välise kerija vastu ei kleepu.
+- **Kinnitatud (`pin`) ja tegevuste (`actions`) lahter** hoiab läbipaistmatut tausta ega võta rea tooni värvi
+  (`tone`, `selected`).
 
 ## Tailwindi skaneerimine
 

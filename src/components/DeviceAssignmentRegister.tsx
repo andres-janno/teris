@@ -272,9 +272,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                 <TableHead>Masin / haakeriist</TableHead>
                 <TableHead>Paigaldatud (algus)</TableHead>
                 <TableHead>Eemaldatud (lõpp)</TableHead>
-                <TableHead>Kestus</TableHead>
+                <TableHead numeric>Kestus</TableHead>
                 <TableHead>Märkused</TableHead>
-                <TableHead actions>Tegevused</TableHead>
+                <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -321,7 +321,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
                       )}
                     </TableCell>
-                    <TableCell>
+                    <TableCell numeric>
                       <span className={`fleet-cell-duration${isActive ? ' is-active' : ''}`}>
                         {formatDuration(a.startedAt, a.endedAt)}
                       </span>

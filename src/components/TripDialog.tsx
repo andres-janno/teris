@@ -219,18 +219,18 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                       <TableCell>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</TableCell>
                       <TableCell numeric wrap>
                         {f.areaHa == null ? '—' : formatQty(f.areaHa)}
-                        <div className="text-muted">
+                        <div className="cell-sub">
                           {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
                         </div>
                       </TableCell>
                       <TableCell numeric>
                         {f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}
-                        {f.fuelFieldL != null && <div className="text-muted">põllul {formatQty(f.fuelFieldL)}</div>}
+                        {f.fuelFieldL != null && <div className="cell-sub">põllul {formatQty(f.fuelFieldL)}</div>}
                       </TableCell>
                       <TableCell>
                         <div className="trip-dialog-entry-cell">
                           {f.entries.length === 0 ? (
-                            <span className="text-muted">kanne puudub</span>
+                            <span className="muted">kanne puudub</span>
                           ) : (
                             f.entries.map((e) => (
                               <button
@@ -242,7 +242,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                                 onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
                               >
                                 <span>{e.workTypeName}</span>
-                                <span className="text-muted">{formatDate(e.date)}</span>
+                                <span className="cell-sub">{formatDate(e.date)}</span>
                               </button>
                             ))
                           )}

@@ -421,7 +421,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</TableCell>
                       <TableCell wrap className="wrap-cell">{field.soilType || <span className="muted">–</span>}</TableCell>
                       <TableCell>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
-                      <TableCell>{field.operatorName || <span className="muted">–</span>}</TableCell>
+                      <TableCell wrap>{field.operatorName || <span className="muted">–</span>}</TableCell>
                       <TableCell actions>
                         <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
                           <Edit2 size={15} />

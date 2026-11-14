@@ -135,14 +135,14 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
                 <TableHead>Võti</TableHead>
                 <TableHead>Loodud</TableHead>
                 <TableHead>Viimati kasutatud</TableHead>
-                <TableHead actions />
+                <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {keys?.length === 0 && <TableEmpty colSpan={5}>Võtmeid pole</TableEmpty>}
               {keys?.map((k) => (
                 <TableRow key={k.id}>
-                  <TableCell>{k.name}</TableCell>
+                  <TableCell wrap>{k.name}</TableCell>
                   <TableCell><code>{k.keyPrefix}…</code></TableCell>
                   <TableCell>{formatDateTimeTallinn(k.createdAt)}</TableCell>
                   <TableCell>{formatDateTimeTallinn(k.lastUsedAt)}</TableCell>
