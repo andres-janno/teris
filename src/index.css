@@ -3868,7 +3868,7 @@ input[type="number"],
 
 .register-table .sticky-size,
 [data-slot="table"] .sticky-size {
-  left: 300px;
+  left: 300px !important; /* ui utiliit left-0 (pin="start") võidaks muidu */
   width: 110px;
   min-width: 110px;
   box-shadow: inset -1px 0 0 var(--border-card);
@@ -3979,17 +3979,16 @@ input[type="number"],
   color: var(--amber-500);
 }
 
+/* Jalus on ui/TableFooter sticky (taust, kleepumine, z-index 2); siin ainult ülajoon.
+   Kinnitatud nurgalahtrid (Põld, tegevused) peavad olema ülejäänud jaluselahtrite kohal (z 3 vs 2),
+   muidu kerimisel katavad hilisemad lahtrid need; !important, sest ui utiliit z-[2] on legacy kihist kõrgemal. */
 .fields-table tfoot td {
-  position: sticky;
-  bottom: 0;
-  z-index: 2;
-  background: linear-gradient(var(--stat-bg), var(--stat-bg)), var(--bg-modal);
   border-top: 1px solid var(--border-card);
-  border-bottom: none;
 }
 
-.fields-table tfoot td.sticky-name {
-  z-index: 3;
+.fields-table tfoot td.sticky-name,
+.fields-table tfoot td:last-child {
+  z-index: 3 !important;
 }
 
 .register-table th.year-col,
@@ -4000,7 +3999,7 @@ input[type="number"],
 
 .register-table th.year-col:hover,
 [data-slot="table"] th.year-col:hover {
-  color: var(--emerald-500);
+  color: var(--emerald-500) !important; /* ui päise text-muted-foreground võidaks muidu */
 }
 
 /* Valitud aasta: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active).
@@ -7422,7 +7421,7 @@ a.history-pill:hover {
 
 /* Põldude ja külvikorra tabeli nimelahter: kuju nupp nurgas, nimi ei jookse selle alla */
 .name-cell.has-corner-btn {
-  padding-right: 30px;
+  padding-right: 30px !important; /* ui lahtri px-2.5 võidaks muidu */
 }
 
 .name-cell.has-corner-btn:not(.sticky-name) {

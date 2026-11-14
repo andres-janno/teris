@@ -21,7 +21,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -495,33 +495,32 @@ function cropSummaryKey(cropText: string): string {
             );
           })()}
 
-          <div className="register-table-wrap">
-            <table className="register-table">
-              <thead>
-                <tr>
-                  <th className="sticky-name">Põld</th>
-                  <th className="sticky-size">Suurus</th>
+            <Table scroll="fill" bordered>
+              <TableHeader>
+                <TableRow>
+                  <TableHead pin="start" className="sticky-name">Põld</TableHead>
+                  <TableHead pin="start" className="sticky-size">Suurus</TableHead>
                   {tableYears.map((yr) => (
-                    <th
+                    <TableHead
                       key={yr}
                       className={`year-col ${yr === selectedYear ? 'selected' : ''}`}
                       onClick={() => onSelectYear(yr)}
                       title={`Vali hooaeg ${yr}`}
                     >
                       <span className="year-col-label">{yr}</span>
-                    </th>
+                    </TableHead>
                   ))}
-                </tr>
-              </thead>
-              <tbody>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
                 {filteredFields.map((field) => {
                   const selectedRec = field.history.find((h) => h.year === selectedYear);
                   const latestRec = [...field.history].sort((a, b) => b.year - a.year)[0];
                   const sizeRec = selectedRec || latestRec;
 
                   return (
-                    <tr key={field.id}>
-                      <td className="name-cell sticky-name has-corner-btn">
+                    <TableRow key={field.id}>
+                      <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                         {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {selectedRec?.geometry && (
                           <button
@@ -542,8 +541,9 @@ function cropSummaryKey(cropText: string): string {
                           {field.operatorName && <span className="sub-tag owner-tag">👤 {field.operatorName}</span>}
                           {field.soilType && <span className="sub-tag soil-tag" title={SOIL_AUTO_HINT}>🌱 {field.soilType}</span>}
                         </div>
-                      </td>
-                      <td
+                      </TableCell>
+                      <TableCell
+                        pin="start"
                         className={`size-cell sticky-size ${selectedRec ? '' : 'muted'}`}
                         title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                       >
@@ -551,7 +551,7 @@ function cropSummaryKey(cropText: string): string {
                           <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
                           {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
                         </div>
-                      </td>
+                      </TableCell>
                       {tableYears.map((yr) => {
                         const rec = field.history.find((h) => h.year === yr);
                         const hasCrop = !!rec && !isCropUndetermined(rec.crop);
@@ -563,7 +563,7 @@ function cropSummaryKey(cropText: string): string {
                           const varietyOptions =
                             cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
                           return (
-                            <td key={yr} className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
+                            <TableCell key={yr} wrap className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
                               <div ref={cropEditRef} className="crop-inline-edit">
                                 <select
                                   className="form-input"
@@ -611,11 +611,11 @@ function cropSummaryKey(cropText: string): string {
                                   </Button>
                                 </div>
                               </div>
-                            </td>
+                            </TableCell>
                           );
                         }
                         return (
-                          <td
+                          <TableCell
                             key={yr}
                             className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${hasCrop ? 'has-crop' : ''}`}
                             style={hasCrop ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
@@ -652,14 +652,14 @@ function cropSummaryKey(cropText: string): string {
                                 {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
                               </div>
                             )}
-                          </td>
+                          </TableCell>
                         );
                       })}
-                    </tr>
+                    </TableRow>
                   );
                 })}
-              </tbody>
-            </table>
+              </TableBody>
+            </Table>
 
             {filteredFields.length === 0 && (
               <div className="empty-register-state glass-card">
@@ -668,7 +668,6 @@ function cropSummaryKey(cropText: string): string {
                 <p>Proovi muuta otsingusõna või eemalda kultuuri-/omandifilter.</p>
               </div>
             )}
-          </div>
         </div>
   );
 

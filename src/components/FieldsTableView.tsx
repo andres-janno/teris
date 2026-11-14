@@ -17,7 +17,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
 import { FilterClear } from './FilterClear';
 import { fmt0 } from '../services/weatherFormat';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableFooter, TableHead, TableHeader, TableRow } from './ui';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -335,34 +335,34 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               </div>
             </div>
 
-            <div className="register-table-wrap">
-              <table className="register-table fields-table">
-                <thead>
-                  <tr>
-                    <th className="sticky-name">Põld</th>
-                    <th className="num-col">Pindala</th>
-                    <th className="num-col">PRIA pind</th>
-                    <th>Kultuur {selectedYear}</th>
-                    {weatherEnabled && <th className="num-col" title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</th>}
-                    {weatherEnabled && <th className="num-col" title="Sademed külvist koristuseni">Sademed, mm</th>}
-                    <th>Omandisuhe</th>
-                    <th>Omanik / rendileandja</th>
-                    <th>Katastriüksused</th>
-                    <th className="num-col">Maamaks</th>
-                    <th className="num-col">Rent</th>
-                    <th>Mullastik</th>
-                    <th>Drenaaž</th>
-                    <th>Operaator</th>
-                    <th className="actions-col"><span className="sr-only">Tegevused</span></th>
-                  </tr>
-                </thead>
-                <tbody>
+            <>
+              <Table scroll="fill" bordered className="fields-table">
+                <TableHeader>
+                  <TableRow>
+                    <TableHead pin="start" className="sticky-name">Põld</TableHead>
+                    <TableHead numeric>Pindala</TableHead>
+                    <TableHead numeric>PRIA pind</TableHead>
+                    <TableHead>Kultuur {selectedYear}</TableHead>
+                    {weatherEnabled && <TableHead numeric title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</TableHead>}
+                    {weatherEnabled && <TableHead numeric title="Sademed külvist koristuseni">Sademed, mm</TableHead>}
+                    <TableHead>Omandisuhe</TableHead>
+                    <TableHead>Omanik / rendileandja</TableHead>
+                    <TableHead>Katastriüksused</TableHead>
+                    <TableHead numeric>Maamaks</TableHead>
+                    <TableHead numeric>Rent</TableHead>
+                    <TableHead>Mullastik</TableHead>
+                    <TableHead>Drenaaž</TableHead>
+                    <TableHead>Operaator</TableHead>
+                    <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
                   {filteredRows.map((r) => {
                     const { field, rec } = r;
                     const hasCrop = !isCropUndetermined(rec.crop);
                     return (
-                      <tr key={field.id}>
-                        <td className="name-cell sticky-name has-corner-btn">
+                      <TableRow key={field.id}>
+                        <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                           {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                           {rec.geometry && (
                             <button
@@ -381,80 +381,78 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           <div className="field-sub-tags">
                             <span className="field-code-badge" title="PRIA massiivi number">{field.fieldCode}</span>
                           </div>
-                        </td>
-                        <td className="num-col" title={rec.areaChangeReason || undefined}>
+                        </TableCell>
+                        <TableCell numeric title={rec.areaChangeReason || undefined}>
                           {fmtHa(rec.areaHa || 0)} ha
-                        </td>
-                        <td className="num-col">{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</td>
-                        <td>
+                        </TableCell>
+                        <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</TableCell>
+                        <TableCell>
                           {hasCrop ? (
                             <span className="fields-table-crop" style={{ '--crop-color': rec.cropColor } as React.CSSProperties}>
                               {rec.crop}
                             </span>
                           ) : <span className="muted">–</span>}
                           {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
-                        </td>
-                        {weatherEnabled && <td className="num-col">{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</td>}
-                        {weatherEnabled && <td className="num-col">{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</td>}
-                        <td>
+                        </TableCell>
+                        {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
+                        {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
+                        <TableCell>
                           <span className={`tenure-badge ${r.tenure}`}>{TENURE_LABEL[r.tenure]}</span>
                           {r.tenure === 'mixed' && (
                             <div className="cell-sub">{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
                           )}
-                        </td>
-                        <td className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</td>
-                        <td>
+                        </TableCell>
+                        <TableCell wrap className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</TableCell>
+                        <TableCell>
                           {r.parcels.length ? r.parcels.map((p, i) => (
                             <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
                               {p.cadastralCode}
                               {r.parcels.length > 1 && <span className="cell-sub-inline"> · {fmtHa(p.fieldAreaHa)} ha</span>}
                             </div>
                           )) : <span className="muted">–</span>}
-                        </td>
-                        <td className="num-col">{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className="muted">–</span>}</td>
-                        <td className="num-col">{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</td>
-                        <td className="wrap-cell">{field.soilType || <span className="muted">–</span>}</td>
-                        <td>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</td>
-                        <td>{field.operatorName || <span className="muted">–</span>}</td>
-                        <td className="actions-col">
-                          <div className="row-actions">
-                            <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
-                              <Edit2 size={15} />
-                            </Button>
-                            <Button variant="danger-ghost" size="icon-sm" onClick={() => handleDelete(field)} title="Kustuta">
-                              <Trash2 size={15} />
-                            </Button>
-                          </div>
-                        </td>
-                      </tr>
+                        </TableCell>
+                        <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className="muted">–</span>}</TableCell>
+                        <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</TableCell>
+                        <TableCell wrap className="wrap-cell">{field.soilType || <span className="muted">–</span>}</TableCell>
+                        <TableCell>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
+                        <TableCell>{field.operatorName || <span className="muted">–</span>}</TableCell>
+                        <TableCell actions>
+                          <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
+                            <Edit2 size={15} />
+                          </Button>
+                          <Button variant="danger-ghost" size="icon-sm" onClick={() => handleDelete(field)} title="Kustuta">
+                            <Trash2 size={15} />
+                          </Button>
+                        </TableCell>
+                      </TableRow>
                     );
                   })}
-                </tbody>
+                </TableBody>
                 {filteredRows.length > 0 && (
-                  <tfoot>
-                    <tr>
-                      <td className="sticky-name"><strong>Kokku: {filteredRows.length} põldu</strong></td>
-                      <td className="num-col"><strong>{fmtHa(totals.areaHa)} ha</strong></td>
-                      <td className="num-col">{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</td>
-                      <td></td>
-                      {weatherEnabled && <td></td>}
-                      {weatherEnabled && <td></td>}
-                      <td>
+                  <TableFooter sticky>
+                    <TableRow>
+                      <TableCell pin="start" className="sticky-name"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
+                      <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
+                      <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
+                      <TableCell />
+                      {weatherEnabled && <TableCell />}
+                      {weatherEnabled && <TableCell />}
+                      <TableCell>
                         <div className="cell-sub">Oma: {fmtHa(totals.ownedHa)} ha</div>
                         <div className="cell-sub">Rent: {fmtHa(totals.rentedHa)} ha</div>
-                      </td>
-                      <td></td>
-                      <td></td>
-                      <td className="num-col"><strong>{fmtEur(totals.landTaxEur)}</strong></td>
-                      <td className="num-col"><strong>{fmtEur(totals.rentFeeEur)}</strong></td>
-                      <td></td>
-                      <td></td>
-                      <td></td>
-                      <td className="actions-col"></td>
-                    </tr>
-                  </tfoot>
+                      </TableCell>
+                      <TableCell />
+                      <TableCell />
+                      <TableCell numeric><strong>{fmtEur(totals.landTaxEur)}</strong></TableCell>
+                      <TableCell numeric><strong>{fmtEur(totals.rentFeeEur)}</strong></TableCell>
+                      <TableCell />
+                      <TableCell />
+                      <TableCell />
+                      <TableCell actions />
+                    </TableRow>
+                  </TableFooter>
                 )}
-              </table>
+              </Table>
 
               {shapeView && (
                 <FieldShapeModal
@@ -488,7 +486,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   <p>{rows.length === 0 ? 'Vali teine hooaeg või impordi põllud PRIA ZIP-failist.' : 'Proovi muuta otsingusõna või omandisuhte filtrit.'}</p>
                 </div>
               )}
-            </div>
+            </>
           </div>
         </div>
       </main>
