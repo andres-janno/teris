@@ -41,3 +41,8 @@ row(
   r.legacyModalFiles.reduce((s, f) => s + f.count, 0),
   r.legacyModalFiles.map((f) => `${f.path}: ${f.count}`)
 );
+row(
+  'Vanu tabeleid (tsx)',
+  r.legacyTableFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyTableFiles.map((f) => `${f.path}: ${f.count}`)
+);

@@ -7,7 +7,7 @@ import {
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
-  TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Tooltip,
+  TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, Tooltip,
 } from './index';
 import { DateInput } from '../DateInput';
 import { FilterSelect } from '../FilterSelect';
@@ -108,6 +108,21 @@ export const UiGallery: React.FC = () => {
             </TableBody>
             <TableFooter><TableRow><TableCell colSpan={2}>Kokku</TableCell><TableCell numeric>42,15</TableCell><TableCell /></TableRow></TableFooter>
           </Table>
+          <Table scroll="md" bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead sort="asc">Nimi</TableHead><TableHead numeric>Kogus, t</TableHead><TableHead actions>Tegevused</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow onClick={() => undefined}><TableCell>Klõpsatav rida</TableCell><TableCell numeric>12,40</TableCell>
+                <TableCell actions><Button variant="ghost" size="icon-sm" aria-label="Muuda"><Pencil size={15} /></Button></TableCell></TableRow>
+              <TableRow selected><TableCell>Valitud rida</TableCell><TableCell numeric>8,05</TableCell><TableCell actions /></TableRow>
+              <TableRow tone="muted"><TableCell>Mitteaktiivne</TableCell><TableCell numeric>0,00</TableCell><TableCell actions /></TableRow>
+              <TableRow tone="group"><TableCell colSpan={3}>Grupi vahepealkiri</TableCell></TableRow>
+            </TableBody>
+          </Table>
+          <Table bordered><TableBody><TableEmpty colSpan={3}>Kirjeid pole</TableEmpty></TableBody></Table>
         </Section>
 
         <Section title="Dialoog, menüüd, hüpikud">

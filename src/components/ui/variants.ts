@@ -1,6 +1,7 @@
 // src/components/ui/variants.ts — kõigi ühiste komponentide variandiklassid ühes kohas (testitud: ainult skaala
 // väärtused, mitte suvalisi). Väärtused järgivad praegust identiteeti (.btn, .form-input, .modal-content index.css-is).
 import { cva } from 'class-variance-authority';
+import { cn } from './cn';
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
@@ -113,3 +114,70 @@ export const dialogContentClass = ({ size = 'md', fillHeight = false }: { size?:
     DIALOG_SIZES[size],
     fillHeight ? 'h-[min(880px,92vh)]' : '',
   ].filter(Boolean).join(' ');
+
+// --- Tabel (etapp 2.3) ---
+export type TableScroll = 'x' | 'none' | 'sm' | 'md' | 'fill';
+export type TableRowTone = 'success' | 'warning' | 'muted' | 'group' | 'total';
+export type TablePin = 'start' | 'end';
+
+const TABLE_SCROLL: Record<TableScroll, string> = {
+  x: 'overflow-x-auto',
+  none: '',
+  sm: 'max-h-[40vh] overflow-auto',
+  md: 'max-h-[62vh] overflow-auto',
+  fill: 'min-h-55 flex-1 overflow-auto',
+};
+
+export const tableContainerClass = ({ scroll = 'x', bordered = false }: { scroll?: TableScroll; bordered?: boolean }): string =>
+  cn('w-full', TABLE_SCROLL[scroll], bordered && 'rounded-md border border-border');
+
+// border-separate: kleepuva päise alumine joon püsib (border-collapse'iga kaoks kerides).
+export const tableClass = ({ bordered = false }: { bordered?: boolean } = {}): string =>
+  cn('w-full border-separate border-spacing-0 text-xs', bordered && '[&>tbody>tr:last-child>td]:border-b-0');
+
+// Kinnitatud lahter vajab läbipaistmatut tausta, mis järgib rea hover'it ja valikut.
+const PIN_BG = 'bg-popover group-hover:bg-table-hover group-data-[selected]:bg-table-selected';
+
+export const tableHeadClass = ({
+  numeric = false, pin, sortable = false, dense = false,
+}: { numeric?: boolean; pin?: TablePin; sortable?: boolean; dense?: boolean }): string =>
+  cn(
+    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-left text-2xs font-semibold uppercase tracking-wide text-muted-foreground',
+    dense ? 'px-1.5 py-1' : 'px-2.5 py-2',
+    numeric && 'text-right',
+    pin === 'start' && 'left-0 z-[3]',
+    pin === 'end' && 'right-0 z-[3] w-px px-1.5 text-center',
+    sortable && 'cursor-pointer select-none hover:text-foreground'
+  );
+
+export const tableCellClass = ({
+  numeric = false, wrap = false, pin, dense = false,
+}: { numeric?: boolean; wrap?: boolean; pin?: TablePin; dense?: boolean }): string =>
+  cn(
+    'border-b border-border align-middle',
+    dense ? 'px-1.5 py-1' : 'px-2.5 py-1.5',
+    wrap ? 'whitespace-normal' : 'whitespace-nowrap',
+    numeric && 'text-right tabular-nums',
+    pin && `sticky z-[1] ${PIN_BG}`,
+    pin === 'start' && 'left-0',
+    pin === 'end' && 'right-0 w-px px-1.5 text-center'
+  );
+
+const ROW_TONES: Record<TableRowTone, string> = {
+  success: 'bg-primary/10',
+  warning: 'bg-warning/10',
+  muted: 'text-subtle',
+  group: 'bg-muted font-semibold [&>td]:pt-4',
+  total: 'font-semibold [&>td]:border-t-2',
+};
+
+// Valitud rida (kasutaja otsus 2026-11-14): hele roheline toon + roheline riba vasakus servas.
+export const tableRowClass = ({ tone, clickable = false }: { tone?: TableRowTone; clickable?: boolean }): string =>
+  cn(
+    'group transition-colors hover:bg-table-hover data-[selected]:bg-table-selected data-[selected]:[&>td:first-child]:shadow-[inset_3px_0_0_var(--color-primary)]',
+    tone && ROW_TONES[tone],
+    clickable && 'cursor-pointer'
+  );
+
+export const tableFooterClass = ({ sticky = false }: { sticky?: boolean } = {}): string =>
+  cn('bg-muted font-semibold', sticky && '[&>tr>td]:sticky [&>tr>td]:bottom-0 [&>tr>td]:z-[2] [&>tr>td]:bg-table-head');

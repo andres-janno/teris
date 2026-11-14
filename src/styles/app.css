@@ -63,6 +63,10 @@
   --color-popover: var(--bg-modal);
   --color-muted: var(--stat-bg);
   --color-muted-hover: var(--stat-bg-hover);
+  /* Tabel: läbipaistmatud toonid (kleepuv päis ja kinnitatud veerud ei lase ridu läbi paista) */
+  --color-table-head: color-mix(in srgb, var(--text-primary) 4%, var(--bg-modal));
+  --color-table-hover: color-mix(in srgb, var(--text-primary) 6%, var(--bg-modal));
+  --color-table-selected: color-mix(in srgb, var(--emerald-500) 12%, var(--bg-modal));
   --color-muted-foreground: var(--text-secondary);
   --color-subtle: var(--text-muted);
   --color-border: var(--border-card);

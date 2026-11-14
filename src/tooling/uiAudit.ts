@@ -16,6 +16,7 @@ export interface AuditReport {
   legacyComponentClasses: string[];
   legacyButtonFiles: { path: string; count: number }[];
   legacyModalFiles: { path: string; count: number }[];
+  legacyTableFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -38,6 +39,9 @@ const LEGACY_BUTTON =
 // Vanad modaaliklassid (etapp 2.2). Vaatepõhised sisuklassid (finance-modal jne) ei loe.
 const LEGACY_MODAL =
   /(?<![\w-])(modal-backdrop|sub-modal|confirm-dialog-backdrop|modal-content|modal-header|modal-title-group|modal-title-with-icon|modal-icon-badge|modal-subtitle|modal-body|modal-footer)(?![\w-])/g;
+// Toored tabelielemendid ja vanad tabeliklassid (etapp 2.3). ui/ kausta ei loeta (seal on ui/Table ise).
+const LEGACY_TABLE =
+  /<(table|thead|tbody|tfoot|tr|th|td)(?=[\s>])|(?<![\w-])(register-table-wrap|register-table|num-col|actions-col|row-actions|clickable-row)(?![\w-])/g;
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -77,6 +81,7 @@ export function auditTsx(src: string) {
     inlineFontSizes: [...src.matchAll(INLINE_FONT_SIZE)].map((m) => (m[1] ? `${m[1]}px` : m[2])),
     legacyButtons: [...src.matchAll(LEGACY_BUTTON)].map((m) => m[1]),
     legacyModals: [...src.matchAll(LEGACY_MODAL)].map((m) => m[1]),
+    legacyTables: [...src.matchAll(LEGACY_TABLE)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
   };
 }
 
@@ -97,5 +102,8 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     legacyComponentClasses: uniqueSorted(css.flatMap((c) => c.componentClasses)),
     legacyButtonFiles: tsx.filter((t) => t.legacyButtons.length > 0).map((t) => ({ path: t.path, count: t.legacyButtons.length })),
     legacyModalFiles: tsx.filter((t) => t.legacyModals.length > 0).map((t) => ({ path: t.path, count: t.legacyModals.length })),
+    legacyTableFiles: tsx
+      .filter((t) => t.legacyTables.length > 0 && !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: t.legacyTables.length })),
   };
 }

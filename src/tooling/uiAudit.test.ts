@@ -192,3 +192,24 @@ describe('auditTsx: vanad modaaliklassid', () => {
     expect(r.legacyModalFiles).toEqual([{ path: 'a.tsx', count: 2 }]);
   });
 });
+
+describe('auditTsx: vanad tabelid', () => {
+  it('loeb toored tabelielemendid ja vanad tabeliklassid', () => {
+    const r = auditTsx(
+      '<table className="register-table"><thead><tr><th className="num">A</th></tr></thead><tbody><tr className="clickable-row"><td className="actions-col"><div className="row-actions" /></td></tr></tbody></table>'
+    );
+    expect(r.legacyTables).toEqual([
+      '<table>', 'register-table', '<thead>', '<tr>', '<th>', '<tbody>', '<tr>', 'clickable-row', '<td>', 'actions-col', 'row-actions',
+    ]);
+  });
+  it('ei loe ui komponente', () => {
+    expect(auditTsx('<Table><TableHeader><TableRow><TableHead numeric>A</TableHead></TableRow></TableHeader></Table>').legacyTables).toEqual([]);
+  });
+  it('summarize jätab ui kausta välja', () => {
+    const r = summarize([
+      { path: 'src/components/ui/Table.tsx', content: '<table>' },
+      { path: 'src/components/X.tsx', content: '<td>' },
+    ]);
+    expect(r.legacyTableFiles).toEqual([{ path: 'src/components/X.tsx', count: 1 }]);
+  });
+});

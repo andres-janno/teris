@@ -11,6 +11,13 @@ const allClassStrings = (): string[] => [
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
   v.fieldControlClass, v.menuContentClass, v.menuItemClass, v.menuSeparatorClass, v.menuLabelClass,
   v.popoverContentClass, v.tooltipContentClass, v.cardClass,
+  ...(['x', 'none', 'sm', 'md', 'fill'] as const).map((scroll) => v.tableContainerClass({ scroll, bordered: true })),
+  v.tableClass({ bordered: true }),
+  ...([undefined, 'start', 'end'] as const).flatMap((pin) => [
+    v.tableHeadClass({ pin, numeric: true, sortable: true }), v.tableCellClass({ pin, numeric: true, dense: true }),
+  ]),
+  ...(['success', 'warning', 'muted', 'group', 'total'] as const).map((tone) => v.tableRowClass({ tone, clickable: true })),
+  v.tableFooterClass({ sticky: true }),
 ];
 
 describe('variants', () => {
@@ -70,7 +77,7 @@ describe('variants', () => {
   });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
-    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|background)$/;
+    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|background|left|right|center)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });
@@ -103,5 +110,42 @@ describe('dialogContentClass', () => {
   it('ei kasuta keelatud suvalisi väärtusi', () => {
     for (const size of ['sm', 'md', 'lg', 'xl', 'full', 'fit'] as const)
       expect(auditTsx(`className="${v.dialogContentClass({ size, fillHeight: true })}"`).arbitrary).toEqual([]);
+  });
+});
+
+describe('tabel', () => {
+  it('päis kleepub ja on läbipaistmatu', () => {
+    const c = v.tableHeadClass({});
+    expect(c).toContain('sticky');
+    expect(c).toContain('bg-table-head');
+  });
+  it('numbriveerg paremale', () => {
+    expect(v.tableCellClass({ numeric: true })).toContain('text-right');
+    expect(v.tableHeadClass({ numeric: true })).toContain('text-right');
+  });
+  it('lahter ei murdu vaikimisi, wrap murdub', () => {
+    expect(v.tableCellClass({})).toContain('whitespace-nowrap');
+    expect(v.tableCellClass({ wrap: true })).toContain('whitespace-normal');
+    expect(v.tableCellClass({ wrap: true })).not.toContain('whitespace-nowrap');
+  });
+  it('tegevuste veerg kleepub paremale läbipaistmatu taustaga', () => {
+    const c = v.tableCellClass({ pin: 'end' });
+    expect(c).toContain('right-0');
+    expect(c).toContain('bg-popover');
+    expect(v.tableCellClass({})).not.toContain('bg-popover');
+  });
+  it('tihe tabel väiksema polstriga', () => {
+    expect(v.tableCellClass({ dense: true })).toContain('py-1');
+    expect(v.tableCellClass({ dense: true })).not.toContain('py-1.5');
+  });
+  it('kerimine: md piirab kõrguse, none ei keri, ääris eraldi', () => {
+    expect(v.tableContainerClass({ scroll: 'md' })).toContain('max-h-[62vh]');
+    expect(v.tableContainerClass({ scroll: 'none' })).not.toContain('overflow');
+    expect(v.tableContainerClass({ bordered: true })).toContain('border-border');
+  });
+  it('rea toonid ja klõpsatav rida', () => {
+    expect(v.tableRowClass({ tone: 'muted' })).toContain('text-subtle');
+    expect(v.tableRowClass({ clickable: true })).toContain('cursor-pointer');
+    expect(v.tableRowClass({})).not.toContain('cursor-pointer');
   });
 });

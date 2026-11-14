@@ -3844,25 +3844,30 @@ input[type="number"],
   font-variant-numeric: tabular-nums;
 }
 
-.register-table .name-cell {
+.register-table .name-cell,
+[data-slot="table"] .name-cell {
   white-space: normal;
 }
 
 /* Põld ja suurus jäävad paremale kerides vasakule paigale */
 .register-table .sticky-name,
-.register-table .sticky-size {
+[data-slot="table"] .sticky-name,
+.register-table .sticky-size,
+[data-slot="table"] .sticky-size {
   position: sticky;
   z-index: 1;
 }
 
-.register-table .sticky-name {
+.register-table .sticky-name,
+[data-slot="table"] .sticky-name {
   left: 0;
   width: 300px;
   min-width: 300px;
   max-width: 300px;
 }
 
-.register-table .sticky-size {
+.register-table .sticky-size,
+[data-slot="table"] .sticky-size {
   left: 300px;
   width: 110px;
   min-width: 110px;
@@ -3870,37 +3875,46 @@ input[type="number"],
 }
 
 .register-table th.sticky-name,
-.register-table th.sticky-size {
+[data-slot="table"] th.sticky-name,
+.register-table th.sticky-size,
+[data-slot="table"] th.sticky-size {
   z-index: 3;
 }
 
-.register-table .name-cell .field-title-line {
+.register-table .name-cell .field-title-line,
+[data-slot="table"] .name-cell .field-title-line {
   gap: 8px;
 }
 
-.register-table .name-cell .field-info-btn {
+.register-table .name-cell .field-info-btn,
+[data-slot="table"] .name-cell .field-info-btn {
   padding: 3px;
   color: var(--text-muted);
 }
 
-.register-table .name-cell .field-info-btn:hover {
+.register-table .name-cell .field-info-btn:hover,
+[data-slot="table"] .name-cell .field-info-btn:hover {
   color: var(--emerald-500);
 }
 
-.register-table .name-cell .field-sub-tags {
+.register-table .name-cell .field-sub-tags,
+[data-slot="table"] .name-cell .field-sub-tags {
   margin-top: 4px;
 }
 
-.register-table .mono {
+.register-table .mono,
+[data-slot="table"] .mono {
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
   font-size: 0.76rem;
 }
 
-.register-table .muted {
+.register-table .muted,
+[data-slot="table"] .muted {
   color: var(--text-muted);
 }
 
-.register-table .cell-sub {
+.register-table .cell-sub,
+[data-slot="table"] .cell-sub {
   font-size: 0.7rem;
   color: var(--text-secondary);
   margin-top: 2px;
@@ -3978,61 +3992,72 @@ input[type="number"],
   z-index: 3;
 }
 
-.register-table th.year-col {
+.register-table th.year-col,
+[data-slot="table"] th.year-col {
   cursor: pointer;
   text-align: left;
 }
 
-.register-table th.year-col:hover {
+.register-table th.year-col:hover,
+[data-slot="table"] th.year-col:hover {
   color: var(--emerald-500);
 }
 
 /* Valitud aasta: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active).
    Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
-.register-table th.year-col .year-col-label {
+.register-table th.year-col .year-col-label,
+[data-slot="table"] th.year-col .year-col-label {
   display: block;
   margin: -8px -10px;
   padding: 8px 10px;
 }
 
-.register-table th.year-col.selected .year-col-label {
+.register-table th.year-col.selected .year-col-label,
+[data-slot="table"] th.year-col.selected .year-col-label {
   color: #ffffff;
   background: #16a34a;
   border-radius: 6px 6px 0 0;
   box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d, inset 0 1px 0 #15803d;
 }
 
-.register-table th.year-col.selected:hover .year-col-label {
+.register-table th.year-col.selected:hover .year-col-label,
+[data-slot="table"] th.year-col.selected:hover .year-col-label {
   background: #15803d;
 }
 
-.register-table td.year-cell {
+.register-table td.year-cell,
+[data-slot="table"] td.year-cell {
   width: 190px;
   min-width: 150px;
   max-width: 190px;
 }
 
 /* Kultuuri värv: hele toon + vasakul täisvärvis riba */
-.register-table td.year-cell.has-crop {
+.register-table td.year-cell.has-crop,
+[data-slot="table"] td.year-cell.has-crop {
   background: color-mix(in srgb, var(--crop-color) var(--crop-tint), transparent);
   box-shadow: inset 3px 0 0 var(--crop-color);
 }
 
-.register-table tbody tr:hover td.year-cell.has-crop {
+.register-table tbody tr:hover td.year-cell.has-crop,
+[data-slot="table"] tbody tr:hover td.year-cell.has-crop {
   background: color-mix(in srgb, var(--crop-color) var(--crop-tint-hover), transparent);
 }
 
 /* Valitud aasta veerg raamitud (roheline taust segaks kultuuride toone) */
-.register-table td.year-cell.selected {
+.register-table td.year-cell.selected,
+[data-slot="table"] td.year-cell.selected {
   border-left: 1px solid #16a34a;
   border-right: 1px solid #16a34a;
 }
 
-.register-table td.year-cell.editable {
+.register-table td.year-cell.editable,
+[data-slot="table"] td.year-cell.editable {
   cursor: pointer;
 }
 
-.register-table .year-shape-btn {
+.register-table .year-shape-btn,
+[data-slot="table"] .year-shape-btn {
   margin-left: auto;
   flex-shrink: 0;
   display: inline-flex;
@@ -4046,7 +4071,8 @@ input[type="number"],
   cursor: pointer;
 }
 
-.register-table .year-shape-btn:hover {
+.register-table .year-shape-btn:hover,
+[data-slot="table"] .year-shape-btn:hover {
   color: var(--emerald-500);
   background: var(--btn-sec-hover);
 }
@@ -4066,17 +4092,20 @@ input[type="number"],
   color: var(--text-secondary);
 }
 
-.register-table .year-crop-edit-icon {
+.register-table .year-crop-edit-icon,
+[data-slot="table"] .year-crop-edit-icon {
   flex-shrink: 0;
   opacity: 0;
   color: var(--text-secondary);
 }
 
-.register-table td.year-cell.editable:hover .year-crop-edit-icon {
+.register-table td.year-cell.editable:hover .year-crop-edit-icon,
+[data-slot="table"] td.year-cell.editable:hover .year-crop-edit-icon {
   opacity: 1;
 }
 
-.register-table td.year-cell.editing {
+.register-table td.year-cell.editing,
+[data-slot="table"] td.year-cell.editing {
   white-space: normal;
   min-width: 190px;
 }
@@ -4102,14 +4131,16 @@ input[type="number"],
   color: var(--emerald-500) !important;
 }
 
-.register-table .year-crop {
+.register-table .year-crop,
+[data-slot="table"] .year-crop {
   display: flex;
   align-items: center;
   gap: 6px;
   overflow: hidden;
 }
 
-.register-table .year-crop-name {
+.register-table .year-crop-name,
+[data-slot="table"] .year-crop-name {
   flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
@@ -4117,32 +4148,37 @@ input[type="number"],
   white-space: nowrap;
 }
 
-.register-table .year-crop .crop-dot {
+.register-table .year-crop .crop-dot,
+[data-slot="table"] .year-crop .crop-dot {
   width: 8px;
   height: 8px;
   border-radius: 50%;
   flex-shrink: 0;
 }
 
-.register-table .size-cell .season-ha-val {
+.register-table .size-cell .season-ha-val,
+[data-slot="table"] .size-cell .season-ha-val {
   font-size: 0.85rem;
   font-weight: 400;
 }
 
 /* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
 .register-table .name-cell .field-name,
+[data-slot="table"] .name-cell .field-name,
 .fields-table .field-name,
 .fw-field-title .field-name {
   font-size: 0.85rem;
   font-weight: 400;
 }
 .register-table .name-cell .field-num-badge,
+[data-slot="table"] .name-cell .field-num-badge,
 .fields-table .field-num-badge,
 .fw-field-title .field-num-badge {
   font-weight: 500;
 }
 
-.register-table .size-cell.muted .season-ha-val {
+.register-table .size-cell.muted .season-ha-val,
+[data-slot="table"] .size-cell.muted .season-ha-val {
   color: var(--text-muted);
 }
 
@@ -10520,7 +10556,8 @@ td.stock-qty-out { color: #dc2626; }
 .stock-doc-lines td > .stock-doc-unit { margin-left: 6px; }
 .stock-doc-footer-row { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
 .article-categories-group h4 { margin: 12px 0 6px; }
-.article-categories-group .register-table td:first-child { width: 60%; }
+.article-categories-group .register-table td:first-child,
+.article-categories-group [data-slot="table"] td:first-child { width: 60%; }
 .article-categories-add { display: flex; gap: 8px; margin-top: 16px; }
 .article-categories-add .form-input:first-child { max-width: 180px; }
 
@@ -10692,18 +10729,21 @@ td.stock-qty-out { color: #dc2626; }
 }
 
 /* Sõitude vahe hoiatus: rida kahe sõidu vahel; kontrollitud = hall */
-.register-table tr.trip-gap-row > td {
+.register-table tr.trip-gap-row > td,
+[data-slot="table"] tr.trip-gap-row > td {
   background: color-mix(in srgb, var(--amber-500, #f59e0b) 10%, transparent);
   font-size: 13px;
   padding-top: 6px;
   padding-bottom: 6px;
 }
 
-.register-table tr.trip-gap-row > td > * + * {
+.register-table tr.trip-gap-row > td > * + *,
+[data-slot="table"] tr.trip-gap-row > td > * + * {
   margin-left: 12px;
 }
 
-.register-table tr.trip-gap-row.reviewed > td {
+.register-table tr.trip-gap-row.reviewed > td,
+[data-slot="table"] tr.trip-gap-row.reviewed > td {
   background: transparent;
   color: var(--text-muted);
 }
@@ -10818,10 +10858,14 @@ td.stock-qty-out { color: #dc2626; }
 .weather-years tbody tr { cursor: pointer; }
 .register-table.weather-years tr.weather-normal-row td { font-weight: 700; border-top: 2px solid var(--border-card); cursor: default; }
 .weather-muted { color: var(--text-secondary); font-size: 0.72rem; }
-.register-table.weather-years td.weather-wet { background: rgba(59, 130, 246, 0.16); }
-.register-table.weather-years td.weather-dry { background: rgba(249, 115, 22, 0.18); }
-.register-table.weather-years td.weather-warm { background: rgba(239, 68, 68, 0.16); }
-.register-table.weather-years td.weather-cool { background: rgba(14, 165, 233, 0.12); }
+.register-table.weather-years td.weather-wet,
+[data-slot="table"].weather-years td.weather-wet { background: rgba(59, 130, 246, 0.16); }
+.register-table.weather-years td.weather-dry,
+[data-slot="table"].weather-years td.weather-dry { background: rgba(249, 115, 22, 0.18); }
+.register-table.weather-years td.weather-warm,
+[data-slot="table"].weather-years td.weather-warm { background: rgba(239, 68, 68, 0.16); }
+.register-table.weather-years td.weather-cool,
+[data-slot="table"].weather-years td.weather-cool { background: rgba(14, 165, 233, 0.12); }
 .fullpage-subtitle.weather-source { font-size: 0.72rem; margin-top: 2px; }
 .weather-note { margin: 6px 0 0; font-size: 0.72rem; }
 .weather-legend-row { margin: 6px 0 0; font-size: 0.72rem; }
