@@ -2,6 +2,7 @@
 // väärtused, mitte suvalisi). Väärtused järgivad praegust identiteeti (.btn, .form-input, .modal-content index.css-is).
 import { cva } from 'class-variance-authority';
 import { cn } from './cn';
+import type { BadgeTone } from '../../types/badgeTone';
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
@@ -31,7 +32,7 @@ export const buttonVariants = cva(
   }
 );
 
-export type BadgeTone = 'success' | 'info' | 'warning' | 'danger' | 'accent' | 'neutral';
+export type { BadgeTone };
 
 // Märk: soft (hele toon, vaikimisi), solid (täisvärv — rõhutatud olek, kasutaja otsus 2026-11-14), outline (ääris).
 export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-semibold', {

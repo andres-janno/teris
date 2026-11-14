@@ -1,5 +1,5 @@
 // src/types/fieldWork.ts — põllutööde register (PRIA põlluraamatust lahus)
-import type { BadgeTone } from '../components/ui';
+import type { BadgeTone } from './badgeTone.ts';
 import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules.ts';
 
 export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';

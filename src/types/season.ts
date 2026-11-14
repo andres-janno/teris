@@ -1,5 +1,5 @@
 // src/types/season.ts
-import type { BadgeTone } from '../components/ui';
+import type { BadgeTone } from './badgeTone.ts';
 
 /**
  * Põllumajandusliku hooaja master-kirje: aasta, nimi ja märkmed.
