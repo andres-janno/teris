@@ -18,6 +18,9 @@ export const buttonVariants = cva(
         danger: 'border-transparent bg-danger-solid text-white enabled:hover:bg-danger-solid/90',
         // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
         'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
+        // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes tumedam. Kasuta size="auto".
+        filter:
+          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:brightness-90 enabled:hover:shadow-primary-hover',
       },
       size: {
         sm: 'h-7 px-3 text-xs',
@@ -26,6 +29,8 @@ export const buttonVariants = cva(
         'icon-xs': 'size-5 rounded-sm',
         'icon-sm': 'size-7 rounded-sm',
         icon: 'size-8 rounded-sm',
+        // Kõrgus sisu järgi (kahe reaga nupp, nt filter-pill): vana .operator-selector-trigger 6px 12px.
+        auto: 'px-3 py-1.5 text-sm',
       },
     },
     defaultVariants: { variant: 'secondary', size: 'md' },
@@ -112,14 +117,14 @@ export const fieldShellClass =
 
 /** Hüpikud on dialoogi (z 2000) kohal, et dialoogi sees avatud menüü oleks nähtav. */
 export const menuContentClass =
-  'z-2100 min-w-40 overflow-hidden rounded-md border border-border bg-popover p-1 text-sm text-foreground shadow-dialog';
+  'z-2100 min-w-40 overflow-y-auto rounded-md border border-border bg-popover p-1 text-sm text-foreground shadow-dialog';
 export const menuItemClass =
-  'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50';
+  'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0';
 export const menuSeparatorClass = 'my-1 h-px bg-border';
 export const menuLabelClass = 'px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-subtle';
 
 export const popoverContentClass =
-  'z-2100 w-72 rounded-md border border-border bg-popover p-3 text-sm text-foreground shadow-dialog outline-none';
+  'z-2100 w-72 overflow-y-auto rounded-md border border-border bg-popover p-3 text-sm text-foreground shadow-dialog outline-none';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
 /** Klaasikaart (praegune .glass-card). */

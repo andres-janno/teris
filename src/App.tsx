@@ -1351,7 +1351,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     if (!isAddPoiMode) return;
     const onKeyDown = (e: KeyboardEvent) => {
       // Rippmenüü loend (portaal) sulgub Esc-iga ise; ei tohi katkestada asukoha valikut
-      if (e.key === 'Escape' && !(e.target as Element | null)?.closest?.('[role="listbox"]')) handleCancelPickLocation();
+      if (e.key === 'Escape' && !(e.target as Element | null)?.closest?.('[data-radix-popper-content-wrapper], [role="listbox"]')) handleCancelPickLocation();
     };
     document.addEventListener('keydown', onKeyDown);
     return () => document.removeEventListener('keydown', onKeyDown);

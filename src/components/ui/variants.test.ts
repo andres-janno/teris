@@ -4,7 +4,7 @@ import { cn } from './cn';
 import * as v from './variants';
 
 const allClassStrings = (): string[] => [
-  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const).flatMap((variant) =>
+  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter'] as const).flatMap((variant) =>
     (['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
@@ -210,5 +210,15 @@ describe('vormiväli', () => {
     for (const c of [v.fieldControlClass, v.fieldShellClass, ...Object.values(v.fieldSizeClass)]) {
       expect(c).not.toMatch(/(?:text|p[xytrblse]?|m[xytrblse]?|gap|rounded|bg|border)-\[/);
     }
+  });
+
+  it('menüükirje: ikoonid 16px ega kahane', () => {
+    expect(v.menuItemClass).toContain('[&_svg]:size-4');
+    expect(v.menuItemClass).toContain('[&_svg]:shrink-0');
+  });
+  it('filter-nupp: roheline pill', () => {
+    const c = v.buttonVariants({ variant: 'filter' });
+    expect(c).toContain('bg-primary-strong');
+    expect(c).toContain('rounded-full');
   });
 });

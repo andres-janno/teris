@@ -24,7 +24,7 @@ export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
 export type { BadgeTone, BadgeVariant } from './variants';
 export {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuCheckboxItem, DropdownMenuSeparator, DropdownMenuLabel, MenuItemText,
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuLabel,
 } from './Menu';
-export { Popover, PopoverTrigger, PopoverContent, Tooltip } from './Popover';
+export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, Tooltip, TooltipProvider } from './Popover';

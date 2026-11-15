@@ -241,4 +241,14 @@ describe('auditTsx: vanad märgid ja sakid', () => {
     ]);
     expect(r.legacyFormFieldFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
   });
+  it('loeb vanu menüü- ja hüpikuklasse, rolle ja aria-haspopup, ei loe sarnaseid nimesid', () => {
+    const src = '<div className="user-menu-dropdown" role="menu"><button aria-haspopup="menu" className="operator-selector-trigger" />' +
+      '<div role="tooltip" className="help-hint-popup" /><div className="usermenu" /><div role="listbox" />';
+    expect(auditTsx(src).legacyMenuPopups).toEqual(['user-menu-dropdown', 'menu', 'aria-haspopup', 'operator-selector-trigger', 'tooltip', 'help-hint-popup']);
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: 'role="menu"' },
+      { path: 'src/components/ui/Menu.tsx', content: 'role="menu"' },
+    ]);
+    expect(r.legacyMenuPopupFiles).toEqual([{ path: 'src/components/A.tsx', count: 1 }]);
+  });
 });

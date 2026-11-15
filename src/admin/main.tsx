@@ -3,9 +3,12 @@ import { createRoot } from 'react-dom/client';
 import '../styles/app.css';
 import './admin.css';
 import { AdminApp } from './AdminApp.tsx';
+import { TooltipProvider } from '../components/ui/Popover';
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AdminApp />
+    <TooltipProvider>
+      <AdminApp />
+    </TooltipProvider>
   </StrictMode>
 );

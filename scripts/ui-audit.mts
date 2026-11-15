@@ -56,3 +56,8 @@ row(
   r.legacyFormFieldFiles.reduce((s, f) => s + f.count, 0),
   r.legacyFormFieldFiles.map((f) => `${f.path}: ${f.count}`)
 );
+row(
+  'Vanu menüüsid/hüpikuid (tsx)',
+  r.legacyMenuPopupFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyMenuPopupFiles.map((f) => `${f.path}: ${f.count}`)
+);

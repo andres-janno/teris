@@ -147,3 +147,13 @@ Reeglid:
 3. Vaatepõhine modifikaator (nt `fw-crop-delete-btn`) jääb alles. Kui vana reegel kannab tähendust (olek, hoiatusvärv),
    lisa reeglile `!important`. Muidu kaovad Buttoni omadused (padding, kõrgus, kirjasuurus, värv, taust, nurk) ja see
    on ühtlustamise eesmärk.
+
+## Menüüd, hüpikud, vihjed
+
+- `DropdownMenuContent`, `ContextMenuContent`, `PopoverContent` ja `Tooltip` portaalivad avatud dialoogi sisse (`usePopupContainer`), Esc sulgeb ainult nemad (ei levi taha), kõrgus piirdub vaba ruuminga ja kerib.
+- Kirjel ikoon: pane `<Icon />` ilma suuruseta (16px tuleb menüüst). Kahe rea kirje: `<DropdownMenuItem className="items-start"><MenuItemText title description /></DropdownMenuItem>`.
+- Märkeruudu kirje `DropdownMenuCheckboxItem`: menüü jääb avatuks, kui annad `onSelect={(e) => e.preventDefault()}`.
+- `PopoverAnchor` seab hüpiku asukoha muu elemendi külge.
+- Vihje: ainult tekstita ikoonnuppudele; `TooltipProvider` on `main.tsx`-is ja `admin/main.tsx`-is. Keelatud nupule `wrapDisabled`.
+- `<Button variant="filter" size="auto">` — päise rohelise pillina nupp (operaatorivalija).
+- Portaalis sisu tunneb ära `closest('[data-radix-popper-content-wrapper], [role="listbox"]')`.

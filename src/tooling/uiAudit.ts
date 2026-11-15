@@ -19,6 +19,7 @@ export interface AuditReport {
   legacyTableFiles: { path: string; count: number }[];
   legacyBadgeTabFiles: { path: string; count: number }[];
   legacyFormFieldFiles: { path: string; count: number }[];
+  legacyMenuPopupFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -52,6 +53,10 @@ const LEGACY_BADGE_TAB =
 // Jääb alles valvurina: peab olema 0.
 const LEGACY_FORM_FIELD =
   /<(input|select|textarea)(?=[\s>/])(?!\s+type="(?:file|range)")|(?<![\w-])(form-input|form-group|form-grid|form-row-3|input-split|input-with-unit|search-input|search-box-wrap|auto-resize-textarea|auto-field-input|time-select|users-admin-checkbox|checkbox-label|filter-select-trigger|date-input-btn)(?![\w-])/g;
+// Käsitsi tehtud menüüd ja hüpikud (etapp 2.6): vanad klassid, käsitsi antud menüürollid ja aria-haspopup.
+// ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0. Leafleti hüpikuklassid (popup-row jms) ei loe.
+const LEGACY_MENU_POPUP =
+  /(?<![\w-])((?:operator-selector|user-menu|map-context-menu|help-hint)[\w-]*)(?![\w-])|role="(menu|menuitem|menuitemcheckbox|menuitemradio|tooltip)"|aria-haspopup=/g;
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -94,6 +99,7 @@ export function auditTsx(src: string) {
     legacyTables: [...src.matchAll(LEGACY_TABLE)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyBadgeTabs: [...src.matchAll(LEGACY_BADGE_TAB)].map((m) => m[1]),
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
+    legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
   };
 }
 
@@ -123,5 +129,8 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     legacyFormFieldFiles: tsx
       .filter((t) => t.legacyFormFields.length > 0 && !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: t.legacyFormFields.length })),
+    legacyMenuPopupFiles: tsx
+      .filter((t) => t.legacyMenuPopups.length > 0 && !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: t.legacyMenuPopups.length })),
   };
 }

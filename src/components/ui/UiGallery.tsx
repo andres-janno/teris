@@ -1,11 +1,11 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Lock, Moon, Pencil, Plus, Search, Sun, Trash2 } from 'lucide-react';
+import { Clock, Lock, Moon, Pencil, Plus, Search, Sun, Trash2, Copy } from 'lucide-react';
 import {
   Badge, Button, Card, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
+  DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput,
@@ -29,6 +29,7 @@ export const UiGallery: React.FC = () => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
   const [crop, setCrop] = useState('');
+  const [menuOps, setMenuOps] = useState<string[]>(['Mari']);
   const [checked, setChecked] = useState(true);
   const [emptyChoice, setEmptyChoice] = useState('');
   const [groupChoice, setGroupChoice] = useState('');
@@ -243,14 +244,54 @@ export const UiGallery: React.FC = () => {
           </Dialog>
           <Button onClick={() => void confirmDialog('Kas soovid kindlasti kustutada?')}>Kinnitus</Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button>Rippmenüü</Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button id="gallery-menu-trigger">Rippmenüü</Button></DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuLabel>Põld</DropdownMenuLabel>
-              <DropdownMenuItem><Pencil size={14} />Muuda</DropdownMenuItem>
+              <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
+              <DropdownMenuItem><Copy />Kopeeri</DropdownMenuItem>
               <DropdownMenuSeparator />
-              <DropdownMenuItem danger><Trash2 size={14} />Kustuta</DropdownMenuItem>
+              <DropdownMenuLabel>Operaatorid</DropdownMenuLabel>
+              {['Mari', 'Jaan', 'Peeter'].map((n) => (
+                <DropdownMenuCheckboxItem
+                  key={n}
+                  checked={menuOps.includes(n)}
+                  onCheckedChange={(c) => setMenuOps((cur) => (c ? [...cur, n] : cur.filter((x) => x !== n)))}
+                  onSelect={(e) => e.preventDefault()}
+                >
+                  {n}
+                </DropdownMenuCheckboxItem>
+              ))}
+              <DropdownMenuSeparator />
+              <DropdownMenuItem className="items-start"><Clock /><MenuItemText title="Külvamine" description="Töös · 12.11.2026 08:30" /></DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button>Pikk menüü</Button></DropdownMenuTrigger>
+            <DropdownMenuContent>
+              {Array.from({ length: 30 }, (_, i) => <DropdownMenuItem key={i}>Kirje {i + 1}</DropdownMenuItem>)}
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button variant="filter" size="auto">Operaator: Mari</Button>
+          <Tooltip content="Muuda"><Button variant="ghost" size="icon" aria-label="Muuda"><Pencil /></Button></Tooltip>
+          <Tooltip content="Kustutamine pole võimalik" wrapDisabled><Button variant="ghost" size="icon" aria-label="Kustuta" disabled><Trash2 /></Button></Tooltip>
+          <Dialog>
+            <DialogTrigger asChild><Button id="gallery-dialog-menu">Menüü dialoogis</Button></DialogTrigger>
+            <DialogContent size="sm">
+              <DialogHeader title="Menüü dialoogis" description="Esc sulgeb esmalt menüü, teine Esc akna" />
+              <DialogBody>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild><Button>Rippmenüü</Button></DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
+                    <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </DialogBody>
+              <DialogFooter><Button>Sulge</Button></DialogFooter>
+            </DialogContent>
+          </Dialog>
           <ContextMenu>
             <ContextMenuTrigger asChild>
               <Card className="px-4 py-3 text-sm">Paremklõps siin</Card>
