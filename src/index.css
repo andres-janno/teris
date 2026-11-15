@@ -1601,7 +1601,7 @@ body {
 /* Rippmenüü kõrgus = --cc-h (Select md 32px) */
 .cc-select {
   display: block;
-  min-width: 8.5rem;
+  min-width: 6rem;
 }
 
 /* Haakeriista nimi töölaiuse kõrval (pikk nimi lõigatakse) */

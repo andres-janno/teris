@@ -320,7 +320,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </Button>
         <Select
           size="sm"
-          value={date ?? ''}
+          value={dates.length ? (date ?? '') : ''}
           onValueChange={(v) => onSelectDate(v || null)}
           disabled={!dates.length}
           aria-label="Pildi kuupäev"

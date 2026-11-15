@@ -51,7 +51,14 @@ export const Select: React.FC<SelectProps> = ({
       </SelectPrimitive.Icon>
     </SelectPrimitive.Trigger>
     <SelectPrimitive.Portal>
-      <SelectPrimitive.Content position="popper" sideOffset={4} className={cn(menuContentClass, 'max-h-72 min-w-(--radix-select-trigger-width)')}>
+      <SelectPrimitive.Content
+        position="popper"
+        sideOffset={4}
+        className={cn(menuContentClass, 'max-h-72 min-w-(--radix-select-trigger-width)')}
+        // Esc sulgeb ainult loendi: Radix ei peata levi ja muidu sulgeks see ka taga oleva paneeli/kaardi/rea
+        // (window/document kuulajad), nagu natiivne <select> seda ei teinud. Sama mis Dialog.tsx-is.
+        onEscapeKeyDown={(e) => e.stopPropagation()}
+      >
         <SelectPrimitive.Viewport>
           {groupOptions(options).map((g, gi) => {
             const items = g.options.map((o) => (
