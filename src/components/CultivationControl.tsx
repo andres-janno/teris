@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
-import { ToggleGroup, ToggleGroupItem, DateInput } from './ui';
+import { ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -124,7 +124,9 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
   const customHour = (customTime.split(':')[0] || '12').padStart(2, '0');
   const customMin = (customTime.split(':')[1] || '00').padStart(2, '0');
   // Kui minut ei ole 5 min sammul (nt vana väärtus), näidatakse seda ikkagi valikus
+  const hourOptions = Array.from({ length: 24 }, (_, i) => { const h = String(i).padStart(2, '0'); return { value: h, label: h }; });
   const minuteOptions = MINUTE_STEPS.includes(customMin) ? MINUTE_STEPS : [...MINUTE_STEPS, customMin].sort();
+  const minuteSelectOptions = minuteOptions.map((m) => ({ value: m, label: m }));
 
   const endTotalMin = Number(customHour) * 60 + Number(customMin) + durationHours * 60;
   const customEndLabel = `${String(Math.floor(endTotalMin / 60) % 24).padStart(2, '0')}:${customMin}${endTotalMin >= 24 * 60 ? ' (järgmine päev)' : ''}`;
@@ -203,50 +205,40 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               />
             </div>
             <div className="cc-time" title="Alguskellaaeg (24 h)">
-              <select
+              <Select
                 value={customHour}
-                onChange={(e) => onCustomTimeChange?.(`${e.target.value}:${customMin}`)}
+                onValueChange={(v) => onCustomTimeChange?.(`${v}:${customMin}`)}
                 aria-label="Tund"
-              >
-                {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map((h) => (
-                  <option key={h} value={h}>{h}</option>
-                ))}
-              </select>
+                options={hourOptions}
+              />
               <span aria-hidden="true">:</span>
-              <select
+              <Select
                 value={customMin}
-                onChange={(e) => onCustomTimeChange?.(`${customHour}:${e.target.value}`)}
+                onValueChange={(v) => onCustomTimeChange?.(`${customHour}:${v}`)}
                 aria-label="Minut"
-              >
-                {minuteOptions.map((m) => (
-                  <option key={m} value={m}>{m}</option>
-                ))}
-              </select>
+                options={minuteSelectOptions}
+              />
             </div>
-            <select
-              value={durationHours}
-              onChange={(e) => onDurationHoursChange?.(Number(e.target.value))}
-              className="cc-select"
-              title="Kestus alguskellaajast edasi"
-            >
-              {DURATION_HOURS.map((h) => (
-                <option key={h} value={h}>+{h} h</option>
-              ))}
-            </select>
+            <span className="cc-select" title="Kestus alguskellaajast edasi">
+              <Select
+                value={String(durationHours)}
+                onValueChange={(v) => onDurationHoursChange?.(Number(v))}
+                aria-label="Kestus"
+                options={DURATION_HOURS.map((h) => ({ value: String(h), label: `+${h} h` }))}
+              />
+            </span>
           </div>
         ) : (
           <div className="cc-period-controls">
             {onHoursChange && (
-              <select
-                value={telemetryHours}
-                onChange={(e) => onHoursChange(Number(e.target.value))}
-                className="cc-select"
-                title="Mitu tundi praegusest hetkest tagasi"
-              >
-                {ROLLING_HOURS.map((h) => (
-                  <option key={h} value={h}>{h === 1 ? 'Viimane 1 h' : `Viimased ${h} h`}</option>
-                ))}
-              </select>
+              <span className="cc-select" title="Mitu tundi praegusest hetkest tagasi">
+                <Select
+                  value={String(telemetryHours)}
+                  onValueChange={(v) => onHoursChange(Number(v))}
+                  aria-label="Tundide arv"
+                  options={ROLLING_HOURS.map((h) => ({ value: String(h), label: h === 1 ? 'Viimane 1 h' : `Viimased ${h} h` }))}
+                />
+              </span>
             )}
           </div>
         )}
@@ -312,13 +304,12 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           <>
             <div className="cc-start" title="Alguskellaaeg raja sees (24 h), millest taasesitus algab">
               <span className="cc-label">Algus</span>
-              <input
+              <Input
                 type="text"
                 maxLength={5}
                 placeholder="08:00"
                 value={localStartTime}
                 onChange={handleStartTimeInputChange}
-                className="cc-start-input"
                 aria-label="Taasesituse alguskellaaeg"
               />
               {isCustomStart && (

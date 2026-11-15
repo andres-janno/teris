@@ -16,7 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button } from './ui';
+import { Button, CheckboxField, RadioGroup, RadioField } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -120,15 +120,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 );
               })}
             </div>
-            <label className="layer-label basemap-cadastre-toggle">
-              <input
-                type="checkbox"
-                checked={visibility.cadastre}
-                onChange={() => onToggleLayer('cadastre')}
-              />
-              <span className="layer-color-indicator cadastre-color"></span>
+            <CheckboxField
+ className="layer-label basemap-cadastre-toggle"
+ checked={visibility.cadastre}
+ onCheckedChange={() => onToggleLayer('cadastre')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator cadastre-color"></span>
               <span className="layer-text">Katastripiirid</span>
-            </label>
+ </span>
+ }
+ />
           </div>
 
           {/* Overlays / Thematic Layers */}
@@ -141,15 +143,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {/* Fields Layer */}
               <div className="layer-field-box">
                 <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.fields}
-                      onChange={() => onToggleLayer('fields')}
-                    />
-                    <span className="layer-color-indicator fields-color"></span>
+                  <CheckboxField
+ className="layer-label"
+ checked={visibility.fields}
+ onCheckedChange={() => onToggleLayer('fields')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator fields-color"></span>
                     <span className="layer-text">Põllud</span>
-                  </label>
+ </span>
+ }
+ />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('fields')}
@@ -161,22 +165,18 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
                 {visibility.fields && (
                   <div className="layer-sub-options">
-                    <label className="soil-metric-radio-item">
-                      <input
-                        type="checkbox"
-                        checked={visibility.fieldLabels}
-                        onChange={() => onToggleLayer('fieldLabels')}
-                      />
-                      <span>Põllunumbrid</span>
-                    </label>
-                    <label className="soil-metric-radio-item">
-                      <input
-                        type="checkbox"
-                        checked={visibility.blockLabels}
-                        onChange={() => onToggleLayer('blockLabels')}
-                      />
-                      <span>Massiivi numbrid</span>
-                    </label>
+                    <CheckboxField
+ className="soil-metric-radio-item"
+ checked={visibility.fieldLabels}
+ onCheckedChange={() => onToggleLayer('fieldLabels')}
+ label="Põllunumbrid"
+ />
+                    <CheckboxField
+ className="soil-metric-radio-item"
+ checked={visibility.blockLabels}
+ onCheckedChange={() => onToggleLayer('blockLabels')}
+ label="Massiivi numbrid"
+ />
                   </div>
                 )}
               </div>
@@ -184,15 +184,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
               <div className="layer-field-box">
                 <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.soilSamples}
-                      onChange={() => onToggleLayer('soilSamples')}
-                    />
-                    <span className="layer-color-indicator soil-color"></span>
+                  <CheckboxField
+ className="layer-label"
+ checked={visibility.soilSamples}
+ onCheckedChange={() => onToggleLayer('soilSamples')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator soil-color"></span>
                     <span className="layer-text">Mullaproovid</span>
-                  </label>
+ </span>
+ }
+ />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('soilSamples')}
@@ -206,21 +208,18 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   <div className="layer-sub-options">
                     <span className="layer-subtext">{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
                     <div className="vehicle-filter-subgroup">
-                      <div className="soil-metric-radio-list">
+                      <RadioGroup
+                        className="soil-metric-radio-list"
+                        orientation="vertical"
+                        value={soilMetric}
+                        onValueChange={(v) => onSelectSoilMetric(v as SoilSampleMetricKey)}
+                        aria-label="Mullaproovi näitaja"
+                      >
                         {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                          <label key={key} className="soil-metric-radio-item">
-                            <input
-                              type="radio"
-                              name="soil-metric"
-                              value={key}
-                              checked={soilMetric === key}
-                              onChange={() => onSelectSoilMetric(key)}
-                            />
-                            <span>{SOIL_METRIC_CONFIG[key].label}</span>
-                          </label>
+                          <RadioField key={key} value={key} label={SOIL_METRIC_CONFIG[key].label} />
                         ))}
-                      </div>
-  
+                      </RadioGroup>
+
                       <div className="soil-legend-list">
                         {isAgeMetric ? (
                           <div className="soil-legend-gradient">
@@ -252,15 +251,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {modules.telemetry && (
               <div className="layer-field-box">
                 <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.vehicles}
-                      onChange={() => onToggleLayer('vehicles')}
-                    />
-                    <span className="layer-color-indicator tech-color"></span>
+                  <CheckboxField
+ className="layer-label"
+ checked={visibility.vehicles}
+ onCheckedChange={() => onToggleLayer('vehicles')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator tech-color"></span>
                     <span className="layer-text">Masinapark</span>
-                  </label>
+ </span>
+ }
+ />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('vehicles')}
@@ -276,18 +277,20 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {modules.telemetry && (
               <div className="layer-field-box">
                 <div className="layer-item">
-                  <label className="layer-label">
-                    <input
-                      type="checkbox"
-                      checked={visibility.cultivation}
-                      onChange={() => onToggleLayer('cultivation')}
-                    />
-                    <span className="layer-color-indicator cultivation-color"></span>
+                  <CheckboxField
+ className="layer-label"
+ checked={visibility.cultivation}
+ onCheckedChange={() => onToggleLayer('cultivation')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator cultivation-color"></span>
                     <span className="layer-text">Põllutööd</span>
                     {visibility.cultivation && isLoadingVehicleTracks && (
                       <Loader2 size={14} className="layer-loading-spinner" aria-label="Radade laadimine" />
                     )}
-                  </label>
+ </span>
+ }
+ />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('cultivation')}
@@ -370,15 +373,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
               {/* POI / Infrastructure */}
               <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.poi}
-                    onChange={() => onToggleLayer('poi')}
-                  />
-                  <span className="layer-color-indicator poi-color"></span>
+                <CheckboxField
+ className="layer-label"
+ checked={visibility.poi}
+ onCheckedChange={() => onToggleLayer('poi')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator poi-color"></span>
                   <span className="layer-text">Muud asukohad</span>
-                </label>
+ </span>
+ }
+ />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('poi')}
@@ -391,15 +396,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
               {modules.weather && (
               <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.weatherRadar}
-                    onChange={() => onToggleLayer('weatherRadar')}
-                  />
-                  <span className="layer-color-indicator weather-color"></span>
+                <CheckboxField
+ className="layer-label"
+ checked={visibility.weatherRadar}
+ onCheckedChange={() => onToggleLayer('weatherRadar')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator weather-color"></span>
                   <span className="layer-text">Sajuradar</span>
-                </label>
+ </span>
+ }
+ />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('weatherRadar')}
@@ -413,15 +420,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
               {modules.satellite && (
               <div className="layer-item">
-                <label className="layer-label">
-                  <input
-                    type="checkbox"
-                    checked={visibility.satellite}
-                    onChange={() => onToggleLayer('satellite')}
-                  />
-                  <span className="layer-color-indicator satellite-color"></span>
+                <CheckboxField
+ className="layer-label"
+ checked={visibility.satellite}
+ onCheckedChange={() => onToggleLayer('satellite')}
+ label={
+ <span className="layer-label-content">
+<span className="layer-color-indicator satellite-color"></span>
                   <span className="layer-text">Satelliidipilt</span>
-                </label>
+ </span>
+ }
+ />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('satellite')}

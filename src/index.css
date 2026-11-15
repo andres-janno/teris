@@ -547,20 +547,17 @@ body {
 .satellite-date-row.satellite-play-row {
   grid-template-columns: auto minmax(0, 1fr);
 }
-.satellite-date-row .form-input {
-  padding: 4px 6px;
-  padding-right: 24px;
-  background-position: right 8px center;
-  font-size: 0.75rem;
-  width: 100%;
+.satellite-date-row [data-slot="select"] {
   min-width: 0;
-  box-sizing: border-box;
 }
 .satellite-cloudfree {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: inherit !important;
+}
+.satellite-cloudfree > button {
+  margin-top: 0 !important;
 }
 .satellite-progress {
   display: flex;
@@ -849,12 +846,20 @@ body {
 }
 
 .layer-label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 8px !important;
+  font-size: 0.8rem !important;
+  color: var(--text-primary) !important;
+}
+.layer-label > button,
+.soil-metric-radio-item > button {
+  margin-top: 0 !important;
+}
+.layer-label-content {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.8rem;
-  cursor: pointer;
-  color: var(--text-primary);
 }
 
 .layer-color-indicator {
@@ -888,18 +893,16 @@ body {
 }
 
 .soil-metric-radio-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
+  gap: 4px !important;
 }
 
-.soil-metric-radio-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  color: var(--text-primary);
-  cursor: pointer;
+.soil-metric-radio-item,
+.soil-metric-radio-list label {
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+  font-size: 0.78rem !important;
+  color: var(--text-primary) !important;
 }
 
 .soil-legend-list {
@@ -1587,21 +1590,18 @@ body {
 }
 
 /* Ühtne valikukast ja sisestusväli */
-.cc-select,
 .cc-time {
   height: var(--cc-h);
   border: 1px solid var(--input-border);
   border-radius: var(--radius-sm);
   background: var(--input-bg);
   color: var(--input-color);
-  font: inherit;
-  font-size: 0.82rem;
-  font-weight: 600;
 }
 
+/* Rippmenüü kõrgus = --cc-h (Select md 32px) */
 .cc-select {
-  padding: 0 8px;
-  cursor: pointer;
+  display: block;
+  min-width: 8.5rem;
 }
 
 /* Haakeriista nimi töölaiuse kõrval (pikk nimi lõigatakse) */
@@ -1612,13 +1612,6 @@ body {
   text-overflow: ellipsis;
   vertical-align: bottom;
   color: var(--text-secondary);
-}
-
-.cc-select:focus,
-.cc-time:focus-within {
-  outline: none;
-  border-color: var(--emerald-500);
-  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15);
 }
 
 /* 2. Ajavahemik */
@@ -1662,16 +1655,14 @@ body {
   padding: 0 4px;
 }
 
-.cc-time select {
-  height: 100%;
-  border: none;
-  background: transparent;
-  color: inherit;
-  font: inherit;
-  font-weight: 600;
-  padding: 0 2px;
-  cursor: pointer;
-  outline: none;
+/* Tund ja minut ühes ääristatud kastis: sisemised valikud äärisetud */
+.cc-time [data-slot="select"] {
+  height: 100% !important;
+  width: auto !important;
+  min-width: 2.75rem;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 4px !important;
 }
 
 .cc-time span {
@@ -1775,14 +1766,13 @@ body {
   border-color: var(--emerald-500);
 }
 
-.cc-start-input {
-  width: 44px;
-  border: none;
-  outline: none;
-  background: transparent;
-  color: var(--input-color);
-  font: inherit;
-  font-weight: 600;
+/* Alguskellaaeg ääristatud .cc-start kastis: sisemine väli äärisetu */
+.cc-start [data-slot="input"] {
+  width: 44px !important;
+  height: 100% !important;
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }

@@ -11,7 +11,7 @@ import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
-import { Button, ToggleGroup, ToggleGroupItem } from './ui';
+import { Button, CheckboxField, Select, ToggleGroup, ToggleGroupItem, type SelectOption } from './ui';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -271,6 +271,18 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   };
   const years: string[] = [];
   for (let y = new Date().getFullYear(); y >= FIRST_YEAR; y--) years.push(String(y));
+  const periodOptions: SelectOption[] = [
+    { value: RECENT, label: 'Viimased 12 kuud' },
+    ...years.map((y) => ({ value: y, label: y }))
+  ];
+  const dateOptions: SelectOption[] = [
+    ...(!dates.length ? [{ value: '', label: loading ? 'Otsin…' : 'Pilte pole' }] : []),
+    ...(date && dates.length > 0 && !dates.includes(date) ? [{ value: date, label: formatDate(date) }] : []),
+    ...dates.map((d) => {
+      const cloud = cloudByDate.get(d);
+      return { value: d, label: `${formatDate(d)}${cloud !== undefined ? ` · pilves ${Math.round(cloud * 100)}%` : ''}` };
+    })
+  ];
   const fieldCount = area?.fieldCount ?? 0;
   const colorLegend = SATELLITE_COLOR_LEGENDS[product];
 
@@ -306,24 +318,14 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         >
           <ChevronLeft size={16} />
         </Button>
-        <select
-          className="form-input satellite-date-select"
+        <Select
+          size="sm"
           value={date ?? ''}
-          onChange={(e) => onSelectDate(e.target.value || null)}
+          onValueChange={(v) => onSelectDate(v || null)}
           disabled={!dates.length}
           aria-label="Pildi kuupäev"
-        >
-          {!dates.length && <option value="">{loading ? 'Otsin…' : 'Pilte pole'}</option>}
-          {date && dates.length > 0 && !dates.includes(date) && <option value={date}>{formatDate(date)}</option>}
-          {dates.map((d) => {
-            const cloud = cloudByDate.get(d);
-            return (
-              <option key={d} value={d}>
-                {formatDate(d)}{cloud !== undefined ? ` · pilves ${Math.round(cloud * 100)}%` : ''}
-              </option>
-            );
-          })}
-        </select>
+          options={dateOptions}
+        />
         <Button
           type="button"
           variant="ghost"
@@ -350,17 +352,13 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           {playing ? <Pause size={16} /> : <Play size={16} />}
           <span>{playing ? 'Peata' : 'Esita'}</span>
         </Button>
-        <select
-          className="form-input satellite-period-select"
+        <Select
+          size="sm"
           value={period}
-          onChange={(e) => setPeriod(e.target.value)}
+          onValueChange={setPeriod}
           aria-label="Periood"
-        >
-          <option value={RECENT}>Viimased 12 kuud</option>
-          {years.map((y) => (
-            <option key={y} value={y}>{y}</option>
-          ))}
-        </select>
+          options={periodOptions}
+        />
       </div>
 
       {date && (
@@ -369,18 +367,19 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </div>
       )}
 
-      <label className="satellite-cloudfree" title="Põldudest väljapoole jäävaid kaardiplaate ei laadita — kiirem ja selgem">
-        <input type="checkbox" checked={fieldsOnly} onChange={onToggleFieldsOnly} />
-        <span>Näita pilti ainult põldudel</span>
-      </label>
+      <CheckboxField
+        className="satellite-cloudfree"
+        checked={fieldsOnly}
+        onCheckedChange={() => onToggleFieldsOnly()}
+        label={<span title="Põldudest väljapoole jäävaid kaardiplaate ei laadita — kiirem ja selgem">Näita pilti ainult põldudel</span>}
+      />
 
-      <label className="satellite-cloudfree">
-        <input type="checkbox" checked={cloudFree} onChange={() => setCloudFree((v) => !v)} />
-        <span>
-          Ainult pilvevabad päevad{' '}
-          {fieldCount > 0 ? `nähtavatel põldudel (${fieldCount})` : 'kaardivaate alal'}
-        </span>
-      </label>
+      <CheckboxField
+        className="satellite-cloudfree"
+        checked={cloudFree}
+        onCheckedChange={setCloudFree}
+        label={`Ainult pilvevabad päevad ${fieldCount > 0 ? `nähtavatel põldudel (${fieldCount})` : 'kaardivaate alal'}`}
+      />
 
       {cloudFree && progress && progress.checked < progress.total && (
         <div className="satellite-progress" title="Esimesel korral laaditakse iga päeva pilt; edaspidi on tulemus kohe olemas">
