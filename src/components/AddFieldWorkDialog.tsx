@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -146,10 +146,9 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
         </DialogBody>
         <DialogFooter className="add-work-footer">
           {toAdd.size > 0 && (
-            <div className="form-group animate-slide-in">
-              <label htmlFor="aw-planned">Planeeritud aeg (uutele töödele)</label>
-              <input id="aw-planned" className="form-input" placeholder="nt mai 2027" value={plannedText} onChange={(e) => setPlannedText(e.target.value)} />
-            </div>
+            <Field label="Planeeritud aeg (uutele töödele)" htmlFor="aw-planned" className="animate-slide-in">
+              <Input id="aw-planned" placeholder="nt mai 2027" value={plannedText} onChange={(e) => setPlannedText(e.target.value)} />
+            </Field>
           )}
           {error && <div className="alert-box error">{error}</div>}
           <div className="add-work-actions">

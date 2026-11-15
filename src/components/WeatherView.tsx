@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, FilterSelect } from './ui';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, FilterSelect, Checkbox } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -111,7 +111,7 @@ export const WeatherView: React.FC = () => {
                           <TableCell numeric>{s.longestDrySpell}</TableCell>
                           <TableCell numeric>{s.hotDays}</TableCell>
                           <TableCell numeric>{s.frostDays}</TableCell>
-                          <TableCell onClick={(e) => e.stopPropagation()}><input type="checkbox" checked={compare.includes(y)} onChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></TableCell>
+                          <TableCell onClick={(e) => e.stopPropagation()}><Checkbox checked={compare.includes(y)} onCheckedChange={() => toggleCompare(y)} aria-label={`Võrdle ${y}`} /></TableCell>
                         </TableRow>
                       ))}
                       {data && data.normalYears.length > 0 && (

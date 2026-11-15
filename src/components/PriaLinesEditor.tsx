@@ -10,7 +10,7 @@ import {
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
-import { Button, FilterSelect, type FilterSelectOption } from './ui';
+import { Button, FilterSelect, Input, NumberInput, type FilterSelectOption } from './ui';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -24,6 +24,9 @@ const parseNum = (s: string): number | null => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
   return s.trim() === '' || !Number.isFinite(n) ? null : n;
 };
+// Rea arvuväli: olek jääb tekstiks (PriaRow/HarvestRow kasutajad parsivad seda), sisend on NumberInput (3 komakohta nagu fmt)
+const numValue = (s: string | undefined) => parseNum(s ?? '');
+const numText = (n: number | null) => (n == null ? '' : String(n));
 const fmt = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
 
 export const emptyPriaRow = (): PriaRow => ({
@@ -170,29 +173,29 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
       )}
       {rows.map((r, i) => (
         <div key={i} className="pria-grid" style={grid}>
-          <FilterSelect fill ariaLabel="Register/materjal" value={r.priaRegister} onChange={(v) => set(i, { priaRegister: v })}
+          <FilterSelect fill size="sm" ariaLabel="Register/materjal" value={r.priaRegister} onChange={(v) => set(i, { priaRegister: v })}
             options={optionsOf('– vali –', registersFor(activity), r.priaRegister)} />
           <div className="pria-article-cell">
-            <FilterSelect fill ariaLabel={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(v) => pickArticle(i, v)}
+            <FilterSelect fill size="sm" ariaLabel={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(v) => pickArticle(i, v)}
               options={[{ value: '', label: r.label && !r.articleId ? r.label : '– Kulumaterjalidest –' }, ...options.map((m) => ({ value: m.id, label: m.name }))]} />
           </div>
-          <input className="form-input" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
+          <Input size="sm" aria-label="Liik" placeholder={isSeed ? 'nt Suvinisu' : isTkv ? 'nt Herbitsiid' : 'nt NPK väetis'} value={r.priaKind} onChange={(e) => set(i, { priaKind: e.target.value })} />
           {isSeed && (
-            <FilterSelect fill ariaLabel="Seemne kategooria" value={r.priaSpec} onChange={(v) => set(i, { priaSpec: v })}
+            <FilterSelect fill size="sm" ariaLabel="Seemne kategooria" value={r.priaSpec} onChange={(v) => set(i, { priaSpec: v })}
               options={optionsOf('–', SEED_CATEGORIES, r.priaSpec)} />
           )}
-          {isTkv && <input className="form-input" aria-label="Toimeaine" value={r.activeIngredient} onChange={(e) => set(i, { activeIngredient: e.target.value })} />}
+          {isTkv && <Input size="sm" aria-label="Toimeaine" value={r.activeIngredient} onChange={(e) => set(i, { activeIngredient: e.target.value })} />}
           {showWarehouse && (
-            <FilterSelect fill ariaLabel="Ladu" value={r.warehouseId} defaultValue={defaultWarehouseId} onChange={(v) => set(i, { warehouseId: v })}
+            <FilterSelect fill size="sm" ariaLabel="Ladu" value={r.warehouseId} defaultValue={defaultWarehouseId} onChange={(v) => set(i, { warehouseId: v })}
               options={warehouseOptions(r.warehouseId)} />
           )}
-          <input className="form-input num" aria-label="Kogus ha kohta" inputMode="decimal" placeholder={`${r.unit}/ha`} value={r.ratePerHa} onChange={(e) => setRate(i, e.target.value)} />
-          {showTotals && <input className="form-input num" aria-label="Kogus kokku" inputMode="decimal" placeholder={r.unit} value={r.total} onChange={(e) => setTotal(i, e.target.value)} />}
+          <NumberInput size="sm" decimals={3} aria-label="Kogus ha kohta" placeholder={`${r.unit}/ha`} value={numValue(r.ratePerHa)} onChange={(n) => setRate(i, numText(n))} />
+          {showTotals && <NumberInput size="sm" decimals={3} aria-label="Kogus kokku" placeholder={r.unit} value={numValue(r.total)} onChange={(n) => setTotal(i, numText(n))} />}
           {isFert && (
             <>
-              <input className="form-input num" aria-label="N kg/ha" inputMode="decimal" value={r.nKgHa} onChange={(e) => set(i, { nKgHa: e.target.value })} />
-              <input className="form-input num" aria-label="P kg/ha" inputMode="decimal" value={r.pKgHa} onChange={(e) => set(i, { pKgHa: e.target.value })} />
-              <input className="form-input num" aria-label="K kg/ha" inputMode="decimal" value={r.kKgHa} onChange={(e) => set(i, { kKgHa: e.target.value })} />
+              <NumberInput size="sm" decimals={3} aria-label="N kg/ha" value={numValue(r.nKgHa)} onChange={(n) => set(i, { nKgHa: numText(n) })} />
+              <NumberInput size="sm" decimals={3} aria-label="P kg/ha" value={numValue(r.pKgHa)} onChange={(n) => set(i, { pKgHa: numText(n) })} />
+              <NumberInput size="sm" decimals={3} aria-label="K kg/ha" value={numValue(r.kKgHa)} onChange={(n) => set(i, { kKgHa: numText(n) })} />
             </>
           )}
           <Button type="button" variant="danger-ghost" size="icon-sm" title="Eemalda rida" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}>
@@ -225,23 +228,23 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
             </>}
       </div>
       <div className="pria-grid" style={grid}>
-        <FilterSelect fill ariaLabel="Kultuuri tüüp" value={value.priaSpec} onChange={(v) => onChange({ ...value, priaSpec: v })}
+        <FilterSelect fill size="sm" ariaLabel="Kultuuri tüüp" value={value.priaSpec} onChange={(v) => onChange({ ...value, priaSpec: v })}
           options={optionsOf('– vali –', CROP_TYPES, value.priaSpec)} />
-        <FilterSelect fill ariaLabel="Saagi tüüp" value={value.priaKind} onChange={(v) => onChange({ ...value, priaKind: v })}
+        <FilterSelect fill size="sm" ariaLabel="Saagi tüüp" value={value.priaKind} onChange={(v) => onChange({ ...value, priaKind: v })}
           options={optionsOf('– vali –', YIELD_TYPES, value.priaKind)} />
         {showBunkers && (
-          <input className="form-input num" aria-label="Punkreid" required inputMode="decimal" placeholder="tk" value={value.bunkers ?? ''}
-            onChange={(e) => onChange({ ...value, bunkers: e.target.value })} />
+          <NumberInput size="sm" aria-label="Punkreid" required placeholder="tk" value={numValue(value.bunkers)}
+            onChange={(n) => onChange({ ...value, bunkers: numText(n) })} />
         )}
         {tonnesText != null ? (
           <span className="num muted" style={{ gridColumn: `span ${showTotals ? 2 : 1}` }}>{tonnesText}</span>
         ) : (
           <>
-            <input className="form-input num" aria-label="Saak t/ha" inputMode="decimal" placeholder="t/ha" value={value.ratePerHa}
-              onChange={(e) => onChange({ ...value, ratePerHa: e.target.value, total: fmt(totalFromRate(parseNum(e.target.value), areaHa)) })} />
+            <NumberInput size="sm" decimals={3} aria-label="Saak t/ha" placeholder="t/ha" value={numValue(value.ratePerHa)}
+              onChange={(n) => onChange({ ...value, ratePerHa: numText(n), total: fmt(totalFromRate(n, areaHa)) })} />
             {showTotals && (
-              <input className="form-input num" aria-label="Saak kokku t" inputMode="decimal" placeholder="t" value={value.total}
-                onChange={(e) => onChange({ ...value, total: e.target.value, ratePerHa: fmt(rateFromTotal(parseNum(e.target.value), areaHa)) })} />
+              <NumberInput size="sm" decimals={3} aria-label="Saak kokku t" placeholder="t" value={numValue(value.total)}
+                onChange={(n) => onChange({ ...value, total: numText(n), ratePerHa: fmt(rateFromTotal(n, areaHa)) })} />
             )}
           </>
         )}
@@ -267,9 +270,9 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
       const set = (p: Partial<WorkEntryObservation>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
       return (
         <div key={i} className="pria-grid" style={OBS_GRID}>
-          <FilterSelect fill ariaLabel="Seire liik" value={o.priaRegister ?? ''} onChange={(v) => set({ priaRegister: v || null, unit: OBSERVATION_UNITS[v] ?? '' })}
+          <FilterSelect fill size="sm" ariaLabel="Seire liik" value={o.priaRegister ?? ''} onChange={(v) => set({ priaRegister: v || null, unit: OBSERVATION_UNITS[v] ?? '' })}
             options={optionsOf('– vali –', Object.keys(OBSERVATION_UNITS), o.priaRegister ?? '')} />
-          <input className="form-input" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
+          <Input size="sm" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
           <ObservationQuantity value={o.quantity} unit={o.unit} onChange={(quantity) => set({ quantity })} />
           <span className="work-entry-unit">{o.unit}</span>
           <Button type="button" variant="danger-ghost" size="icon-sm" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></Button>
@@ -282,15 +285,15 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
   </div>
 );
 
-// Seire koguse sisend hoiab teksti eraldi, et komaga arvu (nt "2,") saaks sisestada
+// Seire kogus: tühi väli = 0 (olek on arv); kohalik väärtus hoiab tühja välja, et seda saaks tühjaks teha ja uuesti sisestada
 const ObservationQuantity: React.FC<{ value: number; unit: string; onChange: (n: number) => void }> = ({ value, unit, onChange }) => {
-  const [text, setText] = React.useState(fmt(value));
-  // Väärtus muutus väljastpoolt (nt eelmise rea eemaldamisel nihkuvad read indeksi võtmega): sünkrooni tekst
+  const [n, setN] = React.useState<number | null>(value);
+  // Väärtus muutus väljastpoolt (nt eelmise rea eemaldamisel nihkuvad read indeksi võtmega): sünkrooni
   React.useEffect(() => {
-    setText((t) => ((parseNum(t) ?? 0) === value ? t : fmt(value)));
+    setN((cur) => ((cur ?? 0) === value ? cur : value));
   }, [value]);
   return (
-    <input className="form-input num" aria-label="Kogus" inputMode="decimal" placeholder={unit || 'kogus'} value={text}
-      onChange={(e) => { setText(e.target.value); onChange(parseNum(e.target.value) ?? 0); }} />
+    <NumberInput size="sm" decimals={3} aria-label="Kogus" placeholder={unit || 'kogus'} value={n}
+      onChange={(x) => { setN(x); onChange(x ?? 0); }} />
   );
 };

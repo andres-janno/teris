@@ -18,7 +18,7 @@ import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -215,10 +215,14 @@ function cropSummaryKey(cropText: string): string {
   useEffect(() => {
     if (!cropEdit) return;
     const onPointerDown = (e: PointerEvent) => {
-      if (cropEditRef.current && !cropEditRef.current.contains(e.target as Node)) setCropEdit(null);
+      const target = e.target as Element;
+      // Rippmenüü valikud on portaalis (väljaspool rida) — need ei tohi redigeerimist sulgeda.
+      if (target.closest?.('[role="listbox"]')) return;
+      if (cropEditRef.current && !cropEditRef.current.contains(target)) setCropEdit(null);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') setCropEdit(null);
+      // Esc sulgeb esmalt avatud rippmenüü, mitte kogu rida.
+      if (e.key === 'Escape' && !document.querySelector('[role="listbox"]')) setCropEdit(null);
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
@@ -442,10 +446,7 @@ function cropSummaryKey(cropText: string): string {
             <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, koodi, katastrit või omanikku..." aria-label="Otsi põllu nime, koodi, katastrit või omanikku..." />
 
             <FilterClear inline active={showMissingInYear} onClear={() => setShowMissingInYear(false)}>
-              <label className="checkbox-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', whiteSpace: 'nowrap' }}>
-                <input type="checkbox" checked={showMissingInYear} onChange={(e) => setShowMissingInYear(e.target.checked)} />
-                Näita ka {selectedYear}. aastal puuduvaid põlde
-              </label>
+              <CheckboxField checked={showMissingInYear} onCheckedChange={setShowMissingInYear} label={`Näita ka ${selectedYear}. aastal puuduvaid põlde`} />
             </FilterClear>
 
             {(cropFilter !== 'all' || tenureFilter !== 'all') && (
@@ -554,42 +555,37 @@ function cropSummaryKey(cropText: string): string {
                         return (
                           <TableCell key={yr} wrap className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
                             <div ref={cropEditRef} className="crop-inline-edit">
-                              <select
-                                className="form-input"
+                              <Select
+                                size="sm"
                                 value={cropEdit.crop}
                                 autoFocus
-                                onChange={(e) => setCropEdit({ ...cropEdit, crop: e.target.value, variety: '', undersowing: 'NONE' })}
-                              >
-                                <option value="">– Kultuur määramata –</option>
-                                {cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) && (
-                                  <option value={cropEdit.crop}>{cropEdit.crop}</option>
-                                )}
-                                {activeCrops.map((c) => (
-                                  <option key={c.id} value={c.name}>{c.name}</option>
-                                ))}
-                              </select>
-                              <select
-                                className="form-input"
+                                aria-label="Kultuur"
+                                onValueChange={(v) => setCropEdit({ ...cropEdit, crop: v, variety: '', undersowing: 'NONE' })}
+                                options={[
+                                  { value: '', label: '– Kultuur määramata –' },
+                                  ...(cropEdit.crop && !activeCrops.some((c) => c.name === cropEdit.crop) ? [{ value: cropEdit.crop, label: cropEdit.crop }] : []),
+                                  ...activeCrops.map((c) => ({ value: c.name, label: c.name }))
+                                ]}
+                              />
+                              <Select
+                                size="sm"
                                 value={cropEdit.variety}
-                                onChange={(e) => setCropEdit({ ...cropEdit, variety: e.target.value })}
+                                aria-label="Sort"
+                                onValueChange={(v) => setCropEdit({ ...cropEdit, variety: v })}
                                 disabled={varietyOptions.length === 0}
-                              >
-                                <option value="">{varietyOptions.length === 0 ? 'Sorte pole' : 'Sort määramata'}</option>
-                                {varietyOptions.map((v) => (
-                                  <option key={v} value={v}>{v}</option>
-                                ))}
-                              </select>
+                                options={[
+                                  { value: '', label: varietyOptions.length === 0 ? 'Sorte pole' : 'Sort määramata' },
+                                  ...varietyOptions.map((v) => ({ value: v, label: v }))
+                                ]}
+                              />
                               {findRegistryCrop(cropEdit.crop)?.priaUndersowing && (
-                                <select
-                                  className="form-input"
+                                <Select
+                                  size="sm"
                                   value={cropEdit.undersowing}
-                                  onChange={(e) => setCropEdit({ ...cropEdit, undersowing: e.target.value as Undersowing })}
-                                  title="Allakülv"
-                                >
-                                  {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
-                                    <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
-                                  ))}
-                                </select>
+                                  aria-label="Allakülv"
+                                  onValueChange={(v) => setCropEdit({ ...cropEdit, undersowing: v as Undersowing })}
+                                  options={(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => ({ value: u, label: UNDERSOWING_LABELS[u] }))}
+                                />
                               )}
                               <div className="crop-inline-edit-actions">
                                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">

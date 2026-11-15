@@ -15,7 +15,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -189,9 +189,9 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
             onDrop={handleDrop}
             onClick={() => fileInputRef.current?.click()}
           >
-            <input 
-              ref={fileInputRef} 
-              type="file" 
+            <input
+              type="file"
+              ref={fileInputRef}
               accept=".zip" 
               style={{ display: 'none' }} 
               onChange={handleFileInput}
@@ -237,47 +237,31 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
             <div className="parsed-preview-box">
               <div className="preview-header">
                 <strong>Leitud põllud ({parsedPreview.features.length})</strong>
-                <label className="checkbox-label">
-                  <input
-                    type="checkbox"
-                    checked={replaceExisting}
-                    onChange={(e) => setReplaceExisting(e.target.checked)}
-                  />
-                  <span>Asenda olemasolevad põllud</span>
-                </label>
+                <CheckboxField checked={replaceExisting} onCheckedChange={setReplaceExisting} label="Asenda olemasolevad põllud" />
               </div>
 
-              <div className="form-group" style={{ margin: '8px 0' }}>
-                <label>Hooaeg (aasta), millesse põllud imporditakse *</label>
-                <select
-                  className="form-input"
-                  value={importYear}
-                  onChange={(e) => setImportYear(Number(e.target.value))}
-                >
-                  {(availableYears.includes(importYear) ? availableYears : [...availableYears, importYear].sort((a, b) => a - b)).map((y) => (
-                    <option key={y} value={y}>{y}</option>
-                  ))}
-                </select>
+              <Field label="Hooaeg (aasta), millesse põllud imporditakse *" htmlFor="fu-year" className="operator-field">
+                <Select
+                  id="fu-year"
+                  value={String(importYear)}
+                  onValueChange={(v) => setImportYear(Number(v))}
+                  options={(availableYears.includes(importYear) ? availableYears : [...availableYears, importYear].sort((a, b) => a - b)).map((y) => ({ value: String(y), label: String(y) }))}
+                />
                 {detectedYear && (
                   <span className="hint-text" style={{ display: 'block', marginTop: '4px' }}>
                     Failist tuvastatud: {detectedYear.year} ({detectedYear.count}/{detectedYear.total} põllu PRIA muutmiskuupäeva järgi) — kontrolli enne kinnitamist
                   </span>
                 )}
-              </div>
+              </Field>
 
-              <div className="form-group" style={{ margin: '8px 0' }}>
-                <label>Operaator (seotakse kõigi imporditud põldudega)</label>
-                <select
-                  className="form-input"
+              <Field label="Operaator (seotakse kõigi imporditud põldudega)" htmlFor="fu-operator" className="operator-field">
+                <Select
+                  id="fu-operator"
                   value={operatorId}
-                  onChange={(e) => setOperatorId(e.target.value)}
-                >
-                  <option value="">-- Määramata --</option>
-                  {operators.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
+                  onValueChange={setOperatorId}
+                  options={[{ value: '', label: '-- Määramata --' }, ...operators.map((p) => ({ value: p.id, label: p.name }))]}
+                />
+              </Field>
 
               {replacePlan && (
                 <div className={`alert-box ${importYearLocked ? 'error' : ''}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px', margin: '8px 0' }}>

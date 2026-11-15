@@ -13,7 +13,7 @@ import { isCropUndetermined } from '../types/season';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select } from './ui';
 
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
@@ -331,99 +331,98 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         <Landmark size={14} />
         <span>Põllu põhiandmed ja massiiv</span>
       </div>
-      <div className="form-grid">
-        <div className="form-row-3">
-          <div className="form-group">
-            <label>Põllu nimi (kasutaja määratud) *</label>
-            <input
+      <FormGrid>
+        <FormGrid cols={3} span="full">
+          <Field label="Põllu nimi (kasutaja määratud) *" htmlFor="field-edit-name">
+            <Input
+              id="field-edit-name"
               type="text"
               required
               placeholder="nt Loisu tagune, Kodu põld, Suur põld..."
               disabled={isEditSeasonLocked}
               value={editName}
               onChange={(e) => setEditName(e.target.value)}
-              className="form-input"
             />
-          </div>
+          </Field>
 
-          <div className="form-group">
-            <label>Põllu number {editYear} (PRIA)</label>
-            <input
+          <Field label={`Põllu number ${editYear} (PRIA)`} htmlFor="field-edit-num">
+            <Input
+              id="field-edit-num"
               type="text"
+              numeric
               placeholder="nt 4, 4-1, 1"
               disabled={isEditSeasonLocked}
               value={editNum}
               onChange={(e) => setEditNum(e.target.value)}
-              className="form-input text-right"
             />
-          </div>
+          </Field>
 
-          <div className="form-group">
-            <label>PRIA massiivi number (fieldCode) *</label>
-            <input
+          <Field label="PRIA massiivi number (fieldCode) *" htmlFor="field-edit-code">
+            <Input
+              id="field-edit-code"
               type="text"
               required
               placeholder="nt 61144313542"
               disabled={isEditSeasonLocked}
               value={editFieldCode}
               onChange={(e) => setEditFieldCode(e.target.value)}
-              className="form-input"
             />
-          </div>
-        </div>
+          </Field>
+        </FormGrid>
 
-        <div className="form-row-3 field-auto-row">
-        <div className="form-group" title={SOIL_AUTO_HINT}>
-          <label>
-            Mullastiku tüüp <Info size={12} className="auto-field-icon" />
-          </label>
-          <input
-            type="text"
-            readOnly
-            tabIndex={-1}
-            placeholder="Täidetakse hiljem automaatselt"
-            value={editSoilType}
-            className="form-input auto-field-input"
-          />
-        </div>
-
-        <div className="form-group" title={DRAINAGE_AUTO_HINT}>
-          <label>
-            Drenaaž <Info size={12} className="auto-field-icon" />
-          </label>
-          <input
-            type="text"
-            readOnly
-            tabIndex={-1}
-            placeholder="Täidetakse hiljem automaatselt"
-            value={field.drainageSystem ? 'Jah' : ''}
-            className="form-input auto-field-input"
-          />
-        </div>
-
-        <div className="form-group">
-          <label>Operaator {editYear}</label>
-          <select
-            disabled={isEditSeasonLocked}
-            value={editOperatorId}
-            onChange={(e) => {
-              const id = e.target.value;
-              setEditOperatorId(id);
-              // Omandivorm sõltub operaatorist (omanik = operaator → oma maa)
-              setEditCadastralParcels((prev) => prev.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(id)) })));
-            }}
-            className="form-input"
+        <FormGrid cols={3} span="full">
+          <Field
+            htmlFor="field-edit-soil"
+            label={<span title={SOIL_AUTO_HINT}>Mullastiku tüüp <Info size={12} className="auto-field-icon" /></span>}
           >
-            <option value="">-- Määramata --</option>
-            {parties
-              .filter((p) => p.roles?.includes('OPERATOR') || p.id === editOperatorId)
-              .map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-          </select>
-        </div>
-        </div>
-      </div>
+            <Input
+              id="field-edit-soil"
+              type="text"
+              readOnly
+              tabIndex={-1}
+              placeholder="Täidetakse hiljem automaatselt"
+              title={SOIL_AUTO_HINT}
+              value={editSoilType}
+              className="auto-filled-input"
+            />
+          </Field>
+
+          <Field
+            htmlFor="field-edit-drainage"
+            label={<span title={DRAINAGE_AUTO_HINT}>Drenaaž <Info size={12} className="auto-field-icon" /></span>}
+          >
+            <Input
+              id="field-edit-drainage"
+              type="text"
+              readOnly
+              tabIndex={-1}
+              placeholder="Täidetakse hiljem automaatselt"
+              title={DRAINAGE_AUTO_HINT}
+              value={field.drainageSystem ? 'Jah' : ''}
+              className="auto-filled-input"
+            />
+          </Field>
+
+          <Field label={`Operaator ${editYear}`} htmlFor="field-edit-operator">
+            <Select
+              id="field-edit-operator"
+              disabled={isEditSeasonLocked}
+              value={editOperatorId}
+              onValueChange={(id) => {
+                setEditOperatorId(id);
+                // Omandivorm sõltub operaatorist (omanik = operaator → oma maa)
+                setEditCadastralParcels((prev) => prev.map((p) => ({ ...p, ownershipType: deriveOwnershipType(p, operatorOf(id)) })));
+              }}
+              options={[
+                { value: '', label: '-- Määramata --' },
+                ...parties
+                  .filter((p) => p.roles?.includes('OPERATOR') || p.id === editOperatorId)
+                  .map((p) => ({ value: p.id, label: p.name }))
+              ]}
+            />
+          </Field>
+        </FormGrid>
+      </FormGrid>
 
       {/* Seasonal Yearly Data & Cadastral Parcels */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
@@ -431,43 +430,42 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         <span>Hooaja külvikord, pindala ja piirid</span>
       </div>
 
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Põllu haritav pindala (ha) *</label>
+      <FormGrid>
+        <Field label="Põllu haritav pindala (ha) *" htmlFor="field-edit-area">
           <NumberInput
+            id="field-edit-area"
             required
             disabled={isEditSeasonLocked}
             value={editAreaHa}
             onChange={setEditAreaHa}
             title="Põllu haritav suurus hooajal"
           />
-        </div>
+        </Field>
 
-        <div className="form-group">
-          <label>PRIA toetusõiguslik pindala (ha)</label>
+        <Field label="PRIA toetusõiguslik pindala (ha)" htmlFor="field-edit-eligible">
           <NumberInput
+            id="field-edit-eligible"
             disabled={isEditSeasonLocked}
             value={editEligibleAreaHa || null}
             onChange={(v) => setEditEligibleAreaHa(v ?? undefined)}
             placeholder="nt 4,85"
           />
-        </div>
+        </Field>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-          <label>Pindala muutuse põhjus (nt võsa pealekasv, kraavipuhastus, puhverribad)</label>
-          <input
+        <Field label="Pindala muutuse põhjus (nt võsa pealekasv, kraavipuhastus, puhverribad)" htmlFor="field-edit-area-reason" span="full">
+          <Input
+            id="field-edit-area-reason"
             type="text"
             disabled={isEditSeasonLocked}
             placeholder="nt Võsa pealekasv idaosas -0.2 ha või Kraaviäärde rajatud puhverriba"
             value={editAreaChangeReason}
             onChange={(e) => setEditAreaChangeReason(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
-        <div className="form-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <label style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <Field>
+          <div className="field-label-row">
+            <label htmlFor="field-edit-crop">
               Kultuur
               {selectedCropObj?.color && (
                 <span
@@ -504,11 +502,11 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </Button>
             )}
           </div>
-          <select
+          <Select
+            id="field-edit-crop"
             disabled={isEditSeasonLocked}
             value={editCrop}
-            onChange={(e) => {
-              const selectedName = e.target.value;
+            onValueChange={(selectedName) => {
               setEditCrop(selectedName);
               const match = activeCrops.find(c => c.name === selectedName);
               if (match) {
@@ -520,39 +518,33 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 }
               }
             }}
-            className="form-input"
-          >
-            <option value="">– määramata –</option>
-            {editCrop && !activeCrops.some(c => c.name === editCrop) && (
-              <option value={editCrop}>
-                {selectedCropObj?.icon || '🌾'} {editCrop}
-              </option>
-            )}
-            {activeCrops.map(c => (
-              <option key={c.id} value={c.name}>
-                {c.icon || '🌾'} {c.name}
-              </option>
-            ))}
-          </select>
-        </div>
+            options={[
+              { value: '', label: '– määramata –' },
+              ...(editCrop && !activeCrops.some(c => c.name === editCrop)
+                ? [{ value: editCrop, label: `${selectedCropObj?.icon || '🌾'} ${editCrop}` }]
+                : []),
+              ...activeCrops.map(c => ({ value: c.name, label: `${c.icon || '🌾'} ${c.name}` }))
+            ]}
+          />
+        </Field>
 
-        <div className="form-group">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-            <label style={{ margin: 0 }}>Sordi valik ({editCrop || 'Kultuur'})</label>
+        <Field>
+          <div className="field-label-row">
+            <label htmlFor="field-edit-variety">Sordi valik ({editCrop || 'Kultuur'})</label>
             {availableVarieties.length > 0 && (
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
                 {availableVarieties.length} sorti registris
               </span>
             )}
           </div>
-          <input
+          <Input
+            id="field-edit-variety"
             type="text"
             list="field-available-varieties-list"
             disabled={isEditSeasonLocked}
             placeholder={availableVarieties.length > 0 ? `nt ${availableVarieties[0].name}` : 'nt Skagen'}
             value={editVariety}
             onChange={(e) => setEditVariety(e.target.value)}
-            className="form-input"
           />
           <datalist id="field-available-varieties-list">
             {availableVarieties.map((v) => (
@@ -561,62 +553,59 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </option>
             ))}
           </datalist>
-        </div>
+        </Field>
 
         {selectedCropObj?.priaUndersowing && (
-          <div className="form-group">
-            <label htmlFor="field-undersowing">Allakülv</label>
-            <select
+          <Field label="Allakülv" htmlFor="field-undersowing">
+            <Select
               id="field-undersowing"
               disabled={isEditSeasonLocked}
               value={editUndersowing}
-              onChange={(e) => setEditUndersowing(e.target.value as Undersowing)}
-              className="form-input"
-            >
-              {(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
-                <option key={u} value={u}>{UNDERSOWING_LABELS[u]}</option>
-              ))}
-            </select>
-          </div>
+              onValueChange={(v) => setEditUndersowing(v as Undersowing)}
+              options={(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => ({ value: u, label: UNDERSOWING_LABELS[u] }))}
+            />
+          </Field>
         )}
 
-        <div className="form-group">
-          <label>PRIA nimetus</label>
-          <div className="form-input readonly" title="Tuletatakse kultuurist, sordist ja allakülvist (kultuuride registri PRIA nimetus)">
-            {priaPreview || '–'}
-          </div>
-        </div>
+        <Field label="PRIA nimetus" htmlFor="field-edit-pria-name">
+          <Input
+            id="field-edit-pria-name"
+            readOnly
+            value={priaPreview || '–'}
+            title="Tuletatakse kultuurist, sordist ja allakülvist (kultuuride registri PRIA nimetus)"
+          />
+        </Field>
 
-        <div className="form-group">
-          <label>Saagiootus (t/ha) & Koristatud saak (t/ha)</label>
-          <div className="input-split">
+        <Field label="Saagiootus (t/ha) & Koristatud saak (t/ha)">
+          <FieldRow>
             <NumberInput
               disabled={isEditSeasonLocked}
               placeholder="Plaan t/ha"
+              aria-label="Saagiootus (t/ha)"
               value={editTargetYield || null}
               onChange={(v) => setEditTargetYield(v ?? undefined)}
             />
             <NumberInput
               disabled={isEditSeasonLocked}
               placeholder="Tegelik t/ha"
+              aria-label="Koristatud saak (t/ha)"
               value={editActualYield || null}
               onChange={(v) => setEditActualYield(v ?? undefined)}
             />
-          </div>
-        </div>
+          </FieldRow>
+        </Field>
 
-        <div className="form-group">
-          <label>Hooaja märkmed (väetamine, taimekaitse, PRIA)</label>
-          <input
+        <Field label="Hooaja märkmed (väetamine, taimekaitse, PRIA)" htmlFor="field-edit-notes">
+          <Input
+            id="field-edit-notes"
             type="text"
             disabled={isEditSeasonLocked}
             placeholder="nt NPK 8-20-30 250kg/ha sügisel"
             value={editNotes}
             onChange={(e) => setEditNotes(e.target.value)}
-            className="form-input"
           />
-        </div>
-      </div>
+        </Field>
+      </FormGrid>
 
       {/* Ainult vaatamiseks: põllu piiridesse jäävad mullaproovid kuni 6 aastat tagasi valitud hooajast */}
       {seasonGeometry && (
@@ -652,33 +641,32 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         {editCadastralParcels.map((parcel, pIdx) => (
           <div key={pIdx} className="edit-cad-item glass-card">
             <div className="edit-cad-grid">
-              <div className="form-group">
-                <label>Katastritunnus *</label>
-                <input
+              <Field label="Katastritunnus *" htmlFor={`field-edit-cad-code-${pIdx}`}>
+                <Input
+                  id={`field-edit-cad-code-${pIdx}`}
                   type="text"
                   required
                   disabled={isEditSeasonLocked}
                   value={parcel.cadastralCode}
                   onChange={(e) => handleUpdateCadastralParcel(pIdx, { cadastralCode: e.target.value })}
-                  className="form-input"
                   placeholder="nt 89201:001:0100"
                 />
-              </div>
+              </Field>
 
-              <div className="form-group">
-                <label>Põllu osa (ha) *</label>
+              <Field label="Põllu osa (ha) *" htmlFor={`field-edit-cad-area-${pIdx}`}>
                 <NumberInput
+                  id={`field-edit-cad-area-${pIdx}`}
                   required
                   disabled={isEditSeasonLocked}
                   value={parcel.fieldAreaHa || null}
                   onChange={(v) => handleUpdateCadastralParcel(pIdx, { fieldAreaHa: v ?? 0 })}
                   title="Hektarite arv sellest katastriüksusest sellel hooajal"
                 />
-              </div>
+              </Field>
 
-              <div className="form-group">
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
-                  <label style={{ margin: 0 }}>
+              <Field>
+                <div className="field-label-row">
+                  <label htmlFor={`field-edit-cad-owner-${pIdx}`}>
                     Maaomanik
                     <Badge tone={OWNERSHIP_TONE[parcel.ownershipType]} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
                       {OWNERSHIP_LABELS[parcel.ownershipType]}
@@ -705,13 +693,13 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                     </Button>
                   )}
                 </div>
-                <input
+                <Input
+                  id={`field-edit-cad-owner-${pIdx}`}
                   type="text"
                   list="parties-landowners-list"
                   disabled={isEditSeasonLocked}
                   value={parcel.ownerName}
                   onChange={(e) => handleUpdateCadastralParcel(pIdx, { ownerName: e.target.value })}
-                  className="form-input"
                   placeholder="nt Loisu Agro OÜ / Jaan Tamm"
                 />
                 <datalist id="parties-landowners-list">
@@ -721,20 +709,18 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                       <option key={p.id} value={p.name} />
                     ))}
                 </datalist>
-              </div>
+              </Field>
 
               {parcel.ownershipType === 'UNKNOWN' ? (
-                <div className="form-group full-width cad-tenure-hint">
+                <div className="cad-tenure-hint">
                   Omandivorm on teadmata. Maamaksu või renditasu saab sisestada, kui maaomanik ja põllu operaator on valitud.
                 </div>
               ) : (
               <>
               {/* €/ha väli ENNE kogusummat */}
-              <div className="form-group">
-                <label>
-                  {parcel.ownershipType === 'OWNED' ? `Maamaks (€/ha)` : `Renditasu (€/ha)`}
-                </label>
+              <Field label={parcel.ownershipType === 'OWNED' ? `Maamaks (€/ha)` : `Renditasu (€/ha)`} htmlFor={`field-edit-cad-ha-${pIdx}`}>
                 <NumberInput
+                  id={`field-edit-cad-ha-${pIdx}`}
                   disabled={isEditSeasonLocked}
                   value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurHa ?? null) : (parcel.rentFeeEurHa ?? null)}
                   onChange={(v) => {
@@ -748,14 +734,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                   placeholder="nt 140"
                   title="Tasu hektari kohta aastas (€/ha)"
                 />
-              </div>
+              </Field>
 
               {/* Kogu summa aastas */}
-              <div className="form-group">
-                <label>
-                  {parcel.ownershipType === 'OWNED' ? `Maamaks kokku (€/a)` : `Renditasu kokku (€/a)`}
-                </label>
+              <Field label={parcel.ownershipType === 'OWNED' ? `Maamaks kokku (€/a)` : `Renditasu kokku (€/a)`} htmlFor={`field-edit-cad-year-${pIdx}`}>
                 <NumberInput
+                  id={`field-edit-cad-year-${pIdx}`}
                   disabled={isEditSeasonLocked}
                   value={parcel.ownershipType === 'OWNED' ? (parcel.landTaxEurYear ?? null) : (parcel.rentFeeEurYear ?? null)}
                   onChange={(v) => {
@@ -769,12 +753,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                   placeholder="nt 630"
                   title="Kogusumma aastas (€/a)"
                 />
-              </div>
+              </Field>
 
               </>
               )}
 
-              <div className="form-group edit-cad-action">
+              <div className="edit-cad-action">
                 {isEditSeasonLocked ? (
                   <span className="edit-cad-locked" title="Hooaeg on muudatusteks suletud">
                     <Lock size={14} />

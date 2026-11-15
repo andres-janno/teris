@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { WeatherCredentialStatus } from '../types/weather';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Input } from './ui';
 
 interface WeatherCredentialModalProps {
   isOpen: boolean;
@@ -119,8 +119,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
 
           {canEdit && (
             <form className="weather-credential-form" onSubmit={save}>
-              <input
-                className="form-input"
+              <Input
                 type="password"
                 autoComplete="off"
                 spellCheck={false}

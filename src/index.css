@@ -2020,6 +2020,8 @@ body {
 }
 
 /* Parsed preview */
+.parsed-preview-box .operator-field { margin: 8px 0; }
+
 .parsed-preview-box {
   background: rgba(255, 255, 255, 0.03);
   border: 1px solid var(--border-card);
@@ -2732,39 +2734,31 @@ body {
   grid-column: span 2;
 }
 
-.form-row-3 {
-  grid-column: span 2;
-  display: grid;
-  grid-template-columns: 2fr 1fr 1.5fr;
-  gap: 10px;
-}
-
-@media (max-width: 640px) {
-  .form-row-3 {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-row-3.field-auto-row {
-  grid-template-columns: 1.5fr 1fr 1.5fr;
-}
-
-@media (max-width: 640px) {
-  .form-row-3.field-auto-row {
-    grid-template-columns: 1fr;
-  }
-}
-
 .auto-field-icon {
   color: var(--text-muted);
   vertical-align: -1px;
   margin-left: 2px;
 }
 
-.form-input.auto-field-input {
-  cursor: help;
+.auto-filled-input[data-slot="input"] {
+  cursor: help !important;
+  color: var(--text-secondary) !important;
+  background: var(--stat-bg) !important;
+}
+
+/* Välja silt koos lisaelemendiga paremal (värvipunkt, "Ava register" nupp, sortide arv) */
+.field-label-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.field-label-row label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.72rem;
+  font-weight: 600;
   color: var(--text-secondary);
-  background: var(--stat-bg);
 }
 
 .form-group label {
@@ -3501,11 +3495,6 @@ input[type="number"],
   gap: 4px;
 }
 
-.crop-inline-edit .form-input {
-  padding: 4px 6px;
-  font-size: 0.78rem;
-}
-
 .crop-inline-edit-actions {
   display: flex;
   justify-content: flex-end;
@@ -3788,18 +3777,26 @@ input[type="number"],
   flex-wrap: wrap;
 }
 
-.crop-winter-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 0.85rem;
-}
-
 .crop-auto-color-toggle {
   margin-top: 6px;
-  font-size: 0.76rem;
-  color: var(--text-secondary);
+  font-size: 0.76rem !important;
+  color: var(--text-secondary) !important;
+}
+
+/* Kultuuri vorm: värvivalija ja ikooni väli on kitsad, PRIA kood võtab ülejäänud laiuse */
+.crop-edit-modal [data-slot="input"][type="color"] {
+  width: 50px !important;
+  flex: none;
+  padding: 2px !important;
+}
+.crop-edit-modal .crop-icon-input[data-slot="input"] {
+  width: 60px !important;
+  flex: none;
+  text-align: center;
+  font-size: 1.2rem !important;
+}
+.crop-edit-modal [data-slot="input"][type="text"]:not(.crop-icon-input) {
+  min-width: 0;
 }
 
 .field-active-season-col {
@@ -4099,14 +4096,15 @@ input[type="number"],
   min-width: 0;
 }
 
-.season-form-fieldset:disabled .form-input {
+.season-form-fieldset:disabled [data-slot="input"],
+.season-form-fieldset:disabled [data-slot="textarea"] {
   opacity: 0.75;
   cursor: default;
 }
 
 .season-form-grid {
   display: grid;
-  grid-template-columns: 160px 1fr;
+  grid-template-columns: 160px 1fr !important;
   gap: 12px;
 }
 
@@ -4544,11 +4542,7 @@ input[type="number"],
   align-items: flex-end;
 }
 
-.edit-cad-grid .form-group {
-  min-width: 0;
-}
-
-.edit-cad-grid .form-input {
+.edit-cad-grid [data-slot="input"] {
   min-width: 0;
   width: 100%;
 }
@@ -4967,7 +4961,7 @@ input[type="number"],
 .weather-credential-status dd { margin: 0; }
 .weather-credential-error { color: #dc2626; }
 .weather-credential-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
-.weather-credential-form .form-input { flex: 1 1 260px; min-width: 0; }
+.weather-credential-form [data-slot="input"] { flex: 1 1 260px; min-width: 0; width: auto; }
 .weather-credential-help { font-size: 13px; }
 .weather-credential-help ol { margin: 6px 0 8px 18px; padding: 0; }
 
@@ -8165,25 +8159,22 @@ select.form-input:read-only {
 .help-content a { color: var(--emerald-500); text-decoration: underline; }
 
 @media (max-width: 520px) {
-  .season-form-grid { grid-template-columns: 1fr; }
+  .season-form-grid { grid-template-columns: 1fr !important; }
 }
 
 /* Põllu täisvaade (FieldFullView) — päise (.app-header) all kogu ekraanil */
 
 /* PRIA materjali-, saagi- ja seireread töö plaani ja kande vormis */
 .pria-lines { display: flex; flex-direction: column; gap: 6px; }
-.pria-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.pria-line .form-input { flex: 1 1 140px; min-width: 0; }
-.pria-line .form-input.num { flex: 0 1 90px; }
 /* Materjaliread: veerupäisega ruudustik, üks rida materjali kohta */
 .pria-grid { display: grid; gap: 6px; align-items: center; }
-.pria-grid .form-input { min-width: 0; width: 100%; }
+.pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { min-width: 0; width: 100%; }
 .pria-grid-head { font-size: 0.72rem; font-weight: 600; color: var(--text-secondary); padding: 0 2px; }
 .pria-grid-head .num { text-align: right; }
 @media (max-width: 760px) {
   .pria-grid { display: flex; flex-wrap: wrap; }
-  .pria-grid .form-input { flex: 1 1 140px; width: auto; }
-  .pria-grid .form-input.num { flex: 0 1 90px; }
+  .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { flex: 1 1 140px; width: auto; }
+  .pria-grid [data-slot="input"][inputmode] { flex: 0 1 90px; }
   .pria-grid-head { display: none; }
 }
 
@@ -8376,6 +8367,7 @@ td.stock-qty-out { color: #dc2626; }
 /* Teadmata omandivorm (maaomanik või operaator sisestamata) */
 
 .cad-tenure-hint {
+  grid-column: span 2;
   align-self: center;
   font-size: 0.78rem;
   color: var(--text-secondary);

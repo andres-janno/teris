@@ -12,7 +12,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput, Field, FormGrid, Input, Textarea } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -141,10 +141,10 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               />
               <DialogBody>
               <fieldset className="season-form-fieldset" disabled={editingLocked}>
-              <div className="form-grid season-form-grid">
-                <div className="form-group">
-                  <label>Aasta (Hooaeg) *</label>
+              <FormGrid className="season-form-grid">
+                <Field label="Aasta (Hooaeg) *" htmlFor="season-year">
                   <NumberInput
+                    id="season-year"
                     integer
                     required
                     min={2020}
@@ -156,30 +156,28 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       if (yr != null) setFormName(`Hooaeg ${yr}`);
                     }}
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Hooaja nimetus</label>
-                  <input
+                <Field label="Hooaja nimetus" htmlFor="season-name">
+                  <Input
+                    id="season-name"
                     type="text"
                     required
                     value={formName}
                     onChange={(e) => setFormName(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group full-width">
-                  <label>Hooaja märkmed</label>
-                  <textarea
+                <Field label="Hooaja märkmed" htmlFor="season-notes" span="full">
+                  <Textarea
+                    id="season-notes"
                     rows={3}
                     placeholder="Ilmastikuolud, saagikokkuvõte, PRIA toetuste koodid..."
                     value={formNotes}
                     onChange={(e) => setFormNotes(e.target.value)}
-                    className="form-input"
                   />
-                </div>
-              </div>
+                </Field>
+              </FormGrid>
               </fieldset>
               </DialogBody>
 

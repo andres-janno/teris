@@ -19,7 +19,7 @@ import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -413,178 +413,155 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 <Sprout size={14} />
                 <span>1. Kultuuri põhiandmed</span>
               </div>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Kultuuri nimetus *</label>
-                  <input
+              <FormGrid>
+                <Field label="Kultuuri nimetus *" htmlFor="crop-name">
+                  <Input
+                    id="crop-name"
                     type="text"
                     required
                     placeholder="nt Talinisu, Suvioder, Taliraps"
                     value={editCropName}
                     onChange={(e) => setEditCropName(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Ladinakeelne nimi (botaaniline)</label>
-                  <input
+                <Field label="Ladinakeelne nimi (botaaniline)" htmlFor="crop-scientific">
+                  <Input
+                    id="crop-scientific"
                     type="text"
                     placeholder="nt Triticum aestivum"
                     value={editCropScientific}
                     onChange={(e) => setEditCropScientific(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Kultuurigrupp *</label>
-                  <select
+                <Field label="Kultuurigrupp *" htmlFor="crop-group">
+                  <Select
+                    id="crop-group"
                     value={editCropGroup}
-                    onChange={(e) => setEditCropGroup(e.target.value as CropGroup)}
-                    className="form-input"
-                  >
-                    {Object.entries(CROP_GROUP_CONFIG).map(([grp, cfg]) => (
-                      <option key={grp} value={grp}>
-                        {cfg.icon} {cfg.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    onValueChange={(v) => setEditCropGroup(v as CropGroup)}
+                    options={Object.entries(CROP_GROUP_CONFIG).map(([grp, cfg]) => ({ value: grp, label: `${cfg.icon} ${cfg.label}` }))}
+                  />
+                </Field>
 
-                <div className="form-group">
-                  <label className="crop-winter-toggle">
-                    <input
-                      type="checkbox"
-                      checked={editCropIsWinter}
-                      onChange={(e) => {
-                        setEditCropIsWinter(e.target.checked);
-                        if (editCropAutoColor) setEditCropColor(pickCropColor(e.target.checked, crops.map((c) => c.color)));
-                      }}
-                    />
-                    <span>Talivili (külvatakse sügisel)</span>
-                  </label>
-                </div>
+                <Field>
+                  <CheckboxField
+                    checked={editCropIsWinter}
+                    onCheckedChange={(checked) => {
+                      setEditCropIsWinter(checked);
+                      if (editCropAutoColor) setEditCropColor(pickCropColor(checked, crops.map((c) => c.color)));
+                    }}
+                    label="Talivili (külvatakse sügisel)"
+                  />
+                </Field>
 
-                <div className="form-group">
-                  <label>GDD baastemperatuur (°C)</label>
-                  <NumberInput value={editCropGddBase} onChange={(v) => setEditCropGddBase(v ?? undefined)} min={0} max={15} className="num" />
-                  <small className="hint">Temperatuurisumma arvutatakse päeva keskmisest miinus see väärtus. Teravili ja raps 5, mais 10.</small>
-                </div>
+                <Field label="GDD baastemperatuur (°C)" htmlFor="crop-gdd" hint="Temperatuurisumma arvutatakse päeva keskmisest miinus see väärtus. Teravili ja raps 5, mais 10.">
+                  <NumberInput id="crop-gdd" value={editCropGddBase} onChange={(v) => setEditCropGddBase(v ?? undefined)} min={0} max={15} />
+                </Field>
 
-                <div className="form-group">
-                  <label>Värv kaardil ja ikoon</label>
-                  <div className="input-split" style={{ display: 'flex', gap: '8px' }}>
-                    <input
+                <Field label="Värv kaardil ja ikoon" htmlFor="crop-color">
+                  <FieldRow>
+                    <Input
+                      id="crop-color"
                       type="color"
                       value={editCropColor}
                       onChange={(e) => {
                         setEditCropColor(e.target.value);
                         setEditCropAutoColor(false);
                       }}
-                      className="form-input"
-                      style={{ padding: '2px', height: '36px', width: '50px' }}
                       title="Kultuuri värv kaardil"
                     />
-                    <input
+                    <Input
                       type="text"
                       value={editCropIcon}
                       onChange={(e) => setEditCropIcon(e.target.value)}
-                      className="form-input"
-                      style={{ width: '60px', textAlign: 'center', fontSize: '1.2rem' }}
+                      className="crop-icon-input"
+                      aria-label="Ikoon"
                       placeholder="🌾"
                       title="Emoji või sümbol"
                     />
-                    <input
+                    <Input
                       type="text"
+                      aria-label="PRIA kood"
                       placeholder="PRIA kood (nt TNS)"
                       value={editCropPriaCode}
                       onChange={(e) => setEditCropPriaCode(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
+                  </FieldRow>
                   {editCropId === null && (
-                    <label className="crop-winter-toggle crop-auto-color-toggle" title="Talivili saab külma, suvivili sooja tooni, mida ükski kultuur veel ei kasuta">
-                      <input
-                        type="checkbox"
+                    <span title="Talivili saab külma, suvivili sooja tooni, mida ükski kultuur veel ei kasuta">
+                      <CheckboxField
+                        className="crop-auto-color-toggle"
                         checked={editCropAutoColor}
-                        onChange={(e) => {
-                          setEditCropAutoColor(e.target.checked);
-                          if (e.target.checked) setEditCropColor(pickCropColor(editCropIsWinter, crops.map((c) => c.color)));
+                        onCheckedChange={(checked) => {
+                          setEditCropAutoColor(checked);
+                          if (checked) setEditCropColor(pickCropColor(editCropIsWinter, crops.map((c) => c.color)));
                         }}
+                        label="Genereeri värv automaatselt (talivili külm, suvivili soe toon)"
                       />
-                      <span>Genereeri värv automaatselt (talivili külm, suvivili soe toon)</span>
-                    </label>
+                    </span>
                   )}
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Vaikimisi külvinorm (kg/ha)</label>
+                <Field label="Vaikimisi külvinorm (kg/ha)" htmlFor="crop-seed-rate">
                   <NumberInput
+                    id="crop-seed-rate"
                     decimals={1}
                     placeholder="nt 220"
                     value={editCropSeedRate === '' ? null : editCropSeedRate}
                     onChange={(v) => setEditCropSeedRate(v ?? '')}
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Baas-saagiootus (t/ha)</label>
+                <Field label="Baas-saagiootus (t/ha)" htmlFor="crop-yield">
                   <NumberInput
+                    id="crop-yield"
                     decimals={1}
                     placeholder="nt 7,5"
                     value={editCropYield === '' ? null : editCropYield}
                     onChange={(v) => setEditCropYield(v ?? '')}
                   />
-                </div>
+                </Field>
 
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label>Agrotehniline kirjeldus ja märkused</label>
-                  <input
+                <Field label="Agrotehniline kirjeldus ja märkused" htmlFor="crop-description" span="full">
+                  <Input
+                    id="crop-description"
                     type="text"
                     placeholder="nt Nõudlik eelvilja suhtes, sobib varajaseks külviks..."
                     value={editCropDescription}
                     onChange={(e) => setEditCropDescription(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group" style={{ gridColumn: 'span 2' }}>
-                  <label htmlFor="crop-pria-name">PRIA nimetus</label>
-                  <input
+                <Field label="PRIA nimetus" htmlFor="crop-pria-name" span="full">
+                  <Input
                     id="crop-pria-name"
                     type="text"
                     placeholder={editCropName.trim() || 'nt Muu põlduba'}
                     value={editCropPria.name}
                     onChange={(e) => setEditCropPria({ ...editCropPria, name: e.target.value })}
-                    className="form-input"
                     title="Nimi PRIA põllumajanduskultuuride loetelust; tühi = kultuuri nimi. Põllu hooaja PRIA nimetus tuletatakse sellest."
                   />
-                  <label className="crop-winter-toggle">
-                    <input
-                      type="checkbox"
-                      checked={editCropPria.undersowing}
-                      onChange={(e) => setEditCropPria({ ...editCropPria, undersowing: e.target.checked })}
-                    />
-                    <span>PRIA eristab allakülvi (nimele lisandub allakülvi variant)</span>
-                  </label>
-                </div>
+                  <CheckboxField
+                    checked={editCropPria.undersowing}
+                    onCheckedChange={(checked) => setEditCropPria({ ...editCropPria, undersowing: checked })}
+                    label="PRIA eristab allakülvi (nimele lisandub allakülvi variant)"
+                  />
+                </Field>
 
                 {editCropPria.undersowing && (Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => (
-                  <div className="form-group" style={{ gridColumn: 'span 2' }} key={u}>
-                    <label htmlFor={`crop-pria-${u}`}>PRIA nimetus: {UNDERSOWING_LABELS[u].toLowerCase()}</label>
-                    <input
+                  <Field label={`PRIA nimetus: ${UNDERSOWING_LABELS[u].toLowerCase()}`} htmlFor={`crop-pria-${u}`} span="full" key={u}>
+                    <Input
                       id={`crop-pria-${u}`}
                       type="text"
                       placeholder={defaultPriaVariantName(editCropPria.name.trim() || editCropName.trim() || 'Kultuur', u)}
                       value={editCropPria[u]}
                       onChange={(e) => setEditCropPria({ ...editCropPria, [u]: e.target.value })}
-                      className="form-input"
                       title="Täida ainult siis, kui PRIA nimi erineb vaikimisi nimest"
                     />
-                  </div>
+                  </Field>
                 ))}
-              </div>
+              </FormGrid>
 
               </DialogBody>
 
@@ -617,107 +594,100 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                 <Sparkles size={14} />
                 <span>Sordi omadused ja aretusandmed ({targetCropForVariety.name})</span>
               </div>
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Sordinimi *</label>
-                  <input
+              <FormGrid>
+                <Field label="Sordinimi *" htmlFor="variety-name">
+                  <Input
+                    id="variety-name"
                     type="text"
                     required
                     placeholder="nt Skagen, Planet, Mercedes"
                     value={editVarietyName}
                     onChange={(e) => setEditVarietyName(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Aretaja / Esindaja</label>
-                  <input
+                <Field label="Aretaja / Esindaja" htmlFor="variety-breeder">
+                  <Input
+                    id="variety-breeder"
                     type="text"
                     placeholder="nt Nordic Seed, KWS, Saaten-Union"
                     value={editVarietyBreeder}
                     onChange={(e) => setEditVarietyBreeder(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Valmimisaeg / Kasvuea pikkus</label>
-                  <input
+                <Field label="Valmimisaeg / Kasvuea pikkus" htmlFor="variety-maturity">
+                  <Input
+                    id="variety-maturity"
                     type="text"
                     placeholder="nt Varajane, Keskvalmiv, 95 päeva"
                     value={editVarietyMaturity}
                     onChange={(e) => setEditVarietyMaturity(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Talvekindlus</label>
-                  <input
+                <Field label="Talvekindlus" htmlFor="variety-hardiness">
+                  <Input
+                    id="variety-hardiness"
                     type="text"
                     placeholder="nt Väga hea, Hea, Kevadine"
                     value={editVarietyWinterHardiness}
                     onChange={(e) => setEditVarietyWinterHardiness(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Soovituslik külvinorm (kg/ha)</label>
+                <Field label="Soovituslik külvinorm (kg/ha)" htmlFor="variety-seed-rate">
                   <NumberInput
+                    id="variety-seed-rate"
                     decimals={1}
                     placeholder="nt 210"
                     value={editVarietySeedRate === '' ? null : editVarietySeedRate}
                     onChange={(v) => setEditVarietySeedRate(v ?? '')}
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Saagipotentsiaal (t/ha)</label>
+                <Field label="Saagipotentsiaal (t/ha)" htmlFor="variety-yield">
                   <NumberInput
+                    id="variety-yield"
                     decimals={1}
                     placeholder="nt 9,5"
                     value={editVarietyPotentialYield === '' ? null : editVarietyPotentialYield}
                     onChange={(v) => setEditVarietyPotentialYield(v ?? '')}
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Kvaliteediklass / Sihtotstarve</label>
-                  <input
+                <Field label="Kvaliteediklass / Sihtotstarve" htmlFor="variety-quality">
+                  <Input
+                    id="variety-quality"
                     type="text"
                     placeholder="nt Toiduvili (E), Õlleoder, Sööt"
                     value={editVarietyQualityClass}
                     onChange={(e) => setEditVarietyQualityClass(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label htmlFor="variety-pria-name">PRIA nimetus</label>
-                  <input
+                <Field label="PRIA nimetus" htmlFor="variety-pria-name">
+                  <Input
                     id="variety-pria-name"
                     type="text"
                     placeholder="tühi = kultuuri PRIA nimetus"
                     value={editVarietyPriaName}
                     onChange={(e) => setEditVarietyPriaName(e.target.value)}
-                    className="form-input"
                     title='Ainult siis, kui PRIA loetelus on sort eraldi (nt "Sangaste" rukis, põlduba "Jõgeva")'
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Märkused sordi kohta</label>
-                  <input
+                <Field label="Märkused sordi kohta" htmlFor="variety-notes">
+                  <Input
+                    id="variety-notes"
                     type="text"
                     placeholder="nt Kõrge proteiinisisaldus, vastupidav pruunroostele"
                     value={editVarietyNotes}
                     onChange={(e) => setEditVarietyNotes(e.target.value)}
-                    className="form-input"
                   />
-                </div>
-              </div>
+                </Field>
+
+              </FormGrid>
 
               </DialogBody>
 

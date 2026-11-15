@@ -9,7 +9,7 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -122,8 +122,8 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
             onClick={() => fileInputRef.current?.click()}
           >
             <input
-              ref={fileInputRef}
               type="file"
+              ref={fileInputRef}
               accept=".xls,.xlsx"
               style={{ display: 'none' }}
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
@@ -157,15 +157,10 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
 
           {results && (
             <div className="parsed-preview-box">
-              <div className="form-group" style={{ margin: '8px 0' }}>
-                <label>Operaator (kelle põldudega sobitatakse) *</label>
-                <select className="form-input" value={operatorId} onChange={(e) => setOperatorId(e.target.value)}>
-                  <option value="">-- Vali operaator --</option>
-                  {operators.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              </div>
+              <Field label="Operaator (kelle põldudega sobitatakse) *" htmlFor="fb-operator" className="operator-field">
+                <Select id="fb-operator" placeholder="-- Vali operaator --" value={operatorId} onValueChange={setOperatorId}
+                  options={operators.map((p) => ({ value: p.id, label: p.name }))} />
+              </Field>
 
               {built && (
                 <>
