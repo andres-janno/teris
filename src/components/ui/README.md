@@ -164,9 +164,12 @@ Reeglid:
   (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
   ääris, toonitud taust, erandnurk), vajab `!important` (`index.css` on `legacy` kihis). `admin.css` on kihistamata
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
+- Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
 - Erandid (jäävad oma CSS-iga): `login-card`, `fw-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
-  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`.
+  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`reg-stat-pill`, `register-crop-stat`,
+  `cc-stat`) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `section-title`, `admin-subpanel`, `admin-card-head`,
+  `admin-card-foot` kannavad ainult asetust.
 
 ## Menüüd, hüpikud, vihjed
 

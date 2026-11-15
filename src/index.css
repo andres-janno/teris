@@ -129,16 +129,6 @@ body {
   background-color: var(--bg-dark);
 }
 
-/* Vana kaart (üleminek ui/Card-ile, etapp 2.7): tahke, ilma klaasita */
-.glass-card {
-  background: var(--bg-surface);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-glass);
-  color: var(--text-primary);
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
-}
-
 /* App Header */
 .app-header {
   height: 64px;
@@ -240,49 +230,6 @@ body {
   padding: 8px 10px;
   font-size: 0.78rem;
   color: var(--text-secondary);
-}
-
-/* Header stats */
-.header-stats {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.stat-icon {
-  color: var(--emerald-500);
-}
-
-.stat-icon.work-icon {
-  color: #0284c7;
-}
-
-.stat-icon.tech-icon {
-  color: #d97706;
-}
-
-.stat-icon.poi-icon {
-  color: #db2777;
-}
-
-.stat-label-with-year {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.68rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-}
-
-.stat-progress-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.05);
 }
 
 .progress-fill {
@@ -1027,11 +974,6 @@ body {
   overflow-y: auto;
 }
 
-.year-widget-footer {
-  border-top: 1px solid var(--border-card);
-  padding-top: 8px;
-}
-
 .year-register-link-btn {
   width: 100%;
   display: flex;
@@ -1060,12 +1002,6 @@ body {
   justify-content: space-between;
 }
 
-.drawer-title-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
 .crop-indicator-dot {
   width: 12px;
   height: 12px;
@@ -1090,11 +1026,6 @@ body {
   color: var(--text-secondary);
 }
 
-.header-button-group {
-  display: flex;
-  gap: 4px;
-}
-
 .section-subtitle {
   font-size: 0.72rem;
   text-transform: uppercase;
@@ -1109,12 +1040,6 @@ body {
 
 .detail-section {
   margin-top: 14px;
-}
-
-.field-op-summary {
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
 }
 
 .field-detail-header {
@@ -2073,12 +1998,6 @@ body {
   border: 1px solid rgba(148, 163, 184, 0.3);
 }
 
-.status-idling {
-  background: rgba(245, 158, 11, 0.15);
-  color: var(--amber-500);
-  border: 1px solid rgba(245, 158, 11, 0.3);
-}
-
 .status-offline {
   background: rgba(100, 116, 139, 0.15);
   color: var(--text-muted);
@@ -2262,14 +2181,6 @@ body {
 }
 
 .imp-card-footer,
-.dev-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--border-card);
-  padding-top: 8px;
-  gap: 8px;
-}
 
 .imp-actions {
   display: flex;
@@ -2575,30 +2486,6 @@ body {
   gap: 10px;
   margin-top: 4px;
   font-size: 0.7rem;
-}
-
-.kpi-card {
-  padding: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.kpi-label {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
-
-.kpi-value {
-  font-size: 1.25rem;
-  font-weight: 800;
-  color: var(--text-primary);
-}
-
-.kpi-sub {
-  font-size: 0.68rem;
-  color: var(--text-muted);
 }
 
 /* Custom Leaflet Markers & Tooltips */
@@ -3403,51 +3290,12 @@ body {
   }
 }
 
-.field-edit-season-card {
-  margin-bottom: 16px;
-  padding: 16px;
-  border: 1px solid var(--emerald-500);
-  background: var(--bg-card);
-  border-radius: var(--radius-lg);
-}
-
-.edit-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 14px;
-}
-
 .edit-title {
   display: flex;
   align-items: center;
   gap: 8px;
   font-size: 0.95rem;
   color: var(--text-primary);
-}
-
-.master-field-card {
-  padding: 14px 16px;
-  border-radius: var(--radius-lg);
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  transition: all var(--transition-fast);
-}
-
-.master-field-card:hover {
-  border-color: rgba(37, 99, 235, 0.4);
-  box-shadow: var(--shadow-sm);
-}
-
-.field-card-main-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
 }
 
 .field-info-col {
@@ -3541,12 +3389,6 @@ body {
   font-weight: 800;
 }
 
-.field-card-actions {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
 /* History Row */
 .field-history-row {
   display: flex;
@@ -3581,12 +3423,6 @@ body {
 
 
 
-
-.legend-title-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 .legend-title {
   font-size: 0.82rem;
@@ -3745,15 +3581,6 @@ body {
   display: flex;
   align-items: center;
   gap: 12px;
-}
-
-/* Form Card */
-.season-form-card {
-  padding: 16px;
-  border: 1px solid var(--emerald-500);
-  background: var(--bg-card);
-  border-radius: 10px;
-  animation: fadeIn 0.2s ease-out;
 }
 
 .edit-cad-locked {
@@ -3918,14 +3745,6 @@ body {
   }
 }
 
-/* Layer Control Live Badge & Subtext */
-.layer-text-wrap {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.15;
-  margin-left: 2px;
-}
-
 .layer-subtext {
   font-size: 0.64rem;
   color: var(--emerald-500);
@@ -3983,22 +3802,6 @@ body {
   background: rgba(148, 163, 184, 0.18);
   color: var(--text-secondary);
   border: 1px solid rgba(148, 163, 184, 0.35);
-}
-
-/* Vehicle Layer Filter Subgroup */
-.layer-box-group {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-  padding: 6px 8px;
-  transition: all 0.2s ease;
-}
-
-.layer-box-group:hover {
-  border-color: rgba(34, 197, 94, 0.3);
 }
 
 .vehicle-filter-subgroup {
@@ -5533,25 +5336,6 @@ body {
 
 .fw-group-icon.undetermined {
   color: #94a3b8;
-}
-
-.fw-group-kind-label {
-  font-size: 0.76rem;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.fw-group-meta {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.fw-group-action-btn {
-  margin-left: 6px;
 }
 
 .fw-row {
