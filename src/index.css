@@ -8202,6 +8202,7 @@ select.form-input:read-only {
 }
 
 [data-slot="filter-clear"] > input.form-input {
+  width: 100%;
   padding-right: 30px;
 }
 
@@ -8217,7 +8218,7 @@ select.form-input:read-only {
 
 .history-filter-bar > div > [data-slot="filter-clear"] > select.form-input,
 .history-filter-bar > div > [data-slot="filter-clear"] > [data-slot="filter-select"] {
-  width: 100%;
+  width: 100% !important;
 }
 
 

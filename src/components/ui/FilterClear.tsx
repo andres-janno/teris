@@ -21,7 +21,7 @@ export const FilterClear: React.FC<FilterClearProps> = ({ active, onClear, fill,
     data-slot="filter-clear"
     className={cn(
       'relative inline-flex max-w-full min-w-0 items-center',
-      fill && 'flex w-full *:w-full',
+      fill && 'flex w-full [&>:not([data-slot=filter-clear-btn])]:w-full',
       inline
         ? 'gap-1'
         : [
