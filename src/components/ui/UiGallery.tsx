@@ -38,7 +38,6 @@ export const UiGallery: React.FC = () => {
   const [num, setNum] = useState<number | null>(12.5);
   const [search, setSearch] = useState('');
   const [fsel, setFsel] = useState('b');
-  const [rawSel, setRawSel] = useState('');
   const [selX, setSelX] = useState('a');
   const [inpX, setInpX] = useState('Kaasiku');
   const [dateX, setDateX] = useState('2026-11-15');
@@ -214,11 +213,6 @@ export const UiGallery: React.FC = () => {
             <Field label="FilterClear ümber DateInput-i">
               <FilterClear fill active={dateX !== ''} onClear={() => setDateX('')}>
                 <DateInput value={dateX} onChange={setDateX} />
-              </FilterClear>
-            </Field>
-            <Field label="FilterClear ümber toore select (üleminekuks)">
-              <FilterClear fill active={rawSel !== ''} onClear={() => setRawSel('')}>
-                <select className="form-input" value={rawSel} onChange={(e) => setRawSel(e.target.value)}><option value="">Kõik</option><option value="a">Esimene</option></select>
               </FilterClear>
             </Field>
             <Field label="Sisendi keelatud ja kirjutuskaitstud"><Input disabled value="Keelatud" onChange={() => {}} /></Field>

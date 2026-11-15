@@ -121,16 +121,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               })}
             </div>
             <CheckboxField
- className="layer-label basemap-cadastre-toggle"
- checked={visibility.cadastre}
- onCheckedChange={() => onToggleLayer('cadastre')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator cadastre-color"></span>
-              <span className="layer-text">Katastripiirid</span>
- </span>
- }
- />
+              className="layer-label basemap-cadastre-toggle"
+              checked={visibility.cadastre}
+              onCheckedChange={() => onToggleLayer('cadastre')}
+              label={
+                <span className="layer-label-content">
+                  <span className="layer-color-indicator cadastre-color"></span>
+                  <span className="layer-text">Katastripiirid</span>
+                </span>
+              }
+            />
           </div>
 
           {/* Overlays / Thematic Layers */}
@@ -144,16 +144,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               <div className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
- className="layer-label"
- checked={visibility.fields}
- onCheckedChange={() => onToggleLayer('fields')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator fields-color"></span>
-                    <span className="layer-text">Põllud</span>
- </span>
- }
- />
+                    className="layer-label"
+                    checked={visibility.fields}
+                    onCheckedChange={() => onToggleLayer('fields')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator fields-color"></span>
+                        <span className="layer-text">Põllud</span>
+                      </span>
+                    }
+                  />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('fields')}
@@ -166,17 +166,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 {visibility.fields && (
                   <div className="layer-sub-options">
                     <CheckboxField
- className="soil-metric-radio-item"
- checked={visibility.fieldLabels}
- onCheckedChange={() => onToggleLayer('fieldLabels')}
- label="Põllunumbrid"
- />
+                      className="soil-metric-radio-item"
+                      checked={visibility.fieldLabels}
+                      onCheckedChange={() => onToggleLayer('fieldLabels')}
+                      label="Põllunumbrid"
+                    />
                     <CheckboxField
- className="soil-metric-radio-item"
- checked={visibility.blockLabels}
- onCheckedChange={() => onToggleLayer('blockLabels')}
- label="Massiivi numbrid"
- />
+                      className="soil-metric-radio-item"
+                      checked={visibility.blockLabels}
+                      onCheckedChange={() => onToggleLayer('blockLabels')}
+                      label="Massiivi numbrid"
+                    />
                   </div>
                 )}
               </div>
@@ -185,16 +185,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               <div className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
- className="layer-label"
- checked={visibility.soilSamples}
- onCheckedChange={() => onToggleLayer('soilSamples')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator soil-color"></span>
-                    <span className="layer-text">Mullaproovid</span>
- </span>
- }
- />
+                    className="layer-label"
+                    checked={visibility.soilSamples}
+                    onCheckedChange={() => onToggleLayer('soilSamples')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator soil-color"></span>
+                        <span className="layer-text">Mullaproovid</span>
+                      </span>
+                    }
+                  />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('soilSamples')}
@@ -252,16 +252,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               <div className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
- className="layer-label"
- checked={visibility.vehicles}
- onCheckedChange={() => onToggleLayer('vehicles')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator tech-color"></span>
-                    <span className="layer-text">Masinapark</span>
- </span>
- }
- />
+                    className="layer-label"
+                    checked={visibility.vehicles}
+                    onCheckedChange={() => onToggleLayer('vehicles')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator tech-color"></span>
+                        <span className="layer-text">Masinapark</span>
+                      </span>
+                    }
+                  />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('vehicles')}
@@ -278,19 +278,19 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               <div className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
- className="layer-label"
- checked={visibility.cultivation}
- onCheckedChange={() => onToggleLayer('cultivation')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator cultivation-color"></span>
-                    <span className="layer-text">Põllutööd</span>
-                    {visibility.cultivation && isLoadingVehicleTracks && (
-                      <Loader2 size={14} className="layer-loading-spinner" aria-label="Radade laadimine" />
-                    )}
- </span>
- }
- />
+                    className="layer-label"
+                    checked={visibility.cultivation}
+                    onCheckedChange={() => onToggleLayer('cultivation')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator cultivation-color"></span>
+                        <span className="layer-text">Põllutööd</span>
+                        {visibility.cultivation && isLoadingVehicleTracks && (
+                          <Loader2 size={14} className="layer-loading-spinner" aria-label="Radade laadimine" />
+                        )}
+                      </span>
+                    }
+                  />
                   <button
                     className="icon-toggle"
                     onClick={() => onToggleLayer('cultivation')}
@@ -374,16 +374,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {/* POI / Infrastructure */}
               <div className="layer-item">
                 <CheckboxField
- className="layer-label"
- checked={visibility.poi}
- onCheckedChange={() => onToggleLayer('poi')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator poi-color"></span>
-                  <span className="layer-text">Muud asukohad</span>
- </span>
- }
- />
+                  className="layer-label"
+                  checked={visibility.poi}
+                  onCheckedChange={() => onToggleLayer('poi')}
+                  label={
+                    <span className="layer-label-content">
+                      <span className="layer-color-indicator poi-color"></span>
+                      <span className="layer-text">Muud asukohad</span>
+                    </span>
+                  }
+                />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('poi')}
@@ -397,16 +397,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {modules.weather && (
               <div className="layer-item">
                 <CheckboxField
- className="layer-label"
- checked={visibility.weatherRadar}
- onCheckedChange={() => onToggleLayer('weatherRadar')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator weather-color"></span>
-                  <span className="layer-text">Sajuradar</span>
- </span>
- }
- />
+                  className="layer-label"
+                  checked={visibility.weatherRadar}
+                  onCheckedChange={() => onToggleLayer('weatherRadar')}
+                  label={
+                    <span className="layer-label-content">
+                      <span className="layer-color-indicator weather-color"></span>
+                      <span className="layer-text">Sajuradar</span>
+                    </span>
+                  }
+                />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('weatherRadar')}
@@ -421,16 +421,16 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               {modules.satellite && (
               <div className="layer-item">
                 <CheckboxField
- className="layer-label"
- checked={visibility.satellite}
- onCheckedChange={() => onToggleLayer('satellite')}
- label={
- <span className="layer-label-content">
-<span className="layer-color-indicator satellite-color"></span>
-                  <span className="layer-text">Satelliidipilt</span>
- </span>
- }
- />
+                  className="layer-label"
+                  checked={visibility.satellite}
+                  onCheckedChange={() => onToggleLayer('satellite')}
+                  label={
+                    <span className="layer-label-content">
+                      <span className="layer-color-indicator satellite-color"></span>
+                      <span className="layer-text">Satelliidipilt</span>
+                    </span>
+                  }
+                />
                 <button
                   className="icon-toggle"
                   onClick={() => onToggleLayer('satellite')}

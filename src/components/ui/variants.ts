@@ -177,9 +177,9 @@ export const tableHeadClass = ({
   numeric = false, pin, sortable = false, dense = false,
 }: { numeric?: boolean; pin?: TablePin; sortable?: boolean; dense?: boolean }): string =>
   cn(
-    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-left text-2xs font-semibold uppercase tracking-wide text-muted-foreground',
+    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-2xs font-semibold uppercase tracking-wide text-muted-foreground',
     dense ? 'px-1.5 py-1' : 'px-2.5 py-2',
-    numeric && 'text-right',
+    numeric ? 'text-right' : 'text-left',
     pin === 'start' && 'left-0 z-[3]',
     pin === 'end' && 'right-0 z-[3] w-px px-1.5 text-center',
     sortable && 'cursor-pointer select-none hover:text-foreground'

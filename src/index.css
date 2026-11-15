@@ -2697,22 +2697,6 @@ body {
   gap: 12px;
 }
 
-.form-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-group.full-width {
-  grid-column: span 2;
-}
-
 .auto-field-icon {
   color: var(--text-muted);
   vertical-align: -1px;
@@ -2740,62 +2724,8 @@ body {
   color: var(--text-secondary);
 }
 
-.form-group label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
 .connectivity-type-picker {
   margin-bottom: 2px;
-}
-
-.form-input {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  padding: 7px 10px;
-  color: var(--input-color);
-  font-family: inherit;
-  font-size: 0.8rem;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: var(--emerald-500);
-}
-
-.form-input::-webkit-calendar-picker-indicator {
-  filter: invert(0.8);
-  cursor: pointer;
-}
-
-/* Native <select> chrome adds its own height/padding on top of ours unless
-   appearance is reset — without this, selects render taller than text
-   inputs sharing the same .form-input class. */
-select.form-input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  padding-right: 28px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
-}
-
-input[type="number"],
-.form-input[type="number"],
-.text-right {
-  text-align: right !important;
-  font-variant-numeric: tabular-nums;
-}
-
-.input-split {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
 }
 
 .form-header-row {
@@ -3664,12 +3594,6 @@ input[type="number"],
   color: var(--text-primary);
 }
 
-.input-split {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-}
-
 .master-field-card {
   padding: 14px 16px;
   border-radius: var(--radius-lg);
@@ -4028,22 +3952,6 @@ input[type="number"],
   background: var(--bg-card);
   border-radius: 10px;
   animation: fadeIn 0.2s ease-out;
-}
-
-.form-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 12px;
-  padding-bottom: 8px;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.form-card-header h4 {
-  font-size: 0.92rem;
-  font-weight: 700;
-  margin: 0;
-  color: var(--text-primary);
 }
 
 .edit-cad-locked {
@@ -4878,7 +4786,6 @@ input[type="number"],
   color: var(--login-ink);
 }
 
-.login-page .login-card label,
 .login-page .login-forgot-box {
   color: var(--login-ink-soft);
 }
@@ -6496,21 +6403,6 @@ input[type="number"],
   gap: 10px;
 }
 
-.fw-panel-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.fw-panel-grid label {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
 .fw-panel-progress {
   display: flex;
   flex-direction: column;
@@ -6981,29 +6873,6 @@ input[type="number"],
   font-size: 0.86rem;
   font-weight: 800;
   color: var(--text-primary);
-}
-
-.form-input.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-.form-input.readonly,
-.form-input:read-only {
-  background: var(--stat-bg);
-  cursor: default;
-  color: var(--text-primary);
-  font-weight: 700;
-  border-color: var(--border-subtle, rgba(0, 0, 0, 0.15));
-}
-
-/* <select> loetakse brauseris alati :read-only alla — eelmine reegel kustutaks rippmenüü noole ja osuti */
-select.form-input:read-only {
-  cursor: pointer;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
 }
 
 .work-entry-hint {
@@ -8077,27 +7946,12 @@ select.form-input:read-only {
 .cell-badge { margin-left: 6px; }
 .cell-badge-lead { margin-right: 6px; }
 
-/* Üleminek: toores select/input FilterClear-i sees (vaated, mida pole veel ui/ komponentidele viidud) */
-[data-slot="filter-clear"] > select.form-input {
-  padding-right: 50px;
-}
-
-[data-slot="filter-clear"] > input.form-input {
-  width: 100%;
-  padding-right: 30px;
-}
-
-[data-slot="filter-clear"]:has(> select.form-input) > [data-slot="filter-clear-btn"] {
-  right: 26px !important;
-}
-
 /* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
 .history-filter-bar > div > [data-slot="filter-clear"] {
   display: flex !important;
   width: 100%;
 }
 
-.history-filter-bar > div > [data-slot="filter-clear"] > select.form-input,
 .history-filter-bar > div > [data-slot="filter-clear"] > [data-slot="filter-select"] {
   width: 100% !important;
 }

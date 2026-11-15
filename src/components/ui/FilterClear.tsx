@@ -1,8 +1,7 @@
 // src/components/ui/FilterClear.tsx — filtri ümbris: aktiivse filtri lõpus X-nupp, mis eemaldab tingimuse ühe klõpsuga.
 // X on alati välja sees paremal; väli jätab talle ruumi ka siis, kui X-i pole (laius ei hüppa).
 // Väljal, millel on järelliide (kalendri nupp), jääb järelliide X-ist vasakule (väli pr-8, X paremas servas).
-// Toores <select>/<input> (vana vormiklass) töötab ümbrises edasi: polster ja X-i asukoht on index.css-is
-// ([data-slot="filter-clear"] > select.form-input), kuni vaated on üle viidud.
+// Toores <select>/<input> (vana vormiklass) töötab ümbrises ainult adminis (src/admin/admin.css).
 import React from 'react';
 import { X } from 'lucide-react';
 import { cn } from './cn';
