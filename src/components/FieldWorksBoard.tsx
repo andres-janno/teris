@@ -21,7 +21,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
+import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
 
 interface Option {
   id: string;
@@ -1191,7 +1191,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   )}
 
-                  <section className="fw-plan-section">
+                  <Card asChild variant="tile" padding="sm" className="fw-plan-section"><section>
                     <div className="fw-plan-section-head">
                       <span>Plaan</span>
                       {!workLocked && (
@@ -1214,7 +1214,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       onSaved={() => undefined}
                       onCancel={() => undefined}
                     />
-                  </section>
+                  </section></Card>
 
                   {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
                   {editingPlan && !workLocked && (

@@ -4,7 +4,7 @@ import { LifeBuoy, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { SupportGrant, SupportAccessEntry } from '../types/auth';
 import { formatDateTimeTallinn } from '../services/dateFormat';
-import { Badge, Button } from './ui';
+import { Badge, Button, Card } from './ui';
 
 const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '1h', label: '1 tund' },
@@ -46,7 +46,7 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
   const active = grants.find((g) => g.active) ?? null;
 
   return (
-    <section className="support-panel">
+    <Card asChild variant="tile" className="support-panel"><section>
       <div className="support-panel-head">
         <span className="support-panel-icon"><LifeBuoy size={18} /></span>
         <div className="support-panel-titles">
@@ -100,6 +100,6 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
           </ul>
         </div>
       )}
-    </section>
+    </section></Card>
   );
 };

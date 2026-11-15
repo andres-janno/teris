@@ -9,7 +9,7 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
+import { Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -156,7 +156,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
           )}
 
           {results && (
-            <div className="parsed-preview-box">
+            <Card variant="tile" padding="sm" className="parsed-preview-box">
               <Field label="Operaator (kelle põldudega sobitatakse) *" htmlFor="fb-operator" className="operator-field">
                 <Select id="fb-operator" placeholder="-- Vali operaator --" value={operatorId} onValueChange={setOperatorId}
                   options={operators.map((p) => ({ value: p.id, label: p.name }))} />
@@ -209,7 +209,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                   </div>
                 </>
               )}
-            </div>
+            </Card>
           )}
         </DialogBody>
 

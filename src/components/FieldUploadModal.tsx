@@ -15,7 +15,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
+import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -234,7 +234,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
           {/* Preview list */}
           {parsedPreview && (
-            <div className="parsed-preview-box">
+            <Card variant="tile" padding="sm" className="parsed-preview-box">
               <div className="preview-header">
                 <strong>Leitud põllud ({parsedPreview.features.length})</strong>
                 <CheckboxField checked={replaceExisting} onCheckedChange={setReplaceExisting} label="Asenda olemasolevad põllud" />
@@ -301,7 +301,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           )}
 
         </DialogBody>

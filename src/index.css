@@ -1875,10 +1875,6 @@ body {
 .parsed-preview-box .operator-field { margin: 8px 0; }
 
 .parsed-preview-box {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  padding: 12px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -6053,9 +6049,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 10px 12px;
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
 }
 
 .fw-plan-section-head {
@@ -7468,10 +7461,6 @@ body {
 /* Kasutajatoe ligipääsu paneel (UsersAdminModal) */
 .support-panel {
   margin-top: 24px;
-  padding: 16px 18px;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  background: var(--stat-bg);
   display: flex;
   flex-direction: column;
   gap: 14px;
@@ -7915,7 +7904,8 @@ td.stock-qty-out { color: #dc2626; }
 .weather-legend-row { margin: 6px 0 0; font-size: 0.72rem; }
 .weather-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
 @media (max-width: 760px) { .weather-chart-grid { grid-template-columns: 1fr; } }
-.weather-chart-card { border: 1px solid var(--border-card); border-radius: var(--radius-sm); padding: 8px 10px 4px; background: var(--bg-modal); min-width: 0; }
+/* Graafiku kast: oma polster (graafik vajab all vähem ruumi), välimus Card tile-ist */
+.weather-chart-card { padding: 8px 10px 4px; min-width: 0; }
 .weather-chart-title { font-size: 0.68rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
 .weather-chart-box { width: 100%; }
 .weather-chart { display: block; }

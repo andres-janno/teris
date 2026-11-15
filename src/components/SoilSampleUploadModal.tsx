@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -145,7 +145,7 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
           )}
 
           {parsedPreview && (
-            <div className="parsed-preview-box">
+            <Card variant="tile" padding="sm" className="parsed-preview-box">
               <div className="preview-header">
                 <strong>Leitud proovid ({parsedPreview.length})</strong>
               </div>
@@ -166,7 +166,7 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
                   </div>
                 )}
               </div>
-            </div>
+            </Card>
           )}
         </DialogBody>
 
