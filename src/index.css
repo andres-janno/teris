@@ -41,10 +41,6 @@
   --basemap-active-bg: rgba(34, 197, 94, 0.16);
   --basemap-active-border: rgba(34, 197, 94, 0.45);
 
-  --popup-bg: var(--bg-modal);
-  --popup-border: var(--border-card);
-  --popup-text: var(--text-primary);
-
   --input-bg: #f8fafc;
   --input-border: rgba(15, 23, 42, 0.18);
   --input-color: #0f172a;
@@ -2795,16 +2791,6 @@ body {
 }
 
 /* Tooltips */
-.custom-field-tooltip {
-  background: var(--popup-bg) !important;
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--popup-border) !important;
-  color: var(--popup-text) !important;
-  border-radius: var(--radius-md) !important;
-  box-shadow: var(--shadow-modal) !important;
-  padding: 4px 8px !important;
-}
-
 /* Leafleti vaikimisi vihje (ilma oma klassita): sama välimus kui ui menüüdel */
 .leaflet-tooltip {
   background: var(--popup-bg) !important;
@@ -2814,10 +2800,20 @@ body {
   box-shadow: var(--shadow-modal) !important;
 }
 
-.leaflet-tooltip-top:before { border-top-color: var(--popup-border) !important; }
-.leaflet-tooltip-bottom:before { border-bottom-color: var(--popup-border) !important; }
-.leaflet-tooltip-left:before { border-left-color: var(--popup-border) !important; }
-.leaflet-tooltip-right:before { border-right-color: var(--popup-border) !important; }
+.leaflet-tooltip-top:before { border-top-color: var(--popup-bg) !important; }
+.leaflet-tooltip-bottom:before { border-bottom-color: var(--popup-bg) !important; }
+.leaflet-tooltip-left:before { border-left-color: var(--popup-bg) !important; }
+.leaflet-tooltip-right:before { border-right-color: var(--popup-bg) !important; }
+
+.custom-field-tooltip {
+  background: var(--popup-bg) !important;
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--popup-border) !important;
+  color: var(--popup-text) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-modal) !important;
+  padding: 4px 8px !important;
+}
 
 .custom-field-tooltip:before {
   display: none !important;

@@ -215,6 +215,8 @@ describe('vormiväli', () => {
   it('menüükirje: ikoonid 16px ega kahane', () => {
     expect(v.menuItemClass).toContain('[&_svg]:size-4');
     expect(v.menuItemClass).toContain('[&_svg]:shrink-0');
+    // esiletõst peab olema nähtav (4% bg-muted oli ~1.08:1 — klaviatuuriga kasutaja ei näinud valikut)
+    expect(v.menuItemClass).toContain('data-[highlighted]:bg-secondary-hover');
   });
   it('filter-nupp: roheline pill', () => {
     const c = v.buttonVariants({ variant: 'filter' });

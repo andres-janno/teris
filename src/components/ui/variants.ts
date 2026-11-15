@@ -119,7 +119,7 @@ export const fieldShellClass =
 export const menuContentClass =
   'z-2100 min-w-40 overflow-y-auto rounded-md border border-border bg-popover p-1 text-sm text-foreground shadow-dialog';
 export const menuItemClass =
-  'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-muted data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0';
+  'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-secondary-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0';
 export const menuSeparatorClass = 'my-1 h-px bg-border';
 export const menuLabelClass = 'px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-subtle';
 

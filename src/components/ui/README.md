@@ -150,14 +150,14 @@ Reeglid:
 
 ## Menüüd, hüpikud, vihjed
 
-- `DropdownMenuContent`, `ContextMenuContent`, `PopoverContent` ja `Tooltip` portaalivad avatud dialoogi sisse (`usePopupContainer`), Esc sulgeb ainult nemad (ei levi taha), kõrgus piirdub vaba ruuminga ja kerib.
+- `DropdownMenuContent`, `ContextMenuContent`, `PopoverContent` ja `Tooltip` portaalivad avatud dialoogi sisse (`usePopupContainer`) ja Esc sulgeb ainult nemad (ei levi taha). Menüü ja `PopoverContent` kõrgus piirdub vaba ruuminga ja kerib (Tooltipil piirangut pole — hoia tekst lühike).
 - Kirjel ikoon: pane `<Icon />` ilma suuruseta (16px tuleb menüüst). Kahe rea kirje: `<DropdownMenuItem className="items-start"><MenuItemText title description /></DropdownMenuItem>`.
 - Märkeruudu kirje `DropdownMenuCheckboxItem`: menüü jääb avatuks, kui annad `onSelect={(e) => e.preventDefault()}`.
 - `PopoverAnchor` seab hüpiku asukoha muu elemendi külge.
 - Päästik: `Trigger` alati `asChild` + `Button` (toores `<button>` jääks preflight'i puudumisel halliks brauserinupuks).
-- `collisionPadding` on kõigil hüpikutel 8 (ekraani serva ei puudutata); ära kirjuta üle.
+- `collisionPadding` on menüüdel, `PopoverContent`-il ja `Tooltip`-il 8 (Select, DateInput ja FilterSelect kasutavad Radixi vaikimisi väärtust) (ekraani serva ei puudutata); ära kirjuta üle.
 - Vihje: ainult tekstita ikoonnuppudele. `<Button size="icon" title="…">` saab rakenduse vihje automaatselt ja on alati `<span>`-ga ümbritsetud (keelatud nupp ei kaota fookust ega vihjet). Kärbitud tekst ja muu `title=` jäävad brauseri omaks.
-- `TooltipProvider` peab olema igas React juures (`main.tsx`, `admin/main.tsx`); uus juur ilma selleta kukub vihjel.
+- `TooltipProvider` peab olema igas React juures (`main.tsx`, `admin/main.tsx` ja kinnitusakna oma juur `ConfirmDialog`); uus juur ilma selleta kukub vihjel.
 - Kaardi (Leaflet) hüpikud ja vihjed (`.leaflet-popup-*`, `.leaflet-tooltip`, `.custom-field-tooltip`) loevad värvi `--popup-*` muutujatest, mis viitavad menüüde omadele (`--bg-modal`, `--border-card`, `--text-primary`). Muuda värvi seal, mitte reeglites.
 - `<Button variant="filter" size="auto">` — päise rohelise pillina nupp (operaatorivalija).
 - Portaalis sisu tunneb ära `closest('[data-radix-popper-content-wrapper], [role="listbox"]')`.
