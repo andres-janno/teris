@@ -7650,6 +7650,15 @@ body {
   animation: spin 1s linear infinite;
 }
 
+/* Pulseeriv riba (POI lisamise režiim) — samuti legacy-kihis, sest vaadetes pole Tailwindi klasse */
+@keyframes pulse {
+  50% { opacity: 0.5; }
+}
+
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
 /* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */
 .help-content {
   font-size: 0.85rem;

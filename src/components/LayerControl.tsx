@@ -372,73 +372,79 @@ export const LayerControl: React.FC<LayerControlProps> = ({
               )}
 
               {/* POI / Infrastructure */}
-              <div className="layer-item">
-                <CheckboxField
-                  className="layer-label"
-                  checked={visibility.poi}
-                  onCheckedChange={() => onToggleLayer('poi')}
-                  label={
-                    <span className="layer-label-content">
-                      <span className="layer-color-indicator poi-color"></span>
-                      <span className="layer-text">Muud asukohad</span>
-                    </span>
-                  }
-                />
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('poi')}
-                  title={visibility.poi ? 'Peida' : 'Näita'}
-                >
-                  {visibility.poi ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
+              <Card variant="tile" padding="none" className="layer-field-box">
+                <div className="layer-item">
+                  <CheckboxField
+                    className="layer-label"
+                    checked={visibility.poi}
+                    onCheckedChange={() => onToggleLayer('poi')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator poi-color"></span>
+                        <span className="layer-text">Muud asukohad</span>
+                      </span>
+                    }
+                  />
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('poi')}
+                    title={visibility.poi ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.poi ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+              </Card>
 
               {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
               {modules.weather && (
-              <div className="layer-item">
-                <CheckboxField
-                  className="layer-label"
-                  checked={visibility.weatherRadar}
-                  onCheckedChange={() => onToggleLayer('weatherRadar')}
-                  label={
-                    <span className="layer-label-content">
-                      <span className="layer-color-indicator weather-color"></span>
-                      <span className="layer-text">Sajuradar</span>
-                    </span>
-                  }
-                />
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('weatherRadar')}
-                  title={visibility.weatherRadar ? 'Peida' : 'Näita'}
-                >
-                  {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
+              <Card variant="tile" padding="none" className="layer-field-box">
+                <div className="layer-item">
+                  <CheckboxField
+                    className="layer-label"
+                    checked={visibility.weatherRadar}
+                    onCheckedChange={() => onToggleLayer('weatherRadar')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator weather-color"></span>
+                        <span className="layer-text">Sajuradar</span>
+                      </span>
+                    }
+                  />
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('weatherRadar')}
+                    title={visibility.weatherRadar ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+              </Card>
               )}
 
               {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
               {modules.satellite && (
-              <div className="layer-item">
-                <CheckboxField
-                  className="layer-label"
-                  checked={visibility.satellite}
-                  onCheckedChange={() => onToggleLayer('satellite')}
-                  label={
-                    <span className="layer-label-content">
-                      <span className="layer-color-indicator satellite-color"></span>
-                      <span className="layer-text">Satelliidipilt</span>
-                    </span>
-                  }
-                />
-                <button
-                  className="icon-toggle"
-                  onClick={() => onToggleLayer('satellite')}
-                  title={visibility.satellite ? 'Peida' : 'Näita'}
-                >
-                  {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
-                </button>
-              </div>
+              <Card variant="tile" padding="none" className="layer-field-box">
+                <div className="layer-item">
+                  <CheckboxField
+                    className="layer-label"
+                    checked={visibility.satellite}
+                    onCheckedChange={() => onToggleLayer('satellite')}
+                    label={
+                      <span className="layer-label-content">
+                        <span className="layer-color-indicator satellite-color"></span>
+                        <span className="layer-text">Satelliidipilt</span>
+                      </span>
+                    }
+                  />
+                  <button
+                    className="icon-toggle"
+                    onClick={() => onToggleLayer('satellite')}
+                    title={visibility.satellite ? 'Peida' : 'Näita'}
+                  >
+                    {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
+                  </button>
+                </div>
+              </Card>
               )}
             </div>
           </div>
