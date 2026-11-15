@@ -9,7 +9,7 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Field, FormGrid, Input, Select, CheckboxField } from './ui';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -137,30 +137,26 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
             <DialogForm onSubmit={saveWork}>
               <DialogHeader icon={<Edit2 size={20} className="text-emerald" />} title={`Muuda tööd: ${workForm.name}`} />
               <DialogBody>
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label htmlFor="wt-name">PRIA tegevus</label>
-                  <input id="wt-name" className="form-input" readOnly value={workForm.name ?? ''} />
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor="wt-short">Lühinimi</label>
-                  <input id="wt-short" className="form-input" maxLength={60} placeholder="nt Umbrohutõrje" value={workForm.shortName ?? ''} onChange={(e) => setWorkForm({ ...workForm, shortName: e.target.value })} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="wt-phase">Faas</label>
-                  <select id="wt-phase" className="form-input" value={workForm.phase} onChange={(e) => setWorkForm({ ...workForm, phase: e.target.value as WorkPhase })}>
-                    {WORK_PHASES.map((p) => <option key={p} value={p}>{WORK_PHASE_META[p].label}</option>)}
-                  </select>
-                </div>
-                <label className="users-admin-checkbox full-width">
-                  <input type="checkbox" checked={workForm.usesMaterials ?? false} onChange={(e) => setWorkForm({ ...workForm, usesMaterials: e.target.checked })} />
-                  <span>Kandes küsitakse kulumaterjale (seeme, väetis, taimekaitsevahend)</span>
-                </label>
-                <label className="users-admin-checkbox full-width">
-                  <input type="checkbox" checked={workForm.isActive ?? true} onChange={(e) => setWorkForm({ ...workForm, isActive: e.target.checked })} />
-                  <span>Aktiivne (mitteaktiivset tööd põldudele ei lisata)</span>
-                </label>
-              </div>
+              <FormGrid>
+                <Field label="PRIA tegevus" htmlFor="wt-name" span="full">
+                  <Input id="wt-name" readOnly value={workForm.name ?? ''} />
+                </Field>
+                <Field label="Lühinimi" htmlFor="wt-short" span="full">
+                  <Input id="wt-short" maxLength={60} placeholder="nt Umbrohutõrje" value={workForm.shortName ?? ''} onChange={(e) => setWorkForm({ ...workForm, shortName: e.target.value })} />
+                </Field>
+                <Field label="Faas" htmlFor="wt-phase">
+                  <Select id="wt-phase" value={workForm.phase ?? ''} onValueChange={(v) => setWorkForm({ ...workForm, phase: v as WorkPhase })}
+                    options={WORK_PHASES.map((p) => ({ value: p, label: WORK_PHASE_META[p].label }))} />
+                </Field>
+                <Field span="full">
+                  <CheckboxField checked={workForm.usesMaterials ?? false} onCheckedChange={(c) => setWorkForm({ ...workForm, usesMaterials: c })}
+                    label="Kandes küsitakse kulumaterjale (seeme, väetis, taimekaitsevahend)" />
+                </Field>
+                <Field span="full">
+                  <CheckboxField checked={workForm.isActive ?? true} onCheckedChange={(c) => setWorkForm({ ...workForm, isActive: c })}
+                    label="Aktiivne (mitteaktiivset tööd põldudele ei lisata)" />
+                </Field>
+              </FormGrid>
               </DialogBody>
               <DialogFooter>
                 <Button type="button" variant="ghost" onClick={() => setWorkForm(null)}>Loobu</Button>

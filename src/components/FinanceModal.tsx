@@ -19,7 +19,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -86,7 +86,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
   const [fieldFilter, setFieldFilter] = useState<string>('all');
 
   // Valitud kande hinnastamise vorm
-  const [prices, setPrices] = useState<Record<string, string>>({});
+  const [prices, setPrices] = useState<Record<string, number | null>>({});
   const [financeNotes, setFinanceNotes] = useState<string>('');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState<string | null>(null);
@@ -167,9 +167,10 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
       setSaveError(null);
       return;
     }
-    const initialPrices: Record<string, string> = {};
+    const initialPrices: Record<string, number | null> = {};
     for (const line of selectedEntry.lines || []) {
-      initialPrices[line.id] = line.unitPrice != null ? String(line.unitPrice) : '';
+      const p = line.unitPrice != null ? parseFloat(String(line.unitPrice)) : null;
+      initialPrices[line.id] = p != null && Number.isFinite(p) ? p : null;
     }
     setPrices(initialPrices);
     setFinanceNotes(selectedEntry.financeNotes || '');
@@ -221,8 +222,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
   const lineCalculations = useMemo(() => {
     if (!selectedEntry || !selectedEntry.lines) return [];
     return selectedEntry.lines.map((l) => {
-      const priceStr = prices[l.id] ?? '';
-      const numPrice = priceStr !== '' ? parseFloat(priceStr.replace(',', '.')) : null;
+      const numPrice = prices[l.id] ?? null;
       const valid = numPrice != null && Number.isFinite(numPrice) && numPrice >= 0;
       const total = valid ? l.quantity * (numPrice as number) : 0;
       return {
@@ -274,13 +274,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
       const payloadPrices: Record<string, number | null> = {};
       for (const line of selectedEntry.lines || []) {
         if (line.kind === 'MATERIAL' || line.kind === 'FUEL') continue; // kulumaterjali ja kütuse hind tuleb laost (FIFO)
-        const val = prices[line.id];
-        if (val !== undefined && val !== '') {
-          const p = parseFloat(val.replace(',', '.'));
-          payloadPrices[line.id] = Number.isFinite(p) ? p : null;
-        } else {
-          payloadPrices[line.id] = null;
-        }
+        payloadPrices[line.id] = prices[line.id] ?? null;
       }
 
       await api.saveFinanceEntry(selectedEntry.id, {
@@ -449,7 +443,6 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     {uniqueFields.length > 1 && (
                       <FilterClear active={fieldFilter !== 'all'} onClear={() => setFieldFilter('all')}>
                         <FilterSelect
-                          className="finance-field-select"
                           value={fieldFilter}
                           defaultValue="all"
                           onChange={setFieldFilter}
@@ -641,21 +634,20 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                             : isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
                                         </span>
                                       ) : (
-                                      <div className={`finance-price-input-wrap ${isMissing ? 'missing' : ''}`}>
-                                        <input
-                                          type="text"
-                                          inputMode="decimal"
-                                          placeholder="0,00"
-                                          className="form-input finance-price-input"
-                                          value={prices[line.id] ?? ''}
-                                          onChange={(e) => {
-                                            setPrices({ ...prices, [line.id]: e.target.value });
-                                            setSaveError(null);
-                                            setSaveSuccess(null);
-                                          }}
-                                        />
-                                        <span className="finance-unit-suffix">€/{line.unit}</span>
-                                      </div>
+                                      <NumberInput
+                                        size="sm"
+                                        decimals={4}
+                                        placeholder="0,00"
+                                        aria-label={`Ühikuhind: ${line.label}`}
+                                        className={isMissing ? 'finance-price-missing' : undefined}
+                                        end={`€/${line.unit}`}
+                                        value={prices[line.id] ?? null}
+                                        onChange={(n) => {
+                                          setPrices({ ...prices, [line.id]: n });
+                                          setSaveError(null);
+                                          setSaveSuccess(null);
+                                        }}
+                                      />
                                       )}
                                     </TableCell>
                                     <TableCell numeric className={`finance-line-total ${isHarvest ? 'revenue-text' : ''}`}>
@@ -676,10 +668,10 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                           <span>Finantsmärkmed</span>
                           <small className="text-muted">(arve nr, palgaviide jne)</small>
                         </label>
-                        <textarea
+                        <Textarea
                           id="fin-notes"
                           rows={2}
-                          className="form-input finance-notes-textarea"
+                          className="finance-notes-textarea"
                           placeholder="Sisesta vajadusel finantsalased märkused..."
                           value={financeNotes}
                           onChange={(e) => setFinanceNotes(e.target.value)}

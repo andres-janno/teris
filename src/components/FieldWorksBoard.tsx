@@ -21,7 +21,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
 
 interface Option {
   id: string;
@@ -754,10 +754,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 ]} />
             </FilterClear>
           </label>
-          <label className="fw-filter checkbox fw-filter-end">
-            <input type="checkbox" checked={hideDone} onChange={(e) => setHideDone(e.target.checked)} />
-            <span>Peida lõpetatud tööd</span>
-          </label>
+          <CheckboxField className="fw-filter-end" checked={hideDone} onCheckedChange={setHideDone} label="Peida lõpetatud tööd" />
         </div>
 
         <div className="fw-board" aria-busy={loading}>

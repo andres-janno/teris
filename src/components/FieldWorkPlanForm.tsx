@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -137,18 +137,18 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const [dateFrom, setDateFrom] = useState(work?.plannedDateFrom ?? '');
   const [dateTo, setDateTo] = useState(work?.plannedDateTo ?? '');
   const [plannedText] = useState(work?.plannedText ?? '');
-  const [areaHa, setAreaHa] = useState(fmt(work?.plannedAreaHa ?? fieldAreaHa));
+  const [areaHa, setAreaHa] = useState<number | null>(parseNum(fmt(work?.plannedAreaHa ?? fieldAreaHa)));
   const [method, setMethod] = useState(work?.method ?? '');
   const [workerId, setWorkerId] = useState(work?.plannedWorkerId ?? '');
   const [notes, setNotes] = useState(work?.notes ?? '');
-  const area = parseNum(areaHa) ?? fieldAreaHa;
+  const area = areaHa ?? fieldAreaHa;
   const [rows, setRows] = useState<PriaRow[]>(() => work?.lines.filter((l) => l.kind === 'MATERIAL').map((l) => planLineToRow(l, area)) ?? []);
   const harvestLine = work?.lines.find((l) => l.kind === 'HARVEST');
   const [harvest, setHarvest] = useState<HarvestRow>(() => recomputeHarvestTotal({ ratePerHa: fmt(harvestLine?.ratePerHa), total: '', priaKind: harvestLine?.priaKind ?? '', priaSpec: harvestLine?.priaSpec ?? '' }, area));
   // Pindala muutmisel arvutatakse materjalide ja saagi kogus kokku normist uuesti
-  const changeArea = (v: string) => {
+  const changeArea = (v: number | null) => {
     setAreaHa(v);
-    const a = parseNum(v) ?? fieldAreaHa;
+    const a = v ?? fieldAreaHa;
     setRows((rs) => recomputeTotals(rs, a));
     setHarvest((h) => recomputeHarvestTotal(h, a));
   };
@@ -178,7 +178,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
     ];
     const plan = {
       plannedText: plannedText.trim() || null, plannedDateFrom: dateFrom || null, plannedDateTo: dateTo || null,
-      plannedAreaHa: parseNum(areaHa), method: method || null, plannedWorkerId: workerId || null, notes: notes.trim() || null, lines
+      plannedAreaHa: areaHa, method: method || null, plannedWorkerId: workerId || null, notes: notes.trim() || null, lines
     };
     setBusy(true);
     try {
@@ -200,16 +200,14 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
     <Form className={`fw-plan-form ${layout}`} onSubmit={save}>
       <Body className="work-entry-body">
         <div className="work-entry-grid work-plan-top-grid">
-          <div className="form-group">
-            <label htmlFor="wp-type">Tegevus *</label>
+          <Field label="Tegevus *" htmlFor="wp-type">
             <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
               { value: '', label: '– vali –' },
               ...ordered.map((w) => ({ value: w.id, label: w.shortName?.trim() ? `${w.shortName.trim()} (${w.name})` : w.name }))
             ]} />
-          </div>
+          </Field>
           {activity === PRIA_ACTIVITY.FERTILIZING && (
-            <div className="form-group">
-              <label htmlFor="wp-method">Väetamisviis</label>
+            <Field label="Väetamisviis" htmlFor="wp-method">
               <FilterClear fill active={!!method} onClear={() => setMethod('')}>
                 <FilterSelect fill id="wp-method" value={method} onChange={setMethod} options={[
                   { value: '', label: '– vali –' },
@@ -217,24 +215,22 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
                   ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
                 ]} />
               </FilterClear>
-            </div>
+            </Field>
           )}
           {activity === PRIA_ACTIVITY.PLANT_PROTECTION && (
-            <div className="form-group">
-              <label htmlFor="wp-worker">Teostaja</label>
+            <Field label="Teostaja" htmlFor="wp-worker">
               <FilterClear fill active={!!workerId} onClear={() => setWorkerId('')}>
                 <FilterSelect fill id="wp-worker" value={workerId} onChange={setWorkerId}
                   options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
               </FilterClear>
-            </div>
+            </Field>
           )}
           {/* Ligikaudset aega vormis ei küsita; olemasolev väärtus (nt mallist "Sügis 2025") jääb salvestamisel alles */}
-          <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} /></div>
-          <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} /></div>
-          <div className="form-group">
-            <label htmlFor="wp-area">Pindala, ha</label>
-            <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => changeArea(e.target.value)} />
-          </div>
+          <Field label="Planeeritud algus" htmlFor="wp-from"><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} /></Field>
+          <Field label="Planeeritud lõpp" htmlFor="wp-to"><DateInput id="wp-to" value={dateTo} onChange={setDateTo} /></Field>
+          <Field label="Pindala, ha" htmlFor="wp-area">
+            <NumberInput id="wp-area" value={areaHa} onChange={changeArea} />
+          </Field>
         </div>
         {usesMaterials && (
           <section className="work-entry-section">
@@ -248,10 +244,9 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
             <HarvestEditor value={harvest} onChange={setHarvest} areaHa={area} showTotals />
           </section>
         )}
-        <div className="form-group">
-          <label htmlFor="wp-notes">Märkused</label>
-          <textarea id="wp-notes" rows={3} maxLength={1000} className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
-        </div>
+        <Field label="Märkused" htmlFor="wp-notes">
+          <Textarea id="wp-notes" rows={3} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} />
+        </Field>
         {error && <div className="alert-box error">{error}</div>}
       </Body>
       <Footer className={dialog ? undefined : 'fw-plan-actions'}>

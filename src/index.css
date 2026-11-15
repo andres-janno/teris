@@ -5464,10 +5464,6 @@ input[type="number"],
   color: var(--text-secondary);
 }
 
-.fw-filter.checkbox {
-  cursor: pointer;
-}
-
 .fw-filter-end {
   margin-left: auto;
 }
@@ -5480,10 +5476,6 @@ input[type="number"],
 .fw-main .search-field {
   flex: 1 1 220px;
   max-width: 420px !important;
-}
-
-.fw-filter.checkbox input {
-  accent-color: #16a34a;
 }
 
 .fw-board {
@@ -7093,32 +7085,11 @@ select.form-input:read-only {
   padding: 10px 12px;
   border-radius: 8px;
   border: 1px solid var(--border-card);
-  cursor: pointer;
 }
 
 .work-entry-finish.on {
   border-color: #16a34a;
   background: rgba(22, 163, 74, 0.08);
-}
-
-.work-entry-finish input {
-  accent-color: #16a34a;
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-}
-
-.work-entry-finish span {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  font-size: 0.82rem;
-  color: var(--text-primary);
-}
-
-.work-entry-finish small {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
 }
 
 .work-entry-area-presets {
@@ -7352,11 +7323,6 @@ select.form-input:read-only {
   display: flex;
   flex-direction: column;
   gap: 6px;
-}
-
-.finance-field-select {
-  font-size: 0.78rem;
-  padding: 4px 8px;
 }
 
 .finance-alert {
@@ -7618,34 +7584,10 @@ select.form-input:read-only {
   width: 180px;
 }
 
-.finance-price-input-wrap {
-  display: flex;
-  align-items: center;
-  position: relative;
-}
-
-.finance-price-input {
-  font-variant-numeric: tabular-nums;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 5px 8px;
-  padding-right: 48px;
-  text-align: right;
-  width: 100%;
-}
-
-.finance-price-input-wrap.missing .finance-price-input {
-  border-color: #f59e0b;
-  background: #fffbeb;
-}
-
-.finance-unit-suffix {
-  position: absolute;
-  right: 8px;
-  font-size: 0.72rem;
-  color: var(--text-muted);
-  pointer-events: none;
-  font-weight: 500;
+/* Puuduv hind: amber ääris ui sisendi ümber (aria-invalid oleks punane) */
+.finance-price-missing[data-slot="input-group"] {
+  border-color: #f59e0b !important;
+  background: #fffbeb !important;
 }
 
 .finance-line-total {
@@ -7682,8 +7624,6 @@ select.form-input:read-only {
 
 .finance-notes-textarea {
   resize: vertical;
-  font-size: 0.8rem;
-  line-height: 1.4;
 }
 
 .finance-worker-notes {

@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField } from './ui';
 
 interface Option {
   id: string;
@@ -42,6 +42,8 @@ const parseNum = (s: string): number | null => {
 };
 const fmt = (n: number | null | undefined, digits = 2) =>
   n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: digits, useGrouping: false });
+// Number, mis on ümardatud nagu varem tekstiväljal (fmt → parseNum); salvestatav väärtus jääb samaks
+const rnd = (n: number | null | undefined, digits = 2): number | null => parseNum(fmt(n, digits));
 const fmtHa = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
 
 const AREA_PERCENTAGES = [10, 25, 33, 50, 66, 75, 90, 100] as const;
@@ -139,10 +141,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   };
   const [vehicleId, setVehicleId] = useState(entry?.vehicleId ?? '');
   const [implementId, setImplementId] = useState(entry?.implementId ?? '');
-  const [equipmentHours, setEquipmentHours] = useState(fmt(entry?.equipmentHours));
-  const [fuelLiters, setFuelLiters] = useState(fmt(entry?.fuelLiters, 1));
+  const [equipmentHours, setEquipmentHours] = useState<number | null>(rnd(entry?.equipmentHours));
+  const [fuelLiters, setFuelLiters] = useState<number | null>(rnd(entry?.fuelLiters, 1));
   // Uue kande pindala jääb tühjaks: täidetakse telemeetriast, protsendivalikust või käsitsi
-  const [areaHa, setAreaHa] = useState(fmt(entry?.areaHa));
+  const [areaHa, setAreaHa] = useState<number | null>(rnd(entry?.areaHa));
   const [telemetryAreaHa, setTelemetryAreaHa] = useState(fmt(entry?.telemetryAreaHa));
   const [notes, setNotes] = useState(entry?.notes ?? '');
   const initialTotal = doneBefore + (entry?.areaHa ?? 0);
@@ -183,7 +185,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const [telemetrySuggestions, setTelemetrySuggestions] = useState<TelemetrySuggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   // Kande seos sõitude registri sõiduga (tühi = seoseta)
-  const autoFuelRef = useRef<string | null>(null); // viimati soovitusest täidetud kütuse väärtus
+  const autoFuelRef = useRef<number | null>(null); // viimati soovitusest täidetud kütuse väärtus
   const [tripId, setTripId] = useState<string | null>(entry?.tripId ?? null);
 
   useEffect(() => {
@@ -235,20 +237,20 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     const tripMins = timeToMinutes(s.endTime) - timeToMinutes(s.startTime);
     const hStr = tripMins > 0 ? fmt(Math.round((tripMins / 60) * 100) / 100) : '';
     setLaborHours(hStr);
-    setEquipmentHours(hStr);
+    setEquipmentHours(tripMins > 0 ? rnd(Math.round((tripMins / 60) * 100) / 100) : null);
     // Kütus: põllu kütus + osa teekütusest (sõitude registrist)
     // Tühja kütusega sõit ei jäta eelmise soovituse kütust; kasutaja sisestatut ei puututa
     if (s.fuelLiters != null) {
-      const v = fmt(s.fuelLiters, 1);
+      const v = rnd(s.fuelLiters, 1);
       setFuelLiters(v);
       autoFuelRef.current = v;
     } else {
-      setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? '' : cur));
+      setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? null : cur));
       autoFuelRef.current = null;
     }
     setTelemetryAreaHa(fmt(s.workedAreaHa));
     // Tehtud pindala eeltäidetakse telemeetriast (kasutaja saab muuta); tühi/0 ha (laius puudub) ei kirjuta üle
-    if (s.workedAreaHa != null && s.workedAreaHa > 0) changeArea(fmt(Math.round(s.workedAreaHa * 100) / 100));
+    if (s.workedAreaHa != null && s.workedAreaHa > 0) changeArea(rnd(Math.round(s.workedAreaHa * 100) / 100));
   };
 
   // Kande seos sõiduga: 'linked' = salvestatud seos, 'selected' = valitud (salvestamata)
@@ -261,7 +263,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
   const unlinkTrip = () => {
     setTripId(null);
     setTelemetryAreaHa('');
-    setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? '' : cur));
+    setFuelLiters((cur) => (autoFuelRef.current !== null && cur === autoFuelRef.current ? null : cur));
     autoFuelRef.current = null;
   };
 
@@ -299,24 +301,24 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     return list;
   }, [workers, telemetrySuggestions, entry?.workerId, entry?.workerName]);
 
-  const areaNum = parseNum(areaHa) ?? 0;
+  const areaNum = areaHa ?? 0;
   const totalAfter = doneBefore + areaNum;
   // Eelseadistuse siht: kogu põllu täitumine (varasemad + see kanne) hektarites
   const presetTarget = (pct: number) => (pct === 100 ? fieldAreaHa : Math.round(((fieldAreaHa * pct) / 100) * 100) / 100);
 
   // Tehtud pindala muutmine (käsitsi või telemeetriast): kogu põllu täitumisel märgitakse töö lõpetatuks
   // Kande pindala muutmine (käsitsi, kiirvalik, telemeetria): read ja saak arvutatakse normist uuesti
-  const setArea = (val: string) => {
+  const setArea = (val: number | null) => {
     setAreaHa(val);
-    const area = parseNum(val) ?? 0;
+    const area = val ?? 0;
     setRows((rs) => recomputeTotals(rs, area));
     setHarvest((h) => recomputeHarvestTotal(h, area));
   };
 
-  const changeArea = (val: string) => {
+  const changeArea = (val: number | null) => {
     setArea(val);
     if (fieldAreaHa > 0) {
-      setFinish(doneBefore + (parseNum(val) ?? 0) >= fieldAreaHa - 0.01);
+      setFinish(doneBefore + (val ?? 0) >= fieldAreaHa - 0.01);
     }
   };
 
@@ -325,7 +327,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     const targetTotal = presetTarget(pct);
     const needed = Math.max(0, targetTotal - doneBefore);
     const roundedNeeded = Math.round(needed * 100) / 100;
-    setArea(fmt(roundedNeeded));
+    setArea(rnd(roundedNeeded));
     if (pct === 100 || targetTotal >= fieldAreaHa - 0.01) {
       setFinish(true);
     } else {
@@ -340,7 +342,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
     if (activity === PRIA_ACTIVITY.PLANT_PROTECTION && !workerId) return setError('Taimekaitsetöö teostaja on kohustuslik');
     if (!workerId && !imported) return setError('Vali töötaja');
     if ((!startTime || !endTime) && !imported) return setError('Vali algus- ja lõpukellaaeg');
-    if (equipmentHours.trim() && !vehicleId && !implementId) return setError('Vali masin ja/või haakeriist, mille töötunnid sisestasid');
+    if (equipmentHours != null && !vehicleId && !implementId) return setError('Vali masin ja/või haakeriist, mille töötunnid sisestasid');
     if (startTime && endTime && timeToMinutes(endTime) <= timeToMinutes(startTime)) {
       return setError('Lõpukellaaeg peab olema alguse omast suurem');
     }
@@ -366,9 +368,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
           endTime: endTime || null,
           vehicleId: vehicleId || null,
           implementId: implementId || null,
-          equipmentHours: parseNum(equipmentHours),
-          fuelLiters: parseNum(fuelLiters),
-          areaHa: parseNum(areaHa),
+          equipmentHours,
+          fuelLiters,
+          areaHa,
           telemetryAreaHa: parseNum(telemetryAreaHa),
           tripId,
           warehouseId: warehouseId || null,
@@ -504,13 +506,11 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             <div className="work-entry-grid work-entry-top-grid">
-              <div className="form-group">
-                <label htmlFor="we-date">Kuupäev *</label>
+              <Field label="Kuupäev *" htmlFor="we-date">
                 <DateInput id="we-date" value={date} onChange={setDate} />
-              </div>
+              </Field>
               {activity === PRIA_ACTIVITY.FERTILIZING && (
-                <div className="form-group">
-                  <label htmlFor="we-method">Väetamisviis</label>
+                <Field label="Väetamisviis" htmlFor="we-method">
                   <FilterClear fill active={!!method} onClear={() => setMethod('')}>
                     <FilterSelect fill id="we-method" value={method} onChange={setMethod} options={[
                       { value: '', label: '– vali –' },
@@ -518,59 +518,51 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                       ...(method && !(FERTILIZING_METHODS as readonly string[]).includes(method) ? [{ value: method, label: method }] : [])
                     ]} />
                   </FilterClear>
-                </div>
+                </Field>
               )}
-              <div className="form-group">
-                <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
+              <Field label={`Töötaja${imported ? '' : ' *'}`} htmlFor="we-worker">
                 <FilterClear fill active={!!workerId} onClear={() => setWorkerId('')}>
                   <FilterSelect fill id="we-worker" value={workerId} onChange={setWorkerId}
                     options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
                 </FilterClear>
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-start-time">Algus{imported ? '' : ' *'}</label>
-                <FilterSelect fill id="we-start-time" className="time-select" value={startTime} onChange={handleStartTimeChange}
+              </Field>
+              <Field label={`Algus${imported ? '' : ' *'}`} htmlFor="we-start-time">
+                <FilterSelect fill id="we-start-time" value={startTime} onChange={handleStartTimeChange}
                   options={timeOptions('– algus –', startOptions)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-end-time">Lõpp{imported ? '' : ' *'}</label>
-                <FilterSelect fill id="we-end-time" className="time-select" value={endTime} onChange={handleEndTimeChange}
+              </Field>
+              <Field label={`Lõpp${imported ? '' : ' *'}`} htmlFor="we-end-time">
+                <FilterSelect fill id="we-end-time" value={endTime} onChange={handleEndTimeChange}
                   options={timeOptions('– lõpp –', endOptions)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="we-labor">Tööaeg, h</label>
-                <input
+              </Field>
+              <Field label="Tööaeg, h" htmlFor="we-labor">
+                <Input
                   id="we-labor"
-                  className="form-input num readonly"
+                  numeric
                   readOnly
                   tabIndex={-1}
                   value={laborHours}
                   placeholder="–"
                   title="Arvutatakse alguse ja lõpu kellaajast"
                 />
-              </div>
+              </Field>
             </div>
 
             {/* Tehtud pindala enne masinat ja materjale: materjalide kogused arvutatakse selle pealt */}
             <div className="work-entry-section">
               <div className="work-entry-grid work-entry-area-grid">
-                <div className="form-group">
-                  <label htmlFor="we-area">Tehtud pindala, ha</label>
-                  <input
+                <Field label="Tehtud pindala, ha" htmlFor="we-area">
+                  <NumberInput
                     id="we-area"
-                    className="form-input num"
-                    inputMode="decimal"
                     value={areaHa}
-                    onChange={(e) => changeArea(e.target.value)}
+                    onChange={changeArea}
                     placeholder="0,00"
                     title="Sisesta pindala või vali allolevatest kiirvalikutest (10% – 100%)"
                   />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="we-telemetry-area">Telemeetria pindala, ha</label>
-                  <input
+                </Field>
+                <Field label="Telemeetria pindala, ha" htmlFor="we-telemetry-area">
+                  <Input
                     id="we-telemetry-area"
-                    className="form-input num readonly"
+                    numeric
                     readOnly
                     tabIndex={-1}
                     value={telemetryAreaHa}
@@ -588,7 +580,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           : 'Telemeetriast (GPS) arvutatud tehtud pindala põllu piirides (mittemuudetav)'
                     }
                   />
-                </div>
+                </Field>
                 {fieldAreaHa > 0 && (
                   <p className="work-entry-hint align-end">Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
                 )}
@@ -635,28 +627,24 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <section className="work-entry-section">
               <h4>Masin ja haakeriist</h4>
               <div className="work-entry-grid four">
-                <div className="form-group">
-                  <label htmlFor="we-vehicle">Masin</label>
+                <Field label="Masin" htmlFor="we-vehicle">
                   <FilterClear fill active={!!vehicleId} onClear={() => setVehicleId('')}>
                     <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
                       options={[{ value: '', label: '– pole –' }, ...vehicleOptions.map((v) => ({ value: v.id, label: v.name }))]} />
                   </FilterClear>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="we-impl">Haakeriist</label>
+                </Field>
+                <Field label="Haakeriist" htmlFor="we-impl">
                   <FilterClear fill active={!!implementId} onClear={() => setImplementId('')}>
                     <FilterSelect fill id="we-impl" value={implementId} onChange={setImplementId}
                       options={[{ value: '', label: '– pole –' }, ...implementOptions.map((i) => ({ value: i.id, label: i.name }))]} />
                   </FilterClear>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="we-eqh">Töötunnid</label>
-                  <input id="we-eqh" className="form-input num" inputMode="decimal" value={equipmentHours} onChange={(e) => setEquipmentHours(e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label htmlFor="we-fuel">Kütus, l</label>
-                  <input id="we-fuel" className="form-input num" inputMode="decimal" value={fuelLiters} onChange={(e) => setFuelLiters(e.target.value)} />
-                </div>
+                </Field>
+                <Field label="Töötunnid" htmlFor="we-eqh">
+                  <NumberInput id="we-eqh" value={equipmentHours} onChange={setEquipmentHours} />
+                </Field>
+                <Field label="Kütus, l" htmlFor="we-fuel">
+                  <NumberInput id="we-fuel" decimals={1} value={fuelLiters} onChange={setFuelLiters} />
+                </Field>
               </div>
               <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
             </section>
@@ -673,22 +661,18 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               <section className="work-entry-section">
                 <h4>Saak</h4>
                 {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
-                  <div className="form-group">
-                    <label htmlFor="we-lot">Saagipartii</label>
+                  <Field label="Saagipartii" htmlFor="we-lot">
                     <FilterSelect fill id="we-lot" value={lotId} onChange={setLotId} options={[
                       ...(!entry?.harvestLotId ? [{ value: '', label: '– vali partii –' }] : []),
                       ...(entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId) ? [{ value: entry.harvestLotId, label: entry.harvestLotName ?? '' }] : []),
                       ...openLots.map((l) => ({ value: l.id, label: l.name }))
                     ]} />
-                  </div>
+                  </Field>
                 )}
                 {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
                   <p className="muted">Partii: {entry.harvestLotName}</p>
                 )}
-                <label className="users-admin-checkbox">
-                  <input type="checkbox" checked={manual} disabled={imported} onChange={(e) => setManual(e.target.checked)} />
-                  <span>Sisesta tonnid käsitsi</span>
-                </label>
+                <CheckboxField checked={manual} disabled={imported} onCheckedChange={setManual} label="Sisesta tonnid käsitsi" />
                 <HarvestEditor
                   value={harvest}
                   onChange={setHarvest}
@@ -707,18 +691,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </section>
             )}
 
-            <div className="form-group">
-              <label htmlFor="we-notes">Märkus</label>
-              <textarea id="we-notes" rows={2} className="form-input" placeholder="nt mullaniiskus, katkestused, tähelepanekud" value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
+            <Field label="Märkus" htmlFor="we-notes">
+              <Textarea id="we-notes" rows={2} placeholder="nt mullaniiskus, katkestused, tähelepanekud" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </Field>
 
-            <label className={`work-entry-finish ${finish ? 'on' : ''}`}>
-              <input type="checkbox" checked={finish} onChange={(e) => setFinish(e.target.checked)} />
-              <span>
-                <strong>Töö on sellega lõpetatud</strong>
-                <small>Märgi ainult siis, kui rohkem kandeid ei tule. 100% puhul lõpetatakse automaatselt.</small>
-              </span>
-            </label>
+            <div className={`work-entry-finish ${finish ? 'on' : ''}`}>
+              <CheckboxField checked={finish} onCheckedChange={setFinish} label={<strong>Töö on sellega lõpetatud</strong>}
+                hint="Märgi ainult siis, kui rohkem kandeid ei tule. 100% puhul lõpetatakse automaatselt." />
+            </div>
 
             <p className="work-entry-hint">
               <Info size={13} /> Sisesta ainult kogused. Finantskulu lisab finantsjuht selle kande juurde.
