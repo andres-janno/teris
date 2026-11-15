@@ -221,8 +221,9 @@ function cropSummaryKey(cropText: string): string {
       if (cropEditRef.current && !cropEditRef.current.contains(target)) setCropEdit(null);
     };
     const onKeyDown = (e: KeyboardEvent) => {
-      // Esc sulgeb esmalt avatud rippmenüü, mitte kogu rida.
-      if (e.key === 'Escape' && !document.querySelector('[role="listbox"]')) setCropEdit(null);
+      // Esc sulgeb esmalt avatud rippmenüü, mitte kogu rida. Kontrolli sündmuse sihtmärki (fookus on avatud
+      // loendis), mitte dokumenti: Radix sulgeb loendi juba enne seda kuulajat.
+      if (e.key === 'Escape' && !(e.target as Element | null)?.closest?.('[role="listbox"]')) setCropEdit(null);
     };
     document.addEventListener('pointerdown', onPointerDown);
     document.addEventListener('keydown', onKeyDown);
