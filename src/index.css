@@ -4834,7 +4834,7 @@ body {
 .weather-credential-status dd { margin: 0; }
 .weather-credential-error { color: #dc2626; }
 .weather-credential-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
-.weather-credential-form [data-slot="input"] { flex: 1 1 260px; min-width: 0; width: auto; }
+.weather-credential-form [data-slot="input"] { flex: 1 1 260px; min-width: 0; }
 .weather-credential-help { font-size: 13px; }
 .weather-credential-help ol { margin: 6px 0 8px 18px; padding: 0; }
 
@@ -7405,8 +7405,8 @@ body {
 
 /* Puuduv hind: amber ääris ui sisendi ümber (aria-invalid oleks punane) */
 .finance-price-missing[data-slot="input-group"] {
-  border-color: #f59e0b !important;
-  background: #fffbeb !important;
+  border-color: var(--amber-500) !important;
+  background: color-mix(in srgb, var(--amber-500) 12%, var(--input-bg)) !important;
 }
 
 .finance-line-total {
@@ -7932,7 +7932,7 @@ body {
 .pria-grid-head .num { text-align: right; }
 @media (max-width: 760px) {
   .pria-grid { display: flex; flex-wrap: wrap; }
-  .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { flex: 1 1 140px; width: auto; }
+  .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { flex: 1 1 140px; }
   .pria-grid [data-slot="input"][inputmode] { flex: 0 1 90px; }
   .pria-grid-head { display: none; }
 }

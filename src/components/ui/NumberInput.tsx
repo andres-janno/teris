@@ -32,6 +32,8 @@ interface NumberInputProps {
   disabled?: boolean;
   required?: boolean;
   'aria-label'?: string;
+  'aria-invalid'?: boolean;
+  'aria-describedby'?: string;
   title?: string;
   size?: FieldSize;
   end?: ReactNode; // ühik (nt "€/t", "ha")
@@ -83,6 +85,8 @@ export function NumberInput({
       required={required}
       title={title}
       aria-label={rest['aria-label']}
+      aria-invalid={rest['aria-invalid']}
+      aria-describedby={rest['aria-describedby']}
       onChange={(e) => handleChange(e.target.value)}
       onBlur={handleBlur}
     />

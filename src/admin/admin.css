@@ -1,3 +1,80 @@
+/* NB: vanad klassid on faili ALGUSES, et admini oma reeglid (nt .ai-instructions-input, .admin-form label) võidaksid sama spetsiifilisuse korral. */
+/* Vanad vormiväljaklassid — põhirakendus kasutab ui/Input, ui/Select, ui/Field (etapp 2.5), admin veel neid.
+   Tõsteti index.css-ist muutmata kujul. */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.form-group label {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.form-input {
+  background: var(--input-bg);
+  border: 1px solid var(--input-border);
+  border-radius: var(--radius-sm);
+  padding: 7px 10px;
+  color: var(--input-color);
+  font-family: inherit;
+  font-size: 0.8rem;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: var(--emerald-500);
+}
+
+/* Native <select> chrome adds its own height/padding on top of ours unless
+   appearance is reset — without this, selects render taller than text
+   inputs sharing the same .form-input class. */
+select.form-input {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
+  padding-right: 28px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+}
+
+/* Brauser loeb <select>-i alati :read-only alla, seega see reegel kehtib ka admini rippmenüüdele
+   (ja keelatud väljadele); järgmine reegel taastab rippmenüü noole ja osuti. */
+.form-input:read-only {
+  background: var(--stat-bg);
+  cursor: default;
+  color: var(--text-primary);
+  font-weight: 700;
+  border-color: var(--border-subtle, rgba(0, 0, 0, 0.15));
+}
+
+select.form-input:read-only {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  background-size: 10px 6px;
+}
+
+/* Üleminek: toores select/input FilterClear-i sees (admin HelpView, InterestView) */
+[data-slot="filter-clear"] > select.form-input {
+  padding-right: 50px;
+}
+
+[data-slot="filter-clear"] > input.form-input {
+  width: 100%;
+  padding-right: 30px;
+}
+
+[data-slot="filter-clear"]:has(> select.form-input) > [data-slot="filter-clear-btn"] {
+  right: 26px !important;
+}
+
 /* Vanad nupuklassid — põhirakendus kasutab ui/Button (etapp 2.1), admin veel neid. */
 .btn {
   display: inline-flex;
@@ -192,79 +269,3 @@ body { overflow: auto; }
 .admin-danger-card h2 { color: #dc2626; }
 .admin-danger-row { align-items: flex-end; margin-top: 12px; }
 .admin-danger-row .admin-field { flex: 1 1 280px; }
-
-/* Vanad vormiväljaklassid — põhirakendus kasutab ui/Input, ui/Select, ui/Field (etapp 2.5), admin veel neid.
-   Tõsteti index.css-ist muutmata kujul. */
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.form-group label {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-}
-
-.form-input {
-  background: var(--input-bg);
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  padding: 7px 10px;
-  color: var(--input-color);
-  font-family: inherit;
-  font-size: 0.8rem;
-  outline: none;
-}
-
-.form-input:focus {
-  border-color: var(--emerald-500);
-}
-
-/* Native <select> chrome adds its own height/padding on top of ours unless
-   appearance is reset — without this, selects render taller than text
-   inputs sharing the same .form-input class. */
-select.form-input {
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  cursor: pointer;
-  padding-right: 28px;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
-}
-
-/* Brauser loeb <select>-i alati :read-only alla, seega see reegel kehtib ka admini rippmenüüdele
-   (ja keelatud väljadele); järgmine reegel taastab rippmenüü noole ja osuti. */
-.form-input:read-only {
-  background: var(--stat-bg);
-  cursor: default;
-  color: var(--text-primary);
-  font-weight: 700;
-  border-color: var(--border-subtle, rgba(0, 0, 0, 0.15));
-}
-
-select.form-input:read-only {
-  cursor: pointer;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
-}
-
-/* Üleminek: toores select/input FilterClear-i sees (admin HelpView, InterestView) */
-[data-slot="filter-clear"] > select.form-input {
-  padding-right: 50px;
-}
-
-[data-slot="filter-clear"] > input.form-input {
-  width: 100%;
-  padding-right: 30px;
-}
-
-[data-slot="filter-clear"]:has(> select.form-input) > [data-slot="filter-clear-btn"] {
-  right: 26px !important;
-}
