@@ -58,7 +58,9 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   const [warehouseId, setWarehouseId] = useState<string>(initialWarehouseId ?? '');
   const [stockCard, setStockCard] = useState<Article | null>(null);
   const [merge, setMerge] = useState<Article | null>(null);
-  const [tab, setTab] = useState<'articles' | 'documents' | 'lots' | 'warehouses'>('articles');
+  const [selectedTab, setTab] = useState<'articles' | 'documents' | 'lots' | 'warehouses'>('articles');
+  // Finantsõiguse kadumisel näita alati artikleid (muidu jääks vaade tühjaks)
+  const tab = canManageFinance ? selectedTab : 'articles';
 
   useEffect(() => {
     if (initialWarehouseId) {
@@ -157,7 +159,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
           <div className="fullpage-board-content">
             {canManageFinance && (
               <div className="articles-tabs">
-                <Tabs activationMode="manual" value={tab} onValueChange={(next) => setTab(next as typeof tab)}>
+                <Tabs activationMode="manual" value={tab} onValueChange={(next) => setTab(next as typeof selectedTab)}>
                   <TabsList>
                     <TabsTrigger value="articles">Artiklid</TabsTrigger>
                     <TabsTrigger value="documents">Laokanded</TabsTrigger>

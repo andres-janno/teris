@@ -1,5 +1,5 @@
 // src/types/fieldWork.ts — põllutööde register (PRIA põlluraamatust lahus)
-import type { BadgeTone } from './badgeTone.ts';
+import type { BadgeTone, BadgeVariant } from './badgeTone.ts';
 import type { ArticleGroup, ArticleSystemKind } from '../services/articleRules.ts';
 
 export type WorkPhase = 'PREPARATION' | 'SOWING' | 'CARE' | 'HARVEST';
@@ -28,7 +28,7 @@ export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; 
 };
 
 // Kande finantsoleku märk: kinnitatud on rõhutatud (täisvärv).
-export const FINANCE_STATUS_BADGE: Record<FinanceStatus, { tone: BadgeTone; variant: 'soft' | 'solid' }> = {
+export const FINANCE_STATUS_BADGE: Record<FinanceStatus, { tone: BadgeTone; variant: BadgeVariant }> = {
   PENDING: { tone: 'warning', variant: 'soft' },
   CONFIRMED: { tone: 'success', variant: 'solid' },
   CHANGED: { tone: 'info', variant: 'soft' }

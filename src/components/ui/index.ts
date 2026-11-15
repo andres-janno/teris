@@ -16,7 +16,7 @@ export {
 } from './Dialog';
 export { Tabs, TabsList, TabsTrigger, TabsContent } from './Tabs';
 export { ToggleGroup, ToggleGroupItem } from './ToggleGroup';
-export type { BadgeTone } from './variants';
+export type { BadgeTone, BadgeVariant } from './variants';
 export {
   DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuLabel,
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuLabel,

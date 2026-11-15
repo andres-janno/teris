@@ -223,7 +223,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               {(Object.keys(CATEGORY_META) as PoiCategory[]).map((cat) => {
                 const count = pois.filter(p => p.category === cat).length;
                 return (
-                  <ToggleGroupItem key={cat} value={cat}>
+                  <ToggleGroupItem key={cat} value={cat} disabled={count === 0}>
                     <span>{CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label.split('/')[0]}</span>
                     <Badge>{count}</Badge>
                   </ToggleGroupItem>

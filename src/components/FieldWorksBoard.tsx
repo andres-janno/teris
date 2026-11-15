@@ -23,7 +23,7 @@ import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { FilterClear } from './FilterClear';
 import { FilterSelect } from './FilterSelect';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant } from './ui';
 
 interface Option {
   id: string;
@@ -93,7 +93,7 @@ function compareFieldNumbers(a: { num?: string | null; name: string }, b: { num?
 }
 
 const STATUS_LABEL = { PLANNED: 'Planeeritud', IN_PROGRESS: 'Töös', DONE: 'Lõpetatud' } as const;
-const WORK_STATUS_TONE: Record<FieldWork['status'], { tone: BadgeTone; variant: 'soft' | 'solid' }> = {
+const WORK_STATUS_TONE: Record<FieldWork['status'], { tone: BadgeTone; variant: BadgeVariant }> = {
   PLANNED: { tone: 'neutral', variant: 'soft' },
   IN_PROGRESS: { tone: 'success', variant: 'soft' },
   DONE: { tone: 'success', variant: 'solid' }
@@ -696,7 +696,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               <Calendar size={15} className="text-blue" />
               <span>Hooaeg:</span>
             </span>
-            <ToggleGroup aria-label="Hooaeg" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>
+            <ToggleGroup aria-label="Hooaasta" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>
               {availableYears.map((y) => {
                 const isLocked = seasons.find((x) => x.year === y)?.isLocked ?? false;
                 return (

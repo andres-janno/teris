@@ -1274,8 +1274,6 @@ body {
   margin-right: 4px;
 }
 
-/* Valitud hooaeg: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active) */
-
 .soil-table {
   display: flex;
   flex-direction: column;
@@ -3586,7 +3584,7 @@ input[type="number"],
   color: var(--emerald-500) !important; /* ui päise text-muted-foreground võidaks muidu */
 }
 
-/* Valitud aasta: sama stiil nagu kaardi hooajavalikus (.year-widget-btn.active).
+/* Valitud aasta: roheline silt.
    Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
 [data-slot="table"] th.year-col .year-col-label {
   display: block;

@@ -4,13 +4,17 @@ import { NumberInput } from './NumberInput';
 import { Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
-import type { FieldCadastralLink } from '../types/cadastre';
+import type { FieldCadastralLink, LandTenureType } from '../types/cadastre';
 import type { RelatedParty } from '../types/party';
 import type { Crop } from '../types/crop';
 import { deriveOwnershipType, OWNERSHIP_LABELS } from '../services/landTenure';
 import { derivePriaCropName, UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { isCropUndetermined } from '../types/season';
+import type { SoilSample } from '../types/soilSample';
+import { SoilSamplesSection } from './SoilSamplesSection';
+import { WeatherSeasonSection } from './WeatherSeasonSection';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone } from './ui';
 
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
@@ -18,12 +22,6 @@ const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RE
 // Kultuur valimata: sama väärtus ja värv mis mujal registris (fieldRegister.ts)
 const UNDETERMINED_CROP = 'Määramata';
 const UNDETERMINED_CROP_COLOR = '#94a3b8';
-import type { SoilSample } from '../types/soilSample';
-import { SoilSamplesSection } from './SoilSamplesSection';
-import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge } from './ui';
-import type { BadgeTone } from './ui';
-import type { LandTenureType } from '../types/cadastre';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';

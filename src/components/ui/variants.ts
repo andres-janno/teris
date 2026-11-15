@@ -2,7 +2,7 @@
 // väärtused, mitte suvalisi). Väärtused järgivad praegust identiteeti (.btn, .form-input, .modal-content index.css-is).
 import { cva } from 'class-variance-authority';
 import { cn } from './cn';
-import type { BadgeTone } from '../../types/badgeTone';
+import type { BadgeTone, BadgeVariant } from '../../types/badgeTone';
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
@@ -32,13 +32,13 @@ export const buttonVariants = cva(
   }
 );
 
-export type { BadgeTone };
+export type { BadgeTone, BadgeVariant };
 
 // Märk: soft (hele toon, vaikimisi), solid (täisvärv — rõhutatud olek, kasutaja otsus 2026-11-14), outline (ääris).
 export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-semibold', {
   variants: {
-    tone: { success: '', info: '', warning: '', danger: '', accent: '', neutral: '' },
-    variant: { soft: 'border-transparent', solid: 'border-transparent text-white', outline: 'bg-popover text-foreground' },
+    tone: { success: '', info: '', warning: '', danger: '', accent: '', neutral: '' } satisfies Record<BadgeTone, string>,
+    variant: { soft: 'border-transparent', solid: 'border-transparent text-white', outline: 'bg-popover text-foreground' } satisfies Record<BadgeVariant, string>,
     size: { sm: 'px-2 py-0.5 text-2xs', md: 'px-2.5 py-1 text-xs' },
   },
   compoundVariants: [
