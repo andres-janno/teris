@@ -84,9 +84,9 @@ export const tabsTriggerVariants = cva(
   {
     variants: {
       variant: {
-        line: '-mb-px border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:border-primary data-[state=active]:text-foreground',
+        line: '-mb-px border-0 border-b-2 border-transparent bg-transparent px-3 py-2 text-sm data-[state=active]:border-primary data-[state=active]:text-foreground',
         segmented:
-          'rounded-sm px-2.5 py-1 text-xs data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm',
+          'rounded-sm border-0 bg-transparent px-2.5 py-1 text-xs data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm',
         // Hall nupp, valitu täisroheline valge kirjaga (kasutaja soov 2026-11-15: hooaja valik nagu enne)
         pills:
           'rounded-sm border border-border bg-muted px-2.5 py-1 text-xs text-foreground enabled:hover:bg-muted-hover data-[state=on]:border-primary-strong data-[state=on]:bg-primary-strong data-[state=on]:text-white data-[state=on]:shadow-primary enabled:data-[state=on]:hover:bg-primary-strong',

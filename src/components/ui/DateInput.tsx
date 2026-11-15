@@ -5,7 +5,6 @@ import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatDate, parseEtDate } from '../../services/dateFormat';
 import { usePopupContainer } from './Dialog';
 import { Input } from './Input';
-import { Button } from './Button';
 import { cn } from './cn';
 import { menuContentClass, type FieldSize } from './variants';
 
@@ -252,8 +251,9 @@ export const DateInput: React.FC<DateInputProps> = ({
     return cells;
   }, [viewDate, value]);
 
-  const dayBase = 'size-8 rounded-sm text-sm cursor-pointer hover:bg-muted';
-  const navBtn = 'inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground cursor-pointer hover:bg-muted hover:text-foreground';
+  // Vana kalendri välimus (kasutaja soov 2026-11-15). Brauseri nupu vaikeraam/-taust tuleb nullida (preflight'i pole).
+  const dayBase = 'inline-flex h-7 items-center justify-center rounded-sm border-0 bg-transparent p-0 text-xs font-medium text-foreground cursor-pointer transition-colors hover:bg-muted';
+  const navBtn = 'inline-flex size-6 items-center justify-center rounded-sm border-0 bg-transparent p-0 text-muted-foreground cursor-pointer transition-colors hover:bg-muted hover:text-foreground';
 
   return (
     <>
@@ -284,7 +284,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         end={
           <button
             type="button"
-            className="inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground cursor-pointer enabled:hover:bg-muted enabled:hover:text-foreground disabled:cursor-not-allowed"
+            className="inline-flex size-6 items-center justify-center rounded-sm border-0 bg-transparent p-0 text-muted-foreground cursor-pointer enabled:hover:text-primary-strong disabled:cursor-default disabled:opacity-60"
             onClick={toggleOpen}
             disabled={disabled}
             tabIndex={-1}
@@ -301,21 +301,26 @@ export const DateInput: React.FC<DateInputProps> = ({
           ref={popupRef}
           data-slot="date-picker"
           style={popupStyle}
-          className={cn(menuContentClass, 'flex w-64 select-none flex-col gap-2 overflow-visible p-2 animate-scale-up')}
+          className={cn(menuContentClass, 'flex w-64 select-none flex-col gap-2 overflow-visible px-3 py-2.5 animate-scale-up')}
           role="dialog"
           aria-label="Kuupäeva valija"
         >
           <div className="flex items-center justify-between border-b border-border pb-1.5">
-            <span className="text-sm font-semibold">
+            <span className="text-sm font-bold">
               {MONTH_NAMES[viewDate.month]} {viewDate.year}
             </span>
             <div className="flex items-center gap-1">
               <button type="button" className={navBtn} onClick={prevMonth} title="Eelmine kuu" aria-label="Eelmine kuu">
                 <ChevronLeft size={16} />
               </button>
-              <Button type="button" size="sm" variant="ghost" onClick={handleToday} title="Vali tänane kuupäev">
+              <button
+                type="button"
+                className="cursor-pointer rounded-sm border border-border bg-transparent px-1.5 py-0.5 text-2xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:bg-muted hover:text-foreground"
+                onClick={handleToday}
+                title="Vali tänane kuupäev"
+              >
                 Täna
-              </Button>
+              </button>
               <button type="button" className={navBtn} onClick={nextMonth} title="Järgmine kuu" aria-label="Järgmine kuu">
                 <ChevronRight size={16} />
               </button>
@@ -324,7 +329,7 @@ export const DateInput: React.FC<DateInputProps> = ({
 
           <div className="grid grid-cols-7 text-center">
             {WEEK_DAYS.map((wd, idx) => (
-              <span key={idx} className="py-0.5 text-2xs font-semibold text-subtle">{wd}</span>
+              <span key={idx} className="py-0.5 text-2xs font-bold text-subtle">{wd}</span>
             ))}
           </div>
 
@@ -335,9 +340,9 @@ export const DateInput: React.FC<DateInputProps> = ({
                 type="button"
                 className={cn(
                   dayBase,
-                  !cell.isCurrentMonth && 'text-subtle',
-                  cell.isToday && 'font-bold text-primary',
-                  cell.isSelected && 'bg-primary font-bold text-white hover:bg-primary'
+                  !cell.isCurrentMonth && 'text-subtle opacity-45',
+                  cell.isToday && !cell.isSelected && 'font-extrabold text-info ring-1 ring-inset ring-info',
+                  cell.isSelected && 'bg-primary font-extrabold text-white opacity-100 hover:bg-primary'
                 )}
                 onClick={() => handleSelectDate(cell.iso)}
               >

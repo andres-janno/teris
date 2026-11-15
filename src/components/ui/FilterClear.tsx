@@ -42,7 +42,7 @@ export const FilterClear: React.FC<FilterClearProps> = ({ active, onClear, fill,
         aria-label="Eemalda filter"
         onClick={onClear}
         className={cn(
-          'inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/15 hover:text-destructive',
+          'inline-flex size-5 shrink-0 cursor-pointer items-center justify-center rounded-full border-0 bg-transparent p-0 text-muted-foreground hover:bg-destructive/15 hover:text-destructive',
           !inline && 'absolute right-1.5 top-1/2 -translate-y-1/2'
         )}
       >
