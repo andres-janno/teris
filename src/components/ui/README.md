@@ -97,7 +97,7 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 | `--bg-dark` | `bg-background` | lehe taust |
 | `--text-primary` | `text-foreground` | põhitekst |
 | `--bg-surface` | `bg-card` | kaart (tahke; vana `--bg-card` on läbipaistev ja ainult legacy jaoks) |
-| `--bg-card-hover` | `bg-card-hover` | kaardi hover |
+| `--bg-surface-hover` | `bg-card-hover` | kaardi hover (tahke) |
 | `--bg-modal` | `bg-popover` | dialoog, menüü, hüpik |
 | `--stat-bg` | `bg-muted` | vaikne taust, tabeli hover |
 | `--stat-bg-hover` | `bg-muted-hover` | vaikse tausta hover |
@@ -155,7 +155,7 @@ Reeglid:
     16px, tugevam vari `shadow-dialog`), `tile` (sisemine plaat kaardi/dialoogi sees: KPI, sektsioon, loendikirje; 10px,
     `bg-muted`, varjuta).
   - `padding`: `md` 16px (vaikimisi), `sm` 12px, `none` (klassi ei anta — vaate CSS-i polster kehtib, nt väike kaardinäit).
-  - `interactive` (kursor, hover, `text-left`, teksti värv) ja `selected` (roheline ääris + rõngas).
+  - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `app.css` base-kihist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
   - `asChild`: `<Card asChild interactive><button type="button">…</button></Card>`, samuti `<form>`, `<section>`.
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
 - Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).

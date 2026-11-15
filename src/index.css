@@ -8,6 +8,7 @@
   --bg-card: rgba(255, 255, 255, 0.92);
   /* Kaardi tahke taust (etapp 2.7, kasutaja otsus: ilma klaasita). Tailwindi bg-card loeb seda. */
   --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
   --bg-card-hover: rgba(241, 245, 249, 0.98);
   --bg-modal: #ffffff;
   --stat-bg: rgba(15, 23, 42, 0.04);
@@ -59,6 +60,7 @@
   --bg-header: rgba(9, 13, 22, 0.90);
   --bg-card: rgba(15, 23, 42, 0.85);
   --bg-surface: #0f172a;
+  --bg-surface-hover: #1e293b;
   --bg-card-hover: rgba(30, 41, 59, 0.9);
   --bg-modal: #0f172a;
   --stat-bg: rgba(255, 255, 255, 0.04);

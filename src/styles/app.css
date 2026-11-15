@@ -25,6 +25,12 @@
   button, input, select, textarea {
     font-family: inherit;
   }
+  /* Klõpsatav kaart <button>-ina: nupp ei päri kirja ega värvi. Base-kihis, et vaate klass (legacy) võidaks. */
+  button[data-slot="card"] {
+    font: inherit;
+    text-align: left;
+    color: var(--text-primary);
+  }
 }
 
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
@@ -67,7 +73,7 @@
   --color-background: var(--bg-dark);
   --color-foreground: var(--text-primary);
   --color-card: var(--bg-surface);
-  --color-card-hover: var(--bg-card-hover);
+  --color-card-hover: var(--bg-surface-hover);
   --color-popover: var(--bg-modal);
   --color-muted: var(--stat-bg);
   --color-muted-hover: var(--stat-bg-hover);

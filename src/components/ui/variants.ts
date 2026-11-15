@@ -154,11 +154,14 @@ export const cardVariants = cva('border border-border', {
     // none: klassi ei anta — vaate CSS-i oma polster (nt väike kaardinäit) jääb kehtima.
     padding: { none: '', sm: 'p-3', md: 'p-4' },
     interactive: {
-      true: 'cursor-pointer text-left text-foreground [font:inherit] transition-colors hover:border-primary/50 hover:bg-card-hover',
+      // Nupu lähtestus (font, text-align, color) on app.css base-kihis (button[data-slot="card"]), et vaate klass (legacy) kirjasuuruse kaotamata võidaks.
+      true: 'cursor-pointer transition-colors hover:bg-card-hover',
       false: '',
     },
     selected: { true: 'border-primary ring-1 ring-primary', false: '' },
   },
+  // Hõljumisel hele roheline ääris ainult valimata kaardil: valitud kaardi täisäärist ei nõrgendata.
+  compoundVariants: [{ interactive: true, selected: false, className: 'hover:border-primary/50' }],
   defaultVariants: { variant: 'surface', padding: 'md', interactive: false, selected: false },
 });
 

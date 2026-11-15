@@ -262,13 +262,19 @@ describe('kaart', () => {
     expect(v.cardVariants({ padding: 'sm' })).toContain('p-3');
     expect(v.cardVariants({ padding: 'none' })).not.toMatch(/(^|\s)p[xytrbl]?-/);
   });
-  it('kaart ei sea teksti värvi, klõpsatav seab (button ei päri värvi)', () => {
+  it('kaart ei sea teksti värvi; klõpsatav annab kursori ja hoveri', () => {
     expect(v.cardVariants({})).not.toMatch(/(^|\s)text-/);
     const c = v.cardVariants({ interactive: true });
-    expect(c).toContain('text-foreground');
-    expect(c).toContain('text-left');
     expect(c).toContain('cursor-pointer');
     expect(c).toContain('hover:bg-card-hover');
+  });
+  it('nupu lähtestus (font, text-align, color) ei ole utiliit — see on app.css base-kihis ja vaate klass võidab', () => {
+    const c = v.cardVariants({ interactive: true });
+    expect(c).not.toMatch(/\[font:|(^|\s)text-(left|foreground)(\s|$)/);
+  });
+  it('hover: valitud kaardi ääris ei nõrgene, valimata kaardil hele roheline', () => {
+    expect(v.cardVariants({ interactive: true, selected: true })).not.toContain('hover:border-primary');
+    expect(v.cardVariants({ interactive: true, selected: false })).toContain('hover:border-primary/50');
   });
   it('valitud: roheline ääris võidab tavaäärise (cn), lisaks rõngas', () => {
     const c = cn(v.cardVariants({ selected: true }));
