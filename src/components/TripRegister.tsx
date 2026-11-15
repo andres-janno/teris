@@ -195,8 +195,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Laen sõite...</div>
       ) : trips.length === 0 ? (
         <Card padding="none" className="empty-register-state is-muted">
-          <Route size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+          <Route size={36} style={{ opacity: 0.4 }} />
+          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
             Sõite ei leitud
           </div>
           <p style={{ fontSize: '13px', margin: 0 }}>

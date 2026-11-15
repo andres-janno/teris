@@ -238,8 +238,8 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
         </div>
       ) : filtered.length === 0 ? (
         <Card padding="none" className="empty-register-state is-muted">
-          <Radio size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+          <Radio size={36} style={{ opacity: 0.4 }} />
+          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
             Ühtegi seose kirjet ei leitud
           </div>
           <p style={{ fontSize: '13px', margin: 0 }}>

@@ -89,8 +89,9 @@ if (platformArg && !anon) {
 }
 
 mkdirSync(outDir, { recursive: true });
-const browser = await chromium.launch();
+let browser: import('playwright').Browser | undefined;
 try {
+  browser = await chromium.launch();
   for (const theme of ['light', 'dark'] as const) {
     const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
     if (!anon) await ctx.addCookies([{ name: cookieName, value: token, url: base, secure: base.startsWith('https') }]);
@@ -136,7 +137,7 @@ try {
     await ctx.close();
   }
 } finally {
-  await browser.close();
+  await browser?.close();
   await removeSession();
   await db.$disconnect();
 }

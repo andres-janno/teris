@@ -1860,8 +1860,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             </div>
           ) : filteredAssignments.length === 0 ? (
             <Card padding="none" className="empty-register-state is-muted">
-              <Wrench size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
+              <Wrench size={36} style={{ opacity: 0.4 }} />
+              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Ühtegi haakimise kirjet ei leitud
               </div>
               <p style={{ fontSize: '13px', margin: 0 }}>
