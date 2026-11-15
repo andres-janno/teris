@@ -1,28 +1,22 @@
 // src/components/HelpHint.tsx — küsimärgi ikoon, mis avab teenusepakkuja koostatud juhendi (admin.teris.ee „Juhendid“).
-// Hiirega üle liikudes avaneb, klõps kinnitab lahti; Esc või kõrvale klõps sulgeb. Tühja juhendi korral ikooni pole.
-import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+// Hiirega üle liikudes avaneb (150 ms), lahkudes sulgub (200 ms); klõps kinnitab lahti, uus klõps sulgeb;
+// klaviatuuriga fookus avab, blur sulgeb (kui pole kinnitatud); Esc sulgeb ainult vihje. Tühja juhendi korral ikooni pole.
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CircleHelp } from 'lucide-react';
 import { HELP_SPOTS, type HelpKey } from '../help/helpRegistry';
 import { useHelpArticle } from '../help/helpStore';
 import { sanitizeHelp } from '../help/sanitizeHelp';
-import { usePopupContainer } from './ui';
+import { cn, helpHintContentClass, helpHintInlineClass, helpHintTitleClass, helpHintTriggerClass, Popover, PopoverContent, PopoverTrigger } from './ui';
 
 const OPEN_DELAY = 150;
 const CLOSE_DELAY = 200;
-const POPUP_WIDTH = 320;
-const MARGIN = 8;
 
 /** inline: ikoon on teise nupu sees (span rolliga button, klõps ei käivita välimist nuppu) */
 export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ helpKey, inline = false }) => {
-  const popupContainer = usePopupContainer();
   const html = useHelpArticle(helpKey);
   const safe = useMemo(() => (html ? sanitizeHelp(html) : ''), [html]);
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
-  const [style, setStyle] = useState<React.CSSProperties>({ visibility: 'hidden' });
-  const btnRef = useRef<HTMLElement>(null);
-  const popRef = useRef<HTMLDivElement>(null);
   const timer = useRef<number | undefined>(undefined);
 
   const schedule = useCallback((next: boolean, delay: number) => {
@@ -38,50 +32,9 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  useLayoutEffect(() => {
-    if (!open || !btnRef.current) return;
-    const place = () => {
-      const r = btnRef.current!.getBoundingClientRect();
-      const width = Math.min(POPUP_WIDTH, window.innerWidth - 2 * MARGIN);
-      const left = Math.min(Math.max(MARGIN, r.left + r.width / 2 - width / 2), window.innerWidth - width - MARGIN);
-      const popH = popRef.current?.offsetHeight ?? 0;
-      const below = r.bottom + 6;
-      const top = below + popH > window.innerHeight - MARGIN && r.top - 6 - popH > MARGIN ? r.top - 6 - popH : below;
-      setStyle({ position: 'fixed', top, left, width });
-    };
-    place();
-    window.addEventListener('resize', place);
-    window.addEventListener('scroll', place, true);
-    return () => {
-      window.removeEventListener('resize', place);
-      window.removeEventListener('scroll', place, true);
-    };
-  }, [open, safe]);
-
-  useEffect(() => {
-    if (!open) return;
-    // Esc sulgeb ainult vihje, mitte ümbritsevat akent (window capture jõuab enne dialoogi kuulajaid)
-    const onKey = (e: KeyboardEvent) => {
-      if (e.key !== 'Escape') return;
-      e.stopPropagation();
-      e.preventDefault();
-      close();
-    };
-    const onDown = (e: PointerEvent) => {
-      const t = e.target as Node;
-      if (!btnRef.current?.contains(t) && !popRef.current?.contains(t)) close();
-    };
-    window.addEventListener('keydown', onKey, true);
-    document.addEventListener('pointerdown', onDown);
-    return () => {
-      window.removeEventListener('keydown', onKey, true);
-      document.removeEventListener('pointerdown', onDown);
-    };
-  }, [open, close]);
-
   if (!safe) return null;
-  const hoverOpen = (e: React.PointerEvent) => e.pointerType === 'mouse' && !pinned && schedule(true, OPEN_DELAY);
-  const hoverClose = (e: React.PointerEvent) => e.pointerType === 'mouse' && !pinned && schedule(false, CLOSE_DELAY);
+  const label = HELP_SPOTS[helpKey].label;
+  const isMouse = (e: React.PointerEvent) => e.pointerType === 'mouse';
 
   const toggle = () => {
     window.clearTimeout(timer.current);
@@ -91,59 +44,71 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
       setOpen(true);
     }
   };
+
   const triggerProps = {
-    className: `help-hint-btn${open ? ' is-open' : ''}`,
-    'aria-label': `Juhend: ${HELP_SPOTS[helpKey].label}`,
-    'aria-expanded': open,
-    onPointerEnter: hoverOpen,
-    onPointerLeave: hoverClose,
+    className: cn(helpHintTriggerClass, inline && helpHintInlineClass),
+    'aria-label': `Juhend: ${label}`,
+    onPointerEnter: (e: React.PointerEvent) => isMouse(e) && !pinned && schedule(true, OPEN_DELAY),
+    onPointerLeave: (e: React.PointerEvent) => isMouse(e) && !pinned && schedule(false, CLOSE_DELAY),
+    // klaviatuuri fookus avab; hiirega klõpsu fookus mitte (klõps kinnitab ise)
+    onFocus: (e: React.FocusEvent<HTMLElement>) => {
+      if (e.currentTarget.matches(':focus-visible')) {
+        window.clearTimeout(timer.current);
+        setOpen(true);
+      }
+    },
+    onBlur: (e: React.FocusEvent<HTMLElement>) => {
+      const next = e.relatedTarget as Node | null;
+      if (!pinned && !(next instanceof Element && next.closest('[data-help-hint-content]'))) schedule(false, 0);
+    },
     onClick: (e: React.MouseEvent) => {
-      // ära lase klõpsul jõuda välimise nupuni (inline) ega selle vanemateni
+      // ära lase klõpsul jõuda välimise nupuni (inline) ega selle vanemateni; Radixi enda lülitus jääb ära
       e.stopPropagation();
       e.preventDefault();
       toggle();
-    }
+    },
   };
 
   return (
-    <>
+    <Popover open={open} onOpenChange={(next) => !next && close()}>
       {inline ? (
-        <span
-          ref={btnRef as React.RefObject<HTMLSpanElement>}
-          role="button"
-          tabIndex={0}
-          {...triggerProps}
-          className={`${triggerProps.className} help-hint-inline`}
-          onKeyDown={(e) => {
-            if (e.key !== 'Enter' && e.key !== ' ') return;
-            e.preventDefault();
-            e.stopPropagation();
-            toggle();
-          }}
-        >
-          <CircleHelp size={15} />
-        </span>
-      ) : (
-        <button ref={btnRef as React.RefObject<HTMLButtonElement>} type="button" {...triggerProps}>
-          <CircleHelp size={15} />
-        </button>
-      )}
-      {open &&
-        createPortal(
-          <div
-            ref={popRef}
-            className="help-hint-popup"
-            role="dialog"
-            aria-label={HELP_SPOTS[helpKey].label}
-            style={style}
-            onPointerEnter={(e) => e.pointerType === 'mouse' && window.clearTimeout(timer.current)}
-            onPointerLeave={hoverClose}
+        <PopoverTrigger asChild>
+          <span
+            role="button"
+            tabIndex={0}
+            {...triggerProps}
+            onKeyDown={(e) => {
+              if (e.key !== 'Enter' && e.key !== ' ') return;
+              e.preventDefault();
+              e.stopPropagation();
+              toggle();
+            }}
           >
-            <div className="help-hint-title">{HELP_SPOTS[helpKey].label}</div>
-            <div className="help-content" dangerouslySetInnerHTML={{ __html: safe }} />
-          </div>,
-          popupContainer
-        )}
-    </>
+            <CircleHelp size={15} />
+          </span>
+        </PopoverTrigger>
+      ) : (
+        <PopoverTrigger asChild>
+          <button type="button" {...triggerProps}>
+            <CircleHelp size={15} />
+          </button>
+        </PopoverTrigger>
+      )}
+      <PopoverContent
+        data-help-hint-content=""
+        className={helpHintContentClass}
+        aria-label={label}
+        onOpenAutoFocus={(e) => e.preventDefault()}
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onPointerEnter={(e) => isMouse(e) && window.clearTimeout(timer.current)}
+        onPointerLeave={(e) => isMouse(e) && !pinned && schedule(false, CLOSE_DELAY)}
+        // portaali sündmused jõuaksid React-puus välimise nuppuni
+        onClick={(e) => e.stopPropagation()}
+        onKeyDown={(e) => e.stopPropagation()}
+      >
+        <div className={helpHintTitleClass}>{label}</div>
+        <div className="help-content" dangerouslySetInnerHTML={{ __html: safe }} />
+      </PopoverContent>
+    </Popover>
   );
 };

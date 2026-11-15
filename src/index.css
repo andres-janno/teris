@@ -7719,62 +7719,13 @@ body {
   }
 }
 
-/* Juhendi küsimärk (HelpHint) — tekst admin.teris.ee „Juhendid“ vaatest */
-.help-hint-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: help;
-  transition: color 0.15s, background-color 0.15s;
+/* Laadimisikoon (vaadetes pole Tailwindi skannimist, seega .animate-spin siin) */
+@keyframes spin {
+  to { transform: rotate(360deg); }
 }
 
-.help-hint-btn:hover,
-.help-hint-btn.is-open,
-.help-hint-btn:focus-visible {
-  color: var(--emerald-500);
-  background: rgba(34, 197, 94, 0.12);
-  outline: none;
-}
-
-/* Nupu sees: väiksem, nupu tekstiga samal joonel */
-.help-hint-btn.help-hint-inline {
-  width: 20px;
-  height: 20px;
-  margin: -2px -4px -2px 2px;
-}
-
-.help-hint-popup {
-  z-index: 3200;
-  max-height: min(60vh, 420px);
-  overflow-y: auto;
-  padding: 12px 14px;
-  background: var(--bg-modal);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3), 0 8px 10px -6px rgba(0, 0, 0, 0.2);
-  color: var(--text-primary);
-  animation: help-hint-in 0.12s ease-out;
-}
-
-@keyframes help-hint-in {
-  from { opacity: 0; transform: translateY(-3px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-
-.help-hint-title {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-  margin-bottom: 6px;
+.animate-spin {
+  animation: spin 1s linear infinite;
 }
 
 /* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */

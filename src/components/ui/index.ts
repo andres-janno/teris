@@ -28,3 +28,4 @@ export {
   ContextMenu, ContextMenuTrigger, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuLabel,
 } from './Menu';
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, Tooltip, TooltipProvider } from './Popover';
+export { helpHintTriggerClass, helpHintInlineClass, helpHintContentClass, helpHintTitleClass } from './variants';
