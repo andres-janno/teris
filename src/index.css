@@ -41,9 +41,9 @@
   --basemap-active-bg: rgba(34, 197, 94, 0.16);
   --basemap-active-border: rgba(34, 197, 94, 0.45);
 
-  --popup-bg: #ffffff;
-  --popup-border: rgba(15, 23, 42, 0.12);
-  --popup-text: #0f172a;
+  --popup-bg: var(--bg-modal);
+  --popup-border: var(--border-card);
+  --popup-text: var(--text-primary);
 
   --input-bg: #f8fafc;
   --input-border: rgba(15, 23, 42, 0.18);
@@ -87,9 +87,9 @@
   --basemap-active-bg: rgba(34, 197, 94, 0.22);
   --basemap-active-border: rgba(34, 197, 94, 0.45);
 
-  --popup-bg: rgba(15, 23, 42, 0.95);
-  --popup-border: rgba(255, 255, 255, 0.15);
-  --popup-text: #ffffff;
+  --popup-bg: var(--bg-modal);
+  --popup-border: var(--border-card);
+  --popup-text: var(--text-primary);
 
   --input-bg: rgba(255, 255, 255, 0.06);
   --input-border: rgba(255, 255, 255, 0.12);
@@ -554,61 +554,12 @@ body {
   vertical-align: baseline;
 }
 
-/* Map Navigation & Fit-All Toolbar */
-.map-nav-toolbar {
-  position: absolute;
-  bottom: 24px;
-  right: 20px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  padding: 4px;
-  z-index: 800;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
 
-.map-nav-btn {
-  background: var(--btn-sec-bg);
-  border: 1px solid var(--btn-sec-border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  padding: 7px 12px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  transition: all 0.15s ease;
-}
 
-.map-nav-btn:hover {
-  background: var(--btn-sec-hover);
-  border-color: rgba(34, 197, 94, 0.4);
-  transform: translateY(-1px);
-}
 
-.map-nav-btn.icon-only {
-  padding: 7px 9px;
-}
 
-.map-nav-btn.fit-all-btn {
-  background: var(--basemap-active-bg);
-  border-color: var(--basemap-active-border);
-  color: var(--basemap-active-color);
-}
 
-.map-nav-btn.fit-all-btn:hover {
-  background: var(--basemap-active-bg);
-  border-color: var(--emerald-500);
-}
 
-.toolbar-divider {
-  width: 1px;
-  height: 20px;
-  background: var(--border-card);
-  margin: 0 2px;
-}
 
 .layer-fit-section {
   margin-top: 4px;
@@ -2849,10 +2800,24 @@ body {
   backdrop-filter: blur(8px);
   border: 1px solid var(--popup-border) !important;
   color: var(--popup-text) !important;
-  border-radius: 6px !important;
+  border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-modal) !important;
   padding: 4px 8px !important;
 }
+
+/* Leafleti vaikimisi vihje (ilma oma klassita): sama välimus kui ui menüüdel */
+.leaflet-tooltip {
+  background: var(--popup-bg) !important;
+  border: 1px solid var(--popup-border) !important;
+  color: var(--popup-text) !important;
+  border-radius: var(--radius-md) !important;
+  box-shadow: var(--shadow-modal) !important;
+}
+
+.leaflet-tooltip-top:before { border-top-color: var(--popup-border) !important; }
+.leaflet-tooltip-bottom:before { border-bottom-color: var(--popup-border) !important; }
+.leaflet-tooltip-left:before { border-left-color: var(--popup-border) !important; }
+.leaflet-tooltip-right:before { border-right-color: var(--popup-border) !important; }
 
 .custom-field-tooltip:before {
   display: none !important;
@@ -2905,7 +2870,7 @@ body {
 .leaflet-popup-content-wrapper {
   background: var(--popup-bg) !important;
   backdrop-filter: blur(12px);
-  border: 1px solid var(--popup-border);
+  border: 1px solid var(--popup-border) !important;
   color: var(--popup-text) !important;
   border-radius: var(--radius-md) !important;
   box-shadow: var(--shadow-modal) !important;
@@ -3663,37 +3628,8 @@ body {
   gap: 8px;
 }
 
-/* Interactive Crop Legend Panel */
-.crop-legend-panel {
-  position: absolute;
-  bottom: 42px;
-  left: 16px;
-  width: 290px;
-  max-height: 480px;
-  z-index: 850;
-  padding: 12px 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-card);
-  animation: fadeIn 0.2s ease-out;
-  transition: all 0.2s ease;
-}
 
-.crop-legend-panel.collapsed {
-  width: auto;
-  min-width: 230px;
-  padding: 8px 12px;
-}
 
-.crop-legend-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-  user-select: none;
-}
 
 .legend-title-group {
   display: flex;
@@ -3715,11 +3651,6 @@ body {
   line-height: 1.2;
 }
 
-.crop-legend-body {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
 
 .cumulative-crop-bar {
   height: 6px;
