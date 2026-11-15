@@ -5,7 +5,7 @@ import * as v from './variants';
 
 const allClassStrings = (): string[] => [
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter'] as const).flatMap((variant) =>
-    (['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const).map((size) => v.buttonVariants({ variant, size }))
+    (['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
     (['soft', 'solid', 'outline'] as const).flatMap((variant) =>
@@ -63,7 +63,7 @@ describe('variants', () => {
   });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
     for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
-      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const) {
+      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border');
         expect(colors, `${variant}/${size}`).toHaveLength(1);
@@ -75,7 +75,7 @@ describe('variants', () => {
   });
   it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
     for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
-      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon'] as const) {
+      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
         const c = v.buttonVariants({ variant, size });
         const tokens = c.split(/\s+/);
         expect(c, `${variant}/${size}`).not.toContain('pointer-events-none');

@@ -20,6 +20,14 @@ const PopupContainerContext = createContext<HTMLElement | null>(null);
 /** Kuhu hüpik portaalida: avatud dialoogi sisu või document.body. */
 export const usePopupContainer = (): HTMLElement => useContext(PopupContainerContext) ?? document.body;
 
+/** Esc sulgeb ainult hüpiku/menüü: Radix ei peata levi ja muidu sulgeks see ka taga oleva akna/paneeli (nagu Select.tsx, Dialog.tsx). */
+export const stopEscape =
+  <E extends { stopPropagation: () => void }>(own?: (e: E) => void) =>
+  (e: E) => {
+    e.stopPropagation();
+    own?.(e);
+  };
+
 // DialogContent teatab päisele, kas akna saab sulgeda (salvestamise ajal on X keelatud, mitte peidetud).
 const DialogDismissibleContext = createContext(true);
 

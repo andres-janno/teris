@@ -2,7 +2,7 @@
 import React from 'react';
 import { Popover as PopoverPrimitive, Tooltip as TooltipPrimitive } from 'radix-ui';
 import { cn } from './cn';
-import { usePopupContainer } from './Dialog';
+import { stopEscape, usePopupContainer } from './Dialog';
 import { popoverContentClass, tooltipContentClass } from './variants';
 
 export const Popover = PopoverPrimitive.Root;
@@ -16,11 +16,7 @@ export const PopoverContent: React.FC<React.ComponentProps<typeof PopoverPrimiti
       sideOffset={sideOffset}
       align={align}
       className={cn(popoverContentClass, 'max-h-(--radix-popover-content-available-height)', className)}
-      // Esc sulgeb ainult hüpiku (nagu Select.tsx ja Dialog.tsx).
-      onEscapeKeyDown={(e) => {
-        e.stopPropagation();
-        onEscapeKeyDown?.(e);
-      }}
+      onEscapeKeyDown={stopEscape(onEscapeKeyDown)}
       {...props}
     />
   </PopoverPrimitive.Portal>

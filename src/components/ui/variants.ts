@@ -18,9 +18,9 @@ export const buttonVariants = cva(
         danger: 'border-transparent bg-danger-solid text-white enabled:hover:bg-danger-solid/90',
         // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
         'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
-        // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes tumedam. Kasuta size="auto".
+        // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes heledam. Kasuta size="auto".
         filter:
-          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:brightness-90 enabled:hover:shadow-primary-hover',
+          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary enabled:hover:shadow-primary-hover',
       },
       size: {
         sm: 'h-7 px-3 text-xs',

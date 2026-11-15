@@ -3,16 +3,8 @@ import React from 'react';
 import { Check } from 'lucide-react';
 import { ContextMenu as ContextMenuPrimitive, DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
 import { cn } from './cn';
-import { usePopupContainer } from './Dialog';
+import { stopEscape, usePopupContainer } from './Dialog';
 import { menuContentClass, menuItemClass, menuLabelClass, menuSeparatorClass } from './variants';
-
-// Esc sulgeb ainult menüü: Radix ei peata levi ja muidu sulgeks see ka taga oleva akna/paneeli (nagu Select.tsx, Dialog.tsx).
-const stopEscape =
-  (own?: (e: KeyboardEvent) => void) =>
-  (e: KeyboardEvent) => {
-    e.stopPropagation();
-    own?.(e);
-  };
 
 type ItemExtra = { danger?: boolean };
 const itemClass = (danger: boolean | undefined, className: string | undefined) =>

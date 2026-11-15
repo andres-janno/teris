@@ -6,7 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
-import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter } from './ui';
+import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, TooltipProvider } from './ui';
 
 export interface ConfirmOptions {
   title?: string;
@@ -106,7 +106,12 @@ function show(kind: DialogProps['kind'], message: string, options: ConfirmOption
           previousFocus?.focus?.();
           resolve(ok);
         };
-        root!.render(<ConfirmView kind={kind} message={message} options={options} onResult={finish} />);
+        // Oma createRoot: rakenduse TooltipProvider siia ei ulatu.
+        root!.render(
+          <TooltipProvider>
+            <ConfirmView kind={kind} message={message} options={options} onResult={finish} />
+          </TooltipProvider>
+        );
       })
   );
   queue = next.catch(() => undefined);
