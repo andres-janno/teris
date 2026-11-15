@@ -2,6 +2,7 @@
 // Tunnihinda näeb ja muudab ainult finantsõigusega kasutaja.
 import React from 'react';
 import type { Article } from '../types/fieldWork';
+import { Field, NumberInput, Select } from './ui';
 
 interface ResourceCostFieldsProps {
   serviceKind: 'LABOR_TIME' | 'MACHINE_TIME' | 'IMPLEMENT_TIME';
@@ -25,27 +26,38 @@ export const ResourceCostFields: React.FC<ResourceCostFieldsProps> = ({
   const fuelFallback = activeFuels.length === 1 ? `Ainus kütus (${activeFuels[0].name})` : 'Määramata';
   return (
     <>
-      <div className="form-group">
-        <label htmlFor={`rc-service-${serviceKind}`}>Teenus</label>
-        <select id={`rc-service-${serviceKind}`} className="form-input" value={serviceArticleId} onChange={(e) => onServiceChange(e.target.value)}>
-          <option value="">{defaultService ? `Vaikimisi (${defaultService.name})` : 'Vaikimisi'}</option>
-          {services.filter((a) => !a.isDefaultService || a.id === serviceArticleId).map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-        </select>
-      </div>
+      <Field label="Teenus" htmlFor={`rc-service-${serviceKind}`}>
+        <Select
+          id={`rc-service-${serviceKind}`}
+          value={serviceArticleId}
+          onValueChange={onServiceChange}
+          options={[
+            { value: '', label: defaultService ? `Vaikimisi (${defaultService.name})` : 'Vaikimisi' },
+            ...services.filter((a) => !a.isDefaultService || a.id === serviceArticleId).map((a) => ({ value: a.id, label: a.name }))
+          ]}
+        />
+      </Field>
       {canManageFinance && (
-        <div className="form-group">
-          <label htmlFor={`rc-rate-${serviceKind}`} title="Tühi = teenuse hind">Oma tunnihind (€/h)</label>
-          <input id={`rc-rate-${serviceKind}`} className="form-input num" inputMode="decimal" placeholder="teenuse hind" value={hourlyRate} onChange={(e) => onRateChange(e.target.value)} />
-        </div>
+        <Field label={<span title="Tühi = teenuse hind">Oma tunnihind (€/h)</span>} htmlFor={`rc-rate-${serviceKind}`}>
+          {/* Kutsujad hoiavad hinda tekstina (parseRate/rateText), seega sild siin: arv ↔ tekst, salvestatav väärtus sama */}
+          <NumberInput
+            id={`rc-rate-${serviceKind}`}
+            decimals={4}
+            placeholder="teenuse hind"
+            value={parseRate(hourlyRate)}
+            onChange={(n) => onRateChange(rateText(n))}
+          />
+        </Field>
       )}
       {onFuelChange && (
-        <div className="form-group">
-          <label htmlFor="rc-fuel">Vaikimisi kütus</label>
-          <select id="rc-fuel" className="form-input" value={fuelArticleId ?? ''} onChange={(e) => onFuelChange(e.target.value)}>
-            <option value="">{fuelFallback}</option>
-            {fuels.map((a) => <option key={a.id} value={a.id}>{a.name}</option>)}
-          </select>
-        </div>
+        <Field label="Vaikimisi kütus" htmlFor="rc-fuel">
+          <Select
+            id="rc-fuel"
+            value={fuelArticleId ?? ''}
+            onValueChange={onFuelChange}
+            options={[{ value: '', label: fuelFallback }, ...fuels.map((a) => ({ value: a.id, label: a.name }))]}
+          />
+        </Field>
       )}
     </>
   );

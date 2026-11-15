@@ -6,7 +6,9 @@ import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import type { ArticleCategory } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, type ArticleGroup } from '../services/articleRules';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableRow } from './ui';
+import {
+  Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Input, Select, Table, TableBody, TableCell, TableRow
+} from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -67,8 +69,8 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
                   {rows.filter((r) => r.group === g).map((c) => (
                     <TableRow key={c.id} tone={c.isActive ? undefined : 'muted'}>
                       <TableCell>
-                        <input
-                          className="form-input"
+                        <Input
+                          size="sm"
                           aria-label="Kategooria nimi"
                           defaultValue={c.name}
                           onBlur={(e) => e.target.value.trim() && e.target.value.trim() !== c.name && void save({ ...c, name: e.target.value.trim() })}
@@ -76,10 +78,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
                       </TableCell>
                       <TableCell numeric>{c.articleCount ?? 0}</TableCell>
                       <TableCell>
-                        <label className="users-admin-checkbox">
-                          <input type="checkbox" checked={c.isActive} onChange={(e) => void save({ ...c, isActive: e.target.checked })} />
-                          <span>Aktiivne</span>
-                        </label>
+                        <CheckboxField checked={c.isActive} onCheckedChange={(v) => void save({ ...c, isActive: v })} label="Aktiivne" />
                       </TableCell>
                       <TableCell actions>
                         {c.systemKind
@@ -93,10 +92,13 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
             </section>
           ))}
           <form className="article-categories-add" onSubmit={add}>
-            <select className="form-input" aria-label="Grupp" value={draft.group} onChange={(e) => setDraft({ ...draft, group: e.target.value as ArticleGroup })}>
-              {ARTICLE_GROUPS.map((g) => <option key={g} value={g}>{ARTICLE_GROUP_LABEL[g]}</option>)}
-            </select>
-            <input className="form-input" placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <Select
+              aria-label="Grupp"
+              value={draft.group}
+              onValueChange={(v) => setDraft({ ...draft, group: v as ArticleGroup })}
+              options={ARTICLE_GROUPS.map((g) => ({ value: g, label: ARTICLE_GROUP_LABEL[g] }))}
+            />
+            <Input placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <Button type="submit" variant="primary" size="sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></Button>
           </form>
         </DialogBody>

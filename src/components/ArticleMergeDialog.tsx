@@ -4,7 +4,7 @@ import { GitMerge } from 'lucide-react';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, Select } from './ui';
 
 // Võrdlusvõti: tõstutundetu, tühikute ja kirjavahemärkideta ("Stabilan 750SL" = "Stabilan 750 SL")
 const looseKey = (s: string) => s.toLowerCase().replace(/[^\p{L}\p{N}]/gu, '');
@@ -56,13 +56,17 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
         <DialogForm onSubmit={merge}>
         <DialogHeader icon={<GitMerge size={20} className="text-emerald" />} title={`Asenda materjal: ${source.name}`} />
         <DialogBody>
-          <div className="form-group">
-            <label htmlFor="mm-target">Asenda materjaliga *</label>
-            <select id="mm-target" className="form-input" required autoFocus value={targetId} onChange={(e) => setTargetId(e.target.value)}>
-              <option value="" disabled>– vali {source.category.name.toLowerCase()} –</option>
-              {options.map((m) => <option key={m.id} value={m.id}>{m.name}{m.unit !== source.unit ? ` (${m.unit})` : ''}</option>)}
-            </select>
-          </div>
+          <Field label="Asenda materjaliga *" htmlFor="mm-target">
+            <Select
+              id="mm-target"
+              required
+              autoFocus
+              placeholder={`– vali ${source.category.name.toLowerCase()} –`}
+              value={targetId}
+              onValueChange={setTargetId}
+              options={options.map((m) => ({ value: m.id, label: `${m.name}${m.unit !== source.unit ? ` (${m.unit})` : ''}` }))}
+            />
+          </Field>
           <p className="muted article-merge-info">
             Kõigis töödes, kannetes ja laokannetes pannakse „{source.name}“ asemele {target ? `„${target.name}“` : 'valitud materjal'}.
             „{source.name}“ kustutatakse ja tema nimi jääb valitud materjalile varunimeks, et PRIA uuesti importimisel seotaks see kohe õige materjaliga.

@@ -10,7 +10,10 @@ import type { Crop } from '../types/crop';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput } from './ui';
+import {
+  Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
+  DateInput, Field, Input, NumberInput, Select
+} from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -29,16 +32,16 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
   const [busy, setBusy] = useState(false);
   const [crops, setCrops] = useState<Crop[]>([]);
   const [name, setName] = useState('');
-  const [year, setYear] = useState(String(defaultYear));
+  const [year, setYear] = useState<number | null>(defaultYear);
   const [cropId, setCropId] = useState('');
   const [warehouseId, setWarehouseId] = useState(warehouses.find((w) => w.isDefault)?.id ?? '');
   const [notes, setNotes] = useState('');
   const [wDate, setWDate] = useState(todayTallinn());
-  const [wTonnes, setWTonnes] = useState('');
+  const [wTonnes, setWTonnes] = useState<number | null>(null);
   const [wNotes, setWNotes] = useState('');
   const [cDate, setCDate] = useState(todayTallinn());
   const [cArticle, setCArticle] = useState('');
-  const [cQty, setCQty] = useState('');
+  const [cQty, setCQty] = useState<number | null>(null);
   const [cNotes, setCNotes] = useState('');
 
   const load = useCallback(async (id: string) => {
@@ -78,7 +81,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
         await load(lotId);
         onSaved(false);
       } else {
-        await api.saveHarvestLot({ name, year: Number(year), cropId, warehouseId, notes: notes || null });
+        await api.saveHarvestLot({ name, year: year ?? 0, cropId, warehouseId, notes: notes || null });
         onSaved(true);
       }
     } catch (err) {
@@ -99,8 +102,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
     e.preventDefault();
     if (!lotId) return;
     void run(async () => {
-      await api.addHarvestLotWeighing(lotId, { date: wDate, tonnes: wTonnes.replace(',', '.'), notes: wNotes || null });
-      setWTonnes('');
+      await api.addHarvestLotWeighing(lotId, { date: wDate, tonnes: wTonnes ?? '', notes: wNotes || null });
+      setWTonnes(null);
       setWNotes('');
     });
   };
@@ -108,8 +111,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
     e.preventDefault();
     if (!lotId) return;
     void run(async () => {
-      await api.addHarvestLotCost(lotId, { date: cDate, articleId: cArticle, quantity: cQty.replace(',', '.'), notes: cNotes || null });
-      setCQty('');
+      await api.addHarvestLotCost(lotId, { date: cDate, articleId: cArticle, quantity: cQty ?? '', notes: cNotes || null });
+      setCQty(null);
       setCNotes('');
     });
   };
@@ -143,36 +146,27 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
         />
         <DialogBody className="harvest-lot-body">
           <form onSubmit={save} className="harvest-lot-head">
-            <div className="form-group">
-              <label htmlFor="hl-name">Nimi *</label>
-              <input id="hl-name" className="form-input" required value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
+            <Field label="Nimi *" htmlFor="hl-name">
+              <Input id="hl-name" required value={name} onChange={(e) => setName(e.target.value)} />
+            </Field>
             {!lot && (
               <>
-                <div className="form-group">
-                  <label htmlFor="hl-crop">Kultuur *</label>
-                  <select id="hl-crop" className="form-input" required value={cropId} onChange={(e) => setCropId(e.target.value)}>
-                    <option value="">– vali –</option>
-                    {crops.map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-                  </select>
-                </div>
-                <div className="form-group">
-                  <label htmlFor="hl-year">Hooaeg *</label>
-                  <input id="hl-year" className="form-input num" required inputMode="numeric" value={year} onChange={(e) => setYear(e.target.value)} />
-                </div>
+                <Field label="Kultuur *" htmlFor="hl-crop">
+                  <Select id="hl-crop" required placeholder="– vali –" value={cropId} onValueChange={setCropId}
+                    options={crops.map((c) => ({ value: c.id, label: c.name }))} />
+                </Field>
+                <Field label="Hooaeg *" htmlFor="hl-year">
+                  <NumberInput id="hl-year" required integer value={year} onChange={setYear} />
+                </Field>
               </>
             )}
-            <div className="form-group">
-              <label htmlFor="hl-wh">Ladu *</label>
-              <select id="hl-wh" className="form-input" required value={warehouseId} onChange={(e) => setWarehouseId(e.target.value)}>
-                <option value="">– vali –</option>
-                {activeWarehouses.map((w) => <option key={w.id} value={w.id}>{w.name}</option>)}
-              </select>
-            </div>
-            <div className="form-group harvest-lot-notes">
-              <label htmlFor="hl-notes">Märkus</label>
-              <input id="hl-notes" className="form-input" value={notes} onChange={(e) => setNotes(e.target.value)} />
-            </div>
+            <Field label="Ladu *" htmlFor="hl-wh">
+              <Select id="hl-wh" required placeholder="– vali –" value={warehouseId} onValueChange={setWarehouseId}
+                options={activeWarehouses.map((w) => ({ value: w.id, label: w.name }))} />
+            </Field>
+            <Field label="Märkus" htmlFor="hl-notes">
+              <Input id="hl-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
+            </Field>
             <Button type="submit" size="sm" disabled={busy}>{lot ? 'Salvesta' : 'Loo partii'}</Button>
           </form>
 
@@ -234,18 +228,15 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                 </Table>
                 {!closed && (
                   <form className="harvest-lot-add harvest-lot-add-weighing" onSubmit={addWeighing}>
-                    <div className="form-group">
-                      <label htmlFor="hl-w-date">Kuupäev</label>
+                    <Field label="Kuupäev" htmlFor="hl-w-date">
                       <DateInput id="hl-w-date" value={wDate} onChange={setWDate} required />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="hl-w-t">Tonnid</label>
-                      <input id="hl-w-t" className="form-input num" inputMode="decimal" required value={wTonnes} onChange={(e) => setWTonnes(e.target.value)} />
-                    </div>
-                    <div className="form-group">
-                      <label htmlFor="hl-w-notes">Märkus</label>
-                      <input id="hl-w-notes" className="form-input" value={wNotes} onChange={(e) => setWNotes(e.target.value)} />
-                    </div>
+                    </Field>
+                    <Field label="Tonnid" htmlFor="hl-w-t">
+                      <NumberInput id="hl-w-t" required decimals={6} value={wTonnes} onChange={setWTonnes} />
+                    </Field>
+                    <Field label="Märkus" htmlFor="hl-w-notes">
+                      <Input id="hl-w-notes" value={wNotes} onChange={(e) => setWNotes(e.target.value)} />
+                    </Field>
                     <Button type="submit" size="sm" disabled={busy}>Lisa kaalumine</Button>
                   </form>
                 )}
@@ -278,25 +269,19 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                   </TableBody>
                 </Table>
                 <form className="harvest-lot-add harvest-lot-add-cost" onSubmit={addCost}>
-                  <div className="form-group">
-                    <label htmlFor="hl-c-date">Kuupäev</label>
+                  <Field label="Kuupäev" htmlFor="hl-c-date">
                     <DateInput id="hl-c-date" value={cDate} onChange={setCDate} required />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="hl-c-art">Artikkel</label>
-                    <select id="hl-c-art" className="form-input" required value={cArticle} onChange={(e) => setCArticle(e.target.value)}>
-                      <option value="">– vali –</option>
-                      {dryingArticles.map((a) => <option key={a.id} value={a.id}>{a.name} ({a.unit})</option>)}
-                    </select>
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="hl-c-qty">Kogus</label>
-                    <input id="hl-c-qty" className="form-input num" inputMode="decimal" required value={cQty} onChange={(e) => setCQty(e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="hl-c-notes">Märkus</label>
-                    <input id="hl-c-notes" className="form-input" value={cNotes} onChange={(e) => setCNotes(e.target.value)} />
-                  </div>
+                  </Field>
+                  <Field label="Artikkel" htmlFor="hl-c-art">
+                    <Select id="hl-c-art" required placeholder="– vali –" value={cArticle} onValueChange={setCArticle}
+                      options={dryingArticles.map((a) => ({ value: a.id, label: `${a.name} (${a.unit})` }))} />
+                  </Field>
+                  <Field label="Kogus" htmlFor="hl-c-qty">
+                    <NumberInput id="hl-c-qty" required decimals={6} value={cQty} onChange={setCQty} />
+                  </Field>
+                  <Field label="Märkus" htmlFor="hl-c-notes">
+                    <Input id="hl-c-notes" value={cNotes} onChange={(e) => setCNotes(e.target.value)} />
+                  </Field>
                   <Button type="submit" size="sm" disabled={busy}>Lisa kulu</Button>
                 </form>
               </section>

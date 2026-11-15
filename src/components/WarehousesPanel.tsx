@@ -5,7 +5,10 @@ import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import type { PointOfInterest } from '../types/poi';
 import type { Warehouse } from '../types/stock';
-import { Badge, Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import {
+  Badge, Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, FormGrid, Input, Select,
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow
+} from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -110,31 +113,34 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
             <DialogForm onSubmit={save}>
             <DialogHeader icon={<WarehouseIcon size={20} className="text-emerald" />} title={form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'} />
             <DialogBody>
-              <div className="form-grid">
-                <div className="form-group full-width">
-                  <label htmlFor="wh-name">Nimi *</label>
-                  <input id="wh-name" className="form-input" required value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor="wh-poi">Asukoht kaardil (huvipunkt)</label>
-                  <select id="wh-poi" className="form-input" value={form.poiId ?? ''} onChange={(e) => setForm({ ...form, poiId: e.target.value || null })}>
-                    <option value="">– pole –</option>
-                    {poiOptions.map((p) => <option key={p.id} value={p.id}>{p.name}{p.category === 'warehouse' ? ' (laohoone)' : ''}</option>)}
-                  </select>
-                </div>
-                <div className="form-group full-width">
-                  <label htmlFor="wh-notes">Märkus</label>
-                  <input id="wh-notes" className="form-input" value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
-                </div>
-                {!editingField && <label className="users-admin-checkbox full-width">
-                  <input type="checkbox" checked={form.isDefault ?? false} disabled={!!warehouses.find((w) => w.id === form.id)?.isDefault} onChange={(e) => setForm({ ...form, isDefault: e.target.checked, isActive: e.target.checked ? true : form.isActive })} />
-                  <span>Põhiladu (põllutöö kannete vaikimisi ladu)</span>
-                </label>}
-                <label className="users-admin-checkbox full-width">
-                  <input type="checkbox" checked={form.isActive ?? true} disabled={form.isDefault} onChange={(e) => setForm({ ...form, isActive: e.target.checked })} />
-                  <span>Aktiivne (kannetes valitav)</span>
-                </label>
-              </div>
+              <FormGrid>
+                <Field span="full" label="Nimi *" htmlFor="wh-name">
+                  <Input id="wh-name" required value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+                </Field>
+                <Field span="full" label="Asukoht kaardil (huvipunkt)" htmlFor="wh-poi">
+                  <Select id="wh-poi" value={form.poiId ?? ''} onValueChange={(v) => setForm({ ...form, poiId: v || null })}
+                    options={[
+                      { value: '', label: '– pole –' },
+                      ...poiOptions.map((p) => ({ value: p.id, label: `${p.name}${p.category === 'warehouse' ? ' (laohoone)' : ''}` }))
+                    ]} />
+                </Field>
+                <Field span="full" label="Märkus" htmlFor="wh-notes">
+                  <Input id="wh-notes" value={form.notes ?? ''} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
+                </Field>
+                {!editingField && (
+                  <Field span="full">
+                    <CheckboxField
+                      checked={form.isDefault ?? false}
+                      disabled={!!warehouses.find((w) => w.id === form.id)?.isDefault}
+                      onCheckedChange={(v) => setForm({ ...form, isDefault: v, isActive: v ? true : form.isActive })}
+                      label="Põhiladu (põllutöö kannete vaikimisi ladu)"
+                    />
+                  </Field>
+                )}
+                <Field span="full">
+                  <CheckboxField checked={form.isActive ?? true} disabled={form.isDefault} onCheckedChange={(v) => setForm({ ...form, isActive: v })} label="Aktiivne (kannetes valitav)" />
+                </Field>
+              </FormGrid>
             </DialogBody>
             <DialogFooter>
               <Button type="button" variant="ghost" onClick={() => setForm(null)}>Loobu</Button>
