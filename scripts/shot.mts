@@ -1,7 +1,7 @@
 // scripts/shot.mts — ekraanipildid visuaalseks kontrolliks (ainult serveris, kasutaja otsus 2026-11-15).
 // Loob kasutajale 15-minutilise sessiooni, pildistab lehed heledas ja tumedas teemas ning kustutab sessiooni kohe.
 // Kasutus: npx tsx scripts/shot.mts --user <e-post|kasutajanimi> [--out /tmp/shots] [--width 1440] [--height 900]
-//          [--click "<css>"] [--do click:<css> --do key:Escape --do shot:nimi …] [--wait 800] <tee> …
+//          [--anon | --platform <kasutajanimi|*>] [--click "<css>"] [--do click:<css> --do key:Escape --do shot:nimi …] [--wait 800] <tee> …
 // Brauser (Playwright Chromium) on paigaldatud eraldi kausta /home/debian/tools/shot, et projekti sõltuvused ei muutuks.
 import { createRequire } from 'node:module';
 import { randomBytes, createHash } from 'node:crypto';
@@ -21,6 +21,10 @@ const opt = (name: string, def?: string) => {
   return v;
 };
 const userArg = opt('user');
+const platformArg = opt('platform');
+const anonIdx = args.indexOf('--anon');
+const anon = anonIdx !== -1;
+if (anon) args.splice(anonIdx, 1);
 const outDir = opt('out', '/tmp/shots')!;
 const width = Number(opt('width', '1440'));
 const height = Number(opt('height', '900'));
@@ -32,10 +36,13 @@ const waitMs = Number(opt('wait', '800'));
 const steps: string[] = [];
 for (let s = opt('do'); s !== undefined; s = opt('do')) steps.push(s);
 const paths = args.length ? args : ['/ui'];
-const base = `http://127.0.0.1:${process.env.PORT ?? '8820'}`;
+// --platform: teenusepakkuja admin (admin.teris.ee) — server tunneb selle ära Host-päise järgi.
+// Rakendus kuulab ainult lihtsat http-d (TLS lõpetab nginx), seega host-resolver-rules ei sobi; kasutame avalikku aadressi (serverist 200).
+const platformHost = process.env.PLATFORM_HOST ?? 'admin.teris.ee';
+const base = platformArg ? `https://${platformHost}` : `http://127.0.0.1:${process.env.PORT ?? '8820'}`;
 
-if (!userArg) {
-  console.error('Puudub --user <e-post|kasutajanimi>');
+if (!userArg && !platformArg && !anon) {
+  console.error('Puudub --user <e-post|kasutajanimi>, --platform <kasutajanimi|*> või --anon');
   process.exit(1);
 }
 const url = process.env.PLATFORM_DATABASE_URL;
@@ -45,29 +52,48 @@ if (!url) {
 }
 
 const db = new PrismaClient({ datasources: { db: { url } } });
-const user = await db.user.findFirst({ where: { OR: [{ email: userArg }, { username: userArg }], isActive: true } });
-if (!user) {
-  console.error(`Aktiivset kasutajat ${userArg} ei leitud`);
-  await db.$disconnect();
-  process.exit(1);
-}
-
 const token = randomBytes(32).toString('base64url');
-const session = await db.session.create({
-  data: {
-    userId: user.id,
-    tokenHash: createHash('sha256').update(token).digest('hex'),
-    expiresAt: new Date(Date.now() + 15 * 60 * 1000),
-    userAgent: 'teris-shot (visuaalne kontroll)',
-  },
-});
+const tokenHash = createHash('sha256').update(token).digest('hex');
+const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
+let cookieName = 'teris_session';
+let removeSession = async () => {};
+if (platformArg && !anon) {
+  const pu = await db.platformUser.findFirst({
+    where: { isActive: true, ...(platformArg === '*' ? {} : { username: platformArg.toLowerCase() }) },
+  });
+  if (!pu) {
+    console.error(`Aktiivset teenusepakkuja kasutajat ${platformArg} ei leitud`);
+    await db.$disconnect();
+    process.exit(1);
+  }
+  const ps = await db.platformSession.create({
+    data: { platformUserId: pu.id, tokenHash, expiresAt, userAgent: 'teris-shot (visuaalne kontroll)' },
+  });
+  cookieName = '__Host-teris_platform_session';
+  removeSession = async () => {
+    await db.platformSession.delete({ where: { id: ps.id } }).catch(() => {});
+  };
+} else if (!anon) {
+  const user = await db.user.findFirst({ where: { OR: [{ email: userArg }, { username: userArg }], isActive: true } });
+  if (!user) {
+    console.error(`Aktiivset kasutajat ${userArg} ei leitud`);
+    await db.$disconnect();
+    process.exit(1);
+  }
+  const session = await db.session.create({
+    data: { userId: user.id, tokenHash, expiresAt, userAgent: 'teris-shot (visuaalne kontroll)' },
+  });
+  removeSession = async () => {
+    await db.session.delete({ where: { id: session.id } }).catch(() => {});
+  };
+}
 
 mkdirSync(outDir, { recursive: true });
 const browser = await chromium.launch();
 try {
   for (const theme of ['light', 'dark'] as const) {
     const ctx = await browser.newContext({ viewport: { width, height }, deviceScaleFactor: 1 });
-    await ctx.addCookies([{ name: 'teris_session', value: token, url: base }]);
+    if (!anon) await ctx.addCookies([{ name: cookieName, value: token, url: base, secure: base.startsWith('https') }]);
     await ctx.addInitScript((t) => {
       localStorage.setItem('agrimap_theme', t);
       document.documentElement.setAttribute('data-theme', t);
@@ -111,6 +137,6 @@ try {
   }
 } finally {
   await browser.close();
-  await db.session.delete({ where: { id: session.id } }).catch(() => {});
+  await removeSession();
   await db.$disconnect();
 }
