@@ -13,11 +13,12 @@ const itemClass = (danger: boolean | undefined, className: string | undefined) =
 export const DropdownMenu = DropdownMenuPrimitive.Root;
 export const DropdownMenuTrigger = DropdownMenuPrimitive.Trigger;
 export const DropdownMenuContent: React.FC<React.ComponentProps<typeof DropdownMenuPrimitive.Content>> = ({
-  className, sideOffset = 4, onEscapeKeyDown, ...props
+  className, sideOffset = 4, collisionPadding = 8, onEscapeKeyDown, ...props
 }) => (
   <DropdownMenuPrimitive.Portal container={usePopupContainer()}>
     <DropdownMenuPrimitive.Content
       sideOffset={sideOffset}
+      collisionPadding={collisionPadding}
       className={cn(menuContentClass, 'max-h-(--radix-dropdown-menu-content-available-height)', className)}
       onEscapeKeyDown={stopEscape(onEscapeKeyDown)}
       {...props}
@@ -47,9 +48,10 @@ export const DropdownMenuLabel: React.FC<React.ComponentProps<typeof DropdownMen
 
 export const ContextMenu = ContextMenuPrimitive.Root;
 export const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
-export const ContextMenuContent: React.FC<React.ComponentProps<typeof ContextMenuPrimitive.Content>> = ({ className, onEscapeKeyDown, ...props }) => (
+export const ContextMenuContent: React.FC<React.ComponentProps<typeof ContextMenuPrimitive.Content>> = ({ className, collisionPadding = 8, onEscapeKeyDown, ...props }) => (
   <ContextMenuPrimitive.Portal container={usePopupContainer()}>
     <ContextMenuPrimitive.Content
+      collisionPadding={collisionPadding}
       className={cn(menuContentClass, 'max-h-(--radix-context-menu-content-available-height)', className)}
       onEscapeKeyDown={stopEscape(onEscapeKeyDown)}
       {...props}

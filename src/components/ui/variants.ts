@@ -130,7 +130,7 @@ export const helpHintTriggerClass =
   'inline-flex size-6 shrink-0 cursor-help items-center justify-center rounded-full border-0 bg-transparent p-0 text-subtle transition-colors hover:bg-primary/15 hover:text-primary data-[state=open]:bg-primary/15 data-[state=open]:text-primary focus-visible:outline-none focus-visible:bg-primary/15 focus-visible:text-primary';
 export const helpHintInlineClass = 'size-5 -my-0.5 -mr-1 ml-0.5';
 /** Abivihje hüpik: 320px, kõrguse piir ja kerimine. */
-export const helpHintContentClass = 'w-80 max-h-96';
+export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-content-available-height))]';
 export const helpHintTitleClass = 'mb-1.5 text-2xs font-bold uppercase tracking-wide text-muted-foreground';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 

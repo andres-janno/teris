@@ -9,12 +9,13 @@ export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
 export const PopoverAnchor = PopoverPrimitive.Anchor;
 export const PopoverContent: React.FC<React.ComponentProps<typeof PopoverPrimitive.Content>> = ({
-  className, sideOffset = 6, align = 'start', onEscapeKeyDown, ...props
+  className, sideOffset = 6, align = 'start', collisionPadding = 8, onEscapeKeyDown, ...props
 }) => (
   <PopoverPrimitive.Portal container={usePopupContainer()}>
     <PopoverPrimitive.Content
       sideOffset={sideOffset}
       align={align}
+      collisionPadding={collisionPadding}
       className={cn(popoverContentClass, 'max-h-(--radix-popover-content-available-height)', className)}
       onEscapeKeyDown={stopEscape(onEscapeKeyDown)}
       {...props}
@@ -43,7 +44,7 @@ export const Tooltip: React.FC<TooltipProps> = ({ content, side = 'top', childre
       {wrapDisabled ? <span className="inline-flex" tabIndex={-1}>{children}</span> : children}
     </TooltipPrimitive.Trigger>
     <TooltipPrimitive.Portal container={usePopupContainer()}>
-      <TooltipPrimitive.Content side={side} sideOffset={6} className={tooltipContentClass} onEscapeKeyDown={(e) => e.stopPropagation()}>
+      <TooltipPrimitive.Content side={side} sideOffset={6} collisionPadding={8} className={tooltipContentClass} onEscapeKeyDown={(e) => e.stopPropagation()}>
         {content}
       </TooltipPrimitive.Content>
     </TooltipPrimitive.Portal>
