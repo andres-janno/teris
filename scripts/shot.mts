@@ -1,7 +1,7 @@
 // scripts/shot.mts — ekraanipildid visuaalseks kontrolliks (ainult serveris, kasutaja otsus 2026-11-15).
 // Loob kasutajale 15-minutilise sessiooni, pildistab lehed heledas ja tumedas teemas ning kustutab sessiooni kohe.
 // Kasutus: npx tsx scripts/shot.mts --user <e-post|kasutajanimi> [--out /tmp/shots] [--width 1440] [--height 900]
-//          [--click "<css-selektor>"] [--wait 800] <tee> [<tee> …]      (nt /ui, /?view=fields)
+//          [--click "<css>"] [--do click:<css> --do key:Escape --do shot:nimi …] [--wait 800] <tee> …
 // Brauser (Playwright Chromium) on paigaldatud eraldi kausta /home/debian/tools/shot, et projekti sõltuvused ei muutuks.
 import { createRequire } from 'node:module';
 import { randomBytes, createHash } from 'node:crypto';
@@ -26,6 +26,10 @@ const width = Number(opt('width', '1440'));
 const height = Number(opt('height', '900'));
 const clickSel = opt('click');
 const waitMs = Number(opt('wait', '800'));
+// --do võib korduda; tegevused tehakse järjest pärast lehe laadimist (ja --click-i):
+//   click:<css>  rightclick:<css>  rightclick-at:<x>,<y>  hover:<css>  key:<Klahv>  wait:<ms>  shot:<nimi> (vahepilt)
+const steps: string[] = [];
+for (let s = opt('do'); s !== undefined; s = opt('do')) steps.push(s);
 const paths = args.length ? args : ['/ui'];
 const base = `http://127.0.0.1:${process.env.PORT ?? '8820'}`;
 
@@ -72,8 +76,28 @@ try {
       await page.goto(base + p, { waitUntil: 'networkidle' });
       await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
       if (clickSel) await page.click(clickSel);
+      const stem = p.replace(/[^\w]+/g, '_').replace(/^_|_$/g, '') || 'root';
+      for (const step of steps) {
+        const i = step.indexOf(':');
+        const kind = i === -1 ? step : step.slice(0, i);
+        const arg = i === -1 ? '' : step.slice(i + 1);
+        if (kind === 'click') await page.click(arg);
+        else if (kind === 'rightclick') await page.click(arg, { button: 'right' });
+        else if (kind === 'rightclick-at') {
+          const [x, y] = arg.split(',').map(Number);
+          await page.mouse.click(x, y, { button: 'right' });
+        } else if (kind === 'hover') await page.hover(arg);
+        else if (kind === 'key') await page.keyboard.press(arg);
+        else if (kind === 'wait') await page.waitForTimeout(Number(arg));
+        else if (kind === 'shot') {
+          await page.waitForTimeout(300);
+          await page.screenshot({ path: `${outDir}/${stem}-${arg}-${theme}.png`, fullPage: true });
+          console.log(`${outDir}/${stem}-${arg}-${theme}.png`);
+        } else throw new Error(`Tundmatu --do: ${step}`);
+        await page.waitForTimeout(150);
+      }
       await page.waitForTimeout(waitMs);
-      const name = `${p.replace(/[^\w]+/g, '_').replace(/^_|_$/g, '') || 'root'}-${theme}.png`;
+      const name = `${stem}-${theme}.png`;
       await page.screenshot({ path: `${outDir}/${name}`, fullPage: true });
       console.log(`${outDir}/${name}`);
     }
