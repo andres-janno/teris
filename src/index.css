@@ -2242,9 +2242,6 @@ body {
 }
 
 .imp-status-box {
-  padding: 8px 10px;
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
   font-size: 0.76rem;
 }
 
@@ -2294,9 +2291,6 @@ body {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 6px;
-  padding: 8px;
-  background: var(--stat-bg);
-  border-radius: var(--radius-sm);
   font-size: 0.72rem;
 }
 
@@ -2945,10 +2939,6 @@ body {
   max-height: 30vh;
   overflow-y: auto;
   margin-bottom: 14px;
-  padding: 10px 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
 }
 
 .register-crop-summary-groups {
@@ -7204,10 +7194,6 @@ body {
 }
 
 .finance-summary-card {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 8px;
@@ -7287,18 +7273,14 @@ body {
 }
 
 .finance-kpi-card {
-  background: var(--card-bg, #ffffff);
-  border: 1px solid var(--border-card);
-  border-radius: 10px;
-  padding: 12px 16px;
   display: flex;
   flex-direction: column;
   gap: 4px;
 }
 
 .finance-kpi-card.result.profit {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.04);
+  border-color: #10b981 !important;
+  background: rgba(16, 185, 129, 0.04) !important;
 }
 
 .finance-kpi-card.result.profit .finance-kpi-value {
@@ -7306,8 +7288,8 @@ body {
 }
 
 .finance-kpi-card.result.loss {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.04);
+  border-color: #ef4444 !important;
+  background: rgba(239, 68, 68, 0.04) !important;
 }
 
 .finance-kpi-card.result.loss .finance-kpi-value {
@@ -7339,10 +7321,6 @@ body {
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: 8px;
-  padding: 8px 14px;
   font-size: 0.78rem;
 }
 
@@ -7871,7 +7849,7 @@ td.stock-qty-out { color: #dc2626; }
 .trip-stop-place { color: var(--text-secondary); }
 
 .trip-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
-.trip-tile { border: 1px solid var(--border-card); border-radius: var(--radius-md); background: var(--stat-bg); padding: 10px 12px; min-width: 0; }
+.trip-tile { min-width: 0; }
 .trip-tile-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
 .trip-tile-value { font-size: 20px; font-weight: 700; color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
 .trip-tile-value.empty { color: var(--text-muted); font-weight: 400; }

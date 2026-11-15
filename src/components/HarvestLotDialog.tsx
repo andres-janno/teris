@@ -11,7 +11,7 @@ import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
 import {
-  Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
+  Button, Card, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
   DateInput, Field, Input, NumberInput, Select
 } from './ui';
 
@@ -133,7 +133,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
   };
 
   const tile = (label: string, value: React.ReactNode) => (
-    <div className="finance-kpi-card"><span className="finance-kpi-label">{label}</span><span className="finance-kpi-value num">{value}</span></div>
+    <Card variant="tile" padding="sm" className="finance-kpi-card"><span className="finance-kpi-label">{label}</span><span className="finance-kpi-value num">{value}</span></Card>
   );
 
   return (

@@ -1528,7 +1528,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </CardActions>
                 </div>
 
-                <div className="imp-status-box">
+                <Card variant="tile" padding="sm" className="imp-status-box">
                   {assignedVehicle ? (
                     <div className="attached-status attached">
                       <Tractor size={14} className="text-emerald" />
@@ -1540,7 +1540,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <span>Vaba laos / Valmis haakimiseks</span>
                     </div>
                   )}
-                </div>
+                </Card>
 
                 {imp.registrationPlate && (
                   <div className="imp-serial-row">
@@ -1652,7 +1652,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
 
                 {isEyeSensor ? (
-                  <div className="dev-telemetry-summary">
+                  <Card variant="tile" padding="sm" className="dev-telemetry-summary">
                     <div className="dev-telemetry-item">
                       <span className="lbl">Aku tase:</span>
                       <strong>{dev.batteryVoltage}%</strong>
@@ -1673,9 +1673,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <span className="dev-fresh-dot" aria-hidden="true" />
                       {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
-                  </div>
+                  </Card>
                 ) : (
-                  <div className="dev-telemetry-summary">
+                  <Card variant="tile" padding="sm" className="dev-telemetry-summary">
                     <div className="dev-telemetry-item">
                       <span className="lbl">Aku pinge:</span>
                       <strong>{dev.batteryVoltage} V</strong>
@@ -1694,7 +1694,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <span className="dev-fresh-dot" aria-hidden="true" />
                       {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
-                  </div>
+                  </Card>
                 )}
 
                 <div className="dev-assignment-box">

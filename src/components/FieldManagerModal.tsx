@@ -18,7 +18,7 @@ import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select } from './ui';
+import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -438,9 +438,9 @@ function cropSummaryKey(cropText: string): string {
           )}
 
           {/* Valitud hooaja kultuuride kokkuvõte; kiibil klikk filtreerib tabeli */}
-          <div className="register-crop-summary">
+          <Card variant="tile" padding="sm" className="register-crop-summary">
             {cropSummaryContent}
-          </div>
+          </Card>
 
           {/* Search & Actions Row */}
           <div className="register-actions-bar">

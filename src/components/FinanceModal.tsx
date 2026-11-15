@@ -685,7 +685,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         )}
                       </div>
 
-                      <div className="finance-summary-card">
+                      <Card variant="tile" padding="sm" className="finance-summary-card">
                         <div className="finance-summary-row">
                           <span className="text-muted">Kulud kokku:</span>
                           <strong className="cost-neg">{fmtCur(entryCostTotal)}</strong>
@@ -703,7 +703,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             {entryNetTotal >= 0 ? '+' : ''}{fmtCur(entryNetTotal)}
                           </span>
                         </div>
-                      </div>
+                      </Card>
                     </div>
 
                     {/* Actions */}
@@ -745,7 +745,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
             <div className="finance-results-layout">
               {/* Summary KPI Cards */}
               <div className="finance-kpis-grid">
-                <div className="finance-kpi-card">
+                <Card variant="tile" padding="sm" className="finance-kpi-card">
                   <span className="finance-kpi-label">Põllud kokku</span>
                   <div className="finance-kpi-value">
                     {resultsSummary.fieldCount} <small className="text-muted">põldu</small>
@@ -753,9 +753,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <div className="finance-kpi-sub">
                     Pindala: <strong>{fmtHa(resultsSummary.totalArea)} ha</strong>
                   </div>
-                </div>
+                </Card>
 
-                <div className="finance-kpi-card">
+                <Card variant="tile" padding="sm" className="finance-kpi-card">
                   <span className="finance-kpi-label">Kulud kokku</span>
                   <div className="finance-kpi-value kpi-cost">
                     {fmtCur(resultsSummary.totalCost)}
@@ -763,9 +763,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <div className="finance-kpi-sub">
                     Keskmiselt: <strong>{fmtCur(resultsSummary.costPerHa)} / ha</strong>
                   </div>
-                </div>
+                </Card>
 
-                <div className="finance-kpi-card">
+                <Card variant="tile" padding="sm" className="finance-kpi-card">
                   <span className="finance-kpi-label">Saagitulu kokku</span>
                   <div className="finance-kpi-value kpi-revenue">
                     {fmtCur(resultsSummary.totalRevenue)}
@@ -773,9 +773,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <div className="finance-kpi-sub">
                     Keskmiselt: <strong>{fmtCur(resultsSummary.revPerHa)} / ha</strong>
                   </div>
-                </div>
+                </Card>
 
-                <div className={`finance-kpi-card result ${resultsSummary.totalProfit >= 0 ? 'profit' : 'loss'}`}>
+                <Card variant="tile" padding="sm" className={`finance-kpi-card result ${resultsSummary.totalProfit >= 0 ? 'profit' : 'loss'}`}>
                   <span className="finance-kpi-label">Tegevustulemus</span>
                   <div className="finance-kpi-value">
                     {resultsSummary.totalProfit >= 0 ? '+' : ''}{fmtCur(resultsSummary.totalProfit)}
@@ -783,11 +783,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   <div className="finance-kpi-sub">
                     Tulemus: <strong>{fmtCur(resultsSummary.profitPerHa)} / ha</strong>
                   </div>
-                </div>
+                </Card>
               </div>
 
               {/* Status Banner */}
-              <div className="finance-results-status-bar">
+              <Card variant="tile" padding="sm" className="finance-results-status-bar">
                 <div className="finance-confirmed-progress">
                   <Info size={14} className="text-emerald" />
                   <span>
@@ -806,7 +806,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     Kinnita puuduvad kanded ({resultsSummary.totalEntries - resultsSummary.totalConfirmed}) →
                   </Button>
                 )}
-              </div>
+              </Card>
 
               {/* Cost breakdown pill bar */}
               {resultsSummary.totalCost > 0 && (
