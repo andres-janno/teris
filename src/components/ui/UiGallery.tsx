@@ -281,13 +281,15 @@ export const UiGallery: React.FC = () => {
             <DialogContent size="sm">
               <DialogHeader title="Menüü dialoogis" description="Esc sulgeb esmalt menüü, teine Esc akna" />
               <DialogBody>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild><Button>Rippmenüü</Button></DropdownMenuTrigger>
-                  <DropdownMenuContent>
-                    <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
-                    <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                <div>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild><Button>Rippmenüü</Button></DropdownMenuTrigger>
+                    <DropdownMenuContent>
+                      <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
+                      <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
               </DialogBody>
               <DialogFooter><Button>Sulge</Button></DialogFooter>
             </DialogContent>
