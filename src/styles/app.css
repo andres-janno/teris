@@ -87,6 +87,8 @@
 
   --color-primary: var(--emerald-500);
   --color-primary-strong: var(--emerald-600);
+  /* Päise pillinupu hover: mõlemas teemas sama (emerald-500 on tumedas liiga hele valge teksti jaoks) */
+  --color-primary-hover: #16a34a;
   /* Põhinupu gradient on mõlemas teemas sama (nagu praegune .btn-primary) */
   --color-primary-from: #16a34a;
   --color-primary-to: #22c55e;

@@ -20,7 +20,7 @@ export const buttonVariants = cva(
         'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
         // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes heledam. Kasuta size="auto".
         filter:
-          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary enabled:hover:shadow-primary-hover',
+          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary-hover enabled:hover:shadow-primary-hover',
       },
       size: {
         sm: 'h-7 px-3 text-xs',

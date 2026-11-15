@@ -220,5 +220,6 @@ describe('vormiväli', () => {
     const c = v.buttonVariants({ variant: 'filter' });
     expect(c).toContain('bg-primary-strong');
     expect(c).toContain('rounded-full');
+    expect(c).toContain('enabled:hover:bg-primary-hover');
   });
 });

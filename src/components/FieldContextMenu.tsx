@@ -1,8 +1,8 @@
 // src/components/FieldContextMenu.tsx — kaardil põllu kontekstimenüü (parem hiireklõps).
 // Esimene tegevus: kande lisamine lõpetamata tööle (kande dialoogi avab App, nagu varem põllu täisvaatest).
-import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { createPortal } from 'react-dom';
+import React, { useEffect, useState } from 'react';
 import { ClipboardPlus, Loader2 } from 'lucide-react';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger, MenuItemText } from './ui';
 import { api } from '../services/api';
 import { formatDate, formatDateRange } from '../services/dateFormat';
 import type { FieldFeature } from '../types/field';
@@ -35,9 +35,6 @@ export const FieldContextMenu: React.FC<Props> = ({ field, point, masterField, s
   const year = p.year ?? new Date().getFullYear();
   const [works, setWorks] = useState<FieldWork[] | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const menuRef = useRef<HTMLDivElement>(null);
-  const [pos, setPos] = useState(point);
-
   useEffect(() => {
     let alive = true;
     api.getFieldWorks(year, p.id)
@@ -45,28 +42,6 @@ export const FieldContextMenu: React.FC<Props> = ({ field, point, masterField, s
       .catch((err) => { if (alive) setError(err instanceof Error ? err.message : 'Tööde laadimine ebaõnnestus'); });
     return () => { alive = false; };
   }, [year, p.id]);
-
-  // Menüü jääb ekraani piiridesse
-  useLayoutEffect(() => {
-    const el = menuRef.current;
-    if (!el) return;
-    const r = el.getBoundingClientRect();
-    const x = Math.max(8, Math.min(point.x, window.innerWidth - r.width - 8));
-    const y = Math.max(8, Math.min(point.y, window.innerHeight - r.height - 8));
-    if (x !== pos.x || y !== pos.y) setPos({ x, y });
-  });
-
-  // Sulgemine: Esc või klõps menüüst väljas
-  useEffect(() => {
-    const onDown = (e: MouseEvent) => { if (!menuRef.current?.contains(e.target as Node)) onClose(); };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
-    document.addEventListener('mousedown', onDown, true);
-    document.addEventListener('keydown', onKey);
-    return () => {
-      document.removeEventListener('mousedown', onDown, true);
-      document.removeEventListener('keydown', onKey);
-    };
-  }, [onClose]);
 
   // Töö hooaja kirje (järgmise aasta sügistöö kuulub järgmisse hooaega)
   const recOf = (w: FieldWork) => masterField?.history.find((h) => h.fieldSeasonId === w.fieldSeasonId) ?? null;
@@ -81,33 +56,38 @@ export const FieldContextMenu: React.FC<Props> = ({ field, point, masterField, s
     onClose();
   };
 
-  return createPortal(
-    <div ref={menuRef} className="map-context-menu" role="menu" style={{ left: pos.x, top: pos.y }} onContextMenu={(e) => e.preventDefault()}>
-      <div className="map-context-menu-title">
-        <strong>{p.name}</strong>
-        <span className="muted">{p.num ? `Nr ${p.num} · ` : ''}{p.crop} · {fmtHa(p.areaHa)} ha</span>
-      </div>
-      <div className="map-context-menu-section">Lisa kanne</div>
-      {works === null && !error && <div className="map-context-menu-note"><Loader2 size={14} className="animate-spin" /> Laen töid…</div>}
-      {error && <div className="map-context-menu-note error">{error}</div>}
-      {works !== null && open.length === 0 && <div className="map-context-menu-note muted">Lõpetamata töid pole</div>}
-      {open.map((w) => {
-        const when = plannedWhen(w);
-        return (
-          <button key={w.id} type="button" role="menuitem" className="map-context-menu-item" onClick={() => openEntry(w)}>
-            <ClipboardPlus size={15} />
-            <span className="map-context-menu-item-text">
-              <span>{w.workTypeName}</span>
-              <span className="muted">
-                {STATUS_LABEL[w.status]}
-                {when ? ` · ${when}` : ''}
-                {w.seasonYear && w.seasonYear !== year ? ` · saak ${w.seasonYear}` : ''}
-              </span>
-            </span>
-          </button>
-        );
-      })}
-    </div>,
-    document.body
+  return (
+    <DropdownMenu open modal={false} onOpenChange={(o) => { if (!o) onClose(); }}>
+      {/* Nähtamatu 0×0 ankur hiireklõpsu kohas: Leaflet'i sündmusel pole DOM-elementi, millele menüüd siduda */}
+      <DropdownMenuTrigger asChild>
+        <span className="field-menu-anchor" style={{ left: point.x, top: point.y }} />
+      </DropdownMenuTrigger>
+      <DropdownMenuContent
+        align="start"
+        sideOffset={0}
+        className="field-menu"
+        onCloseAutoFocus={(e) => e.preventDefault()}
+        onContextMenu={(e) => e.preventDefault()}
+      >
+        <div className="field-menu-title">
+          <strong>{p.name}</strong>
+          <span className="muted">{p.num ? `Nr ${p.num} · ` : ''}{p.crop} · {fmtHa(p.areaHa)} ha</span>
+        </div>
+        <DropdownMenuLabel>Lisa kanne</DropdownMenuLabel>
+        {works === null && !error && <div className="field-menu-note"><Loader2 size={14} className="animate-spin" /> Laen töid…</div>}
+        {error && <div className="field-menu-note error">{error}</div>}
+        {works !== null && open.length === 0 && <div className="field-menu-note muted">Lõpetamata töid pole</div>}
+        {open.map((w) => {
+          const when = plannedWhen(w);
+          const description = `${STATUS_LABEL[w.status]}${when ? ` · ${when}` : ''}${w.seasonYear && w.seasonYear !== year ? ` · saak ${w.seasonYear}` : ''}`;
+          return (
+            <DropdownMenuItem key={w.id} className="items-start" onSelect={() => openEntry(w)}>
+              <ClipboardPlus />
+              <MenuItemText title={w.workTypeName} description={description} />
+            </DropdownMenuItem>
+          );
+        })}
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 };
