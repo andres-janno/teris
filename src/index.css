@@ -233,7 +233,7 @@ body {
 }
 
 .header-operator-content {
-  min-width: 240px;
+  min-width: 240px !important;
 }
 
 .header-operator-empty {
@@ -4800,8 +4800,9 @@ body {
 }
 
 .header-account-trigger[data-state="open"] {
-  background: var(--btn-sec-bg);
-  color: var(--text-primary);
+  background: var(--btn-sec-bg) !important;
+  border-color: var(--btn-sec-border) !important;
+  color: var(--text-primary) !important;
 }
 
 .header-account-trigger[data-state="open"] .header-account-chevron {
@@ -4809,10 +4810,11 @@ body {
 }
 
 .header-account-content {
-  min-width: 240px;
+  min-width: 240px !important;
 }
 
 .header-account-info {
+  line-height: 1.25;
   padding: 8px 10px 10px;
   border-bottom: 1px solid var(--border-card);
   margin-bottom: 4px;
@@ -4835,6 +4837,7 @@ body {
 }
 
 .header-account-footer {
+  line-height: 1.25;
   margin-top: 4px;
   padding: 8px 10px 4px;
   border-top: 1px solid var(--border-card);
