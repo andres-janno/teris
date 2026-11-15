@@ -86,6 +86,10 @@ try {
         else if (kind === 'rightclick-at') {
           const [x, y] = arg.split(',').map(Number);
           await page.mouse.click(x, y, { button: 'right' });
+        } else if (kind === 'click-at' || kind === 'hover-at') {
+          const [x, y] = arg.split(',').map(Number);
+          if (kind === 'click-at') await page.mouse.click(x, y);
+          else await page.mouse.move(x, y);
         } else if (kind === 'hover') await page.hover(arg);
         else if (kind === 'key') await page.keyboard.press(arg);
         else if (kind === 'wait') await page.waitForTimeout(Number(arg));
