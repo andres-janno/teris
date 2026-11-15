@@ -14,7 +14,7 @@ const allClassStrings = (): string[] => [
   ),
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
   v.fieldControlClass, v.menuContentClass, v.menuItemClass, v.menuSeparatorClass, v.menuLabelClass,
-  v.popoverContentClass, v.tooltipContentClass, v.cardClass,
+  v.popoverContentClass, v.tooltipContentClass,
   ...(['x', 'none', 'sm', 'md', 'fill'] as const).map((scroll) => v.tableContainerClass({ scroll, bordered: true })),
   v.tableClass({ bordered: true }),
   ...([undefined, 'start', 'end'] as const).flatMap((pin) => [
@@ -22,6 +22,12 @@ const allClassStrings = (): string[] => [
   ]),
   ...(['success', 'warning', 'muted', 'group', 'total'] as const).map((tone) => v.tableRowClass({ tone, clickable: true })),
   v.tableFooterClass({ sticky: true }),
+  ...(['surface', 'floating', 'tile'] as const).flatMap((variant) =>
+    (['none', 'sm', 'md'] as const).flatMap((padding) =>
+      [true, false].map((interactive) => v.cardVariants({ variant, padding, interactive, selected: interactive }))
+    )
+  ),
+  v.cardHeaderClass({ align: 'center' }), v.cardHeaderClass({ align: 'start' }), v.cardTitleClass, v.cardActionsClass,
 ];
 
 describe('variants', () => {
@@ -223,5 +229,56 @@ describe('vormiväli', () => {
     expect(c).toContain('bg-primary-strong');
     expect(c).toContain('rounded-full');
     expect(c).toContain('enabled:hover:bg-primary-hover');
+  });
+});
+
+describe('kaart', () => {
+  const variants = ['surface', 'floating', 'tile'] as const;
+  it('kõik variandid on tahked: ilma backdrop-filterita ja läbipaistva taustata', () => {
+    for (const variant of variants) {
+      const c = v.cardVariants({ variant });
+      expect(c, variant).not.toMatch(/backdrop-|(^|\s)blur/);
+      expect(c, variant).not.toMatch(/bg-transparent|bg-[a-z-]+\/\d+/);
+    }
+  });
+  it('kaart ja ujuv paneel 16px, sisemine plaat 10px', () => {
+    expect(v.cardVariants({ variant: 'surface' })).toContain('rounded-lg');
+    expect(v.cardVariants({ variant: 'floating' })).toContain('rounded-lg');
+    expect(v.cardVariants({ variant: 'tile' })).toContain('rounded-md');
+    expect(v.cardVariants({ variant: 'tile' })).not.toContain('rounded-lg');
+  });
+  it('vari: kaart shadow-card, ujuv paneel shadow-dialog, plaat varjuta', () => {
+    expect(v.cardVariants({ variant: 'surface' })).toContain('shadow-card');
+    expect(v.cardVariants({ variant: 'floating' })).toContain('shadow-dialog');
+    expect(v.cardVariants({ variant: 'tile' })).not.toMatch(/(^|\s)shadow-/);
+  });
+  it('taust: kaart ja ujuv bg-card, plaat bg-muted', () => {
+    expect(v.cardVariants({ variant: 'surface' })).toContain('bg-card');
+    expect(v.cardVariants({ variant: 'floating' })).toContain('bg-card');
+    expect(v.cardVariants({ variant: 'tile' })).toContain('bg-muted');
+  });
+  it('polster: vaikimisi md 16px, sm 12px, none ei anna polstriklassi', () => {
+    expect(v.cardVariants({})).toContain('p-4');
+    expect(v.cardVariants({ padding: 'sm' })).toContain('p-3');
+    expect(v.cardVariants({ padding: 'none' })).not.toMatch(/(^|\s)p[xytrbl]?-/);
+  });
+  it('kaart ei sea teksti värvi, klõpsatav seab (button ei päri värvi)', () => {
+    expect(v.cardVariants({})).not.toMatch(/(^|\s)text-/);
+    const c = v.cardVariants({ interactive: true });
+    expect(c).toContain('text-foreground');
+    expect(c).toContain('text-left');
+    expect(c).toContain('cursor-pointer');
+    expect(c).toContain('hover:bg-card-hover');
+  });
+  it('valitud: roheline ääris võidab tavaäärise (cn), lisaks rõngas', () => {
+    const c = cn(v.cardVariants({ selected: true }));
+    expect(c).toContain('border-primary');
+    expect(c).not.toMatch(/(^|\s)border-border(\s|$)/);
+    expect(c).toContain('ring-primary');
+  });
+  it('päis: joondus keskele või üles', () => {
+    expect(v.cardHeaderClass({ align: 'center' })).toContain('items-center');
+    expect(v.cardHeaderClass({ align: 'start' })).toContain('items-start');
+    expect(v.cardActionsClass).toContain('ml-auto');
   });
 });

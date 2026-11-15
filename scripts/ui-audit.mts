@@ -7,11 +7,11 @@ import { summarize } from '../src/tooling/uiAudit.ts';
 // Landing ja teenusepakkuja admin on eraldi lehed (ülemineku ulatusest väljas); styles/ on teema allikas.
 const EXCLUDE = ['src/landing', 'src/admin', 'src/styles'];
 
-function walk(dir: string): string[] {
+function walk(dir: string, exclude: string[] = EXCLUDE): string[] {
   return readdirSync(dir).flatMap((name) => {
     const p = join(dir, name);
-    if (EXCLUDE.some((e) => p.startsWith(e)) || name.startsWith('._')) return [];
-    return statSync(p).isDirectory() ? walk(p) : /\.(css|tsx)$/.test(name) ? [p] : [];
+    if (exclude.some((e) => p.startsWith(e)) || name.startsWith('._')) return [];
+    return statSync(p).isDirectory() ? walk(p, exclude) : /\.(css|tsx)$/.test(name) ? [p] : [];
   });
 }
 
@@ -61,3 +61,8 @@ row(
   r.legacyMenuPopupFiles.reduce((s, f) => s + f.count, 0),
   r.legacyMenuPopupFiles.map((f) => `${f.path}: ${f.count}`)
 );
+
+// Kaardid (etapp 2.7) hõlmavad ka teenusepakkuja admini (admin-card jt lähevad samuti ui/Card-ile).
+const adminFiles = walk('src/admin', []).map((path) => ({ path, content: readFileSync(path, 'utf8') }));
+const cards = summarize([...files, ...adminFiles]).legacyCardFiles;
+row('Vanu kaarte (tsx+css, sh admin)', cards.reduce((s, f) => s + f.count, 0), cards.map((f) => `${f.path}: ${f.count}`));

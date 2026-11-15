@@ -20,6 +20,7 @@ export interface AuditReport {
   legacyBadgeTabFiles: { path: string; count: number }[];
   legacyFormFieldFiles: { path: string; count: number }[];
   legacyMenuPopupFiles: { path: string; count: number }[];
+  legacyCardFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -57,6 +58,40 @@ const LEGACY_FORM_FIELD =
 // ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0. Leafleti hüpikuklassid (popup-row jms) ei loe.
 const LEGACY_MENU_POPUP =
   /(?<![\w-])((?:operator-selector|user-menu|map-context-menu|help-hint)[\w-]*)(?![\w-])|role="(menu|menuitem|menuitemcheckbox|menuitemradio|tooltip)"|aria-haspopup=/g;
+// Kaardid (etapp 2.7): tsx-is vana klaasikaardi klass; CSS-is nende klasside lihtreegel (ainult klass, ilma oleku
+// või järglaseta), mis seab ise välimuse — välimus peab tulema ui/Card-ist, vaate klassis jääb ainult asetus.
+// `!important` välimus on teadlik erand (olekuääris, erandnurk) ega loe. Jääb alles valvurina: peab olema 0.
+const LEGACY_CARD_TSX = /(?<![\w-])glass-card(?![\w-])/g;
+export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
+  'glass-card',
+  // ujuvpaneelid kaardi peal
+  'layer-control-panel', 'satellite-panel', 'map-year-floating-widget', 'cultivation-panel', 'add-poi-banner',
+  'coords-tracker', 'radar-legend', 'field-map-card', 'layer-field-box',
+  // register- ja loendikaardid
+  'vehicle-card', 'implement-card', 'device-card', 'finance-entry-card', 'edit-cad-item', 'history-filter-bar',
+  'empty-register-state',
+  // KPI ja statistika plaadid
+  'finance-kpi-card', 'finance-summary-card', 'finance-results-status-bar', 'trip-tile', 'register-crop-summary',
+  'dev-telemetry-summary', 'imp-status-box',
+  // sektsioonikastid
+  'support-panel', 'fw-plan-section', 'parsed-preview-box', 'weather-chart-card',
+  // teenusepakkuja admin
+  'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
+]);
+const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
+const CARD_LOOK_DECL = /(?:^|[;\s])(background(?:-color)?|border|border-radius|box-shadow|(?:-webkit-)?backdrop-filter)\s*:\s*([^;}]*)/g;
+
+export function legacyCardRules(css: string): string[] {
+  const out: string[] = [];
+  for (const [, selector, body] of css.replace(/\/\*[\s\S]*?\*\//g, '').matchAll(CSS_RULE)) {
+    const bare = selector
+      .split(',')
+      .map((s) => s.trim())
+      .filter((s) => /^\.[\w-]+$/.test(s) && LEGACY_CARD_CLASSES.has(s.slice(1)));
+    if (bare.length > 0 && [...body.matchAll(CARD_LOOK_DECL)].some((d) => !d[2].includes('!important'))) out.push(...bare);
+  }
+  return out;
+}
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -84,6 +119,7 @@ export function auditCss(css: string) {
     spacing,
     colors: colors(css),
     componentClasses: [...new Set([...css.matchAll(LEGACY_COMPONENT)].map((m) => `.${m[1]}`))],
+    cardRules: legacyCardRules(css),
   };
 }
 
@@ -100,11 +136,12 @@ export function auditTsx(src: string) {
     legacyBadgeTabs: [...src.matchAll(LEGACY_BADGE_TAB)].map((m) => m[1]),
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
+    legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
   };
 }
 
 export function summarize(files: { path: string; content: string }[]): AuditReport {
-  const css = files.filter((f) => f.path.endsWith('.css')).map((f) => auditCss(f.content));
+  const css = files.filter((f) => f.path.endsWith('.css')).map((f) => ({ path: f.path, ...auditCss(f.content) }));
   const tsx = files.filter((f) => f.path.endsWith('.tsx')).map((f) => ({ path: f.path, ...auditTsx(f.content) }));
   return {
     fontSizes: uniqueSorted(css.flatMap((c) => c.fontSizes)),
@@ -132,5 +169,11 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     legacyMenuPopupFiles: tsx
       .filter((t) => t.legacyMenuPopups.length > 0 && !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: t.legacyMenuPopups.length })),
+    legacyCardFiles: [
+      ...tsx
+        .filter((t) => t.legacyCards.length > 0 && !t.path.includes('components/ui/'))
+        .map((t) => ({ path: t.path, count: t.legacyCards.length })),
+      ...css.filter((c) => c.cardRules.length > 0).map((c) => ({ path: c.path, count: c.cardRules.length })),
+    ],
   };
 }

@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, Lock, Moon, Pencil, Plus, Search, Sun, Trash2, Copy } from 'lucide-react';
 import {
-  Badge, Button, Card, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+  Badge, Button, Card, CardActions, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
@@ -43,6 +43,7 @@ export const UiGallery: React.FC = () => {
   const [inpX, setInpX] = useState('Kaasiku');
   const [dateX, setDateX] = useState('2026-11-15');
   const [year, setYear] = useState('2026');
+  const [pickedCard, setPickedCard] = useState('a');
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -303,7 +304,7 @@ export const UiGallery: React.FC = () => {
           </Dialog>
           <ContextMenu>
             <ContextMenuTrigger asChild>
-              <Card className="px-4 py-3 text-sm">Paremklõps siin</Card>
+              <Card padding="sm" className="text-sm">Paremklõps siin</Card>
             </ContextMenuTrigger>
             <ContextMenuContent>
               <ContextMenuItem>Ava põld</ContextMenuItem>
@@ -316,6 +317,46 @@ export const UiGallery: React.FC = () => {
             <PopoverContent>Hüpiku sisu: filtrid, lisainfo või väike vorm.</PopoverContent>
           </Popover>
           <Tooltip content="Vihje tekst"><Button variant="ghost">Hõlju siin</Button></Tooltip>
+        </Section>
+
+        <Section title="Kaardid">
+          <Card className="w-72">
+            <CardHeader align="start">
+              <CardTitle>Kaart (surface)</CardTitle>
+              <CardActions>
+                <Button variant="ghost" size="icon-sm" title="Muuda"><Pencil size={16} /></Button>
+                <Button variant="danger-ghost" size="icon-sm" title="Kustuta"><Trash2 size={16} /></Button>
+              </CardActions>
+            </CardHeader>
+            <p className="mt-2 text-sm text-muted-foreground">Tahke taust, 16px nurk, kaardi vari, polster md (16px).</p>
+          </Card>
+          <div className="w-80 rounded-md bg-muted p-4">
+            <Card variant="floating" padding="sm" className="text-sm">
+              Ujuv paneel (floating): kaardi peal, tugevam vari, polster sm (12px).
+            </Card>
+          </div>
+          <Card className="w-96">
+            <CardTitle>Plaadid kaardi sees (tile)</CardTitle>
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              {[['Põlde', '42'], ['Pindala', '312,40 ha'], ['Kulud', '18 240 €']].map(([label, value]) => (
+                <Card key={label} variant="tile" padding="sm">
+                  <div className="text-2xs uppercase text-muted-foreground">{label}</div>
+                  <div className="num text-base font-semibold">{value}</div>
+                </Card>
+              ))}
+            </div>
+          </Card>
+          <div className="flex w-72 flex-col gap-2">
+            {['a', 'b'].map((id) => (
+              <Card key={id} padding="sm" interactive selected={pickedCard === id} onClick={() => setPickedCard(id)}>
+                Klõpsatav kaart {id.toUpperCase()} {pickedCard === id ? '(valitud)' : ''}
+              </Card>
+            ))}
+            <Card asChild variant="tile" padding="sm" interactive selected={pickedCard === 'c'}>
+              <button type="button" onClick={() => setPickedCard('c')}>Plaat nupuna (asChild + button)</button>
+            </Card>
+          </div>
+          <Panel title="Paneel" actions={<Button size="sm">Tegevus</Button>} className="w-72">Päisega paneel (Panel).</Panel>
         </Section>
       </div>
     </div>

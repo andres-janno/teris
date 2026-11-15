@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, summarize } from './uiAudit';
+import { auditCss, auditTsx, legacyCardRules, summarize } from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -250,5 +250,36 @@ describe('auditTsx: vanad märgid ja sakid', () => {
       { path: 'src/components/ui/Menu.tsx', content: 'role="menu"' },
     ]);
     expect(r.legacyMenuPopupFiles).toEqual([{ path: 'src/components/A.tsx', count: 1 }]);
+  });
+});
+
+describe('vanad kaardid', () => {
+  it('loeb tsx-is glass-card klassi, ei loe sarnaseid nimesid', () => {
+    const src = '<div className="vehicle-card glass-card"><div className="glass-cards x-glass-card" />';
+    expect(auditTsx(src).legacyCards).toEqual(['glass-card']);
+  });
+  it('loeb CSS-is kaardiklassi reegli, mis seab välimuse; ei loe olekuid, !important-i, asetust ega teisi klasse', () => {
+    const css = `/* .glass-card kommentaaris */
+.vehicle-card { padding: 14px; display: flex; }
+.implement-card,
+.device-card { background: var(--bg-card); border: 1px solid var(--border-card); }
+.vehicle-card.selected { border-color: green; box-shadow: 0 0 1px red; }
+.coords-tracker { position: absolute; border-radius: var(--radius-md) !important; }
+.add-poi-banner { border-color: pink !important; }
+.glass-card { -webkit-backdrop-filter: blur(16px); }
+.other-card { background: red; }
+@media (max-width: 600px) { .trip-tile { border-radius: 10px; } }`;
+    expect(legacyCardRules(css)).toEqual(['.implement-card', '.device-card', '.glass-card', '.trip-tile']);
+  });
+  it('summarize annab tsx ja css failid, ui kaust välja', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="glass-card" />' },
+      { path: 'src/components/ui/Gallery.tsx', content: '<div className="glass-card" />' },
+      { path: 'src/index.css', content: '.glass-card { background: red; }' },
+    ]);
+    expect(r.legacyCardFiles).toEqual([
+      { path: 'src/components/A.tsx', count: 1 },
+      { path: 'src/index.css', count: 1 },
+    ]);
   });
 });

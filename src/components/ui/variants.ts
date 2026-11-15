@@ -134,8 +134,39 @@ export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-c
 export const helpHintTitleClass = 'mb-1.5 text-2xs font-bold uppercase tracking-wide text-muted-foreground';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
-/** Klaasikaart (praegune .glass-card). */
-export const cardClass = 'rounded-lg border border-border bg-card text-foreground shadow-card backdrop-blur-lg';
+// --- Kaart (etapp 2.7) ---
+// Kasutaja otsused 2026-11-15: taust alati tahke (ilma klaasi ja backdrop-filter'ita, ka kaardi peal ujuvatel
+// paneelidel); nurk kaart/paneel 16px, sisemine plaat 10px; üks kaardi vari, ujuv paneel ühe astme võrra
+// tugevam, plaat varjuta. Kaart ei sea teksti värvi (pärib vanemalt); klõpsatav seab, sest <button> ei päri.
+export type CardVariant = 'surface' | 'floating' | 'tile';
+export type CardPadding = 'none' | 'sm' | 'md';
+
+export const cardVariants = cva('border border-border', {
+  variants: {
+    variant: {
+      // Lehe- ja registrikaart.
+      surface: 'rounded-lg bg-card shadow-card',
+      // Kaardi (Leaflet) peal ujuv paneel: sama taust, tugevam vari.
+      floating: 'rounded-lg bg-card shadow-dialog',
+      // Sisemine plaat kaardi/dialoogi sees (KPI, sektsioon, loendikirje): vaikne taust, varjuta.
+      tile: 'rounded-md bg-muted',
+    },
+    // none: klassi ei anta — vaate CSS-i oma polster (nt väike kaardinäit) jääb kehtima.
+    padding: { none: '', sm: 'p-3', md: 'p-4' },
+    interactive: {
+      true: 'cursor-pointer text-left text-foreground [font:inherit] transition-colors hover:border-primary/50 hover:bg-card-hover',
+      false: '',
+    },
+    selected: { true: 'border-primary ring-1 ring-primary', false: '' },
+  },
+  defaultVariants: { variant: 'surface', padding: 'md', interactive: false, selected: false },
+});
+
+/** Kaardi päis: pealkiri vasakul, tegevused paremal. */
+export const cardHeaderClass = ({ align = 'center' }: { align?: 'center' | 'start' } = {}): string =>
+  cn('flex justify-between gap-3', align === 'start' ? 'items-start' : 'items-center');
+export const cardTitleClass = 'm-0 text-base font-semibold';
+export const cardActionsClass = 'ml-auto flex shrink-0 items-center gap-1';
 
 const DIALOG_SIZES = {
   sm: 'w-[min(440px,94vw)]',

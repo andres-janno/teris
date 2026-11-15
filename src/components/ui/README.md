@@ -96,7 +96,7 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 | --- | --- | --- |
 | `--bg-dark` | `bg-background` | lehe taust |
 | `--text-primary` | `text-foreground` | põhitekst |
-| `--bg-card` | `bg-card` | kaart |
+| `--bg-surface` | `bg-card` | kaart (tahke; vana `--bg-card` on läbipaistev ja ainult legacy jaoks) |
 | `--bg-card-hover` | `bg-card-hover` | kaardi hover |
 | `--bg-modal` | `bg-popover` | dialoog, menüü, hüpik |
 | `--stat-bg` | `bg-muted` | vaikne taust, tabeli hover |
@@ -147,6 +147,26 @@ Reeglid:
 3. Vaatepõhine modifikaator (nt `fw-crop-delete-btn`) jääb alles. Kui vana reegel kannab tähendust (olek, hoiatusvärv),
    lisa reeglile `!important`. Muidu kaovad Buttoni omadused (padding, kõrgus, kirjasuurus, värv, taust, nurk) ja see
    on ühtlustamise eesmärk.
+
+## Kaart
+
+- `<Card>` — tahke kaart (kasutaja otsus 2026-11-15: klaasi ja `backdrop-filter`-it ei kasutata kusagil).
+  - `variant`: `surface` (vaikimisi; lehe- ja registrikaart, 16px, `shadow-card`), `floating` (kaardi peal ujuv paneel,
+    16px, tugevam vari `shadow-dialog`), `tile` (sisemine plaat kaardi/dialoogi sees: KPI, sektsioon, loendikirje; 10px,
+    `bg-muted`, varjuta).
+  - `padding`: `md` 16px (vaikimisi), `sm` 12px, `none` (klassi ei anta — vaate CSS-i polster kehtib, nt väike kaardinäit).
+  - `interactive` (kursor, hover, `text-left`, teksti värv) ja `selected` (roheline ääris + rõngas).
+  - `asChild`: `<Card asChild interactive><button type="button">…</button></Card>`, samuti `<form>`, `<section>`.
+- Kaart ei sea teksti värvi (pärib), v.a `interactive`.
+- Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).
+  `Panel` = kaart + päis äärisega + sisu.
+- Vaate klass kaardil annab **ainult asetuse** (position, z-index, flex, gap, margin, kirjasuurus). Välimuse
+  (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
+  ääris, toonitud taust, erandnurk), vajab `!important` (`index.css` on `legacy` kihis). `admin.css` on kihistamata
+  ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
+- `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
+- Erandid (jäävad oma CSS-iga): `login-card`, `fw-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
+  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`.
 
 ## Menüüd, hüpikud, vihjed
 

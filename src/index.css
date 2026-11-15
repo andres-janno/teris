@@ -6,6 +6,8 @@
   --bg-dark: #f8fafc;
   --bg-header: rgba(255, 255, 255, 0.95);
   --bg-card: rgba(255, 255, 255, 0.92);
+  /* Kaardi tahke taust (etapp 2.7, kasutaja otsus: ilma klaasita). Tailwindi bg-card loeb seda. */
+  --bg-surface: #ffffff;
   --bg-card-hover: rgba(241, 245, 249, 0.98);
   --bg-modal: #ffffff;
   --stat-bg: rgba(15, 23, 42, 0.04);
@@ -56,6 +58,7 @@
   --bg-dark: #090d16;
   --bg-header: rgba(9, 13, 22, 0.90);
   --bg-card: rgba(15, 23, 42, 0.85);
+  --bg-surface: #0f172a;
   --bg-card-hover: rgba(30, 41, 59, 0.9);
   --bg-modal: #0f172a;
   --stat-bg: rgba(255, 255, 255, 0.04);
@@ -124,11 +127,9 @@ body {
   background-color: var(--bg-dark);
 }
 
-/* Glass Card Utility */
+/* Vana kaart (üleminek ui/Card-ile, etapp 2.7): tahke, ilma klaasita */
 .glass-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: var(--bg-surface);
   border: 1px solid var(--border-card);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-glass);
