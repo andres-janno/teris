@@ -29,7 +29,7 @@ export const Input: React.FC<InputProps> = ({ className, size = 'md', numeric, s
       {start != null && <span className="inline-flex shrink-0 items-center text-muted-foreground">{start}</span>}
       <input
         data-slot="input"
-        className={cn('h-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 outline-none placeholder:text-subtle', readOnlyClass, numericClass)}
+        className={cn('h-full min-w-0 flex-1 appearance-none border-0 bg-transparent p-0 text-foreground outline-none placeholder:text-subtle', readOnlyClass, numericClass)}
         {...props}
       />
       {end != null && <span className="inline-flex shrink-0 items-center gap-1 text-muted-foreground">{end}</span>}

@@ -19,6 +19,14 @@
 @source '../components/ui';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
+/* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).
+   Kõige nõrgemas kihis — vanad reeglid (legacy) ja ui utiliidid, mis kirja ise määravad, võidavad. */
+@layer base {
+  button, input, select, textarea {
+    font-family: inherit;
+  }
+}
+
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
