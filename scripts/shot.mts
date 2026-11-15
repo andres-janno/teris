@@ -27,7 +27,7 @@ const height = Number(opt('height', '900'));
 const clickSel = opt('click');
 const waitMs = Number(opt('wait', '800'));
 // --do võib korduda; tegevused tehakse järjest pärast lehe laadimist (ja --click-i):
-//   click:<css>  rightclick:<css>  rightclick-at:<x>,<y>  hover:<css>  key:<Klahv>  wait:<ms>  shot:<nimi> (vahepilt)
+//   click:<css>  click-at:<x>,<y>  hover-at:<x>,<y>  rightclick:<css>  rightclick-at:<x>,<y>  hover:<css>  key:<Klahv>  wait:<ms>  shot:<nimi> (vahepilt)
 const steps: string[] = [];
 for (let s = opt('do'); s !== undefined; s = opt('do')) steps.push(s);
 const paths = args.length ? args : ['/ui'];
