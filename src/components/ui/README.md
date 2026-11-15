@@ -160,8 +160,8 @@ Reeglid:
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
 - Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).
   `Panel` = kaart + päis äärisega + sisu.
-- Vaate klass kaardil annab **ainult asetuse** (position, z-index, flex, gap, margin, kirjasuurus). Välimuse
-  (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
+- Vaate klass kaardil annab **asetuse, kirjasuuruse ja tekstivärvi** (position, z-index, flex, gap, margin, font-size, color); polstri ainult
+  `padding="none"` korral. Välimuse (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
   ääris, toonitud taust, erandnurk), vajab `!important` (`index.css` on `legacy` kihis). `admin.css` on kihistamata
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.

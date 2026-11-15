@@ -591,8 +591,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
           {filteredParties.length === 0 && (
             <Card padding="none" className="empty-register-state">
-              <AlertCircle size={28} className="text-amber" style={{ margin: '0 auto 8px auto' }} />
-              <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Otsingule vastavaid isikuid ei leitud</h4>
+              <AlertCircle size={28} className="text-amber" />
+              <h4 style={{ color: 'var(--text-primary)' }}>Otsingule vastavaid isikuid ei leitud</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
             </Card>
           )}

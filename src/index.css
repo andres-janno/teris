@@ -534,16 +534,18 @@ body {
 /* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel */
 .map-top-right-stack {
   position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 300px;
-  max-width: calc(100vw - 32px);
+  /* Polster annab ujuva paneeli varjule ruumi; paneelide nähtav asukoht on servast 16px */
+  top: 0;
+  right: 0;
+  padding: 16px 16px 56px 40px;
+  width: calc(300px + 56px);
+  max-width: calc(100vw - 8px);
   z-index: 900;
   display: flex;
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
-  max-height: calc(100% - 32px);
+  max-height: 100%;
   overflow-y: auto;
 }
 .map-top-right-stack > * {
@@ -880,17 +882,17 @@ body {
 /* Map Top-Left Stack (Season Widget + Selected Field Card) */
 .map-top-left-stack {
   position: absolute;
-  top: 16px;
-  left: 16px;
-  width: 320px;
+  top: 0;
+  left: 0;
+  padding: 16px 44px 56px 16px;
+  width: calc(320px + 56px);
   z-index: 900;
   display: flex;
   flex-direction: column;
   gap: 10px;
   pointer-events: none;
-  max-height: calc(100vh - 40px);
+  max-height: calc(100vh - 8px);
   overflow-y: auto;
-  padding-right: 4px;
 }
 
 .map-top-left-stack>* {
@@ -3420,9 +3422,6 @@ body {
 .empty-register-state.is-muted {
   color: var(--text-muted);
 }
-
-
-
 
 .legend-title {
   font-size: 0.82rem;
@@ -7076,6 +7075,15 @@ body {
   color: #b91c1c;
 }
 
+/* Tumedal plaadil on tumeroheline/-punane halvasti loetav */
+[data-theme='dark'] .finance-kpi-card.result.profit .finance-kpi-value {
+  color: var(--emerald-500);
+}
+
+[data-theme='dark'] .finance-kpi-card.result.loss .finance-kpi-value {
+  color: var(--rose-500);
+}
+
 .finance-kpi-label {
   font-size: 0.72rem;
   font-weight: 700;
@@ -7360,7 +7368,7 @@ body {
   50% { opacity: 0.5; }
 }
 
-.animate-pulse {
+.pulse-anim {
   animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 

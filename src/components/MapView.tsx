@@ -1121,7 +1121,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Add POI Banner */}
       {isAddPoiMode && (
-        <Card variant="floating" padding="sm" className="add-poi-banner animate-pulse">
+        <Card variant="floating" padding="sm" className="add-poi-banner pulse-anim">
           <span>📍 Klõpsa kaardile, et määrata asukoht. Kaardil on ajutiselt näha ainult kiht „Muud asukohad“.</span>
           <Button type="button" size="sm" onClick={onCancelAddPoi} title="Katkesta (Esc)">
             Katkesta
