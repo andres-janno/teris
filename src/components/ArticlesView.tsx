@@ -179,7 +179,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   <Calendar size={15} className="text-blue" />
                   <span>Hooaeg:</span>
                 </span>
-                <ToggleGroup aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
+                <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
                   {availableYearsList.map((yr) => {
                     const isLocked = seasons.find((s) => s.year === yr)?.isLocked ?? false;
                     return (

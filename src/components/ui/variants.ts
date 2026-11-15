@@ -70,6 +70,8 @@ export const tabsListVariants = cva('inline-flex max-w-full flex-wrap items-cent
     variant: {
       line: 'gap-1 border-b border-border',
       segmented: 'gap-0.5 rounded-md bg-muted p-0.5',
+      // Hooaasta valik: eraldi nupud ilma raamita (nagu enne ühtlustamist)
+      pills: 'gap-1',
     },
   },
   defaultVariants: { variant: 'line' },
@@ -85,6 +87,9 @@ export const tabsTriggerVariants = cva(
         line: '-mb-px border-b-2 border-transparent px-3 py-2 text-sm data-[state=active]:border-primary data-[state=active]:text-foreground',
         segmented:
           'rounded-sm px-2.5 py-1 text-xs data-[state=active]:bg-card data-[state=active]:text-foreground data-[state=active]:shadow-sm data-[state=on]:bg-card data-[state=on]:text-foreground data-[state=on]:shadow-sm',
+        // Hall nupp, valitu täisroheline valge kirjaga (kasutaja soov 2026-11-15: hooaja valik nagu enne)
+        pills:
+          'rounded-sm border border-border bg-muted px-2.5 py-1 text-xs text-foreground enabled:hover:bg-muted-hover data-[state=on]:border-primary-strong data-[state=on]:bg-primary-strong data-[state=on]:text-white data-[state=on]:shadow-primary enabled:data-[state=on]:hover:bg-primary-strong',
       },
     },
     defaultVariants: { variant: 'line' },

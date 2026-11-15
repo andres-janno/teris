@@ -696,7 +696,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
               <Calendar size={15} className="text-blue" />
               <span>Hooaeg:</span>
             </span>
-            <ToggleGroup aria-label="Hooaasta" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>
+            <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>
               {availableYears.map((y) => {
                 const isLocked = seasons.find((x) => x.year === y)?.isLocked ?? false;
                 return (
