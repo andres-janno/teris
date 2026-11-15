@@ -274,8 +274,15 @@ export const UiGallery: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button variant="filter" size="auto">Operaator: Mari</Button>
-          <Tooltip content="Muuda"><Button variant="ghost" size="icon" aria-label="Muuda"><Pencil size={16} /></Button></Tooltip>
-          <Tooltip content="Kustutamine pole võimalik" wrapDisabled><Button variant="ghost" size="icon" aria-label="Kustuta" disabled><Trash2 size={16} /></Button></Tooltip>
+          <Button id="gallery-icon-tip" variant="ghost" size="icon" title="Muuda"><Pencil size={16} /></Button>
+          <Button id="gallery-icon-tip-disabled" variant="ghost" size="icon" title="Kustutamine pole võimalik" disabled><Trash2 size={16} /></Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild><Button id="gallery-icon-menu" variant="ghost" size="icon" title="Rohkem"><Copy size={16} /></Button></DropdownMenuTrigger>
+            <DropdownMenuContent>
+              <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
+              <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
           <Dialog>
             <DialogTrigger asChild><Button id="gallery-dialog-menu">Menüü dialoogis</Button></DialogTrigger>
             <DialogContent size="sm">
