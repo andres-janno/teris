@@ -28,6 +28,7 @@ const clickSel = opt('click');
 const waitMs = Number(opt('wait', '800'));
 // --do võib korduda; tegevused tehakse järjest pärast lehe laadimist (ja --click-i):
 //   click:<css>  click-at:<x>,<y>  hover-at:<x>,<y>  rightclick:<css>  rightclick-at:<x>,<y>  hover:<css>  key:<Klahv>  wait:<ms>  shot:<nimi> (vahepilt)
+//   eval:<js-avaldis> (prindib tulemuse, nt arvutatud stiilid)
 const steps: string[] = [];
 for (let s = opt('do'); s !== undefined; s = opt('do')) steps.push(s);
 const paths = args.length ? args : ['/ui'];
@@ -93,6 +94,7 @@ try {
         } else if (kind === 'hover') await page.hover(arg);
         else if (kind === 'key') await page.keyboard.press(arg);
         else if (kind === 'wait') await page.waitForTimeout(Number(arg));
+        else if (kind === 'eval') console.log(`eval(${theme}):`, JSON.stringify(await page.evaluate(arg)));
         else if (kind === 'shot') {
           await page.waitForTimeout(300);
           await page.screenshot({ path: `${outDir}/${stem}-${arg}-${theme}.png`, fullPage: true });
