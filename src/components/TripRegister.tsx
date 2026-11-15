@@ -9,7 +9,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect } from './ui';
+import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -171,22 +171,13 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           </FilterClear>
         </div>
         <FilterClear inline active={unknownPlace} onClear={() => setUnknownPlace(false)}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            <input type="checkbox" checked={unknownPlace} onChange={(e) => setUnknownPlace(e.target.checked)} />
-            Ainult tundmatu algus või lõpp
-          </label>
+          <CheckboxField checked={unknownPlace} onCheckedChange={setUnknownPlace} label="Ainult tundmatu algus või lõpp" />
         </FilterClear>
         <FilterClear inline active={unlinkedOnly} onClear={() => setUnlinkedOnly(false)}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            <input type="checkbox" checked={unlinkedOnly} onChange={(e) => setUnlinkedOnly(e.target.checked)} />
-            Ainult kandeta põllusõidud
-          </label>
+          <CheckboxField checked={unlinkedOnly} onCheckedChange={setUnlinkedOnly} label="Ainult kandeta põllusõidud" />
         </FilterClear>
         <FilterClear inline active={showDeleted} onClear={() => setShowDeleted(false)}>
-          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-            <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
-            Näita kustutatud sõite
-          </label>
+          <CheckboxField checked={showDeleted} onCheckedChange={setShowDeleted} label="Näita kustutatud sõite" />
         </FilterClear>
         {unreviewedGaps > 0 && (
           <span className="trip-gap-count" title="Kontrollimata hoiatusi valitud perioodis">

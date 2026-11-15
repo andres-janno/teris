@@ -6,7 +6,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Field, Input, CheckboxField, RadioGroup, RadioField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -252,59 +252,42 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                 </div>
               )}
               {mode.kind === 'add' && (
-                <div className="form-group">
-                  <label htmlFor="ua-username">Kasutajanimi (a–z, 0–9, . _ -)</label>
-                  <input id="ua-username" className="form-input" required autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
-                </div>
+                <Field label="Kasutajanimi (a–z, 0–9, . _ -)" htmlFor="ua-username">
+                  <Input id="ua-username" required autoComplete="off" value={username} onChange={(e) => setUsername(e.target.value)} />
+                </Field>
               )}
               {(mode.kind === 'add' || mode.kind === 'edit') && (
-                <div className="form-group">
-                  <label htmlFor="ua-display">Nimi</label>
-                  <input id="ua-display" className="form-input" autoComplete="off" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
-                </div>
+                <Field label="Nimi" htmlFor="ua-display">
+                  <Input id="ua-display" autoComplete="off" value={displayName} onChange={(e) => setDisplayName(e.target.value)} />
+                </Field>
               )}
               {(mode.kind === 'add' || mode.kind === 'edit') && (
-                <div className="form-group">
-                  <label htmlFor="ua-email">E-post{mode.kind === 'add' ? ' (kohustuslik)' : ''}</label>
-                  <input id="ua-email" type="email" className="form-input" required={mode.kind === 'add'} autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} />
-                </div>
+                <Field label={<>E-post{mode.kind === 'add' ? ' (kohustuslik)' : ''}</>} htmlFor="ua-email">
+                  <Input id="ua-email" type="email" required={mode.kind === 'add'} autoComplete="off" value={email} onChange={(e) => setEmail(e.target.value)} />
+                </Field>
               )}
               {mode.kind === 'add' && (
-                <div className="users-admin-mode">
-                  <label className="users-admin-checkbox">
-                    <input type="radio" name="ua-mode" checked={useInvite} onChange={() => setUseInvite(true)} />
-                    <span>Saada kutse e-postiga (kasutaja määrab parooli ise)</span>
-                  </label>
-                  <label className="users-admin-checkbox">
-                    <input type="radio" name="ua-mode" checked={!useInvite} onChange={() => setUseInvite(false)} />
-                    <span>Määra ajutine parool</span>
-                  </label>
-                </div>
+                <RadioGroup className="users-admin-mode" orientation="vertical" value={useInvite ? 'invite' : 'password'} onValueChange={(v) => setUseInvite(v === 'invite')}>
+                  <RadioField value="invite" label="Saada kutse e-postiga (kasutaja määrab parooli ise)" />
+                  <RadioField value="password" label="Määra ajutine parool" />
+                </RadioGroup>
               )}
               {(mode.kind === 'reset' || (mode.kind === 'add' && !useInvite)) && (
                 <>
-                  <div className="form-group">
-                    <label htmlFor="ua-password">Ajutine parool (vähemalt 10 märki)</label>
-                    <input id="ua-password" type="password" className="form-input" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="ua-repeat">Korda parooli</label>
-                    <input id="ua-repeat" type="password" className="form-input" required autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
-                  </div>
+                  <Field label="Ajutine parool (vähemalt 10 märki)" htmlFor="ua-password">
+                    <Input id="ua-password" type="password" required autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  </Field>
+                  <Field label="Korda parooli" htmlFor="ua-repeat">
+                    <Input id="ua-repeat" type="password" required autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+                  </Field>
                   <p className="hint-text">Kasutaja peab parooli esimesel sisselogimisel vahetama.</p>
                 </>
               )}
               {(mode.kind === 'add' || (mode.kind === 'edit' && mode.user.id !== currentUserId)) && (
-                <label className="users-admin-checkbox">
-                  <input type="checkbox" checked={isAdmin} onChange={(e) => setIsAdmin(e.target.checked)} />
-                  <span>Admin (saab kasutajaid hallata)</span>
-                </label>
+                <CheckboxField checked={isAdmin} onCheckedChange={setIsAdmin} label="Admin (saab kasutajaid hallata)" />
               )}
               {(mode.kind === 'add' || mode.kind === 'edit') && (
-                <label className="users-admin-checkbox">
-                  <input type="checkbox" checked={isFinanceManager} onChange={(e) => setIsFinanceManager(e.target.checked)} />
-                  <span>Finantsjuht (kannete ühiku kulud, kinnitamine, põldude tulemus)</span>
-                </label>
+                <CheckboxField checked={isFinanceManager} onCheckedChange={setIsFinanceManager} label="Finantsjuht (kannete ühiku kulud, kinnitamine, põldude tulemus)" />
               )}
               </DialogBody>
 

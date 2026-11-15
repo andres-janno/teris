@@ -18,10 +18,10 @@ import { PARTY_ROLE_CONFIG } from '../types/party';
 import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
+import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -68,7 +68,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const [editBankAccount, setEditBankAccount] = useState('');
   const [costArticles, setCostArticles] = useState<Article[]>([]);
   const [editServiceId, setEditServiceId] = useState('');
-  const [editRate, setEditRate] = useState('');
+  const [editRate, setEditRate] = useState<number | null>(null);
   // Teenuste valik töötaja vormil
   useEffect(() => {
     api.getArticles().then(setCostArticles).catch(() => setCostArticles([]));
@@ -88,7 +88,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditAddress(party.address || '');
     setEditBankAccount(party.bankAccount || '');
     setEditServiceId(party.serviceArticleId ?? '');
-    setEditRate(rateText(party.hourlyRate));
+    setEditRate(party.hourlyRate ?? null);
     setEditNotes(party.notes || '');
     setIsEditing(true);
   };
@@ -106,7 +106,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     setEditAddress('');
     setEditBankAccount('');
     setEditServiceId('');
-    setEditRate('');
+    setEditRate(null);
     setEditNotes('');
     setIsEditing(true);
   };
@@ -127,7 +127,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     e.preventDefault();
     if (!editName.trim()) return;
     // Tunnihinna väli on nähtav ainult töötaja rolliga
-    if (canManageFinance && editRoles.includes('DRIVER') && !isRateTextValid(editRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
+    if (canManageFinance && editRoles.includes('DRIVER') && !isRateValid(editRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
 
     const partyToSave: RelatedParty = {
       id: editId || `party-${Date.now()}`,
@@ -142,7 +142,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       address: editAddress.trim() || undefined,
       bankAccount: editBankAccount.trim().replace(/\s+/g, '') || undefined,
       serviceArticleId: editRoles.includes('DRIVER') ? (editServiceId || null) : null,
-      ...(canManageFinance ? { hourlyRate: editRoles.includes('DRIVER') ? parseRate(editRate) : null } : {}),
+      ...(canManageFinance ? { hourlyRate: editRoles.includes('DRIVER') ? editRate : null } : {}),
       notes: editNotes.trim() || undefined,
       updatedAt: new Date().toISOString()
     };
@@ -256,147 +256,128 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         <Building2 size={14} />
         <span>1. Isiku või organisatsiooni põhiandmed</span>
       </div>
-      <div className="form-grid">
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-          <label>Nimi või Ärinimi *</label>
-          <input
+      <FormGrid>
+        <Field label="Nimi või Ärinimi *" htmlFor="party-name" span="full">
+          <Input
+            id="party-name"
             type="text"
             required
             placeholder="nt Loisu Agro OÜ või Jaan Tamm"
             value={editName}
             onChange={(e) => setEditName(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
-        <div className="form-group">
-          <label>Isiku liik *</label>
-          <select
+        <Field label="Isiku liik *" htmlFor="party-type">
+          <Select
+            id="party-type"
             value={editType}
-            onChange={(e) => setEditType(e.target.value as PartyType)}
-            className="form-input"
-          >
-            <option value="PERSON">👤 Füüsiline isik (Eraisik)</option>
-            <option value="LEGAL_ENTITY">🏢 Juriidiline isik (Ettevõte / OÜ / AS)</option>
-          </select>
-        </div>
+            onValueChange={(v) => setEditType(v as PartyType)}
+            options={[
+              { value: 'PERSON', label: '👤 Füüsiline isik (Eraisik)' },
+              { value: 'LEGAL_ENTITY', label: '🏢 Juriidiline isik (Ettevõte / OÜ / AS)' },
+            ]}
+          />
+        </Field>
 
-        <div className="form-group">
-          <label>{editType === 'LEGAL_ENTITY' ? 'Registrikood' : 'Isikukood'}</label>
-          <input
+        <Field label={editType === 'LEGAL_ENTITY' ? 'Registrikood' : 'Isikukood'} htmlFor="party-code">
+          <Input
+            id="party-code"
             type="text"
             placeholder={editType === 'LEGAL_ENTITY' ? 'nt 10874512' : 'nt 38001010000'}
             value={editCode}
             onChange={(e) => setEditCode(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
         {editType === 'LEGAL_ENTITY' && (
-          <div className="form-group">
-            <label>KMKR number (Käibemaksukohustuslane)</label>
-            <input
+          <Field label="KMKR number (Käibemaksukohustuslane)" htmlFor="party-vat">
+            <Input
+              id="party-vat"
               type="text"
               placeholder="nt EE100874512"
               value={editVatNumber}
               onChange={(e) => setEditVatNumber(e.target.value)}
-              className="form-input"
             />
-          </div>
+          </Field>
         )}
-      </div>
+      </FormGrid>
 
       {/* 2. Rollid */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
         <Users size={14} />
         <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
       </div>
-      <div className="form-group">
-        <div className="party-roles-checkbox-grid">
-          {ALL_ROLES.map((role) => {
-            const cfg = PARTY_ROLE_CONFIG[role];
-            const isSelected = editRoles.includes(role);
-            return (
-              <div
-                key={role}
-                className={`party-role-checkbox ${isSelected ? 'selected' : ''}`}
-                onClick={() => toggleRole(role)}
-                style={{
-                  background: isSelected ? 'rgba(16, 185, 129, 0.12)' : undefined,
-                  borderColor: isSelected ? 'var(--emerald-500)' : undefined
-                }}
-              >
-                <input
-                  type="checkbox"
-                  checked={isSelected}
-                  onChange={() => {}}
-                />
-                <span>{cfg.icon} {cfg.label}</span>
-              </div>
-            );
-          })}
-        </div>
+      <div className="party-roles-checkbox-grid">
+        {ALL_ROLES.map((role) => {
+          const cfg = PARTY_ROLE_CONFIG[role];
+          const isSelected = editRoles.includes(role);
+          return (
+            <CheckboxField
+              key={role}
+              className={`party-role-checkbox ${isSelected ? 'selected' : ''}`}
+              checked={isSelected}
+              onCheckedChange={() => toggleRole(role)}
+              label={`${cfg.icon} ${cfg.label}`}
+            />
+          );
+        })}
       </div>
-      <div className="form-group">
-        <label>Märkused (nt muu seotud isiku täpsustus, lepingute info)</label>
-        <textarea
+      <Field label="Märkused (nt muu seotud isiku täpsustus, lepingute info)" htmlFor="party-notes">
+        <Textarea
+          id="party-notes"
           rows={2}
           placeholder="nt Raamatupidaja; rendileping L-2024/02 kehtib kuni 2032..."
           value={editNotes}
           onChange={(e) => setEditNotes(e.target.value)}
-          className="form-input"
         />
-      </div>
+      </Field>
 
       {/* 3. Kontakt- ja finantsandmed */}
       <div className="form-sub-header" style={{ marginTop: '16px' }}>
         <CreditCard size={14} />
         <span>3. Kontakt- ja finantsandmed</span>
       </div>
-      <div className="form-grid">
-        <div className="form-group">
-          <label>Telefoninumber</label>
-          <input
+      <FormGrid>
+        <Field label="Telefoninumber" htmlFor="party-phone">
+          <Input
+            id="party-phone"
             type="tel"
             placeholder="nt +372 5552 9988"
             value={editPhone}
             onChange={(e) => setEditPhone(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
-        <div className="form-group">
-          <label>E-posti aadress</label>
-          <input
+        <Field label="E-posti aadress" htmlFor="party-email">
+          <Input
+            id="party-email"
             type="email"
             placeholder="nt info@loisuagro.ee"
             value={editEmail}
             onChange={(e) => setEditEmail(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
-        <div className="form-group" style={{ gridColumn: 'span 2' }}>
-          <label>Aadress / Asukoht</label>
-          <input
+        <Field label="Aadress / Asukoht" htmlFor="party-address" span="full">
+          <Input
+            id="party-address"
             type="text"
             placeholder="nt Loisu talu, Riidaja küla, Tõrva vald, 68716 Valgamaa"
             value={editAddress}
             onChange={(e) => setEditAddress(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
-        <div className="form-group">
-          <label>IBAN Pangakonto (arvelduskonto)</label>
-          <input
+        <Field label="IBAN Pangakonto (arvelduskonto)" htmlFor="party-iban">
+          <Input
+            id="party-iban"
             type="text"
             placeholder="nt EE452200221054321987"
             value={editBankAccount}
             onChange={(e) => setEditBankAccount(e.target.value)}
-            className="form-input"
           />
-        </div>
+        </Field>
 
         {editRoles.includes('DRIVER') && (
           <ResourceCostFields
@@ -406,7 +387,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           />
         )}
 
-      </div>
+      </FormGrid>
 
       </DialogBody>
 

@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { KeyRound, AlertCircle, Check } from 'lucide-react';
 import { api } from '../services/api';
-import { Button, Dialog, DialogContent, DialogForm, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Field, Input, Dialog, DialogContent, DialogForm, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -76,18 +76,15 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
                   <span>{error}</span>
                 </div>
               )}
-              <div className="form-group">
-                <label htmlFor="pw-current">{forced ? 'Ajutine parool' : 'Praegune parool'}</label>
-                <input id="pw-current" type="password" className="form-input" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="pw-new">Uus parool (vähemalt 10 märki)</label>
-                <input id="pw-new" type="password" className="form-input" autoComplete="new-password" required value={next} onChange={(e) => setNext(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="pw-repeat">Korda uut parooli</label>
-                <input id="pw-repeat" type="password" className="form-input" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
-              </div>
+              <Field label={forced ? 'Ajutine parool' : 'Praegune parool'} htmlFor="pw-current">
+                <Input id="pw-current" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />
+              </Field>
+              <Field label="Uus parool (vähemalt 10 märki)" htmlFor="pw-new">
+                <Input id="pw-new" type="password" autoComplete="new-password" required value={next} onChange={(e) => setNext(e.target.value)} />
+              </Field>
+              <Field label="Korda uut parooli" htmlFor="pw-repeat">
+                <Input id="pw-repeat" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+              </Field>
             </>
           )}
         </DialogBody>

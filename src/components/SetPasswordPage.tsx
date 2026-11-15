@@ -5,7 +5,7 @@ import { TerisLogo } from './TerisLogo';
 import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { api } from '../services/api';
-import { Button } from './ui';
+import { Button, Field, Input } from './ui';
 
 interface SetPasswordPageProps {
   token: string;
@@ -74,15 +74,13 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                   <span>{error}</span>
                 </div>
               )}
-              <input type="text" autoComplete="username" value={username} readOnly hidden />
-              <div className="form-group">
-                <label htmlFor="sp-password">Uus parool (vähemalt 10 märki)</label>
-                <input id="sp-password" type="password" className="form-input" autoComplete="new-password" autoFocus required value={password} onChange={(e) => setPassword(e.target.value)} />
-              </div>
-              <div className="form-group">
-                <label htmlFor="sp-repeat">Korda parooli</label>
-                <input id="sp-repeat" type="password" className="form-input" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
-              </div>
+              <Input type="text" autoComplete="username" value={username} readOnly hidden />
+              <Field label="Uus parool (vähemalt 10 märki)" htmlFor="sp-password">
+                <Input id="sp-password" type="password" autoComplete="new-password" autoFocus required value={password} onChange={(e) => setPassword(e.target.value)} />
+              </Field>
+              <Field label="Korda parooli" htmlFor="sp-repeat">
+                <Input id="sp-repeat" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
+              </Field>
               <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
                 {busy ? <KeyRound size={16} /> : <Check size={16} />}
                 <span>{busy ? 'Salvestan…' : 'Määra parool'}</span>

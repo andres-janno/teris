@@ -1,5 +1,5 @@
 // src/components/VehicleTracker.tsx
-import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import React, { useState, useEffect, useId, useCallback, useMemo } from 'react';
 import {
   Tractor,
   Fuel,
@@ -37,9 +37,9 @@ import type {
   VehicleStatus
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
+import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -127,7 +127,8 @@ function normalizeCategory(value: string, existing: string[]): string | undefine
 }
 
 interface CategoryInputProps {
-  id: string;
+  id: string; // datalist id
+  inputId?: string;
   value: string;
   onChange: (value: string) => void;
   options: string[];
@@ -135,15 +136,15 @@ interface CategoryInputProps {
 }
 
 // Isetäienev liigi väli: pakub olemasolevaid liike, aga lubab sisestada ka uue
-const CategoryInput: React.FC<CategoryInputProps> = ({ id, value, onChange, options, placeholder }) => (
+const CategoryInput: React.FC<CategoryInputProps> = ({ id, inputId, value, onChange, options, placeholder }) => (
   <>
-    <input
+    <Input
+      id={inputId}
       type="text"
       list={id}
       value={value}
       onChange={(e) => onChange(e.target.value)}
       placeholder={placeholder}
-      className="form-input"
       autoComplete="off"
     />
     <datalist id={id}>
@@ -175,93 +176,43 @@ interface DepreciationFieldsProps {
 }
 
 // Soetusmaksumus ja amortisatsioon — sama plokk masina ja haakeriista vormis
-const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateChange, cost, onCostChange, rate, onRateChange, method, onMethodChange }) => (
-  <>
-    <div className="form-group">
-      <label>Soetamise kuupäev</label>
-      <DateInput value={date} onChange={onDateChange} />
-    </div>
-    <div className="form-group">
-      <label>Soetusmaksumus (€)</label>
-      <NumberInput
-        min={0}
-        placeholder="nt 185000"
-        value={cost === '' ? null : Number(cost)}
-        onChange={(v) => onCostChange(v == null ? '' : String(v))}
-      />
-    </div>
-    <div className="form-group">
-      <label>Amortisatsiooni meetod & määr (% aastas)</label>
-      <div className="input-split">
-        <select
-          value={method}
-          onChange={(e) => onMethodChange(e.target.value as DepreciationMethod | '')}
-          className="form-input"
-        >
-          <option value="">-- Määramata --</option>
-          {(Object.keys(DEPRECIATION_METHOD_LABELS) as DepreciationMethod[]).map((m) => (
-            <option key={m} value={m}>{DEPRECIATION_METHOD_LABELS[m]}</option>
-          ))}
-        </select>
-        <NumberInput
-          min={0}
-          max={100}
-          placeholder="nt 20"
-          value={rate === '' ? null : Number(rate)}
-          onChange={(v) => onRateChange(v == null ? '' : String(v))}
-        />
-      </div>
-    </div>
-  </>
-);
-
-interface AutoResizeTextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
-  value: string;
-}
-
-const AutoResizeTextarea: React.FC<AutoResizeTextareaProps> = ({
-  value,
-  onChange,
-  className = '',
-  rows = 2,
-  style,
-  ...props
-}) => {
-  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
-
-  const resize = useCallback(() => {
-    const el = textareaRef.current;
-    if (!el) return;
-    el.style.height = 'auto';
-    const scrollH = el.scrollHeight;
-    const targetHeight = Math.max(scrollH, 62);
-    el.style.height = `${targetHeight}px`;
-    el.style.overflowY = scrollH > 320 ? 'auto' : 'hidden';
-  }, []);
-
-  useEffect(() => {
-    resize();
-  }, [value, resize]);
-
+const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateChange, cost, onCostChange, rate, onRateChange, method, onMethodChange }) => {
+  const uid = useId();
   return (
-    <textarea
-      ref={textareaRef}
-      value={value}
-      onChange={(e) => {
-        onChange?.(e);
-        resize();
-      }}
-      rows={rows}
-      className={`form-input auto-resize-textarea ${className}`}
-      style={{
-        resize: 'vertical',
-        minHeight: '62px',
-        maxHeight: '320px',
-        lineHeight: 1.45,
-        ...style
-      }}
-      {...props}
-    />
+    <>
+      <Field label="Soetamise kuupäev" htmlFor={`${uid}-date`}>
+        <DateInput id={`${uid}-date`} value={date} onChange={onDateChange} />
+      </Field>
+      <Field label="Soetusmaksumus (€)" htmlFor={`${uid}-cost`}>
+        <NumberInput
+          id={`${uid}-cost`}
+          min={0}
+          placeholder="nt 185000"
+          value={cost === '' ? null : Number(cost)}
+          onChange={(v) => onCostChange(v == null ? '' : String(v))}
+        />
+      </Field>
+      <Field label="Amortisatsiooni meetod & määr (% aastas)" htmlFor={`${uid}-method`}>
+        <FieldRow>
+          <Select
+            id={`${uid}-method`}
+            value={method}
+            onValueChange={(v) => onMethodChange(v as DepreciationMethod | '')}
+            options={[
+              { value: '', label: '-- Määramata --' },
+              ...(Object.keys(DEPRECIATION_METHOD_LABELS) as DepreciationMethod[]).map((m) => ({ value: m, label: DEPRECIATION_METHOD_LABELS[m] }))
+            ]}
+          />
+          <NumberInput
+            min={0}
+            max={100}
+            placeholder="nt 20"
+            value={rate === '' ? null : Number(rate)}
+            onChange={(v) => onRateChange(v == null ? '' : String(v))}
+          />
+        </FieldRow>
+      </Field>
+    </>
   );
 };
 
@@ -320,12 +271,12 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     api.getArticles().then(setCostArticles).catch(() => setCostArticles([]));
   }, []);
   const [vServiceId, setVServiceId] = useState('');
-  const [vRate, setVRate] = useState('');
+  const [vRate, setVRate] = useState<number | null>(null);
   const [vFuelId, setVFuelId] = useState('');
   const [vTankL, setVTankL] = useState(''); // paagi maht, l
   const [vYear, setVYear] = useState<number | null>(null); // väljalaskeaasta
   const [impServiceId, setImpServiceId] = useState('');
-  const [impRate, setImpRate] = useState('');
+  const [impRate, setImpRate] = useState<number | null>(null);
   const [vAcqDate, setVAcqDate] = useState('');
   const [vDepRate, setVDepRate] = useState('');
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
@@ -599,7 +550,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVPowerKw('');
     setVCost('');
     setVServiceId('');
-    setVRate('');
+    setVRate(null);
     setVFuelId('');
     setVTankL('');
     setVYear(null);
@@ -619,7 +570,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpCategory('');
     setImpCost('');
     setImpServiceId('');
-    setImpRate('');
+    setImpRate(null);
     setImpAcqDate('');
     setImpDepRate('');
     setImpDepMethod('');
@@ -641,6 +592,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setDevReportsWhenParked(false);
   };
 
+  const timeOpts = (cur: string | undefined): SelectOption[] => getTimeOptions(cur).map((t) => ({ value: t, label: t }));
+
   const openAddForm = () => {
     if (activeTab === 'vehicles') resetVehicleForm();
     else if (activeTab === 'implements') resetImplementForm();
@@ -653,7 +606,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const handleCreateVehicle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!vName.trim()) return;
-    if (canManageFinance && !isRateTextValid(vRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
+    if (canManageFinance && !isRateValid(vRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
     const payload = {
       name: vName.trim(),
       manufacturer: vManufacturer.trim() || undefined,
@@ -666,7 +619,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       fuelArticleId: vFuelId || null,
       fuelCapacityL: parsePositive(vTankL) ?? null,
       year: vYear ?? undefined, // tühi → server salvestab tühjana
-      ...(canManageFinance ? { hourlyRate: parseRate(vRate) } : {}),
+      ...(canManageFinance ? { hourlyRate: vRate } : {}),
       acquisitionDate: vAcqDate || undefined,
       depreciationRate: parsePositive(vDepRate),
       depreciationMethod: vDepMethod || undefined,
@@ -692,7 +645,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const handleCreateImplement = (e: React.FormEvent) => {
     e.preventDefault();
     if (!impName.trim()) return;
-    if (canManageFinance && !isRateTextValid(impRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
+    if (canManageFinance && !isRateValid(impRate)) { alertDialog('Hind peab olema 0 või suurem'); return; }
     const payload = {
       name: impName.trim(),
       manufacturer: impManufacturer.trim(),
@@ -702,7 +655,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       category: normalizeCategory(impCategory, implementCategories),
       acquisitionCost: parsePositive(impCost),
       serviceArticleId: impServiceId || null,
-      ...(canManageFinance ? { hourlyRate: parseRate(impRate) } : {}),
+      ...(canManageFinance ? { hourlyRate: impRate } : {}),
       acquisitionDate: impAcqDate || undefined,
       depreciationRate: parsePositive(impDepRate),
       depreciationMethod: impDepMethod || undefined,
@@ -773,7 +726,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVPowerKw(v.powerKw != null ? String(v.powerKw) : '');
     setVCost(v.acquisitionCost != null ? String(v.acquisitionCost) : '');
     setVServiceId(v.serviceArticleId ?? '');
-    setVRate(rateText(v.hourlyRate));
+    setVRate(v.hourlyRate ?? null);
     setVFuelId(v.fuelArticleId ?? '');
     setVTankL(v.fuelCapacityL != null ? String(v.fuelCapacityL) : '');
     setVYear(v.year ?? null);
@@ -795,7 +748,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setImpCategory(imp.category || '');
     setImpCost(imp.acquisitionCost != null ? String(imp.acquisitionCost) : '');
     setImpServiceId(imp.serviceArticleId ?? '');
-    setImpRate(rateText(imp.hourlyRate));
+    setImpRate(imp.hourlyRate ?? null);
     setImpAcqDate(imp.acquisitionDate || '');
     setImpDepRate(imp.depreciationRate != null ? String(imp.depreciationRate) : '');
     setImpDepMethod(imp.depreciationMethod || '');
@@ -870,102 +823,92 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Masina nimi *</label>
-                    <input
+                <FormGrid className="fleet-form-grid">
+                  <Field label="Masina nimi *" htmlFor="v-name">
+                    <Input
+                      id="v-name"
                       type="text"
                       required
                       placeholder="nt John Deere 8R 410"
                       value={vName}
                       onChange={(e) => setVName(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Liik</label>
+                  </Field>
+                  <Field label="Liik" htmlFor="v-category">
                     <CategoryInput
                       id="vehicle-category-options"
+                      inputId="v-category"
                       value={vCategory}
                       onChange={setVCategory}
                       options={vehicleCategories}
                       placeholder="Vali olemasolev või sisesta uus"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Tootja & Mudel</label>
-                    <div className="input-split">
-                      <input
+                  </Field>
+                  <Field label="Tootja & Mudel" htmlFor="v-manufacturer">
+                    <FieldRow>
+                      <Input
+                        id="v-manufacturer"
                         type="text"
                         placeholder="John Deere"
                         value={vManufacturer}
                         onChange={(e) => setVManufacturer(e.target.value)}
-                        className="form-input"
                       />
-                      <input
+                      <Input
                         type="text"
+                        aria-label="Mudel"
                         placeholder="8R 410"
                         value={vModel}
                         onChange={(e) => setVModel(e.target.value)}
-                        className="form-input"
                       />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Võimsus (kW)</label>
+                    </FieldRow>
+                  </Field>
+                  <Field label="Võimsus (kW)" htmlFor="v-power">
                     <NumberInput
+                      id="v-power"
                       min={0}
                       placeholder="nt 302"
                       value={vPowerKw === '' ? null : Number(vPowerKw)}
                       onChange={(v) => setVPowerKw(v == null ? '' : String(v))}
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Masina tüüp ja värv</label>
-                    <div className="input-split">
-                      <select
+                  </Field>
+                  <Field label="Masina tüüp ja värv" htmlFor="v-type">
+                    <FieldRow>
+                      <Select
+                        id="v-type"
                         value={vType}
-                        onChange={(e) => setVType(e.target.value as VehicleType)}
-                        className="form-input"
-                      >
-                        {(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[]).map((t) => (
-                          <option key={t} value={t}>{VEHICLE_TYPE_LABELS[t]}</option>
-                        ))}
-                      </select>
-                      <input
+                        onValueChange={(v) => setVType(v as VehicleType)}
+                        options={(Object.keys(VEHICLE_TYPE_LABELS) as VehicleType[]).map((t) => ({ value: t, label: VEHICLE_TYPE_LABELS[t] }))}
+                      />
+                      <Input
                         type="color"
                         value={vColor}
                         onChange={(e) => setVColor(e.target.value)}
-                        className="form-input"
-                        style={{ padding: '2px', height: '36px' }}
                         title="Kaardimarkeri värv"
+                        aria-label="Kaardimarkeri värv"
                       />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Registrinumber</label>
-                    <input
+                    </FieldRow>
+                  </Field>
+                  <Field label="Registrinumber" htmlFor="v-plate">
+                    <Input
+                      id="v-plate"
                       type="text"
                       placeholder="4821 TH"
                       value={vPlate}
                       onChange={(e) => setVPlate(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>VIN / Seerianumber</label>
-                    <input
+                  </Field>
+                  <Field label="VIN / Seerianumber" htmlFor="v-serial">
+                    <Input
+                      id="v-serial"
                       type="text"
                       placeholder="nt 1RW8R410JKD012345"
                       value={vSerial}
                       onChange={(e) => setVSerial(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="v-year">Väljalaskeaasta</label>
+                  </Field>
+                  <Field label="Väljalaskeaasta" htmlFor="v-year">
                     <NumberInput id="v-year" integer min={1900} max={2100} placeholder="nt 2012" value={vYear} onChange={setVYear} />
-                  </div>
+                  </Field>
                   <DepreciationFields
                     date={vAcqDate}
                     onDateChange={setVAcqDate}
@@ -982,8 +925,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     hourlyRate={vRate} onRateChange={setVRate} canManageFinance={canManageFinance}
                     fuelArticleId={vFuelId} onFuelChange={setVFuelId}
                   />
-                  <div className="form-group">
-                    <label htmlFor="v-tank">Paagi maht (l)</label>
+                  <Field label="Paagi maht (l)" htmlFor="v-tank">
                     <NumberInput
                       id="v-tank"
                       min={0}
@@ -991,16 +933,18 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       value={vTankL === '' ? null : Number(vTankL)}
                       onChange={(v) => setVTankL(v == null ? '' : String(v))}
                     />
-                  </div>
-                  <div className="form-group full-width">
-                    <label>Märkused</label>
-                    <AutoResizeTextarea
+                  </Field>
+                  <Field label="Märkused" htmlFor="v-notes" span="full">
+                    <Textarea
+                      id="v-notes"
+                      autosize
+                      rows={2}
                       placeholder="Märkused masina kohta (nt hooldusvajadus, eriseadistus jne)..."
                       value={vNotes}
                       onChange={(e) => setVNotes(e.target.value)}
                     />
-                  </div>
-                </div>
+                  </Field>
+                </FormGrid>
 
               </DialogBody>
 
@@ -1021,74 +965,69 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Haakeriista nimi *</label>
-                    <input
+                <FormGrid className="fleet-form-grid">
+                  <Field label="Haakeriista nimi *" htmlFor="imp-name">
+                    <Input
+                      id="imp-name"
                       type="text"
                       required
                       placeholder="nt Väderstad Tempo L 16"
                       value={impName}
                       onChange={(e) => setImpName(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Liik</label>
+                  </Field>
+                  <Field label="Liik" htmlFor="imp-category">
                     <CategoryInput
                       id="implement-category-options"
+                      inputId="imp-category"
                       value={impCategory}
                       onChange={setImpCategory}
                       options={implementCategories}
                       placeholder="Vali olemasolev või sisesta uus"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>Tootja & Mudel</label>
-                    <div className="input-split">
-                      <input
+                  </Field>
+                  <Field label="Tootja & Mudel" htmlFor="imp-manufacturer">
+                    <FieldRow>
+                      <Input
+                        id="imp-manufacturer"
                         type="text"
                         placeholder="Väderstad"
                         value={impManufacturer}
                         onChange={(e) => setImpManufacturer(e.target.value)}
-                        className="form-input"
                       />
-                      <input
+                      <Input
                         type="text"
+                        aria-label="Mudel"
                         placeholder="Tempo L 16"
                         value={impModel}
                         onChange={(e) => setImpModel(e.target.value)}
-                        className="form-input"
                       />
-                    </div>
-                  </div>
-                  <div className="form-group">
-                    <label>Töölaius (m)</label>
+                    </FieldRow>
+                  </Field>
+                  <Field label="Töölaius (m)" htmlFor="imp-width">
                     <NumberInput
+                      id="imp-width"
                       decimals={1}
                       min={0}
                       value={impWidth}
                       onChange={setImpWidth}
                     />
-                  </div>
-                  <div className="form-group">
-                    <label>VIN / Seerianumber</label>
-                    <input
+                  </Field>
+                  <Field label="VIN / Seerianumber" htmlFor="imp-serial">
+                    <Input
+                      id="imp-serial"
                       type="text"
                       placeholder="nt TPL16-88902"
                       value={impSerial}
                       onChange={(e) => setImpSerial(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="imp-plate">Registrinumber</label>
-                    <input id="imp-plate" type="text" placeholder="nt 123 XYZ" value={impPlate} onChange={(e) => setImpPlate(e.target.value)} className="form-input" />
-                  </div>
-                  <div className="form-group">
-                    <label htmlFor="imp-year">Väljalaskeaasta</label>
+                  </Field>
+                  <Field label="Registrinumber" htmlFor="imp-plate">
+                    <Input id="imp-plate" type="text" placeholder="nt 123 XYZ" value={impPlate} onChange={(e) => setImpPlate(e.target.value)} />
+                  </Field>
+                  <Field label="Väljalaskeaasta" htmlFor="imp-year">
                     <NumberInput id="imp-year" integer min={1900} max={2100} placeholder="nt 2018" value={impYear} onChange={setImpYear} />
-                  </div>
+                  </Field>
                   <DepreciationFields
                     date={impAcqDate}
                     onDateChange={setImpAcqDate}
@@ -1104,15 +1043,17 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     serviceArticleId={impServiceId} onServiceChange={setImpServiceId}
                     hourlyRate={impRate} onRateChange={setImpRate} canManageFinance={canManageFinance}
                   />
-                  <div className="form-group full-width">
-                    <label>Märkused</label>
-                    <AutoResizeTextarea
+                  <Field label="Märkused" htmlFor="imp-notes" span="full">
+                    <Textarea
+                      id="imp-notes"
+                      autosize
+                      rows={2}
                       placeholder="Märkused haakeriista kohta (nt kuluosad, asukoht jne)..."
                       value={impNotes}
                       onChange={(e) => setImpNotes(e.target.value)}
                     />
-                  </div>
-                </div>
+                  </Field>
+                </FormGrid>
 
               </DialogBody>
 
@@ -1133,8 +1074,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
 
-                <div className="form-group connectivity-type-picker">
-                  <label>Seadme tüüp</label>
+                <Field label="Seadme tüüp" className="connectivity-type-picker">
                   <ToggleGroup
                     aria-label="Seadme tüüp"
                     value={devConnectivity}
@@ -1143,23 +1083,22 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <ToggleGroupItem value="cellular"><Radio size={14} />Mobiilne GPS (IMEI/SIM)</ToggleGroupItem>
                     <ToggleGroupItem value="eye_sensor"><Activity size={14} />Eye Sensor (MAC)</ToggleGroupItem>
                   </ToggleGroup>
-                </div>
-                <div className="form-grid">
+                </Field>
+                <FormGrid className="fleet-form-grid">
                   {devConnectivity === 'cellular' ? (
                     <>
-                      <div className="form-group">
-                        <label>Seadme mudel</label>
-                        <input
+                      <Field label="Seadme mudel" htmlFor="dev-model">
+                        <Input
+                          id="dev-model"
                           type="text"
                           placeholder="nt Teltonika FMC650 4G LTE"
                           value={devModel}
                           onChange={(e) => setDevModel(e.target.value)}
-                          className="form-input"
                         />
-                      </div>
-                      <div className="form-group">
-                        <label>IMEI kood (15 numbrit) *</label>
-                        <input
+                      </Field>
+                      <Field label="IMEI kood (15 numbrit) *" htmlFor="dev-imei" hint="15 numbrit">
+                        <Input
+                          id="dev-imei"
                           type="text"
                           required
                           placeholder="861234058812001"
@@ -1167,71 +1106,65 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           onChange={(e) => setDevImei(e.target.value)}
                           inputMode="numeric"
                           maxLength={15}
-                          className="form-input"
                         />
-                        <small style={{ color: 'var(--text-muted, #6b7280)' }}>15 numbrit</small>
-                      </div>
-                      <div className="form-group">
-                        <label>SIM kaardi number</label>
-                        <input
+                      </Field>
+                      <Field label="SIM kaardi number" htmlFor="dev-sim">
+                        <Input
+                          id="dev-sim"
                           type="text"
                           placeholder="+372 5311 8812"
                           value={devSim}
                           onChange={(e) => setDevSim(e.target.value)}
-                          className="form-input"
                         />
-                      </div>
+                      </Field>
                     </>
                   ) : (
                     <>
-                      <div className="form-group">
-                        <label>Seadme mudel</label>
-                        <input
+                      <Field label="Seadme mudel" htmlFor="dev-model">
+                        <Input
+                          id="dev-model"
                           type="text"
                           placeholder="nt Teltonika EYE Sensor"
                           value={devModel}
                           onChange={(e) => setDevModel(e.target.value)}
-                          className="form-input"
                         />
-                      </div>
-                      <div className="form-group">
-                        <label>MAC aadress *</label>
-                        <input
+                      </Field>
+                      <Field label="MAC aadress *" htmlFor="dev-mac" hint="nt AA:BB:CC:DD:EE:FF">
+                        <Input
+                          id="dev-mac"
                           type="text"
                           required
                           placeholder="AA:BB:CC:DD:EE:FF"
                           value={devMac}
                           onChange={(e) => setDevMac(e.target.value)}
-                          className="form-input"
                         />
-                        <small style={{ color: 'var(--text-muted, #6b7280)' }}>nt AA:BB:CC:DD:EE:FF</small>
-                      </div>
+                      </Field>
                     </>
                   )}
-                  <div className="form-group">
-                    <label>Soetamise kuupäev</label>
-                    <DateInput value={devAcqDate} onChange={setDevAcqDate} />
-                  </div>
+                  <Field label="Soetamise kuupäev" htmlFor="dev-acq-date">
+                    <DateInput id="dev-acq-date" value={devAcqDate} onChange={setDevAcqDate} />
+                  </Field>
                   {devConnectivity === 'cellular' && (
-                    <div className="form-group full-width">
-                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
-                        <input type="checkbox" checked={devReportsWhenParked} onChange={(e) => setDevReportsWhenParked(e.target.checked)} />
-                        Saadab andmeid ka seisu ajal (pidev toide)
-                      </label>
-                      <small style={{ color: 'var(--text-muted, #6b7280)' }}>
-                        Siis kontrollitakse sõitude vahel ka toitekatkestust ja seadme vaikimist. Ära märgi, kui seade seisu ajal ei saada või on süütega toitel.
-                      </small>
-                    </div>
+                    <Field span="full">
+                      <CheckboxField
+                        checked={devReportsWhenParked}
+                        onCheckedChange={setDevReportsWhenParked}
+                        label="Saadab andmeid ka seisu ajal (pidev toide)"
+                        hint="Siis kontrollitakse sõitude vahel ka toitekatkestust ja seadme vaikimist. Ära märgi, kui seade seisu ajal ei saada või on süütega toitel."
+                      />
+                    </Field>
                   )}
-                  <div className="form-group full-width">
-                    <label>Märkused</label>
-                    <AutoResizeTextarea
+                  <Field label="Märkused" htmlFor="dev-notes" span="full">
+                    <Textarea
+                      id="dev-notes"
+                      autosize
+                      rows={2}
                       placeholder="Märkused seadme kohta (nt paigalduskoht masinas, antenn jne)..."
                       value={devNotes}
                       onChange={(e) => setDevNotes(e.target.value)}
                     />
-                  </div>
-                </div>
+                  </Field>
+                </FormGrid>
 
               </DialogBody>
 
@@ -1257,64 +1190,47 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 )}
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Masin *</label>
-                    <select
+                <FormGrid className="fleet-form-grid">
+                  <Field label="Masin *" htmlFor="assign-vehicle">
+                    <Select
+                      id="assign-vehicle"
                       required
                       value={assignVehicleId}
-                      onChange={(e) => setAssignVehicleId(e.target.value)}
-                      className="form-input"
-                    >
-                      <option value="" disabled>Vali masin...</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          {v.name} ({VEHICLE_TYPE_LABELS[v.type] || v.type})
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      onValueChange={setAssignVehicleId}
+                      placeholder="Vali masin..."
+                      options={vehicles.map((v) => ({ value: v.id, label: `${v.name} (${VEHICLE_TYPE_LABELS[v.type] || v.type})` }))}
+                    />
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Haakeriist *</label>
-                    <select
+                  <Field label="Haakeriist *" htmlFor="assign-implement">
+                    <Select
+                      id="assign-implement"
                       required
                       value={assignImplementId}
-                      onChange={(e) => setAssignImplementId(e.target.value)}
-                      className="form-input"
-                    >
-                      <option value="" disabled>Vali haakeriist...</option>
-                      {implementsList.map((imp) => (
-                        <option key={imp.id} value={imp.id}>
-                          {imp.name}{imp.category ? ` (${imp.category})` : ''}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                      onValueChange={setAssignImplementId}
+                      placeholder="Vali haakeriist..."
+                      options={implementsList.map((imp) => ({ value: imp.id, label: `${imp.name}${imp.category ? ` (${imp.category})` : ''}` }))}
+                    />
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Haagitud (algusaeg) *</label>
+                  <Field label="Haagitud (algusaeg) *" htmlFor="assign-start-time">
                     <div className="assign-datetime">
                       <DateInput
                         value={assignStartDate}
                         onChange={setAssignStartDate}
                         required
                       />
-                      <select
-                        className="form-input time-select"
+                      <Select
+                        id="assign-start-time"
                         value={assignStartTime}
-                        onChange={(e) => setAssignStartTime(e.target.value)}
+                        onValueChange={setAssignStartTime}
                         required
-                      >
-                        {getTimeOptions(assignStartTime).map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
+                        options={timeOpts(assignStartTime)}
+                      />
                     </div>
-                  </div>
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Lahti haagitud (lõppaeg)</label>
+                  <Field label="Lahti haagitud (lõppaeg)" htmlFor="assign-end-time">
                     <div className="assign-datetime">
                       <DateInput
                         value={assignEndDate}
@@ -1323,19 +1239,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           if (!date) setAssignEndTime('');
                           else if (!assignEndTime) setAssignEndTime('17:00');
                         }}
-                        className="form-input"
                       />
-                      <select
-                        className="form-input time-select"
+                      <Select
+                        id="assign-end-time"
                         value={assignEndTime}
-                        onChange={(e) => setAssignEndTime(e.target.value)}
+                        onValueChange={setAssignEndTime}
                         disabled={!assignEndDate}
-                      >
-                        {!assignEndDate && <option value="">--:--</option>}
-                        {getTimeOptions(assignEndTime || undefined).map((t) => (
-                          <option key={t} value={t}>{t}</option>
-                        ))}
-                      </select>
+                        options={assignEndDate ? timeOpts(assignEndTime || undefined) : [{ value: '', label: '--:--' }]}
+                      />
                     </div>
                     <span className="assign-hint">
                       {assignEndDate ? (
@@ -1346,19 +1257,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
                       )}
                     </span>
-                  </div>
+                  </Field>
 
-                  <div className="form-group full-width">
-                    <label>Märkused</label>
-                    <AutoResizeTextarea
+                  <Field label="Märkused" htmlFor="assign-notes" span="full">
+                    <Textarea
+                      id="assign-notes"
+                      autosize
                       placeholder="Lisa märkused, tööülesanne või lisainfo..."
                       value={assignNotes}
                       onChange={(e) => setAssignNotes(e.target.value)}
-                      className="form-input"
                       rows={2}
                     />
-                  </div>
-                </div>
+                  </Field>
+                </FormGrid>
+
               </DialogBody>
 
               <DialogFooter>
@@ -1670,22 +1582,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 <div className="imp-card-footer">
                   <div className="imp-actions">
-                    <select
-                      className="form-input imp-assign-select"
+                    <Select
+                      size="sm"
+                      className="imp-assign-select"
+                      aria-label="Haagi masinale"
                       value={assignedVehicle ? assignedVehicle.id : ''}
-                      onChange={(e) => {
-                        const newVehId = e.target.value || undefined;
+                      onValueChange={(v) => {
+                        const newVehId = v || undefined;
                         onAssignImplement(imp.id, newVehId);
                         setTimeout(loadImplementAssignments, 400);
                       }}
-                    >
-                      <option value="">-- Jäta lattu (vaba) --</option>
-                      {vehicles.map((v) => (
-                        <option key={v.id} value={v.id}>
-                          Haagi masinale: {v.name}
-                        </option>
-                      ))}
-                    </select>
+                      options={[
+                        { value: '', label: '-- Jäta lattu (vaba) --' },
+                        ...vehicles.map((v) => ({ value: v.id, label: `Haagi masinale: ${v.name}` })),
+                      ]}
+                    />
                   </div>
                 </div>
               </div>
@@ -1784,36 +1695,26 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )}
 
                 <div className="dev-assignment-box">
-                  <label className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                  <label htmlFor={`dev-assign-${dev.id}`} className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
                     Paigaldatud:
                   </label>
-                  <select
-                    className="form-input dev-assign-select"
+                  <Select
+                    size="sm"
+                    id={`dev-assign-${dev.id}`}
+                    className="dev-assign-select"
                     value={targetValue}
-                    onChange={(e) => {
-                      const val = e.target.value;
+                    onValueChange={(val) => {
                       if (!val) { assignDevice(dev.id, undefined, undefined); return; }
                       const [kind, targetId] = val.split(':');
                       if (kind === 'veh') assignDevice(dev.id, targetId, undefined);
                       else assignDevice(dev.id, undefined, targetId);
                     }}
-                  >
-                    <option value="">-- Riiulis / Paigaldamata --</option>
-                    <optgroup label="🚜 Masinad">
-                      {vehicles.map((v) => (
-                        <option key={`veh:${v.id}`} value={`veh:${v.id}`}>
-                          {v.name} ({v.registrationPlate || 'nr puudub'})
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="🔧 Haakeriistad">
-                      {implementsList.map((imp) => (
-                        <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>
-                          {imp.name}
-                        </option>
-                      ))}
-                    </optgroup>
-                  </select>
+                    options={[
+                      { value: '', label: '-- Riiulis / Paigaldamata --' },
+                      ...vehicles.map((v) => ({ value: `veh:${v.id}`, label: `${v.name} (${v.registrationPlate || 'nr puudub'})`, group: '🚜 Masinad' })),
+                      ...implementsList.map((imp) => ({ value: `imp:${imp.id}`, label: imp.name, group: '🔧 Haakeriistad' })),
+                    ]}
+                  />
                 </div>
 
                 {/* Märkused */}

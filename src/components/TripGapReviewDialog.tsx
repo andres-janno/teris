@@ -5,7 +5,7 @@ import type { TripGap } from '../types/fleet';
 import { api } from '../services/api';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { gapParts } from './tripGapText';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Button, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface Props {
   gap: TripGap;
@@ -39,14 +39,13 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
             Sõitude vahel {formatDateTime(gap.startedAt)} – {formatDateTime(gap.endedAt)} ({formatDuration(gap.startedAt, gap.endedAt)}):{' '}
             {gapParts(gap).join(' · ')}
           </p>
-          <div className="form-group full-width">
-            <label htmlFor="trip-gap-note">Selgitus</label>
-            <textarea
-              id="trip-gap-note" className="form-input" rows={3} value={note} autoFocus
+          <Field label="Selgitus" htmlFor="trip-gap-note" span="full">
+            <Textarea
+              id="trip-gap-note" rows={3} value={note} autoFocus
               placeholder="nt tankisime kanistrist; traktor veeti treileriga remonti"
               onChange={(e) => setNote(e.target.value)}
             />
-          </div>
+          </Field>
           {error && <div className="auth-error-banner">{error}</div>}
         </DialogBody>
         <DialogFooter>

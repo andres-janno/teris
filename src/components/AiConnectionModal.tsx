@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Input, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
@@ -105,7 +105,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
                 <span>Linki näidatakse ainult üks kord. See annab ligipääsu sinu Terise andmetele — ära jaga seda.</span>
               </div>
               <div className="ai-key-url">
-                <input className="form-input" readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
+                <Input readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
                 <Button type="button" variant="primary" onClick={() => void copy()}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                   <span>{copied ? 'Kopeeritud' : 'Kopeeri'}</span>
@@ -115,8 +115,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
           )}
 
           <form className="ai-key-new" onSubmit={create}>
-            <input
-              className="form-input"
+            <Input
               placeholder="Võtme nimi (valikuline), nt Claude Desktop sülearvutis"
               maxLength={100}
               value={name}

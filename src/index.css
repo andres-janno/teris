@@ -2357,15 +2357,6 @@ body {
   margin-top: 2px;
 }
 
-.auto-resize-textarea {
-  field-sizing: content;
-  min-height: 62px;
-  max-height: 320px;
-  line-height: 1.45;
-  box-sizing: border-box;
-  transition: border-color 0.15s ease;
-}
-
 /* Implements Grid */
 .implements-grid,
 .devices-grid {
@@ -2475,8 +2466,6 @@ body {
 .imp-assign-select,
 .dev-assign-select {
   flex: 1;
-  font-size: 0.74rem;
-  padding: 5px 8px;
 }
 
 .dev-telemetry-summary {
@@ -3648,33 +3637,17 @@ input[type="number"],
   gap: 8px;
 }
 
-/* Veerud ja väljad tohivad kahaneda alla sisu laiuse (pikad <select> valikud,
-   kõrvuti väljad), muidu venib vorm modaalist laiemaks ja tekib kerimisriba. */
-.fleet-edit-modal .form-grid {
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+/* Värvivalija masina vormis: kitsas ruut tüübi kõrval */
+.fleet-edit-modal [data-slot="input"][type="color"] {
+  flex: 0 0 56px !important;
+  width: 56px !important;
+  padding: 2px !important;
 }
 
-.fleet-edit-modal .form-group,
-.fleet-edit-modal .form-input {
-  min-width: 0;
-}
-
-.fleet-edit-modal .form-group > .form-input,
-.fleet-edit-modal .input-split > .form-input {
-  width: 100%;
-}
-
-.fleet-edit-modal .input-split > .form-input {
-  flex: 1 1 0;
-}
-
-.fleet-edit-modal .input-split > .form-input[type="color"] {
-  flex: 0 0 56px;
-}
-
+/* Kitsal ekraanil üks veerg (FormGrid on muidu alati 2 veergu) */
 @media (max-width: 560px) {
-  .fleet-edit-modal .form-grid {
-    grid-template-columns: minmax(0, 1fr);
+  .fleet-form-grid {
+    grid-template-columns: minmax(0, 1fr) !important;
   }
 }
 
@@ -4594,11 +4567,9 @@ input[type="number"],
 }
 
 .party-role-checkbox {
-  display: flex;
-  align-items: center;
+  align-items: center !important;
   gap: 8px;
-  font-size: 0.78rem;
-  cursor: pointer;
+  font-size: 0.78rem !important;
   padding: 6px 10px;
   border-radius: 6px;
   border: 1px solid var(--border-color);
@@ -4611,11 +4582,9 @@ input[type="number"],
   border-color: var(--emerald-500);
 }
 
-.party-role-checkbox input[type="checkbox"] {
-  accent-color: var(--emerald-500);
-  width: 15px;
-  height: 15px;
-  cursor: pointer;
+.party-role-checkbox.selected {
+  background: rgba(16, 185, 129, 0.12);
+  border-color: var(--emerald-500);
 }
 
 /* Kultuuride register: neli veergu (teraviljad, õlikultuurid, kaunviljad, muud) */
@@ -4924,17 +4893,24 @@ input[type="number"],
   color: var(--login-ink-soft);
 }
 
-.login-page .login-card .form-input {
-  background: rgba(255, 253, 247, 0.85);
-  border-color: var(--login-line);
-  color: var(--login-ink);
-  padding: 9px 12px;
-  font-size: 0.85rem;
+/* Field-i silt (ui utiliit) võidab legacy-kihi värvi: !important hoiab lehe oma tooni */
+.login-page .login-card label {
+  color: var(--login-ink-soft) !important;
 }
 
-.login-page .login-card .form-input:focus {
-  border-color: #c98a2e;
-  box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.18);
+/* Sisselogimise lehe oma väljad (ui Input): värvid, polster, font ja oranž fookus nagu enne */
+.login-page .login-card [data-slot="input"] {
+  background: rgba(255, 253, 247, 0.85) !important;
+  border-color: var(--login-line) !important;
+  color: var(--login-ink) !important;
+  height: auto !important;
+  padding: 9px 12px !important;
+  font-size: 0.85rem !important;
+}
+
+.login-page .login-card [data-slot="input"]:focus {
+  border-color: #c98a2e !important;
+  box-shadow: 0 0 0 3px rgba(217, 130, 43, 0.18) !important;
 }
 
 /* Sisselogimise lehe põhinupp: lehe oma roheline (erand ühtsest nupust, kasutaja otsus 2026-11-13).
@@ -5118,8 +5094,8 @@ input[type="number"],
 
 .ai-key-created { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .ai-key-url, .ai-key-new { display: flex; gap: 8px; }
-.ai-key-url .form-input, .ai-key-new .form-input { flex: 1; min-width: 0; }
-.ai-key-url .form-input { font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 12px; }
+.ai-key-url [data-slot="input"], .ai-key-new [data-slot="input"] { flex: 1; min-width: 0; }
+.ai-key-url [data-slot="input"] { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; font-size: 12px !important; }
 .ai-key-table-wrap { margin: 16px 0; }
 .ai-key-help { font-size: 13px; }
 .ai-key-help ol { margin: 6px 0 0 18px; padding: 0; }
@@ -5152,14 +5128,11 @@ input[type="number"],
   gap: 6px;
 }
 
-.login-forgot-row .form-input {
+.login-forgot-row [data-slot="input"] {
   flex: 1;
 }
 
 .users-admin-mode {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
   margin-bottom: 10px;
 }
 
@@ -5177,14 +5150,6 @@ input[type="number"],
   display: flex;
   flex-direction: column;
   line-height: 1.3;
-}
-
-.users-admin-checkbox {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  cursor: pointer;
 }
 
 /* ==========================================================================
@@ -7013,11 +6978,6 @@ input[type="number"],
     grid-template-columns: 1fr 1fr;
     grid-auto-flow: row;
   }
-}
-
-select.time-select {
-  font-weight: 600;
-  color: var(--text-primary);
 }
 
 .work-entry-section {

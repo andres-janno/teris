@@ -9,8 +9,8 @@ interface ResourceCostFieldsProps {
   articles: Article[];
   serviceArticleId: string;
   onServiceChange: (id: string) => void;
-  hourlyRate: string;
-  onRateChange: (v: string) => void;
+  hourlyRate: number | null;
+  onRateChange: (v: number | null) => void;
   canManageFinance: boolean;
   fuelArticleId?: string; // ainult masinal
   onFuelChange?: (id: string) => void;
@@ -39,13 +39,12 @@ export const ResourceCostFields: React.FC<ResourceCostFieldsProps> = ({
       </Field>
       {canManageFinance && (
         <Field label={<span title="Tühi = teenuse hind">Oma tunnihind (€/h)</span>} htmlFor={`rc-rate-${serviceKind}`}>
-          {/* Kutsujad hoiavad hinda tekstina (parseRate/rateText), seega sild siin: arv ↔ tekst, salvestatav väärtus sama */}
           <NumberInput
             id={`rc-rate-${serviceKind}`}
             decimals={4}
             placeholder="teenuse hind"
-            value={parseRate(hourlyRate)}
-            onChange={(n) => onRateChange(rateText(n))}
+            value={hourlyRate}
+            onChange={onRateChange}
           />
         </Field>
       )}
@@ -63,19 +62,5 @@ export const ResourceCostFields: React.FC<ResourceCostFieldsProps> = ({
   );
 };
 
-/** Tunnihinna tekst → number (tühi → null); koma lubatud. */
-export const parseRate = (v: string): number | null => {
-  const t = v.trim().replace(',', '.');
-  if (!t) return null;
-  const n = Number(t);
-  return Number.isFinite(n) ? n : null;
-};
-
-/** Tühi tekst on lubatud (= teenuse hind); muidu peab olema lõplik arv vahemikus 0 ≤ x < 1e8. */
-export const isRateTextValid = (v: string): boolean => {
-  if (!v.trim()) return true;
-  const n = parseRate(v);
-  return n != null && n >= 0 && n < 1e8;
-};
-
-export const rateText = (v: number | null | undefined): string => (v == null ? '' : String(v).replace('.', ','));
+/** Tühi (null) on lubatud (= teenuse hind); muidu peab olema lõplik arv vahemikus 0 ≤ x < 1e8. */
+export const isRateValid = (n: number | null): boolean => n == null || (Number.isFinite(n) && n >= 0 && n < 1e8);

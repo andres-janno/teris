@@ -9,7 +9,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -264,10 +264,9 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
               </ul>
             </>
           )}
-          <div className="form-group full-width">
-            <label>Märkus</label>
-            <textarea className="form-input" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
-          </div>
+          <Field label="Märkus" htmlFor="trip-notes" span="full">
+            <Textarea id="trip-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
+          </Field>
           {error && <div className="auth-error-banner">{error}</div>}
         </DialogBody>
         <DialogFooter>

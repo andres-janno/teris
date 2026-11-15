@@ -7,7 +7,7 @@ import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../t
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -167,16 +167,11 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
 
   const hasFilters = deviceFilter !== 'all' || targetFilter !== 'all' || statusFilter !== 'all';
 
-  const targetOptions = (
-    <>
-      <optgroup label="🚜 Masinad">
-        {vehicles.map((v) => <option key={`veh:${v.id}`} value={`veh:${v.id}`}>{v.name}</option>)}
-      </optgroup>
-      <optgroup label="🔧 Haakeriistad">
-        {implementsList.map((imp) => <option key={`imp:${imp.id}`} value={`imp:${imp.id}`}>{imp.name}</option>)}
-      </optgroup>
-    </>
-  );
+  const targetOptions: SelectOption[] = [
+    ...vehicles.map((v) => ({ value: `veh:${v.id}`, label: v.name, group: '🚜 Masinad' })),
+    ...implementsList.map((imp) => ({ value: `imp:${imp.id}`, label: imp.name, group: '🔧 Haakeriistad' })),
+  ];
+  const timeSelectOptions = (cur: string): SelectOption[] => getTimeOptions(cur || undefined).map((t) => ({ value: t, label: t }));
 
   return (
     <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -361,35 +356,25 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                   </div>
                 )}
 
-                <div className="form-grid">
-                  <div className="form-group">
-                    <label>Seade *</label>
-                    <select required value={formDeviceId} onChange={(e) => setFormDeviceId(e.target.value)} className="form-input">
-                      <option value="" disabled>Vali seade...</option>
-                      {devices.map((d) => <option key={d.id} value={d.id}>{deviceLabel(d)}</option>)}
-                    </select>
-                  </div>
+                <FormGrid>
+                  <Field label="Seade *" htmlFor="assign-device">
+                    <Select id="assign-device" required value={formDeviceId} onValueChange={setFormDeviceId} placeholder="Vali seade..."
+                      options={devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))} />
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Masin / haakeriist *</label>
-                    <select required value={formTarget} onChange={(e) => setFormTarget(e.target.value)} className="form-input">
-                      <option value="" disabled>Vali masin või haakeriist...</option>
-                      {targetOptions}
-                    </select>
-                  </div>
+                  <Field label="Masin / haakeriist *" htmlFor="assign-target">
+                    <Select id="assign-target" required value={formTarget} onValueChange={setFormTarget} placeholder="Vali masin või haakeriist..."
+                      options={targetOptions} />
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Paigaldatud (algusaeg) *</label>
+                  <Field label="Paigaldatud (algusaeg) *" htmlFor="assign-start-time">
                     <div className="assign-datetime">
                       <DateInput value={startDate} onChange={setStartDate} required />
-                      <select className="form-input time-select" value={startTime} onChange={(e) => setStartTime(e.target.value)} required>
-                        {getTimeOptions(startTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
+                      <Select id="assign-start-time" required value={startTime} onValueChange={setStartTime} options={timeSelectOptions(startTime)} />
                     </div>
-                  </div>
+                  </Field>
 
-                  <div className="form-group">
-                    <label>Eemaldatud (lõppaeg)</label>
+                  <Field label="Eemaldatud (lõppaeg)" htmlFor="assign-end-time">
                     <div className="assign-datetime">
                       <DateInput
                         value={endDate}
@@ -398,12 +383,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                           if (!date) setEndTime('');
                           else if (!endTime) setEndTime('17:00');
                         }}
-                        className="form-input"
                       />
-                      <select className="form-input time-select" value={endTime} onChange={(e) => setEndTime(e.target.value)} disabled={!endDate}>
-                        {!endDate && <option value="">--:--</option>}
-                        {getTimeOptions(endTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
+                      <Select id="assign-end-time" value={endTime} onValueChange={setEndTime} disabled={!endDate}
+                        options={endDate ? timeSelectOptions(endTime) : [{ value: '', label: '--:--' }]} />
                     </div>
                     <span className="assign-hint">
                       {endDate ? (
@@ -414,19 +396,18 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         <span className="assign-hint-active">Lõppaeg tühi — seade on praegu paigaldatud</span>
                       )}
                     </span>
-                  </div>
+                  </Field>
 
-                  <div className="form-group full-width">
-                    <label>Märkused</label>
-                    <textarea
-                      className="form-input"
+                  <Field label="Märkused" htmlFor="assign-notes" span="full">
+                    <Textarea
+                      id="assign-notes"
                       rows={2}
                       placeholder="Lisa märkused (nt paigalduskoht, antenn)..."
                       value={notes}
                       onChange={(e) => setNotes(e.target.value)}
                     />
-                  </div>
-                </div>
+                  </Field>
+                </FormGrid>
               </DialogBody>
 
               <DialogFooter>

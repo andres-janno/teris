@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -266,47 +266,38 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                 </Button>
               </div>
 
-              <div className="form-grid">
-                <div className="form-group">
-                  <label>Nimi *</label>
-                  <input
+              <FormGrid>
+                <Field label="Nimi *" htmlFor="poi-name">
+                  <Input
+                    id="poi-name"
                     type="text"
                     required
                     placeholder="nt Loisu vesi või Riidaja kuivati"
                     value={name}
                     onChange={(e) => setName(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Kategooria</label>
-                  <select
+                <Field label="Kategooria" htmlFor="poi-category">
+                  <Select
+                    id="poi-category"
                     value={category}
-                    onChange={(e) => setCategory(e.target.value as PoiCategory)}
-                    className="form-input"
-                  >
-                    {(Object.keys(CATEGORY_META) as PoiCategory[]).map((cat) => (
-                      <option key={cat} value={cat}>
-                        {CATEGORY_META[cat].emoji} {CATEGORY_META[cat].label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    onValueChange={(v) => setCategory(v as PoiCategory)}
+                    options={(Object.keys(CATEGORY_META) as PoiCategory[]).map((cat) => ({ value: cat, label: `${CATEGORY_META[cat].emoji} ${CATEGORY_META[cat].label}` }))}
+                  />
+                </Field>
 
-                <div className="form-group">
-                  <label>Laiuskraad (Lat WGS84)</label>
-                  <NumberInput value={lat} onChange={setLat} decimals={6} />
-                </div>
+                <Field label="Laiuskraad (Lat WGS84)" htmlFor="poi-lat">
+                  <NumberInput id="poi-lat" value={lat} onChange={setLat} decimals={6} />
+                </Field>
 
-                <div className="form-group">
-                  <label>Pikkuskraad (Lng WGS84)</label>
-                  <NumberInput value={lng} onChange={setLng} decimals={6} />
-                </div>
+                <Field label="Pikkuskraad (Lng WGS84)" htmlFor="poi-lng">
+                  <NumberInput id="poi-lng" value={lng} onChange={setLng} decimals={6} />
+                </Field>
 
-                <div className="form-group">
-                  <label>Raadius, m</label>
+                <Field label="Raadius, m" htmlFor="poi-radius">
                   <NumberInput
+                    id="poi-radius"
                     integer
                     min={5}
                     max={1000}
@@ -314,61 +305,57 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                     onChange={setRadiusM}
                     title="Sõidu punkt selle kauguse piires loetakse objekti juures olevaks (5–1000 m, vaikimisi 25)"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Mahutavus / Jõudlus</label>
-                  <input
+                <Field label="Mahutavus / Jõudlus" htmlFor="poi-capacity">
+                  <Input
+                    id="poi-capacity"
                     type="text"
                     placeholder="nt 40 m³ mahuti / 1000 L/min"
                     value={capacity}
                     onChange={(e) => setCapacity(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group">
-                  <label>Kontaktisik & Telefon</label>
-                  <div className="input-split">
-                    <input
+                <Field label="Kontaktisik & Telefon" htmlFor="poi-contact">
+                  <FieldRow>
+                    <Input
+                      id="poi-contact"
                       type="text"
                       placeholder="Nimi"
                       value={contactPerson}
                       onChange={(e) => setContactPerson(e.target.value)}
-                      className="form-input"
                     />
-                    <input
+                    <Input
                       type="text"
+                      aria-label="Telefon"
                       placeholder="+372 555..."
                       value={phone}
                       onChange={(e) => setPhone(e.target.value)}
-                      className="form-input"
                     />
-                  </div>
-                </div>
+                  </FieldRow>
+                </Field>
 
-                <div className="form-group full-width">
-                  <label>Kirjeldus</label>
-                  <textarea
+                <Field label="Kirjeldus" htmlFor="poi-description" span="full">
+                  <Textarea
+                    id="poi-description"
                     rows={2}
                     placeholder="nt tootmisbaas, masinakuur ja töökoda"
                     value={description}
                     onChange={(e) => setDescription(e.target.value)}
-                    className="form-input"
                   />
-                </div>
+                </Field>
 
-                <div className="form-group full-width">
-                  <label>Ligipääsujuhis (suurtele pritsidele/veokitele)</label>
-                  <textarea
+                <Field label="Ligipääsujuhis (suurtele pritsidele/veokitele)" htmlFor="poi-access" span="full">
+                  <Textarea
+                    id="poi-access"
                     rows={2}
                     placeholder="Ligipääs maanteelt 24198, kõvakattega ringtee..."
                     value={accessNotes}
                     onChange={(e) => setAccessNotes(e.target.value)}
-                    className="form-input"
                   />
-                </div>
-              </div>
+                </Field>
+              </FormGrid>
 
                   </DialogBody>
 

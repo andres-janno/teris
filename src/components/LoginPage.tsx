@@ -6,7 +6,7 @@ import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
-import { Button } from './ui';
+import { Button, Field, Input } from './ui';
 
 interface LoginPageProps {
   notice?: string | null;
@@ -53,30 +53,26 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
             </div>
           )}
 
-          <div className="form-group">
-            <label htmlFor="login-username">Kasutajanimi</label>
-            <input
+          <Field label="Kasutajanimi" htmlFor="login-username">
+            <Input
               id="login-username"
-              className="form-input"
               autoComplete="username"
               autoFocus
               required
               value={username}
               onChange={(e) => setUsername(e.target.value)}
             />
-          </div>
-          <div className="form-group">
-            <label htmlFor="login-password">Parool</label>
-            <input
+          </Field>
+          <Field label="Parool" htmlFor="login-password">
+            <Input
               id="login-password"
               type="password"
-              className="form-input"
               autoComplete="current-password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
             />
-          </div>
+          </Field>
           <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
             <LogIn size={16} />
             <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
@@ -92,7 +88,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
                 <>
                   <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
                   <div className="login-forgot-row">
-                    <input id="forgot-login" className="form-input" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
+                    <Input id="forgot-login" value={forgotLogin} onChange={(e) => setForgotLogin(e.target.value)} />
                     <Button
                       type="button"
                       disabled={!forgotLogin.trim()}
