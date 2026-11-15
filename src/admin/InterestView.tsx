@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, INTEREST_STATUS_LABELS, type InterestRow, type InterestStatus } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
-import { FilterClear } from '../components/ui';
+import { FilterClear, Card } from '../components/ui';
 
 const STATUSES = Object.keys(INTEREST_STATUS_LABELS) as InterestStatus[];
 
@@ -43,7 +43,7 @@ export function InterestView() {
   };
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <h2>Huvilised</h2>
       <div className="admin-filter-row">
         <label htmlFor="interest-filter">Staatus</label>
@@ -91,6 +91,6 @@ export function InterestView() {
           </tbody>
         </table>
       </div>
-    </div>
+    </Card>
   );
 }

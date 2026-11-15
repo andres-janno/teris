@@ -1,3 +1,4 @@
+import { Card } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type TenantSummary } from './platformApi.ts';
 import { LicenseCell } from './LicenseCell.tsx';
@@ -23,7 +24,7 @@ export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) =>
   }, []);
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <div className="admin-toolbar">
         <h2>Ettevõtted</h2>
         <button type="button" className="btn btn-primary" onClick={onNew}>
@@ -68,6 +69,6 @@ export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) =>
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

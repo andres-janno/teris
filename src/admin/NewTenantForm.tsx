@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { MODULES, platformApi, type LicenseModule } from './platformApi.ts';
-import { DateInput } from '../components/ui';
+import { DateInput, Card } from '../components/ui';
 
 export function ModuleChecks({ value, onChange }: { value: LicenseModule[]; onChange: (v: LicenseModule[]) => void }) {
   return (
@@ -57,7 +57,7 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
   };
 
   return (
-    <form className="glass-card admin-card admin-form" onSubmit={submit}>
+    <Card asChild className="admin-card"><form className="admin-form" onSubmit={submit}>
       <h2>Uus ettevõte</h2>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-form-grid">
@@ -98,6 +98,6 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
           Tühista
         </button>
       </div>
-    </form>
+    </form></Card>
   );
 }

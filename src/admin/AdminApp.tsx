@@ -1,3 +1,4 @@
+import { Card } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, setUnauthorizedHandler } from './platformApi.ts';
 import { LoginView } from './LoginView.tsx';
@@ -92,10 +93,10 @@ export function AdminApp() {
       {view.kind === 'landing' && <LandingStatsView />}
       {view.kind === 'interest' && <InterestView />}
       {view.kind === 'audit' && (
-        <div className="glass-card admin-card">
+        <Card className="admin-card">
           <h2>Logi</h2>
           <AuditView />
-        </div>
+        </Card>
       )}
     </div>
   );

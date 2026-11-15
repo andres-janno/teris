@@ -48,7 +48,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
     <div className="login-page">
       <LoginBackdrop />
       <div className="login-column">
-        <form className="login-card glass-card" onSubmit={submit}>
+        <form className="login-card" onSubmit={submit}>
           <div className="login-brand">
             <TerisLogo variant="vertical" />
           </div>

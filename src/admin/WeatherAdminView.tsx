@@ -1,4 +1,5 @@
 // Ilmapunktide laadimise olek (ERA5-Land) ja käsitsi uuesti laadimine.
+import { Card } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type WeatherPointRow } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
@@ -42,7 +43,7 @@ export function WeatherAdminView() {
   const warn = (p: WeatherPointRow) => !!data && p.failCount >= data.failWarn;
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <h2>Ilmaandmed (ERA5-Land)</h2>
       {error && <div className="alert-box error">{error}</div>}
       {notice && <div className="alert-box">{notice}</div>}
@@ -91,6 +92,6 @@ export function WeatherAdminView() {
       <p className="admin-hint">
         Laadimine käib igal ööl Tallinna aja järgi kella 3 ja 7 vahel (kontroll kord tunnis, iga punkt kuni kord ~20 tunni jooksul). Esialgsed (viimase 90 päeva) andmed laetakse uuesti esmaspäeva öösel. „Lae uuesti“ laeb punkti kohe ja värskendab ka viimased 90 päeva.
       </p>
-    </div>
+    </Card>
   );
 }

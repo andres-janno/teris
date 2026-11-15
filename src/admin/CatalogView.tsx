@@ -10,7 +10,7 @@ import {
   type CropGroup,
   type WorkPhase
 } from './platformApi.ts';
-import { NumberInput } from '../components/ui';
+import { NumberInput, Card } from '../components/ui';
 
 type Tab = 'crops' | 'workTypes';
 
@@ -110,7 +110,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
   };
 
   return (
-    <form className="admin-form admin-subform" onSubmit={submit}>
+    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{crop ? `Muuda kultuuri: ${crop.name}` : 'Uus kultuur'}</h3>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-form-grid">
@@ -158,7 +158,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</button>
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>Tühista</button>
       </div>
-    </form>
+    </form></Card>
   );
 }
 
@@ -217,7 +217,7 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
   };
 
   return (
-    <form className="admin-form admin-subform" onSubmit={submit}>
+    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{variety ? `Muuda sorti: ${variety.name}` : 'Uus sort'}</h3>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-form-grid">
@@ -251,7 +251,7 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</button>
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>Tühista</button>
       </div>
-    </form>
+    </form></Card>
   );
 }
 
@@ -431,7 +431,7 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
   };
 
   return (
-    <form className="admin-form admin-subform" onSubmit={submit}>
+    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{wt ? `Muuda tööliiki: ${wt.name}` : 'Uus tööliik'}</h3>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-form-grid">
@@ -457,7 +457,7 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
         <button type="submit" className="btn btn-primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</button>
         <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>Tühista</button>
       </div>
-    </form>
+    </form></Card>
   );
 }
 
@@ -544,7 +544,7 @@ export function CatalogView() {
   useEffect(reload, [reload]);
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <h2>Algkataloog</h2>
       <div className="alert-box info">Algkataloogi muudatused kehtivad ainult edaspidi loodavatele ettevõtetele.</div>
       <div className="admin-nav">
@@ -558,6 +558,6 @@ export function CatalogView() {
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && tab === 'crops' && <CropsTab data={data} reload={reload} />}
       {data && tab === 'workTypes' && <WorkTypesTab data={data} reload={reload} />}
-    </div>
+    </Card>
   );
 }

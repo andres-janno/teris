@@ -150,10 +150,10 @@ select.form-input:read-only {
 .admin-header-right { display: flex; align-items: center; gap: 12px; font-size: 0.85rem; }
 .admin-nav { display: flex; gap: 8px; margin-bottom: 16px; }
 .admin-nav .btn.active { outline: 2px solid var(--accent, #10b981); }
-.admin-card { padding: 16px; margin-bottom: 16px; }
+.admin-card { margin-bottom: 16px; }
 .admin-card h2 { font-size: 1.05rem; margin: 0 0 12px; }
 .admin-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-.admin-login { max-width: 380px; margin: 12vh auto 0; padding: 24px; }
+.admin-login { max-width: 380px; margin: 12vh auto 0; }
 .admin-login h1 { font-size: 1.2rem; margin: 0 0 16px; }
 .admin-form { display: grid; gap: 12px; }
 .admin-form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -177,7 +177,7 @@ select.form-input:read-only {
 .admin-warning-text { color: #b45309; font-weight: 600; }
 .admin-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
 .admin-meta div span { display: block; font-size: 0.7rem; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; }
-.admin-subform { padding: 12px; margin-bottom: 12px; border: 1px solid var(--border-card); border-radius: 8px; }
+.admin-subform { margin-bottom: 12px; }
 .admin-subform h3 { font-size: 0.95rem; margin: 0; }
 .admin-subpanel { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-card); }
 .admin-check { display: flex; align-items: center; gap: 6px; font-weight: 500; }
@@ -234,7 +234,7 @@ select.form-input:read-only {
 .admin-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
 .admin-filter-row .form-input, .admin-filter-row [data-slot="input-group"] { width: auto; }
 .admin-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
-.admin-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1px solid var(--border-card); border-radius: 10px; }
+.admin-stat { display: flex; flex-direction: column; gap: 2px; }
 .admin-stat span { font-size: 0.72rem; text-transform: uppercase; color: var(--text-secondary); }
 .admin-stat strong { font-size: 1.4rem; }
 .admin-stat small { color: var(--text-secondary); }

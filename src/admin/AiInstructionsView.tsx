@@ -1,4 +1,5 @@
 // AI ühenduse juhis: tekst, mille MCP server saadab AI-kliendile ühenduse alguses (kõigile ettevõtetele ühine).
+import { Card } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type McpInstructions } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -33,11 +34,11 @@ export function AiInstructionsView() {
     }
   };
 
-  if (!data) return <div className="glass-card admin-card">{error || 'Laen…'}</div>;
+  if (!data) return <Card className="admin-card">{error || 'Laen…'}</Card>;
   const dirty = draft !== data.value;
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <h2>AI ühendus — juhis AI-le</h2>
       <p className="muted">
         Seda teksti näeb AI-klient (nt Claude) iga uue ühenduse alguses. Juhis on kõigile ettevõtetele ühine. Muudatus kehtib kasutaja järgmisest ühendusest.
@@ -63,6 +64,6 @@ export function AiInstructionsView() {
           Salvesta
         </button>
       </div>
-    </div>
+    </Card>
   );
 }

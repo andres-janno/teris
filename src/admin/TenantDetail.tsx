@@ -5,7 +5,7 @@ import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
-import { DateInput } from '../components/ui';
+import { DateInput, Card } from '../components/ui';
 
 export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -119,7 +119,7 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
       {!tenant && !error && <div className="admin-muted">Laadin…</div>}
       {tenant && (
         <>
-          <div className="glass-card admin-card">
+          <Card className="admin-card">
             <div className="admin-toolbar">
               <h2>{tenant.name} <StatusBadge status={tenant.status} /></h2>
               <button type="button" className={`btn ${tenant.status === 'ACTIVE' ? 'btn-secondary' : 'btn-primary'}`} onClick={toggleStatus} disabled={busy}>
@@ -134,9 +134,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
               <div><span>Pindala (ha)</span>{formatHa(tenant.areaHa)}</div>
               <div><span>Viimane sisselogimine</span>{formatTallinn(tenant.lastLoginAt)}</div>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass-card admin-card">
+          <Card className="admin-card">
             <div className="admin-card-head">
               <h2>Kasutajatugi</h2>
               <span className={`admin-badge ${tenant.supportGrant ? 'ok' : 'neutral'}`}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</span>
@@ -161,9 +161,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
                 <span> — brauser blokeeris uue akna. Link kehtib 60 sekundit.</span>
               </div>
             )}
-          </div>
+          </Card>
 
-          <form className="glass-card admin-card" onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
+          <Card asChild className="admin-card"><form onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
             <div className="admin-card-head">
               <h2>Litsents</h2>
               <LicenseCell license={tenant.license} />
@@ -181,9 +181,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
             <div className="admin-card-foot">
               <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta litsents</button>
             </div>
-          </form>
+          </form></Card>
 
-          <div className="glass-card admin-card">
+          <Card className="admin-card">
             <h2>Kasutajad</h2>
             <div className="admin-table-wrap">
               <table className="admin-table">
@@ -219,14 +219,14 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
                 </tbody>
               </table>
             </div>
-          </div>
+          </Card>
 
-          <div className="glass-card admin-card">
+          <Card className="admin-card">
             <h2>Ettevõtte logi</h2>
             <AuditView key={auditKey} tenantId={id} />
-          </div>
+          </Card>
 
-          <div className="glass-card admin-card admin-danger-card">
+          <Card className="admin-card admin-danger-card">
             <h2>Ettevõtte kustutamine</h2>
             {tenant.status === 'ACTIVE' ? (
               <p className="admin-hint">Kustutada saab ainult peatatud ettevõtet. Peata ettevõte enne kustutamist.</p>
@@ -249,7 +249,7 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
                 </div>
               </>
             )}
-          </div>
+          </Card>
         </>
       )}
     </div>

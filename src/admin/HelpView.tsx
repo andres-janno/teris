@@ -6,7 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
-import { FilterClear } from '../components/ui';
+import { FilterClear, Card } from '../components/ui';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -98,7 +98,7 @@ export function HelpView() {
 
   return (
     <div className="admin-help">
-      <div className="glass-card admin-card admin-help-list">
+      <Card className="admin-card admin-help-list">
         <div className="admin-card-head">
           <h2>Juhendid</h2>
           <span className="admin-muted">{filledCount}/{knownCount} täidetud</span>
@@ -132,9 +132,9 @@ export function HelpView() {
             })}
           </div>
         ))}
-      </div>
+      </Card>
 
-      <div className="glass-card admin-card admin-help-editor">
+      <Card className="admin-card admin-help-editor">
         {error && <div className="alert-box error">{error}</div>}
         {notice && <div className="alert-box success">{notice}</div>}
         {!current ? (
@@ -180,7 +180,7 @@ export function HelpView() {
             )}
           </>
         )}
-      </div>
+      </Card>
     </div>
   );
 }

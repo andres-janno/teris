@@ -1,3 +1,4 @@
+import { Card } from '../components/ui';
 import { useState, type FormEvent } from 'react';
 import { platformApi } from './platformApi.ts';
 
@@ -24,7 +25,7 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
   };
 
   return (
-    <form className="glass-card admin-login admin-form" onSubmit={submit}>
+    <Card asChild className="admin-login"><form className="admin-form" onSubmit={submit}>
       <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
       {error && <div className="alert-box error">{error}</div>}
       <div className="form-group">
@@ -53,6 +54,6 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
       <button type="submit" className="btn btn-primary" disabled={busy}>
         {busy ? 'Sisselogimine…' : 'Logi sisse'}
       </button>
-    </form>
+    </form></Card>
   );
 }

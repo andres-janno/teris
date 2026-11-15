@@ -1,3 +1,4 @@
+import { Card } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type DeviceRegistration, type DeviceRow } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -42,7 +43,7 @@ export function DevicesView() {
   };
 
   return (
-    <div className="glass-card admin-card">
+    <Card className="admin-card">
       <h2>Seadmed</h2>
       {error && <div className="alert-box error">{error}</div>}
       {notice && <div className="alert-box">{notice}</div>}
@@ -110,6 +111,6 @@ export function DevicesView() {
           </table>
         </div>
       )}
-    </div>
+    </Card>
   );
 }
