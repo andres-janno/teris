@@ -39,7 +39,7 @@ export const DropdownMenuItem: React.FC<React.ComponentProps<typeof DropdownMenu
 export const DropdownMenuCheckboxItem: React.FC<React.ComponentProps<typeof DropdownMenuPrimitive.CheckboxItem>> = ({ className, children, ...props }) => (
   <DropdownMenuPrimitive.CheckboxItem className={cn(menuItemClass, className)} {...props}>
     <span className="inline-flex size-4 shrink-0 items-center justify-center rounded-sm border border-input bg-field text-primary [&_svg]:size-3.5!">
-      <DropdownMenuPrimitive.ItemIndicator>
+      <DropdownMenuPrimitive.ItemIndicator className="flex">
         <Check strokeWidth={3} />
       </DropdownMenuPrimitive.ItemIndicator>
     </span>
