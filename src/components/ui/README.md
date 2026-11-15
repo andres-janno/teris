@@ -15,6 +15,18 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - `style={{ … }}` ainult dünaamiliste väärtuste jaoks.
 - Kuupäev: `DateInput` (pp.kk.aaaa); arv: `NumberInput`; otsinguga valik: `FilterSelect`; filtri X: `FilterClear`.
   Need neli asuvad väljaspool `ui/` (`src/components/`), aga on samuti kohustuslikud.
+- **Vormiväljad** (`Input`, `Textarea`, `Select`, `CheckboxField`, `RadioField`, `Field`, `FormGrid`, `FieldRow`):
+  - Suurus `size`: `md` 32px (vaikimisi, nagu nupp), `sm` 28px tabeli ridades.
+  - `Input numeric`: arv paremale, ühelaiused numbrid. `start` / `end`: ikoon, ühik (ha, €) või nupp; siis ümbritseb
+    välja `input-group`, ääris ja fookus on ümbrisel, `className` läheb ümbrisele.
+  - `Select`: tühi valik on `{ value: '', label: '— vali —' }`; rühmad `group: 'Laod'` (järjestikused sama rühmaga
+    valikud rühmapealkirja alla). Otsinguga valik on `FilterSelect`.
+  - `CheckboxField` (märkeruut + silt + `hint`, kogu rida klõpsatav) ja `RadioField` (`RadioGroup` sees,
+    `orientation="vertical"` paneb üksteise alla) asendavad käsitsi tehtud `<label>` + märkeruut kombinatsioone.
+  - Paigutus: `FormGrid` (`cols` 2 või 3, `span="full"`), `Field span="full"`, `FieldRow` (väli + nupp ühes reas).
+  - `data-slot` nimed: `input`, `input-group`, `textarea`, `select`.
+  - Toored `<input>` / `<select>` / `<textarea>` on keelatud; erand ainult `<input type="file">` ja `<input type="range">`
+    (`type` esimese atribuudina). `npm run ui-audit` rida „Vanu vormivälju (tsx)“ peab jõudma nulli.
 - Numbriveerg tabelis: `numeric` (paremale joondus); kogused `formatQty`.
 - Klassid liida `cn()`-ga (mitte template-stringiga) — see lahendab Tailwindi konfliktid.
 - `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `legacy` on

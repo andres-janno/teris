@@ -231,4 +231,14 @@ describe('auditTsx: vanad märgid ja sakid', () => {
     ]);
     expect(r.legacyBadgeTabFiles).toEqual([{ path: 'src/components/X.tsx', count: 1 }]);
   });
+  it('loeb tooreid vormielemente ja vanu vormiklasse, jätab file/range ja ui kausta vahele', () => {
+    const src = '<input className="form-input" /><select>\n</select><textarea />' +
+      '<input type="file" /><input type="range" /><div className="form-group"><div className="form-grid">';
+    expect(auditTsx(src).legacyFormFields).toEqual(['<input>', 'form-input', '<select>', '<textarea>', 'form-group', 'form-grid']);
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: src },
+      { path: 'src/components/ui/Input.tsx', content: '<input className="x" />' },
+    ]);
+    expect(r.legacyFormFieldFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
+  });
 });

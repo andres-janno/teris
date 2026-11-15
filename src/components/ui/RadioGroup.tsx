@@ -4,7 +4,7 @@ import { RadioGroup as RadioGroupPrimitive } from 'radix-ui';
 import { cn } from './cn';
 
 export const RadioGroup: React.FC<React.ComponentProps<typeof RadioGroupPrimitive.Root>> = ({ className, ...props }) => (
-  <RadioGroupPrimitive.Root className={cn('flex gap-3', className)} {...props} />
+  <RadioGroupPrimitive.Root className={cn('flex gap-3', props.orientation === 'vertical' && 'flex-col gap-2', className)} {...props} />
 );
 
 interface RadioGroupItemProps {
@@ -24,4 +24,12 @@ export const RadioGroupItem: React.FC<RadioGroupItemProps> = ({ className, ...pr
   >
     <RadioGroupPrimitive.Indicator className="block size-2 rounded-full bg-primary" />
   </RadioGroupPrimitive.Item>
+);
+
+// Raadionupp koos sildiga (kasuta RadioGroup sees).
+export const RadioField: React.FC<RadioGroupItemProps & { label: React.ReactNode }> = ({ label, ...props }) => (
+  <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50">
+    <RadioGroupItem {...props} />
+    <span>{label}</span>
+  </label>
 );

@@ -194,3 +194,21 @@ describe('sakk ja valikurida', () => {
     expect(v.tabsListVariants({ variant: 'line' })).toContain('flex-wrap');
   });
 });
+
+describe('vormiväli', () => {
+  it('suurused: sm 28px väike kiri, md 32px', () => {
+    expect(v.fieldSizeClass.sm).toContain('h-7');
+    expect(v.fieldSizeClass.sm).toContain('text-xs');
+    expect(v.fieldSizeClass.md).toContain('h-8');
+    expect(v.fieldSizeClass.md).toContain('text-sm');
+  });
+  it('ümbris (eesliide/järelliide) annab fookuse rõnga ümbrisele', () => {
+    expect(v.fieldShellClass).toContain('focus-within:ring-2');
+    expect(v.fieldShellClass).toContain('focus-within:border-primary');
+  });
+  it('ei kasuta keelatud suvalisi väärtusi', () => {
+    for (const c of [v.fieldControlClass, v.fieldShellClass, ...Object.values(v.fieldSizeClass)]) {
+      expect(c).not.toMatch(/(?:text|p[xytrblse]?|m[xytrblse]?|gap|rounded|bg|border)-\[/);
+    }
+  });
+});

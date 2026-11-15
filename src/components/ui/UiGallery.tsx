@@ -1,12 +1,12 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Lock, Moon, Pencil, Plus, Sun, Trash2 } from 'lucide-react';
+import { Clock, Lock, Moon, Pencil, Plus, Search, Sun, Trash2 } from 'lucide-react';
 import {
-  Badge, Button, Card, Checkbox, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+  Badge, Button, Card, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, Input, Panel, Popover,
-  PopoverContent, PopoverTrigger, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
+  DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
+  PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip,
 } from './index';
@@ -32,6 +32,8 @@ export const UiGallery: React.FC = () => {
   }, [theme]);
   const [crop, setCrop] = useState('');
   const [checked, setChecked] = useState(true);
+  const [emptyChoice, setEmptyChoice] = useState('');
+  const [groupChoice, setGroupChoice] = useState('');
   const [on, setOn] = useState(false);
   const [date, setDate] = useState('');
   const [filterValue, setFilterValue] = useState('');
@@ -118,6 +120,39 @@ export const UiGallery: React.FC = () => {
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="plan" />Plaan</label>
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="actual" />Tegelik</label>
             </RadioGroup>
+            <Field label="Väike (sm, tabeli ridades)"><Input size="sm" defaultValue="Kaasiku" /></Field>
+            <Field label="Arv ühikuga"><Input numeric end="ha" defaultValue="12,50" /></Field>
+            <Field label="Otsing ikooniga"><Input start={<Search size={14} />} placeholder="Otsi…" /></Field>
+            <Field label="Kirjutuskaitstud"><Input readOnly value="12,50" /></Field>
+            <Field label="Automaatselt kasvav" className="md:col-span-2"><Textarea autosize defaultValue="Kasvab sisu järgi" /></Field>
+            <Field label="Select tühja valikuga">
+              <Select value={emptyChoice} onValueChange={setEmptyChoice} options={[{ value: '', label: '— vali —' }, { value: 'a', label: 'Esimene' }, { value: 'b', label: 'Teine' }]} />
+            </Field>
+            <Field label="Select rühmadega">
+              <Select
+                value={groupChoice}
+                onValueChange={setGroupChoice}
+                options={[
+                  { value: '', label: 'Kõik' },
+                  { value: 'l1', label: 'Rõngu ait', group: 'Laod' },
+                  { value: 'l2', label: 'Kuivati', group: 'Laod' },
+                  { value: 'f1', label: 'Kaasiku', group: 'Põllud' },
+                ]}
+              />
+            </Field>
+            <Field label="Select sm">
+              <Select size="sm" value={crop} onValueChange={setCrop} options={[{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }]} />
+            </Field>
+            <CheckboxField label="Mitteaktiivne" hint="Ei näidata valikutes" checked={checked} onCheckedChange={setChecked} />
+            <RadioGroup orientation="vertical" defaultValue="plan">
+              <RadioField value="plan" label="Plaan" />
+              <RadioField value="actual" label="Tegelik" />
+            </RadioGroup>
+            <FormGrid className="md:col-span-3">
+              <Field label="Esimene"><Input /></Field>
+              <Field label="Teine"><Input /></Field>
+              <Field label="Üle rea" span="full"><FieldRow><Input /><Button>Nupp</Button></FieldRow></Field>
+            </FormGrid>
           </div>
         </Section>
 

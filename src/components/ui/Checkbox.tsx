@@ -8,6 +8,7 @@ interface CheckboxProps {
   checked: boolean;
   onCheckedChange: (checked: boolean) => void;
   disabled?: boolean;
+  required?: boolean;
   id?: string;
   name?: string;
   'aria-describedby'?: string;
@@ -29,4 +30,20 @@ export const Checkbox: React.FC<CheckboxProps> = ({ checked, onCheckedChange, cl
       <Check size={12} strokeWidth={3} />
     </CheckboxPrimitive.Indicator>
   </CheckboxPrimitive.Root>
+);
+
+interface CheckboxFieldProps extends CheckboxProps {
+  label: React.ReactNode;
+  hint?: React.ReactNode;
+}
+
+// Märkeruut koos sildiga: kogu rida on klõpsatav (asendab users-admin-checkbox, checkbox-label jt).
+export const CheckboxField: React.FC<CheckboxFieldProps> = ({ label, hint, className, ...props }) => (
+  <label className={cn('inline-flex cursor-pointer items-start gap-2 text-sm text-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50', className)}>
+    <Checkbox {...props} className="mt-0.5" />
+    <span className="flex flex-col gap-0.5">
+      <span>{label}</span>
+      {hint != null && <span className="text-2xs text-subtle">{hint}</span>}
+    </span>
+  </label>
 );

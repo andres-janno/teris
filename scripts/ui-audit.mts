@@ -51,3 +51,8 @@ row(
   r.legacyBadgeTabFiles.reduce((s, f) => s + f.count, 0),
   r.legacyBadgeTabFiles.map((f) => `${f.path}: ${f.count}`)
 );
+row(
+  'Vanu vormivälju (tsx)',
+  r.legacyFormFieldFiles.reduce((s, f) => s + f.count, 0),
+  r.legacyFormFieldFiles.map((f) => `${f.path}: ${f.count}`)
+);

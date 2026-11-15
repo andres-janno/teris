@@ -18,6 +18,7 @@ export interface AuditReport {
   legacyModalFiles: { path: string; count: number }[];
   legacyTableFiles: { path: string; count: number }[];
   legacyBadgeTabFiles: { path: string; count: number }[];
+  legacyFormFieldFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -46,6 +47,11 @@ const LEGACY_TABLE =
 // Vanad märgi-, saki- ja segmendiklassid (etapp 2.4). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 const LEGACY_BADGE_TAB =
   /(?<![\w-])(status-badge|fleet-active-badge|active-pill|user-status-pill|user-status-dot|fw-status-pill|fw-finance-chip|season-status-badge|work-phase-badge|support-panel-status|stock-shortage-badge|users-admin-badge|article-default-badge|tenure-badge|cad-tenure-tag|weather-credential-ok|weather-credential-missing|count-pill|finance-count-badge|finance-tab-badge|crop-group-count|usage-count-badge|finance-year-badge|mini-badge|badge-list|sub-tag|winter-tag|field-num-badge|finance-field-badge|field-code-badge|equipment-tag|finance-kind-badge|finance-crop-pill|year-widget-stat|telemetry-pill-impl|telemetry-pill-time|telemetry-pill-action|category-filter-tabs|filter-tab|year-tabs|year-tab|work-register-tabs|finance-filter-chips|finance-filter-chip|segmented-control|segmented-option|cc-segmented|year-widget-pills|year-widget-btn|area-preset-btn|tab-lock-icon|pill-lock-icon)(?![\w-])/g;
+// Toored vormielemendid ja vanad vormiklassid (etapp 2.5). ui/ kausta ei loeta (seal on ka DateInput, NumberInput,
+// FilterSelect). Lubatud toored: <input type="file"> ja <input type="range"> (type esimese atribuudina).
+// Jääb alles valvurina: peab olema 0.
+const LEGACY_FORM_FIELD =
+  /<(input|select|textarea)(?=[\s>/])(?!\s+type="(?:file|range)")|(?<![\w-])(form-input|form-group|form-grid|form-row-3|input-split|input-with-unit|search-input|search-box-wrap|auto-resize-textarea|auto-field-input|time-select|users-admin-checkbox|checkbox-label|filter-select-trigger|date-input-btn)(?![\w-])/g;
 const INLINE_FONT_SIZE = /fontSize\s*:\s*(?:(\d+(?:\.\d+)?)|['"](\d+(?:\.\d+)?(?:px|rem))['"])/g;
 
 const values = (css: string, re: RegExp) => [...css.matchAll(re)].map((m) => m[1].trim());
@@ -87,6 +93,7 @@ export function auditTsx(src: string) {
     legacyModals: [...src.matchAll(LEGACY_MODAL)].map((m) => m[1]),
     legacyTables: [...src.matchAll(LEGACY_TABLE)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyBadgeTabs: [...src.matchAll(LEGACY_BADGE_TAB)].map((m) => m[1]),
+    legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
   };
 }
 
@@ -113,5 +120,8 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     legacyBadgeTabFiles: tsx
       .filter((t) => t.legacyBadgeTabs.length > 0 && !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: t.legacyBadgeTabs.length })),
+    legacyFormFieldFiles: tsx
+      .filter((t) => t.legacyFormFields.length > 0 && !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: t.legacyFormFields.length })),
   };
 }
