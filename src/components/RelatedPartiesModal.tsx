@@ -2,7 +2,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   Users,
-  Search,
   Plus,
   Edit2,
   Trash2,
@@ -19,12 +18,10 @@ import { PARTY_ROLE_CONFIG } from '../types/party';
 import type { MasterField } from '../types/fieldRegister';
 import type { Vehicle } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -458,23 +455,11 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
           {/* Search, Filters & Actions Bar (Identical toolbar to FieldManagerModal) */}
           <div className="register-actions-bar">
-            <div className="search-box-wrap">
-              <Search size={16} className="search-icon" />
-              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
-                <input
-                  type="text"
-                  placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input search-input"
-                />
-              </FilterClear>
-            </div>
+            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." aria-label="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." />
 
             {/* Role filter */}
             <FilterClear active={selectedRoleFilter !== 'all'} onClear={() => setSelectedRoleFilter('all')}>
               <FilterSelect
-                className="filter-select"
                 value={selectedRoleFilter}
                 defaultValue="all"
                 onChange={setSelectedRoleFilter}
@@ -492,7 +477,6 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
             {/* Type filter */}
             <FilterClear active={selectedTypeFilter !== 'all'} onClear={() => setSelectedTypeFilter('all')}>
               <FilterSelect
-                className="filter-select"
                 value={selectedTypeFilter}
                 defaultValue="all"
                 onChange={setSelectedTypeFilter}

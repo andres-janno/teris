@@ -155,7 +155,7 @@
 .admin-rte-area:empty::before { content: attr(data-placeholder); color: var(--text-muted); pointer-events: none; }
 
 .admin-filter-row { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 12px; }
-.admin-filter-row .form-input { width: auto; }
+.admin-filter-row .form-input, .admin-filter-row [data-slot="input-group"] { width: auto; }
 .admin-stat-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 16px; }
 .admin-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px; border: 1px solid var(--border-card); border-radius: 10px; }
 .admin-stat span { font-size: 0.72rem; text-transform: uppercase; color: var(--text-secondary); }

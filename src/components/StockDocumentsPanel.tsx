@@ -4,9 +4,6 @@ import { PackagePlus, PackageMinus, ArrowRightLeft, ClipboardCheck, Edit2, Trash
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { DateInput } from './DateInput';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { warehouseFilterOptions } from './WarehouseOptions';
 import { StockDocumentDialog } from './StockDocumentDialog';
 import { InventoryDialog } from './InventoryDialog';
@@ -14,7 +11,7 @@ import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput, FilterClear, FilterSelect } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -75,11 +72,11 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
             options={[{ value: '', label: 'Kõik tarnijad' }, ...suppliers.map((p) => ({ value: p.id, label: p.name }))]} />
         </FilterClear>
         <FilterClear active={!!filter.from} onClear={() => setFilter({ ...filter, from: '' })}>
-          <DateInput value={filter.from ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, from: v })} />
+          <DateInput value={filter.from ?? ''} onChange={(v) => setFilter({ ...filter, from: v })} />
         </FilterClear>
         <span className="muted">–</span>
         <FilterClear active={!!filter.to} onClear={() => setFilter({ ...filter, to: '' })}>
-          <DateInput value={filter.to ?? ''} className="form-input" onChange={(v) => setFilter({ ...filter, to: v })} />
+          <DateInput value={filter.to ?? ''} onChange={(v) => setFilter({ ...filter, to: v })} />
         </FilterClear>
         <div className="register-io-buttons">
           <Button variant="primary" size="sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></Button>

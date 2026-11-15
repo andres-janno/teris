@@ -1,7 +1,7 @@
 // src/admin/LandingStatsView.tsx — landing'u külastused, allikad, robotid ja lehter valitud perioodil.
 import { useEffect, useState } from 'react';
 import { platformApi, type LandingStats } from './platformApi.ts';
-import { DateInput } from '../components/DateInput.tsx';
+import { DateInput } from '../components/ui';
 import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
 
@@ -65,9 +65,9 @@ export function LandingStatsView() {
           ))}
         </div>
         <label htmlFor="ls-from">Alates</label>
-        <DateInput id="ls-from" className="form-input" value={from} onChange={setFrom} />
+        <DateInput id="ls-from" value={from} onChange={setFrom} />
         <label htmlFor="ls-to">Kuni</label>
-        <DateInput id="ls-to" className="form-input" value={to} onChange={setTo} />
+        <DateInput id="ls-to" value={to} onChange={setTo} />
       </div>
       {error && <div className="alert-box error">{error}</div>}
       {stats && (

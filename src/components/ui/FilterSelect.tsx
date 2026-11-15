@@ -1,9 +1,11 @@
-// src/components/FilterSelect.tsx — filtri rippmenüü, mille avatud loendi joonistab rakendus ise.
+// src/components/ui/FilterSelect.tsx — filtri rippmenüü, mille avatud loendi joonistab rakendus ise.
 // Natiivne <select> näitab macOS-is valikuid paksu kirjaga; siin on välimus kõigil platvormidel sama.
 import React, { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
-import { Check } from 'lucide-react';
-import { usePopupContainer } from './ui';
+import { Check, ChevronDown } from 'lucide-react';
+import { usePopupContainer } from './Dialog';
+import { cn } from './cn';
+import { fieldControlClass, fieldSizeClass, menuContentClass, menuItemClass, menuLabelClass, type FieldSize } from './variants';
 
 export interface FilterSelectOption {
   value: string;
@@ -24,6 +26,7 @@ interface FilterSelectProps {
   ariaLabel?: string;
   id?: string; // vormiväljal sildi (label htmlFor) jaoks
   fill?: boolean; // vormiväljal täidab lahtri laiuse (laius ei sõltu valikutest)
+  size?: FieldSize;
 }
 
 // Tähe järgi hüpe: leiab järgmise valiku (alates start+1, tsükliliselt), mille silt algab antud tähega
@@ -39,7 +42,7 @@ export const findTypeaheadIndex = (labels: string[], start: number, char: string
 interface ListPos { left: number; top?: number; bottom?: number; minWidth: number; maxHeight: number }
 
 export const FilterSelect: React.FC<FilterSelectProps> = ({
-  value, onChange, options, defaultValue = '', className, style, title, disabled, ariaLabel, id, fill
+  value, onChange, options, defaultValue = '', className, style, title, disabled, ariaLabel, id, fill, size = 'md'
 }) => {
   const popupContainer = usePopupContainer();
   const [open, setOpen] = useState(false);
@@ -155,13 +158,25 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
   const isDefault = value === defaultValue;
   const listId = React.useId();
 
+  const dot = (color: string) => (
+    <span className="mr-1.5 inline-block size-2.5 shrink-0 rounded-full align-middle" style={{ background: color }} />
+  );
+
   return (
     <>
       <button
         ref={triggerRef}
         id={id}
         type="button"
-        className={`form-input filter-select-trigger${fill ? ' filter-select-fill' : ''}${isDefault ? '' : ' is-set'}${className ? ` ${className}` : ''}`}
+        data-slot="filter-select"
+        className={cn(
+          fieldControlClass,
+          fieldSizeClass[size],
+          'relative inline-flex w-auto max-w-full cursor-pointer items-center pr-8 text-left',
+          !isDefault && 'font-semibold',
+          fill && 'w-full min-w-0',
+          className
+        )}
         style={style}
         title={title}
         disabled={disabled}
@@ -173,12 +188,13 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
         onKeyDown={onTriggerKeyDown}
       >
         {/* Laius = pikim valik paksus kirjas (nähtamatud mõõdusildid samas lahtris) — filter ei muuda valikul suurust */}
-        <span className="filter-select-label">
+        <span className="grid min-w-0 flex-1 overflow-hidden">
           {!fill && options.map((o, i) => (
-            <span key={`${o.value}:${i}`} className="filter-select-sizer" aria-hidden="true">{o.label}</span>
+            <span key={`${o.value}:${i}`} className="invisible col-start-1 row-start-1 whitespace-nowrap font-semibold" aria-hidden="true">{o.label}</span>
           ))}
-          <span className="filter-select-current">{selected?.color && <span className="filter-select-dot" style={{ background: selected.color }} />}{selected?.label || '\u00a0'}</span>
+          <span className="col-start-1 row-start-1 truncate whitespace-nowrap">{selected?.color && dot(selected.color)}{selected?.label || '\u00a0'}</span>
         </span>
+        <ChevronDown size={14} className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground" />
       </button>
       {open && pos && createPortal(
         <div
@@ -186,7 +202,8 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
           id={listId}
           role="listbox"
           aria-label={ariaLabel}
-          className="filter-select-list"
+          data-slot="filter-select-list"
+          className={cn(menuContentClass, 'fixed overflow-y-auto font-normal')}
           style={{ left: pos.left, top: pos.top, bottom: pos.bottom, minWidth: pos.minWidth, maxHeight: pos.maxHeight }}
           onMouseDown={(e) => e.preventDefault()}
         >
@@ -194,17 +211,17 @@ export const FilterSelect: React.FC<FilterSelectProps> = ({
             const showGroup = !!o.group && (i === 0 || options[i - 1].group !== o.group);
             return (
               <React.Fragment key={`${o.value}:${i}`}>
-                {showGroup && <div className="filter-select-group" role="presentation">{o.group}</div>}
+                {showGroup && <div className={cn(menuLabelClass, 'pt-2')} role="presentation">{o.group}</div>}
                 <div
                   role="option"
                   aria-selected={i === selectedIndex}
                   data-idx={i}
-                  className={`filter-select-option${i === selectedIndex ? ' checked' : ''}${i === active ? ' active' : ''}`}
+                  className={cn(menuItemClass, 'whitespace-nowrap', (i === active || i === selectedIndex) && 'bg-muted')}
                   onMouseEnter={() => setActive(i)}
                   onClick={() => choose(i)}
                 >
-                  <span className="filter-select-check">{i === selectedIndex && <Check size={14} strokeWidth={2.5} />}</span>
-                  <span className="filter-select-option-label">{o.color && <span className="filter-select-dot" style={{ background: o.color }} />}{o.label}</span>
+                  <span className="inline-flex size-3.5 shrink-0 items-center justify-center text-primary">{i === selectedIndex && <Check size={14} strokeWidth={2.5} />}</span>
+                  <span>{o.color && dot(o.color)}{o.label}</span>
                 </div>
               </React.Fragment>
             );

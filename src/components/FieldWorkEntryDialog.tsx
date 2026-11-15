@@ -1,7 +1,6 @@
 // src/components/FieldWorkEntryDialog.tsx — kande lisamine/muutmine: töötaja sisestab ainult kogused.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Info, Radio, Clock } from 'lucide-react';
-import { DateInput } from './DateInput';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
 import type { FieldWork, Article, WorkEntry, WorkEntryObservation, TelemetrySuggestion } from '../types/fieldWork';
@@ -10,12 +9,10 @@ import TripRouteView from './TripRouteView';
 import { formatQty } from '../services/units';
 import { PRIA_ACTIVITY, FERTILIZING_METHODS } from '../services/pria';
 import type { SeedCheck } from '../services/seedCropCheck';
-import { FilterSelect, type FilterSelectOption } from './FilterSelect';
-import { FilterClear } from './FilterClear';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear } from './ui';
 
 interface Option {
   id: string;
@@ -509,12 +506,12 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             <div className="work-entry-grid work-entry-top-grid">
               <div className="form-group">
                 <label htmlFor="we-date">Kuupäev *</label>
-                <DateInput id="we-date" value={date} onChange={setDate} className="form-input" />
+                <DateInput id="we-date" value={date} onChange={setDate} />
               </div>
               {activity === PRIA_ACTIVITY.FERTILIZING && (
                 <div className="form-group">
                   <label htmlFor="we-method">Väetamisviis</label>
-                  <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
+                  <FilterClear fill active={!!method} onClear={() => setMethod('')}>
                     <FilterSelect fill id="we-method" value={method} onChange={setMethod} options={[
                       { value: '', label: '– vali –' },
                       ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
@@ -525,7 +522,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               )}
               <div className="form-group">
                 <label htmlFor="we-worker">Töötaja{imported ? '' : ' *'}</label>
-                <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
+                <FilterClear fill active={!!workerId} onClear={() => setWorkerId('')}>
                   <FilterSelect fill id="we-worker" value={workerId} onChange={setWorkerId}
                     options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
                 </FilterClear>
@@ -640,14 +637,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               <div className="work-entry-grid four">
                 <div className="form-group">
                   <label htmlFor="we-vehicle">Masin</label>
-                  <FilterClear className="filter-clear-fill" active={!!vehicleId} onClear={() => setVehicleId('')}>
+                  <FilterClear fill active={!!vehicleId} onClear={() => setVehicleId('')}>
                     <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
                       options={[{ value: '', label: '– pole –' }, ...vehicleOptions.map((v) => ({ value: v.id, label: v.name }))]} />
                   </FilterClear>
                 </div>
                 <div className="form-group">
                   <label htmlFor="we-impl">Haakeriist</label>
-                  <FilterClear className="filter-clear-fill" active={!!implementId} onClear={() => setImplementId('')}>
+                  <FilterClear fill active={!!implementId} onClear={() => setImplementId('')}>
                     <FilterSelect fill id="we-impl" value={implementId} onChange={setImplementId}
                       options={[{ value: '', label: '– pole –' }, ...implementOptions.map((i) => ({ value: i.id, label: i.name }))]} />
                   </FilterClear>

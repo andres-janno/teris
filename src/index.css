@@ -1588,7 +1588,6 @@ body {
 
 /* Ühtne valikukast ja sisestusväli */
 .cc-select,
-.cultivation-panel .cc-input,
 .cc-time {
   height: var(--cc-h);
   border: 1px solid var(--input-border);
@@ -1616,7 +1615,6 @@ body {
 }
 
 .cc-select:focus,
-.cultivation-panel .cc-input:focus,
 .cc-time:focus-within {
   outline: none;
   border-color: var(--emerald-500);
@@ -1656,18 +1654,6 @@ body {
 
 .cc-date {
   width: 136px;
-}
-
-.cultivation-panel .cc-input {
-  width: 100%;
-  padding: 0 32px 0 10px;
-}
-
-/* Kalender avaneb paneeli kohale (DateInput popupPlacement="top") */
-.date-picker-popup-top,
-.cultivation-panel .date-picker-popup {
-  top: auto;
-  bottom: calc(100% + 8px);
 }
 
 .cc-time {
@@ -2809,177 +2795,6 @@ body {
 .form-input::-webkit-calendar-picker-indicator {
   filter: invert(0.8);
   cursor: pointer;
-}
-
-/* Kuupäeva väli eesti vormingus (DateInput) */
-.date-input {
-  position: relative;
-  display: flex;
-}
-
-.date-input>.form-input {
-  flex: 1;
-  min-width: 0;
-  padding-right: 34px;
-}
-
-.date-input.invalid>.form-input {
-  border-color: #ef4444;
-}
-
-.date-input-btn {
-  position: absolute;
-  right: 4px;
-  top: 50%;
-  transform: translateY(-50%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.date-input-btn:hover:not(:disabled) {
-  color: var(--emerald-600);
-}
-
-.date-input-btn:disabled {
-  cursor: default;
-  opacity: 0.6;
-}
-
-/* Eestikeelne kalendrivalija hüpikaken */
-.date-picker-popup {
-  position: absolute;
-  top: calc(100% + 5px);
-  left: 0;
-  z-index: 3100;
-  width: 256px;
-  background: var(--bg-modal);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 8px 10px -6px rgba(0, 0, 0, 0.25);
-  padding: 10px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  user-select: none;
-}
-
-.date-picker-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border-card);
-}
-
-.date-picker-title {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.date-picker-nav {
-  display: flex;
-  align-items: center;
-  gap: 3px;
-}
-
-.date-picker-nav-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
-  border: none;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.date-picker-nav-btn:hover {
-  background: var(--stat-bg);
-  color: var(--text-primary);
-}
-
-.date-picker-today-btn {
-  padding: 2px 7px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1px solid var(--border-card);
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.date-picker-today-btn:hover {
-  background: var(--stat-bg);
-  color: var(--text-primary);
-  border-color: var(--emerald-500);
-}
-
-.date-picker-weekdays {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  text-align: center;
-}
-
-.date-picker-weekday {
-  font-size: 0.7rem;
-  font-weight: 700;
-  color: var(--text-muted);
-  padding: 2px 0;
-}
-
-.date-picker-grid {
-  display: grid;
-  grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
-}
-
-.date-picker-day {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  height: 28px;
-  border-radius: 6px;
-  border: none;
-  background: transparent;
-  font-size: 0.76rem;
-  font-weight: 500;
-  color: var(--text-primary);
-  cursor: pointer;
-  transition: background 0.1s ease, color 0.1s ease;
-}
-
-.date-picker-day:hover {
-  background: var(--stat-bg);
-}
-
-.date-picker-day.other {
-  color: var(--text-muted);
-  opacity: 0.45;
-}
-
-.date-picker-day.today {
-  font-weight: 800;
-  color: #1d4ed8;
-  box-shadow: inset 0 0 0 1px #3b82f6;
-}
-
-.date-picker-day.selected {
-  background: #16a34a !important;
-  color: #ffffff !important;
-  font-weight: 800;
 }
 
 /* Native <select> chrome adds its own height/padding on top of ours unless
@@ -5586,16 +5401,9 @@ input[type="number"],
   gap: 10px;
 }
 
-.fullpage-board-body .search-box-wrap {
+.fullpage-board-body .search-field {
   flex: 1 1 220px;
-  max-width: 420px;
-}
-
-.fullpage-board-body .search-box-wrap .search-input,
-.fullpage-board-body .register-actions-bar select.form-input,
-.fullpage-board-body .register-actions-bar .filter-select-trigger {
-  height: 34px;
-  font-size: 0.8rem;
+  max-width: 420px !important;
 }
 
 /* Põldude lehe kultuuride kokkuvõte */
@@ -5654,29 +5462,6 @@ input[type="number"],
   flex: 1;
 }
 
-.fw-search {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-muted);
-  width: 200px;
-}
-
-.fw-search input {
-  border: 0;
-  outline: none;
-  background: transparent;
-  color: var(--input-color);
-  font: inherit;
-  font-size: 0.8rem;
-  width: 100%;
-}
-
 .fw-filter {
   display: flex;
   align-items: center;
@@ -5698,16 +5483,9 @@ input[type="number"],
   margin-bottom: 0;
 }
 
-.fw-main .search-box-wrap {
+.fw-main .search-field {
   flex: 1 1 220px;
-  max-width: 420px;
-}
-
-.fw-main .search-box-wrap .search-input,
-.fw-main .register-actions-bar select.form-input,
-.fw-main .register-actions-bar .filter-select-trigger {
-  height: 34px;
-  font-size: 0.8rem;
+  max-width: 420px !important;
 }
 
 .fw-filter.checkbox input {
@@ -7571,25 +7349,9 @@ select.form-input:read-only {
   gap: 8px;
 }
 
-.finance-search-box {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  background: var(--input-bg, #ffffff);
-  border: 1px solid var(--input-border, #cbd5e1);
-  border-radius: 8px;
-  padding: 6px 10px;
-  color: var(--text-secondary);
-}
-
-.finance-search-box input {
-  border: 0;
-  background: transparent;
-  outline: none;
-  font: inherit;
-  font-size: 0.82rem;
-  color: var(--text-primary);
-  width: 100%;
+.finance-results-toolbar .search-field {
+  flex: 1 1 280px;
+  max-width: 420px !important;
 }
 
 .finance-filter-row {
@@ -8434,246 +8196,30 @@ select.form-input:read-only {
 .cell-badge { margin-left: 6px; }
 .cell-badge-lead { margin-right: 6px; }
 
-/* Filtri tühjendamise X-nupp (FilterClear): ühtne kõigil rippmenüü- ja otsingufiltritel */
-.filter-clear {
-  position: relative;
-  display: inline-flex;
-  align-items: center;
-  min-width: 0;
-  max-width: 100%;
+/* Üleminek: toores select/input FilterClear-i sees (vaated, mida pole veel ui/ komponentidele viidud) */
+[data-slot="filter-clear"] > select.form-input {
+  padding-right: 50px;
 }
 
-.filter-clear > input {
-  width: 100%;
+[data-slot="filter-clear"] > input.form-input {
   padding-right: 30px;
 }
 
-.filter-clear > select.form-input,
-.filter-clear > .filter-select-trigger {
-  padding-right: 50px;
-}
-
-/* Filtri rippmenüü (FilterSelect): trigger tavalise kirjaga, paks ainult siis, kui filter on seatud
-   (vaikevalik „Kõik …“ jääb tavaliseks). Avatud loend on alati tavalise kirjaga. */
-.filter-select-trigger {
-  -webkit-appearance: none;
-  appearance: none;
-  display: inline-block;
-  text-align: left;
-  cursor: pointer;
-  font-weight: 400;
-  padding-right: 50px;
-  max-width: 100%;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
-}
-
-.filter-select-trigger.is-set {
-  font-weight: 700;
-}
-
-.filter-select-trigger:disabled {
-  cursor: not-allowed;
-  opacity: 0.6;
-}
-
-.filter-select-label {
-  display: block;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.filter-select-list {
-  position: fixed;
-  z-index: 9000;
-  overflow-y: auto;
-  padding: 4px;
-  background: var(--bg-modal);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-modal);
-  font-weight: 400;
-}
-
-.filter-select-option {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 7px 10px;
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 0.84rem;
-  font-weight: 400;
-  white-space: nowrap;
-  cursor: pointer;
-}
-
-.filter-select-option.active {
-  background: var(--btn-sec-hover);
-}
-
-.filter-select-option.checked {
-  background: var(--btn-sec-hover);
-}
-
-.filter-select-check {
-  width: 14px;
-  height: 14px;
-  flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--emerald-500);
-}
-
-.filter-select-group {
-  padding: 8px 10px 4px;
-  color: var(--text-secondary);
-  font-size: 0.72rem;
-  font-weight: 400;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  cursor: default;
-}
-
-/* Brauseri enda tühjendusnupp otsinguväljal asendub ühtse X-nupuga */
-.filter-clear > input[type="search"]::-webkit-search-cancel-button {
-  -webkit-appearance: none;
-  display: none;
-}
-
-.filter-clear-btn {
-  position: absolute;
-  top: 50%;
-  right: 6px;
-  transform: translateY(-50%);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-/* Rippmenüül jääb X noolest vasakule */
-.filter-clear:has(> select) .filter-clear-btn,
-.filter-clear:has(> .filter-select-trigger) .filter-clear-btn {
-  right: 26px;
-}
-
-/* Nupp loetakse brauseris alati :read-only alla — `.form-input:read-only` teeks triggeri paksuks, halliks
-   ja kustutaks noole. Tugevama valijaga taastatakse filtri välimus: vaikevalik tavaline, seatud filter paks. */
-.form-input.filter-select-trigger,
-.form-input.filter-select-trigger:read-only {
-  background-color: var(--input-bg);
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path d='M1 1l4 4 4-4' stroke='%23888888' stroke-width='1.5' fill='none' stroke-linecap='round' stroke-linejoin='round'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  background-size: 10px 6px;
-  border-color: var(--input-border);
-  color: var(--input-color);
-  cursor: pointer;
-  font-weight: 400;
-}
-
-.form-input.filter-select-trigger.is-set {
-  font-weight: 700;
-}
-
-/* Silt: kõik valikud nähtamatult samas ruudustiku lahtris (paksus kirjas) määravad laiuse,
-   nähtav on ainult valitud väärtus — trigger ei muuda valikul ega paksuse vahetusel suurust */
-.filter-select-trigger .filter-select-label {
-  display: grid;
-  overflow: hidden;
-}
-
-.filter-select-sizer,
-.filter-select-current {
-  grid-area: 1 / 1;
-  white-space: nowrap;
-}
-
-.filter-select-sizer {
-  visibility: hidden;
-  font-weight: 700;
-}
-
-.filter-select-current {
-  overflow: hidden;
-  text-overflow: ellipsis;
+[data-slot="filter-clear"]:has(> select.form-input) > [data-slot="filter-clear-btn"] {
+  right: 26px !important;
 }
 
 /* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
-.history-filter-bar > div > .filter-clear {
-  display: flex;
+.history-filter-bar > div > [data-slot="filter-clear"] {
+  display: flex !important;
   width: 100%;
 }
 
-.history-filter-bar > div > .filter-clear > select.form-input,
-.history-filter-bar > div > .filter-clear > .filter-select-trigger {
+.history-filter-bar > div > [data-slot="filter-clear"] > select.form-input,
+.history-filter-bar > div > [data-slot="filter-clear"] > [data-slot="filter-select"] {
   width: 100%;
 }
 
-/* Vormiväli (FilterSelect fill): täidab lahtri laiuse, laius ei sõltu valikute pikkusest */
-.form-input.filter-select-trigger.filter-select-fill {
-  display: block;
-  width: 100%;
-  min-width: 0;
-}
-
-.filter-clear.filter-clear-fill {
-  display: flex;
-  width: 100%;
-}
-
-/* Liitfilter (kuupäevavahemik, linnuke): X-nupp sisu järel, mitte välja peal (seal on kalendri ikoon / tekst) */
-.filter-clear.filter-clear-inline {
-  gap: 4px;
-}
-
-.filter-clear.filter-clear-inline .filter-clear-btn {
-  position: static;
-  transform: none;
-}
-
-.filter-clear-btn:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #ef4444;
-}
-
-/* Otsinguväli: ikoon vasakul, väli täidab ülejäänud laiuse */
-.search-box-wrap {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--text-secondary);
-}
-
-.search-box-wrap > .filter-clear {
-  flex: 1;
-}
-
-.finance-search-box > .filter-clear {
-  flex: 1;
-}
-
-.finance-search-box > .filter-clear > input {
-  padding-right: 26px;
-}
-
-.finance-search-box .filter-clear-btn {
-  right: 0;
-}
 
 /* Laoarvestus */
 
@@ -8970,7 +8516,6 @@ td.stock-qty-out { color: #dc2626; }
 .weather-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
 .weather-body { display: flex; flex-direction: column; gap: 18px; }
 .weather-body > .detail-section { margin-top: 0; }
-.filter-select-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin-right: 6px; vertical-align: middle; }
 .weather-years-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 12px; align-items: stretch; }
 .weather-point-map { min-height: 360px; height: 100%; border: 1px solid var(--border-card); border-radius: var(--radius-sm); z-index: 0; }
 @media (max-width: 1100px) { .weather-years-layout { grid-template-columns: 1fr; } .weather-point-map { height: 360px; } }

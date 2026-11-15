@@ -2,7 +2,7 @@
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
 // Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Search, Plus, Lock, Calendar, SquareKanban, Check, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
+import { Plus, Lock, Calendar, SquareKanban, Check, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
 import { seasonRegistryCrop, isWinterSeason } from '../services/cropMatch';
 import { getCropColor } from '../services/cropColors';
@@ -21,9 +21,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput } from './ui';
 
 interface Option {
   id: string;
@@ -737,19 +735,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         </div>
 
         <div className="register-actions-bar">
-          <div className="search-box-wrap">
-            <Search size={16} className="search-icon" />
-            <FilterClear active={!!search} onClear={() => setSearch('')}>
-              <input
-                type="text"
-                placeholder="Otsi põldu või tööd"
-                aria-label="Otsi põldu või tööd"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="form-input search-input"
-              />
-            </FilterClear>
-          </div>
+          <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" />
           <label className="fw-filter">
             <span>Tegevus</span>
             <FilterClear active={activity !== 'all'} onClear={() => setActivity('all')}>

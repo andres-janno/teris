@@ -1,7 +1,7 @@
 // src/components/WarehouseOptions.tsx — lao valiku read: tavalised laod ja põllu laod eraldi grupis
 import React from 'react';
 import type { Warehouse } from '../types/stock';
-import type { FilterSelectOption } from './FilterSelect';
+import type { FilterSelectOption } from './ui';
 
 interface Props {
   warehouses: Warehouse[];

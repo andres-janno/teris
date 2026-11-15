@@ -4,13 +4,11 @@ import { Package, AlertTriangle } from 'lucide-react';
 import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });

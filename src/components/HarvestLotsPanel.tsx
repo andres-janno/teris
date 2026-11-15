@@ -4,14 +4,12 @@ import { Plus } from 'lucide-react';
 import { api } from '../services/api';
 import { formatQty } from '../services/units';
 import { alertDialog } from './ConfirmDialog';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { HarvestLotDialog } from './HarvestLotDialog';
 import type { Article } from '../types/fieldWork';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotStatus, HarvestLotSummary } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 

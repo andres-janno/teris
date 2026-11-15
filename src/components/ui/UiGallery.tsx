@@ -8,10 +8,8 @@ import {
   DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip,
+  ToggleGroupItem, Tooltip, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput,
 } from './index';
-import { DateInput } from '../DateInput';
-import { FilterSelect } from '../FilterSelect';
 import { confirmDialog } from '../ConfirmDialog';
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
@@ -37,6 +35,13 @@ export const UiGallery: React.FC = () => {
   const [on, setOn] = useState(false);
   const [date, setDate] = useState('');
   const [filterValue, setFilterValue] = useState('');
+  const [num, setNum] = useState<number | null>(12.5);
+  const [search, setSearch] = useState('');
+  const [fsel, setFsel] = useState('b');
+  const [rawSel, setRawSel] = useState('');
+  const [selX, setSelX] = useState('a');
+  const [inpX, setInpX] = useState('Kaasiku');
+  const [dateX, setDateX] = useState('2026-11-15');
   const [year, setYear] = useState('2026');
 
   return (
@@ -181,6 +186,43 @@ export const UiGallery: React.FC = () => {
             </TableBody>
           </Table>
           <Table bordered><TableBody><TableEmpty colSpan={3}>Kirjeid pole</TableEmpty></TableBody></Table>
+        </Section>
+
+        <Section title="Kuupäev, arv, otsing ja filtrid">
+          <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
+            <Field label="Kuupäev (md)" htmlFor="g-date"><DateInput id="g-date" value={date} onChange={setDate} /></Field>
+            <Field label="Kuupäev (sm)" htmlFor="g-date-sm"><DateInput id="g-date-sm" size="sm" value={date} onChange={setDate} /></Field>
+            <Field label="Kuupäev, vigane (sisesta „x“)" htmlFor="g-date-bad"><DateInput id="g-date-bad" value="" onChange={() => {}} /></Field>
+            <Field label="Arv ühikuga (NumberInput end)" htmlFor="g-num"><NumberInput id="g-num" end="ha" value={num} onChange={setNum} /></Field>
+            <Field label="Arv (sm)" htmlFor="g-num-sm"><NumberInput id="g-num-sm" size="sm" value={num} onChange={setNum} /></Field>
+            <Field label="Otsing (SearchInput, X tühjendab)" htmlFor="g-search"><SearchInput aria-label="Otsing" placeholder="Otsi…" value={search} onChange={setSearch} /></Field>
+            <Field label="Otsinguga valik rühmadega (FilterClear sees)">
+              <FilterClear fill active={fsel !== ''} onClear={() => setFsel('')}>
+                <FilterSelect fill value={fsel} onChange={setFsel} options={[{ value: '', label: 'Kõik põllud' }, { value: 'a', label: 'Kaasiku', group: 'Omad', color: '#16a34a' }, { value: 'b', label: 'Männiku', group: 'Omad', color: '#2563eb' }, { value: 'c', label: 'Põllu 12', group: 'Rendi' }]} />
+              </FilterClear>
+            </Field>
+            <Field label="FilterClear ümber Select-i">
+              <FilterClear fill active={selX !== ''} onClear={() => setSelX('')}>
+                <Select value={selX} onValueChange={setSelX} options={[{ value: '', label: 'Kõik' }, { value: 'a', label: 'Esimene' }, { value: 'b', label: 'Teine' }]} />
+              </FilterClear>
+            </Field>
+            <Field label="FilterClear ümber Input-i">
+              <FilterClear fill active={inpX !== ''} onClear={() => setInpX('')}>
+                <Input value={inpX} onChange={(e) => setInpX(e.target.value)} />
+              </FilterClear>
+            </Field>
+            <Field label="FilterClear ümber DateInput-i">
+              <FilterClear fill active={dateX !== ''} onClear={() => setDateX('')}>
+                <DateInput value={dateX} onChange={setDateX} />
+              </FilterClear>
+            </Field>
+            <Field label="FilterClear ümber toore select (üleminekuks)">
+              <FilterClear fill active={rawSel !== ''} onClear={() => setRawSel('')}>
+                <select className="form-input" value={rawSel} onChange={(e) => setRawSel(e.target.value)}><option value="">Kõik</option><option value="a">Esimene</option></select>
+              </FilterClear>
+            </Field>
+            <Field label="Sisendi keelatud ja kirjutuskaitstud"><Input disabled value="Keelatud" onChange={() => {}} /></Field>
+          </div>
         </Section>
 
         <Section title="Dialoog, menüüd, hüpikud">

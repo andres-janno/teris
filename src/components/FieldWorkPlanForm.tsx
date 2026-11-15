@@ -2,7 +2,6 @@
 // Ühine koht plaani valideerimisele ja salvestamisele (api.addFieldWork / api.updateFieldWork);
 // kasutab põllutööde tahvli valitud töö aken.
 import React, { useEffect, useState } from 'react';
-import { DateInput } from './DateInput';
 import { formatQty } from '../services/units';
 import { api } from '../services/api';
 import { formatDate, formatDateRange } from '../services/dateFormat';
@@ -10,9 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { FilterSelect } from './FilterSelect';
-import { FilterClear } from './FilterClear';
-import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -213,7 +210,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
           {activity === PRIA_ACTIVITY.FERTILIZING && (
             <div className="form-group">
               <label htmlFor="wp-method">Väetamisviis</label>
-              <FilterClear className="filter-clear-fill" active={!!method} onClear={() => setMethod('')}>
+              <FilterClear fill active={!!method} onClear={() => setMethod('')}>
                 <FilterSelect fill id="wp-method" value={method} onChange={setMethod} options={[
                   { value: '', label: '– vali –' },
                   ...FERTILIZING_METHODS.map((m) => ({ value: m, label: m })),
@@ -225,15 +222,15 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
           {activity === PRIA_ACTIVITY.PLANT_PROTECTION && (
             <div className="form-group">
               <label htmlFor="wp-worker">Teostaja</label>
-              <FilterClear className="filter-clear-fill" active={!!workerId} onClear={() => setWorkerId('')}>
+              <FilterClear fill active={!!workerId} onClear={() => setWorkerId('')}>
                 <FilterSelect fill id="wp-worker" value={workerId} onChange={setWorkerId}
                   options={[{ value: '', label: '– valimata –' }, ...workerOptions.map((w) => ({ value: w.id, label: w.name }))]} />
               </FilterClear>
             </div>
           )}
           {/* Ligikaudset aega vormis ei küsita; olemasolev väärtus (nt mallist "Sügis 2025") jääb salvestamisel alles */}
-          <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} className="form-input" /></div>
-          <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} className="form-input" /></div>
+          <div className="form-group"><label htmlFor="wp-from">Planeeritud algus</label><DateInput id="wp-from" value={dateFrom} onChange={setDateFrom} /></div>
+          <div className="form-group"><label htmlFor="wp-to">Planeeritud lõpp</label><DateInput id="wp-to" value={dateTo} onChange={setDateTo} /></div>
           <div className="form-group">
             <label htmlFor="wp-area">Pindala, ha</label>
             <input id="wp-area" className="form-input num" inputMode="decimal" value={areaHa} onChange={(e) => changeArea(e.target.value)} />

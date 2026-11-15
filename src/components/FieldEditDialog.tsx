@@ -1,6 +1,5 @@
 // src/components/FieldEditDialog.tsx — põllu põhiandmete ja valitud hooaja kirje muutmise aken
 import React, { useState, useMemo, useEffect } from 'react';
-import { NumberInput } from './NumberInput';
 import { Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { FarmingSeason } from '../types/season';
@@ -14,7 +13,7 @@ import { isCropUndetermined } from '../types/season';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput } from './ui';
 
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };

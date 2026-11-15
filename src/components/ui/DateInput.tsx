@@ -1,9 +1,13 @@
-// src/components/DateInput.tsx — kuupäeva väli eesti vormingus (pp.kk.aaaa) ja eestikeelse kalendrivalijaga.
+// src/components/ui/DateInput.tsx — kuupäeva väli eesti vormingus (pp.kk.aaaa) ja eestikeelse kalendrivalijaga.
 import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { CalendarDays, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatDate, parseEtDate } from '../services/dateFormat';
-import { usePopupContainer } from './ui';
+import { formatDate, parseEtDate } from '../../services/dateFormat';
+import { usePopupContainer } from './Dialog';
+import { Input } from './Input';
+import { Button } from './Button';
+import { cn } from './cn';
+import { menuContentClass, type FieldSize } from './variants';
 
 interface DateInputProps {
   value: string; // ISO 'YYYY-MM-DD' või ''
@@ -13,6 +17,7 @@ interface DateInputProps {
   required?: boolean;
   id?: string;
   popupPlacement?: 'top' | 'bottom';
+  size?: FieldSize;
 }
 
 const MONTH_NAMES = [
@@ -35,13 +40,16 @@ export const DateInput: React.FC<DateInputProps> = ({
   disabled,
   required,
   id,
-  popupPlacement = 'bottom'
+  popupPlacement = 'bottom',
+  size
 }) => {
   const popupContainer = usePopupContainer();
   const [text, setText] = useState(toText(value));
   const [invalid, setInvalid] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-  const containerRef = useRef<HTMLDivElement>(null);
+  // Ankur on välja ümbris (input-group), mitte sisend ise: hüpik joondub kogu välja laiusega.
+  const inputRef = useRef<HTMLInputElement>(null);
+  const getAnchor = () => inputRef.current?.parentElement ?? null;
   const popupRef = useRef<HTMLDivElement>(null);
   // Kalender kuvatakse body all fikseeritud asendis, et modaali kerimisala seda ei lõikaks
   // ega vormi paigutust ei nihutaks.
@@ -78,7 +86,8 @@ export const DateInput: React.FC<DateInputProps> = ({
     if (!isOpen) return;
     const handleClickOutside = (e: MouseEvent) => {
       const target = e.target as Node;
-      if (containerRef.current && !containerRef.current.contains(target) && !popupRef.current?.contains(target)) {
+      const anchorEl = getAnchor();
+      if (anchorEl && !anchorEl.contains(target) && !popupRef.current?.contains(target)) {
         setIsOpen(false);
       }
     };
@@ -102,7 +111,7 @@ export const DateInput: React.FC<DateInputProps> = ({
   useLayoutEffect(() => {
     if (!isOpen) return;
     const place = () => {
-      const anchor = containerRef.current?.getBoundingClientRect();
+      const anchor = getAnchor()?.getBoundingClientRect();
       const popup = popupRef.current;
       if (!anchor || !popup) return;
       const gap = 5;
@@ -116,7 +125,7 @@ export const DateInput: React.FC<DateInputProps> = ({
         : spaceBelow < h && spaceAbove > spaceBelow;
       const top = above ? Math.max(margin, anchor.top - gap - h) : Math.min(anchor.bottom + gap, window.innerHeight - margin - h);
       const left = Math.min(Math.max(margin, anchor.left), window.innerWidth - margin - w);
-      setPopupStyle({ position: 'fixed', top, left, bottom: 'auto', zIndex: 4000 });
+      setPopupStyle({ position: 'fixed', top, left, bottom: 'auto' });
     };
     place();
     window.addEventListener('resize', place);
@@ -243,13 +252,18 @@ export const DateInput: React.FC<DateInputProps> = ({
     return cells;
   }, [viewDate, value]);
 
+  const dayBase = 'size-8 rounded-sm text-sm cursor-pointer hover:bg-muted';
+  const navBtn = 'inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground cursor-pointer hover:bg-muted hover:text-foreground';
+
   return (
-    <div ref={containerRef} className={`date-input ${invalid ? 'invalid' : ''}`}>
-      <input
+    <>
+      <Input
+        ref={inputRef}
         id={id}
         type="text"
         inputMode="numeric"
         placeholder="pp.kk.aaaa"
+        size={size}
         className={className}
         value={text}
         disabled={disabled}
@@ -267,73 +281,64 @@ export const DateInput: React.FC<DateInputProps> = ({
             commit((e.target as HTMLInputElement).value);
           }
         }}
+        end={
+          <button
+            type="button"
+            className="inline-flex size-6 items-center justify-center rounded-sm text-muted-foreground cursor-pointer enabled:hover:bg-muted enabled:hover:text-foreground disabled:cursor-not-allowed"
+            onClick={toggleOpen}
+            disabled={disabled}
+            tabIndex={-1}
+            aria-label="Vali kalendrist"
+            title={isOpen ? 'Sulge kalender' : 'Vali kalendrist'}
+          >
+            <CalendarDays size={15} />
+          </button>
+        }
       />
-      <button
-        type="button"
-        className="date-input-btn"
-        onClick={toggleOpen}
-        disabled={disabled}
-        tabIndex={-1}
-        aria-label="Vali kalendrist"
-        title={isOpen ? 'Sulge kalender' : 'Vali kalendrist'}
-      >
-        <CalendarDays size={15} />
-      </button>
 
       {isOpen && createPortal(
         <div
           ref={popupRef}
+          data-slot="date-picker"
           style={popupStyle}
-          className="date-picker-popup animate-scale-up"
+          className={cn(menuContentClass, 'flex w-64 select-none flex-col gap-2 overflow-visible p-2 animate-scale-up')}
           role="dialog"
           aria-label="Kuupäeva valija"
         >
-          <div className="date-picker-header">
-            <span className="date-picker-title">
+          <div className="flex items-center justify-between border-b border-border pb-1.5">
+            <span className="text-sm font-semibold">
               {MONTH_NAMES[viewDate.month]} {viewDate.year}
             </span>
-            <div className="date-picker-nav">
-              <button
-                type="button"
-                className="date-picker-nav-btn"
-                onClick={prevMonth}
-                title="Eelmine kuu"
-                aria-label="Eelmine kuu"
-              >
+            <div className="flex items-center gap-1">
+              <button type="button" className={navBtn} onClick={prevMonth} title="Eelmine kuu" aria-label="Eelmine kuu">
                 <ChevronLeft size={16} />
               </button>
-              <button
-                type="button"
-                className="date-picker-today-btn"
-                onClick={handleToday}
-                title="Vali tänane kuupäev"
-              >
+              <Button type="button" size="sm" variant="ghost" onClick={handleToday} title="Vali tänane kuupäev">
                 Täna
-              </button>
-              <button
-                type="button"
-                className="date-picker-nav-btn"
-                onClick={nextMonth}
-                title="Järgmine kuu"
-                aria-label="Järgmine kuu"
-              >
+              </Button>
+              <button type="button" className={navBtn} onClick={nextMonth} title="Järgmine kuu" aria-label="Järgmine kuu">
                 <ChevronRight size={16} />
               </button>
             </div>
           </div>
 
-          <div className="date-picker-weekdays">
+          <div className="grid grid-cols-7 text-center">
             {WEEK_DAYS.map((wd, idx) => (
-              <span key={idx} className="date-picker-weekday">{wd}</span>
+              <span key={idx} className="py-0.5 text-2xs font-semibold text-subtle">{wd}</span>
             ))}
           </div>
 
-          <div className="date-picker-grid">
+          <div className="grid grid-cols-7 gap-0.5">
             {calendarCells.map((cell) => (
               <button
                 key={cell.iso}
                 type="button"
-                className={`date-picker-day ${cell.isCurrentMonth ? 'current' : 'other'} ${cell.isSelected ? 'selected' : ''} ${cell.isToday ? 'today' : ''}`}
+                className={cn(
+                  dayBase,
+                  !cell.isCurrentMonth && 'text-subtle',
+                  cell.isToday && 'font-bold text-primary',
+                  cell.isSelected && 'bg-primary font-bold text-white hover:bg-primary'
+                )}
                 onClick={() => handleSelectDate(cell.iso)}
               >
                 {cell.day}
@@ -343,6 +348,6 @@ export const DateInput: React.FC<DateInputProps> = ({
         </div>,
         popupContainer
       )}
-    </div>
+    </>
   );
 };

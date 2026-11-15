@@ -4,7 +4,6 @@ import {
   Euro,
   CheckCircle2,
   AlertCircle,
-  Search,
   ArrowUpDown,
   Clock,
   Tractor,
@@ -20,9 +19,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -440,17 +437,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {/* Left Column: Entries List & Filters */}
               <div className="finance-entries-sidebar">
                 <div className="finance-sidebar-controls">
-                  <div className="finance-search-box">
-                    <Search size={14} />
-                    <FilterClear active={!!search} onClear={() => setSearch('')}>
-                      <input
-                        type="search"
-                        placeholder="Otsi põldu, tööd või tegijat..."
-                        value={search}
-                        onChange={(e) => setSearch(e.target.value)}
-                      />
-                    </FilterClear>
-                  </div>
+                  <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi põldu, tööd või tegijat..." aria-label="Otsi põldu, tööd või tegijat..." />
 
                   <div className="finance-filter-row">
                     <ToggleGroup aria-label="Kannete olek" value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
@@ -860,17 +847,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
               {/* Table search & header */}
               <div className="finance-results-toolbar">
-                <div className="finance-search-box">
-                  <Search size={14} />
-                  <FilterClear active={!!resultsSearch} onClear={() => setResultsSearch('')}>
-                    <input
-                      type="search"
-                      placeholder="Otsi põllu nime, numbri või kultuuri järgi..."
-                      value={resultsSearch}
-                      onChange={(e) => setResultsSearch(e.target.value)}
-                    />
-                  </FilterClear>
-                </div>
+                <SearchInput className="search-field" value={resultsSearch} onChange={setResultsSearch} placeholder="Otsi põllu nime, numbri või kultuuri järgi..." aria-label="Otsi põllu nime, numbri või kultuuri järgi..." />
                 <div className="text-muted text-xs">
                   Klõpsa päisel, et veergu sorteerida. Klõpsa põllul, et avada selle kanded.
                 </div>

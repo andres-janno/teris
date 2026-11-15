@@ -4,15 +4,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import { AlertTriangle, Filter, RotateCcw, Route } from 'lucide-react';
 import type { Implement, Trip, TripGap, TripImportStatus, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
-import { DateInput } from './DateInput';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -142,50 +139,50 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           <Filter size={15} className="text-muted" />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
         </div>
-        <FilterClear className="filter-clear-inline" active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
+        <FilterClear inline active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
           <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-            <DateInput value={fromDay} onChange={setFromDay} className="form-input" />
+            <DateInput value={fromDay} onChange={setFromDay} />
             <span>–</span>
-            <DateInput value={toDay} onChange={setToDay} className="form-input" />
+            <DateInput value={toDay} onChange={setToDay} />
           </span>
         </FilterClear>
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={!!vehicleId} onClear={() => setVehicleId('')}>
-            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={vehicleId} onChange={setVehicleId}
+            <FilterSelect value={vehicleId} onChange={setVehicleId}
               options={[{ value: '', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]} />
           </FilterClear>
         </div>
         <div style={{ minWidth: '180px' }}>
           <FilterClear active={!!implementId} onClear={() => setImplementId('')}>
-            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={implementId} onChange={setImplementId}
+            <FilterSelect value={implementId} onChange={setImplementId}
               options={[{ value: '', label: 'Kõik haakeriistad' }, ...implementsList.map((i) => ({ value: i.id, label: i.name }))]} />
           </FilterClear>
         </div>
         <div style={{ minWidth: '150px' }}>
           <FilterClear active={!!status} onClear={() => setStatus('')}>
-            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={status} onChange={(v) => setStatus(v as '' | 'ACTIVE' | 'CLOSED')}
+            <FilterSelect value={status} onChange={(v) => setStatus(v as '' | 'ACTIVE' | 'CLOSED')}
               options={[{ value: '', label: 'Kõik olekud' }, { value: 'ACTIVE', label: 'Käimas' }, { value: 'CLOSED', label: 'Lõppenud' }]} />
           </FilterClear>
         </div>
         <div style={{ minWidth: '200px' }}>
           <FilterClear active={!!gapsFilter} onClear={() => setGapsFilter('')}>
-            <FilterSelect style={{ fontSize: '13px', height: '34px' }} value={gapsFilter} onChange={(v) => setGapsFilter(v as '' | 'all' | 'unreviewed')}
+            <FilterSelect value={gapsFilter} onChange={(v) => setGapsFilter(v as '' | 'all' | 'unreviewed')}
               options={[{ value: '', label: 'Kõik sõidud' }, { value: 'all', label: 'Hoiatustega' }, { value: 'unreviewed', label: 'Kontrollimata hoiatused' }]} />
           </FilterClear>
         </div>
-        <FilterClear className="filter-clear-inline" active={unknownPlace} onClear={() => setUnknownPlace(false)}>
+        <FilterClear inline active={unknownPlace} onClear={() => setUnknownPlace(false)}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             <input type="checkbox" checked={unknownPlace} onChange={(e) => setUnknownPlace(e.target.checked)} />
             Ainult tundmatu algus või lõpp
           </label>
         </FilterClear>
-        <FilterClear className="filter-clear-inline" active={unlinkedOnly} onClear={() => setUnlinkedOnly(false)}>
+        <FilterClear inline active={unlinkedOnly} onClear={() => setUnlinkedOnly(false)}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             <input type="checkbox" checked={unlinkedOnly} onChange={(e) => setUnlinkedOnly(e.target.checked)} />
             Ainult kandeta põllusõidud
           </label>
         </FilterClear>
-        <FilterClear className="filter-clear-inline" active={showDeleted} onClear={() => setShowDeleted(false)}>
+        <FilterClear inline active={showDeleted} onClear={() => setShowDeleted(false)}>
           <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
             <input type="checkbox" checked={showDeleted} onChange={(e) => setShowDeleted(e.target.checked)} />
             Näita kustutatud sõite

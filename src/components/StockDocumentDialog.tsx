@@ -5,14 +5,13 @@ import { formatQty } from '../services/units';
 import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
 import { alertDialog } from './ConfirmDialog';
-import { DateInput } from './DateInput';
 import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentKind, Warehouse, WriteOffReason, StockLevel } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput } from './ui';
 
 interface Row { articleId: string; quantity: string; amount: string }
 const emptyRow: Row = { articleId: '', quantity: '', amount: '' };
@@ -110,7 +109,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="sd-date">Kuupäev *</label>
-              <DateInput id="sd-date" value={date} onChange={setDate} className="form-input" required />
+              <DateInput id="sd-date" value={date} onChange={setDate} required />
             </div>
             <div className="form-group">
               <label htmlFor="sd-wh">{kind === 'RECEIPT' ? 'Ladu *' : 'Lähteladu *'}</label>

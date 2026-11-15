@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, INTEREST_STATUS_LABELS, type InterestRow, type InterestStatus } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
-import { FilterClear } from '../components/FilterClear';
+import { FilterClear } from '../components/ui';
 
 const STATUSES = Object.keys(INTEREST_STATUS_LABELS) as InterestStatus[];
 

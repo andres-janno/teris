@@ -10,7 +10,7 @@ import {
   type CropGroup,
   type WorkPhase
 } from './platformApi.ts';
-import { NumberInput } from '../components/NumberInput';
+import { NumberInput } from '../components/ui';
 
 type Tab = 'crops' | 'workTypes';
 
@@ -150,7 +150,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
         <input id="cc-pria-name" className="form-input" value={d.priaName} onChange={(e) => set('priaName', e.target.value)} maxLength={300} placeholder={d.name} />
       </Field>
       <Field id="cc-gdd" label="GDD baastemperatuur (°C)">
-        <NumberInput id="cc-gdd" className="num" min={0} max={15} value={d.gddBaseC} onChange={(v) => set('gddBaseC', v)} />
+        <NumberInput id="cc-gdd" min={0} max={15} value={d.gddBaseC} onChange={(v) => set('gddBaseC', v)} />
       </Field>
       <Check label="Talikultuur" checked={d.isWinterCrop} onChange={(v) => set('isWinterCrop', v)} />
       <Check label="PRIA eristab allakülvi" checked={d.priaUndersowing} onChange={(v) => set('priaUndersowing', v)} />

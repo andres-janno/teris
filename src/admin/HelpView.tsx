@@ -6,7 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
-import { FilterClear } from '../components/FilterClear';
+import { FilterClear } from '../components/ui';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };

@@ -1,9 +1,7 @@
 // src/components/CropRegisterModal.tsx
 import React, { useState, useMemo } from 'react';
-import { NumberInput } from './NumberInput';
 import {
   Sprout,
-  Search,
   Plus,
   Edit2,
   Trash2,
@@ -20,9 +18,8 @@ import type { FarmingSeason } from '../types/season';
 import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
-import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -394,18 +391,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
           {/* Otsing */}
           <div className="register-actions-bar">
-            <div className="search-box-wrap">
-              <Search size={16} className="search-icon" />
-              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
-                <input
-                  type="text"
-                  placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input search-input"
-                />
-              </FilterClear>
-            </div>
+            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..." aria-label="Otsi kultuuri, sorti, aretajat või PRIA koodi..." />
             <span className="crop-total-area" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
               Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>
             </span>

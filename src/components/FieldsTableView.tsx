@@ -1,6 +1,6 @@
 // src/components/FieldsTableView.tsx — Põldude üldandmete tabel (omandisuhe, katastrid, mullastik, operaator)
 import React, { useEffect, useMemo, useState } from 'react';
-import { Layers, Calendar, Search, Lock, Download, Crosshair, Plus, Edit2, Trash2 } from 'lucide-react';
+import { Layers, Calendar, Lock, Download, Crosshair, Plus, Edit2, Trash2 } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import { compareFieldNumbers } from '../types/fieldRegister';
 import type { FieldCadastralLink } from '../types/cadastre';
@@ -15,9 +15,8 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { HelpHint } from './HelpHint';
-import { FilterClear } from './FilterClear';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput } from './ui';
 import type { BadgeTone } from './ui';
 
 interface FieldsTableViewProps {
@@ -316,18 +315,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
             </div>
 
             <div className="register-actions-bar">
-              <div className="search-box-wrap">
-                <Search size={16} className="search-icon" />
-                <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
-                  <input
-                    type="text"
-                    placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="form-input search-input"
-                  />
-                </FilterClear>
-              </div>
+              <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." aria-label="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." />
               <ToggleGroup aria-label="Omandivorm" value={tenureFilter} onValueChange={(v) => setTenureFilter(v as TenureFilter)}>
                 {tenureFilters.map((t) => (
                   <ToggleGroupItem key={t} value={t} disabled={t !== 'all' && tenureCounts[t] === 0}>

@@ -11,7 +11,7 @@ export type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   end?: React.ReactNode;
 };
 
-const readOnlyClass = 'read-only:cursor-default read-only:font-semibold';
+const readOnlyClass = 'read-only:enabled:cursor-default read-only:enabled:font-semibold';
 
 export const Input: React.FC<InputProps> = ({ className, size = 'md', numeric, start, end, ...props }) => {
   const numericClass = numeric && 'text-right tabular-nums';
@@ -19,13 +19,13 @@ export const Input: React.FC<InputProps> = ({ className, size = 'md', numeric, s
     return (
       <input
         data-slot="input"
-        className={cn(fieldControlClass, fieldSizeClass[size], readOnlyClass, 'read-only:bg-muted', numericClass, className)}
+        className={cn(fieldControlClass, fieldSizeClass[size], readOnlyClass, 'read-only:enabled:bg-muted', numericClass, className)}
         {...props}
       />
     );
   }
   return (
-    <div data-slot="input-group" className={cn(fieldShellClass, fieldSizeClass[size], 'has-[input:read-only]:bg-muted', className)}>
+    <div data-slot="input-group" className={cn(fieldShellClass, fieldSizeClass[size], 'has-[input:read-only:enabled]:bg-muted', className)}>
       {start != null && <span className="inline-flex shrink-0 items-center text-muted-foreground">{start}</span>}
       <input
         data-slot="input"

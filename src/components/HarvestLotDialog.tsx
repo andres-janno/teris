@@ -5,13 +5,12 @@ import { api } from '../services/api';
 import { formatQty } from '../services/units';
 import { formatDate, todayTallinn } from '../services/dateFormat';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
-import { DateInput } from './DateInput';
 import type { Article } from '../types/fieldWork';
 import type { Crop } from '../types/crop';
 import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -237,7 +236,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                   <form className="harvest-lot-add harvest-lot-add-weighing" onSubmit={addWeighing}>
                     <div className="form-group">
                       <label htmlFor="hl-w-date">Kuupäev</label>
-                      <DateInput id="hl-w-date" value={wDate} onChange={setWDate} className="form-input" required />
+                      <DateInput id="hl-w-date" value={wDate} onChange={setWDate} required />
                     </div>
                     <div className="form-group">
                       <label htmlFor="hl-w-t">Tonnid</label>
@@ -281,7 +280,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                 <form className="harvest-lot-add harvest-lot-add-cost" onSubmit={addCost}>
                   <div className="form-group">
                     <label htmlFor="hl-c-date">Kuupäev</label>
-                    <DateInput id="hl-c-date" value={cDate} onChange={setCDate} className="form-input" required />
+                    <DateInput id="hl-c-date" value={cDate} onChange={setCDate} required />
                   </div>
                   <div className="form-group">
                     <label htmlFor="hl-c-art">Artikkel</label>

@@ -13,8 +13,9 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - Värvid ainult nimedega (`bg-card`, `text-muted-foreground`, `text-warning` …) — need järgivad heledat/tumedat teemat
   ise, `dark:` pole tavaliselt vaja. Erand: andmevärvid (kultuur, kaardikiht) `style={{ … }}` kaudu.
 - `style={{ … }}` ainult dünaamiliste väärtuste jaoks.
-- Kuupäev: `DateInput` (pp.kk.aaaa); arv: `NumberInput`; otsinguga valik: `FilterSelect`; filtri X: `FilterClear`.
-  Need neli asuvad väljaspool `ui/` (`src/components/`), aga on samuti kohustuslikud.
+- Kuupäev: `DateInput` (pp.kk.aaaa); arv: `NumberInput` (`end` = ühik); otsinguga valik: `FilterSelect`; filtri X: `FilterClear`
+  (`fill`, `inline`); otsinguväli: `SearchInput`. Kõik asuvad `ui/` all, võtavad `size` (`md` vaikimisi, `sm`) ega vaja
+  `form-input` klassi — `className` on ainult paigutuse jaoks.
 - **Vormiväljad** (`Input`, `Textarea`, `Select`, `CheckboxField`, `RadioField`, `Field`, `FormGrid`, `FieldRow`):
   - Suurus `size`: `md` 32px (vaikimisi, nagu nupp), `sm` 28px tabeli ridades.
   - `Input numeric`: arv paremale, ühelaiused numbrid. `start` / `end`: ikoon, ühik (ha, €) või nupp; siis ümbritseb
@@ -24,7 +25,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   - `CheckboxField` (märkeruut + silt + `hint`, kogu rida klõpsatav) ja `RadioField` (`RadioGroup` sees,
     `orientation="vertical"` paneb üksteise alla) asendavad käsitsi tehtud `<label>` + märkeruut kombinatsioone.
   - Paigutus: `FormGrid` (`cols` 2 või 3, `span="full"`), `Field span="full"`, `FieldRow` (väli + nupp ühes reas).
-  - `data-slot` nimed: `input`, `input-group`, `textarea`, `select`.
+  - `data-slot` nimed: `input`, `input-group`, `textarea`, `select`, `filter-select`, `filter-clear`, `date-picker`.
   - Toored `<input>` / `<select>` / `<textarea>` on keelatud; erand ainult `<input type="file">` ja `<input type="range">`
     (`type` esimese atribuudina). `npm run ui-audit` rida „Vanu vormivälju (tsx)“ peab jõudma nulli.
 - Numbriveerg tabelis: `numeric` (paremale joondus); kogused `formatQty`.

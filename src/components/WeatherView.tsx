@@ -5,9 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, FilterSelect } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -68,15 +66,15 @@ export const WeatherView: React.FC = () => {
           </div>
           <div className="weather-filters">
             <FilterClear active={period !== 'growing'} onClear={() => setPeriod('growing')}>
-              <FilterSelect style={{ fontSize: '13px', height: '34px' }} ariaLabel="Periood" value={period} onChange={(v) => setPeriod(v as WeatherPeriod)}
+              <FilterSelect ariaLabel="Periood" value={period} onChange={(v) => setPeriod(v as WeatherPeriod)}
                 options={WEATHER_PERIOD_OPTIONS.map((p) => ({ value: p.value, label: `${p.label} ${p.range}` }))} />
             </FilterClear>
             <FilterClear active={point !== 'all'} onClear={() => setPoint('all')}>
-              <FilterSelect style={{ fontSize: '13px', height: '34px' }} ariaLabel="Ilmapunkt" value={String(point)} onChange={(v) => setPoint(v === 'all' ? 'all' : Number(v))}
+              <FilterSelect ariaLabel="Ilmapunkt" value={String(point)} onChange={(v) => setPoint(v === 'all' ? 'all' : Number(v))}
                 options={[{ value: 'all', label: 'Majandi keskmine' }, ...points.map((p) => ({ value: String(p.id), label: `${p.lat.toFixed(1)}° N, ${p.lon.toFixed(1)}° E (${p.fieldCount} põldu)`, color: pointColor(points, p.id) }))]} />
             </FilterClear>
             <FilterClear active={base !== 5} onClear={() => setBase(5)}>
-              <FilterSelect style={{ fontSize: '13px', height: '34px' }} ariaLabel="GDD baastemperatuur" value={String(base)} onChange={(v) => setBase(Number(v))}
+              <FilterSelect ariaLabel="GDD baastemperatuur" value={String(base)} onChange={(v) => setBase(Number(v))}
                 options={BASES.map((b) => ({ value: String(b), label: `GDD baas ${b} °C` }))} />
             </FilterClear>
           </div>

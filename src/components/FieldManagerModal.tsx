@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
   Calendar,
-  Search,
   Edit2,
   Crosshair,
   Check,
@@ -18,9 +17,8 @@ import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { HelpHint } from './HelpHint';
-import { FilterClear } from './FilterClear';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -441,20 +439,9 @@ function cropSummaryKey(cropText: string): string {
 
           {/* Search & Actions Row */}
           <div className="register-actions-bar">
-            <div className="search-box-wrap">
-              <Search size={16} className="search-icon" />
-              <FilterClear active={!!searchQuery} onClear={() => setSearchQuery('')}>
-                <input
-                  type="text"
-                  placeholder="Otsi põllu nime, koodi, katastrit või omanikku..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="form-input search-input"
-                />
-              </FilterClear>
-            </div>
+            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, koodi, katastrit või omanikku..." aria-label="Otsi põllu nime, koodi, katastrit või omanikku..." />
 
-            <FilterClear className="filter-clear-inline" active={showMissingInYear} onClear={() => setShowMissingInYear(false)}>
+            <FilterClear inline active={showMissingInYear} onClear={() => setShowMissingInYear(false)}>
               <label className="checkbox-label" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '13px', whiteSpace: 'nowrap' }}>
                 <input type="checkbox" checked={showMissingInYear} onChange={(e) => setShowMissingInYear(e.target.checked)} />
                 Näita ka {selectedYear}. aastal puuduvaid põlde

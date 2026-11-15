@@ -1,6 +1,5 @@
 // src/components/PoiManagerModal.tsx
 import React, { useState, useEffect } from 'react';
-import { NumberInput } from './NumberInput';
 import {
   MapPin,
   Plus,
@@ -13,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;

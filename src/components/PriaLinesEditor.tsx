@@ -10,8 +10,7 @@ import {
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
-import { FilterSelect, type FilterSelectOption } from './FilterSelect';
-import { Button } from './ui';
+import { Button, FilterSelect, type FilterSelectOption } from './ui';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;

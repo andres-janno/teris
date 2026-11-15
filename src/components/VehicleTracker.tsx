@@ -1,6 +1,5 @@
 // src/components/VehicleTracker.tsx
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
-import { NumberInput } from './NumberInput';
 import {
   Tractor,
   Fuel,
@@ -22,7 +21,6 @@ import {
   History
 } from 'lucide-react';
 import { api } from '../services/api';
-import { DateInput } from './DateInput';
 import { DeviceAssignmentRegister } from './DeviceAssignmentRegister';
 import { TripRegister } from './TripRegister';
 import { formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime, combineDateAndTimeToIso } from './fleetDateTime';
@@ -39,11 +37,9 @@ import type {
   VehicleStatus
 } from '../types/fleet';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { ResourceCostFields, parseRate, rateText, isRateTextValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -183,7 +179,7 @@ const DepreciationFields: React.FC<DepreciationFieldsProps> = ({ date, onDateCha
   <>
     <div className="form-group">
       <label>Soetamise kuupäev</label>
-      <DateInput value={date} onChange={onDateChange} className="form-input" />
+      <DateInput value={date} onChange={onDateChange} />
     </div>
     <div className="form-group">
       <label>Soetusmaksumus (€)</label>
@@ -1214,7 +1210,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   )}
                   <div className="form-group">
                     <label>Soetamise kuupäev</label>
-                    <DateInput value={devAcqDate} onChange={setDevAcqDate} className="form-input" />
+                    <DateInput value={devAcqDate} onChange={setDevAcqDate} />
                   </div>
                   {devConnectivity === 'cellular' && (
                     <div className="form-group full-width">
@@ -1302,7 +1298,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <DateInput
                         value={assignStartDate}
                         onChange={setAssignStartDate}
-                        className="form-input"
                         required
                       />
                       <select
@@ -1902,7 +1897,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   value={historyVehicleFilter}
                   defaultValue="all"
                   onChange={setHistoryVehicleFilter}
-                  style={{ fontSize: '13px', height: '34px' }}
                   options={[{ value: 'all', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]}
                 />
               </FilterClear>
@@ -1914,7 +1908,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   value={historyImplementFilter}
                   defaultValue="all"
                   onChange={setHistoryImplementFilter}
-                  style={{ fontSize: '13px', height: '34px' }}
                   options={[{ value: 'all', label: 'Kõik haakeriistad' }, ...implementsList.map((imp) => ({ value: imp.id, label: imp.name }))]}
                 />
               </FilterClear>

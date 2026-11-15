@@ -5,7 +5,7 @@ import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
-import { DateInput } from '../components/DateInput.tsx';
+import { DateInput } from '../components/ui';
 
 export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -171,7 +171,7 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
             <div className="admin-license-grid">
               <div className="admin-field">
                 <label className="admin-field-label" htmlFor="td-until">Kehtib kuni</label>
-                <DateInput id="td-until" className="form-input" value={validUntil} onChange={setValidUntil} required />
+                <DateInput id="td-until" value={validUntil} onChange={setValidUntil} required />
               </div>
               <div className="admin-field">
                 <span className="admin-field-label">Moodulid</span>

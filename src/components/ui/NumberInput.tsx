@@ -1,4 +1,7 @@
-import { useEffect, useRef, useState } from 'react';
+// src/components/ui/NumberInput.tsx — arvusisend (koma, tühi = null, min/max, ühik `end`).
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Input } from './Input';
+import type { FieldSize } from './variants';
 
 /** Parsib kasutaja sisestatud teksti (koma või punkt kümnendmärgina). Tühi/vigane → null. */
 export function parseNumberText(text: string, integer?: boolean): number | null {
@@ -30,12 +33,14 @@ interface NumberInputProps {
   required?: boolean;
   'aria-label'?: string;
   title?: string;
+  size?: FieldSize;
+  end?: ReactNode; // ühik (nt "€/t", "ha")
 }
 
 /** Numbrisisend, mille saab tühjaks teha (väärtus null) ja mis toetab koma. */
 export function NumberInput({
   value, onChange, decimals = 2, min, max, integer, className, id, placeholder,
-  disabled, required, title, ...rest
+  disabled, required, title, size, end, ...rest
 }: NumberInputProps) {
   const dec = integer ? 0 : decimals;
   const [text, setText] = useState(() => (value == null ? '' : formatNumberText(value, dec)));
@@ -64,10 +69,13 @@ export function NumberInput({
   };
 
   return (
-    <input
+    <Input
+      numeric
       type="text"
       inputMode={integer ? 'numeric' : 'decimal'}
-      className={`form-input num ${className ?? ''}`}
+      size={size}
+      end={end}
+      className={className}
       id={id}
       value={text}
       placeholder={placeholder}

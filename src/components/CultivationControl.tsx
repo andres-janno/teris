@@ -3,8 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
-import { DateInput } from './DateInput';
-import { ToggleGroup, ToggleGroupItem } from './ui';
+import { ToggleGroup, ToggleGroupItem, DateInput } from './ui';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -200,7 +199,6 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               <DateInput
                 value={customDate}
                 onChange={(val) => onCustomDateChange?.(val)}
-                className="cc-input"
                 popupPlacement="top"
               />
             </div>

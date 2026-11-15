@@ -6,12 +6,11 @@ import { formatQty } from '../services/units';
 import { isGoods } from '../services/articleRules';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
-import { DateInput } from './DateInput';
 import { todayTallinn } from '../services/dateFormat';
 import type { Article } from '../types/fieldWork';
 import type { InventoryPreviewRow, StockDocument, Warehouse } from '../types/stock';
 import { WarehouseOptions } from './WarehouseOptions';
-import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput } from './ui';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const parseNum = (s: string) => {
@@ -122,7 +121,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
           <div className="form-grid">
             <div className="form-group">
               <label htmlFor="inv-date">Kuupäev *</label>
-              <DateInput id="inv-date" value={date} onChange={setDate} className="form-input" required />
+              <DateInput id="inv-date" value={date} onChange={setDate} required />
             </div>
             <div className="form-group">
               <label htmlFor="inv-wh">Ladu *</label>

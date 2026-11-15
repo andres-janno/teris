@@ -9,6 +9,11 @@ export { Select, type SelectOption } from './Select';
 export { Checkbox, CheckboxField } from './Checkbox';
 export { RadioGroup, RadioGroupItem, RadioField } from './RadioGroup';
 export { Switch } from './Switch';
+export { DateInput } from './DateInput';
+export { NumberInput, parseNumberText, formatNumberText } from './NumberInput';
+export { FilterSelect, type FilterSelectOption } from './FilterSelect';
+export { FilterClear } from './FilterClear';
+export { SearchInput } from './SearchInput';
 export { Field, FormGrid, FieldRow } from './Field';
 export type { FieldSize } from './variants';
 export {

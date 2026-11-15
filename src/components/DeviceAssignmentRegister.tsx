@@ -5,12 +5,9 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Activity, Filter, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench } from 'lucide-react';
 import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
-import { DateInput } from './DateInput';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -196,7 +193,6 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
               value={deviceFilter}
               defaultValue="all"
               onChange={setDeviceFilter}
-              style={{ fontSize: '13px', height: '34px' }}
               options={[{ value: 'all', label: 'Kõik seadmed' }, ...devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))]}
             />
           </FilterClear>
@@ -208,7 +204,6 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
               value={targetFilter}
               defaultValue="all"
               onChange={setTargetFilter}
-              style={{ fontSize: '13px', height: '34px' }}
               options={[
                 { value: 'all', label: 'Kõik masinad ja haakeriistad' },
                 ...vehicles.map((v) => ({ value: `veh:${v.id}`, label: v.name, group: '🚜 Masinad' })),
@@ -386,7 +381,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                   <div className="form-group">
                     <label>Paigaldatud (algusaeg) *</label>
                     <div className="assign-datetime">
-                      <DateInput value={startDate} onChange={setStartDate} className="form-input" required />
+                      <DateInput value={startDate} onChange={setStartDate} required />
                       <select className="form-input time-select" value={startTime} onChange={(e) => setStartTime(e.target.value)} required>
                         {getTimeOptions(startTime || undefined).map((t) => <option key={t} value={t}>{t}</option>)}
                       </select>

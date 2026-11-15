@@ -1,6 +1,6 @@
 // src/components/ArticlesView.tsx — laoarvestus täislehena: artiklid, laokanded, laod
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Package, Search, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge, Tags } from 'lucide-react';
+import { Package, Plus, Download, Edit2, Trash2, Calendar, Lock, GitMerge, Tags } from 'lucide-react';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ArticleFormDialog } from './ArticleFormDialog';
@@ -11,8 +11,6 @@ import { seasonSelectorYears } from '../types/season';
 import type { Article, ArticleCategory } from '../types/fieldWork';
 import { NEW_ARTICLE } from '../types/fieldWork';
 import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, isGoods, type ArticleGroup } from '../services/articleRules';
-import { FilterClear } from './FilterClear';
-import { FilterSelect } from './FilterSelect';
 import { warehouseFilterOptions } from './WarehouseOptions';
 import { ArticleStockCard } from './ArticleStockCard';
 import type { Warehouse } from '../types/stock';
@@ -21,7 +19,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput } from './ui';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -214,18 +212,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
             </div>
 
             <div className="register-actions-bar">
-              <div className="search-box-wrap">
-                <Search size={16} className="search-icon" />
-                <FilterClear active={!!search} onClear={() => setSearch('')}>
-                  <input
-                    type="text"
-                    placeholder="Otsi materjali nime, tootjat või märkust..."
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="form-input search-input"
-                  />
-                </FilterClear>
-              </div>
+              <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi materjali nime, tootjat või märkust..." aria-label="Otsi materjali nime, tootjat või märkust..." />
               <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
                 <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
                   options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses, true)]} />

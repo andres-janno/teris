@@ -1,6 +1,5 @@
 // src/components/SeasonManagerModal.tsx
 import React, { useState } from 'react';
-import { NumberInput } from './NumberInput';
 import {
   Lock,
   Unlock,
@@ -13,7 +12,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
