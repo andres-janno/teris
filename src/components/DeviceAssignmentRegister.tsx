@@ -356,7 +356,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                   </div>
                 )}
 
-                <FormGrid>
+                <FormGrid className="fleet-form-grid">
                   <Field label="Seade *" htmlFor="assign-device">
                     <Select id="assign-device" required value={formDeviceId} onValueChange={setFormDeviceId} placeholder="Vali seade..."
                       options={devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))} />
