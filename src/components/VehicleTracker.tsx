@@ -39,7 +39,7 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption } from './ui';
+import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -1295,12 +1295,15 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             const attachedImplement = implementsList.find((imp) => imp.id === v.assignedImplementId || imp.assignedVehicleId === v.id);
 
             return (
-              <div
+              <Card
                 key={v.id}
-                className={`vehicle-card glass-card ${isSelected ? 'selected' : ''}`}
+                padding="sm"
+                interactive
+                selected={isSelected}
+                className="vehicle-card"
                 onClick={() => onSelectVehicle(v)}
               >
-                <div className="v-card-header">
+                <CardHeader align="start">
                   <div className="v-title-wrap">
                     <div className="v-avatar" style={{ borderColor: v.color }}>
                       <Tractor size={20} style={{ color: v.color }} />
@@ -1315,7 +1318,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <Badge tone={VEHICLE_STATUS_TONE[v.status]}>
                       {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
                     </Badge>
-                    <div className="card-header-actions">
+                    <CardActions>
                       <Button variant="ghost" size="icon-sm"
                         title="Vaata selle masina haakimise ajalugu"
                         onClick={(e) => {
@@ -1346,9 +1349,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         }}>
                         <Trash2 size={14} />
                       </Button>
-                    </div>
+                    </CardActions>
                   </div>
-                </div>
+                </CardHeader>
 
                 <div className="v-info-rows">
                   {/* Equipment Assignment Badges with Swap Actions */}
@@ -1473,7 +1476,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </Button>
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -1487,7 +1490,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             const attachedDevice = devices.find((d) => d.assignedImplementId === imp.id || imp.assignedDeviceId === d.id);
 
             return (
-              <div key={imp.id} className="implement-card glass-card">
+              <Card key={imp.id} padding="sm" className="implement-card">
                 <div className="imp-card-header">
                   <div className="imp-icon-wrap">
                     <span>🔧</span>
@@ -1496,7 +1499,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <h4 className="imp-name">{imp.name}</h4>
                     <span className="imp-meta">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
                   </div>
-                  <div className="card-header-actions">
+                  <CardActions>
                     <Button variant="ghost" size="icon-sm"
                       title="Vaata selle haakeriista haakimise ajalugu"
                       onClick={() => {
@@ -1522,7 +1525,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       }}>
                       <Trash2 size={14} />
                     </Button>
-                  </div>
+                  </CardActions>
                 </div>
 
                 <div className="imp-status-box">
@@ -1599,7 +1602,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     />
                   </div>
                 </div>
-              </div>
+              </Card>
             );
           })}
         </div>
@@ -1617,7 +1620,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
 
             return (
-              <div key={dev.id} className={`device-card glass-card ${fresh.cls}`}>
+              <Card key={dev.id} padding="sm" className={`device-card ${fresh.cls}`}>
                 <div className="dev-card-header">
                   <div className="dev-icon-wrap">
                     {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
@@ -1630,7 +1633,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
                     </span>
                   </div>
-                  <div className="card-header-actions">
+                  <CardActions>
                     <Button variant="ghost" size="icon-sm"
                       title="Muuda seadme andmeid"
                       onClick={() => startEditDevice(dev)}>
@@ -1645,7 +1648,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       }}>
                       <Trash2 size={14} />
                     </Button>
-                  </div>
+                  </CardActions>
                 </div>
 
                 {isEyeSensor ? (
@@ -1732,7 +1735,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 )}
 
-              </div>
+              </Card>
             );
             };
             // Värskeimad andmed eespool; andmeteta seadmed lõpus
@@ -1786,7 +1789,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       {activeTab === 'history' && (
         <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {/* Filter bar */}
-          <div className="history-filter-bar glass-card" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '12px 16px' }}>
+          <Card padding="sm" className="history-filter-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <Filter size={15} className="text-muted" />
               <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
@@ -1848,7 +1851,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
               <span>Värskenda</span>
             </Button>
-          </div>
+          </Card>
 
           {/* Data Table */}
           {historyLoading && implementAssignments.length === 0 ? (
@@ -1856,7 +1859,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               Laen haakimise registri andmeid...
             </div>
           ) : filteredAssignments.length === 0 ? (
-            <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
+            <Card padding="none" className="empty-register-state is-muted">
               <Wrench size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
               <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
                 Ühtegi haakimise kirjet ei leitud
@@ -1866,7 +1869,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
                   : 'Haakeriistade ja masinate sidumiste ajalugu salvestatakse siia automaatselt, kui masinapargis või töödes haakeriistu vahetatakse.'}
               </p>
-            </div>
+            </Card>
           ) : (
             <Table scroll="fill" bordered>
                 <TableHeader>

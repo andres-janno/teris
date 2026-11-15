@@ -7,7 +7,7 @@ import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../t
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
+import { Badge, Card, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -176,7 +176,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
   return (
     <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {/* Filtrid */}
-      <div className="history-filter-bar glass-card" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '12px 16px' }}>
+      <Card padding="sm" className="history-filter-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Filter size={15} className="text-muted" />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
@@ -229,7 +229,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
           <span>Värskenda</span>
         </Button>
-      </div>
+      </Card>
 
       {/* Tabel */}
       {loading && assignments.length === 0 ? (
@@ -237,7 +237,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
           Laen seadmete seoste registrit...
         </div>
       ) : filtered.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
+        <Card padding="none" className="empty-register-state is-muted">
           <Radio size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
           <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
             Ühtegi seose kirjet ei leitud
@@ -247,7 +247,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
               ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
               : 'Seadmete paigaldused masinatele ja haakeriistadele salvestuvad siia, kui seade kaardilt paigaldatakse või vahetatakse.'}
           </p>
-        </div>
+        </Card>
       ) : (
         <Table scroll="fill" bordered>
             <TableHeader>

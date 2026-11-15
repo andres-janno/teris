@@ -12,7 +12,7 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea } from './ui';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -389,8 +389,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               {filteredPois.map((p) => {
                 const meta = CATEGORY_META[p.category] || CATEGORY_META.other;
                 return (
-                  <div key={p.id} className="vehicle-card glass-card" onClick={() => handleStartEdit(p)}>
-                    <div className="v-card-header">
+                  <Card key={p.id} padding="sm" interactive className="vehicle-card" onClick={() => handleStartEdit(p)}>
+                    <CardHeader align="start">
                       <div className="v-title-wrap">
                         <div className="v-avatar card-emoji-avatar">{meta.emoji}</div>
                         <div>
@@ -398,7 +398,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                           <span className="v-model">{meta.label}</span>
                         </div>
                       </div>
-                      <div className="card-header-actions">
+                      <CardActions>
                         <Button variant="ghost" size="icon-sm"
                           title="Näita kaardil"
                           aria-label="Näita kaardil"
@@ -427,8 +427,8 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                           }}>
                           <Trash2 size={14} />
                         </Button>
-                      </div>
-                    </div>
+                      </CardActions>
+                    </CardHeader>
 
                     <div className="v-info-rows">
                       {p.description && <div className="v-info-item card-info-text">{p.description}</div>}
@@ -453,7 +453,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                       </div>
                       <div className="v-info-item"><span className="text-muted">Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
                     </div>
-                  </div>
+                  </Card>
                 );
               })}
             </div>

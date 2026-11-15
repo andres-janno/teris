@@ -2002,28 +2002,9 @@ body {
 }
 
 .vehicle-card {
-  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.vehicle-card:hover {
-  background: var(--bg-card-hover);
-  border-color: rgba(34, 197, 94, 0.3);
-}
-
-.vehicle-card.selected {
-  border-color: var(--emerald-500);
-  box-shadow: 0 0 16px rgba(34, 197, 94, 0.25);
-}
-
-.v-card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
 }
 
 .v-title-wrap {
@@ -2037,13 +2018,6 @@ body {
   flex-direction: column;
   align-items: flex-end;
   gap: 6px;
-  flex-shrink: 0;
-}
-
-.card-header-actions {
-  display: flex;
-  gap: 2px;
-  margin-left: auto;
   flex-shrink: 0;
 }
 
@@ -2219,13 +2193,9 @@ body {
 
 .implement-card,
 .device-card {
-  padding: 14px;
   display: flex;
   flex-direction: column;
   gap: 12px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
 }
 
 .imp-card-header,
@@ -2389,7 +2359,7 @@ body {
 .fresh-none { --fresh: var(--fresh-none); }
 
 .device-card[class*="fresh-"] {
-  border-left: 4px solid var(--fresh);
+  border-left: 4px solid var(--fresh) !important;
 }
 
 .dev-fresh-dot {
@@ -3619,6 +3589,10 @@ body {
   gap: 8px;
 }
 
+.empty-register-state.is-muted {
+  color: var(--text-muted);
+}
+
 
 
 
@@ -4239,12 +4213,6 @@ body {
   flex-direction: column;
   gap: 8px;
   margin-bottom: 10px;
-}
-
-.edit-cad-item {
-  padding: 8px 10px;
-  border: 1px solid var(--border-subtle);
-  border-radius: var(--radius-sm);
 }
 
 .edit-cad-grid {
@@ -6967,40 +6935,23 @@ body {
 }
 
 .finance-entry-card {
-  text-align: left;
-  border: 1px solid var(--border-card);
-  background: var(--card-bg, #ffffff);
-  border-radius: 8px;
-  padding: 10px 12px;
-  cursor: pointer;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  transition: all 0.15s ease;
   position: relative;
 }
 
-.finance-entry-card:hover {
-  border-color: #10b981;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
-}
-
-.finance-entry-card.selected {
-  border-color: #10b981;
-  background: rgba(16, 185, 129, 0.05);
-  box-shadow: 0 0 0 1px #10b981;
-}
-
+/* Staatuse riba vasakul peab Card-i äärise üle võitma */
 .finance-entry-card.pending {
-  border-left: 3px solid #f59e0b;
+  border-left: 3px solid #f59e0b !important;
 }
 
 .finance-entry-card.changed {
-  border-left: 3px solid #3b82f6;
+  border-left: 3px solid #3b82f6 !important;
 }
 
 .finance-entry-card.confirmed {
-  border-left: 3px solid #16a34a;
+  border-left: 3px solid #16a34a !important;
 }
 
 .finance-entry-card-header {
@@ -7706,6 +7657,13 @@ body {
 .cell-badge-lead { margin-right: 6px; }
 
 /* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
+.history-filter-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
+
 .history-filter-bar > div > [data-slot="filter-clear"] {
   display: flex !important;
   width: 100%;

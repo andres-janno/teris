@@ -13,7 +13,7 @@ import { isCropUndetermined } from '../types/season';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select } from './ui';
+import { Button, Card, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select } from './ui';
 
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
@@ -639,7 +639,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
       <div className="edit-cadastral-list">
         {editCadastralParcels.map((parcel, pIdx) => (
-          <div key={pIdx} className="edit-cad-item glass-card">
+          <Card key={pIdx} variant="tile" padding="sm">
             <div className="edit-cad-grid">
               <Field label="Katastritunnus *" htmlFor={`field-edit-cad-code-${pIdx}`}>
                 <Input
@@ -776,7 +776,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 )}
               </div>
             </div>
-          </div>
+          </Card>
         ))}
       </div>
 

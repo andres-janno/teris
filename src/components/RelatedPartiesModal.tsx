@@ -21,7 +21,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -485,8 +485,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               const accent = PARTY_ROLE_CONFIG[party.roles[0]]?.color;
 
               return (
-                <div key={party.id} className="vehicle-card glass-card" onClick={() => startEdit(party)}>
-                  <div className="v-card-header">
+                <Card key={party.id} padding="sm" interactive className="vehicle-card" onClick={() => startEdit(party)}>
+                  <CardHeader align="start">
                     <div className="v-title-wrap">
                       <div
                         className="v-avatar card-emoji-avatar"
@@ -503,7 +503,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                         </span>
                       </div>
                     </div>
-                    <div className="card-header-actions">
+                    <CardActions>
                       <Button
                         variant="ghost"
                         size="icon-sm"
@@ -548,8 +548,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                           <Trash2 size={14} />
                         </Button>
                       )}
-                    </div>
-                  </div>
+                    </CardActions>
+                  </CardHeader>
 
                   <div className="v-info-rows">
                     {party.roles.length > 0 && (
@@ -584,17 +584,17 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                       </div>
                     )}
                   </div>
-                </div>
+                </Card>
               );
             })}
           </div>
 
           {filteredParties.length === 0 && (
-            <div className="empty-register-state glass-card" style={{ padding: '32px', textAlign: 'center' }}>
+            <Card padding="none" className="empty-register-state">
               <AlertCircle size={28} className="text-amber" style={{ margin: '0 auto 8px auto' }} />
               <h4 style={{ color: 'var(--text-primary)', marginBottom: '4px' }}>Otsingule vastavaid isikuid ei leitud</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
-            </div>
+            </Card>
           )}
     </>
   );

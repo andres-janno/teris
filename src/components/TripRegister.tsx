@@ -9,7 +9,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Badge, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
+import { Badge, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -134,7 +134,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         </div>
       ))}
 
-      <div className="history-filter-bar glass-card" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', padding: '12px 16px' }}>
+      <Card padding="sm" className="history-filter-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Filter size={15} className="text-muted" />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
@@ -187,14 +187,14 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         <Button size="sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
           <RotateCcw size={14} className={loading ? 'spin' : ''} />
         </Button>
-      </div>
+      </Card>
 
       {error && <div className="auth-error-banner">{error}</div>}
 
       {loading && trips.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Laen sõite...</div>
       ) : trips.length === 0 ? (
-        <div className="glass-card" style={{ textAlign: 'center', padding: '48px 24px', color: 'var(--text-muted)' }}>
+        <Card padding="none" className="empty-register-state is-muted">
           <Route size={36} style={{ margin: '0 auto 12px', opacity: 0.4 }} />
           <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '6px' }}>
             Sõite ei leitud
@@ -202,7 +202,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           <p style={{ fontSize: '13px', margin: 0 }}>
             {hasFilters ? 'Valitud filtritega sõite pole. Proovi filtreid muuta.' : 'Sõidud tekivad automaatselt telemeetriaandmetest.'}
           </p>
-        </div>
+        </Card>
       ) : (
         <Table scroll="fill" bordered>
             <TableHeader>
