@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
-import { ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
+import { Card, ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -140,7 +140,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         : 'Seisab';
 
   return (
-    <div className="cultivation-panel glass-card">
+    <Card variant="floating" className="cultivation-panel">
       {/* 1. Masin, olek ja mõõdikud */}
       <div className="cc-header">
         <div className="cc-title">
@@ -357,6 +357,6 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           </>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

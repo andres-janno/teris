@@ -3,7 +3,7 @@ import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-r
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/cropColors';
-import { Badge, Button, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Card, Button, ToggleGroup, ToggleGroupItem } from './ui';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -76,7 +76,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   }, [fields]);
 
   return (
-    <div className="map-year-floating-widget glass-card">
+    <Card variant="floating" padding="sm" className="map-year-floating-widget">
       {/* Header: Season Title & Stat */}
       <div className="year-widget-header">
         <div className="year-widget-title">
@@ -186,6 +186,6 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           </div>
         )}
       </div>
-    </div>
+    </Card>
   );
 };

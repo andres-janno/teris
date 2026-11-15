@@ -3,7 +3,7 @@ import React, { useEffect } from 'react';
 import { X, Pencil, ListChecks } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
 import { formatQty } from '../services/units';
-import { Badge, Button } from './ui';
+import { Badge, Card, Button } from './ui';
 
 interface FieldMapCardProps {
   field: FieldFeature;
@@ -24,7 +24,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
   const hasCrop = !!p.crop && p.crop !== 'Määramata';
 
   return (
-    <div className="field-map-card" role="region" aria-label={`Põld ${p.name}`}>
+    <Card variant="floating" padding="sm" className="field-map-card" role="region" aria-label={`Põld ${p.name}`}>
       <div className="fmc-header">
         <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || '#22c55e' }} />
         {p.num && <Badge tone="success" variant="outline" size="md" className="num">Nr {p.num}</Badge>}
@@ -48,6 +48,6 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         <Button type="button" variant="ghost" size="sm" onClick={() => onOpenWorks(field)}><ListChecks size={14} /> Ava põllutööd</Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => onEditField(Number(p.id))}><Pencil size={14} /> Muuda põldu</Button>
       </div>
-    </div>
+    </Card>
   );
 };

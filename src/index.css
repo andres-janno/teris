@@ -336,7 +336,8 @@ body {
   font-family: monospace;
   color: var(--text-secondary);
   z-index: 800;
-  border-radius: var(--radius-sm);
+  /* Väike näit kaardil: plaadi nurk 10px, mitte paneeli 16px (16px teeks ühe rea kõrgusest pilli) */
+  border-radius: var(--radius-md) !important;
   pointer-events: none;
 }
 
@@ -347,7 +348,8 @@ body {
   left: 80px;
   padding: 8px 10px;
   z-index: 800;
-  border-radius: var(--radius-sm);
+  /* Väike legend kaardil: plaadi nurk 10px */
+  border-radius: var(--radius-md) !important;
   font-size: 0.7rem;
   color: var(--text-secondary);
   pointer-events: none;
@@ -425,9 +427,7 @@ body {
 /* Satelliidipildi juhtpaneel (Satiladu) */
 .satellite-panel {
   width: 100%;
-  padding: 10px 12px;
   z-index: 800;
-  border-radius: var(--radius-sm);
   font-size: 0.72rem;
   color: var(--text-secondary);
   display: flex;
@@ -573,13 +573,12 @@ body {
   top: 16px;
   left: 50%;
   transform: translateX(-50%);
-  padding: 10px 20px;
   z-index: 900;
   color: #db2777;
   font-weight: 600;
   font-size: 0.88rem;
-  border: 1px solid rgba(219, 39, 119, 0.4);
-  background: var(--bg-card);
+  /* Lisamise režiim: roosa ääris peab Card-i äärise üle võitma */
+  border-color: rgba(219, 39, 119, 0.4) !important;
   display: flex;
   align-items: center;
   gap: 14px;
@@ -611,8 +610,6 @@ body {
 .layer-control-panel {
   width: 100%;
   flex: 0 0 auto;
-  padding: 14px;
-  transition: all 0.2s ease;
 }
 
 .layer-control-header {
@@ -832,8 +829,6 @@ body {
 .layer-field-box {
   display: flex;
   flex-direction: column;
-  background: var(--stat-bg);
-  border-radius: var(--radius-sm);
   overflow: hidden;
 }
 
@@ -960,12 +955,9 @@ body {
 /* Floating Map Year Selector Widget */
 .map-year-floating-widget {
   width: 100%;
-  padding: 12px 14px;
   display: flex;
   flex-direction: column;
   gap: 10px;
-  box-shadow: var(--shadow-modal);
-  border: 1px solid var(--border-card);
   animation: fadeIn 0.2s ease-out;
 }
 
@@ -1369,7 +1361,6 @@ body {
   transform: translateX(-50%);
   width: min(1040px, calc(100vw - 32px));
   z-index: 900;
-  padding: 14px 16px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -7953,7 +7944,7 @@ td.stock-qty-out { color: #dc2626; }
 
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
 .field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
-.field-map-card { position: relative; width: 300px; background: var(--bg-modal); color: var(--text-primary); border: 1px solid var(--border-card); border-radius: 10px; box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25); padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.field-map-card { position: relative; width: 300px; display: flex; flex-direction: column; gap: 8px; }
 .fmc-header { display: flex; align-items: center; gap: 8px; }
 .fmc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fmc-rows { display: flex; flex-direction: column; gap: 4px; font-size: 0.85rem; }

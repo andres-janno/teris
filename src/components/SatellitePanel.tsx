@@ -11,7 +11,7 @@ import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
-import { Button, CheckboxField, Select, ToggleGroup, ToggleGroupItem, type SelectOption } from './ui';
+import { Button, Card, CheckboxField, Select, ToggleGroup, ToggleGroupItem, type SelectOption } from './ui';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -287,7 +287,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   const colorLegend = SATELLITE_COLOR_LEGENDS[product];
 
   const panel = (
-    <div className="satellite-panel glass-card">
+    <Card variant="floating" padding="sm" className="satellite-panel">
       <div className="satellite-panel-title">
         Satelliidipilt
         <span className="satellite-panel-source">Sentinel-2 · Satiladu</span>
@@ -470,7 +470,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 
   return host ? createPortal(panel, host) : panel;

@@ -19,7 +19,7 @@ import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
 import { createSatelliteLayer, type ClipField, type SatelliteProductId } from '../services/satelliteLayer';
 import { SatellitePanel } from './SatellitePanel';
-import { Button } from './ui';
+import { Button, Card } from './ui';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -1061,13 +1061,13 @@ export const MapView: React.FC<MapViewProps> = ({
       />
 
       {/* Floating coordinates bar */}
-      <div ref={coordsDisplayRef} className="coords-tracker glass-card">
+      <Card ref={coordsDisplayRef} variant="floating" padding="none" className="coords-tracker">
         WGS84: 58.13800, 25.88200 | L-EST97: X 532800 Y 6531200
-      </div>
+      </Card>
 
       {/* Sajuradari legend */}
       {visibility.weatherRadar && (
-        <div className="radar-legend glass-card">
+        <Card variant="floating" padding="none" className="radar-legend">
           <div className="radar-legend-title">
             Sajuradar
             <span className="radar-legend-time">
@@ -1101,7 +1101,7 @@ export const MapView: React.FC<MapViewProps> = ({
             ))}
             <span className="radar-legend-unit">mm/h</span>
           </div>
-        </div>
+        </Card>
       )}
 
       {visibility.satellite && (
@@ -1121,12 +1121,12 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Add POI Banner */}
       {isAddPoiMode && (
-        <div className="add-poi-banner glass-card animate-pulse">
+        <Card variant="floating" padding="sm" className="add-poi-banner animate-pulse">
           <span>📍 Klõpsa kaardile, et määrata asukoht. Kaardil on ajutiselt näha ainult kiht „Muud asukohad“.</span>
           <Button type="button" size="sm" onClick={onCancelAddPoi} title="Katkesta (Esc)">
             Katkesta
           </Button>
-        </div>
+        </Card>
       )}
     </div>
   );

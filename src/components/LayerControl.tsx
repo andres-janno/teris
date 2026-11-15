@@ -16,7 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, CheckboxField, RadioGroup, RadioField } from './ui';
+import { Button, Card, CheckboxField, RadioGroup, RadioField } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -85,7 +85,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   ).join(', ')})`;
 
   return (
-    <div className={`layer-control-panel glass-card ${isOpen ? 'open' : 'collapsed'}`}>
+    <Card variant="floating" className={`layer-control-panel ${isOpen ? 'open' : 'collapsed'}`}>
       <div className="layer-control-header" onClick={() => setIsOpen(!isOpen)}>
         <div className="layer-header-title">
           <Layers size={18} className="text-emerald" />
@@ -141,7 +141,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
             </div>
             <div className="overlay-list">
               {/* Fields Layer */}
-              <div className="layer-field-box">
+              <Card variant="tile" padding="none" className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
                     className="layer-label"
@@ -179,10 +179,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     />
                   </div>
                 )}
-              </div>
+              </Card>
 
               {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
-              <div className="layer-field-box">
+              <Card variant="tile" padding="none" className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
                     className="layer-label"
@@ -245,11 +245,11 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     </div>
                   </div>
                 )}
-              </div>
+              </Card>
 
               {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
               {modules.telemetry && (
-              <div className="layer-field-box">
+              <Card variant="tile" padding="none" className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
                     className="layer-label"
@@ -270,12 +270,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
                   </button>
                 </div>
-              </div>
+              </Card>
               )}
 
               {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
               {modules.telemetry && (
-              <div className="layer-field-box">
+              <Card variant="tile" padding="none" className="layer-field-box">
                 <div className="layer-item">
                   <CheckboxField
                     className="layer-label"
@@ -368,7 +368,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                     )}
                   </div>
                 )}
-              </div>
+              </Card>
               )}
 
               {/* POI / Infrastructure */}
@@ -459,6 +459,6 @@ export const LayerControl: React.FC<LayerControlProps> = ({
           )}
         </div>
       )}
-    </div>
+    </Card>
   );
 };
