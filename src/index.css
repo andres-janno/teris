@@ -8282,7 +8282,6 @@ td.stock-qty-out { color: #dc2626; }
 .harvest-lot-section { display: flex; flex-direction: column; gap: 8px; }
 .harvest-lot-section h4 { margin: 0; }
 .harvest-lot-add { display: grid; gap: 10px; align-items: end; padding: 10px 12px; border: 1px dashed var(--border-card); border-radius: var(--radius-md); }
-.harvest-lot-add label { font-size: 0.72rem; color: var(--text-secondary); }
 .harvest-lot-add-weighing { grid-template-columns: 150px 120px minmax(0, 1fr) auto; }
 .harvest-lot-add-cost { grid-template-columns: 150px minmax(0, 1.4fr) 110px minmax(0, 1fr) auto; }
 @media (max-width: 720px) {

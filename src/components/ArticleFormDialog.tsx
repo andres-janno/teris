@@ -148,7 +148,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             </Field>
             {rules?.price && canManageFinance && (
               <Field label={`Hind (€ / ${form.unit || 'ühik'})`} htmlFor="mt-price">
-                <NumberInput id="mt-price" decimals={3} value={price} onChange={setPrice} />
+                <NumberInput id="mt-price" decimals={4} value={price} onChange={setPrice} />
               </Field>
             )}
             {isTimeService && (
