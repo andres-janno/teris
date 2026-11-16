@@ -59,7 +59,7 @@
   --radius-full: 9999px;
 
   --shadow-primary: 0 4px 14px rgba(34, 197, 94, 0.35);
-  --shadow-primary-hover: 0 6px 20px rgba(22, 101, 52, 0.5);
+  --shadow-primary-hover: 0 6px 20px rgba(34, 197, 94, 0.5);
 }
 
 /* Tähenduspõhised värvid — viitavad index.css-i muutujatele, seega järgivad heledat/tumedat teemat.
@@ -95,9 +95,9 @@
   --color-primary-strong: var(--emerald-600);
   /* Päise pillinupu hover: mõlemas teemas sama, valge tekst ≥ 4.5:1 */
   --color-primary-hover: #166534;
-  /* Põhinupu gradient mõlemas teemas sama; valge tekst ≥ 4.5:1 mõlemas otsas (kasutaja otsus 2026-11-16) */
-  --color-primary-from: #166534;
-  --color-primary-to: #15803d;
+  /* Põhinupu gradient mõlemas teemas sama; heledam roheline (kasutaja otsus 2026-11-16: ilusam, kontrastist hoolimata) */
+  --color-primary-from: #16a34a;
+  --color-primary-to: #22c55e;
   --color-info: var(--blue-500);
   --color-warning: var(--amber-500);
   --color-destructive: var(--rose-500);

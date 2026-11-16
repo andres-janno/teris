@@ -46,8 +46,10 @@ for (const theme of ['light', 'dark'] as const) {
     it('placeholder (text-subtle) sisestusväljal', () => {
       check('subtle', over(color('field'), popover), 'subtle/field');
     });
-    it('valge tekst põhinupul (gradiendi mõlemas otsas, hõljudes) ja päise pillil', () => {
-      for (const bg of ['primary-from', 'primary-to', 'primary-strong', 'primary-hover']) check('white', color(bg), `white/${bg}`);
+    // Põhinupu gradient (primary-from/to) on kasutaja otsusel 2026-11-16 jälle heledam roheline (#16a34a → #22c55e),
+    // kontrastist hoolimata — seda paari siin ei kontrollita. Tumedad toonid (primary-strong/hover) peavad endiselt täitma AA.
+    it('valge tekst tumedal primaartoonil (hõljudes) ja päise pillil', () => {
+      for (const bg of ['primary-strong', 'primary-hover']) check('white', color(bg), `white/${bg}`);
     });
     it('soft märgid: toonitekst 15% toonil kaardi peal', () => {
       const pairs: [string, string][] = [
