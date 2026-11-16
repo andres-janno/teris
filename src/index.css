@@ -4308,12 +4308,10 @@ body {
   min-width: 1400px;
 }
 
-/* Aastaplokkide (eelmine | käesolev | järgmine) vahel paksem joon; plokkide algusveerud 5 ja 9 */
+/* Aastaplokkide (eelmine | käesolev | järgmine) vahel paksem joon päises (lahtritel see joon ei kehtinud: React kirjutab inline-stiili ilma tühikuta, vana atribuudivalija ei sobinud) */
 .fw-head-cell.year-start,
 .fw-head-section.current,
-.fw-head-section.next,
-.fw-grid :is(.fw-col-5, .fw-col-9, .fw-place-banner-next, .fw-place-next-all),
-.fw-row-container > :is(.fw-col-5, .fw-col-9, .fw-place-banner-next, .fw-place-next-all) {
+.fw-head-section.next {
   border-left: 3px solid var(--border-strong) !important;
 }
 
