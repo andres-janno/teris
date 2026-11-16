@@ -21,6 +21,7 @@ export interface AuditReport {
   legacyFormFieldFiles: { path: string; count: number }[];
   legacyMenuPopupFiles: { path: string; count: number }[];
   legacyCardFiles: { path: string; count: number }[];
+  rawButtonFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -62,6 +63,17 @@ const LEGACY_MENU_POPUP =
 // või järglaseta), mis seab ise välimuse — välimus peab tulema ui/Card-ist, vaate klassis jääb ainult asetus.
 // `!important` välimus on teadlik erand (olekuääris, erandnurk) ega loe. Jääb alles valvurina: peab olema 0.
 const LEGACY_CARD_TSX = /(?<![\w-])glass-card(?![\w-])/g;
+// Toored <button (etapp 3b): kõik nupud tulevad ui komponentidest. ui/ kausta ei loeta. Lubatud erandid
+// (failitee lõpp → mitu tohib olla): jääb alles valvurina, väljaspool erandeid peab olema 0.
+const RAW_BUTTON = /<button(?=[\s>])/g;
+export const RAW_BUTTON_ALLOWED: Readonly<Record<string, number>> = {
+  'components/LoginPage.tsx': 1, // login-forgot-link: tekstilink sisselogimislehel (kasutaja otsus)
+  'components/MapView.tsx': 1, // Leafleti popup-HTML-string, pole React
+};
+const rawButtonsOverAllowed = (path: string, count: number): number => {
+  const key = Object.keys(RAW_BUTTON_ALLOWED).find((k) => path.endsWith(k));
+  return key ? Math.max(0, count - RAW_BUTTON_ALLOWED[key]) : count;
+};
 export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'glass-card',
   // ujuvpaneelid kaardi peal
@@ -137,6 +149,7 @@ export function auditTsx(src: string) {
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
     legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
+    rawButtons: (src.match(RAW_BUTTON) ?? []).length,
   };
 }
 
@@ -175,6 +188,10 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
         .map((t) => ({ path: t.path, count: t.legacyCards.length })),
       ...css.filter((c) => c.cardRules.length > 0).map((c) => ({ path: c.path, count: c.cardRules.length })),
     ],
+    rawButtonFiles: tsx
+      .filter((t) => !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: rawButtonsOverAllowed(t.path, t.rawButtons) }))
+      .filter((f) => f.count > 0),
   };
 }
 

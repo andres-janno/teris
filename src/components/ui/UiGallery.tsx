@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -340,6 +340,14 @@ export const UiGallery: React.FC = () => {
             <PopoverContent>Hüpiku sisu: filtrid, lisainfo või väike vorm.</PopoverContent>
           </Popover>
           <Tooltip content="Vihje tekst"><Button variant="ghost">Hõlju siin</Button></Tooltip>
+        </Section>
+
+        <Section title="Abi-ikoon (HelpHint)">
+          <HelpHintPopover label="Põllu kood" html="<p>Põllu kood on <strong>PRIA põllu number</strong>. Hõlju või klõpsa ikoonil.</p>" />
+          <Button variant="secondary">
+            Nupp koos ikooniga
+            <HelpHintPopover inline label="Nupu sees" html="<p>Ikoon nupu sees (<code>inline</code>): klõps ei käivita nuppu.</p>" />
+          </Button>
         </Section>
 
         <Section title="Kaardid">

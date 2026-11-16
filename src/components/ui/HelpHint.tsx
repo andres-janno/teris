@@ -1,12 +1,15 @@
-// src/components/HelpHint.tsx — küsimärgi ikoon, mis avab teenusepakkuja koostatud juhendi (admin.teris.ee „Juhendid“).
+// src/components/ui/HelpHint.tsx — küsimärgi ikoon, mis avab teenusepakkuja koostatud juhendi (admin.teris.ee „Juhendid“).
 // Hiirega üle liikudes avaneb (150 ms), lahkudes sulgub (200 ms); klõps kinnitab lahti, uus klõps sulgeb;
 // klaviatuuriga fookus avab, blur sulgeb (kui pole kinnitatud); Esc sulgeb ainult vihje. Tühja juhendi korral ikooni pole.
+// HelpHint võtab juhendi teenusest; HelpHintPopover on ainult esitus (galerii ja testid).
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CircleHelp } from 'lucide-react';
-import { HELP_SPOTS, type HelpKey } from '../help/helpRegistry';
-import { useHelpArticle } from '../help/helpStore';
-import { sanitizeHelp } from '../help/sanitizeHelp';
-import { cn, helpHintContentClass, helpHintInlineClass, helpHintTitleClass, helpHintTriggerClass, Popover, PopoverContent, PopoverTrigger } from './ui';
+import { HELP_SPOTS, type HelpKey } from '../../help/helpRegistry';
+import { useHelpArticle } from '../../help/helpStore';
+import { sanitizeHelp } from '../../help/sanitizeHelp';
+import { cn } from './cn';
+import { Popover, PopoverContent, PopoverTrigger } from './Popover';
+import { helpHintContentClass, helpHintInlineClass, helpHintTitleClass, helpHintTriggerClass } from './variants';
 
 const OPEN_DELAY = 150;
 const CLOSE_DELAY = 200;
@@ -15,6 +18,12 @@ const CLOSE_DELAY = 200;
 export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ helpKey, inline = false }) => {
   const html = useHelpArticle(helpKey);
   const safe = useMemo(() => (html ? sanitizeHelp(html) : ''), [html]);
+  if (!safe) return null;
+  return <HelpHintPopover label={HELP_SPOTS[helpKey].label} html={safe} inline={inline} />;
+};
+
+/** Ikoon + hüpik valmis (puhastatud) sisuga; `html` peab olema läbinud `sanitizeHelp`. */
+export const HelpHintPopover: React.FC<{ label: string; html: string; inline?: boolean }> = ({ label, html, inline = false }) => {
   const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const timer = useRef<number | undefined>(undefined);
@@ -32,8 +41,6 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
 
   useEffect(() => () => window.clearTimeout(timer.current), []);
 
-  if (!safe) return null;
-  const label = HELP_SPOTS[helpKey].label;
   const isMouse = (e: React.PointerEvent) => e.pointerType === 'mouse';
 
   const toggle = () => {
@@ -107,7 +114,7 @@ export const HelpHint: React.FC<{ helpKey: HelpKey; inline?: boolean }> = ({ hel
         onKeyDown={(e) => e.stopPropagation()}
       >
         <div className={helpHintTitleClass}>{label}</div>
-        <div className="help-content" dangerouslySetInnerHTML={{ __html: safe }} />
+        <div className="help-content" dangerouslySetInnerHTML={{ __html: html }} />
       </PopoverContent>
     </Popover>
   );

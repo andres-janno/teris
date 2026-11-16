@@ -325,3 +325,19 @@ describe('skaalavälised väärtused CSS-is', () => {
     expect(r.spacing).toEqual(['14px']);
   });
 });
+
+describe('toored nupud', () => {
+  it('loeb <button, mitte <Button; ui kaust ja lubatud erandid välja', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<button type="button">a</button><Button>b</Button><button\n  type="button">c</button>' },
+      { path: 'src/components/ui/X.tsx', content: '<button type="button" />' },
+      { path: 'src/components/LoginPage.tsx', content: '<button type="button" className="login-forgot-link">' },
+      { path: 'src/components/MapView.tsx', content: '`<button type="button" class="map-popup-btn">`' },
+    ]);
+    expect(r.rawButtonFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
+  });
+  it('erand lubab ainult nimetatud arvu: teine toores nupp samas failis loeb', () => {
+    const r = summarize([{ path: 'src/components/LoginPage.tsx', content: '<button type="button"><button type="button">' }]);
+    expect(r.rawButtonFiles).toEqual([{ path: 'src/components/LoginPage.tsx', count: 1 }]);
+  });
+});

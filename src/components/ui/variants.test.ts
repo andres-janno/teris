@@ -15,6 +15,7 @@ const allClassStrings = (): string[] => [
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
   v.fieldControlClass, v.menuContentClass, v.menuItemClass, v.menuSeparatorClass, v.menuLabelClass,
   v.popoverContentClass, v.tooltipContentClass,
+  v.helpHintTriggerClass, v.helpHintInlineClass, v.helpHintContentClass, v.helpHintTitleClass,
   ...(['x', 'none', 'sm', 'md', 'fill'] as const).map((scroll) => v.tableContainerClass({ scroll, bordered: true })),
   v.tableClass({ bordered: true }),
   ...([undefined, 'start', 'end'] as const).flatMap((pin) => [
@@ -391,5 +392,18 @@ describe('vigane väli', () => {
       expect(v.fieldControlClass).toContain(c);
     }
     expect(v.fieldShellClass).toContain('has-[input[aria-invalid=true]]:bg-destructive/10');
+  });
+});
+
+describe('abi-ikoon', () => {
+  it('päästik: 24px ümmargune, abi-kursor; inline kitsam (20px)', () => {
+    expect(v.helpHintTriggerClass).toContain('size-6');
+    expect(v.helpHintTriggerClass).toContain('cursor-help');
+    expect(v.helpHintTriggerClass).toContain('rounded-full');
+    expect(v.helpHintInlineClass).toContain('size-5');
+  });
+  it('hüpik on 320px laiune ja kõrguse piiriga', () => {
+    expect(v.helpHintContentClass).toContain('w-80');
+    expect(v.helpHintContentClass).toContain('max-h-');
   });
 });
