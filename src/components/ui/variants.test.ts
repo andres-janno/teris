@@ -496,7 +496,7 @@ describe('peamenüü (NavSwitch)', () => {
   });
   it('kirje: 13px poolpaks, 6/12px polster, 6px nurk', () => {
     const t = v.navSwitchItemClass.split(/\s+/);
-    for (const c of ['text-sm', 'font-semibold', 'px-3', 'py-1.5', 'rounded-sm', 'gap-1.5']) expect(t).toContain(c);
+    for (const c of ['text-sm', 'font-semibold', 'px-3', 'py-1.5', 'rounded-sm', 'gap-1.5', 'leading-[normal]']) expect(t).toContain(c);
   });
   it('aktiivne (aria-current=page): heledam roheline --selection-bg, valge tekst', () => {
     const t = v.navSwitchItemClass.split(/\s+/);
