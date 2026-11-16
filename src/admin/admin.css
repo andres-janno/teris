@@ -108,3 +108,4 @@ body { overflow: auto; }
 .admin-danger-card h2 { color: #dc2626; }
 .admin-danger-row { align-items: flex-end; margin-top: 12px; }
 .admin-danger-row .admin-field { flex: 1 1 280px; }
+.admin-color-input { width: 56px; height: 32px; padding: 2px; border: 1px solid var(--input-border); border-radius: var(--radius-sm); background: var(--input-bg); cursor: pointer; }

@@ -113,7 +113,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
           <Select id="cc-group" value={d.group} onValueChange={(v) => set('group', v as CropGroup)} options={(Object.keys(CROP_GROUP_LABELS) as CropGroup[]).map((g) => ({ value: g, label: CROP_GROUP_LABELS[g] }))} />
         </Field>
         <Field htmlFor="cc-color" label="Värv">
-          <Input id="cc-color" type="color" value={d.color} onChange={(e) => set('color', e.target.value)} />
+          <input id="cc-color" className="admin-color-input" type="color" value={d.color} onChange={(e) => set('color', e.target.value)} />
         </Field>
         <Field htmlFor="cc-pria" label="PRIA kood">
           <Input id="cc-pria" value={d.priaCode} onChange={(e) => set('priaCode', e.target.value)} maxLength={50} />
