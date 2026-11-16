@@ -31,6 +31,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - Numbriveerg tabelis: `numeric` (paremale joondus); kogused `formatQty`.
 - Vaates ei kasutata `text-emerald`/`text-muted`/`text-blue`… — need pole kunagi olnud defineeritud. Värv tuleb ui komponendist
   või vaate CSS-klassist. `npm run ui-audit` rida „Defineerimata CSS-muutujaid“ peab olema 0.
+- `npm run ui-audit` rida „Kasutuseta klasse (CSS)“ peab olema 0 — klassi eemaldamisel vaatest kustuta ka CSS-reegel.
 - Klassid liida `cn()`-ga (mitte template-stringiga) — see lahendab Tailwindi konfliktid.
 - `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `legacy` on
   `utilities`-ist ees) — eemalda vana reegel.
@@ -88,6 +89,8 @@ Märkused:
 Tailwind genereerib utiliite ainult kataloogist `src/components/ui` (`@source` failis `src/styles/app.css`).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
+
+Etapis 3 (2026-11-16) skaneerimist vaadetele ei laiendata; `index.css`-i ~2 000 rea eesmärk on hilisem etapp „vaated Tailwindi peale“.
 
 ## Vana muutuja -> Tailwindi nimi
 

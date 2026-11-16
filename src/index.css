@@ -234,12 +234,6 @@ body {
   color: var(--text-secondary);
 }
 
-.progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #38bdf8, #22c55e);
-  transition: width 0.3s ease;
-}
-
 /* Header Buttons */
 .header-actions {
   display: flex;
@@ -659,11 +653,6 @@ body {
   color: var(--text-primary);
 }
 
-.layer-item.sub-layer {
-  padding-left: 24px;
-  background: transparent;
-}
-
 .layer-label {
   display: flex !important;
   align-items: center !important;
@@ -859,28 +848,6 @@ body {
   margin-top: 0;
 }
 
-.layer-year-selector {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 4px 8px 8px 24px;
-  background: rgba(0, 0, 0, 0.03);
-  border-top: 1px dashed var(--border-card);
-}
-
-[data-theme='dark'] .layer-year-selector {
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.year-selector-title {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-}
-
 /* Map Top-Left Stack (Season Widget + Selected Field Card) */
 .map-top-left-stack {
   position: absolute;
@@ -978,56 +945,13 @@ body {
   overflow-y: auto;
 }
 
-.year-register-link-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: transparent;
-  border: none;
-  font-size: 0.76rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 4px;
-  transition: all 0.15s ease;
-}
-
-.year-register-link-btn:hover {
-  background: var(--stat-bg-hover);
-  color: var(--emerald-500);
-}
-
 /* Selected Field Details */
-.drawer-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
 
 .crop-indicator-dot {
   width: 12px;
   height: 12px;
   border-radius: 50%;
   box-shadow: 0 0 10px currentColor;
-}
-
-.field-title {
-  font-size: 1rem;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.field-code-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.field-code {
-  font-size: 0.72rem;
-  color: var(--text-secondary);
 }
 
 .section-subtitle {
@@ -1044,29 +968,6 @@ body {
 
 .detail-section {
   margin-top: 14px;
-}
-
-.field-detail-header {
-  padding: 16px 22px;
-  border-bottom: 1px solid var(--border-card);
-}
-
-.field-detail-seasons {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-  padding: 10px 22px;
-  border-bottom: 1px solid var(--border-card);
-  color: var(--text-secondary);
-}
-
-.field-detail-seasons-label {
-  font-size: 0.72rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-right: 4px;
 }
 
 .soil-table {
@@ -1143,123 +1044,7 @@ body {
   border-top: 1px solid var(--border-card);
 }
 
-.field-detail-columns {
-  flex: 1;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-}
-
-.field-detail-col {
-  min-height: 0;
-  overflow-y: auto;
-  padding: 16px 22px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.field-detail-col>.detail-section {
-  margin-top: 0;
-}
-
-.field-detail-col-ops {
-  border-left: 1px solid var(--border-card);
-}
-
 /* Põllu üldandmete paneel (FieldOverviewPanel) — sama vahedega veerg nagu .field-detail-col */
-
-.field-detail-footer {
-  padding: 12px 22px;
-  border-top: 1px solid var(--border-card);
-  display: flex;
-  justify-content: flex-end;
-}
-
-.field-ops-fill {
-  margin-top: 0;
-}
-
-.field-ops-list.field-ops-list-fill {
-  max-height: none;
-  overflow-y: visible;
-}
-
-@media (max-width: 760px) {
-  .field-detail-columns {
-    grid-template-columns: 1fr;
-    overflow-y: auto;
-  }
-
-  .field-detail-col {
-    overflow-y: visible;
-  }
-
-  .field-detail-col-ops {
-    border-left: none;
-    border-top: 1px solid var(--border-card);
-  }
-}
-
-.field-ops-list {
-  list-style: none;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 320px;
-  overflow-y: auto;
-}
-
-.field-op-item {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  padding: 6px 8px;
-}
-
-.field-op-head {
-  display: flex;
-  gap: 8px;
-  align-items: baseline;
-  font-size: 0.76rem;
-}
-
-.field-op-date {
-  color: var(--text-secondary);
-  white-space: nowrap;
-}
-
-.field-op-type {
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.field-op-meta,
-.field-op-product {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-.field-op-notes-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  margin-top: 3px;
-  background: none;
-  border: none;
-  padding: 0;
-  font-size: 0.68rem;
-  color: var(--emerald-500);
-  cursor: pointer;
-}
-
-.field-op-notes {
-  font-size: 0.7rem;
-  color: var(--text-primary);
-  margin-top: 3px;
-  font-style: italic;
-}
 
 .notes-text {
   font-size: 0.76rem;
@@ -1268,11 +1053,6 @@ body {
 }
 
 /* Pulseeriv olekutäpp (masinate jälgija) */
-.dot-active {
-  background-color: var(--emerald-400);
-  box-shadow: 0 0 10px var(--emerald-400);
-  animation: pulse-ring 1.5s infinite;
-}
 
 .dot-idle {
   background-color: var(--text-muted);
@@ -2427,13 +2207,6 @@ body {
   gap: 8px;
 }
 
-.poi-add-form {
-  padding: 14px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 .auto-field-icon {
   color: var(--text-muted);
   vertical-align: -1px;
@@ -2483,13 +2256,6 @@ body {
   background: rgba(34, 197, 94, 0.28) !important;
   border-color: var(--emerald-500) !important;
   transform: translateY(-1px);
-}
-
-.poi-meta-line {
-  display: flex;
-  gap: 10px;
-  margin-top: 4px;
-  font-size: 0.7rem;
 }
 
 /* Custom Leaflet Markers & Tooltips */
@@ -3251,34 +3017,6 @@ body {
 }
 
 /* Add Year Banner */
-.add-year-banner {
-  margin-bottom: 16px;
-  padding: 14px 18px;
-  border-left: 4px solid var(--emerald-500);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.banner-content {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.banner-content p {
-  font-size: 0.78rem;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-.banner-inputs {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
 
 /* Värvivalija masina vormis: kitsas ruut tüübi kõrval */
 .fleet-edit-modal [data-slot="input"][type="color"] {
@@ -3294,22 +3032,6 @@ body {
   }
 }
 
-.edit-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.95rem;
-  color: var(--text-primary);
-}
-
-.field-info-col {
-  flex: 1;
-  min-width: 240px;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
 .field-title-line {
   display: flex;
   align-items: center;
@@ -3322,12 +3044,6 @@ body {
   font-weight: 700;
   color: var(--text-primary);
   margin: 0;
-}
-
-.cadastre-code {
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  font-family: monospace;
 }
 
 .form-sub-header {
@@ -3370,21 +3086,9 @@ body {
   min-width: 0;
 }
 
-.field-active-season-col {
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  min-width: 220px;
-}
-
 .season-area-box {
   display: flex;
   flex-direction: column;
-}
-
-.season-year-label {
-  font-size: 0.68rem;
-  color: var(--text-secondary);
 }
 
 .season-ha-val {
@@ -3394,23 +3098,6 @@ body {
 }
 
 /* History Row */
-.field-history-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding-top: 8px;
-  border-top: 1px solid var(--border-card);
-  flex-wrap: wrap;
-}
-
-.history-label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.72rem;
-  color: var(--text-secondary);
-  font-weight: 600;
-}
 
 .empty-register-state {
   padding: 32px;
@@ -3423,20 +3110,6 @@ body {
 
 .empty-register-state.is-muted {
   color: var(--text-muted);
-}
-
-.legend-title {
-  font-size: 0.82rem;
-  font-weight: 700;
-  color: var(--text-primary);
-  line-height: 1.2;
-}
-
-.legend-subtitle {
-  font-size: 0.70rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  line-height: 1.2;
 }
 
 
@@ -3539,10 +3212,6 @@ body {
 /* ==========================================================================
    Season Register & Season Manager Modal Styles
    ========================================================================== */
-
-.season-icon {
-  color: var(--emerald-500);
-}
 
 .year-header-right {
   display: flex;
@@ -3751,15 +3420,6 @@ body {
   color: var(--emerald-500);
   font-weight: 700;
   letter-spacing: 0.01em;
-}
-
-.live-dot-pulse {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: var(--emerald-500);
-  box-shadow: 0 0 4px var(--emerald-500);
-  animation: liveDotBlink 1.2s infinite alternate;
 }
 
 /* Vehicle Popup enhancements */
@@ -4033,16 +3693,6 @@ body {
   padding-bottom: 2px;
 }
 
-.field-change-reason-line {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 0.7rem;
-  color: var(--amber-500);
-  margin-top: 4px;
-  font-style: italic;
-}
-
 .eligible-ha-sub {
   font-size: 0.68rem;
   color: var(--text-muted);
@@ -4226,33 +3876,10 @@ body {
   white-space: nowrap;
 }
 
-.variety-breeder-cell {
-  color: var(--text-primary);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.variety-winter-text {
-  color: var(--text-primary);
-  font-weight: 500;
-  white-space: nowrap;
-}
-
 .variety-seed-rate {
   color: var(--text-primary);
   font-weight: 600;
   white-space: nowrap;
-}
-
-.variety-notes-cell {
-  max-width: 280px;
-  font-size: 0.74rem;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
-.variety-empty-cell {
-  color: var(--text-muted);
 }
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -4624,11 +4251,6 @@ body {
   min-height: 420px;
 }
 
-.work-register-toolbar {
-  display: flex;
-  justify-content: flex-end;
-}
-
 .work-name-cell {
   font-weight: 700;
 }
@@ -4871,10 +4493,6 @@ body {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
-}
-
-.fw-toolbar-spacer {
-  flex: 1;
 }
 
 .fw-filter {
@@ -5146,10 +4764,6 @@ body {
   background: color-mix(in srgb, #94a3b8 15%, var(--bg-card));
 }
 
-.fw-row-container:hover .fw-field-clear-btn {
-  opacity: 1;
-}
-
 .fw-crop-banner {
   padding: 4px 10px;
   display: flex;
@@ -5207,13 +4821,6 @@ body {
   opacity: 0.85;
 }
 
-.fw-crop-banner.carried {
-  background: var(--stat-bg);
-  box-shadow: none;
-  color: var(--text-secondary);
-  font-size: 0.73rem;
-}
-
 .fw-crop-name {
   font-weight: 700;
   color: var(--text-primary);
@@ -5222,15 +4829,6 @@ body {
   text-overflow: ellipsis;
 }
 
-.fw-cell.fw-cell-carried {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--stat-bg);
-  padding: 8px 10px;
-}
-
-.fw-cell.fw-cell-next-spring,
 .fw-cell.fw-cell-no-sow {
   display: flex;
   align-items: center;
@@ -5239,7 +4837,6 @@ body {
   padding: 8px 10px;
 }
 
-:root[data-theme="dark"] .fw-cell.fw-cell-next-spring,
 :root[data-theme="dark"] .fw-cell.fw-cell-no-sow {
   background: color-mix(in srgb, #16a34a 14%, var(--bg-card));
 }
@@ -5250,19 +4847,6 @@ body {
   justify-content: center;
   background: var(--stat-bg);
   padding: 8px 10px;
-}
-
-.fw-next-spring-banner {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.74rem;
-  color: var(--text-secondary);
-  font-weight: 500;
-  padding: 4px 9px;
-  border-radius: 6px;
-  background: var(--bg-modal);
-  border: 1px dashed var(--border-card);
 }
 
 /* Põllutööde tahvli grupipäised (sügiskülv / kevadkülv) */
@@ -5327,22 +4911,6 @@ body {
   white-space: nowrap;
 }
 
-.fw-group-icon.winter {
-  color: #0284c7;
-}
-
-.fw-group-icon.spring {
-  color: #16a34a;
-}
-
-.fw-group-icon.undetermined {
-  color: #94a3b8;
-}
-
-.fw-row {
-  border-bottom: 1px solid var(--border-card);
-}
-
 .fw-field {
   position: relative;
   padding: 9px 12px;
@@ -5404,14 +4972,6 @@ body {
   overflow: hidden;
 }
 
-.fw-field-actions {
-  margin-left: auto;
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  flex-shrink: 0;
-}
-
 .fw-field-shape-btn {
   display: inline-flex;
   align-items: center;
@@ -5452,11 +5012,6 @@ body {
   font-weight: 400;
   color: var(--text-primary);
   margin-left: auto;
-}
-
-.fw-field-kind {
-  font-size: 0.68rem;
-  color: var(--text-secondary);
 }
 
 .fw-cell {
@@ -5739,38 +5294,6 @@ body {
 .fw-status-done {
   color: #16a34a;
   flex-shrink: 0;
-}
-
-.fw-milestone-done {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 8px;
-  border: 0;
-  border-radius: 6px;
-  background: #16a34a;
-  color: #ffffff;
-  font: inherit;
-  font-size: 0.74rem;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.fw-cell.milestone.harvest .fw-milestone-done {
-  background: #b45309;
-}
-
-.fw-milestone-done.selected {
-  box-shadow: 0 0 0 2px var(--bg-modal), 0 0 0 4px #15803d;
-}
-
-.fw-milestone-done.carried {
-  background: #0284c7;
-}
-
-.fw-field-kind.winter {
-  color: #0284c7;
-  font-weight: 700;
 }
 
 .fw-add {
@@ -6372,10 +5895,6 @@ body {
   align-items: end;
 }
 
-.work-entry-grid.three {
-  grid-template-columns: 170px minmax(0, 1fr) 140px;
-}
-
 .work-entry-grid.four {
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 110px 110px;
 }
@@ -6428,10 +5947,6 @@ body {
 .work-entry-unit {
   font-size: 0.78rem;
   color: var(--text-secondary);
-}
-
-.work-entry-add {
-  align-self: flex-start;
 }
 
 .work-entry-finish {
@@ -6505,16 +6020,6 @@ body {
   background: rgba(22, 163, 74, 0.04);
 }
 
-.add-work-option.to-remove {
-  border-color: rgba(220, 38, 38, 0.4);
-  background: rgba(220, 38, 38, 0.06);
-}
-
-.add-work-option.to-remove .add-work-name {
-  text-decoration: line-through;
-  opacity: 0.65;
-}
-
 .add-work-option.disabled {
   opacity: 0.6;
   cursor: default;
@@ -6536,12 +6041,6 @@ body {
 .add-work-check.on {
   border: 0;
   background: #16a34a;
-}
-
-.add-work-check.removing {
-  border: 0;
-  background: #dc2626;
-  color: #ffffff;
 }
 
 .add-work-option.disabled .add-work-check.on {
@@ -6568,31 +6067,8 @@ body {
   font-weight: 700;
 }
 
-.add-work-tag.to-remove {
-  color: #dc2626;
-  font-weight: 700;
-}
-
 .add-work-tag.removed {
   color: #9a5b00;
-}
-
-.fw-field-edit-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.fw-field-edit-btn:hover {
-  color: var(--emerald-500);
-  background: var(--btn-sec-hover);
 }
 
 .add-work-footer {
@@ -6759,12 +6235,6 @@ body {
   display: flex;
   align-items: center;
   gap: 4px;
-}
-
-.finance-occurrence {
-  font-size: 0.72rem;
-  font-weight: 600;
-  color: var(--text-secondary);
 }
 
 .finance-entry-meta {
@@ -7700,7 +7170,6 @@ td.stock-qty-out { color: #dc2626; }
 .weather-crosshair-label { fill: var(--text-primary, #334155); }
 .weather-crosshair-text { font-size: 11px; font-weight: 600; fill: var(--bg-modal, #fff); }
 .weather-axis { font-size: 11px; fill: var(--text-secondary); }
-.weather-bar-year { fill: #2563eb; background: #2563eb; }
 .weather-bar-normal { fill: #cbd5e1; background: #cbd5e1; }
 .weather-bar.weather-line-0, .weather-bar.weather-line-1, .weather-bar.weather-line-2, .weather-bar.weather-line-3, .weather-bar.weather-line-4, .weather-bar.weather-line-5 { stroke: none; }
 .weather-line-0 { fill: #2563eb; } .weather-line-1 { fill: #16a34a; } .weather-line-2 { fill: #ea580c; } .weather-line-3 { fill: #9333ea; } .weather-line-4 { fill: #0891b2; } .weather-line-5 { fill: #64748b; }

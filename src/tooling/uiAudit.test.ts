@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, legacyCardRules, summarize, undefinedCssVars } from './uiAudit';
+import { auditCss, auditTsx, legacyCardRules, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -292,5 +292,26 @@ describe('defineerimata CSS-muutujad', () => {
     ];
     const tsx = ["<div style={{ '--from-tsx': c } as React.CSSProperties} />"];
     expect(undefinedCssVars(css, tsx)).toEqual(['--gone', '--missing']);
+  });
+});
+
+describe('kasutuseta klassid', () => {
+  it('leiab klassi, mida lähtekoodis pole; kommentaar, url(), string ja leaflet-* ei loe', () => {
+    const css = `/* .old-comment {} */
+.used { a: 1 }
+.dead, .used:hover { b: 2 }
+.leaflet-x { c: 3 }
+.bg { background: url("http://www.w3.org/x.svg"); content: ".fake"; }
+.tone-3 { d: 4 }
+[data-slot="table"] .row-dead { e: 5 }`;
+    const r = unusedCssClasses(css, ['<div className="used bg" />', 'const c = `tone-${n}`;']);
+    expect(r.unused).toEqual(['dead', 'row-dead']);
+    expect(r.dynamic).toEqual(['tone-3']);
+  });
+  it('kommentaaris olev nimi lähtekoodis ei loe kasutuseks', () => {
+    expect(unusedCssClasses('.gone { a: 1 }', ['// gone oli vana klass\n/* gone */ const x = 1;']).unused).toEqual(['gone']);
+  });
+  it("dünaamiline eesliide ka 'prefix-' + x kujul", () => {
+    expect(unusedCssClasses('.weather-wet { a: 1 }', ["const c = 'weather-' + level;"]).dynamic).toEqual(['weather-wet']);
   });
 });

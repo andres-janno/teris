@@ -1,8 +1,8 @@
 // scripts/ui-audit.mts — UI ühtlustamise mõõdik (spec: docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md).
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { summarize, undefinedCssVars } from '../src/tooling/uiAudit.ts';
+import { summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
 // Landing ja teenusepakkuja admin on eraldi lehed (ülemineku ulatusest väljas); styles/ on teema allikas.
 const EXCLUDE = ['src/landing', 'src/admin', 'src/styles'];
@@ -12,6 +12,14 @@ function walk(dir: string, exclude: string[] = EXCLUDE): string[] {
     const p = join(dir, name);
     if (exclude.some((e) => p.startsWith(e)) || name.startsWith('._')) return [];
     return statSync(p).isDirectory() ? walk(p, exclude) : /\.(css|tsx)$/.test(name) ? [p] : [];
+  });
+}
+
+function walkSources(dir: string): string[] {
+  return readdirSync(dir).flatMap((name) => {
+    const p = join(dir, name);
+    if (name.startsWith('._')) return [];
+    return statSync(p).isDirectory() ? walkSources(p) : /\.(ts|tsx)$/.test(name) ? [p] : [];
   });
 }
 
@@ -67,8 +75,18 @@ const adminFiles = walk('src/admin', []).map((path) => ({ path, content: readFil
 const cards = summarize([...files, ...adminFiles]).legacyCardFiles;
 row('Vanu kaarte (tsx+css, sh admin)', cards.reduce((s, f) => s + f.count, 0), cards.map((f) => `${f.path}: ${f.count}`));
 
-// Muutujad: kõik CSS-failid (sh admin, landing, styles; v.a kasutamata Vite malli jääk App.css, mis kustutatakse hilisema ülesandega) ja kõik tsx-id (style-võtmed).
-const allCss = walk('src', []).filter((p) => p.endsWith('.css') && p !== 'src/App.css').map((p) => readFileSync(p, 'utf8'));
+// Muutujad: kõik CSS-failid (sh admin, landing, styles) ja kõik tsx-id (style-võtmed).
+const allCss = walk('src', []).filter((p) => p.endsWith('.css')).map((p) => readFileSync(p, 'utf8'));
 const allTsx = walk('src', []).filter((p) => p.endsWith('.tsx')).map((p) => readFileSync(p, 'utf8'));
 const undefinedVars = undefinedCssVars(allCss, allTsx);
 row('Defineerimata CSS-muutujaid', undefinedVars.length, undefinedVars);
+
+// Kasutuseta klassid: rakenduse ja admini CSS vs kõik ts/tsx + html (landing on eraldi leht, välja).
+const sourceFiles = [...walkSources('src'), ...['index.html', 'admin.html'].filter((p) => existsSync(p))].map((p) =>
+  readFileSync(p, 'utf8')
+);
+const unusedRows = ['src/index.css', 'src/admin/admin.css'].flatMap((p) => {
+  const r = unusedCssClasses(readFileSync(p, 'utf8'), sourceFiles);
+  return [...r.unused.map((c) => `${p}: .${c}`), ...r.dynamic.map((c) => `${p}: .${c} (dünaamiline?)`)];
+});
+row('Kasutuseta klasse (CSS)', unusedRows.filter((r) => !r.endsWith('(dünaamiline?)')).length, unusedRows);

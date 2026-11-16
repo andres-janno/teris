@@ -193,3 +193,28 @@ export function undefinedCssVars(css: string[], tsx: string[]): string[] {
   for (const c of css) for (const m of c.matchAll(VAR_USE)) used.add(m[1]);
   return [...used].filter((v) => !defined.has(v) && !/^--(radix|tw)-/.test(v)).sort();
 }
+
+// Kasutuseta CSS-klass: klassinime pole ühegi lähtefaili tekstis (kommentaarid välja). Klass, mille algus vastab
+// lähtekoodis koostatavale eesliitele (`prefix-${…}` või 'prefix-' + …), on "dünaamiline" — kontrolli käsitsi.
+// leaflet-* klassid loob Leaflet ise.
+const DYNAMIC_PREFIX = /[\s'"`]([a-z][\w-]*-)(?:\$\{|['"]\s*\+)/g;
+
+export function unusedCssClasses(css: string, sources: string[]): { unused: string[]; dynamic: string[] } {
+  const clean = css
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/url\([^)]*\)/g, '')
+    .replace(/"[^"\n]*"|'[^'\n]*'/g, '""');
+  const classes = new Set(
+    [...clean.matchAll(/\.(-?[_a-zA-Z][\w-]*)/g)].map((m) => m[1]).filter((c) => !c.startsWith('leaflet-'))
+  );
+  const text = sources.map((s) => s.replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '')).join('\n');
+  const tokens = new Set(text.match(/[A-Za-z][\w-]*/g) ?? []);
+  const prefixes = [...new Set([...text.matchAll(DYNAMIC_PREFIX)].map((m) => m[1]))];
+  const unused: string[] = [];
+  const dynamic: string[] = [];
+  for (const c of [...classes].sort()) {
+    if (tokens.has(c)) continue;
+    (prefixes.some((p) => c.startsWith(p)) ? dynamic : unused).push(c);
+  }
+  return { unused, dynamic };
+}

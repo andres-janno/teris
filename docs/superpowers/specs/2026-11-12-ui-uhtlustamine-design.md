@@ -141,6 +141,10 @@ uus). Iga samm = commit + release.
    Pärast iga sammu kustutatakse `index.css`-ist kasutuseta klassid.
 3. **Koristus** — `style={{…}}` ja värvikoodid → skaala/nimed; ülejäänud kirjasuurused 6 peale. Eesmärk: `index.css`
    ~2 000 rida (kaart, Leaflet, erijuhud).
+   **Täpsustus 2026-11-16 (kasutaja otsus):** etapis 3 vähendatakse `index.css`-i ~1000 rida (7 758 → ~6 800):
+   kasutuseta klassid, pseudo-tabelid ui Table peale, ikoonnupud. ~85% `index.css`-ist on vaatepõhised reeglid; ~2 000
+   rea eesmärk eeldab vaadete viimist Tailwindi peale (`@source` laiendus), mis jääb hilisemaks eraldi etapiks.
+   Selles etapis Tailwindi skaneerimist vaadetele ei laiendata.
 
 ## Kontroll
 
