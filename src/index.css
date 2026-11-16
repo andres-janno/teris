@@ -4695,7 +4695,7 @@ body {
 }
 
 .fw-head-cell.milestone.sow strong {
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 .fw-head-cell.milestone.harvest {
@@ -4703,7 +4703,7 @@ body {
 }
 
 .fw-head-cell.milestone.harvest strong {
-  color: #9a5b00;
+  color: var(--tone-warning-text);
 }
 
 .fw-head-cell.milestone.prev-sow {
