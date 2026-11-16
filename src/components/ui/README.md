@@ -4,6 +4,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 
 ## Reeglid
 
+- Staatiline `style={{…}}` → klass `index.css`-is või ui komponent; `style` ainult andmest tulev väärtus (värv, %, px). Peidetud failisisend: atribuut `hidden`. Vea olek väljal: `aria-invalid`.
 - Nupud, dialoogid, tabelid, märgid, sakid, väljad, menüüd, hüpikud — ainult siit (`ui/`). Vaates ei looda neile uusi CSS-klasse.
 - Kui vajalikku pole: lisa variant `variants.ts`-i (ja test) või uus komponent siia — mitte vaate-klass.
 - Skaalad: kirjasuurus `text-2xs|xs|sm|base|lg|xl` (11/12/13/14/16/20 px); vahed 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8;
@@ -84,6 +85,11 @@ Märkused:
   otsesest flex-lapsest, jäta tingimuslik renderdus ja kasuta ainult `TabsList` + `TabsTrigger`. Loendur = `<Badge>` lapsena.
 - **`ToggleGroup`** + `ToggleGroupItem`: aasta valik, filtrid, vormi valik (paneel ei vahetu). `value` on string,
   `onValueChange` ei anna kunagi tühja väärtust. `aria-label` on kohustuslik. Rida murdub, üks hall raam.
+
+## Filtririba ja tühi olek
+
+`<FilterBar actions={…}>` + `<FilterBarItem width="sm|md|lg">` (152/180/200px) registrite filtritele; „Filtrid:“ silt tuleb komponendist.
+`<EmptyState icon title description />` tühjale registrile ja laadimisele (ainult `description`).
 
 ## Tailwindi skaneerimine
 

@@ -2927,20 +2927,6 @@ body {
 
 /* History Row */
 
-.empty-register-state {
-  padding: 32px;
-  text-align: center;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.empty-register-state.is-muted {
-  color: var(--text-muted);
-}
-
-
 .cumulative-crop-bar {
   height: 6px;
   width: 100%;
@@ -4244,6 +4230,11 @@ body {
   min-height: 0;
 }
 
+/* Tehnika registrite sisu: filtririba, tabel, tühi olek üksteise all */
+.implement-history-section { display: flex; flex-direction: column; gap: 16px; }
+/* Filtririba perioodi valik: kaks kuupäeva kriipsuga */
+.filter-period { display: inline-flex; align-items: center; gap: 6px; }
+
 /* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
@@ -4321,10 +4312,8 @@ body {
 .fw-head-cell.year-start,
 .fw-head-section.current,
 .fw-head-section.next,
-.fw-grid [style*="grid-column: 5 /"],
-.fw-grid [style*="grid-column: 9 /"],
-.fw-row-container > [style*="grid-column: 5 /"],
-.fw-row-container > [style*="grid-column: 9 /"] {
+.fw-grid :is(.fw-col-5, .fw-col-9, .fw-place-banner-next, .fw-place-next-all),
+.fw-row-container > :is(.fw-col-5, .fw-col-9, .fw-place-banner-next, .fw-place-next-all) {
   border-left: 3px solid var(--border-strong) !important;
 }
 
@@ -4771,6 +4760,27 @@ body {
   color: var(--text-primary);
   margin-left: auto;
 }
+
+/* Tööde tahvli ruudustiku asukohad (11 veergu: põld | eelmine 2–4 | käesolev 5–8 | järgmine 9–11; 2 rida) */
+.fw-place-field { grid-column: 1 / 2; grid-row: 1 / 3; }
+.fw-place-banner-current { grid-column: 2 / 9; grid-row: 1 / 2; }
+.fw-place-banner-next { grid-column: 9 / 12; grid-row: 1 / 2; }
+.fw-place-head-prev { grid-column: 2 / 5; }
+.fw-place-head-current { grid-column: 5 / 9; }
+.fw-place-head-next { grid-column: 9 / 12; }
+.fw-place-next-all { grid-column: 9 / 12; grid-row: 2 / 3; }
+.fw-col-2 { grid-column: 2 / 3; grid-row: 2 / 3; }
+.fw-col-3 { grid-column: 3 / 4; grid-row: 2 / 3; }
+.fw-col-4 { grid-column: 4 / 5; grid-row: 2 / 3; }
+.fw-col-5 { grid-column: 5 / 6; grid-row: 2 / 3; }
+.fw-col-6 { grid-column: 6 / 7; grid-row: 2 / 3; }
+.fw-col-7 { grid-column: 7 / 8; grid-row: 2 / 3; }
+.fw-col-8 { grid-column: 8 / 9; grid-row: 2 / 3; }
+.fw-col-9 { grid-column: 9 / 10; grid-row: 2 / 3; }
+.fw-col-10 { grid-column: 10 / 11; grid-row: 2 / 3; }
+.fw-col-11 { grid-column: 11 / 12; grid-row: 2 / 3; }
+/* Hoiatusikoon tekstinupus (kustuta-nupp) */
+.danger-icon { color: var(--tone-danger-text); }
 
 .fw-cell {
   padding: 8px 10px;
@@ -6624,24 +6634,6 @@ body {
 .cell-badge { margin-left: 6px; }
 .cell-badge-lead { margin-right: 6px; }
 
-/* Tehnika registrite filtririba: rippmenüü täidab oma ümbrise (min-laiusega div), et vahed oleksid ühtlased */
-.history-filter-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 12px;
-  align-items: center;
-}
-
-.history-filter-bar > div > [data-slot="filter-clear"] {
-  display: flex !important;
-  width: 100%;
-}
-
-.history-filter-bar > div > [data-slot="filter-clear"] > [data-slot="filter-select"] {
-  width: 100% !important;
-}
-
-
 /* Laoarvestus */
 
 /* Laokogused: plussis/arvele roheline, miinuses/maha punane */
@@ -6958,3 +6950,30 @@ polyline.weather-line { fill: none; }
   background: var(--btn-sec-hover);
   border-color: rgba(34, 197, 94, 0.4);
 }
+
+/* Staatilised abiklassid (varem inline-stiilid) */
+/* Vormi alapealkiri, mis vajab ülevalt vahet */
+.form-sub-header.with-top-gap { margin-top: 16px; }
+/* Veateate riba, mis vajab all vahet */
+.auth-error-banner.with-bottom-gap { margin-bottom: 16px; }
+/* Summutatud alamväärtus statistikakiibis */
+.sub-val.is-muted { color: var(--text-muted); }
+/* Teisejärguline märkus (13px) ja summutatud märkus (12px) */
+.secondary-note { font-size: 13px; color: var(--text-secondary); }
+.muted-note { font-size: 12px; color: var(--text-muted); }
+/* Töö täisnimi lühinime all */
+.work-full-name { display: block; font-weight: 400; color: var(--text-secondary); }
+/* Seadme paigalduse vormi silt */
+.device-assign-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+/* Ikoon ja tekst reas */
+.inline-icon-text { display: flex; align-items: center; gap: 4px; }
+/* Dialoogi jaluses vasakule nihutatud nupp */
+.footer-start { margin-right: auto; }
+/* Teatekast tegevusnupuga ja virnastatud teatekast */
+.alert-box.with-action { margin: 8px; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
+.alert-box.is-stacked { flex-direction: column; align-items: stretch; gap: 4px; margin: 8px 0; }
+.hint-text.is-block { display: block; margin-top: 4px; }
+/* Kultuuri värvipunkt (värv tuleb andmest) */
+.crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid var(--border-card); }
+/* Kultuuri muutmise dialoog: sinine ülaäär */
+.crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }

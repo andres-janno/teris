@@ -159,7 +159,7 @@ export const AuthGate: React.FC = () => {
   return (
     <>
       {banner && (
-        <div className="alert-box" role="alert" style={{ margin: 8, display: 'flex', gap: 12, alignItems: 'center', justifyContent: 'space-between' }}>
+        <div className="alert-box with-action" role="alert">
           <span>{banner}</span>
           <Button type="button" variant="ghost" size="sm" onClick={() => setBanner(null)}>Sulge</Button>
         </div>

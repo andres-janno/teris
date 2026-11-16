@@ -21,7 +21,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -304,7 +304,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       </FormGrid>
 
       {/* 2. Rollid */}
-      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+      <div className="form-sub-header with-top-gap">
         <Users size={14} />
         <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
       </div>
@@ -334,7 +334,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       </Field>
 
       {/* 3. Kontakt- ja finantsandmed */}
-      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+      <div className="form-sub-header with-top-gap">
         <CreditCard size={14} />
         <span>3. Kontakt- ja finantsandmed</span>
       </div>
@@ -416,7 +416,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               <div className="reg-stat-pill">
                 <span className="lbl">Isikuid kokku:</span>
                 <strong>{stats.total} tk</strong>
-                <span className="sub-val" style={{ color: 'var(--text-muted)' }}>
+                <span className="sub-val is-muted">
                   ({stats.personsCount} eraisikut • {stats.companiesCount} ettevõtet)
                 </span>
               </div>
@@ -590,11 +590,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           </div>
 
           {filteredParties.length === 0 && (
-            <Card padding="none" className="empty-register-state">
-              <AlertCircle size={28} />
-              <h4 style={{ color: 'var(--text-primary)' }}>Otsingule vastavaid isikuid ei leitud</h4>
-              <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
-            </Card>
+            <EmptyState icon={<AlertCircle size={28} />} title="Otsingule vastavaid isikuid ei leitud" description="Proovi muuta otsingusõna või vali teine rollifilter." />
           )}
     </>
   );
@@ -655,7 +651,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
         <DialogFooter>
           <div className="footer-left-info">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <span className="secondary-note">
               Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>

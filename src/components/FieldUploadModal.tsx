@@ -193,7 +193,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               type="file"
               ref={fileInputRef}
               accept=".zip" 
-              style={{ display: 'none' }} 
+              hidden
               onChange={handleFileInput}
             />
 
@@ -248,7 +248,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                   options={(availableYears.includes(importYear) ? availableYears : [...availableYears, importYear].sort((a, b) => a - b)).map((y) => ({ value: String(y), label: String(y) }))}
                 />
                 {detectedYear && (
-                  <span className="hint-text" style={{ display: 'block', marginTop: '4px' }}>
+                  <span className="hint-text is-block">
                     Failist tuvastatud: {detectedYear.year} ({detectedYear.count}/{detectedYear.total} põllu PRIA muutmiskuupäeva järgi) — kontrolli enne kinnitamist
                   </span>
                 )}
@@ -264,7 +264,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               </Field>
 
               {replacePlan && (
-                <div className={`alert-box ${importYearLocked ? 'error' : ''}`} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '4px', margin: '8px 0' }}>
+                <div className={`alert-box is-stacked ${importYearLocked ? 'error' : ''}`}>
                   {importYearLocked ? (
                     <span>Hooaeg {importYear} on lukus — asendamine pole võimalik.</span>
                   ) : (

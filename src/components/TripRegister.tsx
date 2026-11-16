@@ -1,7 +1,7 @@
 // src/components/TripRegister.tsx — sõitude register (Tehnika all): taustaimpordi sõidud süüte sisse → välja.
 // Ainult vaatamine ja märkus; sõite ei lisata käsitsi.
 import React, { useCallback, useEffect, useState } from 'react';
-import { AlertTriangle, Filter, RotateCcw, Route } from 'lucide-react';
+import { AlertTriangle, RotateCcw, Route } from 'lucide-react';
 import type { Implement, Trip, TripGap, TripImportStatus, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { formatDateTime, formatDuration } from './fleetDateTime';
@@ -9,7 +9,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { Badge, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
+import { Badge, Button, FilterBar, FilterBarItem, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -124,7 +124,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
-    <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="implement-history-section">
       <div className="trip-import-status">
         <span>Viimane import: {importStatus?.lastRunAt ? formatDateTime(importStatus.lastRunAt) : '—'}</span>
       </div>
@@ -134,42 +134,44 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         </div>
       ))}
 
-      <Card padding="sm" className="history-filter-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Filter size={15} />
-          <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
-        </div>
+      <FilterBar
+        actions={(
+          <Button size="sm" type="button" title="Värskenda" onClick={load} disabled={loading}>
+            <RotateCcw size={14} className={loading ? 'spin' : ''} />
+          </Button>
+        )}
+      >
         <FilterClear inline active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
-          <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+          <span className="filter-period">
             <DateInput value={fromDay} onChange={setFromDay} />
             <span>–</span>
             <DateInput value={toDay} onChange={setToDay} />
           </span>
         </FilterClear>
-        <div style={{ minWidth: '180px' }}>
+        <FilterBarItem>
           <FilterClear active={!!vehicleId} onClear={() => setVehicleId('')}>
             <FilterSelect value={vehicleId} onChange={setVehicleId}
               options={[{ value: '', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]} />
           </FilterClear>
-        </div>
-        <div style={{ minWidth: '180px' }}>
+        </FilterBarItem>
+        <FilterBarItem>
           <FilterClear active={!!implementId} onClear={() => setImplementId('')}>
             <FilterSelect value={implementId} onChange={setImplementId}
               options={[{ value: '', label: 'Kõik haakeriistad' }, ...implementsList.map((i) => ({ value: i.id, label: i.name }))]} />
           </FilterClear>
-        </div>
-        <div style={{ minWidth: '150px' }}>
+        </FilterBarItem>
+        <FilterBarItem width="sm">
           <FilterClear active={!!status} onClear={() => setStatus('')}>
             <FilterSelect value={status} onChange={(v) => setStatus(v as '' | 'ACTIVE' | 'CLOSED')}
               options={[{ value: '', label: 'Kõik olekud' }, { value: 'ACTIVE', label: 'Käimas' }, { value: 'CLOSED', label: 'Lõppenud' }]} />
           </FilterClear>
-        </div>
-        <div style={{ minWidth: '200px' }}>
+        </FilterBarItem>
+        <FilterBarItem width="lg">
           <FilterClear active={!!gapsFilter} onClear={() => setGapsFilter('')}>
             <FilterSelect value={gapsFilter} onChange={(v) => setGapsFilter(v as '' | 'all' | 'unreviewed')}
               options={[{ value: '', label: 'Kõik sõidud' }, { value: 'all', label: 'Hoiatustega' }, { value: 'unreviewed', label: 'Kontrollimata hoiatused' }]} />
           </FilterClear>
-        </div>
+        </FilterBarItem>
         <FilterClear inline active={unknownPlace} onClear={() => setUnknownPlace(false)}>
           <CheckboxField checked={unknownPlace} onCheckedChange={setUnknownPlace} label="Ainult tundmatu algus või lõpp" />
         </FilterClear>
@@ -184,25 +186,18 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
             <AlertTriangle size={14} /> {unreviewedGaps} kontrollimata
           </span>
         )}
-        <Button size="sm" type="button" title="Värskenda" onClick={load} disabled={loading} style={{ marginLeft: 'auto' }}>
-          <RotateCcw size={14} className={loading ? 'spin' : ''} />
-        </Button>
-      </Card>
+      </FilterBar>
 
       {error && <div className="auth-error-banner">{error}</div>}
 
       {loading && trips.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>Laen sõite...</div>
+        <EmptyState description="Laen sõite..." />
       ) : trips.length === 0 ? (
-        <Card padding="none" className="empty-register-state is-muted">
-          <Route size={36} style={{ opacity: 0.4 }} />
-          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Sõite ei leitud
-          </div>
-          <p style={{ fontSize: '13px', margin: 0 }}>
-            {hasFilters ? 'Valitud filtritega sõite pole. Proovi filtreid muuta.' : 'Sõidud tekivad automaatselt telemeetriaandmetest.'}
-          </p>
-        </Card>
+        <EmptyState
+          icon={<Route size={36} />}
+          title="Sõite ei leitud"
+          description={hasFilters ? 'Valitud filtritega sõite pole. Proovi filtreid muuta.' : 'Sõidud tekivad automaatselt telemeetriaandmetest.'}
+        />
       ) : (
         <Table scroll="fill" bordered>
             <TableHeader>

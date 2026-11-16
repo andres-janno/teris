@@ -425,7 +425,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       </FormGrid>
 
       {/* Seasonal Yearly Data & Cadastral Parcels */}
-      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+      <div className="form-sub-header with-top-gap">
         <Compass size={14} />
         <span>Hooaja külvikord, pindala ja piirid</span>
       </div>
@@ -469,14 +469,8 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               Kultuur
               {selectedCropObj?.color && (
                 <span
-                  style={{
-                    display: 'inline-block',
-                    width: '10px',
-                    height: '10px',
-                    borderRadius: '50%',
-                    backgroundColor: selectedCropObj.color,
-                    border: '1px solid rgba(0, 0, 0, 0.2)'
-                  }}
+                  className="crop-color-dot"
+                  style={{ backgroundColor: selectedCropObj.color }}
                   title={`Kultuuri värv: ${selectedCropObj.color}`}
                 />
               )}
@@ -488,15 +482,6 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 title="Ava kultuuride register"
                 variant="ghost"
                 size="icon-sm"
-                style={{
-                  background: 'transparent',
-                  border: 'none',
-                  color: 'var(--emerald-500, #10b981)',
-                  cursor: 'pointer',
-                  padding: '2px',
-                  display: 'inline-flex',
-                  alignItems: 'center'
-                }}
               >
                 <ExternalLink size={14} />
               </Button>
@@ -532,7 +517,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           <div className="field-label-row">
             <label htmlFor="field-edit-variety">Sordi valik ({editCrop || 'Kultuur'})</label>
             {availableVarieties.length > 0 && (
-              <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+              <span className="muted-note">
                 {availableVarieties.length} sorti registris
               </span>
             )}
@@ -620,7 +605,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       )}
 
       {/* Cadastral Parcels Management for Selected Year */}
-      <div className="form-sub-header" style={{ marginTop: '16px' }}>
+      <div className="form-sub-header with-top-gap">
         <Landmark size={14} />
         <span>Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
         {!isEditSeasonLocked && (
@@ -679,15 +664,6 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                       title="Ava seotud isikute register"
                       variant="ghost"
                       size="icon-sm"
-                      style={{
-                        background: 'transparent',
-                        border: 'none',
-                        color: 'var(--emerald-500, #10b981)',
-                        cursor: 'pointer',
-                        padding: '2px',
-                        display: 'inline-flex',
-                        alignItems: 'center'
-                      }}
                     >
                       <ExternalLink size={14} />
                     </Button>

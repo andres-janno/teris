@@ -271,10 +271,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
         </DialogBody>
         <DialogFooter>
           {canDelete && !trip.deletedAt && (
-            <Button type="button" variant="danger" style={{ marginRight: 'auto' }} onClick={remove} disabled={saving}>Kustuta sõit</Button>
+            <Button type="button" variant="danger" className="footer-start" onClick={remove} disabled={saving}>Kustuta sõit</Button>
           )}
           {canDelete && trip.deletedAt && (
-            <Button type="button" style={{ marginRight: 'auto' }} onClick={restore} disabled={saving}>Taasta</Button>
+            <Button type="button" className="footer-start" onClick={restore} disabled={saving}>Taasta</Button>
           )}
           <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Sulge</Button>
           <Button type="button" variant="primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>

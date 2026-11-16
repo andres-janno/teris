@@ -28,6 +28,8 @@ const allClassStrings = (): string[] => [
     )
   ),
   v.cardHeaderClass({ align: 'center' }), v.cardHeaderClass({ align: 'start' }), v.cardTitleClass, v.cardActionsClass,
+  v.filterBarClass, v.filterBarLabelClass, v.filterBarActionsClass, v.filterBarItemClass('sm'), v.filterBarItemClass('md'), v.filterBarItemClass('lg'),
+  v.emptyStateClass, v.emptyStateIconClass, v.emptyStateTitleClass, v.emptyStateDescriptionClass,
   v.dialogHeaderIconClass,
 ];
 
@@ -359,5 +361,26 @@ describe('klaviatuuri fookus', () => {
     expect(v.tableRowClass({})).not.toContain('focus-visible:outline-primary');
     expect(v.cardVariants({ interactive: true })).toContain('focus-visible:ring-2');
     expect(v.cardVariants({})).not.toContain('focus-visible:ring-2');
+  });
+});
+
+describe('filtririba ja tühi olek', () => {
+  it('filtririba murdub, vahe 12px, tegevused paremale', () => {
+    expect(v.filterBarClass).toContain('flex-wrap');
+    expect(v.filterBarClass).toContain('gap-3');
+    expect(v.filterBarActionsClass).toContain('ml-auto');
+  });
+  it('filtri ümbris: miinimumlaius ja rippmenüü täidab ümbrise', () => {
+    expect(v.filterBarItemClass('md')).toContain('min-w-45');
+    expect(v.filterBarItemClass('sm')).toContain('min-w-38');
+    expect(v.filterBarItemClass('lg')).toContain('min-w-50');
+    expect(v.filterBarItemClass('md')).toContain('[&>[data-slot=filter-clear]]:w-full');
+  });
+  it('tühi olek: keskel, 32px polster, pealkiri 16px, kirjeldus 13px, ikoon summutatud', () => {
+    expect(v.emptyStateClass).toContain('p-8');
+    expect(v.emptyStateClass).toContain('text-center');
+    expect(v.emptyStateTitleClass).toContain('text-lg');
+    expect(v.emptyStateDescriptionClass).toContain('text-sm');
+    expect(v.emptyStateIconClass).toContain('opacity-40');
   });
 });

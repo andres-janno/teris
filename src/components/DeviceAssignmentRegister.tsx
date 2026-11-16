@@ -2,12 +2,12 @@
 // Register on seadme ↔ masina/haakeriista seose ainus tõeallikas: kaardid näitavad
 // seost registri kehtiva kirje järgi ja kaardi „Vaheta“ teeb registrisse uue kirje.
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Activity, Filter, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench } from 'lucide-react';
+import { Activity, Link, Pencil, Radio, RotateCcw, Tractor, Trash2, Unlink, Wrench } from 'lucide-react';
 import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../types/fleet';
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { Badge, Card, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -174,15 +174,27 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
   const timeSelectOptions = (cur: string): SelectOption[] => getTimeOptions(cur || undefined).map((t) => ({ value: t, label: t }));
 
   return (
-    <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+    <div className="implement-history-section">
       {/* Filtrid */}
-      <Card padding="sm" className="history-filter-bar">
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Filter size={15} />
-          <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
-        </div>
-
-        <div style={{ minWidth: '180px' }}>
+      <FilterBar
+        actions={(
+          <>
+            {hasFilters && (
+              <Button variant="ghost" size="sm"
+                onClick={() => { setDeviceFilter('all'); setTargetFilter('all'); setStatusFilter('all'); }}>
+                Tühjenda filtrid
+              </Button>
+            )}
+            <Button size="sm"
+              onClick={onReload}
+              title="Värskenda registrit">
+              <RotateCcw size={14} className={loading ? 'spin' : ''} />
+              <span>Värskenda</span>
+            </Button>
+          </>
+        )}
+      >
+        <FilterBarItem>
           <FilterClear active={deviceFilter !== 'all'} onClear={() => setDeviceFilter('all')}>
             <FilterSelect
               value={deviceFilter}
@@ -191,9 +203,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
               options={[{ value: 'all', label: 'Kõik seadmed' }, ...devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))]}
             />
           </FilterClear>
-        </div>
+        </FilterBarItem>
 
-        <div style={{ minWidth: '180px' }}>
+        <FilterBarItem>
           <FilterClear active={targetFilter !== 'all'} onClear={() => setTargetFilter('all')}>
             <FilterSelect
               value={targetFilter}
@@ -206,48 +218,26 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
               ]}
             />
           </FilterClear>
-        </div>
+        </FilterBarItem>
 
         <ToggleGroup aria-label="Seoste filter" value={statusFilter} onValueChange={(next) => setStatusFilter(next as StatusFilter)}>
           <ToggleGroupItem value="all">Kõik ({assignments.length})</ToggleGroupItem>
           <ToggleGroupItem value="active">Aktiivsed ({assignments.filter((a) => !a.endedAt).length})</ToggleGroupItem>
           <ToggleGroupItem value="ended">Ajalugu ({assignments.filter((a) => !!a.endedAt).length})</ToggleGroupItem>
         </ToggleGroup>
-
-        {hasFilters && (
-          <Button variant="ghost" size="sm"
-            onClick={() => { setDeviceFilter('all'); setTargetFilter('all'); setStatusFilter('all'); }}
-            style={{ fontSize: '12px', marginLeft: 'auto' }}>
-            Tühjenda filtrid
-          </Button>
-        )}
-
-        <Button size="sm"
-          onClick={onReload}
-          title="Värskenda registrit"
-          style={{ marginLeft: hasFilters ? undefined : 'auto' }}>
-          <RotateCcw size={14} className={loading ? 'spin' : ''} />
-          <span>Värskenda</span>
-        </Button>
-      </Card>
+      </FilterBar>
 
       {/* Tabel */}
       {loading && assignments.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-          Laen seadmete seoste registrit...
-        </div>
+        <EmptyState description="Laen seadmete seoste registrit..." />
       ) : filtered.length === 0 ? (
-        <Card padding="none" className="empty-register-state is-muted">
-          <Radio size={36} style={{ opacity: 0.4 }} />
-          <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-            Ühtegi seose kirjet ei leitud
-          </div>
-          <p style={{ fontSize: '13px', margin: 0 }}>
-            {hasFilters
-              ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
-              : 'Seadmete paigaldused masinatele ja haakeriistadele salvestuvad siia, kui seade kaardilt paigaldatakse või vahetatakse.'}
-          </p>
-        </Card>
+        <EmptyState
+          icon={<Radio size={36} />}
+          title="Ühtegi seose kirjet ei leitud"
+          description={hasFilters
+            ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
+            : 'Seadmete paigaldused masinatele ja haakeriistadele salvestuvad siia, kui seade kaardilt paigaldatakse või vahetatakse.'}
+        />
       ) : (
         <Table scroll="fill" bordered>
             <TableHeader>
@@ -351,7 +341,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
 
               <DialogBody>
                 {error && (
-                  <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
+                  <div className="auth-error-banner with-bottom-gap">
                     {error}
                   </div>
                 )}

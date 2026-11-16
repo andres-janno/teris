@@ -581,7 +581,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* 2. Sordi lisamine/muutmine eraldi aknas registri peal */}
           {isEditingVariety && targetCropForVariety && (
             <Dialog open onOpenChange={(open) => { if (!open) setIsEditingVariety(false); }}>
-            <DialogContent size="lg" className="crop-edit-modal" style={{ borderTop: '4px solid var(--blue-500)' }}>
+            <DialogContent size="lg" className="crop-edit-modal">
             <DialogForm onSubmit={handleSaveVarietyForm}>
               <DialogHeader
                 icon={<Tag size={20} />}
@@ -911,7 +911,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
         <DialogFooter>
           <div className="footer-left-info">
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+            <span className="secondary-note">
               Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
             </span>
           </div>

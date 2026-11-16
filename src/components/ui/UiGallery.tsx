@@ -1,14 +1,14 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye } from 'lucide-react';
+import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye } from 'lucide-react';
 import {
   Badge, Button, Card, CardActions, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -223,6 +223,24 @@ export const UiGallery: React.FC = () => {
               </FilterClear>
             </Field>
             <Field label="Sisendi keelatud ja kirjutuskaitstud"><Input disabled value="Keelatud" onChange={() => {}} /></Field>
+          </div>
+        </Section>
+
+        <Section title="Filtririba ja tühi olek">
+          <div className="grid w-full grid-cols-1 gap-3">
+            <FilterBar actions={<Button size="sm">Värskenda</Button>}>
+              <FilterBarItem>
+                <FilterClear fill active={fsel !== ''} onClear={() => setFsel('')}>
+                  <FilterSelect fill value={fsel} onChange={setFsel} options={[{ value: '', label: 'Kõik põllud' }, { value: 'a', label: 'Kaasiku' }, { value: 'b', label: 'Männiku' }]} />
+                </FilterClear>
+              </FilterBarItem>
+              <FilterBarItem width="lg">
+                <FilterClear fill active={selX !== ''} onClear={() => setSelX('')}>
+                  <Select value={selX} onValueChange={setSelX} options={[{ value: '', label: 'Kõik' }, { value: 'a', label: 'Esimene' }, { value: 'b', label: 'Teine' }]} />
+                </FilterClear>
+              </FilterBarItem>
+            </FilterBar>
+            <EmptyState icon={<Inbox size={36} />} title="Kirjeid pole" description="Lisa esimene kirje." />
           </div>
         </Section>
 

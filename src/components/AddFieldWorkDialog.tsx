@@ -134,7 +134,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                       </span>
                       <span className="add-work-name" title={w.name}>
                         {workTypeDisplayName(w)}
-                        {w.shortName?.trim() && <small style={{ display: 'block', fontWeight: 400, color: 'var(--text-secondary)' }}>{w.name}</small>}
+                        {w.shortName?.trim() && <small className="work-full-name">{w.name}</small>}
                       </span>
                       {tagText && <span className={tagClass}>{tagText}</span>}
                     </button>

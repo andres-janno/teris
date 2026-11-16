@@ -125,7 +125,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
               type="file"
               ref={fileInputRef}
               accept=".xls,.xlsx"
-              style={{ display: 'none' }}
+              hidden
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
             {isProcessing ? (

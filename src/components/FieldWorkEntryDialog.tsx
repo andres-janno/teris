@@ -567,11 +567,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                     tabIndex={-1}
                     value={telemetryAreaHa}
                     placeholder="–"
-                    style={
-                      (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
-                        ? { color: '#ef4444', borderColor: '#ef4444', fontWeight: 600, background: 'rgba(239, 68, 68, 0.08)' }
-                        : undefined
-                    }
+                    aria-invalid={(telemetryAreaHa.trim() === '' && hasSelectedSuggestion) || undefined}
                     title={
                       (telemetryAreaHa.trim() === '' && hasSelectedSuggestion)
                         ? 'Haakeriista või selle töölaiust pole seoste registris'

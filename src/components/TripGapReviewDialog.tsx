@@ -35,7 +35,7 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
       <DialogContent size="lg" className="fleet-edit-modal" dismissible={!saving}>
         <DialogHeader icon={<AlertTriangle size={20} className="trip-gap-icon" />} title="Märgi hoiatus kontrollituks" />
         <DialogBody>
-          <p style={{ marginTop: 0 }}>
+          <p>
             Sõitude vahel {formatDateTime(gap.startedAt)} – {formatDateTime(gap.endedAt)} ({formatDuration(gap.startedAt, gap.endedAt)}):{' '}
             {gapParts(gap).join(' · ')}
           </p>

@@ -30,3 +30,5 @@ export {
 } from './Menu';
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, Tooltip, TooltipProvider } from './Popover';
 export { helpHintTriggerClass, helpHintInlineClass, helpHintContentClass, helpHintTitleClass } from './variants';
+export { FilterBar, FilterBarItem } from './FilterBar';
+export { EmptyState } from './EmptyState';

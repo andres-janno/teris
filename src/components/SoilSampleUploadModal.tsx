@@ -106,7 +106,7 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
               type="file"
               ref={fileInputRef}
               accept=".zip"
-              style={{ display: 'none' }}
+              hidden
               onChange={handleFileInput}
             />
 

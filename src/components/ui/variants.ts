@@ -281,3 +281,20 @@ export const tableFooterClass = ({ sticky = false }: { sticky?: boolean } = {}):
     // Jaluse kinnitatud lahtrid jäävad hover'il päise toonis (PIN_BG group-hover muidu värviks need).
     sticky && '[&>tr>td]:sticky [&>tr>td]:bottom-0 [&>tr>td]:z-[2] [&>tr>td]:bg-table-head [&>tr>td]:group-hover:bg-table-head'
   );
+
+// --- Filtririba ja tühi olek (etapp 3) ---
+export const filterBarClass = 'flex flex-wrap items-center gap-3';
+export const filterBarLabelClass = 'inline-flex items-center gap-1.5 text-sm font-semibold';
+export const filterBarActionsClass = 'ml-auto flex items-center gap-2';
+const FILTER_BAR_ITEM_WIDTH = { sm: 'min-w-38', md: 'min-w-45', lg: 'min-w-50' } as const;
+/** Rippmenüü ümbris filtriribal: miinimumlaius (152/180/200px), FilterClear ja FilterSelect täidavad selle. */
+export const filterBarItemClass = (width: keyof typeof FILTER_BAR_ITEM_WIDTH): string =>
+  cn(
+    FILTER_BAR_ITEM_WIDTH[width],
+    '[&>[data-slot=filter-clear]]:flex [&>[data-slot=filter-clear]]:w-full [&>[data-slot=filter-clear]>[data-slot=filter-select]]:w-full'
+  );
+
+export const emptyStateClass = 'flex flex-col items-center gap-2 p-8 text-center text-subtle';
+export const emptyStateIconClass = 'inline-flex opacity-40';
+export const emptyStateTitleClass = 'text-lg font-semibold text-foreground';
+export const emptyStateDescriptionClass = 'm-0 text-sm';

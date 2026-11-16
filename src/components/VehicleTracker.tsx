@@ -17,7 +17,6 @@ import {
   Activity,
   Pencil,
   FileText,
-  Filter,
   History
 } from 'lucide-react';
 import { api } from '../services/api';
@@ -39,7 +38,7 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey } from './ui';
+import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -1185,7 +1184,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
                 {assignmentError && (
-                  <div className="auth-error-banner" style={{ marginBottom: '16px' }}>
+                  <div className="auth-error-banner with-bottom-gap">
                     {assignmentError}
                   </div>
                 )}
@@ -1560,7 +1559,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <div className="imp-serial-row">
                   <span>Andur:</span>
                   {attachedDevice ? (
-                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span className="inline-icon-text">
                       <Activity size={12} />
                       {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
                     </span>
@@ -1702,7 +1701,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )}
 
                 <div className="dev-assignment-box">
-                  <label htmlFor={`dev-assign-${dev.id}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                  <label htmlFor={`dev-assign-${dev.id}`} className="device-assign-label">
                     Paigaldatud:
                   </label>
                   <Select
@@ -1794,15 +1793,31 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
       {activeTab === 'history' && (
-        <div className="implement-history-section" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+        <div className="implement-history-section">
           {/* Filter bar */}
-          <Card padding="sm" className="history-filter-bar">
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Filter size={15} />
-              <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
-            </div>
-
-            <div style={{ minWidth: '180px' }}>
+          <FilterBar
+            actions={(
+              <>
+                {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all') && (
+                  <Button variant="ghost" size="sm"
+                    onClick={() => {
+                      setHistoryVehicleFilter('all');
+                      setHistoryImplementFilter('all');
+                      setHistoryStatusFilter('all');
+                    }}>
+                    Tühjenda filtrid
+                  </Button>
+                )}
+                <Button size="sm"
+                  onClick={loadImplementAssignments}
+                  title="Värskenda registrit">
+                  <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
+                  <span>Värskenda</span>
+                </Button>
+              </>
+            )}
+          >
+            <FilterBarItem>
               <FilterClear active={historyVehicleFilter !== 'all'} onClear={() => setHistoryVehicleFilter('all')}>
                 <FilterSelect
                   value={historyVehicleFilter}
@@ -1811,9 +1826,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   options={[{ value: 'all', label: 'Kõik masinad' }, ...vehicles.map((v) => ({ value: v.id, label: v.name }))]}
                 />
               </FilterClear>
-            </div>
+            </FilterBarItem>
 
-            <div style={{ minWidth: '180px' }}>
+            <FilterBarItem>
               <FilterClear active={historyImplementFilter !== 'all'} onClear={() => setHistoryImplementFilter('all')}>
                 <FilterSelect
                   value={historyImplementFilter}
@@ -1822,61 +1837,26 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   options={[{ value: 'all', label: 'Kõik haakeriistad' }, ...implementsList.map((imp) => ({ value: imp.id, label: imp.name }))]}
                 />
               </FilterClear>
-            </div>
+            </FilterBarItem>
 
-            <div style={{ display: 'flex', gap: '4px' }}>
-              <Button variant={historyStatusFilter === 'all' ? 'primary' : 'secondary'} size="sm"
-                onClick={() => setHistoryStatusFilter('all')}>
-                Kõik ({implementAssignments.length})
-              </Button>
-              <Button variant={historyStatusFilter === 'active' ? 'primary' : 'secondary'} size="sm"
-                onClick={() => setHistoryStatusFilter('active')}>
-                Aktiivsed ({implementAssignments.filter(a => !a.endedAt).length})
-              </Button>
-              <Button variant={historyStatusFilter === 'ended' ? 'primary' : 'secondary'} size="sm"
-                onClick={() => setHistoryStatusFilter('ended')}>
-                Ajalugu ({implementAssignments.filter(a => !!a.endedAt).length})
-              </Button>
-            </div>
-
-            {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all') && (
-              <Button variant="ghost" size="sm"
-                onClick={() => {
-                  setHistoryVehicleFilter('all');
-                  setHistoryImplementFilter('all');
-                  setHistoryStatusFilter('all');
-                }}
-                style={{ fontSize: '12px', marginLeft: 'auto' }}>
-                Tühjenda filtrid
-              </Button>
-            )}
-
-            <Button size="sm"
-              onClick={loadImplementAssignments}
-              title="Värskenda registrit"
-              style={{ marginLeft: (historyVehicleFilter === 'all' && historyImplementFilter === 'all' && historyStatusFilter === 'all') ? 'auto' : undefined }}>
-              <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
-              <span>Värskenda</span>
-            </Button>
-          </Card>
+            <ToggleGroup aria-label="Haakimiste filter" value={historyStatusFilter} onValueChange={(next) => setHistoryStatusFilter(next as typeof historyStatusFilter)}>
+              <ToggleGroupItem value="all">Kõik ({implementAssignments.length})</ToggleGroupItem>
+              <ToggleGroupItem value="active">Aktiivsed ({implementAssignments.filter((a) => !a.endedAt).length})</ToggleGroupItem>
+              <ToggleGroupItem value="ended">Ajalugu ({implementAssignments.filter((a) => !!a.endedAt).length})</ToggleGroupItem>
+            </ToggleGroup>
+          </FilterBar>
 
           {/* Data Table */}
           {historyLoading && implementAssignments.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '40px', color: 'var(--text-muted)' }}>
-              Laen haakimise registri andmeid...
-            </div>
+            <EmptyState description="Laen haakimise registri andmeid..." />
           ) : filteredAssignments.length === 0 ? (
-            <Card padding="none" className="empty-register-state is-muted">
-              <Wrench size={36} style={{ opacity: 0.4 }} />
-              <div style={{ fontSize: '16px', fontWeight: 600, color: 'var(--text-primary)' }}>
-                Ühtegi haakimise kirjet ei leitud
-              </div>
-              <p style={{ fontSize: '13px', margin: 0 }}>
-                {(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all')
-                  ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
-                  : 'Haakeriistade ja masinate sidumiste ajalugu salvestatakse siia automaatselt, kui masinapargis või töödes haakeriistu vahetatakse.'}
-              </p>
-            </Card>
+            <EmptyState
+              icon={<Wrench size={36} />}
+              title="Ühtegi haakimise kirjet ei leitud"
+              description={(historyVehicleFilter !== 'all' || historyImplementFilter !== 'all' || historyStatusFilter !== 'all')
+                ? 'Valitud filtritega ei leitud ühtegi seost. Proovi filtreid muuta.'
+                : 'Haakeriistade ja masinate sidumiste ajalugu salvestatakse siia automaatselt, kui masinapargis või töödes haakeriistu vahetatakse.'}
+            />
           ) : (
             <Table scroll="fill" bordered>
                 <TableHeader>
