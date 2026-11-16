@@ -2,6 +2,7 @@
 // kutsuja (formatQty). <table> kannab data-slot="table" — vanad sisuklasside reeglid (.muted, .cell-sub …) leiavad selle.
 import React, { createContext, useContext } from 'react';
 import { cn } from './cn';
+import { clickOnActivationKey } from './keyActivation';
 import {
   tableCellClass, tableClass, tableContainerClass, tableFooterClass, tableHeadClass, tableRowClass,
   type TablePin, type TableRowTone, type TableScroll,
@@ -33,16 +34,22 @@ export const TableFooter: React.FC<React.ComponentProps<'tfoot'> & { sticky?: bo
   <tfoot className={cn(tableFooterClass({ sticky }), className)} {...props} />
 );
 
+/** Klõpsatav rida (onClick): Tab-fookus ja Enter/tühik käivitab sama klõpsu. */
 export const TableRow: React.FC<React.ComponentProps<'tr'> & { selected?: boolean; tone?: TableRowTone }> = ({
-  className, selected, tone, onClick, ...props
-}) => (
-  <tr
-    data-selected={selected || undefined}
-    onClick={onClick}
-    className={cn(tableRowClass({ tone, clickable: !!onClick }), className)}
-    {...props}
-  />
-);
+  className, selected, tone, onClick, onKeyDown, tabIndex, ...props
+}) => {
+  const clickable = !!onClick;
+  return (
+    <tr
+      data-selected={selected || undefined}
+      onClick={onClick}
+      tabIndex={clickable ? (tabIndex ?? 0) : tabIndex}
+      onKeyDown={clickable ? (e) => { onKeyDown?.(e); clickOnActivationKey(e); } : onKeyDown}
+      className={cn(tableRowClass({ tone, clickable }), className)}
+      {...props}
+    />
+  );
+};
 
 const ARIA_SORT = { asc: 'ascending', desc: 'descending', none: 'none' } as const;
 

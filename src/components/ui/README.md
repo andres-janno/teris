@@ -10,6 +10,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   nurgad `rounded-sm|md|lg|full`.
 - Suvalised väärtused `text-[…]`, `p-[…]`, `m-[…]`, `gap-[…]`, `rounded-[…]`, `bg-[…]`, `border-[…]` on keelatud
   (`npm run ui-audit` näitab). Suurused (`w-[…]`, `max-h-[…]`) on lubatud.
+- Toores klõpsatav `div`/`span`: `role="button" tabIndex={0} onKeyDown={clickOnActivationKey}` (või kasuta `Button` / `Card interactive` / `TableRow`).
 - Värvid ainult nimedega (`bg-card`, `text-muted-foreground`, `text-warning` …) — need järgivad heledat/tumedat teemat
   ise, `dark:` pole tavaliselt vaja. Erand: andmevärvid (kultuur, kaardikiht) `style={{ … }}` kaudu.
 - `style={{ … }}` ainult dünaamiliste väärtuste jaoks.
@@ -60,7 +61,7 @@ kutsuja (`formatQty`). `<table>` kannab `data-slot="table"`, et vanad sisuklassi
 | --- | --- |
 | `Table` | `scroll`: `x` (vaikimisi) / `none` / `sm` (40vh) / `md` (62vh) / `fill` (täislehe paneel); `bordered`; `dense`; `containerClassName` (ümbrisele); `className` (`<table>`-ile) |
 | `TableFooter` | `sticky` (jalus kleepub alla) |
-| `TableRow` | `selected` (valitud rida: hele roheline toon + roheline riba vasakus servas); `tone`: `success` / `warning` / `muted` (mitteaktiivne) / `group` (vahepealkiri) / `total`; `onClick` annab kursori |
+| `TableRow` | `selected` (valitud rida: hele roheline toon + roheline riba vasakus servas); `tone`: `success` / `warning` / `muted` (mitteaktiivne) / `group` (vahepealkiri) / `total`; `onClick` annab kursori, Tab-fookuse ja Enter/tühiku (sama klõps); rea sees olev nupp/link ei aktiveeri rida |
 | `TableHead` | `numeric`; `pin`: `start` / `end`; `actions` (tegevuste veerg); `sort`: `asc` / `desc` / `none` (+ `aria-sort`, ikoon kutsuja) |
 | `TableCell` | `numeric`; `wrap` (murdub, vaikimisi ei murdu); `pin`; `actions` (kleepub paremale, nupud keskel reas) |
 | `TableEmpty` | `colSpan` = veergude arv; `children` = tühja tabeli tekst |
@@ -176,6 +177,7 @@ Reeglid:
     `bg-muted`, varjuta).
   - `padding`: `md` 16px (vaikimisi), `sm` 12px, `none` (klassi ei anta — vaate CSS-i polster kehtib, nt väike kaardinäit).
   - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `app.css` base-kihist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
+  - `interactive` + `onClick` div-kaardil annab `role="button"`, Tab-fookuse ja Enter/tühiku.
   - `asChild`: `<Card asChild interactive><button type="button">…</button></Card>`, samuti `<form>`, `<section>`.
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
 - Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).

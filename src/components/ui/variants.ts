@@ -167,7 +167,7 @@ export const cardVariants = cva('border border-border', {
     padding: { none: '', sm: 'p-3', md: 'p-4' },
     interactive: {
       // Nupu lähtestus (font, text-align, color) on app.css base-kihis (button[data-slot="card"]), et vaate klass (legacy) kirjasuuruse kaotamata võidaks.
-      true: 'cursor-pointer transition-colors hover:bg-card-hover',
+      true: 'cursor-pointer transition-colors hover:bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
       false: '',
     },
     selected: { true: 'border-primary ring-1 ring-primary', false: '' },
@@ -272,7 +272,7 @@ export const tableRowClass = ({ tone, clickable = false }: { tone?: TableRowTone
   cn(
     'group transition-colors hover:bg-table-hover data-[selected]:bg-table-selected data-[selected]:[&>td:first-child]:shadow-[inset_3px_0_0_var(--color-primary)]',
     tone && ROW_TONES[tone],
-    clickable && 'cursor-pointer'
+    clickable && 'cursor-pointer focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-primary'
   );
 
 export const tableFooterClass = ({ sticky = false }: { sticky?: boolean } = {}): string =>

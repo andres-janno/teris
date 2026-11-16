@@ -352,3 +352,12 @@ describe('märkide kontrast', () => {
     expect(v.badgeVariants({ tone: 'accent', variant: 'solid' })).toContain('bg-accent-solid');
   });
 });
+
+describe('klaviatuuri fookus', () => {
+  it('klõpsatav tabelirida ja kaart näitavad fookust', () => {
+    expect(v.tableRowClass({ clickable: true })).toContain('focus-visible:outline-primary');
+    expect(v.tableRowClass({})).not.toContain('focus-visible:outline-primary');
+    expect(v.cardVariants({ interactive: true })).toContain('focus-visible:ring-2');
+    expect(v.cardVariants({})).not.toContain('focus-visible:ring-2');
+  });
+});

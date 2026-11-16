@@ -39,7 +39,7 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption } from './ui';
+import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -1400,6 +1400,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 {v.notes && (
                   <div
                     className="fleet-card-notes"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={clickOnActivationKey}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1570,6 +1573,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 {imp.notes && (
                   <div
                     className="fleet-card-notes"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={clickOnActivationKey}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1722,6 +1728,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 {dev.notes && (
                   <div
                     className="fleet-card-notes"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={clickOnActivationKey}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1973,6 +1982,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <div className="swap-options-list">
                   <div
                     className="swap-option-item unassign-option"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={clickOnActivationKey}
                     onClick={() => {
                       // Unassign any device currently on this vehicle
                       const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
@@ -1995,6 +2007,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <div
                         key={d.id}
                         className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={clickOnActivationKey}
                         onClick={() => {
                           assignDevice(d.id, swapModal.targetVehicleId);
                           setSwapModal(null);
@@ -2018,6 +2033,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <div className="swap-options-list">
                   <div
                     className="swap-option-item unassign-option"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={clickOnActivationKey}
                     onClick={() => {
                       const currentImp = implementsList.find(i => i.assignedVehicleId === swapModal.targetVehicleId);
                       if (currentImp) onAssignImplement(currentImp.id, undefined);
@@ -2040,6 +2058,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <div
                         key={imp.id}
                         className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={clickOnActivationKey}
                         onClick={() => {
                           onAssignImplement(imp.id, swapModal.targetVehicleId);
                           setSwapModal(null);

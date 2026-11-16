@@ -957,57 +957,6 @@ body {
   margin-top: 14px;
 }
 
-.soil-table {
-  display: flex;
-  flex-direction: column;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
-}
-
-.soil-row {
-  display: grid;
-  grid-template-columns: 1.6fr 0.8fr repeat(7, 1fr);
-  gap: 4px;
-  align-items: center;
-  padding: 5px 8px;
-  font-size: 0.74rem;
-  text-align: right;
-}
-
-.soil-row>span:first-child {
-  text-align: left;
-}
-
-.soil-row-head {
-  background: var(--stat-bg);
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.4px;
-  color: var(--text-secondary);
-}
-
-.soil-row-year {
-  width: 100%;
-  border: none;
-  border-top: 1px solid var(--border-card);
-  background: none;
-  font-family: inherit;
-  color: var(--text-primary);
-  cursor: pointer;
-}
-
-.soil-row-year:hover {
-  background: var(--stat-bg-hover);
-}
-
-.soil-row-point {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  background: var(--stat-bg);
-}
-
 .soil-year-cell {
   display: inline-flex;
   align-items: center;
@@ -1016,7 +965,7 @@ body {
 }
 
 .soil-age {
-  font-size: 0.66rem;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -1032,10 +981,9 @@ body {
 .soil-age-dot { display: inline-block; width: 8px; height: 8px; margin-left: 4px; border-radius: 9999px; vertical-align: middle; }
 
 .soil-footnote {
-  padding: 5px 8px;
-  font-size: 0.64rem;
+  margin-top: 4px;
+  font-size: 11px;
   color: var(--text-secondary);
-  border-top: 1px solid var(--border-card);
 }
 
 /* Põllu üldandmete paneel (FieldOverviewPanel) — sama vahedega veerg nagu .field-detail-col */
@@ -6983,11 +6931,8 @@ polyline.weather-line { fill: none; }
 .weather-line-4 { stroke: #0891b2; background: #0891b2; }
 .weather-line-5 { stroke: #64748b; background: #64748b; }
 .weather-legend-row .legend { display: inline-block; width: 10px; height: 10px; border-radius: 2px; vertical-align: middle; margin-left: 6px; }
-.soil-row.weather-season-row { grid-template-columns: minmax(0, 1.4fr) max-content repeat(6, minmax(0, 1fr)); column-gap: 12px; }
-.weather-season-period { text-align: left; white-space: nowrap; }
 .weather-season-crop { font-weight: 400; color: var(--text-secondary); margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.soil-row.weather-season-past { border-top: 1px solid var(--border-card); color: var(--text-secondary); }
-.soil-row.weather-season-past .soil-value { font-weight: 400; }
+.weather-season-past .soil-value { font-weight: 400; }
 .weather-season-shifted { font-style: italic; }
 
 /* Leaflet hüpiku nupp: hüpiku sisu on HTML-string (mitte React), seega ui/Button siia ei sobi.

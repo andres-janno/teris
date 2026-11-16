@@ -4,6 +4,7 @@ import React from 'react';
 import { Slot } from 'radix-ui';
 import type { VariantProps } from 'class-variance-authority';
 import { cn } from './cn';
+import { clickOnActivationKey } from './keyActivation';
 import { cardActionsClass, cardHeaderClass, cardTitleClass, cardVariants } from './variants';
 
 export type CardProps = React.ComponentProps<'div'> &
@@ -12,12 +13,20 @@ export type CardProps = React.ComponentProps<'div'> &
     asChild?: boolean;
   };
 
-export const Card: React.FC<CardProps> = ({ className, variant, padding, interactive, selected, asChild = false, ...props }) => {
+export const Card: React.FC<CardProps> = ({
+  className, variant, padding, interactive, selected, asChild = false, onClick, onKeyDown, tabIndex, role, ...props
+}) => {
   const Comp = asChild ? Slot.Root : 'div';
+  // Klõpsatav div-kaart: nupu roll ja Enter/tühik (asChild <button> haldab seda ise).
+  const keyboard = !!interactive && !!onClick && !asChild;
   return (
     <Comp
       data-slot="card"
       data-selected={selected ? '' : undefined}
+      onClick={onClick}
+      role={keyboard ? (role ?? 'button') : role}
+      tabIndex={keyboard ? (tabIndex ?? 0) : tabIndex}
+      onKeyDown={keyboard ? (e: React.KeyboardEvent<HTMLDivElement>) => { onKeyDown?.(e); clickOnActivationKey(e); } : onKeyDown}
       className={cn(cardVariants({ variant, padding, interactive, selected }), className)}
       {...props}
     />

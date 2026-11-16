@@ -1,5 +1,6 @@
 // src/components/ui/index.ts — ühiste komponentide eksport.
 export { cn } from './cn';
+export { clickOnActivationKey, handleActivationKey, type ActivationKeyEvent } from './keyActivation';
 export { Button, type ButtonProps } from './Button';
 export { Badge, type BadgeProps } from './Badge';
 export { Card, CardHeader, CardTitle, CardActions, Panel, type CardProps } from './Card';

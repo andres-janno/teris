@@ -3,7 +3,7 @@ import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-r
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { getCropColor } from '../services/cropColors';
-import { Badge, Card, Button, ToggleGroup, ToggleGroupItem } from './ui';
+import { Badge, Card, Button, ToggleGroup, ToggleGroupItem, clickOnActivationKey } from './ui';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -111,6 +111,10 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       <div className="widget-crop-legend-section">
         <div
           className="widget-legend-header"
+          role="button"
+          tabIndex={0}
+          aria-expanded={isLegendOpen}
+          onKeyDown={clickOnActivationKey}
           onClick={() => setIsLegendOpen(!isLegendOpen)}
           title={isLegendOpen ? 'Ahenda kultuuride legend' : 'Ava kultuuride legend'}
         >
@@ -148,6 +152,10 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                   <div
                     key={item.name}
                     className={`crop-legend-item ${isSelected ? 'selected' : ''}`}
+                    role="button"
+                    tabIndex={0}
+                    aria-pressed={isSelected}
+                    onKeyDown={clickOnActivationKey}
                     style={{ '--crop-color': item.color } as React.CSSProperties}
                     onClick={() => {
                       if (onSelectCropFilter) {

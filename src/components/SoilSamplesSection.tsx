@@ -6,6 +6,7 @@ import type { Polygon, MultiPolygon } from 'geojson';
 import { FlaskConical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
 import { getSoilMetricColor, getSoilMetricLevel } from '../types/soilSample';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface SoilSamplesSectionProps {
   geometry: Polygon | MultiPolygon;
@@ -72,57 +73,67 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
       {byYear.length === 0 ? (
         <p className="notes-text">Selle põllu piiridesse jäävaid mullaproove pole.</p>
       ) : (
-        <div className="soil-table">
-          <div className="soil-row soil-row-head">
-            <span>Aasta</span>
-            <span>Punkte</span>
-            {METRICS.map((m) => (
-              <span key={m.key}>{m.label}</span>
-            ))}
-          </div>
-
-          {byYear.map(([year, list]) => {
-            const age = currentYear - year;
-            const isOpen = openYears.has(year);
-            return (
-              <React.Fragment key={year}>
-                <button type="button" className="soil-row soil-row-year" onClick={() => toggleYear(year)} title="Näita punktide kaupa">
-                  <span className="soil-year-cell">
-                    {isOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
-                    {year}
-                    {age > 0 && <span className="soil-age">{age} a<span className="soil-age-dot" style={{ backgroundColor: getSoilMetricColor('age', age) }} /></span>}
-                  </span>
-                  <span>{list.length}</span>
-                  {METRICS.map((m) => {
-                    const avg = average(list.map((s) => s[m.key as Exclude<SoilSampleMetricKey, 'age'>]));
-                    return (
-                      <span key={m.key} className="soil-value" data-level={getSoilMetricLevel(m.key, avg)}>
-                        {fmt(avg)}
-                      </span>
-                    );
-                  })}
-                </button>
-
-                {isOpen &&
-                  list.map((s) => (
-                    <div key={s.sampleNumber} className="soil-row soil-row-point">
-                      <span>Proov {s.sampleNumber}</span>
-                      <span />
+        <>
+          <Table dense bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Aasta</TableHead>
+                <TableHead numeric>Punkte</TableHead>
+                {METRICS.map((m) => (
+                  <TableHead key={m.key} numeric>{m.label}</TableHead>
+                ))}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {byYear.map(([year, list]) => {
+                const age = currentYear - year;
+                const isOpen = openYears.has(year);
+                return (
+                  <React.Fragment key={year}>
+                    <TableRow onClick={() => toggleYear(year)} aria-expanded={isOpen} title="Näita punktide kaupa">
+                      <TableCell>
+                        <span className="soil-year-cell">
+                          {isOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
+                          {year}
+                          {age > 0 && (
+                            <span className="soil-age">
+                              {age} a<span className="soil-age-dot" style={{ backgroundColor: getSoilMetricColor('age', age) }} />
+                            </span>
+                          )}
+                        </span>
+                      </TableCell>
+                      <TableCell numeric>{list.length}</TableCell>
                       {METRICS.map((m) => {
-                        const v = s[m.key as Exclude<SoilSampleMetricKey, 'age'>];
+                        const avg = average(list.map((s) => s[m.key as Exclude<SoilSampleMetricKey, 'age'>]));
                         return (
-                          <span key={m.key} className="soil-value" data-level={getSoilMetricLevel(m.key, v)}>
-                            {fmt(v)}
-                          </span>
+                          <TableCell key={m.key} numeric className="soil-value" data-level={getSoilMetricLevel(m.key, avg)}>
+                            {fmt(avg)}
+                          </TableCell>
                         );
                       })}
-                    </div>
-                  ))}
-              </React.Fragment>
-            );
-          })}
-          <div className="soil-footnote">Keskmised; P, K, Ca, Mg mg/kg · Corg % · lubjatarve t/ha</div>
-        </div>
+                    </TableRow>
+                    {isOpen &&
+                      list.map((s) => (
+                        <TableRow key={s.sampleNumber} tone="muted">
+                          <TableCell>Proov {s.sampleNumber}</TableCell>
+                          <TableCell numeric />
+                          {METRICS.map((m) => {
+                            const v = s[m.key as Exclude<SoilSampleMetricKey, 'age'>];
+                            return (
+                              <TableCell key={m.key} numeric className="soil-value" data-level={getSoilMetricLevel(m.key, v)}>
+                                {fmt(v)}
+                              </TableCell>
+                            );
+                          })}
+                        </TableRow>
+                      ))}
+                  </React.Fragment>
+                );
+              })}
+            </TableBody>
+          </Table>
+          <p className="soil-footnote">Keskmised; P, K, Ca, Mg mg/kg · Corg % · lubjatarve t/ha</p>
+        </>
       )}
     </div>
   );

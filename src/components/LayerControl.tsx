@@ -16,7 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CheckboxField, RadioGroup, RadioField } from './ui';
+import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -86,7 +86,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
   return (
     <Card variant="floating" className={`layer-control-panel ${isOpen ? 'open' : 'collapsed'}`}>
-      <div className="layer-control-header" onClick={() => setIsOpen(!isOpen)}>
+      <div className="layer-control-header" role="button" tabIndex={0} aria-expanded={isOpen} onKeyDown={clickOnActivationKey} onClick={() => setIsOpen(!isOpen)}>
         <div className="layer-header-title">
           <Layers size={18} />
           <span>Kaardikihid</span>

@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import type { WeatherSeasonReport, WeatherSeasonHistoryRow, WeatherSummary } from '../types/weather';
 import { fmt0, fmt1, WEATHER_SOURCE } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Button } from './ui';
+import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface Props {
   fieldSeasonId: number | undefined;
@@ -17,21 +17,21 @@ interface Props {
 }
 
 const WeatherRow: React.FC<{ year: number; crop: string | null | undefined; sum: WeatherSummary; gddBaseC: number; yieldTonsHa: number | null | undefined; shifted?: boolean; current?: boolean }> = ({ year, crop, sum, gddBaseC, yieldTonsHa, shifted, current }) => (
-  <div className={`soil-row weather-season-row${current ? '' : ' weather-season-past'}`}>
-    <span className="soil-year-cell">{year}{crop && <span className="weather-season-crop">{crop}</span>}</span>
-    <span
-      className={`weather-season-period${shifted ? ' weather-season-shifted' : ''}`}
+  <TableRow tone={current ? undefined : 'muted'} className={current ? undefined : 'weather-season-past'}>
+    <TableCell><span className="soil-year-cell">{year}{crop && <span className="weather-season-crop">{crop}</span>}</span></TableCell>
+    <TableCell
+      className={shifted ? 'weather-season-shifted' : undefined}
       title={shifted ? 'Selle aasta külvikuupäev puudub — kasutatud valitud hooaja kuupäevi' : undefined}
     >
       {formatDate(sum.from)} – {formatDate(sum.to)}
-    </span>
-    <span className="soil-value" title={`Baas ${gddBaseC} °C`}>{fmt0(sum.gdd)}</span>
-    <span className="soil-value">{fmt0(sum.precipMm)}</span>
-    <span className="soil-value">{fmt0(sum.waterBalanceMm)}</span>
-    <span className="soil-value">{sum.longestDrySpell}</span>
-    <span className="soil-value">{sum.frostDays}</span>
-    <span className="soil-value">{yieldTonsHa != null ? fmt1(yieldTonsHa) : '—'}</span>
-  </div>
+    </TableCell>
+    <TableCell numeric className="soil-value" title={`Baas ${gddBaseC} °C`}>{fmt0(sum.gdd)}</TableCell>
+    <TableCell numeric className="soil-value">{fmt0(sum.precipMm)}</TableCell>
+    <TableCell numeric className="soil-value">{fmt0(sum.waterBalanceMm)}</TableCell>
+    <TableCell numeric className="soil-value">{sum.longestDrySpell}</TableCell>
+    <TableCell numeric className="soil-value">{sum.frostDays}</TableCell>
+    <TableCell numeric className="soil-value">{yieldTonsHa != null ? fmt1(yieldTonsHa) : '—'}</TableCell>
+  </TableRow>
 );
 
 export const WeatherSeasonSection: React.FC<Props> = ({ fieldSeasonId, year, crop, actualYieldTonsHa, onEditSeeding }) => {
@@ -77,30 +77,36 @@ export const WeatherSeasonSection: React.FC<Props> = ({ fieldSeasonId, year, cro
         </p>
       )}
       {(sum || history.length > 0) && (
-        <div className="soil-table">
-          <div className="soil-row soil-row-head weather-season-row">
-            <span>Hooaeg</span>
-            <span className="weather-season-period">Periood</span>
-            <span title="Temperatuurisumma kultuuri baastemperatuuriga">GDD</span>
-            <span>Sademed</span>
-            <span title="Sademed miinus potentsiaalne aurumine">Veebilanss</span>
-            <span title="Pikim järjestikuste kuivade päevade arv">Kuiv per.</span>
-            <span title="Öökülmapäevad 60 päeva jooksul pärast külvi">Öökülm</span>
-            <span>Saak</span>
-          </div>
-          {sum && year != null && rep && (
-            <WeatherRow year={year} crop={crop} sum={sum} gddBaseC={rep.gddBaseC} yieldTonsHa={actualYieldTonsHa} current />
-          )}
-          {history.map((h) => (
-            <WeatherRow key={h.year} year={h.year} crop={h.crop} sum={h.summary} gddBaseC={h.gddBaseC} yieldTonsHa={h.actualYieldTonsHa} shifted={!h.ownDates} />
-          ))}
-          <div className="soil-footnote">
+        <>
+          <Table dense bordered>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Hooaeg</TableHead>
+                <TableHead>Periood</TableHead>
+                <TableHead numeric title="Temperatuurisumma kultuuri baastemperatuuriga">GDD</TableHead>
+                <TableHead numeric>Sademed</TableHead>
+                <TableHead numeric title="Sademed miinus potentsiaalne aurumine">Veebilanss</TableHead>
+                <TableHead numeric title="Pikim järjestikuste kuivade päevade arv">Kuiv per.</TableHead>
+                <TableHead numeric title="Öökülmapäevad 60 päeva jooksul pärast külvi">Öökülm</TableHead>
+                <TableHead numeric>Saak</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {sum && year != null && rep && (
+                <WeatherRow year={year} crop={crop} sum={sum} gddBaseC={rep.gddBaseC} yieldTonsHa={actualYieldTonsHa} current />
+              )}
+              {history.map((h) => (
+                <WeatherRow key={h.year} year={h.year} crop={h.crop} sum={h.summary} gddBaseC={h.gddBaseC} yieldTonsHa={h.actualYieldTonsHa} shifted={!h.ownDates} />
+              ))}
+            </TableBody>
+          </Table>
+          <p className="soil-footnote">
             {sum && !sum.complete && sum.dataUntil && `Andmed kuni ${formatDate(sum.dataUntil)} · `}
             GDD °C kultuuri baastemperatuuriga · sademed ja veebilanss mm · kuiv periood ja öökülm päevi · saak t/ha
             {anyShifted && ' · kaldkirjas periood: selle aasta külvikuupäev puudub, kasutatud valitud hooaja kuupäevi'}
             {' · '}{WEATHER_SOURCE}
-          </div>
-        </div>
+          </p>
+        </>
       )}
     </div>
   );
