@@ -24,6 +24,8 @@
 
   --emerald-600: #166534;           /* oli #15803d */
   --emerald-500: #15803d;           /* oli #16a34a (3.30:1) → 5.02:1; tumedam roheline (kasutaja otsus 2026-11-16) */
+  --selection-bg: #16a34a;          /* valitud olek (peamenüü sakk, valitud aasta, märkeruut) — kasutaja otsus 2026-11-16: heledam roheline jääb, kontrastist hoolimata */
+  --selection-bg-hover: #15803d;
   --emerald-400: #22c55e;
   --blue-500: #2563eb;
   --blue-400: #3b82f6;
@@ -2649,13 +2651,13 @@ body {
 
 [data-slot="table"] th.year-col.selected .year-col-label {
   color: #ffffff;
-  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
+  background: var(--selection-bg);
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d, inset 0 1px 0 #15803d;
 }
 
 [data-slot="table"] th.year-col.selected:hover .year-col-label {
-  background: var(--color-primary-from);
+  background: var(--selection-bg-hover);
 }
 
 [data-slot="table"] td.year-cell {
@@ -4080,7 +4082,7 @@ body {
 }
 
 .main-view-switch button.active {
-  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
+  background: var(--selection-bg);
   color: #ffffff;
 }
 
@@ -5803,7 +5805,7 @@ body {
 
 .add-work-check.on {
   border: 0;
-  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
+  background: var(--selection-bg);
 }
 
 .add-work-option.disabled .add-work-check.on {
