@@ -43,7 +43,7 @@ describe('variants', () => {
     expect(c).toContain('h-7');
   });
   it('märgi toon määrab värvi', () => {
-    expect(v.badgeVariants({ tone: 'warning' })).toContain('text-warning');
+    expect(v.badgeVariants({ tone: 'warning' })).toContain('text-warning-text');
     expect(v.badgeVariants()).toContain('text-muted-foreground');
   });
   it('jaluse kinnitatud lahter jääb hover\'il päise toonis', () => {
@@ -92,7 +92,7 @@ describe('variants', () => {
   });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
-    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|background|left|right|center)$/;
+    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|danger-text|accent-text|on-warning|background|left|right|center)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });
@@ -307,5 +307,23 @@ describe('link-nupp ja dialoogi päis', () => {
   it('dialoogi päise ikoon on roheline (üks koht kõigile dialoogidele)', () => {
     expect(v.dialogHeaderIconClass).toContain('text-primary');
     expect(v.dialogHeaderIconClass).toContain('shrink-0');
+  });
+});
+
+describe('märkide kontrast', () => {
+  it('soft märk kasutab toonitekst-tokenit, mitte põhitooni', () => {
+    for (const tone of ['success', 'info', 'warning', 'danger', 'accent'] as const) {
+      const c = v.badgeVariants({ tone, variant: 'soft' });
+      expect(c, tone).toMatch(/text-(success|info|warning|danger|accent)-text/);
+    }
+  });
+  it('solid hoiatus: tekst on-warning võidab valge (cn)', () => {
+    const c = cn(v.badgeVariants({ tone: 'warning', variant: 'solid' }));
+    expect(c).toContain('text-on-warning');
+    expect(c).not.toMatch(/(^|\s)text-white(\s|$)/);
+  });
+  it('solid info ja accent kasutavad tumedamat täisvärvi', () => {
+    expect(v.badgeVariants({ tone: 'info', variant: 'solid' })).toContain('bg-info-solid');
+    expect(v.badgeVariants({ tone: 'accent', variant: 'solid' })).toContain('bg-accent-solid');
   });
 });

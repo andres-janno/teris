@@ -20,17 +20,27 @@
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #94a3b8;
+  --text-muted: #64748b;            /* oli #94a3b8 (2.56:1) → 4.76:1 kaardil, 4.55:1 väljal */
 
-  --emerald-600: #15803d;
-  --emerald-500: #16a34a;
+  --emerald-600: #166534;           /* oli #15803d */
+  --emerald-500: #15803d;           /* oli #16a34a (3.30:1) → 5.02:1; tumedam roheline (kasutaja otsus 2026-11-16) */
   --emerald-400: #22c55e;
   --blue-500: #2563eb;
   --blue-400: #3b82f6;
-  --amber-500: #d97706;
+  --amber-500: #b45309;             /* oli #d97706 (3.19:1) → 5.02:1 */
   --amber-400: #f59e0b;
   --purple-500: #9333ea;
   --rose-500: #e11d48;
+
+  /* Toonitekst (soft märk, olekutekst kaardil) ja täisvärvid valge tekstiga — kõik ≥ 4.5:1 (contrast.test.ts) */
+  --tone-success-text: #166534;
+  --tone-info-text: #1d4ed8;
+  --tone-warning-text: #92400e;
+  --tone-danger-text: #be123c;
+  --tone-accent-text: #7e22ce;
+  --tone-info-solid: #2563eb;
+  --tone-accent-solid: #9333ea;
+  --on-warning: #ffffff;            /* hoiatusmärgi tekst täisvärvil */
 
   --shadow-glass: 0 10px 30px -5px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
   --shadow-modal: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
@@ -72,7 +82,7 @@
 
   --text-primary: #f8fafc;
   --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-muted: #8796ab;            /* oli #64748b (3.75:1) → 5.95:1 kaardil, 5.09:1 väljal */
 
   --emerald-600: #15803d;
   --emerald-500: #22c55e;
@@ -83,6 +93,15 @@
   --amber-400: #fbbf24;
   --purple-500: #a855f7;
   --rose-500: #f43f5e;
+
+  --tone-success-text: #22c55e;
+  --tone-info-text: #60a5fa;
+  --tone-warning-text: #f59e0b;
+  --tone-danger-text: #fb7185;
+  --tone-accent-text: #c084fc;
+  --tone-info-solid: #2563eb;       /* #3b82f6 valgega 3.68:1 */
+  --tone-accent-solid: #9333ea;     /* #a855f7 valgega 3.96:1 */
+  --on-warning: #0f172a;            /* kollane märk tumeda tekstiga (kasutaja otsus) */
 
   --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
   --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
@@ -1037,6 +1056,13 @@ body {
   font-weight: 700;
 }
 
+/* Mulla väärtus: taseme toon tekstina (kontrast mõlemas teemas); andmevärv jääb kaardile ja vanuse punktile */
+.soil-value[data-level="bad"] { color: var(--tone-danger-text); }
+.soil-value[data-level="warn"] { color: var(--tone-warning-text); }
+.soil-value[data-level="good"] { color: var(--tone-success-text); }
+.soil-value[data-level="none"] { color: var(--text-muted); }
+.soil-age-dot { display: inline-block; width: 8px; height: 8px; margin-left: 4px; border-radius: 9999px; vertical-align: middle; }
+
 .soil-footnote {
   padding: 5px 8px;
   font-size: 0.64rem;
@@ -1157,7 +1183,7 @@ body {
   margin-left: 6px;
   font-size: 0.74rem;
   font-weight: 600;
-  color: var(--emerald-600);
+  color: var(--tone-success-text);
 }
 
 /* Ühtne valikukast ja sisestusväli */
@@ -1250,7 +1276,7 @@ body {
   border: 1px solid transparent;
   border-radius: var(--radius-sm);
   background: transparent;
-  color: var(--emerald-600);
+  color: var(--tone-success-text);
   font: inherit;
   font-size: 0.78rem;
   font-weight: 600;
@@ -1766,7 +1792,7 @@ body {
 
 .status-working {
   background: rgba(34, 197, 94, 0.15);
-  color: var(--emerald-600);
+  color: var(--tone-success-text);
   border: 1px solid rgba(34, 197, 94, 0.3);
 }
 
@@ -1951,7 +1977,7 @@ body {
 }
 
 .attached-status.attached {
-  color: var(--emerald-600);
+  color: var(--tone-success-text);
 }
 
 .attached-status.warehouse {
@@ -2134,7 +2160,7 @@ body {
 
 .confirm-dialog-icon.info {
   background: rgba(16, 185, 129, 0.12);
-  color: var(--emerald-600);
+  color: var(--tone-success-text);
 }
 
 .swap-modal-desc {
@@ -2248,7 +2274,7 @@ body {
 .btn-pick-map-highlight {
   background: rgba(34, 197, 94, 0.15) !important;
   border-color: rgba(34, 197, 94, 0.35) !important;
-  color: var(--emerald-600) !important;
+  color: var(--tone-success-text) !important;
   font-weight: 600;
 }
 
@@ -5447,6 +5473,12 @@ body {
   font-weight: 800;
   letter-spacing: 0.06em;
 }
+
+/* Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina, kontrast mõlemas teemas */
+.phase-label[data-tone="info"] { color: var(--tone-info-text); }
+.phase-label[data-tone="success"] { color: var(--tone-success-text); }
+.phase-label[data-tone="accent"] { color: var(--tone-accent-text); }
+.phase-label[data-tone="warning"] { color: var(--tone-warning-text); }
 
 .fw-panel-body {
   flex: 1;

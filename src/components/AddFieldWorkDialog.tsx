@@ -101,7 +101,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
             if (list.length === 0) return null;
             return (
               <section key={phase} className="add-work-phase">
-                <span className="add-work-phase-label" style={{ color: WORK_PHASE_META[phase].color }}>
+                <span className="add-work-phase-label phase-label" data-tone={WORK_PHASE_META[phase].tone}>
                   {WORK_PHASE_META[phase].label.toUpperCase()}
                 </span>
                 {list.map((w) => {

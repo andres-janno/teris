@@ -19,12 +19,12 @@ export interface WorkEntryHarvest { tonnes: number | null; ratePerHa: number | n
 
 export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'];
 
-// tone = märgi toon (Badge); color = värvitekst mujal (tööde tahvel, lisamisdialoog).
-export const WORK_PHASE_META: Record<WorkPhase, { label: string; color: string; tone: BadgeTone }> = {
-  PREPARATION: { label: 'Ettevalmistus', color: '#1d4ed8', tone: 'info' },
-  SOWING: { label: 'Külv', color: '#15803d', tone: 'success' },
-  CARE: { label: 'Hooldamine', color: '#7c3aed', tone: 'accent' },
-  HARVEST: { label: 'Koristus', color: '#9a5b00', tone: 'warning' }
+// tone = märgi toon (Badge) ja faasi sildi tekstitoon (.phase-label[data-tone], kontrast mõlemas teemas).
+export const WORK_PHASE_META: Record<WorkPhase, { label: string; tone: BadgeTone }> = {
+  PREPARATION: { label: 'Ettevalmistus', tone: 'info' },
+  SOWING: { label: 'Külv', tone: 'success' },
+  CARE: { label: 'Hooldamine', tone: 'accent' },
+  HARVEST: { label: 'Koristus', tone: 'warning' }
 };
 
 // Kande finantsoleku märk: kinnitatud on rõhutatud (täisvärv).

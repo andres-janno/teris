@@ -121,11 +121,18 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 | `--amber-500` | `text-warning` | hoiatus |
 | `--rose-500` | `text-destructive` | viga |
 | `--purple-500` | `text-accent` | rõhk (PRIA) |
+| `--tone-success-text` … `--tone-accent-text` | `text-success-text` … `text-accent-text` | soft märgi ja olekuteksti toon |
+| `--tone-info-solid` / `--tone-accent-solid` | `bg-info-solid` / `bg-accent-solid` | solid märgi taust (valge tekst) |
+| `--on-warning` | `text-on-warning` | hoiatuse solid märgi tekst (heledas valge, tumedas tume) |
 | `--shadow-glass` | `shadow-card` | kaardi vari |
 | `--shadow-modal` | `shadow-dialog` | dialoogi vari |
 
-Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` (põhinupu gradient),
+Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` = `#166534` / `#15803d` (põhinupu gradient),
 `overlay` (dialoogi taust).
+
+## Kontrast
+
+Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenitest. Tekstina värvilist tooni (`text-primary`, `text-warning`…) kasuta ainult siis, kui test seda paari katab; olekutekst = `text-*-text`. Uue värvi lisamisel lisa paar testi.
 
 ## Nupud: vana → uus
 

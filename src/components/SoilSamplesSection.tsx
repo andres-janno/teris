@@ -5,7 +5,7 @@ import * as turf from '@turf/turf';
 import type { Polygon, MultiPolygon } from 'geojson';
 import { FlaskConical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
-import { getSoilMetricColor } from '../types/soilSample';
+import { getSoilMetricColor, getSoilMetricLevel } from '../types/soilSample';
 
 interface SoilSamplesSectionProps {
   geometry: Polygon | MultiPolygon;
@@ -90,13 +90,13 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                   <span className="soil-year-cell">
                     {isOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                     {year}
-                    {age > 0 && <span className="soil-age" style={{ color: getSoilMetricColor('age', age) }}>{age} a</span>}
+                    {age > 0 && <span className="soil-age">{age} a<span className="soil-age-dot" style={{ backgroundColor: getSoilMetricColor('age', age) }} /></span>}
                   </span>
                   <span>{list.length}</span>
                   {METRICS.map((m) => {
                     const avg = average(list.map((s) => s[m.key as Exclude<SoilSampleMetricKey, 'age'>]));
                     return (
-                      <span key={m.key} className="soil-value" style={{ color: getSoilMetricColor(m.key, avg) }}>
+                      <span key={m.key} className="soil-value" data-level={getSoilMetricLevel(m.key, avg)}>
                         {fmt(avg)}
                       </span>
                     );
@@ -111,7 +111,7 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                       {METRICS.map((m) => {
                         const v = s[m.key as Exclude<SoilSampleMetricKey, 'age'>];
                         return (
-                          <span key={m.key} className="soil-value" style={{ color: getSoilMetricColor(m.key, v) }}>
+                          <span key={m.key} className="soil-value" data-level={getSoilMetricLevel(m.key, v)}>
                             {fmt(v)}
                           </span>
                         );

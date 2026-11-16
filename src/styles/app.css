@@ -93,16 +93,25 @@
 
   --color-primary: var(--emerald-500);
   --color-primary-strong: var(--emerald-600);
-  /* Päise pillinupu hover: mõlemas teemas sama (emerald-500 on tumedas liiga hele valge teksti jaoks) */
-  --color-primary-hover: #16a34a;
-  /* Põhinupu gradient on mõlemas teemas sama (nagu praegune .btn-primary) */
-  --color-primary-from: #16a34a;
-  --color-primary-to: #22c55e;
+  /* Päise pillinupu hover: mõlemas teemas sama, valge tekst ≥ 4.5:1 */
+  --color-primary-hover: #166534;
+  /* Põhinupu gradient mõlemas teemas sama; valge tekst ≥ 4.5:1 mõlemas otsas (kasutaja otsus 2026-11-16) */
+  --color-primary-from: #166534;
+  --color-primary-to: #15803d;
   --color-info: var(--blue-500);
   --color-warning: var(--amber-500);
   --color-destructive: var(--rose-500);
   --color-danger-solid: #dc2626;
   --color-accent: var(--purple-500);
+  /* Toonitekstid ja täisvärvid märkidele (kontrast mõlemas teemas) */
+  --color-success-text: var(--tone-success-text);
+  --color-info-text: var(--tone-info-text);
+  --color-warning-text: var(--tone-warning-text);
+  --color-danger-text: var(--tone-danger-text);
+  --color-accent-text: var(--tone-accent-text);
+  --color-info-solid: var(--tone-info-solid);
+  --color-accent-solid: var(--tone-accent-solid);
+  --color-on-warning: var(--on-warning);
 
   --shadow-card: var(--shadow-glass);
   --shadow-dialog: var(--shadow-modal);

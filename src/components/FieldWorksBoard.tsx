@@ -1153,7 +1153,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
               <DialogContent size="lg" className="fw-work-modal" dismissible={!busy}>
                 <DialogHeader
-                  icon={<span className="fw-panel-phase" style={{ color: WORK_PHASE_META[selected.phase].color }}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
+                  icon={<span className="fw-panel-phase phase-label" data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
                   title={<span title={selected.priaName}>{selected.workTypeName}</span>}
                   description={activeLabel}
                 />

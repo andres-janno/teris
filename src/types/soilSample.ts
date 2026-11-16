@@ -29,9 +29,13 @@ export type SoilSampleMetricKey =
   | 'limeRequirement'
   | 'age';
 
+export type SoilLevel = 'bad' | 'warn' | 'good';
+/** Taseme andmevärv (kaart, legend, punkt). Tekstina kasuta taseme tooni (CSS .soil-value[data-level]), mitte seda. */
+export const SOIL_LEVEL_COLOR: Record<SoilLevel, string> = { bad: '#dc2626', warn: '#eab308', good: '#16a34a' };
+
 interface SoilMetricThreshold {
   max: number;
-  color: string;
+  level: SoilLevel;
 }
 
 interface SoilMetricConfig {
@@ -52,63 +56,63 @@ export const SOIL_METRIC_CONFIG: Record<SoilSampleMetricKey, SoilMetricConfig> =
     label: 'pH (mullareaktsioon)',
     unit: '',
     thresholds: [
-      { max: 5.5, color: '#dc2626' },
-      { max: 6.5, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 5.5, level: 'bad' },
+      { max: 6.5, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   phosphorus: {
     label: 'Fosfor (P)',
     unit: 'mg/kg',
     thresholds: [
-      { max: 40, color: '#dc2626' },
-      { max: 80, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 40, level: 'bad' },
+      { max: 80, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   potassium: {
     label: 'Kaalium (K)',
     unit: 'mg/kg',
     thresholds: [
-      { max: 60, color: '#dc2626' },
-      { max: 150, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 60, level: 'bad' },
+      { max: 150, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   calcium: {
     label: 'Kaltsium (Ca)',
     unit: 'mg/kg',
     thresholds: [
-      { max: 800, color: '#dc2626' },
-      { max: 1600, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 800, level: 'bad' },
+      { max: 1600, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   magnesium: {
     label: 'Magneesium (Mg)',
     unit: 'mg/kg',
     thresholds: [
-      { max: 60, color: '#dc2626' },
-      { max: 120, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 60, level: 'bad' },
+      { max: 120, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   organicCarbon: {
     label: 'Orgaaniline süsinik (Corg)',
     unit: '%',
     thresholds: [
-      { max: 1, color: '#dc2626' },
-      { max: 2, color: '#eab308' },
-      { max: Infinity, color: '#16a34a' }
+      { max: 1, level: 'bad' },
+      { max: 2, level: 'warn' },
+      { max: Infinity, level: 'good' }
     ]
   },
   limeRequirement: {
     label: 'Lubjatarve',
     unit: 't/ha',
     thresholds: [
-      { max: 1, color: '#16a34a' },
-      { max: 4, color: '#eab308' },
-      { max: Infinity, color: '#dc2626' }
+      { max: 1, level: 'good' },
+      { max: 4, level: 'warn' },
+      { max: Infinity, level: 'bad' }
     ]
   },
   age: {
@@ -143,12 +147,18 @@ function ageToColor(age: number): string {
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`;
 }
 
+/** Näitaja tase lävendite järgi; vanus (pidev skaala) ja puuduv väärtus → 'none'. */
+export function getSoilMetricLevel(metric: SoilSampleMetricKey, value?: number | null): SoilLevel | 'none' {
+  if (value === undefined || value === null || isNaN(value) || metric === 'age') return 'none';
+  const threshold = (SOIL_METRIC_CONFIG[metric].thresholds || []).find((t) => value <= t.max);
+  return threshold ? threshold.level : 'none';
+}
+
 export function getSoilMetricColor(metric: SoilSampleMetricKey, value?: number | null): string {
   if (value === undefined || value === null || isNaN(value)) return '#94a3b8';
   if (metric === 'age') return ageToColor(value);
-  const config = SOIL_METRIC_CONFIG[metric];
-  const threshold = (config.thresholds || []).find((t) => value <= t.max);
-  return threshold ? threshold.color : '#94a3b8';
+  const level = getSoilMetricLevel(metric, value);
+  return level === 'none' ? '#94a3b8' : SOIL_LEVEL_COLOR[level];
 }
 
 /** Loeb näitaja väärtuse proovilt - "vanus" on tuletatud (praegune aasta - proovi aasta), mitte otse salvestatud väli. */

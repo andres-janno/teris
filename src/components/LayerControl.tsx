@@ -14,7 +14,7 @@ import {
 import type { BaseMapLayerId, LayerVisibility } from '../types/map';
 import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
-import { SOIL_METRIC_CONFIG, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
+import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { Button, Card, CheckboxField, RadioGroup, RadioField } from './ui';
 
@@ -75,7 +75,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
         } else {
           label = `${prevMax} – ${t.max}${unit ? ` ${unit}` : ''}`;
         }
-        return { color: t.color, label };
+        return { color: SOIL_LEVEL_COLOR[t.level], label };
       })
     : [];
 
