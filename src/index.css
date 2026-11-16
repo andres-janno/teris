@@ -245,6 +245,25 @@ body {
   transform: rotate(180deg);
 }
 
+/* Kitsal ekraanil (alla 1656px: logo 164 + menüü 1078 + paremnupud 398 + serv 16) ei mahu peamenüü täiskujul kasutajamenüü ja operaatorivalija kõrvale.
+   Valija näitab siis ainult ikooni ja valitud operaatori nime: ilma pealkirja ja rippmenüü noolega, väiksema polstriga (kasutaja otsus 2026-11-16).
+   !important võidab nupu (size="auto") polstri ja vahe utiliidid. */
+@media (max-width: 1655px) {
+  .header-operator-trigger {
+    padding: 6px 8px !important;
+    gap: 6px !important;
+  }
+
+  .header-operator-caption,
+  .header-operator-chevron {
+    display: none;
+  }
+
+  .header-operator-value {
+    max-width: 140px;
+  }
+}
+
 .header-operator-content {
   min-width: 240px !important;
 }
