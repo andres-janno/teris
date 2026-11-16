@@ -13,7 +13,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - Ka `index.css`-is ainult skaala: kirjasuurus 11/12/13/14/16/20px, nurk `var(--radius-sm|md|lg)` või `9999px`, vahe 2/4/6/8/10/12/16/24/32px (negatiivne samast skaalast). Paigutuse mõõt (> 32px) reegli-sisese muutujana (`--controls-bottom` jms). `npx tsx scripts/css-scale.mts <fail>` viib faili skaalale; `npm run ui-audit` read „Skaalaväliseid …“ peavad olema 0.
 - Suvalised väärtused `text-[…]`, `p-[…]`, `m-[…]`, `gap-[…]`, `rounded-[…]`, `bg-[…]`, `border-[…]` on keelatud
   (`npm run ui-audit` näitab). Suurused (`w-[…]`, `max-h-[…]`) on lubatud.
-- Toores klõpsatav `div`/`span`: `role="button" tabIndex={0} onKeyDown={clickOnActivationKey}` (või kasuta `Button` / `Card interactive` / `TableRow`).
+- Toores klõpsatav `div`/`span` (`role="button"`) on keelatud väljaspool `ui/` (ui-audit „role=button väljaspool ui-d“ = 0): kasuta `Button` (`variant="plain"` kogu rea nupule), `CardButton`, `ChipButton`, `Card interactive` või `TableRow`. Erand ainult pesastatud interaktiivsusel (elemendi sees on teine nupp või ta asub nupu sees): `ROLE_BUTTON_ALLOWED` failis `src/tooling/uiAudit.ts` (failitee → arv, põhjus kommentaaris); siis `role="button" tabIndex={0} onKeyDown={clickOnActivationKey}`.
 - Värvid ainult nimedega (`bg-card`, `text-muted-foreground`, `text-warning` …) — need järgivad heledat/tumedat teemat
   ise, `dark:` pole tavaliselt vaja. Erand: andmevärvid (kultuur, kaardikiht) `style={{ … }}` kaudu.
 - `style={{ … }}` ainult dünaamiliste väärtuste jaoks.
@@ -175,6 +175,7 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | `fw-add` (tühja lahtri „+“) | `<Button variant="dashed" size="add-slot">` |
 | klõpsatav märk nupuna (`fw-finance-chip-btn`) | `<Button variant="bare" size="inline">` |
 | tekstilink kahe reaga (`trip-dialog-entry`) | `<Button variant="text" size="inline">` |
+| kogu rea klõpsatav `div` (grupipäis, valikurida, märkus; välimus vaate CSS-ist) | `<Button variant="plain" size="inline" className="vaate-klass">`; nupp annab ainult lähtestuse (laius 100%, ei ääri, tausta, kirja ja värvi pärib). Vaate reegel, mis seab polstri, tausta, äärise, nurga, gapi, `display`, `justify-content`, `font-size`, `color`, vajab `!important` |
 | kultuuri-/omandivormikiip (`register-crop-stat`, `reg-stat-pill.is-filter`) | `<ChipButton variant="tint" \| "outline" accent selected dimmed>` (värv andmest, valitud = `selected`) |
 | `btn-full` | jääb `className="full-width"` (ainult laius 100%) |
 

@@ -22,6 +22,7 @@ export interface AuditReport {
   legacyMenuPopupFiles: { path: string; count: number }[];
   legacyCardFiles: { path: string; count: number }[];
   rawButtonFiles: { path: string; count: number }[];
+  roleButtonFiles: { path: string; count: number }[];
 }
 
 // Värv: hex (HTML-i numbriline võrdlusmärk &#8212; välja arvatud) või rgb/rgba/hsl/hsla; muutujaga värve ei loeta.
@@ -72,10 +73,23 @@ export const RAW_BUTTON_ALLOWED: Readonly<Record<string, number>> = {
   'src/components/LoginPage.tsx': 1, // login-forgot-link: tekstilink sisselogimislehel (kasutaja otsus)
   'src/components/MapView.tsx': 1, // Leafleti popup-HTML-string, pole React
 };
-const rawButtonsOverAllowed = (path: string, count: number): number => {
-  const key = Object.keys(RAW_BUTTON_ALLOWED).find((k) => path.endsWith(k));
-  return key ? Math.max(0, count - RAW_BUTTON_ALLOWED[key]) : count;
+const overAllowed = (allowed: Readonly<Record<string, number>>, path: string, count: number): number => {
+  const key = Object.keys(allowed).find((k) => path.endsWith(k));
+  return key ? Math.max(0, count - allowed[key]) : count;
 };
+const rawButtonsOverAllowed = (path: string, count: number): number => overAllowed(RAW_BUTTON_ALLOWED, path, count);
+
+// `role="button"` väljaspool ui/ (etapp 3c): klõpsatav div/span peab olema Button / CardButton / ChipButton / TableRow.
+// Erand ainult siis, kui elemendi sees (või sees, kus ta asub) on teine nupp: pesastatud interaktiivsus ei luba välimist <button>-it.
+// Jääb alles valvurina, väljaspool erandeid peab olema 0.
+const ROLE_BUTTON = /(?<![\w-])role="button"/g;
+export const ROLE_BUTTON_ALLOWED: Readonly<Record<string, number>> = {
+  'src/components/LayerControl.tsx': 1, // kaardikihtide päis: sees ikoonnupp (Ahenda/Laienda)
+  'src/components/MapYearSelector.tsx': 1, // kultuuride legendi päis: sees ikoonnupp
+  'src/components/TripRouteView.tsx': 1, // „Teekond“ lüliti asub soovituse nupu (CardButton) sees
+  'src/components/VehicleTracker.tsx': 1, // masinakaardi märkus: kaart ise on interaktiivne (Card interactive), märkus sees
+};
+const roleButtonsOverAllowed = (path: string, count: number): number => overAllowed(ROLE_BUTTON_ALLOWED, path, count);
 export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'glass-card',
   // ujuvpaneelid kaardi peal
@@ -152,6 +166,7 @@ export function auditTsx(src: string) {
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
     legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
     rawButtons: (stripComments(src).match(RAW_BUTTON) ?? []).length,
+    roleButtons: (stripComments(src).match(ROLE_BUTTON) ?? []).length,
   };
 }
 
@@ -193,6 +208,10 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     rawButtonFiles: tsx
       .filter((t) => !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: rawButtonsOverAllowed(t.path, t.rawButtons) }))
+      .filter((f) => f.count > 0),
+    roleButtonFiles: tsx
+      .filter((t) => !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: roleButtonsOverAllowed(t.path, t.roleButtons) }))
       .filter((f) => f.count > 0),
   };
 }

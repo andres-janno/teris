@@ -82,6 +82,7 @@ export const UiGallery: React.FC = () => {
           <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö"><Plus size={13} /></Button>
           <Button variant="bare" size="inline" title="Ava finants"><Badge tone="success" variant="solid">Kinnitatud</Badge></Button>
           <Button variant="text" size="inline">Tekstina nupp (text)</Button>
+          <Button variant="plain" size="inline">Kogu rea nupp (plain)</Button>
           <ChipButton variant="tint" accent="var(--amber-500)" selected={chip === 'a'} dimmed={chip !== 'none' && chip !== 'a'} onClick={() => setChip(chip === 'a' ? 'none' : 'a')}>
             <span>Talinisu</span><strong>120,50 ha</strong>
           </ChipButton>

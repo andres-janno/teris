@@ -51,6 +51,9 @@ export const buttonVariants = cva(
           'rounded-full border-0 border-transparent bg-transparent font-normal enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm',
         // Tekst nupuna: tavakaalus roheline tekst, ilma allajoonimiseta (hõljumise vihje on vaate asi). Kasuta size="inline".
         text: 'border-0 border-transparent bg-transparent font-normal whitespace-normal text-primary',
+        // Kogu rea laiune nupp, mille välimuse (taust, polster, ääris, paigutus) annab vaate CSS: ainult nupu lähtestus
+        // (kiri ja värv päritakse). Vana div role="button" asendus; kasuta size="inline". Vaate reegel, mis peab utiliidi üle võitma, vajab !important.
+        plain: 'w-full rounded-none border-0 border-transparent bg-transparent text-left font-normal whitespace-normal text-inherit [line-height:inherit]',
       },
       size: buttonVariantSizes,
     },

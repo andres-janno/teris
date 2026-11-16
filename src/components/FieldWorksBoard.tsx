@@ -837,25 +837,19 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
             return (
               <React.Fragment key={group.key}>
-                <div
+                <Button
+                  variant="plain"
+                  size="inline"
                   className={`fw-group-header ${group.className}`}
                   onClick={() => toggleGroup(group.key)}
+                  aria-expanded={!isCollapsed}
                   title={`${group.description}. Klõpsa grupi peitmiseks või avamiseks.`}
-                  role="button"
-                  tabIndex={0}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' || e.key === ' ') {
-                      e.preventDefault();
-                      toggleGroup(group.key);
-                    }
-                  }}
                 >
-                  <div className="fw-group-toggle">
+                  <span className="fw-group-toggle">
                     {isCollapsed ? <ChevronRight size={16} className="fw-group-chevron" /> : <ChevronDown size={16} className="fw-group-chevron" />}
                     <span className="fw-group-title">{group.title}</span>
-                  </div>
-
-                </div>
+                  </span>
+                </Button>
 
                 {!isCollapsed &&
                   group.rows.map((row) => {

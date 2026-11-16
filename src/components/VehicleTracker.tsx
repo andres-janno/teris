@@ -1571,11 +1571,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 {/* Märkused */}
                 {imp.notes && (
-                  <div
+                  <Button
+                    variant="plain"
+                    size="inline"
                     className="fleet-card-notes"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={clickOnActivationKey}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1584,7 +1583,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   >
                     <FileText size={13} />
                     <span>{imp.notes}</span>
-                  </div>
+                  </Button>
                 )}
 
                 <div className="imp-card-footer">
@@ -1726,11 +1725,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 {/* Märkused */}
                 {dev.notes && (
-                  <div
+                  <Button
+                    variant="plain"
+                    size="inline"
                     className="fleet-card-notes"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={clickOnActivationKey}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1739,7 +1737,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   >
                     <FileText size={13} />
                     <span>{dev.notes}</span>
-                  </div>
+                  </Button>
                 )}
 
               </Card>
@@ -1961,11 +1959,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               {swapModal.type === 'device' ? (
                 <div className="swap-options-list">
-                  <div
+                  <Button variant="plain" size="inline"
                     className="swap-option-item unassign-option"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={clickOnActivationKey}
                     onClick={() => {
                       // Unassign any device currently on this vehicle
                       const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
@@ -1974,49 +1969,43 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <Unlink size={16} />
-                    <div>
+                    <span>
                       <strong>Eemalda telemeetriaseade</strong>
-                      <p>Jäta masin ilma GPS telemeetriata</p>
-                    </div>
-                  </div>
+                      <span className="swap-option-line">Jäta masin ilma GPS telemeetriata</span>
+                    </span>
+                  </Button>
 
                   {devices.map((d) => {
                     const isCurrent = d.assignedVehicleId === swapModal.targetVehicleId;
                     const otherVeh = vehicles.find(v => v.id === d.assignedVehicleId && v.id !== swapModal.targetVehicleId);
 
                     return (
-                      <div
+                      <Button variant="plain" size="inline"
                         key={d.id}
                         className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={clickOnActivationKey}
                         onClick={() => {
                           assignDevice(d.id, swapModal.targetVehicleId);
                           setSwapModal(null);
                         }}
                       >
                         {d.connectivityType === 'eye_sensor' ? <Activity size={16} /> : <Radio size={16} />}
-                        <div className="option-info">
+                        <span className="option-info">
                           <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
-                          <p>
+                          <span className="swap-option-line">
                             {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
                               otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
                             )}
-                          </p>
-                        </div>
+                          </span>
+                        </span>
                         {isCurrent && <Badge tone="success" variant="solid">Aktiivne</Badge>}
-                      </div>
+                      </Button>
                     );
                   })}
                 </div>
               ) : (
                 <div className="swap-options-list">
-                  <div
+                  <Button variant="plain" size="inline"
                     className="swap-option-item unassign-option"
-                    role="button"
-                    tabIndex={0}
-                    onKeyDown={clickOnActivationKey}
                     onClick={() => {
                       const currentImp = implementsList.find(i => i.assignedVehicleId === swapModal.targetVehicleId);
                       if (currentImp) onAssignImplement(currentImp.id, undefined);
@@ -2025,23 +2014,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <Unlink size={16} />
-                    <div>
+                    <span>
                       <strong>Haagi lahti (Eemalda haakeriist)</strong>
-                      <p>Masin sõidab ilma haakeriistata</p>
-                    </div>
-                  </div>
+                      <span className="swap-option-line">Masin sõidab ilma haakeriistata</span>
+                    </span>
+                  </Button>
 
                   {implementsList.map((imp) => {
                     const isCurrent = imp.assignedVehicleId === swapModal.targetVehicleId;
                     const otherVeh = vehicles.find(v => v.id === imp.assignedVehicleId && v.id !== swapModal.targetVehicleId);
 
                     return (
-                      <div
+                      <Button variant="plain" size="inline"
                         key={imp.id}
                         className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
-                        role="button"
-                        tabIndex={0}
-                        onKeyDown={clickOnActivationKey}
                         onClick={() => {
                           onAssignImplement(imp.id, swapModal.targetVehicleId);
                           setSwapModal(null);
@@ -2049,16 +2035,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         }}
                       >
                         <Wrench size={16} />
-                        <div className="option-info">
+                        <span className="option-info">
                           <strong>{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
-                          <p>
+                          <span className="swap-option-line">
                             {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
                               otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
                             )}
-                          </p>
-                        </div>
+                          </span>
+                        </span>
                         {isCurrent && <Badge tone="success" variant="solid">Haagitud</Badge>}
-                      </div>
+                      </Button>
                     );
                   })}
                 </div>

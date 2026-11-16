@@ -350,3 +350,29 @@ describe('toored nupud', () => {
     expect(r.rawButtonFiles).toEqual([{ path: 'src/components/LoginPage.tsx', count: 1 }]);
   });
 });
+
+describe('role=button väljaspool ui-d', () => {
+  it('loeb role="button" div/span-i; ui kaust, kommentaarid ja lubatud erandid välja', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div role="button" tabIndex={0}/><span role="button"/>' },
+      { path: 'src/components/ui/Card.tsx', content: "role={keyboard ? 'button' : role} role=\"button\"" },
+      { path: 'src/components/B.tsx', content: '{/* <div role="button"> */}\n// role="button"\n<Button>x</Button>' },
+      { path: 'src/components/TripRouteView.tsx', content: '<span role="button">' },
+    ]);
+    expect(r.roleButtonFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
+  });
+  it('erand lubab ainult nimetatud arvu ja ainult täisteed', () => {
+    const r = summarize([
+      { path: 'src/components/LayerControl.tsx', content: '<div role="button"><div role="button">' },
+      { path: 'src/admin/components/LayerControl.tsx', content: '<div role="button">' },
+    ]);
+    expect(r.roleButtonFiles).toEqual([
+      { path: 'src/components/LayerControl.tsx', count: 1 },
+      { path: 'src/admin/components/LayerControl.tsx', count: 1 },
+    ]);
+  });
+  it('ei loe aria-role-sarnaseid nimesid (data-role="button")', () => {
+    const r = summarize([{ path: 'src/components/C.tsx', content: '<i data-role="button" />' }]);
+    expect(r.roleButtonFiles).toEqual([]);
+  });
+});

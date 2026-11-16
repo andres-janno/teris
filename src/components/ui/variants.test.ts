@@ -4,7 +4,7 @@ import { cn } from './cn';
 import * as v from './variants';
 
 const allClassStrings = (): string[] => [
-  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text'] as const).flatMap((variant) =>
+  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
@@ -41,6 +41,14 @@ describe('variants', () => {
     const c = v.buttonVariants();
     expect(c).toContain('bg-secondary');
     expect(c).toContain('h-8');
+  });
+  it('plain nupp lähtestab ääre ja tausta ning pärib kirja', () => {
+    const c = v.buttonVariants({ variant: 'plain', size: 'inline' });
+    expect(c).toContain('border-0');
+    expect(c).toContain('bg-transparent');
+    expect(c).toContain('w-full');
+    expect(c).toContain('text-inherit');
+    expect(c).toContain('p-0');
   });
   it('ohunupp väike', () => {
     const c = v.buttonVariants({ variant: 'danger', size: 'sm' });
@@ -95,7 +103,7 @@ describe('variants', () => {
     }
   });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text'] as const)
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text', 'plain'] as const)
       for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border' || t === 'border-border');
@@ -103,12 +111,12 @@ describe('variants', () => {
       }
     expect(v.buttonVariants({ variant: 'secondary' })).toContain('border-secondary-border');
     expect(v.buttonVariants({ variant: 'secondary' })).not.toContain('border-transparent');
-    for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost', 'bare', 'text'] as const)
+    for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost', 'bare', 'text', 'plain'] as const)
       expect(v.buttonVariants({ variant })).toContain('border-transparent');
     expect(v.buttonVariants({ variant: 'dashed' })).toContain('border-border');
   });
   it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text'] as const)
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text', 'plain'] as const)
       for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const) {
         const c = v.buttonVariants({ variant, size });
         const tokens = c.split(/\s+/);
@@ -119,7 +127,7 @@ describe('variants', () => {
   });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
-    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|danger-text|accent-text|on-warning|background|left|right|center)$/;
+    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|danger-text|accent-text|on-warning|background|left|right|center|inherit)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });

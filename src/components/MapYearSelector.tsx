@@ -4,7 +4,7 @@ import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
-import { Badge, Card, Button, ToggleGroup, ToggleGroupItem, clickOnActivationKey } from './ui';
+import { Badge, Card, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey } from './ui';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -150,14 +150,12 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
               {cropSummaries.map((item) => {
                 const isSelected = selectedCropFilter === item.name;
                 return (
-                  <div
+                  <ChipButton
                     key={item.name}
-                    className={`crop-legend-item ${isSelected ? 'selected' : ''}`}
-                    role="button"
-                    tabIndex={0}
-                    aria-pressed={isSelected}
-                    onKeyDown={clickOnActivationKey}
-                    style={{ '--crop-color': item.color } as React.CSSProperties}
+                    variant="tint"
+                    accent={item.color}
+                    selected={isSelected}
+                    className="crop-legend-item"
                     onClick={() => {
                       if (onSelectCropFilter) {
                         onSelectCropFilter(isSelected ? null : item.name);
@@ -165,17 +163,17 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     }}
                     title={onSelectCropFilter ? `Klõpsa, et filtreerida ${item.name} põlde kaardil` : undefined}
                   >
-                    <div className="crop-left-info">
-                      <div className="crop-text-block">
+                    <span className="crop-left-info">
+                      <span className="crop-text-block">
                         <span className="crop-name-label">{item.name}</span>
                         <span className="crop-field-count">{item.count} {item.count === 1 ? 'põld' : 'põldu'} &bull; {item.pct}%</span>
-                      </div>
-                    </div>
+                      </span>
+                    </span>
 
-                    <div className="crop-right-info">
+                    <span className="crop-right-info">
                       <span className="crop-total-ha">{item.totalHa.toFixed(2)} ha</span>
-                    </div>
-                  </div>
+                    </span>
+                  </ChipButton>
                 );
               })}
             </div>

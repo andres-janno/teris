@@ -1699,18 +1699,19 @@ body {
 }
 
 .fleet-card-notes {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 12px;
-  line-height: 1.45;
-  color: var(--text-secondary);
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px solid rgba(245, 158, 11, 0.22);
-  border-radius: var(--radius-sm, 6px);
-  padding: 6px 8px;
+  display: flex !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  gap: 6px !important;
+  font-size: 12px !important;
+  line-height: 1.45 !important;
+  color: var(--text-secondary) !important;
+  background: rgba(245, 158, 11, 0.08) !important;
+  border: 1px solid rgba(245, 158, 11, 0.22) !important;
+  border-radius: var(--radius-sm, 6px) !important;
+  padding: 6px 8px !important;
   word-break: break-word;
-  white-space: pre-wrap;
+  white-space: pre-wrap !important;
   cursor: pointer;
   transition: all 0.15s ease;
 }
@@ -1721,9 +1722,9 @@ body {
 }
 
 .fleet-card-notes:hover {
-  background: rgba(245, 158, 11, 0.14);
-  border-color: rgba(245, 158, 11, 0.38);
-  color: var(--text-primary);
+  background: rgba(245, 158, 11, 0.14) !important;
+  border-color: rgba(245, 158, 11, 0.38) !important;
+  color: var(--text-primary) !important;
 }
 
 .fleet-card-notes svg {
@@ -2001,35 +2002,41 @@ body {
   overflow-y: auto;
 }
 
+/* Valik on Button variant="plain": !important võidab nupu utiliidid. */
 .swap-option-item {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  gap: 12px;
-  padding: 10px 12px;
-  border-radius: var(--radius-md);
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
+  justify-content: flex-start !important;
+  gap: 12px !important;
+  padding: 10px 12px !important;
+  border-radius: var(--radius-md) !important;
+  background: var(--stat-bg) !important;
+  border: 1px solid var(--border-card) !important;
   cursor: pointer;
   transition: all 0.15s ease;
 }
 
 .swap-option-item:hover {
-  background: var(--stat-bg-hover);
-  border-color: var(--emerald-500);
+  background: var(--stat-bg-hover) !important;
+  border-color: var(--emerald-500) !important;
 }
 
 .swap-option-item.current-active {
-  border-color: var(--emerald-500);
-  background: rgba(34, 197, 94, 0.12);
+  border-color: var(--emerald-500) !important;
+  background: rgba(34, 197, 94, 0.12) !important;
 }
 
 .swap-option-item.unassign-option:hover {
-  border-color: var(--rose-500);
-  background: rgba(244, 63, 94, 0.1);
+  border-color: var(--rose-500) !important;
+  background: rgba(244, 63, 94, 0.1) !important;
 }
 
 .swap-option-item .option-info {
   flex: 1;
+}
+
+.swap-option-line {
+  display: block;
 }
 
 .swap-option-item .option-info strong {
@@ -2037,7 +2044,7 @@ body {
   color: var(--text-primary);
 }
 
-.swap-option-item .option-info p {
+.swap-option-item .option-info .swap-option-line {
   font-size: 12px;
   color: var(--text-secondary);
   margin-top: 2px;
@@ -2927,30 +2934,29 @@ body {
   padding-right: 2px;
 }
 
-/* Sama stiil nagu põldude registris: kultuuri värvi hele toon + vasakul värviriba */
+/* ChipButton variant="tint": kultuuri toon ja vasak riba tulevad kiibist (--chip-accent). !important võidab kiibi utiliidid. */
 .crop-legend-item {
-  display: flex;
+  display: flex !important;
   align-items: center;
   justify-content: space-between;
-  padding: 4px 8px 4px 10px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
-  border: 1px solid transparent;
-  cursor: pointer;
+  width: 100%;
+  padding: 4px 8px 4px 10px !important;
+  border: 1px solid transparent !important;
+  text-align: left;
+  font-size: inherit !important;
+  line-height: inherit !important;
   transition: all 0.15s ease;
 }
 
 .crop-legend-item:hover {
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
   transform: translateX(2px);
 }
 
-.crop-legend-item.selected {
+.crop-legend-item[data-selected] {
   /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
-  border-color: #16a34a;
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8), inset 0 0 0 1px #16a34a;
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
+  border-color: #16a34a !important;
+  box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), inset 0 0 0 1px #16a34a !important;
+  background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
 }
 
 .crop-left-info {
@@ -4530,23 +4536,19 @@ body {
   padding: 8px 10px;
 }
 
-/* Põllutööde tahvli grupipäised (sügiskülv / kevadkülv) */
+/* Põllutööde tahvli grupipäised (sügiskülv / kevadkülv). Päis on Button variant="plain": !important võidab nupu utiliidid. */
 .fw-group-header {
-  display: flex;
+  display: flex !important;
   align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding: 8px 12px;
-  background: var(--stat-bg-hover);
-  border-top: 1px solid var(--border-card);
-  border-bottom: 1px solid var(--border-card);
+  justify-content: space-between !important;
+  gap: 12px !important;
+  padding: 8px 12px !important;
+  background: var(--stat-bg-hover) !important;
+  border-top: 1px solid var(--border-card) !important;
+  border-bottom: 1px solid var(--border-card) !important;
   cursor: pointer;
   user-select: none;
   transition: background 0.12s ease;
-}
-
-.fw-group-header:first-of-type {
-  border-top: none;
 }
 
 .fw-group-header:hover {
@@ -4558,15 +4560,15 @@ body {
 }
 
 .fw-group-header.winter {
-  background: color-mix(in srgb, #0284c7 9%, var(--bg-card));
+  background: color-mix(in srgb, #0284c7 9%, var(--bg-card)) !important;
 }
 
 .fw-group-header.spring {
-  background: color-mix(in srgb, #16a34a 9%, var(--bg-card));
+  background: color-mix(in srgb, #16a34a 9%, var(--bg-card)) !important;
 }
 
 .fw-group-header.undetermined {
-  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card));
+  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card)) !important;
 }
 
 .fw-group-toggle {
