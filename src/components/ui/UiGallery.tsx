@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -44,6 +44,8 @@ export const UiGallery: React.FC = () => {
   const [dateX, setDateX] = useState('2026-11-15');
   const [year, setYear] = useState('2026');
   const [pickedCard, setPickedCard] = useState('a');
+  const [chip, setChip] = useState('none');
+  const [tenure, setTenure] = useState(false);
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -73,6 +75,21 @@ export const UiGallery: React.FC = () => {
           <Button variant="ghost" size="icon-xs" aria-pressed title="Rada nähtav"><Eye size={12} /></Button>
           <Button variant="primary" disabled>Keelatud</Button>
           <p className="text-sm">Lõigu sees: <Button variant="link" size="inline">ava register</Button></p>
+        </Section>
+
+        <Section title="Nupud: erivariandid ja kiibid">
+          <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö"><Plus size={13} /></Button>
+          <Button variant="bare" size="inline" title="Ava finants"><Badge tone="success" variant="solid">Kinnitatud</Badge></Button>
+          <Button variant="text" size="inline">Tekstina nupp (text)</Button>
+          <ChipButton variant="tint" accent="var(--amber-500)" selected={chip === 'a'} dimmed={chip !== 'none' && chip !== 'a'} onClick={() => setChip(chip === 'a' ? 'none' : 'a')}>
+            <span>Talinisu</span><strong>120,50 ha</strong>
+          </ChipButton>
+          <ChipButton variant="tint" accent="var(--blue-500)" selected={chip === 'b'} dimmed={chip !== 'none' && chip !== 'b'} onClick={() => setChip(chip === 'b' ? 'none' : 'b')}>
+            <span>Suvioder</span><strong>40,00 ha</strong>
+          </ChipButton>
+          <ChipButton variant="outline" accent="var(--emerald-500)" selected={tenure} onClick={() => setTenure(!tenure)}>
+            <span className="lbl">Oma maa:</span><strong>312 ha</strong>
+          </ChipButton>
         </Section>
 
         <Section title="Märgid">

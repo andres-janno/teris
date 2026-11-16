@@ -20,6 +20,8 @@ export const buttonVariantSizes = {
   'icon-lg': 'size-10 rounded-full',
   // Kõrgus sisu järgi (kahe reaga nupp, nt filter-pill): vana .operator-selector-trigger 6px 12px.
   auto: 'px-3 py-1.5 text-sm',
+  // Tahvli tühja lahtri „lisa töö“-ruut (vana .fw-add): 30×40px, 6px nurk.
+  'add-slot': 'min-h-10 w-7.5 rounded-sm p-0',
 } as const;
 
 export const buttonVariants = cva(
@@ -41,6 +43,14 @@ export const buttonVariants = cva(
           'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary-hover enabled:hover:shadow-primary-hover',
         // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): tavakaalus roheline tekst, alati allajoonitud, murdub reaga.
         link: 'border-transparent bg-transparent font-normal whitespace-normal text-primary underline underline-offset-2',
+        // Katkendjoonega „lisa“-ruut: hõljudes täisroheline valge ikooniga (vana .fw-add). Kasuta size="add-slot".
+        dashed:
+          'border-dashed border-border bg-transparent font-normal text-subtle enabled:hover:border-solid enabled:hover:border-primary enabled:hover:bg-primary enabled:hover:text-white',
+        // Nupp, mis ümbritseb muud ui elementi (klõpsatav märk): ise nähtamatu, hõljudes tõuseb ja tumeneb. Kasuta size="inline".
+        bare:
+          'rounded-full border-transparent bg-transparent font-normal enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm',
+        // Tekst nupuna: tavakaalus roheline tekst, ilma allajoonimiseta (hõljumise vihje on vaate asi). Kasuta size="inline".
+        text: 'border-transparent bg-transparent font-normal whitespace-normal text-primary',
       },
       size: buttonVariantSizes,
     },
@@ -307,3 +317,22 @@ export const emptyStateClass = 'flex flex-col items-center gap-2 p-8 text-center
 export const emptyStateIconClass = 'inline-flex opacity-40';
 export const emptyStateTitleClass = 'text-lg font-semibold text-foreground';
 export const emptyStateDescriptionClass = 'm-0 text-sm';
+
+// --- Kiip (etapp 3b): valitav, andmevärviga. `chip-*` on @utility-d src/styles/app.css-is (taust ja riba tulevad
+// CSS-muutujast --chip-accent, mida ChipButton seab; suvalisi väärtusi audit ei luba). ---
+export type ChipVariant = 'tint' | 'outline';
+export const chipVariants = cva(
+  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 transition-colors disabled:cursor-default ${focusRing}`,
+  {
+    variants: {
+      variant: {
+        // Andmevärviga toonitud kiip (kultuur): taust ja vasak riba värvist, valituna ümber 2px rõngas.
+        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base text-foreground',
+        // Äärisega kiip (omandivorm): vasak serv 3px värvitud, valituna ümber 2px rõngas.
+        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm text-foreground enabled:hover:border-subtle',
+      },
+      dimmed: { true: 'opacity-50 enabled:hover:opacity-85', false: '' },
+    },
+    defaultVariants: { variant: 'tint', dimmed: false },
+  }
+);

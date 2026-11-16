@@ -234,9 +234,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                             <span className="muted">kanne puudub</span>
                           ) : (
                             f.entries.map((e) => (
-                              <button
+                              <Button
                                 key={e.id}
-                                type="button"
+                                variant="text"
+                                size="inline"
                                 className="trip-dialog-entry"
                                 title="Ava põllu töö"
                                 disabled={!onOpenFieldWork}
@@ -244,7 +245,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                               >
                                 <span>{e.workTypeName}</span>
                                 <span className="cell-sub">{formatDate(e.date)}</span>
-                              </button>
+                              </Button>
                             ))
                           )}
                         </div>

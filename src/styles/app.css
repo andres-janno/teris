@@ -116,3 +116,22 @@
   --shadow-card: var(--shadow-glass);
   --shadow-dialog: var(--shadow-modal);
 }
+
+/* Kiip (ui/ChipButton): värv tuleb CSS-muutujast --chip-accent. Utiliidid, sest audit keelab suvalised bg-/border-[…] väärtused.
+   --crop-tint(-hover) on index.css-i :root-is. Valitud = [data-selected]. */
+@utility chip-tint {
+  background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint), transparent);
+  box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8);
+  &:hover:enabled {
+    background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent);
+  }
+  &[data-selected] {
+    box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), 0 0 0 2px var(--chip-accent, #94a3b8);
+  }
+}
+@utility chip-outline {
+  border-left-color: var(--chip-accent, var(--border-card));
+  &[data-selected] {
+    box-shadow: 0 0 0 2px var(--chip-accent, var(--border-card));
+  }
+}

@@ -33,3 +33,4 @@ export { HelpHint, HelpHintPopover } from './HelpHint';
 export { helpHintTriggerClass, helpHintInlineClass, helpHintContentClass, helpHintTitleClass } from './variants';
 export { FilterBar, FilterBarItem } from './FilterBar';
 export { EmptyState } from './EmptyState';
+export { ChipButton, type ChipButtonProps } from './ChipButton';

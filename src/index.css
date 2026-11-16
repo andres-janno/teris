@@ -2506,38 +2506,6 @@ body {
   color: var(--emerald-500);
 }
 
-.register-crop-stat {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 12px;
-  border-radius: var(--radius-sm);
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint), transparent);
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
-  font-size: 14px;
-  font-family: inherit;
-  color: var(--text-primary);
-  border: none;
-  cursor: pointer;
-  transition: background 0.15s, opacity 0.15s, box-shadow 0.15s;
-}
-
-.register-crop-stat:hover {
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) var(--crop-tint-hover), transparent);
-}
-
-.register-crop-stat.active {
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8), 0 0 0 2px var(--crop-color, #94a3b8);
-}
-
-.register-crop-stat.dimmed {
-  opacity: 0.5;
-}
-
-.register-crop-stat.dimmed:hover {
-  opacity: 0.85;
-}
-
 :root {
   /* Kultuuri värvi toon põldude registri lahtrites ja jaluses */
   --crop-tint: 18%;
@@ -3389,33 +3357,6 @@ body {
 /* Field Manager Modal Stats Pills (Tenure) */
 .reg-stat-pill.tenure-owned {
   border-left: 3px solid var(--emerald-500);
-}
-
-.reg-stat-pill.tenure-rented {
-  border-left: 3px solid var(--blue-500);
-}
-
-.reg-stat-pill.is-filter {
-  font-family: inherit;
-  color: inherit;
-  cursor: pointer;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.reg-stat-pill.is-filter:hover:not(:disabled) {
-  border-color: var(--text-muted);
-}
-
-.reg-stat-pill.is-filter:disabled {
-  cursor: default;
-}
-
-.reg-stat-pill.tenure-owned.active {
-  box-shadow: 0 0 0 2px var(--emerald-500);
-}
-
-.reg-stat-pill.tenure-rented.active {
-  box-shadow: 0 0 0 2px var(--blue-500);
 }
 
 .reg-stat-pill .sub-val {
@@ -5040,26 +4981,6 @@ body {
   flex-shrink: 0;
 }
 
-.fw-add {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  min-height: 40px;
-  border-radius: var(--radius-sm);
-  border: 1px dashed var(--border-card);
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-.fw-add:hover {
-  border-color: var(--emerald-500);
-  border-style: solid;
-  background: var(--emerald-500);
-  color: #fff;
-}
-
 .fw-empty {
   padding: 24px;
   text-align: center;
@@ -5346,28 +5267,6 @@ body {
 .fw-entry-actions {
   display: flex;
   gap: 2px;
-}
-
-.fw-finance-chip-btn {
-  display: inline-flex;
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  cursor: pointer;
-  border-radius: 9999px;
-  transition: transform 0.1s ease, filter 0.1s ease, box-shadow 0.1s ease;
-}
-
-.fw-finance-chip-btn:focus-visible {
-  outline: 2px solid var(--emerald-500);
-  outline-offset: 2px;
-}
-
-.fw-finance-chip-btn:hover {
-  transform: translateY(-1px);
-  filter: brightness(0.92);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.12);
 }
 
 .fw-panel-foot {
@@ -6839,12 +6738,12 @@ td.stock-qty-out { color: #dc2626; }
 .trip-dialog-entry-cell { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; }
 /* Kanne: töö nimi ja kuupäev kahel real, link põllutööle */
 .trip-dialog-entry {
-  display: flex; flex-direction: column; align-items: flex-start;
-  padding: 0; border: 0; background: none; font: inherit;
-  color: var(--color-primary); text-align: left; cursor: pointer;
+  /* !important: ui Button annab inline-flex/center/gap, siin on kahe reaga plokk vasakul */
+  display: flex; flex-direction: column; align-items: flex-start !important; justify-content: flex-start !important;
+  gap: 0 !important; text-align: left;
 }
 .trip-dialog-entry:hover span:first-child { text-decoration: underline; }
-.trip-dialog-entry:disabled { color: inherit; cursor: default; }
+.trip-dialog-entry:disabled { color: inherit !important; cursor: default !important; opacity: 1 !important; }
 .trip-dialog-entry:disabled:hover span:first-child { text-decoration: none; }
 
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
@@ -6957,3 +6856,8 @@ polyline.weather-line { fill: none; }
 .crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }
 /* Statistikakiibid reas (Isikud) */
 .register-stats-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+
+/* Kiibi (ui/ChipButton) sisu tüpograafia */
+[data-slot="chip"] .lbl { color: var(--text-secondary); }
+[data-slot="chip"] strong { color: var(--text-primary); font-weight: 700; }
+[data-slot="chip"] .sub-val { font-size: 11px; margin-left: 4px; }

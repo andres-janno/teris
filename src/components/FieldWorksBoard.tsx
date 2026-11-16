@@ -99,6 +99,13 @@ const WORK_STATUS_TONE: Record<FieldWork['status'], { tone: BadgeTone; variant: 
 };
 const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatud', CHANGED: 'Muudetud – kinnita uuesti' } as const;
 
+/** Tahvli tühja lahtri „Lisa töö“ ruut (katkendjoon, hõljudes roheline). */
+const AddWorkButton: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
+  <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö" onClick={onAdd}>
+    <Plus size={13} />
+  </Button>
+);
+
 const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
   status === 'DONE' ? <Check size={13} strokeWidth={3} className="fw-status-done" /> : <span className={`fw-status-dot ${status === 'IN_PROGRESS' ? 'doing' : ''}`} />;
 
@@ -951,9 +958,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
                           {renderCards(row, 'PREV_PREPARATION')}
                           {!locked && !row.undetermined && (
-                            <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'PREPARATION', plannedText: `Sügis ${year - 1}` })}>
-                              <Plus size={13} />
-                            </button>
+                            <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'PREPARATION', plannedText: `Sügis ${year - 1}` })} />
                           )}
                         </div>
 
@@ -962,9 +967,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           <div className={`fw-cell milestone prev-sow ${prevSownDone(row) ? 'done' : ''} fw-col-3`}>
                             {renderMilestone(row, 'PREV_SOWING')}
                             {!locked && !row.undetermined && (
-                              <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'SOWING', plannedText: `Sügis ${year - 1}` })}>
-                                <Plus size={13} />
-                              </button>
+                              <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'SOWING', plannedText: `Sügis ${year - 1}` })} />
                             )}
                           </div>
                         ) : (
@@ -979,9 +982,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <div className="fw-cell prev fw-col-4">
                           {renderCards(row, 'PREV_CARE')}
                           {!locked && !row.undetermined && (
-                            <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'CARE', plannedText: `Sügis ${year - 1}` })}>
-                              <Plus size={13} />
-                            </button>
+                            <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'CARE', plannedText: `Sügis ${year - 1}` })} />
                           )}
                         </div>
 
@@ -991,9 +992,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
                           {renderCards(row, 'PREPARATION')}
                           {!locked && !row.undetermined && (
-                            <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'PREPARATION' })}>
-                              <Plus size={13} />
-                            </button>
+                            <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'PREPARATION' })} />
                           )}
                         </div>
 
@@ -1008,15 +1007,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           >
                             {renderMilestone(row, 'SOWING')}
                             {!locked && !row.undetermined && (
-                              <button
-                                type="button"
-                                className="fw-add"
-                                aria-label="Lisa töö"
-                                title="Lisa töö"
-                                onClick={() => setAddDialog({ row, phase: 'SOWING' })}
-                              >
-                                <Plus size={13} />
-                              </button>
+                              <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'SOWING' })} />
                             )}
                           </div>
                         )}
@@ -1025,9 +1016,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <div className={`fw-cell ${sownDone(row) ? '' : 'waiting'} fw-col-7`}>
                           {renderCards(row, 'CARE')}
                           {!locked && !row.undetermined && (
-                            <button type="button" className="fw-add" aria-label="Lisa töö" title="Lisa töö" onClick={() => setAddDialog({ row, phase: 'CARE' })}>
-                              <Plus size={13} />
-                            </button>
+                            <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'CARE' })} />
                           )}
                         </div>
 
@@ -1035,15 +1024,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         <div className="fw-cell milestone harvest fw-col-8">
                           {renderMilestone(row, 'HARVEST')}
                           {!locked && !row.undetermined && (
-                            <button
-                              type="button"
-                              className="fw-add"
-                              aria-label="Lisa töö"
-                              title="Lisa töö"
-                              onClick={() => setAddDialog({ row, phase: 'HARVEST' })}
-                            >
-                              <Plus size={13} />
-                            </button>
+                            <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'HARVEST' })} />
                           )}
                         </div>
 
@@ -1054,15 +1035,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <div className="fw-cell fw-col-9">
                               {renderNextCards(row, 'PREP')}
                               {!locked && row.nextRec?.fieldSeasonId && (
-                                <button
-                                  type="button"
-                                  className="fw-add"
-                                  aria-label="Lisa töö"
-                                  title="Lisa töö"
-                                  onClick={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true, plannedText: `Sügis ${year}` })}
-                                >
-                                  <Plus size={13} />
-                                </button>
+                                <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'PREPARATION', isNextCrop: true, plannedText: `Sügis ${year}` })} />
                               )}
                             </div>
 
@@ -1071,15 +1044,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               <div className={`fw-cell milestone autumn-sow ${nextSownDone(row) ? 'done' : ''} fw-col-10`}>
                                 {renderNextMilestone(row)}
                                 {!locked && row.nextRec?.fieldSeasonId && (
-                                  <button
-                                    type="button"
-                                    className="fw-add"
-                                    aria-label="Lisa töö"
-                                    title="Lisa töö"
-                                    onClick={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true, plannedText: `Sügis ${year}` })}
-                                  >
-                                    <Plus size={13} />
-                                  </button>
+                                  <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'SOWING', isNextCrop: true, plannedText: `Sügis ${year}` })} />
                                 )}
                               </div>
                             ) : (
@@ -1094,15 +1059,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <div className="fw-cell fw-col-11">
                               {renderNextCards(row, 'CARE')}
                               {!locked && row.nextRec?.fieldSeasonId && (
-                                <button
-                                  type="button"
-                                  className="fw-add"
-                                  aria-label="Lisa töö"
-                                  title="Lisa töö"
-                                  onClick={() => setAddDialog({ row, phase: 'CARE', isNextCrop: true, plannedText: `Sügis ${year}` })}
-                                >
-                                  <Plus size={13} />
-                                </button>
+                                <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'CARE', isNextCrop: true, plannedText: `Sügis ${year}` })} />
                               )}
                             </div>
                           </>
@@ -1277,9 +1234,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         </div>
                         <div className="fw-entry-finance">
                           {canManageFinance ? (
-                            <button
-                              type="button"
-                              className="fw-finance-chip-btn"
+                            <Button
+                              variant="bare"
+                              size="inline"
                               title="Ava kande finants ja määra ühikuhinnad"
                               onClick={() => {
                                 setFinanceEntryId(e.id);
@@ -1290,7 +1247,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                 <Euro size={10} />
                                 {FINANCE_LABEL[e.financeStatus]}
                               </Badge>
-                            </button>
+                            </Button>
                           ) : (
                             <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
                           )}

@@ -18,7 +18,7 @@ import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint } from './ui';
+import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -326,17 +326,18 @@ function cropSummaryKey(cropText: string): string {
               {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
             </span>
             {g.rows.map((c) => (
-              <button
-                type="button"
+              <ChipButton
                 key={c.crop}
-                className={`register-crop-stat${cropFilter === c.crop ? ' active' : ''}${cropFilter !== 'all' && cropFilter !== c.crop ? ' dimmed' : ''}`}
-                style={{ '--crop-color': c.color } as React.CSSProperties}
+                variant="tint"
+                accent={c.color}
+                selected={cropFilter === c.crop}
+                dimmed={cropFilter !== 'all' && cropFilter !== c.crop}
                 onClick={() => setCropFilter(cropFilter === c.crop ? 'all' : c.crop)}
                 title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
               >
                 <span>{c.crop}</span>
                 <strong>{c.areaHa.toFixed(2)} ha</strong>
-              </button>
+              </ChipButton>
             ))}
           </div>
         ))}
@@ -349,19 +350,21 @@ function cropSummaryKey(cropText: string): string {
       </div>
       {/* Omandivormid paremal üksteise all; klikk filtreerib tabeli */}
       <div className="register-crop-summary-tenure">
-        <button
-          type="button"
-          className={`reg-stat-pill tenure-owned is-filter${tenureFilter === 'OWNED' ? ' active' : ''}`}
+        <ChipButton
+          variant="outline"
+          accent="var(--emerald-500)"
+          selected={tenureFilter === 'OWNED'}
           onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
           title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
         >
           <span className="lbl">🏛️ Oma maa:</span>
           <strong>{financialSummary.ownedHa} ha</strong>
           <span className="sub-val">({financialSummary.totalTax} €/a maamaks)</span>
-        </button>
-        <button
-          type="button"
-          className={`reg-stat-pill tenure-rented is-filter${tenureFilter === 'RENTED' ? ' active' : ''}`}
+        </ChipButton>
+        <ChipButton
+          variant="outline"
+          accent="var(--blue-500)"
+          selected={tenureFilter === 'RENTED'}
           onClick={() => setTenureFilter(tenureFilter === 'RENTED' ? 'all' : 'RENTED')}
           disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
           title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
@@ -369,7 +372,7 @@ function cropSummaryKey(cropText: string): string {
           <span className="lbl">🤝 Rendimaa:</span>
           <strong>{financialSummary.rentedHa} ha</strong>
           <span className="sub-val">({financialSummary.totalRent} €/a rent)</span>
-        </button>
+        </ChipButton>
       </div>
     </>
   );

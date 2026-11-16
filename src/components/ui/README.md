@@ -169,6 +169,10 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
 | `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
 | `link-button`, `assign-hint-link` | `<Button variant="link" size="inline">` |
+| `fw-add` (tühja lahtri „+“) | `<Button variant="dashed" size="add-slot">` |
+| klõpsatav märk nupuna (`fw-finance-chip-btn`) | `<Button variant="bare" size="inline">` |
+| tekstilink kahe reaga (`trip-dialog-entry`) | `<Button variant="text" size="inline">` |
+| kultuuri-/omandivormikiip (`register-crop-stat`, `reg-stat-pill.is-filter`) | `<ChipButton variant="tint" \| "outline" accent selected dimmed>` (värv andmest, valitud = `selected`) |
 | `btn-full` | jääb `className="full-width"` (ainult laius 100%) |
 
 Reeglid:
