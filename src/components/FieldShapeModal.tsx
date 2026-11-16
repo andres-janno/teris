@@ -4,6 +4,7 @@ import L from 'leaflet';
 import { Map as MapIcon } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
 import type { BaseMapLayerId } from '../types/map';
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { Dialog, DialogContent, DialogHeader, DialogBody } from './ui';
 
@@ -31,7 +32,7 @@ export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record,
       subdomains: base.subdomains || []
     }).addTo(map);
     const shape = L.geoJSON(geometry as GeoJSON.GeoJsonObject, {
-      style: { color: record.cropColor || '#16a34a', weight: 3, fillOpacity: 0.3 }
+      style: { color: record.cropColor || DEFAULT_CROP_COLOR, weight: 3, fillOpacity: 0.3 }
     }).addTo(map);
     map.fitBounds(shape.getBounds(), { padding: [24, 24], maxZoom: 18 });
     // Akna avanemisanimatsiooni ajal on konteineri suurus veel muutumas.

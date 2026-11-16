@@ -22,7 +22,7 @@ export const Button: React.FC<ButtonProps> = ({ className, variant, size, asChil
   const button = (
     <Comp
       type={asChild ? undefined : (type ?? 'button')}
-      className={cn(buttonVariants({ variant, size }), className)}
+      className={cn(buttonVariants({ variant, size }), !tip.tooltip && wrapperClassName /* vihjeta nupul pole ümbrist */, className)}
       {...props}
       title={tip.nativeTitle}
       aria-label={tip.ariaLabel}

@@ -9,6 +9,9 @@ export const UNDETERMINED_CROP_COLOR = '#94a3b8';
 /** Uue sõiduki/märgi vaikevärv kaardil. */
 export const DEFAULT_VEHICLE_COLOR = '#22c55e';
 
+/** Kaardil põllu vaikevärv (värvi puudumisel; võrdlusväärtus). */
+export const DEFAULT_FIELD_COLOR = '#3b82f6';
+
 export type SoilLevel = 'bad' | 'warn' | 'good';
 /** Mulla näitaja tase kaardil, legendis ja punktina. Tekstina kasuta toonitokenit (.soil-value[data-level]). */
 export const SOIL_LEVEL_COLOR: Record<SoilLevel, string> = { bad: '#dc2626', warn: '#eab308', good: '#16a34a' };

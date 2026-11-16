@@ -2180,7 +2180,7 @@ body {
 }
 
 [data-theme='light'] .vehicle-marker-label .v-speed {
-  color: #16a34a !important;
+  color: var(--tone-success-text) !important;
   font-weight: 800;
 }
 
@@ -2649,13 +2649,13 @@ body {
 
 [data-slot="table"] th.year-col.selected .year-col-label {
   color: #ffffff;
-  background: #16a34a;
+  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
   border-radius: var(--radius-sm) var(--radius-sm) 0 0;
   box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d, inset 0 1px 0 #15803d;
 }
 
 [data-slot="table"] th.year-col.selected:hover .year-col-label {
-  background: #15803d;
+  background: var(--color-primary-from);
 }
 
 [data-slot="table"] td.year-cell {
@@ -3269,7 +3269,7 @@ body {
 
 .popup-title-row .status-tag.working {
   background: rgba(34, 197, 94, 0.18);
-  color: #16a34a;
+  color: var(--tone-success-text);
   border: 1px solid rgba(34, 197, 94, 0.35);
 }
 
@@ -4080,7 +4080,7 @@ body {
 }
 
 .main-view-switch button.active {
-  background: #16a34a;
+  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
   color: #ffffff;
 }
 
@@ -4315,7 +4315,7 @@ body {
   min-width: 1400px;
 }
 
-/* Aastaplokkide (eelmine | käesolev | järgmine) vahel paksem joon päises (lahtritel see joon ei kehtinud: React kirjutab inline-stiili ilma tühikuta, vana atribuudivalija ei sobinud) */
+/* Aastaplokkide (eelmine | käesolev | järgmine) vahel paksem joon päises (lahtritel see joon ei kehtinud: inline grid-column/grid-row serialiseerub grid-area kujule, valija ei sobinud kunagi) */
 .fw-head-cell.year-start,
 .fw-head-section.current,
 .fw-head-section.next {
@@ -4379,7 +4379,7 @@ body {
 
 .fw-head-section.current {
   background: color-mix(in srgb, #16a34a 8%, var(--bg-modal));
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 :root[data-theme="dark"] .fw-head-section.current {
@@ -4966,7 +4966,7 @@ body {
   padding: 0 4px;
   border-radius: var(--radius-sm);
   background: rgba(22, 163, 74, 0.12);
-  color: #15803d;
+  color: var(--tone-success-text);
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
@@ -5044,12 +5044,12 @@ body {
 
 .fw-status-dot.doing {
   border: 0;
-  background: #16a34a;
+  background: var(--emerald-500);
   box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
 }
 
 .fw-status-done {
-  color: #16a34a;
+  color: var(--tone-success-text);
   flex-shrink: 0;
 }
 
@@ -5252,7 +5252,7 @@ body {
 
 .work-progress-bar>div {
   height: 100%;
-  background: #16a34a;
+  background: var(--emerald-500);
   border-radius: var(--radius-sm);
 }
 
@@ -5494,7 +5494,7 @@ body {
 }
 
 .telemetry-pulse-icon {
-  color: #10b981;
+  color: var(--tone-success-text);
 }
 
 .telemetry-suggestions-hint {
@@ -5803,7 +5803,7 @@ body {
 
 .add-work-check.on {
   border: 0;
-  background: #16a34a;
+  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to));
 }
 
 .add-work-option.disabled .add-work-check.on {
@@ -5822,11 +5822,11 @@ body {
 }
 
 .add-work-tag.on-field {
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 .add-work-tag.to-add {
-  color: #16a34a;
+  color: var(--tone-success-text);
   font-weight: 700;
 }
 
@@ -5866,7 +5866,7 @@ body {
   align-items: center;
   justify-content: center;
   background: rgba(16, 185, 129, 0.15);
-  color: #10b981;
+  color: var(--tone-success-text);
 }
 
 .finance-title-row {
@@ -6069,7 +6069,7 @@ body {
 .finance-detail-work-type {
   font-size: 14px;
   font-weight: 700;
-  color: #10b981;
+  color: var(--tone-success-text);
 }
 
 .finance-detail-sub-meta {
@@ -6169,7 +6169,7 @@ body {
 }
 
 .finance-line-total.revenue-text {
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 /* Bottom Grid: Notes & Summary */
@@ -6233,7 +6233,7 @@ body {
 }
 
 .finance-net-result.positive {
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 .finance-net-result.negative {
@@ -6250,12 +6250,12 @@ body {
 }
 
 .finance-confirm-btn {
-  background: #16a34a !important;
+  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to)) !important;
   color: #ffffff !important;
 }
 
 .finance-confirm-btn:hover {
-  background: #15803d !important;
+  background: var(--color-primary-from) !important;
 }
 
 .finance-no-selection {
@@ -6298,7 +6298,7 @@ body {
 }
 
 .finance-kpi-card.result.profit .finance-kpi-value {
-  color: #15803d;
+  color: var(--tone-success-text);
 }
 
 .finance-kpi-card.result.loss {
@@ -6779,7 +6779,7 @@ td.stock-qty-out { color: #dc2626; }
   font-size: 14px;
 }
 .fleet-icon-box.is-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.fleet-icon-box.is-success { background: rgba(16, 185, 129, 0.15); color: #10b981; }
+.fleet-icon-box.is-success { background: rgba(16, 185, 129, 0.15); color: var(--tone-success-text); }
 .fleet-icon-box.is-warning { background: rgba(234, 179, 8, 0.15); color: #eab308; }
 .fleet-cell-main { display: flex; align-items: center; gap: 8px; }
 .fleet-cell-title { font-weight: 600; font-size: 13px; }
@@ -6980,6 +6980,8 @@ polyline.weather-line { fill: none; }
 .alert-box.is-stacked { flex-direction: column; align-items: stretch; gap: 4px; margin: 8px 0; }
 .hint-text.is-block { display: block; margin-top: 4px; }
 /* Kultuuri värvipunkt (värv tuleb andmest) */
-.crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid var(--border-card); }
+.crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }
 /* Kultuuri muutmise dialoog: sinine ülaäär */
 .crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }
+/* Statistikakiibid reas (Isikud) */
+.register-stats-pills { display: flex; flex-wrap: wrap; gap: 8px; }

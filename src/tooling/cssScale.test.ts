@@ -45,6 +45,10 @@ describe('rescaleCss', () => {
     );
     expect(r.manual).toEqual([]);
   });
+  it('säilitab deklaratsiooni lõpu tühikud ja katab nurgaomadused ning scroll-padding', () => {
+    const r = rescaleCss('.a { border-top-left-radius: 12px ; scroll-padding: 3px }\n.b { scroll-margin-top: 5px;\n}');
+    expect(r.css).toBe('.a { border-top-left-radius: var(--radius-md) ; scroll-padding: 2px }\n.b { scroll-margin-top: 4px;\n}');
+  });
   it('üle 32px vahe jääb muutmata ja läheb käsitsi loetellu (rea nr)', () => {
     const r = rescaleCss('.a {\n  padding: 16px 44px 56px 16px;\n}');
     expect(r.css).toContain('padding: 16px 44px 56px 16px;');

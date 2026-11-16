@@ -384,3 +384,12 @@ describe('filtririba ja tühi olek', () => {
     expect(v.emptyStateIconClass).toContain('opacity-40');
   });
 });
+
+describe('vigane väli', () => {
+  it('aria-invalid annab äärise, punase teksti ja tooni tausta', () => {
+    for (const c of ['aria-invalid:border-destructive', 'aria-invalid:text-destructive', 'aria-invalid:bg-destructive/10']) {
+      expect(v.fieldControlClass).toContain(c);
+    }
+    expect(v.fieldShellClass).toContain('has-[input[aria-invalid=true]]:bg-destructive/10');
+  });
+});

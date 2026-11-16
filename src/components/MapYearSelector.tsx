@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Calendar, Sprout, ChevronDown, ChevronUp, Filter, Lock } from 'lucide-react';
 import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
+import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
 import { Badge, Card, Button, ToggleGroup, ToggleGroupItem, clickOnActivationKey } from './ui';
 
@@ -55,7 +56,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       const existing = map.get(crop)!;
       existing.totalHa += ha;
       existing.count += 1;
-      if (color && color !== '#3b82f6') {
+      if (color && color !== DEFAULT_FIELD_COLOR) {
         existing.color = color;
       }
     });

@@ -1,5 +1,5 @@
 // src/server/apiHandler.ts
-import { DEFAULT_CROP_COLOR } from '../lib/dataColors.ts';
+import { DEFAULT_CROP_COLOR, DEFAULT_VEHICLE_COLOR } from '../lib/dataColors.ts';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE, type TxClient } from './db.ts';
 import { json, parseBody } from './http.ts';
@@ -1016,7 +1016,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         ...depreciationIn(v),
         regNumber: v.registrationPlate || v.regNumber || null,
         serialNumber: cleanText(v.serialNumber),
-        color: v.color || '#10b981',
+        color: v.color || DEFAULT_VEHICLE_COLOR,
         notes: v.notes ?? null,
         ...cost.data
       };

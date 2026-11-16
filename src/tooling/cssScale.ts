@@ -47,7 +47,7 @@ const toPx = (token: string): number | null => {
 const fmt = (n: number) => `${n}px`;
 // Omadus peab algama reegli/deklaratsiooni piirilt; `--x:` muutujad ei vasta (eesliide `--` ei ole lubatud).
 const DECL =
-  /(^|[\s;{])(font-size|border-radius|(?:padding|margin|gap|row-gap|column-gap)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?)(\s*:\s*)([^;}]+)/g;
+  /(^|[\s;{])(font-size|border-radius|border-(?:top|bottom)-(?:left|right)-radius|(?:padding|margin|gap|row-gap|column-gap|scroll-padding|scroll-margin)(?:-(?:top|right|bottom|left|inline|block)(?:-(?:start|end))?)?)(\s*:\s*)([^;}]+)/g;
 
 /** Asendab deklaratsioonide väärtused; > 32px vahed jäävad ja tulevad `manual` loetellu („rida: omadus: väärtus“). */
 export function rescaleCss(css: string): { css: string; manual: string[] } {
@@ -62,7 +62,7 @@ export function rescaleCss(css: string): { css: string; manual: string[] } {
       const px = tokens.length === 1 ? toPx(tokens[0]) : null;
       if (px === null) return whole;
       mapped = [fmt(scaleFontSize(px))];
-    } else if (prop === 'border-radius') {
+    } else if (prop === 'border-radius' || /^border-.*-radius$/.test(prop)) {
       mapped = tokens.map(scaleRadius);
     } else {
       let tooBig = false;
@@ -82,7 +82,8 @@ export function rescaleCss(css: string): { css: string; manual: string[] } {
         return whole;
       }
     }
-    return `${lead}${prop}${sep}${mapped.join(' ')}${important ? ' !important' : ''}`;
+    const trail = value.match(/\s*$/)?.[0] ?? '';
+    return `${lead}${prop}${sep}${mapped.join(' ')}${important ? ' !important' : ''}${trail}`;
   });
   return { css: out, manual };
 }

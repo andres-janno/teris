@@ -20,6 +20,13 @@ describe('handleActivationKey', () => {
       expect(e.defaultPrevented).toBe(true);
     }
   });
+  it('hoitud klahv (repeat) ja modifikaatorid ei käivita', () => {
+    const fn = vi.fn();
+    for (const over of [{ repeat: true }, { ctrlKey: true }, { metaKey: true }, { altKey: true }]) {
+      expect(handleActivationKey(ev('Enter', over), fn)).toBe(false);
+    }
+    expect(fn).not.toHaveBeenCalled();
+  });
   it('muud klahvid ei käivita', () => {
     const fn = vi.fn();
     expect(handleActivationKey(ev('a'), fn)).toBe(false);

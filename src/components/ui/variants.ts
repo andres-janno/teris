@@ -115,7 +115,7 @@ export const tabsTriggerVariants = cva(
 
 /** Sisestusväljade (Input, Textarea, Select) ühine välimus; kõrguse/vahed lisab komponent. */
 export const fieldControlClass =
-  'w-full rounded-sm border border-input bg-field text-sm text-foreground placeholder:text-subtle transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:focus-visible:ring-destructive/30';
+  'w-full rounded-sm border border-input bg-field text-sm text-foreground placeholder:text-subtle transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/30 disabled:cursor-not-allowed disabled:opacity-50 aria-invalid:border-destructive aria-invalid:text-destructive aria-invalid:bg-destructive/10 aria-invalid:focus-visible:ring-destructive/30';
 
 /** Vormivälja suurus: md 32px (vaikimisi, nagu nupp md), sm 28px tabeli ridades (kasutaja otsus 2026-11-15). */
 export type FieldSize = 'sm' | 'md';
@@ -125,7 +125,7 @@ export const fieldSizeClass: Record<FieldSize, string> = {
 };
 /** Eesliite/järelliitega välja ümbris: ääris ja fookus ümbrisel, sees äärisetu input. */
 export const fieldShellClass =
-  'flex w-full items-center gap-1.5 rounded-sm border border-input bg-field text-foreground transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50 has-[input[aria-invalid=true]]:border-destructive';
+  'flex w-full items-center gap-1.5 rounded-sm border border-input bg-field text-foreground transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/30 has-[input:disabled]:cursor-not-allowed has-[input:disabled]:opacity-50 has-[input[aria-invalid=true]]:border-destructive has-[input[aria-invalid=true]]:bg-destructive/10';
 
 /** Hüpikud on dialoogi (z 2000) kohal, et dialoogi sees avatud menüü oleks nähtav. */
 export const menuContentClass =

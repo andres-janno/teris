@@ -147,6 +147,8 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 
 **Ikoonnupu suurused (kasutaja otsus 2026-11-16):** `icon-xs` 20px tabelis/kaardi nurgas, `icon-sm` 28px tööriistaribal ja päises, `icon-lg` 40px esitusnupp (ümmargune). Muud suurust ei lisata.
 
+`wrapperClassName`: asetusklassid (margin, flex-shrink jms) ikoonnupul, mille ümber on vihje (tooltipi ümbris); vihjeta nupul lähevad need nupule endale.
+
 Üldnupud on ainult `<Button>` (`./ui`). Vanad klassid `btn*`, `icon-btn*` tuleb asendada; `npm run ui-audit` loeb neid kohti.
 
 | Vana | Uus |

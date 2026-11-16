@@ -67,6 +67,13 @@ for (const theme of ['light', 'dark'] as const) {
 }
 
 describe('legacy CSS', () => {
+  it('index.css-is pole #16a34a tekstivärvi ega tahket tausta (valge tekst 3.30:1) — kasuta tokenit või primaargradienti', () => {
+    expect(indexCss.match(/^\s*(?:color|background(?:-color)?):\s*#16a34a[^;]*;/gim) ?? []).toEqual([]);
+  });
+  it('valge tekst ei seisa heleda rohelise (#22c55e) taustal', () => {
+    const bad = [...indexCss.matchAll(/\{([^{}]*)\}/g)].filter(([, b]) => /background(?:-color)?:\s*#22c55e/i.test(b) && /(?<![\w-])color:\s*(#fff(?:fff)?|white)\b/i.test(b));
+    expect(bad.length).toBe(0);
+  });
   it('index.css ei kasuta --emerald-600 tekstivärvina (tumedas 3.56:1) — kasuta --tone-success-text', () => {
     expect(indexCss.match(/(?<![\w-])color:\s*var\(--emerald-600\)/g) ?? []).toEqual([]);
   });
