@@ -98,6 +98,9 @@
   /* Põhinupu gradient mõlemas teemas sama; heledam roheline (kasutaja otsus 2026-11-16: ilusam, kontrastist hoolimata) */
   --color-primary-from: #16a34a;
   --color-primary-to: #22c55e;
+  /* Valitud olek (peamenüü sakk jt): heledam roheline, kasutaja otsus 2026-11-16 — ära tumenda */
+  --color-selection: var(--selection-bg);
+  --color-selection-hover: var(--selection-bg-hover);
   --color-info: var(--blue-500);
   --color-warning: var(--amber-500);
   --color-destructive: var(--rose-500);

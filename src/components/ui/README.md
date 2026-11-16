@@ -87,6 +87,7 @@ Märkused:
   otsesest flex-lapsest, jäta tingimuslik renderdus ja kasuta ainult `TabsList` + `TabsTrigger`. Loendur = `<Badge>` lapsena.
 - **`ToggleGroup`** + `ToggleGroupItem`: aasta valik, filtrid, vormi valik (paneel ei vahetu). `value` on string,
   `onValueChange` ei anna kunagi tühja väärtust. `aria-label` on kohustuslik. Rida murdub, üks hall raam.
+- **Peamenüü/navigatsioonirida:** `NavSwitch` + `NavSwitchItem current` (`aria-current="page"`, aktiivne heledam roheline `--selection-bg`); sakid ja valikurida (Tabs/ToggleGroup) on sisu sees vahetamiseks, mitte vaadete vahetamiseks.
 
 ## Filtririba ja tühi olek
 
@@ -142,6 +143,8 @@ Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `p
 ## Kontrast
 
 Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenitest. Tekstina värvilist tooni (`text-primary`, `text-warning`…) kasuta ainult siis, kui test seda paari katab; olekutekst = `text-*-text`. Uue värvi lisamisel lisa paar testi.
+
+**Toored `<button` on keelatud** väljaspool `ui/` (ui-audit „Tooreid nuppe“ = 0). Erandid: `LoginPage` `login-forgot-link`, `MapView` Leafleti popup-string (`RAW_BUTTON_ALLOWED` failis `src/tooling/uiAudit.ts`).
 
 ## Nupud: vana → uus
 

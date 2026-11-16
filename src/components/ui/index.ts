@@ -34,3 +34,4 @@ export { helpHintTriggerClass, helpHintInlineClass, helpHintContentClass, helpHi
 export { FilterBar, FilterBarItem } from './FilterBar';
 export { EmptyState } from './EmptyState';
 export { ChipButton, type ChipButtonProps } from './ChipButton';
+export { NavSwitch, NavSwitchItem } from './NavSwitch';

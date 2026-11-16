@@ -3991,40 +3991,8 @@ body {
 }
 
 .main-view-switch {
-  display: flex;
-  flex-shrink: 0;
-  /* auto-veerised tsentreerivad; ruumipuudusel jääb algus nähtavaks ja keritavaks */
+  /* auto-veerised tsentreerivad; ruumipuudusel jääb algus nähtavaks ja keritavaks (ui NavSwitch annab ilme) */
   margin: 0 auto;
-  gap: 2px;
-  padding: 2px;
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-}
-
-.main-view-switch button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  border: 0;
-  background: transparent;
-  color: var(--text-secondary);
-  font: inherit;
-  font-size: 13px;
-  font-weight: 600;
-  padding: 6px 12px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-
-.main-view-switch button:hover:not(.active) {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-}
-
-.main-view-switch button.active {
-  background: var(--selection-bg);
-  color: #ffffff;
 }
 
 /* ==========================================================================

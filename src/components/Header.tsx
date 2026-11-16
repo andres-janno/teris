@@ -12,6 +12,8 @@ import {
   Repeat,
   CloudSun
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
+import { NavSwitch, NavSwitchItem } from './ui';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
 import { OperatorSelector } from './OperatorSelector';
@@ -21,6 +23,21 @@ import type { AuthUser } from '../types/auth';
 
 export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'stock', 'weather'] as const;
 export type MainView = typeof MAIN_VIEWS[number];
+
+// Peamenüü kirjed järjekorras; Ilm näidatakse ainult siis, kui `showWeather`.
+const NAV_ITEMS: { view: MainView; label: string; Icon: LucideIcon }[] = [
+  { view: 'map', label: 'Kaart', Icon: MapIcon },
+  { view: 'fields', label: 'Põllud', Icon: Layers },
+  { view: 'crops', label: 'Kultuurid', Icon: Sprout },
+  { view: 'rotation', label: 'Külvikord', Icon: Repeat },
+  { view: 'works', label: 'Põllutööd', Icon: SquareKanban },
+  { view: 'stock', label: 'Laoarvestus', Icon: Package },
+  { view: 'fleet', label: 'Tehnika', Icon: Tractor },
+  { view: 'infrastructure', label: 'Taristu', Icon: MapPin },
+  { view: 'parties', label: 'Isikud', Icon: Users },
+  { view: 'weather', label: 'Ilm', Icon: CloudSun },
+  { view: 'seasons', label: 'Hooajad', Icon: CalendarDays },
+];
 
 interface HeaderProps {
   fieldsCount?: number;
@@ -83,109 +100,14 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}
       <div className="header-nav-slot">
         {onChangeMainView && (
-          <nav className="main-view-switch" aria-label="Põhivaade">
-            <button
-              type="button"
-              className={mainView === 'map' ? 'active' : ''}
-              aria-current={mainView === 'map' ? 'page' : undefined}
-              onClick={() => onChangeMainView('map')}
-            >
-              <MapIcon size={15} />
-              <span>Kaart</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'fields' ? 'active' : ''}
-              aria-current={mainView === 'fields' ? 'page' : undefined}
-              onClick={() => onChangeMainView('fields')}
-            >
-              <Layers size={15} />
-              <span>Põllud</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'crops' ? 'active' : ''}
-              aria-current={mainView === 'crops' ? 'page' : undefined}
-              onClick={() => onChangeMainView('crops')}
-            >
-              <Sprout size={15} />
-              <span>Kultuurid</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'rotation' ? 'active' : ''}
-              aria-current={mainView === 'rotation' ? 'page' : undefined}
-              onClick={() => onChangeMainView('rotation')}
-            >
-              <Repeat size={15} />
-              <span>Külvikord</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'works' ? 'active' : ''}
-              aria-current={mainView === 'works' ? 'page' : undefined}
-              onClick={() => onChangeMainView('works')}
-            >
-              <SquareKanban size={15} />
-              <span>Põllutööd</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'stock' ? 'active' : ''}
-              aria-current={mainView === 'stock' ? 'page' : undefined}
-              onClick={() => onChangeMainView('stock')}
-            >
-              <Package size={15} />
-              <span>Laoarvestus</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'fleet' ? 'active' : ''}
-              aria-current={mainView === 'fleet' ? 'page' : undefined}
-              onClick={() => onChangeMainView('fleet')}
-            >
-              <Tractor size={15} />
-              <span>Tehnika</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'infrastructure' ? 'active' : ''}
-              aria-current={mainView === 'infrastructure' ? 'page' : undefined}
-              onClick={() => onChangeMainView('infrastructure')}
-            >
-              <MapPin size={15} />
-              <span>Taristu</span>
-            </button>
-            <button
-              type="button"
-              className={mainView === 'parties' ? 'active' : ''}
-              aria-current={mainView === 'parties' ? 'page' : undefined}
-              onClick={() => onChangeMainView('parties')}
-            >
-              <Users size={15} />
-              <span>Isikud</span>
-            </button>
-            {showWeather && (
-              <button
-                type="button"
-                className={mainView === 'weather' ? 'active' : ''}
-                aria-current={mainView === 'weather' ? 'page' : undefined}
-                onClick={() => onChangeMainView('weather')}
-              >
-                <CloudSun size={15} />
-                <span>Ilm</span>
-              </button>
-            )}
-            <button
-              type="button"
-              className={mainView === 'seasons' ? 'active' : ''}
-              aria-current={mainView === 'seasons' ? 'page' : undefined}
-              onClick={() => onChangeMainView('seasons')}
-            >
-              <CalendarDays size={15} />
-              <span>Hooajad</span>
-            </button>
-          </nav>
+          <NavSwitch className="main-view-switch" aria-label="Põhivaade">
+            {NAV_ITEMS.filter((item) => item.view !== 'weather' || showWeather).map(({ view, label, Icon }) => (
+              <NavSwitchItem key={view} current={mainView === view} onClick={() => onChangeMainView(view)}>
+                <Icon size={15} />
+                <span>{label}</span>
+              </NavSwitchItem>
+            ))}
+          </NavSwitch>
         )}
       </div>
 

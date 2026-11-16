@@ -33,6 +33,7 @@ const allClassStrings = (): string[] => [
   v.emptyStateClass, v.emptyStateIconClass, v.emptyStateTitleClass, v.emptyStateDescriptionClass,
   v.dialogHeaderIconClass,
   v.chipVariants({ variant: 'tint', dimmed: true }), v.chipVariants({ variant: 'outline' }),
+  v.navSwitchClass, v.navSwitchItemClass,
 ];
 
 describe('variants', () => {
@@ -485,5 +486,29 @@ describe('kiip (ChipButton)', () => {
   it('ei kasuta keelatud suvalisi väärtusi', () => {
     for (const variant of ['tint', 'outline'] as const)
       for (const dimmed of [true, false]) expect(auditTsx(`className="${v.chipVariants({ variant, dimmed })}"`).arbitrary).toEqual([]);
+  });
+});
+
+describe('peamenüü (NavSwitch)', () => {
+  it('riba: hall raam, 10px nurk, 2px vahe ja polster', () => {
+    const t = v.navSwitchClass.split(/\s+/);
+    for (const c of ['flex', 'shrink-0', 'gap-0.5', 'p-0.5', 'rounded-md', 'border', 'border-border', 'bg-muted']) expect(t).toContain(c);
+  });
+  it('kirje: 13px poolpaks, 6/12px polster, 6px nurk', () => {
+    const t = v.navSwitchItemClass.split(/\s+/);
+    for (const c of ['text-sm', 'font-semibold', 'px-3', 'py-1.5', 'rounded-sm', 'gap-1.5']) expect(t).toContain(c);
+  });
+  it('aktiivne (aria-current=page): heledam roheline --selection-bg, valge tekst', () => {
+    const t = v.navSwitchItemClass.split(/\s+/);
+    expect(t).toContain('aria-[current=page]:bg-selection');
+    expect(t).toContain('aria-[current=page]:text-white');
+  });
+  it('hõljumine ainult aktiivsele mitte: aktiivne jääb rohelisena', () => {
+    const t = v.navSwitchItemClass.split(/\s+/);
+    expect(t).toContain('not-aria-[current=page]:enabled:hover:bg-muted-hover');
+    expect(t).toContain('not-aria-[current=page]:enabled:hover:text-foreground');
+  });
+  it('ei kasuta keelatud suvalisi väärtusi', () => {
+    expect(auditTsx(`className="${v.navSwitchClass} ${v.navSwitchItemClass}"`).arbitrary).toEqual([]);
   });
 });

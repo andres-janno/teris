@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -46,6 +46,7 @@ export const UiGallery: React.FC = () => {
   const [pickedCard, setPickedCard] = useState('a');
   const [chip, setChip] = useState('none');
   const [tenure, setTenure] = useState(false);
+  const [nav, setNav] = useState('map');
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
@@ -132,6 +133,17 @@ export const UiGallery: React.FC = () => {
             <ToggleGroupItem value="2026">2026</ToggleGroupItem>
             <ToggleGroupItem value="2027" disabled>2027</ToggleGroupItem>
           </ToggleGroup>
+        </Section>
+
+        <Section title="Peamenüü (NavSwitch)">
+          <NavSwitch aria-label="Näidisvaated">
+            {[['map', 'Kaart'], ['fields', 'Põllud'], ['works', 'Põllutööd']].map(([id, label]) => (
+              <NavSwitchItem key={id} current={nav === id} onClick={() => setNav(id)}>
+                <Eye size={15} />
+                <span>{label}</span>
+              </NavSwitchItem>
+            ))}
+          </NavSwitch>
         </Section>
 
         <Section title="Vormiväljad">
