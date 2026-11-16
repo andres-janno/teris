@@ -1,4 +1,5 @@
 // src/components/FinanceModal.tsx — põllutööde finantsid ja kuluarvestus (finantsjuht / admin).
+import { FINANCE_COST_COLOR } from '../lib/dataColors';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   Euro,
@@ -812,25 +813,25 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {resultsSummary.totalCost > 0 && (
                 <div className="finance-cost-breakdown-bar">
                   <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: '#0284c7' }} />
+                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.labor }} />
                     <span className="label">Tööjõud:</span>
                     <strong>{fmtCur(resultsSummary.totalLabor)}</strong>
                     <small>({Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)</small>
                   </div>
                   <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: '#d97706' }} />
+                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.equipment }} />
                     <span className="label">Masinapark:</span>
                     <strong>{fmtCur(resultsSummary.totalEquipment)}</strong>
                     <small>({Math.round((resultsSummary.totalEquipment / resultsSummary.totalCost) * 100)}%)</small>
                   </div>
                   <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: '#ea580c' }} />
+                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.fuel }} />
                     <span className="label">Kütus:</span>
                     <strong>{fmtCur(resultsSummary.totalFuel)}</strong>
                     <small>({Math.round((resultsSummary.totalFuel / resultsSummary.totalCost) * 100)}%)</small>
                   </div>
                   <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: '#16a34a' }} />
+                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.articles }} />
                     <span className="label">Kulumaterjalid:</span>
                     <strong>{fmtCur(resultsSummary.totalArticles)}</strong>
                     <small>({Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)</small>

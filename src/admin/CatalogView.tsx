@@ -1,3 +1,4 @@
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   CROP_GROUP_LABELS,
@@ -64,7 +65,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
     name: crop?.name ?? '',
     scientificName: crop?.scientificName ?? '',
     group: crop?.group ?? 'CEREAL',
-    color: crop?.color ?? '#eab308',
+    color: crop?.color ?? DEFAULT_CROP_COLOR,
     icon: crop?.icon ?? '',
     priaCode: crop?.priaCode ?? '',
     seedRate: numStr(crop?.defaultSeedRateKgHa),

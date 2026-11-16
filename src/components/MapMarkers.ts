@@ -1,4 +1,5 @@
 // src/components/MapMarkers.ts
+import { DEFAULT_VEHICLE_COLOR } from '../lib/dataColors';
 import L from 'leaflet';
 import type { Vehicle } from '../types/vehicle';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
@@ -22,7 +23,7 @@ export function createVehicleIcon(vehicle: Vehicle): L.DivIcon {
   const isWorking = vehicle.status === 'working';
   const isMoving = vehicle.status === 'moving';
   const isRecentlyActive = isVehicleRecentlyActive(vehicle, 5);
-  const color = vehicle.color || '#22c55e';
+  const color = vehicle.color || DEFAULT_VEHICLE_COLOR;
   const heading = vehicle.heading || 0;
 
   let iconEmoji = '🚜';

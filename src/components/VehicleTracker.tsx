@@ -1,4 +1,5 @@
 // src/components/VehicleTracker.tsx
+import { DEFAULT_VEHICLE_COLOR } from '../lib/dataColors';
 import React, { useState, useEffect, useId, useCallback, useMemo } from 'react';
 import {
   Tractor,
@@ -281,7 +282,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const [vDepMethod, setVDepMethod] = useState<DepreciationMethod | ''>('');
   const [vPlate, setVPlate] = useState('');
   const [vSerial, setVSerial] = useState('');
-  const [vColor, setVColor] = useState('#22c55e');
+  const [vColor, setVColor] = useState(DEFAULT_VEHICLE_COLOR);
   const [vNotes, setVNotes] = useState('');
 
   // 2. Implement Form
@@ -558,7 +559,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
     setVDepMethod('');
     setVPlate('');
     setVSerial('');
-    setVColor('#22c55e');
+    setVColor(DEFAULT_VEHICLE_COLOR);
     setVNotes('');
   };
 

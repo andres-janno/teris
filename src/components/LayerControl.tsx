@@ -1,3 +1,4 @@
+import { UNDETERMINED_CROP_COLOR } from '../lib/dataColors';
 import React, { useState } from 'react';
 import {
   Layers,
@@ -235,7 +236,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           ))
                         )}
                         <div className="soil-legend-item">
-                          <span className="soil-legend-swatch" style={{ backgroundColor: '#94a3b8' }}></span>
+                          <span className="soil-legend-swatch" style={{ backgroundColor: UNDETERMINED_CROP_COLOR }}></span>
                           <span className="soil-legend-label">Andmed puuduvad</span>
                         </div>
                       </div>

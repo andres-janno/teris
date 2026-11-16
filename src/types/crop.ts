@@ -1,5 +1,7 @@
 // src/types/crop.ts
 
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
+
 export type CropGroup =
   | 'CEREAL'        // Teravili
   | 'OILSEED'       // Õlikultuur
@@ -53,7 +55,7 @@ export const CROP_GROUP_CONFIG: Record<
   CEREAL: {
     label: 'Teravili',
     icon: '🌾',
-    color: '#eab308',
+    color: DEFAULT_CROP_COLOR,
     bgColor: 'rgba(234, 179, 8, 0.15)'
   },
   OILSEED: {

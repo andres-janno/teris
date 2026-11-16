@@ -1,4 +1,5 @@
 // src/components/FieldEditDialog.tsx — põllu põhiandmete ja valitud hooaja kirje muutmise aken
+import { DEFAULT_CROP_COLOR, UNDETERMINED_CROP_COLOR, DEFAULT_VEHICLE_COLOR } from '../lib/dataColors';
 import React, { useState, useMemo, useEffect } from 'react';
 import { Plus, Edit2, Trash2, Lock, Landmark, Compass, ExternalLink, Info } from 'lucide-react';
 import type { MasterField, FieldYearlyRecord } from '../types/fieldRegister';
@@ -20,7 +21,6 @@ const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RE
 
 // Kultuur valimata: sama väärtus ja värv mis mujal registris (fieldRegister.ts)
 const UNDETERMINED_CROP = 'Määramata';
-const UNDETERMINED_CROP_COLOR = '#94a3b8';
 
 // Väljad, mis hakkavad tulema Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -79,7 +79,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
   const [editEligibleAreaHa, setEditEligibleAreaHa] = useState<number | undefined>(undefined);
   const [editAreaChangeReason, setEditAreaChangeReason] = useState('');
   const [editCrop, setEditCrop] = useState('');
-  const [editCropColor, setEditCropColor] = useState('#eab308');
+  const [editCropColor, setEditCropColor] = useState(DEFAULT_CROP_COLOR);
   const [editVariety, setEditVariety] = useState('');
   const [editUndersowing, setEditUndersowing] = useState<Undersowing>('NONE');
   // Salvestatud valik: muutmata valikuga jääb hooaja senine PRIA nimetus (nagu serveris)
@@ -187,7 +187,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     const cropUndetermined = !editCrop.trim();
     const finalCropColor = cropUndetermined
       ? UNDETERMINED_CROP_COLOR
-      : matchedCrop?.color || selectedCropObj?.color || editCropColor || '#22c55e';
+      : matchedCrop?.color || selectedCropObj?.color || editCropColor || DEFAULT_VEHICLE_COLOR;
 
     onUpdateField(
       field.id,

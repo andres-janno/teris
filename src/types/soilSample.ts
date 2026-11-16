@@ -1,5 +1,7 @@
 // src/types/soilSample.ts
 
+import { SOIL_LEVEL_COLOR, UNDETERMINED_CROP_COLOR, type SoilLevel } from '../lib/dataColors';
+
 export interface SoilSample {
   id: number;
   sampleNumber: string;
@@ -29,9 +31,7 @@ export type SoilSampleMetricKey =
   | 'limeRequirement'
   | 'age';
 
-export type SoilLevel = 'bad' | 'warn' | 'good';
-/** Taseme andmevärv (kaart, legend, punkt). Tekstina kasuta taseme tooni (CSS .soil-value[data-level]), mitte seda. */
-export const SOIL_LEVEL_COLOR: Record<SoilLevel, string> = { bad: '#dc2626', warn: '#eab308', good: '#16a34a' };
+export { SOIL_LEVEL_COLOR, type SoilLevel };
 
 interface SoilMetricThreshold {
   max: number;
@@ -155,10 +155,10 @@ export function getSoilMetricLevel(metric: SoilSampleMetricKey, value?: number |
 }
 
 export function getSoilMetricColor(metric: SoilSampleMetricKey, value?: number | null): string {
-  if (value === undefined || value === null || isNaN(value)) return '#94a3b8';
+  if (value === undefined || value === null || isNaN(value)) return UNDETERMINED_CROP_COLOR;
   if (metric === 'age') return ageToColor(value);
   const level = getSoilMetricLevel(metric, value);
-  return level === 'none' ? '#94a3b8' : SOIL_LEVEL_COLOR[level];
+  return level === 'none' ? UNDETERMINED_CROP_COLOR : SOIL_LEVEL_COLOR[level];
 }
 
 /** Loeb näitaja väärtuse proovilt - "vanus" on tuletatud (praegune aasta - proovi aasta), mitte otse salvestatud väli. */

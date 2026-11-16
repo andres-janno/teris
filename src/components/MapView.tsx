@@ -1,4 +1,5 @@
 // src/components/MapView.tsx
+import { UNDETERMINED_CROP_COLOR, DEFAULT_VEHICLE_COLOR } from '../lib/dataColors';
 import React, { useEffect, useRef, useCallback, useState } from 'react';
 import L from 'leaflet';
 import proj4 from 'proj4';
@@ -351,7 +352,7 @@ export const MapView: React.FC<MapViewProps> = ({
     const getFillColor = (feature: any): string => {
       if (visibility.soilSamples) {
         const avg = getFieldMetricAverage(feature.properties.fieldCode, soilMetric);
-        return avg !== null ? getSoilMetricColor(soilMetric, avg) : '#94a3b8';
+        return avg !== null ? getSoilMetricColor(soilMetric, avg) : UNDETERMINED_CROP_COLOR;
       }
       return feature.properties.cropColor || getCropColor(feature.properties.crop);
     };
@@ -564,7 +565,7 @@ export const MapView: React.FC<MapViewProps> = ({
           color: '#16a34a',
           weight: 1.5,
           opacity: 0.85,
-          fillColor: '#22c55e',
+          fillColor: DEFAULT_VEHICLE_COLOR,
           fillOpacity: 0.55,
           // Taasesitusel koosneb ala kattuvatest osadest; nonzero täidab ülekatted ühtlaselt
           fillRule: 'nonzero'
@@ -610,7 +611,7 @@ export const MapView: React.FC<MapViewProps> = ({
             color: '#16a34a',
             weight: 1.5,
             opacity: 0.85,
-            fillColor: '#22c55e',
+            fillColor: DEFAULT_VEHICLE_COLOR,
             fillOpacity: 0.55,
             fillRule: 'nonzero'
           }

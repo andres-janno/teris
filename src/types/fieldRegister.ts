@@ -1,3 +1,4 @@
+import { UNDETERMINED_CROP_COLOR } from '../lib/dataColors';
 import type { Polygon, MultiPolygon } from 'geojson';
 import type { FieldFeature, FieldCollection } from './field';
 import type { FieldCadastralLink } from './cadastre';
@@ -80,7 +81,7 @@ export function getFieldFeatureForYear(field: MasterField, selectedYear: number)
       year: selectedYear,
       areaHa: 0,
       crop: 'Määramata',
-      cropColor: '#94a3b8',
+      cropColor: UNDETERMINED_CROP_COLOR,
       workedAreaHa: 0,
       workProgress: 0,
       status: 'not_started'

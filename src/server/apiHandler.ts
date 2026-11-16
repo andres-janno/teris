@@ -1,4 +1,5 @@
 // src/server/apiHandler.ts
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors.ts';
 import type { IncomingMessage, ServerResponse } from 'http';
 import { prisma, tenantTransaction, runInRequestContext, setRequestUser, requireTenantId, canDelete, DELETE_FORBIDDEN_MESSAGE, type TxClient } from './db.ts';
 import { json, parseBody } from './http.ts';
@@ -366,7 +367,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             areaChangeReason: h.areaChangeReason ?? null,
             ...cropFields,
             cropVariety: h.cropVariety ?? null,
-            cropColor: h.cropColor || '#eab308',
+            cropColor: h.cropColor || DEFAULT_CROP_COLOR,
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
             actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
             workedAreaHa: Number(h.workedAreaHa) || 0,
@@ -388,7 +389,7 @@ async function saveMasterFieldItem(item: any, db: TxClient) {
             areaChangeReason: h.areaChangeReason ?? null,
             ...cropFields,
             cropVariety: h.cropVariety ?? null,
-            cropColor: h.cropColor || '#eab308',
+            cropColor: h.cropColor || DEFAULT_CROP_COLOR,
             targetYieldTonsHa: h.targetYieldTonsHa != null ? Number(h.targetYieldTonsHa) : null,
             actualYieldTonsHa: h.actualYieldTonsHa != null ? Number(h.actualYieldTonsHa) : null,
             workedAreaHa: Number(h.workedAreaHa) || 0,
@@ -1652,7 +1653,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           name: crop.name,
           scientificName: crop.scientificName ?? null,
           group: (crop.group || 'CEREAL') as any,
-          color: crop.color || '#eab308',
+          color: crop.color || DEFAULT_CROP_COLOR,
           icon: crop.icon ?? null,
           priaCode: crop.priaCode ?? null,
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,
@@ -1667,7 +1668,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           name: crop.name,
           scientificName: crop.scientificName ?? null,
           group: (crop.group || 'CEREAL') as any,
-          color: crop.color || '#eab308',
+          color: crop.color || DEFAULT_CROP_COLOR,
           icon: crop.icon ?? null,
           priaCode: crop.priaCode ?? null,
           defaultSeedRateKgHa: crop.defaultSeedRateKgHa ? Number(crop.defaultSeedRateKgHa) : null,

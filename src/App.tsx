@@ -1,3 +1,4 @@
+import { DEFAULT_CROP_COLOR } from './lib/dataColors';
 import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, startTransition } from 'react';
 import confetti from 'canvas-confetti';
 import { Header, MAIN_VIEWS, type MainView } from './components/Header';
@@ -1472,7 +1473,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       });
       if (match) return match.color;
     }
-    return fallback || '#eab308';
+    return fallback || DEFAULT_CROP_COLOR;
   };
 
   // PRIA SHP import

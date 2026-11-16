@@ -1,4 +1,5 @@
 // src/components/CropRegisterModal.tsx
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
 import React, { useState, useMemo } from 'react';
 import {
   Sprout,
@@ -64,7 +65,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const [editCropName, setEditCropName] = useState('');
   const [editCropScientific, setEditCropScientific] = useState('');
   const [editCropGroup, setEditCropGroup] = useState<CropGroup>('CEREAL');
-  const [editCropColor, setEditCropColor] = useState('#eab308');
+  const [editCropColor, setEditCropColor] = useState(DEFAULT_CROP_COLOR);
   const [editCropIcon, setEditCropIcon] = useState('🌾');
   const [editCropPriaCode, setEditCropPriaCode] = useState('');
   const [editCropSeedRate, setEditCropSeedRate] = useState<number | ''>('');

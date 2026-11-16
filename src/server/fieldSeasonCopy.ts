@@ -1,7 +1,8 @@
 // src/server/fieldSeasonCopy.ts — uue hooaja kirje loomine põllu viimase varasema aasta põhjal.
 
-// Määramata kultuuri värv (sama mis külvikorra tabelis kultuuri eemaldamisel)
-export const UNDETERMINED_CROP_COLOR = '#94a3b8';
+import { UNDETERMINED_CROP_COLOR } from '../lib/dataColors.ts';
+
+export { UNDETERMINED_CROP_COLOR };
 
 /** Hooaja kirje väljad, mis uude aastasse kopeeritakse. */
 export interface SeasonSource {

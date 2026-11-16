@@ -1,4 +1,5 @@
 // src/components/TripDialog.tsx — ühe sõidu aken: rada kaardil, läbitud kohad, mõõdikud ja märkus (ainus muudetav väli).
+import { TRIP_MAP_COLOR } from '../lib/dataColors';
 import React, { useEffect, useState } from 'react';
 import L from 'leaflet';
 import { Route } from 'lucide-react';
@@ -45,8 +46,8 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
       tms: base.tms ?? false, attribution: base.attribution,
       maxZoom: base.maxZoom || 19, minZoom: base.minZoom || 5, subdomains: base.subdomains || []
     }).addTo(map);
-    const start = L.circleMarker([trip.start.lat, trip.start.lng], { radius: 7, color: '#10b981', fillOpacity: 1 }).addTo(map).bindTooltip('Algus');
-    L.circleMarker([trip.end.lat, trip.end.lng], { radius: 7, color: '#ef4444', fillOpacity: 1 }).addTo(map).bindTooltip('Lõpp');
+    const start = L.circleMarker([trip.start.lat, trip.start.lng], { radius: 7, color: TRIP_MAP_COLOR.start, fillOpacity: 1 }).addTo(map).bindTooltip('Algus');
+    L.circleMarker([trip.end.lat, trip.end.lng], { radius: 7, color: TRIP_MAP_COLOR.end, fillOpacity: 1 }).addTo(map).bindTooltip('Lõpp');
     map.setView(start.getLatLng(), 14);
     let cancelled = false;
     let onZoom: (() => void) | null = null;
@@ -55,7 +56,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
       // Põllulõigud haakeriista laiusega: laius pikslites sõltub suumist, seega uuendame suumimisel
       const swathLines = swaths.flatMap((sw) => sw.lines.map((ln) => ({
         widthM: sw.widthM,
-        layer: L.polyline(ln, { color: '#16a34a', opacity: 0.35, weight: 1, lineCap: 'butt', lineJoin: 'round', interactive: false }).addTo(map)
+        layer: L.polyline(ln, { color: TRIP_MAP_COLOR.swath, opacity: 0.35, weight: 1, lineCap: 'butt', lineJoin: 'round', interactive: false }).addTo(map)
       })));
       if (swathLines.length) {
         onZoom = () => {
@@ -64,7 +65,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
         };
         map.on('zoomend', onZoom);
       }
-      const line = L.polyline(pts, { color: '#3b82f6', weight: 3 }).addTo(map);
+      const line = L.polyline(pts, { color: TRIP_MAP_COLOR.track, weight: 3 }).addTo(map);
       map.fitBounds(line.getBounds(), { padding: [24, 24], maxZoom: 17 });
       onZoom?.(); // fitBounds ei pruugi suumi muuta
     }).catch((e) => { if (!cancelled) setTrackError(e.message); });

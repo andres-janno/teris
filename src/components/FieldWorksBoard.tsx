@@ -1,6 +1,7 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
 // Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
+import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Lock, Calendar, SquareKanban, Check, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
@@ -356,7 +357,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
         return {
           fieldSeasonId: rec.fieldSeasonId,
           field,
-          rec: { ...rec, crop: cropName, cropColor: cropColor ?? rec.cropColor ?? '#eab308' },
+          rec: { ...rec, crop: cropName, cropColor: cropColor ?? rec.cropColor ?? DEFAULT_CROP_COLOR },
           crop,
           cropColor,
           undetermined,

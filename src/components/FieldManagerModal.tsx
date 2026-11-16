@@ -1,3 +1,4 @@
+import { UNDETERMINED_CROP_COLOR, DEFAULT_VEHICLE_COLOR } from '../lib/dataColors';
 import React, { useState, useMemo, useEffect } from 'react';
 import {
   X,
@@ -185,7 +186,7 @@ function cropSummaryKey(cropText: string): string {
       const registryCrop = undetermined ? undefined : findRegistryCrop(rec.crop);
       const kind: Kind = undetermined ? 'undetermined' : !registryCrop ? 'unknown' : registryCrop.isWinterCrop ? 'winter' : 'spring';
       const map = byKind[kind];
-      const entry = map.get(crop) ?? { crop, color: undetermined ? '#94a3b8' : rec.cropColor || '#94a3b8', areaHa: 0, count: 0 };
+      const entry = map.get(crop) ?? { crop, color: undetermined ? UNDETERMINED_CROP_COLOR : rec.cropColor || UNDETERMINED_CROP_COLOR, areaHa: 0, count: 0 };
       entry.areaHa += rec.areaHa || 0;
       entry.count += 1;
       map.set(crop, entry);
@@ -256,11 +257,11 @@ function cropSummaryKey(cropText: string): string {
     // Tühi valik: kultuur eemaldatakse, aasta kirje (pindala, piirid, katastrid) jääb alles.
     if (!cropEdit.crop) {
       if (rec && !isCropUndetermined(rec.crop)) {
-        onUpdateField(field.id, {}, { ...rec, crop: '', cropVariety: undefined, cropColor: '#94a3b8' });
+        onUpdateField(field.id, {}, { ...rec, crop: '', cropVariety: undefined, cropColor: UNDETERMINED_CROP_COLOR });
       }
       return setCropEdit(null);
     }
-    const cropColor = findRegistryCrop(cropEdit.crop)?.color || rec?.cropColor || '#22c55e';
+    const cropColor = findRegistryCrop(cropEdit.crop)?.color || rec?.cropColor || DEFAULT_VEHICLE_COLOR;
 
     if (rec) {
       onUpdateField(field.id, {}, { ...rec, crop: cropEdit.crop, cropVariety: cropEdit.variety || undefined, undersowing: cropEdit.undersowing, cropColor });
