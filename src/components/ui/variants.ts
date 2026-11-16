@@ -319,7 +319,7 @@ export const emptyStateTitleClass = 'text-lg font-semibold text-foreground';
 export const emptyStateDescriptionClass = 'm-0 text-sm';
 
 // --- Kiip (etapp 3b): valitav, andmevärviga. `chip-*` on @utility-d src/styles/app.css-is (taust ja riba tulevad
-// CSS-muutujast --chip-accent, mida ChipButton seab; suvalisi väärtusi audit ei luba). ---
+// CSS-muutujast --chip-accent; leading-[normal] hoiab kõrguse vana nupu (UA line-height: normal) sama, mida ChipButton seab; suvalisi väärtusi audit ei luba). ---
 export type ChipVariant = 'tint' | 'outline';
 export const chipVariants = cva(
   `inline-flex shrink-0 cursor-pointer items-center gap-1.5 transition-colors disabled:cursor-default ${focusRing}`,
@@ -327,9 +327,9 @@ export const chipVariants = cva(
     variants: {
       variant: {
         // Andmevärviga toonitud kiip (kultuur): taust ja vasak riba värvist, valituna ümber 2px rõngas.
-        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base text-foreground',
+        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base leading-[normal] text-foreground',
         // Äärisega kiip (omandivorm): vasak serv 3px värvitud, valituna ümber 2px rõngas.
-        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm text-foreground enabled:hover:border-subtle',
+        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm leading-[normal] text-foreground enabled:hover:border-subtle',
       },
       dimmed: { true: 'opacity-50 enabled:hover:opacity-85', false: '' },
     },
