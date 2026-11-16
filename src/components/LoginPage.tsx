@@ -73,7 +73,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
-          <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
+          <Button type="submit" variant="primary" className="full-width login-primary-btn" disabled={busy}>
             <LogIn size={16} />
             <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
           </Button>

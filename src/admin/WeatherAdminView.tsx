@@ -1,5 +1,5 @@
 // Ilmapunktide laadimise olek (ERA5-Land) ja käsitsi uuesti laadimine.
-import { Card } from '../components/ui';
+import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type WeatherPointRow } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
@@ -51,43 +51,41 @@ export function WeatherAdminView() {
       {data && data.points.some(warn) && <div className="alert-box warning">Mõne punkti laadimine on ebaõnnestunud {data.failWarn}+ korda järjest.</div>}
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Punkt</th>
-                <th className="num">Hooaegu</th>
-                <th>Võti</th>
-                <th>Andmed</th>
-                <th>Viimati õnnestus</th>
-                <th className="num">Vigu järjest</th>
-                <th>Viga</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.points.map((p) => (
-                <tr key={p.id} className={warn(p) ? 'row-warning' : ''}>
-                  <td>{p.lat.toFixed(1)}° N, {p.lon.toFixed(1)}° E{p.hasData === false && ' (üle vee, andmeid pole)'}</td>
-                  <td className="num">{p.fieldSeasonCount}</td>
-                  <td>{p.keyTenant ?? <span className="admin-warning-text">puudub</span>}</td>
-                  <td>{p.loadedFrom && p.loadedUntil ? `${formatDate(p.loadedFrom)} – ${formatDate(p.loadedUntil)}` : 'laadimata'}</td>
-                  <td>{p.lastSuccessAt ? formatTallinn(p.lastSuccessAt) : '–'}</td>
-                  <td className="num">{p.failCount}</td>
-                  <td title={p.lastError ?? ''}>{p.lastError ? p.lastError.slice(0, 60) : ''}</td>
-                  <td>
-                    <button type="button" className="btn btn-secondary btn-sm" disabled={busy === p.id} onClick={() => void reload(p.id)}>
-                      Lae uuesti
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {data.points.length === 0 && (
-                <tr><td colSpan={8} className="admin-muted">Ilmapunkte pole</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Punkt</TableHead>
+              <TableHead numeric>Hooaegu</TableHead>
+              <TableHead>Võti</TableHead>
+              <TableHead>Andmed</TableHead>
+              <TableHead>Viimati õnnestus</TableHead>
+              <TableHead numeric>Vigu järjest</TableHead>
+              <TableHead>Viga</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {data.points.map((p) => (
+              <TableRow key={p.id} tone={warn(p) ? 'warning' : undefined}>
+                <TableCell>{p.lat.toFixed(1)}° N, {p.lon.toFixed(1)}° E{p.hasData === false && ' (üle vee, andmeid pole)'}</TableCell>
+                <TableCell numeric>{p.fieldSeasonCount}</TableCell>
+                <TableCell>{p.keyTenant ?? <span className="admin-warning-text">puudub</span>}</TableCell>
+                <TableCell>{p.loadedFrom && p.loadedUntil ? `${formatDate(p.loadedFrom)} – ${formatDate(p.loadedUntil)}` : 'laadimata'}</TableCell>
+                <TableCell>{p.lastSuccessAt ? formatTallinn(p.lastSuccessAt) : '–'}</TableCell>
+                <TableCell numeric>{p.failCount}</TableCell>
+                <TableCell title={p.lastError ?? ''}>{p.lastError ? p.lastError.slice(0, 60) : ''}</TableCell>
+                <TableCell>
+                  <Button size="sm" disabled={busy === p.id} onClick={() => void reload(p.id)}>
+                    Lae uuesti
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {data.points.length === 0 && (
+              <TableEmpty colSpan={8}>Ilmapunkte pole</TableEmpty>
+            )}
+          </TableBody>
+        </Table>
       )}
       <p className="admin-hint">
         Laadimine käib igal ööl Tallinna aja järgi kella 3 ja 7 vahel (kontroll kord tunnis, iga punkt kuni kord ~20 tunni jooksul). Esialgsed (viimase 90 päeva) andmed laetakse uuesti esmaspäeva öösel. „Lae uuesti“ laeb punkti kohe ja värskendab ka viimased 90 päeva.

@@ -1,4 +1,4 @@
-import { Card } from '../components/ui';
+import { Card, Button, Field, Input } from '../components/ui';
 import { useState, type FormEvent } from 'react';
 import { platformApi } from './platformApi.ts';
 
@@ -28,19 +28,15 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
     <Card asChild className="admin-login"><form className="admin-form" onSubmit={submit}>
       <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
       {error && <div className="alert-box error">{error}</div>}
-      <div className="form-group">
-        <label htmlFor="pl-user">Kasutajanimi</label>
-        <input id="pl-user" className="form-input" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
-      </div>
-      <div className="form-group">
-        <label htmlFor="pl-pass">Parool</label>
-        <input id="pl-pass" className="form-input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
-      </div>
-      <div className="form-group">
-        <label htmlFor="pl-code">Autentimisrakenduse kood</label>
-        <input
+      <Field label="Kasutajanimi" htmlFor="pl-user">
+        <Input id="pl-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
+      </Field>
+      <Field label="Parool" htmlFor="pl-pass">
+        <Input id="pl-pass" type="password" value={password} onChange={(e) => setPassword(e.target.value)} autoComplete="current-password" required />
+      </Field>
+      <Field label="Autentimisrakenduse kood" htmlFor="pl-code">
+        <Input
           id="pl-code"
-          className="form-input"
           value={code}
           onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
           inputMode="numeric"
@@ -50,10 +46,10 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
           placeholder="6 numbrit"
           required
         />
-      </div>
-      <button type="submit" className="btn btn-primary" disabled={busy}>
+      </Field>
+      <Button type="submit" variant="primary" disabled={busy}>
         {busy ? 'Sisselogimine…' : 'Logi sisse'}
-      </button>
+      </Button>
     </form></Card>
   );
 }

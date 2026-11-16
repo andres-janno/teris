@@ -1,5 +1,5 @@
 // AI ühenduse juhis: tekst, mille MCP server saadab AI-kliendile ühenduse alguses (kõigile ettevõtetele ühine).
-import { Card } from '../components/ui';
+import { Card, Button, Textarea } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type McpInstructions } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -48,8 +48,8 @@ export function AiInstructionsView() {
       </p>
       {error && <div className="alert-box error">{error}</div>}
       {notice && <div className="alert-box">{notice}</div>}
-      <textarea
-        className="form-input ai-instructions-input"
+      <Textarea
+        className="ai-instructions-input"
         value={draft}
         maxLength={data.maxLength}
         rows={22}
@@ -57,12 +57,12 @@ export function AiInstructionsView() {
       />
       <div className="ai-instructions-footer">
         <span className="muted num">{draft.length} / {data.maxLength}</span>
-        <button type="button" className="btn btn-secondary" disabled={busy || data.isDefault} onClick={() => void run(() => platformApi.resetMcpInstructions(), 'Vaikejuhis taastatud')}>
+        <Button disabled={busy || data.isDefault} onClick={() => void run(() => platformApi.resetMcpInstructions(), 'Vaikejuhis taastatud')}>
           Taasta vaikejuhis
-        </button>
-        <button type="button" className="btn btn-primary" disabled={busy || !dirty || !draft.trim()} onClick={() => void run(() => platformApi.saveMcpInstructions(draft), 'Juhis salvestatud')}>
+        </Button>
+        <Button variant="primary" disabled={busy || !dirty || !draft.trim()} onClick={() => void run(() => platformApi.saveMcpInstructions(draft), 'Juhis salvestatud')}>
           Salvesta
-        </button>
+        </Button>
       </div>
     </Card>
   );

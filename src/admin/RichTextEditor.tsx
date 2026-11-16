@@ -3,6 +3,7 @@
 import { useEffect, useRef, type ReactNode } from 'react';
 import { Bold, Italic, Underline, Heading3, Pilcrow, List, ListOrdered, Link, Unlink, RemoveFormatting } from 'lucide-react';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
+import { Button } from '../components/ui';
 
 type Props = { initialHtml: string; onChange: (html: string) => void; placeholder?: string };
 
@@ -36,16 +37,16 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
   };
 
   const tool = (label: string, icon: ReactNode, fn: () => void) => (
-    <button
-      type="button"
-      className="admin-rte-tool"
+    <Button
+      variant="ghost"
+      size="icon-sm"
       title={label}
       aria-label={label}
       onMouseDown={(e) => e.preventDefault()} // ära võta valikut redaktorist ära
       onClick={run(fn)}
     >
       {icon}
-    </button>
+    </Button>
   );
 
   return (

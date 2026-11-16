@@ -167,7 +167,7 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
 | `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
 | `link-button`, `assign-hint-link` | `<Button variant="link" size="inline">` |
-| `btn-full` | jääb `className="btn-full"` (ainult laius 100%) |
+| `btn-full` | jääb `className="full-width"` (ainult laius 100%) |
 
 Reeglid:
 
@@ -214,3 +214,7 @@ Reeglid:
 - Kaardi (Leaflet) hüpikud ja vihjed (`.leaflet-popup-*`, `.leaflet-tooltip`, `.custom-field-tooltip`) loevad värvi `--popup-*` muutujatest, mis viitavad menüüde omadele (`--bg-modal`, `--border-card`, `--text-primary`). Muuda värvi seal, mitte reeglites.
 - `<Button variant="filter" size="auto">` — päise rohelise pillina nupp (operaatorivalija).
 - Portaalis sisu tunneb ära `closest('[data-radix-popper-content-wrapper], [role="listbox"]')`.
+
+## Admin
+
+Teenusepakkuja admin (`src/admin`) kasutab samu ui komponente. `admin.css` on kihistamata ja võidab utiliite — sinna ainult admini paigutus (päis, nav, vormi read), mitte nupu/tabeli/välja välimus. ui-audit mõõdab admini koos rakendusega; landing on eraldi read.

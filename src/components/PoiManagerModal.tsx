@@ -258,7 +258,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
               <div className="form-header-row">
                 <Button type="button"
-                  size="sm" className="btn-pick-map-highlight"
+                  size="sm" className="pick-map-highlight"
                   onClick={handlePickOnMap}
                   title="Vali täpne asukoht kaardilt klõpsates">
                   <Crosshair size={14} />

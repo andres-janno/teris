@@ -1,7 +1,7 @@
 // src/admin/LandingStatsView.tsx — landing'u külastused, allikad, robotid ja lehter valitud perioodil.
 import { useEffect, useState } from 'react';
 import { platformApi, type LandingStats } from './platformApi.ts';
-import { DateInput, Card } from '../components/ui';
+import { DateInput, Card, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
 
@@ -54,14 +54,14 @@ export function LandingStatsView() {
         <span>Periood</span>
         <div className="admin-preset-group">
           {PRESETS.map((p) => (
-            <button
+            <Button
               key={p.days}
-              type="button"
-              className={`btn btn-sm ${to === today && from === daysAgo(p.days - 1) ? 'btn-primary' : 'btn-secondary'}`}
+              size="sm"
+              variant={to === today && from === daysAgo(p.days - 1) ? 'primary' : 'secondary'}
               onClick={() => applyPreset(p.days)}
             >
               {p.label}
-            </button>
+            </Button>
           ))}
         </div>
         <label htmlFor="ls-from">Alates</label>
@@ -101,48 +101,44 @@ export function LandingStatsView() {
           <VisitsChart daily={stats.daily} from={stats.from.slice(0, 10)} to={stats.to.slice(0, 10)} />
           <details className="admin-details">
             <summary>Näita tabelina</summary>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead><tr><th>Päev</th><th>Külastajad</th><th>Vaatamised</th></tr></thead>
-                <tbody>
-                  {stats.daily.length === 0 && <tr><td colSpan={3}>Külastusi pole</td></tr>}
-                  {stats.daily.map((d) => <tr key={d.day}><td>{formatDate(d.day)}</td><td>{d.visitors}</td><td>{d.views}</td></tr>)}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader><TableRow><TableHead>Päev</TableHead><TableHead numeric>Külastajad</TableHead><TableHead numeric>Vaatamised</TableHead></TableRow></TableHeader>
+              <TableBody>
+                {stats.daily.length === 0 && <TableEmpty colSpan={3}>Külastusi pole</TableEmpty>}
+                {stats.daily.map((d) => <TableRow key={d.day}><TableCell>{formatDate(d.day)}</TableCell><TableCell numeric>{d.visitors}</TableCell><TableCell numeric>{d.views}</TableCell></TableRow>)}
+              </TableBody>
+            </Table>
           </details>
 
           <div className="admin-two-col">
             <div>
               <h3>Allikad</h3>
-              <table className="admin-table">
-                <thead><tr><th>Allikas</th><th>Külastajad</th></tr></thead>
-                <tbody>{stats.sources.map((s) => <tr key={s.source}><td>{s.source}</td><td>{s.visitors}</td></tr>)}</tbody>
-              </table>
+              <Table>
+                <TableHeader><TableRow><TableHead>Allikas</TableHead><TableHead numeric>Külastajad</TableHead></TableRow></TableHeader>
+                <TableBody>{stats.sources.map((s) => <TableRow key={s.source}><TableCell>{s.source}</TableCell><TableCell numeric>{s.visitors}</TableCell></TableRow>)}</TableBody>
+              </Table>
             </div>
             <div>
               <h3>Seadmed</h3>
-              <table className="admin-table">
-                <thead><tr><th>Seade</th><th>Külastajad</th></tr></thead>
-                <tbody>{stats.devices.map((d) => <tr key={d.device}><td>{DEVICE_LABELS[d.device] ?? d.device}</td><td>{d.visitors}</td></tr>)}</tbody>
-              </table>
+              <Table>
+                <TableHeader><TableRow><TableHead>Seade</TableHead><TableHead numeric>Külastajad</TableHead></TableRow></TableHeader>
+                <TableBody>{stats.devices.map((d) => <TableRow key={d.device}><TableCell>{DEVICE_LABELS[d.device] ?? d.device}</TableCell><TableCell numeric>{d.visitors}</TableCell></TableRow>)}</TableBody>
+              </Table>
             </div>
           </div>
 
           <h3>Robotid ja AI-roomajad</h3>
-          <div className="admin-table-wrap">
-            <table className="admin-table">
-              <thead><tr><th>Tüüp</th><th>Nimi</th><th>Päringuid</th><th>llms.txt</th><th>llms.txt viimati</th><th>Viimati</th></tr></thead>
-              <tbody>
-                {stats.bots.length === 0 && <tr><td colSpan={6}>Roboteid pole</td></tr>}
-                {stats.bots.map((b) => (
-                  <tr key={`${b.visitorClass}-${b.botName}`}>
-                    <td>{CLASS_LABELS[b.visitorClass] ?? b.visitorClass}</td><td>{b.botName}</td><td>{b.hits}</td><td>{b.llmsTxtHits}</td><td>{b.llmsTxtLastSeen ? formatTallinn(b.llmsTxtLastSeen) : '–'}</td><td>{formatTallinn(b.lastSeen)}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <Table>
+            <TableHeader><TableRow><TableHead>Tüüp</TableHead><TableHead>Nimi</TableHead><TableHead numeric>Päringuid</TableHead><TableHead numeric>llms.txt</TableHead><TableHead>llms.txt viimati</TableHead><TableHead>Viimati</TableHead></TableRow></TableHeader>
+            <TableBody>
+              {stats.bots.length === 0 && <TableEmpty colSpan={6}>Roboteid pole</TableEmpty>}
+              {stats.bots.map((b) => (
+                <TableRow key={`${b.visitorClass}-${b.botName}`}>
+                  <TableCell>{CLASS_LABELS[b.visitorClass] ?? b.visitorClass}</TableCell><TableCell>{b.botName}</TableCell><TableCell numeric>{b.hits}</TableCell><TableCell numeric>{b.llmsTxtHits}</TableCell><TableCell>{b.llmsTxtLastSeen ? formatTallinn(b.llmsTxtLastSeen) : '–'}</TableCell><TableCell>{formatTallinn(b.lastSeen)}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
         </>
       )}
     </Card>

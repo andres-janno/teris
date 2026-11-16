@@ -1,4 +1,4 @@
-import { Card } from '../components/ui';
+import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type DeviceRegistration, type DeviceRow } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -49,67 +49,63 @@ export function DevicesView() {
       {notice && <div className="alert-box">{notice}</div>}
       {!devices && !error && <div className="admin-muted">Laadin…</div>}
       {devices && (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Ettevõte</th>
-                <th>Tüüp</th>
-                <th>IMEI / MAC</th>
-                <th>Mudel</th>
-                <th>Registreeritud alates</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody>
-              {devices.map((d) => (
-                <tr key={d.id}>
-                  <td>{d.tenantName}</td>
-                  <td>{TYPE_LABEL[d.connectivityType] ?? d.connectivityType}</td>
-                  <td>{[d.imei, d.macAddress].filter(Boolean).join(' / ')}</td>
-                  <td>{d.model}</td>
-                  <td>{formatTallinn(d.ownership?.validFrom ?? d.createdAt)}</td>
-                  <td>
-                    <button type="button" className="btn btn-secondary btn-sm" disabled={busy === d.id} onClick={() => void release(d)}>
-                      Vabasta
-                    </button>
-                  </td>
-                </tr>
-              ))}
-              {devices.length === 0 && (
-                <tr><td colSpan={6} className="admin-muted">Seadmeid pole</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ettevõte</TableHead>
+              <TableHead>Tüüp</TableHead>
+              <TableHead>IMEI / MAC</TableHead>
+              <TableHead>Mudel</TableHead>
+              <TableHead>Registreeritud alates</TableHead>
+              <TableHead></TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {devices.map((d) => (
+              <TableRow key={d.id}>
+                <TableCell>{d.tenantName}</TableCell>
+                <TableCell>{TYPE_LABEL[d.connectivityType] ?? d.connectivityType}</TableCell>
+                <TableCell>{[d.imei, d.macAddress].filter(Boolean).join(' / ')}</TableCell>
+                <TableCell>{d.model}</TableCell>
+                <TableCell>{formatTallinn(d.ownership?.validFrom ?? d.createdAt)}</TableCell>
+                <TableCell>
+                  <Button size="sm" disabled={busy === d.id} onClick={() => void release(d)}>
+                    Vabasta
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))}
+            {devices.length === 0 && (
+              <TableEmpty colSpan={6}>Seadmeid pole</TableEmpty>
+            )}
+          </TableBody>
+        </Table>
       )}
       <h3>Viimased registreerimised</h3>
       {regs && (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Ettevõte</th>
-                <th>Tunnus</th>
-                <th>Kehtib alates</th>
-                <th>Kehtib kuni</th>
-              </tr>
-            </thead>
-            <tbody>
-              {regs.map((r, i) => (
-                <tr key={`${r.identifier}-${r.validFrom}-${i}`}>
-                  <td>{r.tenantName}</td>
-                  <td>{r.kind} {r.identifier}</td>
-                  <td>{formatTallinn(r.validFrom)}</td>
-                  <td>{r.validTo ? formatTallinn(r.validTo) : 'kehtib'}</td>
-                </tr>
-              ))}
-              {regs.length === 0 && (
-                <tr><td colSpan={4} className="admin-muted">Registreerimisi pole</td></tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Ettevõte</TableHead>
+              <TableHead>Tunnus</TableHead>
+              <TableHead>Kehtib alates</TableHead>
+              <TableHead>Kehtib kuni</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {regs.map((r, i) => (
+              <TableRow key={`${r.identifier}-${r.validFrom}-${i}`}>
+                <TableCell>{r.tenantName}</TableCell>
+                <TableCell>{r.kind} {r.identifier}</TableCell>
+                <TableCell>{formatTallinn(r.validFrom)}</TableCell>
+                <TableCell>{r.validTo ? formatTallinn(r.validTo) : 'kehtib'}</TableCell>
+              </TableRow>
+            ))}
+            {regs.length === 0 && (
+              <TableEmpty colSpan={4}>Registreerimisi pole</TableEmpty>
+            )}
+          </TableBody>
+        </Table>
       )}
     </Card>
   );

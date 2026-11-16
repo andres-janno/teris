@@ -183,7 +183,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
               <div className="legend-filter-reset">
                 <Button
                   size="sm"
-                  className="btn-full"
+                  className="full-width"
                   onClick={() => onSelectCropFilter(null)}
                 >
                   <Filter size={11} />

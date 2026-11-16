@@ -1,19 +1,17 @@
 import { useState, type FormEvent } from 'react';
 import { MODULES, platformApi, type LicenseModule } from './platformApi.ts';
-import { DateInput, Card } from '../components/ui';
+import { CheckboxField, DateInput, Card, Button, Field, Input } from '../components/ui';
 
 export function ModuleChecks({ value, onChange }: { value: LicenseModule[]; onChange: (v: LicenseModule[]) => void }) {
   return (
     <div className="admin-checks">
       {MODULES.map((m) => (
-        <label key={m.id}>
-          <input
-            type="checkbox"
-            checked={value.includes(m.id)}
-            onChange={(e) => onChange(e.target.checked ? [...value, m.id] : value.filter((x) => x !== m.id))}
-          />
-          {m.label}
-        </label>
+        <CheckboxField
+          key={m.id}
+          label={m.label}
+          checked={value.includes(m.id)}
+          onCheckedChange={(on) => onChange(on ? [...value, m.id] : value.filter((x) => x !== m.id))}
+        />
       ))}
     </div>
   );
@@ -61,42 +59,35 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
       <h2>Uus ettevõte</h2>
       {error && <div className="alert-box error">{error}</div>}
       <div className="admin-form-grid">
-        <div className="form-group">
-          <label htmlFor="nt-name">Nimi *</label>
-          <input id="nt-name" className="form-input" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="nt-reg">Registrikood</label>
-          <input id="nt-reg" className="form-input" value={registryCode} onChange={(e) => setRegistryCode(e.target.value)} maxLength={20} />
-        </div>
-        <div className="form-group">
-          <label htmlFor="nt-user">Admini kasutajanimi *</label>
-          <input id="nt-user" className="form-input" value={adminUsername} onChange={(e) => setAdminUsername(e.target.value)} autoComplete="off" required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="nt-dn">Admini nimi</label>
-          <input id="nt-dn" className="form-input" value={adminDisplayName} onChange={(e) => setAdminDisplayName(e.target.value)} maxLength={200} />
-        </div>
-        <div className="form-group">
-          <label htmlFor="nt-email">Admini e-post *</label>
-          <input id="nt-email" className="form-input" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label htmlFor="nt-until">Litsents kuni *</label>
+        <Field label="Nimi *" htmlFor="nt-name">
+          <Input id="nt-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required />
+        </Field>
+        <Field label="Registrikood" htmlFor="nt-reg">
+          <Input id="nt-reg" value={registryCode} onChange={(e) => setRegistryCode(e.target.value)} maxLength={20} />
+        </Field>
+        <Field label="Admini kasutajanimi *" htmlFor="nt-user">
+          <Input id="nt-user" value={adminUsername} onChange={(e) => setAdminUsername(e.target.value)} autoComplete="off" required />
+        </Field>
+        <Field label="Admini nimi" htmlFor="nt-dn">
+          <Input id="nt-dn" value={adminDisplayName} onChange={(e) => setAdminDisplayName(e.target.value)} maxLength={200} />
+        </Field>
+        <Field label="Admini e-post *" htmlFor="nt-email">
+          <Input id="nt-email" type="email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} required />
+        </Field>
+        <Field label="Litsents kuni *" htmlFor="nt-until">
           <DateInput id="nt-until" value={validUntil} onChange={setValidUntil} required />
-        </div>
+        </Field>
       </div>
-      <div className="form-group">
-        <span>Moodulid</span>
+      <Field label="Moodulid">
         <ModuleChecks value={modules} onChange={setModules} />
-      </div>
+      </Field>
       <div className="admin-actions">
-        <button type="submit" className="btn btn-primary" disabled={busy}>
+        <Button type="submit" variant="primary" disabled={busy}>
           {busy ? 'Salvestan…' : 'Loo ettevõte'}
-        </button>
-        <button type="button" className="btn btn-secondary" onClick={onCancel} disabled={busy}>
+        </Button>
+        <Button onClick={onCancel} disabled={busy}>
           Tühista
-        </button>
+        </Button>
       </div>
     </form></Card>
   );

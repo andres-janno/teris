@@ -6,7 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
-import { FilterClear, Card } from '../components/ui';
+import { FilterClear, Card, Button, Input } from '../components/ui';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -104,13 +104,13 @@ export function HelpView() {
           <span className="admin-muted">{filledCount}/{knownCount} täidetud</span>
         </div>
         <FilterClear active={!!query} onClear={() => setQuery('')}>
-          <input className="form-input" type="search" placeholder="Otsi…" value={query} onChange={(e) => setQuery(e.target.value)} />
+          <Input type="search" placeholder="Otsi…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </FilterClear>
         <div className="admin-help-filters">
           {(['all', 'filled', 'empty'] as Filter[]).map((f) => (
-            <button key={f} type="button" className={`btn btn-secondary btn-sm ${filter === f ? 'active' : ''}`} onClick={() => setFilter(f)}>
+            <Button key={f} size="sm" aria-pressed={filter === f} onClick={() => setFilter(f)}>
               {f === 'all' ? 'Kõik' : f === 'filled' ? 'Täidetud' : 'Tühjad'}
-            </button>
+            </Button>
           ))}
         </div>
         {!rows && !error && <div className="admin-muted">Laadin…</div>}
@@ -121,13 +121,15 @@ export function HelpView() {
             {items.map((s) => {
               const filled = !!s.row && !isBlank(s.row.html);
               return (
-                <button key={s.key} type="button" className={`admin-help-item ${s.key === selected ? 'is-selected' : ''}`} onClick={() => open(s)}>
-                  <span className={`admin-help-dot ${s.orphan ? 'orphan' : filled ? 'filled' : ''}`} />
-                  <span className="admin-help-item-text">
-                    <span className="admin-help-item-label">{s.label}</span>
-                    <span className="admin-help-item-where">{s.where}</span>
-                  </span>
-                </button>
+                <Card key={s.key} asChild variant="tile" padding="none" interactive selected={s.key === selected} className="admin-help-item">
+                  <button type="button" onClick={() => open(s)}>
+                    <span className={`admin-help-dot ${s.orphan ? 'orphan' : filled ? 'filled' : ''}`} />
+                    <span className="admin-help-item-text">
+                      <span className="admin-help-item-label">{s.label}</span>
+                      <span className="admin-help-item-where">{s.where}</span>
+                    </span>
+                  </button>
+                </Card>
               );
             })}
           </div>
@@ -157,9 +159,9 @@ export function HelpView() {
                 <p className="admin-hint">Seda juhendikohta koodis enam pole, seega rakendus seda ei näita. Sisu:</p>
                 <div className="help-content admin-help-preview" dangerouslySetInnerHTML={{ __html: sanitizeHelp(savedHtml) }} />
                 <div className="admin-card-foot">
-                  <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => window.confirm('Kustuta see juhend?') && void save('')}>
+                  <Button disabled={busy} onClick={() => window.confirm('Kustuta see juhend?') && void save('')}>
                     Kustuta
-                  </button>
+                  </Button>
                 </div>
               </>
             ) : (
@@ -168,13 +170,13 @@ export function HelpView() {
                 <div className="admin-card-foot">
                   {dirty && <span className="admin-muted">Salvestamata muudatused</span>}
                   {current.row && (
-                    <button type="button" className="btn btn-secondary" disabled={busy} onClick={() => window.confirm('Eemalda juhend? Küsimärki rakenduses enam ei näidata.') && void save('')}>
+                    <Button disabled={busy} onClick={() => window.confirm('Eemalda juhend? Küsimärki rakenduses enam ei näidata.') && void save('')}>
                       Eemalda juhend
-                    </button>
+                    </Button>
                   )}
-                  <button type="button" className="btn btn-primary" disabled={busy || !dirty} onClick={() => void save(draft)}>
+                  <Button variant="primary" disabled={busy || !dirty} onClick={() => void save(draft)}>
                     Salvesta
-                  </button>
+                  </Button>
                 </div>
               </>
             )}

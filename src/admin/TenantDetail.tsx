@@ -5,7 +5,7 @@ import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
-import { DateInput, Card } from '../components/ui';
+import { DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -110,9 +110,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
   return (
     <div>
       <div className="admin-toolbar">
-        <button type="button" className="btn btn-secondary" onClick={onBack}>
+        <Button onClick={onBack}>
           ← Ettevõtted
-        </button>
+        </Button>
       </div>
       {error && <div className="alert-box error">{error}</div>}
       {notice && <div className="alert-box">{notice}</div>}
@@ -122,9 +122,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
           <Card className="admin-card">
             <div className="admin-toolbar">
               <h2>{tenant.name} <StatusBadge status={tenant.status} /></h2>
-              <button type="button" className={`btn ${tenant.status === 'ACTIVE' ? 'btn-secondary' : 'btn-primary'}`} onClick={toggleStatus} disabled={busy}>
+              <Button variant={tenant.status === 'ACTIVE' ? 'secondary' : 'primary'} onClick={toggleStatus} disabled={busy}>
                 {tenant.status === 'ACTIVE' ? 'Peata ettevõte' : 'Taasaktiveeri'}
-              </button>
+              </Button>
             </div>
             <div className="admin-meta">
               <div><span>Registrikood</span>{tenant.registryCode ?? '–'}</div>
@@ -149,7 +149,7 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
                   <div className="admin-hint">Tugivaade avaneb uues aknas ainult lugemiseks. Iga sisenemine logitakse ettevõtte poolel.</div>
                 </div>
                 <div className="admin-actions">
-                  <button type="button" className="btn btn-primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</button>
+                  <Button variant="primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</Button>
                 </div>
               </div>
             ) : (
@@ -179,46 +179,44 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
               </div>
             </div>
             <div className="admin-card-foot">
-              <button type="submit" className="btn btn-primary" disabled={busy}>Salvesta litsents</button>
+              <Button type="submit" variant="primary" disabled={busy}>Salvesta litsents</Button>
             </div>
           </form></Card>
 
           <Card className="admin-card">
             <h2>Kasutajad</h2>
-            <div className="admin-table-wrap">
-              <table className="admin-table">
-                <thead>
-                  <tr>
-                    <th>Kasutajanimi</th>
-                    <th>Nimi</th>
-                    <th>E-post</th>
-                    <th>Roll</th>
-                    <th>Olek</th>
-                    <th>Viimane sisselogimine</th>
-                    <th></th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {tenant.users.map((u) => (
-                    <tr key={u.username}>
-                      <td>{u.username}</td>
-                      <td>{u.displayName ?? '–'}</td>
-                      <td>{u.email ?? '–'}</td>
-                      <td>{u.isAdmin ? 'Admin' : 'Kasutaja'}</td>
-                      <td>{!u.isActive ? 'Keelatud' : u.hasPassword ? 'Aktiivne' : 'Kutsutud'}</td>
-                      <td>{formatTallinn(u.lastLoginAt)}</td>
-                      <td>
-                        {!u.hasPassword && u.isActive && (
-                          <button type="button" className="btn btn-secondary btn-sm" disabled={busy || !u.email} onClick={() => void resend(u.username)}>
-                            Saada kutse uuesti
-                          </button>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Kasutajanimi</TableHead>
+                  <TableHead>Nimi</TableHead>
+                  <TableHead>E-post</TableHead>
+                  <TableHead>Roll</TableHead>
+                  <TableHead>Olek</TableHead>
+                  <TableHead>Viimane sisselogimine</TableHead>
+                  <TableHead></TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tenant.users.map((u) => (
+                  <TableRow key={u.username}>
+                    <TableCell>{u.username}</TableCell>
+                    <TableCell>{u.displayName ?? '–'}</TableCell>
+                    <TableCell>{u.email ?? '–'}</TableCell>
+                    <TableCell>{u.isAdmin ? 'Admin' : 'Kasutaja'}</TableCell>
+                    <TableCell>{!u.isActive ? 'Keelatud' : u.hasPassword ? 'Aktiivne' : 'Kutsutud'}</TableCell>
+                    <TableCell>{formatTallinn(u.lastLoginAt)}</TableCell>
+                    <TableCell>
+                      {!u.hasPassword && u.isActive && (
+                        <Button size="sm" disabled={busy || !u.email} onClick={() => void resend(u.username)}>
+                          Saada kutse uuesti
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           </Card>
 
           <Card className="admin-card">
@@ -239,12 +237,12 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
                 <div className="admin-split admin-danger-row">
                   <div className="admin-field">
                     <label className="admin-field-label" htmlFor="td-confirm">Kinnituseks sisesta ettevõtte nimi: <strong>{tenant.name}</strong></label>
-                    <input id="td-confirm" className="form-input" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} autoComplete="off" />
+                    <Input id="td-confirm" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} autoComplete="off" />
                   </div>
                   <div className="admin-actions">
-                    <button type="button" className="btn btn-danger" onClick={() => void deleteTenant()} disabled={busy || confirmName.trim() !== tenant.name.trim()}>
+                    <Button variant="danger" onClick={() => void deleteTenant()} disabled={busy || confirmName.trim() !== tenant.name.trim()}>
                       Kustuta jäädavalt
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </>

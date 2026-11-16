@@ -443,7 +443,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
             <div className="layer-fit-section">
               <Button
                 size="sm"
-                className="btn-full"
+                className="full-width"
                 onClick={onFitAll}
                 title="Kohanda kaardi vaade kõigi aktiivsete kihtide elementide mahutamiseks"
               >

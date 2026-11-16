@@ -429,7 +429,7 @@ function cropSummaryKey(cropText: string): string {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="btn-alert-action"
+                  className="alert-action"
                   onClick={onOpenSeasonManager}
                 >
                   Ava hooajahaldur

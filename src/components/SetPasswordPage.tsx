@@ -59,7 +59,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 <span>{invalid}</span>
               </div>
               <p className="hint-text">Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
-              <Button type="button" variant="primary" className="btn-full login-primary-btn" onClick={onCancel}>Sisselogimise lehele</Button>
+              <Button type="button" variant="primary" className="full-width login-primary-btn" onClick={onCancel}>Sisselogimise lehele</Button>
             </>
           ) : username === null ? (
             <p className="hint-text">Kontrollin linki…</p>
@@ -81,7 +81,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
               <Field label="Korda parooli" htmlFor="sp-repeat">
                 <Input id="sp-repeat" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
               </Field>
-              <Button type="submit" variant="primary" className="btn-full login-primary-btn" disabled={busy}>
+              <Button type="submit" variant="primary" className="full-width login-primary-btn" disabled={busy}>
                 {busy ? <KeyRound size={16} /> : <Check size={16} />}
                 <span>{busy ? 'Salvestan…' : 'Määra parool'}</span>
               </Button>

@@ -4,8 +4,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
-// Landing ja teenusepakkuja admin on eraldi lehed (ülemineku ulatusest väljas); styles/ on teema allikas.
-const EXCLUDE = ['src/landing', 'src/admin', 'src/styles'];
+// Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); styles/ on teema allikas.
+const EXCLUDE = ['src/landing', 'src/styles'];
 
 function walk(dir: string, exclude: string[] = EXCLUDE): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -74,10 +74,7 @@ row(
   r.legacyMenuPopupFiles.map((f) => `${f.path}: ${f.count}`)
 );
 
-// Kaardid (etapp 2.7) hõlmavad ka teenusepakkuja admini (admin-card jt lähevad samuti ui/Card-ile).
-const adminFiles = walk('src/admin', []).map((path) => ({ path, content: readFileSync(path, 'utf8') }));
-const cards = summarize([...files, ...adminFiles]).legacyCardFiles;
-row('Vanu kaarte (tsx+css, sh admin)', cards.reduce((s, f) => s + f.count, 0), cards.map((f) => `${f.path}: ${f.count}`));
+row('Vanu kaarte (tsx+css)', r.legacyCardFiles.reduce((s, f) => s + f.count, 0), r.legacyCardFiles.map((f) => `${f.path}: ${f.count}`));
 
 // Muutujad: kõik CSS-failid (sh admin, landing, styles) ja kõik tsx-id (style-võtmed).
 const allCss = walk('src', []).filter((p) => p.endsWith('.css')).map((p) => readFileSync(p, 'utf8'));
@@ -94,3 +91,10 @@ const unusedRows = ['src/index.css', 'src/admin/admin.css'].flatMap((p) => {
   return [...r.unused.map((c) => `${p}: .${c}`), ...r.dynamic.map((c) => `${p}: .${c} (dünaamiline?)`)];
 });
 row('Kasutuseta klasse (CSS)', unusedRows.filter((r) => !r.endsWith('(dünaamiline?)')).length, unusedRows);
+
+// Landing (avalik leht, oma stiil — ülemineku ulatusest väljas): ainult vanad komponendid ja inline-stiilid.
+const landing = summarize(walk('src/landing', []).map((path) => ({ path, content: readFileSync(path, 'utf8') })));
+const total = (l: { count: number }[]) => l.reduce((s, f) => s + f.count, 0);
+row('Landing: style={{…}} kohti', landing.inlineStyles);
+row('Landing: vanu nupuklasse', total(landing.legacyButtonFiles), landing.legacyButtonFiles.map((f) => `${f.path}: ${f.count}`));
+row('Landing: tooreid vormivälju', total(landing.legacyFormFieldFiles), landing.legacyFormFieldFiles.map((f) => `${f.path}: ${f.count}`));

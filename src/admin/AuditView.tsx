@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { platformApi, type AuditEntry } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
+import { Table, TableEmpty, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 const ACTIONS: Record<string, string> = {
   TENANT_CREATE: 'Ettevõte loodud',
@@ -72,35 +73,35 @@ export function AuditView({ tenantId, tenantNames }: { tenantId?: string; tenant
   }, [tenantId, tenantNames]);
 
   return (
-    <div className="admin-table-wrap">
+    <div>
       {error && <div className="alert-box error">{error}</div>}
       {!rows && !error && <div className="admin-muted">Laadin…</div>}
       {rows && (
-        <table className="admin-table">
-          <thead>
-            <tr>
-              <th>Aeg</th>
-              <th>Tegija</th>
-              <th>Tegevus</th>
-              {!tenantId && <th>Ettevõte</th>}
-              <th>Üksikasjad</th>
-            </tr>
-          </thead>
-          <tbody>
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead>Aeg</TableHead>
+              <TableHead>Tegija</TableHead>
+              <TableHead>Tegevus</TableHead>
+              {!tenantId && <TableHead>Ettevõte</TableHead>}
+              <TableHead>Üksikasjad</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
             {rows.map((r) => (
-              <tr key={r.id}>
-                <td>{formatTallinn(r.createdAt)}</td>
-                <td>{r.platformUsername ?? '–'}</td>
-                <td>{ACTIONS[r.action] ?? r.action}</td>
-                {!tenantId && <td>{r.targetTenantId ? names.get(r.targetTenantId) ?? r.targetTenantId : '–'}</td>}
-                <td>{detailsText(r)}</td>
-              </tr>
+              <TableRow key={r.id}>
+                <TableCell>{formatTallinn(r.createdAt)}</TableCell>
+                <TableCell>{r.platformUsername ?? '–'}</TableCell>
+                <TableCell>{ACTIONS[r.action] ?? r.action}</TableCell>
+                {!tenantId && <TableCell>{r.targetTenantId ? names.get(r.targetTenantId) ?? r.targetTenantId : '–'}</TableCell>}
+                <TableCell>{detailsText(r)}</TableCell>
+              </TableRow>
             ))}
             {rows.length === 0 && (
-              <tr><td colSpan={tenantId ? 4 : 5} className="admin-muted">Kirjeid pole</td></tr>
+              <TableEmpty colSpan={tenantId ? 4 : 5}>Kirjeid pole</TableEmpty>
             )}
-          </tbody>
-        </table>
+          </TableBody>
+        </Table>
       )}
     </div>
   );

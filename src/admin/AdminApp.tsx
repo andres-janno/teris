@@ -1,4 +1,4 @@
-import { Card } from '../components/ui';
+import { Card, Button } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, setUnauthorizedHandler } from './platformApi.ts';
 import { LoginView } from './LoginView.tsx';
@@ -46,39 +46,39 @@ export function AdminApp() {
         <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
         <div className="admin-header-right">
           <span>{user}</span>
-          <button type="button" className="btn btn-secondary btn-sm" onClick={() => void logout()}>
+          <Button size="sm" onClick={() => void logout()}>
             Logi välja
-          </button>
+          </Button>
         </div>
       </header>
       <nav className="admin-nav">
-        <button type="button" className={`btn btn-secondary ${!['audit', 'catalog', 'devices', 'weather', 'help', 'landing', 'interest', 'ai'].includes(view.kind) ? 'active' : ''}`} onClick={() => setView({ kind: 'tenants' })}>
+        <Button size="sm" aria-pressed={!['audit', 'catalog', 'devices', 'weather', 'help', 'landing', 'interest', 'ai'].includes(view.kind)} onClick={() => setView({ kind: 'tenants' })}>
           Ettevõtted
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'catalog' ? 'active' : ''}`} onClick={() => setView({ kind: 'catalog' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'catalog'} onClick={() => setView({ kind: 'catalog' })}>
           Algkataloog
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'devices' ? 'active' : ''}`} onClick={() => setView({ kind: 'devices' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'devices'} onClick={() => setView({ kind: 'devices' })}>
           Seadmed
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'weather' ? 'active' : ''}`} onClick={() => setView({ kind: 'weather' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'weather'} onClick={() => setView({ kind: 'weather' })}>
           Ilm
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'help' ? 'active' : ''}`} onClick={() => setView({ kind: 'help' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'help'} onClick={() => setView({ kind: 'help' })}>
           Juhendid
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'ai' ? 'active' : ''}`} onClick={() => setView({ kind: 'ai' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'ai'} onClick={() => setView({ kind: 'ai' })}>
           AI ühendus
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'landing' ? 'active' : ''}`} onClick={() => setView({ kind: 'landing' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'landing'} onClick={() => setView({ kind: 'landing' })}>
           Landing
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'interest' ? 'active' : ''}`} onClick={() => setView({ kind: 'interest' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'interest'} onClick={() => setView({ kind: 'interest' })}>
           Huvilised
-        </button>
-        <button type="button" className={`btn btn-secondary ${view.kind === 'audit' ? 'active' : ''}`} onClick={() => setView({ kind: 'audit' })}>
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'audit'} onClick={() => setView({ kind: 'audit' })}>
           Logi
-        </button>
+        </Button>
       </nav>
       {view.kind === 'tenants' && <TenantsView notice={view.notice} onOpen={(id) => setView({ kind: 'detail', id })} onNew={() => setView({ kind: 'new' })} />}
       {view.kind === 'new' && (
