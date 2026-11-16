@@ -53,7 +53,7 @@ const LEGACY_BADGE_TAB =
 // FilterSelect). Lubatud toored: <input type="file"> ja <input type="range"> (type esimese atribuudina).
 // Jääb alles valvurina: peab olema 0.
 const LEGACY_FORM_FIELD =
-  /<(input|select|textarea)(?=[\s>/])(?!\s+type="(?:file|range|color)")|(?<![\w-])(form-input|form-group|form-grid|form-row-3|input-split|input-with-unit|search-input|search-box-wrap|auto-resize-textarea|auto-field-input|time-select|users-admin-checkbox|checkbox-label|filter-select-trigger|date-input-btn)(?![\w-])/g;
+  /<(input|select|textarea)(?=[\s>/])(?![^>]*\btype="(?:file|range|color)")|(?<![\w-])(form-input|form-group|form-grid|form-row-3|input-split|input-with-unit|search-input|search-box-wrap|auto-resize-textarea|auto-field-input|time-select|users-admin-checkbox|checkbox-label|filter-select-trigger|date-input-btn)(?![\w-])/g;
 // Käsitsi tehtud menüüd ja hüpikud (etapp 2.6): vanad klassid, käsitsi antud menüürollid ja aria-haspopup.
 // ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0. Leafleti hüpikuklassid (popup-row jms) ei loe.
 const LEGACY_MENU_POPUP =

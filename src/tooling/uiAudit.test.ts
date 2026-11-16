@@ -235,6 +235,7 @@ describe('auditTsx: vanad märgid ja sakid', () => {
     const src = '<input className="form-input" /><select>\n</select><textarea />' +
       '<input type="file" /><input type="range" /><input type="color" /><div className="form-group"><div className="form-grid">';
     expect(auditTsx('<input type="color" />').legacyFormFields).toEqual([]);
+    expect(auditTsx('<input id="a" className="x" type="color" value={v} />').legacyFormFields).toEqual([]);
     expect(auditTsx(src).legacyFormFields).toEqual(['<input>', 'form-input', '<select>', '<textarea>', 'form-group', 'form-grid']);
     const r = summarize([
       { path: 'src/components/A.tsx', content: src },
