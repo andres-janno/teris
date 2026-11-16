@@ -361,7 +361,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                         {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {rec.geometry && (
-                          <Button variant="ghost" size="icon-xs" className="fw-field-shape-btn corner"
+                          <Button variant="ghost" size="icon-xs" wrapperClassName="fw-field-shape-corner"
                             onClick={() => setShapeView({ field, record: rec })}
                             title={`Näita ${selectedYear}. a põllu kuju`}
                           >

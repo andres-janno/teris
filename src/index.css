@@ -4749,7 +4749,7 @@ body {
 }
 
 /* Põllu kuju nupp põllu lahtri paremas ülanurgas */
-.fw-field-shape-btn.corner {
+.fw-field-shape-corner {
   position: absolute;
   top: 6px;
   right: 6px;

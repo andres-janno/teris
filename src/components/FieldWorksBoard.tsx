@@ -180,7 +180,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
       </button>
       {/* Kande kiirlisamine otse kaardilt, ilma töö paneeli avamata */}
       {onAddEntry && (
-        <Button variant="ghost" size="icon-xs" className="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
+        <Button variant="ghost" size="icon-xs" wrapperClassName="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
           <Plus size={12} strokeWidth={2.5} />
         </Button>
       )}
@@ -868,7 +868,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           }}
                         >
                           {/* Põllu kuju nupp lahtri paremas ülanurgas */}
-                          <Button variant="ghost" size="icon-xs" className="fw-field-shape-btn corner"
+                          <Button variant="ghost" size="icon-xs" wrapperClassName="fw-field-shape-corner"
                             title={`Näita ${year}. a põllu kuju`}
                             onClick={(e) => {
                               e.stopPropagation();

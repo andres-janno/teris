@@ -11,10 +11,12 @@ export type ButtonProps = React.ComponentProps<'button'> &
   VariantProps<typeof buttonVariants> & {
     /** Renderda laps (nt <a>) nupu välimusega. */
     asChild?: boolean;
+    /** Ikoonnupu vihje ümbris-span'i klass: nupu asetus (absolute, margin-left:auto) käib ümbrise, mitte nupu külge. */
+    wrapperClassName?: string;
   };
 
 /** Tekstita ikoonnupp (size icon*) + title → rakenduse stiilis vihje natiivse asemel; tekstinupul jääb natiivne title. */
-export const Button: React.FC<ButtonProps> = ({ className, variant, size, asChild = false, type, title, ...props }) => {
+export const Button: React.FC<ButtonProps> = ({ className, variant, size, asChild = false, type, title, wrapperClassName, ...props }) => {
   const Comp = asChild ? Slot.Root : 'button';
   const tip = iconTooltip(size, title, props['aria-label']);
   const button = (
@@ -27,6 +29,6 @@ export const Button: React.FC<ButtonProps> = ({ className, variant, size, asChil
     />
   );
   return tip.tooltip ? (
-    <Tooltip content={tip.tooltip} wrapDisabled /* ümbris alati: disabled vahetudes nupp ei looda uuesti (fookus jääb) */>{button}</Tooltip>
+    <Tooltip content={tip.tooltip} wrapDisabled wrapperClassName={wrapperClassName} /* ümbris alati: disabled vahetudes nupp ei looda uuesti (fookus jääb) */>{button}</Tooltip>
   ) : button;
 };
