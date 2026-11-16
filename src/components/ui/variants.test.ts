@@ -451,12 +451,14 @@ describe('nupuvariandid etapp 3b', () => {
     const t = v.buttonVariants({ variant: 'bare', size: 'inline' }).split(/\s+/);
     expect(t).toContain('bg-transparent');
     expect(t).toContain('rounded-full');
+    expect(t).toContain('border-0');
     expect(t).toContain('enabled:hover:-translate-y-px');
     expect(t).toContain('enabled:hover:brightness-92');
   });
   it('text: roheline tavakaalus tekst ilma allajoonimiseta', () => {
     const t = v.buttonVariants({ variant: 'text', size: 'inline' }).split(/\s+/);
     expect(t).toContain('text-primary');
+    expect(t).toContain('border-0');
     expect(t).toContain('font-normal');
     expect(t).not.toContain('underline');
   });

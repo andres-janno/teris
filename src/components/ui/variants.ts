@@ -48,9 +48,9 @@ export const buttonVariants = cva(
           'border-dashed border-border bg-transparent font-normal text-subtle enabled:hover:border-solid enabled:hover:border-primary enabled:hover:bg-primary enabled:hover:text-white',
         // Nupp, mis ümbritseb muud ui elementi (klõpsatav märk): ise nähtamatu, hõljudes tõuseb ja tumeneb. Kasuta size="inline".
         bare:
-          'rounded-full border-transparent bg-transparent font-normal enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm',
+          'rounded-full border-0 border-transparent bg-transparent font-normal enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm',
         // Tekst nupuna: tavakaalus roheline tekst, ilma allajoonimiseta (hõljumise vihje on vaate asi). Kasuta size="inline".
-        text: 'border-transparent bg-transparent font-normal whitespace-normal text-primary',
+        text: 'border-0 border-transparent bg-transparent font-normal whitespace-normal text-primary',
       },
       size: buttonVariantSizes,
     },

@@ -14,12 +14,12 @@ export type ChipButtonProps = React.ComponentProps<'button'> &
 
 export const ChipButton: React.FC<ChipButtonProps> = ({ className, variant, dimmed, accent, selected = false, type = 'button', style, ...props }) => (
   <button
+    {...props}
     type={type}
     data-slot="chip"
     aria-pressed={selected}
     data-selected={selected ? '' : undefined}
     style={accent ? ({ '--chip-accent': accent, ...style } as React.CSSProperties) : style}
     className={cn(chipVariants({ variant, dimmed }), className)}
-    {...props}
   />
 );
