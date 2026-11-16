@@ -361,14 +361,12 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                         {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {rec.geometry && (
-                          <button
-                            type="button"
-                            className="fw-field-shape-btn corner"
+                          <Button variant="ghost" size="icon-xs" className="fw-field-shape-btn corner"
                             onClick={() => setShapeView({ field, record: rec })}
                             title={`Näita ${selectedYear}. a põllu kuju`}
                           >
                             <Crosshair size={13} />
-                          </button>
+                          </Button>
                         )}
                         <div className="field-title-line">
                           {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}

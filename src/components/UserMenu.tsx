@@ -88,7 +88,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
         </DropdownMenuContent>
       </DropdownMenu>
 
-      <Button size="icon" onClick={onLogout} title="Logi välja" aria-label="Logi välja">
+      <Button size="icon-sm" onClick={onLogout} title="Logi välja" aria-label="Logi välja">
         <LogOut size={16} />
       </Button>
     </div>

@@ -180,9 +180,9 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
       </button>
       {/* Kande kiirlisamine otse kaardilt, ilma töö paneeli avamata */}
       {onAddEntry && (
-        <button type="button" className="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
+        <Button variant="ghost" size="icon-xs" className="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
           <Plus size={12} strokeWidth={2.5} />
-        </button>
+        </Button>
       )}
     </span>
   );
@@ -868,9 +868,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           }}
                         >
                           {/* Põllu kuju nupp lahtri paremas ülanurgas */}
-                          <button
-                            type="button"
-                            className="fw-field-shape-btn corner"
+                          <Button variant="ghost" size="icon-xs" className="fw-field-shape-btn corner"
                             title={`Näita ${year}. a põllu kuju`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -878,7 +876,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             }}
                           >
                             <Crosshair size={13} />
-                          </button>
+                          </Button>
                           <div className="fw-field-title">
                             {row.field.num && <Badge tone="success" variant="outline" size="md">Nr {row.field.num}</Badge>}
                             <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>

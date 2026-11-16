@@ -1,5 +1,5 @@
 // src/components/ui/iconTooltip.ts — otsus: kas nupp saab rakenduse stiilis vihje (ainult tekstita ikoonnupud).
-const ICON_SIZES = new Set(['icon', 'icon-sm', 'icon-xs']);
+const ICON_SIZES = new Set(['icon-xs', 'icon-sm', 'icon-lg']);
 
 export interface IconTooltipDecision {
   /** Vihje tekst (null = vihjet ei ole, nupp jääb ilma Tooltip-ümbriseta). */

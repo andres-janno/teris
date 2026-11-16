@@ -6,6 +6,22 @@ import type { BadgeTone, BadgeVariant } from '../../types/badgeTone';
 
 const focusRing = 'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50';
 
+/** Nupu suurused. Ikoonnupud (kasutaja otsus 2026-11-16): tabel 20px, tööriistariba 28px, esitusnupp 40px. */
+export const buttonVariantSizes = {
+  // Mini-nupp ikooni ja lühikese tekstiga (kiibi/märgi sees: „Vaheta“, „Sim“).
+  xs: 'h-5 gap-1 rounded-sm px-1.5 text-2xs',
+  sm: 'h-7 px-3 text-xs',
+  md: 'h-8 px-4 text-sm',
+  // Lõigu sees: kõrgus ja polster puuduvad, kirjasuurus tuleb ümbritsevast tekstist.
+  inline: 'h-auto p-0 [font-size:inherit]',
+  // Ikoonnupud: 6px nurk nagu vanadel .icon-btn-*; esitusnupp ümmargune.
+  'icon-xs': 'size-5 rounded-sm',
+  'icon-sm': 'size-7 rounded-sm',
+  'icon-lg': 'size-10 rounded-full',
+  // Kõrgus sisu järgi (kahe reaga nupp, nt filter-pill): vana .operator-selector-trigger 6px 12px.
+  auto: 'px-3 py-1.5 text-sm',
+} as const;
+
 export const buttonVariants = cva(
   `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-semibold transition-all cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
   {
@@ -13,29 +29,20 @@ export const buttonVariants = cva(
       variant: {
         primary:
           'border-transparent bg-linear-135 from-primary-from to-primary-to text-white shadow-primary enabled:hover:from-primary-strong enabled:hover:to-primary-from enabled:hover:shadow-primary-hover enabled:hover:-translate-y-px',
-        secondary: 'bg-secondary border-secondary-border text-foreground enabled:hover:bg-secondary-hover',
-        ghost: 'border-transparent bg-transparent text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground',
+        secondary:
+          'bg-secondary border-secondary-border text-foreground enabled:hover:bg-secondary-hover aria-pressed:border-primary/40 aria-pressed:bg-primary/15 aria-pressed:text-success-text',
+        ghost:
+          'border-transparent bg-transparent text-muted-foreground enabled:hover:bg-muted enabled:hover:text-foreground aria-pressed:bg-primary/15 aria-pressed:text-success-text',
         danger: 'border-transparent bg-danger-solid text-white enabled:hover:bg-danger-solid/90',
         // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
         'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
         // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes heledam. Kasuta size="auto".
         filter:
           'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary-hover enabled:hover:shadow-primary-hover',
-        // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): roheline tekst, hõljudes allajoon.
-        link: 'border-transparent bg-transparent text-primary underline-offset-2 enabled:hover:underline',
+        // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): tavakaalus roheline tekst, alati allajoonitud, murdub reaga.
+        link: 'border-transparent bg-transparent font-normal whitespace-normal text-primary underline underline-offset-2',
       },
-      size: {
-        sm: 'h-7 px-3 text-xs',
-        md: 'h-8 px-4 text-sm',
-        // Lõigu sees: kõrgus ja polster puuduvad, kirjasuurus tuleb ümbritsevast tekstist.
-        inline: 'h-auto p-0 [font-size:inherit]',
-        // Ikoonnupud: 6px nurk nagu vanadel .icon-btn-* (tekstinupud 10px).
-        'icon-xs': 'size-5 rounded-sm',
-        'icon-sm': 'size-7 rounded-sm',
-        icon: 'size-8 rounded-sm',
-        // Kõrgus sisu järgi (kahe reaga nupp, nt filter-pill): vana .operator-selector-trigger 6px 12px.
-        auto: 'px-3 py-1.5 text-sm',
-      },
+      size: buttonVariantSizes,
     },
     defaultVariants: { variant: 'secondary', size: 'md' },
   }

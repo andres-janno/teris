@@ -1363,8 +1363,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <span className="tag-text">
                         {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
                       </span>
-                      <button
-                        className="mini-swap-btn"
+                      <Button size="xs"
                         title="Vaheta või eemalda telemeetriaseade"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1373,7 +1372,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       >
                         <RotateCcw size={11} />
                         <span>Vaheta</span>
-                      </button>
+                      </Button>
                     </Badge>
                     )}
 
@@ -1383,8 +1382,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <span className="tag-text">
                         {attachedImplement ? `${attachedImplement.name}${attachedImplement.workingWidthM ? ` (${attachedImplement.workingWidthM}m)` : ''}` : 'Haakeriist puudub'}
                       </span>
-                      <button
-                        className="mini-swap-btn"
+                      <Button size="xs"
                         title="Haagi teine tööriist või eemalda"
                         onClick={(e) => {
                           e.stopPropagation();
@@ -1393,7 +1391,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       >
                         <Link size={11} />
                         <span>Haagi</span>
-                      </button>
+                      </Button>
                     </Badge>
                   </div>
                 </div>

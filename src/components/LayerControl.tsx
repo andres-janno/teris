@@ -109,14 +109,13 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 const mapConfig = BASE_MAPS[id];
                 const isActive = visibility.baseMap === id;
                 return (
-                  <button
+                  <Button size="sm" className="basemap-btn" aria-pressed={isActive}
                     key={id}
-                    className={`basemap-btn ${isActive ? 'active' : ''}`}
                     onClick={() => onSelectBaseMap(id)}
                   >
                     <span className="basemap-name">{mapConfig.name}</span>
                     {isActive && <span className="active-dot"></span>}
-                  </button>
+                  </Button>
                 );
               })}
             </div>
@@ -154,13 +153,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('fields')}
                     title={visibility.fields ? 'Peida' : 'Näita'}
                   >
                     {visibility.fields ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
 
                 {visibility.fields && (
@@ -195,13 +193,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('soilSamples')}
                     title={visibility.soilSamples ? 'Peida' : 'Näita'}
                   >
                     {visibility.soilSamples ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
 
                 {visibility.soilSamples && onSelectSoilMetric && (
@@ -262,13 +259,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('vehicles')}
                     title={visibility.vehicles ? 'Peida' : 'Näita'}
                   >
                     {visibility.vehicles ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
               </Card>
               )}
@@ -291,13 +287,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('cultivation')}
                     title={visibility.cultivation ? 'Peida' : 'Näita'}
                   >
                     {visibility.cultivation ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
 
                 {visibility.cultivation && (
@@ -336,21 +331,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
     
                               <div className="v-indiv-actions">
                                 {onToggleVehicleSimulator && (
-                                  <button
-                                    type="button"
-                                    className={`v-action-btn v-sim-btn ${isSimActive ? 'active' : ''}`}
+                                  <Button size="xs" aria-pressed={isSimActive}
                                     title={isSimActive ? 'Lülita simulaator välja' : `Käivita simulaator (${v.name})`}
                                     onClick={() => onToggleVehicleSimulator(v.id)}
                                   >
                                     <Play size={10} fill={isSimActive ? 'currentColor' : 'none'} />
                                     <span>Sim</span>
-                                  </button>
+                                  </Button>
                                 )}
     
                                 {onToggleTrackVisibility && (
-                                  <button
-                                    type="button"
-                                    className={`v-action-btn v-map-btn ${isTrackVisible ? 'active' : ''}`}
+                                  <Button variant="ghost" size="icon-xs" aria-pressed={isTrackVisible}
                                     title={!hasTrack
                                       ? (isLoadingVehicleTracks ? 'Rada laaditakse…' : 'GPS-rada puudub')
                                       : (isTrackVisible ? `Peida ${v.name} rada` : `Kuva ${v.name} rada`)}
@@ -358,7 +349,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                                     disabled={!hasTrack}
                                   >
                                     {isTrackVisible ? <Eye size={12} /> : <EyeOff size={12} />}
-                                  </button>
+                                  </Button>
                                 )}
                               </div>
                             </div>
@@ -385,13 +376,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('poi')}
                     title={visibility.poi ? 'Peida' : 'Näita'}
                   >
                     {visibility.poi ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
               </Card>
 
@@ -410,13 +400,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('weatherRadar')}
                     title={visibility.weatherRadar ? 'Peida' : 'Näita'}
                   >
                     {visibility.weatherRadar ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
               </Card>
               )}
@@ -436,13 +425,12 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                       </span>
                     }
                   />
-                  <button
-                    className="icon-toggle"
+                  <Button variant="ghost" size="icon-xs"
                     onClick={() => onToggleLayer('satellite')}
                     title={visibility.satellite ? 'Peida' : 'Näita'}
                   >
                     {visibility.satellite ? <Eye size={15} /> : <EyeOff size={15} />}
-                  </button>
+                  </Button>
                 </div>
               </Card>
               )}

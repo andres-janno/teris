@@ -514,14 +514,12 @@ function cropSummaryKey(cropText: string): string {
                     <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                       {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                       {selectedRec?.geometry && (
-                        <button
-                          type="button"
-                          className="fw-field-shape-btn corner"
+                        <Button variant="ghost" size="icon-xs" className="fw-field-shape-btn corner"
                           title={`Näita ${selectedYear}. a põllu kuju`}
                           onClick={() => setShapeView({ fieldId: field.id, year: selectedYear })}
                         >
                           <Crosshair size={13} />
-                        </button>
+                        </Button>
                       )}
                       <div className="field-title-line">
                         {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}
@@ -615,9 +613,7 @@ function cropSummaryKey(cropText: string): string {
                                   ? <span className="year-crop-name" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
                                   : <span className="muted">–</span>}
                                 {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
-                                <button
-                                  type="button"
-                                  className="year-shape-btn"
+                                <Button variant="ghost" size="icon-xs" className="year-shape-btn"
                                   title={`Näita ${yr}. a põllu kuju`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -625,7 +621,7 @@ function cropSummaryKey(cropText: string): string {
                                   }}
                                 >
                                   <Crosshair size={13} />
-                                </button>
+                                </Button>
                               </div>
                               {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
                               {hasCrop && rec.undersowing && rec.undersowing !== 'NONE' && (

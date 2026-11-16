@@ -136,6 +136,8 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 
 ## Nupud: vana → uus
 
+**Ikoonnupu suurused (kasutaja otsus 2026-11-16):** `icon-xs` 20px tabelis/kaardi nurgas, `icon-sm` 28px tööriistaribal ja päises, `icon-lg` 40px esitusnupp (ümmargune). Muud suurust ei lisata.
+
 Üldnupud on ainult `<Button>` (`./ui`). Vanad klassid `btn*`, `icon-btn*` tuleb asendada; `npm run ui-audit` loeb neid kohti.
 
 | Vana | Uus |
@@ -145,10 +147,14 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | `btn btn-ghost` | `<Button variant="ghost">` |
 | `btn btn-danger` | `<Button variant="danger">` |
 | `+ btn-sm` või `+ btn-xs` | `size="sm"` |
-| `btn btn-secondary btn-icon-only` | `<Button size="icon">` |
+| `btn btn-secondary btn-icon-only` | `<Button size="icon-sm">` (oli `icon`) |
 | `icon-btn-ghost`, `icon-btn` | `<Button variant="ghost" size="icon-sm">` |
 | `icon-btn-danger` | `<Button variant="danger-ghost" size="icon-sm">` |
 | `icon-btn-ghost-sm` | `<Button variant="ghost" size="icon-xs">` |
+| `icon-toggle` | `<Button variant="ghost" size="icon-xs">` |
+| `mini-swap-btn`, `v-action-btn` | `<Button size="xs">` |
+| `cc-play` (esitusnupp) | `<Button variant="primary" size="icon-lg">` |
+| valitud olek (`.active`) | `aria-pressed={…}` (mitte `.active`), ghost/secondary näitab rohelist tooni |
 | `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
 | `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
 | `link-button`, `assign-hint-link` | `<Button variant="link" size="inline">` |
@@ -193,7 +199,7 @@ Reeglid:
 - `PopoverAnchor` seab hüpiku asukoha muu elemendi külge.
 - Päästik: `Trigger` alati `asChild` + `Button` (toores `<button>` jääks preflight'i puudumisel halliks brauserinupuks).
 - `collisionPadding` on menüüdel, `PopoverContent`-il ja `Tooltip`-il 8 (Select, DateInput ja FilterSelect kasutavad Radixi vaikimisi väärtust) (ekraani serva ei puudutata); ära kirjuta üle.
-- Vihje: ainult tekstita ikoonnuppudele. `<Button size="icon" title="…">` saab rakenduse vihje automaatselt ja on alati `<span>`-ga ümbritsetud (keelatud nupp ei kaota fookust ega vihjet). Kärbitud tekst ja muu `title=` jäävad brauseri omaks.
+- Vihje: ainult tekstita ikoonnuppudele. `<Button size="icon-sm" title="…">` saab rakenduse vihje automaatselt ja on alati `<span>`-ga ümbritsetud (keelatud nupp ei kaota fookust ega vihjet). Kärbitud tekst ja muu `title=` jäävad brauseri omaks.
 - `TooltipProvider` peab olema igas React juures (`main.tsx`, `admin/main.tsx` ja kinnitusakna oma juur `ConfirmDialog`); uus juur ilma selleta kukub vihjel.
 - Kaardi (Leaflet) hüpikud ja vihjed (`.leaflet-popup-*`, `.leaflet-tooltip`, `.custom-field-tooltip`) loevad värvi `--popup-*` muutujatest, mis viitavad menüüde omadele (`--bg-modal`, `--border-card`, `--text-primary`). Muuda värvi seal, mitte reeglites.
 - `<Button variant="filter" size="auto">` — päise rohelise pillina nupp (operaatorivalija).

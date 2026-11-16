@@ -623,30 +623,7 @@ body {
 }
 
 .basemap-btn {
-  background: var(--stat-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  padding: 8px;
-  font-size: 0.74rem;
-  font-weight: 600;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  transition: all 0.15s;
-}
-
-.basemap-btn:hover {
-  background: var(--stat-bg-hover);
-  color: var(--text-primary);
-}
-
-.basemap-btn.active {
-  background: var(--basemap-active-bg);
-  border-color: var(--basemap-active-border);
-  color: var(--basemap-active-color);
-  font-weight: 700;
+  justify-content: space-between !important; /* Button keskjoondab */
 }
 
 .active-dot {
@@ -773,15 +750,6 @@ body {
   justify-content: space-between;
   font-size: 0.68rem;
   color: var(--text-secondary);
-}
-
-.icon-toggle {
-  background: transparent;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
 }
 
 /* Layer Control Field Year Selector */
@@ -1267,26 +1235,7 @@ body {
 }
 
 .cc-link-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  height: var(--cc-h);
-  padding: 0 10px;
   margin-left: auto;
-  border: 1px solid transparent;
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--tone-success-text);
-  font: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.cc-link-btn:hover {
-  background: rgba(16, 185, 129, 0.1);
-  border-color: rgba(16, 185, 129, 0.3);
 }
 
 /* 3. Mängija */
@@ -1297,54 +1246,8 @@ body {
   min-height: 40px;
 }
 
-.cc-play {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  flex-shrink: 0;
-  border: none;
-  border-radius: 50%;
-  background: var(--emerald-600);
-  color: #ffffff;
-  cursor: pointer;
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.35);
-  transition: transform 0.15s ease, background-color 0.15s ease;
-}
-
-.cc-play:hover:not(:disabled) {
-  background: var(--emerald-500);
-  transform: scale(1.05);
-}
-
 .cc-play-icon {
   margin-left: 2px;
-}
-
-.cc-icon-btn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: var(--cc-h);
-  height: var(--cc-h);
-  flex-shrink: 0;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.cc-icon-btn:hover:not(:disabled) {
-  color: var(--text-primary);
-}
-
-.cc-play:disabled,
-.cc-icon-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  box-shadow: none;
 }
 
 .cc-start {
@@ -1372,20 +1275,6 @@ body {
   padding: 0 !important;
   font-variant-numeric: tabular-nums;
   text-align: center;
-}
-
-.cc-start-reset {
-  display: flex;
-  padding: 2px;
-  border: none;
-  border-radius: 50%;
-  background: transparent;
-  color: var(--text-secondary);
-  cursor: pointer;
-}
-
-.cc-start-reset:hover {
-  color: #ef4444;
 }
 
 .cc-timeline {
@@ -1690,27 +1579,6 @@ body {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-}
-
-.mini-swap-btn {
-  background: var(--btn-sec-bg);
-  border: 1px solid var(--btn-sec-border);
-  color: var(--text-secondary);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 0.68rem;
-  font-weight: 600;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: all 0.15s ease;
-}
-
-.mini-swap-btn:hover {
-  background: var(--btn-sec-hover);
-  color: var(--text-primary);
-  border-color: var(--emerald-500);
 }
 
 .device-unassigned-notice {
@@ -2868,20 +2736,6 @@ body {
 [data-slot="table"] .year-shape-btn {
   margin-left: auto;
   flex-shrink: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-
-[data-slot="table"] .year-shape-btn:hover {
-  color: var(--emerald-500);
-  background: var(--btn-sec-hover);
 }
 
 .field-shape-body {
@@ -3584,58 +3438,6 @@ body {
   align-items: center;
   gap: 4px;
   flex-shrink: 0;
-}
-
-.v-action-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 3px;
-  padding: 3px 6px;
-  font-size: 0.64rem;
-  font-weight: 600;
-  border-radius: 4px;
-  border: 1px solid var(--border-card);
-  background: var(--stat-bg);
-  color: var(--text-secondary);
-  cursor: pointer;
-  transition: all 0.15s ease;
-  line-height: 1;
-}
-
-.v-action-btn:hover {
-  color: var(--text-primary);
-  border-color: var(--border-card);
-  background: var(--stat-bg-hover);
-}
-
-.v-map-btn {
-  padding: 3px 5px;
-}
-
-.v-action-btn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-}
-
-.v-map-btn.active {
-  color: var(--emerald-500);
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-.v-sim-btn.active {
-  color: #ffffff;
-  background: var(--emerald-600);
-  border-color: var(--emerald-500);
-  box-shadow: 0 1px 4px rgba(16, 185, 129, 0.35);
-}
-
-[data-theme='dark'] .v-sim-btn.active {
-  color: #0f172a;
-  background: var(--emerald-400);
-  border-color: var(--emerald-400);
-  font-weight: 800;
 }
 
 /* ==========================================================================
@@ -4998,24 +4800,6 @@ body {
   overflow: hidden;
 }
 
-.fw-field-shape-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.fw-field-shape-btn:hover {
-  color: var(--emerald-500);
-  background: var(--btn-sec-hover);
-}
-
 .fw-field-sub {
   display: flex;
   gap: 6px;
@@ -5128,27 +4912,11 @@ body {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 18px;
-  height: 18px;
-  padding: 0;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  border-radius: 4px;
-  background: transparent;
-  color: var(--text-muted);
-  cursor: pointer;
   opacity: 0.6;
 }
 
 .fw-card-wrap:hover .fw-card-add {
   opacity: 1;
-}
-
-.fw-card-add:hover {
-  background: var(--emerald-500);
-  color: #fff;
 }
 
 .fw-muted {

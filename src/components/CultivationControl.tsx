@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
-import { Card, ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
+import { Button, Card, ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -244,33 +244,27 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         )}
 
         {lastActiveAt && onJumpToLastActive && (
-          <button
-            type="button"
-            className="cc-link-btn"
+          <Button variant="link" size="sm" className="cc-link-btn"
             onClick={onJumpToLastActive}
             title="Ava masina viimase teadaoleva sõidu aeg"
           >
             <Zap size={13} aria-hidden="true" />
             Viimane sõit {formatDate(lastActiveAt)} {formatTimeDisplay(lastActiveAt)}
-          </button>
+          </Button>
         )}
       </div>
 
       {/* 3. Mängija */}
       <div className="cc-player">
-        <button
-          type="button"
-          className="cc-play"
+        <Button variant="primary" size="icon-lg"
           onClick={onTogglePlay}
           disabled={!hasTrack}
           title={isPlaying ? 'Paus' : 'Mängi (alates valitud algusajast)'}
           aria-label={isPlaying ? 'Paus' : 'Mängi'}
         >
           {isPlaying ? <Pause size={18} /> : <Play size={18} className="cc-play-icon" />}
-        </button>
-        <button
-          type="button"
-          className="cc-icon-btn"
+        </Button>
+        <Button size="icon-sm"
           onClick={onReset}
           disabled={!hasTrack && simTimeMode !== 'rolling'}
           title={simTimeMode === 'rolling'
@@ -279,7 +273,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           aria-label={simTimeMode === 'rolling' ? 'Värskenda' : 'Algusesse'}
         >
           <RotateCcw size={16} />
-        </button>
+        </Button>
 
         {isLoading && !hasTrack ? (
           <div className="cc-notice cc-notice-loading" role="status">
@@ -295,9 +289,9 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 : `Viimase ${telemetryHours} h jooksul sõiduandmeid ei leitud.`}
             </span>
             {lastActiveAt && onJumpToLastActive && (
-              <button type="button" className="cc-link-btn" onClick={onJumpToLastActive}>
+              <Button variant="link" size="sm" className="cc-link-btn" onClick={onJumpToLastActive}>
                 Vaata viimast sõitu
-              </button>
+              </Button>
             )}
           </div>
         ) : (
@@ -313,9 +307,9 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 aria-label="Taasesituse alguskellaaeg"
               />
               {isCustomStart && (
-                <button type="button" className="cc-start-reset" onClick={handleResetToOrigin} title="Raja algusesse" aria-label="Lähtesta alguskellaaeg">
+                <Button variant="ghost" size="icon-xs" onClick={handleResetToOrigin} title="Raja algusesse" aria-label="Lähtesta alguskellaaeg">
                   <X size={12} />
-                </button>
+                </Button>
               )}
             </div>
 

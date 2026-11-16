@@ -5,7 +5,7 @@ import * as v from './variants';
 
 const allClassStrings = (): string[] => [
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link'] as const).flatMap((variant) =>
-    (['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const).map((size) => v.buttonVariants({ variant, size }))
+    (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
     (['soft', 'solid', 'outline'] as const).flatMap((variant) =>
@@ -59,18 +59,39 @@ describe('variants', () => {
     expect(c).toContain('bg-transparent');
     expect(c).toContain('hover:bg-destructive/15');
   });
-  it('ikoonnupud on 6px nurgaga (nagu vanad icon-btn), tekstinupud 10px', () => {
-    for (const size of ['icon-xs', 'icon-sm', 'icon'] as const) {
+  it('ikoonnupud: 20px ja 28px 6px nurgaga, 40px ümmargune; tekstinupud 10px', () => {
+    for (const size of ['icon-xs', 'icon-sm'] as const) {
       const c = cn(v.buttonVariants({ size }));
       expect(c, size).toContain('rounded-sm');
       expect(c, size).not.toContain('rounded-md');
     }
-    expect(cn(v.buttonVariants({ size: 'sm' }))).toContain('rounded-md');
     expect(v.buttonVariants({ size: 'icon-xs' })).toContain('size-5');
+    expect(v.buttonVariants({ size: 'icon-sm' })).toContain('size-7');
+    const lg = cn(v.buttonVariants({ variant: 'primary', size: 'icon-lg' }));
+    expect(lg).toContain('size-10');
+    expect(lg).toContain('rounded-full');
+    expect(cn(v.buttonVariants({ size: 'sm' }))).toContain('rounded-md');
+  });
+  it('ikoonnupu suurusi on täpselt kolm (kasutaja otsus 2026-11-16)', () => {
+    const sizes = Object.keys(v.buttonVariantSizes).filter((s) => s.startsWith('icon'));
+    expect(sizes.sort()).toEqual(['icon-lg', 'icon-sm', 'icon-xs']);
+  });
+  it('mini-nupp xs: 20px, 11px kiri, 6px nurk', () => {
+    const c = cn(v.buttonVariants({ size: 'xs' }));
+    expect(c).toContain('h-5');
+    expect(c).toContain('text-2xs');
+    expect(c).toContain('rounded-sm');
+  });
+  it('valitud olek (aria-pressed): roheline toon ghost ja secondary nupul', () => {
+    for (const variant of ['ghost', 'secondary'] as const) {
+      const c = v.buttonVariants({ variant });
+      expect(c, variant).toContain('aria-pressed:bg-primary/15');
+      expect(c, variant).toContain('aria-pressed:text-success-text');
+    }
   });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
     for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link'] as const)
-      for (const size of ['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
+      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border');
         expect(colors, `${variant}/${size}`).toHaveLength(1);
@@ -82,7 +103,7 @@ describe('variants', () => {
   });
   it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
     for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link'] as const)
-      for (const size of ['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
+      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto'] as const) {
         const c = v.buttonVariants({ variant, size });
         const tokens = c.split(/\s+/);
         expect(c, `${variant}/${size}`).not.toContain('pointer-events-none');
@@ -291,12 +312,16 @@ describe('kaart', () => {
 });
 
 describe('link-nupp ja dialoogi päis', () => {
-  it('link: roheline tekst, ilma tausta ja äärisvärvita, hõljudes allajoon', () => {
-    const c = v.buttonVariants({ variant: 'link', size: 'inline' });
+  it('link: roheline tavakaalus tekst, alati allajoonitud, murdub reaga, ilma tausta ja äärisvärvita', () => {
+    const c = cn(v.buttonVariants({ variant: 'link', size: 'inline' }));
     expect(c).toContain('text-primary');
     expect(c).toContain('bg-transparent');
     expect(c).toContain('border-transparent');
-    expect(c).toContain('enabled:hover:underline');
+    expect(c.split(/\s+/)).toContain('underline');
+    expect(c).toContain('underline-offset-2');
+    expect(c).toContain('font-normal');
+    expect(c).not.toContain('font-semibold');
+    expect(c).not.toContain('whitespace-nowrap');
   });
   it('inline: kõrgus ja polster puuduvad, kirjasuurus pärib ümbritsevast tekstist', () => {
     const c = cn(v.buttonVariants({ variant: 'link', size: 'inline' }));

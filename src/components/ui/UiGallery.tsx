@@ -1,7 +1,7 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Lock, Moon, Pencil, Plus, Search, Sun, Trash2, Copy } from 'lucide-react';
+import { Clock, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye } from 'lucide-react';
 import {
   Badge, Button, Card, CardActions, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
@@ -63,10 +63,14 @@ export const UiGallery: React.FC = () => {
           <Button variant="danger"><Trash2 size={14} />Kustuta</Button>
           <Button variant="primary" size="sm">Väike</Button>
           <Button size="sm">Väike</Button>
-          <Button size="icon" aria-label="Muuda"><Pencil size={16} /></Button>
+          <Button size="icon-sm" aria-label="Muuda"><Pencil size={16} /></Button>
           <Button variant="ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
           <Button variant="danger-ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
           <Button variant="ghost" size="icon-xs" aria-label="Muuda"><Pencil size={12} /></Button>
+          <Button variant="primary" size="icon-lg" title="Mängi"><Play size={18} /></Button>
+          <Button size="xs"><RotateCcw size={11} /><span>Vaheta</span></Button>
+          <Button size="xs" aria-pressed>Sim</Button>
+          <Button variant="ghost" size="icon-xs" aria-pressed title="Rada nähtav"><Eye size={12} /></Button>
           <Button variant="primary" disabled>Keelatud</Button>
           <p className="text-sm">Lõigu sees: <Button variant="link" size="inline">ava register</Button></p>
         </Section>
@@ -276,10 +280,10 @@ export const UiGallery: React.FC = () => {
             </DropdownMenuContent>
           </DropdownMenu>
           <Button variant="filter" size="auto">Operaator: Mari</Button>
-          <Button id="gallery-icon-tip" variant="ghost" size="icon" title="Muuda"><Pencil size={16} /></Button>
-          <Button id="gallery-icon-tip-disabled" variant="ghost" size="icon" title="Kustutamine pole võimalik" disabled><Trash2 size={16} /></Button>
+          <Button id="gallery-icon-tip" variant="ghost" size="icon-sm" title="Muuda"><Pencil size={16} /></Button>
+          <Button id="gallery-icon-tip-disabled" variant="ghost" size="icon-sm" title="Kustutamine pole võimalik" disabled><Trash2 size={16} /></Button>
           <DropdownMenu>
-            <DropdownMenuTrigger asChild><Button id="gallery-icon-menu" variant="ghost" size="icon" title="Rohkem"><Copy size={16} /></Button></DropdownMenuTrigger>
+            <DropdownMenuTrigger asChild><Button id="gallery-icon-menu" variant="ghost" size="icon-sm" title="Rohkem"><Copy size={16} /></Button></DropdownMenuTrigger>
             <DropdownMenuContent>
               <DropdownMenuItem><Pencil />Muuda</DropdownMenuItem>
               <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
