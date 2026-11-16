@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField } from './ui';
+import { Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField } from './ui';
 
 interface Option {
   id: string;
@@ -454,8 +454,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                     const isSelected = state !== null;
                     return (
                       <div key={s.id} className="telemetry-suggestion-item">
-                      <button
-                        type="button"
+                      <CardButton
+                        variant="option"
+                        padding="none"
                         className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
                         onClick={() => applySuggestion(s)}
                       >
@@ -492,7 +493,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                           </Badge>
                         </div>
                         {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
-                      </button>
+                      </CardButton>
                       {isSelected && (
                         <Button type="button" size="sm" className="telemetry-pill-unlink" onClick={unlinkTrip}>
                           Eemalda seos

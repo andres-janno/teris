@@ -6,7 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
-import { FilterClear, Card, Button, Input } from '../components/ui';
+import { FilterClear, Card, CardButton, Button, Input } from '../components/ui';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -121,15 +121,13 @@ export function HelpView() {
             {items.map((s) => {
               const filled = !!s.row && !isBlank(s.row.html);
               return (
-                <Card key={s.key} asChild variant="tile" padding="none" interactive selected={s.key === selected} className="admin-help-item">
-                  <button type="button" onClick={() => open(s)}>
-                    <span className={`admin-help-dot ${s.orphan ? 'orphan' : filled ? 'filled' : ''}`} />
-                    <span className="admin-help-item-text">
-                      <span className="admin-help-item-label">{s.label}</span>
-                      <span className="admin-help-item-where">{s.where}</span>
-                    </span>
-                  </button>
-                </Card>
+                <CardButton key={s.key} variant="tile" padding="none" selected={s.key === selected} className="admin-help-item" onClick={() => open(s)}>
+                  <span className={`admin-help-dot ${s.orphan ? 'orphan' : filled ? 'filled' : ''}`} />
+                  <span className="admin-help-item-text">
+                    <span className="admin-help-item-label">{s.label}</span>
+                    <span className="admin-help-item-where">{s.where}</span>
+                  </span>
+                </CardButton>
               );
             })}
           </div>

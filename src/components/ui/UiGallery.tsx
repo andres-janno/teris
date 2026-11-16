@@ -3,7 +3,7 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye } from 'lucide-react';
 import {
-  Badge, Button, Card, CardActions, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+  Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
@@ -383,9 +383,15 @@ export const UiGallery: React.FC = () => {
                 Klõpsatav kaart {id.toUpperCase()} {pickedCard === id ? '(valitud)' : ''}
               </Card>
             ))}
-            <Card asChild variant="tile" padding="sm" interactive selected={pickedCard === 'c'}>
-              <button type="button" onClick={() => setPickedCard('c')}>Plaat nupuna (asChild + button)</button>
-            </Card>
+            <CardButton variant="tile" padding="sm" selected={pickedCard === 'c'} onClick={() => setPickedCard('c')}>
+              Plaat nupuna (CardButton tile)
+            </CardButton>
+            <CardButton variant="item" padding="none" selected={pickedCard === 'd'} onClick={() => setPickedCard('d')} className="px-2 py-1.5 text-sm">
+              Tahvlikaart (item, 6px nurk)
+            </CardButton>
+            <CardButton variant="option" padding="none" selected={pickedCard === 'e'} onClick={() => setPickedCard('e')} className="px-3 py-2 text-sm">
+              Valikurida (option, 10px nurk)
+            </CardButton>
           </div>
           <Panel title="Paneel" actions={<Button size="sm">Tegevus</Button>} className="w-72">Päisega paneel (Panel).</Panel>
         </Section>

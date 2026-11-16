@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
-import { Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
+import { Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -121,9 +121,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                   }
 
                   return (
-                    <button
+                    <CardButton
                       key={w.id}
-                      type="button"
+                      variant="option"
+                      padding="none"
                       className={optionClass}
                       aria-pressed={isAdding}
                       title={isAdding ? 'Kliki, et tühistada lisamine' : 'Kliki, et lisada töö plaanile'}
@@ -137,7 +138,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                         {w.shortName?.trim() && <small className="work-full-name">{w.name}</small>}
                       </span>
                       {tagText && <span className={tagClass}>{tagText}</span>}
-                    </button>
+                    </CardButton>
                   );
                 })}
               </section>

@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea } from './ui';
+import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -485,41 +485,38 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     const isConfirmed = e.financeStatus === 'CONFIRMED';
 
                     return (
-                      <Card key={e.id} asChild variant="tile" padding="sm" interactive selected={isSelected}>
-                        <button
-                          type="button"
-                          className={`finance-entry-card ${e.financeStatus.toLowerCase()}`}
-                          onClick={() => setSelectedEntryId(e.id)}
-                        >
-                          <div className="finance-entry-card-header">
-                            <div className="finance-entry-field-name">
-                              {e.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {e.fieldNum}</Badge>}
-                              <strong>{e.fieldName}</strong>
-                            </div>
-                            <FinanceStatusBadge status={e.financeStatus} />
+                      <CardButton key={e.id} variant="tile" padding="sm" selected={isSelected}
+                        className={`finance-entry-card ${e.financeStatus.toLowerCase()}`}
+                        onClick={() => setSelectedEntryId(e.id)}
+                      >
+                        <div className="finance-entry-card-header">
+                          <div className="finance-entry-field-name">
+                            {e.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {e.fieldNum}</Badge>}
+                            <strong>{e.fieldName}</strong>
                           </div>
+                          <FinanceStatusBadge status={e.financeStatus} />
+                        </div>
 
-                          <div className="finance-entry-card-body">
-                            <div className="finance-entry-work-name">
-                              <span>{e.workTypeName}</span>
-                            </div>
-                            <div className="finance-entry-meta">
-                              <span>{formatDate(e.date)}</span>
-                              {e.areaHa && <span> · {fmtHa(e.areaHa)} ha</span>}
-                              {e.workerName && <span> · {e.workerName}</span>}
-                            </div>
+                        <div className="finance-entry-card-body">
+                          <div className="finance-entry-work-name">
+                            <span>{e.workTypeName}</span>
                           </div>
+                          <div className="finance-entry-meta">
+                            <span>{formatDate(e.date)}</span>
+                            {e.areaHa && <span> · {fmtHa(e.areaHa)} ha</span>}
+                            {e.workerName && <span> · {e.workerName}</span>}
+                          </div>
+                        </div>
 
-                          <div className="finance-entry-card-footer">
-                            <span className="finance-entry-lines-count">
-                              {e.lines?.length || 0} {e.lines?.length === 1 ? 'rida' : 'rida'}
-                            </span>
-                            {isConfirmed && entryCost > 0 && (
-                              <span className="finance-entry-cost">{fmtCur(entryCost)}</span>
-                            )}
-                          </div>
-                        </button>
-                      </Card>
+                        <div className="finance-entry-card-footer">
+                          <span className="finance-entry-lines-count">
+                            {e.lines?.length || 0} {e.lines?.length === 1 ? 'rida' : 'rida'}
+                          </span>
+                          {isConfirmed && entryCost > 0 && (
+                            <span className="finance-entry-cost">{fmtCur(entryCost)}</span>
+                          )}
+                        </div>
+</CardButton>
                     );
                   })}
                 </div>

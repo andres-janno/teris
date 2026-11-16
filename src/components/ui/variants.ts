@@ -150,7 +150,7 @@ export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-
 // Kasutaja otsused 2026-11-15: taust alati tahke (ilma klaasi ja backdrop-filter'ita, ka kaardi peal ujuvatel
 // paneelidel); nurk kaart/paneel 16px, sisemine plaat 10px; üks kaardi vari, ujuv paneel ühe astme võrra
 // tugevam, plaat varjuta. Kaart ei sea teksti värvi (pärib vanemalt); klõpsatav seab, sest <button> ei päri.
-export type CardVariant = 'surface' | 'floating' | 'tile';
+export type CardVariant = 'surface' | 'floating' | 'tile' | 'item' | 'option';
 export type CardPadding = 'none' | 'sm' | 'md';
 
 export const cardVariants = cva('border border-border', {
@@ -162,6 +162,10 @@ export const cardVariants = cva('border border-border', {
       floating: 'rounded-lg bg-card shadow-dialog',
       // Sisemine plaat kaardi/dialoogi sees (KPI, sektsioon, loendikirje): vaikne taust, varjuta.
       tile: 'rounded-md bg-muted',
+      // Valitav tahvlikaart (töökaart): 6px nurk, tahke taust nagu dialoog. Tegelik kuju (polster, laius) tuleb vaate CSS-ist.
+      item: 'rounded-sm bg-popover',
+      // Valitav rida/valik (lisatava töö valik, soovitus): 10px nurk, tahke taust.
+      option: 'rounded-md bg-popover',
     },
     // none: klassi ei anta — vaate CSS-i oma polster (nt väike kaardinäit) jääb kehtima.
     padding: { none: '', sm: 'p-3', md: 'p-4' },
@@ -173,7 +177,12 @@ export const cardVariants = cva('border border-border', {
     selected: { true: 'border-primary ring-1 ring-primary', false: '' },
   },
   // Hõljumisel hele roheline ääris ainult valimata kaardil: valitud kaardi täisäärist ei nõrgendata.
-  compoundVariants: [{ interactive: true, selected: false, className: 'hover:border-primary/50' }],
+  compoundVariants: [
+    { interactive: true, selected: false, className: 'hover:border-primary/50' },
+    // item/option: hõljudes taust ei muutu (vanad kaardid ei muutnud); item'il täisroheline ääris nagu vana .fw-card:hover.
+    { variant: ['item', 'option'], interactive: true, className: 'hover:bg-popover' },
+    { variant: 'item', interactive: true, selected: false, className: 'hover:border-primary' },
+  ],
   defaultVariants: { variant: 'surface', padding: 'md', interactive: false, selected: false },
 });
 

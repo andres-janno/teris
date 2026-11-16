@@ -3,7 +3,7 @@ export { cn } from './cn';
 export { clickOnActivationKey, handleActivationKey, type ActivationKeyEvent } from './keyActivation';
 export { Button, type ButtonProps } from './Button';
 export { Badge, type BadgeProps } from './Badge';
-export { Card, CardHeader, CardTitle, CardActions, Panel, type CardProps } from './Card';
+export { Card, CardButton, CardHeader, CardTitle, CardActions, Panel, type CardProps, type CardButtonProps } from './Card';
 export { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableEmpty } from './Table';
 export { Input, Textarea, type InputProps } from './Input';
 export { Select, type SelectOption } from './Select';

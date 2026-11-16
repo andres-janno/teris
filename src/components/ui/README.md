@@ -188,7 +188,10 @@ Reeglid:
   - `padding`: `md` 16px (vaikimisi), `sm` 12px, `none` (klassi ei anta — vaate CSS-i polster kehtib, nt väike kaardinäit).
   - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `app.css` base-kihist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
   - `interactive` + `onClick` div-kaardil annab `role="button"`, Tab-fookuse ja Enter/tühiku.
-  - `asChild`: `<Card asChild interactive><button type="button">…</button></Card>`, samuti `<form>`, `<section>`.
+  - `asChild`: `<Card asChild><form>…</form></Card>`, samuti `<section>`. Klõpsatavat nuppu `Card asChild` + `<button>` abil ei tehta, selleks on `CardButton`.
+- `<CardButton>` — valitav kaart nupuna (kogu kaart on klõpsatav; `type="button"`, `interactive` alati sees). `variant`: `tile` (loendikirje),
+  `item` (tahvlikaart, 6px, `bg-popover`; hõljudes täisroheline ääris), `option` (valikurida, 10px, `bg-popover`; hõljudes õrn roheline ääris);
+  `padding="none"` korral tuleb polster vaate CSS-ist. `selected` = roheline ääris + rõngas. Vaate olekuäärised (staatus, valitud toon) `!important`-iga.
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
 - Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).
   `Panel` = kaart + päis äärisega + sisu.
@@ -198,9 +201,8 @@ Reeglid:
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
-- Erandid (jäävad oma CSS-iga): `login-card`, `fw-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
-  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`reg-stat-pill`, `register-crop-stat`,
-  `cc-stat`) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `section-title`, `admin-subpanel`, `admin-card-head`,
+- Erandid (jäävad oma CSS-iga): `login-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
+  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `section-title`, `admin-subpanel`, `admin-card-head`,
   `admin-card-foot` kannavad ainult asetust.
 
 ## Menüüd, hüpikud, vihjed

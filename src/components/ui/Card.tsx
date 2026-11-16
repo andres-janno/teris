@@ -33,6 +33,19 @@ export const Card: React.FC<CardProps> = ({
   );
 };
 
+export type CardButtonProps = React.ComponentProps<'button'> & Omit<VariantProps<typeof cardVariants>, 'interactive'>;
+
+/** Valitav kaart nupuna (kogu kaart on klõpsatav): kaardi välimus, klaviatuur ja `type="button"` ühes. Valitud = `selected`. */
+export const CardButton: React.FC<CardButtonProps> = ({ className, variant, padding, selected, type = 'button', ...props }) => (
+  <button
+    type={type}
+    data-slot="card"
+    data-selected={selected ? '' : undefined}
+    className={cn(cardVariants({ variant, padding, interactive: true, selected }), className)}
+    {...props}
+  />
+);
+
 export const CardHeader: React.FC<React.ComponentProps<'div'> & { align?: 'center' | 'start' }> = ({ className, align, ...props }) => (
   <div data-slot="card-header" className={cn(cardHeaderClass({ align }), className)} {...props} />
 );

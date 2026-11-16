@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
 
 interface Option {
   id: string;
@@ -126,9 +126,11 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
 
   return (
     <span className="fw-card-wrap">
-      <button
-        type="button"
-        className={`fw-card ${work.status.toLowerCase()} ${unplanned ? 'unplanned' : ''} ${selected ? 'selected' : ''}`}
+      <CardButton
+        variant="item"
+        padding="none"
+        selected={selected}
+        className={`fw-card ${work.status.toLowerCase()} ${unplanned ? 'unplanned' : ''}`}
         onClick={onSelect}
         aria-label={`${work.workTypeName}, ${STATUS_LABEL[work.status].toLowerCase()}`}
       >
@@ -178,7 +180,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
               : (work.plannedDateFrom ? formatDayMonth(work.plannedDateFrom) : work.plannedText || (work.plannedDateTo ? `– ${formatDayMonth(work.plannedDateTo)}` : 'aeg määramata'))}
           </span>
         )}
-      </button>
+      </CardButton>
       {/* Kande kiirlisamine otse kaardilt, ilma töö paneeli avamata */}
       {onAddEntry && (
         <Button variant="ghost" size="icon-xs" wrapperClassName="fw-card-add" title="Lisa kanne" aria-label={`Lisa kanne: ${work.workTypeName}`} onClick={onAddEntry}>
