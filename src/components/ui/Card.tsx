@@ -41,6 +41,8 @@ export const CardButton: React.FC<CardButtonProps> = ({ className, variant, padd
     type={type}
     data-slot="card"
     data-selected={selected ? '' : undefined}
+    // Valitav olek kuuldavaks; kutsuja enda aria-pressed (…props) võidab.
+    aria-pressed={selected ?? undefined}
     className={cn(cardVariants({ variant, padding, interactive: true, selected }), className)}
     {...props}
   />

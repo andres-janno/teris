@@ -66,9 +66,11 @@ const LEGACY_CARD_TSX = /(?<![\w-])glass-card(?![\w-])/g;
 // Toored <button (etapp 3b): kõik nupud tulevad ui komponentidest. ui/ kausta ei loeta. Lubatud erandid
 // (failitee lõpp → mitu tohib olla): jääb alles valvurina, väljaspool erandeid peab olema 0.
 const RAW_BUTTON = /<button(?=[\s>])/g;
+// Kommentaarid (`/* */`, `{/* */}`, rea lõpu `//`) ei loe; `://` (URL) ja jutumärgi järel olev `//` jääb.
+const stripComments = (src: string): string => src.replace(/\/\*[\s\S]*?\*\//g, '').replace(/(^|[^:\w"'`])\/\/.*$/gm, '$1');
 export const RAW_BUTTON_ALLOWED: Readonly<Record<string, number>> = {
-  'components/LoginPage.tsx': 1, // login-forgot-link: tekstilink sisselogimislehel (kasutaja otsus)
-  'components/MapView.tsx': 1, // Leafleti popup-HTML-string, pole React
+  'src/components/LoginPage.tsx': 1, // login-forgot-link: tekstilink sisselogimislehel (kasutaja otsus)
+  'src/components/MapView.tsx': 1, // Leafleti popup-HTML-string, pole React
 };
 const rawButtonsOverAllowed = (path: string, count: number): number => {
   const key = Object.keys(RAW_BUTTON_ALLOWED).find((k) => path.endsWith(k));
@@ -149,7 +151,7 @@ export function auditTsx(src: string) {
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
     legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
-    rawButtons: (src.match(RAW_BUTTON) ?? []).length,
+    rawButtons: (stripComments(src).match(RAW_BUTTON) ?? []).length,
   };
 }
 

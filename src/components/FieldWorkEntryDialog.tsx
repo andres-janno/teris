@@ -457,6 +457,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                       <CardButton
                         variant="option"
                         padding="none"
+                        aria-pressed={isSelected}
                         className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
                         onClick={() => applySuggestion(s)}
                       >

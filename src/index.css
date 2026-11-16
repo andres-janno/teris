@@ -5381,9 +5381,11 @@ body {
 }
 
 .telemetry-suggestion-pill.selected {
-  background: #ecfdf5 !important;
-  border-color: #059669 !important;
-  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.25);
+  /* sama valitud olek mis .add-work-option.picked (töötab mõlemas teemas) */
+  border-color: #16a34a !important;
+  background: rgba(22, 163, 74, 0.08) !important;
+  box-shadow: none;
+  transform: none;
 }
 
 .telemetry-pill-row {
@@ -5622,11 +5624,6 @@ body {
   background: rgba(22, 163, 74, 0.04) !important;
 }
 
-.add-work-option.disabled {
-  opacity: 0.6;
-  cursor: default;
-}
-
 .add-work-check {
   width: 18px;
   height: 18px;
@@ -5643,10 +5640,6 @@ body {
 .add-work-check.on {
   border: 0;
   background: var(--selection-bg);
-}
-
-.add-work-option.disabled .add-work-check.on {
-  background: #9aa39e;
 }
 
 .add-work-name {

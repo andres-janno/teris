@@ -336,6 +336,15 @@ describe('toored nupud', () => {
     ]);
     expect(r.rawButtonFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
   });
+  it('kommentaarides olev <button ei loe, URL ja string jäävad', () => {
+    const src = '// <button a\n/* <button b */\n{/* <button c */}\nconst u = "https://x"; <button type="button">d</button>';
+    const r = summarize([{ path: 'src/components/B.tsx', content: src }]);
+    expect(r.rawButtonFiles).toEqual([{ path: 'src/components/B.tsx', count: 1 }]);
+  });
+  it('erand kehtib ainult täisteele (src/components/…), mitte samanimelisele failile mujal', () => {
+    const r = summarize([{ path: 'src/admin/components/LoginPage.tsx', content: '<button type="button">' }]);
+    expect(r.rawButtonFiles).toEqual([{ path: 'src/admin/components/LoginPage.tsx', count: 1 }]);
+  });
   it('erand lubab ainult nimetatud arvu: teine toores nupp samas failis loeb', () => {
     const r = summarize([{ path: 'src/components/LoginPage.tsx', content: '<button type="button"><button type="button">' }]);
     expect(r.rawButtonFiles).toEqual([{ path: 'src/components/LoginPage.tsx', count: 1 }]);
