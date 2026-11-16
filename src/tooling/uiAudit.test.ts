@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, legacyCardRules, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
+import { auditCss, auditTsx, legacyCardRules, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -313,5 +313,13 @@ describe('kasutuseta klassid', () => {
   });
   it("dünaamiline eesliide ka 'prefix-' + x kujul", () => {
     expect(unusedCssClasses('.weather-wet { a: 1 }', ["const c = 'weather-' + level;"]).dynamic).toEqual(['weather-wet']);
+  });
+});
+
+describe('skaalavälised väärtused CSS-is', () => {
+  it('kirjasuurus ja vahe väljaspool skaalat; muutujad, 0, auto ja negatiivne skaala ei loe', () => {
+    const r = offScaleCss('.a{font-size:13px;font-size:0.8rem;font-size:15px;padding:4px 14px;margin:-8px 0 auto;gap:var(--g)}');
+    expect(r.fontSizes).toEqual(['0.8rem', '15px']);
+    expect(r.spacing).toEqual(['14px']);
   });
 });

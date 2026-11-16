@@ -2,7 +2,7 @@
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
+import { offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
 // Landing ja teenusepakkuja admin on eraldi lehed (ülemineku ulatusest väljas); styles/ on teema allikas.
 const EXCLUDE = ['src/landing', 'src/admin', 'src/styles'];
@@ -36,6 +36,10 @@ row('Erinevaid värvikoode (CSS)', r.cssColors.length, r.cssColors);
 row('style={{…}} kohti (tsx)', r.inlineStyles);
 row('Värvikoode/rgba (tsx)', r.tsxColors, r.tsxColorFiles.map((f) => `${f.path}: ${f.count}`));
 row('Kirjasuurusi inline (tsx)', r.inlineFontSizes.length, r.inlineFontSizes);
+const cssText = files.filter((f) => f.path.endsWith('.css')).map((f) => f.content).join('\n');
+const off = offScaleCss(cssText);
+row('Skaalaväliseid kirjasuurusi (CSS)', off.fontSizes.length, off.fontSizes);
+row('Skaalaväliseid vahesid (CSS)', off.spacing.length, off.spacing);
 row('Vanu komponendiklasse (CSS)', r.legacyComponentClasses.length, r.legacyComponentClasses);
 row('Keelatud suvalisi klasse (tsx)', r.arbitrary.length, r.arbitrary.map((a) => `${a.path}: ${a.cls}`));
 row('Skaalaväliseid vahe-klasse (tsx)', r.offScaleSpacing.length, r.offScaleSpacing.map((a) => `${a.path}: ${a.cls}`));

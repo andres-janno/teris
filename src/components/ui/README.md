@@ -10,6 +10,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 - Kui vajalikku pole: lisa variant `variants.ts`-i (ja test) või uus komponent siia — mitte vaate-klass.
 - Skaalad: kirjasuurus `text-2xs|xs|sm|base|lg|xl` (11/12/13/14/16/20 px); vahed 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8;
   nurgad `rounded-sm|md|lg|full`.
+- Ka `index.css`-is ainult skaala: kirjasuurus 11/12/13/14/16/20px, nurk `var(--radius-sm|md|lg)` või `9999px`, vahe 2/4/6/8/10/12/16/24/32px (negatiivne samast skaalast). Paigutuse mõõt (> 32px) reegli-sisese muutujana (`--controls-bottom` jms). `npx tsx scripts/css-scale.mts <fail>` viib faili skaalale; `npm run ui-audit` read „Skaalaväliseid …“ peavad olema 0.
 - Suvalised väärtused `text-[…]`, `p-[…]`, `m-[…]`, `gap-[…]`, `rounded-[…]`, `bg-[…]`, `border-[…]` on keelatud
   (`npm run ui-audit` näitab). Suurused (`w-[…]`, `max-h-[…]`) on lubatud.
 - Toores klõpsatav `div`/`span`: `role="button" tabIndex={0} onKeyDown={clickOnActivationKey}` (või kasuta `Button` / `Card interactive` / `TableRow`).

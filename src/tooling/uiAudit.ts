@@ -218,3 +218,15 @@ export function unusedCssClasses(css: string, sources: string[]): { unused: stri
   }
   return { unused, dynamic };
 }
+
+const FONT_SCALE = new Set(['11px', '12px', '13px', '14px', '16px', '20px']);
+const SPACING_SCALE_ABS = new Set(['2px', '4px', '6px', '8px', '10px', '12px', '16px', '24px', '32px']);
+
+/** Skaalavälised kirjasuurused ja vahed (spec: kirjasuurusi ≤ 6, vahed ainult skaalast). */
+export function offScaleCss(css: string): { fontSizes: string[]; spacing: string[] } {
+  const a = auditCss(css);
+  return {
+    fontSizes: uniqueSorted(a.fontSizes.filter((f) => !FONT_SCALE.has(f))),
+    spacing: uniqueSorted(a.spacing.filter((s) => !SPACING_SCALE_ABS.has(s.replace(/^-/, '')))),
+  };
+}
