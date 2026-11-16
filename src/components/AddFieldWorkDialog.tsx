@@ -92,7 +92,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" className="add-work-modal" dismissible={!busy}>
-        <DialogHeader icon={<Plus size={20} className="text-emerald" />} title="Lisa põllule töid" description={fieldLabel} />
+        <DialogHeader icon={<Plus size={20} />} title="Lisa põllule töid" description={fieldLabel} />
         <DialogBody className="add-work-body">
           {phases.map((phase) => {
             const list = workTypes

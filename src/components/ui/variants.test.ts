@@ -4,8 +4,8 @@ import { cn } from './cn';
 import * as v from './variants';
 
 const allClassStrings = (): string[] => [
-  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter'] as const).flatMap((variant) =>
-    (['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const).map((size) => v.buttonVariants({ variant, size }))
+  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link'] as const).flatMap((variant) =>
+    (['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
     (['soft', 'solid', 'outline'] as const).flatMap((variant) =>
@@ -28,6 +28,7 @@ const allClassStrings = (): string[] => [
     )
   ),
   v.cardHeaderClass({ align: 'center' }), v.cardHeaderClass({ align: 'start' }), v.cardTitleClass, v.cardActionsClass,
+  v.dialogHeaderIconClass,
 ];
 
 describe('variants', () => {
@@ -68,8 +69,8 @@ describe('variants', () => {
     expect(v.buttonVariants({ size: 'icon-xs' })).toContain('size-5');
   });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
-      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link'] as const)
+      for (const size of ['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border');
         expect(colors, `${variant}/${size}`).toHaveLength(1);
@@ -80,8 +81,8 @@ describe('variants', () => {
       expect(v.buttonVariants({ variant })).toContain('border-transparent');
   });
   it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost'] as const)
-      for (const size of ['sm', 'md', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link'] as const)
+      for (const size of ['sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon', 'auto'] as const) {
         const c = v.buttonVariants({ variant, size });
         const tokens = c.split(/\s+/);
         expect(c, `${variant}/${size}`).not.toContain('pointer-events-none');
@@ -286,5 +287,25 @@ describe('kaart', () => {
     expect(v.cardHeaderClass({ align: 'center' })).toContain('items-center');
     expect(v.cardHeaderClass({ align: 'start' })).toContain('items-start');
     expect(v.cardActionsClass).toContain('ml-auto');
+  });
+});
+
+describe('link-nupp ja dialoogi päis', () => {
+  it('link: roheline tekst, ilma tausta ja äärisvärvita, hõljudes allajoon', () => {
+    const c = v.buttonVariants({ variant: 'link', size: 'inline' });
+    expect(c).toContain('text-primary');
+    expect(c).toContain('bg-transparent');
+    expect(c).toContain('border-transparent');
+    expect(c).toContain('enabled:hover:underline');
+  });
+  it('inline: kõrgus ja polster puuduvad, kirjasuurus pärib ümbritsevast tekstist', () => {
+    const c = cn(v.buttonVariants({ variant: 'link', size: 'inline' }));
+    expect(c).toContain('h-auto');
+    expect(c).toContain('p-0');
+    expect(c).toContain('[font-size:inherit]');
+  });
+  it('dialoogi päise ikoon on roheline (üks koht kõigile dialoogidele)', () => {
+    expect(v.dialogHeaderIconClass).toContain('text-primary');
+    expect(v.dialogHeaderIconClass).toContain('shrink-0');
   });
 });

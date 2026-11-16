@@ -178,7 +178,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
       {/* Filtrid */}
       <Card padding="sm" className="history-filter-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Filter size={15} className="text-muted" />
+          <Filter size={15} />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
         </div>
 
@@ -347,7 +347,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
         <Dialog open onOpenChange={(open) => { if (!open) onCloseForm(); }}>
           <DialogContent size="lg" className="fleet-edit-modal" dismissible={!submitting}>
             <DialogForm onSubmit={handleSave}>
-              <DialogHeader icon={<Link size={20} className="text-emerald" />} title={editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'} />
+              <DialogHeader icon={<Link size={20} />} title={editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'} />
 
               <DialogBody>
                 {error && (
@@ -389,9 +389,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                     </div>
                     <span className="assign-hint">
                       {endDate ? (
-                        <button type="button" className="assign-hint-link" onClick={() => { setEndDate(''); setEndTime(''); }}>
+                        <Button variant="link" size="inline" onClick={() => { setEndDate(''); setEndTime(''); }}>
                           Tühjenda lõppaeg (seade on praegu paigaldatud)
-                        </button>
+                        </Button>
                       ) : (
                         <span className="assign-hint-active">Lõppaeg tühi — seade on praegu paigaldatud</span>
                       )}

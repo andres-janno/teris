@@ -251,7 +251,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               <DialogContent size="lg" className="poi-edit-modal">
                 <DialogForm onSubmit={handleSubmit}>
                   <DialogHeader
-                    icon={editingId ? <Edit2 size={20} className="text-emerald" /> : <Plus size={20} className="text-emerald" />}
+                    icon={editingId ? <Edit2 size={20} /> : <Plus size={20} />}
                     title={editingId ? `Muuda asukohta: ${name}` : 'Lisa uus asukoht'}
                   />
                   <DialogBody>
@@ -261,7 +261,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                   size="sm" className="btn-pick-map-highlight"
                   onClick={handlePickOnMap}
                   title="Vali täpne asukoht kaardilt klõpsates">
-                  <Crosshair size={14} className="text-emerald" />
+                  <Crosshair size={14} />
                   <span>Vali asukoht kaardilt</span>
                 </Button>
               </div>
@@ -381,7 +381,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           {/* Asukohad kaartidena (sama stiil nagu Tehnika lehel) */}
           {filteredPois.length === 0 ? (
             <div className="empty-state">
-              <Info size={24} className="text-muted" />
+              <Info size={24} />
               <p>Selles kategoorias pole ühtegi asukohta lisatud.</p>
             </div>
           ) : (
@@ -433,11 +433,11 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                     <div className="v-info-rows">
                       {p.description && <div className="v-info-item card-info-text">{p.description}</div>}
                       {p.capacity && (
-                        <div className="v-info-item"><span className="text-muted">Mahutavus:</span> <strong>{p.capacity}</strong></div>
+                        <div className="v-info-item"><span>Mahutavus:</span> <strong>{p.capacity}</strong></div>
                       )}
                       {(p.contactPerson || p.phone) && (
                         <div className="v-info-item">
-                          <span className="text-muted">Kontakt:</span>
+                          <span>Kontakt:</span>
                           <strong>{p.contactPerson || '–'}</strong>
                           {p.phone && (
                             <a href={`tel:${p.phone}`} onClick={(e) => e.stopPropagation()}>{p.phone}</a>
@@ -445,13 +445,13 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                         </div>
                       )}
                       {p.accessNotes && (
-                        <div className="v-info-item"><span className="text-muted">Ligipääs:</span> <span>{p.accessNotes}</span></div>
+                        <div className="v-info-item"><span>Ligipääs:</span> <span>{p.accessNotes}</span></div>
                       )}
-                      <div className="v-info-item text-muted">
+                      <div className="v-info-item">
                         <MapPin size={13} />
                         <span>{p.position[0].toFixed(5)}, {p.position[1].toFixed(5)}</span>
                       </div>
-                      <div className="v-info-item"><span className="text-muted">Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
+                      <div className="v-info-item"><span>Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
                     </div>
                   </Card>
                 );
@@ -466,7 +466,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
       <main className="fullpage-board-main wide">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <MapPin className="text-emerald" size={26} />
+            <MapPin size={26} />
             <div>
               <h2>Taristu</h2>
               <p className="fullpage-subtitle">Kuivatid, veevõtukohad, töökojad, tanklad ja laod</p>

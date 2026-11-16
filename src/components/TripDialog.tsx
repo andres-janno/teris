@@ -141,7 +141,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="fleet-edit-modal trip-dialog" dismissible={!saving}>
-        <DialogHeader icon={<Route size={20} className="text-emerald" />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
+        <DialogHeader icon={<Route size={20} />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
         <DialogBody>
           {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
           <div ref={setMapEl} className="trip-dialog-map" />

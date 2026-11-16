@@ -140,7 +140,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
         <DialogHeader
-          icon={<Wheat size={20} className="text-emerald" />}
+          icon={<Wheat size={20} />}
           title={lot ? `Saagipartii: ${lot.name}` : 'Uus saagipartii'}
           description={lot ? `${lot.cropName} · ${lot.seasonYear} · ${HARVEST_LOT_STATUS_LABEL[lot.status]}` : undefined}
         />

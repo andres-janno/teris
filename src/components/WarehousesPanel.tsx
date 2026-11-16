@@ -111,7 +111,7 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
         <Dialog open onOpenChange={(open) => { if (!open) setForm(null); }}>
           <DialogContent size="md" dismissible={!busy}>
             <DialogForm onSubmit={save}>
-            <DialogHeader icon={<WarehouseIcon size={20} className="text-emerald" />} title={form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'} />
+            <DialogHeader icon={<WarehouseIcon size={20} />} title={form.id ? `Muuda ladu: ${form.name}` : 'Lisa ladu'} />
             <DialogBody>
               <FormGrid>
                 <Field span="full" label="Nimi *" htmlFor="wh-name">

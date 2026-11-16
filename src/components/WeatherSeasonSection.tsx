@@ -6,6 +6,7 @@ import { api } from '../services/api';
 import type { WeatherSeasonReport, WeatherSeasonHistoryRow, WeatherSummary } from '../types/weather';
 import { fmt0, fmt1, WEATHER_SOURCE } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
+import { Button } from './ui';
 
 interface Props {
   fieldSeasonId: number | undefined;
@@ -72,7 +73,7 @@ export const WeatherSeasonSection: React.FC<Props> = ({ fieldSeasonId, year, cro
       {hint && (
         <p className="notes-text">
           {hint}
-          {rep?.reason === 'NO_SEEDING' && onEditSeeding && <> <button type="button" className="link-button" onClick={onEditSeeding}>Sisesta külvikuupäev</button></>}
+          {rep?.reason === 'NO_SEEDING' && onEditSeeding && <> <Button variant="link" size="inline" onClick={onEditSeeding}>Sisesta külvikuupäev</Button></>}
         </p>
       )}
       {(sum || history.length > 0) && (

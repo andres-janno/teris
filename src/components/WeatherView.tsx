@@ -57,7 +57,7 @@ export const WeatherView: React.FC = () => {
       <main className="fullpage-board-main wide">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <CloudSun className="text-blue" size={26} />
+            <CloudSun size={26} />
             <div>
               <h2>Ilm</h2>
               <p className="fullpage-subtitle">Aastate võrdlus ERA5-Landi ilmaandmete põhjal (2015-st)</p>

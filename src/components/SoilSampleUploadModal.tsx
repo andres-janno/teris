@@ -90,7 +90,7 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" dismissible={!isProcessing}>
         <DialogHeader
-          icon={<UploadCloud className="text-emerald" size={24} />}
+          icon={<UploadCloud size={24} />}
           title="Impordi Mullaproovide SHP Fail"
           description="Toetatud on punktikujunditega .ZIP Shapefile arhiivid (WGS84 / EPSG:4326)"
         />
@@ -112,12 +112,12 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
 
             {isProcessing ? (
               <div className="dropzone-state">
-                <RefreshCw size={36} className="animate-spin text-emerald" />
+                <RefreshCw size={36} className="animate-spin" />
                 <p>Töötlen Shapefile faile...</p>
               </div>
             ) : parsedPreview ? (
               <div className="dropzone-state success">
-                <FileArchive size={36} className="text-emerald" />
+                <FileArchive size={36} />
                 <h4>Edukalt parsitud {parsedPreview.length} mullaproovi!</h4>
                 <p>{distinctFields} erinevat massiivi</p>
                 <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>

@@ -177,3 +177,19 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
     ],
   };
 }
+
+// Defineerimata CSS-muutuja: var(--x) on kasutusel, aga --x: pole ühelgi CSS-reeglil ega tsx-i style-võtmena.
+// Brauser ignoreerib siis kogu deklaratsiooni (ääris = currentColor, taust läbipaistev). Radixi ja Tailwindi
+// käitusaja muutujad (--radix-*, --tw-*) ei loe. Varuväärtusega var(--x, y) loeb samuti (varuväärtus peidab vea).
+const VAR_USE = /var\(\s*(--[\w-]+)/g;
+const VAR_DEF_CSS = /(--[\w-]+)\s*:/g;
+const VAR_DEF_TSX = /['"](--[\w-]+)['"]\s*:/g;
+
+export function undefinedCssVars(css: string[], tsx: string[]): string[] {
+  const defined = new Set<string>();
+  for (const c of css) for (const m of c.replace(/var\([^)]*\)/g, '').matchAll(VAR_DEF_CSS)) defined.add(m[1]);
+  for (const t of tsx) for (const m of t.matchAll(VAR_DEF_TSX)) defined.add(m[1]);
+  const used = new Set<string>();
+  for (const c of css) for (const m of c.matchAll(VAR_USE)) used.add(m[1]);
+  return [...used].filter((v) => !defined.has(v) && !/^--(radix|tw)-/.test(v)).sort();
+}

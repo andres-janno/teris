@@ -82,7 +82,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
     <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
       <DialogContent size="md" className="weather-credential-modal" dismissible={!busy}>
         <DialogHeader
-          icon={<CloudSun className="text-emerald" size={22} />}
+          icon={<CloudSun size={22} />}
           title="Ilmaandmete ühendus"
           description="Ilmaandmed tulevad Copernicuse ERA5-Landist. Selleks on vaja ettevõtte Copernicuse konto isiklikku API võtit."
         />

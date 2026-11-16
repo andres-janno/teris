@@ -88,7 +88,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
     <Card variant="floating" className={`layer-control-panel ${isOpen ? 'open' : 'collapsed'}`}>
       <div className="layer-control-header" onClick={() => setIsOpen(!isOpen)}>
         <div className="layer-header-title">
-          <Layers size={18} className="text-emerald" />
+          <Layers size={18} />
           <span>Kaardikihid</span>
         </div>
         <Button variant="ghost" size="icon-sm" title={isOpen ? 'Ahenda' : 'Laienda'}>
@@ -458,7 +458,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 onClick={onFitAll}
                 title="Kohanda kaardi vaade kõigi aktiivsete kihtide elementide mahutamiseks"
               >
-                <Maximize2 size={14} className="text-emerald" />
+                <Maximize2 size={14} />
                 <span>Mahuta valitud kihid ekraanile</span>
               </Button>
             </div>

@@ -555,7 +555,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                       {selectedEntry.financeConfirmedAt && (
                         <div className="finance-confirmed-meta">
-                          <CheckCircle2 size={14} className="text-emerald" />
+                          <CheckCircle2 size={14} />
                           <span>Kinnitatud {formatDate(selectedEntry.financeConfirmedAt)}</span>
                         </div>
                       )}
@@ -589,7 +589,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     <div className="finance-lines-section">
                       <div className="finance-lines-heading">
                         <h5>Kande kulu- ja tuluread</h5>
-                        <span className="text-muted text-xs">Määra ühikuhinnad kulu ja saagitulu arvutamiseks</span>
+                        <span className="text-xs">Määra ühikuhinnad kulu ja saagitulu arvutamiseks</span>
                       </div>
 
                       {lineCalculations.length === 0 ? (
@@ -667,7 +667,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       <div className="finance-notes-box">
                         <label htmlFor="fin-notes" className="finance-notes-label">
                           <span>Finantsmärkmed</span>
-                          <small className="text-muted">(arve nr, palgaviide jne)</small>
+                          <small>(arve nr, palgaviide jne)</small>
                         </label>
                         <Textarea
                           id="fin-notes"
@@ -679,7 +679,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         />
                         {selectedEntry.notes && (
                           <div className="finance-worker-notes">
-                            <span className="text-muted">Töötaja märkus: </span>
+                            <span>Töötaja märkus: </span>
                             <span>{selectedEntry.notes}</span>
                           </div>
                         )}
@@ -687,12 +687,12 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                       <Card variant="tile" padding="sm" className="finance-summary-card">
                         <div className="finance-summary-row">
-                          <span className="text-muted">Kulud kokku:</span>
+                          <span>Kulud kokku:</span>
                           <strong className="cost-neg">{fmtCur(entryCostTotal)}</strong>
                         </div>
                         {entryRevenueTotal > 0 && (
                           <div className="finance-summary-row">
-                            <span className="text-muted">Saagitulu kokku:</span>
+                            <span>Saagitulu kokku:</span>
                             <strong className="profit-pos">+{fmtCur(entryRevenueTotal)}</strong>
                           </div>
                         )}
@@ -733,7 +733,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                   </div>
                 ) : (
                   <div className="finance-no-selection">
-                    <Euro size={32} className="text-muted" />
+                    <Euro size={32} />
                     <p>Vali vasakult nimekirjast kanne, mida hinnastada või kinnitada.</p>
                   </div>
                 )}
@@ -748,7 +748,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 <Card variant="tile" padding="sm" className="finance-kpi-card">
                   <span className="finance-kpi-label">Põllud kokku</span>
                   <div className="finance-kpi-value">
-                    {resultsSummary.fieldCount} <small className="text-muted">põldu</small>
+                    {resultsSummary.fieldCount} <small>põldu</small>
                   </div>
                   <div className="finance-kpi-sub">
                     Pindala: <strong>{fmtHa(resultsSummary.totalArea)} ha</strong>
@@ -789,7 +789,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {/* Status Banner */}
               <Card variant="tile" padding="sm" className="finance-results-status-bar">
                 <div className="finance-confirmed-progress">
-                  <Info size={14} className="text-emerald" />
+                  <Info size={14} />
                   <span>
                     Summades kajastuvad ainult kinnitatud kanded: <strong>{resultsSummary.totalConfirmed}</strong> / {resultsSummary.totalEntries} kannet kinnitatud ({resultsSummary.totalEntries > 0 ? Math.round((resultsSummary.totalConfirmed / resultsSummary.totalEntries) * 100) : 0}%).
                   </span>
@@ -841,7 +841,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {/* Table search & header */}
               <div className="finance-results-toolbar">
                 <SearchInput className="search-field" value={resultsSearch} onChange={setResultsSearch} placeholder="Otsi põllu nime, numbri või kultuuri järgi..." aria-label="Otsi põllu nime, numbri või kultuuri järgi..." />
-                <div className="text-muted text-xs">
+                <div className="text-xs">
                   Klõpsa päisel, et veergu sorteerida. Klõpsa põllul, et avada selle kanded.
                 </div>
               </div>

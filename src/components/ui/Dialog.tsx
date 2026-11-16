@@ -6,7 +6,7 @@ import { Dialog as DialogPrimitive } from 'radix-ui';
 import { X } from 'lucide-react';
 import { cn } from './cn';
 import { Button } from './Button';
-import { dialogContentClass, dialogLayerClass, type DialogLayer, type DialogSize } from './variants';
+import { dialogContentClass, dialogHeaderIconClass, dialogLayerClass, type DialogLayer, type DialogSize } from './variants';
 
 export const Dialog = DialogPrimitive.Root;
 export const DialogTrigger = DialogPrimitive.Trigger;
@@ -102,7 +102,7 @@ export const DialogHeader: React.FC<DialogHeaderProps> = ({ title, description, 
   return (
   <div className="flex items-start justify-between gap-3 border-b border-border px-6 py-4">
     <div className="flex min-w-0 items-center gap-3">
-      {icon && <span className="flex shrink-0 items-center">{icon}</span>}
+      {icon && <span className={dialogHeaderIconClass}>{icon}</span>}
       <div className="min-w-0">
         <DialogPrimitive.Title className="text-lg font-semibold">{title}</DialogPrimitive.Title>
         {description && <DialogPrimitive.Description className="mt-1 text-xs text-muted-foreground">{description}</DialogPrimitive.Description>}

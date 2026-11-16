@@ -51,7 +51,7 @@ export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record,
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="field-shape-modal">
         <DialogHeader
-          icon={<MapIcon className="text-emerald" size={20} />}
+          icon={<MapIcon size={20} />}
           title={title}
           description={`${record.areaHa.toFixed(2)} ha · ${record.crop}${record.cropVariety ? ` (${record.cropVariety})` : ''}`}
         />

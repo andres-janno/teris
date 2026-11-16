@@ -132,7 +132,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
           <DialogContent size="md" className="season-edit-modal">
             <DialogForm onSubmit={handleSaveForm}>
               <DialogHeader
-                icon={editingLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
+                icon={editingLocked ? <Lock size={20} /> : <Edit2 size={20} />}
                 title={
                   editingLocked
                     ? `Lukus hooaeg: ${editingYear}`
@@ -300,7 +300,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
       <main className="fullpage-board-main">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <CalendarDays className="text-emerald" size={26} />
+            <CalendarDays size={26} />
             <div>
               <h2>Hooajad</h2>
               <p className="fullpage-subtitle">Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt.</p>

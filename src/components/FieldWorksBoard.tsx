@@ -679,7 +679,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       <main className="fw-main">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <SquareKanban className="text-emerald" size={26} />
+            <SquareKanban size={26} />
             <div>
               <h2>Põllutööd</h2>
               <p className="fullpage-subtitle">Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine</p>
@@ -691,7 +691,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}
           <div className="year-selector-group">
             <span className="year-label">
-              <Calendar size={15} className="text-blue" />
+              <Calendar size={15} />
               <span>Hooaeg:</span>
             </span>
             <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(year)} onValueChange={(v) => onSelectYear(Number(v))}>

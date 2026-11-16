@@ -141,7 +141,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="xl" className="users-admin-modal" dismissible={!busy}>
-        <DialogHeader icon={<Users className="text-emerald" size={22} />} title="Kasutajad">
+        <DialogHeader icon={<Users size={22} />} title="Kasutajad">
           {!readOnly && (
             <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>
               <UserPlus size={15} />
@@ -243,7 +243,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
         <Dialog open onOpenChange={(open) => { if (!open) { setError(null); setMode({ kind: 'list' }); } }}>
           <DialogContent size="md" dismissible={!busy} className="users-edit-modal">
             <DialogForm id="users-admin-form" onSubmit={submit}>
-              <DialogHeader icon={<FormIcon size={20} className="text-emerald" />} title={formTitle} />
+              <DialogHeader icon={<FormIcon size={20} />} title={formTitle} />
               <DialogBody>
               {error && (
                 <div className="alert-box error">

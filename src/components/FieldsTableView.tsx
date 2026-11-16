@@ -240,7 +240,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
       <main className="fullpage-board-main wide">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <Layers className="text-emerald" size={26} />
+            <Layers size={26} />
             <div>
               <h2>Põllud</h2>
               <p className="fullpage-subtitle">Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator</p>
@@ -253,7 +253,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
             <div className="register-header-controls">
               <div className="year-selector-group">
                 <span className="year-label">
-                  <Calendar size={15} className="text-blue" />
+                  <Calendar size={15} />
                   <span>Hooaeg:</span>
                 </span>
                 <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>

@@ -116,7 +116,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" className="article-form-modal" dismissible={!busy}>
         <DialogForm onSubmit={save}>
-        <DialogHeader icon={<Edit2 size={20} className="text-emerald" />} title={form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'} />
+        <DialogHeader icon={<Edit2 size={20} />} title={form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'} />
         <DialogBody className="article-form-body">
           <FormGrid>
             <Field span="full" label="Nimi *" htmlFor="mt-name">

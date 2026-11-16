@@ -48,7 +48,7 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="stock-card-modal">
-        <DialogHeader icon={<Package size={20} className="text-emerald" />} title={`Laokaart: ${article.name}`} />
+        <DialogHeader icon={<Package size={20} />} title={`Laokaart: ${article.name}`} />
         <DialogBody>
           <div className="register-actions-bar">
             <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>

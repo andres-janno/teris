@@ -357,7 +357,7 @@ function cropSummaryKey(cropText: string): string {
         >
           <span className="lbl">🏛️ Oma maa:</span>
           <strong>{financialSummary.ownedHa} ha</strong>
-          <span className="sub-val text-emerald">({financialSummary.totalTax} €/a maamaks)</span>
+          <span className="sub-val">({financialSummary.totalTax} €/a maamaks)</span>
         </button>
         <button
           type="button"
@@ -368,7 +368,7 @@ function cropSummaryKey(cropText: string): string {
         >
           <span className="lbl">🤝 Rendimaa:</span>
           <strong>{financialSummary.rentedHa} ha</strong>
-          <span className="sub-val text-blue">({financialSummary.totalRent} €/a rent)</span>
+          <span className="sub-val">({financialSummary.totalRent} €/a rent)</span>
         </button>
       </div>
     </>
@@ -381,7 +381,7 @@ function cropSummaryKey(cropText: string): string {
             {/* Year Selector Tabs */}
             <div className="year-selector-group">
               <span className="year-label">
-                <Calendar size={15} className="text-blue" />
+                <Calendar size={15} />
                 <span>Hooaeg:</span>
               </span>
               <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
@@ -654,7 +654,7 @@ function cropSummaryKey(cropText: string): string {
       <main className="fullpage-board-main wide">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <Repeat className="text-emerald" size={26} />
+            <Repeat size={26} />
             <div>
               <h2>Külvikord</h2>
               <p className="fullpage-subtitle">Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>

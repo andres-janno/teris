@@ -54,7 +54,7 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" dismissible={!busy}>
         <DialogForm onSubmit={merge}>
-        <DialogHeader icon={<GitMerge size={20} className="text-emerald" />} title={`Asenda materjal: ${source.name}`} />
+        <DialogHeader icon={<GitMerge size={20} />} title={`Asenda materjal: ${source.name}`} />
         <DialogBody>
           <Field label="Asenda materjaliga *" htmlFor="mm-target">
             <Select

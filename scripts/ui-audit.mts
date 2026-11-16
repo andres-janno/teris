@@ -2,7 +2,7 @@
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { summarize } from '../src/tooling/uiAudit.ts';
+import { summarize, undefinedCssVars } from '../src/tooling/uiAudit.ts';
 
 // Landing ja teenusepakkuja admin on eraldi lehed (ülemineku ulatusest väljas); styles/ on teema allikas.
 const EXCLUDE = ['src/landing', 'src/admin', 'src/styles'];
@@ -66,3 +66,9 @@ row(
 const adminFiles = walk('src/admin', []).map((path) => ({ path, content: readFileSync(path, 'utf8') }));
 const cards = summarize([...files, ...adminFiles]).legacyCardFiles;
 row('Vanu kaarte (tsx+css, sh admin)', cards.reduce((s, f) => s + f.count, 0), cards.map((f) => `${f.path}: ${f.count}`));
+
+// Muutujad: kõik CSS-failid (sh admin, landing, styles; v.a kasutamata Vite malli jääk App.css, mis kustutatakse hilisema ülesandega) ja kõik tsx-id (style-võtmed).
+const allCss = walk('src', []).filter((p) => p.endsWith('.css') && p !== 'src/App.css').map((p) => readFileSync(p, 'utf8'));
+const allTsx = walk('src', []).filter((p) => p.endsWith('.tsx')).map((p) => readFileSync(p, 'utf8'));
+const undefinedVars = undefinedCssVars(allCss, allTsx);
+row('Defineerimata CSS-muutujaid', undefinedVars.length, undefinedVars);

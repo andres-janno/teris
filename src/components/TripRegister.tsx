@@ -136,7 +136,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
 
       <Card padding="sm" className="history-filter-bar">
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Filter size={15} className="text-muted" />
+          <Filter size={15} />
           <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
         </div>
         <FilterClear inline active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>

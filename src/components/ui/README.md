@@ -29,6 +29,8 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   - Toored `<input>` / `<select>` / `<textarea>` on keelatud; erand ainult `<input type="file">` ja `<input type="range">`
     (`type` esimese atribuudina). `npm run ui-audit` rida „Vanu vormivälju (tsx)“ peab jõudma nulli.
 - Numbriveerg tabelis: `numeric` (paremale joondus); kogused `formatQty`.
+- Vaates ei kasutata `text-emerald`/`text-muted`/`text-blue`… — need pole kunagi olnud defineeritud. Värv tuleb ui komponendist
+  või vaate CSS-klassist. `npm run ui-audit` rida „Defineerimata CSS-muutujaid“ peab olema 0.
 - Klassid liida `cn()`-ga (mitte template-stringiga) — see lahendab Tailwindi konfliktid.
 - `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `legacy` on
   `utilities`-ist ees) — eemalda vana reegel.
@@ -41,6 +43,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   `dismissible={false}` keelab mõlemad (sundparool, salvestamine käib).
 - Vorm sisu juurena: `<DialogContent><DialogForm onSubmit>päis, keha, jalus</DialogForm></DialogContent>`.
 - `DialogHeader icon title description` (+ lisanupud lastena; `showClose={false}` peidab sulgemisnupu).
+- Päise ikoon on alati roheline (`dialogHeaderIconClass`); vaade annab ainult ikooni, värvi (`className`) mitte.
 - Hüpikud (kuupäev, otsinguga valik) portaali `usePopupContainer()` elementi, mitte `document.body`-sse.
 - Üleminek: `modal-backdrop`/`modal-content` -> `Dialog`/`DialogContent`; `modal-header` -> `DialogHeader`;
   `modal-body`/`modal-footer` -> `DialogBody`/`DialogFooter`; Esc-kuulaja, taustaklõps, `createPortal`, `sub-modal`
@@ -138,6 +141,7 @@ Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `p
 | `icon-btn-ghost-sm` | `<Button variant="ghost" size="icon-xs">` |
 | `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
 | `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
+| `link-button`, `assign-hint-link` | `<Button variant="link" size="inline">` |
 | `btn-full` | jääb `className="btn-full"` (ainult laius 100%) |
 
 Reeglid:

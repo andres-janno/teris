@@ -80,7 +80,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       {/* Header: Season Title & Stat */}
       <div className="year-widget-header">
         <div className="year-widget-title">
-          <Calendar size={15} className="text-emerald" />
+          <Calendar size={15} />
           <span>Hooaeg:</span>
         </div>
         <div className="year-header-right">
@@ -115,7 +115,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           title={isLegendOpen ? 'Ahenda kultuuride legend' : 'Ava kultuuride legend'}
         >
           <div className="widget-legend-title">
-            <Sprout size={13} className="text-emerald" />
+            <Sprout size={13} />
             <span>Kultuuride jaotus</span>
           </div>
           <Button variant="ghost" size="icon-xs" type="button">

@@ -320,7 +320,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     <DialogContent size="lg" className="field-edit-modal">
     <DialogForm onSubmit={handleSaveEdit}>
       <DialogHeader
-        icon={isEditSeasonLocked ? <Lock size={20} className="text-slate-400" /> : <Edit2 size={20} className="text-emerald" />}
+        icon={isEditSeasonLocked ? <Lock size={20} /> : <Edit2 size={20} />}
         title={`${isEditSeasonLocked ? 'Lukus' : 'Muuda'}: ${editNum ? `Nr ${editNum} ` : ''}${editName || `Põld ${field.id}`} · ${selectedYear}`}
       />
 

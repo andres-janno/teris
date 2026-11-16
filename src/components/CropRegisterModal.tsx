@@ -352,7 +352,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               {onSelectYear && (
                 <>
                   <span className="year-label">
-                    <Calendar size={15} className="text-blue" />
+                    <Calendar size={15} />
                     <span>Hooaeg:</span>
                   </span>
                   <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
@@ -403,7 +403,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             <DialogContent size="lg" className="crop-edit-modal">
             <DialogForm onSubmit={handleSaveCropForm}>
               <DialogHeader
-                icon={<Edit2 size={20} className="text-emerald" />}
+                icon={<Edit2 size={20} />}
                 title={editCropId ? `Muuda kultuuri: ${editCropName}` : 'Lisa uus kultuur'}
               />
 
@@ -584,7 +584,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
             <DialogContent size="lg" className="crop-edit-modal" style={{ borderTop: '4px solid var(--blue-500)' }}>
             <DialogForm onSubmit={handleSaveVarietyForm}>
               <DialogHeader
-                icon={<Tag size={20} className="text-blue" />}
+                icon={<Tag size={20} />}
                 title={editVarietyId ? `Muuda sorti: ${editVarietyName}` : `Lisa sort: ${targetCropForVariety.name}`}
               />
 
@@ -874,7 +874,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
         <main className="fullpage-board-main wide">
           <div className="fullpage-board-header">
             <div className="fullpage-title-wrap">
-              <Sprout className="text-emerald" size={26} />
+              <Sprout size={26} />
               <div>
                 <h2>Kultuurid</h2>
                 <p className="fullpage-subtitle">Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused</p>
@@ -900,7 +900,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="full" className="field-register-modal">
         <DialogHeader
-          icon={<Sprout className="text-emerald" size={24} />}
+          icon={<Sprout size={24} />}
           title="Kultuuride ja Sortide Register"
           description={`Põllukultuurid, sortide alamregistrid, külvinormid ja saagiootused (${stats.totalCrops} kultuuri, ${stats.totalVarieties} sorti)`}
         />

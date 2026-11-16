@@ -245,7 +245,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     <DialogContent size="lg" className="party-edit-modal">
     <DialogForm onSubmit={handleSaveForm}>
       <DialogHeader
-        icon={<Edit2 size={20} className="text-emerald" />}
+        icon={<Edit2 size={20} />}
         title={editId ? `Muuda isikut: ${editName}` : 'Lisa uus seotud isik'}
       />
 
@@ -424,7 +424,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               <div className="reg-stat-pill highlight">
                 <span className="lbl">🏛️ Maaomanikke:</span>
                 <strong>{stats.landownersCount} tk</strong>
-                <span className="sub-val text-emerald">({stats.totalRentedAreaHa} ha seotud maad)</span>
+                <span className="sub-val">({stats.totalRentedAreaHa} ha seotud maad)</span>
               </div>
 
               <div className="reg-stat-pill tenure-owned">
@@ -567,13 +567,13 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                     )}
                     {party.phone && (
                       <a href={`tel:${party.phone}`} className="party-contact-link" title="Helista" onClick={(e) => e.stopPropagation()}>
-                        <Phone size={13} className="text-emerald" />
+                        <Phone size={13} />
                         <span>{party.phone}</span>
                       </a>
                     )}
                     {party.email && (
                       <a href={`mailto:${party.email}`} className="party-contact-link" title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
-                        <Mail size={13} className="text-blue" />
+                        <Mail size={13} />
                         <span>{party.email}</span>
                       </a>
                     )}
@@ -591,7 +591,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
           {filteredParties.length === 0 && (
             <Card padding="none" className="empty-register-state">
-              <AlertCircle size={28} className="text-amber" />
+              <AlertCircle size={28} />
               <h4 style={{ color: 'var(--text-primary)' }}>Otsingule vastavaid isikuid ei leitud</h4>
               <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>Proovi muuta otsingusõna või vali teine rollifilter.</p>
             </Card>
@@ -605,7 +605,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         <main className="fullpage-board-main wide">
           <div className="fullpage-board-header">
             <div className="fullpage-title-wrap">
-              <Users className="text-emerald" size={26} />
+              <Users size={26} />
               <div>
                 <h2>Isikud</h2>
                 <p className="fullpage-subtitle">Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid</p>
@@ -642,7 +642,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="fit" className="field-register-modal parties-register-modal">
         <DialogHeader
-          icon={<Users className="text-emerald" size={24} />}
+          icon={<Users size={24} />}
           title="Seotud isikute register"
           description={`Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid (${parties.length} isikut)`}
         />

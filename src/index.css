@@ -15,6 +15,8 @@
   --stat-bg-hover: rgba(15, 23, 42, 0.08);
   --border-card: rgba(15, 23, 42, 0.12);
   --border-highlight: rgba(22, 163, 74, 0.4);
+  /* Tugevam eraldusjoon (vasak serv); tume teema pärib sama väärtuse */
+  --border-strong: #94a3b8;
 
   --text-primary: #0f172a;
   --text-secondary: #475569;
@@ -323,7 +325,7 @@ body {
 .radar-legend-track {
   height: 4px;
   border-radius: 2px;
-  background: var(--border-subtle);
+  background: var(--border-card);
   overflow: hidden;
 }
 
@@ -814,7 +816,7 @@ body {
   position: relative;
   height: 3px;
   border-radius: 2px;
-  background: var(--border-subtle);
+  background: var(--border-card);
   overflow: hidden;
 }
 
@@ -3212,8 +3214,8 @@ body {
 
 .reg-stat-pill {
   padding: 6px 12px;
-  background: var(--bg-input);
-  border: 1px solid var(--border-color);
+  background: var(--input-bg);
+  border: 1px solid var(--border-card);
   border-radius: var(--radius-md);
   font-size: 0.78rem;
   display: flex;
@@ -3336,7 +3338,7 @@ body {
   color: var(--text-secondary);
   margin-bottom: 8px;
   padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-color);
+  border-bottom: 1px solid var(--border-card);
 }
 
 .field-sub-tags {
@@ -3821,7 +3823,7 @@ body {
   gap: 4px;
   margin-top: 5px;
   padding-top: 5px;
-  border-top: 1px dashed var(--border-subtle);
+  border-top: 1px dashed var(--border-card);
   max-height: 200px;
   overflow-y: auto;
 }
@@ -3917,7 +3919,7 @@ body {
 
 .v-action-btn:hover {
   color: var(--text-primary);
-  border-color: var(--border-subtle);
+  border-color: var(--border-card);
   background: var(--stat-bg-hover);
 }
 
@@ -3946,7 +3948,7 @@ body {
 [data-theme='dark'] .v-sim-btn.active {
   color: #0f172a;
   background: var(--emerald-400);
-  border-color: var(--emerald-300);
+  border-color: var(--emerald-400);
   font-weight: 800;
 }
 
@@ -4057,9 +4059,9 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 8px;
   padding: 10px;
-  background: var(--bg-input);
+  background: var(--input-bg);
   border-radius: var(--radius-sm);
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-card);
 }
 
 .party-role-checkbox {
@@ -4068,7 +4070,7 @@ body {
   font-size: 0.78rem !important;
   padding: 6px 10px;
   border-radius: 6px;
-  border: 1px solid var(--border-color);
+  border: 1px solid var(--border-card);
   background: var(--bg-card);
   transition: all 0.15s ease;
   user-select: none;
@@ -4929,7 +4931,7 @@ body {
 .fw-grid [style*="grid-column: 9 /"],
 .fw-row-container > [style*="grid-column: 5 /"],
 .fw-row-container > [style*="grid-column: 9 /"] {
-  border-left: 3px solid var(--border-strong, #94a3b8) !important;
+  border-left: 3px solid var(--border-strong) !important;
 }
 
 .fw-head-section:first-child,
@@ -5094,7 +5096,7 @@ body {
 }
 
 .fw-row-container:hover {
-  background: color-mix(in srgb, var(--bg-hover) 35%, transparent);
+  background: color-mix(in srgb, var(--stat-bg-hover) 35%, transparent);
 }
 
 .fw-row-container .fw-field {
@@ -5270,7 +5272,7 @@ body {
   justify-content: space-between;
   gap: 12px;
   padding: 8px 14px;
-  background: var(--bg-hover);
+  background: var(--stat-bg-hover);
   border-top: 1px solid var(--border-card);
   border-bottom: 1px solid var(--border-card);
   cursor: pointer;
@@ -5778,7 +5780,7 @@ body {
   width: 30px;
   min-height: 40px;
   border-radius: 7px;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed var(--border-card);
   background: transparent;
   color: var(--text-muted);
   cursor: pointer;
@@ -5980,7 +5982,7 @@ body {
   font-size: 0.78rem;
   color: var(--text-muted);
   padding: 10px 12px;
-  border: 1px dashed var(--border-color);
+  border: 1px dashed var(--border-card);
   border-radius: 8px;
 }
 
@@ -6776,7 +6778,7 @@ body {
   justify-content: space-between;
   font-size: 0.72rem;
   color: var(--text-secondary);
-  border-top: 1px solid var(--border-subtle, rgba(0, 0, 0, 0.05));
+  border-top: 1px solid var(--border-card);
   padding-top: 4px;
   margin-top: 2px;
 }
@@ -7214,20 +7216,6 @@ body {
   color: var(--emerald-500, #10b981);
 }
 
-.assign-hint-link {
-  padding: 0;
-  border: none;
-  background: none;
-  font: inherit;
-  color: var(--text-secondary);
-  text-decoration: underline;
-  cursor: pointer;
-}
-
-.assign-hint-link:hover {
-  color: var(--text-primary);
-}
-
 /* Litsentsi ülariba (aegunud / peatselt aegub) */
 .license-banner {
   flex: 0 0 auto;
@@ -7606,7 +7594,7 @@ td.stock-qty-out { color: #dc2626; }
   align-items: center;
   gap: 4px;
   font-size: 13px;
-  color: var(--amber-600, #d97706);
+  color: var(--amber-500);
 }
 
 /* Sõidu aken: algus/lõpp, põhinumbrid, aja jaotus, lisanäitajad */

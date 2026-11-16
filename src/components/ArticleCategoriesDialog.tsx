@@ -59,7 +59,7 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" className="article-categories-modal">
-        <DialogHeader icon={<Tags size={20} className="text-emerald" />} title="Artikli kategooriad" />
+        <DialogHeader icon={<Tags size={20} />} title="Artikli kategooriad" />
         <DialogBody>
           {ARTICLE_GROUPS.map((g) => (
             <section key={g} className="article-categories-group">

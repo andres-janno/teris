@@ -97,7 +97,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
         <DialogForm onSubmit={save}>
-        <DialogHeader icon={<ArrowRightLeft size={20} className="text-emerald" />} title={`${initial ? 'Muuda: ' : ''}${STOCK_DOC_KIND_LABEL[kind]}`} />
+        <DialogHeader icon={<ArrowRightLeft size={20} />} title={`${initial ? 'Muuda: ' : ''}${STOCK_DOC_KIND_LABEL[kind]}`} />
         <DialogBody>
           <FormGrid>
             <Field label="Kuupäev *" htmlFor="sd-date">

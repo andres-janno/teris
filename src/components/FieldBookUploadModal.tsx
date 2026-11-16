@@ -105,7 +105,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" dismissible={!isSaving && !isProcessing}>
         <DialogHeader
-          icon={<FileSpreadsheet className="text-emerald" size={24} />}
+          icon={<FileSpreadsheet size={24} />}
           title="Impordi põlluraamat"
           description={'e-PRIA "Põlluraamatu väljavõte" (.xls) — iga leht on üks põld'}
         />
@@ -130,12 +130,12 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
             />
             {isProcessing ? (
               <div className="dropzone-state">
-                <RefreshCw size={36} className="animate-spin text-emerald" />
+                <RefreshCw size={36} className="animate-spin" />
                 <p>Loen põlluraamatut...</p>
               </div>
             ) : results ? (
               <div className="dropzone-state success">
-                <FileSpreadsheet size={36} className="text-emerald" />
+                <FileSpreadsheet size={36} />
                 <h4>{results.length} lehte loetud</h4>
                 <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>
               </div>

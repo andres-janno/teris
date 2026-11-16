@@ -21,10 +21,14 @@ export const buttonVariants = cva(
         // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes heledam. Kasuta size="auto".
         filter:
           'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary-hover enabled:hover:shadow-primary-hover',
+        // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): roheline tekst, hõljudes allajoon.
+        link: 'border-transparent bg-transparent text-primary underline-offset-2 enabled:hover:underline',
       },
       size: {
         sm: 'h-7 px-3 text-xs',
         md: 'h-8 px-4 text-sm',
+        // Lõigu sees: kõrgus ja polster puuduvad, kirjasuurus tuleb ümbritsevast tekstist.
+        inline: 'h-auto p-0 [font-size:inherit]',
         // Ikoonnupud: 6px nurk nagu vanadel .icon-btn-* (tekstinupud 10px).
         'icon-xs': 'size-5 rounded-sm',
         'icon-sm': 'size-7 rounded-sm',
@@ -170,6 +174,9 @@ export const cardHeaderClass = ({ align = 'center' }: { align?: 'center' | 'star
   cn('flex justify-between gap-3', align === 'start' ? 'items-start' : 'items-center');
 export const cardTitleClass = 'm-0 text-base font-semibold';
 export const cardActionsClass = 'ml-auto flex shrink-0 items-center gap-1';
+
+/** Dialoogi päise ikoon: alati põhivärv (kasutaja otsus 2026-11-16) — vaade annab ainult ikooni, mitte värvi. */
+export const dialogHeaderIconClass = 'flex shrink-0 items-center text-primary';
 
 const DIALOG_SIZES = {
   sm: 'w-[min(440px,94vw)]',

@@ -819,7 +819,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
           <DialogContent size="lg" className="fleet-edit-modal">
             <DialogForm onSubmit={handleCreateVehicle}>
-              <DialogHeader icon={<Tractor size={20} className="text-emerald" />} title={editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'} />
+              <DialogHeader icon={<Tractor size={20} />} title={editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'} />
 
               <DialogBody>
 
@@ -961,7 +961,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
           <DialogContent size="lg" className="fleet-edit-modal">
             <DialogForm onSubmit={handleCreateImplement}>
-              <DialogHeader icon={<Wrench size={20} className="text-emerald" />} title={editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'} />
+              <DialogHeader icon={<Wrench size={20} />} title={editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'} />
 
               <DialogBody>
 
@@ -1070,7 +1070,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
           <DialogContent size="lg" className="fleet-edit-modal" dismissible={!devSaving}>
             <DialogForm onSubmit={handleCreateDevice}>
-              <DialogHeader icon={<Radio size={20} className="text-emerald" />} title={editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'} />
+              <DialogHeader icon={<Radio size={20} />} title={editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'} />
 
               <DialogBody>
 
@@ -1181,7 +1181,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
           <DialogContent size="lg" className="fleet-edit-modal" dismissible={!assignmentSubmitting}>
             <DialogForm onSubmit={handleSaveAssignment}>
-              <DialogHeader icon={<Link size={20} className="text-emerald" />} title={editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'} />
+              <DialogHeader icon={<Link size={20} />} title={editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'} />
 
               <DialogBody>
                 {assignmentError && (
@@ -1250,9 +1250,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                     <span className="assign-hint">
                       {assignEndDate ? (
-                        <button type="button" className="assign-hint-link" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
+                        <Button variant="link" size="inline" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
                           Tühjenda lõppaeg (haakeriist on praegu küljes)
-                        </button>
+                        </Button>
                       ) : (
                         <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
                       )}
@@ -1359,7 +1359,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     {/* Device Badge */}
                     {telemetryEnabled && (
                     <Badge size="md" className="equipment-slot">
-                      <Radio size={12} className="text-blue" />
+                      <Radio size={12} />
                       <span className="tag-text">
                         {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
                       </span>
@@ -1379,7 +1379,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                     {/* Implement Badge */}
                     <Badge size="md" className="equipment-slot">
-                      <Wrench size={12} className="text-emerald" />
+                      <Wrench size={12} />
                       <span className="tag-text">
                         {attachedImplement ? `${attachedImplement.name}${attachedImplement.workingWidthM ? ` (${attachedImplement.workingWidthM}m)` : ''}` : 'Haakeriist puudub'}
                       </span>
@@ -1417,7 +1417,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 {installedDevice ? (
                   <div className="v-gauges-grid">
                     <div className="gauge-item">
-                      <Gauge size={14} className="text-blue" />
+                      <Gauge size={14} />
                       <div className="gauge-text">
                         <span className="gauge-lbl">Kiirus</span>
                         <strong>{v.speedKmH.toFixed(1)} km/h</strong>
@@ -1425,7 +1425,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
 
                     <div className="gauge-item">
-                      <Fuel size={14} className="text-amber" />
+                      <Fuel size={14} />
                       <div className="gauge-text">
                         <span className="gauge-lbl">Kütus</span>
                         <strong>{v.telemetry.fuelLevelPct}%</strong>
@@ -1433,7 +1433,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
 
                     <div className="gauge-item">
-                      <Battery size={14} className="text-emerald" />
+                      <Battery size={14} />
                       <div className="gauge-text">
                         <span className="gauge-lbl">Aku</span>
                         <strong>{v.telemetry.batteryVoltage} V</strong>
@@ -1441,7 +1441,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
 
                     <div className="gauge-item">
-                      <Activity size={14} className="text-purple" />
+                      <Activity size={14} />
                       <div className="gauge-text">
                         <span className="gauge-lbl">Pöörded</span>
                         <strong>{v.telemetry.engineRpm || 0} rpm</strong>
@@ -1450,7 +1450,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 ) : (
                   <div className="device-unassigned-notice">
-                    <Info size={14} className="text-muted" />
+                    <Info size={14} />
                     <span>Telemeetriaseade paigaldamata. Telemeetria puudub.</span>
                   </div>
                 )}
@@ -1531,7 +1531,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Card variant="tile" padding="sm" className="imp-status-box">
                   {assignedVehicle ? (
                     <div className="attached-status attached">
-                      <Tractor size={14} className="text-emerald" />
+                      <Tractor size={14} />
                       <span>Haagitud masinale: <strong>{assignedVehicle.name}</strong></span>
                     </div>
                   ) : (
@@ -1544,27 +1544,27 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
                 {imp.registrationPlate && (
                   <div className="imp-serial-row">
-                    <span className="text-muted">Registrinumber:</span>
+                    <span>Registrinumber:</span>
                     <code>{imp.registrationPlate}</code>
                   </div>
                 )}
 
                 {imp.serialNumber && (
                   <div className="imp-serial-row">
-                    <span className="text-muted">VIN / Seerianumber:</span>
+                    <span>VIN / Seerianumber:</span>
                     <code>{imp.serialNumber}</code>
                   </div>
                 )}
 
                 <div className="imp-serial-row">
-                  <span className="text-muted">Andur:</span>
+                  <span>Andur:</span>
                   {attachedDevice ? (
-                    <span className="text-emerald" style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
                       <Activity size={12} />
                       {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
                     </span>
                   ) : (
-                    <span className="text-muted">Andur puudub</span>
+                    <span>Andur puudub</span>
                   )}
                 </div>
 
@@ -1623,7 +1623,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
               <Card key={dev.id} padding="sm" className={`device-card ${fresh.cls}`}>
                 <div className="dev-card-header">
                   <div className="dev-icon-wrap">
-                    {isEyeSensor ? <Activity size={20} className="text-emerald" /> : <Radio size={20} className="text-blue" />}
+                    {isEyeSensor ? <Activity size={20} /> : <Radio size={20} />}
                   </div>
                   <div className="dev-title-wrap">
                     <div className="dev-header-line">
@@ -1686,7 +1686,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                     <div className="dev-telemetry-item">
                       <span className="lbl">Süüde:</span>
-                      <strong className={dev.ignition ? 'text-emerald' : 'text-muted'}>
+                      <strong>
                         {dev.ignition ? 'SEES' : 'VÄLJAS'}
                       </strong>
                     </div>
@@ -1698,7 +1698,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )}
 
                 <div className="dev-assignment-box">
-                  <label htmlFor={`dev-assign-${dev.id}`} className="text-secondary" style={{ fontSize: '0.72rem', fontWeight: 600 }}>
+                  <label htmlFor={`dev-assign-${dev.id}`} style={{ fontSize: '0.72rem', fontWeight: 600 }}>
                     Paigaldatud:
                   </label>
                   <Select
@@ -1791,7 +1791,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
           {/* Filter bar */}
           <Card padding="sm" className="history-filter-bar">
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <Filter size={15} className="text-muted" />
+              <Filter size={15} />
               <span style={{ fontSize: '13px', fontWeight: 600 }}>Filtrid:</span>
             </div>
 
@@ -1982,7 +1982,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       setSwapModal(null);
                     }}
                   >
-                    <Unlink size={16} className="text-rose" />
+                    <Unlink size={16} />
                     <div>
                       <strong>Eemalda telemeetriaseade</strong>
                       <p>Jäta masin ilma GPS telemeetriata</p>
@@ -2002,7 +2002,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           setSwapModal(null);
                         }}
                       >
-                        {d.connectivityType === 'eye_sensor' ? <Activity size={16} className="text-emerald" /> : <Radio size={16} className="text-blue" />}
+                        {d.connectivityType === 'eye_sensor' ? <Activity size={16} /> : <Radio size={16} />}
                         <div className="option-info">
                           <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
                           <p>
@@ -2027,7 +2027,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       setTimeout(loadImplementAssignments, 400);
                     }}
                   >
-                    <Unlink size={16} className="text-rose" />
+                    <Unlink size={16} />
                     <div>
                       <strong>Haagi lahti (Eemalda haakeriist)</strong>
                       <p>Masin sõidab ilma haakeriistata</p>
@@ -2048,7 +2048,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                           setTimeout(loadImplementAssignments, 400);
                         }}
                       >
-                        <Wrench size={16} className="text-emerald" />
+                        <Wrench size={16} />
                         <div className="option-info">
                           <strong>{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
                           <p>
@@ -2075,7 +2075,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       <main className="fleet-board-main">
         <div className="fleet-board-header">
           <div className="fleet-title-wrap">
-            <Tractor className="text-emerald" size={26} />
+            <Tractor size={26} />
             <div>
               <h2>Masinapark, haakeriistad ja muu tehnika</h2>
               <p className="fleet-subtitle">Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus</p>

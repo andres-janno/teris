@@ -112,7 +112,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
         <DialogForm onSubmit={save}>
-        <DialogHeader icon={<ClipboardCheck size={20} className="text-emerald" />} title={`${initial ? 'Muuda: ' : ''}Inventuur`} />
+        <DialogHeader icon={<ClipboardCheck size={20} />} title={`${initial ? 'Muuda: ' : ''}Inventuur`} />
         <DialogBody>
           <FormGrid>
             <Field label="Kuupäev *" htmlFor="inv-date">

@@ -145,7 +145,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
       <main className="fullpage-board-main wide">
         <div className="fullpage-board-header">
           <div className="fullpage-title-wrap">
-            <Package className="text-emerald" size={26} />
+            <Package size={26} />
             <div>
               <h2>Laoarvestus</h2>
               <p className="fullpage-subtitle">Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod</p>
@@ -174,7 +174,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
             <div className="register-header-controls">
               <div className="year-selector-group">
                 <span className="year-label">
-                  <Calendar size={15} className="text-blue" />
+                  <Calendar size={15} />
                   <span>Hooaeg:</span>
                 </span>
                 <ToggleGroup variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>

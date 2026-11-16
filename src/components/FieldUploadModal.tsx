@@ -176,7 +176,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="md" dismissible={!isProcessing}>
         <DialogHeader
-          icon={<UploadCloud className="text-emerald" size={24} />}
+          icon={<UploadCloud size={24} />}
           title="Impordi PRIA Põldude SHP Fail"
           description="Toetatud on PRIA allalaaditud .ZIP Shapefile arhiivid (L-EST97 / EPSG:3301)"
         />
@@ -199,12 +199,12 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
             {isProcessing ? (
               <div className="dropzone-state">
-                <RefreshCw size={36} className="animate-spin text-emerald" />
+                <RefreshCw size={36} className="animate-spin" />
                 <p>Töötlen Shapefile faile ja teisendan L-EST97 koordinaate...</p>
               </div>
             ) : parsedPreview ? (
               <div className="dropzone-state success">
-                <FileArchive size={36} className="text-emerald" />
+                <FileArchive size={36} />
                 <h4>Edukalt pargitud {parsedPreview.features.length} põldu!</h4>
                 <p>Kogupindala: {previewTotalHa.toFixed(2)} ha</p>
                 <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>

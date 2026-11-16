@@ -86,7 +86,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
     <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
       <DialogContent size="lg" className="ai-connection-modal" dismissible={!busy}>
         <DialogHeader
-          icon={<Bot className="text-emerald" size={22} />}
+          icon={<Bot size={22} />}
           title="AI ühendus"
           description="Ühenda oma Terise andmed AI-assistendiga (nt Claude). AI saab andmeid ainult lugeda ja näeb sama, mida sina Terises."
         />

@@ -68,6 +68,7 @@ export const UiGallery: React.FC = () => {
           <Button variant="danger-ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
           <Button variant="ghost" size="icon-xs" aria-label="Muuda"><Pencil size={12} /></Button>
           <Button variant="primary" disabled>Keelatud</Button>
+          <p className="text-sm">Lõigu sees: <Button variant="link" size="inline">ava register</Button></p>
         </Section>
 
         <Section title="Märgid">

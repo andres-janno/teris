@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, legacyCardRules, summarize } from './uiAudit';
+import { auditCss, auditTsx, legacyCardRules, summarize, undefinedCssVars } from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -281,5 +281,16 @@ describe('vanad kaardid', () => {
       { path: 'src/components/A.tsx', count: 1 },
       { path: 'src/index.css', count: 1 },
     ]);
+  });
+});
+
+describe('defineerimata CSS-muutujad', () => {
+  it('leiab var(--x), mida pole üheski CSS-is ega tsx-i style-võtmes; radix/tw muutujad ei loe', () => {
+    const css = [
+      ':root { --a: 1px; } .x { --local: 2px; color: var(--a); margin: var(--local); border: var(--missing); }',
+      '.y { height: var(--radix-popover-content-available-height); width: var(--tw-x); background: var(--from-tsx); gap: var(--gone, 4px); }',
+    ];
+    const tsx = ["<div style={{ '--from-tsx': c } as React.CSSProperties} />"];
+    expect(undefinedCssVars(css, tsx)).toEqual(['--gone', '--missing']);
   });
 });

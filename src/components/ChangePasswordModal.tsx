@@ -57,7 +57,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
       <DialogContent size="sm" className="change-password-modal" dismissible={!forced && !busy}>
         <DialogForm onSubmit={submit}>
         <DialogHeader
-          icon={<KeyRound className="text-emerald" size={22} />}
+          icon={<KeyRound size={22} />}
           title={forced ? 'Määra uus parool' : 'Muuda parooli'}
           description={forced ? 'Sinu parool on ajutine. Määra endale uus parool, et jätkata.' : undefined}
           showClose={!forced}

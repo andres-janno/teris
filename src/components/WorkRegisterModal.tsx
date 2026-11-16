@@ -81,7 +81,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
       <DialogContent size="xl" className="work-register-modal">
         <DialogHeader
-          icon={<ListChecks size={20} className="text-emerald" />}
+          icon={<ListChecks size={20} />}
           title="Tööde register"
           description="Põllutööde liigid. PRIA põlluraamatust lahus. Kulumaterjalid on laoarvestuse artiklites."
         />
@@ -135,7 +135,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
         <Dialog open onOpenChange={(open) => { if (!open) setWorkForm(null); }}>
           <DialogContent size="md" dismissible={!busy} className="work-form-modal">
             <DialogForm onSubmit={saveWork}>
-              <DialogHeader icon={<Edit2 size={20} className="text-emerald" />} title={`Muuda tööd: ${workForm.name}`} />
+              <DialogHeader icon={<Edit2 size={20} />} title={`Muuda tööd: ${workForm.name}`} />
               <DialogBody>
               <FormGrid>
                 <Field label="PRIA tegevus" htmlFor="wt-name" span="full">
