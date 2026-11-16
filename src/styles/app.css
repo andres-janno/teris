@@ -59,7 +59,7 @@
   --radius-full: 9999px;
 
   --shadow-primary: 0 4px 14px rgba(34, 197, 94, 0.35);
-  --shadow-primary-hover: 0 6px 20px rgba(34, 197, 94, 0.5);
+  --shadow-primary-hover: 0 6px 20px rgba(22, 101, 52, 0.5);
 }
 
 /* Tähenduspõhised värvid — viitavad index.css-i muutujatele, seega järgivad heledat/tumedat teemat.

@@ -4723,7 +4723,7 @@ body {
 }
 
 .fw-head-cell.milestone.autumn-sow strong {
-  color: #0284c7;
+  color: var(--tone-info-text);
 }
 
 :root[data-theme="dark"] .fw-head-cell.milestone.autumn-sow strong {

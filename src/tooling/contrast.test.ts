@@ -70,4 +70,12 @@ describe('legacy CSS', () => {
   it('index.css ei kasuta --emerald-600 tekstivärvina (tumedas 3.56:1) — kasuta --tone-success-text', () => {
     expect(indexCss.match(/(?<![\w-])color:\s*var\(--emerald-600\)/g) ?? []).toEqual([]);
   });
+  it('tahvli päise tähiste tekst (heleda teema reegel) kasutab toonitekst-tokenit, mitte kõvakodeeritud värvi', () => {
+    const rules = [...indexCss.matchAll(/(?:^|\n)(\.fw-head-cell\.milestone\.[\w-]+ strong)\s*\{([^}]*)\}/g)];
+    expect(rules.length).toBeGreaterThan(0);
+    for (const [, sel, body] of rules) {
+      const color = body.match(/color:\s*([^;]+);/)?.[1].trim() ?? '';
+      expect(color, sel).toMatch(/^var\(--tone-[a-z]+-text\)$|^#(475569)$/);
+    }
+  });
 });
