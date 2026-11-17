@@ -92,9 +92,9 @@
   --color-overlay: rgba(5, 8, 15, 0.6);
 
   --color-primary: var(--emerald-500);
-  --color-primary-strong: var(--emerald-600);
-  /* Päise pillinupu hover: mõlemas teemas sama, valge tekst ≥ 4.5:1 */
-  --color-primary-hover: #166534;
+  --color-primary-strong: var(--selection-bg); /* tahke roheline = Kaart-nupu roheline #16a34a (kasutaja otsus 2026-11-17) */
+  /* Hõljumine veidi tumedam */
+  --color-primary-hover: #15803d;
   /* Põhinupu gradient mõlemas teemas sama; heledam roheline (kasutaja otsus 2026-11-16: ilusam, kontrastist hoolimata) */
   --color-primary-from: #16a34a;
   --color-primary-to: #22c55e;

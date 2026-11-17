@@ -22,8 +22,8 @@
   --text-secondary: #475569;
   --text-muted: #64748b;            /* oli #94a3b8 (2.56:1) → 4.76:1 kaardil, 4.55:1 väljal */
 
-  --emerald-600: #166534;           /* oli #15803d */
-  --emerald-500: #15803d;           /* oli #16a34a (3.30:1) → 5.02:1; tumedam roheline (kasutaja otsus 2026-11-16) */
+  --emerald-600: #15803d;
+  --emerald-500: #16a34a;           /* heledam roheline tagasi (kasutaja otsus 2026-11-17: tumeroheline asendada Kaart-nupu rohelisega) */
   --selection-bg: #16a34a;          /* valitud olek (peamenüü sakk, valitud aasta, märkeruut) — kasutaja otsus 2026-11-16: heledam roheline jääb, kontrastist hoolimata */
   --selection-bg-hover: #15803d;
   --emerald-400: #22c55e;

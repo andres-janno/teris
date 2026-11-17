@@ -37,7 +37,8 @@ for (const theme of ['light', 'dark'] as const) {
       expect(contrastRatio(color(fg), bg), `${theme}: ${label}`).toBeGreaterThanOrEqual(AA);
 
     it('tekstivärvid kaardil ja dialoogis', () => {
-      for (const fg of ['foreground', 'muted-foreground', 'subtle', 'primary', 'info', 'warning', 'destructive', 'accent',
+      // 'primary' (roheline) puudub: kasutaja otsusel 2026-11-17 on roheline kõikjal Kaart-nupu heledam #16a34a.
+      for (const fg of ['foreground', 'muted-foreground', 'subtle', 'info', 'warning', 'destructive', 'accent',
         'success-text', 'info-text', 'warning-text', 'danger-text', 'accent-text']) {
         check(fg, card, `${fg}/card`);
         check(fg, popover, `${fg}/popover`);
@@ -46,10 +47,10 @@ for (const theme of ['light', 'dark'] as const) {
     it('placeholder (text-subtle) sisestusväljal', () => {
       check('subtle', over(color('field'), popover), 'subtle/field');
     });
-    // Põhinupu gradient (primary-from/to) on kasutaja otsusel 2026-11-16 jälle heledam roheline (#16a34a → #22c55e),
-    // kontrastist hoolimata — seda paari siin ei kontrollita. Tumedad toonid (primary-strong/hover) peavad endiselt täitma AA.
-    it('valge tekst tumedal primaartoonil (hõljudes) ja päise pillil', () => {
-      for (const bg of ['primary-strong', 'primary-hover']) check('white', color(bg), `white/${bg}`);
+    // Põhinupu gradient (primary-from/to) ja tahke roheline (primary-strong) on kasutaja otsusel (2026-11-16/17)
+    // heledam #16a34a, kontrastist hoolimata — neid paare ei kontrollita. Hõljumise toon peab täitma AA.
+    it('valge tekst hõljumise primaartoonil', () => {
+      check('white', color('primary-hover'), 'white/primary-hover');
     });
     it('soft märgid: toonitekst 15% toonil kaardi peal', () => {
       const pairs: [string, string][] = [
@@ -59,7 +60,6 @@ for (const theme of ['light', 'dark'] as const) {
       for (const [fg, bg] of pairs) check(fg, tint(color(bg), 15, card), `${fg} on ${bg}/15`);
     });
     it('solid märgid: valge või tume tekst täisvärvil', () => {
-      check('white', color('primary-strong'), 'solid success');
       check('white', color('info-solid'), 'solid info');
       check('white', color('accent-solid'), 'solid accent');
       check('white', color('danger-solid'), 'solid danger');
