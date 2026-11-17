@@ -374,3 +374,11 @@ export const legendItemClass = 'inline-flex items-center gap-1.5 text-xs text-mu
 export const legendMarkerClass = 'size-2.5 shrink-0 rounded-full';
 export const legendValueClass = 'font-semibold tabular-nums text-foreground';
 export const legendNoteClass = 'text-2xs text-subtle';
+
+/** Vaate päis (etapp 4.1; vanad .fullpage-board-header, .fleet-board-header jt): ikoon (20px), pealkiri, alapealkiri, tegevused paremal. */
+export const pageHeaderClass = 'flex flex-wrap items-center gap-x-4 gap-y-2.5';
+export const pageHeaderTitleWrapClass = 'flex min-w-0 items-center gap-2.5';
+export const pageHeaderIconClass = 'flex shrink-0 items-center [&>svg]:size-5';
+export const pageHeaderTitleClass = 'm-0 text-xl font-semibold leading-6 text-foreground';
+export const pageHeaderSubtitleClass = 'mt-0.5 text-sm text-muted-foreground';
+export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2.5';

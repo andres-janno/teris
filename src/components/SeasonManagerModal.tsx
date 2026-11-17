@@ -12,7 +12,7 @@ import type { FarmingSeason } from '../types/season';
 import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput, Field, FormGrid, Input, Textarea } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput, Field, FormGrid, Input, Textarea, PageHeader } from './ui';
 
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
@@ -298,21 +298,17 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   return (
     <div className="fullpage-board-view">
       <main className="fullpage-board-main">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <CalendarDays size={26} />
-            <div>
-              <h2>Hooajad</h2>
-              <p className="fullpage-subtitle">Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt.</p>
-            </div>
-          </div>
-          {!isAdding && (
+        <PageHeader
+          icon={<CalendarDays />}
+          title="Hooajad"
+          subtitle="Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt."
+          actions={!isAdding ? (
             <Button variant="primary" onClick={handleStartAdd}>
               <Plus size={16} />
               <span>Loo uus hooaeg</span>
             </Button>
-          )}
-        </div>
+          ) : undefined}
+        />
         <div className="fullpage-board-body">
           {bodyContent}
         </div>

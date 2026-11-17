@@ -15,7 +15,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader } from './ui';
 import type { BadgeTone } from './ui';
 
 interface FieldsTableViewProps {
@@ -237,15 +237,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   return (
     <div className="fullpage-board-view">
       <main className="fullpage-board-main wide">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <Layers size={26} />
-            <div>
-              <h2>Põllud</h2>
-              <p className="fullpage-subtitle">Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator" />
 
         <div className="fullpage-board-body">
           <div className="fullpage-board-content">

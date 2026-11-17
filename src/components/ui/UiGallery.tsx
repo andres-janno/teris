@@ -2,14 +2,14 @@
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import { FINANCE_COST_COLOR } from '../../lib/dataColors';
 import React, { useEffect, useState } from 'react';
-import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye } from 'lucide-react';
+import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye, Layers } from 'lucide-react';
 import {
   Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, PageHeader,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -446,6 +446,11 @@ export const UiGallery: React.FC = () => {
             <LegendItem color={FINANCE_COST_COLOR.equipment}>Liikumine</LegendItem>
             <LegendItem color={FINANCE_COST_COLOR.fuel} value="3 min">Seisuaeg süütega</LegendItem>
             <LegendItem color={FINANCE_COST_COLOR.labor} value="48 200 €" note="(35%)">Tööjõud:</LegendItem>
+          </div>
+        </Section>
+        <Section title="Vaate päis">
+          <div className="w-full">
+            <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal" actions={<Button variant="primary">Lisa</Button>} />
           </div>
         </Section>
       </div>

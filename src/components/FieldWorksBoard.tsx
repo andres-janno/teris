@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader } from './ui';
 
 interface Option {
   id: string;
@@ -687,15 +687,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   return (
     <div className="fw-board-view">
       <main className="fw-main">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <SquareKanban size={26} />
-            <div>
-              <h2>Põllutööd</h2>
-              <p className="fullpage-subtitle">Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader icon={<SquareKanban />} title="Põllutööd" subtitle="Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine" />
 
         <div className="fw-toolbar">
           {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}

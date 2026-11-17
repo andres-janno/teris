@@ -20,7 +20,7 @@ import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle, PageHeader } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -873,15 +873,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     return (
       <div className="fullpage-board-view">
         <main className="fullpage-board-main wide">
-          <div className="fullpage-board-header">
-            <div className="fullpage-title-wrap">
-              <Sprout size={26} />
-              <div>
-                <h2>Kultuurid</h2>
-                <p className="fullpage-subtitle">Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused</p>
-              </div>
-            </div>
-          </div>
+          <PageHeader icon={<Sprout />} title="Kultuurid" subtitle="Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused" />
           <div className="fullpage-board-body">
             <div className="fullpage-board-content">
               {bodyContent}

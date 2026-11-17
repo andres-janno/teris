@@ -21,7 +21,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle, PageHeader } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -599,15 +599,11 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     return (
       <div className="fullpage-board-view">
         <main className="fullpage-board-main wide">
-          <div className="fullpage-board-header">
-            <div className="fullpage-title-wrap">
-              <Users size={26} />
-              <div>
-                <h2>Isikud</h2>
-                <p className="fullpage-subtitle">Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid</p>
-              </div>
-            </div>
-            {!isEditing && (
+          <PageHeader
+            icon={<Users />}
+            title="Isikud"
+            subtitle="Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid"
+            actions={!isEditing ? (
               <Button
                 type="button"
                 variant="primary"
@@ -616,8 +612,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                 <Plus size={16} />
                 <span>Lisa uus isik</span>
               </Button>
-            )}
-          </div>
+            ) : undefined}
+          />
           <div className="fullpage-board-body">
             {editForm}
             <div className="fullpage-board-content">

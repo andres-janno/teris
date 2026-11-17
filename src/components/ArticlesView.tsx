@@ -19,7 +19,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput } from './ui';
+import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, PageHeader } from './ui';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -143,15 +143,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   return (
     <div className="fullpage-board-view">
       <main className="fullpage-board-main wide">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <Package size={26} />
-            <div>
-              <h2>Laoarvestus</h2>
-              <p className="fullpage-subtitle">Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader icon={<Package />} title="Laoarvestus" subtitle="Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod" />
 
         <div className="fullpage-board-body">
           <div className="fullpage-board-content">

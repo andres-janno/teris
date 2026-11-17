@@ -39,7 +39,7 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey } from './ui';
+import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -2059,15 +2059,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   return (
     <div className="fleet-board-view">
       <main className="fleet-board-main">
-        <div className="fleet-board-header">
-          <div className="fleet-title-wrap">
-            <Tractor size={26} />
-            <div>
-              <h2>Masinapark, haakeriistad ja muu tehnika</h2>
-              <p className="fleet-subtitle">Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader icon={<Tractor />} title="Masinapark, haakeriistad ja muu tehnika" subtitle="Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus" />
         <div className="fleet-board-body">
           {bodyContent}
         </div>

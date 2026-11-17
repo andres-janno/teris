@@ -18,7 +18,7 @@ import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton } from './ui';
+import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader } from './ui';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -653,15 +653,7 @@ function cropSummaryKey(cropText: string): string {
   return (
     <div className="fullpage-board-view">
       <main className="fullpage-board-main wide">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <Repeat size={26} />
-            <div>
-              <h2>Külvikord</h2>
-              <p className="fullpage-subtitle">Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed</p>
-            </div>
-          </div>
-        </div>
+        <PageHeader icon={<Repeat />} title="Külvikord" subtitle="Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed" />
         <div className="fullpage-board-body">
           {bodyContent}
         </div>

@@ -38,3 +38,4 @@ export { NavSwitch, NavSwitchItem } from './NavSwitch';
 export { SectionTitle } from './SectionTitle';
 export { StatTile } from './StatTile';
 export { LegendItem } from './LegendItem';
+export { PageHeader } from './PageHeader';

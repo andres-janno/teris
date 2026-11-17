@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle } from './ui';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle, PageHeader } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -55,30 +55,32 @@ export const WeatherView: React.FC = () => {
   return (
     <div className="fullpage-board-view">
       <main className="fullpage-board-main wide">
-        <div className="fullpage-board-header">
-          <div className="fullpage-title-wrap">
-            <CloudSun size={26} />
-            <div>
-              <h2>Ilm</h2>
-              <p className="fullpage-subtitle">Aastate võrdlus ERA5-Landi ilmaandmete põhjal (2015-st)</p>
-              <p className="fullpage-subtitle weather-source">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
-            </div>
-          </div>
-          <div className="weather-filters">
-            <FilterClear active={period !== 'growing'} onClear={() => setPeriod('growing')}>
-              <FilterSelect ariaLabel="Periood" value={period} onChange={(v) => setPeriod(v as WeatherPeriod)}
-                options={WEATHER_PERIOD_OPTIONS.map((p) => ({ value: p.value, label: `${p.label} ${p.range}` }))} />
-            </FilterClear>
-            <FilterClear active={point !== 'all'} onClear={() => setPoint('all')}>
-              <FilterSelect ariaLabel="Ilmapunkt" value={String(point)} onChange={(v) => setPoint(v === 'all' ? 'all' : Number(v))}
-                options={[{ value: 'all', label: 'Majandi keskmine' }, ...points.map((p) => ({ value: String(p.id), label: `${p.lat.toFixed(1)}° N, ${p.lon.toFixed(1)}° E (${p.fieldCount} põldu)`, color: pointColor(points, p.id) }))]} />
-            </FilterClear>
-            <FilterClear active={base !== 5} onClear={() => setBase(5)}>
-              <FilterSelect ariaLabel="GDD baastemperatuur" value={String(base)} onChange={(v) => setBase(Number(v))}
-                options={BASES.map((b) => ({ value: String(b), label: `GDD baas ${b} °C` }))} />
-            </FilterClear>
-          </div>
-        </div>
+        <PageHeader
+          icon={<CloudSun />}
+          title="Ilm"
+          subtitle={(
+            <>
+              <p>Aastate võrdlus ERA5-Landi ilmaandmete põhjal (2015-st)</p>
+              <p className="weather-source">{WEATHER_SOURCE}.{data?.dataUntil && ` Andmed kuni ${formatDate(data.dataUntil)}.`}</p>
+            </>
+          )}
+          actions={(
+              <div className="weather-filters">
+                <FilterClear active={period !== 'growing'} onClear={() => setPeriod('growing')}>
+                  <FilterSelect ariaLabel="Periood" value={period} onChange={(v) => setPeriod(v as WeatherPeriod)}
+                    options={WEATHER_PERIOD_OPTIONS.map((p) => ({ value: p.value, label: `${p.label} ${p.range}` }))} />
+                </FilterClear>
+                <FilterClear active={point !== 'all'} onClear={() => setPoint('all')}>
+                  <FilterSelect ariaLabel="Ilmapunkt" value={String(point)} onChange={(v) => setPoint(v === 'all' ? 'all' : Number(v))}
+                    options={[{ value: 'all', label: 'Majandi keskmine' }, ...points.map((p) => ({ value: String(p.id), label: `${p.lat.toFixed(1)}° N, ${p.lon.toFixed(1)}° E (${p.fieldCount} põldu)`, color: pointColor(points, p.id) }))]} />
+                </FilterClear>
+                <FilterClear active={base !== 5} onClear={() => setBase(5)}>
+                  <FilterSelect ariaLabel="GDD baastemperatuur" value={String(base)} onChange={(v) => setBase(Number(v))}
+                    options={BASES.map((b) => ({ value: String(b), label: `GDD baas ${b} °C` }))} />
+                </FilterClear>
+              </div>
+          )}
+        />
 
         <div className="fullpage-board-body">
           <div className="fullpage-board-content weather-body">

@@ -7,6 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
+  v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -574,5 +575,18 @@ describe('LegendItem (etapp 4.1)', () => {
     expect(v.legendMarkerClass).toContain('rounded-full');
     expect(v.legendValueClass).toContain('font-semibold');
     expect(v.legendValueClass).toContain('tabular-nums');
+  });
+});
+
+describe('PageHeader (etapp 4.1)', () => {
+  it('päis murdub reaks, pealkiri 20px poolpaks, alapealkiri 13px hall, tegevused paremal', () => {
+    expect(v.pageHeaderClass).toContain('flex-wrap');
+    expect(v.pageHeaderClass).toContain('gap-x-4');
+    expect(v.pageHeaderTitleClass).toContain('text-xl');
+    expect(v.pageHeaderTitleClass).toContain('font-semibold');
+    expect(v.pageHeaderSubtitleClass).toContain('text-sm');
+    expect(v.pageHeaderSubtitleClass).toContain('text-muted-foreground');
+    expect(v.pageHeaderActionsClass).toContain('ml-auto');
+    expect(v.pageHeaderIconClass).toContain('[&>svg]:size-5');
   });
 });
