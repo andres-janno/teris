@@ -14,9 +14,12 @@
 @import 'leaflet/dist/leaflet.css' layer(vendor);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 
-/* Tailwind genereerib utiliite ainult siit kataloogist. Muidu skaneeriks ta kogu src/ ja vanad klassinimed
-   (nt `text-muted`, `text-secondary`, `py-6`) saaksid ootamatult utiliidi stiili. Üleviidud fail lisatakse siia
-   ükshaaval (README ja testid on välja jäetud, sest need nimetavad vanu klasse), pärast kontrolli, et failis pole Tailwindi utiliitidega kattuvaid vanu klassinimesid. */
+/* Tailwind genereerib utiliite ainult siit kataloogist ja allpool nimetatud vaatefailidest. Muidu skaneeriks ta kogu src/
+   ja vanad klassinimed (nt `text-muted`, `text-secondary`, `text-xs`, `py-6`) saaksid ootamatult utiliidi stiili.
+   Etapp 4 (vaated Tailwindi peale): vaatefail lisatakse ükshaaval `@source '../components/<Fail>.tsx';` samas commitis,
+   kus ta klassid üle viiakse. Enne kontrolli `python3 .superpowers/tmp/css-utils.py diff <vana_dist> <uus_dist>`
+   (ehita `npx vite build --outDir /tmp/dist-x --emptyOutDir`): iga uus utiliit peab olema tahtlik; surnud klass
+   (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse. */
 @source '../components/ui';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 

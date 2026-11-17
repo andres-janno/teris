@@ -399,3 +399,29 @@ describe('disallowedFontWeights', () => {
     expect(disallowedFontWeights(files)).toEqual([]);
   });
 });
+
+describe('audit katab vaated (etapp 4.0)', () => {
+  it('suvalised väärtused ja skaalavälised vahed loevad src/components, src/admin ja App.tsx failides', () => {
+    const bad = '<p className="p-[7px] text-[13px] mt-5 gap-x-7" />';
+    const r = summarize([
+      { path: 'src/components/FinanceModal.tsx', content: bad },
+      { path: 'src/admin/TenantsView.tsx', content: bad },
+      { path: 'src/App.tsx', content: bad },
+    ]);
+    expect(r.arbitrary.map((a) => a.path)).toEqual(
+      ['src/components/FinanceModal.tsx', 'src/components/FinanceModal.tsx', 'src/admin/TenantsView.tsx', 'src/admin/TenantsView.tsx', 'src/App.tsx', 'src/App.tsx']
+    );
+    expect(r.offScaleSpacing.map((a) => `${a.path}:${a.cls}`)).toContain('src/admin/TenantsView.tsx:mt-5');
+  });
+  it('lubab Tailwindi variandid ja nimega klassid', () => {
+    const r = summarize([
+      {
+        path: 'src/components/X.tsx',
+        content:
+          '<p className="hover:bg-muted aria-[current=page]:bg-card data-[state=open]:p-2 [&>td]:text-sm dark:text-primary grid-cols-[360px_minmax(0,1fr)] max-w-105 p-2.5 gap-x-4" />',
+      },
+    ]);
+    expect(r.arbitrary).toEqual([]);
+    expect(r.offScaleSpacing).toEqual([]);
+  });
+});
