@@ -425,3 +425,14 @@ describe('audit katab vaated (etapp 4.0)', () => {
     expect(r.offScaleSpacing).toEqual([]);
   });
 });
+
+describe('vanad ülevaateklassid (etapp 4.1)', () => {
+  it('loeb vanad päise-, pealkirja-, plaadi-, legendi- ja finance-klassid; ui kaust ja admin-stat-row välja', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="fullpage-board-header form-sub-header trip-tile finance-kpi-card finance-entry-card section-title" />' },
+      { path: 'src/components/ui/X.tsx', content: '<div data-slot="section-title" className="fullpage-board-header" />' },
+      { path: 'src/admin/B.tsx', content: '<div className="admin-stat-row" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
+  });
+});

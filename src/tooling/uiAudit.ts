@@ -20,6 +20,7 @@ export interface AuditReport {
   legacyBadgeTabFiles: { path: string; count: number }[];
   legacyFormFieldFiles: { path: string; count: number }[];
   legacyMenuPopupFiles: { path: string; count: number }[];
+  legacyOverviewFiles: { path: string; count: number }[];
   legacyCardFiles: { path: string; count: number }[];
   rawButtonFiles: { path: string; count: number }[];
   roleButtonFiles: { path: string; count: number }[];
@@ -106,7 +107,11 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   // teenusepakkuja admin
   'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
 ]);
-const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
+// Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
+// FinanceModal'i finance-* klassid. ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+const LEGACY_OVERVIEW =
+  /(?<![\w-])(section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop)(?![\w-])/g;
+const CSS_RULE =/([^{}]+)\{([^{}]*)\}/g;
 const CARD_LOOK_DECL = /(?:^|[;\s])(background(?:-color)?|border|border-radius|box-shadow|(?:-webkit-)?backdrop-filter)\s*:\s*([^;}]*)/g;
 
 export function legacyCardRules(css: string): string[] {
@@ -165,6 +170,7 @@ export function auditTsx(src: string) {
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
     legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
+    legacyOverview: src.match(LEGACY_OVERVIEW) ?? [],
     rawButtons: (stripComments(src).match(RAW_BUTTON) ?? []).length,
     roleButtons: (stripComments(src).match(ROLE_BUTTON) ?? []).length,
   };
@@ -205,6 +211,9 @@ export function summarize(files: { path: string; content: string }[]): AuditRepo
         .map((t) => ({ path: t.path, count: t.legacyCards.length })),
       ...css.filter((c) => c.cardRules.length > 0).map((c) => ({ path: c.path, count: c.cardRules.length })),
     ],
+    legacyOverviewFiles: tsx
+      .filter((t) => t.legacyOverview.length > 0 && !t.path.includes('components/ui/'))
+      .map((t) => ({ path: t.path, count: t.legacyOverview.length })),
     rawButtonFiles: tsx
       .filter((t) => !t.path.includes('components/ui/'))
       .map((t) => ({ path: t.path, count: rawButtonsOverAllowed(t.path, t.rawButtons) }))

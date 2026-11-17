@@ -77,6 +77,7 @@ row(
 );
 
 row('Vanu kaarte (tsx+css)', r.legacyCardFiles.reduce((s, f) => s + f.count, 0), r.legacyCardFiles.map((f) => `${f.path}: ${f.count}`));
+row('Vanu ülevaateklasse (tsx)', r.legacyOverviewFiles.reduce((s, f) => s + f.count, 0), r.legacyOverviewFiles.map((f) => `${f.path}: ${f.count}`));
 row('Tooreid nuppe (tsx)', r.rawButtonFiles.reduce((s, f) => s + f.count, 0), r.rawButtonFiles.map((f) => `${f.path}: ${f.count}`));
 row('role=button väljaspool ui-d (tsx)', r.roleButtonFiles.reduce((s, f) => s + f.count, 0), r.roleButtonFiles.map((f) => `${f.path}: ${f.count}`));
 

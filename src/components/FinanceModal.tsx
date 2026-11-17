@@ -51,7 +51,7 @@ const STATUS_LABELS: Record<FinanceStatus, string> = {
   CONFIRMED: 'Kinnitatud'
 };
 
-// Kande vasak riba oleku järgi (vana .finance-entry-card.pending/.changed/.confirmed; !important tuli Card ääriselt, cn() lahendab selle)
+// Kande vasak riba oleku järgi (varem vana kandekaardi CSS-reegel oleku järgi; !important tuli Card ääriselt, cn() lahendab selle)
 const ENTRY_STATUS_BAR: Record<FinanceStatus, string> = {
   PENDING: 'border-l-3 border-l-warning',
   CHANGED: 'border-l-3 border-l-info',

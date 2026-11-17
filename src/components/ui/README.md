@@ -100,7 +100,20 @@ Tailwind genereerib utiliite ainult kataloogist `src/components/ui` (`@source` f
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
 
-Etapis 3 (2026-11-16) skaneerimist vaadetele ei laiendata; `index.css`-i ~2 000 rea eesmärk on hilisem etapp „vaated Tailwindi peale“.
+Etapis 4 (2026-11-17) lisatakse vaated `@source`-i faili kaupa (samas commitis, kus klassid üle viiakse); `FinanceModal.tsx` on esimene. Enne kontrolli `css-utils.py diff` (vt `app.css` kommentaar): surnud klassid (`text-xs`, `text-subtle`, kui CSS-i polnud) hakkavad mõjuma.
+
+## Ülevaate komponendid
+
+Etapp 4.1 asendas vaadete korduvad ülevaatemustrid viie komponendiga. Vanu klasse (`fullpage-board-header`, `form-sub-header`,
+`trip-tile*`, `finance-kpi-*`, `soil-legend-*`, `fmc-row` jne) ei tehta uuesti: `npm run ui-audit` rida „Vanu ülevaateklasse (tsx)“ peab olema 0.
+
+| Komponent | Kasutus | Peamised propsid |
+|---|---|---|
+| `PageHeader` | Vaate päis: ikoon, pealkiri (h2), alapealkiri, tegevused paremal | `icon`, `title`, `subtitle`, `actions` |
+| `SectionTitle` | Jaotise pealkiri (väike suurtäheline, 600) vormis ja paneelis | `ruled` (joon all), `spaced` (vahe all) |
+| `StatTile` | Näitaja plaat: silt, suur number, ühik, lisarida, selgitus | `label`, `value`, `unit`, `sub`, `note`, `tone`, `empty` |
+| `LegendItem` | Legendi kirje: värvimärk (andmevärv), nimi, väärtus, märkus | `color`, `value`, `note`, lapsed = nimi |
+| `KeyValueRow` | Rida „silt … väärtus“, väärtus paremal servas | `label`, lapsed = väärtus |
 
 ## Vana muutuja -> Tailwindi nimi
 
@@ -210,7 +223,7 @@ Reeglid:
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
 - Erandid (jäävad oma CSS-iga): `login-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
-  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `section-title`, `admin-subpanel`, `admin-card-head`,
+  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `admin-subpanel`, `admin-card-head`,
   `admin-card-foot` kannavad ainult asetust.
 
 ## Menüüd, hüpikud, vihjed
