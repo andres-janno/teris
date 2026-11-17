@@ -4043,168 +4043,9 @@ body {
 /* ==========================================================================
    Põllutööde finantsid ja kuluarvestus (FinanceModal)
    ========================================================================== */
-.finance-icon-badge {
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border-radius: var(--radius-md);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(16, 185, 129, 0.15);
-  color: var(--tone-success-text);
-}
-
-.finance-title-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.finance-modal-body {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden !important;
-  padding: 16px 16px !important;
-  min-height: 0;
-}
-
-/* Entries Layout */
-.finance-entries-layout {
-  display: grid;
-  grid-template-columns: 360px minmax(0, 1fr);
-  gap: 16px;
-  height: 100%;
-  min-height: 0;
-}
-
-.finance-entries-sidebar {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  height: 100%;
-  min-height: 0;
-  border-right: 1px solid var(--border-card);
-  padding-right: 12px;
-}
-
-.finance-sidebar-controls {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
 .finance-results-toolbar .search-field {
   flex: 1 1 280px;
   max-width: 420px !important;
-}
-
-.finance-filter-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.finance-alert {
-  padding: 8px 12px;
-  font-size: 13px;
-  margin: 0;
-}
-
-.finance-entries-list {
-  flex: 1;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding-right: 4px;
-  min-height: 0;
-}
-
-.finance-empty-state {
-  text-align: center;
-  padding: 32px 16px;
-  font-size: 13px;
-  color: var(--text-muted);
-}
-
-.finance-entry-card {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  position: relative;
-}
-
-/* Staatuse riba vasakul peab Card-i äärise üle võitma */
-.finance-entry-card.pending {
-  border-left: 3px solid #f59e0b !important;
-}
-
-.finance-entry-card.changed {
-  border-left: 3px solid #3b82f6 !important;
-}
-
-.finance-entry-card.confirmed {
-  border-left: 3px solid #16a34a !important;
-}
-
-.finance-entry-card-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-}
-
-.finance-entry-field-name {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  min-width: 0;
-}
-
-.finance-entry-field-name strong {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.finance-entry-card-body {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.finance-entry-work-name {
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--text-primary);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.finance-entry-meta {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
-.finance-entry-card-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 12px;
-  color: var(--text-secondary);
-  border-top: 1px solid var(--border-card);
-  padding-top: 4px;
-  margin-top: 2px;
-}
-
-.finance-entry-cost {
-  font-weight: 500;
-  color: var(--text-primary);
 }
 
 /* Detail Pane */
@@ -5021,6 +4862,7 @@ polyline.weather-line { fill: none; }
 /* Teatekast tegevusnupuga ja virnastatud teatekast */
 .alert-box.with-action { margin: 8px; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
 .alert-box.is-stacked { flex-direction: column; align-items: stretch; gap: 4px; margin: 8px 0; }
+.alert-box.is-compact { padding: 8px 12px; font-size: 13px; margin: 0; }
 .hint-text.is-block { display: block; margin-top: 4px; }
 /* Kultuuri värvipunkt (värv tuleb andmest) */
 .crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }

@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem, KeyValueRow } from './ui';
+import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem, KeyValueRow, cn } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -49,6 +49,13 @@ const STATUS_LABELS: Record<FinanceStatus, string> = {
   PENDING: 'Ootab finantsi',
   CHANGED: 'Muudetud – kinnita uuesti',
   CONFIRMED: 'Kinnitatud'
+};
+
+// Kande vasak riba oleku järgi (vana .finance-entry-card.pending/.changed/.confirmed; !important tuli Card ääriselt, cn() lahendab selle)
+const ENTRY_STATUS_BAR: Record<FinanceStatus, string> = {
+  PENDING: 'border-l-3 border-l-warning',
+  CHANGED: 'border-l-3 border-l-info',
+  CONFIRMED: 'border-l-3 border-l-primary-strong',
 };
 
 const FinanceStatusBadge: React.FC<{ status: FinanceStatus }> = ({ status }) => (
@@ -397,11 +404,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" fillHeight className="finance-modal" dismissible={!saving}>
+      <DialogContent size="xl" fillHeight dismissible={!saving}>
         <DialogHeader
-          icon={<div className="finance-icon-badge"><Euro size={20} /></div>}
+          icon={<div className="flex size-10 shrink-0 items-center justify-center rounded-md bg-primary/15 text-success-text"><Euro size={20} /></div>}
           title={
-            <span className="finance-title-row">
+            <span className="flex items-center gap-2.5">
               <span>Põllutööde finantsid ja kuluarvestus</span>
               <Badge>{year}. a hooaeg</Badge>
             </span>
@@ -426,15 +433,15 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
           </div>
         </DialogHeader>
 
-        <DialogBody className="finance-modal-body">
+        <DialogBody className="flex min-h-0 flex-1 flex-col overflow-hidden p-4">
           {tab === 'entries' && (
-            <div className="finance-entries-layout">
+            <div className="grid h-full min-h-0 grid-cols-[360px_minmax(0,1fr)] gap-4">
               {/* Left Column: Entries List & Filters */}
-              <div className="finance-entries-sidebar">
-                <div className="finance-sidebar-controls">
-                  <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi põldu, tööd või tegijat..." aria-label="Otsi põldu, tööd või tegijat..." />
+              <div className="flex h-full min-h-0 flex-col gap-2.5 border-r border-border pr-3">
+                <div className="flex flex-col gap-2">
+                  <SearchInput value={search} onChange={setSearch} placeholder="Otsi põldu, tööd või tegijat..." aria-label="Otsi põldu, tööd või tegijat..." />
 
-                  <div className="finance-filter-row">
+                  <div className="flex flex-col gap-1.5">
                     <ToggleGroup aria-label="Kannete olek" value={statusFilter} onValueChange={(v) => setStatusFilter(v as StatusFilter)}>
                       <ToggleGroupItem value="ACTION_NEEDED">Ootab ({actionNeededCount})</ToggleGroupItem>
                       <ToggleGroupItem value="ALL">Kõik ({entries.length})</ToggleGroupItem>
@@ -458,19 +465,19 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 </div>
 
                 {entriesError && (
-                  <div className="alert-box error finance-alert">
+                  <div className="alert-box error is-compact">
                     <AlertCircle size={14} />
                     <span>{entriesError}</span>
                   </div>
                 )}
 
-                <div className="finance-entries-list" aria-busy={loadingEntries}>
+                <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1" aria-busy={loadingEntries}>
                   {loadingEntries && entries.length === 0 && (
-                    <div className="finance-empty-state">Laadin kandeid…</div>
+                    <div className="px-4 py-8 text-center text-sm text-subtle">Laadin kandeid…</div>
                   )}
 
                   {!loadingEntries && filteredEntries.length === 0 && (
-                    <div className="finance-empty-state">
+                    <div className="px-4 py-8 text-center text-sm text-subtle">
                       {statusFilter === 'ACTION_NEEDED'
                         ? 'Kõik kanded on kinnitatud! Vali "Kõik", et vaadata varem kinnitatuid.'
                         : 'Ühtegi filtritele vastavat kannet ei leitud.'}
@@ -486,34 +493,30 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                     return (
                       <CardButton key={e.id} variant="tile" padding="sm" selected={isSelected}
-                        className={`finance-entry-card ${e.financeStatus.toLowerCase()}`}
+                        className={cn('relative flex flex-col items-stretch gap-1.5', ENTRY_STATUS_BAR[e.financeStatus])}
                         onClick={() => setSelectedEntryId(e.id)}
                       >
-                        <div className="finance-entry-card-header">
-                          <div className="finance-entry-field-name">
+                        <div className="flex items-center justify-between gap-1.5">
+                          <div className="flex min-w-0 items-center gap-1.5 text-sm">
                             {e.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {e.fieldNum}</Badge>}
-                            <strong>{e.fieldName}</strong>
+                            <strong className="truncate">{e.fieldName}</strong>
                           </div>
                           <FinanceStatusBadge status={e.financeStatus} />
                         </div>
 
-                        <div className="finance-entry-card-body">
-                          <div className="finance-entry-work-name">
-                            <span>{e.workTypeName}</span>
-                          </div>
-                          <div className="finance-entry-meta">
+                        <div className="flex flex-col gap-0.5">
+                          <div className="flex items-center gap-1 text-sm font-medium text-foreground"><span>{e.workTypeName}</span></div>
+                          <div className="text-xs text-subtle">
                             <span>{formatDate(e.date)}</span>
                             {e.areaHa && <span> · {fmtHa(e.areaHa)} ha</span>}
                             {e.workerName && <span> · {e.workerName}</span>}
                           </div>
                         </div>
 
-                        <div className="finance-entry-card-footer">
-                          <span className="finance-entry-lines-count">
-                            {e.lines?.length || 0} {e.lines?.length === 1 ? 'rida' : 'rida'}
-                          </span>
+                        <div className="mt-0.5 flex items-center justify-between border-t border-border pt-1 text-xs text-muted-foreground">
+                          <span>{e.lines?.length || 0} rida</span>
                           {isConfirmed && entryCost > 0 && (
-                            <span className="finance-entry-cost">{fmtCur(entryCost)}</span>
+                            <span className="font-medium text-foreground">{fmtCur(entryCost)}</span>
                           )}
                         </div>
 </CardButton>
@@ -570,14 +573,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     )}
 
                     {saveError && (
-                      <div className="alert-box error finance-alert">
+                      <div className="alert-box error is-compact">
                         <AlertCircle size={14} />
                         <span>{saveError}</span>
                       </div>
                     )}
 
                     {saveSuccess && (
-                      <div className="alert-box success finance-alert">
+                      <div className="alert-box success is-compact">
                         <Check size={14} />
                         <span>{saveSuccess}</span>
                       </div>

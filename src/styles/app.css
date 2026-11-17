@@ -21,6 +21,7 @@
    (ehita `npx vite build --outDir /tmp/dist-x --emptyOutDir`): iga uus utiliit peab olema tahtlik; surnud klass
    (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse. */
 @source '../components/ui';
+@source '../components/FinanceModal.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).
