@@ -214,7 +214,7 @@ body {
 
 .header-operator-caption {
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.7;
@@ -829,7 +829,7 @@ body {
 
 .dev-telemetry-time strong {
   color: var(--fresh);
-  font-weight: 500;
+  font-weight: 400;
 }
 
 .dev-fresh-legend {
@@ -1482,7 +1482,7 @@ body {
 
 .form-sub-header {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
@@ -2002,7 +2002,7 @@ body {
 
 .variety-seed-rate {
   color: var(--text-primary);
-  font-weight: 500;
+  font-weight: 400;
   white-space: nowrap;
 }
 
@@ -2677,7 +2677,7 @@ body {
 .fw-head-section {
   padding: 6px 12px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -2733,7 +2733,7 @@ body {
   flex-direction: column;
   gap: 2px;
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
   min-width: 0;
@@ -3439,7 +3439,7 @@ body {
 .fw-plan-rows dt {
   color: var(--text-secondary);
   font-size: 11px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -4092,7 +4092,7 @@ body {
 .add-work-count {
   flex: 1;
   font-size: 13px;
-  font-weight: 500;
+  font-weight: 400;
   color: var(--text-secondary);
 }
 
@@ -4328,7 +4328,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 400;
   color: #15803d;
   background: #dcfce7;
   padding: 4px 8px;
@@ -4384,7 +4384,7 @@ body {
 }
 
 .finance-line-qty {
-  font-weight: 500;
+  font-weight: 400;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4563,7 +4563,7 @@ body {
 
 .finance-kpi-label {
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
@@ -4864,13 +4864,13 @@ body {
 /* Materjaliread: veerupäisega ruudustik, üks rida materjali kohta */
 .pria-grid { display: grid; gap: 6px; align-items: center; }
 .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { min-width: 0; width: 100%; }
-.pria-grid-head { font-size: 12px; font-weight: 500; color: var(--text-secondary); padding: 0 2px; }
+.pria-grid-head { font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 0 2px; }
 .pria-grid-head .num { text-align: right; }
 @media (max-width: 760px) {
   .pria-grid { display: flex; flex-wrap: wrap; }
   .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { flex: 1 1 140px; }
   .pria-grid [data-slot="input"][inputmode] { flex: 0 1 90px; }
-  .pria-grid-head { display: none; }
+  .pria-grid-head { display: none; font-weight: 600; }
 }
 
 .article-overuse {
@@ -4885,7 +4885,7 @@ body {
 /* Laoarvestus */
 
 /* Laokogused: plussis/arvele roheline, miinuses/maha punane */
-td.stock-qty { font-weight: 500; }
+td.stock-qty { font-weight: 400; }
 td.stock-qty-in { color: var(--emerald-500); }
 td.stock-qty-out { color: #dc2626; }
 
@@ -4923,7 +4923,7 @@ td.stock-qty-out { color: #dc2626; }
   padding-top: 10px;
   border-top: 1px solid var(--border-card);
   font-size: 12px;
-  font-weight: 500;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
@@ -5147,7 +5147,7 @@ td.stock-qty-out { color: #dc2626; }
 @media (max-width: 760px) { .weather-chart-grid { grid-template-columns: 1fr; } }
 /* Graafiku kast: oma polster (graafik vajab all vähem ruumi), välimus Card tile-ist */
 .weather-chart-card { padding: 8px 10px 4px; min-width: 0; }
-.weather-chart-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
+.weather-chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
 .weather-chart-box { width: 100%; }
 .weather-chart { display: block; }
 .weather-grid { stroke: var(--border-card); stroke-width: 1; }
@@ -5156,7 +5156,7 @@ td.stock-qty-out { color: #dc2626; }
 .weather-chart { cursor: crosshair; }
 .weather-crosshair line { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 3 3; }
 .weather-crosshair-label { fill: var(--text-primary, #334155); }
-.weather-crosshair-text { font-size: 11px; font-weight: 500; fill: var(--bg-modal, #fff); }
+.weather-crosshair-text { font-size: 11px; font-weight: 400; fill: var(--bg-modal, #fff); }
 .weather-axis { font-size: 11px; fill: var(--text-secondary); }
 .weather-bar-normal { fill: #cbd5e1; background: #cbd5e1; }
 .weather-bar.weather-line-0, .weather-bar.weather-line-1, .weather-bar.weather-line-2, .weather-bar.weather-line-3, .weather-bar.weather-line-4, .weather-bar.weather-line-5 { stroke: none; }

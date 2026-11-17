@@ -146,7 +146,7 @@ export const menuContentClass =
 export const menuItemClass =
   'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-secondary-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0';
 export const menuSeparatorClass = 'my-1 h-px bg-border';
-export const menuLabelClass = 'px-2 py-1 text-2xs font-medium uppercase tracking-wide text-subtle';
+export const menuLabelClass = 'px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-subtle';
 
 export const popoverContentClass =
   'z-2100 w-72 overflow-y-auto rounded-md border border-border bg-popover p-3 text-sm text-foreground shadow-dialog outline-none';
@@ -156,7 +156,7 @@ export const helpHintTriggerClass =
 export const helpHintInlineClass = 'size-5 -my-0.5 -mr-1 ml-0.5';
 /** Abivihje hüpik: 320px, kõrguse piir ja kerimine. */
 export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-content-available-height))]';
-export const helpHintTitleClass = 'mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground';
+export const helpHintTitleClass = 'mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted-foreground';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
 // --- Kaart (etapp 2.7) ---
@@ -260,7 +260,7 @@ export const tableHeadClass = ({
   numeric = false, pin, sortable = false, dense = false,
 }: { numeric?: boolean; pin?: TablePin; sortable?: boolean; dense?: boolean }): string =>
   cn(
-    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-2xs font-medium uppercase tracking-wide text-muted-foreground',
+    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-2xs font-semibold uppercase tracking-wide text-muted-foreground',
     dense ? 'px-1.5 py-1' : 'px-2.5 py-2',
     numeric ? 'text-right' : 'text-left',
     pin === 'start' && 'left-0 z-[3]',
