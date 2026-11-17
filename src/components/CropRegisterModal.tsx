@@ -20,7 +20,7 @@ import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle } from './ui';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -410,10 +410,10 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
               <DialogBody>
 
-              <div className="form-sub-header">
+              <SectionTitle ruled>
                 <Sprout size={14} />
                 <span>1. Kultuuri põhiandmed</span>
-              </div>
+              </SectionTitle>
               <FormGrid>
                 <Field label="Kultuuri nimetus *" htmlFor="crop-name">
                   <Input
@@ -591,10 +591,10 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
               <DialogBody>
 
-              <div className="form-sub-header">
+              <SectionTitle ruled>
                 <Sparkles size={14} />
                 <span>Sordi omadused ja aretusandmed ({targetCropForVariety.name})</span>
-              </div>
+              </SectionTitle>
               <FormGrid>
                 <Field label="Sordinimi *" htmlFor="variety-name">
                   <Input

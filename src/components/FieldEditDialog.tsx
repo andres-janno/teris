@@ -14,7 +14,7 @@ import { isCropUndetermined } from '../types/season';
 import type { SoilSample } from '../types/soilSample';
 import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
-import { Button, Card, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select } from './ui';
+import { Button, Card, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select, SectionTitle } from './ui';
 
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
@@ -327,10 +327,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       <DialogBody>
 
       {/* General Master Field Data */}
-      <div className="form-sub-header">
+      <SectionTitle ruled>
         <Landmark size={14} />
         <span>Põllu põhiandmed ja massiiv</span>
-      </div>
+      </SectionTitle>
       <FormGrid>
         <FormGrid cols={3} span="full">
           <Field label="Põllu nimi (kasutaja määratud) *" htmlFor="field-edit-name">
@@ -425,10 +425,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       </FormGrid>
 
       {/* Seasonal Yearly Data & Cadastral Parcels */}
-      <div className="form-sub-header with-top-gap">
+      <SectionTitle ruled spaced>
         <Compass size={14} />
         <span>Hooaja külvikord, pindala ja piirid</span>
-      </div>
+      </SectionTitle>
 
       <FormGrid>
         <Field label="Põllu haritav pindala (ha) *" htmlFor="field-edit-area">
@@ -605,7 +605,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       )}
 
       {/* Cadastral Parcels Management for Selected Year */}
-      <div className="form-sub-header with-top-gap">
+      <SectionTitle ruled spaced>
         <Landmark size={14} />
         <span>Hooaja koosseisu kuuluvad katastriüksused (kokku {editCadastralParcels.length} tk)</span>
         {!isEditSeasonLocked && (
@@ -620,7 +620,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             <span>Lisa katastriüksus</span>
           </Button>
         )}
-      </div>
+      </SectionTitle>
 
       <div className="edit-cadastral-list">
         {editCadastralParcels.map((parcel, pIdx) => (

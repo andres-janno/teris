@@ -6,7 +6,7 @@ import type { Polygon, MultiPolygon } from 'geojson';
 import { FlaskConical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
 import { getSoilMetricColor, getSoilMetricLevel } from '../types/soilSample';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionTitle } from './ui';
 
 interface SoilSamplesSectionProps {
   geometry: Polygon | MultiPolygon;
@@ -65,10 +65,10 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
 
   return (
     <div className="detail-section">
-      <div className="section-subtitle">
+      <SectionTitle>
         <FlaskConical size={14} />
         <span>Mullaproovid</span>
-      </div>
+      </SectionTitle>
 
       {byYear.length === 0 ? (
         <p className="notes-text">Selle põllu piiridesse jäävaid mullaproove pole.</p>

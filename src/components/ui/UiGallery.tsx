@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -424,6 +424,12 @@ export const UiGallery: React.FC = () => {
             </CardButton>
           </div>
           <Panel title="Paneel" actions={<Button size="sm">Tegevus</Button>} className="w-72">Päisega paneel (Panel).</Panel>
+        </Section>
+        <Section title="Jaotise pealkiri">
+          <div className="w-72">
+            <SectionTitle>Seadistused</SectionTitle>
+            <SectionTitle ruled spaced>Vormi alajaotis (joonega)</SectionTitle>
+          </div>
         </Section>
       </div>
     </div>

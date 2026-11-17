@@ -340,18 +340,6 @@
   gap: 12px;
 }
 
-.section-title {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
-}
-
 .basemap-cadastre-toggle {
   margin-top: 10px;
   padding: 0 4px;
@@ -683,18 +671,6 @@
   height: 12px;
   border-radius: 9999px;
   box-shadow: 0 0 10px currentColor;
-}
-
-.section-subtitle {
-  font-size: 12px;
-  text-transform: uppercase;
-  color: var(--text-secondary);
-  font-weight: 600;
-  letter-spacing: 0.5px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 8px;
 }
 
 .detail-section {

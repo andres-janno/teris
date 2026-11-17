@@ -344,3 +344,9 @@ export const chipVariants = cva(
 // Aktiivne on heledam roheline --selection-bg (kasutaja otsus 2026-11-16: jääb, kontrastist hoolimata).
 export const navSwitchClass = 'flex shrink-0 gap-0.5 rounded-md border border-border bg-muted p-0.5';
 export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-[normal] ${focusRing}`;
+
+/** Jaotise pealkiri (etapp 4.1; vanad .form-sub-header, .form-section-title, .section-title, .section-subtitle):
+    12px poolpaks suurtäht; ruled = joon all (vormi alajaotis), spaced = 16px ülavahe. */
+export const sectionTitleLabelClass = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground';
+export const sectionTitleClass = ({ ruled = false, spaced = false }: { ruled?: boolean; spaced?: boolean } = {}): string =>
+  cn('mb-2 flex items-center gap-1.5', sectionTitleLabelClass, ruled && 'border-b border-border pb-1', spaced && 'mt-4');

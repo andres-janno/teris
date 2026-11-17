@@ -9,8 +9,7 @@ import { ARTICLE_GROUPS, ARTICLE_GROUP_LABEL, articleFieldRules, sanitizeArticle
 import { convertQty } from '../services/units';
 import { SEED_REGISTERS, SEED_CATEGORIES, FERTILIZER_REGISTERS, LIMING_REGISTERS, PLANT_PROTECTION_REGISTERS } from '../services/pria';
 import {
-  Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, FormGrid, Input, NumberInput, Select, Textarea
-} from './ui';
+  Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, FormGrid, Input, NumberInput, Select, Textarea, SectionTitle } from './ui';
 
 // Kordusteta (tõstutundetult) ja tähestiku järjekorras
 const distinctValues = (values: (string | null | undefined)[]) => {
@@ -193,7 +192,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
             )}
             {registers && (
               <>
-                <div className="form-section-title" title="Täidavad plaani ja kande rea materjali valimisel">PRIA andmed</div>
+                <SectionTitle className="col-span-2 mt-1.5 border-t border-border pt-2.5" title="Täidavad plaani ja kande rea materjali valimisel">PRIA andmed</SectionTitle>
                 <Field span="full" label="PRIA register" htmlFor="mt-pria-register">
                   <Select id="mt-pria-register" value={form.priaRegister ?? ''} onValueChange={(v) => setForm({ ...form, priaRegister: v })}
                     options={[

@@ -1480,17 +1480,6 @@ body {
   margin: 0;
 }
 
-.form-sub-header {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--text-secondary);
-  margin-bottom: 8px;
-  padding-bottom: 4px;
-  border-bottom: 1px solid var(--border-card);
-}
-
 .field-sub-tags {
   display: flex;
   align-items: center;
@@ -4916,18 +4905,6 @@ td.stock-qty-out { color: #dc2626; }
 .article-form-modal [data-slot="input"] { text-overflow: ellipsis; }
 .article-form-body { overflow-x: hidden; }
 
-/* Kulumaterjali vormi PRIA plokk */
-.form-section-title {
-  grid-column: span 2;
-  margin-top: 6px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-card);
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
 .article-npk-inputs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
 
 .article-merge-info { margin-top: 10px; font-size: 13px; line-height: 1.45; }
@@ -5176,8 +5153,6 @@ polyline.weather-line { fill: none; }
 .weather-season-shifted { font-style: italic; }
 
 /* Staatilised abiklassid (varem inline-stiilid) */
-/* Vormi alapealkiri, mis vajab ülevalt vahet */
-.form-sub-header.with-top-gap { margin-top: 16px; }
 /* Veateate riba, mis vajab all vahet */
 .auth-error-banner.with-bottom-gap { margin-bottom: 16px; }
 /* Summutatud alamväärtus statistikakiibis */

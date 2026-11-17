@@ -17,7 +17,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey } from './ui';
+import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -101,10 +101,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
         <div className="layer-control-body">
           {/* Base Maps Selection */}
           <div className="layer-section">
-            <div className="section-title">
+            <SectionTitle>
               <MapIcon size={14} />
               <span>Aluskaart</span>
-            </div>
+            </SectionTitle>
             <div className="basemap-grid">
               {(Object.keys(BASE_MAPS) as BaseMapLayerId[]).map((id) => {
                 const mapConfig = BASE_MAPS[id];
@@ -135,10 +135,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
           {/* Overlays / Thematic Layers */}
           <div className="layer-section">
-            <div className="section-title">
+            <SectionTitle>
               <Grid size={14} />
               <span>Teemakihid</span>
-            </div>
+            </SectionTitle>
             <div className="overlay-list">
               {/* Fields Layer */}
               <Card variant="tile" padding="none" className="layer-field-box">

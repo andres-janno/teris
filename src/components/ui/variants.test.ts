@@ -34,6 +34,7 @@ const allClassStrings = (): string[] => [
   v.dialogHeaderIconClass,
   v.chipVariants({ variant: 'tint', dimmed: true }), v.chipVariants({ variant: 'outline' }),
   v.navSwitchClass, v.navSwitchItemClass,
+  v.sectionTitleLabelClass, v.sectionTitleClass(), v.sectionTitleClass({ ruled: true, spaced: true }),
 ];
 
 describe('variants', () => {
@@ -518,5 +519,20 @@ describe('peamenüü (NavSwitch)', () => {
   });
   it('ei kasuta keelatud suvalisi väärtusi', () => {
     expect(auditTsx(`className="${v.navSwitchClass} ${v.navSwitchItemClass}"`).arbitrary).toEqual([]);
+  });
+});
+
+describe('SectionTitle (etapp 4.1)', () => {
+  it('põhi: 12px poolpaks suurtäht, hall, 8px alla', () => {
+    const c = v.sectionTitleClass();
+    for (const t of ['text-xs', 'font-semibold', 'uppercase', 'text-muted-foreground', 'mb-2', 'flex']) expect(c).toContain(t);
+    expect(c).not.toContain('border-b');
+    expect(c).not.toContain('mt-4');
+  });
+  it('ruled lisab alumise joone ja 4px polstri, spaced 16px ülavahe', () => {
+    const c = v.sectionTitleClass({ ruled: true, spaced: true });
+    expect(c).toContain('border-b');
+    expect(c).toContain('pb-1');
+    expect(c).toContain('mt-4');
   });
 });

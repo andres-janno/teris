@@ -21,7 +21,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle } from './ui';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -252,10 +252,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       <DialogBody>
 
       {/* 1. Põhiandmed */}
-      <div className="form-sub-header">
+      <SectionTitle ruled>
         <Building2 size={14} />
         <span>1. Isiku või organisatsiooni põhiandmed</span>
-      </div>
+      </SectionTitle>
       <FormGrid>
         <Field label="Nimi või Ärinimi *" htmlFor="party-name" span="full">
           <Input
@@ -304,10 +304,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       </FormGrid>
 
       {/* 2. Rollid */}
-      <div className="form-sub-header with-top-gap">
+      <SectionTitle ruled spaced>
         <Users size={14} />
         <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
-      </div>
+      </SectionTitle>
       <div className="party-roles-checkbox-grid">
         {ALL_ROLES.map((role) => {
           const cfg = PARTY_ROLE_CONFIG[role];
@@ -334,10 +334,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
       </Field>
 
       {/* 3. Kontakt- ja finantsandmed */}
-      <div className="form-sub-header with-top-gap">
+      <SectionTitle ruled spaced>
         <CreditCard size={14} />
         <span>3. Kontakt- ja finantsandmed</span>
-      </div>
+      </SectionTitle>
       <FormGrid>
         <Field label="Telefoninumber" htmlFor="party-phone">
           <Input

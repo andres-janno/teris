@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox } from './ui';
+import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -86,7 +86,7 @@ export const WeatherView: React.FC = () => {
             {loading && <div className="alert-box info">Ilmaandmeid laetakse — esmalaadimine võtab kuni mõne tunni.</div>}
 
             <div className="detail-section">
-              <div className="section-subtitle"><CalendarRange size={14} /><span>Aastad · {per.label.toLowerCase()} {per.range}</span></div>
+              <SectionTitle><CalendarRange size={14} /><span>Aastad · {per.label.toLowerCase()} {per.range}</span></SectionTitle>
               <div className="weather-years-layout">
                 <Table scroll="fill" bordered containerClassName="weather-years-wrap" className="weather-years">
                     <TableHeader>
@@ -144,7 +144,7 @@ export const WeatherView: React.FC = () => {
               { metric: 'gdd' as const, title: 'Temperatuurisumma', unit: '°C', icon: <Thermometer size={14} /> }
             ]).map((c) => (
               <div key={c.metric} className="detail-section">
-                <div className="section-subtitle">{c.icon}<span>{c.title}, {c.unit}</span></div>
+                <SectionTitle>{c.icon}<span>{c.title}, {c.unit}</span></SectionTitle>
                 <div className="weather-chart-grid">
                   <Card variant="tile" padding="none" className="weather-chart-card"><div className="weather-chart-title">Kuude kaupa</div><MonthBars months={months} years={compare} metric={c.metric} unit={c.unit} /></Card>
                   <Card variant="tile" padding="none" className="weather-chart-card"><div className="weather-chart-title">Kasv hooaja jooksul</div><CumulativeLines series={cumulative.series} normal={cumulative.normal?.points ?? null} metric={c.metric} unit={c.unit} firstMonth={per.firstMonth} lastMonth={per.lastMonth} /></Card>
