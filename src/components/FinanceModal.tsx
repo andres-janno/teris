@@ -636,6 +636,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                             : isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
                                         </span>
                                       ) : (
+                                      // Läbipaistmatu alus: puuduva hinna toon ei sõltu rea taustast
+                                      <div className="rounded-sm bg-card">
                                       <NumberInput
                                         size="sm"
                                         decimals={4}
@@ -650,6 +652,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                           setSaveSuccess(null);
                                         }}
                                       />
+                                      </div>
                                       )}
                                     </TableCell>
                                     <TableCell numeric className={cn('font-semibold tabular-nums', isHarvest && 'text-success-text')}>
