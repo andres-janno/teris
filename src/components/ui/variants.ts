@@ -64,7 +64,7 @@ export const buttonVariants = cva(
 export type { BadgeTone, BadgeVariant };
 
 // Märk: soft (hele toon, vaikimisi), solid (täisvärv — rõhutatud olek, kasutaja otsus 2026-11-14), outline (ääris).
-export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-memibold', {
+export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-medium', {
   variants: {
     tone: { success: '', info: '', warning: '', danger: '', accent: '', neutral: '' } satisfies Record<BadgeTone, string>,
     variant: { soft: 'border-transparent', solid: 'border-transparent text-white', outline: 'bg-popover text-foreground' } satisfies Record<BadgeVariant, string>,
@@ -358,7 +358,7 @@ export const statTileClass = ({ tone = 'default' }: { tone?: StatTone } = {}): s
 export const statTileLabelClass = sectionTitleLabelClass;
 export const statTileValueClass = ({ tone = 'default', empty = false }: { tone?: StatTone; empty?: boolean } = {}): string =>
   cn(
-    'text-xl font-semibold leading-6 tabular-nums whitespace-nowrap',
+    'text-xl font-semibold leading-6 tabular-nums whitespace-nowrap [&_strong]:font-semibold',
     tone === 'cost' && 'text-destructive',
     tone === 'revenue' && 'text-primary',
     tone === 'profit' && 'text-success-text dark:text-primary',
@@ -366,7 +366,7 @@ export const statTileValueClass = ({ tone = 'default', empty = false }: { tone?:
     empty && 'font-normal text-subtle'
   );
 export const statTileUnitClass = 'text-sm font-normal text-muted-foreground';
-export const statTileSubClass = 'text-xs text-muted-foreground';
+export const statTileSubClass = 'text-xs text-muted-foreground [&_strong]:font-semibold';
 export const statTileNoteClass = 'mt-1.5 text-xs leading-4 text-muted-foreground';
 
 /** Legendi kirje (etapp 4.1; vanad .finance-cost-item, .soil-legend-item, .trip-timesplit-item): värvimärk + nimi [+ väärtus + märkus]. */
@@ -384,4 +384,6 @@ export const pageHeaderSubtitleClass = 'mt-0.5 text-sm text-muted-foreground';
 export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2.5';
 
 /** Rida „silt: väärtus“ (etapp 4.1; vanad .finance-summary-row, .fmc-row). */
-export const keyValueRowClass = 'flex items-center justify-between gap-3 text-base leading-[normal] tabular-nums';
+export const keyValueRowClass = 'flex items-baseline justify-between gap-3 text-base leading-[normal] tabular-nums';
+export const keyValueLabelClass = 'shrink-0';
+export const keyValueValueClass = 'min-w-0 text-right';

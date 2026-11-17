@@ -7,7 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
-  v.keyValueRowClass,
+  v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
@@ -595,5 +595,32 @@ describe('PageHeader (etapp 4.1)', () => {
 describe('KeyValueRow (etapp 4.1)', () => {
   it('silt vasakul, väärtus paremal, 14px tabelnumbritega', () => {
     for (const t of ['flex', 'justify-between', 'gap-3', 'text-base', 'tabular-nums']) expect(v.keyValueRowClass).toContain(t);
+  });
+  it('silt ja väärtus joonduvad baasjoonele; silt ei kahane, pikk väärtus murdub', () => {
+    expect(v.keyValueRowClass).toContain('items-baseline');
+    expect(v.keyValueRowClass).not.toContain('items-center');
+    expect(v.keyValueLabelClass).toContain('shrink-0');
+    for (const t of ['min-w-0', 'text-right']) expect(v.keyValueValueClass).toContain(t);
+  });
+});
+
+describe('kirjapaksuse tokenid (etapp 4a)', () => {
+  it('iga font-* token on tuntud paksus või -family (püüab kirjavead nagu font-memibold)', () => {
+    const allowed = new Set(['font-normal', 'font-medium', 'font-semibold', 'font-bold', 'font-sans', 'font-mono', 'font-serif']);
+    const bad = new Set<string>();
+    for (const str of allClassStrings()) {
+      for (const tok of str.split(/\s+/)) {
+        const m = /(?:^|:)(font-[a-z]+)$/.exec(tok);
+        if (m && !allowed.has(m[1])) bad.add(tok);
+      }
+    }
+    expect([...bad]).toEqual([]);
+  });
+  it('badge on keskmise paksusega', () => {
+    expect(v.badgeVariants({ tone: 'neutral', variant: 'soft', size: 'sm' })).toContain('font-medium');
+  });
+  it('StatTile sub ja value teevad paljad <strong> poolpaksuks', () => {
+    expect(v.statTileSubClass).toContain('[&_strong]:font-semibold');
+    expect(v.statTileValueClass({})).toContain('[&_strong]:font-semibold');
   });
 });
