@@ -221,7 +221,7 @@ body {
 
 .header-operator-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -407,7 +407,7 @@ body {
 }
 
 .p-ha {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--emerald-400);
 }
 
@@ -506,7 +506,7 @@ body {
 
 .v-name {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -693,7 +693,7 @@ body {
 .imp-name,
 .dev-model {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -828,7 +828,7 @@ body {
 
 .dev-telemetry-time strong {
   color: var(--fresh);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .dev-fresh-legend {
@@ -1005,7 +1005,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -1407,7 +1407,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -1428,7 +1428,7 @@ body {
 
 .reg-stat-pill strong {
   color: var(--text-primary);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .reg-stat-pill.highlight {
@@ -1474,14 +1474,14 @@ body {
 
 .field-name {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
   margin: 0;
 }
 
 .form-sub-header {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.05em;
   color: var(--text-secondary);
@@ -1596,7 +1596,7 @@ body {
 
 .crop-name-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -1709,7 +1709,7 @@ body {
 
 .season-year {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .season-notes-icon {
@@ -1985,7 +1985,7 @@ body {
 }
 
 .crop-register-table .variety-name {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -1994,14 +1994,14 @@ body {
    ========================================================================== */
 
 .variety-name-cell {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
 }
 
 .variety-seed-rate {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 500;
   white-space: nowrap;
 }
 
@@ -2105,7 +2105,7 @@ body {
   backdrop-filter: blur(6px);
   color: #fff4de;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   text-decoration: none;
   text-shadow: 0 1px 6px rgba(40, 25, 5, 0.6);
   transition: background 0.15s ease;
@@ -2181,7 +2181,7 @@ body {
 }
 
 .weather-credential-status { margin: 12px 0; font-size: 13px; }
-.weather-credential-state { font-weight: 600; margin-bottom: 6px; }
+.weather-credential-state { font-weight: 500; margin-bottom: 6px; }
 .weather-credential-status dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
 .weather-credential-status dt { color: var(--text-muted); }
 .weather-credential-status dd { margin: 0; }
@@ -2254,7 +2254,7 @@ body {
 }
 
 .header-account-info-name {
-  font-weight: 700;
+  font-weight: 500;
   font-size: 14px;
   color: var(--text-primary);
 }
@@ -2376,12 +2376,12 @@ body {
 }
 
 .work-name-cell {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .add-work-phase-label {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.05em;
 }
 
@@ -2676,7 +2676,7 @@ body {
 .fw-head-section {
   padding: 6px 12px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -2732,7 +2732,7 @@ body {
   flex-direction: column;
   gap: 2px;
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
   min-width: 0;
@@ -2747,7 +2747,7 @@ body {
   align-items: center;
   gap: 4px;
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0;
   color: var(--text-primary);
 }
@@ -2916,7 +2916,7 @@ body {
 }
 
 .fw-crop-name {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -3073,7 +3073,7 @@ body {
 
 .fw-field-sub strong {
   color: var(--text-primary);
-  font-weight: 600;
+  font-weight: 500;
   word-break: break-word;
 }
 
@@ -3246,7 +3246,7 @@ body {
   background: rgba(245, 158, 11, 0.18);
   color: #b45309;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
 }
 
 [data-theme='dark'] .fw-card-unplanned {
@@ -3273,7 +3273,7 @@ body {
   background: rgba(22, 163, 74, 0.12);
   color: var(--tone-success-text);
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -3288,7 +3288,7 @@ body {
 
 .fw-card-sub.repeat {
   color: #1d4ed8;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .fw-card-entries {
@@ -3310,7 +3310,7 @@ body {
 
 .fw-card-entry-primary {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   line-height: 1.25;
 }
@@ -3438,7 +3438,7 @@ body {
 .fw-plan-rows dt {
   color: var(--text-secondary);
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.03em;
 }
@@ -3486,7 +3486,7 @@ body {
 
 .fw-panel-phase {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.06em;
 }
 
@@ -3806,7 +3806,7 @@ body {
 
 .telemetry-pill-vehicle {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -3870,7 +3870,7 @@ body {
 
 .trip-route-toggle {
   flex-shrink: 0;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   background: var(--btn-sec-bg);
   border: 1px solid var(--btn-sec-border);
@@ -3900,7 +3900,7 @@ body {
 }
 
 .trip-route-current {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--basemap-active-color);
 }
 
@@ -3997,7 +3997,7 @@ body {
 
 .work-entry-presets-label {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   margin-right: 2px;
 }
@@ -4053,12 +4053,12 @@ body {
 
 .add-work-name {
   flex: 1;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .add-work-tag {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -4068,7 +4068,7 @@ body {
 
 .add-work-tag.to-add {
   color: var(--tone-success-text);
-  font-weight: 700;
+  font-weight: 500;
 }
 
 .add-work-tag.removed {
@@ -4091,7 +4091,7 @@ body {
 .add-work-count {
   flex: 1;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
 }
 
@@ -4234,7 +4234,7 @@ body {
 
 .finance-entry-work-name {
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
   display: flex;
   align-items: center;
@@ -4258,7 +4258,7 @@ body {
 }
 
 .finance-entry-cost {
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -4309,7 +4309,7 @@ body {
 
 .finance-detail-work-type {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--tone-success-text);
 }
 
@@ -4327,7 +4327,7 @@ body {
   align-items: center;
   gap: 6px;
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: #15803d;
   background: #dcfce7;
   padding: 4px 8px;
@@ -4379,11 +4379,11 @@ body {
 }
 
 .finance-line-label {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .finance-line-qty {
-  font-weight: 600;
+  font-weight: 500;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4863,7 +4863,7 @@ body {
 /* Materjaliread: veerupäisega ruudustik, üks rida materjali kohta */
 .pria-grid { display: grid; gap: 6px; align-items: center; }
 .pria-grid [data-slot="input"], .pria-grid [data-slot="filter-select"] { min-width: 0; width: 100%; }
-.pria-grid-head { font-size: 12px; font-weight: 600; color: var(--text-secondary); padding: 0 2px; }
+.pria-grid-head { font-size: 12px; font-weight: 500; color: var(--text-secondary); padding: 0 2px; }
 .pria-grid-head .num { text-align: right; }
 @media (max-width: 760px) {
   .pria-grid { display: flex; flex-wrap: wrap; }
@@ -4884,7 +4884,7 @@ body {
 /* Laoarvestus */
 
 /* Laokogused: plussis/arvele roheline, miinuses/maha punane */
-td.stock-qty { font-weight: 600; }
+td.stock-qty { font-weight: 500; }
 td.stock-qty-in { color: var(--emerald-500); }
 td.stock-qty-out { color: #dc2626; }
 
@@ -4922,7 +4922,7 @@ td.stock-qty-out { color: #dc2626; }
   padding-top: 10px;
   border-top: 1px solid var(--border-card);
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
@@ -5023,7 +5023,7 @@ td.stock-qty-out { color: #dc2626; }
 .fleet-icon-box.is-success { background: rgba(16, 185, 129, 0.15); color: var(--tone-success-text); }
 .fleet-icon-box.is-warning { background: rgba(234, 179, 8, 0.15); color: #eab308; }
 .fleet-cell-main { display: flex; align-items: center; gap: 8px; }
-.fleet-cell-title { font-weight: 600; font-size: 13px; }
+.fleet-cell-title { font-weight: 500; font-size: 13px; }
 .fleet-cell-sub { font-size: 11px; color: var(--text-muted); }
 .fleet-cell-date { font-size: 13px; font-weight: 500; }
 .fleet-cell-date-end { font-size: 13px; color: var(--text-secondary); }
@@ -5093,7 +5093,7 @@ td.stock-qty-out { color: #dc2626; }
 .trip-timesplit-part.pause, .trip-timesplit-swatch.pause { background: var(--trip-pause); }
 .trip-timesplit-legend { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 8px; font-size: 13px; color: var(--text-secondary); }
 .trip-timesplit-item { display: inline-flex; align-items: center; gap: 6px; }
-.trip-timesplit-item strong { color: var(--text-primary); font-weight: 700; }
+.trip-timesplit-item strong { color: var(--text-primary); font-weight: 500; }
 .trip-timesplit-swatch { width: 10px; height: 10px; border-radius: var(--radius-sm); }
 
 .trip-details { display: grid; grid-template-columns: max-content 1fr; gap: 4px 16px; margin: 0 0 16px; font-size: 13px; }
@@ -5146,7 +5146,7 @@ td.stock-qty-out { color: #dc2626; }
 @media (max-width: 760px) { .weather-chart-grid { grid-template-columns: 1fr; } }
 /* Graafiku kast: oma polster (graafik vajab all vähem ruumi), välimus Card tile-ist */
 .weather-chart-card { padding: 8px 10px 4px; min-width: 0; }
-.weather-chart-title { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
+.weather-chart-title { font-size: 11px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
 .weather-chart-box { width: 100%; }
 .weather-chart { display: block; }
 .weather-grid { stroke: var(--border-card); stroke-width: 1; }
@@ -5155,7 +5155,7 @@ td.stock-qty-out { color: #dc2626; }
 .weather-chart { cursor: crosshair; }
 .weather-crosshair line { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 3 3; }
 .weather-crosshair-label { fill: var(--text-primary, #334155); }
-.weather-crosshair-text { font-size: 11px; font-weight: 600; fill: var(--bg-modal, #fff); }
+.weather-crosshair-text { font-size: 11px; font-weight: 500; fill: var(--bg-modal, #fff); }
 .weather-axis { font-size: 11px; fill: var(--text-secondary); }
 .weather-bar-normal { fill: #cbd5e1; background: #cbd5e1; }
 .weather-bar.weather-line-0, .weather-bar.weather-line-1, .weather-bar.weather-line-2, .weather-bar.weather-line-3, .weather-bar.weather-line-4, .weather-bar.weather-line-5 { stroke: none; }
@@ -5187,7 +5187,7 @@ polyline.weather-line { fill: none; }
 /* Töö täisnimi lühinime all */
 .work-full-name { display: block; font-weight: 400; color: var(--text-secondary); }
 /* Seadme paigalduse vormi silt */
-.device-assign-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+.device-assign-label { font-size: 12px; font-weight: 500; color: var(--text-secondary); }
 /* Ikoon ja tekst reas */
 .inline-icon-text { display: flex; align-items: center; gap: 4px; }
 /* Dialoogi jaluses vasakule nihutatud nupp */
@@ -5205,5 +5205,5 @@ polyline.weather-line { fill: none; }
 
 /* Kiibi (ui/ChipButton) sisu tüpograafia */
 [data-slot="chip"] .lbl { color: var(--text-secondary); }
-[data-slot="chip"] strong { color: var(--text-primary); font-weight: 600; }
+[data-slot="chip"] strong { color: var(--text-primary); font-weight: 500; }
 [data-slot="chip"] .sub-val { font-size: 11px; margin-left: 4px; }

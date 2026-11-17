@@ -275,7 +275,7 @@
   transform: translateX(-50%);
   z-index: 900;
   color: #db2777;
-  font-weight: 600;
+  font-weight: 500;
   font-size: 14px;
   /* Lisamise režiim: roosa ääris peab Card-i äärise üle võitma */
   border-color: rgba(219, 39, 119, 0.4) !important;
@@ -344,7 +344,7 @@
   font-size: 12px;
   text-transform: uppercase;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
@@ -689,7 +689,7 @@
   font-size: 12px;
   text-transform: uppercase;
   color: var(--text-secondary);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.5px;
   display: flex;
   align-items: center;
@@ -705,16 +705,16 @@
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .soil-age {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
 }
 
 .soil-value {
-  font-weight: 600;
+  font-weight: 500;
 }
 
 /* Mulla väärtus: taseme toon tekstina (kontrast mõlemas teemas); andmevärv jääb kaardile ja vanuse punktile */
@@ -833,7 +833,7 @@
 
 .cc-value {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
   white-space: nowrap;
@@ -979,7 +979,7 @@
 
 .cc-time-bound {
   font-size: 12px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-secondary);
   font-variant-numeric: tabular-nums;
 }
@@ -1041,7 +1041,7 @@
 
 .cc-now-time {
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
 }
 
@@ -1484,7 +1484,7 @@
 .layer-subtext {
   font-size: 11px;
   color: var(--emerald-500);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.01em;
 }
 
@@ -1507,7 +1507,7 @@
 
 .popup-title-row .status-tag {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   padding: 2px 6px;
   border-radius: var(--radius-sm);
   text-transform: uppercase;

@@ -25,7 +25,7 @@ export const buttonVariantSizes = {
 } as const;
 
 export const buttonVariants = cva(
-  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-semibold transition-all cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
+  `inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-md border font-medium transition-all cursor-pointer select-none disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
   {
     variants: {
       variant: {
@@ -64,7 +64,7 @@ export const buttonVariants = cva(
 export type { BadgeTone, BadgeVariant };
 
 // Märk: soft (hele toon, vaikimisi), solid (täisvärv — rõhutatud olek, kasutaja otsus 2026-11-14), outline (ääris).
-export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-semibold', {
+export const badgeVariants = cva('inline-flex items-center gap-1 whitespace-nowrap rounded-full border font-memibold', {
   variants: {
     tone: { success: '', info: '', warning: '', danger: '', accent: '', neutral: '' } satisfies Record<BadgeTone, string>,
     variant: { soft: 'border-transparent', solid: 'border-transparent text-white', outline: 'bg-popover text-foreground' } satisfies Record<BadgeVariant, string>,
@@ -110,7 +110,7 @@ export const tabsListVariants = cva('inline-flex max-w-full flex-wrap items-cent
 // Keelatud sakk/valik jääb hõljutatavaks (vihjetekst) — enabled:hover, mitte disabled:pointer-events-none.
 // Aktiivne: Radix Tabs data-state=active, Radix ToggleGroup data-state=on.
 export const tabsTriggerVariants = cva(
-  `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-semibold text-muted-foreground transition-colors cursor-pointer enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
+  `inline-flex shrink-0 items-center gap-1.5 whitespace-nowrap font-medium text-muted-foreground transition-colors cursor-pointer enabled:hover:text-foreground disabled:cursor-not-allowed disabled:opacity-50 ${focusRing}`,
   {
     variants: {
       variant: {
@@ -146,7 +146,7 @@ export const menuContentClass =
 export const menuItemClass =
   'flex cursor-pointer select-none items-center gap-2 rounded-sm px-2 py-1.5 outline-none data-[highlighted]:bg-secondary-hover data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0';
 export const menuSeparatorClass = 'my-1 h-px bg-border';
-export const menuLabelClass = 'px-2 py-1 text-2xs font-semibold uppercase tracking-wide text-subtle';
+export const menuLabelClass = 'px-2 py-1 text-2xs font-medium uppercase tracking-wide text-subtle';
 
 export const popoverContentClass =
   'z-2100 w-72 overflow-y-auto rounded-md border border-border bg-popover p-3 text-sm text-foreground shadow-dialog outline-none';
@@ -156,7 +156,7 @@ export const helpHintTriggerClass =
 export const helpHintInlineClass = 'size-5 -my-0.5 -mr-1 ml-0.5';
 /** Abivihje hüpik: 320px, kõrguse piir ja kerimine. */
 export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-content-available-height))]';
-export const helpHintTitleClass = 'mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted-foreground';
+export const helpHintTitleClass = 'mb-1.5 text-2xs font-medium uppercase tracking-wide text-muted-foreground';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
 // --- Kaart (etapp 2.7) ---
@@ -260,7 +260,7 @@ export const tableHeadClass = ({
   numeric = false, pin, sortable = false, dense = false,
 }: { numeric?: boolean; pin?: TablePin; sortable?: boolean; dense?: boolean }): string =>
   cn(
-    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-2xs font-semibold uppercase tracking-wide text-muted-foreground',
+    'sticky top-0 z-[2] whitespace-nowrap border-b border-border bg-table-head text-2xs font-medium uppercase tracking-wide text-muted-foreground',
     dense ? 'px-1.5 py-1' : 'px-2.5 py-2',
     numeric ? 'text-right' : 'text-left',
     pin === 'start' && 'left-0 z-[3]',
@@ -306,7 +306,7 @@ export const tableFooterClass = ({ sticky = false }: { sticky?: boolean } = {}):
 
 // --- Filtririba ja tühi olek (etapp 3) ---
 export const filterBarClass = 'flex flex-wrap items-center gap-3';
-export const filterBarLabelClass = 'inline-flex items-center gap-1.5 text-sm font-semibold';
+export const filterBarLabelClass = 'inline-flex items-center gap-1.5 text-sm font-medium';
 export const filterBarActionsClass = 'ml-auto flex items-center gap-2';
 const FILTER_BAR_ITEM_WIDTH = { sm: 'min-w-38', md: 'min-w-45', lg: 'min-w-50' } as const;
 /** Rippmenüü ümbris filtriribal: miinimumlaius (152/180/200px), FilterClear ja FilterSelect täidavad selle. */
@@ -343,4 +343,4 @@ export const chipVariants = cva(
 // --- Peamenüü (etapp 3b): navigatsioonirida, aktiivne = aria-current="page" (mitte Radix Tabs/ToggleGroup). ---
 // Aktiivne on heledam roheline --selection-bg (kasutaja otsus 2026-11-16: jääb, kontrastist hoolimata).
 export const navSwitchClass = 'flex shrink-0 gap-0.5 rounded-md border border-border bg-muted p-0.5';
-export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-semibold text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-[normal] ${focusRing}`;
+export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-[normal] ${focusRing}`;

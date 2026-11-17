@@ -11,7 +11,7 @@ export type InputProps = Omit<React.ComponentProps<'input'>, 'size'> & {
   end?: React.ReactNode;
 };
 
-const readOnlyClass = 'read-only:enabled:cursor-default read-only:enabled:font-semibold';
+const readOnlyClass = 'read-only:enabled:cursor-default';
 
 export const Input: React.FC<InputProps> = ({ className, size = 'md', numeric, start, end, ...props }) => {
   const numericClass = numeric && 'text-right tabular-nums';

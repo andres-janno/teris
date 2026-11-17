@@ -315,7 +315,7 @@ export const DateInput: React.FC<DateInputProps> = ({
               </button>
               <button
                 type="button"
-                className="cursor-pointer rounded-sm border border-border bg-transparent px-1.5 py-0.5 text-2xs font-semibold text-muted-foreground transition-colors hover:border-primary hover:bg-muted hover:text-foreground"
+                className="cursor-pointer rounded-sm border border-border bg-transparent px-1.5 py-0.5 text-2xs font-medium text-muted-foreground transition-colors hover:border-primary hover:bg-muted hover:text-foreground"
                 onClick={handleToday}
                 title="Vali tänane kuupäev"
               >
@@ -329,7 +329,7 @@ export const DateInput: React.FC<DateInputProps> = ({
 
           <div className="grid grid-cols-7 text-center">
             {WEEK_DAYS.map((wd, idx) => (
-              <span key={idx} className="py-0.5 text-2xs font-semibold text-subtle">{wd}</span>
+              <span key={idx} className="py-0.5 text-2xs font-medium text-subtle">{wd}</span>
             ))}
           </div>
 
