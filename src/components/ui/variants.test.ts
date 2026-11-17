@@ -7,6 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
+  v.keyValueRowClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
@@ -588,5 +589,11 @@ describe('PageHeader (etapp 4.1)', () => {
     expect(v.pageHeaderSubtitleClass).toContain('text-muted-foreground');
     expect(v.pageHeaderActionsClass).toContain('ml-auto');
     expect(v.pageHeaderIconClass).toContain('[&>svg]:size-5');
+  });
+});
+
+describe('KeyValueRow (etapp 4.1)', () => {
+  it('silt vasakul, väärtus paremal, 14px tabelnumbritega', () => {
+    for (const t of ['flex', 'justify-between', 'gap-3', 'text-base', 'tabular-nums']) expect(v.keyValueRowClass).toContain(t);
   });
 });

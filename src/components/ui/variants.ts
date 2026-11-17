@@ -382,3 +382,6 @@ export const pageHeaderIconClass = 'flex shrink-0 items-center [&>svg]:size-5';
 export const pageHeaderTitleClass = 'm-0 text-xl font-semibold leading-6 text-foreground';
 export const pageHeaderSubtitleClass = 'mt-0.5 text-sm text-muted-foreground';
 export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2.5';
+
+/** Rida „silt: väärtus“ (etapp 4.1; vanad .finance-summary-row, .fmc-row). */
+export const keyValueRowClass = 'flex items-center justify-between gap-3 text-base tabular-nums';

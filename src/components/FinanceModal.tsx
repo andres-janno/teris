@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem } from './ui';
+import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem, KeyValueRow } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -684,23 +684,16 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       </div>
 
                       <Card variant="tile" padding="sm" className="finance-summary-card">
-                        <div className="finance-summary-row">
-                          <span>Kulud kokku:</span>
-                          <strong className="cost-neg">{fmtCur(entryCostTotal)}</strong>
-                        </div>
+                        <KeyValueRow label="Kulud kokku:"><strong className="cost-neg">{fmtCur(entryCostTotal)}</strong></KeyValueRow>
                         {entryRevenueTotal > 0 && (
-                          <div className="finance-summary-row">
-                            <span>Saagitulu kokku:</span>
-                            <strong className="profit-pos">+{fmtCur(entryRevenueTotal)}</strong>
-                          </div>
+                          <KeyValueRow label="Saagitulu kokku:"><strong className="profit-pos">+{fmtCur(entryRevenueTotal)}</strong></KeyValueRow>
                         )}
                         <div className="finance-summary-divider" />
-                        <div className="finance-summary-row total">
-                          <span>Puhastulemus:</span>
+                        <KeyValueRow label="Puhastulemus:" className="font-semibold">
                           <span className={`finance-net-result ${entryNetTotal >= 0 ? 'positive' : 'negative'}`}>
                             {entryNetTotal >= 0 ? '+' : ''}{fmtCur(entryNetTotal)}
                           </span>
-                        </div>
+                        </KeyValueRow>
                       </Card>
                     </div>
 

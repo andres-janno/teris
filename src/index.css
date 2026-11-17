@@ -4399,23 +4399,10 @@ body {
   gap: 8px;
 }
 
-.finance-summary-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 14px;
-  font-variant-numeric: tabular-nums;
-}
-
 .finance-summary-divider {
   height: 1px;
   background: var(--border-card);
   margin: 2px 0;
-}
-
-.finance-summary-row.total {
-  font-size: 14px;
-  font-weight: 600;
 }
 
 .finance-net-result.positive {
@@ -4965,8 +4952,6 @@ td.stock-qty-out { color: #dc2626; }
 .fmc-header { display: flex; align-items: center; gap: 8px; }
 .fmc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .fmc-rows { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-.fmc-row { display: flex; justify-content: space-between; gap: 12px; }
-.fmc-crop { text-align: right; }
 .fmc-actions { display: flex; gap: 8px; }
 .fmc-actions > button { flex: 1; justify-content: center; }
 

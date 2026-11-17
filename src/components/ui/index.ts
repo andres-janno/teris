@@ -39,3 +39,4 @@ export { SectionTitle } from './SectionTitle';
 export { StatTile } from './StatTile';
 export { LegendItem } from './LegendItem';
 export { PageHeader } from './PageHeader';
+export { KeyValueRow } from './KeyValueRow';
