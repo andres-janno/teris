@@ -113,11 +113,12 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
   const who = trip.vehicleName ?? `${trip.deviceLabel} — seos puudub`;
   const active = trip.status === 'ACTIVE';
   // Põhinumbrid: alati neli kasti (andmete puudumisel „—“), et paigutus ei hüppaks sõidult sõidule
-  const tiles: { label: string; value: string; unit?: string }[] = [
-    { label: 'Kestus', value: formatDuration(trip.startedAt, trip.endedAt) },
-    { label: 'Läbitud', value: formatQty(trip.distanceKm), unit: 'km' },
-    { label: 'Tehtud pindala', value: trip.areaHa == null ? '—' : formatQty(trip.areaHa), unit: trip.areaHa == null ? undefined : 'ha' },
-    { label: 'Kütus', value: trip.fuelLiters == null ? '—' : formatQty(trip.fuelLiters), unit: trip.fuelLiters == null ? undefined : 'l' }
+  const duration = formatDuration(trip.startedAt, trip.endedAt);
+  const tiles: { label: string; value: string; unit?: string; empty: boolean }[] = [
+    { label: 'Kestus', value: duration, empty: duration === '—' },
+    { label: 'Läbitud', value: formatQty(trip.distanceKm), unit: 'km', empty: false },
+    { label: 'Tehtud pindala', value: trip.areaHa == null ? '—' : formatQty(trip.areaHa), unit: trip.areaHa == null ? undefined : 'ha', empty: trip.areaHa == null },
+    { label: 'Kütus', value: trip.fuelLiters == null ? '—' : formatQty(trip.fuelLiters), unit: trip.fuelLiters == null ? undefined : 'l', empty: trip.fuelLiters == null }
   ];
   // Aja jaotus: liikumine / seisuaeg süütega / pausid (osad proportsionaalsed, null osa ei joonistu)
   const timeParts = [
@@ -163,7 +164,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
 
           <div className="trip-tiles">
             {tiles.map((t) => (
-              <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.value === '—'} />
+              <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.empty} />
             ))}
           </div>
 

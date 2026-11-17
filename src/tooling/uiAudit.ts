@@ -111,7 +111,7 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
 // FinanceModal'i finance-* klassid. ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 const LEGACY_OVERVIEW =
   /(?<![\w-])(section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop)(?![\w-])/g;
-const CSS_RULE =/([^{}]+)\{([^{}]*)\}/g;
+const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
 const CARD_LOOK_DECL = /(?:^|[;\s])(background(?:-color)?|border|border-radius|box-shadow|(?:-webkit-)?backdrop-filter)\s*:\s*([^;}]*)/g;
 
 export function legacyCardRules(css: string): string[] {
