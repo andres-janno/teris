@@ -473,11 +473,11 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
                 <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1" aria-busy={loadingEntries}>
                   {loadingEntries && entries.length === 0 && (
-                    <div className="px-4 py-8 text-center text-sm text-subtle">Laadin kandeid…</div>
+                    <div className="px-4 py-8 text-center text-sm leading-[normal] text-subtle">Laadin kandeid…</div>
                   )}
 
                   {!loadingEntries && filteredEntries.length === 0 && (
-                    <div className="px-4 py-8 text-center text-sm text-subtle">
+                    <div className="px-4 py-8 text-center text-sm leading-[normal] text-subtle">
                       {statusFilter === 'ACTION_NEEDED'
                         ? 'Kõik kanded on kinnitatud! Vali "Kõik", et vaadata varem kinnitatuid.'
                         : 'Ühtegi filtritele vastavat kannet ei leitud.'}
@@ -497,7 +497,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         onClick={() => setSelectedEntryId(e.id)}
                       >
                         <div className="flex items-center justify-between gap-1.5">
-                          <div className="flex min-w-0 items-center gap-1.5 text-sm">
+                          <div className="flex min-w-0 items-center gap-1.5 text-sm leading-[normal]">
                             {e.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {e.fieldNum}</Badge>}
                             <strong className="truncate">{e.fieldName}</strong>
                           </div>
@@ -505,15 +505,15 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         </div>
 
                         <div className="flex flex-col gap-0.5">
-                          <div className="flex items-center gap-1 text-sm font-medium text-foreground"><span>{e.workTypeName}</span></div>
-                          <div className="text-xs text-subtle">
+                          <div className="flex items-center gap-1 text-sm leading-[normal] font-medium text-foreground"><span>{e.workTypeName}</span></div>
+                          <div className="text-xs leading-[normal] text-subtle">
                             <span>{formatDate(e.date)}</span>
                             {e.areaHa && <span> · {fmtHa(e.areaHa)} ha</span>}
                             {e.workerName && <span> · {e.workerName}</span>}
                           </div>
                         </div>
 
-                        <div className="mt-0.5 flex items-center justify-between border-t border-border pt-1 text-xs text-muted-foreground">
+                        <div className="mt-0.5 flex items-center justify-between border-t border-border pt-1 text-xs leading-[normal] text-muted-foreground">
                           <span>{e.lines?.length || 0} rida</span>
                           {isConfirmed && entryCost > 0 && (
                             <span className="font-medium text-foreground">{fmtCur(entryCost)}</span>
