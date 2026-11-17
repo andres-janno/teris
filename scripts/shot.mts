@@ -102,6 +102,8 @@ try {
     const page = await ctx.newPage();
     for (const p of paths) {
       await page.goto(base + p, { waitUntil: 'networkidle' });
+      // Serveris pole SF Pro'd/Segoe UI-d (litsents) — Inter on kujult ja laiuselt lähim, kõigi paksustega
+      await page.addStyleTag({ content: "body { font-family: Inter, -apple-system, 'Segoe UI', sans-serif !important; }" });
       await page.evaluate((t) => document.documentElement.setAttribute('data-theme', t), theme);
       if (clickSel) await page.click(clickSel);
       const stem = p.replace(/[^\w]+/g, '_').replace(/^_|_$/g, '') || 'root';
