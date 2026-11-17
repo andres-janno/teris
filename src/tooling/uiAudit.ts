@@ -96,10 +96,10 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'layer-control-panel', 'satellite-panel', 'map-year-floating-widget', 'cultivation-panel', 'add-poi-banner',
   'coords-tracker', 'radar-legend', 'field-map-card', 'layer-field-box',
   // register- ja loendikaardid
-  'vehicle-card', 'implement-card', 'device-card', 'finance-entry-card', 'edit-cad-item', 'history-filter-bar',
+  'vehicle-card', 'implement-card', 'device-card', 'edit-cad-item', 'history-filter-bar',
   'empty-register-state',
   // KPI ja statistika plaadid
-  'finance-kpi-card', 'finance-summary-card', 'finance-results-status-bar', 'trip-tile', 'register-crop-summary',
+  'trip-tile', 'register-crop-summary',
   'dev-telemetry-summary', 'imp-status-box',
   // sektsioonikastid
   'support-panel', 'fw-plan-section', 'parsed-preview-box', 'weather-chart-card',

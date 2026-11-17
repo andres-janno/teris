@@ -738,9 +738,9 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
           )}
 
           {tab === 'results' && (
-            <div className="finance-results-layout">
+            <div className="flex h-full min-h-0 flex-col gap-3 overflow-y-auto">
               {/* Summary KPI Cards */}
-              <div className="finance-kpis-grid">
+              <div className="grid grid-cols-4 gap-3">
                 <StatTile label="Põllud kokku" value={<>{resultsSummary.fieldCount} <small>põldu</small></>}
                   sub={<>Pindala: <strong>{fmtHa(resultsSummary.totalArea)} ha</strong></>} />
                 <StatTile label="Kulud kokku" tone="cost" value={fmtCur(resultsSummary.totalCost)}
@@ -753,8 +753,8 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               </div>
 
               {/* Status Banner */}
-              <Card variant="tile" padding="sm" className="finance-results-status-bar">
-                <div className="finance-confirmed-progress">
+              <Card variant="tile" padding="sm" className="flex items-center justify-between gap-3 text-sm leading-[normal]">
+                <div className="flex items-center gap-2">
                   <Info size={14} />
                   <span>
                     Summades kajastuvad ainult kinnitatud kanded: <strong>{resultsSummary.totalConfirmed}</strong> / {resultsSummary.totalEntries} kannet kinnitatud ({resultsSummary.totalEntries > 0 ? Math.round((resultsSummary.totalConfirmed / resultsSummary.totalEntries) * 100) : 0}%).
@@ -776,7 +776,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
 
               {/* Cost breakdown pill bar */}
               {resultsSummary.totalCost > 0 && (
-                <div className="finance-cost-breakdown-bar">
+                <div className="flex flex-wrap items-center gap-4 rounded-md bg-muted px-3 py-1.5 text-xs leading-[normal]">
                   <LegendItem color={FINANCE_COST_COLOR.labor} value={fmtCur(resultsSummary.totalLabor)}
                     note={`(${Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)`}>Tööjõud:</LegendItem>
                   <LegendItem color={FINANCE_COST_COLOR.equipment} value={fmtCur(resultsSummary.totalEquipment)}
@@ -789,31 +789,31 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               )}
 
               {/* Table search & header */}
-              <div className="finance-results-toolbar">
-                <SearchInput className="search-field" value={resultsSearch} onChange={setResultsSearch} placeholder="Otsi põllu nime, numbri või kultuuri järgi..." aria-label="Otsi põllu nime, numbri või kultuuri järgi..." />
-                <div className="text-xs">
+              <div className="flex items-center justify-between gap-3">
+                <SearchInput className="max-w-105 flex-1 basis-70" value={resultsSearch} onChange={setResultsSearch} placeholder="Otsi põllu nime, numbri või kultuuri järgi..." aria-label="Otsi põllu nime, numbri või kultuuri järgi..." />
+                <div className="text-xs leading-[normal]">
                   Klõpsa päisel, et veergu sorteerida. Klõpsa põllul, et avada selle kanded.
                 </div>
               </div>
 
               {/* Field Results Table */}
-              <Table bordered className="finance-results-table" aria-busy={loadingResults}>
+              <Table bordered aria-busy={loadingResults}>
                   <TableHeader>
                     <TableRow>
                       <TableHead onClick={() => toggleSort('field')} sort={sortState('field')}>
-                        <div className="th-content">
+                        <div className="flex items-center gap-1">
                           <span>Põld</span>
                           {sortCol === 'field' && <ArrowUpDown size={12} />}
                         </div>
                       </TableHead>
                       <TableHead onClick={() => toggleSort('crop')} sort={sortState('crop')}>
-                        <div className="th-content">
+                        <div className="flex items-center gap-1">
                           <span>Kultuur</span>
                           {sortCol === 'crop' && <ArrowUpDown size={12} />}
                         </div>
                       </TableHead>
                       <TableHead numeric onClick={() => toggleSort('area')} sort={sortState('area')}>
-                        <div className="th-content num">
+                        <div className="flex items-center justify-end gap-1">
                           <span>Pindala</span>
                           {sortCol === 'area' && <ArrowUpDown size={12} />}
                         </div>
@@ -824,25 +824,25 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       <TableHead numeric>Materjalid</TableHead>
                       <TableHead numeric>Kuivatamine</TableHead>
                       <TableHead numeric onClick={() => toggleSort('cost')} sort={sortState('cost')}>
-                        <div className="th-content num">
+                        <div className="flex items-center justify-end gap-1">
                           <span>Kulu kokku</span>
                           {sortCol === 'cost' && <ArrowUpDown size={12} />}
                         </div>
                       </TableHead>
                       <TableHead numeric onClick={() => toggleSort('revenue')} sort={sortState('revenue')}>
-                        <div className="th-content num">
+                        <div className="flex items-center justify-end gap-1">
                           <span>Saagitulu</span>
                           {sortCol === 'revenue' && <ArrowUpDown size={12} />}
                         </div>
                       </TableHead>
                       <TableHead numeric onClick={() => toggleSort('profit')} sort={sortState('profit')}>
-                        <div className="th-content num">
+                        <div className="flex items-center justify-end gap-1">
                           <span>Tulemus (€)</span>
                           {sortCol === 'profit' && <ArrowUpDown size={12} />}
                         </div>
                       </TableHead>
                       <TableHead numeric onClick={() => toggleSort('profitPerHa')} sort={sortState('profitPerHa')}>
-                        <div className="th-content num">
+                        <div className="flex items-center justify-end gap-1">
                           <span>Tulemus (€/ha)</span>
                           {sortCol === 'profitPerHa' && <ArrowUpDown size={12} />}
                         </div>
@@ -871,7 +871,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                             title="Klõpsa, et näha selle põllu kandeid hinnastamises"
                           >
                             <TableCell>
-                              <div className="finance-field-cell">
+                              <div className="flex items-center gap-1.5">
                                 {r.fieldNum && <Badge tone="success" variant="outline" size="md">Nr {r.fieldNum}</Badge>}
                                 <strong>{r.fieldName}</strong>
                               </div>
@@ -880,17 +880,17 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                               <Badge dot={r.cropColor || undefined}>{r.crop}</Badge>
                             </TableCell>
                             <TableCell numeric>{fmtHa(r.areaHa)} ha</TableCell>
-                            <TableCell numeric className="muted">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
-                            <TableCell numeric className="muted">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</TableCell>
-                            <TableCell numeric className="muted">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</TableCell>
-                            <TableCell numeric className="muted">{r.articles > 0 ? fmtCur(r.articles) : '–'}</TableCell>
-                            <TableCell numeric className="muted" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</TableCell>
-                            <TableCell numeric className="cost-total">{fmtCur(r.costTotal)}</TableCell>
-                            <TableCell numeric className="profit-pos">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</TableCell>
-                            <TableCell numeric className={isProfitable ? 'profit-pos' : 'profit-neg'}>
+                            <TableCell numeric className="text-subtle">{r.labor > 0 ? fmtCur(r.labor) : '–'}</TableCell>
+                            <TableCell numeric className="text-subtle">{r.equipment > 0 ? fmtCur(r.equipment) : '–'}</TableCell>
+                            <TableCell numeric className="text-subtle">{r.fuel > 0 ? fmtCur(r.fuel) : '–'}</TableCell>
+                            <TableCell numeric className="text-subtle">{r.articles > 0 ? fmtCur(r.articles) : '–'}</TableCell>
+                            <TableCell numeric className="text-subtle" title={r.dryingLots.map((l) => `Kuivatamine (${l.name}): ${fmtCur(l.amount)}`).join('\n')}>{r.drying > 0 ? fmtCur(r.drying) : '–'}</TableCell>
+                            <TableCell numeric className="font-semibold">{fmtCur(r.costTotal)}</TableCell>
+                            <TableCell numeric className="font-semibold text-primary">{r.revenue > 0 ? fmtCur(r.revenue) : '–'}</TableCell>
+                            <TableCell numeric className={cn(isProfitable ? 'text-primary' : 'text-destructive', 'font-semibold')}>
                               {isProfitable && r.profit > 0 ? '+' : ''}{fmtCur(r.profit)}
                             </TableCell>
-                            <TableCell numeric className={isProfitable ? 'profit-pos' : 'profit-neg'}>
+                            <TableCell numeric className={cn(isProfitable ? 'text-primary' : 'text-destructive', 'font-semibold')}>
                               {isProfitable && profitPerHa > 0 ? '+' : ''}{fmtCur(profitPerHa)}
                             </TableCell>
                             <TableCell numeric>
