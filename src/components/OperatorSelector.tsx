@@ -32,6 +32,7 @@ export const OperatorSelector: React.FC<OperatorSelectorProps> = ({ parties, sel
             variant="filter"
             size="auto"
             className="header-operator-trigger"
+            aria-label={`Operaator: ${label}`}
             title={selected.length ? selectedNames.join(', ') : 'Filtreeri kaarti ja statistikat operaatori (harija) järgi'}
           >
             <Users size={15} />

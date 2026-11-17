@@ -245,22 +245,32 @@ body {
   transform: rotate(180deg);
 }
 
-/* Kitsal ekraanil (alla 1656px: logo 164 + menüü 1078 + paremnupud 398 + serv 16) ei mahu peamenüü täiskujul kasutajamenüü ja operaatorivalija kõrvale.
-   Valija näitab siis ainult ikooni ja valitud operaatori nime: ilma pealkirja ja rippmenüü noolega, väiksema polstriga (kasutaja otsus 2026-11-16).
-   !important võidab nupu (size="auto") polstri ja vahe utiliidid. */
+/* Kitsal ekraanil (alla 1656px: logo 164 + menüü 1078 + paremnupud + serv 16) ei mahu peamenüü kasutajamenüü ja operaatorivalija kõrvale.
+   Valija ja kasutajamenüü näitavad siis ainult ikooni 28px nupul (nimi on vihjes ja avatud menüüs; kasutaja otsus 2026-11-17).
+   Aktiivse operaatorifiltri punkt tõuseb ikooni nurka. !important võidab nupu (size="auto" / md) polstri, mõõdu ja vahe utiliidid. */
 @media (max-width: 1655px) {
-  .header-operator-trigger {
-    padding: 6px 8px !important;
-    gap: 6px !important;
+  .header-operator-trigger,
+  .header-account-trigger {
+    position: relative;
+    width: 28px;
+    height: 28px !important;
+    padding: 0 !important;
+    gap: 0 !important;
   }
 
-  .header-operator-caption,
-  .header-operator-chevron {
+  .header-operator-text,
+  .header-operator-chevron,
+  .header-account-trigger > span,
+  .header-account-chevron {
     display: none;
   }
 
-  .header-operator-value {
-    max-width: 140px;
+  .header-operator-dot {
+    position: absolute;
+    top: 3px;
+    right: 3px;
+    width: 6px;
+    height: 6px;
   }
 }
 

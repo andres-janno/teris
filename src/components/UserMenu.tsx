@@ -33,7 +33,7 @@ export const UserMenu: React.FC<UserMenuProps> = ({
     <div className="header-account">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
-          <Button variant="ghost" className="header-account-trigger">
+          <Button variant="ghost" className="header-account-trigger" title={user.displayName || user.username} aria-label={user.displayName || user.username}>
             <UserIcon size={14} />
             <span>{user.displayName || user.username}</span>
             <ChevronDown size={14} className="header-account-chevron" />
