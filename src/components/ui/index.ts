@@ -37,3 +37,4 @@ export { ChipButton, type ChipButtonProps } from './ChipButton';
 export { NavSwitch, NavSwitchItem } from './NavSwitch';
 export { SectionTitle } from './SectionTitle';
 export { StatTile } from './StatTile';
+export { LegendItem } from './LegendItem';

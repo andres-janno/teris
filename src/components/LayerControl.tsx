@@ -17,7 +17,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle } from './ui';
+import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem } from './ui';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -229,16 +229,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           </div>
                         ) : (
                           soilLegendItems.map((item) => (
-                            <div key={item.label} className="soil-legend-item">
-                              <span className="soil-legend-swatch" style={{ backgroundColor: item.color }}></span>
-                              <span className="soil-legend-label">{item.label}</span>
-                            </div>
+                            <LegendItem key={item.label} color={item.color}>{item.label}</LegendItem>
                           ))
                         )}
-                        <div className="soil-legend-item">
-                          <span className="soil-legend-swatch" style={{ backgroundColor: UNDETERMINED_CROP_COLOR }}></span>
-                          <span className="soil-legend-label">Andmed puuduvad</span>
-                        </div>
+                        <LegendItem color={UNDETERMINED_CROP_COLOR}>Andmed puuduvad</LegendItem>
                       </div>
                     </div>
                   </div>

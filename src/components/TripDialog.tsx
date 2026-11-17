@@ -10,7 +10,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, StatTile, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -179,10 +179,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
               </div>
               <div className="trip-timesplit-legend">
                 {timeParts.map((p) => (
-                  <span key={p.key} className="trip-timesplit-item">
-                    <span className={`trip-timesplit-swatch ${p.key}`} aria-hidden="true" />
-                    {p.label} <strong>{minutesText(p.minutes)}</strong>
-                  </span>
+                  <LegendItem key={p.key} color={`var(--trip-${p.key})`} value={minutesText(p.minutes)}>{p.label}</LegendItem>
                 ))}
               </div>
             </div>

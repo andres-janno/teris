@@ -368,3 +368,9 @@ export const statTileValueClass = ({ tone = 'default', empty = false }: { tone?:
 export const statTileUnitClass = 'text-sm font-normal text-muted-foreground';
 export const statTileSubClass = 'text-xs text-muted-foreground';
 export const statTileNoteClass = 'mt-1.5 text-xs leading-4 text-muted-foreground';
+
+/** Legendi kirje (etapp 4.1; vanad .finance-cost-item, .soil-legend-item, .trip-timesplit-item): värvimärk + nimi [+ väärtus + märkus]. */
+export const legendItemClass = 'inline-flex items-center gap-1.5 text-xs text-muted-foreground';
+export const legendMarkerClass = 'size-2.5 shrink-0 rounded-full';
+export const legendValueClass = 'font-semibold tabular-nums text-foreground';
+export const legendNoteClass = 'text-2xs text-subtle';

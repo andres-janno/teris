@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -438,6 +438,13 @@ export const UiGallery: React.FC = () => {
             <StatTile label="Saagitulu kokku" tone="revenue" value="61 900 €" note="Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast." />
             <StatTile label="Tegevustulemus" tone="profit" value="+13 700 €" sub="Tulemus: 40 € / ha" />
             <StatTile label="Läbisõit" value="—" empty />
+          </div>
+        </Section>
+        <Section title="Legendi kirje">
+          <div className="flex flex-wrap gap-x-4 gap-y-1.5">
+            <LegendItem color="var(--trip-moving)">Liikumine</LegendItem>
+            <LegendItem color="var(--trip-idle)" value="3 min">Seisuaeg süütega</LegendItem>
+            <LegendItem color="var(--trip-pause)" value="48 200 €" note="(35%)">Tööjõud:</LegendItem>
           </div>
         </Section>
       </div>

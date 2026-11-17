@@ -6,6 +6,7 @@ import * as v from './variants';
 const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
+  v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -562,5 +563,16 @@ describe('StatTile (etapp 4.1)', () => {
     const c = v.statTileValueClass({ empty: true });
     expect(c).toContain('text-subtle');
     expect(c).toContain('font-normal');
+  });
+});
+
+describe('LegendItem (etapp 4.1)', () => {
+  it('kirje: 12px hall rida, märk 10px ring, väärtus poolpaks', () => {
+    expect(v.legendItemClass).toContain('text-xs');
+    expect(v.legendItemClass).toContain('inline-flex');
+    expect(v.legendMarkerClass).toContain('size-2.5');
+    expect(v.legendMarkerClass).toContain('rounded-full');
+    expect(v.legendValueClass).toContain('font-semibold');
+    expect(v.legendValueClass).toContain('tabular-nums');
   });
 });

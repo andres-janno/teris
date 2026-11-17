@@ -447,21 +447,6 @@
   border-top: 1px solid var(--border-card);
 }
 
-.soil-legend-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.soil-legend-swatch {
-  width: 10px;
-  height: 10px;
-  border-radius: var(--radius-sm);
-  flex-shrink: 0;
-}
-
 .soil-legend-gradient {
   display: flex;
   flex-direction: column;

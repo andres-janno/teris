@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile } from './ui';
+import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -779,30 +779,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {/* Cost breakdown pill bar */}
               {resultsSummary.totalCost > 0 && (
                 <div className="finance-cost-breakdown-bar">
-                  <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.labor }} />
-                    <span className="label">Tööjõud:</span>
-                    <strong>{fmtCur(resultsSummary.totalLabor)}</strong>
-                    <small>({Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)</small>
-                  </div>
-                  <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.equipment }} />
-                    <span className="label">Masinapark:</span>
-                    <strong>{fmtCur(resultsSummary.totalEquipment)}</strong>
-                    <small>({Math.round((resultsSummary.totalEquipment / resultsSummary.totalCost) * 100)}%)</small>
-                  </div>
-                  <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.fuel }} />
-                    <span className="label">Kütus:</span>
-                    <strong>{fmtCur(resultsSummary.totalFuel)}</strong>
-                    <small>({Math.round((resultsSummary.totalFuel / resultsSummary.totalCost) * 100)}%)</small>
-                  </div>
-                  <div className="finance-cost-item">
-                    <span className="dot" style={{ backgroundColor: FINANCE_COST_COLOR.articles }} />
-                    <span className="label">Kulumaterjalid:</span>
-                    <strong>{fmtCur(resultsSummary.totalArticles)}</strong>
-                    <small>({Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)</small>
-                  </div>
+                  <LegendItem color={FINANCE_COST_COLOR.labor} value={fmtCur(resultsSummary.totalLabor)}
+                    note={`(${Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)`}>Tööjõud:</LegendItem>
+                  <LegendItem color={FINANCE_COST_COLOR.equipment} value={fmtCur(resultsSummary.totalEquipment)}
+                    note={`(${Math.round((resultsSummary.totalEquipment / resultsSummary.totalCost) * 100)}%)`}>Masinapark:</LegendItem>
+                  <LegendItem color={FINANCE_COST_COLOR.fuel} value={fmtCur(resultsSummary.totalFuel)}
+                    note={`(${Math.round((resultsSummary.totalFuel / resultsSummary.totalCost) * 100)}%)`}>Kütus:</LegendItem>
+                  <LegendItem color={FINANCE_COST_COLOR.articles} value={fmtCur(resultsSummary.totalArticles)}
+                    note={`(${Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)`}>Kulumaterjalid:</LegendItem>
                 </div>
               )}
 
