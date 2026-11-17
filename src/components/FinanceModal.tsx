@@ -539,13 +539,13 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         </div>
 
                         <div className="finance-detail-sub-meta">
-                          <span><strong>Kuupäev:</strong> {formatDate(selectedEntry.date)}</span>
-                          {selectedEntry.areaHa && <span><strong>Tehtud:</strong> {fmtHa(selectedEntry.areaHa)} ha</span>}
-                          {selectedEntry.crop && <span><strong>Kultuur:</strong> {selectedEntry.crop}</span>}
-                          {selectedEntry.workerName && <span><strong>Töötaja:</strong> {selectedEntry.workerName}</span>}
+                          <span><span className="text-subtle">Kuupäev:</span> {formatDate(selectedEntry.date)}</span>
+                          {selectedEntry.areaHa && <span><span className="text-subtle">Tehtud:</span> {fmtHa(selectedEntry.areaHa)} ha</span>}
+                          {selectedEntry.crop && <span><span className="text-subtle">Kultuur:</span> {selectedEntry.crop}</span>}
+                          {selectedEntry.workerName && <span><span className="text-subtle">Töötaja:</span> {selectedEntry.workerName}</span>}
                           {[selectedEntry.vehicleName, selectedEntry.implementName].filter(Boolean).length > 0 && (
                             <span>
-                              <strong>Tehnika:</strong> {[selectedEntry.vehicleName, selectedEntry.implementName].filter(Boolean).join(' + ')}
+                              <span className="text-subtle">Tehnika:</span> {[selectedEntry.vehicleName, selectedEntry.implementName].filter(Boolean).join(' + ')}
                             </span>
                           )}
                         </div>

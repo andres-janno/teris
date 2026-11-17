@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, legacyCardRules, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
+import { auditCss, auditTsx, disallowedFontWeights, legacyCardRules, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -374,5 +374,28 @@ describe('role=button väljaspool ui-d', () => {
   it('ei loe aria-role-sarnaseid nimesid (data-role="button")', () => {
     const r = summarize([{ path: 'src/components/C.tsx', content: '<i data-role="button" />' }]);
     expect(r.roleButtonFiles).toEqual([]);
+  });
+});
+
+describe('disallowedFontWeights', () => {
+  it('tuvastab font-weight: 800 ja 900 CSS-is ning font-extrabold TSX-is', () => {
+    const files = [
+      { path: 'src/components/A.tsx', content: '<div className="font-extrabold text-sm" />' },
+      { path: 'src/styles/map.css', content: '.v { font-weight: 800; }' },
+      { path: 'src/index.css', content: '.login-brand-word { font-weight: 800; }\n.other { font-weight: 800; }' },
+    ];
+    const r = disallowedFontWeights(files);
+    expect(r).toEqual([
+      { path: 'src/components/A.tsx', count: 1 },
+      { path: 'src/styles/map.css', count: 1 },
+      { path: 'src/index.css', count: 1 },
+    ]);
+  });
+  it('lubab täpselt 1 font-weight: 800 failis src/index.css (logo brändisõna)', () => {
+    const files = [
+      { path: 'src/index.css', content: '.login-brand-word { font-weight: 800; }' },
+      { path: 'src/components/B.tsx', content: '<div className="font-semibold" />' },
+    ];
+    expect(disallowedFontWeights(files)).toEqual([]);
   });
 });

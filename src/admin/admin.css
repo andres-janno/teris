@@ -18,7 +18,7 @@
 @media (max-width: 640px) { .admin-form-grid { grid-template-columns: 1fr; } }
 .admin-checks { display: flex; gap: 16px; flex-wrap: wrap; }
 .admin-actions { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
-.admin-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 700; }
+.admin-badge { display: inline-block; padding: 2px 8px; border-radius: 9999px; font-size: 12px; font-weight: 600; }
 .admin-badge.ok { background: rgba(16, 185, 129, 0.15); color: var(--tone-success-text); }
 .admin-badge.off { background: rgba(239, 68, 68, 0.15); color: var(--tone-danger-text); }
 .admin-expired { color: var(--tone-danger-text); font-weight: 600; }
@@ -26,7 +26,7 @@
 .admin-muted { color: var(--text-muted); }
 .admin-warning-text { color: var(--tone-warning-text); font-weight: 600; }
 .admin-meta { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 8px; }
-.admin-meta div span { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 700; }
+.admin-meta div span { display: block; font-size: 11px; text-transform: uppercase; color: var(--text-secondary); font-weight: 500; }
 .admin-subform { margin-bottom: 12px; }
 .admin-subform h3 { font-size: 14px; margin: 0; }
 .admin-subpanel { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border-card); }
@@ -39,7 +39,7 @@
 .admin-badge.neutral { background: rgba(100, 116, 139, 0.15); color: var(--text-secondary); }
 .admin-split { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
 .admin-field { display: flex; flex-direction: column; gap: 8px; }
-.admin-field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 700; color: var(--text-secondary); }
+.admin-field-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.02em; font-weight: 500; color: var(--text-secondary); }
 .admin-field-value { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-top: 4px; }
 .admin-hint { font-size: 13px; line-height: 1.45; color: var(--text-muted); margin: 6px 0 0; }
 .admin-support-link { margin-top: 12px; }

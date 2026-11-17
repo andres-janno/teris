@@ -213,7 +213,7 @@ body {
 
 .header-operator-caption {
   font-size: 11px;
-  font-weight: 600;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   opacity: 0.7;
@@ -221,7 +221,7 @@ body {
 
 .header-operator-value {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   max-width: 180px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -407,7 +407,7 @@ body {
 }
 
 .p-ha {
-  font-weight: 700;
+  font-weight: 600;
   color: var(--emerald-400);
 }
 
@@ -506,7 +506,7 @@ body {
 
 .v-name {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -595,6 +595,7 @@ body {
 
 .gauge-text strong {
   font-size: 13px;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -779,7 +780,7 @@ body {
 .devices-section-title {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -867,7 +868,7 @@ body {
 .confirm-dialog-body h3 {
   margin: 0 0 6px;
   font-size: 16px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -1122,7 +1123,7 @@ body {
 .register-crop-group-title strong {
   margin-left: auto;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -1526,7 +1527,7 @@ body {
 .season-ha-val {
   font-size: 16px;
   color: var(--text-primary);
-  font-weight: 800;
+  font-weight: 600;
 }
 
 /* History Row */
@@ -1595,7 +1596,7 @@ body {
 
 .crop-name-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--text-primary);
   white-space: nowrap;
   overflow: hidden;
@@ -1617,7 +1618,7 @@ body {
 
 .crop-total-ha {
   font-size: 13px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
   font-variant-numeric: tabular-nums;
 }
@@ -1708,7 +1709,7 @@ body {
 
 .season-year {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .season-notes-icon {
@@ -2375,12 +2376,12 @@ body {
 }
 
 .work-name-cell {
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .add-work-phase-label {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.05em;
 }
 
@@ -2466,7 +2467,7 @@ body {
 .fullpage-title-wrap h2 {
   margin: 0;
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 700;
   color: var(--text-primary);
   line-height: 1.25;
 }
@@ -2675,7 +2676,7 @@ body {
 .fw-head-section {
   padding: 6px 12px;
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--text-secondary);
@@ -2731,7 +2732,7 @@ body {
   flex-direction: column;
   gap: 2px;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
   min-width: 0;
@@ -2746,6 +2747,7 @@ body {
   align-items: center;
   gap: 4px;
   font-size: 14px;
+  font-weight: 600;
   letter-spacing: 0;
   color: var(--text-primary);
 }
@@ -3484,7 +3486,7 @@ body {
 
 .fw-panel-phase {
   font-size: 11px;
-  font-weight: 800;
+  font-weight: 600;
   letter-spacing: 0.06em;
 }
 
@@ -3945,7 +3947,7 @@ body {
 .work-entry-section h4 {
   margin: 0;
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
@@ -4301,13 +4303,13 @@ body {
 .finance-detail-main-title h4 {
   margin: 0;
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 600;
   color: var(--text-primary);
 }
 
 .finance-detail-work-type {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
   color: var(--tone-success-text);
 }
 
@@ -4361,7 +4363,7 @@ body {
 .finance-lines-heading h5 {
   margin: 0;
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .finance-empty-lines {
@@ -4381,7 +4383,7 @@ body {
 }
 
 .finance-line-qty {
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4403,7 +4405,7 @@ body {
 }
 
 .finance-line-total {
-  font-weight: 700;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
 }
 
@@ -4427,7 +4429,7 @@ body {
 
 .finance-notes-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   color: var(--text-secondary);
   display: flex;
   align-items: center;
@@ -4468,7 +4470,7 @@ body {
 
 .finance-summary-row.total {
   font-size: 14px;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .finance-net-result.positive {
@@ -4560,7 +4562,7 @@ body {
 
 .finance-kpi-label {
   font-size: 12px;
-  font-weight: 700;
+  font-weight: 500;
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--text-secondary);
@@ -4568,7 +4570,7 @@ body {
 
 .finance-kpi-value {
   font-size: 20px;
-  font-weight: 800;
+  font-weight: 600;
   font-variant-numeric: tabular-nums;
   line-height: 1.2;
 }
@@ -5203,5 +5205,5 @@ polyline.weather-line { fill: none; }
 
 /* Kiibi (ui/ChipButton) sisu tüpograafia */
 [data-slot="chip"] .lbl { color: var(--text-secondary); }
-[data-slot="chip"] strong { color: var(--text-primary); font-weight: 700; }
+[data-slot="chip"] strong { color: var(--text-primary); font-weight: 600; }
 [data-slot="chip"] .sub-val { font-size: 11px; margin-left: 4px; }

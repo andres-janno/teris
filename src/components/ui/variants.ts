@@ -156,7 +156,7 @@ export const helpHintTriggerClass =
 export const helpHintInlineClass = 'size-5 -my-0.5 -mr-1 ml-0.5';
 /** Abivihje hüpik: 320px, kõrguse piir ja kerimine. */
 export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-content-available-height))]';
-export const helpHintTitleClass = 'mb-1.5 text-2xs font-bold uppercase tracking-wide text-muted-foreground';
+export const helpHintTitleClass = 'mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted-foreground';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
 // --- Kaart (etapp 2.7) ---

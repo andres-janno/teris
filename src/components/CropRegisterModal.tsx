@@ -769,7 +769,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                     </div>
                                   </TableCell>
                                   <TableCell numeric className={`${acreageHa > 0 ? '' : 'muted'}`}>
-                                    {acreageHa > 0 ? <strong>{acreageHa.toFixed(2)} ha</strong> : '–'}
+                                    {acreageHa > 0 ? `${acreageHa.toFixed(2)} ha` : '–'}
                                   </TableCell>
                                   <TableCell numeric className={`${crop.defaultSeedRateKgHa ? '' : 'muted'}`}>
                                     {crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : '–'}
@@ -889,7 +889,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           </div>
           <div className="fullpage-board-footer">
             <span>
-              Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+              Kuvatakse {filteredCrops.length} kultuuri {crops.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>
         </main>
@@ -913,7 +913,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
         <DialogFooter>
           <div className="footer-left-info">
             <span className="secondary-note">
-              Kuvatakse <strong>{filteredCrops.length}</strong> kultuuri <strong>{crops.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+              Kuvatakse {filteredCrops.length} kultuuri {crops.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>
           <Button variant="ghost" onClick={onClose}>

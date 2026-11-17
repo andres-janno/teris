@@ -306,7 +306,7 @@ export const DateInput: React.FC<DateInputProps> = ({
           aria-label="Kuupäeva valija"
         >
           <div className="flex items-center justify-between border-b border-border pb-1.5">
-            <span className="text-sm font-bold">
+            <span className="text-sm font-semibold">
               {MONTH_NAMES[viewDate.month]} {viewDate.year}
             </span>
             <div className="flex items-center gap-1">
@@ -329,7 +329,7 @@ export const DateInput: React.FC<DateInputProps> = ({
 
           <div className="grid grid-cols-7 text-center">
             {WEEK_DAYS.map((wd, idx) => (
-              <span key={idx} className="py-0.5 text-2xs font-bold text-subtle">{wd}</span>
+              <span key={idx} className="py-0.5 text-2xs font-semibold text-subtle">{wd}</span>
             ))}
           </div>
 
@@ -341,8 +341,8 @@ export const DateInput: React.FC<DateInputProps> = ({
                 className={cn(
                   dayBase,
                   !cell.isCurrentMonth && 'text-subtle opacity-45',
-                  cell.isToday && !cell.isSelected && 'font-extrabold text-info ring-1 ring-inset ring-info',
-                  cell.isSelected && 'bg-primary font-extrabold text-white opacity-100 hover:bg-primary'
+                  cell.isToday && !cell.isSelected && 'font-semibold text-info ring-1 ring-inset ring-info',
+                  cell.isSelected && 'bg-primary font-semibold text-white opacity-100 hover:bg-primary'
                 )}
                 onClick={() => handleSelectDate(cell.iso)}
               >

@@ -626,7 +626,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           </div>
           <div className="fullpage-board-footer">
             <span>
-              Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+              Kuvatakse {filteredParties.length} isikut {parties.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>
         </main>
@@ -652,7 +652,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         <DialogFooter>
           <div className="footer-left-info">
             <span className="secondary-note">
-              Kuvatakse <strong>{filteredParties.length}</strong> isikut <strong>{parties.length}</strong>-st &bull; Seotud hooaeg: <strong>{selectedYear}</strong>
+              Kuvatakse {filteredParties.length} isikut {parties.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>
           <Button variant="ghost" onClick={onClose}>

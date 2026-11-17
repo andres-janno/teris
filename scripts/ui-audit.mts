@@ -2,7 +2,7 @@
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
+import { disallowedFontWeights, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
 // Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); app.css on teema allikas.
 const EXCLUDE = ['src/landing', 'src/styles/app.css'];
@@ -40,6 +40,8 @@ const cssText = files.filter((f) => f.path.endsWith('.css')).map((f) => f.conten
 const off = offScaleCss(cssText);
 row('Skaalaväliseid kirjasuurusi (CSS)', off.fontSizes.length, off.fontSizes);
 row('Skaalaväliseid vahesid (CSS)', off.spacing.length, off.spacing);
+const disallowedWeights = disallowedFontWeights(files);
+row('Keelatud kirjapaksusi (800+)', disallowedWeights.reduce((s, f) => s + f.count, 0), disallowedWeights.map((f) => `${f.path}: ${f.count}`));
 row('Vanu komponendiklasse (CSS)', r.legacyComponentClasses.length, r.legacyComponentClasses);
 row('Keelatud suvalisi klasse (tsx)', r.arbitrary.length, r.arbitrary.map((a) => `${a.path}: ${a.cls}`));
 row('Skaalaväliseid vahe-klasse (tsx)', r.offScaleSpacing.length, r.offScaleSpacing.map((a) => `${a.path}: ${a.cls}`));

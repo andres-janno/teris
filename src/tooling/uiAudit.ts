@@ -260,6 +260,23 @@ export function unusedCssClasses(css: string, sources: string[]): { unused: stri
 const FONT_SCALE = new Set(['11px', '12px', '13px', '14px', '16px', '20px']);
 const SPACING_SCALE_ABS = new Set(['2px', '4px', '6px', '8px', '10px', '12px', '16px', '24px', '32px']);
 
+const DISALLOWED_FONT_WEIGHT_CSS = /(?:^|[;\s{])font-weight\s*:\s*(800|900|bolder)/g;
+const DISALLOWED_FONT_WEIGHT_TSX = /(?<![\w-])font-(?:extrabold|black)(?![\w-])/g;
+
+/** Keelatud kirjapaksused: 800+ (ExtraBold, Black) teeb teksti liiga raskeks.
+    Lubatud erand: üks 800 failis src/index.css (sisselogimise brändisõna) ja üks src/admin/admin.css-is (admini logo). */
+export function disallowedFontWeights(files: { path: string; content: string }[]): { path: string; count: number }[] {
+  return files.flatMap(({ path, content }) => {
+    const clean = stripComments(content);
+    const isCss = path.endsWith('.css');
+    const matches = isCss ? clean.match(DISALLOWED_FONT_WEIGHT_CSS) ?? [] : clean.match(DISALLOWED_FONT_WEIGHT_TSX) ?? [];
+    const count = matches.length;
+    const allowed = path.endsWith('src/index.css') || path.endsWith('src/admin/admin.css') ? 1 : 0;
+    const excess = Math.max(0, count - allowed);
+    return excess > 0 ? [{ path, count: excess }] : [];
+  });
+}
+
 /** Skaalavälised kirjasuurused ja vahed (spec: kirjasuurusi ≤ 6, vahed ainult skaalast). */
 export function offScaleCss(css: string): { fontSizes: string[]; spacing: string[] } {
   const a = auditCss(css);
