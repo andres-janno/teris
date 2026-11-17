@@ -4,8 +4,8 @@ import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
 import { offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
-// Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); styles/ on teema allikas.
-const EXCLUDE = ['src/landing', 'src/styles'];
+// Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); app.css on teema allikas.
+const EXCLUDE = ['src/landing', 'src/styles/app.css'];
 
 function walk(dir: string, exclude: string[] = EXCLUDE): string[] {
   return readdirSync(dir).flatMap((name) => {
@@ -88,7 +88,7 @@ row('Defineerimata CSS-muutujaid', undefinedVars.length, undefinedVars);
 const sourceFiles = [...walkSources('src'), ...['index.html', 'admin.html'].filter((p) => existsSync(p))].map((p) =>
   readFileSync(p, 'utf8')
 );
-const unusedRows = ['src/index.css', 'src/admin/admin.css'].flatMap((p) => {
+const unusedRows = ['src/index.css', 'src/styles/map.css', 'src/admin/admin.css'].flatMap((p) => {
   const r = unusedCssClasses(readFileSync(p, 'utf8'), sourceFiles);
   return [...r.unused.map((c) => `${p}: .${c}`), ...r.dynamic.map((c) => `${p}: .${c} (dünaamiline?)`)];
 });
