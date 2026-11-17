@@ -132,7 +132,8 @@ button {
 }
 
 body {
-  font-family: Tahoma, Verdana, 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, sans-serif;
+  /* Süsteemi kirjatüüp (Mac: SF Pro, Windows: Segoe UI, Android: Roboto) — pärispoolpaks 500/600; kasutaja otsus 2026-11-17 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   background-color: var(--bg-dark);
   color: var(--text-primary);
   overflow: hidden;
