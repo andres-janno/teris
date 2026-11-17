@@ -1,7 +1,7 @@
 // src/admin/LandingStatsView.tsx — landing'u külastused, allikad, robotid ja lehter valitud perioodil.
 import { useEffect, useState } from 'react';
 import { platformApi, type LandingStats } from './platformApi.ts';
-import { DateInput, Card, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { DateInput, Card, StatTile, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
 
@@ -73,28 +73,10 @@ export function LandingStatsView() {
       {stats && (
         <>
           <div className="admin-stat-row">
-            <Card variant="tile" padding="sm" className="admin-stat">
-              <span>Külastajad</span>
-              <strong>{totalVisitors}</strong>
-              <p>Unikaalsed inimesed päeva kaupa (brauser + IP päevase räsina), kelle brauseris leht päriselt avanes. Robotid ei lähe arvesse. Sama inimene eri päevadel loetakse mitu korda.</p>
-            </Card>
-            <Card variant="tile" padding="sm" className="admin-stat">
-              <span>Vaatamised</span>
-              <strong>{totalViews}</strong>
-              <p>Kõik inimeste lehe avamised (avaleht ja privaatsusleht), sh korduvad avamised ja värskendused.</p>
-            </Card>
-            <Card variant="tile" padding="sm" className="admin-stat">
-              <span>„Tunnen huvi“ klõps</span>
-              <strong>{stats.funnel.clicked}</strong>
-              <small>{pct(stats.funnel.clicked, stats.funnel.viewed)} külastajatest</small>
-              <p>Külastajad, kes vajutasid vähemalt korra mõnda „Tunnen huvi“ nuppu (päis, hero, sammud, jalus). „Logi sisse“ klõpse ei arvestata.</p>
-            </Card>
-            <Card variant="tile" padding="sm" className="admin-stat">
-              <span>Saadetud vorm</span>
-              <strong>{stats.funnel.submitted}</strong>
-              <small>{pct(stats.funnel.submitted, stats.funnel.viewed)} külastajatest</small>
-              <p>Külastajad, kelle „Tunnen huvi“ vormi saatmine õnnestus. Päris päringud on vaates „Huvilised“; spämmifiltri kinni peetud saatmised võivad siin olla, aga seal mitte.</p>
-            </Card>
+            <StatTile label="Külastajad" value={totalVisitors} note="Unikaalsed inimesed päeva kaupa (brauser + IP päevase räsina), kelle brauseris leht päriselt avanes. Robotid ei lähe arvesse. Sama inimene eri päevadel loetakse mitu korda." />
+            <StatTile label="Vaatamised" value={totalViews} note="Kõik inimeste lehe avamised (avaleht ja privaatsusleht), sh korduvad avamised ja värskendused." />
+            <StatTile label="„Tunnen huvi“ klõps" value={stats.funnel.clicked} sub={<>{pct(stats.funnel.clicked, stats.funnel.viewed)} külastajatest</>} note="Külastajad, kes vajutasid vähemalt korra mõnda „Tunnen huvi“ nuppu (päis, hero, sammud, jalus). „Logi sisse“ klõpse ei arvestata." />
+            <StatTile label="Saadetud vorm" value={stats.funnel.submitted} sub={<>{pct(stats.funnel.submitted, stats.funnel.viewed)} külastajatest</>} note="Külastajad, kelle „Tunnen huvi“ vormi saatmine õnnestus. Päris päringud on vaates „Huvilised“; spämmifiltri kinni peetud saatmised võivad siin olla, aga seal mitte." />
           </div>
 
           <h3>Külastajad</h3>

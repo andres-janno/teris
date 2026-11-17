@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea } from './ui';
+import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -743,45 +743,15 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
             <div className="finance-results-layout">
               {/* Summary KPI Cards */}
               <div className="finance-kpis-grid">
-                <Card variant="tile" padding="sm" className="finance-kpi-card">
-                  <span className="finance-kpi-label">Põllud kokku</span>
-                  <div className="finance-kpi-value">
-                    {resultsSummary.fieldCount} <small>põldu</small>
-                  </div>
-                  <div className="finance-kpi-sub">
-                    Pindala: <strong>{fmtHa(resultsSummary.totalArea)} ha</strong>
-                  </div>
-                </Card>
-
-                <Card variant="tile" padding="sm" className="finance-kpi-card">
-                  <span className="finance-kpi-label">Kulud kokku</span>
-                  <div className="finance-kpi-value kpi-cost">
-                    {fmtCur(resultsSummary.totalCost)}
-                  </div>
-                  <div className="finance-kpi-sub">
-                    Keskmiselt: <strong>{fmtCur(resultsSummary.costPerHa)} / ha</strong>
-                  </div>
-                </Card>
-
-                <Card variant="tile" padding="sm" className="finance-kpi-card">
-                  <span className="finance-kpi-label">Saagitulu kokku</span>
-                  <div className="finance-kpi-value kpi-revenue">
-                    {fmtCur(resultsSummary.totalRevenue)}
-                  </div>
-                  <div className="finance-kpi-sub">
-                    Keskmiselt: <strong>{fmtCur(resultsSummary.revPerHa)} / ha</strong>
-                  </div>
-                </Card>
-
-                <Card variant="tile" padding="sm" className={`finance-kpi-card result ${resultsSummary.totalProfit >= 0 ? 'profit' : 'loss'}`}>
-                  <span className="finance-kpi-label">Tegevustulemus</span>
-                  <div className="finance-kpi-value">
-                    {resultsSummary.totalProfit >= 0 ? '+' : ''}{fmtCur(resultsSummary.totalProfit)}
-                  </div>
-                  <div className="finance-kpi-sub">
-                    Tulemus: <strong>{fmtCur(resultsSummary.profitPerHa)} / ha</strong>
-                  </div>
-                </Card>
+                <StatTile label="Põllud kokku" value={<>{resultsSummary.fieldCount} <small>põldu</small></>}
+                  sub={<>Pindala: <strong>{fmtHa(resultsSummary.totalArea)} ha</strong></>} />
+                <StatTile label="Kulud kokku" tone="cost" value={fmtCur(resultsSummary.totalCost)}
+                  sub={<>Keskmiselt: <strong>{fmtCur(resultsSummary.costPerHa)} / ha</strong></>} />
+                <StatTile label="Saagitulu kokku" tone="revenue" value={fmtCur(resultsSummary.totalRevenue)}
+                  sub={<>Keskmiselt: <strong>{fmtCur(resultsSummary.revPerHa)} / ha</strong></>} />
+                <StatTile label="Tegevustulemus" tone={resultsSummary.totalProfit >= 0 ? 'profit' : 'loss'}
+                  value={<>{resultsSummary.totalProfit >= 0 ? '+' : ''}{fmtCur(resultsSummary.totalProfit)}</>}
+                  sub={<>Tulemus: <strong>{fmtCur(resultsSummary.profitPerHa)} / ha</strong></>} />
               </div>
 
               {/* Status Banner */}

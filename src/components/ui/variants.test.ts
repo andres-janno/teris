@@ -4,6 +4,8 @@ import { cn } from './cn';
 import * as v from './variants';
 
 const allClassStrings = (): string[] => [
+  ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
+  v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -534,5 +536,31 @@ describe('SectionTitle (etapp 4.1)', () => {
     expect(c).toContain('border-b');
     expect(c).toContain('pb-1');
     expect(c).toContain('mt-4');
+  });
+});
+
+describe('StatTile (etapp 4.1)', () => {
+  it('silt on jaotise pealkirja kiri, väärtus 20px poolpaks tabelnumbritega', () => {
+    expect(v.statTileLabelClass).toBe(v.sectionTitleLabelClass);
+    const c = v.statTileValueClass({});
+    for (const t of ['text-xl', 'font-semibold', 'tabular-nums', 'whitespace-nowrap']) expect(c).toContain(t);
+  });
+  it('toonid: kulu punane, tulu roheline, tulemus teemapõhine', () => {
+    expect(v.statTileValueClass({ tone: 'cost' })).toContain('text-destructive');
+    expect(v.statTileValueClass({ tone: 'revenue' })).toContain('text-primary');
+    expect(v.statTileValueClass({ tone: 'profit' })).toContain('text-success-text');
+    expect(v.statTileValueClass({ tone: 'profit' })).toContain('dark:text-primary');
+    expect(v.statTileValueClass({ tone: 'loss' })).toContain('text-danger-text');
+    expect(v.statTileValueClass({ tone: 'loss' })).toContain('dark:text-destructive');
+  });
+  it('plaat: kasum/kahjum toonib äärise ja tausta, tavaplaat mitte', () => {
+    expect(v.statTileClass({ tone: 'profit' })).toContain('border-primary');
+    expect(v.statTileClass({ tone: 'loss' })).toContain('border-destructive');
+    expect(v.statTileClass({})).not.toContain('border-primary');
+  });
+  it('tühi väärtus: hall ja tavakaal', () => {
+    const c = v.statTileValueClass({ empty: true });
+    expect(c).toContain('text-subtle');
+    expect(c).toContain('font-normal');
   });
 });

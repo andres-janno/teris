@@ -36,3 +36,4 @@ export { EmptyState } from './EmptyState';
 export { ChipButton, type ChipButtonProps } from './ChipButton';
 export { NavSwitch, NavSwitchItem } from './NavSwitch';
 export { SectionTitle } from './SectionTitle';
+export { StatTile } from './StatTile';

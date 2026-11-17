@@ -350,3 +350,21 @@ export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-cen
 export const sectionTitleLabelClass = 'text-xs font-semibold uppercase tracking-wider text-muted-foreground';
 export const sectionTitleClass = ({ ruled = false, spaced = false }: { ruled?: boolean; spaced?: boolean } = {}): string =>
   cn('mb-2 flex items-center gap-1.5', sectionTitleLabelClass, ruled && 'border-b border-border pb-1', spaced && 'mt-4');
+
+/** Näitaja plaat (etapp 4.1; vanad .finance-kpi-*, .trip-tile*, .admin-stat): silt + suur number + alt. */
+export type StatTone = 'default' | 'cost' | 'revenue' | 'profit' | 'loss';
+export const statTileClass = ({ tone = 'default' }: { tone?: StatTone } = {}): string =>
+  cn('flex min-w-0 flex-col gap-1', tone === 'profit' && 'border-primary bg-primary/4', tone === 'loss' && 'border-destructive bg-destructive/4');
+export const statTileLabelClass = sectionTitleLabelClass;
+export const statTileValueClass = ({ tone = 'default', empty = false }: { tone?: StatTone; empty?: boolean } = {}): string =>
+  cn(
+    'text-xl font-semibold leading-6 tabular-nums whitespace-nowrap',
+    tone === 'cost' && 'text-destructive',
+    tone === 'revenue' && 'text-primary',
+    tone === 'profit' && 'text-success-text dark:text-primary',
+    tone === 'loss' && 'text-danger-text dark:text-destructive',
+    empty && 'font-normal text-subtle'
+  );
+export const statTileUnitClass = 'text-sm font-normal text-muted-foreground';
+export const statTileSubClass = 'text-xs text-muted-foreground';
+export const statTileNoteClass = 'mt-1.5 text-xs leading-4 text-muted-foreground';

@@ -8,7 +8,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -429,6 +429,15 @@ export const UiGallery: React.FC = () => {
           <div className="w-72">
             <SectionTitle>Seadistused</SectionTitle>
             <SectionTitle ruled spaced>Vormi alajaotis (joonega)</SectionTitle>
+          </div>
+        </Section>
+        <Section title="Näitaja plaat">
+          <div className="grid w-full grid-cols-4 gap-3">
+            <StatTile label="Põllud kokku" value={<>12 <small>põldu</small></>} sub={<>Pindala: <strong>340,50 ha</strong></>} />
+            <StatTile label="Kulud kokku" tone="cost" value="48 200 €" sub="Keskmiselt: 140 € / ha" />
+            <StatTile label="Saagitulu kokku" tone="revenue" value="61 900 €" note="Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast." />
+            <StatTile label="Tegevustulemus" tone="profit" value="+13 700 €" sub="Tulemus: 40 € / ha" />
+            <StatTile label="Läbisõit" value="—" empty />
           </div>
         </Section>
       </div>

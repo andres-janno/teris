@@ -10,7 +10,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Card, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, StatTile, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface TripDialogProps {
   trip: Trip;
@@ -163,12 +163,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
 
           <div className="trip-tiles">
             {tiles.map((t) => (
-              <Card key={t.label} variant="tile" padding="sm" className="trip-tile">
-                <div className="trip-tile-label">{t.label}</div>
-                <div className={`trip-tile-value${t.value === '—' ? ' empty' : ''}`}>
-                  {t.value}{t.unit && <span className="trip-tile-unit"> {t.unit}</span>}
-                </div>
-              </Card>
+              <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.value === '—'} />
             ))}
           </div>
 

@@ -4517,59 +4517,6 @@ body {
   gap: 12px;
 }
 
-.finance-kpi-card {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.finance-kpi-card.result.profit {
-  border-color: #10b981 !important;
-  background: rgba(16, 185, 129, 0.04) !important;
-}
-
-.finance-kpi-card.result.profit .finance-kpi-value {
-  color: var(--tone-success-text);
-}
-
-.finance-kpi-card.result.loss {
-  border-color: #ef4444 !important;
-  background: rgba(239, 68, 68, 0.04) !important;
-}
-
-.finance-kpi-card.result.loss .finance-kpi-value {
-  color: #b91c1c;
-}
-
-/* Tumedal plaadil on tumeroheline/-punane halvasti loetav */
-[data-theme='dark'] .finance-kpi-card.result.profit .finance-kpi-value {
-  color: var(--emerald-500);
-}
-
-[data-theme='dark'] .finance-kpi-card.result.loss .finance-kpi-value {
-  color: var(--rose-500);
-}
-
-.finance-kpi-label {
-  font-size: 12px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: var(--text-secondary);
-}
-
-.finance-kpi-value {
-  font-size: 20px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  line-height: 1.2;
-}
-
-.finance-kpi-sub {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
 .finance-results-status-bar {
   display: flex;
   align-items: center;
@@ -4646,10 +4593,6 @@ body {
   color: var(--emerald-500);
   font-weight: 700;
 }
-
-/* KPI kaardid: kulud punasega, tulu rohelisega */
-.finance-kpi-value.kpi-cost { color: var(--rose-500); }
-.finance-kpi-value.kpi-revenue { color: var(--emerald-500); }
 
 .finance-results-table .profit-neg,
 .finance-summary-card .cost-neg {
@@ -4915,7 +4858,6 @@ td.stock-qty-out { color: #dc2626; }
 .harvest-lot-body { gap: 16px !important; }
 .harvest-lot-head { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr) minmax(0, 1.6fr) auto; gap: 12px; align-items: end; }
 .harvest-lot-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; }
-.harvest-lot-tiles .finance-kpi-value { font-size: 16px; font-weight: 700; text-align: left; }
 .harvest-lot-section { display: flex; flex-direction: column; gap: 8px; }
 .harvest-lot-section h4 { margin: 0; }
 .harvest-lot-add { display: grid; gap: 10px; align-items: end; padding: 10px 12px; border: 1px dashed var(--border-card); border-radius: var(--radius-md); }
@@ -5056,11 +4998,6 @@ td.stock-qty-out { color: #dc2626; }
 .trip-stop-place { color: var(--text-secondary); }
 
 .trip-tiles { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-bottom: 16px; }
-.trip-tile { min-width: 0; }
-.trip-tile-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 4px; }
-.trip-tile-value { font-size: 20px; font-weight: 700; color: var(--text-primary); white-space: nowrap; font-variant-numeric: tabular-nums; }
-.trip-tile-value.empty { color: var(--text-muted); font-weight: 400; }
-.trip-tile-unit { font-size: 13px; font-weight: 400; color: var(--text-secondary); }
 
 .trip-timesplit { margin-bottom: 16px; }
 .trip-timesplit-label { font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
