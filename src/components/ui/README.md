@@ -96,11 +96,11 @@ Märkused:
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite ainult kataloogist `src/components/ui` (`@source` failis `src/styles/app.css`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
 
-Etapis 4 (2026-11-17) lisatakse vaated `@source`-i faili kaupa (samas commitis, kus klassid üle viiakse); `FinanceModal.tsx` on esimene. Enne kontrolli `css-utils.py diff` (vt `app.css` kommentaar): surnud klassid (`text-xs`, `text-subtle`, kui CSS-i polnud) hakkavad mõjuma.
+Etapis 4 (2026-11-17) lisatakse vaated `@source`-i faili kaupa (samas commitis, kus klassid üle viiakse); `FinanceModal.tsx` on esimene. Enne kontrolli `python3 scripts/css-utils.py diff` (vt `app.css` kommentaar): surnud klassid (`text-xs`, `text-subtle`, kui CSS-i polnud) hakkavad mõjuma.
 
 ## Ülevaate komponendid
 
