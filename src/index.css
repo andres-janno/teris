@@ -4049,241 +4049,8 @@ body {
 }
 
 /* Detail Pane */
-.finance-entry-detail-pane {
-  display: flex;
-  flex-direction: column;
-  height: 100%;
-  min-height: 0;
-  overflow-y: auto;
-  padding-right: 6px;
-}
-
-.finance-detail-content {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.finance-detail-header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-  border-bottom: 1px solid var(--border-card);
-  padding-bottom: 12px;
-}
-
-.finance-detail-title-group {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.finance-detail-main-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-
-.finance-detail-main-title h4 {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.finance-detail-work-type {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--tone-success-text);
-}
-
-.finance-detail-sub-meta {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.finance-confirmed-meta {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 400;
-  color: #15803d;
-  background: #dcfce7;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  white-space: nowrap;
-}
-
-.finance-changed-warning {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  margin: 0;
-}
-
-.finance-changed-warning p {
-  margin: 2px 0 0 0;
-  font-size: 12px;
-}
-
 /* Lines Table */
-.finance-lines-section {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.finance-lines-heading {
-  display: flex;
-  align-items: baseline;
-  gap: 10px;
-}
-
-.finance-lines-heading h5 {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 600;
-}
-
-.finance-empty-lines {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 16px;
-  background: var(--stat-bg);
-  border: 1px dashed var(--border-card);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.finance-line-label {
-  font-weight: 500;
-}
-
-.finance-line-qty {
-  font-weight: 400;
-  font-variant-numeric: tabular-nums;
-}
-
-.finance-line-unit {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-left: 2px;
-  font-weight: 500;
-}
-
-.finance-price-cell {
-  width: 180px;
-}
-
-/* Puuduv hind: amber ääris ui sisendi ümber (aria-invalid oleks punane) */
-.finance-price-missing[data-slot="input-group"] {
-  border-color: var(--amber-500) !important;
-  background: color-mix(in srgb, var(--amber-500) 12%, var(--input-bg)) !important;
-}
-
-.finance-line-total {
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.finance-line-total.revenue-text {
-  color: var(--tone-success-text);
-}
-
 /* Bottom Grid: Notes & Summary */
-.finance-detail-bottom-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: 16px;
-  align-items: start;
-}
-
-.finance-notes-box {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.finance-notes-label {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.finance-notes-textarea {
-  resize: vertical;
-}
-
-.finance-worker-notes {
-  font-size: 12px;
-  background: var(--stat-bg);
-  border-left: 2px solid var(--border-card);
-  padding: 4px 8px;
-  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
-}
-
-.finance-summary-card {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.finance-summary-divider {
-  height: 1px;
-  background: var(--border-card);
-  margin: 2px 0;
-}
-
-.finance-net-result.positive {
-  color: var(--tone-success-text);
-}
-
-.finance-net-result.negative {
-  color: #b91c1c;
-}
-
-.finance-actions-bar {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  border-top: 1px solid var(--border-card);
-  padding-top: 12px;
-}
-
-.finance-confirm-btn {
-  background: linear-gradient(135deg, var(--color-primary-from), var(--color-primary-to)) !important;
-  color: #ffffff !important;
-}
-
-.finance-confirm-btn:hover {
-  background: var(--color-primary-from) !important;
-}
-
-.finance-no-selection {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  height: 100%;
-  color: var(--text-muted);
-  text-align: center;
-  font-size: 14px;
-}
-
 /* Results Tab */
 .finance-results-layout {
   display: flex;
@@ -4347,14 +4114,12 @@ body {
   font-weight: 600;
 }
 
-.finance-results-table .profit-pos,
-.finance-summary-card .profit-pos {
+.finance-results-table .profit-pos {
   color: var(--emerald-500);
   font-weight: 700;
 }
 
-.finance-results-table .profit-neg,
-.finance-summary-card .cost-neg {
+.finance-results-table .profit-neg {
   color: var(--rose-500);
   font-weight: 700;
 }
@@ -4599,8 +4364,6 @@ td.stock-qty-out { color: #dc2626; }
 .article-categories-add [data-slot="input"] { flex: 1; min-width: 0; }
 .stock-doc-footer-row [data-slot="select"] { max-width: 360px; }
 
-.finance-fifo-price { font-size: 13px; color: var(--text-muted, #64748b); }
-.finance-fifo-price.missing { color: #d97706; }
 .pria-article-cell { display: flex; flex-direction: column; min-width: 0; }
 
 /* Kulumaterjali vorm: veerud ei veni pika valikuteksti järgi laiemaks (muidu tekib kerimisriba) */

@@ -526,22 +526,22 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               </div>
 
               {/* Right Column: Entry Pricing Form */}
-              <div className="finance-entry-detail-pane">
+              <div className="flex h-full min-h-0 flex-col overflow-y-auto pr-1.5">
                 {selectedEntry ? (
-                  <div className="finance-detail-content">
+                  <div className="flex flex-col gap-3">
                     {/* Detail Header */}
-                    <div className="finance-detail-header">
-                      <div className="finance-detail-title-group">
-                        <div className="finance-detail-main-title">
-                          <h4>
+                    <div className="flex items-start justify-between gap-3 border-b border-border pb-3">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h4 className="m-0 text-lg font-semibold text-foreground leading-[normal]">
                             {selectedEntry.fieldNum && <span>Nr {selectedEntry.fieldNum} · </span>}
                             {selectedEntry.fieldName}
                           </h4>
-                          <span className="finance-detail-work-type">{selectedEntry.workTypeName}</span>
+                          <span className="text-base font-medium text-success-text leading-[normal]">{selectedEntry.workTypeName}</span>
                           <FinanceStatusBadge status={selectedEntry.financeStatus} />
                         </div>
 
-                        <div className="finance-detail-sub-meta">
+                        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground leading-[normal]">
                           <span><span className="text-subtle">Kuupäev:</span> {formatDate(selectedEntry.date)}</span>
                           {selectedEntry.areaHa && <span><span className="text-subtle">Tehtud:</span> {fmtHa(selectedEntry.areaHa)} ha</span>}
                           {selectedEntry.crop && <span><span className="text-subtle">Kultuur:</span> {selectedEntry.crop}</span>}
@@ -555,19 +555,19 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       </div>
 
                       {selectedEntry.financeConfirmedAt && (
-                        <div className="finance-confirmed-meta">
+                        <Badge tone="success" variant="soft" size="md">
                           <CheckCircle2 size={14} />
-                          <span>Kinnitatud {formatDate(selectedEntry.financeConfirmedAt)}</span>
-                        </div>
+                          Kinnitatud {formatDate(selectedEntry.financeConfirmedAt)}
+                        </Badge>
                       )}
                     </div>
 
                     {selectedEntry.financeStatus === 'CHANGED' && (
-                      <div className="alert-box warning finance-changed-warning">
+                      <div className="alert-box warning m-0 flex items-start gap-2.5">
                         <AlertCircle size={16} />
                         <div>
                           <strong>Kande koguseid on pärast kinnitamist muudetud!</strong>
-                          <p>Kontrolli allolevad read ja kinnita kanne uuesti, et värskendatud andmed kajastuksid tulemustes.</p>
+                          <p className="mt-0.5 text-xs leading-[normal]">Kontrolli allolevad read ja kinnita kanne uuesti, et värskendatud andmed kajastuksid tulemustes.</p>
                         </div>
                       </div>
                     )}
@@ -587,14 +587,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     )}
 
                     {/* Lines Pricing Table */}
-                    <div className="finance-lines-section">
-                      <div className="finance-lines-heading">
-                        <h5>Kande kulu- ja tuluread</h5>
-                        <span className="text-xs">Määra ühikuhinnad kulu ja saagitulu arvutamiseks</span>
+                    <div className="flex flex-col gap-2">
+                      <div className="flex items-baseline gap-2.5">
+                        <h5 className="m-0 text-base font-semibold leading-[normal]">Kande kulu- ja tuluread</h5>
+                        <span className="text-xs leading-[normal]">Määra ühikuhinnad kulu ja saagitulu arvutamiseks</span>
                       </div>
 
                       {lineCalculations.length === 0 ? (
-                        <div className="finance-empty-lines">
+                        <div className="flex items-center gap-2.5 rounded-md border border-dashed border-border bg-muted p-4 text-sm text-muted-foreground leading-[normal]">
                           <Info size={16} />
                           <span>Töötaja ei sisestanud sellele kandele tunde, kütust ega materjale. Hinnastatavaid ridu pole.</span>
                         </div>
@@ -621,16 +621,16 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                     <TableCell>
                                       <Badge><Icon size={12} />{info.label}</Badge>
                                     </TableCell>
-                                    <TableCell wrap className="finance-line-label">
+                                    <TableCell wrap className="font-medium">
                                       <strong>{line.label}</strong>
                                     </TableCell>
-                                    <TableCell numeric className="finance-line-qty">
+                                    <TableCell numeric className="font-normal tabular-nums">
                                       <span>{formatQty(line.quantity)}</span>
-                                      <span className="finance-line-unit">{line.unit}</span>
+                                      <span className="ml-0.5 text-xs font-medium text-subtle">{line.unit}</span>
                                     </TableCell>
-                                    <TableCell className="finance-price-cell">
+                                    <TableCell className="w-45">
                                       {line.kind === 'MATERIAL' || line.kind === 'FUEL' ? (
-                                        <span className={`finance-fifo-price ${isMissing || (line.kind === 'FUEL' && !line.articleId) ? 'missing' : ''}`} title="Hind tuleb laost (FIFO)">
+                                        <span className={cn('text-sm text-subtle', (isMissing || (line.kind === 'FUEL' && !line.articleId)) && 'text-warning-text')} title="Hind tuleb laost (FIFO)">
                                           {line.kind === 'FUEL' && !line.articleId
                                             ? 'Kütuse artikkel määramata'
                                             : isMissing ? 'ootab arvele võtmist' : `${line.parsedPrice!.toLocaleString('et-EE', { maximumFractionDigits: 4 })} €/${line.unit} · FIFO laost`}
@@ -641,7 +641,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                         decimals={4}
                                         placeholder="0,00"
                                         aria-label={`Ühikuhind: ${line.label}`}
-                                        className={isMissing ? 'finance-price-missing' : undefined}
+                                        className={isMissing ? 'border-warning bg-warning/12' : undefined}
                                         end={`€/${line.unit}`}
                                         value={prices[line.id] ?? null}
                                         onChange={(n) => {
@@ -652,7 +652,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                                       />
                                       )}
                                     </TableCell>
-                                    <TableCell numeric className={`finance-line-total ${isHarvest ? 'revenue-text' : ''}`}>
+                                    <TableCell numeric className={cn('font-semibold tabular-nums', isHarvest && 'text-success-text')}>
                                       {isHarvest ? '+' : ''}{fmtCur(line.total)}
                                     </TableCell>
                                   </TableRow>
@@ -664,36 +664,36 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     </div>
 
                     {/* Notes & Summary */}
-                    <div className="finance-detail-bottom-grid">
-                      <div className="finance-notes-box">
-                        <label htmlFor="fin-notes" className="finance-notes-label">
+                    <div className="grid grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)] items-start gap-4">
+                      <div className="flex flex-col gap-1.5">
+                        <label htmlFor="fin-notes" className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground leading-[normal]">
                           <span>Finantsmärkmed</span>
                           <small>(arve nr, palgaviide jne)</small>
                         </label>
                         <Textarea
                           id="fin-notes"
                           rows={2}
-                          className="finance-notes-textarea"
+                          className="resize-y"
                           placeholder="Sisesta vajadusel finantsalased märkused..."
                           value={financeNotes}
                           onChange={(e) => setFinanceNotes(e.target.value)}
                         />
                         {selectedEntry.notes && (
-                          <div className="finance-worker-notes">
+                          <div className="rounded-r-sm border-l-2 border-border bg-muted px-2 py-1 text-xs leading-[normal]">
                             <span>Töötaja märkus: </span>
                             <span>{selectedEntry.notes}</span>
                           </div>
                         )}
                       </div>
 
-                      <Card variant="tile" padding="sm" className="finance-summary-card">
-                        <KeyValueRow label="Kulud kokku:"><strong className="cost-neg">{fmtCur(entryCostTotal)}</strong></KeyValueRow>
+                      <Card variant="tile" padding="sm" className="flex flex-col gap-2">
+                        <KeyValueRow label="Kulud kokku:"><strong className="font-semibold text-destructive">{fmtCur(entryCostTotal)}</strong></KeyValueRow>
                         {entryRevenueTotal > 0 && (
-                          <KeyValueRow label="Saagitulu kokku:"><strong className="profit-pos">+{fmtCur(entryRevenueTotal)}</strong></KeyValueRow>
+                          <KeyValueRow label="Saagitulu kokku:"><strong className="font-semibold text-primary">+{fmtCur(entryRevenueTotal)}</strong></KeyValueRow>
                         )}
-                        <div className="finance-summary-divider" />
+                        <div className="my-0.5 h-px bg-border" />
                         <KeyValueRow label="Puhastulemus:" className="font-semibold">
-                          <span className={`finance-net-result ${entryNetTotal >= 0 ? 'positive' : 'negative'}`}>
+                          <span className={cn(entryNetTotal >= 0 ? 'text-success-text' : 'text-danger-text')}>
                             {entryNetTotal >= 0 ? '+' : ''}{fmtCur(entryNetTotal)}
                           </span>
                         </KeyValueRow>
@@ -701,7 +701,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     </div>
 
                     {/* Actions */}
-                    <div className="finance-actions-bar">
+                    <div className="flex items-center justify-end gap-2.5 border-t border-border pt-3">
                       <Button
                         type="button"
                         size="sm"
@@ -716,7 +716,6 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                         type="button"
                         variant="primary"
                         size="sm"
-                        className="finance-confirm-btn"
                         disabled={saving || lineCalculations.length === 0}
                         onClick={() => handleSave(true)}
                       >
@@ -726,7 +725,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     </div>
                   </div>
                 ) : (
-                  <div className="finance-no-selection">
+                  <div className="flex h-full flex-col items-center justify-center gap-2.5 text-center text-base text-subtle leading-[normal]">
                     <Euro size={32} />
                     <p>Vali vasakult nimekirjast kanne, mida hinnastada või kinnitada.</p>
                   </div>
