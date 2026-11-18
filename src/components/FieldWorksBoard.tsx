@@ -270,7 +270,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
                     <span className="text-2xs leading-tight text-muted-foreground">
                       {[haStr, workerFirstName].filter(Boolean).join(' · ')}
                       {/* Ühe kande korral protsent sama rea lõpus */}
-                      {n === 1 && donePct !== null && <span className={cn(PCT, 'ml-1.5')}>{donePct}%</span>}
+                      {n === 1 && donePct !== null && <span className={cn(PCT, 'ml-1.5 leading-tight')}>{donePct}%</span>}
                     </span>
                   )}
                 </span>
@@ -280,7 +280,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
             {n > 1 && (
               <span className="mt-0.5 border-t border-border pt-0.5 text-2xs font-semibold leading-natural text-foreground">
                 Kokku {fmtHa(doneHa)} / {fmtHa(fieldAreaHa)} ha
-                {donePct !== null && <span className={cn(PCT, 'ml-1.5')}>{donePct}%</span>}
+                {donePct !== null && <span className={cn(PCT, 'ml-1.5 leading-natural')}>{donePct}%</span>}
               </span>
             )}
           </span>
