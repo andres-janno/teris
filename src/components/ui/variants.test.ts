@@ -41,6 +41,9 @@ const allClassStrings = (): string[] => [
   v.chipVariants({ variant: 'tint', dimmed: true }), v.chipVariants({ variant: 'outline' }),
   v.navSwitchClass, v.navSwitchItemClass,
   v.sectionTitleLabelClass, v.sectionTitleClass(), v.sectionTitleClass({ ruled: true, spaced: true }),
+  ...(['sm', 'md', 'lg'] as const).flatMap((size) => (['neutral', 'info', 'success', 'warning'] as const).map((tone) => v.iconBoxVariants({ size, tone }))),
+  v.cardGridClass, v.registerSectionClass, v.fleetCellMainClass, v.fleetCellTitleClass, v.fleetCellSubClass, v.fleetCellDateClass, v.fleetCellDateEndClass,
+  v.fleetDurationClass({ active: true }), v.fleetDurationClass({}), v.fleetNotesClass({ empty: true }), v.fleetNotesClass({}), v.dateTimeRowClass, v.dateTimeHintClass,
 ];
 
 describe('variants', () => {
@@ -134,7 +137,7 @@ describe('variants', () => {
   });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
-    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|danger-text|accent-text|on-warning|background|left|right|center|inherit)$/;
+    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|warning-solid|danger-text|accent-text|on-warning|background|left|right|center|inherit)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });
@@ -645,5 +648,32 @@ describe('emptyBoxClass ja subheadingClass (etapp 4b, lõppparandus)', () => {
   });
   it('alamrubriik: poolpaks, normaalne rea kõrgus, vaikne tekst', () => {
     for (const t of ['text-xs', 'font-semibold', 'leading-natural', 'text-muted-foreground']) expect(v.subheadingClass).toContain(t);
+  });
+});
+
+describe('Tehnika ühised klassid (etapp 4c)', () => {
+  it('iconBoxVariants: sm 28px nurk 6, md 36px äärisega, lg 40px', () => {
+    expect(v.iconBoxVariants({ size: 'sm', tone: 'info' })).toEqual(expect.stringContaining('size-7'));
+    expect(v.iconBoxVariants({ size: 'sm', tone: 'info' })).toEqual(expect.stringContaining('bg-info/15'));
+    expect(v.iconBoxVariants({ size: 'md' })).toEqual(expect.stringContaining('border-2'));
+    expect(v.iconBoxVariants({ size: 'lg' })).toEqual(expect.stringContaining('size-10'));
+  });
+  it('cardGridClass: automaatsed 360px veerud, vahe 12px', () => {
+    for (const t of ['grid', 'grid-cols-[repeat(auto-fill,minmax(360px,1fr))]', 'gap-3']) expect(v.cardGridClass).toContain(t);
+  });
+  it('registerSectionClass täidab lehe kõrguse ja kerib tabeli ise (flex-1 basis-0 min-h-0)', () => {
+    for (const t of ['flex-1', 'basis-0', 'min-h-0', 'flex-col', 'gap-4']) expect(v.registerSectionClass).toContain(t);
+  });
+  it('registri lahtrid: pealkiri 13/500, alamrida 11 vaikne, kestus aktiivselt roheline, märkus tühjana kaldkirjas', () => {
+    expect(v.fleetCellTitleClass).toContain('font-medium');
+    expect(v.fleetCellSubClass).toContain('text-2xs');
+    expect(v.fleetDurationClass({ active: true })).toContain('text-primary');
+    expect(v.fleetDurationClass({})).toContain('text-subtle');
+    expect(v.fleetNotesClass({ empty: true })).toContain('italic');
+    expect(v.fleetNotesClass({})).not.toContain('italic');
+  });
+  it('kuupäev + kellaaeg rida: 110px kellaajaveerg; vihje min kõrgus 18px', () => {
+    expect(v.dateTimeRowClass).toContain('grid-cols-[minmax(0,1fr)_110px]');
+    expect(v.dateTimeHintClass).toContain('min-h-4.5');
   });
 });

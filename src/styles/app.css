@@ -132,6 +132,15 @@
   --color-info-solid: var(--tone-info-solid);
   --color-accent-solid: var(--tone-accent-solid);
   --color-on-warning: var(--on-warning);
+  /* Tehnika: seadme andmete värskus ja sõidu ajajaotus. Väärtused on teemapõhised (index.css :root), seega viited. */
+  --color-fresh-live: var(--fresh-live);
+  --color-fresh-day: var(--fresh-day);
+  --color-fresh-week: var(--fresh-week);
+  --color-fresh-old: var(--fresh-old);
+  --color-fresh-none: var(--fresh-none);
+  --color-trip-moving: var(--trip-moving);
+  --color-trip-idle: var(--trip-idle);
+  --color-trip-pause: var(--trip-pause);
 
   --shadow-card: var(--shadow-glass);
   --shadow-dialog: var(--shadow-modal);

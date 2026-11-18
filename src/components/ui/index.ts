@@ -11,6 +11,7 @@ export { Checkbox, CheckboxField } from './Checkbox';
 export { RadioGroup, RadioGroupItem, RadioField } from './RadioGroup';
 export { Switch } from './Switch';
 export { ProgressBar } from './ProgressBar';
+export { IconBox, type IconBoxProps } from './IconBox';
 export { DateInput } from './DateInput';
 export { NumberInput, parseNumberText, formatNumberText } from './NumberInput';
 export { FilterSelect, type FilterSelectOption } from './FilterSelect';

@@ -400,3 +400,39 @@ export const progressFillClass = 'h-full rounded-sm bg-primary';
 export const emptyBoxClass = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
 /** Alamrubriigi pealkiri (tahvli töö paneel ja töö plaani vorm). */
 export const subheadingClass = 'text-xs font-semibold leading-natural text-muted-foreground';
+
+// --- Tehnika ja sõidud (etapp 4c) ---
+export type IconBoxSize = 'sm' | 'md' | 'lg';
+export type IconBoxTone = 'neutral' | 'info' | 'success' | 'warning';
+/** Ikoon või emoji ruudus. sm 28px (registri lahter, toon), md 36px (masina avatar; ääre värv tuleb andmest: style.borderColor), lg 40px (kaardi päis). */
+export const iconBoxVariants = cva('flex shrink-0 items-center justify-center', {
+  variants: {
+    size: { sm: 'size-7 rounded-sm text-base', md: 'size-9 rounded-md border-2', lg: 'size-10 rounded-md text-xl' },
+    tone: {
+      neutral: 'bg-muted',
+      info: 'bg-info/15 text-info',
+      success: 'bg-primary/15 text-success-text',
+      warning: 'bg-warning-solid/15 text-warning-solid',
+    },
+  },
+  defaultVariants: { size: 'sm', tone: 'neutral' },
+});
+
+/** Kaartide ruudustik (masinad, haakeriistad, seadmed): automaatsed ≥ 360px veerud. */
+export const cardGridClass = 'grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-3';
+/** Tehnika registri sektsioon (filtririba, tabel, tühi olek): täidab lehe kõrguse, tabel kerib ise. Peab olema `fleet-board-body` otsene laps. */
+export const registerSectionClass = 'flex min-h-0 flex-1 basis-0 flex-col gap-4';
+
+// Haakimiste ja seadmete seoste registri lahtrid
+export const fleetCellMainClass = 'flex items-center gap-2';
+export const fleetCellTitleClass = 'text-sm font-medium leading-natural';
+export const fleetCellSubClass = 'text-2xs leading-natural text-subtle';
+export const fleetCellDateClass = 'text-sm font-medium leading-natural';
+export const fleetCellDateEndClass = 'text-sm leading-natural text-muted-foreground';
+export const fleetDurationClass = ({ active = false }: { active?: boolean } = {}): string =>
+  cn('text-xs font-medium leading-natural', active ? 'text-primary' : 'text-subtle');
+export const fleetNotesClass = ({ empty = false }: { empty?: boolean } = {}): string =>
+  cn('text-xs leading-natural text-subtle', empty && 'italic');
+// Haakimise/seose vorm: kuupäev + kellaaeg ühel real, lõppaja vihje välja all
+export const dateTimeRowClass = 'grid grid-cols-[minmax(0,1fr)_110px] gap-2';
+export const dateTimeHintClass = 'min-h-4.5 text-xs leading-natural text-muted-foreground';

@@ -1,15 +1,15 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
-import { FINANCE_COST_COLOR } from '../../lib/dataColors';
+import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
 import React, { useEffect, useState } from 'react';
-import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Search, Sun, Trash2, Copy, Eye, Layers } from 'lucide-react';
+import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
   Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -452,6 +452,15 @@ export const UiGallery: React.FC = () => {
             <LegendItem color={FINANCE_COST_COLOR.equipment} label="Liikumine" />
             <LegendItem color={FINANCE_COST_COLOR.fuel} label="Seisuaeg süütega" value="3 min" />
             <LegendItem color={FINANCE_COST_COLOR.labor} label="Tööjõud:" value="48 200 €" note="(35%)" />
+          </div>
+        </Section>
+        <Section title="Ikoonikast">
+          <div className="flex items-center gap-3">
+            <IconBox tone="info"><Radio size={15} /></IconBox>
+            <IconBox tone="success"><Tractor size={15} /></IconBox>
+            <IconBox tone="warning"><Wrench size={15} /></IconBox>
+            <IconBox size="md" style={{ borderColor: DEFAULT_VEHICLE_COLOR }}><Tractor size={20} /></IconBox>
+            <IconBox size="lg">🔧</IconBox>
           </div>
         </Section>
         <Section title="Edenemisriba">

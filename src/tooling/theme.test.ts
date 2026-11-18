@@ -27,3 +27,17 @@ describe('app.css tokenid (etapp 4b)', () => {
     expect(dark).toMatch(/--tone-sky-text:\s*#38bdf8;/);
   });
 });
+
+describe('Tehnika tokenid (etapp 4c)', () => {
+  it.each(['live', 'day', 'week', 'old', 'none'])('fresh-%s on värvinimi, väärtus index.css --fresh-%s', (k) => {
+    expect(css).toMatch(new RegExp(`--color-fresh-${k}:\\s*var\\(--fresh-${k}\\);`));
+    expect(indexCss).toMatch(new RegExp(`--fresh-${k}:\\s*#[0-9a-f]{6};`));
+  });
+  it.each(['moving', 'idle', 'pause'])('trip-%s on värvinimi', (k) => {
+    expect(css).toMatch(new RegExp(`--color-trip-${k}:\\s*var\\(--trip-${k}\\);`));
+  });
+  it('--trip-* muutujad on :root-is mõlemas teemas (mitte .trip-dialog-i all)', () => {
+    expect(indexCss).toMatch(/:root\s*\{[^}]*--trip-moving:\s*#2a78d6;[^}]*--trip-idle:\s*#eb6834;[^}]*--trip-pause:\s*#1baf7a;/);
+    expect(indexCss).toMatch(/:root\[data-theme=["']dark["']\]\s*\{[^}]*--trip-moving:\s*#3987e5;[^}]*--trip-idle:\s*#d95926;[^}]*--trip-pause:\s*#199e70;/);
+  });
+});

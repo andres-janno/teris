@@ -799,6 +799,9 @@ body {
   --fresh-week: #e0a100;
   --fresh-old: #d64545;
   --fresh-none: #94a3b8;
+  --trip-moving: #2a78d6;
+  --trip-idle: #eb6834;
+  --trip-pause: #1baf7a;
 }
 
 :root[data-theme="dark"] {
@@ -807,6 +810,9 @@ body {
   --fresh-week: #d9a21c;
   --fresh-old: #e05a5a;
   --fresh-none: #64748b;
+  --trip-moving: #3987e5;
+  --trip-idle: #d95926;
+  --trip-pause: #199e70;
 }
 
 .fresh-live { --fresh: var(--fresh-live); }

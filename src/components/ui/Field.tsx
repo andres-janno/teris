@@ -30,8 +30,9 @@ export const Field: React.FC<FieldProps> = ({ label, htmlFor, hint, error, span,
 );
 
 // Vormi ruudustik: 2 veergu (vana .form-grid) või 3 veergu 2:1:1.5 (vana .form-row-3, mobiilis 1 veerg).
-export const FormGrid: React.FC<{ cols?: 2 | 3; span?: 'full'; className?: string; children: React.ReactNode }> = ({ cols = 2, span, className, children }) => (
-  <div className={cn('grid gap-2.5', cols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr]', span === 'full' && 'col-span-full', className)}>
+// collapse: kitsal ekraanil (≤ 560px) üks veerg; vana .fleet-form-grid
+export const FormGrid: React.FC<{ cols?: 2 | 3; span?: 'full'; collapse?: boolean; className?: string; children: React.ReactNode }> = ({ cols = 2, span, collapse, className, children }) => (
+  <div className={cn('grid gap-2.5', cols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr]', collapse && 'max-[560px]:grid-cols-1', span === 'full' && 'col-span-full', className)}>
     {children}
   </div>
 );
