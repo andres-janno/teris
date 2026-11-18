@@ -27,6 +27,7 @@
 @source '../components/FieldWorkPlanForm.tsx';
 @source '../components/ArticleFormDialog.tsx';
 @source '../components/TripRegister.tsx';
+@source '../components/TripDialog.tsx';
 @source '../components/TripGapReviewDialog.tsx';
 @source '../components/TripRouteView.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';

@@ -10,7 +10,15 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
+
+// Aja jaotuse riba osad; värvid on tokenid (teemapõhised muutujad --trip-*). Täielikud nimed, et Tailwind need näeks.
+const TIME_PART_CLASS = { moving: 'bg-trip-moving', idle: 'bg-trip-idle', pause: 'bg-trip-pause' } as const;
+// Algus/lõpu täpi värv sama mis kaardi markeritel
+const STOP_DOT_COLOR = { start: TRIP_MAP_COLOR.start, end: TRIP_MAP_COLOR.end } as const;
+const STOP_ROW = 'relative flex items-baseline gap-2.5 text-sm leading-natural';
+const STOP_DOT = 'size-2.5 shrink-0 self-center rounded-full ring-2 ring-popover';
+const STOP_TIME = 'whitespace-nowrap tabular-nums text-foreground';
 
 interface TripDialogProps {
   trip: Trip;
@@ -122,9 +130,9 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
   ];
   // Aja jaotus: liikumine / seisuaeg süütega / pausid (osad proportsionaalsed, null osa ei joonistu)
   const timeParts = [
-    { key: 'moving', label: 'Liikumine', minutes: trip.movingMinutes },
-    { key: 'idle', label: 'Seisuaeg süütega', minutes: trip.idleMinutes },
-    { key: 'pause', label: trip.pauseCount ? `Pausid (${trip.pauseCount})` : 'Pausid', minutes: trip.pauseMinutes }
+    { key: 'moving' as const, label: 'Liikumine', minutes: trip.movingMinutes },
+    { key: 'idle' as const, label: 'Seisuaeg süütega', minutes: trip.idleMinutes },
+    { key: 'pause' as const, label: trip.pauseCount ? `Pausid (${trip.pauseCount})` : 'Pausid', minutes: trip.pauseMinutes }
   ];
   const timeTotal = timeParts.reduce((s, p) => s + p.minutes, 0);
   // Lisanäitajad: ainult need, mille kohta seade andmeid saadab
@@ -142,43 +150,44 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="fleet-edit-modal trip-dialog" dismissible={!saving}>
+      <DialogContent size="lg" dismissible={!saving}>
         <DialogHeader icon={<Route size={20} />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
         <DialogBody>
           {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
-          <div ref={setMapEl} className="trip-dialog-map" />
+          {/* shrink-0: dialoogi sisu on flex-veerg, ilma selleta kahaneb kaart 0 kõrguseks */}
+          <div ref={setMapEl} className="mb-3 h-80 shrink-0 rounded-md" />
           {trackError && <div className="auth-error-banner">{trackError}</div>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
-          <div className="trip-stops">
-            <div className="trip-stop">
-              <span className="trip-stop-dot start" aria-hidden="true" />
-              <span className="trip-stop-time">{formatDateTime(trip.startedAt)}</span>
-              <span className="trip-stop-place">{placeText(trip.start)}</span>
+          <div className="relative mb-4 flex flex-col gap-2.5 pl-0.5 before:absolute before:top-3 before:bottom-3 before:left-1.5 before:w-0.5 before:bg-border before:content-['']">
+            <div className={STOP_ROW}>
+              <span className={STOP_DOT} style={{ backgroundColor: STOP_DOT_COLOR.start }} aria-hidden="true" />
+              <span className={STOP_TIME}>{formatDateTime(trip.startedAt)}</span>
+              <span className="text-muted-foreground">{placeText(trip.start)}</span>
             </div>
-            <div className="trip-stop">
-              <span className="trip-stop-dot end" aria-hidden="true" />
-              <span className="trip-stop-time">{active ? 'käimas' : formatDateTime(trip.endedAt)}</span>
-              <span className="trip-stop-place">{active ? '' : placeText(trip.end)}</span>
+            <div className={STOP_ROW}>
+              <span className={STOP_DOT} style={{ backgroundColor: STOP_DOT_COLOR.end }} aria-hidden="true" />
+              <span className={STOP_TIME}>{active ? 'käimas' : formatDateTime(trip.endedAt)}</span>
+              <span className="text-muted-foreground">{active ? '' : placeText(trip.end)}</span>
             </div>
           </div>
 
-          <div className="trip-tiles">
+          <div className="mb-4 grid grid-cols-4 gap-2.5 max-[640px]:grid-cols-2">
             {tiles.map((t) => (
               <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.empty} />
             ))}
           </div>
 
           {timeTotal > 0 && (
-            <div className="trip-timesplit">
-              <div className="trip-timesplit-label">Aja jaotus</div>
-              <div className="trip-timesplit-bar" role="img"
+            <div className="mb-4">
+              <div className="mb-1.5 text-xs leading-natural text-muted-foreground">Aja jaotus</div>
+              <div className="flex h-2 gap-0.5 overflow-hidden rounded-sm" role="img"
                 aria-label={timeParts.map((p) => `${p.label} ${minutesText(p.minutes)}`).join(', ')}>
                 {timeParts.filter((p) => p.minutes > 0).map((p) => (
-                  <span key={p.key} className={`trip-timesplit-part ${p.key}`}
+                  <span key={p.key} className={cn('min-w-0.5 basis-0', TIME_PART_CLASS[p.key])}
                     style={{ flexGrow: p.minutes }} title={`${p.label}: ${minutesText(p.minutes)}`} />
                 ))}
               </div>
-              <div className="trip-timesplit-legend">
+              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
                 {timeParts.map((p) => (
                   <LegendItem key={p.key} color={`var(--trip-${p.key})`} label={p.label} value={minutesText(p.minutes)} />
                 ))}
@@ -187,16 +196,16 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           )}
 
           {details.length > 0 && (
-            <dl className="trip-details">
+            <dl className="mb-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm leading-natural">
               {details.map(([k, v]) => (
-                <React.Fragment key={k}><dt>{k}</dt><dd>{v}</dd></React.Fragment>
+                <React.Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd className="text-foreground">{v}</dd></React.Fragment>
               ))}
             </dl>
           )}
           {trip.fields.length > 0 && (
             <>
               <h4>Põllud</h4>
-              <Table scroll="none" containerClassName="trip-dialog-fields-wrap" className="trip-dialog-fields">
+              <Table scroll="none" containerClassName="mb-3">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Põld</TableHead>
@@ -222,7 +231,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                         {f.fuelFieldL != null && <div className="cell-sub">põllul {formatQty(f.fuelFieldL)}</div>}
                       </TableCell>
                       <TableCell>
-                        <div className="trip-dialog-entry-cell">
+                        <div className="flex flex-col items-start gap-1">
                           {f.entries.length === 0 ? (
                             <span className="muted">kanne puudub</span>
                           ) : (
@@ -231,7 +240,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                                 key={e.id}
                                 variant="text"
                                 size="inline"
-                                className="trip-dialog-entry"
+                                className="flex flex-col items-start justify-start gap-0 text-left enabled:hover:[&>span:first-child]:underline disabled:cursor-default disabled:text-inherit disabled:opacity-100"
                                 title="Ava põllu töö"
                                 disabled={!onOpenFieldWork}
                                 onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
@@ -252,7 +261,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           {trip.visits.length > 0 && (
             <>
               <h4>Läbitud kohad</h4>
-              <ul className="trip-dialog-visits">
+              <ul className="mt-1 mb-3 ml-4 text-sm leading-natural">
                 {trip.visits.map((v, i) => (
                   <li key={i}>{timeOnly(v.arrive)}–{timeOnly(v.leave)} · {v.place.label}</li>
                 ))}
@@ -266,10 +275,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
         </DialogBody>
         <DialogFooter>
           {canDelete && !trip.deletedAt && (
-            <Button type="button" variant="danger" className="footer-start" onClick={remove} disabled={saving}>Kustuta sõit</Button>
+            <Button type="button" variant="danger" className="mr-auto" onClick={remove} disabled={saving}>Kustuta sõit</Button>
           )}
           {canDelete && trip.deletedAt && (
-            <Button type="button" className="footer-start" onClick={restore} disabled={saving}>Taasta</Button>
+            <Button type="button" className="mr-auto" onClick={restore} disabled={saving}>Taasta</Button>
           )}
           <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Sulge</Button>
           <Button type="button" variant="primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
