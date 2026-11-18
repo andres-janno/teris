@@ -30,6 +30,8 @@
 @source '../components/TripDialog.tsx';
 @source '../components/TripGapReviewDialog.tsx';
 @source '../components/TripRouteView.tsx';
+@source '../components/DeviceAssignmentRegister.tsx';
+@source '../components/VehicleTracker.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).

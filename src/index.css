@@ -2504,17 +2504,6 @@ body {
   font-size: 14px;
 }
 
-/* Põhinimekiri / -tabel täidab ülejäänud kõrguse ja kerib ise (päis jääb paigale);
-   väga madalal aknal kerib kogu leht */
-/* Tehnika lehe registrid (haakimised, seadmete seosed, sõidud): jaotis täidab lehe ja tabel kerib ise */
-.fleet-board-body > .implement-history-section {
-  flex: 1 1 0;
-  min-height: 0;
-}
-
-/* Tehnika registrite sisu: filtririba, tabel, tühi olek üksteise all */
-.implement-history-section { display: flex; flex-direction: column; gap: 16px; }
-
 /* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
@@ -2892,23 +2881,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* Haakimise registri vorm: kuupäev + kellaaeg ühel real, lõppaja vihje välja all */
-.assign-datetime {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 110px;
-  gap: 8px;
-}
-
-.assign-hint {
-  min-height: 18px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.assign-hint-active {
-  color: var(--emerald-500, #10b981);
-}
-
 /* Litsentsi ülariba (aegunud / peatselt aegub) */
 .license-banner {
   flex: 0 0 auto;
@@ -3204,30 +3176,6 @@ td.stock-qty-out { color: #dc2626; }
 /* Sõitude register (Tehnika → Sõidud) */
 .footer-left-info { margin-right: auto; }
 
-/* Tehnika registrite (haakimised, seadmete seosed) lahtrite sisu */
-.fleet-icon-box {
-  width: 28px;
-  height: 28px;
-  border-radius: var(--radius-sm);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  font-size: 14px;
-}
-.fleet-icon-box.is-info { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-.fleet-icon-box.is-success { background: rgba(16, 185, 129, 0.15); color: var(--tone-success-text); }
-.fleet-icon-box.is-warning { background: rgba(234, 179, 8, 0.15); color: #eab308; }
-.fleet-cell-main { display: flex; align-items: center; gap: 8px; }
-.fleet-cell-title { font-weight: 500; font-size: 13px; }
-.fleet-cell-sub { font-size: 11px; color: var(--text-muted); }
-.fleet-cell-date { font-size: 13px; font-weight: 500; }
-.fleet-cell-date-end { font-size: 13px; color: var(--text-secondary); }
-.fleet-cell-duration { font-size: 12px; font-weight: 500; color: var(--text-muted); }
-.fleet-cell-duration.is-active { color: var(--color-primary); }
-.fleet-cell-notes { font-size: 12px; color: var(--text-muted); }
-.fleet-cell-notes.is-empty { font-style: italic; }
-
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
 .field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
 .field-map-card { position: relative; width: 300px; display: flex; flex-direction: column; gap: 8px; }
@@ -3285,8 +3233,6 @@ polyline.weather-line { fill: none; }
 .weather-season-shifted { font-style: italic; }
 
 /* Staatilised abiklassid (varem inline-stiilid) */
-/* Veateate riba, mis vajab all vahet */
-.auth-error-banner.with-bottom-gap { margin-bottom: 16px; }
 /* Summutatud alamväärtus statistikakiibis */
 .sub-val.is-muted { color: var(--text-muted); }
 /* Teisejärguline märkus (13px) ja summutatud märkus (12px) */

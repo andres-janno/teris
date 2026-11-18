@@ -39,7 +39,8 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
+import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
+import { registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -1179,18 +1180,18 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {isAddingNew && activeTab === 'history' && (
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
-          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!assignmentSubmitting}>
+          <DialogContent size="lg" dismissible={!assignmentSubmitting}>
             <DialogForm onSubmit={handleSaveAssignment}>
               <DialogHeader icon={<Link size={20} />} title={editingAssignmentId ? 'Muuda haakimise kirjet' : 'Lisa uus haakimise kanne'} />
 
               <DialogBody>
                 {assignmentError && (
-                  <div className="auth-error-banner with-bottom-gap">
+                  <div className="auth-error-banner mb-4">
                     {assignmentError}
                   </div>
                 )}
 
-                <FormGrid className="fleet-form-grid">
+                <FormGrid stackNarrow>
                   <Field label="Masin *" htmlFor="assign-vehicle">
                     <Select
                       id="assign-vehicle"
@@ -1214,7 +1215,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </Field>
 
                   <Field label="Haagitud (algusaeg) *" htmlFor="assign-start-time">
-                    <div className="assign-datetime">
+                    <div className={dateTimeRowClass}>
                       <DateInput
                         value={assignStartDate}
                         onChange={setAssignStartDate}
@@ -1231,7 +1232,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </Field>
 
                   <Field label="Lahti haagitud (lõppaeg)" htmlFor="assign-end-time">
-                    <div className="assign-datetime">
+                    <div className={dateTimeRowClass}>
                       <DateInput
                         value={assignEndDate}
                         onChange={(date) => {
@@ -1248,13 +1249,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         options={assignEndDate ? timeOpts(assignEndTime || undefined) : [{ value: '', label: '--:--' }]}
                       />
                     </div>
-                    <span className="assign-hint">
+                    <span className={dateTimeHintClass}>
                       {assignEndDate ? (
                         <Button variant="link" size="inline" onClick={() => { setAssignEndDate(''); setAssignEndTime(''); }}>
                           Tühjenda lõppaeg (haakeriist on praegu küljes)
                         </Button>
                       ) : (
-                        <span className="assign-hint-active">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
+                        <span className="text-primary">Lõppaeg tühi — haakeriist on praegu masina küljes</span>
                       )}
                     </span>
                   </Field>
@@ -1792,7 +1793,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 4: HAAKIMISE REGISTER (AJALUGU) */}
       {activeTab === 'history' && (
-        <div className="implement-history-section">
+        <div className={registerSectionClass}>
           {/* Filter bar */}
           <FilterBar
             actions={(
@@ -1876,41 +1877,41 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     return (
                       <TableRow key={a.id} tone={isActive ? 'success' : undefined}>
                         <TableCell wrap>
-                          <div className="fleet-cell-main">
-                            <div className="fleet-icon-box is-warning">
+                          <div className={fleetCellMainClass}>
+                            <IconBox tone="warning">
                               🔧
-                            </div>
+                            </IconBox>
                             <div>
-                              <div className="fleet-cell-title">{a.implementName || a.implementId}</div>
-                              <div className="fleet-cell-sub">{a.implementCategory || ''}</div>
+                              <div className={fleetCellTitleClass}>{a.implementName || a.implementId}</div>
+                              <div className={fleetCellSubClass}>{a.implementCategory || ''}</div>
                             </div>
                           </div>
                         </TableCell>
                         <TableCell wrap>
-                          <div className="fleet-cell-main">
-                            <div className="fleet-icon-box is-success">
+                          <div className={fleetCellMainClass}>
+                            <IconBox tone="success">
                               <Tractor size={15} />
-                            </div>
-                            <div className="fleet-cell-title">{a.vehicleName || a.vehicleId}</div>
+                            </IconBox>
+                            <div className={fleetCellTitleClass}>{a.vehicleName || a.vehicleId}</div>
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="fleet-cell-date">{formatDateTime(a.startedAt)}</div>
+                          <div className={fleetCellDateClass}>{formatDateTime(a.startedAt)}</div>
                         </TableCell>
                         <TableCell>
                           {isActive ? (
                             <Badge tone="success" dot>Hetkel küljes (Aktiivne)</Badge>
                           ) : (
-                            <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
+                            <div className={fleetCellDateEndClass}>{formatDateTime(a.endedAt)}</div>
                           )}
                         </TableCell>
                         <TableCell numeric>
-                          <span className={`fleet-cell-duration${isActive ? ' is-active' : ''}`}>
+                          <span className={fleetDurationClass({ active: isActive })}>
                             {duration}
                           </span>
                         </TableCell>
                         <TableCell wrap>
-                          <span className={`fleet-cell-notes${a.notes ? '' : ' is-empty'}`}>
+                          <span className={fleetNotesClass({ empty: !a.notes })}>
                             {a.notes || '—'}
                           </span>
                         </TableCell>

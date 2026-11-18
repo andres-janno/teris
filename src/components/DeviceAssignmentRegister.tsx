@@ -7,7 +7,8 @@ import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../t
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, DateInput, FilterClear, FilterSelect, Field, FormGrid, Select, Textarea, type SelectOption } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, DateInput, FilterClear, FilterSelect, Field, FormGrid, IconBox, Select, Textarea, type SelectOption } from './ui';
+import { registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -174,7 +175,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
   const timeSelectOptions = (cur: string): SelectOption[] => getTimeOptions(cur || undefined).map((t) => ({ value: t, label: t }));
 
   return (
-    <div className="implement-history-section">
+    <div className={registerSectionClass}>
       {/* Filtrid */}
       <FilterBar
         actions={(
@@ -258,47 +259,47 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                 return (
                   <TableRow key={a.id} tone={isActive ? 'success' : undefined}>
                     <TableCell wrap>
-                      <div className="fleet-cell-main">
-                        <div className="fleet-icon-box is-info">
+                      <div className={fleetCellMainClass}>
+                        <IconBox tone="info">
                           {isEye ? <Activity size={15} /> : <Radio size={15} />}
-                        </div>
+                        </IconBox>
                         <div>
-                          <div className="fleet-cell-title">{a.deviceModel || a.deviceId}</div>
-                          <div className="fleet-cell-sub">
+                          <div className={fleetCellTitleClass}>{a.deviceModel || a.deviceId}</div>
+                          <div className={fleetCellSubClass}>
                             {a.deviceIdentifier ? `${isEye ? 'MAC' : 'IMEI'}: ${a.deviceIdentifier}` : ''}
                           </div>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell wrap>
-                      <div className="fleet-cell-main">
+                      <div className={fleetCellMainClass}>
                         {a.vehicleId ? (
-                          <div className="fleet-icon-box is-success"><Tractor size={15} /></div>
+                          <IconBox tone="success"><Tractor size={15} /></IconBox>
                         ) : (
-                          <div className="fleet-icon-box is-warning"><Wrench size={15} /></div>
+                          <IconBox tone="warning"><Wrench size={15} /></IconBox>
                         )}
-                        <div className="fleet-cell-title">
+                        <div className={fleetCellTitleClass}>
                           {a.vehicleId ? (a.vehicleName || a.vehicleId) : (a.implementName || a.implementId)}
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="fleet-cell-date">{formatDateTime(a.startedAt)}</div>
+                      <div className={fleetCellDateClass}>{formatDateTime(a.startedAt)}</div>
                     </TableCell>
                     <TableCell>
                       {isActive ? (
                         <Badge tone="success" dot>Paigaldatud (Aktiivne)</Badge>
                       ) : (
-                        <div className="fleet-cell-date-end">{formatDateTime(a.endedAt)}</div>
+                        <div className={fleetCellDateEndClass}>{formatDateTime(a.endedAt)}</div>
                       )}
                     </TableCell>
                     <TableCell numeric>
-                      <span className={`fleet-cell-duration${isActive ? ' is-active' : ''}`}>
+                      <span className={fleetDurationClass({ active: isActive })}>
                         {formatDuration(a.startedAt, a.endedAt)}
                       </span>
                     </TableCell>
                     <TableCell wrap>
-                      <span className={`fleet-cell-notes${a.notes ? '' : ' is-empty'}`}>
+                      <span className={fleetNotesClass({ empty: !a.notes })}>
                         {a.notes || '—'}
                       </span>
                     </TableCell>
@@ -335,18 +336,18 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
       {/* Lisamise / muutmise vorm */}
       {formOpen && (
         <Dialog open onOpenChange={(open) => { if (!open) onCloseForm(); }}>
-          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!submitting}>
+          <DialogContent size="lg" dismissible={!submitting}>
             <DialogForm onSubmit={handleSave}>
               <DialogHeader icon={<Link size={20} />} title={editingId ? 'Muuda seose kirjet' : 'Lisa seadme seose kanne'} />
 
               <DialogBody>
                 {error && (
-                  <div className="auth-error-banner with-bottom-gap">
+                  <div className="auth-error-banner mb-4">
                     {error}
                   </div>
                 )}
 
-                <FormGrid className="fleet-form-grid">
+                <FormGrid stackNarrow>
                   <Field label="Seade *" htmlFor="assign-device">
                     <Select id="assign-device" required value={formDeviceId} onValueChange={setFormDeviceId} placeholder="Vali seade..."
                       options={devices.map((d) => ({ value: d.id, label: deviceLabel(d) }))} />
@@ -358,14 +359,14 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                   </Field>
 
                   <Field label="Paigaldatud (algusaeg) *" htmlFor="assign-start-time">
-                    <div className="assign-datetime">
+                    <div className={dateTimeRowClass}>
                       <DateInput value={startDate} onChange={setStartDate} required />
                       <Select id="assign-start-time" required value={startTime} onValueChange={setStartTime} options={timeSelectOptions(startTime)} />
                     </div>
                   </Field>
 
                   <Field label="Eemaldatud (lõppaeg)" htmlFor="assign-end-time">
-                    <div className="assign-datetime">
+                    <div className={dateTimeRowClass}>
                       <DateInput
                         value={endDate}
                         onChange={(date) => {
@@ -377,13 +378,13 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                       <Select id="assign-end-time" value={endTime} onValueChange={setEndTime} disabled={!endDate}
                         options={endDate ? timeSelectOptions(endTime) : [{ value: '', label: '--:--' }]} />
                     </div>
-                    <span className="assign-hint">
+                    <span className={dateTimeHintClass}>
                       {endDate ? (
                         <Button variant="link" size="inline" onClick={() => { setEndDate(''); setEndTime(''); }}>
                           Tühjenda lõppaeg (seade on praegu paigaldatud)
                         </Button>
                       ) : (
-                        <span className="assign-hint-active">Lõppaeg tühi — seade on praegu paigaldatud</span>
+                        <span className="text-primary">Lõppaeg tühi — seade on praegu paigaldatud</span>
                       )}
                     </span>
                   </Field>
