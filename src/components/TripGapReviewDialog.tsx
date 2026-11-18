@@ -32,8 +32,8 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="fleet-edit-modal" dismissible={!saving}>
-        <DialogHeader icon={<AlertTriangle size={20} className="trip-gap-icon" />} title="Märgi hoiatus kontrollituks" />
+      <DialogContent size="lg" dismissible={!saving}>
+        <DialogHeader icon={<AlertTriangle size={20} className="text-warning" />} title="Märgi hoiatus kontrollituks" />
         <DialogBody>
           <p>
             Sõitude vahel {formatDateTime(gap.startedAt)} – {formatDateTime(gap.endedAt)} ({formatDuration(gap.startedAt, gap.endedAt)}):{' '}

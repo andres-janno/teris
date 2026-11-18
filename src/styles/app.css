@@ -26,6 +26,9 @@
 @source '../components/FieldWorksBoard.tsx';
 @source '../components/FieldWorkPlanForm.tsx';
 @source '../components/ArticleFormDialog.tsx';
+@source '../components/TripRegister.tsx';
+@source '../components/TripGapReviewDialog.tsx';
+@source '../components/TripRouteView.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).

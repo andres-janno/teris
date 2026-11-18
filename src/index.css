@@ -2514,8 +2514,6 @@ body {
 
 /* Tehnika registrite sisu: filtririba, tabel, tühi olek üksteise all */
 .implement-history-section { display: flex; flex-direction: column; gap: 16px; }
-/* Filtririba perioodi valik: kaks kuupäeva kriipsuga */
-.filter-period { display: inline-flex; align-items: center; gap: 6px; }
 
 /* ==========================================================================
    Põllutööde tahvel
@@ -2706,72 +2704,6 @@ body {
 /* Puuduv ha väärtus soovituse märgis */
 .telemetry-pill-missing {
   color: var(--color-destructive);
-}
-
-/* Sõidu teekond (TripRouteView) — soovituse nupu all täislaiuses */
-.telemetry-suggestion-pill > .trip-route {
-  flex-basis: 100%;
-}
-
-.trip-route {
-  font-size: 12px;
-  color: var(--text-secondary);
-  min-width: 0;
-}
-
-.trip-route-summary {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-}
-
-.trip-route-line {
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trip-route-toggle {
-  flex-shrink: 0;
-  font-weight: 500;
-  color: var(--text-secondary);
-  background: var(--btn-sec-bg);
-  border: 1px solid var(--btn-sec-border);
-  border-radius: var(--radius-sm);
-  padding: 0 6px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.trip-route-toggle:hover {
-  background: var(--btn-sec-hover);
-}
-
-.trip-route-list {
-  list-style: none;
-  margin: 4px 0 0;
-  padding: 0 0 0 8px;
-  border-left: 2px solid var(--border-card);
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.trip-route-time {
-  font-variant-numeric: tabular-nums;
-  color: var(--text-primary);
-}
-
-.trip-route-current {
-  font-weight: 500;
-  color: var(--basemap-active-color);
-}
-
-.trip-route-unknown {
-  font-style: italic;
-  color: var(--text-muted);
 }
 
 .work-entry-grid {
@@ -3270,15 +3202,8 @@ td.stock-qty-out { color: #dc2626; }
 }
 
 /* Sõitude register (Tehnika → Sõidud) */
-.trip-import-status { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
 .footer-left-info { margin-right: auto; }
 .trip-dialog-map { height: 320px; border-radius: var(--radius-md); margin-bottom: 12px; }
-
-/* Sõitude vahe hoiatus: rida kahe sõidu vahel; kontrollitud = hall */
-
-[data-slot="table"] tr.trip-gap-row > td > * + * {
-  margin-left: 12px;
-}
 
 /* Tehnika registrite (haakimised, seadmete seosed) lahtrite sisu */
 .fleet-icon-box {
@@ -3303,28 +3228,6 @@ td.stock-qty-out { color: #dc2626; }
 .fleet-cell-duration.is-active { color: var(--color-primary); }
 .fleet-cell-notes { font-size: 12px; color: var(--text-muted); }
 .fleet-cell-notes.is-empty { font-style: italic; }
-
-.trip-gap-text {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.trip-gap-icon {
-  color: var(--amber-500, #f59e0b);
-}
-
-.trip-gap-row.reviewed .trip-gap-icon {
-  color: var(--text-muted);
-}
-
-.trip-gap-count {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  color: var(--amber-500);
-}
 
 /* Sõidu aken: algus/lõpp, põhinumbrid, aja jaotus, lisanäitajad */
 .trip-dialog {

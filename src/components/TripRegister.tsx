@@ -9,6 +9,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
+import { registerSectionClass } from './ui/variants';
 import { Badge, Button, FilterBar, FilterBarItem, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
@@ -124,8 +125,8 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
   const failing = importStatus?.devices.filter((d) => d.lastError) ?? [];
 
   return (
-    <div className="implement-history-section">
-      <div className="trip-import-status">
+    <div className={registerSectionClass}>
+      <div className="flex items-center gap-2 text-xs leading-natural text-subtle">
         <span>Viimane import: {importStatus?.lastRunAt ? formatDateTime(importStatus.lastRunAt) : '—'}</span>
       </div>
       {failing.map((d) => (
@@ -142,7 +143,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         )}
       >
         <FilterClear inline active={periodActive} onClear={() => { setFromDay(defaultFrom()); setToDay(defaultTo()); }}>
-          <span className="filter-period">
+          <span className="inline-flex items-center gap-1.5">
             <DateInput value={fromDay} onChange={setFromDay} />
             <span>–</span>
             <DateInput value={toDay} onChange={setToDay} />
@@ -182,7 +183,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
           <CheckboxField checked={showDeleted} onCheckedChange={setShowDeleted} label="Näita kustutatud sõite" />
         </FilterClear>
         {unreviewedGaps > 0 && (
-          <span className="trip-gap-count" title="Kontrollimata hoiatusi valitud perioodis">
+          <span className="inline-flex items-center gap-1 text-sm leading-natural text-warning" title="Kontrollimata hoiatusi valitud perioodis">
             <AlertTriangle size={14} /> {unreviewedGaps} kontrollimata
           </span>
         )}
@@ -242,15 +243,15 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                       <TableCell>{active ? <Badge tone="success">käimas</Badge> : 'lõppenud'}</TableCell>
                     </TableRow>
                     {g && (
-                      <TableRow className={`trip-gap-row${g.reviewedAt ? ' reviewed' : ''}`} tone={g.reviewedAt ? 'muted' : 'warning'}>
-                        <TableCell wrap colSpan={13}>
-                          <span className="trip-gap-text">
-                            <AlertTriangle size={14} className="trip-gap-icon" />
+                      <TableRow tone={g.reviewedAt ? 'muted' : 'warning'}>
+                        <TableCell wrap colSpan={13} className="[&>*+*]:ml-3">
+                          <span className="inline-flex items-center gap-1.5">
+                            <AlertTriangle size={14} className={g.reviewedAt ? 'text-subtle' : 'text-warning'} />
                             Sõitude vahel {formatDuration(g.startedAt, g.endedAt)}: {gapParts(g).join(' · ') || 'märke pole'}
                           </span>
                           {g.reviewedAt ? (
                             <>
-                              <span className="trip-gap-review">Kontrollitud {formatDateTime(g.reviewedAt)}{g.reviewedBy ? `, ${g.reviewedBy}` : ''}: {g.reviewNote}</span>
+                              <span>Kontrollitud {formatDateTime(g.reviewedAt)}{g.reviewedBy ? `, ${g.reviewedBy}` : ''}: {g.reviewNote}</span>
                               <Button type="button" size="sm" onClick={() => reopenGap(g)}>Ava uuesti</Button>
                             </>
                           ) : (
