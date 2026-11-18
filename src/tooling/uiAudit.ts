@@ -304,7 +304,6 @@ const STRING_LITERAL = /"([^"\n]*)"|'([^'\n]*)'|`([^`]*)`/g;
 
 /** Lubatud erandid: fail → põhjus. Nähtavat muutust vältiv ajutine loend; kustub, kui fail läheb @source-i. */
 export const SOURCE_GUARD_ALLOWED: Readonly<Record<string, string>> = {
-  'src/components/ArticleFormDialog.tsx': 'PRIA päise SectionTitle klassid (mt/border-t/pt) on surnud; 4.5 dialoogide etapp lisab @source-i',
   'src/components/FieldContextMenu.tsx': 'DropdownMenuItem items-start; 4.6 etapp',
 };
 
