@@ -495,3 +495,14 @@ describe('@source valvur (etapp 4b)', () => {
     expect(unsourcedUtilityFiles([view('src/services/X.tsx', '<p className="px-3" />')], css)).toEqual([]);
   });
 });
+
+describe('vanad fw-* klassid (etapp 4b)', () => {
+  it('loeb fw-* klassid tsx-is, kommentaare ja ui kausta mitte; fw-ga algav suvaline sõna ei loe', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="fw-card fw-cell-no-sow" /> {/* fw-board-view kommentaar */} // fw-main' },
+      { path: 'src/components/ui/X.tsx', content: '<div className="fw-card" />' },
+      { path: 'src/components/B.tsx', content: '<div className="draw-fw fwx-a" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
+  });
+});

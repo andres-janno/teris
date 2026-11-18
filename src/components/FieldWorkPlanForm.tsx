@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { cn, Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -202,7 +202,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const Body = dialog ? DialogBody : 'div';
   const Footer = dialog ? DialogFooter : 'div';
   return (
-    <Form className={cn(dialog && 'flex min-h-0 flex-1 flex-col')} onSubmit={save}>
+    <Form onSubmit={save}>
       <Body className="work-entry-body">
         <div className="work-entry-grid grid-cols-none grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row">
           <Field label="Tegevus *" htmlFor="wp-type">

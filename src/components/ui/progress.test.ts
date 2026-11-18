@@ -14,5 +14,6 @@ describe('clampPercent', () => {
   it('NaN ja lõpmatus on 0 / 100', () => {
     expect(clampPercent(Number.NaN)).toBe(0);
     expect(clampPercent(Number.POSITIVE_INFINITY)).toBe(100);
+    expect(clampPercent(Number.NEGATIVE_INFINITY)).toBe(0);
   });
 });

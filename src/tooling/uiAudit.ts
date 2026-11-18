@@ -103,14 +103,14 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'trip-tile', 'register-crop-summary',
   'dev-telemetry-summary', 'imp-status-box',
   // sektsioonikastid
-  'support-panel', 'fw-plan-section', 'parsed-preview-box', 'weather-chart-card',
+  'support-panel', 'parsed-preview-box', 'weather-chart-card',
   // teenusepakkuja admin
   'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
-// FinanceModal'i finance-* klassid. ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 const LEGACY_OVERVIEW =
-  /(?<![\w-])(section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop)(?![\w-])/g;
+  /(?<![\w-])(section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*)(?![\w-])/g;
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
 const CARD_LOOK_DECL = /(?:^|[;\s])(background(?:-color)?|border|border-radius|box-shadow|(?:-webkit-)?backdrop-filter)\s*:\s*([^;}]*)/g;
 
@@ -170,7 +170,7 @@ export function auditTsx(src: string) {
     legacyFormFields: [...src.matchAll(LEGACY_FORM_FIELD)].map((m) => (m[1] ? `<${m[1]}>` : m[2])),
     legacyMenuPopups: [...src.matchAll(LEGACY_MENU_POPUP)].map((m) => m[1] ?? m[2] ?? 'aria-haspopup'),
     legacyCards: src.match(LEGACY_CARD_TSX) ?? [],
-    legacyOverview: src.match(LEGACY_OVERVIEW) ?? [],
+    legacyOverview: stripComments(src).match(LEGACY_OVERVIEW) ?? [],
     rawButtons: (stripComments(src).match(RAW_BUTTON) ?? []).length,
     roleButtons: (stripComments(src).match(ROLE_BUTTON) ?? []).length,
   };
