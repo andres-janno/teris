@@ -138,7 +138,7 @@ const HEAD_TONE: Record<HeadTone, { bg: string; text: string }> = {
   sow: { bg: 'bg-primary-strong/8', text: 'text-success-text' },
   harvest: { bg: 'bg-warning-solid/10', text: 'text-warning-text' },
   'prev-sow': { bg: 'bg-muted-foreground/10', text: 'text-muted-foreground' },
-  'autumn-sow': { bg: 'bg-sky/8', text: 'text-sky-text' },
+  'autumn-sow': { bg: 'bg-sky/8', text: 'text-info-text' },
 };
 
 /** Veerupäis: nimi + kokkuvõte. `first` = kleepuv põllu veerg, `yearStart` = paks aastavahe vasakul, `tone` = verstaposti toon. */

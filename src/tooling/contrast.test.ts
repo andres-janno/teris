@@ -39,7 +39,7 @@ for (const theme of ['light', 'dark'] as const) {
     it('tekstivärvid kaardil ja dialoogis', () => {
       // 'primary' (roheline) puudub: kasutaja otsusel 2026-11-17 on roheline kõikjal Kaart-nupu heledam #16a34a.
       for (const fg of ['foreground', 'muted-foreground', 'subtle', 'info', 'warning', 'destructive', 'accent',
-        'success-text', 'info-text', 'warning-text', 'danger-text', 'accent-text']) {
+        'success-text', 'info-text', 'sky-text', 'warning-text', 'danger-text', 'accent-text']) {
         check(fg, card, `${fg}/card`);
         check(fg, popover, `${fg}/popover`);
       }
@@ -54,7 +54,7 @@ for (const theme of ['light', 'dark'] as const) {
     });
     it('soft märgid: toonitekst 15% toonil kaardi peal', () => {
       const pairs: [string, string][] = [
-        ['success-text', 'primary'], ['info-text', 'info'], ['warning-text', 'warning'],
+        ['success-text', 'primary'], ['info-text', 'info'], ['sky-text', 'sky'], ['warning-text', 'warning'],
         ['danger-text', 'destructive'], ['accent-text', 'accent'],
       ];
       for (const [fg, bg] of pairs) check(fg, tint(color(bg), 15, card), `${fg} on ${bg}/15`);
