@@ -121,6 +121,39 @@ const isUnplanned = (w: FieldWork) =>
   w.status === 'PLANNED' && w.entries.length === 0 && !w.plannedDateFrom && !w.plannedDateTo && !w.plannedText &&
   w.lines.length === 0 && !w.plannedWorkerId && !w.notes;
 
+// Tahvli ruudustik: põld 10%, ülejäänud 90% jagatud 10 tööveeru vahel (sama päisel ja igal real).
+const BOARD_GRID = 'grid w-full grid-cols-[minmax(0,10fr)_repeat(10,minmax(0,9fr))]';
+const BOARD_MIN_WIDTH = 'min-w-350'; // 1400px: kitsal ekraanil keritakse, põllu veerg jääb paigale
+
+const PLACE = {
+  headPrev: 'col-span-3 col-start-2',
+  headCurrent: 'col-span-4 col-start-5',
+  headNext: 'col-span-3 col-start-9',
+} as const;
+
+const HEAD_SECTION = 'flex min-w-0 items-center justify-between border-b border-border px-3 py-1.5 text-xs font-semibold uppercase leading-natural tracking-wider text-muted-foreground';
+
+type HeadTone = 'sow' | 'harvest' | 'prev-sow' | 'autumn-sow';
+const HEAD_TONE: Record<HeadTone, { bg: string; text: string }> = {
+  sow: { bg: 'bg-primary-strong/8', text: 'text-success-text' },
+  harvest: { bg: 'bg-warning-solid/10', text: 'text-warning-text' },
+  'prev-sow': { bg: 'bg-muted-foreground/10', text: 'text-muted-foreground' },
+  'autumn-sow': { bg: 'bg-sky/8', text: 'text-sky-text' },
+};
+
+/** Veerupäis: nimi + kokkuvõte. `first` = kleepuv põllu veerg, `yearStart` = paks aastavahe vasakul, `tone` = verstaposti toon. */
+const HeadCell: React.FC<{ title: React.ReactNode; count?: string; tone?: HeadTone; yearStart?: boolean; first?: boolean }> = ({ title, count, tone, yearStart, first }) => (
+  <div className={cn(
+    'flex min-w-0 flex-col gap-0.5 px-2.5 py-2 text-2xs font-semibold leading-natural tracking-wider text-muted-foreground',
+    first ? 'sticky left-0 z-2 border-r border-border bg-popover' : 'border-l border-border',
+    yearStart && 'border-l-3 border-l-subtle',
+    tone && HEAD_TONE[tone].bg
+  )}>
+    <strong className={cn('inline-flex items-center gap-1 text-base font-medium leading-natural tracking-normal text-foreground', tone && HEAD_TONE[tone].text)}>{title}</strong>
+    {count != null && <small className="text-2xs font-medium leading-natural tracking-normal">{count}</small>}
+  </div>
+);
+
 const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boolean; onSelect: () => void; onAddEntry?: () => void }> = ({ work, fieldAreaHa, selected, onSelect, onAddEntry }) => {
   const n = work.entries.length;
   const unplanned = isUnplanned(work);
@@ -766,64 +799,32 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           <CheckboxField className="ml-auto" checked={hideDone} onCheckedChange={setHideDone} label="Peida lõpetatud tööd" />
         </div>
 
-        <div className="fw-board" aria-busy={loading}>
-          <div className="fw-head">
-            <div className="fw-grid fw-head-top">
-              <div className="fw-head-section">PÕLD</div>
-              <div className="fw-head-section prev fw-place-head-prev">
+        <div className="min-h-0 flex-1 overflow-auto rounded-md border border-border bg-card" aria-busy={loading}>
+          <div className={cn('sticky top-0 z-3 border-b border-border bg-popover', BOARD_MIN_WIDTH)}>
+            <div className={BOARD_GRID}>
+              <div className={cn(HEAD_SECTION, 'sticky left-0 z-2 border-r bg-popover')}>PÕLD</div>
+              <div className={cn(HEAD_SECTION, PLACE.headPrev, 'border-l bg-muted-foreground/10')}>
                 <span>EELMINE AASTA {year - 1}</span>
               </div>
-              <div className="fw-head-section current fw-place-head-current">
+              <div className={cn(HEAD_SECTION, PLACE.headCurrent, 'border-l-3 border-l-subtle bg-primary-strong/8 text-success-text')}>
                 <span>KÄESOLEV AASTA {year}</span>
               </div>
-              <div className="fw-head-section next fw-place-head-next">
+              <div className={cn(HEAD_SECTION, PLACE.headNext, 'border-l-3 border-l-subtle bg-sky/10 text-sky-text')}>
                 <span>JÄRGMINE AASTA {year + 1}</span>
               </div>
             </div>
-            <div className="fw-grid fw-head-cols">
-              <div className="fw-head-cell">
-                <strong>{rows.length} {rows.length === 1 ? 'põld' : 'põldu'}</strong>
-              </div>
-              <div className="fw-head-cell phase">
-                <strong>Ettevalmistus</strong>
-                <small>{countPhase('PREV_PREPARATION')}</small>
-              </div>
-              <div className="fw-head-cell milestone prev-sow">
-                <strong><Sprout size={14} /> Sügiskülv</strong>
-                <small>{prevMilestoneCount()}</small>
-              </div>
-              <div className="fw-head-cell phase">
-                <strong>Sügishooldus</strong>
-                <small>{countPhase('PREV_CARE')}</small>
-              </div>
-              <div className="fw-head-cell phase year-start">
-                <strong>Ettevalmistus</strong>
-                <small>{countPhase('PREPARATION')}</small>
-              </div>
-              <div className="fw-head-cell milestone sow">
-                <strong><Sprout size={14} /> Kevadkülv</strong>
-                <small>{springSowCount()}</small>
-              </div>
-              <div className="fw-head-cell phase">
-                <strong>Hooldamine</strong>
-                <small>{countPhase('CARE')}</small>
-              </div>
-              <div className="fw-head-cell milestone harvest">
-                <strong><Wheat size={14} /> Koristus</strong>
-                <small>{milestoneCount('HARVEST')}</small>
-              </div>
-              <div className="fw-head-cell phase year-start">
-                <strong>Ettevalmistus</strong>
-                <small>{countNextPhase('PREP')}</small>
-              </div>
-              <div className="fw-head-cell milestone autumn-sow">
-                <strong><Sprout size={14} /> Sügiskülv</strong>
-                <small>{nextMilestoneCount()}</small>
-              </div>
-              <div className="fw-head-cell phase">
-                <strong>Sügishooldus</strong>
-                <small>{countNextPhase('CARE')}</small>
-              </div>
+            <div className={BOARD_GRID}>
+              <HeadCell first title={`${rows.length} ${rows.length === 1 ? 'põld' : 'põldu'}`} />
+              <HeadCell title="Ettevalmistus" count={countPhase('PREV_PREPARATION')} />
+              <HeadCell tone="prev-sow" title={<><Sprout size={14} /> Sügiskülv</>} count={prevMilestoneCount()} />
+              <HeadCell title="Sügishooldus" count={countPhase('PREV_CARE')} />
+              <HeadCell yearStart title="Ettevalmistus" count={countPhase('PREPARATION')} />
+              <HeadCell tone="sow" title={<><Sprout size={14} /> Kevadkülv</>} count={springSowCount()} />
+              <HeadCell title="Hooldamine" count={countPhase('CARE')} />
+              <HeadCell tone="harvest" title={<><Wheat size={14} /> Koristus</>} count={milestoneCount('HARVEST')} />
+              <HeadCell yearStart title="Ettevalmistus" count={countNextPhase('PREP')} />
+              <HeadCell tone="autumn-sow" title={<><Sprout size={14} /> Sügiskülv</>} count={nextMilestoneCount()} />
+              <HeadCell title="Sügishooldus" count={countNextPhase('CARE')} />
             </div>
           </div>
 
