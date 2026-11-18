@@ -667,6 +667,7 @@ describe('Tehnika ühised klassid (etapp 4c)', () => {
   it('registri lahtrid: pealkiri 13/500, alamrida 11 vaikne, kestus aktiivselt roheline, märkus tühjana kaldkirjas', () => {
     expect(v.fleetCellTitleClass).toContain('font-medium');
     expect(v.fleetCellSubClass).toContain('text-2xs');
+    expect(v.fleetCellSubClass).not.toContain('leading-natural'); // vana alamrida päris lahtri 16px rea kõrguse, text-2xs annab sama
     expect(v.fleetDurationClass({ active: true })).toContain('text-primary');
     expect(v.fleetDurationClass({})).toContain('text-subtle');
     expect(v.fleetNotesClass({ empty: true })).toContain('italic');

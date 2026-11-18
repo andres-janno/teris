@@ -426,7 +426,7 @@ export const registerSectionClass = 'flex min-h-0 flex-1 basis-0 flex-col gap-4'
 // Haakimiste ja seadmete seoste registri lahtrid
 export const fleetCellMainClass = 'flex items-center gap-2';
 export const fleetCellTitleClass = 'text-sm font-medium leading-natural';
-export const fleetCellSubClass = 'text-2xs leading-natural text-subtle';
+export const fleetCellSubClass = 'text-2xs text-subtle';
 export const fleetCellDateClass = 'text-sm font-medium leading-natural';
 export const fleetCellDateEndClass = 'text-sm leading-natural text-muted-foreground';
 export const fleetDurationClass = ({ active = false }: { active?: boolean } = {}): string =>
