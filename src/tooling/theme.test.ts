@@ -29,9 +29,12 @@ describe('app.css tokenid (etapp 4b)', () => {
 });
 
 describe('Tehnika tokenid (etapp 4c)', () => {
-  it.each(['live', 'day', 'week', 'old', 'none'])('fresh-%s on värvinimi, väärtus index.css --fresh-%s', (k) => {
+  it.each(['live', 'day', 'week', 'old', 'none'])('fresh-%s on värvinimi app.css-is', (k) => {
     expect(css).toMatch(new RegExp(`--color-fresh-${k}:\\s*var\\(--fresh-${k}\\);`));
-    expect(indexCss).toMatch(new RegExp(`--fresh-${k}:\\s*#[0-9a-f]{6};`));
+  });
+  it('--fresh-* väärtused on :root-is mõlemas teemas', () => {
+    expect(indexCss).toMatch(/:root\s*\{[^}]*--fresh-live:\s*#1baf7a;[^}]*--fresh-day:\s*#2a78d6;[^}]*--fresh-week:\s*#e0a100;[^}]*--fresh-old:\s*#d64545;[^}]*--fresh-none:\s*#94a3b8;/);
+    expect(indexCss).toMatch(/:root\[data-theme=["']dark["']\]\s*\{[^}]*--fresh-live:\s*#199e70;[^}]*--fresh-day:\s*#3987e5;[^}]*--fresh-week:\s*#d9a21c;[^}]*--fresh-old:\s*#e05a5a;[^}]*--fresh-none:\s*#64748b;/);
   });
   it.each(['moving', 'idle', 'pause'])('trip-%s on värvinimi', (k) => {
     expect(css).toMatch(new RegExp(`--color-trip-${k}:\\s*var\\(--trip-${k}\\);`));
