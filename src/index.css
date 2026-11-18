@@ -2515,52 +2515,6 @@ body {
 /* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
-.fw-board-view {
-  flex: 1;
-  height: calc(100vh - 64px);
-  display: flex;
-  min-height: 0;
-  background: var(--bg-dark);
-}
-
-.fw-main {
-  flex: 1;
-  min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px 16px;
-}
-
-.fw-toolbar {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.fw-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-.fw-filter-end {
-  margin-left: auto;
-}
-
-.fw-main .register-actions-bar {
-  gap: 10px;
-  margin-bottom: 0;
-}
-
-.fw-main .search-field {
-  flex: 1 1 220px;
-  max-width: 420px !important;
-}
-
 .fw-board {
   flex: 1;
   min-height: 0;
@@ -3149,11 +3103,6 @@ body {
   opacity: 1;
 }
 
-.fw-muted {
-  font-size: 12px;
-  color: var(--text-muted);
-}
-
 .fw-card {
   display: flex;
   flex-direction: column;
@@ -3180,10 +3129,6 @@ body {
 
 .fw-card.unplanned:hover {
   border-color: var(--amber-400) !important;
-}
-
-.fw-card.unplanned .fw-status-dot {
-  border-color: var(--amber-500);
 }
 
 .fw-card-unplanned {
@@ -3282,51 +3227,6 @@ body {
   font-size: 11px;
   font-weight: 600;
   color: var(--text-primary);
-}
-
-.fw-status-dot {
-  width: 9px;
-  height: 9px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  border-radius: 9999px;
-  border: 1.5px solid #9aa39e;
-  display: inline-block;
-}
-
-.fw-status-dot.doing {
-  border: 0;
-  background: var(--emerald-500);
-  box-shadow: 0 0 0 3px rgba(22, 163, 74, 0.2);
-}
-
-.fw-status-done {
-  color: var(--tone-success-text);
-  flex-shrink: 0;
-}
-
-.fw-empty {
-  padding: 24px;
-  text-align: center;
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.fw-legend {
-  display: flex;
-  gap: 16px;
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.fw-legend>span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fw-repeat {
-  color: #1d4ed8;
 }
 
 /* Plaani päise väljad (tegevus, kuupäevad, aeg, pindala, viis/teostaja) ühel real */

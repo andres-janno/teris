@@ -22,6 +22,7 @@
    (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse. */
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
+@source '../components/FieldWorksBoard.tsx';
 @source '../components/ArticleFormDialog.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 

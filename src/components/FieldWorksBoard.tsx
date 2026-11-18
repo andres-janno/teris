@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, cn } from './ui';
 
 interface Option {
   id: string;
@@ -106,8 +106,15 @@ const AddWorkButton: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
   </Button>
 );
 
-const StatusIcon: React.FC<{ status: FieldWork['status'] }> = ({ status }) =>
-  status === 'DONE' ? <Check size={13} strokeWidth={3} className="fw-status-done" /> : <span className={`fw-status-dot ${status === 'IN_PROGRESS' ? 'doing' : ''}`} />;
+const MUTED = 'text-xs text-subtle leading-natural';
+const STATUS_DOT = 'inline-block size-2.5 shrink-0 rounded-full border-2 border-subtle';
+const STATUS_DOT_DOING = 'border-0 bg-primary ring-3 ring-primary-strong/20';
+
+/** Staatuse märk: tühi ring (planeeritud), täidetud roheline (töös), linnuke (lõpetatud). `unplanned` värvib ringi ääre oranžiks. */
+const StatusIcon: React.FC<{ status: FieldWork['status']; unplanned?: boolean }> = ({ status, unplanned }) =>
+  status === 'DONE'
+    ? <Check size={13} strokeWidth={3} className="shrink-0 text-success-text" />
+    : <span className={cn(STATUS_DOT, status === 'IN_PROGRESS' && STATUS_DOT_DOING, unplanned && 'border-warning')} />;
 
 // Planeerimata: kandeid pole ja plaan on tühi (aega, materjale, töötajat ega märkusi pole)
 const isUnplanned = (w: FieldWork) =>
@@ -142,7 +149,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
         aria-label={`${work.workTypeName}, ${STATUS_LABEL[work.status].toLowerCase()}`}
       >
         <span className="fw-card-title">
-          <StatusIcon status={work.status} />
+          <StatusIcon status={work.status} unplanned={unplanned} />
           <span title={work.priaName}>{work.workTypeName}</span>
         </span>
         {/* Viis (nt väetamisviis) eraldi real, et pealkiri ei läheks kaardist laiemaks */}
@@ -650,7 +657,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   // Verstapost (külv/koristus) on alati nähtav; eelmise sügise hooldustööd selles veerus järgivad filtrit
   const renderMilestone = (row: Row, col: BoardColumn) => {
     const ws = columnWorks(row, col).filter((w) => (w.phase !== 'CARE') || !hideDone || w.status !== 'DONE');
-    if (ws.length === 0) return <span className="fw-muted">–</span>;
+    if (ws.length === 0) return <span className={MUTED}>–</span>;
     return ws.map((w) => (
       <WorkCard key={w.id} work={w} fieldAreaHa={row.rec.areaHa} selected={w.id === selectedId} onSelect={() => selectWork(w)} onAddEntry={locked || w.status === 'DONE' ? undefined : () => openNewEntry(w)} />
     ));
@@ -666,7 +673,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
   const renderNextMilestone = (row: Row) => {
     const ws = nextColumnWorks(row, 'SOWING');
-    if (ws.length === 0) return <span className="fw-muted">–</span>;
+    if (ws.length === 0) return <span className={MUTED}>–</span>;
     return ws.map((w) => (
       <WorkCard key={w.id} work={w} fieldAreaHa={row.nextRec?.areaHa ?? row.rec.areaHa} selected={w.id === selectedId} onSelect={() => selectWork(w)} onAddEntry={locked || w.status === 'DONE' ? undefined : () => openNewEntry(w)} />
     ));
@@ -685,11 +692,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   };
 
   return (
-    <div className="fw-board-view">
-      <main className="fw-main">
+    <div className="flex h-[calc(100vh-64px)] min-h-0 flex-1 bg-background">
+      <main className="flex min-w-0 flex-1 flex-col gap-3 px-4 py-3">
         <PageHeader icon={<SquareKanban />} title="Põllutööd" subtitle="Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine" />
 
-        <div className="fw-toolbar">
+        <div className="flex flex-wrap items-center gap-2.5">
           {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}
           <div className="year-selector-group">
             <span className="year-label">
@@ -736,16 +743,16 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
         </div>
 
-        <div className="register-actions-bar">
-          <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" />
-          <label className="fw-filter">
+        <div className="register-actions-bar gap-2.5 mb-0">
+          <SearchInput className="max-w-105 flex-1 basis-55" value={search} onChange={setSearch} placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" />
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground leading-natural">
             <span>Tegevus</span>
             <FilterClear active={activity !== 'all'} onClear={() => setActivity('all')}>
               <FilterSelect value={activity} defaultValue="all" onChange={setActivity}
                 options={[{ value: 'all', label: 'Kõik tegevused' }, ...activityOptions.map((o) => ({ value: o.id, label: o.name }))]} />
             </FilterClear>
           </label>
-          <label className="fw-filter">
+          <label className="flex items-center gap-1.5 text-sm text-muted-foreground leading-natural">
             <span>Kultuur</span>
             <FilterClear active={cropFilter !== 'all'} onClear={() => setCropFilter('all')}>
               <FilterSelect value={cropFilter} defaultValue="all" onChange={setCropFilter}
@@ -756,7 +763,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 ]} />
             </FilterClear>
           </label>
-          <CheckboxField className="fw-filter-end" checked={hideDone} onCheckedChange={setHideDone} label="Peida lõpetatud tööd" />
+          <CheckboxField className="ml-auto" checked={hideDone} onCheckedChange={setHideDone} label="Peida lõpetatud tööd" />
         </div>
 
         <div className="fw-board" aria-busy={loading}>
@@ -821,7 +828,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           </div>
 
           {rows.length === 0 && (
-            <div className="fw-empty">{allRows.length === 0 ? `${year}. a hooajal pole põlde.` : 'Filtrile vastavaid põlde pole.'}</div>
+            <div className="p-6 text-center text-base text-subtle leading-natural">{allRows.length === 0 ? `${year}. a hooajal pole põlde.` : 'Filtrile vastavaid põlde pole.'}</div>
           )}
 
           {groups.map((group) => {
@@ -941,7 +948,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Rida 2: Eelmise aasta sügistööd (Cols 2-4) */}
                         {/* Col 2: Eelmise aasta ettevalmistus (nt sügiskünd) */}
                         <div className="fw-cell prev fw-col-2">
-                          {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
+                          {row.undetermined && <span className={MUTED}>Kultuur valimata</span>}
                           {renderCards(row, 'PREV_PREPARATION')}
                           {!locked && !row.undetermined && (
                             <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'PREPARATION', plannedText: `Sügis ${year - 1}` })} />
@@ -960,7 +967,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           <div className="fw-cell fw-cell-no-sow fw-col-3">
                             {columnWorks(row, 'PREV_SOWING').length > 0
                               ? renderMilestone(row, 'PREV_SOWING')
-                              : <span className="fw-muted" title="Suvivili – sügiskülvi ei toimunud">—</span>}
+                              : <span className={MUTED} title="Suvivili – sügiskülvi ei toimunud">—</span>}
                           </div>
                         )}
 
@@ -975,7 +982,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Rida 2: Käesoleva aasta tööd (Cols 5-8) */}
                         {/* Col 5: Ettevalmistus */}
                         <div className="fw-cell fw-col-5">
-                          {row.undetermined && <span className="fw-muted">Kultuur valimata</span>}
+                          {row.undetermined && <span className={MUTED}>Kultuur valimata</span>}
                           {renderCards(row, 'PREPARATION')}
                           {!locked && !row.undetermined && (
                             <AddWorkButton onAdd={() => setAddDialog({ row, phase: 'PREPARATION' })} />
@@ -985,7 +992,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Col 6: Kevadkülv (talivili on külvatud eelmisel sügisel) */}
                         {row.isWinter && columnWorks(row, 'SOWING').length === 0 ? (
                           <div className="fw-cell fw-cell-no-sow fw-col-6">
-                            <span className="fw-muted" title={`Talivili – külv ${year - 1}. a sügisel`}>—</span>
+                            <span className={MUTED} title={`Talivili – külv ${year - 1}. a sügisel`}>—</span>
                           </div>
                         ) : (
                           <div
@@ -1037,7 +1044,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               <div className="fw-cell fw-cell-no-sow fw-col-10">
                                 {nextColumnWorks(row, 'SOWING').length > 0
                                   ? renderNextMilestone(row)
-                                  : <span className="fw-muted" title="Suvivili – sügiskülvi ei toimu">—</span>}
+                                  : <span className={MUTED} title="Suvivili – sügiskülvi ei toimu">—</span>}
                               </div>
                             )}
 
@@ -1051,7 +1058,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           </>
                         ) : (
                           <div className="fw-cell fw-cell-next-none fw-place-next-all">
-                            <span className="fw-muted">Järgmine kultuur määramata</span>
+                            <span className={MUTED}>Järgmine kultuur määramata</span>
                           </div>
                         )}
                       </div>
@@ -1062,11 +1069,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
           })}
         </div>
 
-        <div className="fw-legend">
-          <span><span className="fw-status-dot" /> Planeeritud</span>
-          <span><span className="fw-status-dot doing" /> Töös</span>
-          <span><Check size={12} strokeWidth={3} className="fw-status-done" /> Lõpetatud</span>
-          <span><strong className="fw-repeat">↻</strong> Korduv töö (tehtud / plaanitud kordi)</span>
+        <div className="flex gap-4 text-xs text-muted-foreground leading-natural">
+          <span className="inline-flex items-center gap-1.5"><span className={STATUS_DOT} /> Planeeritud</span>
+          <span className="inline-flex items-center gap-1.5"><span className={cn(STATUS_DOT, STATUS_DOT_DOING)} /> Töös</span>
+          <span className="inline-flex items-center gap-1.5"><Check size={12} strokeWidth={3} className="shrink-0 text-success-text" /> Lõpetatud</span>
+          <span className="inline-flex items-center gap-1.5"><strong className="text-info-text">↻</strong> Korduv töö (tehtud / plaanitud kordi)</span>
         </div>
       </main>
 
@@ -1096,7 +1103,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     ) : (
                       <Badge tone={WORK_STATUS_TONE[selected.status].tone} variant={WORK_STATUS_TONE[selected.status].variant} size="md">{STATUS_LABEL[selected.status]}</Badge>
                     )}
-                    <span className="fw-muted">
+                    <span className={MUTED}>
                       {selected.status === 'PLANNED' && (isUnplanned(selected) ? 'Lisa plaan: aeg, materjalid või töötaja.' : 'Esimene kanne muudab töö olekuks „Töös“.')}
                       {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
                       {selected.status === 'DONE' && `Lõpetatud${selected.finishedAt ? ` ${formatDate(selected.finishedAt)}` : ''}${locked ? '' : ' · muutmiseks ava töö uuesti'}`}
@@ -1190,7 +1197,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
                   <div className="fw-panel-entries-head">
                     <span>Kanded</span>
-                    <span className="fw-muted">{selected.entries.length || ''}</span>
+                    <span className={MUTED}>{selected.entries.length || ''}</span>
                   </div>
                   {selected.entries.length === 0 && (
                     <div className="fw-panel-empty">Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
