@@ -1270,7 +1270,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   {selected.entries.map((e) => (
                     <EntryRow key={e.id}>
                         <div className={ENTRY_WHEN}>
-                          <strong className="text-sm text-foreground">{formatDate(e.date)}</strong>
+                          <strong className="text-sm leading-natural text-foreground">{formatDate(e.date)}</strong>
                           {e.startTime && e.endTime && <span className="text-xs leading-natural text-muted-foreground">{e.startTime}–{e.endTime}</span>}
                         </div>
                         <div className="flex min-w-0 flex-col gap-0.5 @max-[560px]:col-span-full @max-[560px]:row-start-2">
@@ -1286,7 +1286,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           </div>
                         </div>
                         <div className={cn(ENTRY_WHEN, 'num items-end @max-[560px]:col-start-2 @max-[560px]:-col-end-1 @max-[560px]:row-start-1')}>
-                          <strong className="text-sm text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
+                          <strong className="text-sm leading-natural text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
                           {e.telemetryAreaHa ? <span className="text-xs leading-natural text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
                         </div>
                         <div className="@max-[560px]:col-span-2 @max-[560px]:col-start-1 @max-[560px]:row-start-3">
