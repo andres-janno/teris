@@ -436,3 +436,12 @@ describe('vanad ülevaateklassid (etapp 4.1)', () => {
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
   });
 });
+
+describe('leading-[…] on keelatud suvaline väärtus (etapp 4b)', () => {
+  it('märgib leading-[normal] ja leading-[1.2], lubab nimega klassid', () => {
+    const bad = summarize([{ path: 'src/components/X.tsx', content: '<p className="leading-[normal] leading-[1.2]" />' }]);
+    expect(bad.arbitrary.map((a) => a.cls)).toEqual(['leading-[normal]', 'leading-[1.2]']);
+    const ok = summarize([{ path: 'src/components/X.tsx', content: '<p className="leading-natural leading-tight leading-6" />' }]);
+    expect(ok.arbitrary).toEqual([]);
+  });
+});

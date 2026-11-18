@@ -322,7 +322,7 @@ export const emptyStateTitleClass = 'text-lg font-semibold text-foreground';
 export const emptyStateDescriptionClass = 'm-0 text-sm';
 
 // --- Kiip (etapp 3b): valitav, andmevärviga. `chip-*` on @utility-d src/styles/app.css-is (taust ja riba tulevad
-// CSS-muutujast --chip-accent; leading-[normal] hoiab kõrguse vana nupu (UA line-height: normal) sama, mida ChipButton seab; suvalisi väärtusi audit ei luba). ---
+// CSS-muutujast --chip-accent; leading-natural hoiab kõrguse vana nupu (UA line-height: normal) sama, mida ChipButton seab). ---
 export type ChipVariant = 'tint' | 'outline';
 export const chipVariants = cva(
   `inline-flex shrink-0 cursor-pointer items-center gap-1.5 transition-colors disabled:cursor-default ${focusRing}`,
@@ -330,9 +330,9 @@ export const chipVariants = cva(
     variants: {
       variant: {
         // Andmevärviga toonitud kiip (kultuur): taust ja vasak riba värvist, valituna ümber 2px rõngas.
-        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base leading-[normal] text-foreground',
+        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base leading-natural text-foreground',
         // Äärisega kiip (omandivorm): vasak serv 3px värvitud, valituna ümber 2px rõngas.
-        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm leading-[normal] text-foreground enabled:hover:border-subtle',
+        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm leading-natural text-foreground enabled:hover:border-subtle',
       },
       dimmed: { true: 'opacity-50 enabled:hover:opacity-85', false: '' },
     },
@@ -343,7 +343,7 @@ export const chipVariants = cva(
 // --- Peamenüü (etapp 3b): navigatsioonirida, aktiivne = aria-current="page" (mitte Radix Tabs/ToggleGroup). ---
 // Aktiivne on heledam roheline --selection-bg (kasutaja otsus 2026-11-16: jääb, kontrastist hoolimata).
 export const navSwitchClass = 'flex shrink-0 gap-0.5 rounded-md border border-border bg-muted p-0.5';
-export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-[normal] ${focusRing}`;
+export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-natural ${focusRing}`;
 
 /** Jaotise pealkiri (etapp 4.1; vanad .form-sub-header, .form-section-title, .section-title, .section-subtitle):
     12px poolpaks suurtäht; ruled = joon all (vormi alajaotis), spaced = 16px ülavahe. */
@@ -384,6 +384,6 @@ export const pageHeaderSubtitleClass = 'mt-0.5 text-sm text-muted-foreground';
 export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2.5';
 
 /** Rida „silt: väärtus“ (etapp 4.1; vanad .finance-summary-row, .fmc-row). */
-export const keyValueRowClass = 'flex items-baseline justify-between gap-3 text-base leading-[normal] tabular-nums';
+export const keyValueRowClass = 'flex items-baseline justify-between gap-3 text-base leading-natural tabular-nums';
 export const keyValueLabelClass = 'shrink-0';
 export const keyValueValueClass = 'min-w-0 text-right';

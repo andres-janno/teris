@@ -37,6 +37,7 @@
   /* Toonitekst (soft märk, olekutekst kaardil) ja täisvärvid valge tekstiga — kõik ≥ 4.5:1 (contrast.test.ts) */
   --tone-success-text: #166534;
   --tone-info-text: #1d4ed8;
+  --tone-sky-text: #0369a1;
   --tone-warning-text: #92400e;
   --tone-danger-text: #be123c;
   --tone-accent-text: #7e22ce;
@@ -98,6 +99,7 @@
 
   --tone-success-text: #22c55e;
   --tone-info-text: #60a5fa;
+  --tone-sky-text: #38bdf8;
   --tone-warning-text: #f59e0b;
   --tone-danger-text: #fb7185;
   --tone-accent-text: #c084fc;

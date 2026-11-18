@@ -56,6 +56,8 @@
   --text-lg--line-height: 22px;
   --text-xl: 20px;
   --text-xl--line-height: 28px;
+  /* Rea kõrgus „vana nupu/teksti järgi“: UA line-height: normal (text-sm annab muidu 18px rea). Asendab leading-[normal]. */
+  --leading-natural: normal;
 
   --radius-*: initial;
   --radius-sm: 6px;
@@ -108,12 +110,18 @@
   --color-selection-hover: var(--selection-bg-hover);
   --color-info: var(--blue-500);
   --color-warning: var(--amber-500);
+  /* Tahke oranž #f59e0b mõlemas teemas (warning on heledas teemas pruunikas #b45309): tahvli harvester-/planeerimata toonid. */
+  --color-warning-solid: #f59e0b;
+  /* Taevasinine #0284c7 (tahvli „järgmine aasta“, talivili); info on #2563eb, info-solid on Badge solid. */
+  --color-sky: #0284c7;
   --color-destructive: var(--rose-500);
   --color-danger-solid: #dc2626;
   --color-accent: var(--purple-500);
   /* Toonitekstid ja täisvärvid märkidele (kontrast mõlemas teemas) */
   --color-success-text: var(--tone-success-text);
   --color-info-text: var(--tone-info-text);
+  /* Taevasinine tekst (heledas #0369a1, tumedas #38bdf8): tahvli „järgmine aasta“ tekst */
+  --color-sky-text: var(--tone-sky-text);
   --color-warning-text: var(--tone-warning-text);
   --color-danger-text: var(--tone-danger-text);
   --color-accent-text: var(--tone-accent-text);
