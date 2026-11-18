@@ -160,8 +160,8 @@ const CELL_TONE: Record<CellTone, { base: string; done: string }> = {
 /** Töölahter ruudustikus. `col` = veerg 2–11; `kind` „no-sow“ = külvi ei toimu (roheline, kesksel), „none“ = järgmine kultuur määramata. */
 const BoardCell: React.FC<{ col?: number; place?: string; tone?: CellTone; done?: boolean; kind?: 'no-sow' | 'none'; children: React.ReactNode }> = ({ col, place, tone, done, kind, children }) => (
   <div className={cn(
-    'flex min-w-0 border-l border-border',
-    kind ? 'items-center justify-center px-2.5 py-2' : 'flex-wrap content-start items-start gap-1.5 px-2.5 py-2',
+    'flex min-w-0 flex-wrap content-start border-l border-border',
+    kind ? 'items-center justify-center px-2.5 py-2' : 'items-start gap-1.5 px-2.5 py-2',
     kind === 'no-sow' && 'bg-card bg-linear-to-b from-primary-strong/9 to-primary-strong/9 dark:from-primary-strong/14 dark:to-primary-strong/14',
     kind === 'none' && 'bg-muted',
     tone && (done ? CELL_TONE[tone].done : CELL_TONE[tone].base),
@@ -172,11 +172,11 @@ const BoardCell: React.FC<{ col?: number; place?: string; tone?: CellTone; done?
 
 const CARD_STATUS: Record<string, string> = {
   planned: '',
-  in_progress: 'border-2 border-primary-strong',
+  in_progress: 'border border-primary-strong hover:border-primary-strong',
   done: 'text-muted-foreground',
 };
-const CARD_UNPLANNED = 'border-2 border-dashed border-warning bg-warning-solid/8 hover:border-warning-solid';
-const PCT = 'rounded-sm bg-primary-strong/12 px-1 text-2xs font-medium leading-natural tabular-nums text-success-text';
+const CARD_UNPLANNED = 'border border-dashed border-warning bg-warning-solid/8 hover:border-warning-solid hover:bg-warning-solid/8';
+const PCT = 'rounded-sm bg-primary-strong/12 px-1 text-2xs font-medium tabular-nums text-success-text';
 
 type GroupTone = 'winter' | 'spring' | 'undetermined'; // = group.className ja fieldNextClass väärtused
 const GROUP_TONE: Record<GroupTone, string> = {
