@@ -1,5 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { auditCss, auditTsx, disallowedFontWeights, legacyCardRules, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from './uiAudit';
+import {
+  auditCss,
+  auditTsx,
+  disallowedFontWeights,
+  legacyCardRules,
+  offScaleCss,
+  SOURCE_GUARD_ALLOWED,
+  sourcedPaths,
+  summarize,
+  undefinedCssVars,
+  unsourcedUtilityFiles,
+  unusedCssClasses,
+} from './uiAudit';
 
 describe('auditCss', () => {
   it('kogub kirjasuurused, nurgad, vahed ja värvid', () => {
@@ -443,5 +455,43 @@ describe('leading-[…] on keelatud suvaline väärtus (etapp 4b)', () => {
     expect(bad.arbitrary.map((a) => a.cls)).toEqual(['leading-[normal]', 'leading-[1.2]']);
     const ok = summarize([{ path: 'src/components/X.tsx', content: '<p className="leading-natural leading-tight leading-6" />' }]);
     expect(ok.arbitrary).toEqual([]);
+  });
+});
+
+describe('@source valvur (etapp 4b)', () => {
+  const css = `
+    /* @source '../components/Kommentaar.tsx'; */
+    @source '../components/ui';
+    @source '../components/FinanceModal.tsx';
+    @source not '../components/ui/**/*.{md,test.ts}';
+    @source '../App.tsx';
+  `;
+  it('loeb @source read, jätab kommentaarid ja "not" välja', () => {
+    expect(sourcedPaths(css)).toEqual(['src/components/ui', 'src/components/FinanceModal.tsx', 'src/App.tsx']);
+  });
+  const view = (path: string, content: string) => ({ path, content });
+  it('märgib vaatefaili, kus on utiliidi tokeneid, aga mis pole @source-is', () => {
+    const r = unsourcedUtilityFiles([view('src/components/Uus.tsx', '<div className="flex items-center gap-2 text-sm" />')], css);
+    expect(r).toEqual([{ path: 'src/components/Uus.tsx', tokens: ['gap-2', 'items-center', 'text-sm'] }]);
+  });
+  it('ei märgi @source-is olevat faili ega ui kataloogi', () => {
+    const files = [
+      view('src/components/FinanceModal.tsx', '<div className="gap-2 text-sm" />'),
+      view('src/components/ui/X.tsx', '<div className="gap-2" />'),
+      view('src/App.tsx', '<div className="gap-2" />'),
+    ];
+    expect(unsourcedUtilityFiles(files, css)).toEqual([]);
+  });
+  it('ainult ühesõnalised nimed (flex, hidden, border) ei loe: need kattuvad vana CSS-iga', () => {
+    expect(unsourcedUtilityFiles([view('src/components/A.tsx', '<div className="flex hidden border" />')], css)).toEqual([]);
+  });
+  it('lubatud loendi failid jäetakse välja', () => {
+    const [path] = Object.keys(SOURCE_GUARD_ALLOWED);
+    expect(unsourcedUtilityFiles([view(path, '<p className="gap-2" />')], css)).toEqual([]);
+  });
+  it('admin ja ülemise taseme vaated loevad; teised kataloogid (services) mitte', () => {
+    const a = unsourcedUtilityFiles([view('src/admin/X.tsx', '<p className="px-3" />')], css);
+    expect(a.map((x) => x.path)).toEqual(['src/admin/X.tsx']);
+    expect(unsourcedUtilityFiles([view('src/services/X.tsx', '<p className="px-3" />')], css)).toEqual([]);
   });
 });

@@ -294,3 +294,47 @@ export function offScaleCss(css: string): { fontSizes: string[]; spacing: string
     spacing: uniqueSorted(a.spacing.filter((s) => !SPACING_SCALE_ABS.has(s.replace(/^-/, '')))),
   };
 }
+
+// @source valvur (etapp 4b): vaatefail, kus stringides on Tailwindi utiliidi tokeneid, aga mida pole app.css `@source`-is,
+// ei saa neile stiili (surnud klass). Tokenite loend on teadlikult kitsas (arvu/nimega kujud): ühesõnalised nimed
+// (flex, hidden, border) kattuvad vana CSS-iga ja jäävad välja.
+const UTILITY_TOKEN =
+  /(?<![\w-])(?:gap(?:-[xy])?-\d+(?:\.\d+)?|p[xytrbl]?-\d+(?:\.\d+)?|m[xytrbl]?-\d+(?:\.\d+)?|text-(?:2xs|xs|sm|base|lg|xl)|font-(?:medium|semibold)|items-(?:center|start|end|baseline)|justify-(?:between|center|end)|rounded-(?:sm|md|lg|full)|bg-(?:card|muted|popover|primary|background)|text-(?:muted-foreground|subtle|foreground|destructive)|border-border|min-w-0|shrink-0|size-\d+|flex-(?:col|wrap)|grid-cols-\d+|leading-natural|whitespace-nowrap|tabular-nums)(?![\w-])/g;
+const STRING_LITERAL = /"([^"\n]*)"|'([^'\n]*)'|`([^`]*)`/g;
+
+/** Lubatud erandid: fail → põhjus. Nähtavat muutust vältiv ajutine loend; kustub, kui fail läheb @source-i. */
+export const SOURCE_GUARD_ALLOWED: Readonly<Record<string, string>> = {
+  'src/components/ArticleFormDialog.tsx': 'PRIA päise SectionTitle klassid (mt/border-t/pt) on surnud; 4.5 dialoogide etapp lisab @source-i',
+  'src/components/FieldContextMenu.tsx': 'DropdownMenuItem items-start; 4.6 etapp',
+};
+
+/** `@source '<tee>'` read (kommentaarid ja `@source not` välja) kujul src/-suhteline tee. */
+export function sourcedPaths(appCss: string): string[] {
+  const clean = appCss.replace(/\/\*[\s\S]*?\*\//g, '');
+  return [...clean.matchAll(/@source\s+(?!not\b)'([^']+)'/g)].map((m) => m[1].replace(/^\.\.\//, 'src/'));
+}
+
+const isViewPath = (p: string): boolean =>
+  p.endsWith('.tsx') &&
+  ((p.startsWith('src/components/') && !p.startsWith('src/components/ui/')) ||
+    p.startsWith('src/admin/') ||
+    p === 'src/App.tsx' ||
+    p === 'src/AuthGate.tsx');
+
+export function unsourcedUtilityFiles(
+  files: { path: string; content: string }[],
+  appCss: string
+): { path: string; tokens: string[] }[] {
+  const sourced = sourcedPaths(appCss);
+  const covered = (p: string) => sourced.some((s) => p === s || p.startsWith(`${s}/`));
+  return files
+    .filter((f) => isViewPath(f.path) && !covered(f.path) && !(f.path in SOURCE_GUARD_ALLOWED))
+    .map((f) => {
+      const tokens = new Set<string>();
+      for (const m of f.content.matchAll(STRING_LITERAL)) {
+        for (const t of (m[1] ?? m[2] ?? m[3] ?? '').match(UTILITY_TOKEN) ?? []) tokens.add(t);
+      }
+      return { path: f.path, tokens: [...tokens].sort() };
+    })
+    .filter((f) => f.tokens.length > 0);
+}

@@ -2,7 +2,7 @@
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { disallowedFontWeights, offScaleCss, summarize, undefinedCssVars, unusedCssClasses } from '../src/tooling/uiAudit.ts';
+import { disallowedFontWeights, offScaleCss, summarize, undefinedCssVars, unsourcedUtilityFiles, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
 // Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); app.css on teema allikas.
 const EXCLUDE = ['src/landing', 'src/styles/app.css'];
@@ -80,6 +80,9 @@ row('Vanu kaarte (tsx+css)', r.legacyCardFiles.reduce((s, f) => s + f.count, 0),
 row('Vanu ülevaateklasse (tsx)', r.legacyOverviewFiles.reduce((s, f) => s + f.count, 0), r.legacyOverviewFiles.map((f) => `${f.path}: ${f.count}`));
 row('Tooreid nuppe (tsx)', r.rawButtonFiles.reduce((s, f) => s + f.count, 0), r.rawButtonFiles.map((f) => `${f.path}: ${f.count}`));
 row('role=button väljaspool ui-d (tsx)', r.roleButtonFiles.reduce((s, f) => s + f.count, 0), r.roleButtonFiles.map((f) => `${f.path}: ${f.count}`));
+const appCss = readFileSync('src/styles/app.css', 'utf8');
+const unsourced = unsourcedUtilityFiles(files, appCss);
+row('Tailwindi klasse ilma @source-ita (tsx)', unsourced.length, unsourced.map((f) => `${f.path}: ${f.tokens.join(' ')}`));
 
 // Muutujad: kõik CSS-failid (sh admin, landing, styles) ja kõik tsx-id (style-võtmed).
 const allCss = walk('src', []).filter((p) => p.endsWith('.css')).map((p) => readFileSync(p, 'utf8'));
