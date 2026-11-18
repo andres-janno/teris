@@ -1,7 +1,7 @@
 // src/components/FieldWorksBoard.tsx — põllutööde tahvel (põhivaade kaardi kõrval).
 // Read = hooaja põllud; veerud kalendriaasta järgi: eelmine aasta (sügistööd) → käesolev aasta → järgmine aasta (sügistööd).
 // Sügisplokk: Ettevalmistus · Sügiskülv · Sügishooldus (jaotus külvi kuupäeva järgi, vt fieldWorksBoardColumns).
-import { DEFAULT_CROP_COLOR } from '../lib/dataColors';
+import { DEFAULT_CROP_COLOR, UNDETERMINED_CROP_COLOR } from '../lib/dataColors';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Plus, Lock, Calendar, SquareKanban, Check, Edit2, Pencil, Trash2, RotateCcw, ListChecks, Sprout, Wheat, Euro, Info, ChevronDown, ChevronRight, Crosshair } from 'lucide-react';
 import { api } from '../services/api';
@@ -149,7 +149,7 @@ const FIELD_TONE: Record<GroupTone, string> = {
 
 /** Kultuuribänner: andmevärv (kultuuri värv) tõuseb inline stiili; sama valem mis vana .fw-crop-banner.current/.next. */
 const cropBannerStyle = (color: string | null, tintPct: number): React.CSSProperties => {
-  const c = color ?? DEFAULT_CROP_COLOR;
+  const c = color ?? UNDETERMINED_CROP_COLOR;
   return { background: `color-mix(in srgb, ${c} ${tintPct}%, var(--bg-surface))`, boxShadow: `inset 3px 0 0 ${c}` };
 };
 
@@ -904,7 +904,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <span className="line-clamp-2 max-w-full overflow-hidden text-base font-normal leading-tight wrap-anywhere text-foreground" title={row.field.name}>{row.field.name}</span>
                           </div>
                           <div className="flex items-center justify-end text-xs text-muted-foreground">
-                            <span className="shrink-0 whitespace-nowrap text-base font-normal text-foreground">{fmtHa(row.rec.areaHa)} ha</span>
+                            <span className="shrink-0 whitespace-nowrap text-base font-normal leading-natural text-foreground">{fmtHa(row.rec.areaHa)} ha</span>
                           </div>
                         </div>
 
