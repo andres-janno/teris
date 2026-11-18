@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, cn } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, cn, cornerActionClass } from './ui';
 
 interface Option {
   id: string;
@@ -129,7 +129,29 @@ const PLACE = {
   headPrev: 'col-span-3 col-start-2',
   headCurrent: 'col-span-4 col-start-5',
   headNext: 'col-span-3 col-start-9',
+  field: 'col-start-1 row-span-2 row-start-1',
+  bannerCurrent: 'col-span-7 col-start-2 row-start-1',
+  bannerNext: 'col-span-3 col-start-9 row-start-1',
 } as const;
+
+type GroupTone = 'winter' | 'spring' | 'undetermined'; // = group.className ja fieldNextClass väärtused
+const GROUP_TONE: Record<GroupTone, string> = {
+  winter: 'bg-sky/9',
+  spring: 'bg-primary-strong/9',
+  undetermined: 'bg-muted-foreground/9',
+};
+// Põllu lahter on kleepuv (z-2): läbipaistmatu alus ja toon gradiendina, et kerides ei paistaks lahtrid läbi. Hõljumine rea kohal heledamaks.
+const FIELD_TONE: Record<GroupTone, string> = {
+  winter: 'bg-card bg-linear-to-b from-sky/9 to-sky/9 dark:from-sky/14 dark:to-sky/14 group-hover/row:from-sky/15 group-hover/row:to-sky/15',
+  spring: 'bg-card bg-linear-to-b from-primary-strong/9 to-primary-strong/9 dark:from-primary-strong/14 dark:to-primary-strong/14 group-hover/row:from-primary-strong/15 group-hover/row:to-primary-strong/15',
+  undetermined: 'bg-card bg-linear-to-b from-muted-foreground/9 to-muted-foreground/9 dark:from-muted-foreground/14 dark:to-muted-foreground/14 group-hover/row:from-muted-foreground/15 group-hover/row:to-muted-foreground/15',
+};
+
+/** Kultuuribänner: andmevärv (kultuuri värv) tõuseb inline stiili; sama valem mis vana .fw-crop-banner.current/.next. */
+const cropBannerStyle = (color: string | null, tintPct: number): React.CSSProperties => {
+  const c = color ?? DEFAULT_CROP_COLOR;
+  return { background: `color-mix(in srgb, ${c} ${tintPct}%, var(--bg-surface))`, boxShadow: `inset 3px 0 0 ${c}` };
+};
 
 const HEAD_SECTION = 'flex min-w-0 items-center justify-between border-b border-border px-3 py-1.5 text-xs font-semibold uppercase leading-natural tracking-wider text-muted-foreground';
 
@@ -506,10 +528,10 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
     });
 
     const res: {
-      key: 'winter' | 'spring' | 'undetermined';
+      key: GroupTone;
       title: string;
       description: string;
-      className: string;
+      className: GroupTone;
       rows: Row[];
       totalHa: number;
     }[] = [];
@@ -840,14 +862,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 <Button
                   variant="plain"
                   size="inline"
-                  className={`fw-group-header ${group.className}`}
+                  className={cn('flex cursor-pointer select-none items-center justify-between gap-3 border-y border-border px-3 py-2 hover:brightness-98 dark:hover:brightness-105', BOARD_MIN_WIDTH, GROUP_TONE[group.className])}
                   onClick={() => toggleGroup(group.key)}
                   aria-expanded={!isCollapsed}
                   title={`${group.description}. Klõpsa grupi peitmiseks või avamiseks.`}
                 >
-                  <span className="fw-group-toggle">
-                    {isCollapsed ? <ChevronRight size={16} className="fw-group-chevron" /> : <ChevronDown size={16} className="fw-group-chevron" />}
-                    <span className="fw-group-title">{group.title}</span>
+                  <span className="sticky left-3.5 flex min-w-0 items-center gap-2">
+                    {isCollapsed ? <ChevronRight size={16} className="shrink-0 text-muted-foreground" /> : <ChevronDown size={16} className="shrink-0 text-muted-foreground" />}
+                    <span className="inline-flex items-center gap-1.5 text-base font-semibold leading-natural whitespace-nowrap text-foreground">{group.title}</span>
                   </span>
                 </Button>
 
@@ -855,20 +877,20 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   group.rows.map((row) => {
                     const color = row.crop?.color ?? (row.undetermined ? null : row.cropColor);
                     const nextColor = row.nextCrop?.color ?? (row.nextUndetermined ? null : row.nextCropColor);
-                    const fieldNextClass = row.nextIsWinter
-                      ? 'winter-next'
+                    const fieldNextClass: GroupTone = row.nextIsWinter
+                      ? 'winter'
                       : !row.nextUndetermined
-                        ? 'spring-next'
-                        : 'undetermined-next';
+                        ? 'spring'
+                        : 'undetermined';
 
                     return (
-                      <div key={row.fieldSeasonId} className="fw-row-container">
+                      <div key={row.fieldSeasonId} className={cn('group/row border-b border-border hover:bg-muted-hover/35', BOARD_GRID, BOARD_MIN_WIDTH, 'grid-rows-[auto_1fr]')}>
                         {/* 1. Põllu info (taustavärvitud vastavalt sügiskülvi / järgmise kultuuri staatusele) */}
                         <div
-                          className={`fw-field fw-place-field ${fieldNextClass}`}
+                          className={cn('sticky left-0 z-2 flex min-w-0 flex-col justify-center gap-1 border-r border-border px-3 py-2.5 transition-colors', PLACE.field, FIELD_TONE[fieldNextClass])}
                         >
                           {/* Põllu kuju nupp lahtri paremas ülanurgas */}
-                          <Button variant="ghost" size="icon-xs" wrapperClassName="fw-field-shape-corner"
+                          <Button variant="ghost" size="icon-xs" wrapperClassName={cornerActionClass}
                             title={`Näita ${year}. a põllu kuju`}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -877,28 +899,28 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           >
                             <Crosshair size={13} />
                           </Button>
-                          <div className="fw-field-title">
+                          <div className="flex min-w-0 flex-col items-start gap-1 pr-4">
                             {row.field.num && <Badge tone="success" variant="outline" size="md">Nr {row.field.num}</Badge>}
-                            <span className="fw-field-name" title={row.field.name}>{row.field.name}</span>
+                            <span className="line-clamp-2 max-w-full overflow-hidden text-base font-normal leading-tight wrap-anywhere text-foreground" title={row.field.name}>{row.field.name}</span>
                           </div>
-                          <div className="fw-field-sub">
-                            <span className="fw-field-ha">{fmtHa(row.rec.areaHa)} ha</span>
+                          <div className="flex items-center justify-end text-xs text-muted-foreground">
+                            <span className="shrink-0 whitespace-nowrap text-base font-normal text-foreground">{fmtHa(row.rec.areaHa)} ha</span>
                           </div>
                         </div>
 
                         {/* Rida 1: Käesoleva hooaja kultuuri päis (eelmise aasta sügis + käesolev aasta, Cols 2-8) */}
                         <div
-                          className="fw-crop-banner current fw-place-banner-current"
-                          style={color ? ({ '--crop-color': color } as React.CSSProperties) : undefined}
+                          className={cn('flex min-w-0 items-center justify-between gap-2 border-b border-border px-2.5 py-1 text-sm leading-natural', PLACE.bannerCurrent)}
+                          style={cropBannerStyle(color, 12)}
                         >
-                          <div className="fw-crop-banner-main">
-                            <span className="fw-crop-name">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
+                          <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                            <span className="truncate font-medium text-foreground">{row.undetermined ? 'Kultuur valimata' : row.rec.crop}</span>
                           </div>
                           {!locked && row.works.length > 0 && !hasCurrentEntries(row) && (
                             <Button
                               type="button"
-                              size="sm"
-                              className="fw-crop-delete-btn"
+                              size="xs"
+                              className="ml-auto shrink-0 enabled:hover:border-destructive/40 enabled:hover:bg-destructive/12 enabled:hover:text-danger-text"
                               title={`Eemalda kultuuri "${row.undetermined ? 'valimata' : row.rec.crop}" tööd (${row.works.length} tk)`}
                               aria-label="Kustuta plaanitud tööd"
                               disabled={busy}
@@ -907,7 +929,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                 clearCurrentCropWorks(row);
                               }}
                             >
-                              <Trash2 size={11} className="danger-icon" />
+                              <Trash2 size={11} className="text-danger-text" />
                               <span>Kustuta plaanitud tööd</span>
                             </Button>
                           )}
@@ -916,17 +938,17 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                         {/* Rida 1: Järgmise kultuuri päis (Cols 9-11) */}
                         {!row.nextUndetermined ? (
                           <div
-                            className="fw-crop-banner next fw-place-banner-next"
-                            style={nextColor ? ({ '--next-crop-color': nextColor } as React.CSSProperties) : undefined}
+                            className={cn('flex min-w-0 items-center justify-between gap-2 border-b border-l border-border px-2.5 py-1 text-sm leading-natural', PLACE.bannerNext)}
+                            style={cropBannerStyle(nextColor, 10)}
                           >
-                            <div className="fw-crop-banner-main">
-                              <span className="fw-crop-name">{row.nextCropName}</span>
+                            <div className="flex min-w-0 items-center gap-1.5 overflow-hidden">
+                              <span className="truncate font-medium text-foreground">{row.nextCropName}</span>
                             </div>
                             {!locked && row.nextWorks.length > 0 && !hasNextEntries(row) && row.nextRec?.fieldSeasonId && (
                               <Button
                                 type="button"
-                                size="sm"
-                                className="fw-crop-delete-btn"
+                                size="xs"
+                                className="ml-auto shrink-0 enabled:hover:border-destructive/40 enabled:hover:bg-destructive/12 enabled:hover:text-danger-text"
                                 title={`Eemalda järgmise kultuuri "${row.nextCropName}" sügistööd (${row.nextWorks.length} tk)`}
                                 aria-label="Kustuta plaanitud tööd"
                                 disabled={busy}
@@ -935,14 +957,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                                   clearNextCropWorks(row);
                                 }}
                               >
-                                <Trash2 size={11} className="danger-icon" />
+                                <Trash2 size={11} className="text-danger-text" />
                                 <span>Kustuta plaanitud tööd</span>
                               </Button>
                             )}
                           </div>
                         ) : (
-                          <div className="fw-crop-banner next undetermined fw-place-banner-next">
-                            <span className="fw-crop-name muted">Järgmine kultuur määramata</span>
+                          <div className={cn('flex min-w-0 items-center justify-between gap-2 border-b border-l border-border bg-muted px-2.5 py-1 text-sm leading-natural opacity-85', PLACE.bannerNext)}>
+                            <span className="truncate font-medium text-foreground">Järgmine kultuur määramata</span>
                           </div>
                         )}
 

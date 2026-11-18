@@ -387,3 +387,7 @@ export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2
 export const keyValueRowClass = 'flex items-baseline justify-between gap-3 text-base leading-natural tabular-nums';
 export const keyValueLabelClass = 'shrink-0';
 export const keyValueValueClass = 'min-w-0 text-right';
+
+/** Nurgas olev tegevusnupp (vana .fw-field-shape-corner): põllu kuju nupp lahtri paremas ülanurgas.
+    Edastatakse `Button wrapperClassName`-ina; vanemal peab olema `relative` (või `sticky`). Kasutavad tahvel, Põldude tabel ja Külvikord. */
+export const cornerActionClass = 'absolute top-1.5 right-1.5';

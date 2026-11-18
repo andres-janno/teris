@@ -7,7 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
-  v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass,
+  v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
@@ -622,5 +622,11 @@ describe('kirjapaksuse tokenid (etapp 4a)', () => {
   it('StatTile sub ja value teevad paljad <strong> poolpaksuks', () => {
     expect(v.statTileSubClass).toContain('[&_strong]:font-semibold');
     expect(v.statTileValueClass({})).toContain('[&_strong]:font-semibold');
+  });
+});
+
+describe('cornerActionClass (etapp 4b)', () => {
+  it('paneb nupu kinnise vanema paremasse ülanurka 6px kaugusele', () => {
+    for (const x of ['absolute', 'top-1.5', 'right-1.5']) expect(v.cornerActionClass).toContain(x);
   });
 });

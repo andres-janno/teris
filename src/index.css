@@ -1361,8 +1361,7 @@ body {
 
 /* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
 [data-slot="table"] .name-cell .field-name,
-.fields-table .field-name,
-.fw-field-title .field-name {
+.fields-table .field-name {
   font-size: 14px;
   font-weight: 400;
 }
@@ -2515,148 +2514,6 @@ body {
 /* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
-/* Tahvel on 11 veeruga lai: kitsal ekraanil keritakse horisontaalselt, põllu veerg jääb paigale */
-.fw-group-header,
-.fw-row-container {
-  min-width: 1400px;
-}
-
-.fw-row-container .fw-field {
-  position: sticky;
-  left: 0;
-  z-index: 2;
-}
-
-.fw-group-header .fw-group-toggle {
-  position: sticky;
-  left: 14px;
-}
-
-/* Põllurea kultuuripäised (Käesolev kultuur ja Järgmine kultuur) */
-.fw-row-container {
-  display: grid;
-  /* Põllu veerg 10% laiusest, ülejäänud 90% jagatakse võrdselt 10 tööveeru vahel */
-  grid-template-columns: minmax(0, 10fr) repeat(10, minmax(0, 9fr));
-  grid-template-rows: auto 1fr;
-  border-bottom: 1px solid var(--border-card);
-}
-
-.fw-row-container:hover {
-  background: color-mix(in srgb, var(--stat-bg-hover) 35%, transparent);
-}
-
-.fw-row-container .fw-field {
-  border-right: 1px solid var(--border-card);
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 10px 12px;
-  gap: 4px;
-  background: transparent;
-  transition: background 0.15s ease;
-}
-
-.fw-field.winter-next {
-  background: color-mix(in srgb, #0284c7 9%, var(--bg-card));
-}
-
-:root[data-theme="dark"] .fw-field.winter-next {
-  background: color-mix(in srgb, #0284c7 14%, var(--bg-card));
-}
-
-.fw-field.spring-next {
-  background: color-mix(in srgb, #16a34a 9%, var(--bg-card));
-}
-
-:root[data-theme="dark"] .fw-field.spring-next {
-  background: color-mix(in srgb, #16a34a 14%, var(--bg-card));
-}
-
-.fw-field.undetermined-next {
-  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card));
-}
-
-:root[data-theme="dark"] .fw-field.undetermined-next {
-  background: color-mix(in srgb, #94a3b8 14%, var(--bg-card));
-}
-
-.fw-row-container:hover .fw-field.winter-next {
-  background: color-mix(in srgb, #0284c7 15%, var(--bg-card));
-}
-
-.fw-row-container:hover .fw-field.spring-next {
-  background: color-mix(in srgb, #16a34a 15%, var(--bg-card));
-}
-
-.fw-row-container:hover .fw-field.undetermined-next {
-  background: color-mix(in srgb, #94a3b8 15%, var(--bg-card));
-}
-
-.fw-crop-banner {
-  padding: 4px 10px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  font-size: 13px;
-  min-width: 0;
-  border-bottom: 1px solid var(--border-card);
-}
-
-.fw-crop-banner-main {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  overflow: hidden;
-}
-
-.fw-crop-delete-btn {
-  margin-left: auto;
-  padding: 2px 6px;
-  font-size: 11px;
-  line-height: 1.2;
-  gap: 4px;
-  flex-shrink: 0;
-  background: var(--bg-surface);
-  border-color: var(--border-card);
-  color: var(--text-secondary);
-}
-
-.fw-crop-delete-btn:hover {
-  background: color-mix(in srgb, #dc2626 12%, var(--bg-surface)) !important;
-  border-color: color-mix(in srgb, #dc2626 40%, var(--border-card)) !important;
-  color: #dc2626 !important;
-}
-
-.fw-crop-banner+.fw-crop-banner {
-  border-left: 1px solid var(--border-card);
-}
-
-.fw-crop-banner.current {
-  background: color-mix(in srgb, var(--crop-color, #94a3b8) 12%, var(--bg-card));
-  box-shadow: inset 3px 0 0 var(--crop-color, #94a3b8);
-}
-
-.fw-crop-banner.next {
-  background: color-mix(in srgb, var(--next-crop-color, #94a3b8) 10%, var(--bg-card));
-  box-shadow: inset 3px 0 0 var(--next-crop-color, #94a3b8);
-}
-
-.fw-crop-banner.next.undetermined {
-  background: var(--stat-bg);
-  box-shadow: none;
-  opacity: 0.85;
-}
-
-.fw-crop-name {
-  font-weight: 500;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
 .fw-cell.fw-cell-no-sow {
   display: flex;
   align-items: center;
@@ -2677,80 +2534,6 @@ body {
   padding: 8px 10px;
 }
 
-/* Põllutööde tahvli grupipäised (sügiskülv / kevadkülv). Päis on Button variant="plain": !important võidab nupu utiliidid. */
-.fw-group-header {
-  display: flex !important;
-  align-items: center;
-  justify-content: space-between !important;
-  gap: 12px !important;
-  padding: 8px 12px !important;
-  background: var(--stat-bg-hover) !important;
-  border-top: 1px solid var(--border-card) !important;
-  border-bottom: 1px solid var(--border-card) !important;
-  cursor: pointer;
-  user-select: none;
-  transition: background 0.12s ease;
-}
-
-.fw-group-header:hover {
-  filter: brightness(0.98);
-}
-
-:root[data-theme="dark"] .fw-group-header:hover {
-  filter: brightness(1.05);
-}
-
-.fw-group-header.winter {
-  background: color-mix(in srgb, #0284c7 9%, var(--bg-card)) !important;
-}
-
-.fw-group-header.spring {
-  background: color-mix(in srgb, #16a34a 9%, var(--bg-card)) !important;
-}
-
-.fw-group-header.undetermined {
-  background: color-mix(in srgb, #94a3b8 9%, var(--bg-card)) !important;
-}
-
-.fw-group-toggle {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  min-width: 0;
-}
-
-.fw-group-chevron {
-  color: var(--text-secondary);
-  flex-shrink: 0;
-}
-
-.fw-group-title {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-  letter-spacing: -0.01em;
-  white-space: nowrap;
-}
-
-.fw-field {
-  position: relative;
-  padding: 8px 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  min-width: 0;
-}
-
-/* Põllu kuju nupp põllu lahtri paremas ülanurgas */
-.fw-field-shape-corner {
-  position: absolute;
-  top: 6px;
-  right: 6px;
-}
-
 /* Põllu muutmise aken: NDVI ja mullaproovid katastriüksuste all */
 .field-edit-insights {
   margin-top: 16px;
@@ -2768,62 +2551,7 @@ body {
   position: relative;
 }
 
-.fw-field.has-crop {
-  background: color-mix(in srgb, var(--crop-color) var(--crop-tint), transparent);
-  box-shadow: inset 3px 0 0 var(--crop-color);
-}
-
-/* Põllu number ja nimi eraldi ridadel, et pikem nimi mahuks ära */
-.fw-field-title {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
-  min-width: 0;
-  padding-right: 16px; /* ruum paremas ülanurgas olevale põllu kuju nupule */
-}
-
-.fw-field-name {
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-primary);
-  line-height: 1.25;
-  max-width: 100%;
-  overflow-wrap: anywhere;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.fw-field-sub {
-  display: flex;
-  gap: 6px;
-  font-size: 12px;
-  color: var(--text-secondary);
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.fw-field-sub strong {
-  color: var(--text-primary);
-  font-weight: 500;
-  word-break: break-word;
-}
-
-.fw-field-ha {
-  white-space: nowrap;
-  flex-shrink: 0;
-  font-size: 14px;
-  font-weight: 400;
-  color: var(--text-primary);
-  margin-left: auto;
-}
-
 /* Tööde tahvli ruudustiku asukohad (11 veergu: põld | eelmine 2–4 | käesolev 5–8 | järgmine 9–11; 2 rida) */
-.fw-place-field { grid-column: 1 / 2; grid-row: 1 / 3; }
-.fw-place-banner-current { grid-column: 2 / 9; grid-row: 1 / 2; }
-.fw-place-banner-next { grid-column: 9 / 12; grid-row: 1 / 2; }
 .fw-place-next-all { grid-column: 9 / 12; grid-row: 2 / 3; }
 .fw-col-2 { grid-column: 2 / 3; grid-row: 2 / 3; }
 .fw-col-3 { grid-column: 3 / 4; grid-row: 2 / 3; }
@@ -2835,9 +2563,6 @@ body {
 .fw-col-9 { grid-column: 9 / 10; grid-row: 2 / 3; }
 .fw-col-10 { grid-column: 10 / 11; grid-row: 2 / 3; }
 .fw-col-11 { grid-column: 11 / 12; grid-row: 2 / 3; }
-/* Hoiatusikoon tekstinupus (kustuta-nupp) */
-.danger-icon { color: var(--tone-danger-text); }
-
 .fw-cell {
   padding: 8px 10px;
   border-left: 1px solid var(--border-card);

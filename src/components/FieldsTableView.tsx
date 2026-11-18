@@ -15,7 +15,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader, cornerActionClass } from './ui';
 import type { BadgeTone } from './ui';
 
 interface FieldsTableViewProps {
@@ -352,7 +352,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
                         {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {rec.geometry && (
-                          <Button variant="ghost" size="icon-xs" wrapperClassName="fw-field-shape-corner"
+                          <Button variant="ghost" size="icon-xs" wrapperClassName={cornerActionClass}
                             onClick={() => setShapeView({ field, record: rec })}
                             title={`Näita ${selectedYear}. a põllu kuju`}
                           >
