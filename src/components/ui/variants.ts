@@ -395,3 +395,8 @@ export const cornerActionClass = 'absolute top-1.5 right-1.5';
 /** Edenemisriba (vana .work-progress-bar): 8px kõrge, täitub vasakult. Kasutavad tahvli töö paneel ja kande dialoog. */
 export const progressTrackClass = 'h-2 overflow-hidden rounded-sm bg-muted';
 export const progressFillClass = 'h-full rounded-sm bg-primary';
+
+/** Tühja oleku kast (tahvli kanded ja töö plaani vorm): punktiirääris, vaikne tekst. */
+export const emptyBoxClass = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
+/** Alamrubriigi pealkiri (tahvli töö paneel ja töö plaani vorm). */
+export const subheadingClass = 'text-xs font-semibold leading-natural text-muted-foreground';

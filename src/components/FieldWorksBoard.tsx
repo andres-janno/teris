@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
 
 interface Option {
   id: string;
@@ -176,7 +176,8 @@ const CARD_STATUS: Record<string, string> = {
   done: 'text-muted-foreground',
 };
 const CARD_UNPLANNED = 'border border-dashed border-warning bg-warning-solid/8 hover:border-warning-solid hover:bg-warning-solid/8';
-const EMPTY_BOX = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
+/** Kustutusnupu hõljumine (plaanitud tööde kustutus ja „Eemalda kõik tööd“): sama toon kõigil. */
+const DELETE_HOVER = 'enabled:hover:bg-destructive/12 enabled:hover:text-danger-text';
 /** Töö paneeli kanderida: kitsas paneel (alla 560px) murrab rea kaheks, konteineri päring. */
 const EntryRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="@container rounded-md border border-border bg-muted px-2.5 py-2">
@@ -275,7 +276,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
                     {dateStr}{timeStr ? ` · ${timeStr}` : ''}
                   </span>
                   {(haStr || workerFirstName) && (
-                    <span className="text-2xs leading-tight text-muted-foreground">
+                    <span className="text-2xs leading-tight tabular-nums text-muted-foreground">
                       {[haStr, workerFirstName].filter(Boolean).join(' · ')}
                       {/* Ühe kande korral protsent sama rea lõpus */}
                       {n === 1 && donePct !== null && <span className={cn(PCT, 'ml-1.5 leading-tight')}>{donePct}%</span>}
@@ -964,7 +965,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <Button
                               type="button"
                               size="xs"
-                              className="ml-auto shrink-0 enabled:hover:border-destructive/40 enabled:hover:bg-destructive/12 enabled:hover:text-danger-text"
+                              className={cn('ml-auto shrink-0 enabled:hover:border-destructive/40', DELETE_HOVER)}
                               title={`Eemalda kultuuri "${row.undetermined ? 'valimata' : row.rec.crop}" tööd (${row.works.length} tk)`}
                               aria-label="Kustuta plaanitud tööd"
                               disabled={busy}
@@ -992,7 +993,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                               <Button
                                 type="button"
                                 size="xs"
-                                className="ml-auto shrink-0 enabled:hover:border-destructive/40 enabled:hover:bg-destructive/12 enabled:hover:text-danger-text"
+                                className={cn('ml-auto shrink-0 enabled:hover:border-destructive/40', DELETE_HOVER)}
                                 title={`Eemalda järgmise kultuuri "${row.nextCropName}" sügistööd (${row.nextWorks.length} tk)`}
                                 aria-label="Kustuta plaanitud tööd"
                                 disabled={busy}
@@ -1195,7 +1196,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   )}
 
                   <Card asChild variant="tile" padding="sm" className="flex flex-col gap-2"><section>
-                    <div className="flex min-h-6.5 items-center justify-between text-xs font-semibold leading-natural text-muted-foreground">
+                    <div className={cn(subheadingClass, 'flex min-h-6.5 items-center justify-between')}>
                       <span>Plaan</span>
                       {!workLocked && (
                         <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPlan(true)}>
@@ -1222,7 +1223,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
                   {editingPlan && !workLocked && (
                     <Dialog open onOpenChange={(open) => { if (!open) setEditingPlan(false); }}>
-                      <DialogContent size="xl" className="work-entry-modal" dismissible={!planBusy}>
+                      <DialogContent size="xl" dismissible={!planBusy}>
                         <DialogHeader
                           title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
                           description={activeLabel}
@@ -1260,12 +1261,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     );
                   })()}
 
-                  <div className="flex justify-between text-xs font-semibold leading-natural text-muted-foreground">
+                  <div className={cn(subheadingClass, 'flex justify-between')}>
                     <span>Kanded</span>
                     <span className={MUTED}>{selected.entries.length || ''}</span>
                   </div>
                   {selected.entries.length === 0 && (
-                    <div className={EMPTY_BOX}>Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
+                    <div className={emptyBoxClass}>Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
                   )}
                   {selected.entries.map((e) => (
                     <EntryRow key={e.id}>
@@ -1285,9 +1286,9 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
                           </div>
                         </div>
-                        <div className={cn(ENTRY_WHEN, 'num items-end @max-[560px]:col-start-2 @max-[560px]:-col-end-1 @max-[560px]:row-start-1')}>
-                          <strong className="text-sm leading-natural text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
-                          {e.telemetryAreaHa ? <span className="text-xs leading-natural text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
+                        <div className={cn(ENTRY_WHEN, 'num tabular-nums items-end @max-[560px]:col-start-2 @max-[560px]:-col-end-1 @max-[560px]:row-start-1')}>
+                          <strong className="text-sm leading-natural tabular-nums text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
+                          {e.telemetryAreaHa ? <span className="text-xs leading-natural tabular-nums text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
                         </div>
                         <div className="@max-[560px]:col-span-2 @max-[560px]:col-start-1 @max-[560px]:row-start-3">
                           {canManageFinance ? (
@@ -1364,7 +1365,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="w-full justify-center text-xs text-subtle enabled:hover:bg-danger-solid/10 enabled:hover:text-danger-solid"
+                      className={cn('w-full justify-center text-xs text-subtle', DELETE_HOVER)}
                       disabled={busy}
                       onClick={() => clearFieldWorks(selectedRow)}
                     >

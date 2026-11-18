@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
+import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea, emptyBoxClass, subheadingClass } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -26,7 +26,6 @@ export interface FieldWorkPlanFormProps {
   seedCheck?: SeedCheck; // seemne ja põllu kultuuri võrdlus
 }
 
-const EMPTY_BOX = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
 
 const parseNum = (s: string): number | null => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
@@ -59,7 +58,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
 
   const isEmpty = !hasDate && work.plannedAreaHa == null && !method && !workerName
     && articleLines.length === 0 && !harvestLine && !work.notes;
-  if (isEmpty) return <div className="flex flex-col gap-2.5"><div className={EMPTY_BOX}>Plaan puudub</div></div>;
+  if (isEmpty) return <div className="flex flex-col gap-2.5"><div className={emptyBoxClass}>Plaan puudub</div></div>;
 
   const planned = work.plannedDateFrom
     ? (work.plannedDateTo && work.plannedDateTo !== work.plannedDateFrom ? formatDateRange(work.plannedDateFrom, work.plannedDateTo) : formatDate(work.plannedDateFrom))
@@ -94,7 +93,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
       </dl>
       {articleLines.length > 0 && (
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-semibold leading-natural text-muted-foreground">Planeeritud materjalid</div>
+          <div className={subheadingClass}>Planeeritud materjalid</div>
           <Table dense>
             <TableHeader>
               <TableRow>{columns.map((c) => <TableHead key={c.label} numeric={c.num}>{c.label}</TableHead>)}</TableRow>
@@ -109,7 +108,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
       )}
       {harvestLine && (
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-semibold leading-natural text-muted-foreground">Planeeritud saak</div>
+          <div className={subheadingClass}>Planeeritud saak</div>
           <Table dense>
             <TableHeader>
               <TableRow><TableHead>Kultuuri tüüp</TableHead><TableHead>Saagi tüüp</TableHead><TableHead numeric>Saak t/ha</TableHead></TableRow>
@@ -122,7 +121,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
       )}
       {work.notes && (
         <div className="flex flex-col gap-1">
-          <div className="text-xs font-semibold leading-natural text-muted-foreground">Märkused</div>
+          <div className={subheadingClass}>Märkused</div>
           <div className="whitespace-pre-line text-sm leading-natural text-foreground">{work.notes}</div>
         </div>
       )}
@@ -204,7 +203,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   return (
     <Form onSubmit={save}>
       <Body className="work-entry-body">
-        <div className="work-entry-grid grid-cols-none grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row">
+        <div className="work-entry-grid grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row">
           <Field label="Tegevus *" htmlFor="wp-type">
             <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
               { value: '', label: '– vali –' },

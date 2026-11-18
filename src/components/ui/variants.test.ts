@@ -8,7 +8,7 @@ const allClassStrings = (): string[] => [
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
-  v.progressTrackClass, v.progressFillClass,
+  v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
@@ -636,5 +636,14 @@ describe('ProgressBar (etapp 4b)', () => {
   it('riba: 8px kõrge, ümar, vaikne taust; täide roheline', () => {
     for (const t of ['h-2', 'overflow-hidden', 'rounded-sm', 'bg-muted']) expect(v.progressTrackClass).toContain(t);
     for (const t of ['h-full', 'bg-primary', 'rounded-sm']) expect(v.progressFillClass).toContain(t);
+  });
+});
+
+describe('emptyBoxClass ja subheadingClass (etapp 4b, lõppparandus)', () => {
+  it('tühja oleku kast: punktiirääris, 10px täide, vaikne tekst', () => {
+    for (const t of ['rounded-md', 'border-dashed', 'border-border', 'px-3', 'py-2.5', 'text-subtle']) expect(v.emptyBoxClass).toContain(t);
+  });
+  it('alamrubriik: poolpaks, normaalne rea kõrgus, vaikne tekst', () => {
+    for (const t of ['text-xs', 'font-semibold', 'leading-natural', 'text-muted-foreground']) expect(v.subheadingClass).toContain(t);
   });
 });

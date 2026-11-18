@@ -408,7 +408,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" className="work-entry-modal" dismissible={!busy}>
+      <DialogContent size="xl" dismissible={!busy}>
         <DialogForm onSubmit={save}>
           <DialogHeader title={`${entry ? 'Muuda kannet' : 'Lisa kanne'}: ${work.workTypeName}`} description={fieldLabel} />
 

@@ -96,7 +96,7 @@ Märkused:
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`).
 Audit-rida „Tailwindi klasse ilma @source-ita“ valvab, et vaatefail, mille klassides on utiliite, oleks `@source`-is (ajutised erandid: `SOURCE_GUARD_ALLOWED` `src/tooling/uiAudit.ts`-is).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
@@ -123,7 +123,7 @@ Etapp 4.1 asendas vaadete korduvad ülevaatemustrid viie komponendiga. Vanu klas
 | `<ProgressBar value aria-label>` | edenemisriba 0–100% (laius on dünaamiline; `clampPercent`) | `work-progress-bar` |
 | `cornerActionClass` (`wrapperClassName`) | nurgas olev tegevusnupp, vanem `relative` | `fw-field-shape-corner` |
 | `leading-natural` | tekstielemendi rea kõrgus „nagu varem“ (UA `normal`) | `leading-[normal]` |
-| `warning-solid`, `sky` | tahke oranž `#f59e0b` ja taevasinine `#0284c7` tahvli toonidele (`bg-warning-solid/8`, `bg-sky/10`) | `rgba(245,158,11,…)`, `#0284c7` |
+| `warning-solid`, `sky`, `sky-text` | tahke oranž `#f59e0b` ja taevasinine `#0284c7` tahvli toonidele (`bg-warning-solid/8`, `bg-sky/10`); `sky-text` on taevasinine tekst (heledas `#0369a1`, tumedas `#38bdf8`) | `rgba(245,158,11,…)`, `#0284c7` |
 
 Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTile`, `LegendItem`, `KeyValueRow`; viimasel on väärtus lapsena). `StatTone` (`default | cost | revenue | profit | loss`) on finantsi domeeni toon (kulu/tulu/kasum); teistes vaadetes ära kasuta, vali `Badge` toon või tavaline tekstivärv.
 
