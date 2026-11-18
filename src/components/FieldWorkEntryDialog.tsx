@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField } from './ui';
+import { Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar } from './ui';
 
 interface Option {
   id: string;
@@ -420,7 +420,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   {fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
                 </div>
                 {fieldAreaHa > 0 && (
-                  <div className="work-progress-bar"><div style={{ width: `${Math.min(100, (doneBefore / fieldAreaHa) * 100)}%` }} /></div>
+                  <ProgressBar value={(doneBefore / fieldAreaHa) * 100} aria-label="Tehtud pindala" />
                 )}
               </div>
             )}

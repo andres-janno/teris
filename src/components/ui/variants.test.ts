@@ -8,6 +8,7 @@ const allClassStrings = (): string[] => [
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
+  v.progressTrackClass, v.progressFillClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
@@ -628,5 +629,12 @@ describe('kirjapaksuse tokenid (etapp 4a)', () => {
 describe('cornerActionClass (etapp 4b)', () => {
   it('paneb nupu kinnise vanema paremasse ülanurka 6px kaugusele', () => {
     for (const x of ['absolute', 'top-1.5', 'right-1.5']) expect(v.cornerActionClass).toContain(x);
+  });
+});
+
+describe('ProgressBar (etapp 4b)', () => {
+  it('riba: 8px kõrge, ümar, vaikne taust; täide roheline', () => {
+    for (const t of ['h-2', 'overflow-hidden', 'rounded-sm', 'bg-muted']) expect(v.progressTrackClass).toContain(t);
+    for (const t of ['h-full', 'bg-primary', 'rounded-sm']) expect(v.progressFillClass).toContain(t);
   });
 });

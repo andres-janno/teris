@@ -391,3 +391,7 @@ export const keyValueValueClass = 'min-w-0 text-right';
 /** Nurgas olev tegevusnupp (vana .fw-field-shape-corner): põllu kuju nupp lahtri paremas ülanurgas.
     Edastatakse `Button wrapperClassName`-ina; vanemal peab olema `relative` (või `sticky`). Kasutavad tahvel, Põldude tabel ja Külvikord. */
 export const cornerActionClass = 'absolute top-1.5 right-1.5';
+
+/** Edenemisriba (vana .work-progress-bar): 8px kõrge, täitub vasakult. Kasutavad tahvli töö paneel ja kande dialoog. */
+export const progressTrackClass = 'h-2 overflow-hidden rounded-sm bg-muted';
+export const progressFillClass = 'h-full rounded-sm bg-primary';

@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, cn, cornerActionClass } from './ui';
+import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass } from './ui';
 
 interface Option {
   id: string;
@@ -176,6 +176,14 @@ const CARD_STATUS: Record<string, string> = {
   done: 'text-muted-foreground',
 };
 const CARD_UNPLANNED = 'border border-dashed border-warning bg-warning-solid/8 hover:border-warning-solid hover:bg-warning-solid/8';
+const EMPTY_BOX = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
+/** Töö paneeli kanderida: kitsas paneel (alla 560px) murrab rea kaheks, konteineri päring. */
+const EntryRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <div className="@container rounded-md border border-border bg-muted px-2.5 py-2">
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-x-4 gap-y-1.5 @max-[560px]:grid-cols-[auto_minmax(0,1fr)_auto]">{children}</div>
+  </div>
+);
+const ENTRY_WHEN = 'flex flex-col gap-0.5 whitespace-nowrap';
 const PCT = 'rounded-sm bg-primary-strong/12 px-1 text-2xs font-medium tabular-nums text-success-text';
 
 type GroupTone = 'winter' | 'spring' | 'undetermined'; // = group.className ja fieldNextClass väärtused
@@ -191,7 +199,7 @@ const FIELD_TONE: Record<GroupTone, string> = {
   undetermined: 'bg-card bg-linear-to-b from-muted-foreground/9 to-muted-foreground/9 dark:from-muted-foreground/14 dark:to-muted-foreground/14 group-hover/row:from-muted-foreground/15 group-hover/row:to-muted-foreground/15',
 };
 
-/** Kultuuribänner: andmevärv (kultuuri värv) tõuseb inline stiili; sama valem mis vana .fw-crop-banner.current/.next. */
+/** Kultuuribänner: andmevärv (kultuuri värv) tõuseb inline stiili; kultuuri värv pärineb andmetest, mitte klassist. */
 const cropBannerStyle = (color: string | null, tintPct: number): React.CSSProperties => {
   const c = color ?? UNDETERMINED_CROP_COLOR;
   return { background: `color-mix(in srgb, ${c} ${tintPct}%, var(--bg-surface))`, boxShadow: `inset 3px 0 0 ${c}` };
@@ -1146,15 +1154,15 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
           return (
             <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-              <DialogContent size="lg" className="fw-work-modal" dismissible={!busy}>
+              <DialogContent size="lg" dismissible={!busy}>
                 <DialogHeader
-                  icon={<span className="fw-panel-phase phase-label" data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
+                  icon={<span className="phase-label text-2xs font-medium leading-natural tracking-wider" data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
                   title={<span title={selected.priaName}>{selected.workTypeName}</span>}
                   description={activeLabel}
                 />
 
-                <DialogBody className="fw-panel-body">
-                  <div className="fw-panel-status">
+                <DialogBody className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
+                  <div className="flex items-center gap-2.5">
                     {isUnplanned(selected) ? (
                       <Badge tone="warning" size="md">Planeerimata</Badge>
                     ) : (
@@ -1186,8 +1194,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     </div>
                   )}
 
-                  <Card asChild variant="tile" padding="sm" className="fw-plan-section"><section>
-                    <div className="fw-plan-section-head">
+                  <Card asChild variant="tile" padding="sm" className="flex flex-col gap-2"><section>
+                    <div className="flex min-h-6.5 items-center justify-between text-xs font-semibold leading-natural text-muted-foreground">
                       <span>Plaan</span>
                       {!workLocked && (
                         <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPlan(true)}>
@@ -1245,30 +1253,29 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                     const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
                     const pct = Math.min(100, Math.round((done / activeArea) * 100));
                     return (
-                      <div className="fw-panel-progress">
-                        <div className="fw-panel-progress-head"><span>Tehtud pindala</span><strong>{fmtHa(done)} / {fmtHa(activeArea)} ha ({pct}%)</strong></div>
-                        <div className="work-progress-bar"><div style={{ width: `${pct}%` }} /></div>
+                      <div className="flex flex-col gap-1">
+                        <div className="flex justify-between text-xs leading-natural text-muted-foreground"><span>Tehtud pindala</span><strong className="text-foreground">{fmtHa(done)} / {fmtHa(activeArea)} ha ({pct}%)</strong></div>
+                        <ProgressBar value={pct} aria-label="Tehtud pindala" />
                       </div>
                     );
                   })()}
 
-                  <div className="fw-panel-entries-head">
+                  <div className="flex justify-between text-xs font-semibold leading-natural text-muted-foreground">
                     <span>Kanded</span>
                     <span className={MUTED}>{selected.entries.length || ''}</span>
                   </div>
                   {selected.entries.length === 0 && (
-                    <div className="fw-panel-empty">Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
+                    <div className={EMPTY_BOX}>Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
                   )}
                   {selected.entries.map((e) => (
-                    <div key={e.id} className="fw-entry">
-                      <div className="fw-entry-grid">
-                        <div className="fw-entry-when">
-                          <strong>{formatDate(e.date)}</strong>
-                          {e.startTime && e.endTime && <span>{e.startTime}–{e.endTime}</span>}
+                    <EntryRow key={e.id}>
+                        <div className={ENTRY_WHEN}>
+                          <strong className="text-sm text-foreground">{formatDate(e.date)}</strong>
+                          {e.startTime && e.endTime && <span className="text-xs leading-natural text-muted-foreground">{e.startTime}–{e.endTime}</span>}
                         </div>
-                        <div className="fw-entry-what">
-                          <div className="fw-entry-line">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
-                          <div className="fw-entry-line muted">
+                        <div className="flex min-w-0 flex-col gap-0.5 @max-[560px]:col-span-full @max-[560px]:row-start-2">
+                          <div className="text-xs leading-natural text-foreground">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
+                          <div className="text-xs leading-natural text-muted-foreground">
                             {[
                               fmtNum(e.laborHours, 'h tööaeg'),
                               fmtNum(e.equipmentHours, 'h masin'),
@@ -1278,11 +1285,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
                           </div>
                         </div>
-                        <div className="fw-entry-area num">
-                          <strong>{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
-                          {e.telemetryAreaHa ? <span>{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
+                        <div className={cn(ENTRY_WHEN, 'num items-end @max-[560px]:col-start-2 @max-[560px]:-col-end-1 @max-[560px]:row-start-1')}>
+                          <strong className="text-sm text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
+                          {e.telemetryAreaHa ? <span className="text-xs leading-natural text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
                         </div>
-                        <div className="fw-entry-finance">
+                        <div className="@max-[560px]:col-span-2 @max-[560px]:col-start-1 @max-[560px]:row-start-3">
                           {canManageFinance ? (
                             <Button
                               variant="bare"
@@ -1302,7 +1309,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
                           )}
                         </div>
-                        <span className="fw-entry-actions">
+                        <span className="flex gap-0.5 empty:hidden @max-[560px]:col-start-3 @max-[560px]:row-start-3 @max-[560px]:justify-self-end">
                           {!workLocked && (
                             <>
                               <Button type="button" variant="ghost" size="icon-sm" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
@@ -1314,8 +1321,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             </>
                           )}
                         </span>
-                      </div>
-                    </div>
+                    </EntryRow>
                   ))}
                   {!workLocked && (
                     <Button type="button" onClick={() => openNewEntry(selected)}>
@@ -1326,14 +1332,14 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 </DialogBody>
 
                 {!locked && (
-                  <div className="fw-panel-foot">
+                  <div className="flex items-center gap-2.5 border-t border-border px-6 py-3">
                     {selected.status === 'DONE' ? (
-                      <Button type="button" className="fw-panel-foot-btn" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
+                      <Button type="button" className="flex-1 justify-center" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
                         <RotateCcw size={14} />
                         <span>Ava uuesti</span>
                       </Button>
                     ) : (
-                      <Button type="button" variant="primary" className="fw-panel-foot-btn" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
+                      <Button type="button" variant="primary" className="flex-1 justify-center" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
                         <Check size={14} />
                         <span>Märgi lõpetatuks</span>
                       </Button>
@@ -1353,12 +1359,12 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 )}
 
                 {!locked && !hasAnyEntries(selectedRow) && getRowVisibleWorks(selectedRow).length > 1 && (
-                  <div className="fw-panel-clear-wrap">
+                  <div className="flex justify-center px-6 pb-3">
                     <Button
                       type="button"
                       variant="ghost"
                       size="sm"
-                      className="fw-panel-clear-btn"
+                      className="w-full justify-center text-xs text-subtle enabled:hover:bg-danger-solid/10 enabled:hover:text-danger-solid"
                       disabled={busy}
                       onClick={() => clearFieldWorks(selectedRow)}
                     >

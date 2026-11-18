@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
+import { cn, Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -26,12 +26,17 @@ export interface FieldWorkPlanFormProps {
   seedCheck?: SeedCheck; // seemne ja põllu kultuuri võrdlus
 }
 
+const EMPTY_BOX = 'rounded-md border border-dashed border-border px-3 py-2.5 text-sm leading-natural text-subtle';
+
 const parseNum = (s: string): number | null => {
   const n = Number(s.replace(/\s/g, '').replace(',', '.'));
   return s.trim() === '' || !Number.isFinite(n) ? null : n;
 };
 const fmt = (n: number | null | undefined) => (n == null ? '' : n.toLocaleString('et-EE', { maximumFractionDigits: 2, useGrouping: false }));
 const fmtNum = (n: number | null | undefined) => (n == null ? '–' : n.toLocaleString('et-EE', { maximumFractionDigits: 3, useGrouping: false }));
+const PLAN_ROW = 'flex min-w-0 flex-col gap-0.5';
+const PLAN_DT = 'text-2xs font-semibold uppercase leading-natural tracking-wider text-muted-foreground';
+const PLAN_DD = 'm-0 text-foreground';
 const fmtQ = (n: number | null | undefined) => (n == null ? '–' : formatQty(n));
 
 export const FieldWorkPlanForm: React.FC<FieldWorkPlanFormProps> = (props) =>
@@ -54,7 +59,7 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
 
   const isEmpty = !hasDate && work.plannedAreaHa == null && !method && !workerName
     && articleLines.length === 0 && !harvestLine && !work.notes;
-  if (isEmpty) return <div className="fw-plan-view"><div className="fw-panel-empty">Plaan puudub</div></div>;
+  if (isEmpty) return <div className="flex flex-col gap-2.5"><div className={EMPTY_BOX}>Plaan puudub</div></div>;
 
   const planned = work.plannedDateFrom
     ? (work.plannedDateTo && work.plannedDateTo !== work.plannedDateFrom ? formatDateRange(work.plannedDateFrom, work.plannedDateTo) : formatDate(work.plannedDateFrom))
@@ -79,17 +84,17 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
   ];
 
   return (
-    <div className="fw-plan-view">
-      <dl className="fw-plan-rows">
-        <div><dt>Tegevus</dt><dd title={work.priaName}>{work.workTypeName}</dd></div>
-        <div><dt>Planeeritud</dt><dd>{planned}</dd></div>
-        <div><dt>Pindala</dt><dd className="num">{fmtNum(work.plannedAreaHa ?? fieldAreaHa)} ha</dd></div>
-        {method && <div><dt>Väetamisviis</dt><dd>{method}</dd></div>}
-        {workerName && <div><dt>Teostaja</dt><dd>{workerName}</dd></div>}
+    <div className="flex flex-col gap-2.5">
+      <dl className="m-0 flex flex-wrap gap-x-8 gap-y-1.5 text-sm leading-natural">
+        <div className={PLAN_ROW}><dt className={PLAN_DT}>Tegevus</dt><dd className={PLAN_DD} title={work.priaName}>{work.workTypeName}</dd></div>
+        <div className={PLAN_ROW}><dt className={PLAN_DT}>Planeeritud</dt><dd className={PLAN_DD}>{planned}</dd></div>
+        <div className={PLAN_ROW}><dt className={PLAN_DT}>Pindala</dt><dd className="m-0 tabular-nums text-foreground">{fmtNum(work.plannedAreaHa ?? fieldAreaHa)} ha</dd></div>
+        {method && <div className={PLAN_ROW}><dt className={PLAN_DT}>Väetamisviis</dt><dd className={PLAN_DD}>{method}</dd></div>}
+        {workerName && <div className={PLAN_ROW}><dt className={PLAN_DT}>Teostaja</dt><dd className={PLAN_DD}>{workerName}</dd></div>}
       </dl>
       {articleLines.length > 0 && (
-        <div className="fw-plan-block">
-          <div className="fw-plan-block-title">Planeeritud materjalid</div>
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-semibold leading-natural text-muted-foreground">Planeeritud materjalid</div>
           <Table dense>
             <TableHeader>
               <TableRow>{columns.map((c) => <TableHead key={c.label} numeric={c.num}>{c.label}</TableHead>)}</TableRow>
@@ -103,8 +108,8 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
         </div>
       )}
       {harvestLine && (
-        <div className="fw-plan-block">
-          <div className="fw-plan-block-title">Planeeritud saak</div>
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-semibold leading-natural text-muted-foreground">Planeeritud saak</div>
           <Table dense>
             <TableHeader>
               <TableRow><TableHead>Kultuuri tüüp</TableHead><TableHead>Saagi tüüp</TableHead><TableHead numeric>Saak t/ha</TableHead></TableRow>
@@ -116,9 +121,9 @@ const FieldWorkPlanView: React.FC<FieldWorkPlanFormProps & { work: FieldWork }> 
         </div>
       )}
       {work.notes && (
-        <div className="fw-plan-block">
-          <div className="fw-plan-block-title">Märkused</div>
-          <div className="fw-plan-notes">{work.notes}</div>
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-semibold leading-natural text-muted-foreground">Märkused</div>
+          <div className="whitespace-pre-line text-sm leading-natural text-foreground">{work.notes}</div>
         </div>
       )}
     </div>
@@ -197,9 +202,9 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const Body = dialog ? DialogBody : 'div';
   const Footer = dialog ? DialogFooter : 'div';
   return (
-    <Form className={`fw-plan-form ${layout}`} onSubmit={save}>
+    <Form className={cn(dialog && 'flex min-h-0 flex-1 flex-col')} onSubmit={save}>
       <Body className="work-entry-body">
-        <div className="work-entry-grid work-plan-top-grid">
+        <div className="work-entry-grid grid-cols-none grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row">
           <Field label="Tegevus *" htmlFor="wp-type">
             <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
               { value: '', label: '– vali –' },
@@ -249,7 +254,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
         </Field>
         {error && <div className="alert-box error">{error}</div>}
       </Body>
-      <Footer className={dialog ? undefined : 'fw-plan-actions'}>
+      <Footer className={dialog ? undefined : 'mt-2.5 flex justify-end gap-2'}>
         <Button type="button" variant="ghost" onClick={onCancel}>Loobu</Button>
         <Button type="submit" variant="primary" disabled={busy}>Salvesta</Button>
       </Footer>

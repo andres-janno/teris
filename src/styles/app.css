@@ -23,6 +23,7 @@
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
 @source '../components/FieldWorksBoard.tsx';
+@source '../components/FieldWorkPlanForm.tsx';
 @source '../components/ArticleFormDialog.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 

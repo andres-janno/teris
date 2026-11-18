@@ -10,6 +10,7 @@ export { Select, type SelectOption } from './Select';
 export { Checkbox, CheckboxField } from './Checkbox';
 export { RadioGroup, RadioGroupItem, RadioField } from './RadioGroup';
 export { Switch } from './Switch';
+export { ProgressBar } from './ProgressBar';
 export { DateInput } from './DateInput';
 export { NumberInput, parseNumberText, formatNumberText } from './NumberInput';
 export { FilterSelect, type FilterSelectOption } from './FilterSelect';

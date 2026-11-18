@@ -9,7 +9,7 @@ import {
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
-  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader,
+  ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
@@ -452,6 +452,13 @@ export const UiGallery: React.FC = () => {
             <LegendItem color={FINANCE_COST_COLOR.equipment} label="Liikumine" />
             <LegendItem color={FINANCE_COST_COLOR.fuel} label="Seisuaeg süütega" value="3 min" />
             <LegendItem color={FINANCE_COST_COLOR.labor} label="Tööjõud:" value="48 200 €" note="(35%)" />
+          </div>
+        </Section>
+        <Section title="Edenemisriba">
+          <div className="flex w-72 flex-col gap-2">
+            <ProgressBar value={0} aria-label="Tehtud 0%" />
+            <ProgressBar value={45} aria-label="Tehtud 45%" />
+            <ProgressBar value={100} aria-label="Tehtud 100%" />
           </div>
         </Section>
         <Section title="Vaate päis">
