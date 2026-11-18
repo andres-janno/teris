@@ -436,39 +436,6 @@ body {
   margin-bottom: 12px;
 }
 
-.v-equipment-badge-row {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  margin-top: 4px;
-}
-
-/* Seadme/haakeriista pesa masinakaardil (Badge): täislaius, nupp paremal, pikk nimi lõigatakse ellipsiga */
-.equipment-slot {
-  width: 100%;
-  min-width: 0;
-  justify-content: space-between;
-}
-
-.equipment-slot .tag-text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.device-unassigned-notice {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1px dashed rgba(245, 158, 11, 0.3);
-  border-radius: var(--radius-sm);
-  font-size: 12px;
-  color: var(--amber-500);
-}
-
 /* Vehicle Grid */
 .vehicle-grid {
   display: grid;
@@ -486,14 +453,6 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-}
-
-.card-header-right {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 6px;
-  flex-shrink: 0;
 }
 
 .v-avatar {
@@ -569,54 +528,6 @@ body {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.v-gauges-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 6px;
-  background: var(--stat-bg);
-  padding: 8px;
-  border-radius: var(--radius-sm);
-}
-
-.gauge-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.gauge-text {
-  display: flex;
-  flex-direction: column;
-}
-
-.gauge-lbl {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.gauge-text strong {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.v-card-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-top: 1px solid var(--border-card);
-  padding-top: 8px;
-}
-
-.telemetry-device-id {
-  font-size: 11px;
-  color: var(--text-muted);
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-family: monospace;
 }
 
 .fleet-card-notes {

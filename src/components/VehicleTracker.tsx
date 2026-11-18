@@ -40,7 +40,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
-import { registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
+import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 import type { BadgeTone } from './ui';
 
 // Masina oleku märgi toon
@@ -66,6 +66,22 @@ const deviceFreshness = (iso?: string | null): { cls: string; text: string } => 
   const cls = min < 60 ? 'fresh-live' : min < 24 * 60 ? 'fresh-day' : min < 7 * 1440 ? 'fresh-week' : 'fresh-old';
   return { cls, text };
 };
+
+// Märkuse kast kaardil (masin, haakeriist, seade): oranž vihje, klõps avab muutmise. Vana .fleet-card-notes (!important).
+// leading-4.5 (18px) on vana 1.45 lähim skaalaväärtus (12px × 1.45 = 17.4px).
+const NOTES_BOX =
+  'flex cursor-pointer items-start justify-start gap-1.5 whitespace-pre-wrap break-words rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
+
+// Telemeetria mõõdik masinakaardil: ikoon, silt ja väärtus
+const GaugeItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
+  <div className="flex items-center gap-1.5">
+    {icon}
+    <div className="flex flex-col">
+      <span className="text-2xs leading-natural text-muted-foreground">{label}</span>
+      <strong className="text-sm font-semibold leading-natural text-foreground">{value}</strong>
+    </div>
+  </div>
+);
 
 interface VehicleTrackerProps {
   isOpen?: boolean;
@@ -1289,7 +1305,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 1: SÕIDUKID / MASINAD */}
       {activeTab === 'vehicles' && (
-        <div className="vehicle-grid">
+        <div className={cardGridClass}>
           {enrichedVehicles.map((v) => {
             const isSelected = selectedVehicle && selectedVehicle.id === v.id;
             const installedDevice = devices.find((d) => d.id === v.assignedDeviceId || d.assignedVehicleId === v.id);
@@ -1301,21 +1317,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 padding="sm"
                 interactive
                 selected={isSelected}
-                className="vehicle-card"
+                className="flex flex-col gap-3"
                 onClick={() => onSelectVehicle(v)}
               >
                 <CardHeader align="start">
-                  <div className="v-title-wrap">
-                    <div className="v-avatar" style={{ borderColor: v.color }}>
+                  <div className="flex items-center gap-2.5">
+                    <IconBox size="md" style={{ borderColor: v.color }}>
                       <Tractor size={20} style={{ color: v.color }} />
-                    </div>
+                    </IconBox>
                     <div>
-                      <h4 className="v-name">{v.name}</h4>
-                      <span className="v-model">{[v.category, [v.manufacturer, v.model].filter(Boolean).join(' '), v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
+                      <h4 className="text-base font-medium leading-natural text-foreground">{v.name}</h4>
+                      <span className="text-xs leading-natural text-muted-foreground">{[v.category, [v.manufacturer, v.model].filter(Boolean).join(' '), v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
                     </div>
                   </div>
 
-                  <div className="card-header-right">
+                  <div className="flex shrink-0 flex-col items-end gap-1.5">
                     <Badge tone={VEHICLE_STATUS_TONE[v.status]}>
                       {v.status === 'working' ? 'Töötav' : (v.status === 'moving' ? 'Liikuv' : (v.status === 'idling' ? 'Tühikäik' : (v.status === 'stopped' ? 'Seisev' : 'Offline')))}
                     </Badge>
@@ -1354,14 +1370,14 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </div>
                 </CardHeader>
 
-                <div className="v-info-rows">
+                <div className="flex flex-col gap-1 text-xs">
                   {/* Equipment Assignment Badges with Swap Actions */}
-                  <div className="v-equipment-badge-row">
+                  <div className="mt-1 flex flex-col gap-1.5">
                     {/* Device Badge */}
                     {telemetryEnabled && (
-                    <Badge size="md" className="equipment-slot">
+                    <Badge size="md" className="w-full min-w-0 justify-between">
                       <Radio size={12} />
-                      <span className="tag-text">
+                      <span className="min-w-0 flex-1 truncate">
                         {installedDevice ? `${installedDevice.model} (${installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.imei?.slice(-4)})` : 'GPS puudub'}
                       </span>
                       <Button size="xs"
@@ -1378,9 +1394,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     )}
 
                     {/* Implement Badge */}
-                    <Badge size="md" className="equipment-slot">
+                    <Badge size="md" className="w-full min-w-0 justify-between">
                       <Wrench size={12} />
-                      <span className="tag-text">
+                      <span className="min-w-0 flex-1 truncate">
                         {attachedImplement ? `${attachedImplement.name}${attachedImplement.workingWidthM ? ` (${attachedImplement.workingWidthM}m)` : ''}` : 'Haakeriist puudub'}
                       </span>
                       <Button size="xs"
@@ -1400,7 +1416,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 {/* Märkused */}
                 {v.notes && (
                   <div
-                    className="fleet-card-notes"
+                    className={NOTES_BOX}
                     role="button"
                     tabIndex={0}
                     onKeyDown={clickOnActivationKey}
@@ -1411,58 +1427,31 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <FileText size={13} />
-                    <span>{v.notes}</span>
+                    <span className="flex-1 whitespace-pre-wrap">{v.notes}</span>
                   </div>
                 )}
 
                 {/* Telemetry live gauges if device is installed */}
                 {installedDevice ? (
-                  <div className="v-gauges-grid">
-                    <div className="gauge-item">
-                      <Gauge size={14} />
-                      <div className="gauge-text">
-                        <span className="gauge-lbl">Kiirus</span>
-                        <strong>{v.speedKmH.toFixed(1)} km/h</strong>
-                      </div>
-                    </div>
-
-                    <div className="gauge-item">
-                      <Fuel size={14} />
-                      <div className="gauge-text">
-                        <span className="gauge-lbl">Kütus</span>
-                        <strong>{v.telemetry.fuelLevelPct}%</strong>
-                      </div>
-                    </div>
-
-                    <div className="gauge-item">
-                      <Battery size={14} />
-                      <div className="gauge-text">
-                        <span className="gauge-lbl">Aku</span>
-                        <strong>{v.telemetry.batteryVoltage} V</strong>
-                      </div>
-                    </div>
-
-                    <div className="gauge-item">
-                      <Activity size={14} />
-                      <div className="gauge-text">
-                        <span className="gauge-lbl">Pöörded</span>
-                        <strong>{v.telemetry.engineRpm || 0} rpm</strong>
-                      </div>
-                    </div>
+                  <div className="grid grid-cols-4 gap-1.5 rounded-sm bg-muted p-2">
+                    <GaugeItem icon={<Gauge size={14} />} label="Kiirus" value={`${v.speedKmH.toFixed(1)} km/h`} />
+                    <GaugeItem icon={<Fuel size={14} />} label="Kütus" value={`${v.telemetry.fuelLevelPct}%`} />
+                    <GaugeItem icon={<Battery size={14} />} label="Aku" value={`${v.telemetry.batteryVoltage} V`} />
+                    <GaugeItem icon={<Activity size={14} />} label="Pöörded" value={`${v.telemetry.engineRpm || 0} rpm`} />
                   </div>
                 ) : (
-                  <div className="device-unassigned-notice">
+                  <div className="flex items-center gap-2 rounded-sm border border-dashed border-warning-solid/30 bg-warning-solid/8 px-3 py-2 text-xs leading-natural text-warning">
                     <Info size={14} />
                     <span>Telemeetriaseade paigaldamata. Telemeetria puudub.</span>
                   </div>
                 )}
 
-                <div className="v-card-footer">
-                  <div className="telemetry-device-id">
+                <div className="flex items-center justify-between border-t border-border pt-2">
+                  <div className="flex items-center gap-1 font-mono text-2xs leading-natural text-subtle">
                     <span>🛰️ {installedDevice ? (installedDevice.connectivityType === 'eye_sensor' ? installedDevice.macAddress : installedDevice.simNumber) : 'SIM puudub'}</span>
                   </div>
 
-                  <div className="card-actions-group">
+                  <div>
                     <Button size="sm"
                       disabled={!v.position}
                       title={!v.position ? 'GPS asukoht puudub' : 'Näita kaardil'}
