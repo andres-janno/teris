@@ -449,9 +449,9 @@ export const UiGallery: React.FC = () => {
         </Section>
         <Section title="Legendi kirje">
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
-            <LegendItem color={FINANCE_COST_COLOR.equipment}>Liikumine</LegendItem>
-            <LegendItem color={FINANCE_COST_COLOR.fuel} value="3 min">Seisuaeg süütega</LegendItem>
-            <LegendItem color={FINANCE_COST_COLOR.labor} value="48 200 €" note="(35%)">Tööjõud:</LegendItem>
+            <LegendItem color={FINANCE_COST_COLOR.equipment} label="Liikumine" />
+            <LegendItem color={FINANCE_COST_COLOR.fuel} label="Seisuaeg süütega" value="3 min" />
+            <LegendItem color={FINANCE_COST_COLOR.labor} label="Tööjõud:" value="48 200 €" note="(35%)" />
           </div>
         </Section>
         <Section title="Vaate päis">

@@ -777,14 +777,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
               {/* Cost breakdown pill bar */}
               {resultsSummary.totalCost > 0 && (
                 <div className="flex flex-wrap items-center gap-4 rounded-md bg-muted px-3 py-1.5 text-xs leading-natural">
-                  <LegendItem color={FINANCE_COST_COLOR.labor} value={fmtCur(resultsSummary.totalLabor)}
-                    note={`(${Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)`}>Tööjõud:</LegendItem>
-                  <LegendItem color={FINANCE_COST_COLOR.equipment} value={fmtCur(resultsSummary.totalEquipment)}
-                    note={`(${Math.round((resultsSummary.totalEquipment / resultsSummary.totalCost) * 100)}%)`}>Masinapark:</LegendItem>
-                  <LegendItem color={FINANCE_COST_COLOR.fuel} value={fmtCur(resultsSummary.totalFuel)}
-                    note={`(${Math.round((resultsSummary.totalFuel / resultsSummary.totalCost) * 100)}%)`}>Kütus:</LegendItem>
-                  <LegendItem color={FINANCE_COST_COLOR.articles} value={fmtCur(resultsSummary.totalArticles)}
-                    note={`(${Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)`}>Kulumaterjalid:</LegendItem>
+                  <LegendItem color={FINANCE_COST_COLOR.labor} label="Tööjõud:" value={fmtCur(resultsSummary.totalLabor)}
+                    note={`(${Math.round((resultsSummary.totalLabor / resultsSummary.totalCost) * 100)}%)`} />
+                  <LegendItem color={FINANCE_COST_COLOR.equipment} label="Masinapark:" value={fmtCur(resultsSummary.totalEquipment)}
+                    note={`(${Math.round((resultsSummary.totalEquipment / resultsSummary.totalCost) * 100)}%)`} />
+                  <LegendItem color={FINANCE_COST_COLOR.fuel} label="Kütus:" value={fmtCur(resultsSummary.totalFuel)}
+                    note={`(${Math.round((resultsSummary.totalFuel / resultsSummary.totalCost) * 100)}%)`} />
+                  <LegendItem color={FINANCE_COST_COLOR.articles} label="Kulumaterjalid:" value={fmtCur(resultsSummary.totalArticles)}
+                    note={`(${Math.round((resultsSummary.totalArticles / resultsSummary.totalCost) * 100)}%)`} />
                 </div>
               )}
 

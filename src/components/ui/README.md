@@ -112,8 +112,10 @@ Etapp 4.1 asendas vaadete korduvad ülevaatemustrid viie komponendiga. Vanu klas
 | `PageHeader` | Vaate päis: ikoon, pealkiri (h2), alapealkiri, tegevused paremal | `icon`, `title`, `subtitle`, `actions` |
 | `SectionTitle` | Jaotise pealkiri (väike suurtäheline, 600) vormis ja paneelis | `ruled` (joon all), `spaced` (vahe all) |
 | `StatTile` | Näitaja plaat: silt, suur number, ühik, lisarida, selgitus | `label`, `value`, `unit`, `sub`, `note`, `tone`, `empty` |
-| `LegendItem` | Legendi kirje: värvimärk (andmevärv), nimi, väärtus, märkus | `color`, `value`, `note`, lapsed = nimi |
+| `LegendItem` | Legendi kirje: värvimärk (andmevärv), nimi, väärtus, märkus | `color`, `label`, `value`, `note` |
 | `KeyValueRow` | Rida „silt … väärtus“, väärtus paremal servas | `label`, lapsed = väärtus |
+
+Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTile`, `LegendItem`, `KeyValueRow`; viimasel on väärtus lapsena). `StatTone` (`default | cost | revenue | profit | loss`) on finantsi domeeni toon (kulu/tulu/kasum); teistes vaadetes ära kasuta, vali `Badge` toon või tavaline tekstivärv.
 
 ## Vana muutuja -> Tailwindi nimi
 

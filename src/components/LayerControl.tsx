@@ -229,10 +229,10 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           </div>
                         ) : (
                           soilLegendItems.map((item) => (
-                            <LegendItem key={item.label} color={item.color}>{item.label}</LegendItem>
+                            <LegendItem key={item.label} color={item.color} label={item.label} />
                           ))
                         )}
-                        <LegendItem color={UNDETERMINED_CROP_COLOR}>Andmed puuduvad</LegendItem>
+                        <LegendItem color={UNDETERMINED_CROP_COLOR} label="Andmed puuduvad" />
                       </div>
                     </div>
                   </div>

@@ -180,7 +180,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
               </div>
               <div className="trip-timesplit-legend">
                 {timeParts.map((p) => (
-                  <LegendItem key={p.key} color={`var(--trip-${p.key})`} value={minutesText(p.minutes)}>{p.label}</LegendItem>
+                  <LegendItem key={p.key} color={`var(--trip-${p.key})`} label={p.label} value={minutesText(p.minutes)} />
                 ))}
               </div>
             </div>
