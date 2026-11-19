@@ -271,7 +271,7 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
               const workerFirstName = e.workerName ? e.workerName.trim().split(/\s+/)[0] : null;
 
               return (
-                <span key={e.id} className="flex flex-col gap-0.5 not-first:border-t not-first:border-dashed not-first:border-border not-first:pt-0.5">
+                <span key={e.id} className="flex flex-col gap-0.5 not-first:border-x-0 not-first:border-b-0 not-first:border-t not-first:border-dashed not-first:border-border not-first:pt-0.5">
                   <span className="text-2xs font-medium leading-tight text-foreground">
                     {dateStr}{timeStr ? ` · ${timeStr}` : ''}
                   </span>
