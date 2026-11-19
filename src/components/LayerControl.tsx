@@ -43,8 +43,8 @@ interface LayerControlProps {
   modules?: { telemetry: boolean; satellite: boolean; weather: boolean };
 }
 
-// Kihi alamvalikud (vana .layer-sub-options) ja alamtekst (.layer-subtext): kasutavad Põllud, Mullaproovid ja Põllutööd
-const LAYER_SUB_OPTIONS = 'flex flex-col gap-1.5 border-t border-dashed border-border px-2 pt-1.5 pb-2';
+// Kihi alamvalikud (vana .layer-sub-options) ja alamtekst (.layer-subtext): kasutavad Põllud, Mullaproovid ja Põllutööd; preflighti pole, seega ülejäänud küljed nulli (muidu 3px katkendjoon)
+const LAYER_SUB_OPTIONS = 'flex flex-col gap-1.5 border-x-0 border-b-0 border-t border-dashed border-border px-2 pt-1.5 pb-2';
 const LAYER_SUBTEXT = 'text-2xs leading-natural text-primary';
 // Masina rida: hõljumine, peidetud rada, aktiivne simulaator; hover-klassid selgelt, et olekud võidaksid (vana järjekord)
 const VEHICLE_ROW = 'flex items-center justify-between gap-1.5 rounded-sm border border-border bg-card px-1.5 py-1 transition-all duration-150 hover:border-primary/35 hover:bg-muted-hover';
