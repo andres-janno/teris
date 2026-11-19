@@ -108,16 +108,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                   const count = existingCount.get(w.id) ?? 0;
                   const isAdding = toAdd.has(w.id);
 
-                  let tagTone = 'text-muted-foreground';
-                  let tagText = '';
-                  if (isAdding) {
-                    tagTone = 'text-success-text';
-                    tagText = count > 0 ? `Lisatakse (põllul juba ${count})` : 'Lisatakse';
-                  } else if (count > 0) {
-                    tagTone = 'text-success-text';
-                    tagText = `põllul juba ${count}`;
-                  }
                   const onField = !isAdding && count > 0;
+                  const tagText = isAdding
+                    ? (count > 0 ? `Lisatakse (põllul juba ${count})` : 'Lisatakse')
+                    : onField ? `põllul juba ${count}` : '';
 
                   return (
                     <CardButton
@@ -140,7 +134,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                         {workTypeDisplayName(w)}
                         {w.shortName?.trim() && <small className="block font-normal text-muted-foreground">{w.name}</small>}
                       </span>
-                      {tagText && <span className={cn('text-xs font-medium leading-natural', tagTone)}>{tagText}</span>}
+                      {tagText && <span className={'text-xs font-medium leading-natural text-success-text'}>{tagText}</span>}
                     </CardButton>
                   );
                 })}

@@ -96,7 +96,7 @@
   --radius-lg: 16px;
   --radius-full: 9999px;
 
-  /* „Planeeritud aeg“ välja sisselibisemine (AddFieldWorkDialog): kaob koos vana `.animate-slide-in` ja `@keyframes slideIn` reegliga index.css-ist. */
+  /* „Planeeritud aeg“ välja sisselibisemine (AddFieldWorkDialog, klass `animate-slide-in`). */
   --animate-slide-in: slide-in 0.25s cubic-bezier(0.16, 1, 0.3, 1);
   @keyframes slide-in {
     from { opacity: 0; transform: translateY(-10px); }

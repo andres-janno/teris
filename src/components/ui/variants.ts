@@ -490,6 +490,6 @@ export const workFormHintClass = 'm-0 flex items-start gap-1.5 text-xs leading-n
 /** Mulla ja ilma tabeli väärtus (põllu muutmise aken): kaal 400, toon tuleb data-level atribuudist. Vana `.soil-value[data-level]`. */
 export const soilValueClass = 'font-normal data-[level=bad]:text-danger-text data-[level=warn]:text-warning-text data-[level=good]:text-success-text data-[level=none]:text-subtle';
 /** Mulla ja ilma tabeli joonealune märkus (11px). Vana `.soil-footnote`. */
-export const soilFootnoteClass = 'mt-1 text-2xs text-muted-foreground';
+export const soilFootnoteClass = 'mt-1 text-2xs leading-natural text-muted-foreground';
 /** Mulla ja ilma tabeli aasta lahter (chevron/aasta/vanus ühes reas). Vana `.soil-year-cell`. */
 export const soilYearCellClass = 'inline-flex items-center gap-1 font-medium';

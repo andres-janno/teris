@@ -18,9 +18,9 @@ import { Button, Card, Dialog, DialogContent, DialogHeader, DialogForm, DialogBo
 
 // Automaatselt täidetavad väljad (vana .auto-field-icon, .auto-filled-input)
 const AUTO_ICON_CLASS = 'relative top-px ml-0.5 text-subtle';
-const AUTO_INPUT_CLASS = 'cursor-help bg-muted text-muted-foreground';
+const AUTO_INPUT_CLASS = 'read-only:enabled:cursor-help bg-muted text-muted-foreground';
 // Välja silt koos lisaelemendiga paremal (värvipunkt, „Ava register“ nupp, sortide arv)
-const LABEL_ROW_CLASS = 'flex items-center justify-between [&_label]:flex [&_label]:items-center [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-medium [&_label]:text-muted-foreground';
+const LABEL_ROW_CLASS = 'flex items-center justify-between [&_label]:flex [&_label]:items-center [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-medium [&_label]:leading-natural [&_label]:text-muted-foreground';
 // Põllu muutmise aken: NDVI ja mullaproovid katastriüksuste all
 const INSIGHTS_CLASS = 'mt-4 flex flex-col gap-3';
 
@@ -525,7 +525,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
           <div className={LABEL_ROW_CLASS}>
             <label htmlFor="field-edit-variety">Sordi valik ({editCrop || 'Kultuur'})</label>
             {availableVarieties.length > 0 && (
-              <span className="text-xs text-subtle">
+              <span className="text-xs leading-natural text-subtle">
                 {availableVarieties.length} sorti registris
               </span>
             )}
@@ -696,7 +696,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </Field>
 
               {parcel.ownershipType === 'UNKNOWN' ? (
-                <div className="col-span-2 self-center text-sm text-muted-foreground">
+                <div className="col-span-2 self-center text-sm leading-natural text-muted-foreground">
                   Omandivorm on teadmata. Maamaksu või renditasu saab sisestada, kui maaomanik ja põllu operaator on valitud.
                 </div>
               ) : (

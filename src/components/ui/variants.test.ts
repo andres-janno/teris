@@ -748,6 +748,7 @@ describe('mulla/ilma lõigu konstandid (etapp 4e)', () => {
   it('väärtuse toon tuleb data-level atribuudist (ohtlik/hoiatus/hea/puudub), kaal 400; joonealune märkus 11px', () => {
     for (const t of ['font-normal', 'data-[level=bad]:text-danger-text', 'data-[level=warn]:text-warning-text', 'data-[level=good]:text-success-text', 'data-[level=none]:text-subtle']) expect(v.soilValueClass).toContain(t);
     expect(v.soilFootnoteClass).toContain('text-2xs');
+    expect(v.soilFootnoteClass).toContain('leading-natural');
     expect(v.soilYearCellClass).toContain('font-medium');
   });
 });

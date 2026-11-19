@@ -96,7 +96,7 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                           {isOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                           {year}
                           {age > 0 && (
-                            <span className="text-2xs font-normal">
+                            <span className="text-2xs font-normal leading-natural">
                               {age} a<span className="ml-1 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: getSoilMetricColor('age', age) }} />
                             </span>
                           )}

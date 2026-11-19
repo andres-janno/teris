@@ -13,7 +13,7 @@ export const DEFAULT_VEHICLE_COLOR = '#22c55e';
 export const DEFAULT_FIELD_COLOR = '#3b82f6';
 
 export type SoilLevel = 'bad' | 'warn' | 'good';
-/** Mulla näitaja tase kaardil, legendis ja punktina. Tekstina kasuta toonitokenit (.soil-value[data-level]). */
+/** Mulla näitaja tase kaardil, legendis ja punktina. Tekstina kasuta toonitokenit (`soilValueClass`, components/ui/variants.ts). */
 export const SOIL_LEVEL_COLOR: Record<SoilLevel, string> = { bad: '#dc2626', warn: '#eab308', good: '#16a34a' };
 
 /** Finantsi kulujaotuse seeriad (tulemuste riba legend). */
