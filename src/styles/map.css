@@ -116,14 +116,6 @@
   margin-left: 4px;
 }
 
-.weather-color {
-  background: #1e6fff;
-}
-
-.satellite-color {
-  background: linear-gradient(135deg, #2b7c4c, #c9d292 50%, #8f6b3a);
-}
-
 /* Satelliidipildi juhtpaneel (Satiladu) */
 .satellite-panel {
   width: 100%;
@@ -261,12 +253,6 @@
 
 
 
-.layer-fit-section {
-  margin-top: 4px;
-  padding-top: 10px;
-  border-top: 1px solid var(--border-card);
-}
-
 /* Add POI Banner */
 .add-poi-banner {
   position: absolute;
@@ -311,172 +297,6 @@
   display: none;
 }
 
-/* Layer Control Panel */
-.layer-control-panel {
-  width: 100%;
-  flex: 0 0 auto;
-}
-
-.layer-control-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  cursor: pointer;
-}
-
-.layer-header-title {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.layer-control-body {
-  margin-top: 12px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.basemap-cadastre-toggle {
-  margin-top: 10px;
-  padding: 0 4px;
-}
-
-.basemap-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px;
-}
-
-.basemap-btn {
-  justify-content: space-between !important; /* Button keskjoondab */
-}
-
-.active-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 9999px;
-  background-color: var(--emerald-500);
-}
-
-.overlay-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.layer-item {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  background: var(--stat-bg);
-  color: var(--text-primary);
-}
-
-.layer-label {
-  display: flex !important;
-  align-items: center !important;
-  gap: 8px !important;
-  font-size: 13px !important;
-  color: var(--text-primary) !important;
-}
-.layer-label > button,
-.soil-metric-radio-item > button {
-  margin-top: 0 !important;
-}
-.layer-label-content {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.layer-color-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-sm);
-}
-
-.fields-color {
-  background-color: var(--amber-400);
-}
-
-.tech-color {
-  background-color: var(--emerald-400);
-}
-
-.cultivation-color {
-  background-color: #38bdf8;
-}
-
-.poi-color {
-  background-color: #ec4899;
-}
-
-.cadastre-color {
-  background-color: #f97316;
-}
-
-.soil-color {
-  background-color: #a16207;
-}
-
-.soil-metric-radio-list {
-  gap: 4px !important;
-}
-
-.soil-metric-radio-item,
-.soil-metric-radio-list label {
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px !important;
-  font-size: 13px !important;
-  color: var(--text-primary) !important;
-}
-
-.soil-legend-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 6px;
-  padding-top: 6px;
-  border-top: 1px solid var(--border-card);
-}
-
-.soil-legend-gradient {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  margin-bottom: 2px;
-}
-
-.soil-legend-gradient-bar {
-  height: 8px;
-  border-radius: var(--radius-sm);
-}
-
-.soil-legend-gradient-labels {
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-/* Layer Control Field Year Selector */
-.layer-field-box {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.layer-field-box .layer-item {
-  background: transparent;
-}
-
 /* Kihi andmete laadimise animatsioon (Põllutööde rajad) */
 /* transform (mitte left), et animatsioon jookseks ka siis, kui radade arvutus hoiab põhilõime kinni */
 @keyframes layerLoadingSlide {
@@ -501,19 +321,6 @@
   .layer-loading-bar::after {
     animation-duration: 3s;
   }
-}
-
-/* Kihi lisavalikud päise all samas kastis (päis ei liigu sisselülitamisel) */
-.layer-sub-options {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 6px 8px 8px;
-  border-top: 1px dashed var(--border-card);
-}
-
-.layer-sub-options .vehicle-filter-subgroup {
-  margin-top: 0;
 }
 
 /* Map Top-Left Stack (Season Widget + Selected Field Card) */
@@ -1328,13 +1135,6 @@
   }
 }
 
-.layer-subtext {
-  font-size: 11px;
-  color: var(--emerald-500);
-  font-weight: 400;
-  letter-spacing: 0.01em;
-}
-
 /* Vehicle Popup enhancements */
 .popup-title-row {
   display: flex;
@@ -1376,17 +1176,6 @@
   background: rgba(148, 163, 184, 0.18);
   color: var(--text-secondary);
   border: 1px solid rgba(148, 163, 184, 0.35);
-}
-
-.vehicle-filter-subgroup {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  background: var(--bg-card);
-  padding: 2px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-card);
-  margin-top: 2px;
 }
 
 /* Leaflet hüpiku nupp: hüpiku sisu on HTML-string (mitte React), seega ui/Button siia ei sobi.
