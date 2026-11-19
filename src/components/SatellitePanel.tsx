@@ -12,6 +12,7 @@ import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
 import { Button, Card, CheckboxField, Select, ToggleGroup, ToggleGroupItem, type SelectOption } from './ui';
+import { loadingSpinnerInlineClass } from './ui/variants';
 
 const FIRST_YEAR = 2015;
 const RECENT = 'recent';
@@ -291,7 +292,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
       <div className="satellite-panel-title">
         Satelliidipilt
         <span className="satellite-panel-source">Sentinel-2 · Satiladu</span>
-        {loading && <Loader2 size={12} className="layer-loading-spinner" aria-label="Laadimine" />}
+        {loading && <Loader2 size={12} className={loadingSpinnerInlineClass} aria-label="Laadimine" />}
       </div>
 
       <ToggleGroup

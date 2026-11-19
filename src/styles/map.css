@@ -478,36 +478,10 @@
 }
 
 /* Kihi andmete laadimise animatsioon (Põllutööde rajad) */
-@keyframes layerSpin {
-  to { transform: rotate(360deg); }
-}
-
 /* transform (mitte left), et animatsioon jookseks ka siis, kui radade arvutus hoiab põhilõime kinni */
 @keyframes layerLoadingSlide {
   0% { transform: translateX(-100%); }
   100% { transform: translateX(250%); }
-}
-
-.layer-loading-spinner {
-  margin-left: 6px;
-  color: var(--emerald-500);
-  animation: layerSpin 0.9s linear infinite;
-  will-change: transform;
-  flex-shrink: 0;
-}
-
-.layer-loading {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.layer-loading-bar {
-  position: relative;
-  height: 3px;
-  border-radius: var(--radius-sm);
-  background: var(--border-card);
-  overflow: hidden;
 }
 
 .layer-loading-bar::after {
@@ -524,7 +498,6 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .layer-loading-spinner,
   .layer-loading-bar::after {
     animation-duration: 3s;
   }
@@ -537,12 +510,6 @@
   gap: 6px;
   padding: 6px 8px 8px;
   border-top: 1px dashed var(--border-card);
-}
-
-.layer-sub-options .vehicle-individual-list {
-  margin-top: 0;
-  padding-top: 0;
-  border-top: none;
 }
 
 .layer-sub-options .vehicle-filter-subgroup {
@@ -1420,90 +1387,6 @@
   border-radius: var(--radius-sm);
   border: 1px solid var(--border-card);
   margin-top: 2px;
-}
-
-/* Individual Vehicles / Devices in LayerControl */
-.vehicle-individual-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-  padding-top: 4px;
-  border-top: 1px dashed var(--border-card);
-  max-height: 200px;
-  overflow-y: auto;
-}
-
-.v-indiv-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
-  padding: 4px 6px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  transition: all 0.15s ease;
-}
-
-.v-indiv-row:hover {
-  background: var(--stat-bg-hover);
-  border-color: rgba(34, 197, 94, 0.35);
-}
-
-.v-indiv-row.is-hidden-map {
-  opacity: 0.55;
-  background: var(--stat-bg);
-}
-
-.v-indiv-row.is-sim-active {
-  border-color: rgba(16, 185, 129, 0.6);
-  background: rgba(16, 185, 129, 0.08);
-}
-
-.v-indiv-info {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  min-width: 0;
-  flex: 1;
-}
-
-.v-indiv-emoji {
-  font-size: 14px;
-  line-height: 1;
-  flex-shrink: 0;
-}
-
-.v-indiv-names {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.15;
-}
-
-.v-indiv-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--text-primary);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.v-indiv-subtitle {
-  font-size: 11px;
-  color: var(--text-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.v-indiv-actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  flex-shrink: 0;
 }
 
 /* Leaflet hüpiku nupp: hüpiku sisu on HTML-string (mitte React), seega ui/Button siia ei sobi.

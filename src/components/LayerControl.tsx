@@ -17,7 +17,8 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem } from './ui';
+import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
+import { loadingSpinnerInlineClass } from './ui/variants';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -41,6 +42,14 @@ interface LayerControlProps {
   // Litsentsi moodulid: puuduva mooduli kihi rida ei näidata
   modules?: { telemetry: boolean; satellite: boolean; weather: boolean };
 }
+
+// Kihi alamvalikud (vana .layer-sub-options) ja alamtekst (.layer-subtext): kasutavad Põllud, Mullaproovid ja Põllutööd
+const LAYER_SUB_OPTIONS = 'flex flex-col gap-1.5 border-t border-dashed border-border px-2 pt-1.5 pb-2';
+const LAYER_SUBTEXT = 'text-2xs leading-natural text-primary';
+// Masina rida: hõljumine, peidetud rada, aktiivne simulaator; hover-klassid selgelt, et olekud võidaksid (vana järjekord)
+const VEHICLE_ROW = 'flex items-center justify-between gap-1.5 rounded-sm border border-border bg-card px-1.5 py-1 transition-all duration-150 hover:border-primary/35 hover:bg-muted-hover';
+const VEHICLE_ROW_HIDDEN = 'bg-muted opacity-55 hover:bg-muted';
+const VEHICLE_ROW_SIM = 'border-primary/60 bg-primary/8 hover:border-primary/60 hover:bg-primary/8';
 
 export const LayerControl: React.FC<LayerControlProps> = ({
   visibility,
@@ -277,7 +286,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                         <span className="layer-color-indicator cultivation-color"></span>
                         <span className="layer-text">Põllutööd</span>
                         {visibility.cultivation && isLoadingVehicleTracks && (
-                          <Loader2 size={14} className="layer-loading-spinner" aria-label="Radade laadimine" />
+                          <Loader2 size={14} className={loadingSpinnerInlineClass} aria-label="Radade laadimine" />
                         )}
                       </span>
                     }
@@ -291,17 +300,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                 </div>
 
                 {visibility.cultivation && (
-                  <div className="layer-sub-options">
+                  <div className={LAYER_SUB_OPTIONS}>
                     {isLoadingVehicleTracks ? (
-                      <div className="layer-loading" role="status">
-                        <span className="layer-subtext">Masinate radade laadimine ja arvutamine…</span>
-                        <div className="layer-loading-bar" />
+                      <div className="flex flex-col gap-1" role="status">
+                        <span className={LAYER_SUBTEXT}>Masinate radade laadimine ja arvutamine…</span>
+                        <div className="layer-loading-bar relative h-0.75 overflow-hidden rounded-sm bg-border" />
                       </div>
                     ) : (
-                      <span className="layer-subtext">{trackVehicleIds?.size ?? 0} masina rajad</span>
+                      <span className={LAYER_SUBTEXT}>{trackVehicleIds?.size ?? 0} masina rajad</span>
                     )}
                     {vehicles.length > 0 && (
-                      <div className="vehicle-individual-list">
+                      <div className="flex max-h-50 flex-col gap-1 overflow-y-auto">
                         {vehicles.map((v) => {
                           const isSimActive = simulatedVehicleId === v.id;
                           const hasTrack = trackVehicleIds?.has(v.id) ?? false;
@@ -314,17 +323,17 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           return (
                             <div
                               key={v.id}
-                              className={`v-indiv-row ${hasTrack && !isTrackVisible ? 'is-hidden-map' : ''} ${isSimActive ? 'is-sim-active' : ''}`}
+                              className={cn(VEHICLE_ROW, hasTrack && !isTrackVisible && VEHICLE_ROW_HIDDEN, isSimActive && VEHICLE_ROW_SIM)}
                             >
-                              <div className="v-indiv-info" title={`${v.name} (${deviceLabel})`}>
-                                <span className="v-indiv-emoji">{iconEmoji}</span>
-                                <div className="v-indiv-names">
-                                  <span className="v-indiv-title">{v.name}</span>
-                                  <span className="v-indiv-subtitle">{deviceLabel}</span>
+                              <div className="flex min-w-0 flex-1 items-center gap-1.5" title={`${v.name} (${deviceLabel})`}>
+                                <span className="shrink-0 text-base leading-none">{iconEmoji}</span>
+                                <div className="flex min-w-0 flex-col">
+                                  <span className="truncate text-xs font-semibold leading-3.5 text-foreground">{v.name}</span>
+                                  <span className="truncate text-2xs leading-3 text-subtle">{deviceLabel}</span>
                                 </div>
                               </div>
     
-                              <div className="v-indiv-actions">
+                              <div className="flex shrink-0 items-center gap-1">
                                 {onToggleVehicleSimulator && (
                                   <Button size="xs" aria-pressed={isSimActive}
                                     title={isSimActive ? 'Lülita simulaator välja' : `Käivita simulaator (${v.name})`}
