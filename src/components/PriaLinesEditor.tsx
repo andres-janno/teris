@@ -10,7 +10,7 @@ import {
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
-import { Alert, Button, FilterSelect, Input, NumberInput, cn, type FilterSelectOption } from './ui';
+import { Alert, Button, FilterSelect, Input, NumberInput, cn, infoNoticeClass, type FilterSelectOption } from './ui';
 
 // PRIA read: veerupäisega ruudustik (veerud tulevad style-ist); kitsal ekraanil lahtrid murduvad
 const PRIA_GRID = 'grid items-center gap-1.5 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_[data-slot=filter-select]]:w-full [&_[data-slot=filter-select]]:min-w-0 max-[760px]:flex max-[760px]:flex-wrap max-[760px]:[&_[data-slot=input]]:flex-1 max-[760px]:[&_[data-slot=input]]:basis-35 max-[760px]:[&_[data-slot=filter-select]]:flex-1 max-[760px]:[&_[data-slot=filter-select]]:basis-35 max-[760px]:[&_[data-slot=input][inputmode]]:flex-initial max-[760px]:[&_[data-slot=input][inputmode]]:basis-22.5';
@@ -163,7 +163,7 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   return (
     <div className={PRIA_LINES}>
       {seedMismatches.length > 0 && (
-        <Alert size="sm" className="gap-2 rounded-md bg-info/10 text-foreground" role="alert">
+        <Alert size="sm" className={infoNoticeClass} role="alert">
           <AlertTriangle size={14} />
           <span>
             Põllu kultuur on {seedCheck?.seasonCrop?.name}, aga {seedMismatches.map((m) => `„${m.articleName}" on ${m.seedCropName.toLowerCase()} seeme`).join(', ')}.

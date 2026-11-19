@@ -393,7 +393,6 @@ body {
   z-index: 1500;
   max-width: min(640px, calc(100% - 32px));
   box-shadow: var(--shadow-modal);
-  background: var(--bg-modal);
 }
 
 /* Masina nimi kaardi markeris (MapMarkers HTML) */
@@ -667,7 +666,6 @@ body {
   flex-wrap: wrap;
 }
 
-/* Kultuuri vorm: värvivalija ja ikooni väli on kitsad, PRIA kood võtab ülejäänud laiuse */
 /* Valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
 .crop-legend-item[data-selected] {
   /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
@@ -1126,8 +1124,6 @@ body {
   font-size: 13px;
   color: var(--text-secondary);
 }
-
-/* Jaotised (nt Taristu: punktid / seotud isikud) — samas stiilis nagu aastanupud */
 
 /* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
 .fullpage-board-body > .fullpage-board-content {

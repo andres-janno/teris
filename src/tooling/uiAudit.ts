@@ -96,20 +96,20 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   // ujuvpaneelid kaardi peal
   'add-poi-banner', 'field-map-card',
   // register- ja loendikaardid
-  'vehicle-card', 'edit-cad-item', 'history-filter-bar',
+  'history-filter-bar',
   'empty-register-state',
   // KPI ja statistika plaadid
-  'trip-tile', 'register-crop-summary',
+  'trip-tile',
   // sektsioonikastid
   'support-panel', 'parsed-preview-box', 'weather-chart-card',
   // teenusepakkuja admin
   'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
-// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 // 4c: Tehnika ja sõitude kustutatud klassid (etapp 4c). Eesliidete asemel täpsed nimed: id-d (`dev-assign-…`, `trip-notes`) ei loe.
 // `dev-imei`, `dev-model`, `imp-name` on ka vormiväljade id-d: id="…" ja htmlFor="…" väärtusi regex ei loe (lookbehind).
-// Jagatud klassid (vehicle-card, v-*, auth-error-banner, telemetry-suggestion-*) puuduvad teadlikult: nad jäävad 4.5/ühiste etapini.
+// Jagatud klass auth-error-banner puudub teadlikult (jääb ühiste etapini). vehicle-card, v-* ja telemetry-suggestion-* viidi 4e-s ära (RETIRED_4E).
 export const RETIRED_4C: readonly string[] = [
   'assign-datetime', 'assign-hint', 'assign-hint-active', 'attached-status', 'card-header-right', 'connectivity-type-picker',
   'dev-assign-select', 'dev-assignment-box', 'dev-card-header', 'dev-fresh-dot', 'dev-fresh-legend', 'dev-fresh-legend-item',
@@ -155,8 +155,36 @@ export const RETIRED_4D: readonly string[] = [
   'widget-crop-list', 'widget-legend-content', 'widget-legend-header', 'widget-legend-title', 'year-header-right',
   'year-widget-header', 'year-widget-season', 'year-widget-title',
 ];
+// 4e: dialoogide ja registrite kustutatud klassid (etapp 4e). Täpsed nimed. Jäävad klassid puuduvad teadlikult: `year-col`, `year-col-label`,
+// `year-cell`, `has-crop` (Külvikorra aastaveeru CSS-konksud), `sticky-name`, `cell-sub`, `name-cell`, `field-name`, `fullpage-board-*`,
+// `detail-section`, `login-notice` (jagatud, jäävad 4f-ni või erandiks).
+export const RETIRED_4E: readonly string[] = [
+  'add-cad-btn', 'add-work-actions', 'add-work-body', 'add-work-check', 'add-work-count', 'add-work-footer', 'add-work-name', 'add-work-option',
+  'add-work-phase', 'add-work-phase-label', 'add-work-tag', 'alert-action', 'alert-box', 'alert-left', 'auto-field-icon', 'auto-filled-input',
+  'cad-tenure-hint', 'card-emoji-avatar', 'card-info-text', 'confirm-dialog', 'confirm-dialog-body', 'confirm-dialog-icon',
+  'crop-auto-color-toggle', 'crop-color-dot', 'crop-edit-modal', 'crop-group-block', 'crop-group-block-header', 'crop-group-columns',
+  'crop-group-empty', 'crop-group-ha', 'crop-icon-input', 'crop-inline-edit', 'crop-inline-edit-actions', 'crop-latin', 'crop-name-cell',
+  'crop-register-table', 'crop-register-wrap', 'crop-row', 'crop-total-area', 'edit-cad-action', 'edit-cad-grid', 'edit-cad-locked',
+  'edit-cadastral-list', 'eligible-ha-sub', 'field-edit-insights', 'field-label-row', 'field-register-modal', 'field-shape-body',
+  'field-shape-empty', 'field-shape-map', 'footer-left-info', 'form-header-row', 'is-compact', 'is-stacked', 'muted-note',
+  'parties-register-modal', 'party-contact-link', 'party-contact-note', 'party-edit-modal', 'party-role-checkbox', 'party-roles-checkbox-grid',
+  'pick-map-highlight', 'poi-edit-modal', 'poi-top-actions', 'poi-top-bar', 'pria-article-cell', 'pria-grid', 'pria-grid-head', 'pria-lines',
+  'reg-stat-pill', 'register-crop-group', 'register-crop-group-title', 'register-crop-summary', 'register-crop-summary-groups',
+  'register-crop-summary-tenure', 'register-stats-pills', 'season-area-box', 'season-cell', 'season-cell-head', 'season-cell-name',
+  'season-cell-notes', 'season-edit-modal', 'season-form-fieldset', 'season-form-grid', 'season-ha-val', 'season-header-actions',
+  'season-locked-global-alert', 'season-notes-icon', 'season-notes-row', 'season-year', 'seasons-table-hint', 'secondary-note', 'size-cell',
+  'soil-age', 'soil-age-dot', 'soil-footnote', 'soil-value', 'soil-year-cell', 'sticky-size', 'sub-val', 'telemetry-loading-notice',
+  'telemetry-pill-field', 'telemetry-pill-meta', 'telemetry-pill-missing', 'telemetry-pill-row', 'telemetry-pill-unlink',
+  'telemetry-pill-vehicle', 'telemetry-pill-worker', 'telemetry-pulse-icon', 'telemetry-suggestion-item', 'telemetry-suggestion-pill',
+  'telemetry-suggestions-card', 'telemetry-suggestions-head', 'telemetry-suggestions-hint', 'telemetry-suggestions-list',
+  'telemetry-suggestions-title', 'v-avatar', 'v-info-item', 'v-info-rows', 'v-model', 'v-title-wrap', 'variety-name', 'variety-name-cell',
+  'variety-row', 'variety-seed-rate', 'vehicle-card', 'vehicle-grid', 'weather-season-crop', 'weather-season-past', 'weather-season-shifted',
+  'with-action', 'work-entry-area-grid', 'work-entry-area-presets', 'work-entry-body', 'work-entry-finish', 'work-entry-grid', 'work-entry-hint',
+  'work-entry-presets-label', 'work-entry-progress', 'work-entry-progress-head', 'work-entry-section', 'work-entry-top-grid',
+  'work-entry-unit', 'work-entry-warning', 'work-full-name', 'year-crop', 'year-crop-edit-icon', 'year-crop-name', 'year-shape-btn',
+];
 const LEGACY_OVERVIEW = new RegExp(
-  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D].join('|')})(?![\\w-])`,
+  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E].join('|')})(?![\\w-])`,
   'g',
 );
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;

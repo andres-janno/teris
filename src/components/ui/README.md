@@ -96,7 +96,7 @@ Märkused:
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`, `MapYearSelector.tsx`, `LayerControl.tsx`, `SatellitePanel.tsx`, `MapView.tsx`, `CultivationControl.tsx`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`, `MapYearSelector.tsx`, `LayerControl.tsx`, `SatellitePanel.tsx`, `MapView.tsx`, `CultivationControl.tsx`, 4e dialoogid: `RelatedPartiesModal.tsx`, `PoiManagerModal.tsx`, `FieldManagerModal.tsx`, `FieldShapeModal.tsx`, `CropRegisterModal.tsx`, `SeasonManagerModal.tsx`, `FieldWorkEntryDialog.tsx`, `PriaLinesEditor.tsx`, `AddFieldWorkDialog.tsx`, `FieldEditDialog.tsx`, `FieldUploadModal.tsx`, `SoilSamplesSection.tsx`, `WeatherSeasonSection.tsx`, `ConfirmDialog.tsx`, `AuthGate.tsx`).
 Audit-rida „Tailwindi klasse ilma @source-ita“ valvab, et vaatefail, mille klassides on utiliite, oleks `@source`-is (ajutised erandid: `SOURCE_GUARD_ALLOWED` `src/tooling/uiAudit.ts`-is).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
@@ -139,9 +139,8 @@ Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTil
 | `fleetCell*Class`, `fleetDurationClass`, `fleetNotesClass` | haakimiste/seoste registri lahtrid | `fleet-cell-*` |
 | `dateTimeRowClass`, `dateTimeHintClass` | kuupäev + kellaaeg + vihje | `assign-datetime`, `assign-hint` |
 | `bg-/text-/border-l-fresh-*`, `bg-trip-*` | seadme värskus, sõidu ajajaotus (teemapõhised) | `fresh-*`, `--trip-*` `.trip-dialog` all |
-| `<Alert tone size>` (`alertVariants`) | teatekast (error/success/info/warning/neutral, md/sm) | `alert-box` |
 
-`PoiManagerModal` ja `RelatedPartiesModal` kasutavad veel `vehicle-grid`, `vehicle-card`, `v-avatar`, `v-name`, `v-title-wrap`, `v-info-*` (dialoogide etapp: `cardGridClass` + `IconBox size="md"`).
+`PoiManagerModal` ja `RelatedPartiesModal` (Isikud, Taristu) kasutavad `cardGridClass` + `IconBox size="md"` + `infoCard*` konstante (vt 4e tabel). `.v-name` jääb ainult MapMarkers HTML-stringi jaoks.
 
 ### Kaardi paneelide abiklassid (etapp 4d)
 
@@ -154,6 +153,22 @@ Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTil
 | `Select`/`Input` `className` | sisemine äärisetu väli ääristatud kastis (`border-0 bg-transparent h-full`) | `.cc-time [data-slot=select] !important` |
 
 Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolute`, `z-800`/`z-900`), laiuse ja paigutuse. Konteinerid `.map-top-left-stack` / `.map-top-right-stack` (App.tsx) ja `.cc-range`, `.layer-loading-bar::after`, `.crop-legend-item[data-selected]`, `.add-poi-banner` jäävad `map.css`/`index.css`-i (põhjused kommentaarides).
+
+### Dialoogide ja registrite abiklassid (etapp 4e)
+
+| Nimi | Kasuta | Vana klass |
+| --- | --- | --- |
+| `<Alert tone size>` | teatekast (error/success/info/warning/neutral; `size="sm"`) | `alert-box` (+ `.error`, `.is-compact`) |
+| `infoNoticeClass` | `Alert size="sm"` peal: hele sinine info-teade (kande dialoog, PRIA read) | `work-entry-warning` |
+| `cellSubClass`, `cellSubStackedClass` | tabelilahtri/kaardi alamrida (11px, hallim) | `cell-sub`, `fleetCellSubClass` |
+| `infoCardClass`, `infoCardTitleWrapClass`, `infoCardNameClass`, `infoCardSubClass`, `infoRowsClass`, `infoRowClass` | registrikaart avatariga (Isikud, Taristu) | `vehicle-card`, `v-*` |
+| `tableNameClass`, `tableTitleLineClass`, `tableSubTagsClass`, `tableMutedClass` | tabeli nimelahter ja summutatud tekst | `field-name`, `field-title-line`, `field-sub-tags`, `muted` |
+| `dialogStackBodyClass`, `workFormGridClass`, `workFormSectionClass`, `workFormHintClass` | töö kande ja plaani vormi kere, ruudustik, jaotis, vihje | `work-entry-*`, `add-work-body` |
+| `soilValueClass`, `soilFootnoteClass`, `soilYearCellClass` | mulla väärtus (`data-level`), joonealune märkus, aasta lahter | `soil-value`, `soil-footnote`, `soil-year-cell` |
+
+Kustutatud klasside valvur: `RETIRED_4E` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
+
+CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label`, `.year-cell.has-crop/.selected` (Külvikorra aastaveerud), `[data-slot="table"] .cell-sub/.muted/.sticky-name/.name-cell` (kuni `FieldsTableView` on üle viidud), `.fullpage-board-*`, `.detail-section`, `.login-notice`.
 
 ## Vana muutuja -> Tailwindi nimi
 

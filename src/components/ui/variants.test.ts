@@ -7,7 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
-  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass, v.soilValueClass, v.soilFootnoteClass, v.soilYearCellClass,
+  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass, v.soilValueClass, v.soilFootnoteClass, v.soilYearCellClass, v.infoNoticeClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
@@ -750,5 +750,11 @@ describe('mulla/ilma lõigu konstandid (etapp 4e)', () => {
     expect(v.soilFootnoteClass).toContain('text-2xs');
     expect(v.soilFootnoteClass).toContain('leading-natural');
     expect(v.soilYearCellClass).toContain('font-medium');
+  });
+});
+
+describe('infoNoticeClass (etapp 4e)', () => {
+  it('sinine teatetaust ilma äärisetoonita, tavaline tekst, ümardus md (kande dialoog, PRIA read)', () => {
+    for (const t of ['gap-2', 'rounded-md', 'bg-info/10', 'text-foreground']) expect(v.infoNoticeClass).toContain(t);
   });
 });

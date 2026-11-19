@@ -459,6 +459,9 @@ export const alertVariants = cva('flex items-center gap-2.5 rounded-sm text-sm l
   defaultVariants: { tone: 'neutral', size: 'md' },
 });
 
+/** Info-teade `Alert size="sm"` peal (kande dialoog, PRIA read): hele sinine taust, tavaline tekst, ümardus 10px. Vana `.work-entry-warning`. */
+export const infoNoticeClass = 'gap-2 rounded-md bg-info/10 text-foreground';
+
 /** Tabelilahtri/kaardi alamrida (11px, hallim): sama ilme Tehnikas, Külvikorras, Kultuurides, sõidu dialoogis. */
 export const cellSubClass = 'text-2xs text-subtle';
 /** Alamrida teksti all tabelilahtris (vana `[data-slot="table"] .cell-sub`: 2px ülaveeris). */

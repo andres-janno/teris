@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass } from './ui';
+import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass, infoNoticeClass } from './ui';
 
 // Kande vormi ruudustike veerud (ruudustiku enda kest: workFormGridClass); kitsal ekraanil kaks veergu
 const GRID_TOP = 'grid-cols-none grid-flow-col auto-cols-[minmax(0,1fr)] max-[680px]:grid-cols-2 max-[680px]:grid-flow-row';
@@ -21,8 +21,6 @@ const GRID_FOUR = 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_110px]';
 // Telemeetria soovitus: roheline identiteet (primary); valitud olek = töö valiku roheline (primary-strong)
 const PILL = 'flex flex-wrap items-center justify-between gap-2.5 border-primary/35 px-3 py-2 hover:-translate-y-px hover:border-primary hover:bg-primary/12 hover:shadow-sm';
 const PILL_ON = 'border-primary-strong bg-primary-strong/8 hover:translate-y-0 hover:border-primary-strong hover:bg-primary-strong/8 hover:shadow-none';
-// Info-teade (vana .work-entry-warning)
-const NOTICE = 'gap-2 rounded-md bg-info/10 text-foreground';
 
 interface Option {
   id: string;
@@ -436,7 +434,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {entry?.financeStatus === 'CONFIRMED' && (
-              <Alert size="sm" className={NOTICE}>
+              <Alert size="sm" className={infoNoticeClass}>
                 <Info size={14} />
                 <span>Kande finants on kinnitatud. Koguste muutmisel tuleb finantsjuhil kanne uuesti kinnitada.</span>
               </Alert>

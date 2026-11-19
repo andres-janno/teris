@@ -31,6 +31,8 @@ const STAT_NUM = 'font-medium text-foreground';
 const STAT_SUB = 'ml-1 text-2xs';
 // Kontaktirida isiku kaardil (vana .party-contact-link/-note)
 const CONTACT_ROW = 'flex min-w-0 items-start gap-2 leading-snug text-muted-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0';
+// Telefoni ja e-posti link: sama rida, tekst murdub, hõljumisel allajoonitud
+const CONTACT_LINK = cn(CONTACT_ROW, 'max-w-full self-start no-underline [&>span]:wrap-anywhere [&:hover>span]:text-foreground [&:hover>span]:underline');
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -478,12 +480,10 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               />
             </FilterClear>
 
-            <div>
-              <Button variant="primary" size="sm" onClick={startCreate}>
-                <Plus size={14} />
-                <span>Lisa uus seotud isik</span>
-              </Button>
-            </div>
+            <Button variant="primary" size="sm" onClick={startCreate}>
+              <Plus size={14} />
+              <span>Lisa uus seotud isik</span>
+            </Button>
           </div>
 
           {/* Seotud isikute tabel (sama stiil nagu põldude registris) */}
@@ -576,13 +576,13 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                       </div>
                     )}
                     {party.phone && (
-                      <a href={`tel:${party.phone}`} className={cn(CONTACT_ROW, 'max-w-full self-start no-underline [&>span]:wrap-anywhere [&:hover>span]:text-foreground [&:hover>span]:underline')} title="Helista" onClick={(e) => e.stopPropagation()}>
+                      <a href={`tel:${party.phone}`} className={CONTACT_LINK} title="Helista" onClick={(e) => e.stopPropagation()}>
                         <Phone size={13} />
                         <span>{party.phone}</span>
                       </a>
                     )}
                     {party.email && (
-                      <a href={`mailto:${party.email}`} className={cn(CONTACT_ROW, 'max-w-full self-start no-underline [&>span]:wrap-anywhere [&:hover>span]:text-foreground [&:hover>span]:underline')} title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
+                      <a href={`mailto:${party.email}`} className={CONTACT_LINK} title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
                         <Mail size={13} />
                         <span>{party.email}</span>
                       </a>
