@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Alert, Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea, emptyBoxClass, subheadingClass } from './ui';
+import { Alert, Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea, emptyBoxClass, subheadingClass, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -202,8 +202,8 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   const Footer = dialog ? DialogFooter : 'div';
   return (
     <Form onSubmit={save}>
-      <Body className="work-entry-body">
-        <div className="work-entry-grid grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row">
+      <Body className={dialogStackBodyClass}>
+        <div className={cn(workFormGridClass, 'grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row')}>
           <Field label="Tegevus *" htmlFor="wp-type">
             <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
               { value: '', label: '– vali –' },
@@ -237,13 +237,13 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
           </Field>
         </div>
         {usesMaterials && (
-          <section className="work-entry-section">
+          <section className={workFormSectionClass}>
             <h4>Planeeritud materjalid</h4>
             <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={area} showTotals seedCheck={seedCheck} />
           </section>
         )}
         {isHarvest && (
-          <section className="work-entry-section">
+          <section className={workFormSectionClass}>
             <h4>Planeeritud saak</h4>
             <HarvestEditor value={harvest} onChange={setHarvest} areaHa={area} showTotals />
           </section>

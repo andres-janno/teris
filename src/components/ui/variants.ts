@@ -477,3 +477,12 @@ export const tableNameClass = 'm-0 text-base font-normal text-foreground';
 export const tableTitleLineClass = 'flex flex-wrap items-center gap-2';
 export const tableSubTagsClass = 'mt-1 flex flex-wrap items-center gap-1.5';
 export const tableMutedClass = 'text-subtle';
+
+/** Töö kande ja plaani vormi kere (Põllutööd: kande dialoog, plaani vorm, töö lisamine): veerg gap 12px, kerib. Vana `.work-entry-body`, `.add-work-body`. */
+export const dialogStackBodyClass = 'flex flex-col gap-3 overflow-y-auto';
+/** Töö vormi väljaruudustik (veerud tulevad vaatelt): gap 10px, väljad alla joondatud. Vana `.work-entry-grid`. */
+export const workFormGridClass = 'grid items-end gap-2.5';
+/** Töö vormi jaotis: pealkiri h4 14px/600 + sisu, gap 8px. Vana `.work-entry-section`. */
+export const workFormSectionClass = 'flex flex-col gap-2 [&>h4]:m-0 [&>h4]:text-base [&>h4]:font-semibold [&>h4]:leading-natural [&>h4]:text-foreground';
+/** Töö vormi vihje (12px, hall, ikooniga). Vana `.work-entry-hint`. */
+export const workFormHintClass = 'm-0 flex items-start gap-1.5 text-xs leading-natural text-muted-foreground';

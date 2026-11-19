@@ -7,6 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
+  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
@@ -731,5 +732,14 @@ describe('tabeli sisu konstandid (etapp 4e)', () => {
     expect(v.tableTitleLineClass).toContain('gap-2');
     for (const t of ['mt-1', 'gap-1.5', 'flex-wrap']) expect(v.tableSubTagsClass).toContain(t);
     expect(v.tableMutedClass).toBe('text-subtle');
+  });
+});
+
+describe('töö vormi konstandid (etapp 4e)', () => {
+  it('kere veerg gap 12px ja kerib; ruudustik gap 10px, väljad alla joondatud; jaotis gap 8px koos h4 14px/600; vihje 12px', () => {
+    for (const t of ['flex-col', 'gap-3', 'overflow-y-auto']) expect(v.dialogStackBodyClass).toContain(t);
+    for (const t of ['grid', 'items-end', 'gap-2.5']) expect(v.workFormGridClass).toContain(t);
+    for (const t of ['gap-2', '[&>h4]:text-base', '[&>h4]:font-semibold']) expect(v.workFormSectionClass).toContain(t);
+    expect(v.workFormHintClass).toContain('text-xs');
   });
 });

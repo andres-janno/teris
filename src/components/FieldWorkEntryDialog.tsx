@@ -12,7 +12,17 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar } from './ui';
+import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass } from './ui';
+
+// Kande vormi ruudustike veerud (ruudustiku enda kest: workFormGridClass); kitsal ekraanil kaks veergu
+const GRID_TOP = 'grid-cols-none grid-flow-col auto-cols-[minmax(0,1fr)] max-[680px]:grid-cols-2 max-[680px]:grid-flow-row';
+const GRID_AREA = 'grid-cols-[140px_155px_auto_minmax(0,1fr)] max-[680px]:grid-cols-2 max-[680px]:grid-flow-row';
+const GRID_FOUR = 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_110px]';
+// Telemeetria soovitus: roheline identiteet (primary); valitud olek = töö valiku roheline (primary-strong)
+const PILL = 'flex flex-wrap items-center justify-between gap-2.5 border-primary/35 px-3 py-2 hover:-translate-y-px hover:border-primary hover:bg-primary/12 hover:shadow-sm';
+const PILL_ON = 'border-primary-strong bg-primary-strong/8 hover:translate-y-0 hover:border-primary-strong hover:bg-primary-strong/8 hover:shadow-none';
+// Info-teade (vana .work-entry-warning)
+const NOTICE = 'gap-2 rounded-md bg-info/10 text-foreground';
 
 interface Option {
   id: string;
@@ -412,10 +422,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
         <DialogForm onSubmit={save}>
           <DialogHeader title={`${entry ? 'Muuda kannet' : 'Lisa kanne'}: ${work.workTypeName}`} description={fieldLabel} />
 
-          <DialogBody className="work-entry-body">
+          <DialogBody className={dialogStackBodyClass}>
             {(others.length > 0 || fieldAreaHa > 0) && (
-              <div className="work-entry-progress">
-                <div className="work-entry-progress-head">
+              <div className="flex flex-col gap-1.5 rounded-md border border-border bg-muted px-3 py-2.5">
+                <div className="flex justify-between text-sm leading-natural text-muted-foreground [&_strong]:text-foreground">
                   <strong>Varasemad kanded: {others.length}</strong>
                   {fieldAreaHa > 0 && <span>{fmtHa(doneBefore)} / {fmtHa(fieldAreaHa)} ha tehtud</span>}
                 </div>
@@ -426,43 +436,43 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {entry?.financeStatus === 'CONFIRMED' && (
-              <div className="work-entry-warning">
+              <Alert size="sm" className={NOTICE}>
                 <Info size={14} />
                 <span>Kande finants on kinnitatud. Koguste muutmisel tuleb finantsjuhil kanne uuesti kinnitada.</span>
-              </div>
+              </Alert>
             )}
 
             {loadingSuggestions && (
-              <div className="telemetry-loading-notice">
-                <Radio size={14} className="telemetry-pulse-icon" />
+              <div className="flex items-center gap-2 rounded-sm bg-primary/8 px-3 py-1.5 text-sm leading-natural text-success-text">
+                <Radio size={14} />
                 <span>Kontrollin telemeetriat...</span>
               </div>
             )}
 
             {telemetrySuggestions.length > 0 && (
-              <div className="telemetry-suggestions-card">
-                <div className="telemetry-suggestions-head">
-                  <div className="telemetry-suggestions-title">
-                    <Radio size={14} className="telemetry-pulse-icon" />
+              <div className="flex flex-col gap-2 rounded-md border border-primary/30 bg-linear-135 from-primary/8 to-primary/4 px-3 py-2.5">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 text-sm font-semibold leading-natural text-success-text">
+                    <Radio size={14} />
                     <span>Telemeetria tuvastatud põllusõidud ({telemetrySuggestions.length}):</span>
                   </div>
-                  <span className="telemetry-suggestions-hint">Klõpsa kande eeltäitmiseks</span>
+                  <span className="text-xs leading-natural text-muted-foreground">Klõpsa kande eeltäitmiseks</span>
                 </div>
-                <div className="telemetry-suggestions-list">
+                <div className="flex flex-col gap-1.5">
                   {telemetrySuggestions.map((s) => {
                     const state = suggestionState(s);
                     const isSelected = state !== null;
                     return (
-                      <div key={s.id} className="telemetry-suggestion-item">
+                      <div key={s.id} className="flex flex-col items-stretch gap-1">
                       <CardButton
                         variant="option"
                         padding="none"
                         aria-pressed={isSelected}
-                        className={`telemetry-suggestion-pill ${isSelected ? 'selected' : ''}`}
+                        className={cn(PILL, isSelected && PILL_ON)}
                         onClick={() => applySuggestion(s)}
                       >
-                        <div className="telemetry-pill-row">
-                          <span className="telemetry-pill-vehicle">🚜 {s.vehicleName || 'Tehnika'}</span>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-base font-medium leading-natural text-foreground">🚜 {s.vehicleName || 'Tehnika'}</span>
                           {s.implementName ? (
                             <Badge tone="info" size="md">+{s.implementName}</Badge>
                           ) : (
@@ -474,7 +484,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                               <span> · {fmtHa(s.workedAreaHa)} ha</span>
                             ) : (
                               s.workedAreaHa == null ? (
-                                <span className="telemetry-pill-missing" title="Haakeriista või selle töölaiust pole seoste registris">
+                                <span className="text-destructive" title="Haakeriista või selle töölaiust pole seoste registris">
                                   {' · '}ha puudub
                                 </span>
                               ) : (
@@ -484,9 +494,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                             {s.fuelLiters != null && <span> · {formatQty(s.fuelLiters)} l</span>}
                           </Badge>
                         </div>
-                        <div className="telemetry-pill-meta">
-                          {s.workerName && <span className="telemetry-pill-worker">👤 {s.workerName}</span>}
-                          <span className="telemetry-pill-field" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
+                        <div className="flex items-center gap-2">
+                          {s.workerName && <span className="text-sm leading-natural text-muted-foreground">👤 {s.workerName}</span>}
+                          <span className="text-xs leading-natural text-muted-foreground tabular-nums" title="Põllu piirides oldud aeg; pindala arvutatakse ainult põllu piirides sõidust">
                             Põllul {s.fieldStartTime} – {s.fieldEndTime}
                           </span>
                           <Badge tone="success" variant={isSelected ? 'solid' : 'soft'}>
@@ -496,7 +506,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                         {s.route && <TripRouteView route={s.route} compact highlightPlaceId={String(work.fieldSeasonId)} />}
                       </CardButton>
                       {isSelected && (
-                        <Button type="button" size="sm" className="telemetry-pill-unlink" onClick={unlinkTrip}>
+                        <Button type="button" size="sm" className="self-end" onClick={unlinkTrip}>
                           Eemalda seos
                         </Button>
                       )}
@@ -507,7 +517,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               </div>
             )}
 
-            <div className="work-entry-grid work-entry-top-grid">
+            <div className={cn(workFormGridClass, GRID_TOP)}>
               <Field label="Kuupäev *" htmlFor="we-date">
                 <DateInput id="we-date" value={date} onChange={setDate} />
               </Field>
@@ -550,8 +560,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             </div>
 
             {/* Tehtud pindala enne masinat ja materjale: materjalide kogused arvutatakse selle pealt */}
-            <div className="work-entry-section">
-              <div className="work-entry-grid work-entry-area-grid">
+            <div className={workFormSectionClass}>
+              <div className={cn(workFormGridClass, GRID_AREA)}>
                 <Field label="Tehtud pindala, ha" htmlFor="we-area">
                   <NumberInput
                     id="we-area"
@@ -580,7 +590,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   />
                 </Field>
                 {fieldAreaHa > 0 && (
-                  <p className="work-entry-hint align-end">Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
+                  <p className={cn(workFormHintClass, 'pb-2')}>Kokku pärast kannet {fmtHa(totalAfter)} / {fmtHa(fieldAreaHa)} ha</p>
                 )}
               </div>
 
@@ -590,8 +600,8 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   ? AREA_PERCENTAGES.find((pct) => Math.abs(totalAfter - presetTarget(pct)) < 0.005) ?? null
                   : null;
                 return (
-                <div className="work-entry-area-presets">
-                  <span className="work-entry-presets-label">Põllust tehtud:</span>
+                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-md border border-border bg-muted px-2.5 py-2">
+                  <span className="mr-0.5 text-xs font-medium leading-natural text-muted-foreground">Põllust tehtud:</span>
                   {/* Eelseadistus ei ole püsiv valik: klõps täidab pindala välja, märgitud on ainult täpne vaste.
                       Klõps rakendab eelseadistuse alati (onClick), ka märgitud oma uuesti; onValueChange ei tee midagi. */}
                   <ToggleGroup aria-label="Pindala osa" value={matchedPct == null ? '' : String(matchedPct)} onValueChange={() => undefined}>
@@ -622,9 +632,9 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               })()}
             </div>
 
-            <section className="work-entry-section">
+            <section className={workFormSectionClass}>
               <h4>Masin ja haakeriist</h4>
-              <div className="work-entry-grid four">
+              <div className={cn(workFormGridClass, GRID_FOUR)}>
                 <Field label="Masin" htmlFor="we-vehicle">
                   <FilterClear fill active={!!vehicleId} onClear={() => setVehicleId('')}>
                     <FilterSelect fill id="we-vehicle" value={vehicleId} onChange={setVehicleId}
@@ -644,11 +654,11 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   <NumberInput id="we-fuel" decimals={1} value={fuelLiters} onChange={setFuelLiters} />
                 </Field>
               </div>
-              <p className="work-entry-hint"><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
+              <p className={workFormHintClass}><Info size={13} /> Töötunnid kehtivad nii masinale kui haakeriistale. Haakeriista vahetusel lisa uus kanne.</p>
             </section>
 
             {(work.usesMaterials || rows.length > 0) && (
-              <section className="work-entry-section">
+              <section className={workFormSectionClass}>
                 <h4>Materjalid</h4>
                 <PriaLinesEditor activity={activity} rows={rows} onChange={setRows} articles={articles} areaHa={areaNum} showTotals seedCheck={seedCheck}
                   warehouses={warehouses} defaultWarehouseId={defaultWarehouseId} />
@@ -656,7 +666,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {isHarvest && (
-              <section className="work-entry-section">
+              <section className={workFormSectionClass}>
                 <h4>Saak</h4>
                 {(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
                   <Field label="Saagipartii" htmlFor="we-lot">
@@ -668,7 +678,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                   </Field>
                 )}
                 {entry?.harvestLotName && !(openLots.length > 1 || (openLots.length > 0 && !!entry?.harvestLotId && !openLots.some((l) => l.id === entry.harvestLotId))) && (
-                  <p className="muted">Partii: {entry.harvestLotName}</p>
+                  <p>Partii: {entry.harvestLotName}</p>
                 )}
                 <CheckboxField checked={manual} disabled={imported} onCheckedChange={setManual} label="Sisesta tonnid käsitsi" />
                 <HarvestEditor
@@ -683,7 +693,7 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {activity === PRIA_ACTIVITY.MONITORING && (
-              <section className="work-entry-section">
+              <section className={workFormSectionClass}>
                 <h4>Seire leiud</h4>
                 <ObservationsEditor rows={observations} onChange={setObservations} />
               </section>
@@ -693,12 +703,12 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
               <Textarea id="we-notes" rows={2} placeholder="nt mullaniiskus, katkestused, tähelepanekud" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </Field>
 
-            <div className={`work-entry-finish ${finish ? 'on' : ''}`}>
+            <div className={cn('flex items-start gap-2.5 rounded-md border border-border px-3 py-2.5', finish && 'border-primary-strong bg-primary-strong/8')}>
               <CheckboxField checked={finish} onCheckedChange={setFinish} label={<strong>Töö on sellega lõpetatud</strong>}
                 hint="Märgi ainult siis, kui rohkem kandeid ei tule. 100% puhul lõpetatakse automaatselt." />
             </div>
 
-            <p className="work-entry-hint">
+            <p className={workFormHintClass}>
               <Info size={13} /> Sisesta ainult kogused. Finantskulu lisab finantsjuht selle kande juurde.
             </p>
             {error && <Alert tone="error">{error}</Alert>}

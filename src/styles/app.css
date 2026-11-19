@@ -26,6 +26,8 @@
 @source '../components/FinanceModal.tsx';
 @source '../components/FieldWorksBoard.tsx';
 @source '../components/FieldWorkPlanForm.tsx';
+@source '../components/FieldWorkEntryDialog.tsx';
+@source '../components/PriaLinesEditor.tsx';
 @source '../components/ArticleFormDialog.tsx';
 @source '../components/TripRegister.tsx';
 @source '../components/TripDialog.tsx';

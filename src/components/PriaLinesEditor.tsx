@@ -10,7 +10,12 @@ import {
 import { convertQty } from '../services/units';
 import { matchesPriaKind } from '../services/articleRules';
 import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
-import { Button, FilterSelect, Input, NumberInput, type FilterSelectOption } from './ui';
+import { Alert, Button, FilterSelect, Input, NumberInput, cn, type FilterSelectOption } from './ui';
+
+// PRIA read: veerupäisega ruudustik (veerud tulevad style-ist); kitsal ekraanil lahtrid murduvad
+const PRIA_GRID = 'grid items-center gap-1.5 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_[data-slot=filter-select]]:w-full [&_[data-slot=filter-select]]:min-w-0 max-[760px]:flex max-[760px]:flex-wrap max-[760px]:[&_[data-slot=input]]:flex-1 max-[760px]:[&_[data-slot=input]]:basis-35 max-[760px]:[&_[data-slot=filter-select]]:flex-1 max-[760px]:[&_[data-slot=filter-select]]:basis-35 max-[760px]:[&_[data-slot=input][inputmode]]:flex-initial max-[760px]:[&_[data-slot=input][inputmode]]:basis-22.5';
+const PRIA_HEAD = 'px-0.5 text-xs font-semibold leading-natural text-muted-foreground max-[760px]:hidden [&>.num]:text-right';
+const PRIA_LINES = 'flex flex-col gap-1.5';
 
 export interface PriaRow {
   articleId: string; label: string; unit: string; ratePerHa: string; total: string;
@@ -156,26 +161,26 @@ export const PriaLinesEditor: React.FC<PriaLinesEditorProps> = ({ activity, rows
   const seedMismatches = isSeed ? seedCropMismatches(rows.map((r) => r.articleId), articles, seedCheck) : [];
 
   return (
-    <div className="pria-lines">
+    <div className={PRIA_LINES}>
       {seedMismatches.length > 0 && (
-        <div className="work-entry-warning" role="alert">
+        <Alert size="sm" className="gap-2 rounded-md bg-info/10 text-foreground" role="alert">
           <AlertTriangle size={14} />
           <span>
             Põllu kultuur on {seedCheck?.seasonCrop?.name}, aga {seedMismatches.map((m) => `„${m.articleName}" on ${m.seedCropName.toLowerCase()} seeme`).join(', ')}.
             Kontrolli seemet või külvikorra kultuuri.
           </span>
-        </div>
+        </Alert>
       )}
       {rows.length > 0 && (
-        <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
+        <div className={cn(PRIA_GRID, PRIA_HEAD)} style={grid} aria-hidden="true">
           {columns.map((c, k) => <span key={k} className={c.num ? 'num' : undefined}>{c.label}</span>)}
         </div>
       )}
       {rows.map((r, i) => (
-        <div key={i} className="pria-grid" style={grid}>
+        <div key={i} className={PRIA_GRID} style={grid}>
           <FilterSelect fill size="sm" ariaLabel="Register/materjal" value={r.priaRegister} onChange={(v) => set(i, { priaRegister: v })}
             options={optionsOf('– vali –', registersFor(activity), r.priaRegister)} />
-          <div className="pria-article-cell">
+          <div className="flex min-w-0 flex-col">
             <FilterSelect fill size="sm" ariaLabel={isSeed ? 'Sort' : 'Toode'} value={r.articleId} onChange={(v) => pickArticle(i, v)}
               options={[{ value: '', label: r.label && !r.articleId ? r.label : '– Kulumaterjalidest –' }, ...options.map((m) => ({ value: m.id, label: m.name }))]} />
           </div>
@@ -215,8 +220,8 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
   // Sama veerupäisega ruudustik nagu materjaliridadel
   const grid = { gridTemplateColumns: `minmax(140px, 1.2fr) minmax(140px, 1.2fr) ${showBunkers ? '84px ' : ''}84px${showTotals ? ' 92px' : ''}` };
   return (
-    <div className="pria-lines">
-      <div className="pria-grid pria-grid-head" style={grid} aria-hidden="true">
+    <div className={PRIA_LINES}>
+      <div className={cn(PRIA_GRID, PRIA_HEAD)} style={grid} aria-hidden="true">
         <span>Kultuuri tüüp</span>
         <span>Saagi tüüp</span>
         {showBunkers && <span className="num">Punkreid *</span>}
@@ -227,7 +232,7 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
               {showTotals && <span className="num">Kokku, t</span>}
             </>}
       </div>
-      <div className="pria-grid" style={grid}>
+      <div className={PRIA_GRID} style={grid}>
         <FilterSelect fill size="sm" ariaLabel="Kultuuri tüüp" value={value.priaSpec} onChange={(v) => onChange({ ...value, priaSpec: v })}
           options={optionsOf('– vali –', CROP_TYPES, value.priaSpec)} />
         <FilterSelect fill size="sm" ariaLabel="Saagi tüüp" value={value.priaKind} onChange={(v) => onChange({ ...value, priaKind: v })}
@@ -237,7 +242,7 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
             onChange={(n) => onChange({ ...value, bunkers: numText(n) })} />
         )}
         {tonnesText != null ? (
-          <span className="num muted" style={{ gridColumn: `span ${showTotals ? 2 : 1}` }}>{tonnesText}</span>
+          <span className="num" style={{ gridColumn: `span ${showTotals ? 2 : 1}` }}>{tonnesText}</span>
         ) : (
           <>
             <NumberInput size="sm" decimals={3} aria-label="Saak t/ha" placeholder="t/ha" value={numValue(value.ratePerHa)}
@@ -256,9 +261,9 @@ export const HarvestEditor: React.FC<{ value: HarvestRow; onChange: (v: HarvestR
 const OBS_GRID = { gridTemplateColumns: 'minmax(140px, 1fr) minmax(160px, 1.6fr) 90px minmax(90px, 0.6fr) 28px' };
 
 export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChange: (rows: WorkEntryObservation[]) => void }> = ({ rows, onChange }) => (
-  <div className="pria-lines">
+  <div className={PRIA_LINES}>
     {rows.length > 0 && (
-      <div className="pria-grid pria-grid-head" style={OBS_GRID} aria-hidden="true">
+      <div className={cn(PRIA_GRID, PRIA_HEAD)} style={OBS_GRID} aria-hidden="true">
         <span>Seire liik</span>
         <span>Leid</span>
         <span className="num">Kogus</span>
@@ -269,12 +274,12 @@ export const ObservationsEditor: React.FC<{ rows: WorkEntryObservation[]; onChan
     {rows.map((o, i) => {
       const set = (p: Partial<WorkEntryObservation>) => onChange(rows.map((r, j) => (j === i ? { ...r, ...p } : r)));
       return (
-        <div key={i} className="pria-grid" style={OBS_GRID}>
+        <div key={i} className={PRIA_GRID} style={OBS_GRID}>
           <FilterSelect fill size="sm" ariaLabel="Seire liik" value={o.priaRegister ?? ''} onChange={(v) => set({ priaRegister: v || null, unit: OBSERVATION_UNITS[v] ?? '' })}
             options={optionsOf('– vali –', Object.keys(OBSERVATION_UNITS), o.priaRegister ?? '')} />
           <Input size="sm" aria-label="Leid" placeholder="nt Põldsinep" value={o.label} onChange={(e) => set({ label: e.target.value })} />
           <ObservationQuantity value={o.quantity} unit={o.unit} onChange={(quantity) => set({ quantity })} />
-          <span className="work-entry-unit">{o.unit}</span>
+          <span className="text-sm leading-natural text-muted-foreground">{o.unit}</span>
           <Button type="button" variant="danger-ghost" size="icon-sm" aria-label="Eemalda rida" onClick={() => onChange(rows.filter((_, j) => j !== i))}><Trash2 size={14} /></Button>
         </div>
       );
