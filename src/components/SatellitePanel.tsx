@@ -11,7 +11,7 @@ import type { FieldCollection } from '../types/field';
 import { api } from '../services/api';
 import { NDVI_CLASSES } from '../services/ndvi';
 import { SATELLITE_PRODUCTS, NDVI_LEGEND_GRADIENT, NDPI_LEGEND_GRADIENT, SATELLITE_COLOR_LEGENDS, type SatelliteProductId } from '../services/satelliteLayer';
-import { Button, Card, CheckboxField, Select, ToggleGroup, ToggleGroupItem, type SelectOption } from './ui';
+import { Button, Card, CheckboxField, LegendItem, ProgressBar, Select, ToggleGroup, ToggleGroupItem, cn, type SelectOption } from './ui';
 import { loadingSpinnerInlineClass } from './ui/variants';
 
 const FIRST_YEAR = 2015;
@@ -40,6 +40,24 @@ const NDPI_LEGEND_TICKS = [
 // Sama mis serveris (satelliteClouds.ts): andmeid ≥ 90% põldudest, pilves ≤ 10%
 const CLEAR_MIN_COVERAGE = 0.9;
 const CLEAR_MAX_CLOUD = 0.1;
+
+// Paneeli tekstid (vana .satellite-panel-note: 11px, rea kõrgus 1,35 ≈ 15px)
+const NOTE = 'text-2xs leading-3.75';
+// Alumine ja ülemine kuupäevarida (vana .satellite-date-row): nool · kuupäev · nool; esitus · periood
+const DATE_ROW = 'grid items-center gap-1';
+// Märkeruut paneeli 12px kirjas (vana .satellite-cloudfree: flex, 6px vahe, font-size inherit, nupp ilma ülavaheta)
+const CLOUDFREE = 'flex items-center gap-1.5 text-xs leading-natural [&>button]:mt-0';
+
+// Legendiriba väärtused: esimene vasakus servas, viimane paremas, ülejäänud keskel
+const LegendTicks: React.FC<{ ticks: { label: string; pos: number }[] }> = ({ ticks }) => (
+  <div className="relative h-3 text-2xs leading-natural">
+    {ticks.map((t, i) => (
+      <span key={t.label} className={cn('absolute top-px', i === 0 ? '' : i === ticks.length - 1 ? '-translate-x-full' : '-translate-x-1/2')} style={{ left: `${t.pos}%` }}>
+        {t.label}
+      </span>
+    ))}
+  </div>
+);
 
 type CloudStat = { date: string; coverage: number; cloud: number };
 type Polygons = number[][][][];
@@ -288,27 +306,27 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
   const colorLegend = SATELLITE_COLOR_LEGENDS[product];
 
   const panel = (
-    <Card variant="floating" padding="sm" className="satellite-panel">
-      <div className="satellite-panel-title">
+    <Card variant="floating" padding="sm" className="flex w-full flex-col gap-1.5 text-xs leading-natural text-muted-foreground">
+      <div className="flex items-center gap-2 font-semibold text-foreground">
         Satelliidipilt
-        <span className="satellite-panel-source">Sentinel-2 · Satiladu</span>
+        <span className="font-medium text-muted-foreground">Sentinel-2 · Satiladu</span>
         {loading && <Loader2 size={12} className={loadingSpinnerInlineClass} aria-label="Laadimine" />}
       </div>
 
       <ToggleGroup
-        className="satellite-product-row"
+        className="flex w-full"
         aria-label="Satelliidi toode"
         value={product}
         onValueChange={(next) => onSelectProduct(next as SatelliteProductId)}
       >
         {(Object.keys(SATELLITE_PRODUCTS) as SatelliteProductId[]).map((id) => (
-          <ToggleGroupItem key={id} value={id} title={SATELLITE_PRODUCTS[id].title}>
+          <ToggleGroupItem key={id} value={id} className="min-w-0 flex-1 justify-center px-1" title={SATELLITE_PRODUCTS[id].title}>
             {SATELLITE_PRODUCTS[id].label}
           </ToggleGroupItem>
         ))}
       </ToggleGroup>
 
-      <div className="satellite-date-row">
+      <div className={cn(DATE_ROW, 'grid-cols-[auto_minmax(0,1fr)_auto]')}>
         <Button
           type="button"
           variant="ghost"
@@ -321,6 +339,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </Button>
         <Select
           size="sm"
+          className="min-w-0"
           value={dates.length ? (date ?? '') : ''}
           onValueChange={(v) => onSelectDate(v || null)}
           disabled={!dates.length}
@@ -339,12 +358,11 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </Button>
       </div>
 
-      <div className="satellite-date-row satellite-play-row">
+      <div className={cn(DATE_ROW, 'grid-cols-[auto_minmax(0,1fr)]')}>
         <Button
           type="button"
           variant="ghost"
           size="sm"
-          className={playing ? 'active' : undefined}
           title={playing ? 'Peata' : 'Mängi pildid läbi vanimast uusimani'}
           aria-pressed={playing}
           disabled={dates.length < 2}
@@ -355,6 +373,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         </Button>
         <Select
           size="sm"
+          className="min-w-0"
           value={period}
           onValueChange={setPeriod}
           aria-label="Periood"
@@ -363,67 +382,58 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
       </div>
 
       {date && (
-        <div className="satellite-panel-note" title="Sentinel-2 lendab Eesti kohalt üle alati keskpäeva paiku; sama koha kohta tuleb pilt keskmiselt iga 2–3 päeva järel">
+        <div className={NOTE} title="Sentinel-2 lendab Eesti kohalt üle alati keskpäeva paiku; sama koha kohta tuleb pilt keskmiselt iga 2–3 päeva järel">
           Pildistatud {formatDate(date)} umbes kell {passTimeRange(date)}
         </div>
       )}
 
       <CheckboxField
-        className="satellite-cloudfree"
+        className={CLOUDFREE}
         checked={fieldsOnly}
         onCheckedChange={() => onToggleFieldsOnly()}
         label={<span title="Põldudest väljapoole jäävaid kaardiplaate ei laadita — kiirem ja selgem">Näita pilti ainult põldudel</span>}
       />
 
       <CheckboxField
-        className="satellite-cloudfree"
+        className={CLOUDFREE}
         checked={cloudFree}
         onCheckedChange={setCloudFree}
         label={`Ainult pilvevabad päevad ${fieldCount > 0 ? `nähtavatel põldudel (${fieldCount})` : 'kaardivaate alal'}`}
       />
 
       {cloudFree && progress && progress.checked < progress.total && (
-        <div className="satellite-progress" title="Esimesel korral laaditakse iga päeva pilt; edaspidi on tulemus kohe olemas">
-          <div className="satellite-progress-bar">
-            <div style={{ width: `${(progress.checked / Math.max(1, progress.total)) * 100}%` }} />
-          </div>
+        <div className="flex flex-col gap-0.5 text-2xs leading-natural" title="Esimesel korral laaditakse iga päeva pilt; edaspidi on tulemus kohe olemas">
+          <ProgressBar className="h-1" value={(progress.checked / Math.max(1, progress.total)) * 100} aria-label="Pilvisuse kontroll" />
           <span>Kontrollin pilvisust: {progress.checked} / {progress.total} päeva</span>
         </div>
       )}
 
       {error ? (
-        <div className="satellite-panel-note error">{error}</div>
+        <div className={cn(NOTE, 'text-destructive')}>{error}</div>
       ) : !loading && !dates.length ? (
-        <div className="satellite-panel-note">
+        <div className={NOTE}>
           {cloudFree
             ? `Selle perioodi jooksul polnud ${fieldCount > 0 ? 'nähtavad põllud' : 'kaardivaade'} ühelgi päeval pilvevaba — suumi lähemale (vähem põlde korraga) või lülita filter välja.`
             : 'Selle perioodi kohta pilte pole.'}
         </div>
       ) : cloudFree ? (
-        <div className="satellite-panel-note">
+        <div className={NOTE}>
           Pilvevaba = pildil on ≥ 90% {fieldCount > 0 ? 'põldudest' : 'alast'} ja sellest pilves või udus ≤ 10%.
         </div>
       ) : (
-        <div className="satellite-panel-note">Pilves või lennuribast välja jäänud alad on pildil tühjad või valged.</div>
+        <div className={NOTE}>Pilves või lennuribast välja jäänud alad on pildil tühjad või valged.</div>
       )}
 
       {product === 'ndvi' && (
-        <div className="satellite-ndvi-legend">
-          <div className="satellite-ndvi-bar" style={{ backgroundImage: NDVI_LEGEND_GRADIENT }} />
-          <div className="satellite-ndvi-labels">
-            {NDVI_LEGEND_TICKS.map((t) => (
-              <span key={t.label} style={{ left: `${t.pos}%` }}>{t.label}</span>
-            ))}
-          </div>
-          <div className="satellite-ndvi-classes">
+        <div>
+          <div className="h-2 rounded-sm" style={{ backgroundImage: NDVI_LEGEND_GRADIENT }} />
+          <LegendTicks ticks={NDVI_LEGEND_TICKS} />
+          <div className="flex flex-wrap gap-x-2.5 gap-y-0.5 text-2xs">
             {NDVI_CLASSES.map((c, i) => (
-              <span key={c.key}>
-                <i style={{ backgroundColor: c.color }} />
-                {i === 0 ? '< 0,25' : i === 1 ? '0,25–0,5' : '> 0,5'} {c.label.toLowerCase()}
-              </span>
+              <LegendItem key={c.key} color={c.color} className="gap-1 text-2xs leading-natural" label={`${i === 0 ? '< 0,25' : i === 1 ? '0,25–0,5' : '> 0,5'} ${c.label.toLowerCase()}`} />
             ))}
           </div>
-          <div className="satellite-panel-note">
+          <div className={NOTE}>
             Mida rohelisem, seda tihedam elus taimkate. Augustis–septembris on punane enamasti koristatud või
             haritud põld, kevadel hõre oras. Klõpsa põllul, et näha selle päeva keskmist NDVI-d.
           </div>
@@ -431,22 +441,15 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
       )}
 
       {product === 'ndpi' && (
-        <div className="satellite-ndvi-legend">
-          <div className="satellite-ndvi-bar" style={{ backgroundImage: NDPI_LEGEND_GRADIENT }} />
-          <div className="satellite-ndvi-labels">
-            {NDPI_LEGEND_TICKS.map((t) => (
-              <span key={t.label} style={{ left: `${t.pos}%` }}>{t.label}</span>
-            ))}
-          </div>
-          <div className="satellite-color-legend">
+        <div>
+          <div className="h-2 rounded-sm" style={{ backgroundImage: NDPI_LEGEND_GRADIENT }} />
+          <LegendTicks ticks={NDPI_LEGEND_TICKS} />
+          <div className="flex flex-col gap-0.5 text-2xs">
             {NDPI_CLASSES.map((c) => (
-              <span key={c.label}>
-                <i style={{ backgroundColor: c.color }} />
-                {c.label}
-              </span>
+              <LegendItem key={c.label} color={c.color} className="items-start text-2xs leading-natural" label={c.label} />
             ))}
           </div>
-          <div className="satellite-panel-note">
+          <div className={NOTE}>
             Veekogude indeks: vesi on alla nulli (tumesinine), taimkate madal, paljas muld kõrge. Mida
             kollasem põld, seda vähem on sellel taimi — hea künni, külvieelse põllu ja tühjade laikude
             leidmiseks.
@@ -455,16 +458,13 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
       )}
 
       {colorLegend && (
-        <div className="satellite-ndvi-legend">
-          <div className="satellite-color-legend">
+        <div>
+          <div className="flex flex-col gap-0.5 text-2xs">
             {colorLegend.map((c) => (
-              <span key={c.label}>
-                <i style={{ backgroundColor: c.color }} />
-                {c.label}
-              </span>
+              <LegendItem key={c.label} color={c.color} className="items-start text-2xs leading-natural" label={c.label} />
             ))}
           </div>
-          <div className="satellite-panel-note">
+          <div className={NOTE}>
             {product === 'nrg'
               ? 'Lähi-infrapuna on punane kanal: taimed peegeldavad seda tugevalt, seega mida erksam punane, seda elujõulisem taimkate. Kahvatu või tumepunane põld kasvuajal viitab kehvemale kasvule.'
               : 'Punane kanal = NDVI (taimkate), roheline = lähi-infrapuna (biomass), sinine = NDPI (paljas muld). Kollasel põllul on nii taimkate kui biomass suured; lilla toon tähendab paljast mulda.'}

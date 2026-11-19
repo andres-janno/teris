@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
 import { createSatelliteLayer, type ClipField, type SatelliteProductId } from '../services/satelliteLayer';
 import { SatellitePanel } from './SatellitePanel';
-import { Button, Card } from './ui';
+import { Button, Card, ProgressBar } from './ui';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -1062,16 +1062,16 @@ export const MapView: React.FC<MapViewProps> = ({
       />
 
       {/* Floating coordinates bar */}
-      <Card ref={coordsDisplayRef} variant="floating" padding="none" className="coords-tracker">
+      <Card ref={coordsDisplayRef} variant="floating" padding="none" className="pointer-events-none absolute bottom-6 left-20 z-800 rounded-md px-3 py-1.5 font-mono text-xs leading-natural text-muted-foreground">
         WGS84: 58.13800, 25.88200 | L-EST97: X 532800 Y 6531200
       </Card>
 
       {/* Sajuradari legend */}
       {visibility.weatherRadar && (
-        <Card variant="floating" padding="none" className="radar-legend">
-          <div className="radar-legend-title">
+        <Card variant="floating" padding="none" className="pointer-events-none absolute bottom-15 left-20 z-800 rounded-md px-2.5 py-2 text-2xs leading-natural text-muted-foreground">
+          <div className="mb-1.5 flex items-baseline gap-2 font-semibold text-foreground">
             Sajuradar
-            <span className="radar-legend-time">
+            <span className="font-medium text-muted-foreground">
               {radarError
                 ? radarError
                 : radarFrames[radarFrameIdx]
@@ -1080,27 +1080,22 @@ export const MapView: React.FC<MapViewProps> = ({
             </span>
           </div>
           {radarFrames.length > 1 && (
-            <div className="radar-legend-timeline" title="Viimase 6 tunni kaadrid 5 min vahega, viimane on hetkeseis">
-              <div className="radar-legend-track">
-                <div
-                  className="radar-legend-progress"
-                  style={{ width: `${(radarFrameIdx / (radarFrames.length - 1)) * 100}%` }}
-                />
-              </div>
-              <div className="radar-legend-range">
+            <div className="mb-1.5" title="Viimase 6 tunni kaadrid 5 min vahega, viimane on hetkeseis">
+              <ProgressBar className="h-1 bg-border" value={(radarFrameIdx / (radarFrames.length - 1)) * 100} aria-label="Radari kaader" />
+              <div className="mt-0.5 flex justify-between">
                 <span>{new Date(radarFrames[0].time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}</span>
                 <span>{new Date(radarFrames[radarFrames.length - 1].time).toLocaleTimeString('et-EE', { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
           )}
-          <div className="radar-legend-scale">
+          <div className="flex items-end gap-0.5">
             {RADAR_RATE_SCALE.map((s) => (
-              <div key={s.min} className="radar-legend-step">
-                <span className="radar-legend-swatch" style={{ backgroundColor: `rgb(${s.color.join(',')})` }} />
+              <div key={s.min} className="flex min-w-5.5 flex-col items-center gap-0.5">
+                <span className="h-2 w-full rounded-sm" style={{ backgroundColor: `rgb(${s.color.join(',')})` }} />
                 <span>{s.min}</span>
               </div>
             ))}
-            <span className="radar-legend-unit">mm/h</span>
+            <span className="ml-1">mm/h</span>
           </div>
         </Card>
       )}
@@ -1122,7 +1117,7 @@ export const MapView: React.FC<MapViewProps> = ({
 
       {/* Add POI Banner */}
       {isAddPoiMode && (
-        <Card variant="floating" padding="sm" className="add-poi-banner pulse-anim">
+        <Card variant="floating" padding="sm" className="add-poi-banner absolute top-4 left-1/2 z-900 flex -translate-x-1/2 animate-pulse items-center gap-3 text-base font-medium leading-natural">
           <span>📍 Klõpsa kaardile, et määrata asukoht. Kaardil on ajutiselt näha ainult kiht „Muud asukohad“.</span>
           <Button type="button" size="sm" onClick={onCancelAddPoi} title="Katkesta (Esc)">
             Katkesta
