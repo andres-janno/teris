@@ -25,7 +25,7 @@ import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHea
 import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass } from './ui/variants';
 
 // Statistikakiip (vana .reg-stat-pill): silt, number, alamväärtus
-const STAT_PILL = 'flex items-center gap-1.5 rounded-md border border-border bg-field px-3 py-1.5 text-sm';
+const STAT_PILL = 'flex items-center gap-1.5 rounded-md border border-border bg-field px-3 py-1.5 text-sm leading-natural';
 const STAT_LBL = 'text-muted-foreground';
 const STAT_NUM = 'font-medium text-foreground';
 const STAT_SUB = 'ml-1 text-2xs';

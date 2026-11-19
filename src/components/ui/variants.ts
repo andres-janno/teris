@@ -469,5 +469,5 @@ export const infoCardClass = 'flex flex-col gap-3';
 export const infoCardTitleWrapClass = 'flex items-center gap-2.5';
 export const infoCardNameClass = 'm-0 text-base font-medium leading-natural text-foreground';
 export const infoCardSubClass = 'text-xs leading-natural text-muted-foreground';
-export const infoRowsClass = 'flex flex-col gap-1 text-xs';
+export const infoRowsClass = 'flex flex-col gap-1 text-xs leading-natural';
 export const infoRowClass = 'flex items-center gap-1.5';
