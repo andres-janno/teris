@@ -766,10 +766,6 @@ body {
   background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
 }
 
-/* ==========================================================================
-   Season Register & Season Manager Modal Styles
-   ========================================================================== */
-
 .edit-cad-locked {
   display: inline-flex;
   padding: 6px;

@@ -14,6 +14,9 @@ import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
 import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput, Field, FormGrid, Input, Textarea, PageHeader } from './ui';
 
+// Numbrilahter: püsilaiusega kiri (pindala, arv).
+const MONO_CELL = 'font-mono text-xs leading-natural';
+
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
@@ -242,8 +245,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       <TableCell>
                         <Badge tone={meta.tone} title={meta.description}>{meta.label}</Badge>
                       </TableCell>
-                      <TableCell numeric className="font-mono text-xs leading-natural">{formatNum(areaHa, 1)}</TableCell>
-                      <TableCell numeric className="font-mono text-xs leading-natural">{formatNum(totals?.count ?? null, 0)}</TableCell>
+                      <TableCell numeric className={MONO_CELL}>{formatNum(areaHa, 1)}</TableCell>
+                      <TableCell numeric className={MONO_CELL}>{formatNum(totals?.count ?? null, 0)}</TableCell>
                       <TableCell actions onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"

@@ -403,7 +403,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* Otsing */}
           <div className="register-actions-bar">
             <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..." aria-label="Otsi kultuuri, sorti, aretajat või PRIA koodi..." />
-            <span className="text-base text-muted-foreground tabular-nums [&_strong]:text-foreground" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
+            <span className="text-lg leading-natural text-foreground" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
               Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>
             </span>
           </div>
