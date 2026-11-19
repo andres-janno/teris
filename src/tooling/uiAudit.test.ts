@@ -511,8 +511,9 @@ describe('vanad Tehnika ja sõitude klassid (etapp 4c)', () => {
   it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="swap-option-item fleet-top-bar trip-stop-dot" /> {/* gauge-item kommentaar */}' },
-      { path: 'src/components/B.tsx', content: '<Field htmlFor="dev-assign-1" /><div id="trip-notes" className="vehicle-card auth-error-banner telemetry-suggestion-pill" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="imp-name"><input id="dev-model" /></Field><div id="trip-notes" className="vehicle-card auth-error-banner telemetry-suggestion-pill" />' },
+      { path: 'src/components/C.tsx', content: '<div className="dev-model" />' },
     ]);
-    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }, { path: 'src/components/C.tsx', count: 1 }]);
   });
 });

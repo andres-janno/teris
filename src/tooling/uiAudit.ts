@@ -109,18 +109,18 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
 // FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 // 4c: Tehnika ja sõitude kustutatud klassid (etapp 4c). Eesliidete asemel täpsed nimed: id-d (`dev-assign-…`, `trip-notes`) ei loe.
-// Puuduvad ka `dev-imei`, `dev-model` ja `imp-name`: need on vormiväljade id-d (VehicleTracker), mitte klassid.
+// `dev-imei`, `dev-model`, `imp-name` on ka vormiväljade id-d: id="…" ja htmlFor="…" väärtusi regex ei loe (lookbehind).
 // Jagatud klassid (vehicle-card, v-*, auth-error-banner, telemetry-suggestion-*) puuduvad teadlikult: nad jäävad 4.5/ühiste etapini.
 export const RETIRED_4C: readonly string[] = [
   'assign-datetime', 'assign-hint', 'assign-hint-active', 'attached-status', 'card-header-right', 'connectivity-type-picker',
   'dev-assign-select', 'dev-assignment-box', 'dev-card-header', 'dev-fresh-dot', 'dev-fresh-legend', 'dev-fresh-legend-item',
-  'dev-header-line', 'dev-icon-wrap', 'dev-telemetry-item', 'dev-telemetry-summary', 'dev-telemetry-time',
+  'dev-header-line', 'dev-icon-wrap', 'dev-imei', 'dev-model', 'dev-telemetry-item', 'dev-telemetry-summary', 'dev-telemetry-time',
   'dev-title-wrap', 'device-assign-label', 'device-card', 'device-unassigned-notice', 'devices-grid', 'devices-section',
   'devices-section-title', 'devices-sections', 'dot-idle', 'equipment-slot', 'filter-period', 'fleet-board-body', 'fleet-board-main',
   'fleet-board-view', 'fleet-card-notes', 'fleet-cell-date', 'fleet-cell-date-end', 'fleet-cell-duration', 'fleet-cell-main',
   'fleet-cell-notes', 'fleet-cell-sub', 'fleet-cell-title', 'fleet-edit-modal', 'fleet-form-grid', 'fleet-icon-box', 'fleet-top-bar',
   'footer-start', 'fresh-day', 'fresh-live', 'fresh-none', 'fresh-old', 'fresh-week', 'gauge-item', 'gauge-lbl', 'gauge-text',
-  'imp-actions', 'imp-assign-select', 'imp-card-footer', 'imp-card-header', 'imp-icon-wrap', 'imp-meta',
+  'imp-actions', 'imp-assign-select', 'imp-card-footer', 'imp-card-header', 'imp-icon-wrap', 'imp-meta', 'imp-name',
   'imp-serial-row', 'imp-status-box', 'imp-title-wrap', 'implement-card', 'implement-history-section', 'implements-grid',
   'inline-icon-text', 'option-info', 'swap-modal-card', 'swap-modal-desc', 'swap-option-item', 'swap-option-line',
   'swap-options-list', 'tag-text', 'telemetry-device-id', 'trip-dialog', 'trip-dialog-entry', 'trip-dialog-entry-cell',
@@ -132,7 +132,7 @@ export const RETIRED_4C: readonly string[] = [
   'v-card-footer', 'v-equipment-badge-row', 'v-gauges-grid', 'with-bottom-gap',
 ];
 const LEGACY_OVERVIEW = new RegExp(
-  `(?<![\\w-])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C].join('|')})(?![\\w-])`,
+  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C].join('|')})(?![\\w-])`,
   'g',
 );
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;

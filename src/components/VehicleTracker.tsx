@@ -1230,7 +1230,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
                 {assignmentError && (
-                  <div className="alert-box error mb-4">
+                  <div className="alert-box error">
                     {assignmentError}
                   </div>
                 )}
