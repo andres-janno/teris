@@ -45,8 +45,9 @@ const CLEAR_MAX_CLOUD = 0.1;
 const NOTE = 'text-2xs leading-3.75';
 // Alumine ja ülemine kuupäevarida (vana .satellite-date-row): nool · kuupäev · nool; esitus · periood
 const DATE_ROW = 'grid items-center gap-1';
-// Märkeruut paneeli 12px kirjas (vana .satellite-cloudfree: flex, 6px vahe, font-size inherit, nupp ilma ülavaheta)
-const CLOUDFREE = 'flex items-center gap-1.5 text-xs leading-natural [&>button]:mt-0';
+// Märkeruut paneeli 12px kirjas (vana .satellite-cloudfree: flex, 6px vahe, font-size inherit, nupp ilma ülavaheta);
+// rea kõrgus jääb 18px (vana CheckboxField text-sm rida), mitte text-xs 16px
+const CLOUDFREE = 'flex items-center gap-1.5 text-xs leading-4.5 [&>button]:mt-0';
 
 // Legendiriba väärtused: esimene vasakus servas, viimane paremas, ülejäänud keskel
 const LegendTicks: React.FC<{ ticks: { label: string; pos: number }[] }> = ({ ticks }) => (
