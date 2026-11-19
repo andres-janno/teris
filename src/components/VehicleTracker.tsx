@@ -1702,6 +1702,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <Select
                     size="sm"
                     id={`dev-assign-${dev.id}`}
+                    className="flex-1"
                     value={targetValue}
                     onValueChange={(val) => {
                       if (!val) { assignDevice(dev.id, undefined, undefined); return; }
@@ -1984,8 +1985,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       >
                         {d.connectivityType === 'eye_sensor' ? <Activity size={16} /> : <Radio size={16} />}
                         <span className="flex-1">
-                          <strong className="text-base text-foreground">{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                          <strong className="text-base leading-natural text-foreground">{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
+                          <span className="mt-0.5 block text-xs leading-natural text-muted-foreground">
                             {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
                               otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
                             )}
@@ -2030,8 +2031,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       >
                         <Wrench size={16} />
                         <span className="flex-1">
-                          <strong className="text-base text-foreground">{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
-                          <span className="mt-0.5 block text-xs text-muted-foreground">
+                          <strong className="text-base leading-natural text-foreground">{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
+                          <span className="mt-0.5 block text-xs leading-natural text-muted-foreground">
                             {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
                               otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
                             )}
