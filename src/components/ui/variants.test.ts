@@ -11,6 +11,7 @@ const allClassStrings = (): string[] => [
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   v.mapPanelTitleClass, v.loadingSpinnerClass, v.loadingSpinnerInlineClass,
+  v.infoCardClass, v.infoCardTitleWrapClass, v.infoCardNameClass, v.infoCardSubClass, v.infoRowsClass, v.infoRowClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -709,5 +710,16 @@ describe('Alert ja alamrida (etapp 4e)', () => {
     expect(v.cellSubStackedClass).toContain('mt-0.5');
     expect(v.cellSubStackedClass).toContain('text-2xs');
     expect(v).not.toHaveProperty('fleetCellSubClass');
+  });
+});
+
+describe('registrikaardi mustrid (etapp 4e)', () => {
+  it('nimi 14px/500, alamtekst 12px, inforead 12px gap 4px ja read gap 6px (vana v-name, v-model, v-info-rows, v-info-item)', () => {
+    for (const t of ['text-base', 'font-medium', 'leading-natural']) expect(v.infoCardNameClass).toContain(t);
+    expect(v.infoCardSubClass).toContain('text-xs');
+    expect(v.infoRowsClass).toContain('gap-1');
+    expect(v.infoRowsClass).toContain('flex-col');
+    expect(v.infoRowClass).toContain('gap-1.5');
+    expect(v.infoCardClass).toContain('gap-3');
   });
 });

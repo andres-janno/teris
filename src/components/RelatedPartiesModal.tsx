@@ -21,7 +21,16 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
-import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle, PageHeader } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle, PageHeader, IconBox, cn } from './ui';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass } from './ui/variants';
+
+// Statistikakiip (vana .reg-stat-pill): silt, number, alamväärtus
+const STAT_PILL = 'flex items-center gap-1.5 rounded-md border border-border bg-field px-3 py-1.5 text-sm';
+const STAT_LBL = 'text-muted-foreground';
+const STAT_NUM = 'font-medium text-foreground';
+const STAT_SUB = 'ml-1 text-2xs';
+// Kontaktirida isiku kaardil (vana .party-contact-link/-note)
+const CONTACT_ROW = 'flex min-w-0 items-start gap-2 leading-snug text-muted-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0';
 
 interface RelatedPartiesModalProps {
   isOpen: boolean;
@@ -242,7 +251,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   const editForm = isEditing && (
     <Dialog open onOpenChange={(open) => { if (!open) setIsEditing(false); }}>
-    <DialogContent size="lg" className="party-edit-modal">
+    <DialogContent size="lg">
     <DialogForm onSubmit={handleSaveForm}>
       <DialogHeader
         icon={<Edit2 size={20} />}
@@ -308,14 +317,14 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         <Users size={14} />
         <span>2. Rollid ja tegevusalad süsteemis (vali kõik sobivad)</span>
       </SectionTitle>
-      <div className="party-roles-checkbox-grid">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(180px,1fr))] gap-2 rounded-sm border border-border bg-field p-2.5">
         {ALL_ROLES.map((role) => {
           const cfg = PARTY_ROLE_CONFIG[role];
           const isSelected = editRoles.includes(role);
           return (
             <CheckboxField
               key={role}
-              className={`party-role-checkbox ${isSelected ? 'selected' : ''}`}
+              className={cn('items-center gap-2 rounded-sm border border-border bg-card px-2.5 py-1.5 text-sm transition-colors select-none hover:border-primary', isSelected && 'border-primary bg-primary/12')}
               checked={isSelected}
               onCheckedChange={() => toggleRole(role)}
               label={`${cfg.icon} ${cfg.label}`}
@@ -412,24 +421,24 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
     <>
       {/* Top Row: Quick Stats Bar (Identical pills to FieldManagerModal) */}
           <div className="register-header-controls">
-            <div className="register-stats-pills">
-              <div className="reg-stat-pill">
-                <span className="lbl">Isikuid kokku:</span>
-                <strong>{stats.total} tk</strong>
-                <span className="sub-val is-muted">
+            <div className="flex flex-wrap gap-2">
+              <div className={STAT_PILL}>
+                <span className={STAT_LBL}>Isikuid kokku:</span>
+                <strong className={STAT_NUM}>{stats.total} tk</strong>
+                <span className={cn(STAT_SUB, 'text-subtle')}>
                   ({stats.personsCount} eraisikut • {stats.companiesCount} ettevõtet)
                 </span>
               </div>
 
-              <div className="reg-stat-pill highlight">
-                <span className="lbl">🏛️ Maaomanikke:</span>
-                <strong>{stats.landownersCount} tk</strong>
-                <span className="sub-val">({stats.totalRentedAreaHa} ha seotud maad)</span>
+              <div className={cn(STAT_PILL, 'border-primary/35 bg-primary/12')}>
+                <span className={STAT_LBL}>🏛️ Maaomanikke:</span>
+                <strong className={cn(STAT_NUM, 'text-success-text')}>{stats.landownersCount} tk</strong>
+                <span className={STAT_SUB}>({stats.totalRentedAreaHa} ha seotud maad)</span>
               </div>
 
-              <div className="reg-stat-pill tenure-owned">
-                <span className="lbl">🚜 Töötajaid:</span>
-                <strong>{stats.driversCount} tk</strong>
+              <div className={cn(STAT_PILL, 'border-l-3 border-l-primary')}>
+                <span className={STAT_LBL}>🚜 Töötajaid:</span>
+                <strong className={STAT_NUM}>{stats.driversCount} tk</strong>
               </div>
             </div>
           </div>
@@ -469,7 +478,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               />
             </FilterClear>
 
-            <div className="actions-right">
+            <div>
               <Button variant="primary" size="sm" onClick={startCreate}>
                 <Plus size={14} />
                 <span>Lisa uus seotud isik</span>
@@ -479,25 +488,26 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
           {/* Seotud isikute tabel (sama stiil nagu põldude registris) */}
           {/* Isikud kaartidena (sama stiil nagu Tehnika lehel) */}
-          <div className="vehicle-grid">
+          <div className={cardGridClass}>
             {filteredParties.map((party) => {
               const isCompany = party.type === 'LEGAL_ENTITY';
               const accent = PARTY_ROLE_CONFIG[party.roles[0]]?.color;
 
               return (
-                <Card key={party.id} padding="sm" interactive className="vehicle-card" onClick={() => startEdit(party)}>
+                <Card key={party.id} padding="sm" interactive className={infoCardClass} onClick={() => startEdit(party)}>
                   <CardHeader align="start">
-                    <div className="v-title-wrap">
-                      <div
-                        className="v-avatar card-emoji-avatar"
+                    <div className={infoCardTitleWrapClass}>
+                      <IconBox
+                        size="md"
+                        className="border-border text-base leading-none"
                         style={accent ? { borderColor: accent } : undefined}
                         title={isCompany ? 'Ettevõte' : 'Eraisik'}
                       >
                         {isCompany ? '🏢' : '👤'}
-                      </div>
+                      </IconBox>
                       <div>
-                        <h4 className="v-name">{party.name}</h4>
-                        <span className="v-model">
+                        <h4 className={infoCardNameClass}>{party.name}</h4>
+                        <span className={infoCardSubClass}>
                           {party.code ? (isCompany ? `Reg: ${party.code}` : `IK: ${party.code}`) : (isCompany ? 'Ettevõte' : 'Eraisik')}
                           {party.vatNumber && ` · KMKR: ${party.vatNumber}`}
                         </span>
@@ -551,9 +561,9 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                     </CardActions>
                   </CardHeader>
 
-                  <div className="v-info-rows">
+                  <div className={infoRowsClass}>
                     {party.roles.length > 0 && (
-                      <div className="field-sub-tags">
+                      <div className="mb-0.5 flex flex-wrap items-center gap-1.5">
                         {party.roles.map((role) => {
                           const cfg = PARTY_ROLE_CONFIG[role];
                           if (!cfg) return null;
@@ -566,21 +576,21 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                       </div>
                     )}
                     {party.phone && (
-                      <a href={`tel:${party.phone}`} className="party-contact-link" title="Helista" onClick={(e) => e.stopPropagation()}>
+                      <a href={`tel:${party.phone}`} className={cn(CONTACT_ROW, 'max-w-full self-start no-underline [&>span]:wrap-anywhere [&:hover>span]:text-foreground [&:hover>span]:underline')} title="Helista" onClick={(e) => e.stopPropagation()}>
                         <Phone size={13} />
                         <span>{party.phone}</span>
                       </a>
                     )}
                     {party.email && (
-                      <a href={`mailto:${party.email}`} className="party-contact-link" title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
+                      <a href={`mailto:${party.email}`} className={cn(CONTACT_ROW, 'max-w-full self-start no-underline [&>span]:wrap-anywhere [&:hover>span]:text-foreground [&:hover>span]:underline')} title="Saada e-kiri" onClick={(e) => e.stopPropagation()}>
                         <Mail size={13} />
                         <span>{party.email}</span>
                       </a>
                     )}
                     {party.notes && (
-                      <div className="party-contact-note" title={party.notes}>
+                      <div className={cn(CONTACT_ROW, '[&>svg]:text-subtle')} title={party.notes}>
                         <MessageSquare size={13} />
-                        <span className="card-info-text">{party.notes}</span>
+                        <span className="line-clamp-2 text-muted-foreground">{party.notes}</span>
                       </div>
                     )}
                   </div>
@@ -632,7 +642,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="fit" className="field-register-modal parties-register-modal">
+      <DialogContent size="fit" className="field-register-modal min-w-[min(900px,96vw)]">
         <DialogHeader
           icon={<Users size={24} />}
           title="Seotud isikute register"

@@ -463,3 +463,11 @@ export const alertVariants = cva('flex items-center gap-2.5 rounded-sm text-sm l
 export const cellSubClass = 'text-2xs text-subtle';
 /** Alamrida teksti all tabelilahtris (vana `[data-slot="table"] .cell-sub`: 2px ülaveeris). */
 export const cellSubStackedClass = cn(cellSubClass, 'mt-0.5');
+
+/** Registrikaart (Isikud, Taristu): veerg gap 12px; päis: avatar + nimi + alamtekst; inforead 12px. Vana .vehicle-card / .v-* (v-name jääb MapMarkers HTML-stringi jaoks). */
+export const infoCardClass = 'flex flex-col gap-3';
+export const infoCardTitleWrapClass = 'flex items-center gap-2.5';
+export const infoCardNameClass = 'm-0 text-base font-medium leading-natural text-foreground';
+export const infoCardSubClass = 'text-xs leading-natural text-muted-foreground';
+export const infoRowsClass = 'flex flex-col gap-1 text-xs';
+export const infoRowClass = 'flex items-center gap-1.5';

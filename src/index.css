@@ -396,61 +396,11 @@ body {
   background: var(--bg-modal);
 }
 
-/* Vehicle Grid */
-.vehicle-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
-  gap: 12px;
-}
-
-.vehicle-card {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.v-title-wrap {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
-.v-avatar {
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-md);
-  background: var(--stat-bg);
-  border: 2px solid;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
+/* Masina nimi kaardi markeris (MapMarkers HTML) */
 .v-name {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-}
-
-.v-model {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-/* Taristu ja Isikute kaardid (Tehnika kaartide stiilis): emoji ikoonina, pikk tekst kahel real */
-.card-emoji-avatar {
-  font-size: 16px;
-  line-height: 1;
-  border-color: var(--border-card);
-  flex-shrink: 0;
-}
-
-.card-info-text {
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-  color: var(--text-secondary);
 }
 
 .status-working {
@@ -475,19 +425,6 @@ body {
   background: rgba(100, 116, 139, 0.15);
   color: var(--text-muted);
   border: 1px solid rgba(100, 116, 139, 0.3);
-}
-
-.v-info-rows {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  font-size: 12px;
-}
-
-.v-info-item {
-  display: flex;
-  align-items: center;
-  gap: 6px;
 }
 
 /* Seadmete värskuse värv (viimaste andmete vanus) ja sõidu ajaosade värvid */
@@ -560,20 +497,6 @@ body {
   color: var(--tone-success-text);
 }
 
-/* POI Manager */
-.poi-top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-}
-
-.poi-top-actions {
-  display: flex;
-  gap: 8px;
-}
-
 .auto-field-icon {
   color: var(--text-muted);
   vertical-align: -1px;
@@ -599,13 +522,6 @@ body {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-}
-
-.form-header-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 2px;
 }
 
 .animate-slide-in {
@@ -955,11 +871,6 @@ body {
   color: var(--text-muted);
 }
 
-/* Seotud isikute register: aken sisu laiune (tabelis on vähe veerge) */
-.field-register-modal.parties-register-modal {
-  min-width: min(900px, 96vw);
-}
-
 .register-header-controls {
   display: flex;
   justify-content: space-between;
@@ -996,35 +907,6 @@ body {
   font-size: 14px;
   font-weight: 500;
   color: var(--text-primary);
-}
-
-.reg-stat-pill {
-  padding: 6px 12px;
-  background: var(--input-bg);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.reg-stat-pill .lbl {
-  color: var(--text-secondary);
-}
-
-.reg-stat-pill strong {
-  color: var(--text-primary);
-  font-weight: 500;
-}
-
-.reg-stat-pill.highlight {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: rgba(16, 185, 129, 0.35);
-}
-
-.reg-stat-pill.highlight strong {
-  color: var(--emerald-400);
 }
 
 /* Actions Row */
@@ -1233,16 +1115,6 @@ body {
    CADASTRAL PARCELS, TENURE & GEOMETRY INSPECTOR STYLES
    ========================================================================== */
 
-/* Field Manager Modal Stats Pills (Tenure) */
-.reg-stat-pill.tenure-owned {
-  border-left: 3px solid var(--emerald-500);
-}
-
-.reg-stat-pill .sub-val {
-  font-size: 11px;
-  margin-left: 4px;
-}
-
 /* Edit Cadastral Parcels in Modal */
 .add-cad-btn {
   margin-left: auto;
@@ -1293,37 +1165,6 @@ body {
 /* ==========================================================================
    Seotud Isikute Register (Harmonized with Field Register design)
    ========================================================================== */
-
-.party-roles-checkbox-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-  gap: 8px;
-  padding: 10px;
-  background: var(--input-bg);
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-card);
-}
-
-.party-role-checkbox {
-  align-items: center !important;
-  gap: 8px;
-  font-size: 13px !important;
-  padding: 6px 10px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border-card);
-  background: var(--bg-card);
-  transition: all 0.15s ease;
-  user-select: none;
-}
-
-.party-role-checkbox:hover {
-  border-color: var(--emerald-500);
-}
-
-.party-role-checkbox.selected {
-  background: rgba(16, 185, 129, 0.12);
-  border-color: var(--emerald-500);
-}
 
 /* Kultuuride register: neli veergu (teraviljad, õlikultuurid, kaunviljad, muud) */
 /* Veerud täidavad akna ülejäänud kõrguse; iga veeru tabel kerib eraldi */
@@ -1934,8 +1775,7 @@ body {
 }
 
 .fullpage-board-body .register-header-controls,
-.fullpage-board-body .register-actions-bar,
-.fullpage-board-body .poi-top-bar {
+.fullpage-board-body .register-actions-bar {
   flex-wrap: wrap;
   margin-bottom: 0;
 }
@@ -2602,31 +2442,6 @@ td.stock-qty-out { color: #dc2626; }
 .field-menu-note { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 13px; }
 .field-menu-note.error { color: #ef4444; }
 
-/* Isiku kaardi kontaktread: ikoon ja tekst eraldi, pikk e-post murdub, märkus kahel real */
-.party-contact-link,
-.party-contact-note {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  min-width: 0;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-.party-contact-link {
-  align-self: flex-start;
-  max-width: 100%;
-  text-decoration: none;
-}
-.party-contact-link span { overflow-wrap: anywhere; }
-.party-contact-link:hover span { color: var(--text-primary); text-decoration: underline; }
-.party-contact-link svg,
-.party-contact-note svg {
-  flex-shrink: 0;
-  margin-top: 2px; /* ikoon esimese tekstirea keskele */
-}
-.party-contact-note svg { color: var(--text-muted); }
-.v-info-rows .field-sub-tags { margin-bottom: 2px; }
-
 /* Teadmata omandivorm (maaomanik või operaator sisestamata) */
 
 .cad-tenure-hint {
@@ -2696,8 +2511,6 @@ polyline.weather-line { fill: none; }
 .weather-season-shifted { font-style: italic; }
 
 /* Staatilised abiklassid (varem inline-stiilid) */
-/* Summutatud alamväärtus statistikakiibis */
-.sub-val.is-muted { color: var(--text-muted); }
 /* Teisejärguline märkus (13px) ja summutatud märkus (12px) */
 .secondary-note { font-size: 13px; color: var(--text-secondary); }
 .muted-note { font-size: 12px; color: var(--text-muted); }
@@ -2708,8 +2521,6 @@ polyline.weather-line { fill: none; }
 .crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }
 /* Kultuuri muutmise dialoog: sinine ülaäär */
 .crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }
-/* Statistikakiibid reas (Isikud) */
-.register-stats-pills { display: flex; flex-wrap: wrap; gap: 8px; }
 
 /* Kiibi (ui/ChipButton) sisu tüpograafia */
 [data-slot="chip"] .lbl { color: var(--text-secondary); }

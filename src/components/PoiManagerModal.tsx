@@ -12,7 +12,8 @@ import {
 } from 'lucide-react';
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea, PageHeader } from './ui';
+import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea, PageHeader, EmptyState, IconBox, cn } from './ui';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, infoRowClass } from './ui/variants';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -215,7 +216,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   const bodyContent = (
     <div className="fullpage-board-content">
           {/* Action Bar */}
-          <div className="poi-top-bar">
+          <div className="flex flex-wrap items-center justify-between gap-2.5">
             {/* Category tabs */}
             <ToggleGroup aria-label="Huvipunkti kategooria" value={selectedCategory} onValueChange={setSelectedCategory}>
               <ToggleGroupItem value="all">Kõik ({pois.length})</ToggleGroupItem>
@@ -230,7 +231,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
               })}
             </ToggleGroup>
 
-            <div className="poi-top-actions">
+            <div className="flex gap-2">
               <Button size="sm"
                 onClick={handleExportJson}
                 title="Ekspordi JSON failina">
@@ -248,7 +249,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
           {/* Asukoha lisamine/muutmine eraldi aknas registri peal */}
           {isAdding && (
             <Dialog open onOpenChange={(open) => { if (!open) { setIsAdding(false); setEditingId(null); } }}>
-              <DialogContent size="lg" className="poi-edit-modal">
+              <DialogContent size="lg">
                 <DialogForm onSubmit={handleSubmit}>
                   <DialogHeader
                     icon={editingId ? <Edit2 size={20} /> : <Plus size={20} />}
@@ -256,9 +257,9 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                   />
                   <DialogBody>
 
-              <div className="form-header-row">
+              <div className="mb-0.5 flex items-center justify-between">
                 <Button type="button"
-                  size="sm" className="pick-map-highlight"
+                  size="sm" className="border-primary/35 bg-primary/15 font-medium text-success-text enabled:hover:-translate-y-px enabled:hover:border-primary enabled:hover:bg-primary/28"
                   onClick={handlePickOnMap}
                   title="Vali täpne asukoht kaardilt klõpsates">
                   <Crosshair size={14} />
@@ -380,22 +381,19 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
 
           {/* Asukohad kaartidena (sama stiil nagu Tehnika lehel) */}
           {filteredPois.length === 0 ? (
-            <div className="empty-state">
-              <Info size={24} />
-              <p>Selles kategoorias pole ühtegi asukohta lisatud.</p>
-            </div>
+            <EmptyState icon={<Info size={24} />} title="Selles kategoorias pole ühtegi asukohta lisatud." />
           ) : (
-            <div className="vehicle-grid">
+            <div className={cardGridClass}>
               {filteredPois.map((p) => {
                 const meta = CATEGORY_META[p.category] || CATEGORY_META.other;
                 return (
-                  <Card key={p.id} padding="sm" interactive className="vehicle-card" onClick={() => handleStartEdit(p)}>
+                  <Card key={p.id} padding="sm" interactive className={infoCardClass} onClick={() => handleStartEdit(p)}>
                     <CardHeader align="start">
-                      <div className="v-title-wrap">
-                        <div className="v-avatar card-emoji-avatar">{meta.emoji}</div>
+                      <div className={infoCardTitleWrapClass}>
+                        <IconBox size="md" className="border-border text-base leading-none">{meta.emoji}</IconBox>
                         <div>
-                          <h4 className="v-name">{p.name}</h4>
-                          <span className="v-model">{meta.label}</span>
+                          <h4 className={infoCardNameClass}>{p.name}</h4>
+                          <span className={infoCardSubClass}>{meta.label}</span>
                         </div>
                       </div>
                       <CardActions>
@@ -430,13 +428,13 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                       </CardActions>
                     </CardHeader>
 
-                    <div className="v-info-rows">
-                      {p.description && <div className="v-info-item card-info-text">{p.description}</div>}
+                    <div className={infoRowsClass}>
+                      {p.description && <div className={cn(infoRowClass, 'overflow-hidden text-muted-foreground')}>{p.description}</div>}
                       {p.capacity && (
-                        <div className="v-info-item"><span>Mahutavus:</span> <strong>{p.capacity}</strong></div>
+                        <div className={infoRowClass}><span>Mahutavus:</span> <strong>{p.capacity}</strong></div>
                       )}
                       {(p.contactPerson || p.phone) && (
-                        <div className="v-info-item">
+                        <div className={infoRowClass}>
                           <span>Kontakt:</span>
                           <strong>{p.contactPerson || '–'}</strong>
                           {p.phone && (
@@ -445,13 +443,13 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                         </div>
                       )}
                       {p.accessNotes && (
-                        <div className="v-info-item"><span>Ligipääs:</span> <span>{p.accessNotes}</span></div>
+                        <div className={infoRowClass}><span>Ligipääs:</span> <span>{p.accessNotes}</span></div>
                       )}
-                      <div className="v-info-item">
+                      <div className={infoRowClass}>
                         <MapPin size={13} />
                         <span>{p.position[0].toFixed(5)}, {p.position[1].toFixed(5)}</span>
                       </div>
-                      <div className="v-info-item"><span>Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
+                      <div className={infoRowClass}><span>Raadius:</span> <strong>{p.radiusM ?? 25} m</strong></div>
                     </div>
                   </Card>
                 );

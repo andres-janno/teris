@@ -38,6 +38,8 @@
 @source '../components/SatellitePanel.tsx';
 @source '../components/MapView.tsx';
 @source '../components/CultivationControl.tsx';
+@source '../components/RelatedPartiesModal.tsx';
+@source '../components/PoiManagerModal.tsx';
 @source '../AuthGate.tsx';
 @source '../components/FieldUploadModal.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
