@@ -748,7 +748,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </div>
 
                   {blockCrops.length > 0 ? (
-                    <Table scroll="fill" bordered containerClassName="min-h-0 max-[1400px]:max-h-[62vh]">
+                    <Table scroll="fill" bordered containerClassName="max-[1400px]:max-h-[62vh]">
                         <TableHeader>
                           <TableRow>
                             <TableHead>Kultuur</TableHead>
@@ -769,7 +769,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                 <TableRow className={cn(crop.varieties.length > 0 && NO_ROW_LINE)}>
                                   <TableCell wrap className="crop-bar pl-3" style={cropStyle} title={crop.description || undefined}>
                                     <div className={tableTitleLineClass}>
-                                      <span className={cn(tableNameClass, 'font-medium leading-natural')}>{crop.name}</span>
+                                      <span className={cn(tableNameClass, 'font-medium leading-4')}>{crop.name}</span>
                                     </div>
                                     {crop.scientificName && <div className={cn(cellSubStackedClass, 'italic')}>{crop.scientificName}</div>}
                                     <div className={cn(tableSubTagsClass, 'mt-0')}>
