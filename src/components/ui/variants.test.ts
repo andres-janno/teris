@@ -7,7 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
-  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass,
+  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass, v.soilValueClass, v.soilFootnoteClass, v.soilYearCellClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
@@ -741,5 +741,13 @@ describe('töö vormi konstandid (etapp 4e)', () => {
     for (const t of ['grid', 'items-end', 'gap-2.5']) expect(v.workFormGridClass).toContain(t);
     for (const t of ['gap-2', '[&>h4]:text-base', '[&>h4]:font-semibold']) expect(v.workFormSectionClass).toContain(t);
     expect(v.workFormHintClass).toContain('text-xs');
+  });
+});
+
+describe('mulla/ilma lõigu konstandid (etapp 4e)', () => {
+  it('väärtuse toon tuleb data-level atribuudist (ohtlik/hoiatus/hea/puudub), kaal 400; joonealune märkus 11px', () => {
+    for (const t of ['font-normal', 'data-[level=bad]:text-danger-text', 'data-[level=warn]:text-warning-text', 'data-[level=good]:text-success-text', 'data-[level=none]:text-subtle']) expect(v.soilValueClass).toContain(t);
+    expect(v.soilFootnoteClass).toContain('text-2xs');
+    expect(v.soilYearCellClass).toContain('font-medium');
   });
 });

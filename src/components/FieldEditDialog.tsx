@@ -16,6 +16,14 @@ import { SoilSamplesSection } from './SoilSamplesSection';
 import { WeatherSeasonSection } from './WeatherSeasonSection';
 import { Button, Card, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, type BadgeTone, NumberInput, Field, FieldRow, FormGrid, Input, Select, SectionTitle } from './ui';
 
+// Automaatselt täidetavad väljad (vana .auto-field-icon, .auto-filled-input)
+const AUTO_ICON_CLASS = 'relative top-px ml-0.5 text-subtle';
+const AUTO_INPUT_CLASS = 'cursor-help bg-muted text-muted-foreground';
+// Välja silt koos lisaelemendiga paremal (värvipunkt, „Ava register“ nupp, sortide arv)
+const LABEL_ROW_CLASS = 'flex items-center justify-between [&_label]:flex [&_label]:items-center [&_label]:gap-1.5 [&_label]:text-xs [&_label]:font-medium [&_label]:text-muted-foreground';
+// Põllu muutmise aken: NDVI ja mullaproovid katastriüksuste all
+const INSIGHTS_CLASS = 'mt-4 flex flex-col gap-3';
+
 // Omandivormi märgi toon
 const OWNERSHIP_TONE: Record<LandTenureType, BadgeTone> = { OWNED: 'success', RENTED: 'info', UNKNOWN: 'neutral' };
 
@@ -317,7 +325,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-    <DialogContent size="lg" className="field-edit-modal">
+    <DialogContent size="lg">
     <DialogForm onSubmit={handleSaveEdit}>
       <DialogHeader
         icon={isEditSeasonLocked ? <Lock size={20} /> : <Edit2 size={20} />}
@@ -373,7 +381,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         <FormGrid cols={3} span="full">
           <Field
             htmlFor="field-edit-soil"
-            label={<span title={SOIL_AUTO_HINT}>Mullastiku tüüp <Info size={12} className="auto-field-icon" /></span>}
+            label={<span title={SOIL_AUTO_HINT}>Mullastiku tüüp <Info size={12} className={AUTO_ICON_CLASS} /></span>}
           >
             <Input
               id="field-edit-soil"
@@ -383,13 +391,13 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               placeholder="Täidetakse hiljem automaatselt"
               title={SOIL_AUTO_HINT}
               value={editSoilType}
-              className="auto-filled-input"
+              className={AUTO_INPUT_CLASS}
             />
           </Field>
 
           <Field
             htmlFor="field-edit-drainage"
-            label={<span title={DRAINAGE_AUTO_HINT}>Drenaaž <Info size={12} className="auto-field-icon" /></span>}
+            label={<span title={DRAINAGE_AUTO_HINT}>Drenaaž <Info size={12} className={AUTO_ICON_CLASS} /></span>}
           >
             <Input
               id="field-edit-drainage"
@@ -399,7 +407,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               placeholder="Täidetakse hiljem automaatselt"
               title={DRAINAGE_AUTO_HINT}
               value={field.drainageSystem ? 'Jah' : ''}
-              className="auto-filled-input"
+              className={AUTO_INPUT_CLASS}
             />
           </Field>
 
@@ -464,12 +472,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         </Field>
 
         <Field>
-          <div className="field-label-row">
+          <div className={LABEL_ROW_CLASS}>
             <label htmlFor="field-edit-crop">
               Kultuur
               {selectedCropObj?.color && (
                 <span
-                  className="crop-color-dot"
+                  className="inline-block size-2.5 rounded-full border border-black/20"
                   style={{ backgroundColor: selectedCropObj.color }}
                   title={`Kultuuri värv: ${selectedCropObj.color}`}
                 />
@@ -514,10 +522,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         </Field>
 
         <Field>
-          <div className="field-label-row">
+          <div className={LABEL_ROW_CLASS}>
             <label htmlFor="field-edit-variety">Sordi valik ({editCrop || 'Kultuur'})</label>
             {availableVarieties.length > 0 && (
-              <span className="muted-note">
+              <span className="text-xs text-subtle">
                 {availableVarieties.length} sorti registris
               </span>
             )}
@@ -594,12 +602,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
       {/* Ainult vaatamiseks: põllu piiridesse jäävad mullaproovid kuni 6 aastat tagasi valitud hooajast */}
       {seasonGeometry && (
-        <div className="field-edit-insights">
+        <div className={INSIGHTS_CLASS}>
           <SoilSamplesSection geometry={seasonGeometry} samples={recentSoilSamples} />
         </div>
       )}
       {weatherEnabled && (
-        <div className="field-edit-insights">
+        <div className={INSIGHTS_CLASS}>
           <WeatherSeasonSection fieldSeasonId={seasonRec?.fieldSeasonId} year={seasonRec?.year} crop={seasonRec?.crop} actualYieldTonsHa={seasonRec?.actualYieldTonsHa} />
         </div>
       )}
@@ -613,7 +621,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
             type="button"
             variant="ghost"
             size="sm"
-            className="add-cad-btn"
+            className="ml-auto"
             onClick={handleAddCadastralParcelToEdit}
           >
             <Plus size={12} />
@@ -622,10 +630,10 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
         )}
       </SectionTitle>
 
-      <div className="edit-cadastral-list">
+      <div className="mb-2.5 flex flex-col gap-2">
         {editCadastralParcels.map((parcel, pIdx) => (
           <Card key={pIdx} variant="tile" padding="sm">
-            <div className="edit-cad-grid">
+            <div className="grid grid-cols-[minmax(120px,1.1fr)_76px_minmax(180px,2fr)_76px_86px_34px] items-end gap-2 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_label]:truncate">
               <Field label="Katastritunnus *" htmlFor={`field-edit-cad-code-${pIdx}`}>
                 <Input
                   id={`field-edit-cad-code-${pIdx}`}
@@ -650,7 +658,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </Field>
 
               <Field>
-                <div className="field-label-row">
+                <div className={LABEL_ROW_CLASS}>
                   <label htmlFor={`field-edit-cad-owner-${pIdx}`}>
                     Maaomanik
                     <Badge tone={OWNERSHIP_TONE[parcel.ownershipType]} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
@@ -688,7 +696,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </Field>
 
               {parcel.ownershipType === 'UNKNOWN' ? (
-                <div className="cad-tenure-hint">
+                <div className="col-span-2 self-center text-sm text-muted-foreground">
                   Omandivorm on teadmata. Maamaksu või renditasu saab sisestada, kui maaomanik ja põllu operaator on valitud.
                 </div>
               ) : (
@@ -734,9 +742,9 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </>
               )}
 
-              <div className="edit-cad-action">
+              <div className="flex items-end justify-center pb-0.5">
                 {isEditSeasonLocked ? (
-                  <span className="edit-cad-locked" title="Hooaeg on muudatusteks suletud">
+                  <span className="inline-flex p-1.5 text-subtle" title="Hooaeg on muudatusteks suletud">
                     <Lock size={14} />
                   </span>
                 ) : (

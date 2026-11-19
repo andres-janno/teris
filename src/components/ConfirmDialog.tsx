@@ -6,7 +6,7 @@ import React, { useEffect, useRef } from 'react';
 import { flushSync } from 'react-dom';
 import { createRoot, type Root } from 'react-dom/client';
 import { AlertTriangle, Info, Trash2 } from 'lucide-react';
-import { Button, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, TooltipProvider } from './ui';
+import { Button, cn, Dialog, DialogContent, DialogTitle, DialogDescription, DialogFooter, TooltipProvider } from './ui';
 
 export interface ConfirmOptions {
   title?: string;
@@ -22,6 +22,13 @@ interface DialogProps {
   options: ConfirmOptions;
   onResult: (ok: boolean) => void;
 }
+
+// Ikooni toon (vana .confirm-dialog-icon.danger/warning/info)
+const ICON_TONE = {
+  danger: 'bg-destructive/12 text-danger-solid',
+  warning: 'bg-warning/14 text-warning',
+  info: 'bg-primary/12 text-success-text',
+} as const;
 
 const isDeleteText = (message: string) => /kustut|eemald/i.test(message);
 
@@ -52,7 +59,6 @@ const ConfirmView: React.FC<DialogProps> = ({ kind, message, options, onResult }
         size="sm"
         layer="alert"
         closeOnOutsideClick
-        className="confirm-dialog"
         role={kind === 'alert' ? 'alertdialog' : 'dialog'}
         onOpenAutoFocus={(e) => {
           e.preventDefault();
@@ -60,13 +66,13 @@ const ConfirmView: React.FC<DialogProps> = ({ kind, message, options, onResult }
         }}
         onCloseAutoFocus={(e) => e.preventDefault()}
       >
-        <div className="confirm-dialog-body">
-          <span className={`confirm-dialog-icon ${danger ? 'danger' : kind === 'alert' ? 'info' : 'warning'}`}>
+        <div className="flex gap-3 px-6 pt-6 pb-4">
+          <span className={cn('flex size-9.5 shrink-0 items-center justify-center rounded-full', ICON_TONE[danger ? 'danger' : kind === 'alert' ? 'info' : 'warning'])}>
             <Icon size={20} />
           </span>
           <div>
-            <DialogTitle asChild><h3>{title}</h3></DialogTitle>
-            <DialogDescription asChild><p>{message}</p></DialogDescription>
+            <DialogTitle asChild><h3 className="m-0 mb-1.5 text-lg font-semibold leading-natural text-foreground">{title}</h3></DialogTitle>
+            <DialogDescription asChild><p className="m-0 text-base leading-normal text-muted-foreground whitespace-pre-line wrap-anywhere">{message}</p></DialogDescription>
           </div>
         </div>
         <DialogFooter>
@@ -95,7 +101,6 @@ function show(kind: DialogProps['kind'], message: string, options: ConfirmOption
       new Promise<boolean>((resolve) => {
         if (!container) {
           container = document.createElement('div');
-          container.className = 'confirm-dialog-root';
           document.body.appendChild(container);
           root = createRoot(container);
         }

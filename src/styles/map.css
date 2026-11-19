@@ -122,35 +122,6 @@
   margin-top: 12px;
 }
 
-.soil-year-cell {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 500;
-}
-
-.soil-age {
-  font-size: 11px;
-  font-weight: 400;
-}
-
-.soil-value {
-  font-weight: 400;
-}
-
-/* Mulla väärtus: taseme toon tekstina (kontrast mõlemas teemas); andmevärv jääb kaardile ja vanuse punktile */
-.soil-value[data-level="bad"] { color: var(--tone-danger-text); }
-.soil-value[data-level="warn"] { color: var(--tone-warning-text); }
-.soil-value[data-level="good"] { color: var(--tone-success-text); }
-.soil-value[data-level="none"] { color: var(--text-muted); }
-.soil-age-dot { display: inline-block; width: 8px; height: 8px; margin-left: 4px; border-radius: 9999px; vertical-align: middle; }
-
-.soil-footnote {
-  margin-top: 4px;
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
 /* Põllu üldandmete paneel (FieldOverviewPanel) — sama vahedega veerg nagu .field-detail-col */
 
 .notes-text {

@@ -450,98 +450,8 @@ body {
   --trip-pause: #199e70;
 }
 
-.confirm-dialog-body {
-  display: flex;
-  gap: 12px;
-  padding: 24px 24px 16px;
-}
-
-.confirm-dialog-body h3 {
-  margin: 0 0 6px;
-  font-size: 16px;
-  font-weight: 600;
-  color: var(--text-primary);
-}
-
-.confirm-dialog-body p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
-  color: var(--text-secondary);
-  white-space: pre-line;
-  overflow-wrap: anywhere;
-}
-
-.confirm-dialog-icon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 38px;
-  height: 38px;
-  flex-shrink: 0;
-  border-radius: 9999px;
-}
-
-.confirm-dialog-icon.danger {
-  background: rgba(239, 68, 68, 0.12);
-  color: #dc2626;
-}
-
-.confirm-dialog-icon.warning {
-  background: rgba(245, 158, 11, 0.14);
-  color: #d97706;
-}
-
-.confirm-dialog-icon.info {
-  background: rgba(16, 185, 129, 0.12);
-  color: var(--tone-success-text);
-}
-
-.auto-field-icon {
-  color: var(--text-muted);
-  vertical-align: -1px;
-  margin-left: 2px;
-}
-
-.auto-filled-input[data-slot="input"] {
-  cursor: help !important;
-  color: var(--text-secondary) !important;
-  background: var(--stat-bg) !important;
-}
-
-/* Välja silt koos lisaelemendiga paremal (värvipunkt, "Ava register" nupp, sortide arv) */
-.field-label-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.field-label-row label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.animate-slide-in {
-  animation: slideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
 .animate-scale-up {
   animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateY(-10px);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
 }
 
 @keyframes scaleUp {
@@ -766,12 +676,6 @@ body {
   background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
 }
 
-.edit-cad-locked {
-  display: inline-flex;
-  padding: 6px;
-  color: var(--text-muted);
-}
-
 .sr-only {
   position: absolute;
   width: 1px;
@@ -779,50 +683,6 @@ body {
   overflow: hidden;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-}
-
-/* ==========================================================================
-   CADASTRAL PARCELS, TENURE & GEOMETRY INSPECTOR STYLES
-   ========================================================================== */
-
-/* Edit Cadastral Parcels in Modal */
-.add-cad-btn {
-  margin-left: auto;
-}
-
-.edit-cadastral-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 10px;
-}
-
-.edit-cad-grid {
-  display: grid;
-  /* tunnus | põllu osa | omanik (+ tuletatud omandivorm) | €/ha | €/a | kustuta — numbriväljad kitsad, et rida mahuks kerimata */
-  grid-template-columns: minmax(120px, 1.1fr) 76px minmax(180px, 2fr) 76px 86px 34px;
-  gap: 8px;
-  align-items: flex-end;
-}
-
-.edit-cad-grid [data-slot="input"] {
-  min-width: 0;
-  width: 100%;
-}
-
-.edit-cad-grid label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* Tuletatud omandivorm maaomaniku sildi kõrval */
-
-.edit-cad-action {
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding-bottom: 2px;
 }
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -1205,12 +1065,6 @@ body {
   font-weight: 500;
 }
 
-.add-work-phase-label {
-  font-size: 11px;
-  font-weight: 500;
-  letter-spacing: 0.05em;
-}
-
 /* ==========================================================================
    Põhivaate lüliti (Kaart | Põllutööd)
    ========================================================================== */
@@ -1314,14 +1168,6 @@ body {
 /* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
-/* Põllu muutmise aken: NDVI ja mullaproovid katastriüksuste all */
-.field-edit-insights {
-  margin-top: 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
 /* Põldude ja külvikorra tabeli nimelahter: kuju nupp nurgas, nimi ei jookse selle alla */
 .name-cell.has-corner-btn {
   padding-right: 32px !important; /* ui lahtri px-2.5 võidaks muidu */
@@ -1336,99 +1182,6 @@ body {
 .phase-label[data-tone="success"] { color: var(--tone-success-text); }
 .phase-label[data-tone="accent"] { color: var(--tone-accent-text); }
 .phase-label[data-tone="warning"] { color: var(--tone-warning-text); }
-
-.add-work-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px !important;
-  overflow-y: auto;
-}
-
-.add-work-phase {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.add-work-option {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 8px 12px;
-  font-size: 14px;
-}
-
-.add-work-option.picked {
-  border-color: #16a34a !important;
-  background: rgba(22, 163, 74, 0.08) !important;
-}
-
-.add-work-option.on-field {
-  border-color: rgba(22, 163, 74, 0.35) !important;
-  background: rgba(22, 163, 74, 0.04) !important;
-}
-
-.add-work-check {
-  width: 18px;
-  height: 18px;
-  flex-shrink: 0;
-  box-sizing: border-box;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid #9aa39e;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  color: #ffffff;
-}
-
-.add-work-check.on {
-  border: 0;
-  background: var(--selection-bg);
-}
-
-.add-work-name {
-  flex: 1;
-  font-weight: 500;
-}
-
-.add-work-tag {
-  font-size: 12px;
-  font-weight: 500;
-  color: var(--text-secondary);
-}
-
-.add-work-tag.on-field {
-  color: var(--tone-success-text);
-}
-
-.add-work-tag.to-add {
-  color: var(--tone-success-text);
-  font-weight: 500;
-}
-
-.add-work-tag.removed {
-  color: #9a5b00;
-}
-
-.add-work-footer {
-  flex-direction: column;
-  align-items: stretch !important;
-  gap: 10px !important;
-}
-
-.add-work-actions {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  justify-content: flex-end;
-}
-
-.add-work-count {
-  flex: 1;
-  font-size: 13px;
-  font-weight: 400;
-  color: var(--text-secondary);
-}
 
 /* Litsentsi ülariba (aegunud / peatselt aegub) */
 .license-banner {
@@ -1657,15 +1410,6 @@ td.stock-qty-out { color: #dc2626; }
 .field-menu-note { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 13px; }
 .field-menu-note.error { color: #ef4444; }
 
-/* Teadmata omandivorm (maaomanik või operaator sisestamata) */
-
-.cad-tenure-hint {
-  grid-column: span 2;
-  align-self: center;
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
 .field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
 .field-map-card { position: relative; width: 300px; display: flex; flex-direction: column; gap: 8px; }
@@ -1718,15 +1462,6 @@ polyline.weather-line { fill: none; }
 .weather-line-4 { stroke: #0891b2; background: #0891b2; }
 .weather-line-5 { stroke: #64748b; background: #64748b; }
 .weather-legend-row .legend { display: inline-block; width: 10px; height: 10px; border-radius: var(--radius-sm); vertical-align: middle; margin-left: 6px; }
-.weather-season-crop { font-weight: 400; color: var(--text-secondary); margin-left: 4px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.weather-season-past .soil-value { font-weight: 400; }
-.weather-season-shifted { font-style: italic; }
 
 /* Staatilised abiklassid (varem inline-stiilid) */
-/* Summutatud märkus (12px) */
-.muted-note { font-size: 12px; color: var(--text-muted); }
-/* Töö täisnimi lühinime all */
-.work-full-name { display: block; font-weight: 400; color: var(--text-secondary); }
 .hint-text.is-block { display: block; margin-top: 4px; }
-/* Kultuuri värvipunkt (värv tuleb andmest) */
-.crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }

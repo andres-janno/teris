@@ -6,7 +6,7 @@ import type { Polygon, MultiPolygon } from 'geojson';
 import { FlaskConical, ChevronDown, ChevronUp } from 'lucide-react';
 import type { SoilSample, SoilSampleMetricKey } from '../types/soilSample';
 import { getSoilMetricColor, getSoilMetricLevel } from '../types/soilSample';
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionTitle } from './ui';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionTitle, soilValueClass, soilFootnoteClass, soilYearCellClass } from './ui';
 
 interface SoilSamplesSectionProps {
   geometry: Polygon | MultiPolygon;
@@ -92,12 +92,12 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                   <React.Fragment key={year}>
                     <TableRow onClick={() => toggleYear(year)} aria-expanded={isOpen} title="Näita punktide kaupa">
                       <TableCell>
-                        <span className="soil-year-cell">
+                        <span className={soilYearCellClass}>
                           {isOpen ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
                           {year}
                           {age > 0 && (
-                            <span className="soil-age">
-                              {age} a<span className="soil-age-dot" style={{ backgroundColor: getSoilMetricColor('age', age) }} />
+                            <span className="text-2xs font-normal">
+                              {age} a<span className="ml-1 inline-block size-2 rounded-full align-middle" style={{ backgroundColor: getSoilMetricColor('age', age) }} />
                             </span>
                           )}
                         </span>
@@ -106,7 +106,7 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                       {METRICS.map((m) => {
                         const avg = average(list.map((s) => s[m.key as Exclude<SoilSampleMetricKey, 'age'>]));
                         return (
-                          <TableCell key={m.key} numeric className="soil-value" data-level={getSoilMetricLevel(m.key, avg)}>
+                          <TableCell key={m.key} numeric className={soilValueClass} data-level={getSoilMetricLevel(m.key, avg)}>
                             {fmt(avg)}
                           </TableCell>
                         );
@@ -120,7 +120,7 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
                           {METRICS.map((m) => {
                             const v = s[m.key as Exclude<SoilSampleMetricKey, 'age'>];
                             return (
-                              <TableCell key={m.key} numeric className="soil-value" data-level={getSoilMetricLevel(m.key, v)}>
+                              <TableCell key={m.key} numeric className={soilValueClass} data-level={getSoilMetricLevel(m.key, v)}>
                                 {fmt(v)}
                               </TableCell>
                             );
@@ -132,7 +132,7 @@ export const SoilSamplesSection: React.FC<SoilSamplesSectionProps> = ({ geometry
               })}
             </TableBody>
           </Table>
-          <p className="soil-footnote">Keskmised; P, K, Ca, Mg mg/kg · Corg % · lubjatarve t/ha</p>
+          <p className={soilFootnoteClass}>Keskmised; P, K, Ca, Mg mg/kg · Corg % · lubjatarve t/ha</p>
         </>
       )}
     </div>

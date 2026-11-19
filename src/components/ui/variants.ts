@@ -486,3 +486,10 @@ export const workFormGridClass = 'grid items-end gap-2.5';
 export const workFormSectionClass = 'flex flex-col gap-2 [&>h4]:m-0 [&>h4]:text-base [&>h4]:font-semibold [&>h4]:leading-natural [&>h4]:text-foreground';
 /** Töö vormi vihje (12px, hall, ikooniga). Vana `.work-entry-hint`. */
 export const workFormHintClass = 'm-0 flex items-start gap-1.5 text-xs leading-natural text-muted-foreground';
+
+/** Mulla ja ilma tabeli väärtus (põllu muutmise aken): kaal 400, toon tuleb data-level atribuudist. Vana `.soil-value[data-level]`. */
+export const soilValueClass = 'font-normal data-[level=bad]:text-danger-text data-[level=warn]:text-warning-text data-[level=good]:text-success-text data-[level=none]:text-subtle';
+/** Mulla ja ilma tabeli joonealune märkus (11px). Vana `.soil-footnote`. */
+export const soilFootnoteClass = 'mt-1 text-2xs text-muted-foreground';
+/** Mulla ja ilma tabeli aasta lahter (chevron/aasta/vanus ühes reas). Vana `.soil-year-cell`. */
+export const soilYearCellClass = 'inline-flex items-center gap-1 font-medium';

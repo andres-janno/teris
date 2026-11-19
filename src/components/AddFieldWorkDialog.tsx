@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
-import { Alert, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
+import { Alert, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input, cn, dialogStackBodyClass } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -91,53 +91,56 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="md" className="add-work-modal" dismissible={!busy}>
+      <DialogContent size="md" dismissible={!busy}>
         <DialogHeader icon={<Plus size={20} />} title="Lisa põllule töid" description={fieldLabel} />
-        <DialogBody className="add-work-body">
+        <DialogBody className={dialogStackBodyClass}>
           {phases.map((phase) => {
             const list = workTypes
               .filter((w) => w.phase === phase && w.isActive)
               .sort((a, b) => priaIndex(a) - priaIndex(b) || (a.name || '').localeCompare(b.name || ''));
             if (list.length === 0) return null;
             return (
-              <section key={phase} className="add-work-phase">
-                <span className="add-work-phase-label phase-label" data-tone={WORK_PHASE_META[phase].tone}>
+              <section key={phase} className="flex flex-col gap-1">
+                <span className="phase-label text-2xs font-medium leading-natural tracking-wider" data-tone={WORK_PHASE_META[phase].tone}>
                   {WORK_PHASE_META[phase].label.toUpperCase()}
                 </span>
                 {list.map((w) => {
                   const count = existingCount.get(w.id) ?? 0;
                   const isAdding = toAdd.has(w.id);
 
-                  let optionClass = 'add-work-option';
-                  let tagClass = 'add-work-tag';
+                  let tagTone = 'text-muted-foreground';
                   let tagText = '';
                   if (isAdding) {
-                    optionClass += ' picked';
-                    tagClass += ' to-add';
+                    tagTone = 'text-success-text';
                     tagText = count > 0 ? `Lisatakse (põllul juba ${count})` : 'Lisatakse';
                   } else if (count > 0) {
-                    tagClass += ' on-field';
+                    tagTone = 'text-success-text';
                     tagText = `põllul juba ${count}`;
                   }
+                  const onField = !isAdding && count > 0;
 
                   return (
                     <CardButton
                       key={w.id}
                       variant="option"
                       padding="none"
-                      className={optionClass}
+                      className={cn(
+                        'flex items-center gap-2.5 px-3 py-2 text-base leading-natural',
+                        isAdding && 'border-primary-strong bg-primary-strong/8 hover:border-primary-strong hover:bg-primary-strong/8',
+                        onField && 'border-primary-strong/35 bg-primary-strong/4 hover:border-primary-strong/35 hover:bg-primary-strong/4'
+                      )}
                       aria-pressed={isAdding}
                       title={isAdding ? 'Kliki, et tühistada lisamine' : 'Kliki, et lisada töö plaanile'}
                       onClick={() => toggle(w.id)}
                     >
-                      <span className={`add-work-check ${isAdding ? 'on' : ''}`}>
+                      <span className={cn('inline-flex size-4.5 shrink-0 items-center justify-center rounded-sm border border-subtle text-white', isAdding && 'border-0 bg-primary-strong')}>
                         {isAdding && <Check size={11} strokeWidth={3.4} />}
                       </span>
-                      <span className="add-work-name" title={w.name}>
+                      <span className="flex-1 font-medium" title={w.name}>
                         {workTypeDisplayName(w)}
-                        {w.shortName?.trim() && <small className="work-full-name">{w.name}</small>}
+                        {w.shortName?.trim() && <small className="block font-normal text-muted-foreground">{w.name}</small>}
                       </span>
-                      {tagText && <span className={tagClass}>{tagText}</span>}
+                      {tagText && <span className={cn('text-xs font-medium leading-natural', tagTone)}>{tagText}</span>}
                     </CardButton>
                   );
                 })}
@@ -145,15 +148,15 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
             );
           })}
         </DialogBody>
-        <DialogFooter className="add-work-footer">
+        <DialogFooter className="flex-col items-stretch gap-2.5">
           {toAdd.size > 0 && (
             <Field label="Planeeritud aeg (uutele töödele)" htmlFor="aw-planned" className="animate-slide-in">
               <Input id="aw-planned" placeholder="nt mai 2027" value={plannedText} onChange={(e) => setPlannedText(e.target.value)} />
             </Field>
           )}
           {error && <Alert tone="error">{error}</Alert>}
-          <div className="add-work-actions">
-            <span className="add-work-count">{summaryText}</span>
+          <div className="flex items-center justify-end gap-2">
+            <span className="flex-1 text-sm font-normal leading-natural text-muted-foreground">{summaryText}</span>
             <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>
             <Button
               type="button"
