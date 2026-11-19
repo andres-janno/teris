@@ -12,6 +12,7 @@ const allClassStrings = (): string[] => [
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
   v.mapPanelTitleClass, v.loadingSpinnerClass, v.loadingSpinnerInlineClass,
   v.infoCardClass, v.infoCardTitleWrapClass, v.infoCardNameClass, v.infoCardSubClass, v.infoRowsClass, v.infoRowClass,
+  v.tableNameClass, v.tableTitleLineClass, v.tableSubTagsClass, v.tableMutedClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -721,5 +722,14 @@ describe('registrikaardi mustrid (etapp 4e)', () => {
     expect(v.infoRowsClass).toContain('flex-col');
     expect(v.infoRowClass).toContain('gap-1.5');
     expect(v.infoCardClass).toContain('gap-3');
+  });
+});
+
+describe('tabeli sisu konstandid (etapp 4e)', () => {
+  it('nimi 14px/400, alamsildid gap 6px ülaveeris 4px, summutatud tekst', () => {
+    for (const t of ['text-base', 'font-normal']) expect(v.tableNameClass).toContain(t);
+    expect(v.tableTitleLineClass).toContain('gap-2');
+    for (const t of ['mt-1', 'gap-1.5', 'flex-wrap']) expect(v.tableSubTagsClass).toContain(t);
+    expect(v.tableMutedClass).toBe('text-subtle');
   });
 });

@@ -471,3 +471,9 @@ export const infoCardNameClass = 'm-0 text-base font-medium leading-natural text
 export const infoCardSubClass = 'text-xs leading-natural text-muted-foreground';
 export const infoRowsClass = 'flex flex-col gap-1 text-xs leading-natural';
 export const infoRowClass = 'flex items-center gap-1.5';
+
+/** Tabeli nimelahter (Külvikord, Kultuurid): põllu/kultuuri nimi 14px/400; pealkirjarida; alamsildid; summutatud tekst (vana `.name-cell .field-name` jt, `.muted`). */
+export const tableNameClass = 'm-0 text-base font-normal text-foreground';
+export const tableTitleLineClass = 'flex flex-wrap items-center gap-2';
+export const tableSubTagsClass = 'mt-1 flex flex-wrap items-center gap-1.5';
+export const tableMutedClass = 'text-subtle';

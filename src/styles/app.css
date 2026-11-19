@@ -39,6 +39,8 @@
 @source '../components/MapView.tsx';
 @source '../components/CultivationControl.tsx';
 @source '../components/RelatedPartiesModal.tsx';
+@source '../components/FieldManagerModal.tsx';
+@source '../components/FieldShapeModal.tsx';
 @source '../components/PoiManagerModal.tsx';
 @source '../AuthGate.tsx';
 @source '../components/FieldUploadModal.tsx';
@@ -173,6 +175,10 @@
   &[data-selected] {
     box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), 0 0 0 2px var(--chip-accent, #94a3b8);
   }
+}
+/* Kinnitatud Suurus-veeru parem joon (Külvikord): sisemine vari, et border-collapse'i-vaba tabel ei nihkuks. */
+@utility pin-edge-end {
+  box-shadow: inset -1px 0 0 var(--border-card);
 }
 @utility chip-outline {
   border-left-color: var(--chip-accent, var(--border-card));

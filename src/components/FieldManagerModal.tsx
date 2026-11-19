@@ -18,9 +18,17 @@ import type { Crop } from '../types/crop';
 import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
-import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader, cornerActionClass } from './ui';
+import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader, cornerActionClass, cn } from './ui';
+import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
+// Kultuurigrupi pealkiri ja pindala (täisleht: 13px / min-laius 240px, number 14px).
+const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold text-muted-foreground';
+const GROUP_NUM = 'ml-auto text-base font-semibold tabular-nums';
+// Kiibi sisu: silt ja number (alamväärtus 11px, veeris 4px otse kiibis).
+const CHIP_LBL = 'text-muted-foreground';
+const CHIP_NUM = 'font-medium text-foreground';
+
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
 
 interface FieldManagerModalProps {
@@ -318,12 +326,12 @@ function cropSummaryKey(cropText: string): string {
 
   const cropSummaryContent = (
     <>
-      <div className="register-crop-summary-groups">
-        {cropGroups.length === 0 && <span className="muted">Selle hooaja kirjeid pole</span>}
+      <div className="flex min-w-0 flex-1 basis-120 flex-col gap-1.5">
+        {cropGroups.length === 0 && <span className="text-base text-subtle">Selle hooaja kirjeid pole</span>}
         {cropGroups.map((g) => (
-          <div key={g.kind} className={`register-crop-group ${g.kind}`}>
-            <span className="register-crop-group-title" title={g.title}>
-              {g.label}: <strong>{g.totalHa.toFixed(2)} ha</strong>
+          <div key={g.kind} className="flex w-full flex-wrap items-center gap-2">
+            <span className={GROUP_TITLE} title={g.title}>
+              {g.label}: <strong className={cn(GROUP_NUM, g.kind === 'winter' && 'text-sky-text', g.kind === 'spring' && 'text-primary')}>{g.totalHa.toFixed(2)} ha</strong>
             </span>
             {g.rows.map((c) => (
               <ChipButton
@@ -336,20 +344,20 @@ function cropSummaryKey(cropText: string): string {
                 title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
               >
                 <span>{c.crop}</span>
-                <strong>{c.areaHa.toFixed(2)} ha</strong>
+                <strong className={CHIP_NUM}>{c.areaHa.toFixed(2)} ha</strong>
               </ChipButton>
             ))}
           </div>
         ))}
-        <div className="register-crop-group total">
-          <span className="register-crop-group-title">
-            Σ Kogupind: <strong>{totalAreaHa.toFixed(2)} ha</strong>
+        <div className="flex w-full flex-wrap items-center gap-2 border-t border-border pt-1.5">
+          <span className={GROUP_TITLE}>
+            Σ Kogupind: <strong className={GROUP_NUM}>{totalAreaHa.toFixed(2)} ha</strong>
           </span>
-          <span className="muted">{fieldsForSelectedYear.length} põldu</span>
+          <span className="text-base text-subtle">{fieldsForSelectedYear.length} põldu</span>
         </div>
       </div>
       {/* Omandivormid paremal üksteise all; klikk filtreerib tabeli */}
-      <div className="register-crop-summary-tenure">
+      <div className="ml-auto flex flex-col items-stretch gap-1.5">
         <ChipButton
           variant="outline"
           accent="var(--emerald-500)"
@@ -357,9 +365,9 @@ function cropSummaryKey(cropText: string): string {
           onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
           title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
         >
-          <span className="lbl">🏛️ Oma maa:</span>
-          <strong>{financialSummary.ownedHa} ha</strong>
-          <span className="sub-val">({financialSummary.totalTax} €/a maamaks)</span>
+          <span className={CHIP_LBL}>🏛️ Oma maa:</span>
+          <strong className={CHIP_NUM}>{financialSummary.ownedHa} ha</strong>
+          <span className="ml-1 text-2xs">({financialSummary.totalTax} €/a maamaks)</span>
         </ChipButton>
         <ChipButton
           variant="outline"
@@ -369,9 +377,9 @@ function cropSummaryKey(cropText: string): string {
           disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
           title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
         >
-          <span className="lbl">🤝 Rendimaa:</span>
-          <strong>{financialSummary.rentedHa} ha</strong>
-          <span className="sub-val">({financialSummary.totalRent} €/a rent)</span>
+          <span className={CHIP_LBL}>🤝 Rendimaa:</span>
+          <strong className={CHIP_NUM}>{financialSummary.rentedHa} ha</strong>
+          <span className="ml-1 text-2xs">({financialSummary.totalRent} €/a rent)</span>
         </ChipButton>
       </div>
     </>
@@ -420,8 +428,8 @@ function cropSummaryKey(cropText: string): string {
 
           {/* Locked Season Alert Banner */}
           {isCurrentSeasonLocked && (
-            <div className="season-locked-global-alert">
-              <div className="alert-left">
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground">
+              <div className="flex items-center gap-2 text-muted-foreground">
                 <Lock size={16} />
                 <span>
                   <strong>Hooaeg {selectedYear} on muudatusteks suletud.</strong> Koristus on lõppenud ning põldude ja kultuuride andmed on arhiveeritud.
@@ -431,7 +439,7 @@ function cropSummaryKey(cropText: string): string {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="alert-action"
+                  className="text-xs underline"
                   onClick={onOpenSeasonManager}
                 >
                   Ava hooajahaldur
@@ -441,7 +449,7 @@ function cropSummaryKey(cropText: string): string {
           )}
 
           {/* Valitud hooaja kultuuride kokkuvõte; kiibil klikk filtreerib tabeli */}
-          <Card variant="tile" padding="sm" className="register-crop-summary">
+          <Card variant="tile" padding="sm" className="flex max-h-[30vh] shrink-0 flex-wrap items-start gap-x-4 gap-y-2.5 overflow-y-auto">
             {cropSummaryContent}
           </Card>
 
@@ -487,12 +495,12 @@ function cropSummaryKey(cropText: string): string {
           <Table scroll="fill" bordered>
             <TableHeader>
               <TableRow>
-                <TableHead pin="start" className="sticky-name">Põld</TableHead>
-                <TableHead pin="start" className="sticky-size">Suurus</TableHead>
+                <TableHead pin="start" className="left-0 w-75 min-w-75 max-w-75">Põld</TableHead>
+                <TableHead pin="start" className="left-75 w-27.5 min-w-27.5 pin-edge-end">Suurus</TableHead>
                 {tableYears.map((yr) => (
                   <TableHead
                     key={yr}
-                    className={`year-col ${yr === selectedYear ? 'selected' : ''}`}
+                    className={cn('year-col cursor-pointer text-left hover:text-primary', yr === selectedYear && 'selected')}
                     onClick={() => onSelectYear(yr)}
                     title={`Vali hooaeg ${yr}`}
                   >
@@ -514,7 +522,7 @@ function cropSummaryKey(cropText: string): string {
 
                 return (
                   <TableRow key={field.id}>
-                    <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
+                    <TableCell pin="start" wrap className="left-0 w-75 min-w-75 max-w-75 pr-8">
                       {/* Valitud aasta põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                       {selectedRec?.geometry && (
                         <Button variant="ghost" size="icon-xs" wrapperClassName={cornerActionClass}
@@ -524,11 +532,11 @@ function cropSummaryKey(cropText: string): string {
                           <Crosshair size={13} />
                         </Button>
                       )}
-                      <div className="field-title-line">
+                      <div className={tableTitleLineClass}>
                         {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}
-                        <span className="field-name">{field.name}</span>
+                        <span className={tableNameClass}>{field.name}</span>
                       </div>
-                      <div className="field-sub-tags">
+                      <div className={tableSubTagsClass}>
                         <Badge tone="info" className="num" title="PRIA massiivi number">{field.fieldCode}</Badge>
                         {field.operatorName && <Badge>👤 {field.operatorName}</Badge>}
                         {field.soilType && <Badge title={SOIL_AUTO_HINT}>🌱 {field.soilType}</Badge>}
@@ -536,12 +544,12 @@ function cropSummaryKey(cropText: string): string {
                     </TableCell>
                     <TableCell
                       pin="start"
-                      className={`size-cell sticky-size ${selectedRec ? '' : 'muted'}`}
+                      className={cn('left-75 w-27.5 min-w-27.5 pin-edge-end', !selectedRec && 'text-subtle')}
                       title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                     >
-                      <div className="season-area-box">
-                        <strong className="season-ha-val">{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
-                        {selectedRec?.eligibleAreaHa ? <span className="eligible-ha-sub">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
+                      <div className="flex flex-col">
+                        <strong className={cn('text-base font-normal text-foreground', !selectedRec && 'text-subtle')}>{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
+                        {selectedRec?.eligibleAreaHa ? <span className="block text-2xs font-medium text-subtle">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
                       </div>
                     </TableCell>
                     {tableYears.map((yr) => {
@@ -555,8 +563,8 @@ function cropSummaryKey(cropText: string): string {
                         const varietyOptions =
                           cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
                         return (
-                          <TableCell key={yr} wrap className={`year-cell editing ${yr === selectedYear ? 'selected' : ''}`}>
-                            <div ref={cropEditRef} className="crop-inline-edit">
+                          <TableCell key={yr} wrap className={cn('year-cell min-w-47.5', yr === selectedYear && 'selected')}>
+                            <div ref={cropEditRef} className="flex flex-col gap-1">
                               <Select
                                 size="sm"
                                 value={cropEdit.crop}
@@ -589,11 +597,11 @@ function cropSummaryKey(cropText: string): string {
                                   options={(Object.keys(UNDERSOWING_LABELS) as Undersowing[]).map((u) => ({ value: u, label: UNDERSOWING_LABELS[u] }))}
                                 />
                               )}
-                              <div className="crop-inline-edit-actions">
+                              <div className="flex justify-end gap-0.5">
                                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
                                   <X size={15} />
                                 </Button>
-                                <Button type="button" variant="ghost" size="icon-sm" className="save" onClick={saveCropEdit} title="Salvesta">
+                                <Button type="button" variant="ghost" size="icon-sm" className="text-primary" onClick={saveCropEdit} title="Salvesta">
                                   <Check size={15} />
                                 </Button>
                               </div>
@@ -604,7 +612,7 @@ function cropSummaryKey(cropText: string): string {
                       return (
                         <TableCell
                           key={yr}
-                          className={`year-cell ${yr === selectedYear ? 'selected' : ''} ${editable ? 'editable' : ''} ${hasCrop ? 'has-crop' : ''}`}
+                          className={cn('year-cell w-47.5 min-w-37.5 max-w-47.5', yr === selectedYear && 'selected', hasCrop && 'has-crop', editable && 'group/cell cursor-pointer')}
                           style={hasCrop ? ({ '--crop-color': rec.cropColor } as React.CSSProperties) : undefined}
                           title={editable ? (hasCrop ? 'Klõpsa kultuuri muutmiseks' : 'Klõpsa, et lisada selle aasta kultuur') : blockReason ?? undefined}
                           onClick={editable ? () => openCropEdit(field, yr, rec) : undefined}
@@ -613,12 +621,12 @@ function cropSummaryKey(cropText: string): string {
                         >
                           {rec ? (
                             <>
-                              <div className="year-crop">
+                              <div className="flex items-center gap-1.5 overflow-hidden">
                                 {hasCrop
-                                  ? <span className="year-crop-name" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
-                                  : <span className="muted">–</span>}
-                                {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
-                                <Button variant="ghost" size="icon-xs" wrapperClassName="year-shape-btn"
+                                  ? <span className="min-w-0 flex-1 truncate" title={rec.priaCropName ? `PRIA nimetus: ${rec.priaCropName}` : rec.crop}>{rec.crop}</span>
+                                  : <span className={tableMutedClass}>–</span>}
+                                {editable && <Edit2 size={11} className="shrink-0 text-muted-foreground opacity-0 group-hover/cell:opacity-100" />}
+                                <Button variant="ghost" size="icon-xs" wrapperClassName="ml-auto shrink-0"
                                   title={`Näita ${yr}. a põllu kuju`}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -628,15 +636,15 @@ function cropSummaryKey(cropText: string): string {
                                   <Crosshair size={13} />
                                 </Button>
                               </div>
-                              {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                              {rec.cropVariety && <div className={cellSubStackedClass}>{rec.cropVariety}</div>}
                               {hasCrop && rec.undersowing && rec.undersowing !== 'NONE' && (
-                                <div className="cell-sub">{UNDERSOWING_LABELS[rec.undersowing]}</div>
+                                <div className={cellSubStackedClass}>{UNDERSOWING_LABELS[rec.undersowing]}</div>
                               )}
                             </>
                           ) : (
-                            <div className="year-crop">
-                              <span className="muted">–</span>
-                              {editable && <Edit2 size={11} className="year-crop-edit-icon" />}
+                            <div className="flex items-center gap-1.5 overflow-hidden">
+                              <span className={tableMutedClass}>–</span>
+                              {editable && <Edit2 size={11} className="shrink-0 text-muted-foreground opacity-0 group-hover/cell:opacity-100" />}
                             </div>
                           )}
                         </TableCell>

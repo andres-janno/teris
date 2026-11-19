@@ -50,17 +50,17 @@ export const FieldShapeModal: React.FC<FieldShapeModalProps> = ({ field, record,
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="field-shape-modal">
+      <DialogContent size="lg">
         <DialogHeader
           icon={<MapIcon size={20} />}
           title={title}
           description={`${record.areaHa.toFixed(2)} ha · ${record.crop}${record.cropVariety ? ` (${record.cropVariety})` : ''}`}
         />
-        <DialogBody className="field-shape-body">
+        <DialogBody className="p-0">
           {geometry ? (
-            <div ref={setMapEl} className="field-shape-map" />
+            <div ref={setMapEl} className="h-[min(60vh,520px)] w-full" />
           ) : (
-            <div className="field-shape-empty">Selle aasta kirjel pole põllu kuju.</div>
+            <div className="px-4 py-8 text-center text-muted-foreground">Selle aasta kirjel pole põllu kuju.</div>
           )}
         </DialogBody>
       </DialogContent>

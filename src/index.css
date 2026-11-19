@@ -565,80 +565,6 @@ body {
   flex-direction: column;
 }
 
-/* Põldude registri kultuuride kokkuvõte (tabeli kohal): valitud hooaja kultuuride pindalad */
-.register-crop-summary {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  gap: 10px 16px;
-  flex-shrink: 0;
-  max-height: 30vh;
-  overflow-y: auto;
-  margin-bottom: 12px;
-}
-
-.register-crop-summary-groups {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  flex: 1 1 480px;
-  min-width: 0;
-}
-
-/* Oma maa / rendimaa paremal üksteise all, ühelaiused */
-.register-crop-summary-tenure {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  margin-left: auto;
-}
-
-.register-crop-group.total {
-  padding-top: 6px;
-  border-top: 1px solid var(--border-card);
-}
-
-.register-crop-summary .muted {
-  font-size: 14px;
-  color: var(--text-muted);
-}
-
-.register-crop-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.register-crop-group-title {
-  display: inline-flex;
-  align-items: baseline;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  min-width: 270px;
-  margin-right: 8px;
-}
-
-/* Pindalad paremale joondatud, et ridade numbrid oleks kohakuti */
-.register-crop-group-title strong {
-  margin-left: auto;
-  font-size: 16px;
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-}
-
-.register-crop-group.winter .register-crop-group-title strong {
-  color: #0369a1;
-}
-
-.register-crop-group.spring .register-crop-group-title strong {
-  color: var(--emerald-500);
-}
-
 :root {
   /* Kultuuri värvi toon põldude registri lahtrites ja jaluses */
   --crop-tint: 18%;
@@ -656,13 +582,6 @@ body {
   width: 300px;
   min-width: 300px;
   max-width: 300px;
-}
-
-[data-slot="table"] .sticky-size {
-  left: 300px !important; /* ui utiliit left-0 (pin="start") võidaks muidu */
-  width: 110px;
-  min-width: 110px;
-  box-shadow: inset -1px 0 0 var(--border-card);
 }
 
 [data-slot="table"] .name-cell .field-title-line {
@@ -733,15 +652,6 @@ body {
   z-index: 3 !important;
 }
 
-[data-slot="table"] th.year-col {
-  cursor: pointer;
-  text-align: left;
-}
-
-[data-slot="table"] th.year-col:hover {
-  color: var(--emerald-500) !important; /* ui päise text-muted-foreground võidaks muidu */
-}
-
 /* Valitud aasta: roheline silt.
    Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
 [data-slot="table"] th.year-col .year-col-label {
@@ -759,12 +669,6 @@ body {
 
 [data-slot="table"] th.year-col.selected:hover .year-col-label {
   background: var(--selection-bg-hover);
-}
-
-[data-slot="table"] td.year-cell {
-  width: 190px;
-  min-width: 150px;
-  max-width: 190px;
 }
 
 /* Kultuuri värv: hele toon + vasakul täisvärvis riba */
@@ -786,89 +690,11 @@ body {
   border-right-color: #16a34a !important;
 }
 
-[data-slot="table"] td.year-cell.editable {
-  cursor: pointer;
-}
-
-[data-slot="table"] .year-shape-btn {
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.field-shape-body {
-  padding: 0 !important; /* DialogBody utiliidid on kõrgemas kihis */
-}
-
-.field-shape-map {
-  height: min(60vh, 520px);
-  width: 100%;
-}
-
-.field-shape-empty {
-  padding: 32px 16px;
-  text-align: center;
-  color: var(--text-secondary);
-}
-
-[data-slot="table"] .year-crop-edit-icon {
-  flex-shrink: 0;
-  opacity: 0;
-  color: var(--text-secondary);
-}
-
-[data-slot="table"] td.year-cell.editable:hover .year-crop-edit-icon {
-  opacity: 1;
-}
-
-[data-slot="table"] td.year-cell.editing {
-  min-width: 190px;
-}
-
-.crop-inline-edit {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.crop-inline-edit-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 2px;
-}
-
-.crop-inline-edit-actions .save {
-  color: var(--emerald-500) !important;
-}
-
-[data-slot="table"] .year-crop {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  overflow: hidden;
-}
-
-[data-slot="table"] .year-crop-name {
-  flex: 1 1 auto;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-[data-slot="table"] .size-cell .season-ha-val {
-  font-size: 14px;
-  font-weight: 400;
-}
-
 /* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
 [data-slot="table"] .name-cell .field-name,
 .fields-table .field-name {
   font-size: 14px;
   font-weight: 400;
-}
-
-[data-slot="table"] .size-cell.muted .season-ha-val {
-  color: var(--text-muted);
 }
 
 .register-header-controls {
@@ -963,17 +789,6 @@ body {
   min-width: 0;
 }
 
-.season-area-box {
-  display: flex;
-  flex-direction: column;
-}
-
-.season-ha-val {
-  font-size: 16px;
-  color: var(--text-primary);
-  font-weight: 600;
-}
-
 /* Valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
 .crop-legend-item[data-selected] {
   /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
@@ -985,34 +800,6 @@ body {
 /* ==========================================================================
    Season Register & Season Manager Modal Styles
    ========================================================================== */
-
-/* Global Locked Alert Banner in Field Manager */
-.season-locked-global-alert {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  background: rgba(148, 163, 184, 0.14);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-  color: var(--text-primary);
-  font-size: 13px;
-  padding: 8px 12px;
-  border-radius: var(--radius-md);
-  margin-bottom: 12px;
-}
-
-.season-locked-global-alert .alert-left {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  color: var(--text-secondary);
-}
-
-.alert-action {
-  font-size: 12px;
-  text-decoration: underline;
-  cursor: pointer;
-}
 
 .season-header-actions {
   display: flex;
@@ -1153,13 +940,6 @@ body {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 2px;
-}
-
-.eligible-ha-sub {
-  font-size: 11px;
-  color: var(--text-muted);
-  font-weight: 500;
-  display: block;
 }
 
 /* ==========================================================================
@@ -1797,23 +1577,6 @@ body {
 .fullpage-board-body .search-field {
   flex: 1 1 220px;
   max-width: 420px !important;
-}
-
-/* Põldude lehe kultuuride kokkuvõte */
-.fullpage-board-body .register-crop-summary {
-  margin-bottom: 0;
-}
-
-.fullpage-board-body .register-crop-group-title {
-  font-size: 13px;
-}
-
-.fullpage-board-body .register-crop-group-title {
-  min-width: min(240px, 100%);
-}
-
-.fullpage-board-body .register-crop-group-title strong {
-  font-size: 14px;
 }
 
 /* ==========================================================================
@@ -2521,8 +2284,3 @@ polyline.weather-line { fill: none; }
 .crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }
 /* Kultuuri muutmise dialoog: sinine ülaäär */
 .crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }
-
-/* Kiibi (ui/ChipButton) sisu tüpograafia */
-[data-slot="chip"] .lbl { color: var(--text-secondary); }
-[data-slot="chip"] strong { color: var(--text-primary); font-weight: 500; }
-[data-slot="chip"] .sub-val { font-size: 11px; margin-left: 4px; }
