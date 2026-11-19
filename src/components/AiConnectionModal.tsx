@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
-import { Button, Input, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
+import { Alert, Button, Input, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
@@ -92,18 +92,18 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
         />
         <DialogBody>
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={16} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
 
           {created && (
             <div className="ai-key-created">
-              <div className="alert-box">
+              <Alert>
                 <AlertCircle size={16} />
                 <span>Linki näidatakse ainult üks kord. See annab ligipääsu sinu Terise andmetele — ära jaga seda.</span>
-              </div>
+              </Alert>
               <div className="ai-key-url">
                 <Input readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
                 <Button type="button" variant="primary" onClick={() => void copy()}>

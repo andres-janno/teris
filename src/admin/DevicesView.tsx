@@ -1,4 +1,4 @@
-import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type DeviceRegistration, type DeviceRow } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -45,8 +45,8 @@ export function DevicesView() {
   return (
     <Card className="admin-card">
       <h2>Seadmed</h2>
-      {error && <div className="alert-box error">{error}</div>}
-      {notice && <div className="alert-box">{notice}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert>{notice}</Alert>}
       {!devices && !error && <div className="admin-muted">Laadin…</div>}
       {devices && (
         <Table>

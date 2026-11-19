@@ -15,7 +15,7 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
+import { Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -226,10 +226,10 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
           {/* Error display */}
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={18} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
 
           {/* Preview list */}
@@ -264,7 +264,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
               </Field>
 
               {replacePlan && (
-                <div className={`alert-box is-stacked ${importYearLocked ? 'error' : ''}`}>
+                <Alert tone={importYearLocked ? 'error' : 'neutral'} className="my-2 flex-col items-stretch gap-1">
                   {importYearLocked ? (
                     <span>Hooaeg {importYear} on lukus — asendamine pole võimalik.</span>
                   ) : (
@@ -282,7 +282,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                       )}
                     </>
                   )}
-                </div>
+                </Alert>
               )}
 
               <div className="preview-fields-scroll">

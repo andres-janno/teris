@@ -1,5 +1,5 @@
 // Ilmapunktide laadimise olek (ERA5-Land) ja käsitsi uuesti laadimine.
-import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type WeatherPointRow } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
@@ -45,10 +45,10 @@ export function WeatherAdminView() {
   return (
     <Card className="admin-card">
       <h2>Ilmaandmed (ERA5-Land)</h2>
-      {error && <div className="alert-box error">{error}</div>}
-      {notice && <div className="alert-box">{notice}</div>}
-      {data && data.tenantsWithKey === 0 && <div className="alert-box error">Ühelgi ettevõttel pole Copernicuse (CDS) võtit, ilmaandmeid ei laeta. Võtme lisab ettevõtte administraator menüüs „Ilmaandmete ühendus“.</div>}
-      {data && data.points.some(warn) && <div className="alert-box warning">Mõne punkti laadimine on ebaõnnestunud {data.failWarn}+ korda järjest.</div>}
+      {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert>{notice}</Alert>}
+      {data && data.tenantsWithKey === 0 && <Alert tone="error">Ühelgi ettevõttel pole Copernicuse (CDS) võtit, ilmaandmeid ei laeta. Võtme lisab ettevõtte administraator menüüs „Ilmaandmete ühendus“.</Alert>}
+      {data && data.points.some(warn) && <Alert tone="warning">Mõne punkti laadimine on ebaõnnestunud {data.failWarn}+ korda järjest.</Alert>}
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && (
         <Table>

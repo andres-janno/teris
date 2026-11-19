@@ -8,7 +8,7 @@ import { warehouseFilterOptions } from './WarehouseOptions';
 import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
-import { Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
+import { Alert, Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -56,14 +56,14 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
                 options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses)]} />
             </FilterClear>
           </div>
-          {error && <div className="alert-box error">{error}</div>}
+          {error && <Alert tone="error">{error}</Alert>}
           {data && data.issues.length > 0 && (
-            <div className="alert-box warning">
+            <Alert>
               <AlertTriangle size={14} /> {data.issues.length} kannet on arvestusest väljas, sest nende ühikut ei saa laoühikusse ({data.unit}) teisendada:
               <ul>
                 {data.issues.map((i) => <li key={i.entryId}>{formatDate(i.date)} · {i.workTypeName} · {i.fieldName} · {fmtQty(i.quantity)} {i.unit}</li>)}
               </ul>
-            </div>
+            </Alert>
           )}
           <Table scroll="md" bordered>
             <TableHeader>

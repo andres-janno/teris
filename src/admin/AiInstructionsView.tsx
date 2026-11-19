@@ -1,5 +1,5 @@
 // AI ühenduse juhis: tekst, mille MCP server saadab AI-kliendile ühenduse alguses (kõigile ettevõtetele ühine).
-import { Card, Button, Textarea } from '../components/ui';
+import { Alert, Card, Button, Textarea } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type McpInstructions } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
@@ -46,8 +46,8 @@ export function AiInstructionsView() {
       <p className="muted">
         {data.isDefault ? 'Kehtib vaikejuhis (koodis).' : `Muudetud: ${data.updatedAt ? formatTallinn(data.updatedAt) : '–'}${data.updatedBy ? `, ${data.updatedBy}` : ''}`}
       </p>
-      {error && <div className="alert-box error">{error}</div>}
-      {notice && <div className="alert-box">{notice}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert>{notice}</Alert>}
       <Textarea
         className="ai-instructions-input"
         value={draft}

@@ -5,7 +5,7 @@ import type { TripGap } from '../types/fleet';
 import { api } from '../services/api';
 import { formatDateTime, formatDuration } from './fleetDateTime';
 import { gapParts } from './tripGapText';
-import { Button, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Alert, Button, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface Props {
   gap: TripGap;
@@ -46,7 +46,7 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
               onChange={(e) => setNote(e.target.value)}
             />
           </Field>
-          {error && <div className="alert-box error">{error}</div>}
+          {error && <Alert tone="error">{error}</Alert>}
         </DialogBody>
         <DialogFooter>
           <Button type="button" onClick={onClose} disabled={saving}>Loobu</Button>

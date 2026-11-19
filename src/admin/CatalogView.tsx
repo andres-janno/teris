@@ -11,7 +11,7 @@ import {
   type CropGroup,
   type WorkPhase
 } from './platformApi.ts';
-import { NumberInput, CheckboxField, Field, Card, Button, Input, Select, Textarea, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { Alert, NumberInput, CheckboxField, Field, Card, Button, Input, Select, Textarea, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 
 type Tab = 'crops' | 'workTypes';
 
@@ -101,7 +101,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
   return (
     <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{crop ? `Muuda kultuuri: ${crop.name}` : 'Uus kultuur'}</h3>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       <div className="admin-form-grid">
         <Field htmlFor="cc-name" label="Nimi *">
           <Input id="cc-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
@@ -204,7 +204,7 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
   return (
     <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{variety ? `Muuda sorti: ${variety.name}` : 'Uus sort'}</h3>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       <div className="admin-form-grid">
         <Field htmlFor="cv-name" label="Nimi *">
           <Input id="cv-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
@@ -261,7 +261,7 @@ function VarietiesPanel({ crop, onChanged }: { crop: CatalogCrop; onChanged: () 
         <strong>Sordid — {crop.name}</strong>
         <Button size="sm" onClick={() => setEditing('new')}>Lisa sort</Button>
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       {editing && (
         <VarietyForm
           key={editing === 'new' ? 'new' : editing.id}
@@ -324,7 +324,7 @@ function CropsTab({ data, reload }: { data: CatalogData; reload: () => void }) {
         <h2>Kultuurid</h2>
         <Button variant="primary" size="sm" onClick={() => setEditing('new')}>Lisa kultuur</Button>
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       {editing && (
         <CropForm
           key={editing === 'new' ? 'new' : editing.id}
@@ -414,7 +414,7 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
   return (
     <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
       <h3>{wt ? `Muuda tööliiki: ${wt.name}` : 'Uus tööliik'}</h3>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       <div className="admin-form-grid">
         <Field htmlFor="wt-name" label="Nimi *">
           <Input id="wt-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
@@ -461,7 +461,7 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
         <h2>Tööliigid</h2>
         <Button variant="primary" size="sm" onClick={() => setEditing('new')}>Lisa tööliik</Button>
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       {editing && (
         <WorkTypeForm
           key={editing === 'new' ? 'new' : editing.id}
@@ -521,7 +521,7 @@ export function CatalogView() {
   return (
     <Card className="admin-card">
       <h2>Algkataloog</h2>
-      <div className="alert-box info">Algkataloogi muudatused kehtivad ainult edaspidi loodavatele ettevõtetele.</div>
+      <Alert tone="info">Algkataloogi muudatused kehtivad ainult edaspidi loodavatele ettevõtetele.</Alert>
       <div className="admin-nav">
         {([['crops', 'Kultuurid'], ['workTypes', 'Tööliigid']] as [Tab, string][]).map(([k, l]) => (
           <Button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>
@@ -529,7 +529,7 @@ export function CatalogView() {
           </Button>
         ))}
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       {!data && !error && <div className="admin-muted">Laadin…</div>}
       {data && tab === 'crops' && <CropsTab data={data} reload={reload} />}
       {data && tab === 'workTypes' && <WorkTypesTab data={data} reload={reload} />}

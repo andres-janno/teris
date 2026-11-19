@@ -424,7 +424,6 @@ export const registerSectionClass = 'flex min-h-0 flex-1 basis-0 flex-col gap-4'
 // Haakimiste ja seadmete seoste registri lahtrid
 export const fleetCellMainClass = 'flex items-center gap-2';
 export const fleetCellTitleClass = 'text-sm font-medium leading-natural';
-export const fleetCellSubClass = 'text-2xs text-subtle';
 export const fleetCellDateClass = 'text-sm font-medium leading-natural';
 export const fleetCellDateEndClass = 'text-sm leading-natural text-muted-foreground';
 export const fleetDurationClass = ({ active = false }: { active?: boolean } = {}): string =>
@@ -442,3 +441,25 @@ export const mapPanelTitleClass = 'flex items-center gap-2 text-base font-semibo
 export const loadingSpinnerClass = 'shrink-0 animate-spin text-primary motion-reduce:[animation-duration:3s]';
 /** Sama, kuid 6px vasak vahe teksti kõrval (kihtide paneeli rida, satelliidipaneeli pealkiri). */
 export const loadingSpinnerInlineClass = cn(loadingSpinnerClass, 'ml-1.5');
+
+// --- Dialoogid ja registrid (etapp 4e) ---
+/** Teatekast. error: punane ääris + taust (vana .alert-box.error); success/info/warning: ainult taust ja toonitekst, ääris puudub (vana admin.css: border-width oli 0);
+    neutral: ilma toonita (vana .alert-box ilma modifikaatorita). sm: kitsam polster (vana .is-compact). Veeris ja paigutus (`m-2`, `justify-between`, `flex-col`) tuleb kutsujalt. */
+export const alertVariants = cva('flex items-center gap-2.5 rounded-sm text-sm leading-natural', {
+  variants: {
+    tone: {
+      error: 'border border-destructive/35 bg-destructive/12 text-danger-text',
+      success: 'bg-primary/15 text-success-text',
+      info: 'bg-info/12 text-info-text',
+      warning: 'bg-warning/15 text-warning-text',
+      neutral: '',
+    },
+    size: { md: 'px-3 py-2.5', sm: 'px-3 py-2' },
+  },
+  defaultVariants: { tone: 'neutral', size: 'md' },
+});
+
+/** Tabelilahtri/kaardi alamrida (11px, hallim): sama ilme Tehnikas, Külvikorras, Kultuurides, sõidu dialoogis. */
+export const cellSubClass = 'text-2xs text-subtle';
+/** Alamrida teksti all tabelilahtris (vana `[data-slot="table"] .cell-sub`: 2px ülaveeris). */
+export const cellSubStackedClass = cn(cellSubClass, 'mt-0.5');

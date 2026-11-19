@@ -139,7 +139,7 @@ Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTil
 | `fleetCell*Class`, `fleetDurationClass`, `fleetNotesClass` | haakimiste/seoste registri lahtrid | `fleet-cell-*` |
 | `dateTimeRowClass`, `dateTimeHintClass` | kuupäev + kellaaeg + vihje | `assign-datetime`, `assign-hint` |
 | `bg-/text-/border-l-fresh-*`, `bg-trip-*` | seadme värskus, sõidu ajajaotus (teemapõhised) | `fresh-*`, `--trip-*` `.trip-dialog` all |
-| `alert-box error` | veateade (punane kast; vana `auth-error-banner`-il polnud reeglit) | `auth-error-banner` |
+| `<Alert tone size>` (`alertVariants`) | teatekast (error/success/info/warning/neutral, md/sm) | `alert-box` |
 
 `PoiManagerModal` ja `RelatedPartiesModal` kasutavad veel `vehicle-grid`, `vehicle-card`, `v-avatar`, `v-name`, `v-title-wrap`, `v-info-*` (dialoogide etapp: `cardGridClass` + `IconBox size="md"`).
 

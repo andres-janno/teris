@@ -9,7 +9,7 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
+import { Alert, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -149,10 +149,10 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
           </div>
 
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={18} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
 
           {results && (
@@ -172,20 +172,20 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                   </div>
 
                   {lockedSeasons.length > 0 && (
-                    <div className="alert-box">
+                    <Alert>
                       <Lock size={16} />
                       <span>Hooaeg {lockedSeasons.join(', ')} on lukus — nende põldude tööd jäetakse vahele.</span>
-                    </div>
+                    </Alert>
                   )}
 
                   {unmatchedPerformers.length > 0 && (
-                    <div className="alert-box error">
+                    <Alert tone="error">
                       <AlertCircle size={16} />
                       <span>
                         Seotud isikute registris puuduvad teostajad: {unmatchedPerformers.join(', ')}. Nende tegevused
                         imporditakse ilma teostajata — lisa isik registrisse ja impordi uuesti, kui soovid seost.
                       </span>
-                    </div>
+                    </Alert>
                   )}
 
                   <div className="preview-fields-scroll">

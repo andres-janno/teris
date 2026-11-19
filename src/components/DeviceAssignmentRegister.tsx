@@ -7,8 +7,8 @@ import type { DeviceAssignment, Implement, TelemetryDevice, Vehicle } from '../t
 import { api } from '../services/api';
 import { alertDialog, confirmDialog } from './ConfirmDialog';
 import { combineDateAndTimeToIso, formatDateTime, formatDuration, getTimeOptions, splitIsoToDateAndTime } from './fleetDateTime';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, DateInput, FilterClear, FilterSelect, Field, FormGrid, IconBox, Select, Textarea, type SelectOption } from './ui';
-import { registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
+import { Alert, Badge, Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, DateInput, FilterClear, FilterSelect, Field, FormGrid, IconBox, Select, Textarea, type SelectOption } from './ui';
+import { registerSectionClass, fleetCellMainClass, fleetCellTitleClass, cellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 
 interface DeviceAssignmentRegisterProps {
   vehicles: Vehicle[];
@@ -265,7 +265,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
                         </IconBox>
                         <div>
                           <div className={fleetCellTitleClass}>{a.deviceModel || a.deviceId}</div>
-                          <div className={fleetCellSubClass}>
+                          <div className={cellSubClass}>
                             {a.deviceIdentifier ? `${isEye ? 'MAC' : 'IMEI'}: ${a.deviceIdentifier}` : ''}
                           </div>
                         </div>
@@ -342,9 +342,9 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
 
               <DialogBody>
                 {error && (
-                  <div className="alert-box error">
+                  <Alert tone="error">
                     {error}
-                  </div>
+                  </Alert>
                 )}
 
                 <FormGrid stackNarrow>

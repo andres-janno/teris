@@ -5,7 +5,7 @@ import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
-import { DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Alert, DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -114,8 +114,8 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
           ← Ettevõtted
         </Button>
       </div>
-      {error && <div className="alert-box error">{error}</div>}
-      {notice && <div className="alert-box">{notice}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
+      {notice && <Alert>{notice}</Alert>}
       {!tenant && !error && <div className="admin-muted">Laadin…</div>}
       {tenant && (
         <>
@@ -156,10 +156,10 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
               <p className="admin-hint">Ettevõte pole kasutajatoele ligipääsu andnud. Luba antakse ettevõtte admini poolt teris.ee-s (Kasutajad → Kasutajatoe ligipääs).</p>
             )}
             {supportUrl && (
-              <div className="alert-box info admin-support-link">
+              <Alert tone="info" className="admin-support-link">
                 <a href={supportUrl} target="_blank" rel="noopener noreferrer">Ava tugivaade</a>
                 <span> — brauser blokeeris uue akna. Link kehtib 60 sekundit.</span>
-              </div>
+              </Alert>
             )}
           </Card>
 

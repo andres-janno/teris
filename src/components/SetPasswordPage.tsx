@@ -5,7 +5,7 @@ import { TerisLogo } from './TerisLogo';
 import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { api } from '../services/api';
-import { Button, Field, Input } from './ui';
+import { Alert, Button, Field, Input } from './ui';
 
 interface SetPasswordPageProps {
   token: string;
@@ -54,10 +54,10 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
           </div>
           {invalid ? (
             <>
-              <div className="alert-box error">
+              <Alert tone="error">
                 <AlertCircle size={16} />
                 <span>{invalid}</span>
-              </div>
+              </Alert>
               <p className="hint-text">Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
               <Button type="button" variant="primary" className="full-width login-primary-btn" onClick={onCancel}>Sisselogimise lehele</Button>
             </>
@@ -69,10 +69,10 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 Määra parool kasutajale <strong>{username}</strong>.
               </p>
               {error && (
-                <div className="alert-box error">
+                <Alert tone="error">
                   <AlertCircle size={16} />
                   <span>{error}</span>
-                </div>
+                </Alert>
               )}
               <Input type="text" autoComplete="username" value={username} readOnly hidden />
               <Field label="Uus parool (vähemalt 10 märki)" htmlFor="sp-password">

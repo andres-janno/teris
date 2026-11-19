@@ -4,7 +4,7 @@ import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors'
 import React, { useEffect, useState } from 'react';
 import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
-  Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+  Alert, Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
@@ -371,6 +371,16 @@ export const UiGallery: React.FC = () => {
             <PopoverContent>Hüpiku sisu: filtrid, lisainfo või väike vorm.</PopoverContent>
           </Popover>
           <Tooltip content="Vihje tekst"><Button variant="ghost">Hõlju siin</Button></Tooltip>
+        </Section>
+
+        <Section title="Teated">
+          <div className="flex flex-col gap-2">
+            <Alert tone="error">Salvestamine ebaõnnestus: serveri viga.</Alert>
+            <Alert tone="success">Salvestatud.</Alert>
+            <Alert tone="info">See töö kuulub järgmise hooaja tsüklisse.</Alert>
+            <Alert tone="warning" size="sm">Hooaeg on lukus.</Alert>
+            <Alert>Tavaline teade ilma toonita.</Alert>
+          </div>
         </Section>
 
         <Section title="Abi-ikoon (HelpHint)">

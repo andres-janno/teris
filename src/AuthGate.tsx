@@ -7,7 +7,7 @@ import { SetPasswordPage } from './components/SetPasswordPage';
 import type { AuthUser } from './types/auth';
 import { api, ApiError, setUnauthorizedHandler } from './services/api';
 import { alertDialog } from './components/ConfirmDialog';
-import { Button } from './components/ui';
+import { Alert, Button } from './components/ui';
 
 // Ühiste komponentide näidiste leht (/ui, ainult admin) — eraldi tükk, tavakasutaja seda ei lae.
 const UiGallery = React.lazy(() => import('./components/ui/UiGallery').then((m) => ({ default: m.UiGallery })));
@@ -159,10 +159,10 @@ export const AuthGate: React.FC = () => {
   return (
     <>
       {banner && (
-        <div className="alert-box with-action" role="alert">
+        <Alert role="alert" className="m-2 justify-between gap-3">
           <span>{banner}</span>
           <Button type="button" variant="ghost" size="sm" onClick={() => setBanner(null)}>Sulge</Button>
-        </div>
+        </Alert>
       )}
       <App user={user} onLogout={logout} />
     </>

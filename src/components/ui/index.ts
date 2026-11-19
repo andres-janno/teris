@@ -2,6 +2,7 @@
 export { cn } from './cn';
 export { clickOnActivationKey, handleActivationKey, type ActivationKeyEvent } from './keyActivation';
 export { Button, type ButtonProps } from './Button';
+export { Alert, type AlertProps } from './Alert';
 export { Badge, type BadgeProps } from './Badge';
 export { Card, CardButton, CardHeader, CardTitle, CardActions, Panel, type CardProps, type CardButtonProps } from './Card';
 export { Table, TableHeader, TableBody, TableFooter, TableRow, TableHead, TableCell, TableEmpty } from './Table';

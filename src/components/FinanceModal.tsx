@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { FINANCE_STATUS_BADGE, type FinanceEntry, type FieldResult, type WorkEntryLineKind, type FinanceStatus } from '../types/fieldWork';
-import { Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem, KeyValueRow, cn } from './ui';
+import { Alert, Badge, Card, CardButton, Button, Dialog, DialogContent, DialogHeader, DialogBody, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, NumberInput, Textarea, StatTile, LegendItem, KeyValueRow, cn } from './ui';
 
 interface FinanceModalProps {
   isOpen: boolean;
@@ -465,10 +465,10 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 </div>
 
                 {entriesError && (
-                  <div className="alert-box error is-compact">
+                  <Alert tone="error" size="sm">
                     <AlertCircle size={14} />
                     <span>{entriesError}</span>
-                  </div>
+                  </Alert>
                 )}
 
                 <div className="flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto pr-1" aria-busy={loadingEntries}>
@@ -563,27 +563,27 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     </div>
 
                     {selectedEntry.financeStatus === 'CHANGED' && (
-                      <div className="alert-box warning m-0 flex items-start gap-2.5">
+                      <Alert className="m-0 items-start">
                         <AlertCircle size={16} />
                         <div>
                           <strong>Kande koguseid on pärast kinnitamist muudetud!</strong>
                           <p className="mt-0.5 text-xs leading-natural">Kontrolli allolevad read ja kinnita kanne uuesti, et värskendatud andmed kajastuksid tulemustes.</p>
                         </div>
-                      </div>
+                      </Alert>
                     )}
 
                     {saveError && (
-                      <div className="alert-box error is-compact">
+                      <Alert tone="error" size="sm">
                         <AlertCircle size={14} />
                         <span>{saveError}</span>
-                      </div>
+                      </Alert>
                     )}
 
                     {saveSuccess && (
-                      <div className="alert-box success is-compact">
+                      <Alert size="sm">
                         <Check size={14} />
                         <span>{saveSuccess}</span>
-                      </div>
+                      </Alert>
                     )}
 
                     {/* Lines Pricing Table */}

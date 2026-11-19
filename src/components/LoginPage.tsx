@@ -6,7 +6,7 @@ import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
-import { Button, Field, Input } from './ui';
+import { Alert, Button, Field, Input } from './ui';
 
 interface LoginPageProps {
   notice?: string | null;
@@ -45,12 +45,12 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
             <TerisLogo variant="vertical" />
           </div>
 
-          {notice && !error && <div className="alert-box">{notice}</div>}
+          {notice && !error && <div className="login-notice">{notice}</div>}
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={16} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
 
           <Field label="Kasutajanimi" htmlFor="login-username">
@@ -83,7 +83,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
           {forgotOpen && (
             <div className="login-forgot-box">
               {forgotSent ? (
-                <div className="alert-box">Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
+                <div className="login-notice">Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
               ) : (
                 <>
                   <label htmlFor="forgot-login">Kasutajanimi või e-post</label>

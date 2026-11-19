@@ -1,4 +1,4 @@
-import { Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type TenantSummary } from './platformApi.ts';
 import { LicenseCell } from './LicenseCell.tsx';
@@ -31,8 +31,8 @@ export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) =>
           Uus ettevõte
         </Button>
       </div>
-      {notice && <div className="alert-box">{notice}</div>}
-      {error && <div className="alert-box error">{error}</div>}
+      {notice && <Alert>{notice}</Alert>}
+      {error && <Alert tone="error">{error}</Alert>}
       {!tenants && !error && <div className="admin-muted">Laadin…</div>}
       {tenants && (
         <Table>

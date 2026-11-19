@@ -6,7 +6,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Badge, Button, Field, Input, CheckboxField, RadioGroup, RadioField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Alert, Badge, Button, Field, Input, CheckboxField, RadioGroup, RadioField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -152,13 +152,13 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
         <DialogBody>
           {error && mode.kind === 'list' && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={16} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
           {notice && (
-            <div className="alert-box">{notice}</div>
+            <Alert>{notice}</Alert>
           )}
 
           <Table bordered>
@@ -246,10 +246,10 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
               <DialogHeader icon={<FormIcon size={20} />} title={formTitle} />
               <DialogBody>
               {error && (
-                <div className="alert-box error">
+                <Alert tone="error">
                   <AlertCircle size={16} />
                   <span>{error}</span>
-                </div>
+                </Alert>
               )}
               {mode.kind === 'add' && (
                 <Field label="Kasutajanimi (a–z, 0–9, . _ -)" htmlFor="ua-username">

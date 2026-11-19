@@ -2,7 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, INTEREST_STATUS_LABELS, type InterestRow, type InterestStatus } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
-import { FilterClear, Card, Button, Select, Textarea, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Alert, FilterClear, Card, Button, Select, Textarea, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 const STATUSES = Object.keys(INTEREST_STATUS_LABELS) as InterestStatus[];
 
@@ -56,7 +56,7 @@ export function InterestView() {
           />
         </FilterClear>
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       <Table>
         <TableHeader><TableRow><TableHead>Aeg</TableHead><TableHead>Kontakt</TableHead><TableHead>Ettevõte / pind</TableHead><TableHead>Sõnum</TableHead><TableHead>Allikas</TableHead><TableHead>Staatus</TableHead><TableHead>Märkmed</TableHead><TableHead/></TableRow></TableHeader>
         <TableBody>

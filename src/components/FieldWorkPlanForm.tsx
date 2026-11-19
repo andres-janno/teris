@@ -9,7 +9,7 @@ import { PRIA_ACTIVITY, FERTILIZING_METHODS, PRIA_ACTIVITIES } from '../services
 import type { FieldWork, FieldWorkPlanLine, Article, WorkType } from '../types/fieldWork';
 import type { SeedCheck } from '../services/seedCropCheck';
 import { PriaLinesEditor, HarvestEditor, planLineToRow, rowToPlanLine, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea, emptyBoxClass, subheadingClass } from './ui';
+import { Alert, Button, DialogForm, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, DateInput, FilterSelect, FilterClear, Field, NumberInput, Textarea, emptyBoxClass, subheadingClass } from './ui';
 
 export interface FieldWorkPlanFormProps {
   fieldSeasonId: number;
@@ -251,7 +251,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
         <Field label="Märkused" htmlFor="wp-notes">
           <Textarea id="wp-notes" rows={3} maxLength={1000} value={notes} onChange={(e) => setNotes(e.target.value)} />
         </Field>
-        {error && <div className="alert-box error">{error}</div>}
+        {error && <Alert tone="error">{error}</Alert>}
       </Body>
       <Footer className={dialog ? undefined : 'mt-2.5 flex justify-end gap-2'}>
         <Button type="button" variant="ghost" onClick={onCancel}>Loobu</Button>

@@ -6,7 +6,7 @@ import { formatTallinn } from './format.ts';
 import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/helpRegistry.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
-import { FilterClear, Card, CardButton, Button, Input } from '../components/ui';
+import { Alert, FilterClear, Card, CardButton, Button, Input } from '../components/ui';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -135,8 +135,8 @@ export function HelpView() {
       </Card>
 
       <Card className="admin-card admin-help-editor">
-        {error && <div className="alert-box error">{error}</div>}
-        {notice && <div className="alert-box success">{notice}</div>}
+        {error && <Alert tone="error">{error}</Alert>}
+        {notice && <Alert tone="success">{notice}</Alert>}
         {!current ? (
           <p className="admin-hint">Vali vasakult koht, mille juhendit muuta. Tühja juhendiga kohas rakendus küsimärki ei näita.</p>
         ) : (

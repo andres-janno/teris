@@ -10,7 +10,8 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
+import { cellSubClass, cellSubStackedClass } from './ui/variants';
+import { Alert, Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
 
 // Aja jaotuse riba osad; värvid on tokenid (teemapõhised muutujad --trip-*). Täielikud nimed, et Tailwind need näeks.
 const TIME_PART_CLASS = { moving: 'bg-trip-moving', idle: 'bg-trip-idle', pause: 'bg-trip-pause' } as const;
@@ -153,10 +154,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
       <DialogContent size="lg" dismissible={!saving}>
         <DialogHeader icon={<Route size={20} />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
         <DialogBody>
-          {trip.deletedAt && <div className="alert-box error">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
+          {trip.deletedAt && <Alert tone="error">Kustutatud {formatDateTime(trip.deletedAt)}</Alert>}
           {/* shrink-0: dialoogi sisu on flex-veerg, ilma selleta kahaneb kaart 0 kõrguseks */}
           <div ref={setMapEl} className="mb-3 h-80 shrink-0 rounded-md" />
-          {trackError && <div className="alert-box error">{trackError}</div>}
+          {trackError && <Alert tone="error">{trackError}</Alert>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
           <div className="relative mb-4 flex flex-col gap-2.5 pl-0.5 before:absolute before:top-3 before:bottom-3 before:left-1.5 before:w-0.5 before:bg-border before:content-['']">
             <div className={STOP_ROW}>
@@ -222,13 +223,13 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                       <TableCell>{timeOnly(f.arriveAt)}–{timeOnly(f.leaveAt)} · {minutesText(f.activeMinutes)}</TableCell>
                       <TableCell numeric wrap>
                         {f.areaHa == null ? '—' : formatQty(f.areaHa)}
-                        <div className="cell-sub">
+                        <div className={cellSubStackedClass}>
                           {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
                         </div>
                       </TableCell>
                       <TableCell numeric>
                         {f.fuelSharedL == null ? '—' : formatQty(f.fuelSharedL)}
-                        {f.fuelFieldL != null && <div className="cell-sub">põllul {formatQty(f.fuelFieldL)}</div>}
+                        {f.fuelFieldL != null && <div className={cellSubStackedClass}>põllul {formatQty(f.fuelFieldL)}</div>}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col items-start gap-1">
@@ -246,7 +247,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                                 onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
                               >
                                 <span>{e.workTypeName}</span>
-                                <span className="cell-sub">{formatDate(e.date)}</span>
+                                <span className={cellSubClass}>{formatDate(e.date)}</span>
                               </Button>
                             ))
                           )}
@@ -271,7 +272,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           <Field label="Märkus" htmlFor="trip-notes" span="full">
             <Textarea id="trip-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
-          {error && <div className="alert-box error">{error}</div>}
+          {error && <Alert tone="error">{error}</Alert>}
         </DialogBody>
         <DialogFooter>
           {canDelete && !trip.deletedAt && (

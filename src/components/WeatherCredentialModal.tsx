@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import { confirmDialog } from './ConfirmDialog';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { WeatherCredentialStatus } from '../types/weather';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Input } from './ui';
+import { Alert, Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Input } from './ui';
 
 interface WeatherCredentialModalProps {
   isOpen: boolean;
@@ -88,16 +88,16 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
         />
         <DialogBody>
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={16} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
           {notice && (
-            <div className="alert-box">
+            <Alert>
               <Check size={16} />
               <span>{notice}</span>
-            </div>
+            </Alert>
           )}
 
           {status && (

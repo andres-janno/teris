@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { KeyRound, AlertCircle, Check } from 'lucide-react';
 import { api } from '../services/api';
-import { Button, Field, Input, Dialog, DialogContent, DialogForm, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Alert, Button, Field, Input, Dialog, DialogContent, DialogForm, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface ChangePasswordModalProps {
   isOpen: boolean;
@@ -64,17 +64,17 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
         />
         <DialogBody>
           {done ? (
-            <div className="alert-box">
+            <Alert>
               <Check size={16} />
               <span>Parool muudetud. Teistes seadmetes tuleb uuesti sisse logida.</span>
-            </div>
+            </Alert>
           ) : (
             <>
               {error && (
-                <div className="alert-box error">
+                <Alert tone="error">
                   <AlertCircle size={16} />
                   <span>{error}</span>
-                </div>
+                </Alert>
               )}
               <Field label={forced ? 'Ajutine parool' : 'Praegune parool'} htmlFor="pw-current">
                 <Input id="pw-current" type="password" autoComplete="current-password" required value={current} onChange={(e) => setCurrent(e.target.value)} />

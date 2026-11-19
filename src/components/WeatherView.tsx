@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle, PageHeader } from './ui';
+import { Alert, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle, PageHeader } from './ui';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -84,8 +84,8 @@ export const WeatherView: React.FC = () => {
 
         <div className="fullpage-board-body">
           <div className="fullpage-board-content weather-body">
-            {error && <div className="alert-box error">{error}</div>}
-            {loading && <div className="alert-box info">Ilmaandmeid laetakse — esmalaadimine võtab kuni mõne tunni.</div>}
+            {error && <Alert tone="error">{error}</Alert>}
+            {loading && <Alert>Ilmaandmeid laetakse — esmalaadimine võtab kuni mõne tunni.</Alert>}
 
             <div className="detail-section">
               <SectionTitle><CalendarRange size={14} /><span>Aastad · {per.label.toLowerCase()} {per.range}</span></SectionTitle>

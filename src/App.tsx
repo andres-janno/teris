@@ -38,6 +38,7 @@ import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
+import { Alert } from './components/ui';
 import { seasonSelectorYears, activeSeasonYear } from './types/season';
 
 function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
@@ -1829,9 +1830,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
       <div className="main-content" style={mainView !== 'map' ? { display: 'none' } : undefined}>
         {dbError && (
-          <div className="db-error-banner alert-box error" role="alert">
+          <Alert tone="error" role="alert" className="db-error-banner">
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.
-          </div>
+          </Alert>
         )}
         <MapView
           selectedFieldCard={selectedField ? (

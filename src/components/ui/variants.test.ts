@@ -43,8 +43,9 @@ const allClassStrings = (): string[] => [
   v.navSwitchClass, v.navSwitchItemClass,
   v.sectionTitleLabelClass, v.sectionTitleClass(), v.sectionTitleClass({ ruled: true, spaced: true }),
   ...(['sm', 'md', 'lg'] as const).flatMap((size) => (['neutral', 'info', 'success', 'warning'] as const).map((tone) => v.iconBoxVariants({ size, tone }))),
-  v.cardGridClass, v.registerSectionClass, v.fleetCellMainClass, v.fleetCellTitleClass, v.fleetCellSubClass, v.fleetCellDateClass, v.fleetCellDateEndClass,
+  v.cardGridClass, v.registerSectionClass, v.fleetCellMainClass, v.fleetCellTitleClass, v.cellSubClass, v.cellSubStackedClass, v.fleetCellDateClass, v.fleetCellDateEndClass,
   v.fleetDurationClass({ active: true }), v.fleetDurationClass({}), v.fleetNotesClass({ empty: true }), v.fleetNotesClass({}), v.dateTimeRowClass, v.dateTimeHintClass,
+  ...(['error', 'success', 'info', 'warning', 'neutral'] as const).flatMap((tone) => (['md', 'sm'] as const).map((size) => v.alertVariants({ tone, size }))),
 ];
 
 describe('variants', () => {
@@ -667,8 +668,8 @@ describe('Tehnika ühised klassid (etapp 4c)', () => {
   });
   it('registri lahtrid: pealkiri 13/500, alamrida 11 vaikne, kestus aktiivselt roheline, märkus tühjana kaldkirjas', () => {
     expect(v.fleetCellTitleClass).toContain('font-medium');
-    expect(v.fleetCellSubClass).toContain('text-2xs');
-    expect(v.fleetCellSubClass).not.toContain('leading-natural'); // vana alamrida päris lahtri 16px rea kõrguse, text-2xs annab sama
+    expect(v.cellSubClass).toContain('text-2xs');
+    expect(v.cellSubClass).not.toContain('leading-natural'); // vana alamrida päris lahtri 16px rea kõrguse, text-2xs annab sama
     expect(v.fleetDurationClass({ active: true })).toContain('text-primary');
     expect(v.fleetDurationClass({})).toContain('text-subtle');
     expect(v.fleetNotesClass({ empty: true })).toContain('italic');
@@ -688,5 +689,25 @@ describe('kaardi paneelide ühised klassid (etapp 4d)', () => {
     for (const t of ['animate-spin', 'text-primary', 'shrink-0', 'motion-reduce:[animation-duration:3s]']) expect(v.loadingSpinnerClass).toContain(t);
     expect(v.loadingSpinnerClass).not.toContain('ml-1.5');
     expect(v.loadingSpinnerInlineClass).toContain('ml-1.5');
+  });
+});
+
+describe('Alert ja alamrida (etapp 4e)', () => {
+  it('alertVariants: veateade on punane ääris + taust + roosa tekst; neutral ilma toonita; sm on väiksema polstriga', () => {
+    const err = v.alertVariants({ tone: 'error' });
+    for (const t of ['border', 'border-destructive/35', 'bg-destructive/12', 'text-danger-text', 'px-3', 'py-2.5', 'text-sm', 'leading-natural', 'rounded-sm']) expect(err).toContain(t);
+    expect(v.alertVariants({ tone: 'success' })).toContain('text-success-text');
+    expect(v.alertVariants({ tone: 'info' })).toContain('text-info-text');
+    expect(v.alertVariants({ tone: 'warning' })).toContain('text-warning-text');
+    const neutral = v.alertVariants({});
+    expect(neutral).not.toMatch(/bg-(destructive|primary|info|warning)/);
+    expect(v.alertVariants({ size: 'sm' })).toContain('py-2');
+    expect(v.alertVariants({ size: 'sm' })).not.toContain('py-2.5');
+  });
+  it('alamrida: üks kirjasuurus ja toon kõigis registrites; virnastatud variant lisab ainult ülaveeru', () => {
+    expect(v.cellSubClass).toBe('text-2xs text-subtle');
+    expect(v.cellSubStackedClass).toContain('mt-0.5');
+    expect(v.cellSubStackedClass).toContain('text-2xs');
+    expect(v).not.toHaveProperty('fleetCellSubClass');
   });
 });

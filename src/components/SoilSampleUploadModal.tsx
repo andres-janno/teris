@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
-import { Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import { Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -138,10 +138,10 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
           </div>
 
           {error && (
-            <div className="alert-box error">
+            <Alert tone="error">
               <AlertCircle size={18} />
               <span>{error}</span>
-            </div>
+            </Alert>
           )}
 
           {parsedPreview && (

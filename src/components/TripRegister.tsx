@@ -10,7 +10,7 @@ import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
 import { registerSectionClass } from './ui/variants';
-import { Badge, Button, FilterBar, FilterBarItem, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
+import { Alert, Badge, Button, FilterBar, FilterBarItem, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
   vehicles: Vehicle[];
@@ -130,9 +130,9 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         <span>Viimane import: {importStatus?.lastRunAt ? formatDateTime(importStatus.lastRunAt) : '—'}</span>
       </div>
       {failing.map((d) => (
-        <div key={d.deviceId} className="alert-box error">
+        <Alert tone="error" key={d.deviceId}>
           <AlertTriangle size={14} /> {d.deviceLabel}: {d.lastError} ({formatDateTime(d.lastErrorAt ?? undefined)})
-        </div>
+        </Alert>
       ))}
 
       <FilterBar
@@ -189,7 +189,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         )}
       </FilterBar>
 
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
 
       {loading && trips.length === 0 ? (
         <EmptyState description="Laen sõite..." />

@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
-import { Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
+import { Alert, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input } from './ui';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -151,7 +151,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
               <Input id="aw-planned" placeholder="nt mai 2027" value={plannedText} onChange={(e) => setPlannedText(e.target.value)} />
             </Field>
           )}
-          {error && <div className="alert-box error">{error}</div>}
+          {error && <Alert tone="error">{error}</Alert>}
           <div className="add-work-actions">
             <span className="add-work-count">{summaryText}</span>
             <Button type="button" variant="ghost" onClick={onClose}>Loobu</Button>

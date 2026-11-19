@@ -341,28 +341,6 @@ body {
   text-decoration: underline;
 }
 
-/* Alerts */
-.alert-box {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 12px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-}
-
-.alert-box.error {
-  background: rgba(244, 63, 94, 0.12);
-  border: 1px solid rgba(244, 63, 94, 0.35);
-  color: #9f1239;
-}
-
-[data-theme='dark'] .alert-box.error {
-  background: rgba(244, 63, 94, 0.15);
-  border-color: rgba(244, 63, 94, 0.3);
-  color: #fecdd3;
-}
-
 /* Parsed preview */
 .parsed-preview-box .operator-field { margin: 8px 0; }
 
@@ -1663,7 +1641,13 @@ body {
   background: linear-gradient(135deg, #357a1c, #4c9a2a) !important;
 }
 
-.login-page .login-card .alert-box:not(.error) {
+.login-page .login-card .login-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
   background: rgba(217, 130, 43, 0.12);
   color: var(--login-ink);
   border: 1px solid rgba(217, 130, 43, 0.3);
@@ -2719,10 +2703,6 @@ polyline.weather-line { fill: none; }
 .muted-note { font-size: 12px; color: var(--text-muted); }
 /* Töö täisnimi lühinime all */
 .work-full-name { display: block; font-weight: 400; color: var(--text-secondary); }
-/* Teatekast tegevusnupuga ja virnastatud teatekast */
-.alert-box.with-action { margin: 8px; display: flex; gap: 12px; align-items: center; justify-content: space-between; }
-.alert-box.is-stacked { flex-direction: column; align-items: stretch; gap: 4px; margin: 8px 0; }
-.alert-box.is-compact { padding: 8px 12px; font-size: 13px; margin: 0; }
 .hint-text.is-block { display: block; margin-top: 4px; }
 /* Kultuuri värvipunkt (värv tuleb andmest) */
 .crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }

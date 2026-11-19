@@ -39,8 +39,8 @@ import type {
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
-import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
-import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
+import { Alert, Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
+import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, cellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 import type { BadgeTone } from './ui';
 import { cn } from './ui/cn';
 
@@ -1241,9 +1241,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
                 {assignmentError && (
-                  <div className="alert-box error">
+                  <Alert tone="error">
                     {assignmentError}
-                  </div>
+                  </Alert>
                 )}
 
                 <FormGrid stackNarrow>
@@ -1888,7 +1888,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                             </IconBox>
                             <div>
                               <div className={fleetCellTitleClass}>{a.implementName || a.implementId}</div>
-                              <div className={fleetCellSubClass}>{a.implementCategory || ''}</div>
+                              <div className={cellSubClass}>{a.implementCategory || ''}</div>
                             </div>
                           </div>
                         </TableCell>

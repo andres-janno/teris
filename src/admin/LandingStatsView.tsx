@@ -1,7 +1,7 @@
 // src/admin/LandingStatsView.tsx — landing'u külastused, allikad, robotid ja lehter valitud perioodil.
 import { useEffect, useState } from 'react';
 import { platformApi, type LandingStats } from './platformApi.ts';
-import { DateInput, Card, StatTile, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Alert, DateInput, Card, StatTile, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
 
@@ -69,7 +69,7 @@ export function LandingStatsView() {
         <label htmlFor="ls-to">Kuni</label>
         <DateInput id="ls-to" value={to} onChange={setTo} />
       </div>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       {stats && (
         <>
           <div className="admin-stat-row">

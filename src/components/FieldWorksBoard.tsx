@@ -22,7 +22,7 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
-import { Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
+import { Alert, Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
 
 interface Option {
   id: string;
@@ -1177,22 +1177,22 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                   </div>
 
                   {selected.isNextSeasonWinterSowing && (
-                    <div className="alert-box info is-compact">
+                    <Alert size="sm">
                       <Info size={14} />
                       <span>See on {year}. a sügisene ettevalmistus/külv järgmise hooaja ({year + 1}) taliviljale {selectedRow.nextCropName ?? ''}.</span>
-                    </div>
+                    </Alert>
                   )}
                   {selected.carriedOverFromYear && (
-                    <div className="alert-box info is-compact">
+                    <Alert size="sm">
                       <Info size={14} />
                       <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
-                    </div>
+                    </Alert>
                   )}
                   {selected.carriedOverToYear && !selected.isNextSeasonWinterSowing && (
-                    <div className="alert-box info is-compact">
+                    <Alert size="sm">
                       <Info size={14} />
                       <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
-                    </div>
+                    </Alert>
                   )}
 
                   <Card asChild variant="tile" padding="sm" className="flex flex-col gap-2"><section>

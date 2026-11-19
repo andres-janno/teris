@@ -1,4 +1,4 @@
-import { Card, Button, Field, Input } from '../components/ui';
+import { Alert, Card, Button, Field, Input } from '../components/ui';
 import { useState, type FormEvent } from 'react';
 import { platformApi } from './platformApi.ts';
 
@@ -27,7 +27,7 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
   return (
     <Card asChild className="admin-login"><form className="admin-form" onSubmit={submit}>
       <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
-      {error && <div className="alert-box error">{error}</div>}
+      {error && <Alert tone="error">{error}</Alert>}
       <Field label="Kasutajanimi" htmlFor="pl-user">
         <Input id="pl-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />
       </Field>

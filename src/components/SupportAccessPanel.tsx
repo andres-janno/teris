@@ -4,7 +4,7 @@ import { LifeBuoy, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { SupportGrant, SupportAccessEntry } from '../types/auth';
 import { formatDateTimeTallinn } from '../services/dateFormat';
-import { Badge, Button, Card, SectionTitle } from './ui';
+import { Alert, Badge, Button, Card, SectionTitle } from './ui';
 
 const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '1h', label: '1 tund' },
@@ -57,10 +57,10 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
       </div>
 
       {error && (
-        <div className="alert-box error">
+        <Alert tone="error">
           <AlertCircle size={16} />
           <span>{error}</span>
-        </div>
+        </Alert>
       )}
 
       {active ? (
