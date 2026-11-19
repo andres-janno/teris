@@ -496,3 +496,11 @@ export const soilValueClass = 'font-normal data-[level=bad]:text-danger-text dat
 export const soilFootnoteClass = 'mt-1 text-2xs leading-natural text-muted-foreground';
 /** Mulla ja ilma tabeli aasta lahter (chevron/aasta/vanus ühes reas). Vana `.soil-year-cell`. */
 export const soilYearCellClass = 'inline-flex items-center gap-1 font-medium';
+
+/** Statistikakiibi sisu: silt, number ja alamväärtus (11px, veeris 4px otse kiibis). Sama ilme Isikute ja Põllu haldamise kiipides. Vana `.reg-stat-pill`. */
+export const statChipLabelClass = 'text-muted-foreground';
+export const statChipNumClass = 'font-medium text-foreground';
+export const statChipSubClass = 'ml-1 text-2xs';
+
+/** Registrikaardi ikooniruut (Isikud, POI-d): ääris ja 16px emoji ilma joonekõrguseta. */
+export const registerIconBoxClass = 'border-border text-base leading-none';

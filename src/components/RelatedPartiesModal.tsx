@@ -22,13 +22,10 @@ import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
 import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle, PageHeader, IconBox, cn } from './ui';
-import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass } from './ui/variants';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, statChipLabelClass, statChipNumClass, statChipSubClass, registerIconBoxClass } from './ui/variants';
 
 // Statistikakiip (vana .reg-stat-pill): silt, number, alamväärtus
 const STAT_PILL = 'flex items-center gap-1.5 rounded-md border border-border bg-field px-3 py-1.5 text-sm leading-natural';
-const STAT_LBL = 'text-muted-foreground';
-const STAT_NUM = 'font-medium text-foreground';
-const STAT_SUB = 'ml-1 text-2xs';
 // Kontaktirida isiku kaardil (vana .party-contact-link/-note)
 const CONTACT_ROW = 'flex min-w-0 items-start gap-2 leading-snug text-muted-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0';
 // Telefoni ja e-posti link: sama rida, tekst murdub, hõljumisel allajoonitud
@@ -425,22 +422,22 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           <div className="register-header-controls">
             <div className="flex flex-wrap gap-2">
               <div className={STAT_PILL}>
-                <span className={STAT_LBL}>Isikuid kokku:</span>
-                <strong className={STAT_NUM}>{stats.total} tk</strong>
-                <span className={cn(STAT_SUB, 'text-subtle')}>
+                <span className={statChipLabelClass}>Isikuid kokku:</span>
+                <strong className={statChipNumClass}>{stats.total} tk</strong>
+                <span className={cn(statChipSubClass, 'text-subtle')}>
                   ({stats.personsCount} eraisikut • {stats.companiesCount} ettevõtet)
                 </span>
               </div>
 
               <div className={cn(STAT_PILL, 'border-primary/35 bg-primary/12')}>
-                <span className={STAT_LBL}>🏛️ Maaomanikke:</span>
-                <strong className={cn(STAT_NUM, 'text-success-text')}>{stats.landownersCount} tk</strong>
-                <span className={STAT_SUB}>({stats.totalRentedAreaHa} ha seotud maad)</span>
+                <span className={statChipLabelClass}>🏛️ Maaomanikke:</span>
+                <strong className={cn(statChipNumClass, 'text-success-text')}>{stats.landownersCount} tk</strong>
+                <span className={statChipSubClass}>({stats.totalRentedAreaHa} ha seotud maad)</span>
               </div>
 
               <div className={cn(STAT_PILL, 'border-l-3 border-l-primary')}>
-                <span className={STAT_LBL}>🚜 Töötajaid:</span>
-                <strong className={STAT_NUM}>{stats.driversCount} tk</strong>
+                <span className={statChipLabelClass}>🚜 Töötajaid:</span>
+                <strong className={statChipNumClass}>{stats.driversCount} tk</strong>
               </div>
             </div>
           </div>
@@ -499,7 +496,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
                     <div className={infoCardTitleWrapClass}>
                       <IconBox
                         size="md"
-                        className="border-border text-base leading-none"
+                        className={registerIconBoxClass}
                         style={accent ? { borderColor: accent } : undefined}
                         title={isCompany ? 'Ettevõte' : 'Eraisik'}
                       >

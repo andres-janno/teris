@@ -277,8 +277,7 @@ Reeglid:
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
-- Erandid (jäävad oma CSS-iga): `login-card`, `telemetry-suggestions-card`, `fleet-card-notes`,
-  `fw-panel-empty`, `crop-group-empty`, `party-role-checkbox`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `admin-subpanel`, `admin-card-head`,
+- Erandid (jäävad oma CSS-iga): `login-card`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `admin-subpanel`, `admin-card-head`,
   `admin-card-foot` kannavad ainult asetust.
 
 ## Menüüd, hüpikud, vihjed

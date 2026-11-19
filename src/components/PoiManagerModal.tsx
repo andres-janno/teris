@@ -13,7 +13,7 @@ import {
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea, PageHeader, EmptyState, IconBox, cn } from './ui';
-import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, infoRowClass } from './ui/variants';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, infoRowClass, registerIconBoxClass } from './ui/variants';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -390,7 +390,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
                   <Card key={p.id} padding="sm" interactive className={infoCardClass} onClick={() => handleStartEdit(p)}>
                     <CardHeader align="start">
                       <div className={infoCardTitleWrapClass}>
-                        <IconBox size="md" className="border-border text-base leading-none">{meta.emoji}</IconBox>
+                        <IconBox size="md" className={registerIconBoxClass}>{meta.emoji}</IconBox>
                         <div>
                           <h4 className={infoCardNameClass}>{p.name}</h4>
                           <span className={infoCardSubClass}>{meta.label}</span>

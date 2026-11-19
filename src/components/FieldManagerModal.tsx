@@ -19,15 +19,11 @@ import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader, cornerActionClass, cn } from './ui';
-import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
+import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass, statChipLabelClass, statChipNumClass, statChipSubClass } from './ui/variants';
 
 // Kultuurigrupi pealkiri ja pindala (täisleht: 13px / min-laius 240px, number 14px).
 const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold leading-natural text-muted-foreground';
 const GROUP_NUM = 'ml-auto text-base font-semibold leading-natural tabular-nums';
-// Kiibi sisu: silt ja number (alamväärtus 11px, veeris 4px otse kiibis).
-const CHIP_LBL = 'text-muted-foreground';
-const CHIP_NUM = 'font-medium text-foreground';
-const CHIP_SUB = 'ml-1 text-2xs';
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
@@ -345,7 +341,7 @@ function cropSummaryKey(cropText: string): string {
                 title={`${c.crop}: ${c.areaHa.toFixed(2)} ha (${c.count} põldu) — ${cropFilter === c.crop ? 'klõps eemaldab filtri' : 'klõps filtreerib tabeli'}`}
               >
                 <span>{c.crop}</span>
-                <strong className={CHIP_NUM}>{c.areaHa.toFixed(2)} ha</strong>
+                <strong className={statChipNumClass}>{c.areaHa.toFixed(2)} ha</strong>
               </ChipButton>
             ))}
           </div>
@@ -366,9 +362,9 @@ function cropSummaryKey(cropText: string): string {
           onClick={() => setTenureFilter(tenureFilter === 'OWNED' ? 'all' : 'OWNED')}
           title={tenureFilter === 'OWNED' ? 'Eemalda omandivormi filter' : 'Näita ainult oma maa põlde'}
         >
-          <span className={CHIP_LBL}>🏛️ Oma maa:</span>
-          <strong className={CHIP_NUM}>{financialSummary.ownedHa} ha</strong>
-          <span className={CHIP_SUB}>({financialSummary.totalTax} €/a maamaks)</span>
+          <span className={statChipLabelClass}>🏛️ Oma maa:</span>
+          <strong className={statChipNumClass}>{financialSummary.ownedHa} ha</strong>
+          <span className={statChipSubClass}>({financialSummary.totalTax} €/a maamaks)</span>
         </ChipButton>
         <ChipButton
           variant="outline"
@@ -378,9 +374,9 @@ function cropSummaryKey(cropText: string): string {
           disabled={financialSummary.rentedHa === 0 && tenureFilter !== 'RENTED'}
           title={tenureFilter === 'RENTED' ? 'Eemalda omandivormi filter' : 'Näita ainult rendimaa põlde'}
         >
-          <span className={CHIP_LBL}>🤝 Rendimaa:</span>
-          <strong className={CHIP_NUM}>{financialSummary.rentedHa} ha</strong>
-          <span className={CHIP_SUB}>({financialSummary.totalRent} €/a rent)</span>
+          <span className={statChipLabelClass}>🤝 Rendimaa:</span>
+          <strong className={statChipNumClass}>{financialSummary.rentedHa} ha</strong>
+          <span className={statChipSubClass}>({financialSummary.totalRent} €/a rent)</span>
         </ChipButton>
       </div>
     </>
