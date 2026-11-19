@@ -232,18 +232,18 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                     >
                       <TableCell wrap className="min-w-27.5">
                         <div className="flex items-center gap-1.5">
-                          <span className="text-base font-medium">{season.year}</span>
+                          <span className="text-base font-medium leading-natural">{season.year}</span>
                           {season.notes && <Info size={13} className="text-subtle" />}
                         </div>
                         {season.name !== `Hooaeg ${season.year}` && (
-                          <div className="text-xs text-muted-foreground">{season.name}</div>
+                          <div className="text-xs leading-natural text-muted-foreground">{season.name}</div>
                         )}
                       </TableCell>
                       <TableCell>
                         <Badge tone={meta.tone} title={meta.description}>{meta.label}</Badge>
                       </TableCell>
-                      <TableCell numeric className="font-mono text-xs">{formatNum(areaHa, 1)}</TableCell>
-                      <TableCell numeric className="font-mono text-xs">{formatNum(totals?.count ?? null, 0)}</TableCell>
+                      <TableCell numeric className="font-mono text-xs leading-natural">{formatNum(areaHa, 1)}</TableCell>
+                      <TableCell numeric className="font-mono text-xs leading-natural">{formatNum(totals?.count ?? null, 0)}</TableCell>
                       <TableCell actions onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"
@@ -292,7 +292,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 })}
               </TableBody>
           </Table>
-          <p className="m-0 w-0 min-w-full text-xs text-subtle">
+          <p className="m-0 w-0 min-w-full text-xs leading-natural text-subtle">
             Märkusega real (<Info size={11} />) näitab klõps märkust. Pindala ja põldude arv tulevad põldude andmetest. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>
     </>
