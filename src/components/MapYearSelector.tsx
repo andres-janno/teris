@@ -27,7 +27,7 @@ interface CropSummary {
 }
 
 // Kultuuri rida (ChipButton tint): vana .crop-legend-item !important → cn tühistab kiibi vaikeklassid; valitud olek jääb index.css-i
-const CROP_ROW = 'flex w-full items-center justify-between border border-transparent py-1 pr-2 pl-2.5 text-base leading-natural transition-all duration-150 hover:translate-x-0.5';
+const CROP_ROW = 'flex w-full text-left items-center justify-between border border-transparent py-1 pr-2 pl-2.5 text-base leading-natural transition-all duration-150 hover:translate-x-0.5';
 
 export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   selectedYear,
