@@ -278,7 +278,7 @@ describe('vanad kaardid', () => {
 .admin-card,
 .admin-subform { background: var(--bg-card); border: 1px solid var(--border-card); }
 .vehicle-card.selected { border-color: green; box-shadow: 0 0 1px red; }
-.coords-tracker { position: absolute; border-radius: var(--radius-md) !important; }
+.field-map-card { position: absolute; border-radius: var(--radius-md) !important; }
 .add-poi-banner { border-color: pink !important; }
 .glass-card { -webkit-backdrop-filter: blur(16px); }
 .other-card { background: red; }
@@ -515,5 +515,15 @@ describe('vanad Tehnika ja sõitude klassid (etapp 4c)', () => {
       { path: 'src/components/C.tsx', content: '<div className="dev-model" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }, { path: 'src/components/C.tsx', count: 1 }]);
+  });
+});
+
+describe('vanad kaardi paneelide klassid (etapp 4d)', () => {
+  it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="layer-item v-indiv-row cc-notice" /> {/* satellite-panel-note kommentaar */}' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="layer-text" /><div id="cc-header" className="crop-legend-item layer-loading-bar cc-range add-poi-banner crop-indicator-dot" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });
 });

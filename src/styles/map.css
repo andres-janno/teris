@@ -1,7 +1,6 @@
 /* src/styles/map.css — Kaardivaate, Leafleti ja telemeetria spetsiifilised stiilid.
    Imporditakse failis src/styles/app.css kihis `legacy`. */
 
-
 /* Main Map Content Area */
 .main-content {
   flex: 1;

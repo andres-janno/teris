@@ -55,10 +55,6 @@
   --btn-sec-border: rgba(15, 23, 42, 0.14);
   --btn-sec-hover: rgba(15, 23, 42, 0.10);
 
-  --basemap-active-color: #15803d;
-  --basemap-active-bg: rgba(34, 197, 94, 0.16);
-  --basemap-active-border: rgba(34, 197, 94, 0.45);
-
   /* Kaardi hüpikud/vihjed = menüü värvid; muutujad viitavad teemapõhistele, seega kehtib mõlemas teemas */
   --popup-bg: var(--bg-modal);
   --popup-border: var(--border-card);
@@ -113,10 +109,6 @@
   --btn-sec-bg: rgba(255, 255, 255, 0.07);
   --btn-sec-border: rgba(255, 255, 255, 0.12);
   --btn-sec-hover: rgba(255, 255, 255, 0.14);
-
-  --basemap-active-color: #4ade80;
-  --basemap-active-bg: rgba(34, 197, 94, 0.22);
-  --basemap-active-border: rgba(34, 197, 94, 0.45);
 
   --input-bg: rgba(255, 255, 255, 0.06);
   --input-border: rgba(255, 255, 255, 0.12);

@@ -94,8 +94,7 @@ const roleButtonsOverAllowed = (path: string, count: number): number => overAllo
 export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'glass-card',
   // ujuvpaneelid kaardi peal
-  'layer-control-panel', 'satellite-panel', 'map-year-floating-widget', 'cultivation-panel', 'add-poi-banner',
-  'coords-tracker', 'radar-legend', 'field-map-card', 'layer-field-box',
+  'add-poi-banner', 'field-map-card',
   // register- ja loendikaardid
   'vehicle-card', 'edit-cad-item', 'history-filter-bar',
   'empty-register-state',
@@ -107,7 +106,7 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
-// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 // 4c: Tehnika ja sõitude kustutatud klassid (etapp 4c). Eesliidete asemel täpsed nimed: id-d (`dev-assign-…`, `trip-notes`) ei loe.
 // `dev-imei`, `dev-model`, `imp-name` on ka vormiväljade id-d: id="…" ja htmlFor="…" väärtusi regex ei loe (lookbehind).
 // Jagatud klassid (vehicle-card, v-*, auth-error-banner, telemetry-suggestion-*) puuduvad teadlikult: nad jäävad 4.5/ühiste etapini.
@@ -131,8 +130,33 @@ export const RETIRED_4C: readonly string[] = [
   'trip-timesplit-bar', 'trip-timesplit-label', 'trip-timesplit-legend', 'trip-timesplit-part', 'unassign-option',
   'v-card-footer', 'v-equipment-badge-row', 'v-gauges-grid', 'with-bottom-gap',
 ];
+// 4d: kaardi paneelide kustutatud klassid (etapp 4d). Täpsed nimed. Jäävad klassid puuduvad teadlikult: crop-legend-item (valitud olek),
+// layer-loading-bar (::after), cc-range (liuguri käepide), add-poi-banner (värv), crop-indicator-dot (FieldMapCard), map-top-*-stack (App.tsx).
+export const RETIRED_4D: readonly string[] = [
+  'active-dot', 'basemap-btn', 'basemap-cadastre-toggle', 'basemap-grid', 'basemap-name', 'cadastre-color', 'cc-date', 'cc-header',
+  'cc-label', 'cc-link-btn', 'cc-now', 'cc-now-pct', 'cc-now-time', 'cc-notice', 'cc-notice-loading', 'cc-period',
+  'cc-period-controls', 'cc-period-icon', 'cc-play-icon', 'cc-player', 'cc-select', 'cc-slider', 'cc-slider-fill', 'cc-spin',
+  'cc-start', 'cc-stat', 'cc-stats', 'cc-status-dot', 'cc-time', 'cc-time-bound', 'cc-timeline', 'cc-title', 'cc-title-field',
+  'cc-title-name', 'cc-title-status', 'cc-title-text', 'cc-toggle', 'cc-value', 'cc-value-impl', 'cc-value-sub', 'coords-tracker',
+  'crop-bar-segment', 'crop-field-count', 'crop-left-info', 'crop-list', 'crop-name-label', 'crop-right-info', 'crop-text-block',
+  'crop-total-ha', 'cultivation-color', 'cultivation-panel', 'cumulative-crop-bar', 'fields-color', 'is-hidden-map', 'is-sim-active',
+  'layer-color-indicator', 'layer-control-body', 'layer-control-header', 'layer-control-panel', 'layer-field-box',
+  'layer-fit-section', 'layer-header-title', 'layer-item', 'layer-label', 'layer-label-content', 'layer-loading',
+  'layer-loading-spinner', 'layer-section', 'layer-sub-options', 'layer-subtext', 'layer-text', 'legend-filter-reset',
+  'map-year-floating-widget', 'overlay-list', 'poi-color', 'pulse-anim', 'radar-legend', 'radar-legend-progress',
+  'radar-legend-range', 'radar-legend-scale', 'radar-legend-step', 'radar-legend-swatch', 'radar-legend-time',
+  'radar-legend-timeline', 'radar-legend-title', 'radar-legend-track', 'radar-legend-unit', 'satellite-cloudfree', 'satellite-color',
+  'satellite-color-legend', 'satellite-date-row', 'satellite-ndvi-bar', 'satellite-ndvi-classes', 'satellite-ndvi-labels',
+  'satellite-ndvi-legend', 'satellite-panel', 'satellite-panel-note', 'satellite-panel-source', 'satellite-panel-title',
+  'satellite-play-row', 'satellite-product-row', 'satellite-progress', 'satellite-progress-bar', 'soil-color', 'soil-legend-gradient',
+  'soil-legend-gradient-bar', 'soil-legend-gradient-labels', 'soil-legend-list', 'soil-metric-radio-item', 'soil-metric-radio-list',
+  'tech-color', 'v-indiv-actions', 'v-indiv-emoji', 'v-indiv-info', 'v-indiv-names', 'v-indiv-row', 'v-indiv-subtitle',
+  'v-indiv-title', 'vehicle-filter-subgroup', 'vehicle-individual-list', 'weather-color', 'widget-crop-legend-section',
+  'widget-crop-list', 'widget-legend-content', 'widget-legend-header', 'widget-legend-title', 'year-header-right',
+  'year-widget-header', 'year-widget-season', 'year-widget-title',
+];
 const LEGACY_OVERVIEW = new RegExp(
-  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C].join('|')})(?![\\w-])`,
+  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D].join('|')})(?![\\w-])`,
   'g',
 );
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;

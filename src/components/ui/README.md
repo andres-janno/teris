@@ -27,7 +27,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   - `Select`: tühi valik on `{ value: '', label: '— vali —' }`; rühmad `group: 'Laod'` (järjestikused sama rühmaga
     valikud rühmapealkirja alla). Otsinguga valik on `FilterSelect`.
   - `CheckboxField` (märkeruut + silt + `hint`, kogu rida klõpsatav) ja `RadioField` (`RadioGroup` sees,
-    `orientation="vertical"` paneb üksteise alla) asendavad käsitsi tehtud `<label>` + märkeruut kombinatsioone.
+    `orientation="vertical"` paneb üksteise alla; `labelClassName` seab rea vahe ja kõrguse) asendavad käsitsi tehtud `<label>` + märkeruut kombinatsioone.
   - Paigutus: `FormGrid` (`cols` 2 või 3, `span="full"`), `Field span="full"`, `FieldRow` (väli + nupp ühes reas).
   - `data-slot` nimed: `input`, `input-group`, `textarea`, `select`, `filter-select`, `filter-clear`, `date-picker`.
   - Toored `<input>` / `<select>` / `<textarea>` on keelatud; erand ainult `<input type="file">` ja `<input type="range">`
@@ -96,7 +96,7 @@ Märkused:
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`, `MapYearSelector.tsx`, `LayerControl.tsx`, `SatellitePanel.tsx`, `MapView.tsx`, `CultivationControl.tsx`).
 Audit-rida „Tailwindi klasse ilma @source-ita“ valvab, et vaatefail, mille klassides on utiliite, oleks `@source`-is (ajutised erandid: `SOURCE_GUARD_ALLOWED` `src/tooling/uiAudit.ts`-is).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
@@ -142,6 +142,18 @@ Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTil
 | `alert-box error` | veateade (punane kast; vana `auth-error-banner`-il polnud reeglit) | `auth-error-banner` |
 
 `PoiManagerModal` ja `RelatedPartiesModal` kasutavad veel `vehicle-grid`, `vehicle-card`, `v-avatar`, `v-name`, `v-title-wrap`, `v-info-*` (dialoogide etapp: `cardGridClass` + `IconBox size="md"`).
+
+### Kaardi paneelide abiklassid (etapp 4d)
+
+| Nimi | Kasuta | Vana klass |
+| --- | --- | --- |
+| `mapPanelTitleClass` | kaardi ujuvpaneeli pealkirjarida (ikoon + 14px poolpaks) | `layer-header-title`, `year-widget-title` |
+| `loadingSpinnerClass`, `loadingSpinnerInlineClass` | Loader2 roheline spinner (+ 6px vahe) | `layer-loading-spinner`, `cc-spin` |
+| `LAYER_SWATCH` (`src/lib/dataColors.ts`) | kihi värvimärk kihtide paneelis (`style={{ background }}`) | `fields-color`, `tech-color` jt |
+| `<RadioField labelClassName>` | raadionupu rea vahe ja rea kõrgus | `soil-metric-radio-item` |
+| `Select`/`Input` `className` | sisemine äärisetu väli ääristatud kastis (`border-0 bg-transparent h-full`) | `.cc-time [data-slot=select] !important` |
+
+Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolute`, `z-800`/`z-900`), laiuse ja paigutuse. Konteinerid `.map-top-left-stack` / `.map-top-right-stack` (App.tsx) ja `.cc-range`, `.layer-loading-bar::after`, `.crop-legend-item[data-selected]`, `.add-poi-banner` jäävad `map.css`/`index.css`-i (põhjused kommentaarides).
 
 ## Vana muutuja -> Tailwindi nimi
 
