@@ -17,6 +17,9 @@ import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogF
 const formatNum = (n: number | null | undefined, digits: number) =>
   n == null ? '–' : n.toLocaleString('et-EE', { minimumFractionDigits: digits, maximumFractionDigits: digits });
 
+// Lukus hooaja vorm (fieldset:disabled): sisendid tuhmimad ja ilma tekstikursorita
+const SEASON_FIELDSET = 'm-0 min-w-0 border-0 p-0 [&:disabled_[data-slot=input]]:cursor-default [&:disabled_[data-slot=input]]:opacity-75 [&:disabled_[data-slot=textarea]]:cursor-default [&:disabled_[data-slot=textarea]]:opacity-75';
+
 interface SeasonManagerModalProps {
   isOpen: boolean;
   seasons: FarmingSeason[];
@@ -129,7 +132,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
       {/* Add / Edit Form eraldi aknas registri peal */}
       {isAdding && (
         <Dialog open onOpenChange={(open) => { if (!open) { setIsAdding(false); setEditingYear(null); } }}>
-          <DialogContent size="md" className="season-edit-modal">
+          <DialogContent size="md">
             <DialogForm onSubmit={handleSaveForm}>
               <DialogHeader
                 icon={editingLocked ? <Lock size={20} /> : <Edit2 size={20} />}
@@ -140,8 +143,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 }
               />
               <DialogBody>
-              <fieldset className="season-form-fieldset" disabled={editingLocked}>
-              <FormGrid className="season-form-grid">
+              <fieldset className={SEASON_FIELDSET} disabled={editingLocked}>
+              <FormGrid className="grid-cols-[160px_1fr] gap-3 max-[520px]:grid-cols-1">
                 <Field label="Aasta (Hooaeg) *" htmlFor="season-year">
                   <NumberInput
                     id="season-year"
@@ -223,24 +226,24 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                     <React.Fragment key={season.year}>
                     <TableRow
                       selected={isCurrent}
-                      className={notesOpen && season.notes ? 'notes-open' : undefined}
+                      className={notesOpen && season.notes ? '[&>td]:border-b-transparent' : undefined}
                       onClick={season.notes ? () => toggleNotes(season.year) : undefined}
                       title={season.notes && !notesOpen ? 'Klõpsa märkuse nägemiseks' : undefined}
                     >
-                      <TableCell wrap className="season-cell">
-                        <div className="season-cell-head">
-                          <span className="season-year">{season.year}</span>
-                          {season.notes && <Info size={13} className="season-notes-icon" />}
+                      <TableCell wrap className="min-w-27.5">
+                        <div className="flex items-center gap-1.5">
+                          <span className="text-base font-medium">{season.year}</span>
+                          {season.notes && <Info size={13} className="text-subtle" />}
                         </div>
                         {season.name !== `Hooaeg ${season.year}` && (
-                          <div className="season-cell-name">{season.name}</div>
+                          <div className="text-xs text-muted-foreground">{season.name}</div>
                         )}
                       </TableCell>
                       <TableCell>
                         <Badge tone={meta.tone} title={meta.description}>{meta.label}</Badge>
                       </TableCell>
-                      <TableCell numeric className="mono">{formatNum(areaHa, 1)}</TableCell>
-                      <TableCell numeric className="mono">{formatNum(totals?.count ?? null, 0)}</TableCell>
+                      <TableCell numeric className="font-mono text-xs">{formatNum(areaHa, 1)}</TableCell>
+                      <TableCell numeric className="font-mono text-xs">{formatNum(totals?.count ?? null, 0)}</TableCell>
                       <TableCell actions onClick={(e) => e.stopPropagation()}>
                         <Button
                           type="button"
@@ -275,9 +278,9 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                       </TableCell>
                     </TableRow>
                     {notesOpen && season.notes && (
-                      <TableRow selected={isCurrent} className="season-notes-row" onClick={() => toggleNotes(season.year)}>
+                      <TableRow selected={isCurrent} className="[&>td]:pt-0" onClick={() => toggleNotes(season.year)}>
                         <TableCell colSpan={5} wrap>
-                          <div className="season-cell-notes">
+                          <div className="flex items-start gap-1.5 text-xs leading-snug text-muted-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0">
                             <Info size={13} />
                             <span>{season.notes}</span>
                           </div>
@@ -289,7 +292,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
                 })}
               </TableBody>
           </Table>
-          <p className="seasons-table-hint">
+          <p className="m-0 w-0 min-w-full text-xs text-subtle">
             Märkusega real (<Info size={11} />) näitab klõps märkust. Pindala ja põldude arv tulevad põldude andmetest. Luku ikoon näitab hooaja olekut, klõps lukustab või avab. Lukus hooaega saab muuta pärast avamist.
           </p>
     </>

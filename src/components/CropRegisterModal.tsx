@@ -20,7 +20,8 @@ import { pickCropColor } from '../services/cropColors';
 import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
-import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle, PageHeader } from './ui';
+import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle, PageHeader, cn } from './ui';
+import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -44,6 +45,15 @@ const cropBlocks: { key: string; label: string; icon: string; groups: CropGroup[
   { key: 'legume', label: 'Kaunviljad', icon: '🌱', groups: ['LEGUME'] },
   { key: 'other', label: 'Muud', icon: '🪴', groups: ['OTHER', 'FORAGE_GRASS', 'FALLOW'] }
 ];
+
+// Neli veergu täidavad akna ülejäänud kõrguse (iga veeru tabel kerib eraldi); kitsamal kui 1400px kaks veergu, tabel max 62vh
+const CROP_GROUPS = 'grid min-h-0 flex-1 grid-cols-4 grid-rows-[minmax(0,1fr)] gap-3 max-[1400px]:grid-cols-2 max-[1400px]:grid-rows-none max-[1400px]:items-start max-[760px]:grid-cols-1';
+// Kultuuri/sordi andmeridade nimelahtri alamosa: kultuuri värvitriip tuleb lahtri --crop-color-ist (crop-bar), polster vasakul
+const CROP_ROW_CELLS = '[&>td]:py-0.5 [&>td]:text-xs';
+// Kultuuri ja sortide vahel joont pole (kultuuri rida, kui sorte on, ja iga sordi rida peale viimase)
+const NO_ROW_LINE = '[&>td]:border-b-transparent';
+// Kultuuri dialoogi (kultuur ja sort) sinine ülaäär
+const CROP_DIALOG = 'border-t-4 border-t-info';
 
 export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   isOpen,
@@ -393,7 +403,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* Otsing */}
           <div className="register-actions-bar">
             <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..." aria-label="Otsi kultuuri, sorti, aretajat või PRIA koodi..." />
-            <span className="crop-total-area" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
+            <span className="text-base text-muted-foreground tabular-nums [&_strong]:text-foreground" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
               Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>
             </span>
           </div>
@@ -401,7 +411,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* 1. Kultuuri lisamine/muutmine eraldi aknas registri peal */}
           {isEditingCrop && (
             <Dialog open onOpenChange={(open) => { if (!open) setIsEditingCrop(false); }}>
-            <DialogContent size="lg" className="crop-edit-modal">
+            <DialogContent size="lg" className={CROP_DIALOG}>
             <DialogForm onSubmit={handleSaveCropForm}>
               <DialogHeader
                 icon={<Edit2 size={20} />}
@@ -464,6 +474,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   <FieldRow>
                     <Input
                       id="crop-color"
+                      className="w-12.5 flex-none p-0.5"
                       type="color"
                       value={editCropColor}
                       onChange={(e) => {
@@ -476,7 +487,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                       type="text"
                       value={editCropIcon}
                       onChange={(e) => setEditCropIcon(e.target.value)}
-                      className="crop-icon-input"
+                      className="w-15 flex-none text-center text-xl"
                       aria-label="Ikoon"
                       placeholder="🌾"
                       title="Emoji või sümbol"
@@ -492,7 +503,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   {editCropId === null && (
                     <span title="Talivili saab külma, suvivili sooja tooni, mida ükski kultuur veel ei kasuta">
                       <CheckboxField
-                        className="crop-auto-color-toggle"
+                        className="mt-1.5 text-xs text-muted-foreground"
                         checked={editCropAutoColor}
                         onCheckedChange={(checked) => {
                           setEditCropAutoColor(checked);
@@ -582,7 +593,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           {/* 2. Sordi lisamine/muutmine eraldi aknas registri peal */}
           {isEditingVariety && targetCropForVariety && (
             <Dialog open onOpenChange={(open) => { if (!open) setIsEditingVariety(false); }}>
-            <DialogContent size="lg" className="crop-edit-modal">
+            <DialogContent size="lg" className={CROP_DIALOG}>
             <DialogForm onSubmit={handleSaveVarietyForm}>
               <DialogHeader
                 icon={<Tag size={20} />}
@@ -707,7 +718,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
           {/* Kultuurid neljas veerus (teraviljad, õlikultuurid, kaunviljad, muud);
               sortide alamregister avaneb kultuuri rea alla */}
-          <div className="crop-group-columns">
+          <div className={CROP_GROUPS}>
             {cropBlocks.map((block) => {
               const blockCrops = filteredCrops
                 .filter((c) => block.groups.includes(c.group))
@@ -716,18 +727,19 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
               const showGroupTag = block.groups.length > 1;
 
               return (
-                <section key={block.key} className="crop-group-block">
-                  <div className="crop-group-block-header">
-                    <h4>
+                <section key={block.key} className="flex min-h-0 min-w-0 flex-col gap-2">
+                  <div className="flex items-center gap-2 px-0.5">
+                    <h4 className="m-0 flex items-center gap-1.5 text-base font-semibold text-foreground">
                       <span>{block.icon}</span>
                       <span>{block.label}</span>
                       <Badge>{blockCrops.length}</Badge>
                     </h4>
-                    {blockHa > 0 && <span className="crop-group-ha">{blockHa.toFixed(2)} ha</span>}
+                    {blockHa > 0 && <span className="ml-auto text-sm font-semibold text-muted-foreground tabular-nums">{blockHa.toFixed(2)} ha</span>}
                     <Button
                       type="button"
                       variant="ghost"
                       size="icon-sm"
+                      className="ml-auto"
                       onClick={() => startCreateCrop(block.groups[0])}
                       title={`Lisa uus kultuur: ${block.label}`}
                     >
@@ -736,7 +748,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </div>
 
                   {blockCrops.length > 0 ? (
-                    <Table scroll="fill" bordered containerClassName="crop-register-wrap" className="crop-register-table">
+                    <Table scroll="fill" bordered containerClassName="min-h-0 max-[1400px]:max-h-[62vh]">
                         <TableHeader>
                           <TableRow>
                             <TableHead>Kultuur</TableHead>
@@ -754,13 +766,13 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
                             return (
                               <React.Fragment key={crop.id}>
-                                <TableRow className={`crop-row ${crop.varieties.length > 0 ? 'has-varieties' : ''}`}>
-                                  <TableCell wrap className="crop-name-cell" style={cropStyle} title={crop.description || undefined}>
-                                    <div className="field-title-line">
-                                      <span className="field-name">{crop.name}</span>
+                                <TableRow className={cn(crop.varieties.length > 0 && NO_ROW_LINE)}>
+                                  <TableCell wrap className="crop-bar pl-3" style={cropStyle} title={crop.description || undefined}>
+                                    <div className={tableTitleLineClass}>
+                                      <span className={cn(tableNameClass, 'font-medium')}>{crop.name}</span>
                                     </div>
-                                    {crop.scientificName && <div className="cell-sub crop-latin">{crop.scientificName}</div>}
-                                    <div className="field-sub-tags">
+                                    {crop.scientificName && <div className={cn(cellSubStackedClass, 'italic')}>{crop.scientificName}</div>}
+                                    <div className={tableSubTagsClass}>
                                       <Badge tone={crop.isWinterCrop ? 'info' : 'neutral'}>
                                         {crop.isWinterCrop ? '❄️ Talivili' : '☀️ Suvivili'}
                                       </Badge>
@@ -768,13 +780,13 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                       {showGroupTag && <Badge>{groupCfg.icon} {groupCfg.label}</Badge>}
                                     </div>
                                   </TableCell>
-                                  <TableCell numeric className={`${acreageHa > 0 ? '' : 'muted'}`}>
+                                  <TableCell numeric className={cn(!(acreageHa > 0) && tableMutedClass)}>
                                     {acreageHa > 0 ? `${acreageHa.toFixed(2)} ha` : '–'}
                                   </TableCell>
-                                  <TableCell numeric className={`${crop.defaultSeedRateKgHa ? '' : 'muted'}`}>
+                                  <TableCell numeric className={cn(!crop.defaultSeedRateKgHa && tableMutedClass)}>
                                     {crop.defaultSeedRateKgHa ? `${crop.defaultSeedRateKgHa} kg/ha` : '–'}
                                   </TableCell>
-                                  <TableCell numeric className={`${crop.defaultYieldTonsHa ? '' : 'muted'}`}>
+                                  <TableCell numeric className={cn(!crop.defaultYieldTonsHa && tableMutedClass)}>
                                     {crop.defaultYieldTonsHa ? `${crop.defaultYieldTonsHa} t/ha` : '–'}
                                   </TableCell>
                                   <TableCell actions>
@@ -815,18 +827,18 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                                   const isLast = vIdx === crop.varieties.length - 1;
                                   const varietyHa = cropAcreageMap[`${crop.id}|${variety.name.toLowerCase().trim()}`] || 0;
                                   return (
-                                    <TableRow key={variety.id} className={`variety-row ${isLast ? 'last' : ''}`}>
-                                      <TableCell wrap className="variety-name-cell" style={cropStyle} title={variety.notes || undefined}>
-                                        <span className="variety-name">{variety.name}</span>
-                                        {details && <div className="cell-sub">{details}</div>}
+                                    <TableRow key={variety.id} className={cn(CROP_ROW_CELLS, !isLast && NO_ROW_LINE, isLast && '[&>td]:pb-2')}>
+                                      <TableCell wrap className="crop-bar pl-6" style={cropStyle} title={variety.notes || undefined}>
+                                        <span className="font-medium text-foreground">{variety.name}</span>
+                                        {details && <div className={cellSubStackedClass}>{details}</div>}
                                       </TableCell>
-                                      <TableCell numeric className={`${varietyHa > 0 ? '' : 'muted'}`}>
+                                      <TableCell numeric className={cn(!(varietyHa > 0) && tableMutedClass)}>
                                         {varietyHa > 0 ? `${varietyHa.toFixed(2)} ha` : '–'}
                                       </TableCell>
-                                      <TableCell numeric className={`${variety.recommendedSeedRateKgHa ? '' : 'muted'}`}>
+                                      <TableCell numeric className={cn(!variety.recommendedSeedRateKgHa && tableMutedClass)}>
                                         {variety.recommendedSeedRateKgHa ? `${variety.recommendedSeedRateKgHa} kg/ha` : '–'}
                                       </TableCell>
-                                      <TableCell numeric className={`${variety.potentialYieldTonsHa ? '' : 'muted'}`}>
+                                      <TableCell numeric className={cn(!variety.potentialYieldTonsHa && tableMutedClass)}>
                                         {variety.potentialYieldTonsHa ? `${variety.potentialYieldTonsHa} t/ha` : '–'}
                                       </TableCell>
                                       <TableCell actions>
@@ -858,7 +870,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                         </TableBody>
                       </Table>
                   ) : (
-                    <div className="crop-group-empty">
+                    <div className="min-h-0 flex-1 rounded-md border border-dashed border-border bg-popover px-3 py-4 text-center text-sm text-subtle">
                       {searchQuery ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}
                     </div>
                   )}
@@ -891,7 +903,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="full" className="field-register-modal">
+      <DialogContent size="full" className="flex flex-col">
         <DialogHeader
           icon={<Sprout size={24} />}
           title="Kultuuride ja Sortide Register"
@@ -903,8 +915,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
         </DialogBody>
 
         <DialogFooter>
-          <div className="footer-left-info">
-            <span className="secondary-note">
+          <div className="mr-auto">
+            <span className="text-sm text-muted-foreground">
               Kuvatakse {filteredCrops.length} kultuuri {crops.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>

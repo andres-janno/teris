@@ -415,7 +415,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
           }
           description="Kannete ühikuhindade määramine, kinnitamine ja põllupõhine tasuvus."
         >
-          <div className="season-header-actions">
+          <div className="flex items-center gap-3">
             {/* Käsitsi aktiveerimine: sakivahetus laeb andmeid, nooleklahv ei tohi seda käivitada */}
             <Tabs value={tab} onValueChange={(v) => setTab(v as Tab)} activationMode="manual">
               <TabsList>

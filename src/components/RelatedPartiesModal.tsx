@@ -642,7 +642,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="fit" className="field-register-modal min-w-[min(900px,96vw)]">
+      <DialogContent size="fit" className="flex flex-col min-w-[min(900px,96vw)]">
         <DialogHeader
           icon={<Users size={24} />}
           title="Seotud isikute register"
@@ -656,8 +656,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
         {editForm}
 
         <DialogFooter>
-          <div className="footer-left-info">
-            <span className="secondary-note">
+          <div className="mr-auto">
+            <span className="text-sm text-muted-foreground">
               Kuvatakse {filteredParties.length} isikut {parties.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>
           </div>

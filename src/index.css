@@ -560,11 +560,6 @@ body {
    FIELD REGISTER & MULTI-YEAR SEASONS MODAL
    ========================================================================== */
 
-.field-register-modal {
-  display: flex;
-  flex-direction: column;
-}
-
 :root {
   /* Kultuuri värvi toon põldude registri lahtrites ja jaluses */
   --crop-tint: 18%;
@@ -590,11 +585,6 @@ body {
 
 [data-slot="table"] .name-cell .field-sub-tags {
   margin-top: 4px;
-}
-
-[data-slot="table"] .mono {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 12px;
 }
 
 [data-slot="table"] .muted {
@@ -767,28 +757,7 @@ body {
   flex-wrap: wrap;
 }
 
-.crop-auto-color-toggle {
-  margin-top: 6px;
-  font-size: 12px !important;
-  color: var(--text-secondary) !important;
-}
-
 /* Kultuuri vorm: värvivalija ja ikooni väli on kitsad, PRIA kood võtab ülejäänud laiuse */
-.crop-edit-modal [data-slot="input"][type="color"] {
-  width: 50px !important;
-  flex: none;
-  padding: 2px !important;
-}
-.crop-edit-modal .crop-icon-input[data-slot="input"] {
-  width: 60px !important;
-  flex: none;
-  text-align: center;
-  font-size: 20px !important;
-}
-.crop-edit-modal [data-slot="input"][type="text"]:not(.crop-icon-input) {
-  min-width: 0;
-}
-
 /* Valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
 .crop-legend-item[data-selected] {
   /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
@@ -801,91 +770,9 @@ body {
    Season Register & Season Manager Modal Styles
    ========================================================================== */
 
-.season-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
 .edit-cad-locked {
   display: inline-flex;
   padding: 6px;
-  color: var(--text-muted);
-}
-
-.season-form-fieldset {
-  border: none;
-  margin: 0;
-  padding: 0;
-  min-width: 0;
-}
-
-.season-form-fieldset:disabled [data-slot="input"],
-.season-form-fieldset:disabled [data-slot="textarea"] {
-  opacity: 0.75;
-  cursor: default;
-}
-
-.season-form-grid {
-  display: grid;
-  grid-template-columns: 160px 1fr !important;
-  gap: 12px !important;
-}
-
-/* Hooaegade tabel: struktuur tuleb ui/Table'ilt; siin ainult sisureeglid */
-.season-cell {
-  min-width: 110px;
-}
-
-.season-cell-head {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.season-year {
-  font-size: 14px;
-  font-weight: 500;
-}
-
-.season-notes-icon {
-  color: var(--text-muted);
-}
-
-.season-cell-name {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-/* !important: ui/Table'i utiliit (border-color, py) ei tohi võita */
-[data-slot="table"] tr.notes-open > td {
-  border-bottom-color: transparent !important;
-}
-
-[data-slot="table"] tr.season-notes-row > td {
-  padding-top: 0 !important;
-}
-
-.season-cell-notes {
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
-  font-size: 12px;
-  line-height: 1.4;
-  color: var(--text-secondary);
-}
-
-.season-cell-notes svg {
-  flex-shrink: 0;
-  margin-top: 2px;
-}
-
-.seasons-table-hint {
-  /* ei laienda akent: murdub tabeli laiuses */
-  width: 0;
-  min-width: 100%;
-  margin: 0;
-  font-size: 12px;
   color: var(--text-muted);
 }
 
@@ -940,157 +827,6 @@ body {
   align-items: flex-end;
   justify-content: center;
   padding-bottom: 2px;
-}
-
-/* ==========================================================================
-   Seotud Isikute Register (Harmonized with Field Register design)
-   ========================================================================== */
-
-/* Kultuuride register: neli veergu (teraviljad, õlikultuurid, kaunviljad, muud) */
-/* Veerud täidavad akna ülejäänud kõrguse; iga veeru tabel kerib eraldi */
-.crop-group-columns {
-  flex: 1 1 auto;
-  min-height: 0;
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  grid-template-rows: minmax(0, 1fr);
-  gap: 12px;
-}
-
-.crop-group-columns .crop-group-block {
-  min-height: 0;
-}
-
-.crop-group-columns .crop-total-area {
-  font-size: 14px;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.crop-total-area strong {
-  color: var(--text-primary);
-}
-
-.crop-group-empty {
-  flex: 1 1 auto;
-  min-height: 0;
-  max-height: none;
-}
-
-@media (max-width: 1400px) {
-  .crop-group-columns {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    grid-template-rows: none;
-    align-items: start;
-  }
-
-  .crop-group-columns .crop-register-wrap {
-    max-height: 62vh;
-  }
-}
-
-@media (max-width: 760px) {
-  .crop-group-columns {
-    grid-template-columns: minmax(0, 1fr);
-  }
-}
-
-.crop-group-block {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  min-width: 0;
-}
-
-.crop-group-block-header {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 0 2px;
-}
-
-.crop-group-block-header h4 {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin: 0;
-  font-size: 14px;
-  font-weight: 700;
-  color: var(--text-primary);
-}
-
-.crop-group-ha {
-  margin-left: auto;
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-secondary);
-  font-variant-numeric: tabular-nums;
-}
-
-.crop-group-block-header h4 + button {
-  margin-left: auto;
-}
-
-.crop-group-empty {
-  padding: 16px 12px;
-  background: var(--bg-modal);
-  text-align: center;
-  font-size: 13px;
-  color: var(--text-muted);
-  border: 1px dashed var(--border-card);
-  border-radius: var(--radius-md);
-}
-
-/* !important: ui/Table'i utiliit (padding, border-color) ei tohi võita */
-.crop-register-table .crop-name-cell {
-  box-shadow: inset 4px 0 0 var(--crop-color);
-  padding-left: 12px !important;
-}
-
-.crop-register-table .crop-latin {
-  font-style: italic;
-}
-
-/* Sordid kultuuri all: sama värvitriip, nimi nihkega, kultuuri ja sortide vahel joont pole */
-.crop-register-table tr.crop-row.has-varieties td,
-.crop-register-table tr.variety-row:not(.last) td {
-  border-bottom-color: transparent !important;
-}
-
-.crop-register-table tr.variety-row td {
-  padding-top: 2px !important;
-  padding-bottom: 2px !important;
-  font-size: 12px;
-}
-
-.crop-register-table tr.variety-row.last td {
-  padding-bottom: 8px !important;
-}
-
-.crop-register-table .variety-name-cell {
-  box-shadow: inset 4px 0 0 var(--crop-color);
-  padding-left: 24px !important;
-}
-
-.crop-register-table .variety-name {
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* ==========================================================================
-   Sortide Alamregister Tabel (Varieties Sub-Register Table)
-   ========================================================================== */
-
-.variety-name-cell {
-  font-weight: 500;
-  color: var(--text-primary);
-  white-space: nowrap;
-}
-
-.variety-seed-rate {
-  color: var(--text-primary);
-  font-weight: 400;
-  white-space: nowrap;
 }
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -2109,10 +1845,6 @@ body {
 .help-content li { margin: 2px 0; }
 .help-content a { color: var(--emerald-500); text-decoration: underline; }
 
-@media (max-width: 520px) {
-  .season-form-grid { grid-template-columns: 1fr !important; }
-}
-
 /* Põllu täisvaade (FieldFullView) — päise (.app-header) all kogu ekraanil */
 
 /* PRIA materjali-, saagi- ja seireread töö plaani ja kande vormis */
@@ -2214,9 +1946,6 @@ td.stock-qty-out { color: #dc2626; }
   color: var(--text-secondary);
 }
 
-/* Sõitude register (Tehnika → Sõidud) */
-.footer-left-info { margin-right: auto; }
-
 /* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
 .field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
 .field-map-card { position: relative; width: 300px; display: flex; flex-direction: column; gap: 8px; }
@@ -2274,13 +2003,10 @@ polyline.weather-line { fill: none; }
 .weather-season-shifted { font-style: italic; }
 
 /* Staatilised abiklassid (varem inline-stiilid) */
-/* Teisejärguline märkus (13px) ja summutatud märkus (12px) */
-.secondary-note { font-size: 13px; color: var(--text-secondary); }
+/* Summutatud märkus (12px) */
 .muted-note { font-size: 12px; color: var(--text-muted); }
 /* Töö täisnimi lühinime all */
 .work-full-name { display: block; font-weight: 400; color: var(--text-secondary); }
 .hint-text.is-block { display: block; margin-top: 4px; }
 /* Kultuuri värvipunkt (värv tuleb andmest) */
 .crop-color-dot { display: inline-block; width: 10px; height: 10px; border-radius: 9999px; border: 1px solid rgba(0, 0, 0, 0.2); }
-/* Kultuuri muutmise dialoog: sinine ülaäär */
-.crop-edit-modal { border-top: 4px solid var(--blue-500) !important; /* DialogContent ääris on utiliit */ }

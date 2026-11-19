@@ -41,6 +41,8 @@
 @source '../components/RelatedPartiesModal.tsx';
 @source '../components/FieldManagerModal.tsx';
 @source '../components/FieldShapeModal.tsx';
+@source '../components/CropRegisterModal.tsx';
+@source '../components/SeasonManagerModal.tsx';
 @source '../components/PoiManagerModal.tsx';
 @source '../AuthGate.tsx';
 @source '../components/FieldUploadModal.tsx';
@@ -179,6 +181,10 @@
 /* Kinnitatud Suurus-veeru parem joon (Külvikord): sisemine vari, et border-collapse'i-vaba tabel ei nihkuks. */
 @utility pin-edge-end {
   box-shadow: inset -1px 0 0 var(--border-card);
+}
+/* Kultuuri/sordi rea värviriba vasakul (--crop-color tuleb lahtri style'ist). */
+@utility crop-bar {
+  box-shadow: inset 4px 0 0 var(--crop-color);
 }
 @utility chip-outline {
   border-left-color: var(--chip-accent, var(--border-card));
