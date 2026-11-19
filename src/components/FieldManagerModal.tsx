@@ -21,14 +21,15 @@ import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader, cornerActionClass, cn } from './ui';
 import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
 
-// Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 // Kultuurigrupi pealkiri ja pindala (täisleht: 13px / min-laius 240px, number 14px).
 const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold leading-natural text-muted-foreground';
 const GROUP_NUM = 'ml-auto text-base font-semibold leading-natural tabular-nums';
 // Kiibi sisu: silt ja number (alamväärtus 11px, veeris 4px otse kiibis).
 const CHIP_LBL = 'text-muted-foreground';
 const CHIP_NUM = 'font-medium text-foreground';
+const CHIP_SUB = 'ml-1 text-2xs';
 
+// Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 const SOIL_AUTO_HINT = 'Täidetakse hiljem automaatselt Maa- ja Ruumiameti mullastiku kaardi põhjal (põllu kuju järgi).';
 
 interface FieldManagerModalProps {
@@ -367,7 +368,7 @@ function cropSummaryKey(cropText: string): string {
         >
           <span className={CHIP_LBL}>🏛️ Oma maa:</span>
           <strong className={CHIP_NUM}>{financialSummary.ownedHa} ha</strong>
-          <span className="ml-1 text-2xs">({financialSummary.totalTax} €/a maamaks)</span>
+          <span className={CHIP_SUB}>({financialSummary.totalTax} €/a maamaks)</span>
         </ChipButton>
         <ChipButton
           variant="outline"
@@ -379,7 +380,7 @@ function cropSummaryKey(cropText: string): string {
         >
           <span className={CHIP_LBL}>🤝 Rendimaa:</span>
           <strong className={CHIP_NUM}>{financialSummary.rentedHa} ha</strong>
-          <span className="ml-1 text-2xs">({financialSummary.totalRent} €/a rent)</span>
+          <span className={CHIP_SUB}>({financialSummary.totalRent} €/a rent)</span>
         </ChipButton>
       </div>
     </>
@@ -428,7 +429,7 @@ function cropSummaryKey(cropText: string): string {
 
           {/* Locked Season Alert Banner */}
           {isCurrentSeasonLocked && (
-            <div className="mb-3 flex items-center justify-between gap-3 rounded-md border border-border bg-muted px-3 py-2 text-sm text-foreground">
+            <div className="mb-3 flex items-center justify-between gap-3 rounded-md border border-subtle/30 bg-subtle/14 px-3 py-2 text-sm text-foreground">
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Lock size={16} />
                 <span>
@@ -563,7 +564,7 @@ function cropSummaryKey(cropText: string): string {
                         const varietyOptions =
                           cropEdit.variety && !varieties.includes(cropEdit.variety) ? [cropEdit.variety, ...varieties] : varieties;
                         return (
-                          <TableCell key={yr} wrap className={cn('year-cell min-w-47.5', yr === selectedYear && 'selected')}>
+                          <TableCell key={yr} wrap className={cn('year-cell w-47.5 min-w-47.5 max-w-47.5', yr === selectedYear && 'selected')}>
                             <div ref={cropEditRef} className="flex flex-col gap-1">
                               <Select
                                 size="sm"
@@ -601,7 +602,7 @@ function cropSummaryKey(cropText: string): string {
                                 <Button type="button" variant="ghost" size="icon-sm" onClick={() => setCropEdit(null)} title="Loobu (Esc)">
                                   <X size={15} />
                                 </Button>
-                                <Button type="button" variant="ghost" size="icon-sm" className="text-primary" onClick={saveCropEdit} title="Salvesta">
+                                <Button type="button" variant="ghost" size="icon-sm" className="text-primary enabled:hover:text-primary" onClick={saveCropEdit} title="Salvesta">
                                   <Check size={15} />
                                 </Button>
                               </div>

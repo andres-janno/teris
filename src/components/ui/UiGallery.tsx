@@ -13,6 +13,9 @@ import {
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 
+// Kiibi arvu klass (nagu Külvikorras)
+const CHIP_NUM = 'font-medium text-foreground';
+
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Panel title={title} bodyClassName="flex flex-wrap items-start gap-3">{children}</Panel>
 );
@@ -85,13 +88,13 @@ export const UiGallery: React.FC = () => {
           <Button variant="text" size="inline">Tekstina nupp (text)</Button>
           <Button variant="plain" size="inline">Kogu rea nupp (plain)</Button>
           <ChipButton variant="tint" accent="var(--amber-500)" selected={chip === 'a'} dimmed={chip !== 'none' && chip !== 'a'} onClick={() => setChip(chip === 'a' ? 'none' : 'a')}>
-            <span>Talinisu</span><strong className="font-medium text-foreground">120,50 ha</strong>
+            <span>Talinisu</span><strong className={CHIP_NUM}>120,50 ha</strong>
           </ChipButton>
           <ChipButton variant="tint" accent="var(--blue-500)" selected={chip === 'b'} dimmed={chip !== 'none' && chip !== 'b'} onClick={() => setChip(chip === 'b' ? 'none' : 'b')}>
-            <span>Suvioder</span><strong className="font-medium text-foreground">40,00 ha</strong>
+            <span>Suvioder</span><strong className={CHIP_NUM}>40,00 ha</strong>
           </ChipButton>
           <ChipButton variant="outline" accent="var(--emerald-500)" selected={tenure} onClick={() => setTenure(!tenure)}>
-            <span className="text-muted-foreground">Oma maa:</span><strong className="font-medium text-foreground">312 ha</strong>
+            <span className="text-muted-foreground">Oma maa:</span><strong className={CHIP_NUM}>312 ha</strong>
           </ChipButton>
         </Section>
 
