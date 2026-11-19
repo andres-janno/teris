@@ -90,8 +90,9 @@ const TELEMETRY_TIME = 'col-span-full border-t border-border pt-1 text-2xs leadi
 
 // Märkuse kast kaardil (masin, haakeriist, seade): oranž vihje, klõps avab muutmise.
 // leading-4.5 (18px) on vana 1.45 lähim skaalaväärtus (12px × 1.45 = 17.4px).
+// Tekstisuurus on ka sisemisel span-il: nupul (Button plain) on [font-size:inherit] ja [line-height:inherit], mis võidavad konteineri text-xs.
 const NOTES_BOX =
-  'flex cursor-pointer items-start gap-1.5 whitespace-pre-wrap wrap-anywhere rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
+  'flex cursor-pointer items-start gap-1.5 whitespace-pre-wrap wrap-anywhere rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>span]:text-xs [&>span]:leading-4.5 [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
 
 // Telemeetria mõõdik masinakaardil: ikoon, silt ja väärtus
 const GaugeItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
@@ -1540,7 +1541,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </CardActions>
                 </div>
 
-                <Card variant="tile" padding="sm" className="text-xs">
+                <Card variant="tile" padding="sm" className="text-xs leading-natural">
                   {assignedVehicle ? (
                     <div className="flex items-center gap-2 text-success-text">
                       <Tractor size={14} />
@@ -1554,20 +1555,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </Card>
 
                 {imp.registrationPlate && (
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xs leading-natural">
                     <span>Registrinumber:</span>
                     <code>{imp.registrationPlate}</code>
                   </div>
                 )}
 
                 {imp.serialNumber && (
-                  <div className="flex justify-between text-xs">
+                  <div className="flex justify-between text-xs leading-natural">
                     <span>VIN / Seerianumber:</span>
                     <code>{imp.serialNumber}</code>
                   </div>
                 )}
 
-                <div className="flex justify-between text-xs">
+                <div className="flex justify-between text-xs leading-natural">
                   <span>Andur:</span>
                   {attachedDevice ? (
                     <span className="flex items-center gap-1">
@@ -1665,7 +1666,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
 
                 {isEyeSensor ? (
-                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs">
+                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs leading-natural">
                     <TelemetryItem label="Aku tase:">{dev.batteryVoltage}%</TelemetryItem>
                     {dev.eyeTemperatureC != null && (
                       <TelemetryItem label="Temperatuur:">{dev.eyeTemperatureC}°C</TelemetryItem>
@@ -1679,7 +1680,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     </div>
                   </Card>
                 ) : (
-                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs">
+                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs leading-natural">
                     <TelemetryItem label="Aku pinge:">{dev.batteryVoltage} V</TelemetryItem>
                     <TelemetryItem label="Satelliite:">{dev.satelliteCount} SAT</TelemetryItem>
                     <TelemetryItem label="Süüde:">{dev.ignition ? 'SEES' : 'VÄLJAS'}</TelemetryItem>
@@ -1691,7 +1692,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )}
 
                 <div className="flex flex-col gap-1">
-                  <label htmlFor={`dev-assign-${dev.id}`} className="text-xs font-medium text-muted-foreground">
+                  <label htmlFor={`dev-assign-${dev.id}`} className="text-xs font-medium leading-natural text-muted-foreground">
                     Paigaldatud:
                   </label>
                   <Select
