@@ -402,8 +402,6 @@ export const emptyBoxClass = 'rounded-md border border-dashed border-border px-3
 export const subheadingClass = 'text-xs font-semibold leading-natural text-muted-foreground';
 
 // --- Tehnika ja sõidud (etapp 4c) ---
-export type IconBoxSize = 'sm' | 'md' | 'lg';
-export type IconBoxTone = 'neutral' | 'info' | 'success' | 'warning';
 /** Ikoon või emoji ruudus. sm 28px (registri lahter, toon), md 36px (masina avatar; ääre värv tuleb andmest: style.borderColor), lg 40px (kaardi päis). */
 export const iconBoxVariants = cva('flex shrink-0 items-center justify-center', {
   variants: {

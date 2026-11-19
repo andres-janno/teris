@@ -44,6 +44,17 @@ import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitle
 import type { BadgeTone } from './ui';
 import { cn } from './ui/cn';
 
+// Kaardi korduvad tekstiklassid (ühesugune välimus kõigis kaartides).
+// Lisaklassid lisa cn(KONST, 'lisa') abil.
+/** Alamtekst kaardil: väike, vaikse värviga (masina kategooria, seadme IMEI jm). */
+const CARD_SUB = 'text-xs leading-natural text-muted-foreground';
+/** Kõige väiksem silt või ajatempel: silt mõõdikul, kaardi ajarida. */
+const CARD_HINT = 'text-2xs leading-natural text-muted-foreground';
+/** Kaardi pealkiri (masina, haakeriista ja seadme nimi). */
+const CARD_TITLE = 'text-base font-medium leading-natural text-foreground';
+/** Rida, kus silt on vasakul ja väärtus paremal (registrinumber, VIN, andur). */
+const CARD_ROW = 'flex justify-between text-xs leading-natural';
+
 // Masina oleku märgi toon
 const VEHICLE_STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
   working: 'success', moving: 'info', idling: 'warning', stopped: 'neutral', offline: 'neutral'
@@ -80,13 +91,13 @@ const deviceFreshness = (iso?: string | null): { level: FreshLevel; text: string
 // Seadme näit kaardil: silt ja väärtus üksteise all (ruudustiku lahter)
 const TelemetryItem: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
   <div className="flex flex-col">
-    <span className="text-2xs leading-natural text-muted-foreground">{label}</span>
+    <span className={CARD_HINT}>{label}</span>
     <strong>{children}</strong>
   </div>
 );
 
 // Telemeetriakaardi ajatempli rida: täpp ja tekst värskuse värvis
-const TELEMETRY_TIME = 'col-span-full border-t border-border pt-1 text-2xs leading-natural text-muted-foreground';
+const TELEMETRY_TIME = cn('col-span-full border-t border-border pt-1', CARD_HINT);
 
 // Märkuse kast kaardil (masin, haakeriist, seade): oranž vihje, klõps avab muutmise.
 // leading-4.5 (18px) on vana 1.45 lähim skaalaväärtus (12px × 1.45 = 17.4px).
@@ -104,7 +115,7 @@ const GaugeItem: React.FC<{ icon: React.ReactNode; label: string; value: string 
   <div className="flex items-center gap-1.5">
     {icon}
     <div className="flex flex-col">
-      <span className="text-2xs leading-natural text-muted-foreground">{label}</span>
+      <span className={CARD_HINT}>{label}</span>
       <strong className="text-sm font-semibold leading-natural text-foreground">{value}</strong>
     </div>
   </div>
@@ -1354,8 +1365,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       <Tractor size={20} style={{ color: v.color }} />
                     </IconBox>
                     <div>
-                      <h4 className="text-base font-medium leading-natural text-foreground">{v.name}</h4>
-                      <span className="text-xs leading-natural text-muted-foreground">{[v.category, [v.manufacturer, v.model].filter(Boolean).join(' '), v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
+                      <h4 className={CARD_TITLE}>{v.name}</h4>
+                      <span className={CARD_SUB}>{[v.category, [v.manufacturer, v.model].filter(Boolean).join(' '), v.powerKw ? `${v.powerKw} kW` : null, v.registrationPlate || 'Reg. nr puudub'].filter(Boolean).join(' • ')}</span>
                     </div>
                   </div>
 
@@ -1515,8 +1526,8 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <span>🔧</span>
                   </IconBox>
                   <div className="flex-1">
-                    <h4 className="text-base font-medium leading-natural text-foreground">{imp.name}</h4>
-                    <span className="text-xs leading-natural text-muted-foreground">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
+                    <h4 className={CARD_TITLE}>{imp.name}</h4>
+                    <span className={CARD_SUB}>{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
                   </div>
                   <CardActions>
                     <Button variant="ghost" size="icon-sm"
@@ -1561,20 +1572,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </Card>
 
                 {imp.registrationPlate && (
-                  <div className="flex justify-between text-xs leading-natural">
+                  <div className={CARD_ROW}>
                     <span>Registrinumber:</span>
                     <code>{imp.registrationPlate}</code>
                   </div>
                 )}
 
                 {imp.serialNumber && (
-                  <div className="flex justify-between text-xs leading-natural">
+                  <div className={CARD_ROW}>
                     <span>VIN / Seerianumber:</span>
                     <code>{imp.serialNumber}</code>
                   </div>
                 )}
 
-                <div className="flex justify-between text-xs leading-natural">
+                <div className={CARD_ROW}>
                   <span>Andur:</span>
                   {attachedDevice ? (
                     <span className="flex items-center gap-1">
@@ -1645,9 +1656,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </IconBox>
                   <div className="flex-1">
                     <div className="flex items-center justify-between">
-                      <h4 className="text-base font-medium leading-natural text-foreground">{dev.model}</h4>
+                      <h4 className={CARD_TITLE}>{dev.model}</h4>
                     </div>
-                    <span className="text-xs leading-natural text-muted-foreground">
+                    <span className={CARD_SUB}>
                       {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
                     </span>
                   </div>
@@ -1986,7 +1997,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         {d.connectivityType === 'eye_sensor' ? <Activity size={16} /> : <Radio size={16} />}
                         <span className="flex-1">
                           <strong className="text-base leading-natural text-foreground">{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
-                          <span className="mt-0.5 block text-xs leading-natural text-muted-foreground">
+                          <span className={cn(CARD_SUB, 'mt-0.5 block')}>
                             {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
                               otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
                             )}
@@ -2032,7 +2043,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         <Wrench size={16} />
                         <span className="flex-1">
                           <strong className="text-base leading-natural text-foreground">{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
-                          <span className="mt-0.5 block text-xs leading-natural text-muted-foreground">
+                          <span className={cn(CARD_SUB, 'mt-0.5 block')}>
                             {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
                               otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
                             )}
