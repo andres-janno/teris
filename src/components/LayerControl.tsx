@@ -53,8 +53,8 @@ const VEHICLE_ROW_SIM = 'border-primary/60 bg-primary/8 hover:border-primary/60 
 
 // Kihirea ühised klassid (vana .layer-item, .layer-label, .soil-metric-radio-item). CheckboxField juurde: `[&>button]:mt-0` nullib märkeruudu ülavahe.
 const LAYER_ITEM = 'flex items-center justify-between px-2 py-1.5 text-foreground';
-const LAYER_LABEL = 'flex items-center gap-2 text-sm leading-natural [&>button]:mt-0';
-const LAYER_OPTION = 'flex items-center gap-1.5 text-sm leading-natural [&>button]:mt-0';
+const LAYER_LABEL = 'flex items-center gap-2 text-sm [&>button]:mt-0';
+const LAYER_OPTION = 'flex items-center gap-1.5 text-sm [&>button]:mt-0';
 
 // Kihi värvimärk (8px; värv tuleb LAYER_SWATCH-ist)
 const LayerDot: React.FC<{ swatch: string }> = ({ swatch }) => (
@@ -209,7 +209,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                         aria-label="Mullaproovi näitaja"
                       >
                         {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                          <RadioField key={key} value={key} label={SOIL_METRIC_CONFIG[key].label} labelClassName="gap-1.5 leading-natural" />
+                          <RadioField key={key} value={key} label={SOIL_METRIC_CONFIG[key].label} labelClassName="gap-1.5" />
                         ))}
                       </RadioGroup>
 
