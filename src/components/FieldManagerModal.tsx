@@ -23,8 +23,8 @@ import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsC
 
 // Mullastik tuleb hiljem Maa- ja Ruumiameti andmetest põllu kuju järgi (praegu ainult vaatamiseks).
 // Kultuurigrupi pealkiri ja pindala (täisleht: 13px / min-laius 240px, number 14px).
-const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold text-muted-foreground';
-const GROUP_NUM = 'ml-auto text-base font-semibold tabular-nums';
+const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold leading-natural text-muted-foreground';
+const GROUP_NUM = 'ml-auto text-base font-semibold leading-natural tabular-nums';
 // Kiibi sisu: silt ja number (alamväärtus 11px, veeris 4px otse kiibis).
 const CHIP_LBL = 'text-muted-foreground';
 const CHIP_NUM = 'font-medium text-foreground';
@@ -327,7 +327,7 @@ function cropSummaryKey(cropText: string): string {
   const cropSummaryContent = (
     <>
       <div className="flex min-w-0 flex-1 basis-120 flex-col gap-1.5">
-        {cropGroups.length === 0 && <span className="text-base text-subtle">Selle hooaja kirjeid pole</span>}
+        {cropGroups.length === 0 && <span className="text-base leading-natural text-subtle">Selle hooaja kirjeid pole</span>}
         {cropGroups.map((g) => (
           <div key={g.kind} className="flex w-full flex-wrap items-center gap-2">
             <span className={GROUP_TITLE} title={g.title}>
@@ -353,7 +353,7 @@ function cropSummaryKey(cropText: string): string {
           <span className={GROUP_TITLE}>
             Σ Kogupind: <strong className={GROUP_NUM}>{totalAreaHa.toFixed(2)} ha</strong>
           </span>
-          <span className="text-base text-subtle">{fieldsForSelectedYear.length} põldu</span>
+          <span className="text-base leading-natural text-subtle">{fieldsForSelectedYear.length} põldu</span>
         </div>
       </div>
       {/* Omandivormid paremal üksteise all; klikk filtreerib tabeli */}
@@ -548,8 +548,8 @@ function cropSummaryKey(cropText: string): string {
                       title={selectedRec ? selectedRec.areaChangeReason || undefined : sizeRec ? `${sizeRec.year}. a pindala` : undefined}
                     >
                       <div className="flex flex-col">
-                        <strong className={cn('text-base font-normal text-foreground', !selectedRec && 'text-subtle')}>{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
-                        {selectedRec?.eligibleAreaHa ? <span className="block text-2xs font-medium text-subtle">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
+                        <strong className={cn('text-base font-normal leading-natural text-foreground', !selectedRec && 'text-subtle')}>{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
+                        {selectedRec?.eligibleAreaHa ? <span className="block text-2xs font-medium leading-natural text-subtle">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
                       </div>
                     </TableCell>
                     {tableYears.map((yr) => {
