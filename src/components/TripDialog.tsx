@@ -153,10 +153,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
       <DialogContent size="lg" dismissible={!saving}>
         <DialogHeader icon={<Route size={20} />} title={`${who}${trip.implementName ? ` + ${trip.implementName}` : ''}`} />
         <DialogBody>
-          {trip.deletedAt && <div className="auth-error-banner">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
+          {trip.deletedAt && <div className="alert-box error">Kustutatud {formatDateTime(trip.deletedAt)}</div>}
           {/* shrink-0: dialoogi sisu on flex-veerg, ilma selleta kahaneb kaart 0 kõrguseks */}
           <div ref={setMapEl} className="mb-3 h-80 shrink-0 rounded-md" />
-          {trackError && <div className="auth-error-banner">{trackError}</div>}
+          {trackError && <div className="alert-box error">{trackError}</div>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
           <div className="relative mb-4 flex flex-col gap-2.5 pl-0.5 before:absolute before:top-3 before:bottom-3 before:left-1.5 before:w-0.5 before:bg-border before:content-['']">
             <div className={STOP_ROW}>
@@ -271,7 +271,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
           <Field label="Märkus" htmlFor="trip-notes" span="full">
             <Textarea id="trip-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
-          {error && <div className="auth-error-banner">{error}</div>}
+          {error && <div className="alert-box error">{error}</div>}
         </DialogBody>
         <DialogFooter>
           {canDelete && !trip.deletedAt && (

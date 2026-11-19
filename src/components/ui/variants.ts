@@ -420,7 +420,7 @@ export const iconBoxVariants = cva('flex shrink-0 items-center justify-center', 
 
 /** Kaartide ruudustik (masinad, haakeriistad, seadmed): automaatsed ≥ 360px veerud. */
 export const cardGridClass = 'grid grid-cols-[repeat(auto-fill,minmax(360px,1fr))] gap-3';
-/** Tehnika registri sektsioon (filtririba, tabel, tühi olek): täidab lehe kõrguse, tabel kerib ise. Peab olema `fleet-board-body` otsene laps. */
+/** Tehnika registri sektsioon (filtririba, tabel, tühi olek): täidab lehe kõrguse, tabel kerib ise. Peab olema Tehnika vaate sisu (kerituv flex-veerg) otsene laps. */
 export const registerSectionClass = 'flex min-h-0 flex-1 basis-0 flex-col gap-4';
 
 // Haakimiste ja seadmete seoste registri lahtrid

@@ -46,7 +46,7 @@ export const TripGapReviewDialog: React.FC<Props> = ({ gap, onClose, onSaved }) 
               onChange={(e) => setNote(e.target.value)}
             />
           </Field>
-          {error && <div className="auth-error-banner">{error}</div>}
+          {error && <div className="alert-box error">{error}</div>}
         </DialogBody>
         <DialogFooter>
           <Button type="button" onClick={onClose} disabled={saving}>Loobu</Button>

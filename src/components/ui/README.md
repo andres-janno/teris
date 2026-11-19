@@ -96,7 +96,7 @@ Märkused:
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`).
 Audit-rida „Tailwindi klasse ilma @source-ita“ valvab, et vaatefail, mille klassides on utiliite, oleks `@source`-is (ajutised erandid: `SOURCE_GUARD_ALLOWED` `src/tooling/uiAudit.ts`-is).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
@@ -115,6 +115,7 @@ Etapp 4.1 asendas vaadete korduvad ülevaatemustrid viie komponendiga. Vanu klas
 | `StatTile` | Näitaja plaat: silt, suur number, ühik, lisarida, selgitus | `label`, `value`, `unit`, `sub`, `note`, `tone`, `empty` |
 | `LegendItem` | Legendi kirje: värvimärk (andmevärv), nimi, väärtus, märkus | `color`, `label`, `value`, `note` |
 | `KeyValueRow` | Rida „silt … väärtus“, väärtus paremal servas | `label`, lapsed = väärtus |
+| `IconBox` | Ikoon/emoji ruudus (registri lahter, kaardi päis, masina avatar) | `size` sm/md/lg, `tone` neutral/info/success/warning; md äär `style.borderColor` |
 
 ### Abiklassid ja komponendid, mis tulid tahvlist (etapp 4b)
 
@@ -126,6 +127,21 @@ Etapp 4.1 asendas vaadete korduvad ülevaatemustrid viie komponendiga. Vanu klas
 | `warning-solid`, `sky`, `sky-text` | tahke oranž `#f59e0b` ja taevasinine `#0284c7` tahvli toonidele (`bg-warning-solid/8`, `bg-sky/10`); `sky-text` on taevasinine tekst (heledas `#0369a1`, tumedas `#38bdf8`) | `rgba(245,158,11,…)`, `#0284c7` |
 
 Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTile`, `LegendItem`, `KeyValueRow`; viimasel on väärtus lapsena). `StatTone` (`default | cost | revenue | profit | loss`) on finantsi domeeni toon (kulu/tulu/kasum); teistes vaadetes ära kasuta, vali `Badge` toon või tavaline tekstivärv.
+
+### Tehnika ja sõitude abiklassid (etapp 4c)
+
+| Nimi | Kasuta | Vana klass |
+| --- | --- | --- |
+| `<IconBox size tone>` | ikoon/emoji ruudus (registri lahter, kaardi päis, masina avatar) | `fleet-icon-box`, `imp-icon-wrap`, `dev-icon-wrap`, `v-avatar` |
+| `<FormGrid stackNarrow>` | kaks veergu, kitsal ekraanil (≤ 560px) üks | `fleet-form-grid` |
+| `cardGridClass` | kaartide ruudustik (≥ 360px veerud) | `vehicle-grid`, `implements-grid`, `devices-grid` |
+| `registerSectionClass` | registri sektsioon (filtririba + tabel), täidab lehe | `implement-history-section` |
+| `fleetCell*Class`, `fleetDurationClass`, `fleetNotesClass` | haakimiste/seoste registri lahtrid | `fleet-cell-*` |
+| `dateTimeRowClass`, `dateTimeHintClass` | kuupäev + kellaaeg + vihje | `assign-datetime`, `assign-hint` |
+| `bg-/text-/border-l-fresh-*`, `bg-trip-*` | seadme värskus, sõidu ajajaotus (teemapõhised) | `fresh-*`, `--trip-*` `.trip-dialog` all |
+| `alert-box error` | veateade (punane kast; vana `auth-error-banner`-il polnud reeglit) | `auth-error-banner` |
+
+`PoiManagerModal` ja `RelatedPartiesModal` kasutavad veel `vehicle-grid`, `vehicle-card`, `v-avatar`, `v-name`, `v-title-wrap`, `v-info-*` (dialoogide etapp: `cardGridClass` + `IconBox size="md"`).
 
 ## Vana muutuja -> Tailwindi nimi
 

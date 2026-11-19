@@ -506,3 +506,13 @@ describe('vanad fw-* klassid (etapp 4b)', () => {
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
   });
 });
+
+describe('vanad Tehnika ja sõitude klassid (etapp 4c)', () => {
+  it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="swap-option-item fleet-top-bar trip-stop-dot" /> {/* gauge-item kommentaar */}' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="dev-assign-1" /><div id="trip-notes" className="vehicle-card auth-error-banner telemetry-suggestion-pill" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
+  });
+});

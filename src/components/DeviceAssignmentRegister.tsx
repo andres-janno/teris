@@ -342,7 +342,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
 
               <DialogBody>
                 {error && (
-                  <div className="auth-error-banner mb-4">
+                  <div className="alert-box error mb-4">
                     {error}
                   </div>
                 )}

@@ -94,6 +94,11 @@ const TELEMETRY_TIME = 'col-span-full border-t border-border pt-1 text-2xs leadi
 const NOTES_BOX =
   'flex cursor-pointer items-start gap-1.5 whitespace-pre-wrap wrap-anywhere rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>span]:text-xs [&>span]:leading-4.5 [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
 
+// Valik-dialoogi rida (Button variant="plain"): vana .swap-option-item !important → cn tühistab Buttoni vaikeklassid
+const SWAP_OPTION = 'flex items-center justify-start gap-3 rounded-md border border-border bg-muted px-3 py-2.5 hover:border-primary hover:bg-muted-hover';
+const SWAP_OPTION_CURRENT = 'border-primary bg-primary/12 hover:bg-primary/12';
+const SWAP_OPTION_UNASSIGN = 'hover:border-destructive hover:bg-destructive/10';
+
 // Telemeetria mõõdik masinakaardil: ikoon, silt ja väärtus
 const GaugeItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
   <div className="flex items-center gap-1.5">
@@ -816,7 +821,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   const bodyContent = (
     <>
       {/* Main Navigation Tabs */}
-      <div className="fleet-top-bar">
+      <div className="flex flex-wrap items-center justify-between gap-2.5">
         <Tabs activationMode="manual"
           value={activeTab}
           onValueChange={(next) => {
@@ -856,13 +861,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       {/* ADD FORMS eraldi aknas registri peal */}
       {isAddingNew && activeTab === 'vehicles' && (
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
-          <DialogContent size="lg" className="fleet-edit-modal">
+          <DialogContent size="lg">
             <DialogForm onSubmit={handleCreateVehicle}>
               <DialogHeader icon={<Tractor size={20} />} title={editingVehicleId ? `Muuda masinat: ${vName}` : 'Lisa uus masin'} />
 
               <DialogBody>
 
-                <FormGrid className="fleet-form-grid">
+                <FormGrid stackNarrow>
                   <Field label="Masina nimi *" htmlFor="v-name">
                     <Input
                       id="v-name"
@@ -920,6 +925,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                       />
                       <Input
                         type="color"
+                        className="w-14 flex-none p-0.5"
                         value={vColor}
                         onChange={(e) => setVColor(e.target.value)}
                         title="Kaardimarkeri värv"
@@ -998,13 +1004,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {isAddingNew && activeTab === 'implements' && (
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
-          <DialogContent size="lg" className="fleet-edit-modal">
+          <DialogContent size="lg">
             <DialogForm onSubmit={handleCreateImplement}>
               <DialogHeader icon={<Wrench size={20} />} title={editingImplementId ? `Muuda haakeriista: ${impName}` : 'Lisa uus haakeriist'} />
 
               <DialogBody>
 
-                <FormGrid className="fleet-form-grid">
+                <FormGrid stackNarrow>
                   <Field label="Haakeriista nimi *" htmlFor="imp-name">
                     <Input
                       id="imp-name"
@@ -1107,13 +1113,13 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {isAddingNew && activeTab === 'devices' && (
         <Dialog open onOpenChange={(open) => { if (!open) closeForm(); }}>
-          <DialogContent size="lg" className="fleet-edit-modal" dismissible={!devSaving}>
+          <DialogContent size="lg" dismissible={!devSaving}>
             <DialogForm onSubmit={handleCreateDevice}>
               <DialogHeader icon={<Radio size={20} />} title={editingDeviceId ? `Muuda seadet: ${devModel}` : 'Registreeri telemeetriaseade'} />
 
               <DialogBody>
 
-                <Field label="Seadme tüüp" className="connectivity-type-picker">
+                <Field label="Seadme tüüp" className="mb-0.5">
                   <ToggleGroup
                     aria-label="Seadme tüüp"
                     value={devConnectivity}
@@ -1123,7 +1129,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <ToggleGroupItem value="eye_sensor"><Activity size={14} />Eye Sensor (MAC)</ToggleGroupItem>
                   </ToggleGroup>
                 </Field>
-                <FormGrid className="fleet-form-grid">
+                <FormGrid stackNarrow>
                   {devConnectivity === 'cellular' ? (
                     <>
                       <Field label="Seadme mudel" htmlFor="dev-model">
@@ -1224,7 +1230,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
               <DialogBody>
                 {assignmentError && (
-                  <div className="auth-error-banner mb-4">
+                  <div className="alert-box error mb-4">
                     {assignmentError}
                   </div>
                 )}
@@ -1598,23 +1604,21 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 )}
 
                 <div className="flex w-full items-center gap-2">
-                  <div className="flex w-full items-center gap-2">
-                    <Select
-                      size="sm"
-                      className="flex-1"
-                      aria-label="Haagi masinale"
-                      value={assignedVehicle ? assignedVehicle.id : ''}
-                      onValueChange={(v) => {
-                        const newVehId = v || undefined;
-                        onAssignImplement(imp.id, newVehId);
-                        setTimeout(loadImplementAssignments, 400);
-                      }}
-                      options={[
-                        { value: '', label: '-- Jäta lattu (vaba) --' },
-                        ...vehicles.map((v) => ({ value: v.id, label: `Haagi masinale: ${v.name}` })),
-                      ]}
-                    />
-                  </div>
+                  <Select
+                    size="sm"
+                    className="flex-1"
+                    aria-label="Haagi masinale"
+                    value={assignedVehicle ? assignedVehicle.id : ''}
+                    onValueChange={(v) => {
+                      const newVehId = v || undefined;
+                      onAssignImplement(imp.id, newVehId);
+                      setTimeout(loadImplementAssignments, 400);
+                    }}
+                    options={[
+                      { value: '', label: '-- Jäta lattu (vaba) --' },
+                      ...vehicles.map((v) => ({ value: v.id, label: `Haagi masinale: ${v.name}` })),
+                    ]}
+                  />
                 </div>
               </Card>
             );
@@ -1698,7 +1702,6 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <Select
                     size="sm"
                     id={`dev-assign-${dev.id}`}
-                    className="flex-1"
                     value={targetValue}
                     onValueChange={(val) => {
                       if (!val) { assignDevice(dev.id, undefined, undefined); return; }
@@ -1940,18 +1943,18 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
       {/* Quick Swap Sub-Modal */}
       {swapModal && (
         <Dialog open onOpenChange={(open) => { if (!open) setSwapModal(null); }}>
-          <DialogContent size="sm" className="swap-modal-card">
+          <DialogContent size="sm">
             <DialogHeader title={swapModal.type === 'device' ? '📡 Telemeetriaseadme valik' : '🔧 Haakeriista Haakimine'} />
 
             <DialogBody>
-              <p className="swap-modal-desc">
+              <p className="mb-3 text-sm leading-natural text-muted-foreground">
                 Vali masinale <strong>{swapModal.targetVehicleName}</strong> sobiv {swapModal.type === 'device' ? 'telemeetriaseade' : 'haakeriist'}:
               </p>
 
               {swapModal.type === 'device' ? (
-                <div className="swap-options-list">
+                <div className="flex max-h-90 flex-col gap-2 overflow-y-auto">
                   <Button variant="plain" size="inline"
-                    className="swap-option-item unassign-option"
+                    className={cn(SWAP_OPTION, SWAP_OPTION_UNASSIGN)}
                     onClick={() => {
                       // Unassign any device currently on this vehicle
                       const currentDev = devices.find(d => d.assignedVehicleId === swapModal.targetVehicleId);
@@ -1962,7 +1965,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <Unlink size={16} />
                     <span>
                       <strong>Eemalda telemeetriaseade</strong>
-                      <span className="swap-option-line">Jäta masin ilma GPS telemeetriata</span>
+                      <span className="block">Jäta masin ilma GPS telemeetriata</span>
                     </span>
                   </Button>
 
@@ -1973,16 +1976,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     return (
                       <Button variant="plain" size="inline"
                         key={d.id}
-                        className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        className={cn(SWAP_OPTION, isCurrent && SWAP_OPTION_CURRENT)}
                         onClick={() => {
                           assignDevice(d.id, swapModal.targetVehicleId);
                           setSwapModal(null);
                         }}
                       >
                         {d.connectivityType === 'eye_sensor' ? <Activity size={16} /> : <Radio size={16} />}
-                        <span className="option-info">
-                          <strong>{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
-                          <span className="swap-option-line">
+                        <span className="flex-1">
+                          <strong className="text-base text-foreground">{d.model} &bull; {d.connectivityType === 'eye_sensor' ? `MAC: ${d.macAddress}` : `IMEI: ${d.imei}`}</strong>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
                             {isCurrent ? '🟢 Hetkel paigaldatud sellesse masinasse' : (
                               otherVeh ? `⚠️ Paigaldatud masinasse ${otherVeh.name} (Tõstetakse ringi)` : '🟢 Vaba laos / Riiulis'
                             )}
@@ -1994,9 +1997,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   })}
                 </div>
               ) : (
-                <div className="swap-options-list">
+                <div className="flex max-h-90 flex-col gap-2 overflow-y-auto">
                   <Button variant="plain" size="inline"
-                    className="swap-option-item unassign-option"
+                    className={cn(SWAP_OPTION, SWAP_OPTION_UNASSIGN)}
                     onClick={() => {
                       const currentImp = implementsList.find(i => i.assignedVehicleId === swapModal.targetVehicleId);
                       if (currentImp) onAssignImplement(currentImp.id, undefined);
@@ -2007,7 +2010,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     <Unlink size={16} />
                     <span>
                       <strong>Haagi lahti (Eemalda haakeriist)</strong>
-                      <span className="swap-option-line">Masin sõidab ilma haakeriistata</span>
+                      <span className="block">Masin sõidab ilma haakeriistata</span>
                     </span>
                   </Button>
 
@@ -2018,7 +2021,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     return (
                       <Button variant="plain" size="inline"
                         key={imp.id}
-                        className={`swap-option-item ${isCurrent ? 'current-active' : ''}`}
+                        className={cn(SWAP_OPTION, isCurrent && SWAP_OPTION_CURRENT)}
                         onClick={() => {
                           onAssignImplement(imp.id, swapModal.targetVehicleId);
                           setSwapModal(null);
@@ -2026,9 +2029,9 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                         }}
                       >
                         <Wrench size={16} />
-                        <span className="option-info">
-                          <strong>{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
-                          <span className="swap-option-line">
+                        <span className="flex-1">
+                          <strong className="text-base text-foreground">{imp.name}{imp.workingWidthM ? ` (${imp.workingWidthM}m töölaius)` : ''}</strong>
+                          <span className="mt-0.5 block text-xs text-muted-foreground">
                             {isCurrent ? '🟢 Hetkel haagitud selle masina taha' : (
                               otherVeh ? `⚠️ Haagitud masina ${otherVeh.name} taha (Haagitakse ümber)` : '🟢 Vaba laos / Valmis haakimiseks'
                             )}
@@ -2048,10 +2051,10 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   );
 
   return (
-    <div className="fleet-board-view">
-      <main className="fleet-board-main">
+    <div className="flex h-[calc(100vh-64px)] min-h-0 flex-1 overflow-hidden bg-background">
+      <main className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 px-4 py-3">
         <PageHeader icon={<Tractor />} title="Masinapark, haakeriistad ja muu tehnika" subtitle="Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus" />
-        <div className="fleet-board-body">
+        <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
           {bodyContent}
         </div>
       </main>

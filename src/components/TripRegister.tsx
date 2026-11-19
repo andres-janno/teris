@@ -130,7 +130,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         <span>Viimane import: {importStatus?.lastRunAt ? formatDateTime(importStatus.lastRunAt) : '—'}</span>
       </div>
       {failing.map((d) => (
-        <div key={d.deviceId} className="auth-error-banner">
+        <div key={d.deviceId} className="alert-box error">
           <AlertTriangle size={14} /> {d.deviceLabel}: {d.lastError} ({formatDateTime(d.lastErrorAt ?? undefined)})
         </div>
       ))}
@@ -189,7 +189,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
         )}
       </FilterBar>
 
-      {error && <div className="auth-error-banner">{error}</div>}
+      {error && <div className="alert-box error">{error}</div>}
 
       {loading && trips.length === 0 ? (
         <EmptyState description="Laen sõite..." />

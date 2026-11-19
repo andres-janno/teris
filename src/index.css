@@ -426,16 +426,6 @@ body {
   background: var(--bg-modal);
 }
 
-/* Fleet & Machinery Tracker */
-.fleet-top-bar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-
 /* Vehicle Grid */
 .vehicle-grid {
   display: grid;
@@ -553,7 +543,6 @@ body {
   --trip-pause: #199e70;
 }
 
-
 .confirm-dialog-body {
   display: flex;
   gap: 12px;
@@ -601,68 +590,6 @@ body {
   color: var(--tone-success-text);
 }
 
-.swap-modal-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin-bottom: 12px;
-}
-
-.swap-options-list {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  max-height: 360px;
-  overflow-y: auto;
-}
-
-/* Valik on Button variant="plain": !important võidab nupu utiliidid. */
-.swap-option-item {
-  display: flex !important;
-  align-items: center;
-  justify-content: flex-start !important;
-  gap: 12px !important;
-  padding: 10px 12px !important;
-  border-radius: var(--radius-md) !important;
-  background: var(--stat-bg) !important;
-  border: 1px solid var(--border-card) !important;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.swap-option-item:hover {
-  background: var(--stat-bg-hover) !important;
-  border-color: var(--emerald-500) !important;
-}
-
-.swap-option-item.current-active {
-  border-color: var(--emerald-500) !important;
-  background: rgba(34, 197, 94, 0.12) !important;
-}
-
-.swap-option-item.unassign-option:hover {
-  border-color: var(--rose-500) !important;
-  background: rgba(244, 63, 94, 0.1) !important;
-}
-
-.swap-option-item .option-info {
-  flex: 1;
-}
-
-.swap-option-line {
-  display: block;
-}
-
-.swap-option-item .option-info strong {
-  font-size: 14px;
-  color: var(--text-primary);
-}
-
-.swap-option-item .option-info .swap-option-line {
-  font-size: 12px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
 /* POI Manager */
 .poi-top-bar {
   display: flex;
@@ -702,10 +629,6 @@ body {
   font-size: 12px;
   font-weight: 500;
   color: var(--text-secondary);
-}
-
-.connectivity-type-picker {
-  margin-bottom: 2px;
 }
 
 .form-header-row {
@@ -1144,20 +1067,6 @@ body {
 }
 
 /* Add Year Banner */
-
-/* Värvivalija masina vormis: kitsas ruut tüübi kõrval */
-.fleet-edit-modal [data-slot="input"][type="color"] {
-  flex: 0 0 56px !important;
-  width: 56px !important;
-  padding: 2px !important;
-}
-
-/* Kitsal ekraanil üks veerg (FormGrid on muidu alati 2 veergu) */
-@media (max-width: 560px) {
-  .fleet-form-grid {
-    grid-template-columns: minmax(0, 1fr) !important;
-  }
-}
 
 .field-title-line {
   display: flex;
@@ -2095,7 +2004,6 @@ body {
    Sama raam nagu Põllutööde tahvlil: leht täidab akna päise all, tööriistariba
    murdub kitsal aknal, põhinimekiri/tabel täidab ülejäänud kõrguse ja kerib ise.
    ========================================================================== */
-.fleet-board-view,
 .fullpage-board-view {
   flex: 1;
   height: calc(100vh - 64px);
@@ -2105,7 +2013,6 @@ body {
   overflow: hidden;
 }
 
-.fleet-board-main,
 .fullpage-board-main {
   flex: 1;
   min-width: 0;
@@ -2117,7 +2024,6 @@ body {
   width: 100%;
 }
 
-.fleet-board-body,
 .fullpage-board-body {
   flex: 1;
   min-height: 0;
@@ -2148,8 +2054,7 @@ body {
 
 .fullpage-board-body .register-header-controls,
 .fullpage-board-body .register-actions-bar,
-.fullpage-board-body .poi-top-bar,
-.fleet-board-body .fleet-top-bar {
+.fullpage-board-body .poi-top-bar {
   flex-wrap: wrap;
   margin-bottom: 0;
 }

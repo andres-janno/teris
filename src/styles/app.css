@@ -20,6 +20,7 @@
    kus ta klassid üle viiakse. Enne kontrolli `python3 scripts/css-utils.py diff <vana_dist> <uus_dist>`
    (ehita `npx vite build --outDir /tmp/dist-x --emptyOutDir`): iga uus utiliit peab olema tahtlik; surnud klass
    (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse.
+   Tehnika ja sõitude failid on 4c-s üle viidud.
    Valvur: `npm run ui-audit` rida „Tailwindi klasse ilma @source-ita“. */
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
