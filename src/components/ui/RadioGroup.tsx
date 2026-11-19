@@ -26,9 +26,9 @@ export const RadioGroupItem: React.FC<RadioGroupItemProps> = ({ className, ...pr
   </RadioGroupPrimitive.Item>
 );
 
-// Raadionupp koos sildiga (kasuta RadioGroup sees).
-export const RadioField: React.FC<RadioGroupItemProps & { label: React.ReactNode }> = ({ label, ...props }) => (
-  <label className="inline-flex cursor-pointer items-center gap-2 text-sm text-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50">
+// Raadionupp koos sildiga (kasuta RadioGroup sees). labelClassName: sildi paigutus (vahe, rea kõrgus).
+export const RadioField: React.FC<RadioGroupItemProps & { label: React.ReactNode; labelClassName?: string }> = ({ label, labelClassName, ...props }) => (
+  <label className={cn('inline-flex cursor-pointer items-center gap-2 text-sm text-foreground has-[button:disabled]:cursor-not-allowed has-[button:disabled]:opacity-50', labelClassName)}>
     <RadioGroupItem {...props} />
     <span>{label}</span>
   </label>

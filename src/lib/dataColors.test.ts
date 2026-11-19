@@ -23,3 +23,13 @@ describe('andmevärvid', () => {
     expect(soilLevelColor).toBe(dc.SOIL_LEVEL_COLOR);
   });
 });
+
+describe('kihtide värvimärgid (etapp 4d)', () => {
+  it('on kaheksa kihti; fields ja vehicles järgivad teemat (CSS-muutuja), ülejäänud hex või gradient', () => {
+    expect(Object.keys(dc.LAYER_SWATCH).sort()).toEqual(['cadastre', 'cultivation', 'fields', 'poi', 'satellite', 'soil', 'vehicles', 'weather']);
+    expect(dc.LAYER_SWATCH.fields).toBe('var(--amber-400)');
+    expect(dc.LAYER_SWATCH.vehicles).toBe('var(--emerald-400)');
+    for (const k of ['cultivation', 'poi', 'cadastre', 'soil', 'weather'] as const) expect(dc.LAYER_SWATCH[k]).toMatch(HEX);
+    expect(dc.LAYER_SWATCH.satellite).toMatch(/^linear-gradient\(/);
+  });
+});

@@ -10,6 +10,7 @@ const allClassStrings = (): string[] => [
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
+  v.mapPanelTitleClass, v.loadingSpinnerClass, v.loadingSpinnerInlineClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -676,5 +677,16 @@ describe('Tehnika ühised klassid (etapp 4c)', () => {
   it('kuupäev + kellaaeg rida: 110px kellaajaveerg; vihje min kõrgus 18px', () => {
     expect(v.dateTimeRowClass).toContain('grid-cols-[minmax(0,1fr)_110px]');
     expect(v.dateTimeHintClass).toContain('min-h-4.5');
+  });
+});
+
+describe('kaardi paneelide ühised klassid (etapp 4d)', () => {
+  it('mapPanelTitleClass: ikoon + tekst reas, 14px poolpaks, rea kõrgus normal', () => {
+    for (const t of ['flex', 'items-center', 'text-base', 'font-semibold', 'leading-natural']) expect(v.mapPanelTitleClass).toContain(t);
+  });
+  it('loadingSpinnerClass pöörleb ja on roheline, aeglustub vähendatud liikumise korral; inline-variandil vasak vahe 6px', () => {
+    for (const t of ['animate-spin', 'text-primary', 'shrink-0', 'motion-reduce:[animation-duration:3s]']) expect(v.loadingSpinnerClass).toContain(t);
+    expect(v.loadingSpinnerClass).not.toContain('ml-1.5');
+    expect(v.loadingSpinnerInlineClass).toContain('ml-1.5');
   });
 });

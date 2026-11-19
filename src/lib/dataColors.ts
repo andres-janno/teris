@@ -21,3 +21,16 @@ export const FINANCE_COST_COLOR = { labor: '#0284c7', equipment: '#d97706', fuel
 
 /** Sõidu kaart (Leaflet): algus, lõpp, põllulõik haakeriista laiusega, rada. */
 export const TRIP_MAP_COLOR = { start: '#10b981', end: '#ef4444', swath: '#16a34a', track: '#3b82f6' } as const;
+
+/** Kaardikihtide värvimärgid kihtide paneelis. Põllud ja Masinapark on teemapõhised (heledas ja tumedas erinev toon, vanas CSS-is
+    `--amber-400` / `--emerald-400`), seepärast CSS-muutuja; ülejäänud on kaardi kihi värv mõlemas teemas sama. */
+export const LAYER_SWATCH = {
+  fields: 'var(--amber-400)',
+  vehicles: 'var(--emerald-400)',
+  cultivation: '#38bdf8',
+  poi: '#ec4899',
+  cadastre: '#f97316',
+  soil: '#a16207',
+  weather: '#1e6fff',
+  satellite: 'linear-gradient(135deg, #2b7c4c, #c9d292 50%, #8f6b3a)',
+} as const;

@@ -434,3 +434,11 @@ export const fleetNotesClass = ({ empty = false }: { empty?: boolean } = {}): st
 // Haakimise/seose vorm: kuupäev + kellaaeg ühel real, lõppaja vihje välja all
 export const dateTimeRowClass = 'grid grid-cols-[minmax(0,1fr)_110px] gap-2';
 export const dateTimeHintClass = 'min-h-4.5 text-xs leading-natural text-muted-foreground';
+
+// --- Kaardi paneelid (etapp 4d) ---
+/** Kaardi ujuvpaneeli pealkirjarida: ikoon + 14px poolpaks tekst (Kaardikihid, Hooaeg). Vahe on kutsuja asi (`gap-1.5` jne). */
+export const mapPanelTitleClass = 'flex items-center gap-2 text-base font-semibold leading-natural text-foreground';
+/** Laadimisikoon (Loader2): roheline, pöörleb; aeglustub, kui kasutaja on vähendatud liikumise valinud (vana `layerSpin` + `@media (prefers-reduced-motion)`). */
+export const loadingSpinnerClass = 'shrink-0 animate-spin text-primary motion-reduce:[animation-duration:3s]';
+/** Sama, kuid 6px vasak vahe teksti kõrval (kihtide paneeli rida, satelliidipaneeli pealkiri). */
+export const loadingSpinnerInlineClass = cn(loadingSpinnerClass, 'ml-1.5');
