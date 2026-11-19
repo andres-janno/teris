@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Clock, AlertCircle, Zap, Loader2, X } from 'lucide-react';
 import type { CultivationPass } from '../types/telemetry';
-import { Button, Card, ToggleGroup, ToggleGroupItem, DateInput, Select, Input } from './ui';
+import { Button, Card, ToggleGroup, ToggleGroupItem, DateInput, Select, Input, cn } from './ui';
+import { loadingSpinnerClass } from './ui/variants';
 import { formatDate } from '../services/dateFormat';
 
 interface CultivationControlProps {
@@ -42,6 +43,16 @@ const ROLLING_HOURS = [1, 2, 4, 6, 12, 24];
 const DURATION_HOURS = [1, 2, 3, 4, 6, 8, 12];
 const MINUTE_STEPS = ['00', '05', '10', '15', '20', '25', '30', '35', '40', '45', '50', '55'];
 const SPEEDS = [1, 2, 5, 10];
+
+// Taasesituse paneeli klassid (vana map.css `.cc-*`; --cc-h 32px = h-8)
+const CC_LABEL = 'whitespace-nowrap text-2xs font-semibold uppercase leading-natural tracking-wider text-muted-foreground';
+const CC_VALUE = 'whitespace-nowrap text-base font-medium leading-natural tabular-nums text-foreground';
+const CC_VALUE_SUB = 'ml-1.5 text-xs font-medium';
+const CC_BOX = 'flex h-8 items-center rounded-sm border border-input bg-field'; // tund:minut ja algusaja kast
+const CC_TOGGLE_ITEM = 'self-stretch'; // vana `.cc-toggle > button { align-self: stretch }`
+const CC_LINK = 'ml-auto max-[760px]:ml-0';
+const CC_NOTICE = 'flex min-h-8 flex-1 items-center gap-2 rounded-sm border border-warning-solid/40 bg-warning-solid/10 py-1 pr-1 pl-3 font-medium text-foreground [&>svg]:shrink-0 [&>svg]:text-warning';
+const CC_NOTICE_LOADING = 'border-border bg-muted text-muted-foreground [&>svg]:text-primary';
 
 const toLocalTimeString = (iso?: string): string => {
   if (!iso) return '';
@@ -140,86 +151,88 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         : 'Seisab';
 
   return (
-    <Card variant="floating" className="cultivation-panel">
+    <Card variant="floating" className="absolute bottom-5 left-1/2 z-900 flex w-[min(1040px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-3 text-sm leading-natural max-[760px]:bottom-3 max-[760px]:p-3">
       {/* 1. Masin, olek ja mõõdikud */}
-      <div className="cc-header">
-        <div className="cc-title">
-          <span className={`cc-status-dot ${isWorkingNow ? 'working' : ''}`} aria-hidden="true" />
-          <div className="cc-title-text">
-            <div className="cc-title-name">
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div className="flex min-w-0 items-center gap-2.5">
+          <span className={cn('size-2.5 shrink-0 rounded-full bg-subtle', isWorkingNow && 'bg-primary ring-4 ring-primary/20')} aria-hidden="true" />
+          <div>
+            <div className="whitespace-nowrap text-base font-semibold leading-natural text-foreground">
               {pass.vehicleName || 'Sõidu taasesitus'}
-              {targetFieldName && <span className="cc-title-field">· {targetFieldName}</span>}
+              {targetFieldName && <span className="ml-1.5 font-medium text-muted-foreground">· {targetFieldName}</span>}
             </div>
-            <div className="cc-title-status">{statusText}</div>
+            <div className="text-xs leading-natural text-muted-foreground">{statusText}</div>
           </div>
         </div>
 
-        <div className="cc-stats">
-          <div className="cc-stat">
-            <span className="cc-label">Haritud ala</span>
-            <span className="cc-value">
+        <div className="flex flex-wrap items-end gap-4 max-[760px]:gap-3">
+          <div className="flex flex-col gap-0.5">
+            <span className={CC_LABEL}>Haritud ala</span>
+            <span className={CC_VALUE}>
               {pass.workedAreaHa.toFixed(2)} ha
-              {coverageOfField !== null && <span className="cc-value-sub">{coverageOfField}%</span>}
+              {coverageOfField !== null && <span className={cn(CC_VALUE_SUB, 'text-success-text')}>{coverageOfField}%</span>}
             </span>
           </div>
-          <div className="cc-stat">
-            <span className="cc-label">Läbisõit</span>
-            <span className="cc-value">{pass.distanceKm.toFixed(2)} km</span>
+          <div className="flex flex-col gap-0.5">
+            <span className={CC_LABEL}>Läbisõit</span>
+            <span className={CC_VALUE}>{pass.distanceKm.toFixed(2)} km</span>
           </div>
-          <div className="cc-stat">
-            <span className="cc-label">Kiirus</span>
-            <span className="cc-value">{currentSpeedKmH.toFixed(1)} km/h</span>
+          <div className="flex flex-col gap-0.5">
+            <span className={CC_LABEL}>Kiirus</span>
+            <span className={CC_VALUE}>{currentSpeedKmH.toFixed(1)} km/h</span>
           </div>
-          <div className="cc-stat" title={currentImplement ? `Haakeriist: ${currentImplement.name}` : 'Haakeriista pole määratud'}>
-            <span className="cc-label">Töölaius</span>
-            <span className="cc-value">
+          <div className="flex flex-col gap-0.5" title={currentImplement ? `Haakeriist: ${currentImplement.name}` : 'Haakeriista pole määratud'}>
+            <span className={CC_LABEL}>Töölaius</span>
+            <span className={CC_VALUE}>
               {workingWidthM} m
-              {currentImplement && <span className="cc-value-sub cc-value-impl">{currentImplement.name}</span>}
+              {currentImplement && <span className={cn(CC_VALUE_SUB, 'inline-block max-w-40 truncate align-bottom text-muted-foreground')}>{currentImplement.name}</span>}
             </span>
           </div>
         </div>
       </div>
 
       {/* 2. Ajavahemik */}
-      <div className="cc-period">
-        <Clock size={14} className="cc-period-icon" aria-hidden="true" />
+      <div className="flex flex-wrap items-center gap-2.5 border-t border-border pt-3">
+        <Clock size={14} className="shrink-0 text-primary" aria-hidden="true" />
         {onSimTimeModeChange && (
           <ToggleGroup
-            className="cc-toggle"
+            className="h-8"
             aria-label="Ajavahemiku režiim"
             value={simTimeMode}
             onValueChange={(next) => onSimTimeModeChange(next as typeof simTimeMode)}
           >
-            <ToggleGroupItem value="rolling" title="Viimased tunnid praegusest hetkest tagasi">Viimased tunnid</ToggleGroupItem>
-            <ToggleGroupItem value="custom" title="Konkreetne kuupäev, kellaaeg ja kestus">Kuupäev ja kell</ToggleGroupItem>
+            <ToggleGroupItem value="rolling" className={CC_TOGGLE_ITEM} title="Viimased tunnid praegusest hetkest tagasi">Viimased tunnid</ToggleGroupItem>
+            <ToggleGroupItem value="custom" className={CC_TOGGLE_ITEM} title="Konkreetne kuupäev, kellaaeg ja kestus">Kuupäev ja kell</ToggleGroupItem>
           </ToggleGroup>
         )}
 
         {simTimeMode === 'custom' ? (
-          <div className="cc-period-controls">
-            <div className="cc-date">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="w-34">
               <DateInput
                 value={customDate}
                 onChange={(val) => onCustomDateChange?.(val)}
                 popupPlacement="top"
               />
             </div>
-            <div className="cc-time" title="Alguskellaaeg (24 h)">
+            <div className={cn(CC_BOX, 'inline-flex px-1')} title="Alguskellaaeg (24 h)">
               <Select
                 value={customHour}
                 onValueChange={(v) => onCustomTimeChange?.(`${v}:${customMin}`)}
                 aria-label="Tund"
+                className="h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground"
                 options={hourOptions}
               />
-              <span aria-hidden="true">:</span>
+              <span aria-hidden="true" className="text-muted-foreground">:</span>
               <Select
                 value={customMin}
                 onValueChange={(v) => onCustomTimeChange?.(`${customHour}:${v}`)}
                 aria-label="Minut"
+                className="h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground"
                 options={minuteSelectOptions}
               />
             </div>
-            <span className="cc-select" title="Kestus alguskellaajast edasi">
+            <span className="block min-w-24" title="Kestus alguskellaajast edasi">
               <Select
                 value={String(durationHours)}
                 onValueChange={(v) => onDurationHoursChange?.(Number(v))}
@@ -229,9 +242,9 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
             </span>
           </div>
         ) : (
-          <div className="cc-period-controls">
+          <div className="flex flex-wrap items-center gap-2">
             {onHoursChange && (
-              <span className="cc-select" title="Mitu tundi praegusest hetkest tagasi">
+              <span className="block min-w-24" title="Mitu tundi praegusest hetkest tagasi">
                 <Select
                   value={String(telemetryHours)}
                   onValueChange={(v) => onHoursChange(Number(v))}
@@ -244,7 +257,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         )}
 
         {lastActiveAt && onJumpToLastActive && (
-          <Button variant="link" size="sm" className="cc-link-btn"
+          <Button variant="link" size="sm" className={CC_LINK}
             onClick={onJumpToLastActive}
             title="Ava masina viimase teadaoleva sõidu aeg"
           >
@@ -255,14 +268,14 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
       </div>
 
       {/* 3. Mängija */}
-      <div className="cc-player">
+      <div className="flex min-h-10 items-center gap-2.5 max-[760px]:flex-wrap">
         <Button variant="primary" size="icon-lg"
           onClick={onTogglePlay}
           disabled={!hasTrack}
           title={isPlaying ? 'Paus' : 'Mängi (alates valitud algusajast)'}
           aria-label={isPlaying ? 'Paus' : 'Mängi'}
         >
-          {isPlaying ? <Pause size={18} /> : <Play size={18} className="cc-play-icon" />}
+          {isPlaying ? <Pause size={18} /> : <Play size={18} className="ml-0.5" />}
         </Button>
         <Button size="icon-sm"
           onClick={onReset}
@@ -276,12 +289,12 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         </Button>
 
         {isLoading && !hasTrack ? (
-          <div className="cc-notice cc-notice-loading" role="status">
-            <Loader2 size={16} className="cc-spin" aria-hidden="true" />
+          <div className={cn(CC_NOTICE, CC_NOTICE_LOADING)} role="status">
+            <Loader2 size={16} className={loadingSpinnerClass} aria-hidden="true" />
             <span>Sõiduandmete laadimine…</span>
           </div>
         ) : !hasTrack ? (
-          <div className="cc-notice" role="status">
+          <div className={CC_NOTICE} role="status">
             <AlertCircle size={16} aria-hidden="true" />
             <span>
               {simTimeMode === 'custom'
@@ -289,15 +302,15 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 : `Viimase ${telemetryHours} h jooksul sõiduandmeid ei leitud.`}
             </span>
             {lastActiveAt && onJumpToLastActive && (
-              <Button variant="link" size="sm" className="cc-link-btn" onClick={onJumpToLastActive}>
+              <Button variant="link" size="sm" className={CC_LINK} onClick={onJumpToLastActive}>
                 Vaata viimast sõitu
               </Button>
             )}
           </div>
         ) : (
           <>
-            <div className="cc-start" title="Alguskellaaeg raja sees (24 h), millest taasesitus algab">
-              <span className="cc-label">Algus</span>
+            <div className={cn(CC_BOX, 'shrink-0 gap-1.5 px-2 focus-within:border-primary')} title="Alguskellaaeg raja sees (24 h), millest taasesitus algab">
+              <span className={CC_LABEL}>Algus</span>
               <Input
                 type="text"
                 maxLength={5}
@@ -305,6 +318,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 value={localStartTime}
                 onChange={handleStartTimeInputChange}
                 aria-label="Taasesituse alguskellaaeg"
+                className="h-full w-11 border-0 bg-transparent p-0 text-center tabular-nums"
               />
               {isCustomStart && (
                 <Button variant="ghost" size="icon-xs" onClick={handleResetToOrigin} title="Raja algusesse" aria-label="Lähtesta alguskellaaeg">
@@ -313,14 +327,15 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               )}
             </div>
 
-            <div className="cc-timeline">
-              <span className="cc-time-bound" title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
+            <div className="flex min-w-30 flex-1 items-center gap-2 max-[760px]:order-10 max-[760px]:basis-full">
+              <span className="text-xs leading-natural tabular-nums text-muted-foreground" title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
                 {formatTimeDisplay(pass.startTime)}
               </span>
-              <div className="cc-slider">
-                <div className="cc-slider-fill" style={{ width: `${progressPct}%` }} />
+              <div className="relative h-1.5 flex-1 rounded-sm bg-border">
+                <div className="pointer-events-none absolute inset-y-0 left-0 rounded-sm bg-primary" style={{ width: `${progressPct}%` }} />
                 <input
                   type="range"
+                  className="cc-range absolute -inset-y-2 inset-x-0 m-0 h-5.5 w-full cursor-pointer appearance-none bg-transparent"
                   min="0"
                   max="100"
                   value={progressPct}
@@ -328,24 +343,24 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                   aria-label="Taasesituse asukoht"
                 />
               </div>
-              <span className="cc-time-bound" title={`Raja lõpp: ${formatDate(pass.endTime)} ${formatTimeDisplay(pass.endTime)}`}>
+              <span className="text-xs leading-natural tabular-nums text-muted-foreground" title={`Raja lõpp: ${formatDate(pass.endTime)} ${formatTimeDisplay(pass.endTime)}`}>
                 {formatTimeDisplay(pass.endTime)}
               </span>
             </div>
 
-            <div className="cc-now" title="Taasesituse hetk ja edenemine">
-              <span className="cc-now-time">{formatTimeDisplay(currentTimestamp, true)}</span>
-              <span className="cc-now-pct">{Math.round(progressPct)}%</span>
+            <div className="flex shrink-0 items-baseline gap-1.5 tabular-nums" title="Taasesituse hetk ja edenemine">
+              <span className="text-base font-medium leading-natural text-foreground">{formatTimeDisplay(currentTimestamp, true)}</span>
+              <span className="min-w-8 text-xs font-medium leading-natural text-muted-foreground">{Math.round(progressPct)}%</span>
             </div>
 
             <ToggleGroup
-              className="cc-toggle"
+              className="h-8"
               aria-label="Taasesituse kiirus"
               value={String(playbackSpeed)}
               onValueChange={(next) => onSpeedChange(Number(next))}
             >
               {SPEEDS.map((s) => (
-                <ToggleGroupItem key={s} value={String(s)}>{s}×</ToggleGroupItem>
+                <ToggleGroupItem key={s} value={String(s)} className={CC_TOGGLE_ITEM}>{s}×</ToggleGroupItem>
               ))}
             </ToggleGroup>
           </>

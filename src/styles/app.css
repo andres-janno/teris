@@ -37,6 +37,7 @@
 @source '../components/LayerControl.tsx';
 @source '../components/SatellitePanel.tsx';
 @source '../components/MapView.tsx';
+@source '../components/CultivationControl.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).
