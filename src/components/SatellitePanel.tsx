@@ -48,6 +48,8 @@ const DATE_ROW = 'grid items-center gap-1';
 // Märkeruut paneeli 12px kirjas (vana .satellite-cloudfree: flex, 6px vahe, font-size inherit, nupp ilma ülavaheta);
 // rea kõrgus jääb 18px (vana CheckboxField text-sm rida), mitte text-xs 16px
 const CLOUDFREE = 'flex items-center gap-1.5 text-xs leading-4.5 [&>button]:mt-0';
+// Legendi loend (NDPI ja värvilegend): read ühe rea kaupa, väike kiri
+const LEGEND_LIST = 'flex flex-col gap-0.5 text-2xs';
 
 // Legendiriba väärtused: esimene vasakus servas, viimane paremas, ülejäänud keskel
 const LegendTicks: React.FC<{ ticks: { label: string; pos: number }[] }> = ({ ticks }) => (
@@ -445,7 +447,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
         <div>
           <div className="h-2 rounded-sm" style={{ backgroundImage: NDPI_LEGEND_GRADIENT }} />
           <LegendTicks ticks={NDPI_LEGEND_TICKS} />
-          <div className="flex flex-col gap-0.5 text-2xs">
+          <div className={LEGEND_LIST}>
             {NDPI_CLASSES.map((c) => (
               <LegendItem key={c.label} color={c.color} className="items-start text-2xs leading-natural" label={c.label} />
             ))}
@@ -460,7 +462,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
 
       {colorLegend && (
         <div>
-          <div className="flex flex-col gap-0.5 text-2xs">
+          <div className={LEGEND_LIST}>
             {colorLegend.map((c) => (
               <LegendItem key={c.label} color={c.color} className="items-start text-2xs leading-natural" label={c.label} />
             ))}

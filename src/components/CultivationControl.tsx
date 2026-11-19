@@ -53,6 +53,8 @@ const CC_TOGGLE_ITEM = 'self-stretch'; // vana `.cc-toggle > button { align-self
 const CC_LINK = 'ml-auto max-[760px]:ml-0';
 const CC_NOTICE = 'flex min-h-8 flex-1 items-center gap-2 rounded-sm border border-warning-solid/40 bg-warning-solid/10 py-1 pr-1 pl-3 font-medium text-foreground [&>svg]:shrink-0 [&>svg]:text-warning';
 const CC_NOTICE_LOADING = 'border-border bg-muted text-muted-foreground [&>svg]:text-primary';
+const CC_CLOCK_SELECT = 'h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground'; // tund ja minut algusaja kastis
+const CC_EDGE_TIME = 'text-xs leading-natural tabular-nums text-muted-foreground'; // raja algus- ja lõpuaeg joonel
 
 const toLocalTimeString = (iso?: string): string => {
   if (!iso) return '';
@@ -220,7 +222,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 value={customHour}
                 onValueChange={(v) => onCustomTimeChange?.(`${v}:${customMin}`)}
                 aria-label="Tund"
-                className="h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground"
+                className={CC_CLOCK_SELECT}
                 options={hourOptions}
               />
               <span aria-hidden="true" className="text-muted-foreground">:</span>
@@ -228,7 +230,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 value={customMin}
                 onValueChange={(v) => onCustomTimeChange?.(`${customHour}:${v}`)}
                 aria-label="Minut"
-                className="h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground"
+                className={CC_CLOCK_SELECT}
                 options={minuteSelectOptions}
               />
             </div>
@@ -328,7 +330,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
             </div>
 
             <div className="flex min-w-30 flex-1 items-center gap-2 max-[760px]:order-10 max-[760px]:basis-full">
-              <span className="text-xs leading-natural tabular-nums text-muted-foreground" title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
+              <span className={CC_EDGE_TIME} title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
                 {formatTimeDisplay(pass.startTime)}
               </span>
               <div className="relative h-1.5 flex-1 rounded-sm bg-border">
@@ -343,7 +345,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                   aria-label="Taasesituse asukoht"
                 />
               </div>
-              <span className="text-xs leading-natural tabular-nums text-muted-foreground" title={`Raja lõpp: ${formatDate(pass.endTime)} ${formatTimeDisplay(pass.endTime)}`}>
+              <span className={CC_EDGE_TIME} title={`Raja lõpp: ${formatDate(pass.endTime)} ${formatTimeDisplay(pass.endTime)}`}>
                 {formatTimeDisplay(pass.endTime)}
               </span>
             </div>
