@@ -4,7 +4,8 @@ import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
-import { Badge, Card, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey } from './ui';
+import { Badge, Card, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey, cn } from './ui';
+import { mapPanelTitleClass } from './ui/variants';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -24,6 +25,9 @@ interface CropSummary {
   count: number;
   pct: number;
 }
+
+// Kultuuri rida (ChipButton tint): vana .crop-legend-item !important → cn tühistab kiibi vaikeklassid; valitud olek jääb index.css-i
+const CROP_ROW = 'flex w-full items-center justify-between border border-transparent py-1 pr-2 pl-2.5 text-base leading-natural transition-all duration-150 hover:translate-x-0.5';
 
 export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   selectedYear,
@@ -77,22 +81,22 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   }, [fields]);
 
   return (
-    <Card variant="floating" padding="sm" className="map-year-floating-widget">
+    <Card variant="floating" padding="sm" className="flex flex-col gap-2.5">
       {/* Header: Season Title & Stat */}
-      <div className="year-widget-header">
-        <div className="year-widget-title">
+      <div className="flex items-center justify-between">
+        <div className={cn(mapPanelTitleClass, 'gap-1.5')}>
           <Calendar size={15} />
           <span>Hooaeg:</span>
         </div>
-        <div className="year-header-right">
-          <Badge className="num">
+        <div className="flex items-center gap-1.5">
+          <Badge className="num tabular-nums">
             {fields.features.length} põldu &bull; {totalAreaHa.toFixed(1)} ha
           </Badge>
         </div>
       </div>
 
       {/* Season Selection Pills */}
-      <ToggleGroup className="year-widget-season" variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
+      <ToggleGroup className="self-start" variant="pills" aria-label="Hooaasta" value={String(selectedYear)} onValueChange={(v) => onSelectYear(Number(v))}>
         {availableYears.map((year) => {
           const isLocked = seasons.find((s) => s.year === year)?.isLocked ?? false;
           return (
@@ -109,9 +113,9 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       </ToggleGroup>
 
       {/* Integrated Crop Legend Section */}
-      <div className="widget-crop-legend-section">
+      <div className="flex flex-col gap-2 border-t border-border pt-2">
         <div
-          className="widget-legend-header"
+          className="flex cursor-pointer select-none items-center justify-between rounded-sm px-1 py-0.5 transition-colors hover:bg-muted-hover"
           role="button"
           tabIndex={0}
           aria-expanded={isLegendOpen}
@@ -119,7 +123,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           onClick={() => setIsLegendOpen(!isLegendOpen)}
           title={isLegendOpen ? 'Ahenda kultuuride legend' : 'Ava kultuuride legend'}
         >
-          <div className="widget-legend-title">
+          <div className="flex items-center gap-1.5 text-xs font-semibold leading-natural text-foreground">
             <Sprout size={13} />
             <span>Kultuuride jaotus</span>
           </div>
@@ -129,13 +133,13 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
         </div>
 
         {isLegendOpen && (
-          <div className="widget-legend-content">
+          <div className="flex flex-col gap-2">
             {/* Cumulative Visual Proportion Bar */}
-            <div className="cumulative-crop-bar">
+            <div className="flex h-1.5 w-full overflow-hidden rounded-sm bg-muted inset-shadow-xs">
               {cropSummaries.map((item) => (
                 <div
                   key={item.name}
-                  className="crop-bar-segment"
+                  className="h-full transition-[width] duration-300"
                   style={{
                     width: `${item.pct}%`,
                     backgroundColor: item.color
@@ -146,7 +150,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
             </div>
 
             {/* List of Crops with Sum Ha */}
-            <div className="crop-list widget-crop-list">
+            <div className="flex max-h-110 flex-col gap-1 overflow-y-auto pr-0.5">
               {cropSummaries.map((item) => {
                 const isSelected = selectedCropFilter === item.name;
                 return (
@@ -155,7 +159,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     variant="tint"
                     accent={item.color}
                     selected={isSelected}
-                    className="crop-legend-item"
+                    className={cn('crop-legend-item', CROP_ROW)}
                     onClick={() => {
                       if (onSelectCropFilter) {
                         onSelectCropFilter(isSelected ? null : item.name);
@@ -163,15 +167,15 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
                     }}
                     title={onSelectCropFilter ? `Klõpsa, et filtreerida ${item.name} põlde kaardil` : undefined}
                   >
-                    <span className="crop-left-info">
-                      <span className="crop-text-block">
-                        <span className="crop-name-label">{item.name}</span>
-                        <span className="crop-field-count">{item.count} {item.count === 1 ? 'põld' : 'põldu'} &bull; {item.pct}%</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="flex min-w-0 flex-col">
+                        <span className="max-w-38.75 truncate text-xs font-medium leading-natural text-foreground">{item.name}</span>
+                        <span className="text-2xs leading-natural text-muted-foreground">{item.count} {item.count === 1 ? 'põld' : 'põldu'} &bull; {item.pct}%</span>
                       </span>
                     </span>
 
-                    <span className="crop-right-info">
-                      <span className="crop-total-ha">{item.totalHa.toFixed(2)} ha</span>
+                    <span className="flex shrink-0 items-center gap-1">
+                      <span className="text-sm font-semibold leading-natural tabular-nums text-foreground">{item.totalHa.toFixed(2)} ha</span>
                     </span>
                   </ChipButton>
                 );
@@ -179,10 +183,10 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
             </div>
 
             {selectedCropFilter && onSelectCropFilter && (
-              <div className="legend-filter-reset">
+              <div className="mt-1">
                 <Button
                   size="sm"
-                  className="full-width"
+                  className="w-full"
                   onClick={() => onSelectCropFilter(null)}
                 >
                   <Filter size={11} />
