@@ -404,7 +404,7 @@ export const SatellitePanel: React.FC<SatellitePanelProps> = ({
 
       {cloudFree && progress && progress.checked < progress.total && (
         <div className="flex flex-col gap-0.5 text-2xs leading-natural" title="Esimesel korral laaditakse iga päeva pilt; edaspidi on tulemus kohe olemas">
-          <ProgressBar className="h-1" value={(progress.checked / Math.max(1, progress.total)) * 100} aria-label="Pilvisuse kontroll" />
+          <ProgressBar className="h-1 [&>div]:transition-[width] [&>div]:duration-300" value={(progress.checked / Math.max(1, progress.total)) * 100} aria-label="Pilvisuse kontroll" />
           <span>Kontrollin pilvisust: {progress.checked} / {progress.total} päeva</span>
         </div>
       )}
