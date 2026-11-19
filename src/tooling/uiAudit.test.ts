@@ -275,15 +275,15 @@ describe('vanad kaardid', () => {
   it('loeb CSS-is kaardiklassi reegli, mis seab välimuse; ei loe olekuid, !important-i, asetust ega teisi klasse', () => {
     const css = `/* .glass-card kommentaaris */
 .vehicle-card { padding: 14px; display: flex; }
-.implement-card,
-.device-card { background: var(--bg-card); border: 1px solid var(--border-card); }
+.admin-card,
+.admin-subform { background: var(--bg-card); border: 1px solid var(--border-card); }
 .vehicle-card.selected { border-color: green; box-shadow: 0 0 1px red; }
 .coords-tracker { position: absolute; border-radius: var(--radius-md) !important; }
 .add-poi-banner { border-color: pink !important; }
 .glass-card { -webkit-backdrop-filter: blur(16px); }
 .other-card { background: red; }
 @media (max-width: 600px) { .trip-tile { border-radius: 10px; } }`;
-    expect(legacyCardRules(css)).toEqual(['.implement-card', '.device-card', '.glass-card', '.trip-tile']);
+    expect(legacyCardRules(css)).toEqual(['.admin-card', '.admin-subform', '.glass-card', '.trip-tile']);
   });
   it('summarize annab tsx ja css failid, ui kaust välja', () => {
     const r = summarize([

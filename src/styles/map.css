@@ -699,12 +699,6 @@
   line-height: 1.4;
 }
 
-/* Pulseeriv olekutäpp (masinate jälgija) */
-
-.dot-idle {
-  background-color: var(--text-muted);
-}
-
 /* ==========================================================================
    Sõidu taasesituse paneel (kaardi allservas)
    Üks juhtnuppude kõrgus (--cc-h) ja kaks kirjasuurust: silt 0.68rem, sisu 0.82rem.

@@ -42,35 +42,56 @@ import type { Article } from '../types/fieldWork';
 import { Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
 import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, fleetCellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 import type { BadgeTone } from './ui';
+import { cn } from './ui/cn';
 
 // Masina oleku märgi toon
 const VEHICLE_STATUS_TONE: Record<VehicleStatus, BadgeTone> = {
   working: 'success', moving: 'info', idling: 'warning', stopped: 'neutral', offline: 'neutral'
 };
 
-// Seadme viimaste andmete värskus: värv kaardi serval ja ajatempli täpil
-const FRESHNESS_LEGEND = [
-  { cls: 'fresh-live', label: 'alla 1 h' },
-  { cls: 'fresh-day', label: 'alla 24 h' },
-  { cls: 'fresh-week', label: 'alla 7 päeva' },
-  { cls: 'fresh-old', label: 'vanem' },
-  { cls: 'fresh-none', label: 'andmeid pole' }
+// Seadme viimaste andmete värskus: värv kaardi serval, ajatempli täpil ja tekstil. Täielikud klassinimed (Tailwind ei näe dünaamilisi).
+type FreshLevel = 'live' | 'day' | 'week' | 'old' | 'none';
+const FRESH: Record<FreshLevel, { card: string; dot: string; text: string }> = {
+  live: { card: 'border-l-fresh-live', dot: 'bg-fresh-live', text: 'text-fresh-live' },
+  day: { card: 'border-l-fresh-day', dot: 'bg-fresh-day', text: 'text-fresh-day' },
+  week: { card: 'border-l-fresh-week', dot: 'bg-fresh-week', text: 'text-fresh-week' },
+  old: { card: 'border-l-fresh-old', dot: 'bg-fresh-old', text: 'text-fresh-old' },
+  none: { card: 'border-l-fresh-none', dot: 'bg-fresh-none', text: 'text-fresh-none' },
+};
+const FRESH_DOT = 'mr-1.5 inline-block size-2 rounded-full align-middle';
+const FRESHNESS_LEGEND: { level: FreshLevel; label: string }[] = [
+  { level: 'live', label: 'alla 1 h' },
+  { level: 'day', label: 'alla 24 h' },
+  { level: 'week', label: 'alla 7 päeva' },
+  { level: 'old', label: 'vanem' },
+  { level: 'none', label: 'andmeid pole' },
 ];
 
-const deviceFreshness = (iso?: string | null): { cls: string; text: string } => {
-  if (!iso) return { cls: 'fresh-none', text: '' };
+const deviceFreshness = (iso?: string | null): { level: FreshLevel; text: string } => {
+  if (!iso) return { level: 'none', text: '' };
   const min = Math.max(0, (Date.now() - new Date(iso).getTime()) / 60000);
   const text = min < 60 ? `${Math.max(1, Math.round(min))} min tagasi`
     : min < 48 * 60 ? `${Math.round(min / 60)} h tagasi`
     : `${Math.round(min / 1440)} päeva tagasi`;
-  const cls = min < 60 ? 'fresh-live' : min < 24 * 60 ? 'fresh-day' : min < 7 * 1440 ? 'fresh-week' : 'fresh-old';
-  return { cls, text };
+  const level: FreshLevel = min < 60 ? 'live' : min < 24 * 60 ? 'day' : min < 7 * 1440 ? 'week' : 'old';
+  return { level, text };
 };
 
-// Märkuse kast kaardil (masin, haakeriist, seade): oranž vihje, klõps avab muutmise. Vana .fleet-card-notes (!important).
+// Seadme näit kaardil: silt ja väärtus üksteise all (ruudustiku lahter)
+const TelemetryItem: React.FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
+  <div className="flex flex-col">
+    <span className="text-2xs leading-natural text-muted-foreground">{label}</span>
+    <strong>{children}</strong>
+  </div>
+);
+
+// Telemeetriakaardi ajatempli rida: täpp ja tekst värskuse värvis
+const TELEMETRY_TIME = 'col-span-full border-t border-border pt-1 text-2xs leading-natural text-muted-foreground';
+
+// Märkuse kast kaardil (masin, haakeriist, seade): oranž vihje, klõps avab muutmise.
 // leading-4.5 (18px) on vana 1.45 lähim skaalaväärtus (12px × 1.45 = 17.4px).
 const NOTES_BOX =
-  'flex cursor-pointer items-start justify-start gap-1.5 whitespace-pre-wrap break-words rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
+  'flex cursor-pointer items-start gap-1.5 whitespace-pre-wrap wrap-anywhere rounded-sm border border-warning-solid/22 bg-warning-solid/8 px-2 py-1.5 text-xs leading-4.5 text-muted-foreground transition-all hover:border-warning-solid/38 hover:bg-warning-solid/14 hover:text-foreground [&>svg]:mt-0.5 [&>svg]:shrink-0 [&>svg]:text-warning';
 
 // Telemeetria mõõdik masinakaardil: ikoon, silt ja väärtus
 const GaugeItem: React.FC<{ icon: React.ReactNode; label: string; value: string }> = ({ icon, label, value }) => (
@@ -1427,7 +1448,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <FileText size={13} />
-                    <span className="flex-1 whitespace-pre-wrap">{v.notes}</span>
+                    <span className="flex-1">{v.notes}</span>
                   </div>
                 )}
 
@@ -1475,20 +1496,20 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 2: HAAKERIISTADE REGISTER */}
       {activeTab === 'implements' && (
-        <div className="implements-grid">
+        <div className={cardGridClass}>
           {implementsList.map((imp) => {
             const assignedVehicle = vehicles.find((v) => v.assignedImplementId === imp.id || imp.assignedVehicleId === v.id);
             const attachedDevice = devices.find((d) => d.assignedImplementId === imp.id || imp.assignedDeviceId === d.id);
 
             return (
-              <Card key={imp.id} padding="sm" className="implement-card">
-                <div className="imp-card-header">
-                  <div className="imp-icon-wrap">
+              <Card key={imp.id} padding="sm" className="flex flex-col gap-3">
+                <div className="flex items-center gap-3">
+                  <IconBox size="lg">
                     <span>🔧</span>
-                  </div>
-                  <div className="imp-title-wrap">
-                    <h4 className="imp-name">{imp.name}</h4>
-                    <span className="imp-meta">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
+                  </IconBox>
+                  <div className="flex-1">
+                    <h4 className="text-base font-medium leading-natural text-foreground">{imp.name}</h4>
+                    <span className="text-xs leading-natural text-muted-foreground">{[imp.category, imp.manufacturer, imp.workingWidthM ? `${imp.workingWidthM}m` : null].filter(Boolean).join(' • ')}</span>
                   </div>
                   <CardActions>
                     <Button variant="ghost" size="icon-sm"
@@ -1519,38 +1540,37 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   </CardActions>
                 </div>
 
-                <Card variant="tile" padding="sm" className="imp-status-box">
+                <Card variant="tile" padding="sm" className="text-xs">
                   {assignedVehicle ? (
-                    <div className="attached-status attached">
+                    <div className="flex items-center gap-2 text-success-text">
                       <Tractor size={14} />
                       <span>Haagitud masinale: <strong>{assignedVehicle.name}</strong></span>
                     </div>
                   ) : (
-                    <div className="attached-status warehouse">
-                      <span className="dot-idle"></span>
+                    <div className="flex items-center gap-2 text-muted-foreground">
                       <span>Vaba laos / Valmis haakimiseks</span>
                     </div>
                   )}
                 </Card>
 
                 {imp.registrationPlate && (
-                  <div className="imp-serial-row">
+                  <div className="flex justify-between text-xs">
                     <span>Registrinumber:</span>
                     <code>{imp.registrationPlate}</code>
                   </div>
                 )}
 
                 {imp.serialNumber && (
-                  <div className="imp-serial-row">
+                  <div className="flex justify-between text-xs">
                     <span>VIN / Seerianumber:</span>
                     <code>{imp.serialNumber}</code>
                   </div>
                 )}
 
-                <div className="imp-serial-row">
+                <div className="flex justify-between text-xs">
                   <span>Andur:</span>
                   {attachedDevice ? (
-                    <span className="inline-icon-text">
+                    <span className="flex items-center gap-1">
                       <Activity size={12} />
                       {attachedDevice.model} ({attachedDevice.connectivityType === 'eye_sensor' ? `MAC: ${attachedDevice.macAddress}` : `IMEI: ${attachedDevice.imei}`})
                     </span>
@@ -1564,7 +1584,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <Button
                     variant="plain"
                     size="inline"
-                    className="fleet-card-notes"
+                    className={NOTES_BOX}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1572,15 +1592,15 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <FileText size={13} />
-                    <span>{imp.notes}</span>
+                    <span className="flex-1">{imp.notes}</span>
                   </Button>
                 )}
 
-                <div className="imp-card-footer">
-                  <div className="imp-actions">
+                <div className="flex w-full items-center gap-2">
+                  <div className="flex w-full items-center gap-2">
                     <Select
                       size="sm"
-                      className="imp-assign-select"
+                      className="flex-1"
                       aria-label="Haagi masinale"
                       value={assignedVehicle ? assignedVehicle.id : ''}
                       onValueChange={(v) => {
@@ -1603,7 +1623,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
 
       {/* TAB 3: TELEMEETRIASEADMETE REGISTER */}
       {telemetryEnabled && activeTab === 'devices' && (
-        <div className="devices-sections">
+        <div className="flex flex-col gap-4">
           {(() => {
             const renderDevice = (dev: TelemetryDevice) => {
             const assignedVehicle = vehicles.find((v) => v.assignedDeviceId === dev.id || dev.assignedVehicleId === v.id);
@@ -1613,16 +1633,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             const targetValue = assignedVehicle ? `veh:${assignedVehicle.id}` : (assignedImplement ? `imp:${assignedImplement.id}` : '');
 
             return (
-              <Card key={dev.id} padding="sm" className={`device-card ${fresh.cls}`}>
-                <div className="dev-card-header">
-                  <div className="dev-icon-wrap">
+              <Card key={dev.id} padding="sm" className={cn('flex flex-col gap-3 border-l-4', FRESH[fresh.level].card)}>
+                <div className="flex items-center gap-3">
+                  <IconBox size="lg">
                     {isEyeSensor ? <Activity size={20} /> : <Radio size={20} />}
-                  </div>
-                  <div className="dev-title-wrap">
-                    <div className="dev-header-line">
-                      <h4 className="dev-model">{dev.model}</h4>
+                  </IconBox>
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between">
+                      <h4 className="text-base font-medium leading-natural text-foreground">{dev.model}</h4>
                     </div>
-                    <span className="dev-imei">
+                    <span className="text-xs leading-natural text-muted-foreground">
                       {isEyeSensor ? `MAC: ${dev.macAddress}` : `IMEI: ${dev.imei} • SIM: ${dev.simNumber}`}
                     </span>
                   </div>
@@ -1645,59 +1665,39 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 </div>
 
                 {isEyeSensor ? (
-                  <Card variant="tile" padding="sm" className="dev-telemetry-summary">
-                    <div className="dev-telemetry-item">
-                      <span className="lbl">Aku tase:</span>
-                      <strong>{dev.batteryVoltage}%</strong>
-                    </div>
+                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs">
+                    <TelemetryItem label="Aku tase:">{dev.batteryVoltage}%</TelemetryItem>
                     {dev.eyeTemperatureC != null && (
-                      <div className="dev-telemetry-item">
-                        <span className="lbl">Temperatuur:</span>
-                        <strong>{dev.eyeTemperatureC}°C</strong>
-                      </div>
+                      <TelemetryItem label="Temperatuur:">{dev.eyeTemperatureC}°C</TelemetryItem>
                     )}
                     {dev.eyeHumidityPercent != null && (
-                      <div className="dev-telemetry-item">
-                        <span className="lbl">Niiskus:</span>
-                        <strong>{dev.eyeHumidityPercent}%</strong>
-                      </div>
+                      <TelemetryItem label="Niiskus:">{dev.eyeHumidityPercent}%</TelemetryItem>
                     )}
-                    <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
-                      <span className="dev-fresh-dot" aria-hidden="true" />
-                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
+                    <div className={TELEMETRY_TIME} title="Viimane seadmelt saadud andmepakett">
+                      <span className={cn(FRESH_DOT, FRESH[fresh.level].dot)} aria-hidden="true" />
+                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong className={cn('font-normal', FRESH[fresh.level].text)}>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
                   </Card>
                 ) : (
-                  <Card variant="tile" padding="sm" className="dev-telemetry-summary">
-                    <div className="dev-telemetry-item">
-                      <span className="lbl">Aku pinge:</span>
-                      <strong>{dev.batteryVoltage} V</strong>
-                    </div>
-                    <div className="dev-telemetry-item">
-                      <span className="lbl">Satelliite:</span>
-                      <strong>{dev.satelliteCount} SAT</strong>
-                    </div>
-                    <div className="dev-telemetry-item">
-                      <span className="lbl">Süüde:</span>
-                      <strong>
-                        {dev.ignition ? 'SEES' : 'VÄLJAS'}
-                      </strong>
-                    </div>
-                    <div className="dev-telemetry-time" title="Viimane seadmelt saadud andmepakett">
-                      <span className="dev-fresh-dot" aria-hidden="true" />
-                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong>{fresh.text}</strong></> : 'Andmeid pole'}
+                  <Card variant="tile" padding="sm" className="grid grid-cols-3 gap-1.5 text-xs">
+                    <TelemetryItem label="Aku pinge:">{dev.batteryVoltage} V</TelemetryItem>
+                    <TelemetryItem label="Satelliite:">{dev.satelliteCount} SAT</TelemetryItem>
+                    <TelemetryItem label="Süüde:">{dev.ignition ? 'SEES' : 'VÄLJAS'}</TelemetryItem>
+                    <div className={TELEMETRY_TIME} title="Viimane seadmelt saadud andmepakett">
+                      <span className={cn(FRESH_DOT, FRESH[fresh.level].dot)} aria-hidden="true" />
+                      {dev.lastReceivedAt ? <>Andmed seisuga {formatDateTime(dev.lastReceivedAt)} · <strong className={cn('font-normal', FRESH[fresh.level].text)}>{fresh.text}</strong></> : 'Andmeid pole'}
                     </div>
                   </Card>
                 )}
 
-                <div className="dev-assignment-box">
-                  <label htmlFor={`dev-assign-${dev.id}`} className="device-assign-label">
+                <div className="flex flex-col gap-1">
+                  <label htmlFor={`dev-assign-${dev.id}`} className="text-xs font-medium text-muted-foreground">
                     Paigaldatud:
                   </label>
                   <Select
                     size="sm"
                     id={`dev-assign-${dev.id}`}
-                    className="dev-assign-select"
+                    className="flex-1"
                     value={targetValue}
                     onValueChange={(val) => {
                       if (!val) { assignDevice(dev.id, undefined, undefined); return; }
@@ -1718,7 +1718,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                   <Button
                     variant="plain"
                     size="inline"
-                    className="fleet-card-notes"
+                    className={NOTES_BOX}
                     title="Kliki märkuse muutmiseks"
                     onClick={(e) => {
                       e.stopPropagation();
@@ -1726,7 +1726,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                     }}
                   >
                     <FileText size={13} />
-                    <span>{dev.notes}</span>
+                    <span className="flex-1">{dev.notes}</span>
                   </Button>
                 )}
 
@@ -1742,16 +1742,16 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
             ];
             return (
               <>
-                <div className="dev-fresh-legend">
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5 text-xs leading-natural text-muted-foreground">
                   <span>Viimased andmed:</span>
                   {FRESHNESS_LEGEND.map((l) => (
-                    <span key={l.cls} className={`dev-fresh-legend-item ${l.cls}`}><span className="dev-fresh-dot" aria-hidden="true" />{l.label}</span>
+                    <span key={l.level} className="inline-flex items-center"><span className={cn(FRESH_DOT, FRESH[l.level].dot)} aria-hidden="true" />{l.label}</span>
                   ))}
                 </div>
                 {groups.filter((g) => g.list.length > 0).map((g) => (
-                  <section key={g.key} className="devices-section">
-                    <h3 className="devices-section-title">{g.title} <span>{g.list.length}</span></h3>
-                    <div className="devices-grid">{g.list.map(renderDevice)}</div>
+                  <section key={g.key} className="flex flex-col gap-2.5">
+                    <h3 className="text-base font-semibold leading-natural text-foreground">{g.title} <span className="ml-1 font-normal text-muted-foreground">{g.list.length}</span></h3>
+                    <div className={cardGridClass}>{g.list.map(renderDevice)}</div>
                   </section>
                 ))}
               </>
