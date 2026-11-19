@@ -151,7 +151,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         : 'Seisab';
 
   return (
-    <Card variant="floating" className="absolute bottom-5 left-1/2 z-900 flex w-[min(1040px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-3 text-sm leading-natural max-[760px]:bottom-3 max-[760px]:p-3">
+    <Card variant="floating" className="absolute bottom-5 left-1/2 z-900 flex w-[min(1040px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-3 text-sm leading-natural max-[760px]:bottom-3">
       {/* 1. Masin, olek ja mõõdikud */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2.5">
