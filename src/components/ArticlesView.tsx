@@ -20,7 +20,7 @@ import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
 import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, PageHeader } from './ui';
-import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
+import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass, cellBadgeClass, overuseClass, stockQtyClass } from './ui/variants';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -149,7 +149,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
         <div className={boardBodyClass}>
           <div className={boardContentClass}>
             {canManageFinance && (
-              <div className="articles-tabs">
+              <div className="mb-3">
                 <Tabs activationMode="manual" value={tab} onValueChange={(next) => setTab(next as typeof selectedTab)}>
                   <TabsList>
                     <TabsTrigger value="articles">Artiklid</TabsTrigger>
@@ -260,8 +260,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     <TableCell wrap>{refinement(m)}</TableCell>
                     <TableCell wrap title={m.notes ?? undefined}>
                       <span>{m.name}</span>
-                      {m.isDefaultService && <Badge className="cell-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</Badge>}
-                      {!m.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
+                      {m.isDefaultService && <Badge className={cellBadgeClass} title="Tööaja kategooria vaikimisi teenus">vaikimisi</Badge>}
+                      {!m.isActive && <Badge className={cellBadgeClass}>Mitteaktiivne</Badge>}
                     </TableCell>
                     <TableCell wrap>{m.manufacturer ?? ''}</TableCell>
                     <TableCell>{m.unit}</TableCell>
@@ -269,7 +269,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                       <TableCell numeric>{!isGoods(m.category.group) && m.price != null ? `${fmtEur(m.price)} / ${m.unit}` : ''}</TableCell>
                     )}
                     {isGoods(m.category.group) ? (
-                      <TableCell numeric className={`stock-qty ${(m.stockQty ?? 0) < 0 ? 'stock-qty-out' : (m.stockQty ?? 0) > 0 ? 'stock-qty-in' : ''}`}>
+                      <TableCell numeric className={stockQtyClass({ sign: (m.stockQty ?? 0) < 0 ? 'out' : (m.stockQty ?? 0) > 0 ? 'in' : undefined })}>
                         {fmtQty(m.stockQty ?? 0)}
                       </TableCell>
                     ) : <TableCell numeric>–</TableCell>}
@@ -281,7 +281,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     )}
                     <TableCell numeric>{hasQty(m) ? fmtQty(m.plannedQty ?? 0) : '–'}</TableCell>
                     <TableCell numeric>{hasQty(m) ? fmtQty(m.usedQty ?? 0) : '–'}</TableCell>
-                    <TableCell numeric className={diffQty(m) < 0 ? 'article-overuse' : ''}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</TableCell>
+                    <TableCell numeric className={diffQty(m) < 0 ? overuseClass : undefined}>{hasQty(m) ? fmtQty(diffQty(m)) : '–'}</TableCell>
                     <TableCell numeric>{m.usageCount ?? 0}</TableCell>
                     <TableCell actions>
                       <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={(e) => { e.stopPropagation(); setForm(m); }}>

@@ -55,6 +55,9 @@ const allClassStrings = (): string[] => [
   v.dropzoneClass({}), v.dropzoneClass({ dragging: true }), v.dropzoneClass({ hasFile: true }), v.dropzoneStateClass, v.dropzoneIconClass,
   v.hintTextClass, v.hintTextBlockClass, v.fileReuploadHintClass, v.uploadFormatListClass,
   v.previewBoxClass, v.previewHeaderClass, v.previewFieldsScrollClass, v.previewFieldRowClass, v.previewFieldClass, v.previewCropClass, v.previewValueClass,
+  v.detailSectionClass, v.notesTextClass,
+  v.stockQtyClass({ sign: 'in' }), v.stockQtyClass({ sign: 'out' }), v.stockQtyClass({}), v.overuseClass, v.cellBadgeClass, v.cellBadgeLeadClass,
+  v.stockDocUnitClass, v.stockDocQtyClass, v.stockDocAmountClass, v.stockDocFooterRowClass,
 ];
 
 describe('variants', () => {
@@ -828,5 +831,13 @@ describe('täislehe kest ja registririba (etapp 4f)', () => {
   });
   it('otsinguväli kasvab 220px-st 420px-ni', () => {
     for (const t of ['grow', 'shrink', 'basis-55', 'max-w-105']) expect(v.searchFieldClass.split(' ')).toContain(t);
+  });
+});
+
+describe('stockQtyClass', () => {
+  it('sisse roheline, välja punane', () => {
+    expect(v.stockQtyClass({ sign: 'in' })).toContain('text-success-text');
+    expect(v.stockQtyClass({ sign: 'out' })).toContain('text-danger-text');
+    expect(v.stockQtyClass({})).not.toContain('text-success-text');
   });
 });

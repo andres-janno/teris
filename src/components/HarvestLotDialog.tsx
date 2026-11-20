@@ -11,10 +11,18 @@ import type { Warehouse } from '../types/stock';
 import type { HarvestLotDetail } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
 import {
-  Button, StatTile, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
+  Button, StatTile, cn, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
   DateInput, Field, Input, NumberInput, Select
 } from './ui';
 import { tableMutedClass } from './ui/variants';
+
+// Saagipartii akna plokid: kitsal aknal (≤ 720px) kaks veergu
+const lotHeadClass = 'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)_auto] items-end gap-3 max-[720px]:grid-cols-2';
+const lotTilesClass = 'grid grid-cols-4 gap-3 max-[720px]:grid-cols-2';
+const lotSectionClass = 'flex flex-col gap-2';
+const lotAddClass = 'grid items-end gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 max-[720px]:grid-cols-2';
+const lotAddWeighingClass = 'grid-cols-[150px_120px_minmax(0,1fr)_auto]';
+const lotAddCostClass = 'grid-cols-[150px_minmax(0,1.4fr)_110px_minmax(0,1fr)_auto]';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -139,14 +147,14 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+      <DialogContent size="lg" dismissible={!busy}>
         <DialogHeader
           icon={<Wheat size={20} />}
           title={lot ? `Saagipartii: ${lot.name}` : 'Uus saagipartii'}
           description={lot ? `${lot.cropName} · ${lot.seasonYear} · ${HARVEST_LOT_STATUS_LABEL[lot.status]}` : undefined}
         />
-        <DialogBody className="harvest-lot-body">
-          <form onSubmit={save} className="harvest-lot-head">
+        <DialogBody className="[&>*]:shrink-0">
+          <form onSubmit={save} className={lotHeadClass}>
             <Field label="Nimi *" htmlFor="hl-name">
               <Input id="hl-name" required value={name} onChange={(e) => setName(e.target.value)} />
             </Field>
@@ -173,14 +181,14 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
 
           {lot && (
             <>
-              <div className="harvest-lot-tiles">
+              <div className={lotTilesClass}>
                 {tile('Punkreid', lot.bunkers)}
                 {tile('Kaalutud', `${formatQty(lot.weighedTonnes)} t`)}
                 {tile('Punkri kaal', closed && lot.bunkerTonnes != null ? `${formatQty(lot.bunkerTonnes)} t` : '–')}
                 {tile('Kuivatuskulu', fmtEur(dryingTotal))}
               </div>
 
-              <section className="harvest-lot-section">
+              <section className={lotSectionClass}>
                 <h4>Kanded</h4>
                 <Table scroll="sm" bordered>
                   <TableHeader>
@@ -204,7 +212,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                 </Table>
               </section>
 
-              <section className="harvest-lot-section">
+              <section className={lotSectionClass}>
                 <h4>Kaalumised</h4>
                 <Table scroll="sm" bordered>
                   <TableHeader>
@@ -228,7 +236,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                   </TableBody>
                 </Table>
                 {!closed && (
-                  <form className="harvest-lot-add harvest-lot-add-weighing" onSubmit={addWeighing}>
+                  <form className={cn(lotAddClass, lotAddWeighingClass)} onSubmit={addWeighing}>
                     <Field label="Kuupäev" htmlFor="hl-w-date">
                       <DateInput id="hl-w-date" value={wDate} onChange={setWDate} required />
                     </Field>
@@ -243,7 +251,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                 )}
               </section>
 
-              <section className="harvest-lot-section">
+              <section className={lotSectionClass}>
                 <h4>Kuivatuskulud</h4>
                 <Table scroll="sm" bordered>
                   <TableHeader>
@@ -269,7 +277,7 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                     ))}
                   </TableBody>
                 </Table>
-                <form className="harvest-lot-add harvest-lot-add-cost" onSubmit={addCost}>
+                <form className={cn(lotAddClass, lotAddCostClass)} onSubmit={addCost}>
                   <Field label="Kuupäev" htmlFor="hl-c-date">
                     <DateInput id="hl-c-date" value={cDate} onChange={setCDate} required />
                   </Field>

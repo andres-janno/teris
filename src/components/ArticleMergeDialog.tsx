@@ -67,7 +67,7 @@ export const ArticleMergeDialog: React.FC<Props> = ({ source, articles, onClose,
               options={options.map((m) => ({ value: m.id, label: `${m.name}${m.unit !== source.unit ? ` (${m.unit})` : ''}` }))}
             />
           </Field>
-          <p className="article-merge-info">
+          <p className="mt-2.5 text-sm">
             Kõigis töödes, kannetes ja laokannetes pannakse „{source.name}“ asemele {target ? `„${target.name}“` : 'valitud materjal'}.
             „{source.name}“ kustutatakse ja tema nimi jääb valitud materjalile varunimeks, et PRIA uuesti importimisel seotaks see kohe õige materjaliga.
             {target && target.unit !== source.unit && ` Ühikud erinevad (${source.unit} → ${target.unit}): laokannete kogused teisendatakse, kannete kogused jäävad oma ühikusse.`}

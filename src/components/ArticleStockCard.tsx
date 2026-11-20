@@ -9,7 +9,7 @@ import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { Alert, Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
-import { dialogActionsBarClass, tableMutedClass } from './ui/variants';
+import { dialogActionsBarClass, tableMutedClass, overuseClass, stockQtyClass } from './ui/variants';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -86,13 +86,13 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
                   <TableCell>{formatDate(m.date)}</TableCell>
                   <TableCell wrap>
                     {describe(m)}
-                    {!!m.shortageQty && <span className="article-overuse"> · puudu {fmtQty(m.shortageQty)}</span>}
+                    {!!m.shortageQty && <span className={overuseClass}> · puudu {fmtQty(m.shortageQty)}</span>}
                   </TableCell>
                   {!warehouseId && <TableCell wrap>{m.kind === 'TRANSFER' ? `${m.warehouseName} → ${m.toWarehouseName}` : m.warehouseName}</TableCell>}
-                  <TableCell numeric className={`stock-qty ${m.kind === 'TRANSFER' && !warehouseId ? '' : m.delta < 0 ? 'stock-qty-out' : m.delta > 0 ? 'stock-qty-in' : ''}`}>
+                  <TableCell numeric className={stockQtyClass({ sign: m.kind === 'TRANSFER' && !warehouseId ? undefined : m.delta < 0 ? 'out' : m.delta > 0 ? 'in' : undefined })}>
                     {m.kind === 'TRANSFER' && !warehouseId ? fmtQty(m.quantity) : `${m.delta > 0 ? '+' : ''}${fmtQty(m.delta)}`}
                   </TableCell>
-                  {warehouseId && <TableCell numeric className={m.balance < 0 ? 'article-overuse' : ''}>{fmtQty(m.balance)}</TableCell>}
+                  {warehouseId && <TableCell numeric className={m.balance < 0 ? overuseClass : undefined}>{fmtQty(m.balance)}</TableCell>}
                   {canSeeMoney && (
                     <TableCell numeric>{m.cost == null ? <span className={tableMutedClass} title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</TableCell>
                   )}

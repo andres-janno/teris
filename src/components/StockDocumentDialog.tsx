@@ -15,7 +15,7 @@ import {
   Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
   DateInput, Field, FormGrid, Input, NumberInput, Select
 } from './ui';
-import { tableMutedClass } from './ui/variants';
+import { tableMutedClass, overuseClass, stockDocUnitClass, stockDocQtyClass, stockDocAmountClass, stockDocFooterRowClass } from './ui/variants';
 
 interface Row { articleId: string; quantity: number | null; amount: number | null }
 const emptyRow: Row = { articleId: '', quantity: null, amount: null };
@@ -96,7 +96,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+      <DialogContent size="lg" dismissible={!busy}>
         <DialogForm onSubmit={save}>
         <DialogHeader icon={<ArrowRightLeft size={20} />} title={`${initial ? 'Muuda: ' : ''}${STOCK_DOC_KIND_LABEL[kind]}`} />
         <DialogBody>
@@ -135,7 +135,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
             </Field>
           </FormGrid>
 
-          <Table scroll="none" className="stock-doc-lines">
+          <Table scroll="none" className="mt-3">
             <TableHeader>
               <TableRow>
                 <TableHead>Materjal</TableHead>
@@ -155,28 +155,28 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                 const saved = initial?.lines.find((l) => l.articleId === r.articleId);
                 return (
                   <TableRow key={i}>
-                    <TableCell>
-                      <Select size="sm" aria-label="Materjal" placeholder="– vali –" value={r.articleId} onValueChange={(v) => setRow(i, { articleId: v })}
+                    <TableCell className="w-full">
+                      <Select size="sm" aria-label="Materjal" className="min-w-40" placeholder="– vali –" value={r.articleId} onValueChange={(v) => setRow(i, { articleId: v })}
                         options={[{ value: '', label: '– vali –' }, ...options.map((x) => ({ value: x.id, label: x.name }))]} />
                     </TableCell>
-                    <TableCell numeric className={(levels.get(r.articleId) ?? 0) < 0 ? 'article-overuse' : ''}>
-                      {m ? <>{fmtQty(levels.get(m.id) ?? 0)}<span className="stock-doc-unit">{m.unit}</span></> : '–'}
+                    <TableCell numeric className={(levels.get(r.articleId) ?? 0) < 0 ? overuseClass : undefined}>
+                      {m ? <>{fmtQty(levels.get(m.id) ?? 0)}<span className={stockDocUnitClass}>{m.unit}</span></> : '–'}
                     </TableCell>
                     <TableCell numeric>
                       {/* keydown tõuseb NumberInput-ilt siia: viimase rea Tab viib „Lisa rida“ nupule */}
                       <span onKeyDown={kind === 'RECEIPT' ? undefined : tabToAddRow(i)}>
-                        <NumberInput size="sm" className="stock-doc-qty" aria-label="Kogus" end={m?.unit ?? ''} value={r.quantity} onChange={(n) => setRow(i, { quantity: n })} />
+                        <NumberInput size="sm" className={stockDocQtyClass} aria-label="Kogus" end={m?.unit ?? ''} value={r.quantity} onChange={(n) => setRow(i, { quantity: n })} />
                       </span>
                     </TableCell>
                     {kind === 'RECEIPT' && (
                       <TableCell numeric>
                         <span onKeyDown={tabToAddRow(i)}>
-                          <NumberInput size="sm" className="stock-doc-amount" aria-label="Summa" value={r.amount} onChange={(n) => setRow(i, { amount: n })} />
+                          <NumberInput size="sm" className={stockDocAmountClass} aria-label="Summa" value={r.amount} onChange={(n) => setRow(i, { amount: n })} />
                         </span>
                       </TableCell>
                     )}
                     {kind === 'RECEIPT' && (
-                      <TableCell numeric className="stock-doc-unit-price">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</TableCell>
+                      <TableCell numeric className="text-foreground">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</TableCell>
                     )}
                     {kind !== 'RECEIPT' && initial && (
                       <TableCell numeric>{saved?.fifoCost == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(saved.fifoCost)}</TableCell>
@@ -192,7 +192,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
               })}
             </TableBody>
           </Table>
-          <div className="stock-doc-footer-row">
+          <div className={stockDocFooterRowClass}>
             <Button type="button" ref={addRowRef} size="sm" onClick={() => setRows([...rows, { ...emptyRow }])}>
               <Plus size={14} /><span>Lisa rida</span>
             </Button>

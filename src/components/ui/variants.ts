@@ -560,3 +560,19 @@ export const previewValueClass = 'font-medium text-success-text';
 export const detailSectionClass = 'mt-3';
 /** Väike hall märkus jaotise all (12px). Vana `.notes-text` ja `.weather-note`. */
 export const notesTextClass = 'text-xs leading-snug text-muted-foreground';
+
+/** Laokogus tabeli lahtris: sisse (+) roheline, välja (−) punane, muidu vaikevärv. Vana `td.stock-qty(-in|-out)`. */
+export const stockQtyClass = ({ sign }: { sign?: 'in' | 'out' } = {}): string =>
+  cn(sign === 'in' && 'text-success-text', sign === 'out' && 'text-danger-text');
+/** Puudujääk või ülekulu (negatiivne seis, ala/ülekulu). Vana `.article-overuse`. */
+export const overuseClass = 'font-semibold text-danger-text';
+/** Märgi vahe nime ees/järel tabeli lahtris. Vana `.cell-badge` ja `.cell-badge-lead`. */
+export const cellBadgeClass = 'ml-1.5';
+export const cellBadgeLeadClass = 'mr-1.5';
+
+/** Laokande ja inventuuri ridade tabel (StockDocumentDialog, InventoryDialog): ühik kindla laiusega, et numbrid jääksid ühte joonde;
+    kogus ja summa kindla laiusega, materjali veerg võtab ülejäänu (tabel mahub aknasse ilma kerimisribata). Vana `.stock-doc-*`. */
+export const stockDocUnitClass = 'ml-1.5 inline-block w-7.5 text-left';
+export const stockDocQtyClass = 'w-32.5 min-w-32.5 max-w-32.5';
+export const stockDocAmountClass = 'w-27.5 min-w-27.5 max-w-27.5';
+export const stockDocFooterRowClass = 'mt-2.5 flex items-center justify-between';

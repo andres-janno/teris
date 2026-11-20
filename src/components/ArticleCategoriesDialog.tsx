@@ -58,17 +58,17 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="md" className="article-categories-modal">
+      <DialogContent size="md">
         <DialogHeader icon={<Tags size={20} />} title="Artikli kategooriad" />
         <DialogBody>
           {ARTICLE_GROUPS.map((g) => (
-            <section key={g} className="article-categories-group">
-              <h4>{ARTICLE_GROUP_LABEL[g]}</h4>
+            <section key={g}>
+              <h4 className="mt-3 mb-1.5">{ARTICLE_GROUP_LABEL[g]}</h4>
               <Table scroll="none">
                 <TableBody>
                   {rows.filter((r) => r.group === g).map((c) => (
                     <TableRow key={c.id} tone={c.isActive ? undefined : 'muted'}>
-                      <TableCell>
+                      <TableCell className="w-3/5">
                         <Input
                           size="sm"
                           aria-label="Kategooria nimi"
@@ -91,14 +91,15 @@ export const ArticleCategoriesDialog: React.FC<Props> = ({ onClose, onChanged })
               </Table>
             </section>
           ))}
-          <form className="article-categories-add" onSubmit={add}>
+          <form className="mt-4 flex gap-2" onSubmit={add}>
             <Select
               aria-label="Grupp"
+              className="max-w-45"
               value={draft.group}
               onValueChange={(v) => setDraft({ ...draft, group: v as ArticleGroup })}
               options={ARTICLE_GROUPS.map((g) => ({ value: g, label: ARTICLE_GROUP_LABEL[g] }))}
             />
-            <Input placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
+            <Input className="min-w-0 flex-1" placeholder="Uue kategooria nimi, nt Varuosad" value={draft.name} onChange={(e) => setDraft({ ...draft, name: e.target.value })} />
             <Button type="submit" variant="primary" size="sm" disabled={!draft.name.trim()}><Plus size={14} /><span>Lisa kategooria</span></Button>
           </form>
         </DialogBody>

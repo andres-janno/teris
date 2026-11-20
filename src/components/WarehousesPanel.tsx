@@ -9,7 +9,7 @@ import {
   Badge, Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, FormGrid, Input, Select,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from './ui';
-import { registerActionsBarClass, registerIoButtonsClass, tableNameClass, tableMutedClass } from './ui/variants';
+import { registerActionsBarClass, registerIoButtonsClass, tableNameClass, tableMutedClass, cellBadgeClass } from './ui/variants';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -66,8 +66,8 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
     <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
       <TableCell wrap>
         <span className={tableNameClass}>{w.name}</span>
-        {w.isDefault && <Badge tone="info" className="cell-badge">Põhiladu</Badge>}
-        {!w.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
+        {w.isDefault && <Badge tone="info" className={cellBadgeClass}>Põhiladu</Badge>}
+        {!w.isActive && <Badge className={cellBadgeClass}>Mitteaktiivne</Badge>}
       </TableCell>
       <TableCell>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className={tableMutedClass}>–</span>}</TableCell>
       <TableCell wrap className={tableMutedClass}>{w.notes ?? ''}</TableCell>

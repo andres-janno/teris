@@ -12,7 +12,7 @@ import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput, FilterClear, FilterSelect } from './ui';
-import { registerActionsBarClass, registerIoButtonsClass, tableMutedClass } from './ui/variants';
+import { registerActionsBarClass, registerIoButtonsClass, tableMutedClass, cellBadgeLeadClass } from './ui/variants';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -111,7 +111,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
               <TableCell>{d.documentNo ?? ''}</TableCell>
               <TableCell numeric>{d.lines.length}</TableCell>
               <TableCell numeric>
-                {d.hasShortage && <Badge tone="danger" variant="outline" className="cell-badge-lead" title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</Badge>}
+                {d.hasShortage && <Badge tone="danger" variant="outline" className={cellBadgeLeadClass} title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</Badge>}
                 {fmtEur(d.total)}{d.hasUnpriced && <span className={tableMutedClass} title="Osa ridu on hindamata"> *</span>}
               </TableCell>
               <TableCell actions>

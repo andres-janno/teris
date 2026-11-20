@@ -14,7 +14,7 @@ import {
   Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
   DateInput, Field, FormGrid, Input, NumberInput, Select
 } from './ui';
-import { tableMutedClass } from './ui/variants';
+import { tableMutedClass, overuseClass, stockQtyClass, stockDocUnitClass, stockDocQtyClass, stockDocFooterRowClass } from './ui/variants';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 
@@ -111,7 +111,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="stock-doc-modal" dismissible={!busy}>
+      <DialogContent size="lg" dismissible={!busy}>
         <DialogForm onSubmit={save}>
         <DialogHeader icon={<ClipboardCheck size={20} />} title={`${initial ? 'Muuda: ' : ''}Inventuur`} />
         <DialogBody>
@@ -132,7 +132,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
           </FormGrid>
           <p>Tühi tegelik seis: rida ei arvestata. 0: kogu seis kantakse maha.</p>
 
-          <Table scroll="none" className="stock-doc-lines">
+          <Table scroll="none" className="mt-3">
             <TableHeader>
               <TableRow>
                 <TableHead>Artikkel</TableHead>
@@ -148,19 +148,19 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
                 const x = results[i];
                 return (
                   <TableRow key={r.articleId}>
-                    <TableCell wrap>{r.articleName}</TableCell>
-                    <TableCell numeric className={r.bookQty < 0 ? 'article-overuse' : ''}>{formatQty(r.bookQty)}<span className="stock-doc-unit">{r.unit}</span></TableCell>
+                    <TableCell wrap className="w-full">{r.articleName}</TableCell>
+                    <TableCell numeric className={r.bookQty < 0 ? overuseClass : undefined}>{formatQty(r.bookQty)}<span className={stockDocUnitClass}>{r.unit}</span></TableCell>
                     <TableCell numeric>
                       <NumberInput
                         size="sm"
-                        className="stock-doc-qty"
+                        className={stockDocQtyClass}
                         aria-label={`Tegelik seis: ${r.articleName}`}
                         end={r.unit}
                         value={counted[r.articleId] ?? null}
                         onChange={(n) => setCounted({ ...counted, [r.articleId]: n })}
                       />
                     </TableCell>
-                    <TableCell numeric className={x && x.diff < 0 ? 'stock-qty-out' : x && x.diff > 0 ? 'stock-qty-in' : ''}>
+                    <TableCell numeric className={stockQtyClass({ sign: x && x.diff < 0 ? 'out' : x && x.diff > 0 ? 'in' : undefined })}>
                       {x ? `${x.diff > 0 ? '+' : ''}${formatQty(x.diff)}` : '–'}
                     </TableCell>
                     <TableCell numeric>{!x || x.diff === 0 ? '–' : x.value == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(x.value)}</TableCell>
@@ -169,9 +169,10 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
               })}
             </TableBody>
           </Table>
-          <div className="stock-doc-footer-row">
+          <div className={stockDocFooterRowClass}>
             <Select
               aria-label="Lisa artikkel"
+              className="max-w-90"
               value=""
               onValueChange={(v) => v && setAdded([...added, v])}
               options={[{ value: '', label: '+ Lisa artikkel, mida nimekirjas pole' }, ...addable.map((a) => ({ value: a.id, label: a.name }))]}

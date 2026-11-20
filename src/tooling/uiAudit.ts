@@ -204,6 +204,10 @@ export const RETIRED_4F: readonly string[] = [
   'weather-crosshair-label', 'weather-crosshair-text', 'weather-bar', 'weather-bar-normal', 'weather-line', 'weather-line-normal', 'weather-line-0',
   'weather-line-1', 'weather-line-2', 'weather-line-3', 'weather-line-4', 'weather-line-5', 'weather-credential-modal', 'weather-credential-status',
   'weather-credential-state', 'weather-credential-error', 'weather-credential-form', 'weather-credential-help',
+  'article-overuse', 'cell-badge', 'cell-badge-lead', 'stock-qty', 'stock-qty-in', 'stock-qty-out', 'articles-tabs', 'stock-doc-lines', 'stock-doc-qty',
+  'stock-doc-amount', 'stock-doc-unit', 'stock-doc-unit-price', 'stock-doc-footer-row', 'stock-doc-modal', 'article-categories-group',
+  'article-categories-add', 'article-categories-modal', 'article-form-modal', 'article-form-body', 'article-npk-inputs', 'article-merge-info',
+  'harvest-lot-body', 'harvest-lot-head', 'harvest-lot-tiles', 'harvest-lot-section', 'harvest-lot-add', 'harvest-lot-add-weighing', 'harvest-lot-add-cost',
 ];
 const LEGACY_OVERVIEW = new RegExp(
   `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,

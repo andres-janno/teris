@@ -113,10 +113,10 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="md" className="article-form-modal" dismissible={!busy}>
+      <DialogContent size="md" className="[&_[data-slot=input]]:text-ellipsis" dismissible={!busy}>
         <DialogForm onSubmit={save}>
         <DialogHeader icon={<Edit2 size={20} />} title={form.id ? `Muuda artiklit: ${initial.name}` : 'Lisa artikkel'} />
-        <DialogBody className="article-form-body">
+        <DialogBody className="overflow-x-hidden">
           <FormGrid>
             <Field span="full" label="Nimi *" htmlFor="mt-name">
               <Input id="mt-name" required placeholder="nt YaraMila 16-27-7" value={form.name ?? ''} onChange={(e) => setForm({ ...form, name: e.target.value })} />
@@ -218,7 +218,7 @@ export const ArticleFormDialog: React.FC<ArticleFormDialogProps> = ({ initial, o
                 )}
                 {rules?.fertilizer && (
                   <Field label={<span title="PRIA arvestab P ja K elemendina, mitte P₂O₅ / K₂O">Sisaldus % (N / P / K elemendina)</span>}>
-                    <div className="article-npk-inputs">
+                    <div className="grid grid-cols-3 gap-1.5">
                       {NUTRIENTS.map(([k, label]) => (
                         <NumberInput key={k} decimals={3} aria-label={`${label} %`} placeholder={label} value={pct[k]} onChange={(n) => setPct({ ...pct, [k]: n })} />
                       ))}

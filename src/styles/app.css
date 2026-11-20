@@ -75,6 +75,16 @@
 @source '../components/TerisLogo.tsx';
 @source '../components/LicenseBanner.tsx';
 @source '../components/SupportAccessPanel.tsx';
+@source '../components/ArticlesView.tsx';
+@source '../components/ArticleStockCard.tsx';
+@source '../components/ArticleCategoriesDialog.tsx';
+@source '../components/ArticleMergeDialog.tsx';
+@source '../components/InventoryDialog.tsx';
+@source '../components/StockDocumentDialog.tsx';
+@source '../components/StockDocumentsPanel.tsx';
+@source '../components/WarehousesPanel.tsx';
+@source '../components/HarvestLotDialog.tsx';
+@source '../components/HarvestLotsPanel.tsx';
 @source '../App.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
