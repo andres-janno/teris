@@ -44,7 +44,7 @@ export function AdminApp() {
   return (
     <div className={adminShellClass}>
       <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
-        <h1 className={adminTitleClass}><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
+        <h1 className={adminTitleClass}><em className="login-brand-word">TERIS</em> — teenusepakkuja</h1>
         <div className="flex items-center gap-3 text-base leading-natural">
           <span>{user}</span>
           <Button size="sm" onClick={() => void logout()}>

@@ -2,9 +2,21 @@
 import React from 'react';
 import { cn } from './cn';
 import { dropzoneClass } from './variants';
+import { clickOnActivationKey } from './keyActivation';
 
 export type DropzoneProps = React.ComponentProps<'div'> & { dragging?: boolean; hasFile?: boolean };
 
-export const Dropzone: React.FC<DropzoneProps> = ({ dragging, hasFile, className, ...props }) => (
-  <div data-slot="dropzone" className={cn(dropzoneClass({ dragging, hasFile }), className)} {...props} />
+/** Fookustatav ja klaviatuurilt (Enter/tühik) aktiveeritav: kutsuja onClick avab failivaliku. */
+export const Dropzone: React.FC<DropzoneProps> = ({ dragging, hasFile, className, onKeyDown, ...props }) => (
+  <div
+    data-slot="dropzone"
+    role="button"
+    tabIndex={0}
+    className={cn(dropzoneClass({ dragging, hasFile }), className)}
+    onKeyDown={(e) => {
+      onKeyDown?.(e);
+      clickOnActivationKey(e);
+    }}
+    {...props}
+  />
 );

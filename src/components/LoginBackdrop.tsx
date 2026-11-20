@@ -93,9 +93,9 @@ const DustCanvas: React.FC = () => {
 
 export const LoginBackdrop: React.FC = () => (
   <div className="pointer-events-none absolute inset-0 -z-1 overflow-hidden" aria-hidden="true">
-    <div className="login-backdrop-photo" style={{ backgroundImage: `url(${loginBg})` }} />
-    <div className="login-backdrop-sun" />
-    <div className="login-backdrop-shade" />
+    <div className="login-backdrop-photo absolute bg-cover" style={{ backgroundImage: `url(${loginBg})` }} />
+    <div className="login-backdrop-sun absolute rounded-full" />
+    <div className="login-backdrop-shade absolute inset-0" />
     <DustCanvas />
   </div>
 );

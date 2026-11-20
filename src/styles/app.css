@@ -20,8 +20,7 @@
    kus ta klassid üle viiakse. Enne kontrolli `python3 scripts/css-utils.py diff <vana_dist> <uus_dist>`
    (ehita `npx vite build --outDir /tmp/dist-x --emptyOutDir`): iga uus utiliit peab olema tahtlik; surnud klass
    (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse.
-   Tehnika ja sõitude failid on 4c-s üle viidud. Kaardi paneelide failid on 4d-s üle viidud. Dialoogide failid on 4e-s üle viidud. Päis, menüüd, ribad ja rakenduse kest on 4f-s üle viidud. Teenusepakkuja admin (src/admin) on 4f-s üle viidud, kataloogina.
-   4f: päis, menüüd, väikesed vaated ja admin on üle viidud; 4g: põhireeglid.
+   Tehnika ja sõitude failid on 4c-s üle viidud. Kaardi paneelide failid on 4d-s üle viidud. Dialoogide failid on 4e-s üle viidud. Päis, menüüd, ribad, rakenduse kest, väikesed vaated ja teenusepakkuja admin (src/admin, kataloogina) on 4f-s üle viidud; 4g: põhireeglid.
    Valvur: `npm run ui-audit` rida „Tailwindi klasse ilma @source-ita“. */
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
@@ -230,6 +229,10 @@
   }
 }
 /* Kinnitatud Suurus-veeru parem joon (Külvikord): sisemine vari, et border-collapse'i-vaba tabel ei nihkuks. */
+/* Nupp pärib kirjatüübi (puhastuskiht ei sea seda nupule). */
+@utility font-inherit {
+  font-family: inherit;
+}
 @utility pin-edge-end {
   box-shadow: inset -1px 0 0 var(--border-card);
 }

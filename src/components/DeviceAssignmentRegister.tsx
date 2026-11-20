@@ -189,7 +189,7 @@ export const DeviceAssignmentRegister: React.FC<DeviceAssignmentRegisterProps> =
             <Button size="sm"
               onClick={onReload}
               title="Värskenda registrit">
-              <RotateCcw size={14} className={loading ? 'spin' : ''} />
+              <RotateCcw size={14} className={loading ? 'animate-spin' : ''} />
               <span>Värskenda</span>
             </Button>
           </>

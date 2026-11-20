@@ -207,7 +207,7 @@ export const RETIRED_4F: readonly string[] = [
   'stock-doc-amount', 'stock-doc-unit', 'stock-doc-unit-price', 'stock-doc-footer-row', 'stock-doc-modal', 'article-categories-group',
   'article-categories-add', 'article-categories-modal', 'article-form-modal', 'article-form-body', 'article-npk-inputs', 'article-merge-info',
   'harvest-lot-body', 'harvest-lot-head', 'harvest-lot-tiles', 'harvest-lot-section', 'harvest-lot-add', 'harvest-lot-add-weighing', 'harvest-lot-add-cost',
-  // 4f järelkorjatud: Dropzone, vihjed, üleslaadimise eelvaade, AI võtmed, kasutajate admin ja teenusepakkuja admin (admin-login ja admin-brand-word jäävad CSS-i, neid ei loe).
+  // 4f järelkorjatud: Dropzone, vihjed, üleslaadimise eelvaade, AI võtmed, kasutajate admin ja teenusepakkuja admin (admin-login jääb CSS-i, seda ei loe).
   'ai-instructions-footer', 'ai-instructions-input', 'ai-key-created', 'ai-key-help', 'ai-key-new', 'ai-key-table', 'ai-key-table-wrap', 'ai-key-url',
   'detail-section', 'dropzone', 'dropzone-icon', 'dropzone-state', 'file-reupload-hint', 'hint-text', 'is-block', 'notes-text', 'operator-field', 'p-crop',
   'p-ha', 'parsed-preview-box', 'preview-field-row', 'preview-fields-scroll', 'preview-header', 'upload-format-list', 'users-admin-mode',
@@ -387,14 +387,14 @@ const DISALLOWED_FONT_WEIGHT_CSS = /(?:^|[;\s{])font-weight\s*:\s*(800|900|bolde
 const DISALLOWED_FONT_WEIGHT_TSX = /(?<![\w-])font-(?:extrabold|black)(?![\w-])/g;
 
 /** Keelatud kirjapaksused: 800+ (ExtraBold, Black) teeb teksti liiga raskeks.
-    Lubatud erand: üks 800 failis src/index.css (sisselogimise brändisõna) ja üks src/admin/admin.css-is (admini logo). */
+    Lubatud erand: üks 800 failis src/index.css (`.login-brand-word`, kasutab ka admin). */
 export function disallowedFontWeights(files: { path: string; content: string }[]): { path: string; count: number }[] {
   return files.flatMap(({ path, content }) => {
     const clean = stripComments(content);
     const isCss = path.endsWith('.css');
     const matches = isCss ? clean.match(DISALLOWED_FONT_WEIGHT_CSS) ?? [] : clean.match(DISALLOWED_FONT_WEIGHT_TSX) ?? [];
     const count = matches.length;
-    const allowed = path.endsWith('src/index.css') || path.endsWith('src/admin/admin.css') ? 1 : 0;
+    const allowed = path.endsWith('src/index.css') ? 1 : 0;
     const excess = Math.max(0, count - allowed);
     return excess > 0 ? [{ path, count: excess }] : [];
   });

@@ -4,8 +4,5 @@
 /* Põhirakendus keelab lehe kerimise (body overflow: hidden); admin on tavaline kerivate lehtedega leht */
 body { overflow: auto; }
 
-/* Kaubamärk nagu logos: paks kaldkiri. Kirjatüüp Outfit ja paksus 800 on teadlik erand (uiAudit lubab ühe 800 siin). */
-.admin-brand-word { font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 800; padding-right: 4px; }
-
 /* Sisselogimiskaardi ülaveeris on vaateakna kõrgusest (Tailwindi skaalas pole vh-vahet); laius ja külgveeris on LoginView klassides. */
 .admin-login { margin-top: 12vh; }

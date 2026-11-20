@@ -6,10 +6,7 @@ import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import type { AuthUser } from '../types/auth';
 import { api } from '../services/api';
-import { Alert, Button, Field, Input } from './ui';
-
-/** Oranž teade kaardil (värvid `.login-notice` reeglis: login-kaardi palett on püsiv erand). Vana `.login-notice` paigutus. */
-const LOGIN_NOTICE = 'login-notice flex items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm leading-natural';
+import { Alert, Button, Field, Input, loginPageClass, loginColumnClass, loginCardClass, loginLogoClass, loginPrimaryButtonClass, loginCopyrightClass, loginNoticeClass } from './ui';
 
 interface LoginPageProps {
   notice?: string | null;
@@ -40,15 +37,15 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
   };
 
   return (
-    <div className="login-page relative isolate flex min-h-dvh items-center overflow-hidden px-4 py-6 max-[761px]:justify-center">
+    <div className={loginPageClass}>
       <LoginBackdrop />
-      <div className="login-column flex w-[min(380px,100%)] flex-col items-center">
-        <form className="login-card flex w-full flex-col gap-3 px-6 py-8" onSubmit={submit}>
-          <div className="mb-1.5 flex justify-center">
+      <div className={loginColumnClass}>
+        <form className={loginCardClass} onSubmit={submit}>
+          <div className={loginLogoClass}>
             <TerisLogo variant="vertical" />
           </div>
 
-          {notice && !error && <div className={LOGIN_NOTICE}>{notice}</div>}
+          {notice && !error && <div className={loginNoticeClass}>{notice}</div>}
           {error && (
             <Alert tone="error">
               <AlertCircle size={16} />
@@ -76,17 +73,17 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
               onChange={(e) => setPassword(e.target.value)}
             />
           </Field>
-          <Button type="submit" variant="primary" className="login-primary-btn w-full" disabled={busy}>
+          <Button type="submit" variant="primary" className={loginPrimaryButtonClass} disabled={busy}>
             <LogIn size={16} />
             <span>{busy ? 'Login sisse…' : 'Logi sisse'}</span>
           </Button>
-          <button type="button" className="login-forgot-link mt-1 cursor-pointer self-center border-none bg-transparent font-[inherit] text-sm leading-natural underline" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
+          <button type="button" className="login-forgot-link mt-1 cursor-pointer self-center border-none bg-transparent font-inherit text-sm leading-natural underline" onClick={() => { setForgotOpen((v) => !v); setForgotSent(false); }}>
             Unustasid parooli?
           </button>
           {forgotOpen && (
             <div className="login-forgot-box flex flex-col gap-1.5 text-sm leading-natural">
               {forgotSent ? (
-                <div className={LOGIN_NOTICE}>Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
+                <div className={loginNoticeClass}>Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.</div>
               ) : (
                 <>
                   <label htmlFor="forgot-login">Kasutajanimi või e-post</label>
@@ -114,7 +111,7 @@ export const LoginPage: React.FC<LoginPageProps> = ({ notice, onLoggedIn }) => {
           )}
         </form>
         <a className="login-home-link mt-4 rounded-full px-3 py-1.5 text-base leading-natural font-medium no-underline" href="/">← Tutvu <em className="login-brand-word">TERIS</em>-ega avalehel</a>
-        <p className="login-copyright mt-4 text-xs leading-natural">{COPYRIGHT_TEXT}</p>
+        <p className={loginCopyrightClass}>{COPYRIGHT_TEXT}</p>
       </div>
     </div>
   );

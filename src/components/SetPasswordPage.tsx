@@ -5,7 +5,7 @@ import { TerisLogo } from './TerisLogo';
 import { LoginBackdrop } from './LoginBackdrop';
 import { COPYRIGHT_TEXT } from '../copyright';
 import { api } from '../services/api';
-import { Alert, Button, Field, Input } from './ui';
+import { Alert, Button, Field, Input, loginPageClass, loginColumnClass, loginCardClass, loginLogoClass, loginPrimaryButtonClass, loginCopyrightClass } from './ui';
 import { hintTextClass } from './ui/variants';
 
 interface SetPasswordPageProps {
@@ -46,11 +46,11 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
   };
 
   return (
-    <div className="login-page relative isolate flex min-h-dvh items-center overflow-hidden px-4 py-6 max-[761px]:justify-center">
+    <div className={loginPageClass}>
       <LoginBackdrop />
-      <div className="login-column flex w-[min(380px,100%)] flex-col items-center">
-        <form className="login-card flex w-full flex-col gap-3 px-6 py-8" onSubmit={submit}>
-          <div className="mb-1.5 flex justify-center">
+      <div className={loginColumnClass}>
+        <form className={loginCardClass} onSubmit={submit}>
+          <div className={loginLogoClass}>
             <TerisLogo variant="vertical" />
           </div>
           {invalid ? (
@@ -60,7 +60,7 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
                 <span>{invalid}</span>
               </Alert>
               <p className={hintTextClass}>Küsi uus link sisselogimise lehe „Unustasid parooli?“ kaudu või adminilt.</p>
-              <Button type="button" variant="primary" className="login-primary-btn w-full" onClick={onCancel}>Sisselogimise lehele</Button>
+              <Button type="button" variant="primary" className={loginPrimaryButtonClass} onClick={onCancel}>Sisselogimise lehele</Button>
             </>
           ) : username === null ? (
             <p className={hintTextClass}>Kontrollin linki…</p>
@@ -82,14 +82,14 @@ export const SetPasswordPage: React.FC<SetPasswordPageProps> = ({ token, onDone,
               <Field label="Korda parooli" htmlFor="sp-repeat">
                 <Input id="sp-repeat" type="password" autoComplete="new-password" required value={repeat} onChange={(e) => setRepeat(e.target.value)} />
               </Field>
-              <Button type="submit" variant="primary" className="login-primary-btn w-full" disabled={busy}>
+              <Button type="submit" variant="primary" className={loginPrimaryButtonClass} disabled={busy}>
                 {busy ? <KeyRound size={16} /> : <Check size={16} />}
                 <span>{busy ? 'Salvestan…' : 'Määra parool'}</span>
               </Button>
             </>
           )}
         </form>
-        <p className="login-copyright mt-4 text-xs leading-natural">{COPYRIGHT_TEXT}</p>
+        <p className={loginCopyrightClass}>{COPYRIGHT_TEXT}</p>
       </div>
     </div>
   );

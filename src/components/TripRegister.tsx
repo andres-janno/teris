@@ -138,7 +138,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
       <FilterBar
         actions={(
           <Button size="sm" type="button" title="Värskenda" onClick={load} disabled={loading}>
-            <RotateCcw size={14} className={loading ? 'spin' : ''} />
+            <RotateCcw size={14} className={loading ? 'animate-spin' : ''} />
           </Button>
         )}
       >
