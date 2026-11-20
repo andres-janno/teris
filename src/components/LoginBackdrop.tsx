@@ -88,11 +88,11 @@ const DustCanvas: React.FC = () => {
     };
   }, []);
 
-  return <canvas ref={ref} className="login-dust" aria-hidden="true" />;
+  return <canvas ref={ref} className="absolute inset-0 size-full mix-blend-screen" aria-hidden="true" />;
 };
 
 export const LoginBackdrop: React.FC = () => (
-  <div className="login-backdrop" aria-hidden="true">
+  <div className="pointer-events-none absolute inset-0 -z-1 overflow-hidden" aria-hidden="true">
     <div className="login-backdrop-photo" style={{ backgroundImage: `url(${loginBg})` }} />
     <div className="login-backdrop-sun" />
     <div className="login-backdrop-shade" />

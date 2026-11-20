@@ -193,6 +193,7 @@ export const RETIRED_4F: readonly string[] = [
   'support-banner', 'support-panel', 'support-banner-end', 'support-panel-actions', 'support-panel-desc', 'support-panel-head', 'support-panel-icon',
   'support-panel-label', 'support-panel-log', 'support-panel-row', 'support-panel-title', 'support-panel-titles', 'support-panel-until',
   'support-panel-who', 'teris-logo-horizontal', 'teris-logo-icon', 'teris-logo-vertical',
+  'auth-loading', 'forced-password-page', 'full-width', 'login-backdrop', 'login-brand', 'login-dust', 'login-forgot-row',
 ];
 const LEGACY_OVERVIEW = new RegExp(
   `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,

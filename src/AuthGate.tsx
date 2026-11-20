@@ -102,7 +102,7 @@ export const AuthGate: React.FC = () => {
     return <SetPasswordPage token={linkToken} onDone={(m) => leaveLinkPage(m)} onCancel={() => leaveLinkPage()} />;
   }
 
-  if (checking) return <div className="auth-loading">Laadin…</div>;
+  if (checking) return <div className="flex min-h-screen items-center justify-center bg-background text-muted-foreground">Laadin…</div>;
 
   if (!user) {
     return (
@@ -134,7 +134,7 @@ export const AuthGate: React.FC = () => {
 
   if (user.mustChangePassword) {
     return (
-      <div className="forced-password-page">
+      <div className="min-h-screen bg-background">
         <ChangePasswordModal
           isOpen
           forced

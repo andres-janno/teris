@@ -24,6 +24,9 @@
    Valvur: `npm run ui-audit` rida „Tailwindi klasse ilma @source-ita“. */
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
+@source '../components/LoginPage.tsx';
+@source '../components/SetPasswordPage.tsx';
+@source '../components/LoginBackdrop.tsx';
 @source '../components/FieldWorksBoard.tsx';
 @source '../components/FieldWorkPlanForm.tsx';
 @source '../components/FieldWorkEntryDialog.tsx';
