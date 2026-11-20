@@ -296,94 +296,6 @@ body {
   color: var(--text-secondary);
 }
 
-/* Dropzone */
-.dropzone {
-  border: 2px dashed rgba(255, 255, 255, 0.15);
-  border-radius: var(--radius-lg);
-  padding: 32px 16px;
-  text-align: center;
-  cursor: pointer;
-  transition: all 0.2s;
-  background: rgba(255, 255, 255, 0.02);
-}
-
-.dropzone:hover,
-.dropzone.dragging {
-  border-color: var(--emerald-400);
-  background: rgba(34, 197, 94, 0.05);
-}
-
-.dropzone.has-file {
-  border-color: var(--emerald-400);
-  background: rgba(34, 197, 94, 0.08);
-}
-
-.dropzone-state {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-}
-
-.dropzone-icon {
-  color: var(--text-secondary);
-}
-
-.upload-format-list {
-  display: flex;
-  gap: 6px;
-  margin-top: 8px;
-}
-
-.file-reupload-hint {
-  font-size: 12px;
-  color: var(--emerald-400);
-  text-decoration: underline;
-}
-
-/* Parsed preview */
-.parsed-preview-box .operator-field { margin: 8px 0; }
-
-.parsed-preview-box {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.preview-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font-size: 13px;
-}
-
-.preview-fields-scroll {
-  max-height: 140px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.preview-field-row {
-  display: flex;
-  justify-content: space-between;
-  padding: 4px 8px;
-  border-radius: var(--radius-sm);
-  background: rgba(255, 255, 255, 0.02);
-  font-size: 12px;
-}
-
-.p-crop {
-  margin-left: 8px;
-  color: var(--text-secondary);
-}
-
-.p-ha {
-  font-weight: 500;
-  color: var(--emerald-400);
-}
-
 /* Andmebaasi ühenduse viga (kaardi kohal) */
 .db-error-banner {
   position: absolute;
@@ -983,18 +895,6 @@ body {
   box-shadow: 0 0 6px #10b981;
 }
 
-.ai-key-created { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
-.ai-key-url, .ai-key-new { display: flex; gap: 8px; }
-.ai-key-url [data-slot="input"], .ai-key-new [data-slot="input"] { flex: 1; min-width: 0; }
-.ai-key-url [data-slot="input"] { font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important; font-size: 12px !important; }
-.ai-key-table-wrap { margin: 16px 0; }
-.ai-key-help { font-size: 13px; }
-.ai-key-help ol { margin: 6px 0 0 16px; padding: 0; }
-@media (max-width: 640px) {
-  .ai-key-url, .ai-key-new { flex-direction: column; }
-  .ai-key-table th:nth-child(3), .ai-key-table td:nth-child(3) { display: none; }
-}
-
 .login-forgot-link {
   align-self: center;
   margin-top: 4px;
@@ -1023,24 +923,9 @@ body {
   flex: 1;
 }
 
-.users-admin-mode {
-  margin-bottom: 10px;
-}
-
 .forced-password-page {
   min-height: 100vh;
   background: var(--bg-dark);
-}
-
-/* Nimi ja e-post võivad murduda, et tabel mahuks aknasse ilma horisontaalse kerimiseta */
-.users-admin-wrap {
-  overflow-wrap: anywhere;
-}
-
-.users-admin-roles {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.3;
 }
 
 /* ==========================================================================
@@ -1458,6 +1343,3 @@ polyline.weather-line { fill: none; }
 .weather-line-4 { stroke: #0891b2; background: #0891b2; }
 .weather-line-5 { stroke: #64748b; background: #64748b; }
 .weather-legend-row .legend { display: inline-block; width: 10px; height: 10px; border-radius: var(--radius-sm); vertical-align: middle; margin-left: 6px; }
-
-/* Staatilised abiklassid (varem inline-stiilid) */
-.hint-text.is-block { display: block; margin-top: 4px; }

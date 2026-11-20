@@ -4,7 +4,7 @@ import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors'
 import React, { useEffect, useState } from 'react';
 import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
-  Alert, Badge, Button, Card, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
+  Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
   PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
@@ -383,6 +383,13 @@ export const UiGallery: React.FC = () => {
             <Alert tone="info">See töö kuulub järgmise hooaja tsüklisse.</Alert>
             <Alert tone="warning" size="sm">Hooaeg on lukus.</Alert>
             <Alert>Tavaline teade ilma toonita.</Alert>
+          </div>
+        </Section>
+
+        <Section title="Failikast (Dropzone)">
+          <div className="flex w-full max-w-120 flex-col gap-2">
+            <Dropzone>Lohista fail siia</Dropzone>
+            <Dropzone hasFile>Fail valitud</Dropzone>
           </div>
         </Section>
 

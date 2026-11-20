@@ -8,6 +8,10 @@ import { formatDateTimeTallinn } from '../services/dateFormat';
 import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import { Alert, Button, Input, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
+// Võtme rida (link + nupp, nimi + nupp): kitsal ekraanil veerus. Kolmas veerg („Loodud“) kitsal ekraanil peidus.
+const keyRowClass = 'flex gap-2 max-[640px]:flex-col';
+const hideNarrowClass = 'max-[640px]:hidden';
+
 interface AiConnectionModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -84,7 +88,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) close(); }}>
-      <DialogContent size="lg" className="ai-connection-modal" dismissible={!busy}>
+      <DialogContent size="lg" dismissible={!busy}>
         <DialogHeader
           icon={<Bot size={22} />}
           title="AI ühendus"
@@ -99,13 +103,13 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
           )}
 
           {created && (
-            <div className="ai-key-created">
+            <div className="mb-4 flex flex-col gap-2">
               <Alert>
                 <AlertCircle size={16} />
                 <span>Linki näidatakse ainult üks kord. See annab ligipääsu sinu Terise andmetele — ära jaga seda.</span>
               </Alert>
-              <div className="ai-key-url">
-                <Input readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
+              <div className={keyRowClass}>
+                <Input className="min-w-0 flex-1 font-mono text-xs" readOnly value={created.url} onFocus={(e) => e.currentTarget.select()} />
                 <Button type="button" variant="primary" onClick={() => void copy()}>
                   {copied ? <Check size={16} /> : <Copy size={16} />}
                   <span>{copied ? 'Kopeeritud' : 'Kopeeri'}</span>
@@ -114,8 +118,9 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
             </div>
           )}
 
-          <form className="ai-key-new" onSubmit={create}>
+          <form className={keyRowClass} onSubmit={create}>
             <Input
+              className="min-w-0 flex-1"
               placeholder="Võtme nimi (valikuline), nt Claude Desktop sülearvutis"
               maxLength={100}
               value={name}
@@ -127,12 +132,12 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
             </Button>
           </form>
 
-          <Table containerClassName="ai-key-table-wrap" className="ai-key-table">
+          <Table containerClassName="my-4">
             <TableHeader>
               <TableRow>
                 <TableHead>Nimi</TableHead>
                 <TableHead>Võti</TableHead>
-                <TableHead>Loodud</TableHead>
+                <TableHead className={hideNarrowClass}>Loodud</TableHead>
                 <TableHead>Viimati kasutatud</TableHead>
                 <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
               </TableRow>
@@ -143,7 +148,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
                 <TableRow key={k.id}>
                   <TableCell wrap>{k.name}</TableCell>
                   <TableCell><code>{k.keyPrefix}…</code></TableCell>
-                  <TableCell>{formatDateTimeTallinn(k.createdAt)}</TableCell>
+                  <TableCell className={hideNarrowClass}>{formatDateTimeTallinn(k.createdAt)}</TableCell>
                   <TableCell>{formatDateTimeTallinn(k.lastUsedAt)}</TableCell>
                   <TableCell actions>
                     <Button type="button" variant="ghost" size="icon-sm" title="Tühista" aria-label={`Tühista ${k.name}`} onClick={() => void revoke(k)}>
@@ -155,9 +160,9 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
             </TableBody>
           </Table>
 
-          <div className="ai-key-help">
+          <div className="text-sm leading-natural">
             <strong>Kuidas ühendada</strong>
-            <ol>
+            <ol className="mr-0 mb-0 mt-1.5 ml-4 p-0">
               <li>Loo võti ja kopeeri link.</li>
               <li>Ava AI-kliendis connectorite seaded ja lisa uus MCP connector (nt Claude Desktop → Settings → Connectors → Add custom connector).</li>
               <li>Kleebi link URL-i väljale ja salvesta. Seejärel küsi AI-lt näiteks „Mis põllud mul tänavu on?“</li>

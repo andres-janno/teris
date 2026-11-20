@@ -504,3 +504,29 @@ export const statChipSubClass = 'ml-1 text-2xs';
 
 /** Registrikaardi ikooniruut (Isikud, POI-d): ääris ja 16px emoji ilma joonekõrguseta. */
 export const registerIconBoxClass = 'border-border text-base leading-none';
+
+/** Faili lohistamise kast (Põldude, põlluraamatu ja mullaproovide import): 2px katkendjoon, nõrk valge ääris ja taust; hõljumisel, lohistamisel ja valitud failiga roheline. Vana `.dropzone`. */
+export const dropzoneClass = ({ dragging = false, hasFile = false }: { dragging?: boolean; hasFile?: boolean } = {}): string =>
+  cn(
+    'cursor-pointer rounded-lg border-2 border-dashed px-4 py-8 text-center transition-all duration-200',
+    hasFile ? 'border-primary bg-primary/8' : dragging ? 'border-primary bg-primary/5' : 'border-white/15 bg-white/2 hover:border-primary hover:bg-primary/5'
+  );
+/** Kasti sisu: ikoon, pealkiri ja tekst veerus keskel. Vana `.dropzone-state`. */
+export const dropzoneStateClass = 'flex flex-col items-center gap-2';
+export const dropzoneIconClass = 'text-muted-foreground';
+/** Vihjetekst 13px, hall (vana `.hint-text`); blokina ülaveerisega (vana `.hint-text.is-block`). */
+export const hintTextClass = 'text-sm leading-natural text-muted-foreground';
+export const hintTextBlockClass = cn(hintTextClass, 'mt-1 block');
+/** „Klõpsa siia uue faili valimiseks“ valitud faili all. Vana `.file-reupload-hint`. */
+export const fileReuploadHintClass = 'text-xs leading-natural text-success-text underline';
+/** Failivormingu märgiread kasti all. Vana `.upload-format-list`. */
+export const uploadFormatListClass = 'mt-2 flex gap-1.5';
+
+/** Importimise eelvaade: kast, päis, kerituv ridade loend, rida, välja veeris, rea hall tekst ja roheline väärtus. Vana `.parsed-preview-box`, `.preview-*`, `.operator-field`, `.p-crop`, `.p-ha`. */
+export const previewBoxClass = 'flex flex-col gap-2';
+export const previewHeaderClass = 'flex items-center justify-between text-sm leading-natural';
+export const previewFieldsScrollClass = 'flex max-h-35 flex-col gap-1 overflow-y-auto';
+export const previewFieldRowClass = 'flex justify-between rounded-sm bg-white/2 px-2 py-1 text-xs leading-natural';
+export const previewFieldClass = 'my-2';
+export const previewCropClass = 'ml-2 text-muted-foreground';
+export const previewValueClass = 'font-medium text-success-text';

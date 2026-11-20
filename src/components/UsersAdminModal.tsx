@@ -6,7 +6,7 @@ import type { AdminUser } from '../types/auth';
 import { formatDateTime } from '../services/dateFormat';
 import { confirmDialog } from './ConfirmDialog';
 import { SupportAccessPanel } from './SupportAccessPanel';
-import { Alert, Badge, Button, Field, Input, CheckboxField, RadioGroup, RadioField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui';
+import { Alert, Badge, Button, Field, Input, CheckboxField, RadioGroup, RadioField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, hintTextClass } from './ui';
 
 interface UsersAdminModalProps {
   isOpen: boolean;
@@ -140,7 +140,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" className="users-admin-modal" dismissible={!busy}>
+      <DialogContent size="xl" dismissible={!busy}>
         <DialogHeader icon={<Users size={22} />} title="Kasutajad">
           {!readOnly && (
             <Button type="button" variant="primary" size="sm" onClick={() => openForm({ kind: 'add' })}>
@@ -178,11 +178,11 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   const self = u.id === currentUserId;
                   return (
                     <TableRow key={u.id} tone={u.isActive ? undefined : 'muted'}>
-                      <TableCell wrap className="users-admin-wrap">{u.displayName ?? '–'}</TableCell>
+                      <TableCell wrap className="wrap-anywhere">{u.displayName ?? '–'}</TableCell>
                       <TableCell>{u.username}</TableCell>
-                      <TableCell wrap className="users-admin-wrap">{u.email ?? '–'}</TableCell>
+                      <TableCell wrap className="wrap-anywhere">{u.email ?? '–'}</TableCell>
                       <TableCell>
-                        <span className="users-admin-roles">
+                        <span className="flex flex-col leading-4">
                           <span>{u.isAdmin ? 'Admin' : 'Kasutaja'}</span>
                           {u.isFinanceManager && <span>Finantsjuht</span>}
                         </span>
@@ -241,7 +241,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
       {/* Kasutaja lisamine/muutmine/parooli lähtestamine eraldi aknas registri peal */}
       {mode.kind !== 'list' && (
         <Dialog open onOpenChange={(open) => { if (!open) { setError(null); setMode({ kind: 'list' }); } }}>
-          <DialogContent size="md" dismissible={!busy} className="users-edit-modal">
+          <DialogContent size="md" dismissible={!busy}>
             <DialogForm id="users-admin-form" onSubmit={submit}>
               <DialogHeader icon={<FormIcon size={20} />} title={formTitle} />
               <DialogBody>
@@ -267,7 +267,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                 </Field>
               )}
               {mode.kind === 'add' && (
-                <RadioGroup className="users-admin-mode" orientation="vertical" value={useInvite ? 'invite' : 'password'} onValueChange={(v) => setUseInvite(v === 'invite')}>
+                <RadioGroup className="mb-2.5" orientation="vertical" value={useInvite ? 'invite' : 'password'} onValueChange={(v) => setUseInvite(v === 'invite')}>
                   <RadioField value="invite" label="Saada kutse e-postiga (kasutaja määrab parooli ise)" />
                   <RadioField value="password" label="Määra ajutine parool" />
                 </RadioGroup>
@@ -280,7 +280,7 @@ export const UsersAdminModal: React.FC<UsersAdminModalProps> = ({ isOpen, onClos
                   <Field label="Korda parooli" htmlFor="ua-repeat">
                     <Input id="ua-repeat" type="password" required autoComplete="new-password" value={repeat} onChange={(e) => setRepeat(e.target.value)} />
                   </Field>
-                  <p className="hint-text">Kasutaja peab parooli esimesel sisselogimisel vahetama.</p>
+                  <p className={hintTextClass}>Kasutaja peab parooli esimesel sisselogimisel vahetama.</p>
                 </>
               )}
               {(mode.kind === 'add' || (mode.kind === 'edit' && mode.user.id !== currentUserId)) && (

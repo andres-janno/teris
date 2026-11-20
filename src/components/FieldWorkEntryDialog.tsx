@@ -441,10 +441,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {loadingSuggestions && (
-              <div className="flex items-center gap-2 rounded-sm bg-primary/8 px-3 py-1.5 text-sm leading-natural text-success-text">
+              <Alert size="sm" className="gap-2 bg-primary/8 py-1.5 text-success-text">
                 <Radio size={14} />
                 <span>Kontrollin telemeetriat...</span>
-              </div>
+              </Alert>
             )}
 
             {telemetrySuggestions.length > 0 && (

@@ -9,7 +9,11 @@ import {
 } from 'lucide-react';
 import type { SoilSample } from '../types/soilSample';
 import { parseSoilSampleShapefileZip } from '../services/soilSampleParser';
-import { Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter } from './ui';
+import {
+  Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Dropzone,
+  dropzoneIconClass, dropzoneStateClass, fileReuploadHintClass, previewBoxClass, previewCropClass, previewFieldRowClass, previewFieldsScrollClass, previewHeaderClass, previewValueClass,
+  uploadFormatListClass,
+} from './ui';
 
 interface SoilSampleUploadModalProps {
   isOpen: boolean;
@@ -95,8 +99,9 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
           description="Toetatud on punktikujunditega .ZIP Shapefile arhiivid (WGS84 / EPSG:4326)"
         />
         <DialogBody>
-          <div
-            className={`dropzone ${isDragging ? 'dragging' : ''} ${parsedPreview ? 'has-file' : ''}`}
+          <Dropzone
+            dragging={isDragging}
+            hasFile={!!parsedPreview}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -111,23 +116,23 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
             />
 
             {isProcessing ? (
-              <div className="dropzone-state">
+              <div className={dropzoneStateClass}>
                 <RefreshCw size={36} className="animate-spin" />
                 <p>Töötlen Shapefile faile...</p>
               </div>
             ) : parsedPreview ? (
-              <div className="dropzone-state success">
+              <div className={dropzoneStateClass}>
                 <FileArchive size={36} />
                 <h4>Edukalt parsitud {parsedPreview.length} mullaproovi!</h4>
                 <p>{distinctFields} erinevat massiivi</p>
-                <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>
+                <span className={fileReuploadHintClass}>Klõpsa siia uue faili valimiseks</span>
               </div>
             ) : (
-              <div className="dropzone-state">
-                <UploadCloud size={44} className="dropzone-icon" />
+              <div className={dropzoneStateClass}>
+                <UploadCloud size={44} className={dropzoneIconClass} />
                 <h4>Lohista mullaproovide .ZIP fail siia</h4>
                 <p>või klõpsa faili valimiseks arvutist</p>
-                <div className="upload-format-list">
+                <div className={uploadFormatListClass}>
                   <Badge>.SHP</Badge>
                   <Badge>.DBF</Badge>
                   <Badge>.PRJ</Badge>
@@ -135,7 +140,7 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
                 </div>
               </div>
             )}
-          </div>
+          </Dropzone>
 
           {error && (
             <Alert tone="error">
@@ -145,23 +150,23 @@ export const SoilSampleUploadModal: React.FC<SoilSampleUploadModalProps> = ({
           )}
 
           {parsedPreview && (
-            <Card variant="tile" padding="sm" className="parsed-preview-box">
-              <div className="preview-header">
+            <Card variant="tile" padding="sm" className={previewBoxClass}>
+              <div className={previewHeaderClass}>
                 <strong>Leitud proovid ({parsedPreview.length})</strong>
               </div>
 
-              <div className="preview-fields-scroll">
+              <div className={previewFieldsScrollClass}>
                 {parsedPreview.slice(0, 10).map((s, idx) => (
-                  <div key={idx} className="preview-field-row">
-                    <div className="p-title">
+                  <div key={idx} className={previewFieldRowClass}>
+                    <div>
                       <strong>Massiiv {s.fieldCode}</strong>
-                      <span className="p-crop">Proov {s.sampleNumber} ({s.year})</span>
+                      <span className={previewCropClass}>Proov {s.sampleNumber} ({s.year})</span>
                     </div>
-                    <div className="p-ha">pH {s.ph ?? '-'}</div>
+                    <div className={previewValueClass}>pH {s.ph ?? '-'}</div>
                   </div>
                 ))}
                 {parsedPreview.length > 10 && (
-                  <div className="preview-more-hint">
+                  <div>
                     ...ja veel {parsedPreview.length - 10} proovi
                   </div>
                 )}

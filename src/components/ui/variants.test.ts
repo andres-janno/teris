@@ -49,6 +49,9 @@ const allClassStrings = (): string[] => [
   v.cardGridClass, v.registerSectionClass, v.fleetCellMainClass, v.fleetCellTitleClass, v.cellSubClass, v.cellSubStackedClass, v.fleetCellDateClass, v.fleetCellDateEndClass,
   v.fleetDurationClass({ active: true }), v.fleetDurationClass({}), v.fleetNotesClass({ empty: true }), v.fleetNotesClass({}), v.dateTimeRowClass, v.dateTimeHintClass,
   ...(['error', 'success', 'info', 'warning', 'neutral'] as const).flatMap((tone) => (['md', 'sm'] as const).map((size) => v.alertVariants({ tone, size }))),
+  v.dropzoneClass({}), v.dropzoneClass({ dragging: true }), v.dropzoneClass({ hasFile: true }), v.dropzoneStateClass, v.dropzoneIconClass,
+  v.hintTextClass, v.hintTextBlockClass, v.fileReuploadHintClass, v.uploadFormatListClass,
+  v.previewBoxClass, v.previewHeaderClass, v.previewFieldsScrollClass, v.previewFieldRowClass, v.previewFieldClass, v.previewCropClass, v.previewValueClass,
 ];
 
 describe('variants', () => {
@@ -767,5 +770,25 @@ describe('registrikaartide korduvad klassid (etapp 4e, lõpp)', () => {
   });
   it('registri ikooniruut: ääris, 16px emoji ja joonekõrgus normal', () => {
     for (const t of ['border-border', 'text-base', 'leading-none']) expect(v.registerIconBoxClass).toContain(t);
+  });
+});
+
+describe('dropzoneClass', () => {
+  it('vaikimisi katkendjoonega kast, hõljumisel ja valitud failiga roheline', () => {
+    expect(v.dropzoneClass({})).toContain('border-dashed');
+    expect(v.dropzoneClass({ dragging: true })).toContain('border-primary');
+    expect(v.dropzoneClass({ hasFile: true })).toContain('border-primary');
+    expect(v.dropzoneClass({})).toContain('cursor-pointer');
+  });
+  it('ääris on kõigil külgedel 2px nagu vanas reeglis', () => {
+    expect(v.dropzoneClass({})).toContain('border-2');
+  });
+});
+describe('hintText', () => {
+  it('vihje on 13px hall, blokk-variant lisab ülaveerise', () => {
+    expect(v.hintTextClass).toContain('text-sm');
+    expect(v.hintTextClass).toContain('text-muted-foreground');
+    expect(v.hintTextBlockClass).toContain('mt-1');
+    expect(v.hintTextBlockClass).toContain('block');
   });
 });

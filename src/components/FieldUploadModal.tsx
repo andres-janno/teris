@@ -15,7 +15,11 @@ import { planYearReplacement } from '../services/fieldYearReplace';
 import { matchImportedFields } from '../services/fieldIdentity';
 import { parseShapefileZip } from '../services/shpParser';
 import { confirmDialog } from './ConfirmDialog';
-import { Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Field, Select } from './ui';
+import {
+  Alert, Badge, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, CheckboxField, Dropzone, Field, Select,
+  dropzoneIconClass, dropzoneStateClass, fileReuploadHintClass, hintTextBlockClass, hintTextClass, previewBoxClass, previewCropClass, previewFieldClass, previewFieldRowClass,
+  previewFieldsScrollClass, previewHeaderClass, previewValueClass, uploadFormatListClass,
+} from './ui';
 
 // PRIA põldude failis pole hooaja veergu; "muudetud" (pp.kk.aaaa) on põllu
 // viimase muutmise kuupäev PRIA-s ja langeb enamasti hooaja aastasse.
@@ -182,8 +186,9 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
         />
         <DialogBody>
           {/* Dropzone */}
-          <div 
-            className={`dropzone ${isDragging ? 'dragging' : ''} ${parsedPreview ? 'has-file' : ''}`}
+          <Dropzone
+            dragging={isDragging}
+            hasFile={!!parsedPreview}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
@@ -198,23 +203,23 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
             />
 
             {isProcessing ? (
-              <div className="dropzone-state">
+              <div className={dropzoneStateClass}>
                 <RefreshCw size={36} className="animate-spin" />
                 <p>Töötlen Shapefile faile ja teisendan L-EST97 koordinaate...</p>
               </div>
             ) : parsedPreview ? (
-              <div className="dropzone-state success">
+              <div className={dropzoneStateClass}>
                 <FileArchive size={36} />
                 <h4>Edukalt pargitud {parsedPreview.features.length} põldu!</h4>
                 <p>Kogupindala: {previewTotalHa.toFixed(2)} ha</p>
-                <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>
+                <span className={fileReuploadHintClass}>Klõpsa siia uue faili valimiseks</span>
               </div>
             ) : (
-              <div className="dropzone-state">
-                <UploadCloud size={44} className="dropzone-icon" />
+              <div className={dropzoneStateClass}>
+                <UploadCloud size={44} className={dropzoneIconClass} />
                 <h4>Lohista PRIA .ZIP fail siia</h4>
                 <p>või klõpsa faili valimiseks arvutist</p>
-                <div className="upload-format-list">
+                <div className={uploadFormatListClass}>
                   <Badge>.SHP</Badge>
                   <Badge>.DBF</Badge>
                   <Badge>.PRJ</Badge>
@@ -222,7 +227,7 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                 </div>
               </div>
             )}
-          </div>
+          </Dropzone>
 
           {/* Error display */}
           {error && (
@@ -234,13 +239,13 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
 
           {/* Preview list */}
           {parsedPreview && (
-            <Card variant="tile" padding="sm" className="parsed-preview-box">
-              <div className="preview-header">
+            <Card variant="tile" padding="sm" className={previewBoxClass}>
+              <div className={previewHeaderClass}>
                 <strong>Leitud põllud ({parsedPreview.features.length})</strong>
                 <CheckboxField checked={replaceExisting} onCheckedChange={setReplaceExisting} label="Asenda olemasolevad põllud" />
               </div>
 
-              <Field label="Hooaeg (aasta), millesse põllud imporditakse *" htmlFor="fu-year" className="operator-field">
+              <Field label="Hooaeg (aasta), millesse põllud imporditakse *" htmlFor="fu-year" className={previewFieldClass}>
                 <Select
                   id="fu-year"
                   value={String(importYear)}
@@ -248,13 +253,13 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                   options={(availableYears.includes(importYear) ? availableYears : [...availableYears, importYear].sort((a, b) => a - b)).map((y) => ({ value: String(y), label: String(y) }))}
                 />
                 {detectedYear && (
-                  <span className="hint-text is-block">
+                  <span className={hintTextBlockClass}>
                     Failist tuvastatud: {detectedYear.year} ({detectedYear.count}/{detectedYear.total} põllu PRIA muutmiskuupäeva järgi) — kontrolli enne kinnitamist
                   </span>
                 )}
               </Field>
 
-              <Field label="Operaator (seotakse kõigi imporditud põldudega)" htmlFor="fu-operator" className="operator-field">
+              <Field label="Operaator (seotakse kõigi imporditud põldudega)" htmlFor="fu-operator" className={previewFieldClass}>
                 <Select
                   id="fu-operator"
                   value={operatorId}
@@ -275,28 +280,28 @@ export const FieldUploadModal: React.FC<FieldUploadModalProps> = ({
                         {replacePlan.skipped.length > 0 && <>; töödega jäetakse alles: <strong>{replacePlan.skipped.length}</strong></>}
                       </span>
                       {replacePlan.removed.length > 0 && (
-                        <span className="hint-text">Eemaldatakse: {replacePlan.removed.map(fieldLabel).join(', ')}</span>
+                        <span className={hintTextClass}>Eemaldatakse: {replacePlan.removed.map(fieldLabel).join(', ')}</span>
                       )}
                       {replacePlan.skipped.length > 0 && (
-                        <span className="hint-text">Jäetakse alles (töid): {replacePlan.skipped.map((r) => `${fieldLabel(r)} (${r.works})`).join(', ')}</span>
+                        <span className={hintTextClass}>Jäetakse alles (töid): {replacePlan.skipped.map((r) => `${fieldLabel(r)} (${r.works})`).join(', ')}</span>
                       )}
                     </>
                   )}
                 </Alert>
               )}
 
-              <div className="preview-fields-scroll">
+              <div className={previewFieldsScrollClass}>
                 {parsedPreview.features.slice(0, 10).map((f, idx) => (
-                  <div key={idx} className="preview-field-row">
-                    <div className="p-title">
+                  <div key={idx} className={previewFieldRowClass}>
+                    <div>
                       <strong>{f.properties.name}</strong>
-                      <span className="p-crop">{f.properties.crop}</span>
+                      <span className={previewCropClass}>{f.properties.crop}</span>
                     </div>
-                    <div className="p-ha">{f.properties.areaHa.toFixed(2)} ha</div>
+                    <div className={previewValueClass}>{f.properties.areaHa.toFixed(2)} ha</div>
                   </div>
                 ))}
                 {parsedPreview.features.length > 10 && (
-                  <div className="preview-more-hint">
+                  <div>
                     ...ja veel {parsedPreview.features.length - 10} põldu
                   </div>
                 )}

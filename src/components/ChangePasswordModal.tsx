@@ -54,7 +54,7 @@ export const ChangePasswordModal: React.FC<ChangePasswordModalProps> = ({ isOpen
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open && !forced) close(); }}>
-      <DialogContent size="sm" className="change-password-modal" dismissible={!forced && !busy}>
+      <DialogContent size="sm" dismissible={!forced && !busy}>
         <DialogForm onSubmit={submit}>
         <DialogHeader
           icon={<KeyRound size={22} />}

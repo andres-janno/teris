@@ -48,6 +48,11 @@
 @source '../components/PoiManagerModal.tsx';
 @source '../AuthGate.tsx';
 @source '../components/FieldUploadModal.tsx';
+@source '../components/FieldBookUploadModal.tsx';
+@source '../components/SoilSampleUploadModal.tsx';
+@source '../components/AiConnectionModal.tsx';
+@source '../components/UsersAdminModal.tsx';
+@source '../components/ChangePasswordModal.tsx';
 @source '../components/AddFieldWorkDialog.tsx';
 @source '../components/FieldEditDialog.tsx';
 @source '../components/SoilSamplesSection.tsx';

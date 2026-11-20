@@ -9,7 +9,10 @@ import { parseFieldBookFile } from '../services/fieldBookWorkbook';
 import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Alert, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Select } from './ui';
+import {
+  Alert, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Dropzone, Field, Select,
+  dropzoneIconClass, dropzoneStateClass, fileReuploadHintClass, previewBoxClass, previewCropClass, previewFieldClass, previewFieldRowClass, previewFieldsScrollClass, previewHeaderClass,
+} from './ui';
 
 interface FieldBookUploadModalProps {
   isOpen: boolean;
@@ -110,8 +113,9 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
           description={'e-PRIA "Põlluraamatu väljavõte" (.xls) — iga leht on üks põld'}
         />
         <DialogBody>
-          <div
-            className={`dropzone ${isDragging ? 'dragging' : ''} ${results ? 'has-file' : ''}`}
+          <Dropzone
+            dragging={isDragging}
+            hasFile={!!results}
             onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
             onDragLeave={() => setIsDragging(false)}
             onDrop={(e) => {
@@ -129,24 +133,24 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
               onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
             />
             {isProcessing ? (
-              <div className="dropzone-state">
+              <div className={dropzoneStateClass}>
                 <RefreshCw size={36} className="animate-spin" />
                 <p>Loen põlluraamatut...</p>
               </div>
             ) : results ? (
-              <div className="dropzone-state success">
+              <div className={dropzoneStateClass}>
                 <FileSpreadsheet size={36} />
                 <h4>{results.length} lehte loetud</h4>
-                <span className="file-reupload-hint">Klõpsa siia uue faili valimiseks</span>
+                <span className={fileReuploadHintClass}>Klõpsa siia uue faili valimiseks</span>
               </div>
             ) : (
-              <div className="dropzone-state">
-                <UploadCloud size={44} className="dropzone-icon" />
+              <div className={dropzoneStateClass}>
+                <UploadCloud size={44} className={dropzoneIconClass} />
                 <h4>Lohista põlluraamatu väljavõte siia</h4>
                 <p>või klõpsa faili valimiseks arvutist</p>
               </div>
             )}
-          </div>
+          </Dropzone>
 
           {error && (
             <Alert tone="error">
@@ -156,15 +160,15 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
           )}
 
           {results && (
-            <Card variant="tile" padding="sm" className="parsed-preview-box">
-              <Field label="Operaator (kelle põldudega sobitatakse) *" htmlFor="fb-operator" className="operator-field">
+            <Card variant="tile" padding="sm" className={previewBoxClass}>
+              <Field label="Operaator (kelle põldudega sobitatakse) *" htmlFor="fb-operator" className={previewFieldClass}>
                 <Select id="fb-operator" placeholder="-- Vali operaator --" value={operatorId} onValueChange={setOperatorId}
                   options={operators.map((p) => ({ value: p.id, label: p.name }))} />
               </Field>
 
               {built && (
                 <>
-                  <div className="preview-header">
+                  <div className={previewHeaderClass}>
                     <strong>
                       {rows.length} põldu, hooaeg {seasonsInFile.join(', ')} · {matched.length} sobitatud · {opsTotal} tegevust
                       {unmatchedPerformers.length > 0 ? ` · ${unmatchedPerformers.length} sobitamata teostajat` : ''}
@@ -188,15 +192,15 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                     </Alert>
                   )}
 
-                  <div className="preview-fields-scroll">
+                  <div className={previewFieldsScrollClass}>
                     {rows.map((row) => (
-                      <div key={row.sheetName} className="preview-field-row">
-                        <div className="p-title">
+                      <div key={row.sheetName} className={previewFieldRowClass}>
+                        <div>
                           <strong>
                             {row.matched ? '✓' : '✗'} Nr {row.num ?? row.sheetName}
                             {row.fieldName ? ` · ${row.fieldName}` : ''}
                           </strong>
-                          <span className="p-crop">
+                          <span className={previewCropClass}>
                             {row.error
                               ? `Viga: ${row.error}`
                               : row.matched
