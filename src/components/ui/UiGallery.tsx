@@ -12,9 +12,17 @@ import {
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
+import { LicenseBanner, SupportBanner } from '../LicenseBanner';
+import type { AuthUser } from '../../types/auth';
 
 // Kiibi arvu klass (nagu Külvikorras)
 const CHIP_NUM = 'font-medium text-foreground';
+
+// Litsentsi- ja tugivaate ribade näidiskasutaja (päris andmetes neid riba-olekuid tavaliselt pole)
+const BANNER_USER: AuthUser = {
+  id: 'demo', username: 'demo', displayName: 'Näidis Kasutaja', isAdmin: true, isFinanceManager: false, mustChangePassword: false,
+  tenantName: 'Näidisettevõte OÜ', license: { readOnly: false, validUntil: '2026-12-31', expiresSoon: true, modules: [] },
+};
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <Panel title={title} bodyClassName="flex flex-wrap items-start gap-3">{children}</Panel>
@@ -383,6 +391,15 @@ export const UiGallery: React.FC = () => {
             <Alert tone="info">See töö kuulub järgmise hooaja tsüklisse.</Alert>
             <Alert tone="warning" size="sm">Hooaeg on lukus.</Alert>
             <Alert>Tavaline teade ilma toonita.</Alert>
+          </div>
+        </Section>
+
+        <Section title="Litsentsiribad">
+          <div className="flex w-full flex-col gap-2">
+            <LicenseBanner user={BANNER_USER} />
+            <LicenseBanner user={{ ...BANNER_USER, license: { ...BANNER_USER.license, readOnly: true, expiresSoon: false } }} />
+            <LicenseBanner user={{ ...BANNER_USER, license: { ...BANNER_USER.license, readOnly: true, validUntil: null, expiresSoon: false } }} />
+            <SupportBanner user={{ ...BANNER_USER, supportView: true, supportValidUntil: '2026-12-31T12:00:00.000Z' }} onLogout={() => undefined} />
           </div>
         </Section>
 
