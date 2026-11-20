@@ -151,7 +151,7 @@ describe('variants', () => {
   });
   it('kirjasuurused ainult skaalast', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
-    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|warning-solid|danger-text|accent-text|on-warning|background|left|right|center|inherit)$/;
+    const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|warning-solid|danger-text|danger-solid|accent-text|on-warning|background|left|right|center|inherit)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
   });
 });
