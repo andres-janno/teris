@@ -190,7 +190,7 @@ export const RETIRED_4F: readonly string[] = [
   'header-account-info-name', 'header-account-sun', 'header-account-trigger', 'header-brand', 'header-nav-slot', 'header-operator',
   'header-operator-caption', 'header-operator-chevron', 'header-operator-content', 'header-operator-dot', 'header-operator-empty',
   'header-operator-text', 'header-operator-trigger', 'header-operator-value', 'license-banner', 'main-content', 'main-view-switch',
-  'support-banner', 'support-banner-end', 'support-panel-actions', 'support-panel-desc', 'support-panel-head', 'support-panel-icon',
+  'support-banner', 'support-panel', 'support-banner-end', 'support-panel-actions', 'support-panel-desc', 'support-panel-head', 'support-panel-icon',
   'support-panel-label', 'support-panel-log', 'support-panel-row', 'support-panel-title', 'support-panel-titles', 'support-panel-until',
   'support-panel-who', 'teris-logo-horizontal', 'teris-logo-icon', 'teris-logo-vertical',
 ];

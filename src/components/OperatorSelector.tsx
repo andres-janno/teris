@@ -41,7 +41,7 @@ export const OperatorSelector: React.FC<OperatorSelectorProps> = ({ parties, sel
               <span className="text-2xs leading-3 font-semibold tracking-widest uppercase opacity-70">Operaator</span>
               <span className="max-w-45 truncate text-base leading-4 font-medium">{label}</span>
             </span>
-            {selected.length > 0 && <span className="size-1.75 rounded-full bg-warning-solid text-warning-solid shadow-glow max-[1655px]:absolute max-[1655px]:top-1 max-[1655px]:right-1 max-[1655px]:size-1.5" />}
+            {selected.length > 0 && <span className="size-1.75 rounded-full bg-white text-white shadow-glow max-[1656px]:absolute max-[1656px]:top-1 max-[1656px]:right-1 max-[1656px]:size-1.5" />}
             <ChevronDown size={15} className={cn('opacity-80', headerChevronClass)} />
           </Button>
         </DropdownMenuTrigger>

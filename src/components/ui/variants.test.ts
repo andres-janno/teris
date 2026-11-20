@@ -796,11 +796,11 @@ describe('hintText', () => {
 
 describe('päise nupud kitsal ekraanil', () => {
   it('nupp muutub 28px ikooninupuks ainult alla 1656px, ilma polstri ja vaheta', () => {
-    for (const c of ['max-[1655px]:size-7', 'max-[1655px]:p-0', 'max-[1655px]:gap-0', 'max-[1655px]:relative', 'group']) expect(v.headerTriggerClass.split(' ')).toContain(c);
-    expect(v.headerNarrowHiddenClass).toBe('max-[1655px]:hidden');
+    for (const c of ['max-[1656px]:size-7', 'max-[1656px]:p-0', 'max-[1656px]:gap-0', 'max-[1656px]:relative', 'group']) expect(v.headerTriggerClass.split(' ')).toContain(c);
+    expect(v.headerNarrowHiddenClass).toBe('max-[1656px]:hidden');
   });
   it('nool peidetakse kitsal ekraanil ja pöörab avatud menüüs', () => {
-    expect(v.headerChevronClass).toContain('max-[1655px]:hidden');
+    expect(v.headerChevronClass).toContain('max-[1656px]:hidden');
     expect(v.headerChevronClass).toContain('group-data-[state=open]:rotate-180');
   });
 });

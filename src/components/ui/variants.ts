@@ -345,10 +345,10 @@ export const chipVariants = cva(
 export const navSwitchClass = 'flex shrink-0 gap-0.5 rounded-md border border-border bg-muted p-0.5';
 export const navSwitchItemClass = `inline-flex shrink-0 cursor-pointer items-center gap-1.5 whitespace-nowrap rounded-sm border-0 bg-transparent px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors not-aria-[current=page]:enabled:hover:bg-muted-hover not-aria-[current=page]:enabled:hover:text-foreground aria-[current=page]:bg-selection aria-[current=page]:text-white leading-natural ${focusRing}`;
 
-// --- Päise nupud kitsal ekraanil (alla 1656px: logo + menüü + paremnupud ei mahu): operaatorivalija ja kasutajamenüü näitavad ainult
+// --- Päise nupud kitsal ekraanil (laius kuni 1655px kaasa arvatud, `max-[1656px]` = laius < 1656px nagu vana `max-width: 1655px`; logo + menüü + paremnupud ei mahu): operaatorivalija ja kasutajamenüü näitavad ainult
 // ikooni 28px nupul (kasutaja otsus 2026-11-17). Nimi, silt ja nool peidetakse; avatud menüü nool pöörab (nupp on `group`).
-export const headerTriggerClass = 'group max-[1655px]:relative max-[1655px]:size-7 max-[1655px]:gap-0 max-[1655px]:p-0';
-export const headerNarrowHiddenClass = 'max-[1655px]:hidden';
+export const headerTriggerClass = 'group max-[1656px]:relative max-[1656px]:size-7 max-[1656px]:gap-0 max-[1656px]:p-0';
+export const headerNarrowHiddenClass = 'max-[1656px]:hidden';
 export const headerChevronClass = `transition-transform duration-200 group-data-[state=open]:rotate-180 ${headerNarrowHiddenClass}`;
 
 /** Jaotise pealkiri (etapp 4.1; vanad .form-sub-header, .form-section-title, .section-title, .section-subtitle):

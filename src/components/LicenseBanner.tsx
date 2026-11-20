@@ -9,7 +9,7 @@ const BANNER_CLASS = 'w-full shrink-0 px-4 py-1.5 text-center text-base leading-
 const BANNER_TONE = {
   support: 'bg-info/15 text-info-text',
   expired: 'bg-destructive/15 text-danger-text',
-  warning: 'bg-warning/15 text-warning-text',
+  warning: 'bg-warning-solid/18 text-warning-text',
 } as const;
 
 // Tugivaate riba: alati nähtav tugivaates, litsentsiriba kohal.
