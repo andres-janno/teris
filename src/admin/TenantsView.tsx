@@ -1,11 +1,12 @@
-import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { Alert, Badge, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
 import { useEffect, useState } from 'react';
 import { platformApi, type TenantSummary } from './platformApi.ts';
 import { LicenseCell } from './LicenseCell.tsx';
 import { formatHa, formatTallinn } from './format.ts';
+import { adminBadgeTone, adminCardClass, adminH2Class, adminMutedClass, adminToolbarClass } from './adminUi.ts';
 
 export function StatusBadge({ status }: { status: TenantSummary['status'] }) {
-  return status === 'ACTIVE' ? <span className="admin-badge ok">Aktiivne</span> : <span className="admin-badge off">Peatatud</span>;
+  return status === 'ACTIVE' ? <Badge tone={adminBadgeTone('ok')}>Aktiivne</Badge> : <Badge tone={adminBadgeTone('off')}>Peatatud</Badge>;
 }
 
 export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) => void; onNew: () => void; notice?: string }) {
@@ -24,16 +25,16 @@ export function TenantsView({ onOpen, onNew, notice }: { onOpen: (id: string) =>
   }, []);
 
   return (
-    <Card className="admin-card">
-      <div className="admin-toolbar">
-        <h2>Ettevõtted</h2>
+    <Card className={adminCardClass}>
+      <div className={adminToolbarClass}>
+        <h2 className={adminH2Class}>Ettevõtted</h2>
         <Button variant="primary" onClick={onNew}>
           Uus ettevõte
         </Button>
       </div>
       {notice && <Alert>{notice}</Alert>}
       {error && <Alert tone="error">{error}</Alert>}
-      {!tenants && !error && <div className="admin-muted">Laadin…</div>}
+      {!tenants && !error && <div className={adminMutedClass}>Laadin…</div>}
       {tenants && (
         <Table>
           <TableHeader>

@@ -1,11 +1,24 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import { platformApi, type LicenseModule, type TenantDetailData } from './platformApi.ts';
 import { LicenseCell } from './LicenseCell.tsx';
 import { ModuleChecks } from './NewTenantForm.tsx';
 import { StatusBadge } from './TenantsView.tsx';
 import { AuditView } from './AuditView.tsx';
 import { formatHa, formatTallinn } from './format.ts';
-import { Alert, DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { Alert, Badge, DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
+import { cn } from '../components/ui/cn';
+import {
+  adminActionsClass, adminBadgeTone, adminCardClass, adminCardFootClass, adminCardHeadClass, adminFieldClass, adminFieldLabelClass, adminH2Class,
+  adminH2FlushClass, adminHintClass, adminLicenseGridClass, adminMetaGridClass, adminMetaLabelClass, adminMutedClass, adminSplitClass, adminToolbarClass
+} from './adminUi.ts';
+
+/** Üks lahter ettevõtte kokkuvõttes: silt + väärtus. */
+const MetaItem = ({ label, children }: { label: string; children: ReactNode }) => (
+  <div>
+    <span className={adminMetaLabelClass}>{label}</span>
+    {children}
+  </div>
+);
 
 export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: string; initialNotice?: string; onBack: () => void; onDeleted: (notice: string) => void }) {
   const [tenant, setTenant] = useState<TenantDetailData | null>(null);
@@ -109,82 +122,82 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
 
   return (
     <div>
-      <div className="admin-toolbar">
+      <div className={adminToolbarClass}>
         <Button onClick={onBack}>
           ← Ettevõtted
         </Button>
       </div>
       {error && <Alert tone="error">{error}</Alert>}
       {notice && <Alert>{notice}</Alert>}
-      {!tenant && !error && <div className="admin-muted">Laadin…</div>}
+      {!tenant && !error && <div className={adminMutedClass}>Laadin…</div>}
       {tenant && (
         <>
-          <Card className="admin-card">
-            <div className="admin-toolbar">
-              <h2>{tenant.name} <StatusBadge status={tenant.status} /></h2>
+          <Card className={adminCardClass}>
+            <div className={adminToolbarClass}>
+              <h2 className={adminH2Class}>{tenant.name} <StatusBadge status={tenant.status} /></h2>
               <Button variant={tenant.status === 'ACTIVE' ? 'secondary' : 'primary'} onClick={toggleStatus} disabled={busy}>
                 {tenant.status === 'ACTIVE' ? 'Peata ettevõte' : 'Taasaktiveeri'}
               </Button>
             </div>
-            <div className="admin-meta">
-              <div><span>Registrikood</span>{tenant.registryCode ?? '–'}</div>
-              <div><span>Litsents</span><LicenseCell license={tenant.license} /></div>
-              <div><span>Kasutajad (aktiivsed/kokku)</span>{tenant.activeUserCount}/{tenant.userCount}</div>
-              <div><span>Põlde</span>{tenant.fieldCount}</div>
-              <div><span>Pindala (ha)</span>{formatHa(tenant.areaHa)}</div>
-              <div><span>Viimane sisselogimine</span>{formatTallinn(tenant.lastLoginAt)}</div>
+            <div className={adminMetaGridClass}>
+              <MetaItem label="Registrikood">{tenant.registryCode ?? '–'}</MetaItem>
+              <MetaItem label="Litsents"><LicenseCell license={tenant.license} /></MetaItem>
+              <MetaItem label="Kasutajad (aktiivsed/kokku)">{tenant.activeUserCount}/{tenant.userCount}</MetaItem>
+              <MetaItem label="Põlde">{tenant.fieldCount}</MetaItem>
+              <MetaItem label="Pindala (ha)">{formatHa(tenant.areaHa)}</MetaItem>
+              <MetaItem label="Viimane sisselogimine">{formatTallinn(tenant.lastLoginAt)}</MetaItem>
             </div>
           </Card>
 
-          <Card className="admin-card">
-            <div className="admin-card-head">
-              <h2>Kasutajatugi</h2>
-              <span className={`admin-badge ${tenant.supportGrant ? 'ok' : 'neutral'}`}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</span>
+          <Card className={adminCardClass}>
+            <div className={adminCardHeadClass}>
+              <h2 className={adminH2FlushClass}>Kasutajatugi</h2>
+              <Badge tone={adminBadgeTone(tenant.supportGrant ? 'ok' : 'neutral')}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</Badge>
             </div>
             {tenant.supportGrant ? (
-              <div className="admin-split">
+              <div className={adminSplitClass}>
                 <div>
-                  <div className="admin-field-label">Ligipääs kehtib kuni</div>
-                  <div className="admin-field-value">{formatTallinn(tenant.supportGrant.validUntil)}</div>
-                  <div className="admin-hint">Tugivaade avaneb uues aknas ainult lugemiseks. Iga sisenemine logitakse ettevõtte poolel.</div>
+                  <div className={adminFieldLabelClass}>Ligipääs kehtib kuni</div>
+                  <div className="mt-1 text-lg font-semibold leading-natural text-foreground">{formatTallinn(tenant.supportGrant.validUntil)}</div>
+                  <div className={adminHintClass}>Tugivaade avaneb uues aknas ainult lugemiseks. Iga sisenemine logitakse ettevõtte poolel.</div>
                 </div>
-                <div className="admin-actions">
+                <div className={adminActionsClass}>
                   <Button variant="primary" onClick={openSupport} disabled={busy}>Ava ettevõtte vaade</Button>
                 </div>
               </div>
             ) : (
-              <p className="admin-hint">Ettevõte pole kasutajatoele ligipääsu andnud. Luba antakse ettevõtte admini poolt teris.ee-s (Kasutajad → Kasutajatoe ligipääs).</p>
+              <p className={adminHintClass}>Ettevõte pole kasutajatoele ligipääsu andnud. Luba antakse ettevõtte admini poolt teris.ee-s (Kasutajad → Kasutajatoe ligipääs).</p>
             )}
             {supportUrl && (
-              <Alert tone="info" className="admin-support-link">
+              <Alert tone="info" className="mt-3">
                 <a href={supportUrl} target="_blank" rel="noopener noreferrer">Ava tugivaade</a>
                 <span> — brauser blokeeris uue akna. Link kehtib 60 sekundit.</span>
               </Alert>
             )}
           </Card>
 
-          <Card asChild className="admin-card"><form onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
-            <div className="admin-card-head">
-              <h2>Litsents</h2>
+          <Card asChild className={adminCardClass}><form onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
+            <div className={adminCardHeadClass}>
+              <h2 className={adminH2FlushClass}>Litsents</h2>
               <LicenseCell license={tenant.license} />
             </div>
-            <div className="admin-license-grid">
-              <div className="admin-field">
-                <label className="admin-field-label" htmlFor="td-until">Kehtib kuni</label>
+            <div className={adminLicenseGridClass}>
+              <div className={adminFieldClass}>
+                <label className={adminFieldLabelClass} htmlFor="td-until">Kehtib kuni</label>
                 <DateInput id="td-until" value={validUntil} onChange={setValidUntil} required />
               </div>
-              <div className="admin-field">
-                <span className="admin-field-label">Moodulid</span>
-                <ModuleChecks value={modules} onChange={setModules} />
+              <div className={adminFieldClass}>
+                <span className={adminFieldLabelClass}>Moodulid</span>
+                <ModuleChecks value={modules} onChange={setModules} className="min-h-10.5 items-center" />
               </div>
             </div>
-            <div className="admin-card-foot">
+            <div className={adminCardFootClass}>
               <Button type="submit" variant="primary" disabled={busy}>Salvesta litsents</Button>
             </div>
           </form></Card>
 
-          <Card className="admin-card">
-            <h2>Kasutajad</h2>
+          <Card className={adminCardClass}>
+            <h2 className={adminH2Class}>Kasutajad</h2>
             <Table>
               <TableHeader>
                 <TableRow>
@@ -219,27 +232,27 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
             </Table>
           </Card>
 
-          <Card className="admin-card">
-            <h2>Ettevõtte logi</h2>
+          <Card className={adminCardClass}>
+            <h2 className={adminH2Class}>Ettevõtte logi</h2>
             <AuditView key={auditKey} tenantId={id} />
           </Card>
 
-          <Card className="admin-card admin-danger-card">
-            <h2>Ettevõtte kustutamine</h2>
+          <Card className={cn(adminCardClass, 'border-danger-solid/35')}>
+            <h2 className={cn(adminH2Class, 'text-danger-text')}>Ettevõtte kustutamine</h2>
             {tenant.status === 'ACTIVE' ? (
-              <p className="admin-hint">Kustutada saab ainult peatatud ettevõtet. Peata ettevõte enne kustutamist.</p>
+              <p className={adminHintClass}>Kustutada saab ainult peatatud ettevõtet. Peata ettevõte enne kustutamist.</p>
             ) : (
               <>
-                <p className="admin-hint">
+                <p className={adminHintClass}>
                   Kustutab jäädavalt ettevõtte, tema kasutajad, litsentsi ja kõik andmed (põllud, tööd, laoarvestus, masinad, seadmed, sõidud jm).
                   Seadmete tunnused vabanevad teistele ettevõtetele. Teenusepakkuja logisse jääb kustutamise kirje. Tagasi võtta ei saa.
                 </p>
-                <div className="admin-split admin-danger-row">
-                  <div className="admin-field">
-                    <label className="admin-field-label" htmlFor="td-confirm">Kinnituseks sisesta ettevõtte nimi: <strong>{tenant.name}</strong></label>
+                <div className={cn(adminSplitClass, 'mt-3 items-end')}>
+                  <div className={cn(adminFieldClass, 'grow basis-70')}>
+                    <label className={adminFieldLabelClass} htmlFor="td-confirm">Kinnituseks sisesta ettevõtte nimi: <strong>{tenant.name}</strong></label>
                     <Input id="td-confirm" value={confirmName} onChange={(e) => setConfirmName(e.target.value)} autoComplete="off" />
                   </div>
-                  <div className="admin-actions">
+                  <div className={adminActionsClass}>
                     <Button variant="danger" onClick={() => void deleteTenant()} disabled={busy || confirmName.trim() !== tenant.name.trim()}>
                       Kustuta jäädavalt
                     </Button>

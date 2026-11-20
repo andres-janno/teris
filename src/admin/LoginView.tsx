@@ -1,6 +1,7 @@
 import { Alert, Card, Button, Field, Input } from '../components/ui';
 import { useState, type FormEvent } from 'react';
 import { platformApi } from './platformApi.ts';
+import { adminFormClass, adminTitleClass } from './adminUi.ts';
 
 export function LoginView({ onLogin }: { onLogin: (username: string) => void }) {
   const [username, setUsername] = useState('');
@@ -25,8 +26,8 @@ export function LoginView({ onLogin }: { onLogin: (username: string) => void }) 
   };
 
   return (
-    <Card asChild className="admin-login"><form className="admin-form" onSubmit={submit}>
-      <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
+    <Card asChild className="admin-login mx-auto max-w-95"><form className={adminFormClass} onSubmit={submit}>
+      <h1 className={`${adminTitleClass} mb-4`}><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
       {error && <Alert tone="error">{error}</Alert>}
       <Field label="Kasutajanimi" htmlFor="pl-user">
         <Input id="pl-user" value={username} onChange={(e) => setUsername(e.target.value)} autoComplete="username" autoFocus required />

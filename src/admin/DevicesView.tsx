@@ -2,6 +2,7 @@ import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type DeviceRegistration, type DeviceRow } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
+import { adminCardClass, adminH2Class, adminH3Class, adminMutedClass } from './adminUi.ts';
 
 const TYPE_LABEL: Record<string, string> = { CELLULAR: 'Mobiilsidega', EYE_SENSOR: 'Eye andur' };
 
@@ -43,11 +44,11 @@ export function DevicesView() {
   };
 
   return (
-    <Card className="admin-card">
-      <h2>Seadmed</h2>
+    <Card className={adminCardClass}>
+      <h2 className={adminH2Class}>Seadmed</h2>
       {error && <Alert tone="error">{error}</Alert>}
       {notice && <Alert>{notice}</Alert>}
-      {!devices && !error && <div className="admin-muted">Laadin…</div>}
+      {!devices && !error && <div className={adminMutedClass}>Laadin…</div>}
       {devices && (
         <Table>
           <TableHeader>
@@ -81,7 +82,7 @@ export function DevicesView() {
           </TableBody>
         </Table>
       )}
-      <h3>Viimased registreerimised</h3>
+      <h3 className={adminH3Class}>Viimased registreerimised</h3>
       {regs && (
         <Table>
           <TableHeader>

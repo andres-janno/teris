@@ -12,6 +12,14 @@ import {
   type WorkPhase
 } from './platformApi.ts';
 import { Alert, NumberInput, CheckboxField, Field, Card, Button, Input, Select, Textarea, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableEmpty } from '../components/ui';
+import { cn } from '../components/ui/cn';
+import {
+  adminActionsClass, adminCardClass, adminChecksClass, adminFormClass, adminFormGridClass, adminH2Class, adminH3Class, adminMutedClass, adminNavClass,
+  adminRowActionsClass, adminSubpanelClass, adminToolbarClass
+} from './adminUi.ts';
+
+/** Alamvormi kaart (kultuuri, sordi, tööliigi vorm tabeli kohal). */
+const subformClass = 'mb-3';
 
 type Tab = 'crops' | 'workTypes';
 
@@ -99,10 +107,10 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
   };
 
   return (
-    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
-      <h3>{crop ? `Muuda kultuuri: ${crop.name}` : 'Uus kultuur'}</h3>
+    <Card asChild variant="tile" padding="sm" className={subformClass}><form className={adminFormClass} onSubmit={submit}>
+      <h3 className={adminH3Class}>{crop ? `Muuda kultuuri: ${crop.name}` : 'Uus kultuur'}</h3>
       {error && <Alert tone="error">{error}</Alert>}
-      <div className="admin-form-grid">
+      <div className={adminFormGridClass}>
         <Field htmlFor="cc-name" label="Nimi *">
           <Input id="cc-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
         </Field>
@@ -113,7 +121,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
           <Select id="cc-group" value={d.group} onValueChange={(v) => set('group', v as CropGroup)} options={(Object.keys(CROP_GROUP_LABELS) as CropGroup[]).map((g) => ({ value: g, label: CROP_GROUP_LABELS[g] }))} />
         </Field>
         <Field htmlFor="cc-color" label="Värv">
-          <input id="cc-color" className="admin-color-input" type="color" value={d.color} onChange={(e) => set('color', e.target.value)} />
+          <input id="cc-color" className="h-8 w-14 cursor-pointer rounded-sm border border-input bg-field p-0.5" type="color" value={d.color} onChange={(e) => set('color', e.target.value)} />
         </Field>
         <Field htmlFor="cc-pria" label="PRIA kood">
           <Input id="cc-pria" value={d.priaCode} onChange={(e) => set('priaCode', e.target.value)} maxLength={50} />
@@ -139,7 +147,7 @@ function CropForm({ crop, onSaved, onCancel }: { crop: CatalogCrop | null; onSav
       </Field>
       <Check label="Talikultuur" checked={d.isWinterCrop} onChange={(v) => set('isWinterCrop', v)} />
       <Check label="PRIA eristab allakülvi" checked={d.priaUndersowing} onChange={(v) => set('priaUndersowing', v)} />
-      <div className="admin-actions">
+      <div className={adminActionsClass}>
         <Button type="submit" variant="primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</Button>
         <Button onClick={onCancel} disabled={busy}>Tühista</Button>
       </div>
@@ -202,10 +210,10 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
   };
 
   return (
-    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
-      <h3>{variety ? `Muuda sorti: ${variety.name}` : 'Uus sort'}</h3>
+    <Card asChild variant="tile" padding="sm" className={subformClass}><form className={adminFormClass} onSubmit={submit}>
+      <h3 className={adminH3Class}>{variety ? `Muuda sorti: ${variety.name}` : 'Uus sort'}</h3>
       {error && <Alert tone="error">{error}</Alert>}
-      <div className="admin-form-grid">
+      <div className={adminFormGridClass}>
         <Field htmlFor="cv-name" label="Nimi *">
           <Input id="cv-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
         </Field>
@@ -232,7 +240,7 @@ function VarietyForm({ cropId, variety, onSaved, onCancel }: { cropId: string; v
         <Textarea id="cv-notes" rows={2} value={d.notes} onChange={(e) => set('notes', e.target.value)} maxLength={2000} />
       </Field>
       <Check label="Aktiivne" checked={d.isActive} onChange={(v) => set('isActive', v)} />
-      <div className="admin-actions">
+      <div className={adminActionsClass}>
         <Button type="submit" variant="primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</Button>
         <Button onClick={onCancel} disabled={busy}>Tühista</Button>
       </div>
@@ -256,8 +264,8 @@ function VarietiesPanel({ crop, onChanged }: { crop: CatalogCrop; onChanged: () 
   };
 
   return (
-    <div className="admin-subpanel">
-      <div className="admin-toolbar">
+    <div className={adminSubpanelClass}>
+      <div className={adminToolbarClass}>
         <strong>Sordid — {crop.name}</strong>
         <Button size="sm" onClick={() => setEditing('new')}>Lisa sort</Button>
       </div>
@@ -286,7 +294,7 @@ function VarietiesPanel({ crop, onChanged }: { crop: CatalogCrop; onChanged: () 
               <TableCell>{v.maturityDays ?? '–'}</TableCell>
               <TableCell>{v.winterHardiness ?? '–'}</TableCell>
               <TableCell>{yesNo(v.isActive)}</TableCell>
-              <TableCell><div className="admin-row-actions">
+              <TableCell><div className={adminRowActionsClass}>
                 <Button size="sm" onClick={() => setEditing(v)}>Muuda</Button>
                 <Button variant="danger" size="sm" onClick={() => void remove(v)}>Kustuta</Button>
               </div></TableCell>
@@ -320,8 +328,8 @@ function CropsTab({ data, reload }: { data: CatalogData; reload: () => void }) {
 
   return (
     <div>
-      <div className="admin-toolbar">
-        <h2>Kultuurid</h2>
+      <div className={adminToolbarClass}>
+        <h2 className={adminH2Class}>Kultuurid</h2>
         <Button variant="primary" size="sm" onClick={() => setEditing('new')}>Lisa kultuur</Button>
       </div>
       {error && <Alert tone="error">{error}</Alert>}
@@ -346,11 +354,11 @@ function CropsTab({ data, reload }: { data: CatalogData; reload: () => void }) {
               <TableCell>{c.name}</TableCell>
               <TableCell>{c.scientificName ?? '–'}</TableCell>
               <TableCell>{CROP_GROUP_LABELS[c.group] ?? c.group}</TableCell>
-              <TableCell><span className="admin-swatch" style={{ background: c.color }} title={c.color} /></TableCell>
+              <TableCell><span className="inline-block size-4.5 rounded-sm border border-border align-middle" style={{ background: c.color }} title={c.color} /></TableCell>
               <TableCell>{c.priaCode ?? '–'}</TableCell>
               <TableCell>{yesNo(c.isWinterCrop)}</TableCell>
               <TableCell numeric>{c.varieties.length}</TableCell>
-              <TableCell><div className="admin-row-actions">
+              <TableCell><div className={adminRowActionsClass}>
                 <Button size="sm" onClick={() => setOpenId(openId === c.id ? null : c.id)}>
                   {openId === c.id ? 'Peida sordid' : 'Sordid'}
                 </Button>
@@ -412,10 +420,10 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
   };
 
   return (
-    <Card asChild variant="tile" padding="sm" className="admin-subform"><form className="admin-form" onSubmit={submit}>
-      <h3>{wt ? `Muuda tööliiki: ${wt.name}` : 'Uus tööliik'}</h3>
+    <Card asChild variant="tile" padding="sm" className={subformClass}><form className={adminFormClass} onSubmit={submit}>
+      <h3 className={adminH3Class}>{wt ? `Muuda tööliiki: ${wt.name}` : 'Uus tööliik'}</h3>
       {error && <Alert tone="error">{error}</Alert>}
-      <div className="admin-form-grid">
+      <div className={adminFormGridClass}>
         <Field htmlFor="wt-name" label="Nimi *">
           <Input id="wt-name" value={d.name} onChange={(e) => set('name', e.target.value)} maxLength={100} required />
         </Field>
@@ -426,11 +434,11 @@ function WorkTypeForm({ wt, nextOrder, onSaved, onCancel }: { wt: CatalogWorkTyp
           <NumberInput id="wt-order" min={0} integer value={numOrNull(d.sortOrder)} onChange={(v) => set('sortOrder', numStr(v))} />
         </Field>
       </div>
-      <div className="admin-checks">
+      <div className={adminChecksClass}>
         <Check label="Kasutab kulumaterjale" checked={d.usesMaterials} onChange={(v) => set('usesMaterials', v)} />
         <Check label="Aktiivne" checked={d.isActive} onChange={(v) => set('isActive', v)} />
       </div>
-      <div className="admin-actions">
+      <div className={adminActionsClass}>
         <Button type="submit" variant="primary" disabled={busy}>{busy ? 'Salvestan…' : 'Salvesta'}</Button>
         <Button onClick={onCancel} disabled={busy}>Tühista</Button>
       </div>
@@ -457,8 +465,8 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
 
   return (
     <div>
-      <div className="admin-toolbar">
-        <h2>Tööliigid</h2>
+      <div className={adminToolbarClass}>
+        <h2 className={adminH2Class}>Tööliigid</h2>
         <Button variant="primary" size="sm" onClick={() => setEditing('new')}>Lisa tööliik</Button>
       </div>
       {error && <Alert tone="error">{error}</Alert>}
@@ -486,7 +494,7 @@ function WorkTypesTab({ data, reload }: { data: CatalogData; reload: () => void 
               <TableCell>{yesNo(w.usesMaterials)}</TableCell>
               <TableCell numeric>{w.sortOrder}</TableCell>
               <TableCell>{yesNo(w.isActive)}</TableCell>
-              <TableCell><div className="admin-row-actions">
+              <TableCell><div className={adminRowActionsClass}>
                 <Button size="sm" onClick={() => setEditing(w)}>Muuda</Button>
                 <Button variant="danger" size="sm" onClick={() => void remove(w)}>Kustuta</Button>
               </div></TableCell>
@@ -519,10 +527,10 @@ export function CatalogView() {
   useEffect(reload, [reload]);
 
   return (
-    <Card className="admin-card">
-      <h2>Algkataloog</h2>
+    <Card className={adminCardClass}>
+      <h2 className={adminH2Class}>Algkataloog</h2>
       <Alert tone="info">Algkataloogi muudatused kehtivad ainult edaspidi loodavatele ettevõtetele.</Alert>
-      <div className="admin-nav">
+      <div className={cn(adminNavClass, 'mt-4')}>
         {([['crops', 'Kultuurid'], ['workTypes', 'Tööliigid']] as [Tab, string][]).map(([k, l]) => (
           <Button key={k} aria-pressed={tab === k} onClick={() => setTab(k)}>
             {l}
@@ -530,7 +538,7 @@ export function CatalogView() {
         ))}
       </div>
       {error && <Alert tone="error">{error}</Alert>}
-      {!data && !error && <div className="admin-muted">Laadin…</div>}
+      {!data && !error && <div className={adminMutedClass}>Laadin…</div>}
       {data && tab === 'crops' && <CropsTab data={data} reload={reload} />}
       {data && tab === 'workTypes' && <WorkTypesTab data={data} reload={reload} />}
     </Card>

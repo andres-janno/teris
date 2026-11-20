@@ -4,6 +4,7 @@ import { platformApi, type LandingStats } from './platformApi.ts';
 import { Alert, DateInput, Card, StatTile, Button, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { formatDate, formatTallinn } from './format.ts';
 import { VisitsChart } from './VisitsChart.tsx';
+import { adminCardClass, adminFilterRowClass, adminH2Class, adminH3Class, adminStatRowClass, adminTwoColClass } from './adminUi.ts';
 
 const tallinnDay = (d: Date) => new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(d);
 const CLASS_LABELS: Record<string, string> = {
@@ -48,11 +49,11 @@ export function LandingStatsView() {
   const totalViews = stats?.daily.reduce((s, d) => s + d.views, 0) ?? 0;
 
   return (
-    <Card className="admin-card">
-      <h2>Landing</h2>
-      <div className="admin-filter-row">
+    <Card className={adminCardClass}>
+      <h2 className={adminH2Class}>Landing</h2>
+      <div className={adminFilterRowClass}>
         <span>Periood</span>
-        <div className="admin-preset-group">
+        <div className="flex flex-wrap gap-1">
           {PRESETS.map((p) => (
             <Button
               key={p.days}
@@ -72,17 +73,17 @@ export function LandingStatsView() {
       {error && <Alert tone="error">{error}</Alert>}
       {stats && (
         <>
-          <div className="admin-stat-row">
+          <div className={adminStatRowClass}>
             <StatTile label="Külastajad" value={totalVisitors} note="Unikaalsed inimesed päeva kaupa (brauser + IP päevase räsina), kelle brauseris leht päriselt avanes. Robotid ei lähe arvesse. Sama inimene eri päevadel loetakse mitu korda." />
             <StatTile label="Vaatamised" value={totalViews} note="Kõik inimeste lehe avamised (avaleht ja privaatsusleht), sh korduvad avamised ja värskendused." />
             <StatTile label="„Tunnen huvi“ klõps" value={stats.funnel.clicked} sub={<>{pct(stats.funnel.clicked, stats.funnel.viewed)} külastajatest</>} note="Külastajad, kes vajutasid vähemalt korra mõnda „Tunnen huvi“ nuppu (päis, hero, sammud, jalus). „Logi sisse“ klõpse ei arvestata." />
             <StatTile label="Saadetud vorm" value={stats.funnel.submitted} sub={<>{pct(stats.funnel.submitted, stats.funnel.viewed)} külastajatest</>} note="Külastajad, kelle „Tunnen huvi“ vormi saatmine õnnestus. Päris päringud on vaates „Huvilised“; spämmifiltri kinni peetud saatmised võivad siin olla, aga seal mitte." />
           </div>
 
-          <h3>Külastajad</h3>
+          <h3 className={adminH3Class}>Külastajad</h3>
           <VisitsChart daily={stats.daily} from={stats.from.slice(0, 10)} to={stats.to.slice(0, 10)} />
-          <details className="admin-details">
-            <summary>Näita tabelina</summary>
+          <details className="mb-4 text-sm leading-natural">
+            <summary className="mb-2 cursor-pointer text-muted-foreground">Näita tabelina</summary>
             <Table>
               <TableHeader><TableRow><TableHead>Päev</TableHead><TableHead numeric>Külastajad</TableHead><TableHead numeric>Vaatamised</TableHead></TableRow></TableHeader>
               <TableBody>
@@ -92,16 +93,16 @@ export function LandingStatsView() {
             </Table>
           </details>
 
-          <div className="admin-two-col">
+          <div className={adminTwoColClass}>
             <div>
-              <h3>Allikad</h3>
+              <h3 className={adminH3Class}>Allikad</h3>
               <Table>
                 <TableHeader><TableRow><TableHead>Allikas</TableHead><TableHead numeric>Külastajad</TableHead></TableRow></TableHeader>
                 <TableBody>{stats.sources.map((s) => <TableRow key={s.source}><TableCell>{s.source}</TableCell><TableCell numeric>{s.visitors}</TableCell></TableRow>)}</TableBody>
               </Table>
             </div>
             <div>
-              <h3>Seadmed</h3>
+              <h3 className={adminH3Class}>Seadmed</h3>
               <Table>
                 <TableHeader><TableRow><TableHead>Seade</TableHead><TableHead numeric>Külastajad</TableHead></TableRow></TableHeader>
                 <TableBody>{stats.devices.map((d) => <TableRow key={d.device}><TableCell>{DEVICE_LABELS[d.device] ?? d.device}</TableCell><TableCell numeric>{d.visitors}</TableCell></TableRow>)}</TableBody>
@@ -109,7 +110,7 @@ export function LandingStatsView() {
             </div>
           </div>
 
-          <h3>Robotid ja AI-roomajad</h3>
+          <h3 className={adminH3Class}>Robotid ja AI-roomajad</h3>
           <Table>
             <TableHeader><TableRow><TableHead>Tüüp</TableHead><TableHead>Nimi</TableHead><TableHead numeric>Päringuid</TableHead><TableHead numeric>llms.txt</TableHead><TableHead>llms.txt viimati</TableHead><TableHead>Viimati</TableHead></TableRow></TableHeader>
             <TableBody>

@@ -7,6 +7,9 @@ import { Button } from '../components/ui';
 
 type Props = { initialHtml: string; onChange: (html: string) => void; placeholder?: string };
 
+// Tööriistariba on tavaline rida (nagu live'is); eraldaja on 8px vahe (vana laius/kõrgus ei rakendunud, sest <span> on rea-element).
+const SEPARATOR = 'mx-1';
+
 const exec = (cmd: string, value?: string) => document.execCommand(cmd, false, value);
 
 export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
@@ -50,18 +53,18 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
   );
 
   return (
-    <div className="admin-rte">
-      <div className="admin-rte-toolbar" role="toolbar" aria-label="Vormindus">
+    <div className="overflow-hidden rounded-md border border-border bg-field">
+      <div role="toolbar" aria-label="Vormindus">
         {tool('Paks', <Bold size={15} />, () => exec('bold'))}
         {tool('Kaldkiri', <Italic size={15} />, () => exec('italic'))}
         {tool('Allajoonitud', <Underline size={15} />, () => exec('underline'))}
-        <span className="admin-rte-sep" />
+        <span className={SEPARATOR} />
         {tool('Alapealkiri', <Heading3 size={15} />, () => exec('formatBlock', '<h3>'))}
         {tool('Tavaline lõik', <Pilcrow size={15} />, () => exec('formatBlock', '<p>'))}
-        <span className="admin-rte-sep" />
+        <span className={SEPARATOR} />
         {tool('Täpploend', <List size={15} />, () => exec('insertUnorderedList'))}
         {tool('Numberloend', <ListOrdered size={15} />, () => exec('insertOrderedList'))}
-        <span className="admin-rte-sep" />
+        <span className={SEPARATOR} />
         {tool('Lisa link', <Link size={15} />, addLink)}
         {tool('Eemalda link', <Unlink size={15} />, () => exec('unlink'))}
         {tool('Eemalda vormindus', <RemoveFormatting size={15} />, () => {
@@ -71,7 +74,7 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
       </div>
       <div
         ref={ref}
-        className="admin-rte-area help-content"
+        className="help-content max-h-[60vh] min-h-55 overflow-y-auto px-4 py-3 text-foreground outline-none focus:inset-ring-2 focus:inset-ring-primary/35 empty:before:pointer-events-none empty:before:text-subtle empty:before:content-[attr(data-placeholder)]"
         contentEditable
         suppressContentEditableWarning
         role="textbox"

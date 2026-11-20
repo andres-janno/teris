@@ -13,6 +13,7 @@ import { HelpView } from './HelpView.tsx';
 import { AiInstructionsView } from './AiInstructionsView.tsx';
 import { LandingStatsView } from './LandingStatsView.tsx';
 import { InterestView } from './InterestView.tsx';
+import { adminCardClass, adminH2Class, adminNavClass, adminShellClass, adminTitleClass } from './adminUi.ts';
 
 type View = { kind: 'tenants'; notice?: string } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'weather' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' };
 
@@ -41,17 +42,17 @@ export function AdminApp() {
   if (!user) return <LoginView onLogin={setUser} />;
 
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
-        <h1><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
-        <div className="admin-header-right">
+    <div className={adminShellClass}>
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-4">
+        <h1 className={adminTitleClass}><em className="admin-brand-word">TERIS</em> — teenusepakkuja</h1>
+        <div className="flex items-center gap-3 text-base leading-natural">
           <span>{user}</span>
           <Button size="sm" onClick={() => void logout()}>
             Logi välja
           </Button>
         </div>
       </header>
-      <nav className="admin-nav">
+      <nav className={adminNavClass}>
         <Button size="sm" aria-pressed={!['audit', 'catalog', 'devices', 'weather', 'help', 'landing', 'interest', 'ai'].includes(view.kind)} onClick={() => setView({ kind: 'tenants' })}>
           Ettevõtted
         </Button>
@@ -93,8 +94,8 @@ export function AdminApp() {
       {view.kind === 'landing' && <LandingStatsView />}
       {view.kind === 'interest' && <InterestView />}
       {view.kind === 'audit' && (
-        <Card className="admin-card">
-          <h2>Logi</h2>
+        <Card className={adminCardClass}>
+          <h2 className={adminH2Class}>Logi</h2>
           <AuditView />
         </Card>
       )}

@@ -8,6 +8,7 @@ interface Bucket { key: string; label: string; title: string; visitors: number; 
 
 const HEIGHT = 220;
 const M = { top: 12, right: 8, bottom: 26, left: 36 };
+const AXIS_CLASS = 'fill-muted-foreground text-2xs tabular-nums'; // telje sildid (kuupäevad ja väärtused)
 const WEEKLY_AFTER_DAYS = 92; // pikemal perioodil koondatakse nädala kaupa, et tulbad ei jääks liiga peeneks
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -92,21 +93,21 @@ export function VisitsChart({ daily, from, to }: { daily: DayRow[]; from: string
   const tipLeft = hover != null ? Math.min(Math.max(M.left + band * hover + band / 2, 70), width - 70) : 0;
 
   return (
-    <div className="visits-chart" ref={wrapRef}>
+    <div className="relative mb-2 w-full [&>svg]:block" ref={wrapRef}>
       <svg width={width} height={HEIGHT} role="img" aria-label={`Külastajad ${weekly ? 'nädalas' : 'päevas'}`} onMouseLeave={() => setHover(null)}>
         {ticks.map((t) => (
           <g key={t}>
-            <line className="visits-grid" x1={M.left} x2={width - M.right} y1={y(t)} y2={y(t)} />
-            <text className="visits-axis" x={M.left - 6} y={y(t)} textAnchor="end" dominantBaseline="middle">{t}</text>
+            <line className="stroke-border" x1={M.left} x2={width - M.right} y1={y(t)} y2={y(t)} />
+            <text className={AXIS_CLASS} x={M.left - 6} y={y(t)} textAnchor="end" dominantBaseline="middle">{t}</text>
           </g>
         ))}
         {buckets.map((b, i) => {
           const x = M.left + band * i + gap / 2;
           return (
             <g key={b.key}>
-              {b.visitors > 0 && <path className={`visits-bar${hover === i ? ' active' : ''}`} d={barPath(x, b.visitors)} />}
+              {b.visitors > 0 && <path className="fill-primary-strong" d={barPath(x, b.visitors)} />}
               {i % labelEvery === 0 && (
-                <text className="visits-axis" x={x + barW / 2} y={HEIGHT - 8} textAnchor="middle">{b.label}</text>
+                <text className={AXIS_CLASS} x={x + barW / 2} y={HEIGHT - 8} textAnchor="middle">{b.label}</text>
               )}
               {/* Tabamisala on terve veeru kõrgune, et ka madalat tulpa oleks lihtne tabada */}
               <rect x={M.left + band * i} y={M.top} width={band} height={plotH} fill="transparent" onMouseEnter={() => setHover(i)} />
@@ -115,7 +116,7 @@ export function VisitsChart({ daily, from, to }: { daily: DayRow[]; from: string
         })}
       </svg>
       {hovered && (
-        <div className="visits-tip" style={{ left: tipLeft }}>
+        <div className="pointer-events-none absolute top-0 flex -translate-x-1/2 flex-col gap-0.5 whitespace-nowrap rounded-md border border-border bg-card px-2.5 py-1.5 text-xs leading-natural text-foreground shadow-md [&>span]:tabular-nums [&>span]:text-muted-foreground" style={{ left: tipLeft }}>
           <strong>{hovered.title}</strong>
           <span>Külastajad: {hovered.visitors}</span>
           <span>Vaatamised: {hovered.views}</span>

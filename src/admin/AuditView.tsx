@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { platformApi, type AuditEntry } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
+import { adminMutedClass } from './adminUi.ts';
 import { Alert, Table, TableEmpty, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 const ACTIONS: Record<string, string> = {
@@ -75,7 +76,7 @@ export function AuditView({ tenantId, tenantNames }: { tenantId?: string; tenant
   return (
     <div>
       {error && <Alert tone="error">{error}</Alert>}
-      {!rows && !error && <div className="admin-muted">Laadin…</div>}
+      {!rows && !error && <div className={adminMutedClass}>Laadin…</div>}
       {rows && (
         <Table>
           <TableHeader>

@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, INTEREST_STATUS_LABELS, type InterestRow, type InterestStatus } from './platformApi.ts';
 import { formatTallinn } from './format.ts';
+import { adminCardClass, adminFilterRowClass, adminH2Class } from './adminUi.ts';
 import { Alert, FilterClear, Card, Button, Select, Textarea, TableEmpty, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 
 const STATUSES = Object.keys(INTEREST_STATUS_LABELS) as InterestStatus[];
@@ -43,9 +44,9 @@ export function InterestView() {
   };
 
   return (
-    <Card className="admin-card">
-      <h2>Huvilised</h2>
-      <div className="admin-filter-row">
+    <Card className={adminCardClass}>
+      <h2 className={adminH2Class}>Huvilised</h2>
+      <div className={adminFilterRowClass}>
         <label htmlFor="interest-filter">Staatus</label>
         <FilterClear active={filter !== ''} onClear={() => setFilter('')}>
           <Select
@@ -70,7 +71,7 @@ export function InterestView() {
                 {r.phone && <><br /><a href={`tel:${r.phone}`}>{r.phone}</a></>}
               </TableCell>
               <TableCell>{r.company ?? '–'}{r.areaHa != null && <><br />{r.areaHa} ha</>}</TableCell>
-              <TableCell className="admin-interest-message">{r.message ?? ''}</TableCell>
+              <TableCell className="max-w-80 whitespace-pre-wrap">{r.message ?? ''}</TableCell>
               <TableCell>{r.utmSource ?? r.referrerHost ?? 'otse'}</TableCell>
               <TableCell>
                 <Select

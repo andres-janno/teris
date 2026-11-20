@@ -3,6 +3,7 @@ import { Alert, Card, Button, Table, TableHeader, TableBody, TableRow, TableHead
 import { useCallback, useEffect, useState } from 'react';
 import { platformApi, type WeatherPointRow } from './platformApi.ts';
 import { formatDate, formatTallinn } from './format.ts';
+import { adminCardClass, adminH2Class, adminHintClass, adminMutedClass } from './adminUi.ts';
 
 type WeatherStatus = { points: WeatherPointRow[]; failWarn: number; tenantsWithKey: number };
 
@@ -43,13 +44,13 @@ export function WeatherAdminView() {
   const warn = (p: WeatherPointRow) => !!data && p.failCount >= data.failWarn;
 
   return (
-    <Card className="admin-card">
-      <h2>Ilmaandmed (ERA5-Land)</h2>
+    <Card className={adminCardClass}>
+      <h2 className={adminH2Class}>Ilmaandmed (ERA5-Land)</h2>
       {error && <Alert tone="error">{error}</Alert>}
       {notice && <Alert>{notice}</Alert>}
       {data && data.tenantsWithKey === 0 && <Alert tone="error">Ühelgi ettevõttel pole Copernicuse (CDS) võtit, ilmaandmeid ei laeta. Võtme lisab ettevõtte administraator menüüs „Ilmaandmete ühendus“.</Alert>}
       {data && data.points.some(warn) && <Alert tone="warning">Mõne punkti laadimine on ebaõnnestunud {data.failWarn}+ korda järjest.</Alert>}
-      {!data && !error && <div className="admin-muted">Laadin…</div>}
+      {!data && !error && <div className={adminMutedClass}>Laadin…</div>}
       {data && (
         <Table>
           <TableHeader>
@@ -69,7 +70,7 @@ export function WeatherAdminView() {
               <TableRow key={p.id} tone={warn(p) ? 'warning' : undefined}>
                 <TableCell>{p.lat.toFixed(1)}° N, {p.lon.toFixed(1)}° E{p.hasData === false && ' (üle vee, andmeid pole)'}</TableCell>
                 <TableCell numeric>{p.fieldSeasonCount}</TableCell>
-                <TableCell>{p.keyTenant ?? <span className="admin-warning-text">puudub</span>}</TableCell>
+                <TableCell>{p.keyTenant ?? <span className="font-semibold text-warning-text">puudub</span>}</TableCell>
                 <TableCell>{p.loadedFrom && p.loadedUntil ? `${formatDate(p.loadedFrom)} – ${formatDate(p.loadedUntil)}` : 'laadimata'}</TableCell>
                 <TableCell>{p.lastSuccessAt ? formatTallinn(p.lastSuccessAt) : '–'}</TableCell>
                 <TableCell numeric>{p.failCount}</TableCell>
@@ -87,7 +88,7 @@ export function WeatherAdminView() {
           </TableBody>
         </Table>
       )}
-      <p className="admin-hint">
+      <p className={adminHintClass}>
         Laadimine käib igal ööl Tallinna aja järgi kella 3 ja 7 vahel (kontroll kord tunnis, iga punkt kuni kord ~20 tunni jooksul). Esialgsed (viimase 90 päeva) andmed laetakse uuesti esmaspäeva öösel. „Lae uuesti“ laeb punkti kohe ja värskendab ka viimased 90 päeva.
       </p>
     </Card>

@@ -1,10 +1,12 @@
 import { useState, type FormEvent } from 'react';
 import { MODULES, platformApi, type LicenseModule } from './platformApi.ts';
 import { Alert, CheckboxField, DateInput, Card, Button, Field, Input } from '../components/ui';
+import { cn } from '../components/ui/cn';
+import { adminActionsClass, adminCardClass, adminChecksClass, adminFormClass, adminFormGridClass, adminH2Class } from './adminUi.ts';
 
-export function ModuleChecks({ value, onChange }: { value: LicenseModule[]; onChange: (v: LicenseModule[]) => void }) {
+export function ModuleChecks({ value, onChange, className }: { value: LicenseModule[]; onChange: (v: LicenseModule[]) => void; className?: string }) {
   return (
-    <div className="admin-checks">
+    <div className={cn(adminChecksClass, className)}>
       {MODULES.map((m) => (
         <CheckboxField
           key={m.id}
@@ -55,10 +57,10 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
   };
 
   return (
-    <Card asChild className="admin-card"><form className="admin-form" onSubmit={submit}>
-      <h2>Uus ettevõte</h2>
+    <Card asChild className={adminCardClass}><form className={adminFormClass} onSubmit={submit}>
+      <h2 className={adminH2Class}>Uus ettevõte</h2>
       {error && <Alert tone="error">{error}</Alert>}
-      <div className="admin-form-grid">
+      <div className={adminFormGridClass}>
         <Field label="Nimi *" htmlFor="nt-name">
           <Input id="nt-name" value={name} onChange={(e) => setName(e.target.value)} maxLength={200} required />
         </Field>
@@ -81,7 +83,7 @@ export function NewTenantForm({ onCreated, onCancel }: { onCreated: (id: string,
       <Field label="Moodulid">
         <ModuleChecks value={modules} onChange={setModules} />
       </Field>
-      <div className="admin-actions">
+      <div className={adminActionsClass}>
         <Button type="submit" variant="primary" disabled={busy}>
           {busy ? 'Salvestan…' : 'Loo ettevõte'}
         </Button>

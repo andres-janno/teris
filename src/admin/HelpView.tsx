@@ -7,6 +7,8 @@ import { HELP_SPOTS, HELP_MAX_LENGTH, isHelpKey, type HelpSpot } from '../help/h
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
 import { Alert, FilterClear, Card, CardButton, Button, Input } from '../components/ui';
+import { cn } from '../components/ui/cn';
+import { adminCardClass, adminCardFootClass, adminCardHeadClass, adminFieldLabelClass, adminH2FlushClass, adminHintClass, adminMutedClass } from './adminUi.ts';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -97,35 +99,35 @@ export function HelpView() {
   const knownCount = spots.filter((s) => !s.orphan).length;
 
   return (
-    <div className="admin-help">
-      <Card className="admin-card admin-help-list">
-        <div className="admin-card-head">
-          <h2>Juhendid</h2>
-          <span className="admin-muted">{filledCount}/{knownCount} täidetud</span>
+    <div className="grid grid-cols-[minmax(260px,340px)_1fr] items-start gap-4 max-[861px]:grid-cols-1">
+      <Card className={cn(adminCardClass, 'sticky top-4 flex max-h-[calc(100vh-32px)] flex-col gap-2.5 overflow-y-auto')}>
+        <div className={adminCardHeadClass}>
+          <h2 className={adminH2FlushClass}>Juhendid</h2>
+          <span className={adminMutedClass}>{filledCount}/{knownCount} täidetud</span>
         </div>
         <FilterClear active={!!query} onClear={() => setQuery('')}>
           <Input type="search" placeholder="Otsi…" value={query} onChange={(e) => setQuery(e.target.value)} />
         </FilterClear>
-        <div className="admin-help-filters">
+        <div className="flex flex-wrap gap-1.5">
           {(['all', 'filled', 'empty'] as Filter[]).map((f) => (
             <Button key={f} size="sm" aria-pressed={filter === f} onClick={() => setFilter(f)}>
               {f === 'all' ? 'Kõik' : f === 'filled' ? 'Täidetud' : 'Tühjad'}
             </Button>
           ))}
         </div>
-        {!rows && !error && <div className="admin-muted">Laadin…</div>}
-        {rows && groups.length === 0 && <div className="admin-muted">Ühtegi kohta ei leitud.</div>}
+        {!rows && !error && <div className={adminMutedClass}>Laadin…</div>}
+        {rows && groups.length === 0 && <div className={adminMutedClass}>Ühtegi kohta ei leitud.</div>}
         {groups.map(([area, items]) => (
-          <div key={area} className="admin-help-group">
-            <div className="admin-field-label">{area}</div>
+          <div key={area} className="mt-1.5 flex flex-col gap-0.5">
+            <div className={cn(adminFieldLabelClass, 'mb-1')}>{area}</div>
             {items.map((s) => {
               const filled = !!s.row && !isBlank(s.row.html);
               return (
-                <CardButton key={s.key} variant="tile" padding="none" selected={s.key === selected} className="admin-help-item" onClick={() => open(s)}>
-                  <span className={`admin-help-dot ${s.orphan ? 'orphan' : filled ? 'filled' : ''}`} />
-                  <span className="admin-help-item-text">
-                    <span className="admin-help-item-label">{s.label}</span>
-                    <span className="admin-help-item-where">{s.where}</span>
+                <CardButton key={s.key} variant="tile" padding="none" selected={s.key === selected} className="flex w-full items-start gap-2.5 px-2.5 py-2 text-left" onClick={() => open(s)}>
+                  <span className={cn('mt-1.5 size-2 shrink-0 rounded-full border border-subtle', s.orphan && 'border-warning-solid bg-warning-solid', !s.orphan && filled && 'border-primary bg-primary')} />
+                  <span className="flex min-w-0 flex-col">
+                    <span className="text-base font-medium leading-natural">{s.label}</span>
+                    <span className="text-xs leading-natural text-subtle">{s.where}</span>
                   </span>
                 </CardButton>
               );
@@ -134,29 +136,29 @@ export function HelpView() {
         ))}
       </Card>
 
-      <Card className="admin-card admin-help-editor">
+      <Card className={adminCardClass}>
         {error && <Alert tone="error">{error}</Alert>}
         {notice && <Alert tone="success">{notice}</Alert>}
         {!current ? (
-          <p className="admin-hint">Vali vasakult koht, mille juhendit muuta. Tühja juhendiga kohas rakendus küsimärki ei näita.</p>
+          <p className={adminHintClass}>Vali vasakult koht, mille juhendit muuta. Tühja juhendiga kohas rakendus küsimärki ei näita.</p>
         ) : (
           <>
-            <div className="admin-card-head">
+            <div className={adminCardHeadClass}>
               <div>
-                <h2>{current.label}</h2>
-                <div className="admin-hint">{current.area} · {current.where} · <code>{current.key}</code></div>
+                <h2 className={cn(adminH2FlushClass, 'mb-0.5')}>{current.label}</h2>
+                <div className={adminHintClass}>{current.area} · {current.where} · <code>{current.key}</code></div>
               </div>
               {current.row && (
-                <span className="admin-muted admin-help-updated">
+                <span className={cn(adminMutedClass, 'text-xs leading-natural')}>
                   Muudetud {formatTallinn(current.row.updatedAt)}{current.row.updatedBy ? `, ${current.row.updatedBy}` : ''}
                 </span>
               )}
             </div>
             {current.orphan ? (
               <>
-                <p className="admin-hint">Seda juhendikohta koodis enam pole, seega rakendus seda ei näita. Sisu:</p>
-                <div className="help-content admin-help-preview" dangerouslySetInnerHTML={{ __html: sanitizeHelp(savedHtml) }} />
-                <div className="admin-card-foot">
+                <p className={adminHintClass}>Seda juhendikohta koodis enam pole, seega rakendus seda ei näita. Sisu:</p>
+                <div className="help-content rounded-md border border-dashed border-border p-3" dangerouslySetInnerHTML={{ __html: sanitizeHelp(savedHtml) }} />
+                <div className={adminCardFootClass}>
                   <Button disabled={busy} onClick={() => window.confirm('Kustuta see juhend?') && void save('')}>
                     Kustuta
                   </Button>
@@ -165,8 +167,8 @@ export function HelpView() {
             ) : (
               <>
                 <RichTextEditor key={`${current.key}:${current.row?.updatedAt ?? 'uus'}`} initialHtml={savedHtml} onChange={setDraft} placeholder="Kirjuta juhend…" />
-                <div className="admin-card-foot">
-                  {dirty && <span className="admin-muted">Salvestamata muudatused</span>}
+                <div className={cn(adminCardFootClass, 'items-center')}>
+                  {dirty && <span className={cn(adminMutedClass, 'mr-auto text-sm leading-natural')}>Salvestamata muudatused</span>}
                   {current.row && (
                     <Button disabled={busy} onClick={() => window.confirm('Eemalda juhend? Küsimärki rakenduses enam ei näidata.') && void save('')}>
                       Eemalda juhend
