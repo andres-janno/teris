@@ -1,7 +1,8 @@
 import React from 'react';
 import { Users, ChevronDown } from 'lucide-react';
 import type { RelatedParty } from '../types/party';
-import { Button, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator } from './ui';
+import { Button, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem, DropdownMenuSeparator, cn } from './ui';
+import { headerChevronClass, headerNarrowHiddenClass, headerTriggerClass } from './ui/variants';
 
 interface OperatorSelectorProps {
   parties: RelatedParty[];
@@ -25,27 +26,27 @@ export const OperatorSelector: React.FC<OperatorSelectorProps> = ({ parties, sel
     onChange(selected.includes(id) ? selected.filter((s) => s !== id) : [...selected, id]);
 
   return (
-    <div className="header-operator">
+    <div className="ml-1">
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="filter"
             size="auto"
-            className="header-operator-trigger"
+            className={headerTriggerClass}
             aria-label={`Operaator: ${label}`}
             title={selected.length ? selectedNames.join(', ') : 'Filtreeri kaarti ja statistikat operaatori (harija) järgi'}
           >
             <Users size={15} />
-            <span className="header-operator-text">
-              <span className="header-operator-caption">Operaator</span>
-              <span className="header-operator-value">{label}</span>
+            <span className={cn('flex flex-col items-start', headerNarrowHiddenClass)}>
+              <span className="text-2xs leading-3 font-semibold tracking-widest uppercase opacity-70">Operaator</span>
+              <span className="max-w-45 truncate text-base leading-4 font-medium">{label}</span>
             </span>
-            {selected.length > 0 && <span className="header-operator-dot" />}
-            <ChevronDown size={15} className="header-operator-chevron" />
+            {selected.length > 0 && <span className="size-1.75 rounded-full bg-warning-solid text-warning-solid shadow-glow max-[1655px]:absolute max-[1655px]:top-1 max-[1655px]:right-1 max-[1655px]:size-1.5" />}
+            <ChevronDown size={15} className={cn('opacity-80', headerChevronClass)} />
           </Button>
         </DropdownMenuTrigger>
 
-        <DropdownMenuContent align="end" className="header-operator-content">
+        <DropdownMenuContent align="end" className="min-w-60">
           {/* Valik ei sulge menüüd: mitu operaatorit saab märkida järjest. */}
           <DropdownMenuCheckboxItem
             checked={selected.length === 0}
@@ -55,7 +56,7 @@ export const OperatorSelector: React.FC<OperatorSelectorProps> = ({ parties, sel
             <span>Kõik operaatorid</span>
           </DropdownMenuCheckboxItem>
           <DropdownMenuSeparator />
-          {operators.length === 0 && <div className="header-operator-empty">Operaatoreid pole (seotud isikute registris roll „Operaator“)</div>}
+          {operators.length === 0 && <div className="px-2.5 py-2 text-sm text-muted-foreground">Operaatoreid pole (seotud isikute registris roll „Operaator“)</div>}
           {operators.map((p) => (
             <DropdownMenuCheckboxItem
               key={p.id}

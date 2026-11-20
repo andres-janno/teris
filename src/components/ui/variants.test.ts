@@ -25,6 +25,7 @@ const allClassStrings = (): string[] => [
   ...(['line', 'segmented'] as const).flatMap((variant) => [v.tabsListVariants({ variant }), v.tabsTriggerVariants({ variant })]),
   v.fieldControlClass, v.menuContentClass, v.menuItemClass, v.menuSeparatorClass, v.menuLabelClass,
   v.popoverContentClass, v.tooltipContentClass,
+  v.headerTriggerClass, v.headerNarrowHiddenClass, v.headerChevronClass,
   v.helpHintTriggerClass, v.helpHintInlineClass, v.helpHintContentClass, v.helpHintTitleClass,
   ...(['x', 'none', 'sm', 'md', 'fill'] as const).map((scroll) => v.tableContainerClass({ scroll, bordered: true })),
   v.tableClass({ bordered: true }),
@@ -790,5 +791,16 @@ describe('hintText', () => {
     expect(v.hintTextClass).toContain('text-muted-foreground');
     expect(v.hintTextBlockClass).toContain('mt-1');
     expect(v.hintTextBlockClass).toContain('block');
+  });
+});
+
+describe('päise nupud kitsal ekraanil', () => {
+  it('nupp muutub 28px ikooninupuks ainult alla 1656px, ilma polstri ja vaheta', () => {
+    for (const c of ['max-[1655px]:size-7', 'max-[1655px]:p-0', 'max-[1655px]:gap-0', 'max-[1655px]:relative', 'group']) expect(v.headerTriggerClass.split(' ')).toContain(c);
+    expect(v.headerNarrowHiddenClass).toBe('max-[1655px]:hidden');
+  });
+  it('nool peidetakse kitsal ekraanil ja pöörab avatud menüüs', () => {
+    expect(v.headerChevronClass).toContain('max-[1655px]:hidden');
+    expect(v.headerChevronClass).toContain('group-data-[state=open]:rotate-180');
   });
 });

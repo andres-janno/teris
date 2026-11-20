@@ -106,7 +106,7 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
-// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E) ja 4f päise ja kesta klassid (RETIRED_4F). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 // 4c: Tehnika ja sõitude kustutatud klassid (etapp 4c). Eesliidete asemel täpsed nimed: id-d (`dev-assign-…`, `trip-notes`) ei loe.
 // `dev-imei`, `dev-model`, `imp-name` on ka vormiväljade id-d: id="…" ja htmlFor="…" väärtusi regex ei loe (lookbehind).
 // Jagatud klass auth-error-banner puudub teadlikult (jääb ühiste etapini). vehicle-card, v-* ja telemetry-suggestion-* viidi 4e-s ära (RETIRED_4E).
@@ -131,7 +131,7 @@ export const RETIRED_4C: readonly string[] = [
   'v-card-footer', 'v-equipment-badge-row', 'v-gauges-grid', 'with-bottom-gap',
 ];
 // 4d: kaardi paneelide kustutatud klassid (etapp 4d). Täpsed nimed. Jäävad klassid puuduvad teadlikult: crop-legend-item (valitud olek),
-// layer-loading-bar (::after), cc-range (liuguri käepide), add-poi-banner (värv), crop-indicator-dot (FieldMapCard), map-top-*-stack (App.tsx).
+// layer-loading-bar (::after), cc-range (liuguri käepide), add-poi-banner (värv), crop-indicator-dot (FieldMapCard). map-top-*-stack jäävad 4f-s: ainult polster map.css-is.
 export const RETIRED_4D: readonly string[] = [
   'active-dot', 'basemap-btn', 'basemap-cadastre-toggle', 'basemap-grid', 'basemap-name', 'cadastre-color', 'cc-date', 'cc-header',
   'cc-label', 'cc-link-btn', 'cc-now', 'cc-now-pct', 'cc-now-time', 'cc-notice', 'cc-notice-loading', 'cc-period',
@@ -183,8 +183,19 @@ export const RETIRED_4E: readonly string[] = [
   'work-entry-presets-label', 'work-entry-progress', 'work-entry-progress-head', 'work-entry-section', 'work-entry-top-grid',
   'work-entry-unit', 'work-entry-warning', 'work-full-name', 'year-crop', 'year-crop-edit-icon', 'year-crop-name', 'year-shape-btn',
 ];
+// 4f: päise, menüüde, ribade, tugipaneeli ja rakenduse kesta kustutatud klassid (etapp 4f). Täpsed nimed; `teris-logo` puudub teadlikult (logofailide nimi `teris-logo.svg`).
+export const RETIRED_4F: readonly string[] = [
+  'app-container', 'app-header', 'db-error-banner', 'header-actions', 'header-account', 'header-account-chevron', 'header-account-content',
+  'header-account-db', 'header-account-db-dot', 'header-account-footer', 'header-account-info', 'header-account-info-login',
+  'header-account-info-name', 'header-account-sun', 'header-account-trigger', 'header-brand', 'header-nav-slot', 'header-operator',
+  'header-operator-caption', 'header-operator-chevron', 'header-operator-content', 'header-operator-dot', 'header-operator-empty',
+  'header-operator-text', 'header-operator-trigger', 'header-operator-value', 'license-banner', 'main-content', 'main-view-switch',
+  'support-banner', 'support-banner-end', 'support-panel-actions', 'support-panel-desc', 'support-panel-head', 'support-panel-icon',
+  'support-panel-label', 'support-panel-log', 'support-panel-row', 'support-panel-title', 'support-panel-titles', 'support-panel-until',
+  'support-panel-who', 'teris-logo-horizontal', 'teris-logo-icon', 'teris-logo-vertical',
+];
 const LEGACY_OVERVIEW = new RegExp(
-  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E].join('|')})(?![\\w-])`,
+  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,
   'g',
 );
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;

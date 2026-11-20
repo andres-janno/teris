@@ -91,16 +91,16 @@ export const Header: React.FC<HeaderProps> = ({
   showWeather = false
 }) => {
   return (
-    <header className="app-header">
+    <header className="z-1000 flex h-16 items-center justify-between border-b border-border bg-white/95 px-4 backdrop-blur-md transition-colors duration-250 dark:bg-background/90">
       {/* Logo klõps laeb lehe uuesti algolekusse (kaardivaade, nagu uues brauseris avamine) */}
-      <a href="/" className="header-brand" title="Ava TERIS algusest" onClick={() => onChangeMainView?.('map')}>
+      <a href="/" className="flex items-center gap-3 no-underline" title="Ava TERIS algusest" onClick={() => onChangeMainView?.('map')}>
         <TerisLogo variant="horizontal" />
       </a>
 
       {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}
-      <div className="header-nav-slot">
+      <div className="flex min-w-0 flex-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
         {onChangeMainView && (
-          <NavSwitch className="main-view-switch" aria-label="Põhivaade">
+          <NavSwitch className="mx-auto" aria-label="Põhivaade">
             {NAV_ITEMS.filter((item) => item.view !== 'weather' || showWeather).map(({ view, label, Icon }) => (
               <NavSwitchItem key={view} current={mainView === view} onClick={() => onChangeMainView(view)}>
                 <Icon size={15} />
@@ -111,8 +111,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
       </div>
 
-      <div className="header-actions">
-
+      <div className="flex items-center gap-2.5">
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
         )}

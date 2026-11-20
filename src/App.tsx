@@ -38,7 +38,7 @@ import { LicenseBanner, SupportBanner } from './components/LicenseBanner';
 import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
-import { Alert } from './components/ui';
+import { Alert, cn } from './components/ui';
 import { seasonSelectorYears, activeSeasonYear } from './types/season';
 
 function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
@@ -60,6 +60,10 @@ function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
   const date = new Date(y, m - 1, d, hh, mm, 0);
   return isNaN(date.getTime()) ? null : date;
 }
+
+// Kaardi ülemised paneelide veerud (vasakul aasta ja kultuurid, paremal kihid ja satelliit). Veerg ise on klõpsudele läbipaistev,
+// paneelid on klõpsatavad. Polster (varju ja Leafleti nuppude ruum) on map.css-is, sest 44/56/40px ei ole vahede skaalas.
+const MAP_STACK_CLASS = 'pointer-events-none absolute z-900 flex flex-col gap-2.5 overflow-y-auto [&>*]:pointer-events-auto';
 
 // Modaalid ja tööde vaade laaditakse eraldi tükkidena alles vajadusel (nt xlsx/shpjs/jszip ei ole esilehe kimbus).
 const FieldMapCard = lazy(() => import('./components/FieldMapCard').then((m) => ({ default: m.FieldMapCard })));
@@ -1623,8 +1627,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   // Total area for map year selector
   const totalAreaHa = fields.features.reduce((sum, f) => sum + (f.properties.areaHa || 0), 0);
 
+  // Kest: w-full (mitte 100vw), sest 100vw sisaldab kerimisriba laiust ja lükkab parema serva aknast välja.
   return (
-    <div className="app-container">
+    <div className="relative flex h-screen w-full flex-col overflow-hidden bg-background">
       <SupportBanner user={user} onLogout={onLogout} />
       <LicenseBanner user={user} />
       {/* Top Header */}
@@ -1828,9 +1833,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       )}
 
       {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
-      <div className="main-content" style={mainView !== 'map' ? { display: 'none' } : undefined}>
+      <div className="relative h-[calc(100vh-64px)] w-full flex-1" style={mainView !== 'map' ? { display: 'none' } : undefined}>
         {dbError && (
-          <Alert tone="error" role="alert" className="db-error-banner">
+          <Alert tone="error" role="alert" className="absolute top-3 left-1/2 z-1500 max-w-[min(640px,calc(100%-32px))] -translate-x-1/2 bg-card bg-linear-to-b from-destructive/12 to-destructive/12 shadow-dialog">
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.
           </Alert>
         )}
@@ -1881,7 +1886,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
-        <div className="map-top-left-stack">
+        <div className={cn(MAP_STACK_CLASS, 'map-top-left-stack top-0 left-0 max-h-[calc(100vh-8px)] w-94 [&>*]:static! [&>*]:w-full!')}>
           <MapYearSelector 
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
@@ -1896,7 +1901,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </div>
 
         {/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel (MapView portaal) */}
-        <div className="map-top-right-stack">
+        <div className={cn(MAP_STACK_CLASS, 'map-top-right-stack top-0 right-0 max-h-full w-89 max-w-[calc(100vw-8px)] [&>:empty]:hidden')}>
           <LayerControl
             visibility={visibility}
             onToggleLayer={handleToggleLayer}

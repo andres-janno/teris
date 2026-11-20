@@ -20,7 +20,7 @@
    kus ta klassid üle viiakse. Enne kontrolli `python3 scripts/css-utils.py diff <vana_dist> <uus_dist>`
    (ehita `npx vite build --outDir /tmp/dist-x --emptyOutDir`): iga uus utiliit peab olema tahtlik; surnud klass
    (kirjas, aga CSS-i polnud) hakkab mõjuma. README ja testid on välja jäetud, sest need nimetavad vanu klasse.
-   Tehnika ja sõitude failid on 4c-s üle viidud. Kaardi paneelide failid on 4d-s üle viidud. Dialoogide failid on 4e-s üle viidud.
+   Tehnika ja sõitude failid on 4c-s üle viidud. Kaardi paneelide failid on 4d-s üle viidud. Dialoogide failid on 4e-s üle viidud. Päis, menüüd, ribad ja rakenduse kest on 4f-s üle viidud.
    Valvur: `npm run ui-audit` rida „Tailwindi klasse ilma @source-ita“. */
 @source '../components/ui';
 @source '../components/FinanceModal.tsx';
@@ -58,6 +58,13 @@
 @source '../components/SoilSamplesSection.tsx';
 @source '../components/WeatherSeasonSection.tsx';
 @source '../components/ConfirmDialog.tsx';
+@source '../components/Header.tsx';
+@source '../components/UserMenu.tsx';
+@source '../components/OperatorSelector.tsx';
+@source '../components/TerisLogo.tsx';
+@source '../components/LicenseBanner.tsx';
+@source '../components/SupportAccessPanel.tsx';
+@source '../App.tsx';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
 /* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).
@@ -110,6 +117,8 @@
 
   --shadow-primary: 0 4px 14px rgba(34, 197, 94, 0.35);
   --shadow-primary-hover: 0 6px 20px rgba(34, 197, 94, 0.5);
+  /* Hele kuma väikese märgi ümber (päise operaatorifiltri punkt, andmebaasi ühenduse punkt); värv = elemendi tekstivärv */
+  --shadow-glow: 0 0 6px currentColor;
 }
 
 /* Tähenduspõhised värvid — viitavad index.css-i muutujatele, seega järgivad heledat/tumedat teemat.

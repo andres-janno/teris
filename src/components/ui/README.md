@@ -152,7 +152,7 @@ Props-nimi nimele/sildile on kõigil kolmel plaadil/real sama: `label` (`StatTil
 | `<RadioField labelClassName>` | raadionupu rea vahe ja rea kõrgus | `soil-metric-radio-item` |
 | `Select`/`Input` `className` | sisemine äärisetu väli ääristatud kastis (`border-0 bg-transparent h-full`) | `.cc-time [data-slot=select] !important` |
 
-Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolute`, `z-800`/`z-900`), laiuse ja paigutuse. Konteinerid `.map-top-left-stack` / `.map-top-right-stack` (App.tsx) ja `.cc-range`, `.layer-loading-bar::after`, `.crop-legend-item[data-selected]`, `.add-poi-banner` jäävad `map.css`/`index.css`-i (põhjused kommentaarides).
+Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolute`, `z-800`/`z-900`), laiuse ja paigutuse. Konteinerid (`MAP_STACK_CLASS` App.tsx-is) on Tailwindi klassid; CSS-i jäävad nende polster (`.map-top-left-stack`, `.map-top-right-stack`: 44/56/40px pole skaalas), `.cc-range`, `.layer-loading-bar::after`, `.crop-legend-item[data-selected]`, `.add-poi-banner` (põhjused kommentaarides).
 
 ### Dialoogide ja registrite abiklassid (etapp 4e)
 
@@ -166,7 +166,7 @@ Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolut
 | `dialogStackBodyClass`, `workFormGridClass`, `workFormSectionClass`, `workFormHintClass` | töö kande ja plaani vormi kere, ruudustik, jaotis, vihje | `work-entry-*`, `add-work-body` |
 | `soilValueClass`, `soilFootnoteClass`, `soilYearCellClass` | mulla väärtus (`data-level`), joonealune märkus, aasta lahter | `soil-value`, `soil-footnote`, `soil-year-cell` |
 
-Kustutatud klasside valvur: `RETIRED_4E` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
+Kustutatud klasside valvur: `RETIRED_4E` ja `RETIRED_4F` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
 
 CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label`, `.year-cell.has-crop/.selected` (Külvikorra aastaveerud), `[data-slot="table"] .cell-sub/.muted/.sticky-name/.name-cell` (kuni `FieldsTableView` on üle viidud), `.fullpage-board-*`, `.detail-section`, `.login-notice`.
 
