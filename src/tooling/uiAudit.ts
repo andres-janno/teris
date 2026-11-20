@@ -183,7 +183,7 @@ export const RETIRED_4E: readonly string[] = [
 ];
 // 4f: päise, menüüde, ribade, tugipaneeli ja rakenduse kesta kustutatud klassid (etapp 4f). Täpsed nimed; `teris-logo` puudub teadlikult (logofailide nimi `teris-logo.svg`).
 export const RETIRED_4F: readonly string[] = [
-  'app-container', 'app-header', 'db-error-banner', 'header-actions', 'header-account', 'header-account-chevron', 'header-account-content',
+  'admin-brand-word', 'app-container', 'app-header', 'db-error-banner', 'header-actions', 'header-account', 'header-account-chevron', 'header-account-content',
   'header-account-db', 'header-account-db-dot', 'header-account-footer', 'header-account-info', 'header-account-info-login',
   'header-account-info-name', 'header-account-sun', 'header-account-trigger', 'header-brand', 'header-nav-slot', 'header-operator',
   'header-operator-caption', 'header-operator-chevron', 'header-operator-content', 'header-operator-dot', 'header-operator-empty',

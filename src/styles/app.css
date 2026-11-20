@@ -228,11 +228,11 @@
     box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), 0 0 0 2px var(--chip-accent, #94a3b8);
   }
 }
-/* Kinnitatud Suurus-veeru parem joon (Külvikord): sisemine vari, et border-collapse'i-vaba tabel ei nihkuks. */
 /* Nupp pärib kirjatüübi (puhastuskiht ei sea seda nupule). */
 @utility font-inherit {
   font-family: inherit;
 }
+/* Kinnitatud Suurus-veeru parem joon (Külvikord): sisemine vari, et border-collapse'i-vaba tabel ei nihkuks. */
 @utility pin-edge-end {
   box-shadow: inset -1px 0 0 var(--border-card);
 }
