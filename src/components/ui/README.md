@@ -58,7 +58,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 
 Vaates ei ole toorest `<table>`-it: kasuta `Table`, `TableHeader`, `TableBody`, `TableFooter`, `TableRow`, `TableHead`,
 `TableCell`, `TableEmpty` (import `./ui` kaudu). Päis kleepub tabeli enda kerimisalas (vt allpool); numbrid paremale (`numeric`), kogused vormindab
-kutsuja (`formatQty`). `<table>` kannab `data-slot="table"`, et vanad sisuklassid (`.muted`, `.cell-sub`) toimiksid.
+kutsuja (`formatQty`). `<table>` kannab `data-slot="table"`; tabeli sisu stiili annavad variants.ts konstandid (`cellSubClass`, `tableMutedClass` jt).
 
 | Komponent | Prop'id |
 | --- | --- |
@@ -93,7 +93,6 @@ Märkused:
 
 `<FilterBar actions={…}>` + `<FilterBarItem width="sm|md|lg">` (152/180/200px) registrite filtritele; „Filtrid:“ silt tuleb komponendist.
 `<EmptyState icon title description />` tühjale registrile ja laadimisele (ainult `description`).
-`<Dropzone dragging hasFile>` faili lohistamise kast (3 üleslaadimise modaali); ainult kast, sisu ja sündmused tulevad vaatest.
 
 ## Tailwindi skaneerimine
 
@@ -175,9 +174,16 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 
 | Nimi | Kasuta | Vana klass |
 | --- | --- | --- |
-| `<Dropzone dragging hasFile>` | faili lohistamise kast (3 üleslaadimise modaali) | `dropzone`, `.dragging`, `.has-file` |
+| `<Dropzone dragging hasFile>` | faili lohistamise kast (3 üleslaadimise modaali); `role="button"`, `tabIndex=0`, Enter/tühik käivitab `onClick`; sisu ja sündmused tulevad vaatest | `dropzone`, `.dragging`, `.has-file` |
 | `hintTextClass`, `hintTextBlockClass` | väike hajutatud selgitustekst | `hint-text`, `.is-block` |
-| `boardViewClass`, `boardMainClass`, `boardContentClass`, `boardBodyClass`, `boardFooterClass` | täislehe vaate kest | `fullpage-board-*` |
+| `boardViewClass`, `boardMainClass`, `boardContentClass`, `boardBodyClass`, `boardFooterClass` (= `hintTextClass`) | täislehe vaate kest | `fullpage-board-*` |
+| `belowHeaderHeightClass` | akna kõrgus miinus päis (64px = Header `h-16`); `boardViewClass` ja kaardi konteiner | `h-[calc(100vh-64px)]` |
+| `headerTriggerClass`, `headerNarrowHiddenClass`, `headerChevronClass` | päise menüünupud (operaator, kasutaja), kitsal ekraanil ainult ikoon | (4f uus) |
+| `dialogHeaderControlsClass`, `dialogActionsBarClass` | dialoogi päise juhtnupud ja tegevusriba | (4f uus) |
+| `dropzoneStateClass`, `dropzoneIconClass`, `fileReuploadHintClass`, `uploadFormatListClass` | üleslaadimise modaali kasti sisu | `dropzone-*`, `file-reupload-hint` |
+| `previewBoxClass`, `previewHeaderClass`, `previewFieldsScrollClass`, `previewFieldRowClass`, `previewFieldClass`, `previewCropClass`, `previewValueClass` | üleslaadimise eelvaade | `preview-*`, `parsed-preview-box` |
+| `overuseClass`, `cellBadgeClass`, `cellBadgeLeadClass`, `stockDocUnitClass`, `stockDocQtyClass`, `stockDocAmountClass`, `stockDocFooterRowClass` | laotabeli ja laokande read | `article-overuse`, `cell-badge*`, `stock-doc-*` |
+| `loginPageClass`, `loginColumnClass`, `loginCardClass`, `loginLogoClass`, `loginPrimaryButtonClass`, `loginCopyrightClass`, `loginNoticeClass` | sisselogimise ja parooli määramise leht | `login-*` paigutus |
 | `registerActionsBarClass`, `registerHeaderControlsClass`, `registerIoButtonsClass`, `searchFieldClass`, `yearSelectorGroupClass`, `yearLabelClass` | registri tööriistariba | `register-*`, `search-field`, `year-*` |
 | `detailSectionClass`, `notesTextClass` | Ilma/Mulla lõigud | `detail-section`, `notes-text` |
 | `stockQtyClass({ sign })` | laokoguse märk ja värv | `stock-qty(-in/-out)` |
@@ -185,7 +191,7 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 
 Kustutatud klasside valvur: `RETIRED_4F` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
 
-CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admini `body` kerimine, `.admin-brand-word`, `.admin-login`, teemamuutujad ja põhireeglid (4g).
+CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admini `body` kerimine, `.admin-login` (admin kasutab brändisõnale `.login-brand-word`), teemamuutujad ja põhireeglid (4g).
 
 ## Vana muutuja -> Tailwindi nimi
 
@@ -262,7 +268,7 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | tekstilink kahe reaga (`trip-dialog-entry`) | `<Button variant="text" size="inline">` |
 | kogu rea klõpsatav `div` (grupipäis, valikurida, märkus; välimus vaate CSS-ist) | `<Button variant="plain" size="inline" className="vaate-klass">`; nupp annab ainult lähtestuse (laius 100%, ei ääri, tausta, kirja ja värvi pärib). Vaate reegel, mis seab polstri, tausta, äärise, nurga, gapi, `display`, `justify-content`, `font-size`, `color`, vajab `!important` |
 | kultuuri-/omandivormikiip (`register-crop-stat`, `reg-stat-pill.is-filter`) | `<ChipButton variant="tint" \| "outline" accent selected dimmed>` (värv andmest, valitud = `selected`) |
-| `btn-full` | jääb `className="full-width"` (ainult laius 100%) |
+| `btn-full` | `className="w-full"` |
 
 Reeglid:
 

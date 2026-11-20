@@ -58,6 +58,7 @@ const allClassStrings = (): string[] => [
   v.detailSectionClass, v.notesTextClass,
   v.stockQtyClass({ sign: 'in' }), v.stockQtyClass({ sign: 'out' }), v.stockQtyClass({}), v.overuseClass, v.cellBadgeClass, v.cellBadgeLeadClass,
   v.stockDocUnitClass, v.stockDocQtyClass, v.stockDocAmountClass, v.stockDocFooterRowClass,
+  v.belowHeaderHeightClass, v.loginPageClass, v.loginColumnClass, v.loginCardClass, v.loginLogoClass, v.loginPrimaryButtonClass, v.loginCopyrightClass, v.loginNoticeClass,
 ];
 
 describe('variants', () => {
@@ -153,6 +154,17 @@ describe('variants', () => {
     const sizes = allClassStrings().flatMap((c) => c.match(/(?<![\w-])text-[a-z0-9-]+/g) ?? []);
     const allowed = /^text-(2xs|xs|sm|base|lg|xl|foreground|muted-foreground|subtle|white|primary|info|warning|destructive|accent|success-text|info-text|warning-text|warning-solid|danger-text|danger-solid|accent-text|on-warning|background|left|right|center|inherit)$/;
     for (const s of sizes) expect(s).toMatch(allowed);
+  });
+});
+
+describe('4f lõppparandused', () => {
+  it('tahvli jalus on sama mis vihjetekst, tahvli kest kasutab päise kõrgust', () => {
+    expect(v.boardFooterClass).toBe(v.hintTextClass);
+    expect(v.boardViewClass.split(' ')).toContain(v.belowHeaderHeightClass);
+    expect(v.belowHeaderHeightClass).toBe('h-[calc(100vh-64px)]');
+  });
+  it('sisselogimise lehe kitsa ekraani piir on vana 760 + 1', () => {
+    expect(v.loginPageClass).toContain('max-[761px]:justify-center');
   });
 });
 
