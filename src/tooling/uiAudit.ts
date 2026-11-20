@@ -94,16 +94,15 @@ const roleButtonsOverAllowed = (path: string, count: number): number => overAllo
 export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'glass-card',
   // ujuvpaneelid kaardi peal
-  'add-poi-banner', 'field-map-card',
+  'add-poi-banner',
   // register- ja loendikaardid
   'history-filter-bar',
   'empty-register-state',
   // KPI ja statistika plaadid
   'trip-tile',
   // sektsioonikastid
-  'support-panel', 'parsed-preview-box', 'weather-chart-card',
-  // teenusepakkuja admin
-  'admin-card', 'admin-login', 'admin-subform', 'admin-stat',
+  // teenusepakkuja admin (admin-login jääb CSS-i)
+  'admin-login', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
 // FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E) ja 4f päise ja kesta klassid (RETIRED_4F). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
@@ -208,6 +207,19 @@ export const RETIRED_4F: readonly string[] = [
   'stock-doc-amount', 'stock-doc-unit', 'stock-doc-unit-price', 'stock-doc-footer-row', 'stock-doc-modal', 'article-categories-group',
   'article-categories-add', 'article-categories-modal', 'article-form-modal', 'article-form-body', 'article-npk-inputs', 'article-merge-info',
   'harvest-lot-body', 'harvest-lot-head', 'harvest-lot-tiles', 'harvest-lot-section', 'harvest-lot-add', 'harvest-lot-add-weighing', 'harvest-lot-add-cost',
+  // 4f järelkorjatud: Dropzone, vihjed, üleslaadimise eelvaade, AI võtmed, kasutajate admin ja teenusepakkuja admin (admin-login ja admin-brand-word jäävad CSS-i, neid ei loe).
+  'ai-instructions-footer', 'ai-instructions-input', 'ai-key-created', 'ai-key-help', 'ai-key-new', 'ai-key-table', 'ai-key-table-wrap', 'ai-key-url',
+  'detail-section', 'dropzone', 'dropzone-icon', 'dropzone-state', 'file-reupload-hint', 'hint-text', 'is-block', 'notes-text', 'operator-field', 'p-crop',
+  'p-ha', 'parsed-preview-box', 'preview-field-row', 'preview-fields-scroll', 'preview-header', 'upload-format-list', 'users-admin-mode',
+  'users-admin-roles', 'users-admin-wrap', 'weather-chart-card',
+  'admin-actions', 'admin-badge', 'admin-card', 'admin-card-foot', 'admin-card-head', 'admin-checks', 'admin-color-input', 'admin-danger-card',
+  'admin-danger-row', 'admin-details', 'admin-expired', 'admin-field', 'admin-field-label', 'admin-field-value', 'admin-filter-row', 'admin-form',
+  'admin-form-grid', 'admin-header', 'admin-header-right', 'admin-help', 'admin-help-dot', 'admin-help-editor', 'admin-help-filters', 'admin-help-group',
+  'admin-help-item', 'admin-help-item-label', 'admin-help-item-text', 'admin-help-item-where', 'admin-help-list', 'admin-help-preview',
+  'admin-help-updated', 'admin-hint', 'admin-interest-message', 'admin-license-grid', 'admin-meta', 'admin-muted', 'admin-nav', 'admin-preset-group',
+  'admin-row-actions', 'admin-rte', 'admin-rte-area', 'admin-rte-sep', 'admin-shell', 'admin-soon', 'admin-split', 'admin-stat-row', 'admin-subform',
+  'admin-subpanel', 'admin-support-link', 'admin-swatch', 'admin-toolbar', 'admin-two-col', 'admin-warning-text',
+  'visits-axis', 'visits-bar', 'visits-chart', 'visits-grid', 'visits-tip',
 ];
 const LEGACY_OVERVIEW = new RegExp(
   `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,

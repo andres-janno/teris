@@ -93,10 +93,11 @@ Märkused:
 
 `<FilterBar actions={…}>` + `<FilterBarItem width="sm|md|lg">` (152/180/200px) registrite filtritele; „Filtrid:“ silt tuleb komponendist.
 `<EmptyState icon title description />` tühjale registrile ja laadimisele (ainult `description`).
+`<Dropzone dragging hasFile>` faili lohistamise kast (3 üleslaadimise modaali); ainult kast, sisu ja sündmused tulevad vaatest.
 
 ## Tailwindi skaneerimine
 
-Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`, `MapYearSelector.tsx`, `LayerControl.tsx`, `SatellitePanel.tsx`, `MapView.tsx`, `CultivationControl.tsx`, 4e dialoogid: `RelatedPartiesModal.tsx`, `PoiManagerModal.tsx`, `FieldManagerModal.tsx`, `FieldShapeModal.tsx`, `CropRegisterModal.tsx`, `SeasonManagerModal.tsx`, `FieldWorkEntryDialog.tsx`, `PriaLinesEditor.tsx`, `AddFieldWorkDialog.tsx`, `FieldEditDialog.tsx`, `FieldUploadModal.tsx`, `SoilSamplesSection.tsx`, `WeatherSeasonSection.tsx`, `ConfirmDialog.tsx`, `AuthGate.tsx`).
+Tailwind genereerib utiliite kataloogist `src/components/ui` ja neist vaatefailidest, mis on `src/styles/app.css`-is fail-faili haaval `@source`-is (praegu `FinanceModal.tsx`, `FieldWorksBoard.tsx`, `FieldWorkPlanForm.tsx`, `ArticleFormDialog.tsx`, `TripRegister.tsx`, `TripGapReviewDialog.tsx`, `TripRouteView.tsx`, `TripDialog.tsx`, `DeviceAssignmentRegister.tsx`, `VehicleTracker.tsx`, `MapYearSelector.tsx`, `LayerControl.tsx`, `SatellitePanel.tsx`, `MapView.tsx`, `CultivationControl.tsx`, 4e dialoogid: `RelatedPartiesModal.tsx`, `PoiManagerModal.tsx`, `FieldManagerModal.tsx`, `FieldShapeModal.tsx`, `CropRegisterModal.tsx`, `SeasonManagerModal.tsx`, `FieldWorkEntryDialog.tsx`, `PriaLinesEditor.tsx`, `AddFieldWorkDialog.tsx`, `FieldEditDialog.tsx`, `FieldUploadModal.tsx`, `SoilSamplesSection.tsx`, `WeatherSeasonSection.tsx`, `ConfirmDialog.tsx`, `AuthGate.tsx`, 4f: päis, menüüd, tugipaneel, Põllud, Ilm, Laoarvestus ja kogu `src/admin` (kataloogina `../admin`), `App.tsx`, `Header.tsx`, `UserMenu.tsx`, `OperatorSelector.tsx`, `LicenseBanner.tsx`, `SupportAccessPanel.tsx`, `FieldsTableView.tsx`, `WeatherView.tsx`, `ArticlesView.tsx`, `StockDocumentDialog.tsx`, `HarvestLotDialog.tsx` jt; täielik loend on `app.css`-is).
 Audit-rida „Tailwindi klasse ilma @source-ita“ valvab, et vaatefail, mille klassides on utiliite, oleks `@source`-is (ajutised erandid: `SOURCE_GUARD_ALLOWED` `src/tooling/uiAudit.ts`-is).
 Üleviidud fail lisa `app.css`-i `@source`-i; enne kontrolli, et failis pole vanu klassinimesid, mis kattuvad
 Tailwindi utiliitidega (nt `text-muted`, `text-secondary`, `hidden`, `flex`) — muidu saavad need ootamatu stiili.
@@ -168,7 +169,23 @@ Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolut
 
 Kustutatud klasside valvur: `RETIRED_4E` ja `RETIRED_4F` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
 
-CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label`, `.year-cell.has-crop/.selected` (Külvikorra aastaveerud), `[data-slot="table"] .cell-sub/.muted/.sticky-name/.name-cell` (kuni `FieldsTableView` on üle viidud), `.fullpage-board-*`, `.detail-section`, `.login-notice`.
+CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label`, `.year-cell.has-crop/.selected` (Külvikorra aastaveerud), `.login-notice` (login-kaardi palett).
+
+### Päise, kesta ja väikeste vaadete abiklassid (etapp 4f)
+
+| Nimi | Kasuta | Vana klass |
+| --- | --- | --- |
+| `<Dropzone dragging hasFile>` | faili lohistamise kast (3 üleslaadimise modaali) | `dropzone`, `.dragging`, `.has-file` |
+| `hintTextClass`, `hintTextBlockClass` | väike hajutatud selgitustekst | `hint-text`, `.is-block` |
+| `boardViewClass`, `boardMainClass`, `boardContentClass`, `boardBodyClass`, `boardFooterClass` | täislehe vaate kest | `fullpage-board-*` |
+| `registerActionsBarClass`, `registerHeaderControlsClass`, `registerIoButtonsClass`, `searchFieldClass`, `yearSelectorGroupClass`, `yearLabelClass` | registri tööriistariba | `register-*`, `search-field`, `year-*` |
+| `detailSectionClass`, `notesTextClass` | Ilma/Mulla lõigud | `detail-section`, `notes-text` |
+| `stockQtyClass({ sign })` | laokoguse märk ja värv | `stock-qty(-in/-out)` |
+| `adminUi.ts` (ainult admin) | admin kaardid, vormid, vihjed | `admin-*` |
+
+Kustutatud klasside valvur: `RETIRED_4F` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
+
+CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admini `body` kerimine, `.admin-brand-word`, `.admin-login`, teemamuutujad ja põhireeglid (4g).
 
 ## Vana muutuja -> Tailwindi nimi
 
@@ -277,8 +294,7 @@ Reeglid:
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
-- Erandid (jäävad oma CSS-iga): `login-card`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detail-section`, `admin-subpanel`, `admin-card-head`,
-  `admin-card-foot` kannavad ainult asetust.
+- Erandid (jäävad oma CSS-iga): `login-card`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detailSectionClass` ja admini `adminSubpanelClass`/`adminCardHeadClass`/`adminCardFootClass` kannavad ainult asetust.
 
 ## Menüüd, hüpikud, vihjed
 

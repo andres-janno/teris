@@ -274,16 +274,16 @@ describe('vanad kaardid', () => {
   });
   it('loeb CSS-is kaardiklassi reegli, mis seab välimuse; ei loe olekuid, !important-i, asetust ega teisi klasse', () => {
     const css = `/* .glass-card kommentaaris */
-.support-panel { padding: 14px; display: flex; }
-.admin-card,
-.admin-subform { background: var(--bg-card); border: 1px solid var(--border-card); }
-.support-panel.selected { border-color: green; box-shadow: 0 0 1px red; }
-.field-map-card { position: absolute; border-radius: var(--radius-md) !important; }
+.empty-register-state { padding: 14px; display: flex; }
+.admin-login,
+.history-filter-bar { background: var(--bg-card); border: 1px solid var(--border-card); }
+.empty-register-state.selected { border-color: green; box-shadow: 0 0 1px red; }
+.admin-stat { position: absolute; border-radius: var(--radius-md) !important; }
 .add-poi-banner { border-color: pink !important; }
 .glass-card { -webkit-backdrop-filter: blur(16px); }
 .other-card { background: red; }
 @media (max-width: 600px) { .trip-tile { border-radius: 10px; } }`;
-    expect(legacyCardRules(css)).toEqual(['.admin-card', '.admin-subform', '.glass-card', '.trip-tile']);
+    expect(legacyCardRules(css)).toEqual(['.admin-login', '.history-filter-bar', '.glass-card', '.trip-tile']);
   });
   it('summarize annab tsx ja css failid, ui kaust välja', () => {
     const r = summarize([
@@ -439,11 +439,11 @@ describe('audit katab vaated (etapp 4.0)', () => {
 });
 
 describe('vanad ülevaateklassid (etapp 4.1)', () => {
-  it('loeb vanad päise-, pealkirja-, plaadi-, legendi- ja finance-klassid; ui kaust ja admin-stat-row välja', () => {
+  it('loeb vanad päise-, pealkirja-, plaadi-, legendi- ja finance-klassid; ui kaust ja admin-login välja', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="fullpage-board-header form-sub-header trip-tile finance-kpi-card finance-entry-card section-title" />' },
       { path: 'src/components/ui/X.tsx', content: '<div data-slot="section-title" className="fullpage-board-header" />' },
-      { path: 'src/admin/B.tsx', content: '<div className="admin-stat-row" />' },
+      { path: 'src/admin/B.tsx', content: '<div className="admin-login" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
   });
@@ -532,7 +532,7 @@ describe('vanad dialoogide klassid (etapp 4e)', () => {
   it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="add-work-option telemetry-pill-row alert-box error" /> {/* pria-grid kommentaar */}' },
-      { path: 'src/components/B.tsx', content: '<Field htmlFor="season-year" /><div id="work-entry-body" className="year-col selected year-cell has-crop detail-section login-notice" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="season-year" /><div id="work-entry-body" className="year-col selected year-cell has-crop sr-only login-notice" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });
@@ -543,6 +543,16 @@ describe('vanad kesta ja Põllud-tabeli klassid (etapp 4f)', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="fullpage-board-view" /><main className="fullpage-board-main wide" /><div className="register-actions-bar" />' },
       { path: 'src/components/B.tsx', content: '<Field htmlFor="search-field" /><div id="name-cell" className="year-col selected year-cell has-crop" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
+  });
+});
+
+describe('vanad päise, menüü ja väikeste vaadete klassid (etapp 4f)', () => {
+  it('loeb kustutatud klassid tsx-is, mitte id-sid, jäävaid erandeid ega kommentaare', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="app-header header-brand fullpage-board-view" /> {/* weather-chart kommentaar */}' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="login-name" /><div id="header-actions" className="login-page login-card year-col v-name has-crop sr-only help-content admin-login" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });
