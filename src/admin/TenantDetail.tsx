@@ -8,7 +8,7 @@ import { formatHa, formatTallinn } from './format.ts';
 import { Alert, Badge, DateInput, Card, Button, Input, Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../components/ui';
 import { cn } from '../components/ui/cn';
 import {
-  adminActionsClass, adminBadgeTone, adminCardClass, adminCardFootClass, adminCardHeadClass, adminFieldClass, adminFieldLabelClass, adminH2Class,
+  adminActionsClass, adminBadgeTone, adminCardClass, adminCardFootClass, adminFieldClass, adminFieldLabelClass, adminH2Class,
   adminH2FlushClass, adminHintClass, adminLicenseGridClass, adminMetaGridClass, adminMetaLabelClass, adminMutedClass, adminSplitClass, adminToolbarClass
 } from './adminUi.ts';
 
@@ -150,9 +150,9 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
           </Card>
 
           <Card className={adminCardClass}>
-            <div className={adminCardHeadClass}>
+            <div className={adminToolbarClass}>
               <h2 className={adminH2FlushClass}>Kasutajatugi</h2>
-              <Badge tone={adminBadgeTone(tenant.supportGrant ? 'ok' : 'neutral')}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</Badge>
+              <Badge tone={adminBadgeTone(tenant.supportGrant ? 'ok' : 'neutral')} className={tenant.supportGrant ? undefined : 'bg-subtle/15'}>{tenant.supportGrant ? 'Lubatud' : 'Suletud'}</Badge>
             </div>
             {tenant.supportGrant ? (
               <div className={adminSplitClass}>
@@ -177,7 +177,7 @@ export function TenantDetail({ id, initialNotice, onBack, onDeleted }: { id: str
           </Card>
 
           <Card asChild className={adminCardClass}><form onSubmit={(e) => { e.preventDefault(); void saveLicense(); }}>
-            <div className={adminCardHeadClass}>
+            <div className={adminToolbarClass}>
               <h2 className={adminH2FlushClass}>Litsents</h2>
               <LicenseCell license={tenant.license} />
             </div>

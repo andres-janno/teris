@@ -23,7 +23,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { Alert, Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
-import { registerActionsBarClass, registerIoButtonsClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
+import { boardViewClass, boardMainClass, registerActionsBarClass, registerIoButtonsClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
 
 interface Option {
   id: string;
@@ -793,8 +793,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   };
 
   return (
-    <div className="flex h-[calc(100vh-64px)] min-h-0 flex-1 bg-background">
-      <main className="flex min-w-0 flex-1 flex-col gap-3 px-4 py-3">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader icon={<SquareKanban />} title="Põllutööd" subtitle="Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine" />
 
         <div className="flex flex-wrap items-center gap-2.5">

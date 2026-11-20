@@ -4,7 +4,7 @@ import { LifeBuoy, AlertCircle } from 'lucide-react';
 import { api } from '../services/api';
 import type { SupportGrant, SupportAccessEntry } from '../types/auth';
 import { formatDateTimeTallinn } from '../services/dateFormat';
-import { Alert, Badge, Button, Card, SectionTitle, cn } from './ui';
+import { Alert, Badge, Button, Card, SectionTitle, cn, hintTextClass } from './ui';
 
 const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
   { value: '1h', label: '1 tund' },
@@ -13,8 +13,7 @@ const DURATIONS: { value: '1h' | '24h' | '7d'; label: string }[] = [
 ];
 
 // Rida on ikooni veeru kõrval (joondub pealkirjaga); kitsal ekraanil täislaiuses.
-const ROW_CLASS = 'col-span-2 col-start-2 flex flex-wrap items-center gap-x-3 gap-y-2.5 max-[520px]:col-span-full max-[520px]:col-start-1';
-const ROW_TEXT_CLASS = 'text-sm leading-natural text-muted-foreground';
+const ROW_CLASS = 'col-span-2 col-start-2 flex flex-wrap items-center gap-x-3 gap-y-2.5 max-[521px]:col-span-full max-[521px]:col-start-1';
 
 export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly = false }) => {
   const [grants, setGrants] = useState<SupportGrant[]>([]);
@@ -67,7 +66,7 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
 
       {active ? (
         <div className={ROW_CLASS}>
-          <span className={cn(ROW_TEXT_CLASS, '[&_strong]:text-foreground')}>Ligipääs kehtib kuni <strong>{formatDateTimeTallinn(active.validUntil)}</strong></span>
+          <span className={cn(hintTextClass, '[&_strong]:text-foreground')}>Ligipääs kehtib kuni <strong>{formatDateTimeTallinn(active.validUntil)}</strong></span>
           {!readOnly && (
             <Button type="button" size="sm" disabled={busy} onClick={() => run(() => api.revokeSupportGrant(active.id))}>
               Tühista
@@ -77,7 +76,7 @@ export const SupportAccessPanel: React.FC<{ readOnly?: boolean }> = ({ readOnly 
       ) : (
         !readOnly && (
           <div className={ROW_CLASS}>
-            <span className={ROW_TEXT_CLASS}>Anna ligipääs:</span>
+            <span className={hintTextClass}>Anna ligipääs:</span>
             <div className="flex flex-wrap gap-2">
               {DURATIONS.map((d) => (
                 <Button key={d.value} type="button" size="sm" disabled={busy} onClick={() => run(() => api.createSupportGrant(d.value))}>

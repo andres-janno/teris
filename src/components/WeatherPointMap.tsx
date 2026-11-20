@@ -71,5 +71,5 @@ export const WeatherPointMap: React.FC<Props> = ({ points, fields, selected, onS
     }
   }, [points, fields, selected]);
 
-  return <div ref={divRef} className="z-0 h-full min-h-90 rounded-sm border border-border max-[1100px]:h-90" />;
+  return <div ref={divRef} className="z-0 h-full min-h-90 rounded-sm border border-border max-[1101px]:h-90" />;
 };

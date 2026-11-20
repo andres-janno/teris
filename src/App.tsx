@@ -39,6 +39,7 @@ import { parseEtDate } from './services/dateFormat';
 import { DeferredMount } from './components/DeferredMount';
 import { alertDialog } from './components/ConfirmDialog';
 import { Alert, cn } from './components/ui';
+import { belowHeaderHeightClass } from './components/ui/variants';
 import { seasonSelectorYears, activeSeasonYear } from './types/season';
 
 function parseLocalDateTime(dateStr: string, timeStr: string): Date | null {
@@ -1833,7 +1834,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       )}
 
       {/* Main Map View (peidetud, mitte eemaldatud, et kaardi seis säiliks) */}
-      <div className="relative h-[calc(100vh-64px)] w-full flex-1" style={mainView !== 'map' ? { display: 'none' } : undefined}>
+      <div className={cn('relative w-full flex-1', belowHeaderHeightClass)} style={mainView !== 'map' ? { display: 'none' } : undefined}>
         {dbError && (
           <Alert tone="error" role="alert" className="absolute top-3 left-1/2 z-1500 max-w-[min(640px,calc(100%-32px))] -translate-x-1/2 bg-card bg-linear-to-b from-destructive/12 to-destructive/12 shadow-dialog">
             Andmebaasiga ei saa ühendust — andmeid ei kuvata. Värskenda lehte või proovi hiljem uuesti.

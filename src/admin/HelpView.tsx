@@ -8,7 +8,7 @@ import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { RichTextEditor } from './RichTextEditor.tsx';
 import { Alert, FilterClear, Card, CardButton, Button, Input } from '../components/ui';
 import { cn } from '../components/ui/cn';
-import { adminCardClass, adminCardFootClass, adminCardHeadClass, adminFieldLabelClass, adminH2FlushClass, adminHintClass, adminMutedClass } from './adminUi.ts';
+import { adminCardClass, adminCardFootClass, adminFieldLabelClass, adminH2FlushClass, adminHintClass, adminMutedClass, adminToolbarClass } from './adminUi.ts';
 
 type Filter = 'all' | 'filled' | 'empty';
 type Spot = HelpSpot & { key: string; row?: HelpArticleRow; orphan: boolean };
@@ -101,7 +101,7 @@ export function HelpView() {
   return (
     <div className="grid grid-cols-[minmax(260px,340px)_1fr] items-start gap-4 max-[861px]:grid-cols-1">
       <Card className={cn(adminCardClass, 'sticky top-4 flex max-h-[calc(100vh-32px)] flex-col gap-2.5 overflow-y-auto')}>
-        <div className={adminCardHeadClass}>
+        <div className={adminToolbarClass}>
           <h2 className={adminH2FlushClass}>Juhendid</h2>
           <span className={adminMutedClass}>{filledCount}/{knownCount} täidetud</span>
         </div>
@@ -143,7 +143,7 @@ export function HelpView() {
           <p className={adminHintClass}>Vali vasakult koht, mille juhendit muuta. Tühja juhendiga kohas rakendus küsimärki ei näita.</p>
         ) : (
           <>
-            <div className={adminCardHeadClass}>
+            <div className={adminToolbarClass}>
               <div>
                 <h2 className={cn(adminH2FlushClass, 'mb-0.5')}>{current.label}</h2>
                 <div className={adminHintClass}>{current.area} · {current.where} · <code>{current.key}</code></div>

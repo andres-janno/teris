@@ -40,7 +40,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import type { Article } from '../types/fieldWork';
 import { Alert, Badge, Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterBar, FilterBarItem, EmptyState, NumberInput, DateInput, FilterClear, FilterSelect, Field, FormGrid, FieldRow, IconBox, Input, Select, Textarea, CheckboxField, type SelectOption, clickOnActivationKey, PageHeader } from './ui';
-import { cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, cellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
+import { boardViewClass, cardGridClass, registerSectionClass, fleetCellMainClass, fleetCellTitleClass, cellSubClass, fleetCellDateClass, fleetCellDateEndClass, fleetDurationClass, fleetNotesClass, dateTimeRowClass, dateTimeHintClass } from './ui/variants';
 import type { BadgeTone } from './ui';
 import { cn } from './ui/cn';
 
@@ -1816,7 +1816,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
                 <Button size="sm"
                   onClick={loadImplementAssignments}
                   title="Värskenda registrit">
-                  <RotateCcw size={14} className={historyLoading ? 'spin' : ''} />
+                  <RotateCcw size={14} className={historyLoading ? 'animate-spin' : ''} />
                   <span>Värskenda</span>
                 </Button>
               </>
@@ -2063,7 +2063,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] min-h-0 flex-1 overflow-hidden bg-background">
+    <div className={boardViewClass}>
       <main className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 px-4 py-3">
         <PageHeader icon={<Tractor />} title="Masinapark, haakeriistad ja muu tehnika" subtitle="Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus" />
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">

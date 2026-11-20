@@ -14,7 +14,7 @@ import { WeatherPointMap } from './WeatherPointMap';
 const BASES = [0, 5, 6, 8, 10];
 
 // Aastate tabel ja kaart kõrvuti; kitsal ekraanil kaart tabeli alla
-const yearsLayoutClass = 'grid grid-cols-[minmax(0,2fr)_minmax(300px,1fr)] items-stretch gap-3 max-[1100px]:grid-cols-1';
+const yearsLayoutClass = 'grid grid-cols-[minmax(0,2fr)_minmax(300px,1fr)] items-stretch gap-3 max-[1101px]:grid-cols-1';
 // Graafiku kast: polster väiksem all (graafik vajab vähem ruumi); pealkiri 11px suurtähtedes
 const chartCardClass = 'min-w-0 px-2.5 pt-2 pb-1';
 const chartTitleClass = 'mb-1 text-2xs font-semibold uppercase leading-natural tracking-wide text-muted-foreground';
@@ -161,7 +161,7 @@ export const WeatherView: React.FC = () => {
             ]).map((c) => (
               <div key={c.metric}>
                 <SectionTitle>{c.icon}<span>{c.title}, {c.unit}</span></SectionTitle>
-                <div className="grid grid-cols-2 gap-3 max-[760px]:grid-cols-1">
+                <div className="grid grid-cols-2 gap-3 max-[761px]:grid-cols-1">
                   <Card variant="tile" padding="none" className={chartCardClass}><div className={chartTitleClass}>Kuude kaupa</div><MonthBars months={months} years={compare} metric={c.metric} unit={c.unit} /></Card>
                   <Card variant="tile" padding="none" className={chartCardClass}><div className={chartTitleClass}>Kasv hooaja jooksul</div><CumulativeLines series={cumulative.series} normal={cumulative.normal?.points ?? null} metric={c.metric} unit={c.unit} firstMonth={per.firstMonth} lastMonth={per.lastMonth} /></Card>
                 </div>

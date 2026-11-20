@@ -489,11 +489,12 @@ export const tableMutedClass = 'text-subtle';
 
 /** Täislehe kest (Põllud, Külvikord, Kultuurid, Hooajad, Isikud, Taristu, Ilm, Laoarvestus): leht täidab akna päise all, põhi kerib ise.
     Vana `.fullpage-board-*`; `wide` modifikaatoril polnud reeglit, seega seda ei ole. Sisu on põhja otsene laps (vana `.fullpage-board-body > .fullpage-board-content`). */
-export const boardViewClass = 'flex min-h-0 flex-1 overflow-hidden bg-background h-[calc(100vh-64px)]';
+/** Akna kõrgus miinus päis. 64px on Header.tsx `h-16`; muuda mõlemat koos (App.tsx kaardi konteiner kasutab sama). */
+export const belowHeaderHeightClass = 'h-[calc(100vh-64px)]';
+export const boardViewClass = `flex min-h-0 flex-1 overflow-hidden bg-background ${belowHeaderHeightClass}`;
 export const boardMainClass = 'flex min-h-0 min-w-0 w-full flex-1 flex-col gap-3 px-4 py-3';
 export const boardBodyClass = 'flex min-h-0 flex-1 flex-col gap-3 overflow-auto';
 export const boardContentClass = 'flex min-h-0 flex-auto flex-col gap-3 overflow-visible p-0';
-export const boardFooterClass = 'text-sm leading-natural text-muted-foreground';
 
 /** Lehe tööriistaribad (vana `.register-*`, `.search-field`, `.year-*`): kestas vahe 10px, ilma polstri ja taustata. */
 export const registerHeaderControlsClass = 'flex flex-wrap items-center justify-between gap-2.5';
@@ -541,6 +542,8 @@ export const dropzoneStateClass = 'flex flex-col items-center gap-2';
 export const dropzoneIconClass = 'text-muted-foreground';
 /** Vihjetekst 13px, hall (vana `.hint-text`); blokina ülaveerisega (vana `.hint-text.is-block`). */
 export const hintTextClass = 'text-sm leading-natural text-muted-foreground';
+/** Tahvli jalus on sama tekst mis vihje. */
+export const boardFooterClass = hintTextClass;
 export const hintTextBlockClass = cn(hintTextClass, 'mt-1 block');
 /** „Klõpsa siia uue faili valimiseks“ valitud faili all. Vana `.file-reupload-hint`. */
 export const fileReuploadHintClass = 'text-xs leading-natural text-success-text underline';
@@ -576,3 +579,12 @@ export const stockDocUnitClass = 'ml-1.5 inline-block w-7.5 text-left';
 export const stockDocQtyClass = 'w-32.5 min-w-32.5 max-w-32.5';
 export const stockDocAmountClass = 'w-27.5 min-w-27.5 max-w-27.5';
 export const stockDocFooterRowClass = 'mt-2.5 flex items-center justify-between';
+
+/** Sisselogimise ja parooli määramise lehed (LoginPage, SetPasswordPage). Kaardi palett on index.css `.login-*` reeglites. */
+export const loginPageClass = 'login-page relative isolate flex min-h-dvh items-center overflow-hidden px-4 py-6 max-[761px]:justify-center';
+export const loginColumnClass = 'login-column flex w-[min(380px,100%)] flex-col items-center';
+export const loginCardClass = 'login-card flex w-full flex-col gap-3 px-6 py-8';
+export const loginLogoClass = 'mb-1.5 flex justify-center';
+export const loginPrimaryButtonClass = 'login-primary-btn w-full';
+export const loginCopyrightClass = 'login-copyright mt-4 text-xs leading-natural';
+export const loginNoticeClass = 'login-notice flex items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm leading-natural';

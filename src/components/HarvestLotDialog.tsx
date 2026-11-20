@@ -17,10 +17,10 @@ import {
 import { tableMutedClass } from './ui/variants';
 
 // Saagipartii akna plokid: kitsal aknal (≤ 720px) kaks veergu
-const lotHeadClass = 'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)_auto] items-end gap-3 max-[720px]:grid-cols-2';
-const lotTilesClass = 'grid grid-cols-4 gap-3 max-[720px]:grid-cols-2';
+const lotHeadClass = 'grid grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,1.6fr)_auto] items-end gap-3 max-[721px]:grid-cols-2';
+const lotTilesClass = 'grid grid-cols-4 gap-3 max-[721px]:grid-cols-2';
 const lotSectionClass = 'flex flex-col gap-2';
-const lotAddClass = 'grid items-end gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 max-[720px]:grid-cols-2';
+const lotAddClass = 'grid items-end gap-2.5 rounded-md border border-dashed border-border px-3 py-2.5 max-[721px]:grid-cols-2';
 const lotAddWeighingClass = 'grid-cols-[150px_120px_minmax(0,1fr)_auto]';
 const lotAddCostClass = 'grid-cols-[150px_minmax(0,1.4fr)_110px_minmax(0,1fr)_auto]';
 

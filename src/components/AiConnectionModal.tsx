@@ -9,8 +9,8 @@ import type { ApiKeyRow, CreatedApiKey } from '../types/apiKey';
 import { Alert, Button, Input, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow } from './ui';
 
 // Võtme rida (link + nupp, nimi + nupp): kitsal ekraanil veerus. Kolmas veerg („Loodud“) kitsal ekraanil peidus.
-const keyRowClass = 'flex gap-2 max-[640px]:flex-col';
-const hideNarrowClass = 'max-[640px]:hidden';
+const keyRowClass = 'flex gap-2 max-[641px]:flex-col';
+const hideNarrowClass = 'max-[641px]:hidden';
 
 interface AiConnectionModalProps {
   isOpen: boolean;
