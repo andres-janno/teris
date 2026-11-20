@@ -25,18 +25,18 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
   const hasCrop = !!p.crop && p.crop !== 'Määramata';
 
   return (
-    <Card variant="floating" padding="sm" className="field-map-card" role="region" aria-label={`Põld ${p.name}`}>
-      <div className="fmc-header">
-        <span className="crop-indicator-dot" style={{ backgroundColor: p.cropColor || DEFAULT_VEHICLE_COLOR }} />
+    <Card variant="floating" padding="sm" className="relative flex w-75 flex-col gap-2" role="region" aria-label={`Põld ${p.name}`}>
+      <div className="flex items-center gap-2">
+        <span className="size-3 rounded-full shadow-[0_0_10px_currentColor]" style={{ backgroundColor: p.cropColor || DEFAULT_VEHICLE_COLOR }} />
         {p.num && <Badge tone="success" variant="outline" size="md" className="num">Nr {p.num}</Badge>}
-        <strong className="fmc-name" title={p.name}>{p.name}</strong>
+        <strong className="min-w-0 flex-1 truncate" title={p.name}>{p.name}</strong>
         <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
       </div>
-      <div className="fmc-rows">
+      <div className="flex flex-col gap-1">
         <KeyValueRow label={`Pindala ${p.year}`}><strong>{formatQty(p.areaHa || 0)}</strong> ha</KeyValueRow>
         <KeyValueRow label="Kultuur">{hasCrop ? p.crop : 'Määramata'}{hasCrop && p.cropVariety ? ` (${p.cropVariety})` : ''}</KeyValueRow>
       </div>
-      <div className="fmc-actions">
+      <div className="flex gap-2 [&>button]:flex-1">
         <Button type="button" variant="ghost" size="sm" onClick={() => onOpenWorks(field)}><ListChecks size={14} /> Ava põllutööd</Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => onEditField(Number(p.id))}><Pencil size={14} /> Muuda põldu</Button>
       </div>

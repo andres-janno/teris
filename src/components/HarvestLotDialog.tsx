@@ -14,6 +14,7 @@ import {
   Button, StatTile, Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
   DateInput, Field, Input, NumberInput, Select
 } from './ui';
+import { tableMutedClass } from './ui/variants';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -193,8 +194,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                         <TableCell wrap>{e.fieldName}</TableCell>
                         <TableCell numeric>{e.bunkers ?? '–'}</TableCell>
                         <TableCell numeric>
-                          {e.manual && <span className="muted" title="Tonnid sisestatud käsitsi">käsitsi </span>}
-                          {!e.manual && !(e.tonnes != null && e.tonnes > 0) ? <span className="muted">kaalumata</span> : formatQty(e.tonnes ?? 0)}
+                          {e.manual && <span className={tableMutedClass} title="Tonnid sisestatud käsitsi">käsitsi </span>}
+                          {!e.manual && !(e.tonnes != null && e.tonnes > 0) ? <span className={tableMutedClass}>kaalumata</span> : formatQty(e.tonnes ?? 0)}
                         </TableCell>
                         <TableCell>{e.financeStatus ?? ''}</TableCell>
                       </TableRow>
@@ -258,8 +259,8 @@ export const HarvestLotDialog: React.FC<Props> = ({ lotId, defaultYear, warehous
                         <TableCell>{formatDate(c.date)}</TableCell>
                         <TableCell wrap>{c.articleName}</TableCell>
                         <TableCell numeric>{formatQty(c.quantity)} {c.unit}</TableCell>
-                        <TableCell numeric>{c.unitPrice == null ? <span className="muted">hindamata</span> : fmtEur(c.unitPrice)}</TableCell>
-                        <TableCell numeric>{c.total == null ? <span className="muted">hindamata</span> : fmtEur(c.total)}</TableCell>
+                        <TableCell numeric>{c.unitPrice == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(c.unitPrice)}</TableCell>
+                        <TableCell numeric>{c.total == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(c.total)}</TableCell>
                         <TableCell actions>
                           <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta kuivatuskulu" disabled={busy}
                             onClick={() => void run(async () => { await api.deleteHarvestLotCost(lot.id, c.id); })}><Trash2 size={15} /></Button>

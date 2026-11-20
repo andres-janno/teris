@@ -522,7 +522,7 @@ describe('vanad kaardi paneelide klassid (etapp 4d)', () => {
   it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="layer-item v-indiv-row cc-notice" /> {/* satellite-panel-note kommentaar */}' },
-      { path: 'src/components/B.tsx', content: '<Field htmlFor="layer-text" /><div id="cc-header" className="crop-legend-item layer-loading-bar cc-range add-poi-banner crop-indicator-dot" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="layer-text" /><div id="cc-header" className="crop-legend-item layer-loading-bar cc-range add-poi-banner" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });
@@ -532,7 +532,17 @@ describe('vanad dialoogide klassid (etapp 4e)', () => {
   it('loeb kustutatud klassid tsx-is, mitte id-sid, jagatud klasse ega kommentaare', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="add-work-option telemetry-pill-row alert-box error" /> {/* pria-grid kommentaar */}' },
-      { path: 'src/components/B.tsx', content: '<Field htmlFor="season-year" /><div id="work-entry-body" className="year-col selected cell-sub sticky-name fullpage-board-view detail-section login-notice" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="season-year" /><div id="work-entry-body" className="year-col selected year-cell has-crop detail-section login-notice" />' },
+    ]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
+  });
+});
+
+describe('vanad kesta ja Põllud-tabeli klassid (etapp 4f)', () => {
+  it('loeb kustutatud kesta, tööriistariba ja tabeli klassid tsx-is, mitte id-sid', () => {
+    const r = summarize([
+      { path: 'src/components/A.tsx', content: '<div className="fullpage-board-view" /><main className="fullpage-board-main wide" /><div className="register-actions-bar" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="search-field" /><div id="name-cell" className="year-col selected year-cell has-crop" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });

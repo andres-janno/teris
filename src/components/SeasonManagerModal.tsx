@@ -13,6 +13,7 @@ import type { MasterField } from '../types/fieldRegister';
 import { formatDateTimeTallinn } from '../services/dateFormat';
 import { SEASON_PHASE_META, deriveSeasonPhase } from '../types/season';
 import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, NumberInput, Field, FormGrid, Input, Textarea, PageHeader } from './ui';
+import { boardViewClass, boardMainClass, boardBodyClass } from './ui/variants';
 
 // Numbrilahter: püsilaiusega kiri (pindala, arv).
 const MONO_CELL = 'font-mono text-xs leading-natural';
@@ -302,8 +303,8 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
   );
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader
           icon={<CalendarDays />}
           title="Hooajad"
@@ -315,7 +316,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
             </Button>
           ) : undefined}
         />
-        <div className="fullpage-board-body">
+        <div className={boardBodyClass}>
           {bodyContent}
         </div>
       </main>

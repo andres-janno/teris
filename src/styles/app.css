@@ -28,6 +28,10 @@
 @source '../components/SetPasswordPage.tsx';
 @source '../components/LoginBackdrop.tsx';
 @source '../components/FieldWorksBoard.tsx';
+@source '../components/FieldsTableView.tsx';
+@source '../components/FieldMapCard.tsx';
+@source '../components/FieldContextMenu.tsx';
+@source '../components/WorkRegisterModal.tsx';
 @source '../components/FieldWorkPlanForm.tsx';
 @source '../components/FieldWorkEntryDialog.tsx';
 @source '../components/PriaLinesEditor.tsx';

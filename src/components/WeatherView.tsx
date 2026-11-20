@@ -6,6 +6,7 @@ import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, Weather
 import { deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
 import { Alert, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle, PageHeader } from './ui';
+import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass } from './ui/variants';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
 import { WeatherPointMap } from './WeatherPointMap';
 
@@ -53,8 +54,8 @@ export const WeatherView: React.FC = () => {
   const toggleCompare = (y: number) => setCompare((c) => (c.includes(y) ? c.filter((x) => x !== y) : [...c, y].sort()));
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main wide">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader
           icon={<CloudSun />}
           title="Ilm"
@@ -82,8 +83,8 @@ export const WeatherView: React.FC = () => {
           )}
         />
 
-        <div className="fullpage-board-body">
-          <div className="fullpage-board-content weather-body">
+        <div className={boardBodyClass}>
+          <div className={`${boardContentClass} weather-body`}>
             {error && <Alert tone="error">{error}</Alert>}
             {loading && <Alert>Ilmaandmeid laetakse — esmalaadimine võtab kuni mõne tunni.</Alert>}
 

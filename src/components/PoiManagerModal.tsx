@@ -13,7 +13,7 @@ import {
 import type { PointOfInterest, PoiCategory } from '../types/poi';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Badge, ToggleGroup, ToggleGroupItem, NumberInput, Field, FormGrid, FieldRow, Input, Select, Textarea, PageHeader, EmptyState, IconBox, cn } from './ui';
-import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, infoRowClass, registerIconBoxClass } from './ui/variants';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, infoRowClass, registerIconBoxClass, boardViewClass, boardMainClass, boardBodyClass, boardContentClass } from './ui/variants';
 
 interface PoiManagerModalProps {
   isOpen: boolean;
@@ -214,7 +214,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   };
 
   const bodyContent = (
-    <div className="fullpage-board-content">
+    <div className={boardContentClass}>
           {/* Action Bar */}
           <div className="flex flex-wrap items-center justify-between gap-2.5">
             {/* Category tabs */}
@@ -460,10 +460,10 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   );
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main wide">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader icon={<MapPin />} title="Taristu" subtitle="Kuivatid, veevõtukohad, töökojad, tanklad ja laod" />
-        <div className="fullpage-board-body">
+        <div className={boardBodyClass}>
           {bodyContent}
         </div>
       </main>

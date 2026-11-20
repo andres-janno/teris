@@ -17,6 +17,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { fmt0 } from '../services/weatherFormat';
 import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader, cornerActionClass } from './ui';
 import type { BadgeTone } from './ui';
+import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, registerHeaderControlsClass, registerIoButtonsClass, registerActionsBarClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass, cellSubClass, cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -235,15 +236,15 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   const tenureFilters: TenureFilter[] = ['all', 'owned', 'rented', 'mixed', 'unknown'];
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main wide">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator" />
 
-        <div className="fullpage-board-body">
-          <div className="fullpage-board-content">
-            <div className="register-header-controls">
-              <div className="year-selector-group">
-                <span className="year-label">
+        <div className={boardBodyClass}>
+          <div className={boardContentClass}>
+            <div className={registerHeaderControlsClass}>
+              <div className={yearSelectorGroupClass}>
+                <span className={yearLabelClass}>
                   <Calendar size={15} />
                   <span>Hooaeg:</span>
                 </span>
@@ -262,7 +263,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     );
                   })}
                 </ToggleGroup>
-                <div className="register-io-buttons">
+                <div className={registerIoButtonsClass}>
                   <Button size="sm" onClick={handleExportCsv} title="Ekspordi tabel CSV failina">
                     <Download size={14} />
                     <span>CSV Eksport</span>
@@ -305,8 +306,8 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               </div>
             </div>
 
-            <div className="register-actions-bar">
-              <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." aria-label="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." />
+            <div className={registerActionsBarClass}>
+              <SearchInput className={searchFieldClass} value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." aria-label="Otsi põllu nime, numbrit, katastrit, omanikku või operaatorit..." />
               <ToggleGroup aria-label="Omandivorm" value={tenureFilter} onValueChange={(v) => setTenureFilter(v as TenureFilter)}>
                 {tenureFilters.map((t) => (
                   <ToggleGroupItem key={t} value={t} disabled={t !== 'all' && tenureCounts[t] === 0}>
@@ -316,10 +317,10 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               </ToggleGroup>
             </div>
 
-            <Table scroll="fill" bordered className="fields-table">
+            <Table scroll="fill" bordered className="[&>tfoot>tr>td]:border-t">
               <TableHeader>
                 <TableRow>
-                  <TableHead pin="start" className="sticky-name">Põld</TableHead>
+                  <TableHead pin="start" className="w-60 min-w-60 max-w-60 pin-edge-end">Põld</TableHead>
                   <TableHead numeric>Pindala</TableHead>
                   <TableHead numeric>PRIA pind</TableHead>
                   <TableHead>Kultuur {selectedYear}</TableHead>
@@ -349,7 +350,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   const hasCrop = !isCropUndetermined(rec.crop);
                   return (
                     <TableRow key={field.id}>
-                      <TableCell pin="start" wrap className="name-cell sticky-name has-corner-btn">
+                      <TableCell pin="start" wrap className="w-60 min-w-60 max-w-60 pr-8 pin-edge-end">
                         {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {rec.geometry && (
                           <Button variant="ghost" size="icon-xs" wrapperClassName={cornerActionClass}
@@ -359,48 +360,49 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                             <Crosshair size={13} />
                           </Button>
                         )}
-                        <div className="field-title-line">
+                        <div className={tableTitleLineClass}>
                           {field.num && <Badge tone="success" variant="outline" size="md" className="num" title="PRIA põllu number">Nr {field.num}</Badge>}
-                          <span className="field-name">{field.name}</span>
+                          <span className={tableNameClass}>{field.name}</span>
                         </div>
-                        <div className="field-sub-tags">
+                        <div className={tableSubTagsClass}>
                           <Badge tone="info" className="num" title="PRIA massiivi number">{field.fieldCode}</Badge>
                         </div>
                       </TableCell>
                       <TableCell numeric title={rec.areaChangeReason || undefined}>
                         {fmtHa(rec.areaHa || 0)} ha
                       </TableCell>
-                      <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className="muted">–</span>}</TableCell>
+                      <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell>
                         {hasCrop ? (
-                          <span className="fields-table-crop" style={{ '--crop-color': rec.cropColor } as React.CSSProperties}>
+                          <span className="inline-flex items-center gap-1.5">
+                            <span className="size-2 shrink-0 rounded-sm bg-subtle" style={rec.cropColor ? { background: rec.cropColor } : undefined} />
                             {rec.crop}
                           </span>
-                        ) : <span className="muted">–</span>}
-                        {rec.cropVariety && <div className="cell-sub">{rec.cropVariety}</div>}
+                        ) : <span className={tableMutedClass}>–</span>}
+                        {rec.cropVariety && <div className={cellSubStackedClass}>{rec.cropVariety}</div>}
                       </TableCell>
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
                       <TableCell>
                         <Badge tone={TENURE_TONE[r.tenure]}>{TENURE_LABEL[r.tenure]}</Badge>
                         {r.tenure === 'mixed' && (
-                          <div className="cell-sub">{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
+                          <div className={cellSubStackedClass}>{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
                         )}
                       </TableCell>
-                      <TableCell wrap className="wrap-cell">{r.owners.length ? r.owners.join(', ') : <span className="muted">–</span>}</TableCell>
+                      <TableCell wrap className="min-w-35 max-w-55">{r.owners.length ? r.owners.join(', ') : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell>
                         {r.parcels.length ? r.parcels.map((p, i) => (
                           <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
                             {p.cadastralCode}
-                            {r.parcels.length > 1 && <span className="cell-sub-inline"> · {fmtHa(p.fieldAreaHa)} ha</span>}
+                            {r.parcels.length > 1 && <span className={cellSubClass}> · {fmtHa(p.fieldAreaHa)} ha</span>}
                           </div>
-                        )) : <span className="muted">–</span>}
+                        )) : <span className={tableMutedClass}>–</span>}
                       </TableCell>
-                      <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className="muted">–</span>}</TableCell>
-                      <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className="muted">–</span>}</TableCell>
-                      <TableCell wrap className="wrap-cell">{field.soilType || <span className="muted">–</span>}</TableCell>
-                      <TableCell>{field.drainageSystem === undefined ? <span className="muted">–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
-                      <TableCell wrap>{field.operatorName || <span className="muted">–</span>}</TableCell>
+                      <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell wrap className="min-w-35 max-w-55">{field.soilType || <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell>{field.drainageSystem === undefined ? <span className={tableMutedClass}>–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
+                      <TableCell wrap>{field.operatorName || <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell actions>
                         <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
                           <Edit2 size={15} />
@@ -416,15 +418,15 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               {filteredRows.length > 0 && (
                 <TableFooter sticky>
                   <TableRow>
-                    <TableCell pin="start" className="sticky-name"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
+                    <TableCell pin="start" className="w-60 min-w-60 max-w-60 pin-edge-end z-3!"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
                     <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
                     <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
                     <TableCell />
                     {weatherEnabled && <TableCell />}
                     {weatherEnabled && <TableCell />}
                     <TableCell>
-                      <div className="cell-sub">Oma: {fmtHa(totals.ownedHa)} ha</div>
-                      <div className="cell-sub">Rent: {fmtHa(totals.rentedHa)} ha</div>
+                      <div className={cellSubStackedClass}>Oma: {fmtHa(totals.ownedHa)} ha</div>
+                      <div className={cellSubStackedClass}>Rent: {fmtHa(totals.rentedHa)} ha</div>
                     </TableCell>
                     <TableCell />
                     <TableCell />
@@ -433,7 +435,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <TableCell />
                     <TableCell />
                     <TableCell />
-                    <TableCell actions />
+                    <TableCell actions className="z-3!" />
                   </TableRow>
                 </TableFooter>
               )}

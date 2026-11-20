@@ -61,13 +61,6 @@
 
 /* Selected Field Details */
 
-.crop-indicator-dot {
-  width: 12px;
-  height: 12px;
-  border-radius: 9999px;
-  box-shadow: 0 0 10px currentColor;
-}
-
 .detail-section {
   margin-top: 12px;
 }

@@ -19,7 +19,7 @@ import type { BaseMapLayerId } from '../types/map';
 import { FieldShapeModal } from './FieldShapeModal';
 import { UNDERSOWING_LABELS, type Undersowing } from '../services/priaCropName';
 import { Button, Card, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, FilterClear, SearchInput, CheckboxField, Select, clickOnActivationKey, HelpHint, ChipButton, PageHeader, cornerActionClass, cn } from './ui';
-import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass, statChipLabelClass, statChipNumClass, statChipSubClass } from './ui/variants';
+import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass, statChipLabelClass, statChipNumClass, statChipSubClass, boardViewClass, boardMainClass, boardBodyClass, boardContentClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
 
 // Kultuurigrupi pealkiri ja pindala (täisleht: 13px / min-laius 240px, number 14px).
 const GROUP_TITLE = 'mr-2 inline-flex min-w-[min(240px,100%)] items-baseline gap-1.5 text-sm font-semibold leading-natural text-muted-foreground';
@@ -383,12 +383,12 @@ function cropSummaryKey(cropText: string): string {
   );
 
   const bodyContent = (
-    <div className="fullpage-board-content">
+    <div className={boardContentClass}>
           {/* Top Row: Year Season Switcher & Global Stats */}
-          <div className="register-header-controls">
+          <div className={registerHeaderControlsClass}>
             {/* Year Selector Tabs */}
-            <div className="year-selector-group">
-              <span className="year-label">
+            <div className={yearSelectorGroupClass}>
+              <span className={yearLabelClass}>
                 <Calendar size={15} />
                 <span>Hooaeg:</span>
               </span>
@@ -407,7 +407,7 @@ function cropSummaryKey(cropText: string): string {
                   );
                 })}
               </ToggleGroup>
-              <div className="register-io-buttons">
+              <div className={registerIoButtonsClass}>
                 <Button
                   size="sm"
                   onClick={handleExportCsv}
@@ -451,8 +451,8 @@ function cropSummaryKey(cropText: string): string {
           </Card>
 
           {/* Search & Actions Row */}
-          <div className="register-actions-bar">
-            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, koodi, katastrit või omanikku..." aria-label="Otsi põllu nime, koodi, katastrit või omanikku..." />
+          <div className={registerActionsBarClass}>
+            <SearchInput className={searchFieldClass} value={searchQuery} onChange={setSearchQuery} placeholder="Otsi põllu nime, koodi, katastrit või omanikku..." aria-label="Otsi põllu nime, koodi, katastrit või omanikku..." />
 
             <FilterClear inline active={showMissingInYear} onClear={() => setShowMissingInYear(false)}>
               <CheckboxField checked={showMissingInYear} onCheckedChange={setShowMissingInYear} label={`Näita ka ${selectedYear}. aastal puuduvaid põlde`} />
@@ -656,10 +656,10 @@ function cropSummaryKey(cropText: string): string {
   );
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main wide">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader icon={<Repeat />} title="Külvikord" subtitle="Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed" />
-        <div className="fullpage-board-body">
+        <div className={boardBodyClass}>
           {bodyContent}
         </div>
       </main>

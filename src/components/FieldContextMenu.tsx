@@ -19,6 +19,8 @@ interface Props {
   onClose: () => void;
 }
 
+// Menüü märkus (laadimine, viga, tühi loend)
+const NOTE_CLASS = 'flex items-center gap-1.5 px-2 py-1.5 text-sm';
 const STATUS_LABEL = { PLANNED: 'Planeeritud', IN_PROGRESS: 'Töös', DONE: 'Lõpetatud' } as const;
 const fmtHa = (n: number) => n.toLocaleString('et-EE', { maximumFractionDigits: 2 });
 
@@ -60,23 +62,23 @@ export const FieldContextMenu: React.FC<Props> = ({ field, point, masterField, s
     <DropdownMenu open modal={false} onOpenChange={(o) => { if (!o) onClose(); }}>
       {/* Nähtamatu 0×0 ankur hiireklõpsu kohas: Leaflet'i sündmusel pole DOM-elementi, millele menüüd siduda */}
       <DropdownMenuTrigger asChild>
-        <span className="field-menu-anchor" style={{ left: point.x, top: point.y }} />
+        <span className="pointer-events-none fixed size-0" style={{ left: point.x, top: point.y }} />
       </DropdownMenuTrigger>
       <DropdownMenuContent
         align="start"
         sideOffset={0}
-        className="field-menu"
+        className="max-w-85 min-w-60"
         onCloseAutoFocus={(e) => e.preventDefault()}
         onContextMenu={(e) => e.preventDefault()}
       >
-        <div className="field-menu-title">
+        <div className="mb-1 flex flex-col gap-0.5 border-b border-secondary-border px-2 pt-1.5 pb-2">
           <strong>{p.name}</strong>
-          <span className="muted">{p.num ? `Nr ${p.num} · ` : ''}{p.crop} · {fmtHa(p.areaHa)} ha</span>
+          <span className="text-xs leading-4.5">{p.num ? `Nr ${p.num} · ` : ''}{p.crop} · {fmtHa(p.areaHa)} ha</span>
         </div>
         <DropdownMenuLabel>Lisa kanne</DropdownMenuLabel>
-        {works === null && !error && <div className="field-menu-note"><Loader2 size={14} className="animate-spin" /> Laen töid…</div>}
-        {error && <div className="field-menu-note error">{error}</div>}
-        {works !== null && open.length === 0 && <div className="field-menu-note muted">Lõpetamata töid pole</div>}
+        {works === null && !error && <div className={NOTE_CLASS}><Loader2 size={14} className="animate-spin" /> Laen töid…</div>}
+        {error && <div className={`${NOTE_CLASS} text-destructive`}>{error}</div>}
+        {works !== null && open.length === 0 && <div className={NOTE_CLASS}>Lõpetamata töid pole</div>}
         {open.map((w) => {
           const when = plannedWhen(w);
           const description = `${STATUS_LABEL[w.status]}${when ? ` · ${when}` : ''}${w.seasonYear && w.seasonYear !== year ? ` · saak ${w.seasonYear}` : ''}`;

@@ -22,7 +22,7 @@ import { ResourceCostFields, isRateValid } from './ResourceCostFields';
 import { api } from '../services/api';
 import type { Article } from '../types/fieldWork';
 import { Button, Card, CardHeader, CardActions, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Badge, EmptyState, FilterClear, FilterSelect, SearchInput, Field, FormGrid, Input, Select, Textarea, CheckboxField, SectionTitle, PageHeader, IconBox, cn } from './ui';
-import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, statChipLabelClass, statChipNumClass, statChipSubClass, registerIconBoxClass } from './ui/variants';
+import { cardGridClass, infoCardClass, infoCardTitleWrapClass, infoCardNameClass, infoCardSubClass, infoRowsClass, statChipLabelClass, statChipNumClass, statChipSubClass, registerIconBoxClass, boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, searchFieldClass, dialogHeaderControlsClass, dialogActionsBarClass } from './ui/variants';
 
 // Statistikakiip (vana .reg-stat-pill): silt, number, alamväärtus
 const STAT_PILL = 'flex items-center gap-1.5 rounded-md border border-border bg-field px-3 py-1.5 text-sm leading-natural';
@@ -419,7 +419,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
   const bodyContent = (
     <>
       {/* Top Row: Quick Stats Bar (Identical pills to FieldManagerModal) */}
-          <div className="register-header-controls">
+          <div className={isFullPage ? registerHeaderControlsClass : dialogHeaderControlsClass}>
             <div className="flex flex-wrap gap-2">
               <div className={STAT_PILL}>
                 <span className={statChipLabelClass}>Isikuid kokku:</span>
@@ -443,8 +443,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           </div>
 
           {/* Search, Filters & Actions Bar (Identical toolbar to FieldManagerModal) */}
-          <div className="register-actions-bar">
-            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." aria-label="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." />
+          <div className={isFullPage ? registerActionsBarClass : dialogActionsBarClass}>
+            <SearchInput className={isFullPage ? searchFieldClass : undefined} value={searchQuery} onChange={setSearchQuery} placeholder="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." aria-label="Otsi nime, isikukoodi, telefoni, katastrit või märkust..." />
 
             {/* Role filter */}
             <FilterClear active={selectedRoleFilter !== 'all'} onClear={() => setSelectedRoleFilter('all')}>
@@ -604,8 +604,8 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
 
   if (isFullPage) {
     return (
-      <div className="fullpage-board-view">
-        <main className="fullpage-board-main wide">
+      <div className={boardViewClass}>
+        <main className={boardMainClass}>
           <PageHeader
             icon={<Users />}
             title="Isikud"
@@ -621,13 +621,13 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
               </Button>
             ) : undefined}
           />
-          <div className="fullpage-board-body">
+          <div className={boardBodyClass}>
             {editForm}
-            <div className="fullpage-board-content">
+            <div className={boardContentClass}>
               {bodyContent}
             </div>
           </div>
-          <div className="fullpage-board-footer">
+          <div className={boardFooterClass}>
             <span>
               Kuvatakse {filteredParties.length} isikut {parties.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>

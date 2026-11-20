@@ -9,6 +9,7 @@ import type { Article } from '../types/fieldWork';
 import type { ArticleMovements, StockMovement, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { Alert, Dialog, DialogBody, DialogContent, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
+import { dialogActionsBarClass, tableMutedClass } from './ui/variants';
 
 const fmtQty = formatQty;
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
@@ -47,10 +48,10 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="lg" className="stock-card-modal">
+      <DialogContent size="lg">
         <DialogHeader icon={<Package size={20} />} title={`Laokaart: ${article.name}`} />
         <DialogBody>
-          <div className="register-actions-bar">
+          <div className={dialogActionsBarClass}>
             <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
               <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
                 options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses)]} />
@@ -93,7 +94,7 @@ export const ArticleStockCard: React.FC<Props> = ({ article, warehouseId: initia
                   </TableCell>
                   {warehouseId && <TableCell numeric className={m.balance < 0 ? 'article-overuse' : ''}>{fmtQty(m.balance)}</TableCell>}
                   {canSeeMoney && (
-                    <TableCell numeric>{m.cost == null ? <span className="muted" title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</TableCell>
+                    <TableCell numeric>{m.cost == null ? <span className={tableMutedClass} title="Ootab arvele võtmist">hindamata</span> : fmtEur(m.cost)}</TableCell>
                   )}
                 </TableRow>
               ))}

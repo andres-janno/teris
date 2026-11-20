@@ -10,7 +10,7 @@ import { formatDateTime, formatDuration } from './fleetDateTime';
 import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { cellSubClass, cellSubStackedClass } from './ui/variants';
+import { cellSubClass, cellSubStackedClass, tableMutedClass } from './ui/variants';
 import { Alert, Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
 
 // Aja jaotuse riba osad; värvid on tokenid (teemapõhised muutujad --trip-*). Täielikud nimed, et Tailwind need näeks.
@@ -234,7 +234,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                       <TableCell>
                         <div className="flex flex-col items-start gap-1">
                           {f.entries.length === 0 ? (
-                            <span className="muted">kanne puudub</span>
+                            <span className={tableMutedClass}>kanne puudub</span>
                           ) : (
                             f.entries.map((e) => (
                               <Button

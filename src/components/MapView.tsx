@@ -1050,7 +1050,7 @@ export const MapView: React.FC<MapViewProps> = ({
       {selectedField && selectedFieldCard && (
         <div
           ref={fieldCardRef}
-          className={`field-map-card-anchor${fieldCardPos?.below ? ' below' : ''}`}
+          className="absolute z-900 w-75"
           style={fieldCardPos ? { left: fieldCardPos.left, top: fieldCardPos.top } : { visibility: 'hidden', left: 0, top: 0 }}
         >
           {selectedFieldCard}

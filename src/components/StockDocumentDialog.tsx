@@ -15,6 +15,7 @@ import {
   Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
   DateInput, Field, FormGrid, Input, NumberInput, Select
 } from './ui';
+import { tableMutedClass } from './ui/variants';
 
 interface Row { articleId: string; quantity: number | null; amount: number | null }
 const emptyRow: Row = { articleId: '', quantity: null, amount: null };
@@ -178,7 +179,7 @@ export const StockDocumentDialog: React.FC<Props> = ({ kind, initial, warehouses
                       <TableCell numeric className="stock-doc-unit-price">{qty && amount != null ? `${fmtEur(amount / qty)}/${m?.unit ?? ''}` : '–'}</TableCell>
                     )}
                     {kind !== 'RECEIPT' && initial && (
-                      <TableCell numeric>{saved?.fifoCost == null ? <span className="muted">hindamata</span> : fmtEur(saved.fifoCost)}</TableCell>
+                      <TableCell numeric>{saved?.fifoCost == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(saved.fifoCost)}</TableCell>
                     )}
                     <TableCell actions>
                       {/* Tab jätab kustutamisnupu vahele */}

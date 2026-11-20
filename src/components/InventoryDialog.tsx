@@ -14,6 +14,7 @@ import {
   Button, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow,
   DateInput, Field, FormGrid, Input, NumberInput, Select
 } from './ui';
+import { tableMutedClass } from './ui/variants';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 
@@ -129,7 +130,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
               <Input id="inv-notes" value={notes} onChange={(e) => setNotes(e.target.value)} />
             </Field>
           </FormGrid>
-          <p className="muted">Tühi tegelik seis: rida ei arvestata. 0: kogu seis kantakse maha.</p>
+          <p>Tühi tegelik seis: rida ei arvestata. 0: kogu seis kantakse maha.</p>
 
           <Table scroll="none" className="stock-doc-lines">
             <TableHeader>
@@ -162,7 +163,7 @@ export const InventoryDialog: React.FC<Props> = ({ initial, warehouses, articles
                     <TableCell numeric className={x && x.diff < 0 ? 'stock-qty-out' : x && x.diff > 0 ? 'stock-qty-in' : ''}>
                       {x ? `${x.diff > 0 ? '+' : ''}${formatQty(x.diff)}` : '–'}
                     </TableCell>
-                    <TableCell numeric>{!x || x.diff === 0 ? '–' : x.value == null ? <span className="muted">hindamata</span> : fmtEur(x.value)}</TableCell>
+                    <TableCell numeric>{!x || x.diff === 0 ? '–' : x.value == null ? <span className={tableMutedClass}>hindamata</span> : fmtEur(x.value)}</TableCell>
                   </TableRow>
                 );
               })}

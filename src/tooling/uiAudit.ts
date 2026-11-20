@@ -131,7 +131,7 @@ export const RETIRED_4C: readonly string[] = [
   'v-card-footer', 'v-equipment-badge-row', 'v-gauges-grid', 'with-bottom-gap',
 ];
 // 4d: kaardi paneelide kustutatud klassid (etapp 4d). Täpsed nimed. Jäävad klassid puuduvad teadlikult: crop-legend-item (valitud olek),
-// layer-loading-bar (::after), cc-range (liuguri käepide), add-poi-banner (värv), crop-indicator-dot (FieldMapCard). map-top-*-stack jäävad 4f-s: ainult polster map.css-is.
+// layer-loading-bar (::after), cc-range (liuguri käepide), add-poi-banner (värv). map-top-*-stack jäävad 4f-s: ainult polster map.css-is.
 export const RETIRED_4D: readonly string[] = [
   'active-dot', 'basemap-btn', 'basemap-cadastre-toggle', 'basemap-grid', 'basemap-name', 'cadastre-color', 'cc-date', 'cc-header',
   'cc-label', 'cc-link-btn', 'cc-now', 'cc-now-pct', 'cc-now-time', 'cc-notice', 'cc-notice-loading', 'cc-period',
@@ -156,8 +156,7 @@ export const RETIRED_4D: readonly string[] = [
   'year-widget-header', 'year-widget-season', 'year-widget-title',
 ];
 // 4e: dialoogide ja registrite kustutatud klassid (etapp 4e). Täpsed nimed. Jäävad klassid puuduvad teadlikult: `year-col`, `year-col-label`,
-// `year-cell`, `has-crop` (Külvikorra aastaveeru CSS-konksud), `sticky-name`, `cell-sub`, `name-cell`, `field-name`, `fullpage-board-*`,
-// `detail-section`, `login-notice` (jagatud, jäävad 4f-ni või erandiks).
+// `year-cell`, `has-crop` (Külvikorra aastaveeru CSS-konksud), `detail-section`, `login-notice` (jagatud, jäävad erandiks).
 export const RETIRED_4E: readonly string[] = [
   'add-cad-btn', 'add-work-actions', 'add-work-body', 'add-work-check', 'add-work-count', 'add-work-footer', 'add-work-name', 'add-work-option',
   'add-work-phase', 'add-work-phase-label', 'add-work-tag', 'alert-action', 'alert-box', 'alert-left', 'auto-field-icon', 'auto-filled-input',
@@ -194,6 +193,11 @@ export const RETIRED_4F: readonly string[] = [
   'support-panel-label', 'support-panel-log', 'support-panel-row', 'support-panel-title', 'support-panel-titles', 'support-panel-until',
   'support-panel-who', 'teris-logo-horizontal', 'teris-logo-icon', 'teris-logo-vertical',
   'auth-loading', 'forced-password-page', 'full-width', 'login-backdrop', 'login-brand', 'login-dust', 'login-forgot-row',
+  'fullpage-board-view', 'fullpage-board-main', 'fullpage-board-body', 'fullpage-board-content', 'fullpage-board-footer', 'register-actions-bar',
+  'register-header-controls', 'register-io-buttons', 'search-field', 'year-selector-group', 'year-label', 'cell-sub', 'cell-sub-inline', 'field-name',
+  'field-title-line', 'field-sub-tags', 'sticky-name', 'name-cell', 'wrap-cell', 'has-corner-btn', 'fields-table', 'fields-table-crop',
+  'field-menu', 'field-menu-anchor', 'field-menu-title', 'field-menu-note', 'field-map-card', 'field-map-card-anchor', 'fmc-header', 'fmc-name',
+  'fmc-rows', 'fmc-actions', 'crop-indicator-dot', 'work-register-modal', 'work-register-body', 'work-name-cell', 'work-form-modal',
 ];
 const LEGACY_OVERVIEW = new RegExp(
   `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,

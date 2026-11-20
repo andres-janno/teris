@@ -23,6 +23,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { Alert, Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
+import { registerActionsBarClass, registerIoButtonsClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
 
 interface Option {
   id: string;
@@ -798,8 +799,8 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}
-          <div className="year-selector-group">
-            <span className="year-label">
+          <div className={yearSelectorGroupClass}>
+            <span className={yearLabelClass}>
               <Calendar size={15} />
               <span>Hooaeg:</span>
             </span>
@@ -818,7 +819,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 );
               })}
             </ToggleGroup>
-            <div className="register-io-buttons">
+            <div className={registerIoButtonsClass}>
               <Button type="button" size="sm" onClick={onOpenWorkRegister} title="Ava tööde register: tööd ja kulumaterjalid">
                 <ListChecks size={14} />
                 <span>Tööde register</span>
@@ -843,7 +844,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
 
         </div>
 
-        <div className="register-actions-bar gap-2.5 mb-0">
+        <div className={registerActionsBarClass}>
           <SearchInput className="max-w-105 flex-1 basis-55" value={search} onChange={setSearch} placeholder="Otsi põldu või tööd" aria-label="Otsi põldu või tööd" />
           <label className="flex items-center gap-1.5 text-sm text-muted-foreground leading-natural">
             <span>Tegevus</span>

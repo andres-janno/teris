@@ -20,6 +20,7 @@ import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
 import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, PageHeader } from './ui';
+import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
 const fmtQty = formatQty;
@@ -141,12 +142,12 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   };
 
   return (
-    <div className="fullpage-board-view">
-      <main className="fullpage-board-main wide">
+    <div className={boardViewClass}>
+      <main className={boardMainClass}>
         <PageHeader icon={<Package />} title="Laoarvestus" subtitle="Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod" />
 
-        <div className="fullpage-board-body">
-          <div className="fullpage-board-content">
+        <div className={boardBodyClass}>
+          <div className={boardContentClass}>
             {canManageFinance && (
               <div className="articles-tabs">
                 <Tabs activationMode="manual" value={tab} onValueChange={(next) => setTab(next as typeof selectedTab)}>
@@ -163,9 +164,9 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
             {tab === 'lots' && canManageFinance && <HarvestLotsPanel warehouses={warehouses} articles={articles} onChanged={() => void reload()} />}
             {tab === 'warehouses' && canManageFinance && <WarehousesPanel warehouses={warehouses} onChanged={() => { reloadWarehouses(); void reload(); }} />}
             {tab === 'articles' && (<>
-            <div className="register-header-controls">
-              <div className="year-selector-group">
-                <span className="year-label">
+            <div className={registerHeaderControlsClass}>
+              <div className={yearSelectorGroupClass}>
+                <span className={yearLabelClass}>
                   <Calendar size={15} />
                   <span>Hooaeg:</span>
                 </span>
@@ -184,7 +185,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                     );
                   })}
                 </ToggleGroup>
-                <div className="register-io-buttons">
+                <div className={registerIoButtonsClass}>
                   {canManageFinance && (
                     <Button size="sm" onClick={() => setShowCategories(true)} title="Artikli kategooriate haldus">
                       <Tags size={14} />
@@ -203,8 +204,8 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               </div>
             </div>
 
-            <div className="register-actions-bar">
-              <SearchInput className="search-field" value={search} onChange={setSearch} placeholder="Otsi materjali nime, tootjat või märkust..." aria-label="Otsi materjali nime, tootjat või märkust..." />
+            <div className={registerActionsBarClass}>
+              <SearchInput className={searchFieldClass} value={search} onChange={setSearch} placeholder="Otsi materjali nime, tootjat või märkust..." aria-label="Otsi materjali nime, tootjat või märkust..." />
               <FilterClear active={!!warehouseId} onClear={() => setWarehouseId('')}>
                 <FilterSelect ariaLabel="Ladu" value={warehouseId} onChange={setWarehouseId}
                   options={[{ value: '', label: 'Kõik laod' }, ...warehouseFilterOptions(warehouses, true)]} />
@@ -257,7 +258,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   <TableRow key={m.id} tone={m.isActive ? undefined : 'muted'} onClick={() => (isGoods(m.category.group) ? setStockCard(m) : setForm(m))}>
                     <TableCell wrap>{m.category.name}</TableCell>
                     <TableCell wrap>{refinement(m)}</TableCell>
-                    <TableCell wrap className="name-cell" title={m.notes ?? undefined}>
+                    <TableCell wrap title={m.notes ?? undefined}>
                       <span>{m.name}</span>
                       {m.isDefaultService && <Badge className="cell-badge" title="Tööaja kategooria vaikimisi teenus">vaikimisi</Badge>}
                       {!m.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
@@ -301,7 +302,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
           </div>
         </div>
         {tab === 'articles' && (
-        <div className="fullpage-board-footer">
+        <div className={boardFooterClass}>
           <span>
             Kuvatakse <strong>{filtered.length}</strong> materjali <strong>{articles.length}</strong>-st
           </span>

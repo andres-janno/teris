@@ -9,7 +9,7 @@ import { formatQty } from '../services/units';
 import { TripDialog, placeText } from './TripDialog';
 import { TripGapReviewDialog } from './TripGapReviewDialog';
 import { gapParts } from './tripGapText';
-import { registerSectionClass } from './ui/variants';
+import { registerSectionClass, tableMutedClass } from './ui/variants';
 import { Alert, Badge, Button, FilterBar, FilterBarItem, EmptyState, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, DateInput, FilterClear, FilterSelect, CheckboxField } from './ui';
 
 interface TripRegisterProps {
@@ -228,9 +228,9 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                     <TableRow data-trip-id={t.id} selected={t.id === lastOpenedId} tone={t.deletedAt ? 'muted' : undefined} onClick={() => openTrip(t)}>
                       <TableCell>{formatDateTime(t.startedAt).slice(0, 10)}</TableCell>
                       <TableCell wrap>
-                        {t.vehicleName ?? <span className="muted">{t.deviceLabel} — seos puudub</span>}
+                        {t.vehicleName ?? <span className={tableMutedClass}>{t.deviceLabel} — seos puudub</span>}
                       </TableCell>
-                      <TableCell wrap>{t.implementName ?? <span className="muted">—</span>}</TableCell>
+                      <TableCell wrap>{t.implementName ?? <span className={tableMutedClass}>—</span>}</TableCell>
                       <TableCell>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell numeric>{formatDuration(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell wrap>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</TableCell>

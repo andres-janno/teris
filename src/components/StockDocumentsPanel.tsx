@@ -12,6 +12,7 @@ import type { RelatedParty } from '../types/party';
 import type { StockDocument, StockDocumentFilter, StockDocumentKind, Warehouse } from '../types/stock';
 import { STOCK_DOC_KIND_LABEL, WRITE_OFF_REASON_LABEL } from '../types/stock';
 import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, DateInput, FilterClear, FilterSelect } from './ui';
+import { registerActionsBarClass, registerIoButtonsClass, tableMutedClass } from './ui/variants';
 
 const fmtEur = (n: number) => n.toLocaleString('et-EE', { style: 'currency', currency: 'EUR' });
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
@@ -58,7 +59,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
 
   return (
     <>
-      <div className="register-actions-bar">
+      <div className={registerActionsBarClass}>
         <FilterClear active={!!filter.kind} onClear={() => setFilter({ ...filter, kind: '' })}>
           <FilterSelect ariaLabel="Liik" value={filter.kind ?? ''} onChange={(v) => setFilter({ ...filter, kind: v as StockDocumentKind | '' })}
             options={[{ value: '', label: 'Kõik liigid' }, ...(Object.keys(STOCK_DOC_KIND_LABEL) as StockDocumentKind[]).map((k) => ({ value: k, label: STOCK_DOC_KIND_LABEL[k] }))]} />
@@ -74,11 +75,11 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
         <FilterClear active={!!filter.from} onClear={() => setFilter({ ...filter, from: '' })}>
           <DateInput value={filter.from ?? ''} onChange={(v) => setFilter({ ...filter, from: v })} />
         </FilterClear>
-        <span className="muted">–</span>
+        <span>–</span>
         <FilterClear active={!!filter.to} onClear={() => setFilter({ ...filter, to: '' })}>
           <DateInput value={filter.to ?? ''} onChange={(v) => setFilter({ ...filter, to: v })} />
         </FilterClear>
-        <div className="register-io-buttons">
+        <div className={registerIoButtonsClass}>
           <Button variant="primary" size="sm" onClick={() => setForm({ kind: 'RECEIPT', initial: null })}><PackagePlus size={14} /><span>Arvele võtmine</span></Button>
           <Button size="sm" onClick={() => setForm({ kind: 'WRITE_OFF', initial: null })}><PackageMinus size={14} /><span>Mahakandmine</span></Button>
           <Button size="sm" onClick={() => setForm({ kind: 'TRANSFER', initial: null })} disabled={!canTransfer} title={canTransfer ? undefined : 'Ülekandeks on vaja vähemalt kahte aktiivset ladu'}><ArrowRightLeft size={14} /><span>Ülekanne</span></Button>
@@ -111,7 +112,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
               <TableCell numeric>{d.lines.length}</TableCell>
               <TableCell numeric>
                 {d.hasShortage && <Badge tone="danger" variant="outline" className="cell-badge-lead" title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</Badge>}
-                {fmtEur(d.total)}{d.hasUnpriced && <span className="muted" title="Osa ridu on hindamata"> *</span>}
+                {fmtEur(d.total)}{d.hasUnpriced && <span className={tableMutedClass} title="Osa ridu on hindamata"> *</span>}
               </TableCell>
               <TableCell actions>
                 <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm({ kind: d.kind, initial: d })}><Edit2 size={15} /></Button>

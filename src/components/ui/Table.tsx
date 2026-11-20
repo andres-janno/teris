@@ -1,5 +1,5 @@
 // src/components/ui/Table.tsx — ühine tabel (etapp 2.3). Päis kleepub alati; numbriveerg paremale; kogused vormindab
-// kutsuja (formatQty). <table> kannab data-slot="table" — vanad sisuklasside reeglid (.muted, .cell-sub …) leiavad selle.
+// kutsuja (formatQty). <table> kannab data-slot="table" (tabeli sisu stiili hoiavad ui/variants.ts konstandid).
 import React, { createContext, useContext } from 'react';
 import { cn } from './cn';
 import { clickOnActivationKey } from './keyActivation';

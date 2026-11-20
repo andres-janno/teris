@@ -21,7 +21,7 @@ import { confirmDialog } from './ConfirmDialog';
 import { seasonSelectorYears } from '../types/season';
 import { UNDERSOWING_LABELS, defaultPriaVariantName, type Undersowing } from '../services/priaCropName';
 import { Button, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, Badge, ToggleGroup, ToggleGroupItem, NumberInput, SearchInput, CheckboxField, Field, FieldRow, FormGrid, Input, Select, SectionTitle, PageHeader, cn } from './ui';
-import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
+import { cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass, boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass, dialogHeaderControlsClass, dialogActionsBarClass } from './ui/variants';
 
 interface CropRegisterModalProps {
   isOpen: boolean;
@@ -358,11 +358,11 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
   const bodyContent = (
     <>
       {/* Quick Stats Bar */}
-          <div className="register-header-controls">
-            <div className="year-selector-group">
+          <div className={isFullPage ? registerHeaderControlsClass : dialogHeaderControlsClass}>
+            <div className={yearSelectorGroupClass}>
               {onSelectYear && (
                 <>
-                  <span className="year-label">
+                  <span className={yearLabelClass}>
                     <Calendar size={15} />
                     <span>Hooaeg:</span>
                   </span>
@@ -383,7 +383,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </ToggleGroup>
                 </>
               )}
-              <div className="register-io-buttons">
+              <div className={registerIoButtonsClass}>
                 <Button
                   size="sm"
                   onClick={handleExportCsv}
@@ -401,8 +401,8 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
           </div>
 
           {/* Otsing */}
-          <div className="register-actions-bar">
-            <SearchInput className="search-field" value={searchQuery} onChange={setSearchQuery} placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..." aria-label="Otsi kultuuri, sorti, aretajat või PRIA koodi..." />
+          <div className={isFullPage ? registerActionsBarClass : dialogActionsBarClass}>
+            <SearchInput className={isFullPage ? searchFieldClass : undefined} value={searchQuery} onChange={setSearchQuery} placeholder="Otsi kultuuri, sorti, aretajat või PRIA koodi..." aria-label="Otsi kultuuri, sorti, aretajat või PRIA koodi..." />
             <span className="text-lg leading-natural text-foreground" title={`${selectedYear}. a külvipind kokku (kuvatud kultuurid)`}>
               Kokku: <strong>{filteredHectares.toFixed(2)} ha</strong>
             </span>
@@ -883,15 +883,15 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
 
   if (isFullPage) {
     return (
-      <div className="fullpage-board-view">
-        <main className="fullpage-board-main wide">
+      <div className={boardViewClass}>
+        <main className={boardMainClass}>
           <PageHeader icon={<Sprout />} title="Kultuurid" subtitle="Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused" />
-          <div className="fullpage-board-body">
-            <div className="fullpage-board-content">
+          <div className={boardBodyClass}>
+            <div className={boardContentClass}>
               {bodyContent}
             </div>
           </div>
-          <div className="fullpage-board-footer">
+          <div className={boardFooterClass}>
             <span>
               Kuvatakse {filteredCrops.length} kultuuri {crops.length}-st &bull; Seotud hooaeg: {selectedYear}
             </span>

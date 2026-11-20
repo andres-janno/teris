@@ -9,6 +9,7 @@ import {
   Badge, Button, CheckboxField, Dialog, DialogBody, DialogContent, DialogFooter, DialogForm, DialogHeader, Field, FormGrid, Input, Select,
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow
 } from './ui';
+import { registerActionsBarClass, registerIoButtonsClass, tableNameClass, tableMutedClass } from './ui/variants';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -63,13 +64,13 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
 
   const row = (w: Warehouse) => (
     <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
-      <TableCell wrap className="name-cell">
-        <span className="field-name">{w.name}</span>
+      <TableCell wrap>
+        <span className={tableNameClass}>{w.name}</span>
         {w.isDefault && <Badge tone="info" className="cell-badge">Põhiladu</Badge>}
         {!w.isActive && <Badge className="cell-badge">Mitteaktiivne</Badge>}
       </TableCell>
-      <TableCell>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className="muted">–</span>}</TableCell>
-      <TableCell wrap className="muted">{w.notes ?? ''}</TableCell>
+      <TableCell>{w.poiName ? <><MapPin size={13} /> {w.poiName}</> : <span className={tableMutedClass}>–</span>}</TableCell>
+      <TableCell wrap className={tableMutedClass}>{w.notes ?? ''}</TableCell>
       <TableCell actions>
         <Button variant="ghost" size="icon-sm" title="Muuda" aria-label="Muuda" onClick={() => setForm(w)}><Edit2 size={15} /></Button>
         {!w.isDefault && !w.fieldId && <Button variant="danger-ghost" size="icon-sm" title="Kustuta" aria-label="Kustuta" onClick={() => remove(w)}><Trash2 size={15} /></Button>}
@@ -79,8 +80,8 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
 
   return (
     <>
-      <div className="register-actions-bar">
-        <div className="register-io-buttons">
+      <div className={registerActionsBarClass}>
+        <div className={registerIoButtonsClass}>
           <Button variant="primary" size="sm" onClick={() => setForm({ isActive: true, isDefault: false })}><Plus size={14} /><span>Lisa ladu</span></Button>
         </div>
       </div>
@@ -99,7 +100,7 @@ export const WarehousesPanel: React.FC<Props> = ({ warehouses, onChanged }) => {
             <TableRow tone="group">
               <TableCell wrap colSpan={4}>
                 <strong>Põllu laod</strong>
-                <span className="muted"> — koristatud punkrid enne vedu; tekivad esimesel koristusel automaatselt</span>
+                <span className={tableMutedClass}> — koristatud punkrid enne vedu; tekivad esimesel koristusel automaatselt</span>
               </TableCell>
             </TableRow>
           )}

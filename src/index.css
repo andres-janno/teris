@@ -226,77 +226,6 @@ body {
   --crop-tint-hover: 36%;
 }
 
-/* Põld ja suurus jäävad paremale kerides vasakule paigale (position/z-index tuleb ui pin'ilt) */
-[data-slot="table"] .sticky-name {
-  left: 0;
-  width: 300px;
-  min-width: 300px;
-  max-width: 300px;
-}
-
-[data-slot="table"] .name-cell .field-title-line {
-  gap: 8px;
-}
-
-[data-slot="table"] .name-cell .field-sub-tags {
-  margin-top: 4px;
-}
-
-[data-slot="table"] .muted {
-  color: var(--text-muted);
-}
-
-[data-slot="table"] .cell-sub {
-  font-size: 11px;
-  color: var(--text-secondary);
-  margin-top: 2px;
-}
-
-/* Põldude üldandmete tabel (Põllud vaade) */
-.fields-table .sticky-name {
-  width: 240px;
-  min-width: 240px;
-  max-width: 240px;
-  box-shadow: inset -1px 0 0 var(--border-card);
-}
-
-.fields-table .wrap-cell {
-  min-width: 140px;
-  max-width: 220px;
-}
-
-.fields-table .cell-sub-inline {
-  font-size: 11px;
-  color: var(--text-secondary);
-}
-
-.fields-table-crop {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.fields-table-crop::before {
-  content: '';
-  width: 8px;
-  height: 8px;
-  border-radius: var(--radius-sm);
-  background: var(--crop-color, var(--text-muted));
-  flex-shrink: 0;
-}
-
-/* Jalus on ui/TableFooter sticky (taust, kleepumine, z-index 2); siin ainult ülajoon.
-   Kinnitatud nurgalahtrid (Põld, tegevused) peavad olema ülejäänud jaluselahtrite kohal (z 3 vs 2),
-   muidu kerimisel katavad hilisemad lahtrid need; !important, sest ui utiliit z-[2] on legacy kihist kõrgemal. */
-.fields-table tfoot td {
-  border-top: 1px solid var(--border-card);
-}
-
-.fields-table tfoot td.sticky-name,
-.fields-table tfoot td:last-child {
-  z-index: 3 !important;
-}
-
 /* Valitud aasta: roheline silt.
    Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
 [data-slot="table"] th.year-col .year-col-label {
@@ -333,83 +262,6 @@ body {
   /* ui lahtri border-border seab värvi kõigile külgedele utiliidikihis; roheline peab !important-iga võitma */
   border-left-color: #16a34a !important;
   border-right-color: #16a34a !important;
-}
-
-/* Põldude registris nimi ja number tavakirjas, sama suurusega nagu aasta lahtrite kultuur */
-[data-slot="table"] .name-cell .field-name,
-.fields-table .field-name {
-  font-size: 14px;
-  font-weight: 400;
-}
-
-.register-header-controls {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 12px;
-  padding: 12px 16px;
-  background: var(--bg-card);
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-lg);
-  flex-wrap: wrap;
-}
-
-.year-selector-group {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex: 1 1 100%;
-  flex-wrap: wrap;
-}
-
-.register-io-buttons {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-left: auto;
-  flex-wrap: wrap;
-}
-
-.year-label {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-/* Actions Row */
-.register-actions-bar {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-
-/* Add Year Banner */
-
-.field-title-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.field-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-  margin: 0;
-}
-
-.field-sub-tags {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
 }
 
 /* Valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
@@ -585,127 +437,13 @@ body {
 }
 
 /* ==========================================================================
-   Tööde register (tööd, kulumaterjalid)
-   ========================================================================== */
-.work-register-modal {
-  display: flex;
-  flex-direction: column;
-}
-
-.work-register-body {
-  display: flex;
-  flex-direction: column;
-  gap: 12px !important;
-  overflow-y: auto;
-  min-height: 420px;
-}
-
-.work-name-cell {
-  font-weight: 500;
-}
-
-/* ==========================================================================
-   Täissuuruses lehevaated (Hooajad, Põllud, Kultuurid, Tehnika, Taristu)
-   Sama raam nagu Põllutööde tahvlil: leht täidab akna päise all, tööriistariba
-   murdub kitsal aknal, põhinimekiri/tabel täidab ülejäänud kõrguse ja kerib ise.
-   ========================================================================== */
-.fullpage-board-view {
-  flex: 1;
-  height: calc(100vh - 64px);
-  display: flex;
-  min-height: 0;
-  background: var(--bg-dark);
-  overflow: hidden;
-}
-
-.fullpage-board-main {
-  flex: 1;
-  min-width: 0;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px 16px;
-  width: 100%;
-}
-
-.fullpage-board-body {
-  flex: 1;
-  min-height: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  overflow: auto;
-}
-
-/* Loendurid jm lehe allservas (varem dialoogiakna jalus) */
-.fullpage-board-footer {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* Lehe sisse pandud dialoogiakende sisu: ilma akna vahede ja kõrguspiiranguteta */
-.fullpage-board-body > .fullpage-board-content {
-  flex: 1 1 auto;
-  min-height: 0;
-  padding: 0;
-  overflow: visible;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.fullpage-board-body .register-header-controls,
-.fullpage-board-body .register-actions-bar {
-  flex-wrap: wrap;
-  margin-bottom: 0;
-}
-
-/* Lehtede sisemised tööriistaribad: samad mõõdud nagu Põllutööde tahvlil */
-.fullpage-board-body .register-header-controls {
-  gap: 10px;
-  margin: 0;
-  padding: 0;
-  background: none;
-  border: none;
-  border-radius: 0;
-}
-
-.fullpage-board-body .register-actions-bar {
-  gap: 10px;
-}
-
-.fullpage-board-body .search-field {
-  flex: 1 1 220px;
-  max-width: 420px !important;
-}
-
-/* ==========================================================================
    Põllutööde tahvel
    ========================================================================== */
-/* Põldude ja külvikorra tabeli nimelahter: kuju nupp nurgas, nimi ei jookse selle alla */
-.name-cell.has-corner-btn {
-  padding-right: 32px !important; /* ui lahtri px-2.5 võidaks muidu */
-}
-
-.name-cell.has-corner-btn:not(.sticky-name) {
-  position: relative;
-}
-
 /* Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina, kontrast mõlemas teemas */
 .phase-label[data-tone="info"] { color: var(--tone-info-text); }
 .phase-label[data-tone="success"] { color: var(--tone-success-text); }
 .phase-label[data-tone="accent"] { color: var(--tone-accent-text); }
 .phase-label[data-tone="warning"] { color: var(--tone-warning-text); }
-
-/* Laadimisikoon (vaadetes pole Tailwindi skannimist, seega .animate-spin siin) */
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.animate-spin {
-  animation: spin 1s linear infinite;
-}
 
 /* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */
 .help-content {
@@ -782,30 +520,6 @@ td.stock-qty-out { color: #dc2626; }
   .harvest-lot-head, .harvest-lot-add-weighing, .harvest-lot-add-cost { grid-template-columns: 1fr 1fr; }
   .harvest-lot-tiles { grid-template-columns: 1fr 1fr; }
 }
-
-/* Kaardi põllu kontekstimenüü (parem hiireklõps): ankur ja päis; kirjed on ui menüü */
-.field-menu-anchor { position: fixed; width: 0; height: 0; pointer-events: none; }
-.field-menu { min-width: 240px !important; max-width: 340px; }
-.field-menu-title {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-  padding: 6px 8px 8px;
-  border-bottom: 1px solid var(--btn-sec-border);
-  margin-bottom: 4px;
-}
-.field-menu-title .muted { font-size: 12px; }
-.field-menu-note { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font-size: 13px; }
-.field-menu-note.error { color: #ef4444; }
-
-/* Kaardil valitud põllu väike infokast (alla vasakule, mõõtkava kohale) */
-.field-map-card-anchor { position: absolute; z-index: 900; width: 300px; }
-.field-map-card { position: relative; width: 300px; display: flex; flex-direction: column; gap: 8px; }
-.fmc-header { display: flex; align-items: center; gap: 8px; }
-.fmc-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.fmc-rows { display: flex; flex-direction: column; gap: 4px; font-size: 14px; }
-.fmc-actions { display: flex; gap: 8px; }
-.fmc-actions > button { flex: 1; justify-content: center; }
 
 /* Ilm */
 .weather-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }

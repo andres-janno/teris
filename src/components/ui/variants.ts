@@ -487,6 +487,25 @@ export const tableTitleLineClass = 'flex flex-wrap items-center gap-2';
 export const tableSubTagsClass = 'mt-1 flex flex-wrap items-center gap-1.5';
 export const tableMutedClass = 'text-subtle';
 
+/** Täislehe kest (Põllud, Külvikord, Kultuurid, Hooajad, Isikud, Taristu, Ilm, Laoarvestus): leht täidab akna päise all, põhi kerib ise.
+    Vana `.fullpage-board-*`; `wide` modifikaatoril polnud reeglit, seega seda ei ole. Sisu on põhja otsene laps (vana `.fullpage-board-body > .fullpage-board-content`). */
+export const boardViewClass = 'flex min-h-0 flex-1 overflow-hidden bg-background h-[calc(100vh-64px)]';
+export const boardMainClass = 'flex min-h-0 min-w-0 w-full flex-1 flex-col gap-3 px-4 py-3';
+export const boardBodyClass = 'flex min-h-0 flex-1 flex-col gap-3 overflow-auto';
+export const boardContentClass = 'flex min-h-0 flex-1 flex-col gap-3 overflow-visible p-0';
+export const boardFooterClass = 'text-sm leading-natural text-muted-foreground';
+
+/** Lehe tööriistaribad (vana `.register-*`, `.search-field`, `.year-*`): kestas vahe 10px, ilma polstri ja taustata. */
+export const registerHeaderControlsClass = 'flex flex-wrap items-center justify-between gap-2.5';
+export const registerActionsBarClass = 'flex flex-wrap items-center gap-2.5';
+export const registerIoButtonsClass = 'ml-auto flex flex-wrap items-center gap-2';
+export const searchFieldClass = 'flex-[1_1_220px] max-w-105';
+export const yearSelectorGroupClass = 'flex flex-[1_1_100%] flex-wrap items-center gap-2.5';
+export const yearLabelClass = 'flex items-center gap-1.5 text-base font-medium leading-natural text-foreground';
+/** Sama tööriistariba dialoogi sees (Isikute ja Kultuuride register dialoogina, Laokaart): kaart ümber, ruumi allapoole. */
+export const dialogHeaderControlsClass = 'mb-3 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3';
+export const dialogActionsBarClass = 'mb-3 flex flex-wrap items-center gap-3';
+
 /** Töö kande ja plaani vormi kere (Põllutööd: kande dialoog, plaani vorm, töö lisamine): veerg gap 12px, kerib. Vana `.work-entry-body`, `.add-work-body`. */
 export const dialogStackBodyClass = 'flex flex-col gap-3 overflow-y-auto';
 /** Töö vormi väljaruudustik (veerud tulevad vaatelt): gap 10px, väljad alla joondatud. Vana `.work-entry-grid`. */

@@ -9,7 +9,8 @@ import {
   type WorkType
 } from '../types/fieldWork';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
-import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Field, FormGrid, Input, Select, CheckboxField } from './ui';
+import { Badge, Button, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, DialogForm, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, Field, FormGrid, Input, Select, CheckboxField, cn } from './ui';
+import { tableSubTagsClass } from './ui/variants';
 
 interface WorkRegisterModalProps {
   isOpen: boolean;
@@ -79,14 +80,14 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
-      <DialogContent size="xl" className="work-register-modal">
+      <DialogContent size="xl">
         <DialogHeader
           icon={<ListChecks size={20} />}
           title="Tööde register"
           description="Põllutööde liigid. PRIA põlluraamatust lahus. Kulumaterjalid on laoarvestuse artiklites."
         />
 
-        <DialogBody className="work-register-body">
+        <DialogBody className="min-h-105 gap-3">
           {/* tööliigid on PRIA e-põlluraamatu 29 tegevust; uusi ei lisata, muuta saab faasi ja materjalide küsimist */}
           <Table scroll="md" bordered>
             <TableHeader>
@@ -104,14 +105,14 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
                   .sort((a, b) => WORK_PHASES.indexOf(a.phase) - WORK_PHASES.indexOf(b.phase) || a.sortOrder - b.sortOrder)
                   .map((w) => (
                     <TableRow key={w.id} tone={w.isActive ? undefined : 'muted'}>
-                      <TableCell wrap className="work-name-cell">
+                      <TableCell wrap className="font-medium">
                         {w.name}
                         {!w.isActive && <Badge>Mitteaktiivne</Badge>}
                       </TableCell>
                       <TableCell>{w.shortName?.trim() || '–'}</TableCell>
                       <TableCell><PhaseBadge phase={w.phase} /></TableCell>
                       <TableCell>
-                        <div className="field-sub-tags">
+                        <div className={cn(tableSubTagsClass, 'mt-0')}>
                           {entryInputs(w).map((i) => <Badge key={i}>{i}</Badge>)}
                         </div>
                       </TableCell>
@@ -133,7 +134,7 @@ export const WorkRegisterModal: React.FC<WorkRegisterModalProps> = ({ isOpen, on
 
       {workForm && (
         <Dialog open onOpenChange={(open) => { if (!open) setWorkForm(null); }}>
-          <DialogContent size="md" dismissible={!busy} className="work-form-modal">
+          <DialogContent size="md" dismissible={!busy}>
             <DialogForm onSubmit={saveWork}>
               <DialogHeader icon={<Edit2 size={20} />} title={`Muuda tööd: ${workForm.name}`} />
               <DialogBody>

@@ -14,6 +14,8 @@ const allClassStrings = (): string[] => [
   v.mapPanelTitleClass, v.loadingSpinnerClass, v.loadingSpinnerInlineClass,
   v.infoCardClass, v.infoCardTitleWrapClass, v.infoCardNameClass, v.infoCardSubClass, v.infoRowsClass, v.infoRowClass,
   v.tableNameClass, v.tableTitleLineClass, v.tableSubTagsClass, v.tableMutedClass,
+  v.boardViewClass, v.boardMainClass, v.boardBodyClass, v.boardContentClass, v.boardFooterClass,
+  v.registerActionsBarClass, v.registerHeaderControlsClass, v.registerIoButtonsClass, v.searchFieldClass, v.yearSelectorGroupClass, v.yearLabelClass, v.dialogHeaderControlsClass, v.dialogActionsBarClass,
   ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
     (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
@@ -802,5 +804,29 @@ describe('päise nupud kitsal ekraanil', () => {
   it('nool peidetakse kitsal ekraanil ja pöörab avatud menüüs', () => {
     expect(v.headerChevronClass).toContain('max-[1656px]:hidden');
     expect(v.headerChevronClass).toContain('group-data-[state=open]:rotate-180');
+  });
+});
+
+describe('täislehe kest ja registririba (etapp 4f)', () => {
+  it('vaade täidab akna päise all, põhi kerib ise, sisu ja põhi on veerud gap 12px', () => {
+    for (const t of ['flex', 'min-h-0', 'flex-1', 'overflow-hidden', 'bg-background', 'h-[calc(100vh-64px)]']) expect(v.boardViewClass.split(' ')).toContain(t);
+    for (const t of ['flex-col', 'gap-3', 'min-w-0', 'min-h-0', 'w-full', 'px-4', 'py-3']) expect(v.boardMainClass.split(' ')).toContain(t);
+    for (const t of ['flex-col', 'gap-3', 'min-h-0', 'overflow-auto']) expect(v.boardBodyClass.split(' ')).toContain(t);
+    for (const t of ['flex-col', 'gap-3', 'p-0', 'overflow-visible']) expect(v.boardContentClass.split(' ')).toContain(t);
+    for (const t of ['text-sm', 'text-muted-foreground']) expect(v.boardFooterClass.split(' ')).toContain(t);
+  });
+  it('tööriistaribad murduvad, vahe 10px (kest) ja aasta rida võtab kogu laiuse', () => {
+    for (const t of ['flex-wrap', 'justify-between', 'gap-2.5']) expect(v.registerHeaderControlsClass.split(' ')).toContain(t);
+    for (const t of ['flex-wrap', 'gap-2.5']) expect(v.registerActionsBarClass.split(' ')).toContain(t);
+    for (const t of ['flex-wrap', 'gap-2', 'ml-auto']) expect(v.registerIoButtonsClass.split(' ')).toContain(t);
+    for (const t of ['flex-wrap', 'gap-2.5', 'flex-[1_1_100%]']) expect(v.yearSelectorGroupClass.split(' ')).toContain(t);
+    for (const t of ['gap-1.5', 'text-base', 'font-medium', 'text-foreground']) expect(v.yearLabelClass.split(' ')).toContain(t);
+  });
+  it('dialoogis on riba kaart (polster 12/16, ääris, ümardus 16px) ja ribade all ruumi 12px', () => {
+    for (const t of ['px-4', 'py-3', 'border', 'rounded-lg', 'mb-3', 'bg-card', 'gap-4']) expect(v.dialogHeaderControlsClass.split(' ')).toContain(t);
+    for (const t of ['mb-3', 'gap-3', 'flex-wrap']) expect(v.dialogActionsBarClass.split(' ')).toContain(t);
+  });
+  it('otsinguväli kasvab 220px-st 420px-ni', () => {
+    for (const t of ['flex-[1_1_220px]', 'max-w-105']) expect(v.searchFieldClass.split(' ')).toContain(t);
   });
 });

@@ -10,6 +10,7 @@ import type { Warehouse } from '../types/stock';
 import type { HarvestLotStatus, HarvestLotSummary } from '../types/harvestLot';
 import { HARVEST_LOT_STATUS_LABEL } from '../types/harvestLot';
 import { Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, FilterClear, FilterSelect } from './ui';
+import { registerActionsBarClass, registerIoButtonsClass } from './ui/variants';
 
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -49,7 +50,7 @@ export const HarvestLotsPanel: React.FC<Props> = ({ warehouses, articles, onChan
 
   return (
     <>
-      <div className="register-actions-bar">
+      <div className={registerActionsBarClass}>
         <FilterClear active={!!year} onClear={() => setYear('')}>
           <FilterSelect ariaLabel="Hooaeg" value={year} onChange={setYear}
             options={[{ value: '', label: 'Kõik hooajad' }, ...years.map((y) => ({ value: String(y), label: String(y) }))]} />
@@ -58,7 +59,7 @@ export const HarvestLotsPanel: React.FC<Props> = ({ warehouses, articles, onChan
           <FilterSelect ariaLabel="Staatus" value={status} onChange={(v) => setStatus(v as HarvestLotStatus | '')}
             options={[{ value: '', label: 'Kõik staatused' }, ...(Object.keys(HARVEST_LOT_STATUS_LABEL) as HarvestLotStatus[]).map((s) => ({ value: s, label: HARVEST_LOT_STATUS_LABEL[s] }))]} />
         </FilterClear>
-        <div className="register-io-buttons">
+        <div className={registerIoButtonsClass}>
           <Button variant="primary" size="sm" onClick={() => setDialog({ lotId: null })}><Plus size={14} /><span>Uus partii</span></Button>
         </div>
       </div>
