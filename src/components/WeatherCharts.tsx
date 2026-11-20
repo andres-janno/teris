@@ -3,8 +3,16 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { WeatherMonth, WeatherCumulativeSeries, WeatherCumulativePoint } from '../types/weather';
 import { MONTH_NAMES, MONTH_SHORT, fmt0 } from '../services/weatherFormat';
+import { WEATHER_SERIES_COLORS, WEATHER_NORMAL_BAR_COLOR, WEATHER_NORMAL_LINE_COLOR } from '../lib/dataColors';
 
 const H = 240, M = { top: 12, right: 12, bottom: 28, left: 48 };
+
+// SVG-i joonte ja siltide värvid: teemavärvid klassidega, seeriavärvid andmevärvidena (dataColors.ts)
+const GRID_LINE = 'stroke-border';
+const AXIS_LINE = 'stroke-muted-foreground opacity-50';
+const TICK_LINE = 'stroke-muted-foreground';
+const AXIS_TEXT = 'fill-muted-foreground text-2xs';
+const seriesColor = (i: number) => WEATHER_SERIES_COLORS[i % WEATHER_SERIES_COLORS.length];
 
 // Graafik joonistatakse tegeliku laiusega (mitte viewBox-skaleerimisega), et tekst jääks rakenduse fondisuurusesse
 function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
@@ -36,11 +44,11 @@ const Grid: React.FC<{ top: number; step: number; y: (v: number) => number; W: n
     <>
       {ticks.map((v) => (
         <g key={v}>
-          <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className="weather-grid" />
-          <text x={M.left - 6} y={y(v) + 4} textAnchor="end" className="weather-axis">{fmt0(v)}</text>
+          <line x1={M.left} x2={W - M.right} y1={y(v)} y2={y(v)} className={GRID_LINE} />
+          <text x={M.left - 6} y={y(v) + 4} textAnchor="end" className={AXIS_TEXT}>{fmt0(v)}</text>
         </g>
       ))}
-      <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className="weather-axis-line" />
+      <line x1={M.left} x2={W - M.right} y1={y(0)} y2={y(0)} className={AXIS_LINE} />
     </>
   );
 };
@@ -65,13 +73,13 @@ const Crosshair: React.FC<{ hover: Hover; yLabel: string; xLabel: string; W: num
   const yw = Math.min(M.left - 3, yLabel.length * 6.6 + 10), xw = xLabel.length * 6.6 + 12;
   const xl = Math.min(Math.max(hover.x, M.left + xw / 2), W - M.right - xw / 2);
   return (
-    <g className="weather-crosshair" pointerEvents="none">
-      <line x1={M.left} x2={hover.x} y1={hover.y} y2={hover.y} />
-      <line x1={hover.x} x2={hover.x} y1={hover.y} y2={bottom} />
-      <rect x={Math.max(1, M.left - yw - 2)} y={hover.y - 9} width={yw} height={18} rx={3} className="weather-crosshair-label" />
-      <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className="weather-crosshair-text">{yLabel}</text>
-      <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className="weather-crosshair-label" />
-      <text x={xl} y={bottom + 17} textAnchor="middle" className="weather-crosshair-text">{xLabel}</text>
+    <g pointerEvents="none">
+      <line x1={M.left} x2={hover.x} y1={hover.y} y2={hover.y} className={TICK_LINE} strokeDasharray="3 3" />
+      <line x1={hover.x} x2={hover.x} y1={hover.y} y2={bottom} className={TICK_LINE} strokeDasharray="3 3" />
+      <rect x={Math.max(1, M.left - yw - 2)} y={hover.y - 9} width={yw} height={18} rx={3} className="fill-foreground" />
+      <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className="fill-popover text-2xs">{yLabel}</text>
+      <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className="fill-foreground" />
+      <text x={xl} y={bottom + 17} textAnchor="middle" className="fill-popover text-2xs">{xLabel}</text>
     </g>
   );
 };
@@ -88,12 +96,12 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
   const y = (v: number) => M.top + ih - (v / top) * ih;
   const hoverMonth = hover ? months[Math.min(months.length - 1, Math.floor((hover.x - M.left) / slot))] : null;
   return (
-    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`} {...handlers}>
+    <div ref={ref} className="w-full"><svg className="block cursor-crosshair" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`} {...handlers}>
       <Grid top={top} step={step} y={y} W={W} />
       {months.map((m, i) => (
-        <line key={m.month} x1={M.left + i * slot} x2={M.left + i * slot} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />
+        <line key={m.month} x1={M.left + i * slot} x2={M.left + i * slot} y1={y(0)} y2={y(0) + 6} className={TICK_LINE} />
       ))}
-      <line x1={W - M.right} x2={W - M.right} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />
+      <line x1={W - M.right} x2={W - M.right} y1={y(0)} y2={y(0) + 6} className={TICK_LINE} />
       {months.map((m, i) => {
         const x0 = M.left + i * slot + slot / 2 - (n * (bw + 1)) / 2;
         const nv = m[normalKey];
@@ -102,13 +110,13 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
             {years.map((yr, j) => {
               const v = m.years.find((r) => r.year === yr)?.[metric];
               return v != null && (
-                <rect key={yr} x={x0 + j * (bw + 1)} y={y(v)} width={bw} height={y(0) - y(v)} className={`weather-bar weather-line-${j % 6}`}>
+                <rect key={yr} x={x0 + j * (bw + 1)} y={y(v)} width={bw} height={y(0) - y(v)} fill={seriesColor(j)}>
                   <title>{`${MONTH_NAMES[m.month]} ${yr}: ${fmt0(v)} ${unit}`}</title>
                 </rect>
               );
             })}
-            {nv != null && <rect x={x0 + years.length * (bw + 1)} y={y(nv)} width={bw} height={y(0) - y(nv)} className="weather-bar weather-bar-normal"><title>{`${MONTH_NAMES[m.month]} keskmine: ${fmt0(nv)} ${unit}`}</title></rect>}
-            <text x={M.left + i * slot + slot / 2} y={H - 8} textAnchor="middle" className="weather-axis">{MONTH_NAMES[m.month]}</text>
+            {nv != null && <rect x={x0 + years.length * (bw + 1)} y={y(nv)} width={bw} height={y(0) - y(nv)} fill={WEATHER_NORMAL_BAR_COLOR}><title>{`${MONTH_NAMES[m.month]} keskmine: ${fmt0(nv)} ${unit}`}</title></rect>}
+            <text x={M.left + i * slot + slot / 2} y={H - 8} textAnchor="middle" className={AXIS_TEXT}>{MONTH_NAMES[m.month]}</text>
           </g>
         );
       })}
@@ -139,17 +147,17 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; norm
   const path = (pts: WeatherCumulativePoint[]) => pts.map((p) => `${x(p.day)},${y(p[metric])}`).join(' ');
   const hoverDay = hover ? Math.round(((hover.x - M.left) / iw) * maxDay) : 0;
   return (
-    <div ref={ref} className="weather-chart-box"><svg className="weather-chart" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'} {...handlers}>
+    <div ref={ref} className="w-full"><svg className="block cursor-crosshair" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'} {...handlers}>
       <Grid top={top} step={step} y={y} W={W} />
-      {bounds.map((d) => <line key={d} x1={x(d)} x2={x(d)} y1={y(0)} y2={y(0) + 6} className="weather-month-tick" />)}
-      {labels.map((t) => <text key={t.l} x={x(t.d)} y={H - 8} textAnchor="middle" className="weather-axis">{t.l}</text>)}
+      {bounds.map((d) => <line key={d} x1={x(d)} x2={x(d)} y1={y(0)} y2={y(0) + 6} className={TICK_LINE} />)}
+      {labels.map((t) => <text key={t.l} x={x(t.d)} y={H - 8} textAnchor="middle" className={AXIS_TEXT}>{t.l}</text>)}
       {normal && normal.length > 0 && (
-        <polyline fill="none" className="weather-line weather-line-normal" points={path(normal)}>
+        <polyline fill="none" stroke={WEATHER_NORMAL_LINE_COLOR} strokeWidth={2} strokeDasharray="5 3" points={path(normal)}>
           <title>{`Keskmine: ${fmt0(normal[normal.length - 1][metric])} ${unit}`}</title>
         </polyline>
       )}
       {series.map((s, i) => (
-        <polyline key={s.year} fill="none" className={`weather-line weather-line-${i % 6}`} points={path(s.points)}>
+        <polyline key={s.year} fill="none" stroke={seriesColor(i)} strokeWidth={2} points={path(s.points)}>
           <title>{`${s.year}: ${fmt0(s.points[s.points.length - 1]?.[metric] ?? 0)} ${unit}`}</title>
         </polyline>
       ))}

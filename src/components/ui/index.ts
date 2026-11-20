@@ -33,7 +33,7 @@ export {
 } from './Menu';
 export { Popover, PopoverTrigger, PopoverContent, PopoverAnchor, Tooltip, TooltipProvider } from './Popover';
 export { HelpHint, HelpHintPopover } from './HelpHint';
-export { cornerActionClass, emptyBoxClass, subheadingClass, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass, soilValueClass, soilFootnoteClass, soilYearCellClass, infoNoticeClass } from './variants';
+export { cornerActionClass, emptyBoxClass, subheadingClass, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass, soilValueClass, soilFootnoteClass, soilYearCellClass, infoNoticeClass, detailSectionClass, notesTextClass } from './variants';
 export { hintTextClass, hintTextBlockClass, dropzoneStateClass, dropzoneIconClass, fileReuploadHintClass, uploadFormatListClass, previewBoxClass, previewHeaderClass, previewFieldsScrollClass, previewFieldRowClass, previewFieldClass, previewCropClass, previewValueClass } from './variants';
 export { Dropzone, type DropzoneProps } from './Dropzone';
 export { helpHintTriggerClass, helpHintInlineClass, helpHintContentClass, helpHintTitleClass } from './variants';

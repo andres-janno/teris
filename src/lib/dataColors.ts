@@ -34,3 +34,16 @@ export const LAYER_SWATCH = {
   weather: '#1e6fff',
   satellite: 'linear-gradient(135deg, #2b7c4c, #c9d292 50%, #8f6b3a)',
 } as const;
+
+/** Ilmavaate graafikute seeriad: aasta järjekord võrdluses (tulbad, jooned, legend); 6 värvi kordub. */
+export const WEATHER_SERIES_COLORS = ['#2563eb', '#16a34a', '#ea580c', '#9333ea', '#0891b2', '#64748b'] as const;
+/** Pikaajaline keskmine graafikul: tulp ja katkendjoon. */
+export const WEATHER_NORMAL_BAR_COLOR = '#cbd5e1';
+export const WEATHER_NORMAL_LINE_COLOR = '#94a3b8';
+/** Aastate tabeli lahtri taust, kui näitaja erineb keskmisest üle ühe standardhälbe (märg, kuiv, soe, jahe). */
+export const WEATHER_DEVIATION_COLOR = {
+  wet: 'rgba(59, 130, 246, 0.16)',
+  dry: 'rgba(249, 115, 22, 0.18)',
+  warm: 'rgba(239, 68, 68, 0.16)',
+  cool: 'rgba(14, 165, 233, 0.12)'
+} as const;

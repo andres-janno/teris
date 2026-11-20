@@ -198,6 +198,12 @@ export const RETIRED_4F: readonly string[] = [
   'field-title-line', 'field-sub-tags', 'sticky-name', 'name-cell', 'wrap-cell', 'has-corner-btn', 'fields-table', 'fields-table-crop',
   'field-menu', 'field-menu-anchor', 'field-menu-title', 'field-menu-note', 'field-map-card', 'field-map-card-anchor', 'fmc-header', 'fmc-name',
   'fmc-rows', 'fmc-actions', 'crop-indicator-dot', 'work-register-modal', 'work-register-body', 'work-name-cell', 'work-form-modal',
+  'weather-body', 'weather-filters', 'weather-source', 'weather-note', 'weather-muted', 'weather-years-layout', 'weather-years', 'weather-years-wrap',
+  'weather-point-map', 'weather-wet', 'weather-dry', 'weather-warm', 'weather-cool', 'weather-legend-row', 'weather-chart-grid', 'weather-chart-title',
+  'weather-chart-box', 'weather-chart', 'weather-grid', 'weather-axis', 'weather-axis-line', 'weather-month-tick', 'weather-crosshair',
+  'weather-crosshair-label', 'weather-crosshair-text', 'weather-bar', 'weather-bar-normal', 'weather-line', 'weather-line-normal', 'weather-line-0',
+  'weather-line-1', 'weather-line-2', 'weather-line-3', 'weather-line-4', 'weather-line-5', 'weather-credential-modal', 'weather-credential-status',
+  'weather-credential-state', 'weather-credential-error', 'weather-credential-form', 'weather-credential-help',
 ];
 const LEGACY_OVERVIEW = new RegExp(
   `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,

@@ -59,20 +59,6 @@
   }
 }
 
-/* Selected Field Details */
-
-.detail-section {
-  margin-top: 12px;
-}
-
-/* Põllu üldandmete paneel (FieldOverviewPanel) — sama vahedega veerg nagu .field-detail-col */
-
-.notes-text {
-  font-size: 12px;
-  color: var(--text-secondary);
-  line-height: 1.4;
-}
-
 /* Taasesituse liugur (CultivationControl): range sisendi pseudo-elemendid ei ole utiliitidega väljendatavad */
 .cc-range::-webkit-slider-thumb {
   -webkit-appearance: none;

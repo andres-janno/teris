@@ -64,6 +64,10 @@
 @source '../components/FieldEditDialog.tsx';
 @source '../components/SoilSamplesSection.tsx';
 @source '../components/WeatherSeasonSection.tsx';
+@source '../components/WeatherView.tsx';
+@source '../components/WeatherCharts.tsx';
+@source '../components/WeatherCredentialModal.tsx';
+@source '../components/WeatherPointMap.tsx';
 @source '../components/ConfirmDialog.tsx';
 @source '../components/Header.tsx';
 @source '../components/UserMenu.tsx';

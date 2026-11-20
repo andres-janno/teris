@@ -555,3 +555,8 @@ export const previewFieldRowClass = 'flex justify-between rounded-sm bg-white/2 
 export const previewFieldClass = 'my-2';
 export const previewCropClass = 'ml-2 text-muted-foreground';
 export const previewValueClass = 'font-medium text-success-text';
+
+/** Põllu akna jaotis (mullaproovid, ilm): 12px ülaveeris eelmisest jaotisest. Vana `.detail-section`. */
+export const detailSectionClass = 'mt-3';
+/** Väike hall märkus jaotise all (12px). Vana `.notes-text` ja `.weather-note`. */
+export const notesTextClass = 'text-xs leading-snug text-muted-foreground';

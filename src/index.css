@@ -135,12 +135,6 @@ body {
   transition: background-color 0.25s ease, color 0.25s ease;
 }
 
-/* Väike hajutatud selgitustekst (sisu sees) */
-.hint-text {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
 /* Masina nimi kaardi markeris (MapMarkers HTML) */
 .v-name {
   font-size: 14px;
@@ -409,17 +403,6 @@ body {
   border: 1px solid rgba(217, 130, 43, 0.3);
 }
 
-.weather-credential-status { margin: 12px 0; font-size: 13px; }
-.weather-credential-state { font-weight: 500; margin-bottom: 6px; }
-.weather-credential-status dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 12px; margin: 0; }
-.weather-credential-status dt { color: var(--text-muted); }
-.weather-credential-status dd { margin: 0; }
-.weather-credential-error { color: #dc2626; }
-.weather-credential-form { display: flex; gap: 8px; flex-wrap: wrap; margin: 12px 0 16px; }
-.weather-credential-form [data-slot="input"] { flex: 1 1 260px; min-width: 0; }
-.weather-credential-help { font-size: 13px; }
-.weather-credential-help ol { margin: 6px 0 8px 16px; padding: 0; }
-
 .login-page .login-forgot-link,
 .login-page .login-forgot-box {
   color: var(--login-ink-soft);
@@ -520,46 +503,3 @@ td.stock-qty-out { color: #dc2626; }
   .harvest-lot-head, .harvest-lot-add-weighing, .harvest-lot-add-cost { grid-template-columns: 1fr 1fr; }
   .harvest-lot-tiles { grid-template-columns: 1fr 1fr; }
 }
-
-/* Ilm */
-.weather-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.weather-body > .detail-section { margin-top: 0; }
-.weather-years-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 12px; align-items: stretch; }
-.weather-point-map { min-height: 360px; height: 100%; border: 1px solid var(--border-card); border-radius: var(--radius-sm); z-index: 0; }
-@media (max-width: 1100px) { .weather-years-layout { grid-template-columns: 1fr; } .weather-point-map { height: 360px; } }
-.weather-muted { color: var(--text-secondary); font-size: 12px; }
-[data-slot="table"].weather-years td.weather-wet { background: rgba(59, 130, 246, 0.16); }
-[data-slot="table"].weather-years td.weather-dry { background: rgba(249, 115, 22, 0.18); }
-[data-slot="table"].weather-years td.weather-warm { background: rgba(239, 68, 68, 0.16); }
-[data-slot="table"].weather-years td.weather-cool { background: rgba(14, 165, 233, 0.12); }
-.weather-source { font-size: 12px; line-height: normal; margin-top: 2px; }
-.weather-note { margin: 6px 0 0; font-size: 12px; }
-.weather-legend-row { margin: 6px 0 0; font-size: 12px; }
-.weather-chart-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
-@media (max-width: 760px) { .weather-chart-grid { grid-template-columns: 1fr; } }
-/* Graafiku kast: oma polster (graafik vajab all vähem ruumi), välimus Card tile-ist */
-.weather-chart-card { padding: 8px 10px 4px; min-width: 0; }
-.weather-chart-title { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.4px; color: var(--text-secondary); margin-bottom: 4px; }
-.weather-chart-box { width: 100%; }
-.weather-chart { display: block; }
-.weather-grid { stroke: var(--border-card); stroke-width: 1; }
-.weather-axis-line { stroke: var(--text-secondary); stroke-width: 1; opacity: 0.5; }
-.weather-month-tick { stroke: var(--text-secondary); stroke-width: 1; }
-.weather-chart { cursor: crosshair; }
-.weather-crosshair line { stroke: var(--text-secondary); stroke-width: 1; stroke-dasharray: 3 3; }
-.weather-crosshair-label { fill: var(--text-primary, #334155); }
-.weather-crosshair-text { font-size: 11px; font-weight: 400; fill: var(--bg-modal, #fff); }
-.weather-axis { font-size: 11px; fill: var(--text-secondary); }
-.weather-bar-normal { fill: #cbd5e1; background: #cbd5e1; }
-.weather-bar.weather-line-0, .weather-bar.weather-line-1, .weather-bar.weather-line-2, .weather-bar.weather-line-3, .weather-bar.weather-line-4, .weather-bar.weather-line-5 { stroke: none; }
-.weather-line-0 { fill: #2563eb; } .weather-line-1 { fill: #16a34a; } .weather-line-2 { fill: #ea580c; } .weather-line-3 { fill: #9333ea; } .weather-line-4 { fill: #0891b2; } .weather-line-5 { fill: #64748b; }
-polyline.weather-line { fill: none; }
-.weather-line-normal { stroke: #94a3b8; stroke-dasharray: 5 3; }
-.weather-line { stroke-width: 2; }
-.weather-line-0 { stroke: #2563eb; background: #2563eb; }
-.weather-line-1 { stroke: #16a34a; background: #16a34a; }
-.weather-line-2 { stroke: #ea580c; background: #ea580c; }
-.weather-line-3 { stroke: #9333ea; background: #9333ea; }
-.weather-line-4 { stroke: #0891b2; background: #0891b2; }
-.weather-line-5 { stroke: #64748b; background: #64748b; }
-.weather-legend-row .legend { display: inline-block; width: 10px; height: 10px; border-radius: var(--radius-sm); vertical-align: middle; margin-left: 6px; }

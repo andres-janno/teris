@@ -6,7 +6,7 @@ import { api } from '../services/api';
 import type { WeatherSeasonReport, WeatherSeasonHistoryRow, WeatherSummary } from '../types/weather';
 import { fmt0, fmt1, WEATHER_SOURCE } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionTitle, soilValueClass, soilFootnoteClass, soilYearCellClass } from './ui';
+import { Button, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, SectionTitle, detailSectionClass, notesTextClass, soilValueClass, soilFootnoteClass, soilYearCellClass } from './ui';
 
 interface Props {
   fieldSeasonId: number | undefined;
@@ -65,13 +65,13 @@ export const WeatherSeasonSection: React.FC<Props> = ({ fieldSeasonId, year, cro
       : null);
   const anyShifted = history.some((h) => !h.ownDates);
   return (
-    <div className="detail-section">
+    <div className={detailSectionClass}>
       <SectionTitle>
         <CloudSun size={14} />
         <span>Ilm külvist {toHarvest ? 'koristuseni' : 'tänaseni'}</span>
       </SectionTitle>
       {hint && (
-        <p className="notes-text">
+        <p className={notesTextClass}>
           {hint}
           {rep?.reason === 'NO_SEEDING' && onEditSeeding && <> <Button variant="link" size="inline" onClick={onEditSeeding}>Sisesta külvikuupäev</Button></>}
         </p>
