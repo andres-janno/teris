@@ -836,8 +836,8 @@ describe('täislehe kest ja registririba (etapp 4f)', () => {
 
 describe('stockQtyClass', () => {
   it('sisse roheline, välja punane', () => {
-    expect(v.stockQtyClass({ sign: 'in' })).toContain('text-success-text');
-    expect(v.stockQtyClass({ sign: 'out' })).toContain('text-danger-text');
-    expect(v.stockQtyClass({})).not.toContain('text-success-text');
+    expect(v.stockQtyClass({ sign: 'in' })).toContain('text-primary');
+    expect(v.stockQtyClass({ sign: 'out' })).toContain('text-danger-solid');
+    expect(v.stockQtyClass({})).not.toContain('text-primary');
   });
 });

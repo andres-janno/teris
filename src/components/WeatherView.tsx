@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import type { WeatherMap, WeatherPeriod, WeatherPointInfo, WeatherYears, WeatherMonth, WeatherCumulative, WeatherPointRef } from '../types/weather';
 import { deviation, type Deviation, fmt0, fmt1, pointColor, WEATHER_SOURCE, WEATHER_PERIOD_OPTIONS } from '../services/weatherFormat';
 import { formatDate } from '../services/dateFormat';
-import { WEATHER_DEVIATION_COLOR, WEATHER_SERIES_COLORS, WEATHER_NORMAL_BAR_COLOR } from '../lib/dataColors';
+import { WEATHER_DEVIATION_COLOR, weatherSeriesColor, WEATHER_NORMAL_BAR_COLOR } from '../lib/dataColors';
 import { Alert, Table, TableHeader, TableBody, TableRow, TableHead, TableCell, FilterClear, Card, FilterSelect, Checkbox, SectionTitle, PageHeader, cn } from './ui';
 import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, notesTextClass } from './ui/variants';
 import { MonthBars, CumulativeLines } from './WeatherCharts';
@@ -19,6 +19,8 @@ const yearsLayoutClass = 'grid grid-cols-[minmax(0,2fr)_minmax(300px,1fr)] items
 const chartCardClass = 'min-w-0 px-2.5 pt-2 pb-1';
 const chartTitleClass = 'mb-1 text-2xs font-semibold uppercase leading-natural tracking-wide text-muted-foreground';
 // Legendi värvimärk teksti vahel
+// Märkus tabeli ja legendi all
+const noteClass = cn(notesTextClass, 'mt-1.5');
 const legendSwatchClass = 'ml-1.5 inline-block size-2.5 rounded-sm align-middle';
 // Lahtri taust, kui näitaja erineb keskmisest üle ühe standardhälbe
 const deviationStyle = (d: Deviation): React.CSSProperties | undefined => (d ? { backgroundColor: WEATHER_DEVIATION_COLOR[d] } : undefined);
@@ -144,12 +146,12 @@ export const WeatherView: React.FC = () => {
                   </Table>
                 <WeatherPointMap points={points} fields={mapFields} selected={point} onSelect={setPoint} />
               </div>
-              <p className={cn(notesTextClass, 'mt-1.5')}>Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele. Kaardil on ilmaandmete ruudud (0,1°) ja põllud ruudu värviga — klõps ruudul või põllul valib selle ilmapunkti, uus klõps viib tagasi majandi keskmisele.</p>
+              <p className={noteClass}>Värviga on märgitud aastad, mis erinevad keskmisest rohkem kui ühe standardhälbe võrra: sinine = märg, oranž = kuiv, punane = soe, helesinine = jahe. Rea klõps või linnuke lisab aasta allolevatele graafikutele. Kaardil on ilmaandmete ruudud (0,1°) ja põllud ruudu värviga — klõps ruudul või põllul valib selle ilmapunkti, uus klõps viib tagasi majandi keskmisele.</p>
             </div>
 
             {compare.length > 0 && cumulative && (
-              <p className={cn(notesTextClass, 'mt-1.5')}>
-                {compare.map((y, i) => <span key={y}><span className={legendSwatchClass} style={{ backgroundColor: WEATHER_SERIES_COLORS[i % 6] }} /> {y} </span>)}
+              <p className={noteClass}>
+                {compare.map((y, i) => <span key={y}><span className={legendSwatchClass} style={{ backgroundColor: weatherSeriesColor(i) }} /> {y} </span>)}
                 <span className={legendSwatchClass} style={{ backgroundColor: WEATHER_NORMAL_BAR_COLOR }} /> keskmine{cumulative.normal && ` ${cumulative.normal.years[0]}–${cumulative.normal.years[cumulative.normal.years.length - 1]}`}
               </p>
             )}

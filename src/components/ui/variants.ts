@@ -563,9 +563,9 @@ export const notesTextClass = 'text-xs leading-snug text-muted-foreground';
 
 /** Laokogus tabeli lahtris: sisse (+) roheline, välja (−) punane, muidu vaikevärv. Vana `td.stock-qty(-in|-out)`. */
 export const stockQtyClass = ({ sign }: { sign?: 'in' | 'out' } = {}): string =>
-  cn(sign === 'in' && 'text-success-text', sign === 'out' && 'text-danger-text');
+  cn(sign === 'in' && 'text-primary', sign === 'out' && 'text-danger-solid');
 /** Puudujääk või ülekulu (negatiivne seis, ala/ülekulu). Vana `.article-overuse`. */
-export const overuseClass = 'font-semibold text-danger-text';
+export const overuseClass = 'font-semibold text-danger-solid';
 /** Märgi vahe nime ees/järel tabeli lahtris. Vana `.cell-badge` ja `.cell-badge-lead`. */
 export const cellBadgeClass = 'ml-1.5';
 export const cellBadgeLeadClass = 'mr-1.5';

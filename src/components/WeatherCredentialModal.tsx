@@ -106,7 +106,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
                 {status.configured ? <Badge tone="success">Võti salvestatud</Badge> : <Badge tone="warning">Võti puudub</Badge>}
               </div>
               {status.configured && (
-                <dl className="m-0 grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 [&>dd]:m-0 [&>dt]:text-subtle">
+                <dl className="grid grid-cols-[max-content_1fr] gap-x-3 gap-y-1 [&>dt]:text-subtle">
                   <dt>Muudetud</dt>
                   <dd>{formatDateTimeTallinn(status.updatedAt)}{status.updatedBy ? ` (${status.updatedBy})` : ''}</dd>
                   <dt>Viimati kasutatud</dt>
@@ -143,7 +143,7 @@ export const WeatherCredentialModal: React.FC<WeatherCredentialModalProps> = ({ 
           )}
           {status && !canEdit && <p className={hintTextClass}>Võtit saab muuta ainult administraator.</p>}
 
-          <div className="text-sm leading-natural [&>ol]:mt-1.5 [&>ol]:mb-2 [&>ol]:ml-4 [&>ol]:p-0">
+          <div className="text-sm leading-natural [&>ol]:mt-1.5 [&>ol]:mb-2 [&>ol]:ml-4">
             <strong>Kuidas võtit saada</strong>
             <ol>
               <li>Loo konto aadressil cds.climate.copernicus.eu.</li>

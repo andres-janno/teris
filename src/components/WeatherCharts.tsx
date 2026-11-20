@@ -3,7 +3,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import type { WeatherMonth, WeatherCumulativeSeries, WeatherCumulativePoint } from '../types/weather';
 import { MONTH_NAMES, MONTH_SHORT, fmt0 } from '../services/weatherFormat';
-import { WEATHER_SERIES_COLORS, WEATHER_NORMAL_BAR_COLOR, WEATHER_NORMAL_LINE_COLOR } from '../lib/dataColors';
+import { weatherSeriesColor, WEATHER_NORMAL_BAR_COLOR, WEATHER_NORMAL_LINE_COLOR } from '../lib/dataColors';
 
 const H = 240, M = { top: 12, right: 12, bottom: 28, left: 48 };
 
@@ -12,7 +12,11 @@ const GRID_LINE = 'stroke-border';
 const AXIS_LINE = 'stroke-muted-foreground opacity-50';
 const TICK_LINE = 'stroke-muted-foreground';
 const AXIS_TEXT = 'fill-muted-foreground text-2xs';
-const seriesColor = (i: number) => WEATHER_SERIES_COLORS[i % WEATHER_SERIES_COLORS.length];
+// Graafiku kast ja SVG (kursor ristiga), ristjoone silt (tume plaat, heleda taustavärviga tekst)
+const CHART_BOX = 'w-full';
+const CHART_SVG = 'block cursor-crosshair';
+const CROSSHAIR_LABEL = 'fill-foreground';
+const CROSSHAIR_TEXT = 'fill-popover text-2xs';
 
 // Graafik joonistatakse tegeliku laiusega (mitte viewBox-skaleerimisega), et tekst jääks rakenduse fondisuurusesse
 function useWidth(): [React.RefObject<HTMLDivElement | null>, number] {
@@ -76,10 +80,10 @@ const Crosshair: React.FC<{ hover: Hover; yLabel: string; xLabel: string; W: num
     <g pointerEvents="none">
       <line x1={M.left} x2={hover.x} y1={hover.y} y2={hover.y} className={TICK_LINE} strokeDasharray="3 3" />
       <line x1={hover.x} x2={hover.x} y1={hover.y} y2={bottom} className={TICK_LINE} strokeDasharray="3 3" />
-      <rect x={Math.max(1, M.left - yw - 2)} y={hover.y - 9} width={yw} height={18} rx={3} className="fill-foreground" />
-      <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className="fill-popover text-2xs">{yLabel}</text>
-      <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className="fill-foreground" />
-      <text x={xl} y={bottom + 17} textAnchor="middle" className="fill-popover text-2xs">{xLabel}</text>
+      <rect x={Math.max(1, M.left - yw - 2)} y={hover.y - 9} width={yw} height={18} rx={3} className={CROSSHAIR_LABEL} />
+      <text x={M.left - 7} y={hover.y + 4} textAnchor="end" className={CROSSHAIR_TEXT}>{yLabel}</text>
+      <rect x={xl - xw / 2} y={bottom + 4} width={xw} height={18} rx={3} className={CROSSHAIR_LABEL} />
+      <text x={xl} y={bottom + 17} textAnchor="middle" className={CROSSHAIR_TEXT}>{xLabel}</text>
     </g>
   );
 };
@@ -96,7 +100,7 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
   const y = (v: number) => M.top + ih - (v / top) * ih;
   const hoverMonth = hover ? months[Math.min(months.length - 1, Math.floor((hover.x - M.left) / slot))] : null;
   return (
-    <div ref={ref} className="w-full"><svg className="block cursor-crosshair" width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`} {...handlers}>
+    <div ref={ref} className={CHART_BOX}><svg className={CHART_SVG} width={W} height={H} role="img" aria-label={`${metric === 'precipMm' ? 'Sademed' : 'Temperatuurisumma'} kuude kaupa`} {...handlers}>
       <Grid top={top} step={step} y={y} W={W} />
       {months.map((m, i) => (
         <line key={m.month} x1={M.left + i * slot} x2={M.left + i * slot} y1={y(0)} y2={y(0) + 6} className={TICK_LINE} />
@@ -110,7 +114,7 @@ export const MonthBars: React.FC<{ months: WeatherMonth[]; years: number[]; metr
             {years.map((yr, j) => {
               const v = m.years.find((r) => r.year === yr)?.[metric];
               return v != null && (
-                <rect key={yr} x={x0 + j * (bw + 1)} y={y(v)} width={bw} height={y(0) - y(v)} fill={seriesColor(j)}>
+                <rect key={yr} x={x0 + j * (bw + 1)} y={y(v)} width={bw} height={y(0) - y(v)} fill={weatherSeriesColor(j)}>
                   <title>{`${MONTH_NAMES[m.month]} ${yr}: ${fmt0(v)} ${unit}`}</title>
                 </rect>
               );
@@ -147,7 +151,7 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; norm
   const path = (pts: WeatherCumulativePoint[]) => pts.map((p) => `${x(p.day)},${y(p[metric])}`).join(' ');
   const hoverDay = hover ? Math.round(((hover.x - M.left) / iw) * maxDay) : 0;
   return (
-    <div ref={ref} className="w-full"><svg className="block cursor-crosshair" width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'} {...handlers}>
+    <div ref={ref} className={CHART_BOX}><svg className={CHART_SVG} width={W} height={H} role="img" aria-label={metric === 'gdd' ? 'Temperatuurisumma kasv' : 'Sademete kasv'} {...handlers}>
       <Grid top={top} step={step} y={y} W={W} />
       {bounds.map((d) => <line key={d} x1={x(d)} x2={x(d)} y1={y(0)} y2={y(0) + 6} className={TICK_LINE} />)}
       {labels.map((t) => <text key={t.l} x={x(t.d)} y={H - 8} textAnchor="middle" className={AXIS_TEXT}>{t.l}</text>)}
@@ -157,7 +161,7 @@ export const CumulativeLines: React.FC<{ series: WeatherCumulativeSeries[]; norm
         </polyline>
       )}
       {series.map((s, i) => (
-        <polyline key={s.year} fill="none" stroke={seriesColor(i)} strokeWidth={2} points={path(s.points)}>
+        <polyline key={s.year} fill="none" stroke={weatherSeriesColor(i)} strokeWidth={2} points={path(s.points)}>
           <title>{`${s.year}: ${fmt0(s.points[s.points.length - 1]?.[metric] ?? 0)} ${unit}`}</title>
         </polyline>
       ))}
