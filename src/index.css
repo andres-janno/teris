@@ -523,7 +523,6 @@ td.stock-qty-out { color: #dc2626; }
 
 /* Ilm */
 .weather-filters { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
-.weather-body { display: flex; flex-direction: column; gap: 16px; }
 .weather-body > .detail-section { margin-top: 0; }
 .weather-years-layout { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr); gap: 12px; align-items: stretch; }
 .weather-point-map { min-height: 360px; height: 100%; border: 1px solid var(--border-card); border-radius: var(--radius-sm); z-index: 0; }

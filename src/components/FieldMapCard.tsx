@@ -32,7 +32,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         <strong className="min-w-0 flex-1 truncate" title={p.name}>{p.name}</strong>
         <Button type="button" variant="ghost" size="icon-sm" onClick={onClose} title="Sulge (Esc)"><X size={16} /></Button>
       </div>
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1 text-base">
         <KeyValueRow label={`Pindala ${p.year}`}><strong>{formatQty(p.areaHa || 0)}</strong> ha</KeyValueRow>
         <KeyValueRow label="Kultuur">{hasCrop ? p.crop : 'Määramata'}{hasCrop && p.cropVariety ? ` (${p.cropVariety})` : ''}</KeyValueRow>
       </div>

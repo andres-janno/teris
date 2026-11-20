@@ -15,9 +15,14 @@ import { FieldShapeModal } from './FieldShapeModal';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { fmt0 } from '../services/weatherFormat';
-import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader, cornerActionClass } from './ui';
+import { Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Badge, ToggleGroup, ToggleGroupItem, SearchInput, HelpHint, PageHeader, cornerActionClass, cn } from './ui';
 import type { BadgeTone } from './ui';
 import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, registerHeaderControlsClass, registerIoButtonsClass, registerActionsBarClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass, cellSubClass, cellSubStackedClass, tableNameClass, tableTitleLineClass, tableSubTagsClass, tableMutedClass } from './ui/variants';
+
+// Kinnitatud Põllu veerg (laius 240px kõigis kolmes kohas), tekstiveerg ja jaluse kinnitatud lahtrid (z 3 kerimisel teiste jaluselahtrite kohal)
+const PIN_NAME_CELL = 'w-60 min-w-60 max-w-60 pin-edge-end';
+const WRAP_CELL = 'min-w-35 max-w-55';
+const FOOT_PIN_Z = 'z-3!';
 
 interface FieldsTableViewProps {
   masterFields: MasterField[];
@@ -320,7 +325,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
             <Table scroll="fill" bordered className="[&>tfoot>tr>td]:border-t">
               <TableHeader>
                 <TableRow>
-                  <TableHead pin="start" className="w-60 min-w-60 max-w-60 pin-edge-end">Põld</TableHead>
+                  <TableHead pin="start" className={PIN_NAME_CELL}>Põld</TableHead>
                   <TableHead numeric>Pindala</TableHead>
                   <TableHead numeric>PRIA pind</TableHead>
                   <TableHead>Kultuur {selectedYear}</TableHead>
@@ -350,7 +355,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   const hasCrop = !isCropUndetermined(rec.crop);
                   return (
                     <TableRow key={field.id}>
-                      <TableCell pin="start" wrap className="w-60 min-w-60 max-w-60 pr-8 pin-edge-end">
+                      <TableCell pin="start" wrap className={cn(PIN_NAME_CELL, 'pr-8')}>
                         {/* Põllu kuju nupp lahtri paremas ülanurgas (nagu põllutööde tahvlil) */}
                         {rec.geometry && (
                           <Button variant="ghost" size="icon-xs" wrapperClassName={cornerActionClass}
@@ -389,7 +394,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                           <div className={cellSubStackedClass}>{fmtHa(r.ownedHa)} oma / {fmtHa(r.rentedHa)} rent</div>
                         )}
                       </TableCell>
-                      <TableCell wrap className="min-w-35 max-w-55">{r.owners.length ? r.owners.join(', ') : <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell wrap className={WRAP_CELL}>{r.owners.length ? r.owners.join(', ') : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell>
                         {r.parcels.length ? r.parcels.map((p, i) => (
                           <div key={i} title={`${p.parcelName ? `${p.parcelName}, ` : ''}${fmtHa(p.fieldAreaHa)} ha`}>
@@ -400,7 +405,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       </TableCell>
                       <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className={tableMutedClass}>–</span>}</TableCell>
-                      <TableCell wrap className="min-w-35 max-w-55">{field.soilType || <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell wrap className={WRAP_CELL}>{field.soilType || <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell>{field.drainageSystem === undefined ? <span className={tableMutedClass}>–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
                       <TableCell wrap>{field.operatorName || <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell actions>
@@ -418,7 +423,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
               {filteredRows.length > 0 && (
                 <TableFooter sticky>
                   <TableRow>
-                    <TableCell pin="start" className="w-60 min-w-60 max-w-60 pin-edge-end z-3!"><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
+                    <TableCell pin="start" className={cn(PIN_NAME_CELL, FOOT_PIN_Z)}><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
                     <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
                     <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
                     <TableCell />
@@ -435,7 +440,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <TableCell />
                     <TableCell />
                     <TableCell />
-                    <TableCell actions className="z-3!" />
+                    <TableCell actions className={FOOT_PIN_Z} />
                   </TableRow>
                 </TableFooter>
               )}

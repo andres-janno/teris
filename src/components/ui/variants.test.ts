@@ -812,14 +812,14 @@ describe('täislehe kest ja registririba (etapp 4f)', () => {
     for (const t of ['flex', 'min-h-0', 'flex-1', 'overflow-hidden', 'bg-background', 'h-[calc(100vh-64px)]']) expect(v.boardViewClass.split(' ')).toContain(t);
     for (const t of ['flex-col', 'gap-3', 'min-w-0', 'min-h-0', 'w-full', 'px-4', 'py-3']) expect(v.boardMainClass.split(' ')).toContain(t);
     for (const t of ['flex-col', 'gap-3', 'min-h-0', 'overflow-auto']) expect(v.boardBodyClass.split(' ')).toContain(t);
-    for (const t of ['flex-col', 'gap-3', 'p-0', 'overflow-visible']) expect(v.boardContentClass.split(' ')).toContain(t);
+    for (const t of ['flex-col', 'gap-3', 'p-0', 'overflow-visible', 'flex-auto']) expect(v.boardContentClass.split(' ')).toContain(t);
     for (const t of ['text-sm', 'text-muted-foreground']) expect(v.boardFooterClass.split(' ')).toContain(t);
   });
   it('tööriistaribad murduvad, vahe 10px (kest) ja aasta rida võtab kogu laiuse', () => {
     for (const t of ['flex-wrap', 'justify-between', 'gap-2.5']) expect(v.registerHeaderControlsClass.split(' ')).toContain(t);
     for (const t of ['flex-wrap', 'gap-2.5']) expect(v.registerActionsBarClass.split(' ')).toContain(t);
     for (const t of ['flex-wrap', 'gap-2', 'ml-auto']) expect(v.registerIoButtonsClass.split(' ')).toContain(t);
-    for (const t of ['flex-wrap', 'gap-2.5', 'flex-[1_1_100%]']) expect(v.yearSelectorGroupClass.split(' ')).toContain(t);
+    for (const t of ['flex-wrap', 'gap-2.5', 'flex-auto', 'basis-full']) expect(v.yearSelectorGroupClass.split(' ')).toContain(t);
     for (const t of ['gap-1.5', 'text-base', 'font-medium', 'text-foreground']) expect(v.yearLabelClass.split(' ')).toContain(t);
   });
   it('dialoogis on riba kaart (polster 12/16, ääris, ümardus 16px) ja ribade all ruumi 12px', () => {
@@ -827,6 +827,6 @@ describe('täislehe kest ja registririba (etapp 4f)', () => {
     for (const t of ['mb-3', 'gap-3', 'flex-wrap']) expect(v.dialogActionsBarClass.split(' ')).toContain(t);
   });
   it('otsinguväli kasvab 220px-st 420px-ni', () => {
-    for (const t of ['flex-[1_1_220px]', 'max-w-105']) expect(v.searchFieldClass.split(' ')).toContain(t);
+    for (const t of ['grow', 'shrink', 'basis-55', 'max-w-105']) expect(v.searchFieldClass.split(' ')).toContain(t);
   });
 });

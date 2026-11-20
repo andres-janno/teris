@@ -492,15 +492,15 @@ export const tableMutedClass = 'text-subtle';
 export const boardViewClass = 'flex min-h-0 flex-1 overflow-hidden bg-background h-[calc(100vh-64px)]';
 export const boardMainClass = 'flex min-h-0 min-w-0 w-full flex-1 flex-col gap-3 px-4 py-3';
 export const boardBodyClass = 'flex min-h-0 flex-1 flex-col gap-3 overflow-auto';
-export const boardContentClass = 'flex min-h-0 flex-1 flex-col gap-3 overflow-visible p-0';
+export const boardContentClass = 'flex min-h-0 flex-auto flex-col gap-3 overflow-visible p-0';
 export const boardFooterClass = 'text-sm leading-natural text-muted-foreground';
 
 /** Lehe tööriistaribad (vana `.register-*`, `.search-field`, `.year-*`): kestas vahe 10px, ilma polstri ja taustata. */
 export const registerHeaderControlsClass = 'flex flex-wrap items-center justify-between gap-2.5';
 export const registerActionsBarClass = 'flex flex-wrap items-center gap-2.5';
 export const registerIoButtonsClass = 'ml-auto flex flex-wrap items-center gap-2';
-export const searchFieldClass = 'flex-[1_1_220px] max-w-105';
-export const yearSelectorGroupClass = 'flex flex-[1_1_100%] flex-wrap items-center gap-2.5';
+export const searchFieldClass = 'grow shrink basis-55 max-w-105';
+export const yearSelectorGroupClass = 'flex flex-auto basis-full flex-wrap items-center gap-2.5';
 export const yearLabelClass = 'flex items-center gap-1.5 text-base font-medium leading-natural text-foreground';
 /** Sama tööriistariba dialoogi sees (Isikute ja Kultuuride register dialoogina, Laokaart): kaart ümber, ruumi allapoole. */
 export const dialogHeaderControlsClass = 'mb-3 flex flex-wrap items-center justify-between gap-4 rounded-lg border border-border bg-card px-4 py-3';
