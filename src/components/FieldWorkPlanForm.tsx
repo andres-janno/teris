@@ -203,7 +203,7 @@ const FieldWorkPlanEditor: React.FC<FieldWorkPlanFormProps> = ({ fieldSeasonId, 
   return (
     <Form onSubmit={save}>
       <Body className={dialogStackBodyClass}>
-        <div className={cn(workFormGridClass, 'grid-flow-col auto-cols-fr max-[680px]:grid-cols-2 max-[680px]:grid-flow-row')}>
+        <div className={cn(workFormGridClass, 'grid-flow-col auto-cols-fr max-[681px]:grid-cols-2 max-[681px]:grid-flow-row')}>
           <Field label="Tegevus *" htmlFor="wp-type">
             <FilterSelect fill id="wp-type" value={workTypeId} disabled={!!work} onChange={setWorkTypeId} options={[
               { value: '', label: '– vali –' },

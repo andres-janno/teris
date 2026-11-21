@@ -32,7 +32,7 @@ export const Field: React.FC<FieldProps> = ({ label, htmlFor, hint, error, span,
 // Vormi ruudustik: 2 veergu (vana .form-grid) või 3 veergu 2:1:1.5 (vana .form-row-3, mobiilis 1 veerg).
 // stackNarrow: kitsal ekraanil (≤ 560px) üks veerg; vana .fleet-form-grid
 export const FormGrid: React.FC<{ cols?: 2 | 3; span?: 'full'; stackNarrow?: boolean; className?: string; children: React.ReactNode }> = ({ cols = 2, span, stackNarrow, className, children }) => (
-  <div className={cn('grid gap-2.5', cols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr]', stackNarrow && 'max-[560px]:grid-cols-1', span === 'full' && 'col-span-full', className)}>
+  <div className={cn('grid gap-2.5', cols === 2 ? 'grid-cols-2' : 'grid-cols-1 sm:grid-cols-[2fr_1fr_1.5fr]', stackNarrow && 'max-[561px]:grid-cols-1', span === 'full' && 'col-span-full', className)}>
     {children}
   </div>
 );

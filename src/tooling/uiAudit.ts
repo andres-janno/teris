@@ -91,6 +91,18 @@ export const ROLE_BUTTON_ALLOWED: Readonly<Record<string, number>> = {
   'src/components/VehicleTracker.tsx': 1, // masinakaardi märkus: kaart ise on interaktiivne (Card interactive), märkus sees
 };
 const roleButtonsOverAllowed = (path: string, count: number): number => overAllowed(ROLE_BUTTON_ALLOWED, path, count);
+
+// Vana `@media (max-width: N)` = Tailwindi `max-[N+1px]` (max-[…] on range-süntaks: laius < N); sama konteineripäringul `@max-[…]`.
+// `min-[Npx]` nihet ei vaja. Vana murdepunkt või ümmargune arv ilma +1-ta on peaaegu kindlasti viga.
+const MAX_BREAKPOINT = /(?<![\w-])(@?max-\[(\d+)px\]):/g;
+export const OLD_BREAKPOINTS: ReadonlySet<number> = new Set([520, 560, 640, 680, 720, 760, 860, 1100, 1400, 1655]);
+
+/** Murdepunktid, kus +1 puudub: N jagub 10-ga või on tuntud vana max-width. */
+export function offByOneBreakpoints(src: string): string[] {
+  return [...stripComments(src).matchAll(MAX_BREAKPOINT)]
+    .filter((m) => Number(m[2]) % 10 === 0 || OLD_BREAKPOINTS.has(Number(m[2])))
+    .map((m) => m[1]);
+}
 export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'glass-card',
   // ujuvpaneelid kaardi peal

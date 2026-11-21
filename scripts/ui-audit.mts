@@ -2,7 +2,7 @@
 // Käivitus: npm run ui-audit  (väärtuste loetelu: npm run ui-audit -- --details)
 import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import { join } from 'node:path';
-import { disallowedFontWeights, offScaleCss, summarize, undefinedCssVars, unsourcedUtilityFiles, unusedCssClasses } from '../src/tooling/uiAudit.ts';
+import { disallowedFontWeights, offByOneBreakpoints, offScaleCss, summarize, undefinedCssVars, unsourcedUtilityFiles, unusedCssClasses } from '../src/tooling/uiAudit.ts';
 
 // Landing on eraldi avalik leht (ülemineku ulatusest väljas, mõõdetakse allpool eraldi); app.css on teema allikas.
 const EXCLUDE = ['src/landing', 'src/styles/app.css'];
@@ -83,6 +83,10 @@ row('role=button väljaspool ui-d (tsx)', r.roleButtonFiles.reduce((s, f) => s +
 const appCss = readFileSync('src/styles/app.css', 'utf8');
 const unsourced = unsourcedUtilityFiles(files, appCss);
 row('Tailwindi klasse ilma @source-ita (tsx)', unsourced.length, unsourced.map((f) => `${f.path}: ${f.tokens.join(' ')}`));
+const offBp = walkSources('src')
+  .filter((p) => !/\.test\.tsx?$/.test(p) && !p.includes('/tooling/'))
+  .flatMap((p) => offByOneBreakpoints(readFileSync(p, 'utf8')).map((c) => `${p}: ${c}`));
+row('Murdepunkte ilma +1-ta (ts/tsx)', offBp.length, offBp);
 
 // Muutujad: kõik CSS-failid (sh admin, landing, styles) ja kõik tsx-id (style-võtmed).
 const allCss = walk('src', []).filter((p) => p.endsWith('.css')).map((p) => readFileSync(p, 'utf8'));

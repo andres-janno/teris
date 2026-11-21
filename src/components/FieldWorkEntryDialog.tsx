@@ -15,8 +15,8 @@ import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowP
 import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass, infoNoticeClass } from './ui';
 
 // Kande vormi ruudustike veerud (ruudustiku enda kest: workFormGridClass); kitsal ekraanil kaks veergu
-const GRID_TOP = 'grid-cols-none grid-flow-col auto-cols-[minmax(0,1fr)] max-[680px]:grid-cols-2 max-[680px]:grid-flow-row';
-const GRID_AREA = 'grid-cols-[140px_155px_auto_minmax(0,1fr)] max-[680px]:grid-cols-2 max-[680px]:grid-flow-row';
+const GRID_TOP = 'grid-cols-none grid-flow-col auto-cols-[minmax(0,1fr)] max-[681px]:grid-cols-2 max-[681px]:grid-flow-row';
+const GRID_AREA = 'grid-cols-[140px_155px_auto_minmax(0,1fr)] max-[681px]:grid-cols-2 max-[681px]:grid-flow-row';
 const GRID_FOUR = 'grid-cols-[minmax(0,1fr)_minmax(0,1fr)_110px_110px]';
 // Telemeetria soovitus: roheline identiteet (primary); valitud olek = töö valiku roheline (primary-strong)
 const PILL = 'flex flex-wrap items-center justify-between gap-2.5 border-primary/35 px-3 py-2 hover:-translate-y-px hover:border-primary hover:bg-primary/12 hover:shadow-sm';

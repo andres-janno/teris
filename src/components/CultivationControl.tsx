@@ -50,7 +50,7 @@ const CC_VALUE = 'whitespace-nowrap text-base font-medium leading-natural tabula
 const CC_VALUE_SUB = 'ml-1.5 text-xs font-medium';
 const CC_BOX = 'flex h-8 items-center rounded-sm border border-input bg-field'; // tund:minut ja algusaja kast
 const CC_TOGGLE_ITEM = 'self-stretch'; // vana `.cc-toggle > button { align-self: stretch }`
-const CC_LINK = 'ml-auto max-[760px]:ml-0';
+const CC_LINK = 'ml-auto max-[761px]:ml-0';
 const CC_NOTICE = 'flex min-h-8 flex-1 items-center gap-2 rounded-sm border border-warning-solid/40 bg-warning-solid/10 py-1 pr-1 pl-3 font-medium text-foreground [&>svg]:shrink-0 [&>svg]:text-warning';
 const CC_NOTICE_LOADING = 'border-border bg-muted text-muted-foreground [&>svg]:text-primary';
 const CC_CLOCK_SELECT = 'h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground'; // tund ja minut algusaja kastis
@@ -153,7 +153,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         : 'Seisab';
 
   return (
-    <Card variant="floating" className="absolute bottom-5 left-1/2 z-900 flex w-[min(1040px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-3 text-sm leading-natural max-[760px]:bottom-3">
+    <Card variant="floating" className="absolute bottom-5 left-1/2 z-900 flex w-[min(1040px,calc(100vw-32px))] -translate-x-1/2 flex-col gap-3 text-sm leading-natural max-[761px]:bottom-3">
       {/* 1. Masin, olek ja mõõdikud */}
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex min-w-0 items-center gap-2.5">
@@ -167,7 +167,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
           </div>
         </div>
 
-        <div className="flex flex-wrap items-end gap-4 max-[760px]:gap-3">
+        <div className="flex flex-wrap items-end gap-4 max-[761px]:gap-3">
           <div className="flex flex-col gap-0.5">
             <span className={CC_LABEL}>Haritud ala</span>
             <span className={CC_VALUE}>
@@ -270,7 +270,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
       </div>
 
       {/* 3. Mängija */}
-      <div className="flex min-h-10 items-center gap-2.5 max-[760px]:flex-wrap">
+      <div className="flex min-h-10 items-center gap-2.5 max-[761px]:flex-wrap">
         <Button variant="primary" size="icon-lg"
           onClick={onTogglePlay}
           disabled={!hasTrack}
@@ -329,7 +329,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
               )}
             </div>
 
-            <div className="flex min-w-30 flex-1 items-center gap-2 max-[760px]:order-10 max-[760px]:basis-full">
+            <div className="flex min-w-30 flex-1 items-center gap-2 max-[761px]:order-10 max-[761px]:basis-full">
               <span className={CC_EDGE_TIME} title={`Raja algus: ${formatDate(pass.startTime)} ${formatTimeDisplay(pass.startTime)}`}>
                 {formatTimeDisplay(pass.startTime)}
               </span>

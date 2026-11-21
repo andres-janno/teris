@@ -148,7 +148,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
               />
               <DialogBody>
               <fieldset className={SEASON_FIELDSET} disabled={editingLocked}>
-              <FormGrid className="grid-cols-[160px_1fr] gap-3 max-[520px]:grid-cols-1">
+              <FormGrid className="grid-cols-[160px_1fr] gap-3 max-[521px]:grid-cols-1">
                 <Field label="Aasta (Hooaeg) *" htmlFor="season-year">
                   <NumberInput
                     id="season-year"

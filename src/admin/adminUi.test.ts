@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { auditTsx } from '../tooling/uiAudit';
+import { auditTsx, offByOneBreakpoints } from '../tooling/uiAudit';
 import * as ui from './adminUi';
 import { adminBadgeTone, adminFormGridClass, adminLicenseGridClass } from './adminUi';
 
@@ -42,8 +42,6 @@ describe('adminUi', () => {
     }
   });
   it('kitsa ekraani murdepunktid on vana max-width + 1 (range-süntaks)', () => {
-    for (const cls of allAdminClassStrings()) {
-      for (const m of cls.matchAll(/max-\[(\d+)px\]/g)) expect(Number(m[1]) % 10, cls).toBe(1);
-    }
+    for (const cls of allAdminClassStrings()) expect(offByOneBreakpoints(cls), cls).toEqual([]);
   });
 });

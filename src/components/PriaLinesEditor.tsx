@@ -13,8 +13,8 @@ import { seedCropMismatches, type SeedCheck } from '../services/seedCropCheck';
 import { Alert, Button, FilterSelect, Input, NumberInput, cn, infoNoticeClass, type FilterSelectOption } from './ui';
 
 // PRIA read: veerupäisega ruudustik (veerud tulevad style-ist); kitsal ekraanil lahtrid murduvad
-const PRIA_GRID = 'grid items-center gap-1.5 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_[data-slot=filter-select]]:w-full [&_[data-slot=filter-select]]:min-w-0 max-[760px]:flex max-[760px]:flex-wrap max-[760px]:[&_[data-slot=input]]:flex-1 max-[760px]:[&_[data-slot=input]]:basis-35 max-[760px]:[&_[data-slot=filter-select]]:flex-1 max-[760px]:[&_[data-slot=filter-select]]:basis-35 max-[760px]:[&_[data-slot=input][inputmode]]:flex-initial max-[760px]:[&_[data-slot=input][inputmode]]:basis-22.5';
-const PRIA_HEAD = 'px-0.5 text-xs font-semibold leading-natural text-muted-foreground max-[760px]:hidden [&>.num]:text-right';
+const PRIA_GRID = 'grid items-center gap-1.5 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_[data-slot=filter-select]]:w-full [&_[data-slot=filter-select]]:min-w-0 max-[761px]:flex max-[761px]:flex-wrap max-[761px]:[&_[data-slot=input]]:flex-1 max-[761px]:[&_[data-slot=input]]:basis-35 max-[761px]:[&_[data-slot=filter-select]]:flex-1 max-[761px]:[&_[data-slot=filter-select]]:basis-35 max-[761px]:[&_[data-slot=input][inputmode]]:flex-initial max-[761px]:[&_[data-slot=input][inputmode]]:basis-22.5';
+const PRIA_HEAD = 'px-0.5 text-xs font-semibold leading-natural text-muted-foreground max-[761px]:hidden [&>.num]:text-right';
 const PRIA_LINES = 'flex flex-col gap-1.5';
 
 export interface PriaRow {

@@ -47,7 +47,7 @@ const cropBlocks: { key: string; label: string; icon: string; groups: CropGroup[
 ];
 
 // Neli veergu täidavad akna ülejäänud kõrguse (iga veeru tabel kerib eraldi); kitsamal kui 1400px kaks veergu, tabel max 62vh
-const CROP_GROUPS = 'grid min-h-0 flex-1 grid-cols-4 grid-rows-[minmax(0,1fr)] gap-3 max-[1400px]:grid-cols-2 max-[1400px]:grid-rows-none max-[1400px]:items-start max-[760px]:grid-cols-1';
+const CROP_GROUPS = 'grid min-h-0 flex-1 grid-cols-4 grid-rows-[minmax(0,1fr)] gap-3 max-[1401px]:grid-cols-2 max-[1401px]:grid-rows-none max-[1401px]:items-start max-[761px]:grid-cols-1';
 // Kultuuri/sordi andmeridade nimelahtri alamosa: kultuuri värvitriip tuleb lahtri --crop-color-ist (crop-bar), polster vasakul
 const CROP_ROW_CELLS = '[&>td]:py-0.5 [&>td]:text-xs';
 // Kultuuri ja sortide vahel joont pole (kultuuri rida, kui sorte on, ja iga sordi rida peale viimase)
@@ -748,7 +748,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </div>
 
                   {blockCrops.length > 0 ? (
-                    <Table scroll="fill" bordered containerClassName="max-[1400px]:max-h-[62vh]">
+                    <Table scroll="fill" bordered containerClassName="max-[1401px]:max-h-[62vh]">
                         <TableHeader>
                           <TableRow>
                             <TableHead>Kultuur</TableHead>

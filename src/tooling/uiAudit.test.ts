@@ -1,9 +1,11 @@
+import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import {
   auditCss,
   auditTsx,
   disallowedFontWeights,
   legacyCardRules,
+  offByOneBreakpoints,
   offScaleCss,
   SOURCE_GUARD_ALLOWED,
   sourcedPaths,
@@ -555,5 +557,33 @@ describe('vanad päise, menüü ja väikeste vaadete klassid (etapp 4f)', () => 
       { path: 'src/components/B.tsx', content: '<Field htmlFor="login-name" /><div id="header-actions" className="login-page login-card year-col v-name has-crop sr-only help-content admin-login" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
+  });
+});
+
+describe('offByOneBreakpoints', () => {
+  it('märgib vana max-width ilma +1-ta, ka konteineripäringul', () => {
+    expect(offByOneBreakpoints('<div className="max-[760px]:flex @max-[560px]:grid max-[1655px]:hidden max-[900px]:p-2" />')).toEqual([
+      'max-[760px]', '@max-[560px]', 'max-[1655px]', 'max-[900px]',
+    ]);
+  });
+  it('lubab N+1 ja min-laiused', () => {
+    expect(offByOneBreakpoints('max-[761px]:flex @max-[561px]:grid max-[1656px]:hidden min-[760px]:flex md:flex')).toEqual([]);
+  });
+  it('kommentaaris olev ei loe', () => {
+    expect(offByOneBreakpoints('// vana max-[760px]:flex\n<div className="max-[761px]:flex" />')).toEqual([]);
+  });
+});
+
+describe('murdepunktid lähtekoodis', () => {
+  const walk = (d: string): string[] =>
+    readdirSync(d).flatMap((n) => {
+      const p = `${d}/${n}`;
+      if (n.startsWith('._')) return [];
+      if (statSync(p).isDirectory()) return walk(p);
+      return /\.(ts|tsx)$/.test(n) && !/\.test\.tsx?$/.test(n) && !p.includes('/tooling/') ? [p] : [];
+    });
+  it('ükski src/ ts/tsx fail ei kasuta max-[N px] ilma +1-ta', () => {
+    const bad = walk('src').flatMap((p) => offByOneBreakpoints(readFileSync(p, 'utf8')).map((c) => `${p}: ${c}`));
+    expect(bad).toEqual([]);
   });
 });

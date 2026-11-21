@@ -172,7 +172,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
             </div>
           </div>
 
-          <div className="mb-4 grid grid-cols-4 gap-2.5 max-[640px]:grid-cols-2">
+          <div className="mb-4 grid grid-cols-4 gap-2.5 max-[641px]:grid-cols-2">
             {tiles.map((t) => (
               <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.empty} />
             ))}

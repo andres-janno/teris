@@ -182,7 +182,7 @@ const DELETE_HOVER = 'enabled:hover:bg-destructive/12 enabled:hover:text-danger-
 /** Töö paneeli kanderida: kitsas paneel (alla 560px) murrab rea kaheks, konteineri päring. */
 const EntryRow: React.FC<{ children: React.ReactNode }> = ({ children }) => (
   <div className="@container rounded-md border border-border bg-muted px-2.5 py-2">
-    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-x-4 gap-y-1.5 @max-[560px]:grid-cols-[auto_minmax(0,1fr)_auto]">{children}</div>
+    <div className="grid grid-cols-[auto_minmax(0,1fr)_auto_auto_auto] items-center gap-x-4 gap-y-1.5 @max-[561px]:grid-cols-[auto_minmax(0,1fr)_auto]">{children}</div>
   </div>
 );
 const ENTRY_WHEN = 'flex flex-col gap-0.5 whitespace-nowrap';
@@ -1275,7 +1275,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                           <strong className="text-sm leading-natural text-foreground">{formatDate(e.date)}</strong>
                           {e.startTime && e.endTime && <span className="text-xs leading-natural text-muted-foreground">{e.startTime}–{e.endTime}</span>}
                         </div>
-                        <div className="flex min-w-0 flex-col gap-0.5 @max-[560px]:col-span-full @max-[560px]:row-start-2">
+                        <div className="flex min-w-0 flex-col gap-0.5 @max-[561px]:col-span-full @max-[561px]:row-start-2">
                           <div className="text-xs leading-natural text-foreground">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
                           <div className="text-xs leading-natural text-muted-foreground">
                             {[
@@ -1287,11 +1287,11 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
                           </div>
                         </div>
-                        <div className={cn(ENTRY_WHEN, 'num tabular-nums items-end @max-[560px]:col-start-2 @max-[560px]:-col-end-1 @max-[560px]:row-start-1')}>
+                        <div className={cn(ENTRY_WHEN, 'num tabular-nums items-end @max-[561px]:col-start-2 @max-[561px]:-col-end-1 @max-[561px]:row-start-1')}>
                           <strong className="text-sm leading-natural tabular-nums text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
                           {e.telemetryAreaHa ? <span className="text-xs leading-natural tabular-nums text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
                         </div>
-                        <div className="@max-[560px]:col-span-2 @max-[560px]:col-start-1 @max-[560px]:row-start-3">
+                        <div className="@max-[561px]:col-span-2 @max-[561px]:col-start-1 @max-[561px]:row-start-3">
                           {canManageFinance ? (
                             <Button
                               variant="bare"
@@ -1311,7 +1311,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                             <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
                           )}
                         </div>
-                        <span className="flex gap-0.5 empty:hidden @max-[560px]:col-start-3 @max-[560px]:row-start-3 @max-[560px]:justify-self-end">
+                        <span className="flex gap-0.5 empty:hidden @max-[561px]:col-start-3 @max-[561px]:row-start-3 @max-[561px]:justify-self-end">
                           {!workLocked && (
                             <>
                               <Button type="button" variant="ghost" size="icon-sm" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
