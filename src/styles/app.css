@@ -31,6 +31,7 @@
 @source '../components/FieldWorksBoard.tsx';
 @source '../components/FieldsTableView.tsx';
 @source '../components/FieldMapCard.tsx';
+@source '../components/FieldNdviBlock.tsx';
 @source '../components/FieldContextMenu.tsx';
 @source '../components/WorkRegisterModal.tsx';
 @source '../components/FieldWorkPlanForm.tsx';

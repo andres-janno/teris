@@ -1837,6 +1837,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
                 changeMainView('works');
               }}
               onEditField={setEditFieldId}
+              ndviDate={visibility.satellite ? satelliteDate : null}
             />
           </Suspense>
           ) : null}

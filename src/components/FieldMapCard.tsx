@@ -5,15 +5,18 @@ import { X, Pencil, ListChecks } from 'lucide-react';
 import type { FieldFeature } from '../types/field';
 import { formatQty } from '../services/units';
 import { Badge, Card, Button, KeyValueRow } from './ui';
+import { FieldNdviBlock } from './FieldNdviBlock';
 
 interface FieldMapCardProps {
   field: FieldFeature;
   onClose: () => void;
   onOpenWorks: (field: FieldFeature) => void;
   onEditField: (fieldId: number) => void;
+  /** Satelliidikiht on sees ja päev valitud → ISO kuupäev NDVI plokile; muidu null (plokki pole) */
+  ndviDate?: string | null;
 }
 
-export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOpenWorks, onEditField }) => {
+export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOpenWorks, onEditField, ndviDate = null }) => {
   // Esc sulgeb kasti; avatud dialoogid peatavad Esc-i document'is, nii et siia see ei jõua
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
@@ -36,6 +39,7 @@ export const FieldMapCard: React.FC<FieldMapCardProps> = ({ field, onClose, onOp
         <KeyValueRow label={`Pindala ${p.year}`}><strong>{formatQty(p.areaHa || 0)}</strong> ha</KeyValueRow>
         <KeyValueRow label="Kultuur">{hasCrop ? p.crop : 'Määramata'}{hasCrop && p.cropVariety ? ` (${p.cropVariety})` : ''}</KeyValueRow>
       </div>
+      <FieldNdviBlock key={p.id} geometry={field.geometry} date={ndviDate} />
       <div className="flex gap-2 [&>button]:flex-1">
         <Button type="button" variant="ghost" size="sm" onClick={() => onOpenWorks(field)}><ListChecks size={14} /> Ava põllutööd</Button>
         <Button type="button" variant="ghost" size="sm" onClick={() => onEditField(Number(p.id))}><Pencil size={14} /> Muuda põldu</Button>
