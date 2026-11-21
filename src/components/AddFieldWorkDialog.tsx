@@ -6,6 +6,7 @@ import { PRIA_ACTIVITIES } from '../services/pria';
 import { workTypeDisplayName } from '../services/workTypeName';
 import { WORK_PHASES, WORK_PHASE_META, type FieldWork, type WorkPhase, type WorkType } from '../types/fieldWork';
 import { Alert, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Field, Input, cn, dialogStackBodyClass } from './ui';
+import { phaseLabelClass } from './ui/variants';
 
 interface AddFieldWorkDialogProps {
   fieldSeasonId: number;
@@ -101,7 +102,7 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
             if (list.length === 0) return null;
             return (
               <section key={phase} className="flex flex-col gap-1">
-                <span className="phase-label text-2xs font-medium leading-natural tracking-wider" data-tone={WORK_PHASE_META[phase].tone}>
+                <span className={phaseLabelClass} data-tone={WORK_PHASE_META[phase].tone}>
                   {WORK_PHASE_META[phase].label.toUpperCase()}
                 </span>
                 {list.map((w) => {

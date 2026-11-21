@@ -291,7 +291,7 @@ Reeglid:
     16px, tugevam vari `shadow-dialog`), `tile` (sisemine plaat kaardi/dialoogi sees: KPI, sektsioon, loendikirje; 10px,
     `bg-muted`, varjuta).
   - `padding`: `md` 16px (vaikimisi), `sm` 12px, `none` (klassi ei anta — vaate CSS-i polster kehtib, nt väike kaardinäit).
-  - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `app.css` base-kihist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
+  - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `src/styles/base.css`-ist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
   - `interactive` + `onClick` div-kaardil annab `role="button"`, Tab-fookuse ja Enter/tühiku.
   - `asChild`: `<Card asChild><form>…</form></Card>`, samuti `<section>`. Klõpsatavat nuppu `Card asChild` + `<button>` abil ei tehta, selleks on `CardButton`.
 - `<CardButton>` — valitav kaart nupuna (kogu kaart on klõpsatav; `type="button"`, `interactive` alati sees). `variant`: `tile` (loendikirje),

@@ -23,7 +23,7 @@ import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { PRIA_ACTIVITIES } from '../services/pria';
 import { autumnColumns, boardColumns, type AutumnColumn, type BoardColumn } from '../services/fieldWorksBoardColumns';
 import { Alert, Badge, Button, Card, CardButton, Dialog, DialogContent, DialogHeader, DialogBody, ToggleGroup, ToggleGroupItem, type BadgeTone, type BadgeVariant, FilterClear, FilterSelect, SearchInput, CheckboxField, PageHeader, ProgressBar, cn, cornerActionClass, emptyBoxClass, subheadingClass } from './ui';
-import { boardViewClass, boardMainClass, registerActionsBarClass, registerIoButtonsClass, yearSelectorGroupClass, yearLabelClass } from './ui/variants';
+import { boardViewClass, boardMainClass, registerActionsBarClass, registerIoButtonsClass, yearSelectorGroupClass, yearLabelClass, phaseLabelClass } from './ui/variants';
 
 interface Option {
   id: string;
@@ -1158,7 +1158,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
             <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
               <DialogContent size="lg" dismissible={!busy}>
                 <DialogHeader
-                  icon={<span className="phase-label text-2xs font-medium leading-natural tracking-wider" data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
+                  icon={<span className={phaseLabelClass} data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
                   title={<span title={selected.priaName}>{selected.workTypeName}</span>}
                   description={activeLabel}
                 />

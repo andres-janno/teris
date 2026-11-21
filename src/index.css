@@ -1,24 +1,4 @@
-/* src/index.css — põhireeglid ja erandid; teemamuutujad on src/styles/themes.css-is */
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-button {
-  user-select: none;
-}
-
-body {
-  /* Süsteemi kirjatüüp (Mac: SF Pro, Windows: Segoe UI, Android: Roboto) — pärispoolpaks 500/600; kasutaja otsus 2026-11-17 */
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: var(--bg-dark);
-  color: var(--text-primary);
-  overflow: hidden;
-  -webkit-font-smoothing: antialiased;
-  transition: background-color 0.25s ease, color 0.25s ease;
-}
+/* src/index.css — erandid (kaardimärgised, Külvikorra aastaveerud, login, rikasteksti .help-content); põhireeglid on src/styles/base.css-is, teemamuutujad themes.css-is */
 
 /* Masina nimi kaardi markeris (MapMarkers HTML) */
 .v-name {
@@ -49,22 +29,6 @@ body {
   background: rgba(100, 116, 139, 0.15);
   color: var(--text-muted);
   border: 1px solid rgba(100, 116, 139, 0.3);
-}
-
-.animate-scale-up {
-  animation: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-@keyframes scaleUp {
-  from {
-    opacity: 0;
-    transform: scale(0.95);
-  }
-
-  to {
-    opacity: 1;
-    transform: scale(1);
-  }
 }
 
 /* Külvikorra aastaveerud (erand). Valitud aasta: roheline silt.
@@ -111,15 +75,6 @@ body {
   border-color: #16a34a !important;
   box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), inset 0 0 0 1px #16a34a !important;
   background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
-}
-
-.sr-only {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
 }
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -259,15 +214,6 @@ body {
   .login-backdrop-sun,
   .login-column { animation: none; }
 }
-
-/* ==========================================================================
-   Põllutööde tahvel
-   ========================================================================== */
-/* Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina, kontrast mõlemas teemas */
-.phase-label[data-tone="info"] { color: var(--tone-info-text); }
-.phase-label[data-tone="success"] { color: var(--tone-success-text); }
-.phase-label[data-tone="accent"] { color: var(--tone-accent-text); }
-.phase-label[data-tone="warning"] { color: var(--tone-warning-text); }
 
 /* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */
 .help-content {

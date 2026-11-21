@@ -58,3 +58,10 @@ describe('teemamuutujate allikas (etapp 4g)', () => {
     expect(themeVars(themesCss, 'dark')['--crop-tint']).toBe('28%');
   });
 });
+
+describe('animatsioonid (etapp 4g)', () => {
+  it('scale-up on @theme animatsioon koos @keyframes scaleUp-ga', () => {
+    expect(css).toMatch(/--animate-scale-up:\s*scaleUp 0\.2s cubic-bezier\(0\.16, 1, 0\.3, 1\);/);
+    expect(css).toMatch(/@keyframes scaleUp\s*\{/);
+  });
+});

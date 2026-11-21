@@ -58,7 +58,7 @@ const allClassStrings = (): string[] => [
   v.detailSectionClass, v.notesTextClass,
   v.stockQtyClass({ sign: 'in' }), v.stockQtyClass({ sign: 'out' }), v.stockQtyClass({}), v.overuseClass, v.cellBadgeClass, v.cellBadgeLeadClass,
   v.stockDocUnitClass, v.stockDocQtyClass, v.stockDocAmountClass, v.stockDocFooterRowClass,
-  v.collapsedPanelButtonClass,
+  v.collapsedPanelButtonClass, v.phaseLabelClass,
   v.belowHeaderHeightClass, v.loginPageClass, v.loginColumnClass, v.loginCardClass, v.loginLogoClass, v.loginPrimaryButtonClass, v.loginCopyrightClass, v.loginNoticeClass,
 ];
 
@@ -341,7 +341,7 @@ describe('kaart', () => {
     expect(c).toContain('cursor-pointer');
     expect(c).toContain('hover:bg-card-hover');
   });
-  it('nupu lähtestus (font, text-align, color) ei ole utiliit — see on app.css base-kihis ja vaate klass võidab', () => {
+  it('nupu lähtestus (font, text-align, color) ei ole utiliit — see on src/styles/base.css-is ja vaate klass võidab', () => {
     const c = v.cardVariants({ interactive: true });
     expect(c).not.toMatch(/\[font:|(^|\s)text-(left|foreground)(\s|$)/);
   });
@@ -861,5 +861,15 @@ describe('collapsedPanelButtonClass (kaardi paneeli ahendatud nupp)', () => {
     expect(v.collapsedPanelButtonClass).toContain('items-center justify-center');
     expect(v.collapsedPanelButtonClass).not.toMatch(/(?:^|\s)self-/);
     expect(v.collapsedPanelButtonClass).toContain('hover:text-primary');
+  });
+});
+
+describe('phaseLabelClass (töö faasi silt)', () => {
+  it('toon tekstina data-tone järgi, nelja tooniga', () => {
+    for (const t of ['info', 'success', 'accent', 'warning']) {
+      expect(v.phaseLabelClass).toContain(`data-[tone=${t}]:text-${t}-text`);
+    }
+    expect(v.phaseLabelClass).toContain('text-2xs');
+    expect(v.phaseLabelClass).toContain('leading-natural');
   });
 });

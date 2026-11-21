@@ -1,0 +1,35 @@
+/* src/styles/base.css — põhireeglid (kiht `base`, nõrgeim): lähtestus, body, nupu ja vormiväljade kirjatüüp.
+   Vanad reeglid (kiht `legacy`) ja Tailwindi utiliidid võidavad need. Preflight'i (Tailwindi vaikestiilid) jäetakse
+   teadlikult välja — see fail on selle asendaja. */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  user-select: none;
+}
+
+/* Vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga) */
+button, input, select, textarea {
+  font-family: inherit;
+}
+
+/* Klõpsatav kaart <button>-ina: nupp ei päri kirja ega värvi. Base-kihis, et vaate klass võidaks. */
+button[data-slot="card"] {
+  font: inherit;
+  text-align: left;
+  color: var(--text-primary);
+}
+
+body {
+  /* Süsteemi kirjatüüp (Mac: SF Pro, Windows: Segoe UI, Android: Roboto) — pärispoolpaks 500/600; kasutaja otsus 2026-11-17 */
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background-color 0.25s ease, color 0.25s ease;
+}

@@ -10,6 +10,7 @@
 
 @import 'tailwindcss/theme.css' layer(theme);
 @import './themes.css' layer(theme);
+@import './base.css' layer(base);
 @import '../index.css' layer(legacy);
 @import './map.css' layer(legacy);
 @import 'leaflet/dist/leaflet.css' layer(vendor);
@@ -91,20 +92,6 @@
 @source '../admin';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
 
-/* Preflight'i pole: vormielemendid ja nupud võtaksid brauseri kirjatüübi (nt tekstikast ühelaiuse kirjaga).
-   Kõige nõrgemas kihis — vanad reeglid (legacy) ja ui utiliidid, mis kirja ise määravad, võidavad. */
-@layer base {
-  button, input, select, textarea {
-    font-family: inherit;
-  }
-  /* Klõpsatav kaart <button>-ina: nupp ei päri kirja ega värvi. Base-kihis, et vaate klass (legacy) võidaks. */
-  button[data-slot="card"] {
-    font: inherit;
-    text-align: left;
-    color: var(--text-primary);
-  }
-}
-
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
@@ -137,6 +124,13 @@
   @keyframes slide-in {
     from { opacity: 0; transform: translateY(-10px); }
     to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* Dialoogi/menüü sisselibisemine (ui/Dialog, ui/DateInput, klass `animate-scale-up`). */
+  --animate-scale-up: scaleUp 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  @keyframes scaleUp {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
   }
 
   --shadow-primary: 0 4px 14px rgba(34, 197, 94, 0.35);

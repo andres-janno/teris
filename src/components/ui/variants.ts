@@ -183,7 +183,7 @@ export const cardVariants = cva('border border-border', {
     // none: klassi ei anta — vaate CSS-i oma polster (nt väike kaardinäit) jääb kehtima.
     padding: { none: '', sm: 'p-3', md: 'p-4' },
     interactive: {
-      // Nupu lähtestus (font, text-align, color) on app.css base-kihis (button[data-slot="card"]), et vaate klass (legacy) kirjasuuruse kaotamata võidaks.
+      // Nupu lähtestus (font, text-align, color) on src/styles/base.css-is (button[data-slot="card"]), et vaate klass (legacy) kirjasuuruse kaotamata võidaks.
       true: 'cursor-pointer transition-colors hover:bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
       false: '',
     },
@@ -591,3 +591,7 @@ export const loginNoticeClass = 'login-notice flex items-center gap-2.5 rounded-
 
 /** Kaardi ujuva paneeli ahendatud olek (LayerControl, MapYearSelector): 40px ikoonnupp; asukoha annab pakk (items-start/items-end). */
 export const collapsedPanelButtonClass = 'flex size-10 shrink-0 items-center justify-center text-foreground transition-all duration-150 hover:text-primary';
+
+/** Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina (`data-tone`), kontrast mõlemas teemas. Vana `.phase-label[data-tone]`. */
+export const phaseLabelClass =
+  'text-2xs font-medium leading-natural tracking-wider data-[tone=info]:text-info-text data-[tone=success]:text-success-text data-[tone=accent]:text-accent-text data-[tone=warning]:text-warning-text';
