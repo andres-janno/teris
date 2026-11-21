@@ -4,7 +4,7 @@ import type { FieldCollection } from '../types/field';
 import type { FarmingSeason } from '../types/season';
 import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
-import { Badge, Card, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey, cn } from './ui';
+import { Badge, Card, CardButton, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey, cn } from './ui';
 import { mapPanelTitleClass } from './ui/variants';
 
 interface MapYearSelectorProps {
@@ -39,6 +39,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   onSelectCropFilter,
   seasons = []
 }) => {
+  const [isOpen, setIsOpen] = useState(true);
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
   // Calculate crop breakdown with sum ha and counts
@@ -80,11 +81,30 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
     return list;
   }, [fields]);
 
+  if (!isOpen) {
+    return (
+      <CardButton
+        variant="floating"
+        padding="none"
+        className="flex size-10 shrink-0 items-center justify-center self-start text-foreground transition-all duration-150 hover:text-primary"
+        onClick={() => setIsOpen(true)}
+        title={`Hooaeg: ${selectedYear} (ava hooaja paneel)`}
+        aria-label={`Hooaeg: ${selectedYear} (ava hooaja paneel)`}
+      >
+        <Calendar size={20} />
+      </CardButton>
+    );
+  }
+
   return (
-    <Card variant="floating" padding="sm" className="flex flex-col gap-2.5">
-      {/* Header: Season Title & Stat */}
+    <Card variant="floating" padding="sm" className="flex w-full flex-col gap-2.5">
+      {/* Header: Season Title, Stat & Collapse Button */}
       <div className="flex items-center justify-between">
-        <div className={cn(mapPanelTitleClass, 'gap-1.5')}>
+        <div
+          className={cn(mapPanelTitleClass, 'cursor-pointer select-none gap-1.5')}
+          onClick={() => setIsOpen(false)}
+          title="Ahenda hooaja paneel"
+        >
           <Calendar size={15} />
           <span>Hooaeg:</span>
         </div>
@@ -92,6 +112,15 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
           <Badge className="num tabular-nums">
             {fields.features.length} põldu &bull; {totalAreaHa.toFixed(1)} ha
           </Badge>
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            type="button"
+            onClick={() => setIsOpen(false)}
+            title="Ahenda hooaja paneel"
+          >
+            <ChevronUp size={14} />
+          </Button>
         </div>
       </div>
 

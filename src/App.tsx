@@ -1887,7 +1887,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         />
 
         {/* Top-Left Stack: Season / Year Switcher (with integrated Crop Legend) and Field Details below it */}
-        <div className={cn(MAP_STACK_CLASS, 'map-top-left-stack top-0 left-0 max-h-[calc(100vh-8px)] w-94 [&>*]:static! [&>*]:w-full!')}>
+        <div className={cn(MAP_STACK_CLASS, 'map-top-left-stack top-0 left-0 max-h-[calc(100vh-8px)] w-94 items-start [&>*]:static!')}>
           <MapYearSelector 
             selectedYear={selectedYear}
             onSelectYear={setSelectedYear}
@@ -1902,7 +1902,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         </div>
 
         {/* Paremal üleval: kaardikihid ja nende all satelliidipildi paneel (MapView portaal) */}
-        <div className={cn(MAP_STACK_CLASS, 'map-top-right-stack top-0 right-0 max-h-full w-89 max-w-[calc(100vw-8px)] [&>:empty]:hidden')}>
+        <div className={cn(MAP_STACK_CLASS, 'map-top-right-stack top-0 right-0 max-h-full w-89 max-w-[calc(100vw-8px)] items-end [&>:empty]:hidden')}>
           <LayerControl
             visibility={visibility}
             onToggleLayer={handleToggleLayer}
@@ -1921,7 +1921,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             onToggleTrackVisibility={handleToggleTrackVisibility}
             modules={modules}
           />
-          <div ref={setSatellitePanelHost} />
+          <div ref={setSatellitePanelHost} className="w-full" />
         </div>
 
         {/* Bottom Floating Telemetry & Cultivation Scrubber Panel */}

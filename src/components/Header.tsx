@@ -93,8 +93,8 @@ export const Header: React.FC<HeaderProps> = ({
   return (
     <header className="z-1000 flex h-16 items-center justify-between border-b border-border bg-white/95 px-4 backdrop-blur-md transition-colors duration-250 dark:bg-background/90">
       {/* Logo klõps laeb lehe uuesti algolekusse (kaardivaade, nagu uues brauseris avamine) */}
-      <a href="/" className="flex items-center gap-3 no-underline" title="Ava TERIS algusest" onClick={() => onChangeMainView?.('map')}>
-        <TerisLogo variant="horizontal" />
+      <a href="/" className="flex shrink-0 items-center gap-3 no-underline" title="Ava TERIS algusest" onClick={() => onChangeMainView?.('map')}>
+        <TerisLogo variant="responsive" />
       </a>
 
       {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}

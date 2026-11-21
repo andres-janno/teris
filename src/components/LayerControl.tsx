@@ -6,7 +6,6 @@ import {
   Eye,
   EyeOff,
   Grid,
-  ChevronDown,
   ChevronUp,
   Maximize2,
   Play,
@@ -17,7 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
+import { Button, Card, CardButton, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
 import { loadingSpinnerInlineClass, mapPanelTitleClass } from './ui/variants';
 
 interface LayerControlProps {
@@ -111,18 +110,18 @@ export const LayerControl: React.FC<LayerControlProps> = ({
 
   const soilLegendItems = !isAgeMetric
     ? (SOIL_METRIC_CONFIG[soilMetric].thresholds || []).map((t, idx, arr) => {
-        const prevMax = idx > 0 ? arr[idx - 1].max : null;
-        const unit = SOIL_METRIC_CONFIG[soilMetric].unit;
-        let label: string;
-        if (t.max === Infinity) {
-          label = `> ${prevMax}${unit ? ` ${unit}` : ''}`;
-        } else if (prevMax === null) {
-          label = `≤ ${t.max}${unit ? ` ${unit}` : ''}`;
-        } else {
-          label = `${prevMax} – ${t.max}${unit ? ` ${unit}` : ''}`;
-        }
-        return { color: SOIL_LEVEL_COLOR[t.level], label };
-      })
+      const prevMax = idx > 0 ? arr[idx - 1].max : null;
+      const unit = SOIL_METRIC_CONFIG[soilMetric].unit;
+      let label: string;
+      if (t.max === Infinity) {
+        label = `> ${prevMax}${unit ? ` ${unit}` : ''}`;
+      } else if (prevMax === null) {
+        label = `≤ ${t.max}${unit ? ` ${unit}` : ''}`;
+      } else {
+        label = `${prevMax} – ${t.max}${unit ? ` ${unit}` : ''}`;
+      }
+      return { color: SOIL_LEVEL_COLOR[t.level], label };
+    })
     : [];
 
   const ageGradientCss = `linear-gradient(to right, ${Array.from(
@@ -130,117 +129,138 @@ export const LayerControl: React.FC<LayerControlProps> = ({
     (_, i) => getSoilMetricColor('age', i)
   ).join(', ')})`;
 
+  if (!isOpen) {
+    return (
+      <CardButton
+        variant="floating"
+        padding="none"
+        className="flex size-10 shrink-0 items-center justify-center self-end text-foreground transition-all duration-150 hover:text-primary"
+        onClick={() => setIsOpen(true)}
+        title="Ava kaardikihid"
+        aria-label="Ava kaardikihid"
+      >
+        <Layers size={20} />
+      </CardButton>
+    );
+  }
+
   return (
     <Card variant="floating" className="w-full flex-none">
-      <div className="flex cursor-pointer items-center justify-between" role="button" tabIndex={0} aria-expanded={isOpen} onKeyDown={clickOnActivationKey} onClick={() => setIsOpen(!isOpen)}>
+      <div
+        className="flex cursor-pointer items-center justify-between"
+        role="button"
+        tabIndex={0}
+        aria-expanded={isOpen}
+        onKeyDown={clickOnActivationKey}
+        onClick={() => setIsOpen(false)}
+      >
         <div className={mapPanelTitleClass}>
           <Layers size={18} />
           <span>Kaardikihid</span>
         </div>
-        <Button variant="ghost" size="icon-sm" title={isOpen ? 'Ahenda' : 'Laienda'}>
-          {isOpen ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+        <Button variant="ghost" size="icon-sm" title="Ahenda kaardikihid" type="button" tabIndex={-1}>
+          <ChevronUp size={16} />
         </Button>
       </div>
 
-      {isOpen && (
-        <div className="mt-3 flex flex-col gap-3">
-          {/* Base Maps Selection */}
-          <div>
-            <SectionTitle>
-              <MapIcon size={14} />
-              <span>Aluskaart</span>
-            </SectionTitle>
-            <div className="grid grid-cols-2 gap-1.5">
-              {(Object.keys(BASE_MAPS) as BaseMapLayerId[]).map((id) => {
-                const mapConfig = BASE_MAPS[id];
-                const isActive = visibility.baseMap === id;
-                return (
-                  <Button size="sm" className="justify-between" aria-pressed={isActive}
-                    key={id}
-                    onClick={() => onSelectBaseMap(id)}
-                  >
-                    <span>{mapConfig.name}</span>
-                    {isActive && <span className="size-1.5 rounded-full bg-primary" />}
-                  </Button>
-                );
-              })}
-            </div>
-            <CheckboxField
-              className={cn(LAYER_LABEL, 'mt-2.5 px-1')}
-              checked={visibility.cadastre}
-              onCheckedChange={() => onToggleLayer('cadastre')}
-              label={
-                <span className="flex items-center gap-2">
-                  <LayerDot swatch={LAYER_SWATCH.cadastre} />
-                  <span>Katastripiirid</span>
-                </span>
-              }
-            />
+      <div className="mt-3 flex flex-col gap-3">
+        {/* Base Maps Selection */}
+        <div>
+          <SectionTitle>
+            <MapIcon size={14} />
+            <span>Aluskaart</span>
+          </SectionTitle>
+          <div className="grid grid-cols-2 gap-1.5">
+            {(Object.keys(BASE_MAPS) as BaseMapLayerId[]).map((id) => {
+              const mapConfig = BASE_MAPS[id];
+              const isActive = visibility.baseMap === id;
+              return (
+                <Button size="sm" className="justify-between" aria-pressed={isActive}
+                  key={id}
+                  onClick={() => onSelectBaseMap(id)}
+                >
+                  <span>{mapConfig.name}</span>
+                  {isActive && <span className="size-1.5 rounded-full bg-primary" />}
+                </Button>
+              );
+            })}
           </div>
+          <CheckboxField
+            className={cn(LAYER_LABEL, 'mt-2.5 px-1')}
+            checked={visibility.cadastre}
+            onCheckedChange={() => onToggleLayer('cadastre')}
+            label={
+              <span className="flex items-center gap-2">
+                <LayerDot swatch={LAYER_SWATCH.cadastre} />
+                <span>Katastripiirid</span>
+              </span>
+            }
+          />
+        </div>
 
-          {/* Overlays / Thematic Layers */}
-          <div>
-            <SectionTitle>
-              <Grid size={14} />
-              <span>Teemakihid</span>
-            </SectionTitle>
-            <div className="flex flex-col gap-1.5">
-              {/* Fields Layer */}
-              <LayerRow swatch={LAYER_SWATCH.fields} label="Põllud" checked={visibility.fields} onToggle={() => onToggleLayer('fields')}>
-                {visibility.fields && (
-                  <div className={LAYER_SUB_OPTIONS}>
-                    <CheckboxField className={LAYER_OPTION} checked={visibility.fieldLabels} onCheckedChange={() => onToggleLayer('fieldLabels')} label="Põllunumbrid" />
-                    <CheckboxField className={LAYER_OPTION} checked={visibility.blockLabels} onCheckedChange={() => onToggleLayer('blockLabels')} label="Massiivi numbrid" />
-                  </div>
-                )}
-              </LayerRow>
+        {/* Overlays / Thematic Layers */}
+        <div>
+          <SectionTitle>
+            <Grid size={14} />
+            <span>Teemakihid</span>
+          </SectionTitle>
+          <div className="flex flex-col gap-1.5">
+            {/* Fields Layer */}
+            <LayerRow swatch={LAYER_SWATCH.fields} label="Põllud" checked={visibility.fields} onToggle={() => onToggleLayer('fields')}>
+              {visibility.fields && (
+                <div className={LAYER_SUB_OPTIONS}>
+                  <CheckboxField className={LAYER_OPTION} checked={visibility.fieldLabels} onCheckedChange={() => onToggleLayer('fieldLabels')} label="Põllunumbrid" />
+                  <CheckboxField className={LAYER_OPTION} checked={visibility.blockLabels} onCheckedChange={() => onToggleLayer('blockLabels')} label="Massiivi numbrid" />
+                </div>
+              )}
+            </LayerRow>
 
-              {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
-              <LayerRow swatch={LAYER_SWATCH.soil} label="Mullaproovid" checked={visibility.soilSamples} onToggle={() => onToggleLayer('soilSamples')}>
-                {visibility.soilSamples && onSelectSoilMetric && (
-                  <div className={LAYER_SUB_OPTIONS}>
-                    <span className={LAYER_SUBTEXT}>{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
-                    <div className="flex items-center gap-1 rounded-sm border border-border bg-card p-0.5">
-                      <RadioGroup
-                        className="gap-1"
-                        orientation="vertical"
-                        value={soilMetric}
-                        onValueChange={(v) => onSelectSoilMetric(v as SoilSampleMetricKey)}
-                        aria-label="Mullaproovi näitaja"
-                      >
-                        {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
-                          <RadioField key={key} value={key} label={SOIL_METRIC_CONFIG[key].label} labelClassName="gap-1.5" />
-                        ))}
-                      </RadioGroup>
+            {/* Soil Samples — linnutamata lihtne rida, linnutatuna statistika ja näitaja valik */}
+            <LayerRow swatch={LAYER_SWATCH.soil} label="Mullaproovid" checked={visibility.soilSamples} onToggle={() => onToggleLayer('soilSamples')}>
+              {visibility.soilSamples && onSelectSoilMetric && (
+                <div className={LAYER_SUB_OPTIONS}>
+                  <span className={LAYER_SUBTEXT}>{soilSampleCount} punkti kokku, {soilFieldCount} massiivil</span>
+                  <div className="flex items-center gap-1 rounded-sm border border-border bg-card p-0.5">
+                    <RadioGroup
+                      className="gap-1"
+                      orientation="vertical"
+                      value={soilMetric}
+                      onValueChange={(v) => onSelectSoilMetric(v as SoilSampleMetricKey)}
+                      aria-label="Mullaproovi näitaja"
+                    >
+                      {(Object.keys(SOIL_METRIC_CONFIG) as SoilSampleMetricKey[]).map((key) => (
+                        <RadioField key={key} value={key} label={SOIL_METRIC_CONFIG[key].label} labelClassName="gap-1.5" />
+                      ))}
+                    </RadioGroup>
 
-                      <div className="mt-1.5 flex flex-col gap-1 border-t border-border pt-1.5">
-                        {isAgeMetric ? (
-                          <div className="mb-0.5 flex flex-col gap-0.5">
-                            <div className="h-2 rounded-sm" style={{ backgroundImage: ageGradientCss }}></div>
-                            <div className="flex justify-between text-2xs leading-natural text-muted-foreground">
-                              <span>0 a</span>
-                              <span>&gt; {AGE_MAX_YEARS} a</span>
-                            </div>
+                    <div className="mt-1.5 flex flex-col gap-1 border-t border-border pt-1.5">
+                      {isAgeMetric ? (
+                        <div className="mb-0.5 flex flex-col gap-0.5">
+                          <div className="h-2 rounded-sm" style={{ backgroundImage: ageGradientCss }}></div>
+                          <div className="flex justify-between text-2xs leading-natural text-muted-foreground">
+                            <span>0 a</span>
+                            <span>&gt; {AGE_MAX_YEARS} a</span>
                           </div>
-                        ) : (
-                          soilLegendItems.map((item) => (
-                            <LegendItem key={item.label} color={item.color} label={item.label} />
-                          ))
-                        )}
-                        <LegendItem color={UNDETERMINED_CROP_COLOR} label="Andmed puuduvad" />
-                      </div>
+                        </div>
+                      ) : (
+                        soilLegendItems.map((item) => (
+                          <LegendItem key={item.label} color={item.color} label={item.label} />
+                        ))
+                      )}
+                      <LegendItem color={UNDETERMINED_CROP_COLOR} label="Andmed puuduvad" />
                     </div>
                   </div>
-                )}
-              </LayerRow>
-
-              {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
-              {modules.telemetry && (
-                <LayerRow swatch={LAYER_SWATCH.vehicles} label="Masinapark" checked={visibility.vehicles} onToggle={() => onToggleLayer('vehicles')} />
+                </div>
               )}
+            </LayerRow>
 
-              {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
-              {modules.telemetry && (
+            {/* Machinery / Vehicles — masinate viimased teadaolevad asukohad */}
+            {modules.telemetry && (
+              <LayerRow swatch={LAYER_SWATCH.vehicles} label="Masinapark" checked={visibility.vehicles} onToggle={() => onToggleLayer('vehicles')} />
+            )}
+
+            {/* Põllutööd — linnutatuna kõigi masinate rajad kaardil, masinate kaupa peitmine ja taasesitus */}
+            {modules.telemetry && (
               <LayerRow
                 swatch={LAYER_SWATCH.cultivation}
                 label="Põllutööd"
@@ -270,7 +290,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                           const deviceLabel = v.telemetry?.deviceId && v.telemetry.deviceId !== 'PAIGALDAMATA'
                             ? v.telemetry.deviceId
                             : (v.id.includes('demo') || v.name.toLowerCase().includes('demo') ? 'Demorežiim' : 'Seade puudub');
-    
+
                           return (
                             <div
                               key={v.id}
@@ -283,7 +303,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                                   <span className="truncate text-2xs leading-3 text-subtle">{deviceLabel}</span>
                                 </div>
                               </div>
-    
+
                               <div className="flex shrink-0 items-center gap-1">
                                 {onToggleVehicleSimulator && (
                                   <Button size="xs" aria-pressed={isSimActive}
@@ -294,7 +314,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                                     <span>Sim</span>
                                   </Button>
                                 )}
-    
+
                                 {onToggleTrackVisibility && (
                                   <Button variant="ghost" size="icon-xs" aria-pressed={isTrackVisible}
                                     title={!hasTrack
@@ -315,39 +335,38 @@ export const LayerControl: React.FC<LayerControlProps> = ({
                   </div>
                 )}
               </LayerRow>
-              )}
+            )}
 
-              {/* POI / Infrastructure */}
-              <LayerRow swatch={LAYER_SWATCH.poi} label="Muud asukohad" checked={visibility.poi} onToggle={() => onToggleLayer('poi')} />
+            {/* POI / Infrastructure */}
+            <LayerRow swatch={LAYER_SWATCH.poi} label="Muud asukohad" checked={visibility.poi} onToggle={() => onToggleLayer('poi')} />
 
-              {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
-              {modules.weather && (
-                <LayerRow swatch={LAYER_SWATCH.weather} label="Sajuradar" checked={visibility.weatherRadar} onToggle={() => onToggleLayer('weatherRadar')} />
-              )}
+            {/* Sajuradar — Keskkonnaagentuuri radarite koondpilt, uueneb iga 5 min */}
+            {modules.weather && (
+              <LayerRow swatch={LAYER_SWATCH.weather} label="Sajuradar" checked={visibility.weatherRadar} onToggle={() => onToggleLayer('weatherRadar')} />
+            )}
 
-              {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
-              {modules.satellite && (
-                <LayerRow swatch={LAYER_SWATCH.satellite} label="Satelliidipilt" checked={visibility.satellite} onToggle={() => onToggleLayer('satellite')} />
-              )}
-            </div>
+            {/* Satelliidipilt — Maa- ja Ruumiameti Satiladu (Sentinel-2), kuupäeva valik kaardil */}
+            {modules.satellite && (
+              <LayerRow swatch={LAYER_SWATCH.satellite} label="Satelliidipilt" checked={visibility.satellite} onToggle={() => onToggleLayer('satellite')} />
+            )}
           </div>
-
-          {/* Quick Fit Action */}
-          {onFitAll && (
-            <div className="mt-1 border-t border-border pt-2.5">
-              <Button
-                size="sm"
-                className="w-full"
-                onClick={onFitAll}
-                title="Kohanda kaardi vaade kõigi aktiivsete kihtide elementide mahutamiseks"
-              >
-                <Maximize2 size={14} />
-                <span>Mahuta valitud kihid ekraanile</span>
-              </Button>
-            </div>
-          )}
         </div>
-      )}
+
+        {/* Quick Fit Action */}
+        {onFitAll && (
+          <div className="mt-1 border-t border-border pt-2.5">
+            <Button
+              size="sm"
+              className="w-full"
+              onClick={onFitAll}
+              title="Kohanda kaardi vaade kõigi aktiivsete kihtide elementide mahutamiseks"
+            >
+              <Maximize2 size={14} />
+              <span>Mahuta valitud kihid ekraanile</span>
+            </Button>
+          </div>
+        )}
+      </div>
     </Card>
   );
 };
