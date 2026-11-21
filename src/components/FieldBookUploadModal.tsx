@@ -10,7 +10,7 @@ import { buildFieldBookImport } from '../services/fieldBookImport';
 import { api } from '../services/api';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import {
-  Alert, Button, Card, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Dropzone, Field, Select,
+  Alert, Button, Card, CheckboxField, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Dropzone, Field, Select,
   dropzoneIconClass, dropzoneStateClass, fileReuploadHintClass, previewBoxClass, previewCropClass, previewFieldClass, previewFieldRowClass, previewFieldsScrollClass, previewHeaderClass,
 } from './ui';
 
@@ -37,6 +37,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<FieldBookSheetResult[] | null>(null);
   const [operatorId, setOperatorId] = useState('');
+  const [createPerformers, setCreatePerformers] = useState(true); // puuduvad teostajad lisatakse töötajana
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const operators = parties.filter((p) => p.roles?.includes('OPERATOR'));
@@ -50,8 +51,8 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
   }, [isOpen, operators.length]);
 
   const built = useMemo(
-    () => (results && operatorId ? buildFieldBookImport(results, { masterFields, parties, seasons, operatorId }) : null),
-    [results, operatorId, masterFields, parties, seasons]
+    () => (results && operatorId ? buildFieldBookImport(results, { masterFields, parties, seasons, operatorId, createMissingPerformers: createPerformers }) : null),
+    [results, operatorId, masterFields, parties, seasons, createPerformers]
   );
 
   if (!isOpen) return null;
@@ -79,7 +80,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
     setError(null);
     try {
       const r = await api.importFieldBook(built.payload);
-      onImported();
+      onImported(); // värskendab ka isikute loendi (uued teostajad)
       onClose();
       const skippedText = r.skipped.length
         ? `\n\nVahele jäetud:\n${r.skipped.map((x) => `Nr ${x.num} (${x.season}): ${x.reason}`).join('\n')}`
@@ -89,6 +90,7 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
       if (r.linked) parts.push(`${r.linked} juba olemas`);
       if (r.movedToNext) parts.push(`${r.movedToNext} sügistööd järgmise hooaja alla`);
       if (r.unknown) parts.push(`${r.unknown} tundmatu tegevusega rida vahele jäetud`);
+      if (r.partiesCreated) parts.push(`isikute registrisse lisati ${r.partiesCreated} töötajat`);
       void alertDialog(`Imporditud ${r.imported} põldu: ${parts.join(', ')}${skippedText}`);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Import ebaõnnestus.');
@@ -183,13 +185,20 @@ export const FieldBookUploadModal: React.FC<FieldBookUploadModalProps> = ({
                   )}
 
                   {unmatchedPerformers.length > 0 && (
-                    <Alert tone="error">
-                      <AlertCircle size={16} />
-                      <span>
-                        Seotud isikute registris puuduvad teostajad: {unmatchedPerformers.join(', ')}. Nende tegevused
-                        imporditakse ilma teostajata — lisa isik registrisse ja impordi uuesti, kui soovid seost.
-                      </span>
-                    </Alert>
+                    <>
+                      <CheckboxField
+                        checked={createPerformers}
+                        onCheckedChange={setCreatePerformers}
+                        disabled={isSaving}
+                        label={`Lisa puuduvad teostajad isikute registrisse töötajana (${unmatchedPerformers.length} inimest)`}
+                        hint={unmatchedPerformers.join(', ')}
+                      />
+                      {!createPerformers && (
+                        <p className="text-2xs text-subtle">
+                          Märkimata jättes imporditakse nende tegevused ilma teostajata (nimi läheb töö märkusesse).
+                        </p>
+                      )}
+                    </>
                   )}
 
                   <div className={previewFieldsScrollClass}>

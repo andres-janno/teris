@@ -95,3 +95,32 @@ describe('buildFieldBookImport', () => {
     expect(other.payload.fields).toHaveLength(0);
   });
 });
+
+describe('buildFieldBookImport: puuduvad teostajad', () => {
+  const masterFields = [field(1, '61044415735', '2', 'op-1', [2025])];
+  const run = (createMissingPerformers?: boolean) =>
+    buildFieldBookImport([{ sheetName: '2', sheet: sheet(), error: null }] as FieldBookSheetResult[], {
+      masterFields, parties: PARTIES, seasons: SEASONS, operatorId: 'op-1', createMissingPerformers
+    });
+
+  it('ruut märkimata: teostajata, nimi märkusesse, lippu ei saadeta', () => {
+    const { payload, rows } = run(false);
+    const ops = payload.fields[0].operations;
+    expect(payload.createMissingPerformers).toBeUndefined();
+    expect(ops[1].performerId).toBeNull();
+    expect(ops[1].performerName).toBeUndefined();
+    expect(ops[1].notes).toContain('Teostaja: Tundmatu Isik');
+    expect(rows[0].unmatchedPerformers).toEqual(['Tundmatu Isik']);
+  });
+
+  it('ruut märgitud: lipp ja performerName saadetakse, märkusesse nime ei lisata; leitud isik seotakse', () => {
+    const { payload } = run(true);
+    const ops = payload.fields[0].operations;
+    expect(payload.createMissingPerformers).toBe(true);
+    expect(ops[0].performerId).toBe('p-mari');
+    expect(ops[0].performerName).toBeUndefined();
+    expect(ops[1].performerId).toBeNull();
+    expect(ops[1].performerName).toBe('Tundmatu Isik');
+    expect(ops[1].notes).toBeNull();
+  });
+});

@@ -52,6 +52,7 @@ export interface FieldBookImportOperation {
   areaHa: number | null;
   method: string | null;
   performerId: string | null;
+  performerName?: string; // registris puuduva teostaja nimi — server lisab ta isikuna (createMissingPerformers)
   notes: string | null;
   products: ParsedProduct[];
 }
@@ -69,6 +70,7 @@ export interface FieldBookImportField {
 
 export interface FieldBookImportPayload {
   operatorId: string;
+  createMissingPerformers?: boolean; // lisa registris puuduvad teostajad töötajana (samas tehingus)
   fields: FieldBookImportField[];
 }
 
@@ -80,6 +82,7 @@ export interface FieldBookImportResult {
   linked: number;       // olemasolevad tööd, mis sobisid, aga midagi ei muutunud
   entriesAdded: number; // kanneteta sobinud töödele lisatud kanded
   unknown: number;      // tundmatu tegevusega read — vahele jäetud
+  partiesCreated?: number; // impordiga registrisse lisatud teostajad
   movedToNext: number;  // koristuse järel tehtud sügistööd, mis imporditi järgmise hooaja alla
   skipped: { fieldCode: string; num: string; season: number; reason: string }[];
 }

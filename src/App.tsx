@@ -2040,6 +2040,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
           onImported={() => {
             api.getMasterFields().then(setMasterFields).catch((err) => console.error('Põldude uuendamine ebaõnnestus:', err));
             void refreshSeasons();
+            api.getParties().then(setParties).catch((err) => console.error('Isikute uuendamine ebaõnnestus:', err));
           }}
           masterFields={masterFields}
           parties={parties}

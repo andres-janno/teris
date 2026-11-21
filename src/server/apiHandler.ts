@@ -32,6 +32,7 @@ import { ensurePriaWorkTypes, importFieldSeasonOperations, type PriaWorkTypes } 
 import { splitPostHarvestOperations } from './fieldBookRules.ts';
 import { planYearReplacement } from '../services/fieldYearReplace.ts';
 import { normalizeFieldNum } from '../services/fieldIdentity.ts';
+import { resolveMissingPerformers } from './fieldBookPerformers.ts';
 import { loadCropsForLink, resolveSeasonCrop, relinkSeasonCrops } from './seasonCropLink.ts';
 import { derivePriaCropName } from '../services/priaCropName.ts';
 import { deriveOwnershipType } from '../services/landTenure.ts';
@@ -1790,7 +1791,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
       if (!isAdmin(req)) return json(res, { error: IMPORT_FORBIDDEN }, 403);
       const body = await parseBody(req);
       const operatorId: string | undefined = body?.operatorId;
-      const fieldsIn: any[] = Array.isArray(body?.fields) ? body.fields : [];
+      let fieldsIn: any[] = Array.isArray(body?.fields) ? body.fields : [];
       if (!operatorId) return json(res, { error: 'operatorId on kohustuslik' }, 400);
       const userId = sessionUserOf(req)?.id ?? null;
 
@@ -1798,6 +1799,13 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
         async (tx) => {
           let imported = 0, created = 0, complemented = 0, linked = 0, entriesAdded = 0, unknown = 0, movedToNext = 0;
           let types: PriaWorkTypes | null = null; // PRIA töötüübid laaditakse üks kord impordi kohta
+          // Puuduvad teostajad lisatakse töötajana samas tehingus: viga tühistab kogu impordi
+          let partiesCreated = 0;
+          if (body?.createMissingPerformers === true) {
+            const resolved = await resolveMissingPerformers(tx, fieldsIn);
+            fieldsIn = resolved.fields;
+            partiesCreated = resolved.created;
+          }
           const warehouseId = await getDefaultWarehouseId(tx); // imporditud kanded seotakse põhilaoga
           const skipped: { fieldCode: string; num: string; season: number; reason: string }[] = [];
           const seasonIds = await ensureSeasons(fieldsIn.map((f) => f?.season), tx);
@@ -1866,7 +1874,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
           }
           // Import lisab materjaliga kandeid → laoseis ja FIFO hinnad uuesti
           if (entriesAdded + created > 0) await recomputeAllArticleStock(tx);
-          return { imported, created, complemented, linked, entriesAdded, unknown, movedToNext, skipped };
+          return { imported, created, complemented, linked, entriesAdded, unknown, movedToNext, skipped, partiesCreated };
         },
         { timeout: 120000 }
       );

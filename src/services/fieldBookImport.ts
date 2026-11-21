@@ -2,6 +2,7 @@
 // Põlluraamatu parsitud lehtede sobitamine registriga ja impordi API keha koostamine.
 import type { MasterField } from '../types/fieldRegister';
 import { normalizeFieldNum } from './fieldIdentity';
+import { matchPartyByName } from './partyMatch';
 import type { RelatedParty } from '../types/party';
 import type { FarmingSeason } from '../types/season';
 import type {
@@ -10,27 +11,15 @@ import type {
   FieldBookSheetResult
 } from '../types/fieldOperation';
 
-const normalizeName = (s: string) => s.toLowerCase().replace(/\s+/g, ' ').trim();
-
-// PRIA võib nime anda kujul "Perenimi Eesnimi"; proovime ka pööratud järjekorda.
-export function matchPartyByName(name: string, parties: RelatedParty[]): RelatedParty | null {
-  const n = normalizeName(name);
-  if (!n) return null;
-  const parts = n.split(' ');
-  const candidates = new Set([
-    n,
-    [...parts.slice(1), parts[0]].join(' '),
-    [parts[parts.length - 1], ...parts.slice(0, -1)].join(' ')
-  ]);
-  return parties.find((p) => candidates.has(normalizeName(p.name))) ?? null;
-}
+export { matchPartyByName };
 
 export function buildFieldBookImport(
   results: FieldBookSheetResult[],
-  ctx: { masterFields: MasterField[]; parties: RelatedParty[]; seasons: FarmingSeason[]; operatorId: string }
+  ctx: { masterFields: MasterField[]; parties: RelatedParty[]; seasons: FarmingSeason[]; operatorId: string; createMissingPerformers?: boolean }
 ): { rows: FieldBookPreviewRow[]; payload: FieldBookImportPayload } {
   const rows: FieldBookPreviewRow[] = [];
   const payload: FieldBookImportPayload = { operatorId: ctx.operatorId, fields: [] };
+  if (ctx.createMissingPerformers) payload.createMissingPerformers = true;
 
   for (const result of results) {
     const s = result.sheet;
@@ -54,6 +43,8 @@ export function buildFieldBookImport(
     const operations = s.operations.map((op) => {
       const performer = op.performerName ? matchPartyByName(op.performerName, ctx.parties) : null;
       if (op.performerName && !performer) unmatched.add(op.performerName);
+      // Puuduva teostaja lisamisel loob server isiku nime järgi ja seob töö temaga (märkusesse nime ei lisata)
+      const createPerformer = !!ctx.createMissingPerformers && !!op.performerName && !performer;
       return {
         type: op.type,
         dateFrom: op.dateFrom,
@@ -61,7 +52,8 @@ export function buildFieldBookImport(
         areaHa: op.areaHa,
         method: op.method,
         performerId: performer?.id ?? null,
-        notes: performer || !op.performerName ? op.notes : [op.notes, `Teostaja: ${op.performerName}`].filter(Boolean).join('\n'),
+        ...(createPerformer ? { performerName: op.performerName as string } : {}),
+        notes: performer || !op.performerName || createPerformer ? op.notes : [op.notes, `Teostaja: ${op.performerName}`].filter(Boolean).join('\n'),
         products: op.products
       };
     });
