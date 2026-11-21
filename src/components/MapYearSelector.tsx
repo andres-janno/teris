@@ -6,6 +6,7 @@ import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
 import { Badge, Card, CardButton, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey, cn } from './ui';
 import { collapsedPanelButtonClass, mapPanelTitleClass } from './ui/variants';
+import { usePanelOpen } from '../lib/mapPrefs';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -39,7 +40,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
   onSelectCropFilter,
   seasons = []
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = usePanelOpen('year');
   const [isLegendOpen, setIsLegendOpen] = useState(true);
 
   // Calculate crop breakdown with sum ha and counts

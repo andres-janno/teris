@@ -1,5 +1,5 @@
 import { LAYER_SWATCH, UNDETERMINED_CROP_COLOR } from '../lib/dataColors';
-import React, { useState } from 'react';
+import React from 'react';
 import {
   Layers,
   Map as MapIcon,
@@ -18,6 +18,7 @@ import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { Button, Card, CardButton, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
 import { collapsedPanelButtonClass, loadingSpinnerInlineClass, mapPanelTitleClass } from './ui/variants';
+import { usePanelOpen } from '../lib/mapPrefs';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -104,7 +105,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
   onToggleTrackVisibility,
   modules = { telemetry: true, satellite: true, weather: true }
 }) => {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = usePanelOpen('layers');
 
   const isAgeMetric = soilMetric === 'age';
 

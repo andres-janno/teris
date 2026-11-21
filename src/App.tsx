@@ -15,6 +15,7 @@ import type { AuthUser } from './types/auth';
 import type { LayerVisibility, BaseMapLayerId } from './types/map';
 import type { SatelliteProductId } from './services/satelliteLayer';
 import { BASE_MAPS } from './services/maaAmetLayers';
+import { applyModuleLimits, readStorage, restoreLayerVisibility, restoreSoilMetric, writeStorage, SOIL_METRIC_KEY, VISIBILITY_KEY } from './lib/mapPrefs';
 import type { FieldCollection, FieldFeature } from './types/field';
 import type { MasterField, FieldYearlyRecord } from './types/fieldRegister';
 import { generateFieldCollectionForYear } from './types/fieldRegister';
@@ -25,7 +26,7 @@ import type { FarmingSeason } from './types/season';
 import type { RelatedParty } from './types/party';
 import type { FieldWork, WorkEntry, WorkType, Article } from './types/fieldWork';
 import type { Crop } from './types/crop';
-import type { SoilSample, SoilSampleMetricKey } from './types/soilSample';
+import { SOIL_METRIC_CONFIG, type SoilSample, type SoilSampleMetricKey } from './types/soilSample';
 
 import { enrichVehicles } from './services/fleet';
 import { hasModule } from './services/license';
@@ -168,8 +169,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     }
   }, []);
 
-  // Kihtide nähtavus. Lehe avamisel on alati sees ainult Põllud (kaart mahutatakse neile);
-  // brauseri mälust taastatakse aluskaardi valik ning põllu- ja massiivinumbrite valik.
+  // Kihtide nähtavus. Vaikimisi on sees ainult Põllud (kaart mahutatakse neile); brauseri mälust taastatakse
+  // kõik kihtide lülitid ja aluskaardi valik (restoreLayerVisibility). Satelliidi kuupäeva ei salvestata.
   const DEFAULT_VISIBILITY: LayerVisibility = {
     baseMap: 'maaamet-pohikaart',
     cadastre: false,
@@ -184,23 +185,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     weatherRadar: false,
     satellite: false
   };
-  const [rawVisibility, setVisibility] = useState<LayerVisibility>(() => {
-    const saved = localStorage.getItem('agrimap_visibility');
-    if (!saved) return DEFAULT_VISIBILITY;
-    try {
-      const parsed = JSON.parse(saved) as Partial<LayerVisibility>;
-      const savedBaseMap = parsed.baseMap;
-      return {
-        ...DEFAULT_VISIBILITY,
-        // Varem salvestatud, nüüdseks eemaldatud aluskaart (hübriid, hallkaart, OSM) → põhikaart.
-        baseMap: savedBaseMap && savedBaseMap in BASE_MAPS ? savedBaseMap : DEFAULT_VISIBILITY.baseMap,
-        fieldLabels: parsed.fieldLabels === true,
-        blockLabels: parsed.blockLabels === true
-      };
-    } catch {
-      return DEFAULT_VISIBILITY;
-    }
-  });
+  const [rawVisibility, setVisibility] = useState<LayerVisibility>(() =>
+    restoreLayerVisibility(readStorage(VISIBILITY_KEY), DEFAULT_VISIBILITY, Object.keys(BASE_MAPS))
+  );
 
   // Asukoha valimisel kaardilt on näha ainult kiht „Muud asukohad“; eelmine kihtide valik
   // hoitakse siin ja taastatakse, kui valik on tehtud või katkestatud.
@@ -208,7 +195,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   useEffect(() => {
     if (visibilityBeforePickRef.current) return; // ajutist valikut ei salvestata
-    localStorage.setItem('agrimap_visibility', JSON.stringify(rawVisibility));
+    writeStorage(VISIBILITY_KEY, JSON.stringify(rawVisibility));
   }, [rawVisibility]);
 
   // Litsentsita moodulite kihid on kaardil ja mujal alati väljas (kasutaja valik jääb salvestatud kujul alles)
@@ -217,13 +204,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     satellite: hasModule(user, 'SATELLITE'),
     weather: hasModule(user, 'WEATHER')
   }), [user]);
-  const visibility = useMemo<LayerVisibility>(() => ({
-    ...rawVisibility,
-    vehicles: rawVisibility.vehicles && modules.telemetry,
-    cultivation: rawVisibility.cultivation && modules.telemetry,
-    satellite: rawVisibility.satellite && modules.satellite,
-    weatherRadar: rawVisibility.weatherRadar && modules.weather
-  }), [rawVisibility, modules]);
+  const visibility = useMemo<LayerVisibility>(() => applyModuleLimits(rawVisibility, modules), [rawVisibility, modules]);
 
   // Masinapargi kuvamise filter: 'active' (ainult töötavad < 5 min) või 'all' (kõik masinad)
 
@@ -372,7 +353,10 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
 
   // Mullaproovid (soil samples)
   const [soilSamples, setSoilSamples] = useState<SoilSample[]>([]);
-  const [soilMetric, setSoilMetric] = useState<SoilSampleMetricKey>('ph');
+  const [soilMetric, setSoilMetric] = useState<SoilSampleMetricKey>(() =>
+    restoreSoilMetric(readStorage(SOIL_METRIC_KEY), Object.keys(SOIL_METRIC_CONFIG), 'ph')
+  );
+  useEffect(() => { writeStorage(SOIL_METRIC_KEY, soilMetric); }, [soilMetric]);
   // Satelliidipilt (Satiladu): toode ja kuupäev; kuupäeva järgi arvutatakse ka põllu aknas NDVI
   const [satelliteProduct, setSatelliteProduct] = useState<SatelliteProductId>('rgb');
   const [satelliteDate, setSatelliteDate] = useState<string | null>(null);
