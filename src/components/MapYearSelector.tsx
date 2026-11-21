@@ -5,7 +5,7 @@ import type { FarmingSeason } from '../types/season';
 import { DEFAULT_FIELD_COLOR } from '../lib/dataColors';
 import { getCropColor } from '../services/cropColors';
 import { Badge, Card, CardButton, Button, ChipButton, ToggleGroup, ToggleGroupItem, clickOnActivationKey, cn } from './ui';
-import { mapPanelTitleClass } from './ui/variants';
+import { collapsedPanelButtonClass, mapPanelTitleClass } from './ui/variants';
 
 interface MapYearSelectorProps {
   selectedYear: number;
@@ -86,7 +86,7 @@ export const MapYearSelector: React.FC<MapYearSelectorProps> = ({
       <CardButton
         variant="floating"
         padding="none"
-        className="flex size-10 shrink-0 items-center justify-center self-start text-foreground transition-all duration-150 hover:text-primary"
+        className={collapsedPanelButtonClass}
         onClick={() => setIsOpen(true)}
         title={`Hooaeg: ${selectedYear} (ava hooaja paneel)`}
         aria-label={`Hooaeg: ${selectedYear} (ava hooaja paneel)`}

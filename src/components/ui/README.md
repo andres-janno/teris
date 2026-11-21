@@ -180,6 +180,8 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 | `belowHeaderHeightClass` | akna kõrgus miinus päis (64px = Header `h-16`); `boardViewClass` ja kaardi konteiner | `h-[calc(100vh-64px)]` |
 | `headerTriggerClass`, `headerNarrowHiddenClass`, `headerChevronClass` | päise menüünupud (operaator, kasutaja), kitsal ekraanil ainult ikoon | (4f uus) |
 | `dialogHeaderControlsClass`, `dialogActionsBarClass` | dialoogi päise juhtnupud ja tegevusriba | (4f uus) |
+| `TerisLogo variant="responsive"` | ikoon alla 1280px, täislogo alates 1280px (Tailwindi vaike `xl:`; päise nimede piir on `max-[1656px]`, need on eri piirid) | (4g: kasutaja logo) |
+| `collapsedPanelButtonClass` | kaardi ujuvpaneeli (kaardikihid, hooaja paneel) ahendatud 40px ikoonnupp; asukoha annab pakk (`items-start`/`items-end`) | (4g: kasutaja ahendatavad paneelid) |
 | `dropzoneStateClass`, `dropzoneIconClass`, `fileReuploadHintClass`, `uploadFormatListClass` | üleslaadimise modaali kasti sisu | `dropzone-*`, `file-reupload-hint` |
 | `previewBoxClass`, `previewHeaderClass`, `previewFieldsScrollClass`, `previewFieldRowClass`, `previewFieldClass`, `previewCropClass`, `previewValueClass` | üleslaadimise eelvaade | `preview-*`, `parsed-preview-box` |
 | `overuseClass`, `cellBadgeClass`, `cellBadgeLeadClass`, `stockDocUnitClass`, `stockDocQtyClass`, `stockDocAmountClass`, `stockDocFooterRowClass` | laotabeli ja laokande read | `article-overuse`, `cell-badge*`, `stock-doc-*` |
@@ -188,6 +190,8 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 | `detailSectionClass`, `notesTextClass` | Ilma/Mulla lõigud | `detail-section`, `notes-text` |
 | `stockQtyClass({ sign })` | laokoguse märk ja värv | `stock-qty(-in/-out)` |
 | `adminUi.ts` (ainult admin) | admin kaardid, vormid, vihjed | `admin-*` |
+
+`xl:` (1280px) on ainus murdepunkt, mis ei ole tuletatud vanast `max-width` päringust (`max-[N+1px]`).
 
 Kustutatud klasside valvur: `RETIRED_4F` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
 

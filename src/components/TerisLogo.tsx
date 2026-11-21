@@ -16,7 +16,6 @@ const logoVariants = cva('inline-flex text-primary [&_svg]:block', {
       horizontal: '[&_svg]:h-10 [&_svg]:w-auto [&_svg]:max-w-41.25',
       vertical: '[&_svg]:size-35',
       icon: '[&_svg]:size-9',
-      responsive: '[&_svg]:h-10 [&_svg]:w-auto',
     },
   },
 });
@@ -24,19 +23,11 @@ const logoVariants = cva('inline-flex text-primary [&_svg]:block', {
 export interface TerisLogoProps {
   variant?: 'horizontal' | 'vertical' | 'icon' | 'responsive';
   monochrome?: boolean;
-  responsive?: boolean;
   className?: string;
 }
 
-export const TerisLogo: React.FC<TerisLogoProps> = ({
-  variant = 'horizontal',
-  monochrome = false,
-  responsive = false,
-  className
-}) => {
-  const isResponsive = responsive || variant === 'responsive';
-
-  if (isResponsive) {
+export const TerisLogo: React.FC<TerisLogoProps> = ({ variant = 'horizontal', monochrome = false, className }) => {
+  if (variant === 'responsive') {
     const iconSvg = monochrome ? iconMonoSvg : iconColorSvg;
     const horizontalSvg = monochrome ? horizontalMonoSvg : horizontalColorSvg;
 

@@ -58,6 +58,7 @@ const allClassStrings = (): string[] => [
   v.detailSectionClass, v.notesTextClass,
   v.stockQtyClass({ sign: 'in' }), v.stockQtyClass({ sign: 'out' }), v.stockQtyClass({}), v.overuseClass, v.cellBadgeClass, v.cellBadgeLeadClass,
   v.stockDocUnitClass, v.stockDocQtyClass, v.stockDocAmountClass, v.stockDocFooterRowClass,
+  v.collapsedPanelButtonClass,
   v.belowHeaderHeightClass, v.loginPageClass, v.loginColumnClass, v.loginCardClass, v.loginLogoClass, v.loginPrimaryButtonClass, v.loginCopyrightClass, v.loginNoticeClass,
 ];
 
@@ -851,5 +852,14 @@ describe('stockQtyClass', () => {
     expect(v.stockQtyClass({ sign: 'in' })).toContain('text-primary');
     expect(v.stockQtyClass({ sign: 'out' })).toContain('text-danger-solid');
     expect(v.stockQtyClass({})).not.toContain('text-primary');
+  });
+});
+
+describe('collapsedPanelButtonClass (kaardi paneeli ahendatud nupp)', () => {
+  it('40px ruut, tsentreeritud ikoon, ei sisalda self-* (paigutuse annab pakk)', () => {
+    expect(v.collapsedPanelButtonClass).toContain('size-10');
+    expect(v.collapsedPanelButtonClass).toContain('items-center justify-center');
+    expect(v.collapsedPanelButtonClass).not.toMatch(/(?:^|\s)self-/);
+    expect(v.collapsedPanelButtonClass).toContain('hover:text-primary');
   });
 });

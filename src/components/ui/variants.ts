@@ -588,3 +588,6 @@ export const loginLogoClass = 'mb-1.5 flex justify-center';
 export const loginPrimaryButtonClass = 'login-primary-btn w-full';
 export const loginCopyrightClass = 'login-copyright mt-4 text-xs leading-natural';
 export const loginNoticeClass = 'login-notice flex items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm leading-natural';
+
+/** Kaardi ujuva paneeli ahendatud olek (LayerControl, MapYearSelector): 40px ikoonnupp; asukoha annab pakk (items-start/items-end). */
+export const collapsedPanelButtonClass = 'flex size-10 shrink-0 items-center justify-center text-foreground transition-all duration-150 hover:text-primary';

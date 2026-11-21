@@ -17,7 +17,7 @@ import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { Button, Card, CardButton, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
-import { loadingSpinnerInlineClass, mapPanelTitleClass } from './ui/variants';
+import { collapsedPanelButtonClass, loadingSpinnerInlineClass, mapPanelTitleClass } from './ui/variants';
 
 interface LayerControlProps {
   visibility: LayerVisibility;
@@ -134,7 +134,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
       <CardButton
         variant="floating"
         padding="none"
-        className="flex size-10 shrink-0 items-center justify-center self-end text-foreground transition-all duration-150 hover:text-primary"
+        className={collapsedPanelButtonClass}
         onClick={() => setIsOpen(true)}
         title="Ava kaardikihid"
         aria-label="Ava kaardikihid"
