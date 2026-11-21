@@ -1,4 +1,4 @@
-// src/tooling/contrast.ts — WCAG 2.x kontrastsuhe teema tokenitest. Allikad: index.css heleda/tumeda teema
+// src/tooling/contrast.ts — WCAG 2.x kontrastsuhe teema tokenitest. Allikad: styles/themes.css heleda/tumeda teema
 // :root plokid ja app.css `@theme inline` värvinimed (kasutaja otsus 2026-11-16: tekst ≥ 4.5:1 mõlemas teemas).
 export interface Rgba { r: number; g: number; b: number; a: number }
 

@@ -17,8 +17,9 @@ def classes(text):
 
 def legacy():
     out = set()
-    for p in ('src/index.css', 'src/styles/map.css', 'src/admin/admin.css'):
-        out |= classes(open(p).read())
+    for p in ['src/index.css', 'src/admin/admin.css'] + glob.glob('src/styles/*.css'):
+        if os.path.exists(p):
+            out |= classes(open(p).read())
     return out
 
 cmd = sys.argv[1]

@@ -1,8 +1,13 @@
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { contrastRatio, over, parseColor, resolveColor, themeColors, themeVars, tint, type Rgba } from './contrast';
 
-const indexCss = readFileSync(new URL('../index.css', import.meta.url), 'utf8');
+const themesCss = readFileSync(new URL('../styles/themes.css', import.meta.url), 'utf8');
+// CSS-erandite valvurid: kõik src/styles/*.css (v.a app.css ja themes.css) + index.css
+const styleCss = readdirSync(new URL('../styles/', import.meta.url))
+  .filter((f) => f.endsWith('.css') && f !== 'app.css' && f !== 'themes.css')
+  .map((f) => readFileSync(new URL(`../styles/${f}`, import.meta.url), 'utf8'))
+  .join('\n') + readFileSync(new URL('../index.css', import.meta.url), 'utf8'); // T5: index.css kustub
 const appCss = readFileSync(new URL('../styles/app.css', import.meta.url), 'utf8');
 const names = themeColors(appCss);
 const AA = 4.5;
@@ -29,7 +34,7 @@ describe('kontrasti abifunktsioonid', () => {
 
 for (const theme of ['light', 'dark'] as const) {
   describe(`kontrast ${theme}`, () => {
-    const vars = themeVars(indexCss, theme);
+    const vars = themeVars(themesCss, theme);
     const color = (name: string): Rgba => resolveColor(names[name] ?? name, vars);
     const card = color('card');
     const popover = color('popover');
@@ -68,15 +73,15 @@ for (const theme of ['light', 'dark'] as const) {
   });
 }
 
-describe('legacy CSS', () => {
-  it('index.css-is pole #16a34a tekstivärvi ega tahket tausta (valge tekst 3.30:1) — kasuta tokenit või primaargradienti', () => {
-    expect(indexCss.match(/^\s*(?:color|background(?:-color)?):\s*#16a34a[^;]*;/gim) ?? []).toEqual([]);
+describe('CSS-erandid', () => {
+  it('CSS-erandites pole #16a34a tekstivärvi ega tahket tausta (valge tekst 3.30:1) — kasuta tokenit või primaargradienti', () => {
+    expect(styleCss.match(/^\s*(?:color|background(?:-color)?):\s*#16a34a[^;]*;/gim) ?? []).toEqual([]);
   });
   it('valge tekst ei seisa heleda rohelise (#22c55e) taustal', () => {
-    const bad = [...indexCss.matchAll(/\{([^{}]*)\}/g)].filter(([, b]) => /background(?:-color)?:\s*#22c55e/i.test(b) && /(?<![\w-])color:\s*(#fff(?:fff)?|white)\b/i.test(b));
+    const bad = [...styleCss.matchAll(/\{([^{}]*)\}/g)].filter(([, b]) => /background(?:-color)?:\s*#22c55e/i.test(b) && /(?<![\w-])color:\s*(#fff(?:fff)?|white)\b/i.test(b));
     expect(bad.length).toBe(0);
   });
-  it('index.css ei kasuta --emerald-600 tekstivärvina (tumedas 3.56:1) — kasuta --tone-success-text', () => {
-    expect(indexCss.match(/(?<![\w-])color:\s*var\(--emerald-600\)/g) ?? []).toEqual([]);
+  it('CSS-erandid ei kasuta --emerald-600 tekstivärvina (tumedas 3.56:1) — kasuta --tone-success-text', () => {
+    expect(styleCss.match(/(?<![\w-])color:\s*var\(--emerald-600\)/g) ?? []).toEqual([]);
   });
 });

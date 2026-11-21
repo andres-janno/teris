@@ -1,0 +1,133 @@
+/* src/styles/themes.css — teemamuutujate ÜKS allikas: hele (`:root`, vaikimisi) ja tume (`[data-theme="dark"]`) teema.
+   Imporditakse app.css-is kihis `theme`. Tailwindi värvinimed (`bg-card`, `text-muted-foreground` …) on app.css
+   `@theme inline`-is ja viitavad siia, seega teema vahetub ainult siin. Otse (`var(--…)`) loevad muutujaid veel:
+   Leafleti hüpikud ja vihjed ning kaardi märgised (map.css: --bg-modal, --border-card, --text-*, --tone-*, --emerald-*,
+   --amber-400, --shadow-modal, --btn-sec-*); sisselogimise palett (login.css kasutab ainult --text-* ja nurgaraadiuste muutujaid);
+   andmevärvid (src/lib/dataColors.ts: --amber-400, --emerald-400); ChipButton accent-stringid (--emerald-500, --blue-500);
+   FieldWorksBoard style-string (--bg-surface); tehnika värvid (--fresh-*, --trip-*; tsx style); Külvikord ja kiip
+   (--crop-tint*, --selection-bg*). Ära nimeta ümber ega kustuta ilma `grep -rn` kontrollita.
+   Nurgaraadiused (radius-sm/md/lg) on app.css `@theme`-s, siin neid ei dubleerita. */
+
+/* Default Light Theme */
+:root,
+:root[data-theme="light"] {
+  --bg-dark: #f8fafc;
+  /* Kaardi tahke taust (etapp 2.7, kasutaja otsus: ilma klaasita). Tailwindi bg-card loeb seda. */
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f1f5f9;
+  --bg-modal: #ffffff;
+  --stat-bg: rgba(15, 23, 42, 0.04);
+  --stat-bg-hover: rgba(15, 23, 42, 0.08);
+  --border-card: rgba(15, 23, 42, 0.12);
+
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #64748b;            /* oli #94a3b8 (2.56:1) → 4.76:1 kaardil, 4.55:1 väljal */
+
+  --emerald-600: #15803d;
+  --emerald-500: #16a34a;           /* heledam roheline tagasi (kasutaja otsus 2026-11-17: tumeroheline asendada Kaart-nupu rohelisega) */
+  --selection-bg: #16a34a;          /* valitud olek (peamenüü sakk, valitud aasta, märkeruut) — kasutaja otsus 2026-11-16: heledam roheline jääb, kontrastist hoolimata */
+  --selection-bg-hover: #15803d;
+  --emerald-400: #22c55e;
+  --blue-500: #2563eb;
+  --amber-500: #b45309;             /* oli #d97706 (3.19:1) → 5.02:1 */
+  --amber-400: #f59e0b;
+  --purple-500: #9333ea;
+  --rose-500: #e11d48;
+
+  /* Toonitekst (soft märk, olekutekst kaardil) ja täisvärvid valge tekstiga — kõik ≥ 4.5:1 (contrast.test.ts) */
+  --tone-success-text: #166534;
+  --tone-info-text: #1d4ed8;
+  --tone-sky-text: #0369a1;
+  --tone-warning-text: #92400e;
+  --tone-danger-text: #be123c;
+  --tone-accent-text: #7e22ce;
+  --tone-info-solid: #2563eb;
+  --tone-accent-solid: #9333ea;
+  --on-warning: #ffffff;            /* hoiatusmärgi tekst täisvärvil */
+
+  --shadow-glass: 0 10px 30px -5px rgba(0, 0, 0, 0.10), 0 0 0 1px rgba(0, 0, 0, 0.04);
+  --shadow-modal: 0 20px 45px -10px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.06);
+
+  --btn-sec-bg: rgba(15, 23, 42, 0.05);
+  --btn-sec-border: rgba(15, 23, 42, 0.14);
+  --btn-sec-hover: rgba(15, 23, 42, 0.10);
+
+  /* Kaardi hüpikud/vihjed = menüü värvid; muutujad viitavad teemapõhistele, seega kehtib mõlemas teemas */
+  --popup-bg: var(--bg-modal);
+  --popup-border: var(--border-card);
+  --popup-text: var(--text-primary);
+
+  --input-bg: #f8fafc;
+  --input-border: rgba(15, 23, 42, 0.18);
+
+  /* Seadmete värskuse värv (viimaste andmete vanus) ja sõidu ajaosade värvid */
+  --fresh-live: #1baf7a;
+  --fresh-day: #2a78d6;
+  --fresh-week: #e0a100;
+  --fresh-old: #d64545;
+  --fresh-none: #94a3b8;
+  --trip-moving: #2a78d6;
+  --trip-idle: #eb6834;
+  --trip-pause: #1baf7a;
+
+  /* Kultuuri värvi toon põldude registri lahtrites, jaluses ja kiibis */
+  --crop-tint: 18%;
+  --crop-tint-hover: 26%;
+}
+
+/* Dark Theme */
+:root[data-theme="dark"] {
+  --bg-dark: #090d16;
+  --bg-surface: #0f172a;
+  --bg-surface-hover: #1e293b;
+  --bg-modal: #0f172a;
+  --stat-bg: rgba(255, 255, 255, 0.04);
+  --stat-bg-hover: rgba(255, 255, 255, 0.08);
+  --border-card: rgba(255, 255, 255, 0.08);
+
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --text-muted: #8796ab;            /* oli #64748b (3.75:1) → 5.95:1 kaardil, 5.09:1 väljal */
+
+  --emerald-600: #15803d;
+  --emerald-500: #22c55e;
+  --emerald-400: #4ade80;
+  --blue-500: #3b82f6;
+  --amber-500: #f59e0b;
+  --amber-400: #fbbf24;
+  --purple-500: #a855f7;
+  --rose-500: #f43f5e;
+
+  --tone-success-text: #22c55e;
+  --tone-info-text: #60a5fa;
+  --tone-sky-text: #38bdf8;
+  --tone-warning-text: #f59e0b;
+  --tone-danger-text: #fb7185;
+  --tone-accent-text: #c084fc;
+  --tone-info-solid: #2563eb;       /* #3b82f6 valgega 3.68:1 */
+  --tone-accent-solid: #9333ea;     /* #a855f7 valgega 3.96:1 */
+  --on-warning: #0f172a;            /* kollane märk tumeda tekstiga (kasutaja otsus) */
+
+  --shadow-glass: 0 8px 32px 0 rgba(0, 0, 0, 0.45);
+  --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+
+  --btn-sec-bg: rgba(255, 255, 255, 0.07);
+  --btn-sec-border: rgba(255, 255, 255, 0.12);
+  --btn-sec-hover: rgba(255, 255, 255, 0.14);
+
+  --input-bg: rgba(255, 255, 255, 0.06);
+  --input-border: rgba(255, 255, 255, 0.12);
+
+  --fresh-live: #199e70;
+  --fresh-day: #3987e5;
+  --fresh-week: #d9a21c;
+  --fresh-old: #e05a5a;
+  --fresh-none: #64748b;
+  --trip-moving: #3987e5;
+  --trip-idle: #d95926;
+  --trip-pause: #199e70;
+
+  --crop-tint: 28%;
+  --crop-tint-hover: 36%;
+}

@@ -9,6 +9,7 @@
 @layer theme, base, legacy, vendor, components, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
+@import './themes.css' layer(theme);
 @import '../index.css' layer(legacy);
 @import './map.css' layer(legacy);
 @import 'leaflet/dist/leaflet.css' layer(vendor);

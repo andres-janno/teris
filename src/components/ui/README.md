@@ -203,11 +203,11 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 `text-secondary` utiliite. Tailwindi `text-muted` on taust (`--stat-bg`), mitte hall tekst. Hall abitekst on
 `text-muted-foreground` või `text-subtle`.
 
-| Vana muutuja (index.css) | Tailwindi nimi | Kasutus |
+| Muutuja (`src/styles/themes.css`) | Tailwindi nimi | Kasutus |
 | --- | --- | --- |
 | `--bg-dark` | `bg-background` | lehe taust |
 | `--text-primary` | `text-foreground` | põhitekst |
-| `--bg-surface` | `bg-card` | kaart (tahke; vana `--bg-card` on läbipaistev ja ainult legacy jaoks) |
+| `--bg-surface` | `bg-card` | kaart (tahke; `--bg-card` kustus 4g-s) |
 | `--bg-surface-hover` | `bg-card-hover` | kaardi hover (tahke) |
 | `--bg-modal` | `bg-popover` | dialoog, menüü, hüpik |
 | `--stat-bg` | `bg-muted` | vaikne taust, tabeli hover |
@@ -231,6 +231,8 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 | `--on-warning` | `text-on-warning` | hoiatuse solid märgi tekst (heledas valge, tumedas tume) |
 | `--shadow-glass` | `shadow-card` | kaardi vari |
 | `--shadow-modal` | `shadow-dialog` | dialoogi vari |
+
+Muutujaid, mida loevad Leaflet, login, `dataColors.ts` ja tsx style-stringid, ei nimetata ümber; nimekiri on `themes.css` päises.
 
 Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` = `#166534` / `#15803d` (põhinupu gradient),
 `overlay` (dialoogi taust).
