@@ -1,5 +1,5 @@
 // Põllu kaardi NDVI plokk: olekud (laadimine, tulemus, viga, pilve all), tühistamine ja peidetud olek
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { createElement } from 'react';
 import { renderToStaticMarkup } from 'react-dom/server';
 import type { Polygon } from 'geojson';
@@ -9,7 +9,7 @@ vi.mock('../services/fieldNdvi', () => ({ computeFieldNdvi: vi.fn() }));
 
 import { computeFieldNdvi } from '../services/fieldNdvi';
 import { FieldNdviBlock, NdviBlockView } from './FieldNdviBlock';
-import { startNdviLoad, coverageNote, type NdviBlockState } from './fieldNdviState';
+import { startNdviLoad, coverageNote, ndviStateFor, scheduleNdviLoad, NDVI_DEBOUNCE_MS, type NdviBlockState } from './fieldNdviState';
 
 const geometry: Polygon = { type: 'Polygon', coordinates: [[[24, 58], [24.01, 58], [24.01, 58.01], [24, 58]]] };
 const summary: NdviSummary = { mean: 0.456, classShares: [0.1, 0.3, 0.6], coverage: 1, cloudShare: 0 };
@@ -25,6 +25,7 @@ describe('NdviBlockView', () => {
     expect(out).toContain('NDVI');
     expect(out).toContain('15.08.2026');
     expect(out).toContain('Arvutan satelliidipildist');
+    expect(out).toContain('role="status"');
   });
 
   it('tulemus: keskmine kahe komakohaga eesti komaga, klassid ja protsendid', () => {
@@ -116,6 +117,72 @@ describe('startNdviLoad', () => {
     cancel();
     rejectOld(new Error('x'));
     await flush();
+    expect(states.map((s) => s.status)).toEqual(['loading']);
+  });
+});
+
+describe('ndviStateFor (vana päeva tulemus ei jää näitama)', () => {
+  it('sama päev → salvestatud olek', () => {
+    const ready: NdviBlockState = { status: 'ready', summary };
+    expect(ndviStateFor({ date: '2026-08-15', state: ready }, '2026-08-15')).toEqual(ready);
+  });
+
+  it('kuupäev on muutunud → laadimine, ka kui eelmise päeva tulemus on olemas', () => {
+    expect(ndviStateFor({ date: '2026-08-15', state: { status: 'ready', summary } }, '2026-08-20')).toEqual({ status: 'loading' });
+  });
+
+  it('pole veel ühtegi tulemust → laadimine', () => {
+    expect(ndviStateFor(null, '2026-08-20')).toEqual({ status: 'loading' });
+  });
+});
+
+describe('scheduleNdviLoad (viivitus, fake timers)', () => {
+  beforeEach(() => { vi.useFakeTimers(); });
+  afterEach(() => { vi.useRealTimers(); });
+
+  it('ei käivita arvutust enne viivitust, käivitab pärast seda', async () => {
+    mocked.mockResolvedValue(summary);
+    const states: NdviBlockState[] = [];
+    scheduleNdviLoad(geometry, '2026-08-15', (s) => states.push(s));
+    await vi.advanceTimersByTimeAsync(NDVI_DEBOUNCE_MS - 1);
+    expect(mocked).not.toHaveBeenCalled();
+    await vi.advanceTimersByTimeAsync(1);
+    expect(mocked).toHaveBeenCalledTimes(1);
+    expect(states.map((s) => s.status)).toEqual(['loading', 'ready']);
+  });
+
+  it('kiiresti vahetatud päevadest arvutatakse ainult viimane päev', async () => {
+    mocked.mockResolvedValue(summary);
+    const cancelFirst = scheduleNdviLoad(geometry, '2026-08-15', () => {});
+    await vi.advanceTimersByTimeAsync(200);
+    cancelFirst();
+    const cancelSecond = scheduleNdviLoad(geometry, '2026-08-16', () => {});
+    await vi.advanceTimersByTimeAsync(200);
+    cancelSecond();
+    scheduleNdviLoad(geometry, '2026-08-17', () => {});
+    await vi.advanceTimersByTimeAsync(NDVI_DEBOUNCE_MS);
+    expect(mocked.mock.calls.map((c) => c[1])).toEqual(['2026-08-17']);
+  });
+
+  it('tühistamine enne viivituse lõppu → ei arvutata ega näidata midagi', async () => {
+    const states: NdviBlockState[] = [];
+    const cancel = scheduleNdviLoad(geometry, '2026-08-15', (s) => states.push(s));
+    cancel();
+    await vi.advanceTimersByTimeAsync(NDVI_DEBOUNCE_MS * 2);
+    expect(mocked).not.toHaveBeenCalled();
+    expect(states).toEqual([]);
+  });
+
+  it('tühistamine pärast käivitust katkestab pooleli arvutuse tulemuse', async () => {
+    let resolveOld!: (v: NdviSummary | null) => void;
+    mocked.mockReturnValueOnce(new Promise<NdviSummary | null>((r) => { resolveOld = r; }));
+    const states: NdviBlockState[] = [];
+    const cancel = scheduleNdviLoad(geometry, '2026-08-15', (s) => states.push(s));
+    await vi.advanceTimersByTimeAsync(NDVI_DEBOUNCE_MS);
+    expect(mocked).toHaveBeenCalledTimes(1);
+    cancel();
+    resolveOld(summary);
+    await vi.advanceTimersByTimeAsync(0);
     expect(states.map((s) => s.status)).toEqual(['loading']);
   });
 });

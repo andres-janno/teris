@@ -40,3 +40,32 @@ export function startNdviLoad(geometry: Polygon | MultiPolygon, date: string, on
     .catch(() => { if (!cancelled) onState({ status: 'error' }); });
   return () => { cancelled = true; };
 }
+
+/** Viivitus enne arvutust: satelliidipaneeli esitusrežiim vahetab päevi kiiresti, iga päeva arvutust ei taheta. */
+export const NDVI_DEBOUNCE_MS = 400;
+
+/** Tulemus koos päevaga, millele see kuulub. */
+export type NdviEntry = { date: string; state: NdviBlockState };
+
+/** Näidatav olek valitud päevale: teisele päevale kuuluv tulemus on selle päeva jaoks laadimine. */
+export function ndviStateFor(entry: NdviEntry | null, date: string): NdviBlockState {
+  return entry && entry.date === date ? entry.state : { status: 'loading' };
+}
+
+/**
+ * Käivitab arvutuse pärast viivitust. Tühistaja katkestab nii ootava taimeri kui pooleli arvutuse,
+ * nii et kiiresti vahetatud päevade vahelt arvutatakse ainult viimane, kui päev püsib.
+ */
+export function scheduleNdviLoad(
+  geometry: Polygon | MultiPolygon,
+  date: string,
+  onState: (state: NdviBlockState) => void,
+  delayMs: number = NDVI_DEBOUNCE_MS
+): () => void {
+  let stopLoad: (() => void) | null = null;
+  const timer = setTimeout(() => { stopLoad = startNdviLoad(geometry, date, onState); }, delayMs);
+  return () => {
+    clearTimeout(timer);
+    stopLoad?.();
+  };
+}

@@ -9,14 +9,14 @@ import { formatDate } from '../services/dateFormat';
 import { formatQty } from '../services/units';
 import { LegendItem, SectionTitle } from './ui';
 import { loadingSpinnerClass } from './ui/variants';
-import { NDVI_TEXT, coverageNote, formatPercent, startNdviLoad, type NdviBlockState } from './fieldNdviState';
+import { NDVI_TEXT, coverageNote, formatPercent, ndviStateFor, scheduleNdviLoad, type NdviBlockState, type NdviEntry } from './fieldNdviState';
 
 /** Plokk ilma arvutuseta (olek tuleb väljastpoolt) — eraldi, et olekuid saaks serveri-renderdusega testida. */
 export const NdviBlockView: React.FC<{ date: string; state: NdviBlockState }> = ({ date, state }) => (
   <div className="flex flex-col gap-1.5 border-t border-border pt-2" data-testid="field-ndvi">
     <div className="flex items-center gap-1.5">
       <SectionTitle className="mb-0">{NDVI_TEXT.title}</SectionTitle>
-      {state.status === 'loading' && <Loader2 size={12} className={loadingSpinnerClass} aria-label={NDVI_TEXT.loading} />}
+      {state.status === 'loading' && <Loader2 size={12} className={loadingSpinnerClass} role="status" aria-label={NDVI_TEXT.loading} />}
       <span className="ml-auto text-sm tabular-nums text-muted-foreground">{formatDate(date)}</span>
     </div>
     {state.status === 'error' && <p className="m-0 text-sm text-destructive" role="alert">{NDVI_TEXT.error}</p>}
@@ -54,7 +54,8 @@ const NdviResult: React.FC<{ summary: NdviSummary }> = ({ summary }) => {
 
 /** Põllu kaardi NDVI plokk: `date` on valitud satelliidipäev (ISO); puudub → plokki ei ole. Kutsuja annab `key`-ks põllu id. */
 export const FieldNdviBlock: React.FC<{ geometry: Polygon | MultiPolygon; date: string | null }> = ({ geometry, date }) => {
-  const [state, setState] = useState<NdviBlockState>({ status: 'loading' });
+  // Tulemus hoitakse koos päevaga: päeva vahetusel näidatakse laadimist kohe, mitte eelmise päeva tulemust
+  const [entry, setEntry] = useState<NdviEntry | null>(null);
   // Geomeetria objekt vahetub andmete uuendamisel ka siis, kui põld on sama; arvutust käivitab ainult päeva vahetus
   // (teise põllu korral ehitatakse plokk `key` järgi uuesti)
   const geometryRef = useRef(geometry);
@@ -62,9 +63,9 @@ export const FieldNdviBlock: React.FC<{ geometry: Polygon | MultiPolygon; date: 
 
   useEffect(() => {
     if (!date) return;
-    return startNdviLoad(geometryRef.current, date, setState);
+    return scheduleNdviLoad(geometryRef.current, date, (state) => setEntry({ date, state }));
   }, [date]);
 
   if (!date) return null;
-  return <NdviBlockView date={date} state={state} />;
+  return <NdviBlockView date={date} state={ndviStateFor(entry, date)} />;
 };
