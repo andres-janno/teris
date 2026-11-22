@@ -84,7 +84,7 @@ afterAll(async () => {
   else await db.helpArticle.deleteMany({ where: { key: SPOT } });
   await db.helpArticle.deleteMany({ where: { key: ORPHAN } });
   await db.helpArticle.deleteMany({ where: { key: { in: [LOADER_KEY, VERSION_KEY] } } });
-  await db.helpArticleVersion.deleteMany({ where: { OR: [{ key: { in: [VERSION_KEY, LOADER_KEY] } }, { key: SPOT, createdBy: USERNAME }] } });
+  await db.helpArticleVersion.deleteMany({ where: { OR: [{ key: { in: [VERSION_KEY, LOADER_KEY, ORPHAN] } }, { key: { startsWith: `${LOADER_KEY}-` } }, { key: SPOT, createdBy: USERNAME }] } });
   await db.platformAuditLog.deleteMany({ where: { platformUserId } });
   await db.platformSession.deleteMany({ where: { platformUserId } });
   await db.platformUser.deleteMany({ where: { id: platformUserId } });
@@ -285,6 +285,23 @@ describe('writeHelpIfEmpty (mustandite laadimise alus)', () => {
       expect(await writeHelpIfEmpty(key, '<p>mustand</p>', LOADER_AUTHOR)).toBe(false);
       expect((await authDb().helpArticle.findUnique({ where: { key } }))?.html).toBe('<p>kasutaja</p>');
       expect(await authDb().helpArticleVersion.count({ where: { key } })).toBe(1);
+    } finally {
+      await authDb().helpArticle.deleteMany({ where: { key } });
+      await authDb().helpArticleVersion.deleteMany({ where: { key } });
+    }
+  });
+
+  it('samaaegsed kirjutised tühjale reale (FOR UPDATE haru): täpselt üks võidab, üks versioonirida', async () => {
+    const key = `${LOADER_KEY}-race-blank`;
+    try {
+      await authDb().helpArticle.create({ data: { key, html: '<p><br></p>', updatedBy: 'kasutaja' } });
+      const res = await Promise.all([1, 2, 3, 4].map((i) => writeHelpIfEmpty(key, `<p>mustand ${i}</p>`, LOADER_AUTHOR)));
+      const winners = res.map((r, i) => (r ? i + 1 : 0)).filter(Boolean);
+      expect(winners).toHaveLength(1);
+      expect(await authDb().helpArticleVersion.count({ where: { key } })).toBe(1);
+      const row = await authDb().helpArticle.findUnique({ where: { key } });
+      expect(row?.html).toBe(`<p>mustand ${winners[0]}</p>`);
+      expect(row?.updatedBy).toBe(LOADER_AUTHOR);
     } finally {
       await authDb().helpArticle.deleteMany({ where: { key } });
       await authDb().helpArticleVersion.deleteMany({ where: { key } });
