@@ -103,15 +103,17 @@ export const stockTools = [
           include: { article: { select: { name: true, unit: true, defaultWarehouse: { select: { name: true } } } }, lot: { select: { name: true, warehouse: { select: { name: true } } } } }
         })
       ]);
-      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; counted?: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; field?: string; work?: string; lot?: string; cost: number | null };
+      type Row = { sortDate: Date; date: string | null; type: string; warehouse: string; toWarehouse?: string | null; article: string; quantity: number | null; counted?: number | null; shortageQty?: number | null; unit: string; supplier?: string | null; documentNo?: string | null; reason?: string | null; notes?: string | null; field?: string; work?: string; lot?: string; cost: number | null };
       const rows: Row[] = [
         ...docLines.map((l) => ({
           sortDate: l.document.date, date: fmtDate(l.document.date), type: l.document.kind, warehouse: l.document.warehouse.name, toWarehouse: l.document.toWarehouse?.name ?? null,
           article: l.article.name,
           quantity: l.document.kind === 'INVENTORY' ? round2(l.diffQty ?? 0) : round2(l.quantity),
           ...(l.document.kind === 'INVENTORY' ? { counted: round2(l.countedQty ?? 0) } : {}),
+          ...(l.shortageQty ? { shortageQty: round2(l.shortageQty) } : {}),
           unit: l.article.unit, supplier: l.document.supplier?.name ?? null, documentNo: l.document.documentNo,
-          reason: l.document.writeOffReason, cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) > 0 ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) === 0 ? 0 : l.fifoCost)
+          reason: l.document.writeOffReason, notes: l.document.notes,
+          cost: money(l.document.kind === 'RECEIPT' ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) > 0 ? l.amount : l.document.kind === 'INVENTORY' && (l.diffQty ?? 0) === 0 ? 0 : l.fifoCost)
         })),
         ...entryLines.map((l) => ({
           sortDate: l.entry.date, date: fmtDate(l.entry.date), type: 'FIELD_WORK', warehouse: l.entry.warehouse?.name ?? defaultWh?.name ?? '',
@@ -126,18 +128,38 @@ export const stockTools = [
           return [{
             sortDate: w.date, date: fmtDate(w.date), type: 'HARVEST_WEIGHING', warehouse: w.lot.warehouse.name,
             article: w.lot.article.name, quantity: Math.round(qty * 1e6) / 1e6, unit: w.lot.article.unit,
-            lot: w.lot.name, cost: null
+            lot: w.lot.name, notes: w.notes, cost: null
           }];
         }),
         ...lotCosts.map((c) => ({
           sortDate: c.date, date: fmtDate(c.date), type: 'HARVEST_LOT_COST', warehouse: c.article.defaultWarehouse?.name ?? c.lot.warehouse.name,
           article: c.article.name, quantity: round2(c.quantity), unit: c.article.unit,
-          lot: c.lot.name, cost: c.unitPrice === null ? null : round2(Number(c.unitPrice) * c.quantity)
+          lot: c.lot.name, notes: c.notes, cost: c.unitPrice === null ? null : round2(Number(c.unitPrice) * c.quantity)
         }))
       ];
       rows.sort((p, q) => q.sortDate.getTime() - p.sortDate.getTime());
       const out = limitRows(rows, a.limit);
       return { total: out.total, shown: out.shown, rows: out.rows.map(({ sortDate: _s, ...r }) => r) };
+    }
+  }),
+  defineTool({
+    name: 'list_warehouses',
+    title: 'Laod',
+    description: 'Kõik laod: nimi, kas põhiladu (isDefault), aktiivsus, seotud huvipunkt või põld (põllu ladu koristatud punkritele), märkused.',
+    input: { includeInactive: z.boolean().optional().describe('Kaasa ka mitteaktiivsed laod (vaikimisi false)') },
+    run: async (a) => {
+      const rows = await prisma.warehouse.findMany({
+        where: a.includeInactive ? {} : { isActive: true },
+        orderBy: [{ isDefault: 'desc' }, { name: 'asc' }],
+        include: { poi: { select: { name: true } }, field: { select: { num: true, name: true } } }
+      });
+      return {
+        total: rows.length,
+        rows: rows.map((w) => ({
+          name: w.name, isDefault: w.isDefault, isActive: w.isActive,
+          poi: w.poi?.name ?? null, field: w.field ? fieldLabel(w.field) : null, notes: w.notes
+        }))
+      };
     }
   })
 ];

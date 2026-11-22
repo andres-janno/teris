@@ -6,7 +6,7 @@ import { fetchDevicePackets, type DevicePacket } from '../../telemetryAccess.ts'
 import { buildRoute, DEFAULT_ROUTE_OPTIONS } from '../../tripRoute.ts';
 import { loadPlaces } from '../../tripPlaces.ts';
 import { defineTool, canSeeFinance, hasTelemetry } from '../context.ts';
-import { parseDateInput, dayAfter, fieldLabel, fmtDate, fmtDateTime, round2, ToolInputError } from '../format.ts';
+import { parseDateInput, dayAfter, fieldLabel, fmtDate, fmtDateTime, round2, limitRows, ToolInputError } from '../format.ts';
 import { resolveVehicleId } from './works.ts';
 import { loadAssignmentResolver } from '../../tripAssignments.ts';
 import { GAP_LIMITS } from '../../../services/tripGapLimits.ts';
@@ -17,23 +17,31 @@ const GAP_MAX_DAYS = 92;
 const GAP_LIMIT = 200;
 const dayFmt = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' });
 
-const financeOut = (r: { acquisitionCost: number | null; acquisitionDate: Date | null; depreciationRate: number | null; depreciationMethod: string | null }) => ({
-  acquisitionCost: r.acquisitionCost, acquired: fmtDate(r.acquisitionDate), depreciationRatePct: r.depreciationRate, depreciationMethod: r.depreciationMethod
+const financeOut = (r: { acquisitionCost: number | null; acquisitionDate: Date | null; depreciationRate: number | null; depreciationMethod: string | null; hourlyRate: unknown }) => ({
+  acquisitionCost: r.acquisitionCost, acquired: fmtDate(r.acquisitionDate), depreciationRatePct: r.depreciationRate, depreciationMethod: r.depreciationMethod,
+  hourlyRate: r.hourlyRate === null || r.hourlyRate === undefined ? null : round2(Number(r.hourlyRate))
 });
 
 export const fleetTools = [
   defineTool({
     name: 'list_vehicles',
     title: 'Masinad ja haakeriistad',
-    description: 'Masinad (liik, mudel, reg nr, laius, juht, praegu haagitud haakeriist, viimane aktiivsus) ja haakeriistad. Telemeetria mooduliga ka viimane asukoht; finantsõigusega soetusmaksumus ja amortisatsioon.',
-    input: {},
-    run: async (_a, ctx) => {
+    description: 'Masinad (liik, mudel, reg nr, VIN, aasta, paak, laius, praegu haagitud haakeriist, viimane aktiivsus) ja haakeriistad. Telemeetria mooduliga ka viimane asukoht; finantsõigusega soetusmaksumus, amortisatsioon ja tunnihind.',
+    input: { type: z.string().optional().describe('Masina või haakeriista liik (nt TRACTOR, COMBINE, SEEDER)') },
+    run: async (a, ctx) => {
       const finance = canSeeFinance(ctx);
       const telemetry = hasTelemetry(ctx);
       const now = new Date();
+      const typeFilter = a.type?.trim().toUpperCase();
       const [vehicles, implementRows, hitches] = await Promise.all([
-        prisma.vehicle.findMany({ orderBy: { name: 'asc' } }),
-        prisma.implement.findMany({ orderBy: { name: 'asc' } }),
+        prisma.vehicle.findMany({
+          orderBy: { name: 'asc' },
+          include: { fuelArticle: { select: { name: true } }, serviceArticle: { select: { name: true } } }
+        }),
+        prisma.implement.findMany({
+          orderBy: { name: 'asc' },
+          include: { serviceArticle: { select: { name: true } } }
+        }),
         prisma.implementAssignment.findMany({
           where: { startedAt: { lte: now }, OR: [{ endedAt: null }, { endedAt: { gt: now } }] },
           orderBy: { startedAt: 'desc' }, select: { vehicleId: true, implement: { select: { name: true } } }
@@ -41,16 +49,22 @@ export const fleetTools = [
       ]);
       const hitchOf = new Map<string, string>();
       for (const h of hitches) if (!hitchOf.has(h.vehicleId)) hitchOf.set(h.vehicleId, h.implement.name);
+      const vOut = typeFilter ? vehicles.filter((v) => v.type === typeFilter || v.category?.toUpperCase() === typeFilter) : vehicles;
+      const iOut = typeFilter ? implementRows.filter((i) => i.type === typeFilter || i.category?.toUpperCase() === typeFilter) : implementRows;
       return {
-        vehicles: vehicles.map((v) => ({
+        vehicles: vOut.map((v) => ({
           name: v.name, type: v.type, category: v.category, manufacturer: v.manufacturer, model: v.model, regNumber: v.regNumber,
-          powerKw: v.powerKw, workingWidthM: v.workingWidthM, implement: hitchOf.get(v.id) ?? null,
+          serialNumber: v.serialNumber, year: v.year, powerKw: v.powerKw, workingWidthM: v.workingWidthM, fuelCapacityL: v.fuelCapacityL,
+          fuelArticle: v.fuelArticle?.name ?? null, serviceArticle: v.serviceArticle?.name ?? null,
+          implement: hitchOf.get(v.id) ?? null, notes: v.notes,
           ...(telemetry ? { lastActive: fmtDateTime(v.lastActiveAt) } : {}),
           ...(telemetry && v.lastLatitude != null && v.lastLongitude != null ? { lastPosition: { lat: v.lastLatitude, lng: v.lastLongitude } } : {}),
           ...(finance ? financeOut(v) : {})
         })),
-        implements: implementRows.map((i) => ({
-          name: i.name, type: i.type, category: i.category, manufacturer: i.manufacturer, model: i.model, regNumber: i.regNumber, year: i.year, workingWidthM: i.workingWidthM,
+        implements: iOut.map((i) => ({
+          name: i.name, type: i.type, category: i.category, manufacturer: i.manufacturer, model: i.model, regNumber: i.regNumber,
+          serialNumber: i.serialNumber, year: i.year, workingWidthM: i.workingWidthM,
+          serviceArticle: i.serviceArticle?.name ?? null, notes: i.notes,
           ...(finance ? financeOut(i) : {})
         }))
       };
@@ -165,6 +179,90 @@ export const fleetTools = [
             jumpM: g.jumpM, engineHoursGrowth: g.engineHoursGrowth
           },
           reviewed: !!g.reviewedAt, reviewedAt: fmtDateTime(g.reviewedAt), reviewedBy: g.reviewedBy, reviewNote: g.reviewNote
+        }))
+      };
+    }
+  }),
+  defineTool({
+    name: 'list_trips',
+    title: 'Sõitude register',
+    description: `Telemeetriast tuletatud sõidud (kuni ${GAP_MAX_DAYS} päeva): algus, lõpp, masin, teekond km, liikumis- ja tühikäiguaeg, kiirused, kütus, mootoritunnid, kaetud pindala ha ja põllul käigud (põld, saabumine, lahkumine, põllul oldud aeg, pindala, kütus).`,
+    input: {
+      vehicle: z.string().optional().describe('Masina nimi või reg nr (tühi = kõik)'),
+      from: z.string().describe('Alates (pp.kk.aaaa)'),
+      to: z.string().describe('Kuni, kaasa arvatud (pp.kk.aaaa)'),
+      limit: z.number().int().min(1).max(1000).optional().describe('Ridade arv (vaikimisi 200)')
+    },
+    when: hasTelemetry,
+    run: async (a) => {
+      const from = parseDateInput(a.from, 'from')!;
+      const to = parseDateInput(a.to, 'to')!;
+      if (from > to) throw new ToolInputError('Algus on hilisem kui lõpp');
+      const end = dayAfter(to);
+      if ((end.getTime() - from.getTime()) / 86_400_000 > GAP_MAX_DAYS) throw new ToolInputError(`Vahemik võib olla kuni ${GAP_MAX_DAYS} päeva`);
+      const vehicleId = a.vehicle ? await resolveVehicleId(a.vehicle) : null;
+      const rows = await prisma.vehicleTrip.findMany({
+        where: { deletedAt: null, startedAt: { gte: from, lt: end } },
+        orderBy: { startedAt: 'desc' },
+        include: {
+          fields: {
+            orderBy: { arriveAt: 'asc' },
+            include: { fieldSeason: { select: { num: true, field: { select: { num: true, name: true } } } } }
+          },
+          _count: { select: { workEntries: true } }
+        }
+      });
+      const resolve = await loadAssignmentResolver(rows.map((t) => t.deviceId));
+      const matched = rows
+        .map((t) => ({ t, target: resolve(t.deviceId, t.startedAt) }))
+        .filter((x) => !vehicleId || x.target.vehicleId === vehicleId);
+      const out = limitRows(matched, a.limit);
+      return {
+        from: fmtDate(from), to: fmtDate(to), total: out.total, shown: out.shown,
+        rows: out.rows.map(({ t, target }) => ({
+          id: t.id, vehicle: target.vehicleName, startedAt: fmtDateTime(t.startedAt), endedAt: fmtDateTime(t.endedAt), status: t.status,
+          distanceKm: round2(t.distanceKm), movingMinutes: round2(t.movingMinutes), idleMinutes: round2(t.idleMinutes),
+          pauseCount: t.pauseCount, pauseMinutes: round2(t.pauseMinutes),
+          maxSpeedKmh: round2(t.maxSpeedKmh), avgSpeedKmh: round2(t.avgSpeedKmh),
+          fuelLiters: round2(t.fuelLiters), fuelLevelStartPct: round2(t.fuelLevelStartPct), fuelLevelEndPct: round2(t.fuelLevelEndPct),
+          engineHoursStart: round2(t.engineHoursStart), engineHoursEnd: round2(t.engineHoursEnd),
+          areaHa: round2(t.areaHa), workEntries: t._count.workEntries, notes: t.notes,
+          fields: t.fields.map((f) => ({
+            field: fieldLabel({ num: f.fieldSeason.num ?? f.fieldSeason.field.num, name: f.fieldSeason.field.name }),
+            arriveAt: fmtDateTime(f.arriveAt), leaveAt: fmtDateTime(f.leaveAt),
+            activeMinutes: round2(f.activeMinutes), areaHa: round2(f.areaHa),
+            fuelFieldL: round2(f.fuelFieldL), fuelSharedL: round2(f.fuelSharedL)
+          }))
+        }))
+      };
+    }
+  }),
+  defineTool({
+    name: 'list_telemetry_devices',
+    title: 'Telemeetriaseadmed',
+    description: 'Ettevõtte telemeetriaseadmed (IMEI/MAC, mudel, staatus, püsivara) ja nende praegune ning ajalooline seos masina või haakeriistaga.',
+    input: {},
+    when: hasTelemetry,
+    run: async () => {
+      const devices = await prisma.telemetryDevice.findMany({
+        orderBy: { model: 'asc' },
+        include: {
+          assignments: {
+            orderBy: { startedAt: 'desc' },
+            include: { vehicle: { select: { name: true } }, implement: { select: { name: true } } }
+          }
+        }
+      });
+      return {
+        total: devices.length,
+        rows: devices.map((d) => ({
+          connectivityType: d.connectivityType, imei: d.imei, macAddress: d.macAddress,
+          model: d.model, simNumber: d.simNumber, firmware: d.firmware,
+          acquired: fmtDate(d.acquisitionDate), status: d.status, reportsWhenParked: d.reportsWhenParked, notes: d.notes,
+          assignments: d.assignments.map((a) => ({
+            vehicle: a.vehicle?.name ?? null, implement: a.implement?.name ?? null,
+            startedAt: fmtDateTime(a.startedAt), endedAt: fmtDateTime(a.endedAt), notes: a.notes
+          }))
         }))
       };
     }

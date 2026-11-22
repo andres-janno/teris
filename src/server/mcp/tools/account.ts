@@ -1,7 +1,7 @@
 // src/server/mcp/tools/account.ts — kes ma olen ja millised hooajad on olemas.
 import { prisma } from '../../db.ts';
 import { defineTool, canSeeFinance } from '../context.ts';
-import { tallinnYear } from '../format.ts';
+import { tallinnYear, fmtDateTime } from '../format.ts';
 
 export const accountTools = [
   defineTool({
@@ -25,8 +25,17 @@ export const accountTools = [
     description: 'Kõik hooajad (aastad) uuemad eespool; locked = hooaeg on suletud.',
     input: {},
     run: async () => {
-      const rows = await prisma.season.findMany({ orderBy: { year: 'desc' }, select: { year: true, name: true, isLocked: true } });
-      return rows.map((s) => ({ year: s.year, name: s.name, locked: s.isLocked }));
+      const rows = await prisma.season.findMany({
+        orderBy: { year: 'desc' },
+        select: { year: true, name: true, isLocked: true, closedAt: true, closedBy: true, notes: true }
+      });
+      return rows.map((s) => ({
+        year: s.year,
+        name: s.name,
+        locked: s.isLocked,
+        ...(s.isLocked ? { closedAt: fmtDateTime(s.closedAt), closedBy: s.closedBy } : {}),
+        ...(s.notes ? { notes: s.notes } : {})
+      }));
     }
   })
 ];

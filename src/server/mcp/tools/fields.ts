@@ -10,8 +10,11 @@ const limit = z.number().int().min(1).max(1000).optional().describe('Ridade arv 
 
 /** Põllu hooaeg nime või numbri järgi (mitu vastet → valikud veateates). */
 export async function resolveFieldSeason(query: string, y: number): Promise<{ id: number; label: string }> {
-  const rows = await prisma.fieldSeason.findMany({ where: { year: y }, select: { id: true, field: { select: { num: true, name: true } } } });
-  const hit = pickOne('Põld', query, rows.map((r) => ({ id: String(r.id), label: fieldLabel(r.field), keys: [r.field.num, r.field.name] })));
+  const rows = await prisma.fieldSeason.findMany({ where: { year: y }, select: { id: true, num: true, field: { select: { num: true, name: true } } } });
+  const hit = pickOne('Põld', query, rows.map((r) => {
+    const num = r.num ?? r.field.num;
+    return { id: String(r.id), label: fieldLabel({ num, name: r.field.name }), keys: [num, r.field.num, r.field.name] };
+  }));
   return { id: Number(hit.id), label: hit.label };
 }
 
@@ -48,12 +51,13 @@ export const fieldTools = [
           ...(a.search ? { field: { OR: [{ name: { contains: a.search, mode: 'insensitive' as const } }, { num: { contains: a.search, mode: 'insensitive' as const } }] } } : {})
         },
         select: {
-          areaHa: true, eligibleAreaHa: true, crop: true, priaCropName: true, cropVariety: true, status: true, workProgress: true,
-          seedingDate: true, harvestDate: true, targetYieldTonsHa: true, actualYieldTonsHa: true,
-          field: { select: { num: true, name: true } }
+          num: true, areaHa: true, eligibleAreaHa: true, workedAreaHa: true, crop: true, priaCropName: true, cropVariety: true, undersowing: true,
+          status: true, workProgress: true, seedingDate: true, harvestDate: true, targetYieldTonsHa: true, actualYieldTonsHa: true,
+          operator: { select: { name: true } },
+          field: { select: { num: true, name: true, operator: { select: { name: true } } } }
         }
       });
-      rows.sort((p, q) => byNum(p.field, q.field));
+      rows.sort((p, q) => byNum({ num: p.num ?? p.field.num }, { num: q.num ?? q.field.num }));
       const out = limitRows(rows, a.limit);
       return {
         year: y,
@@ -61,7 +65,10 @@ export const fieldTools = [
         shown: out.shown,
         totalAreaHa: round2(rows.reduce((s, r) => s + r.areaHa, 0)),
         rows: out.rows.map((r) => ({
-          field: fieldLabel(r.field), areaHa: round2(r.areaHa), eligibleAreaHa: round2(r.eligibleAreaHa), crop: r.crop, priaCrop: r.priaCropName, variety: r.cropVariety,
+          field: fieldLabel({ num: r.num ?? r.field.num, name: r.field.name }),
+          areaHa: round2(r.areaHa), eligibleAreaHa: round2(r.eligibleAreaHa), workedAreaHa: round2(r.workedAreaHa),
+          crop: r.crop, priaCrop: r.priaCropName, variety: r.cropVariety, undersowing: r.undersowing,
+          operator: r.operator?.name ?? r.field.operator?.name ?? null,
           status: r.status, progressPct: round2(r.workProgress), seeded: fmtDate(r.seedingDate), harvested: fmtDate(r.harvestDate),
           targetYieldTHa: round2(r.targetYieldTonsHa), actualYieldTHa: round2(r.actualYieldTonsHa)
         }))
@@ -80,29 +87,38 @@ export const fieldTools = [
       const s = await prisma.fieldSeason.findUniqueOrThrow({
         where: { id: fs.id },
         include: {
+          operator: { select: { name: true } },
           field: { include: { operator: { select: { name: true } } } },
           cadastralParcels: { orderBy: { id: 'asc' }, include: { cadastralParcel: { select: { cadastralCode: true, name: true } } } },
           fieldWorks: {
             orderBy: [{ plannedDateFrom: 'asc' }, { sortOrder: 'asc' }],
             include: {
               workType: { select: { name: true, shortName: true } },
+              plannedWorker: { select: { name: true } },
               lines: { orderBy: { sortOrder: 'asc' } },
               entries: {
                 orderBy: { date: 'asc' },
                 include: {
                   worker: { select: { name: true } }, vehicle: { select: { name: true } }, implement: { select: { name: true } },
-                  lines: { where: { kind: { in: ['MATERIAL', 'HARVEST'] } }, orderBy: { sortOrder: 'asc' } }
+                  harvestLot: { select: { name: true } }, warehouse: { select: { name: true } },
+                  lines: { where: { kind: { in: ['MATERIAL', 'HARVEST', 'OBSERVATION'] } }, orderBy: { sortOrder: 'asc' } }
                 }
               }
             }
           }
         }
       });
+      const soilSamples = s.field.fieldCode
+        ? await prisma.soilSample.findMany({ where: { fieldCode: s.field.fieldCode }, orderBy: [{ year: 'desc' }, { sampleNumber: 'asc' }] })
+        : [];
       return {
-        field: fs.label, year: y, areaHa: round2(s.areaHa), eligibleAreaHa: round2(s.eligibleAreaHa), crop: s.crop, priaCrop: s.priaCropName, variety: s.cropVariety,
+        field: fs.label, year: y, areaHa: round2(s.areaHa), eligibleAreaHa: round2(s.eligibleAreaHa), workedAreaHa: round2(s.workedAreaHa),
+        areaChangeReason: s.areaChangeReason, perimeterM: round2(s.perimeterM),
+        crop: s.crop, priaCrop: s.priaCropName, variety: s.cropVariety, undersowing: s.undersowing,
         status: s.status, progressPct: round2(s.workProgress), seeded: fmtDate(s.seedingDate), harvested: fmtDate(s.harvestDate),
         targetYieldTHa: round2(s.targetYieldTonsHa), actualYieldTHa: round2(s.actualYieldTonsHa),
-        priaCode: s.field.fieldCode, soilType: s.field.soilType, drainage: s.field.drainageSystem, operator: s.field.operator?.name ?? null, notes: s.notes ?? s.field.notes,
+        priaCode: s.field.fieldCode, soilType: s.field.soilType, drainage: s.field.drainageSystem,
+        operator: s.operator?.name ?? s.field.operator?.name ?? null, notes: s.notes ?? s.field.notes,
         cadastralParcels: s.cadastralParcels.map((p) => ({
           // name = katastriüksuse (kinnistu) nimi; owner = maaomanik/rendileandja sellel hooajal. Sama üksus võib korduda eri omanikega.
           code: p.cadastralParcel.cadastralCode, name: p.cadastralParcel.name, owner: p.ownerName, areaHa: round2(p.fieldAreaHa), ownership: p.ownershipType,
@@ -112,15 +128,28 @@ export const fieldTools = [
             landTaxEurHa: round2(p.landTaxEurHa), landTaxEurYear: round2(p.landTaxEurYear)
           } : {})
         })),
+        soilSamples: soilSamples.map((ss) => ({
+          sampleNumber: ss.sampleNumber, year: ss.year, ph: round2(ss.ph),
+          p: round2(ss.phosphorus), k: round2(ss.potassium), ca: round2(ss.calcium), mg: round2(ss.magnesium),
+          cu: round2(ss.copper), mn: round2(ss.manganese), b: round2(ss.boron), cOrg: round2(ss.organicCarbon),
+          limeRequirementTHa: round2(ss.limeRequirement)
+        })),
         works: s.fieldWorks.map((w) => ({
-          work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status,
+          work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status, source: w.source,
           planned: w.plannedDateFrom ? [fmtDate(w.plannedDateFrom), fmtDate(w.plannedDateTo)].filter(Boolean).join(' – ') : w.plannedText,
+          plannedAreaHa: round2(w.plannedAreaHa), method: w.method, plannedWorker: w.plannedWorker?.name ?? null, notes: w.notes,
           plannedArticles: w.lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit })),
+          plannedHarvest: w.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit })),
           entries: w.entries.map((e) => ({
-            date: fmtDate(e.date), dateTo: fmtDate(e.dateTo), worker: e.worker?.name ?? null, vehicle: e.vehicle?.name ?? null, implement: e.implement?.name ?? null,
-            areaHa: round2(e.areaHa), equipmentHours: round2(e.equipmentHours), fuelLiters: round2(e.fuelLiters),
+            date: fmtDate(e.date), dateTo: fmtDate(e.dateTo), startTime: e.startTime, endTime: e.endTime, occurrenceNo: e.occurrenceNo,
+            worker: e.worker?.name ?? null, vehicle: e.vehicle?.name ?? null, implement: e.implement?.name ?? null,
+            areaHa: round2(e.areaHa), telemetryAreaHa: round2(e.telemetryAreaHa),
+            equipmentHours: round2(e.equipmentHours), laborHours: round2(e.laborHours), fuelLiters: round2(e.fuelLiters),
+            harvestBunkers: round2(e.harvestBunkers), harvestLot: e.harvestLot?.name ?? null, warehouse: e.warehouse?.name ?? null,
+            notes: e.notes,
             articles: e.lines.filter((l) => l.kind === 'MATERIAL').map((l) => articleLineOut(l, ctx)),
-            harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit }))
+            harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit })),
+            observations: e.lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ name: l.label, kind: l.priaRegister ?? undefined }))
           }))
         }))
       };

@@ -4,7 +4,7 @@ import type { Prisma } from '@prisma/client';
 import { prisma } from '../../db.ts';
 import { workTypeDisplayName } from '../../../services/workTypeName.ts';
 import { defineTool, canSeeFinance } from '../context.ts';
-import { parseDateInput, dayAfter, pickOne, fieldLabel, fmtDate, round2, limitRows, tallinnYear, ToolInputError } from '../format.ts';
+import { parseDateInput, dayAfter, pickOne, fieldLabel, fmtDate, fmtDateTime, round2, limitRows, tallinnYear, ToolInputError } from '../format.ts';
 import { resolveFieldSeason, articleLineOut } from './fields.ts';
 
 const year = z.number().int().min(1990).max(2100).optional().describe('Hooaja aasta');
@@ -88,8 +88,9 @@ export const workTools = [
         orderBy: [{ plannedDateFrom: 'asc' }, { sortOrder: 'asc' }],
         include: {
           workType: { select: { name: true, shortName: true } },
-          fieldSeason: { select: { field: { select: { num: true, name: true } } } },
+          fieldSeason: { select: { num: true, field: { select: { num: true, name: true } } } },
           plannedWorker: { select: { name: true } },
+          finishedBy: { select: { displayName: true, username: true } },
           lines: { orderBy: { sortOrder: 'asc' } },
           _count: { select: { entries: true } }
         }
@@ -98,10 +99,14 @@ export const workTools = [
       return {
         year: y ?? null, total: out.total, shown: out.shown,
         rows: out.rows.map((w) => ({
-          field: fieldLabel(w.fieldSeason.field), work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status,
+          field: fieldLabel({ num: w.fieldSeason.num ?? w.fieldSeason.field.num, name: w.fieldSeason.field.name }),
+          work: workTypeDisplayName(w.workType), phase: w.phase, status: w.status, source: w.source, plannedCount: w.plannedCount,
           planned: w.plannedDateFrom ? [fmtDate(w.plannedDateFrom), fmtDate(w.plannedDateTo)].filter(Boolean).join(' – ') : w.plannedText,
-          plannedAreaHa: round2(w.plannedAreaHa), method: w.method, plannedWorker: w.plannedWorker?.name ?? null, entries: w._count.entries,
-          plannedArticles: w.lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit, activeIngredient: l.activeIngredient ?? undefined }))
+          plannedAreaHa: round2(w.plannedAreaHa), method: w.method, plannedWorker: w.plannedWorker?.name ?? null,
+          finishedAt: fmtDateTime(w.finishedAt), finishedBy: w.finishedBy ? (w.finishedBy.displayName || w.finishedBy.username) : null,
+          notes: w.notes, entries: w._count.entries,
+          plannedArticles: w.lines.filter((l) => l.kind === 'MATERIAL').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit, activeIngredient: l.activeIngredient ?? undefined })),
+          plannedHarvest: w.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ name: l.label, ratePerHa: round2(l.ratePerHa), unit: l.unit }))
         }))
       };
     }
@@ -117,24 +122,47 @@ export const workTools = [
         where: await entryWhere(a),
         orderBy: { date: 'desc' },
         include: {
-          fieldWork: { select: { workType: { select: { name: true, shortName: true } }, fieldSeason: { select: { field: { select: { num: true, name: true } } } } } },
+          fieldWork: { select: { workType: { select: { name: true, shortName: true } }, fieldSeason: { select: { num: true, field: { select: { num: true, name: true } } } } } },
           worker: { select: { name: true } }, vehicle: { select: { name: true } }, implement: { select: { name: true } },
+          harvestLot: { select: { name: true } }, warehouse: { select: { name: true } },
+          financeConfirmedBy: { select: { displayName: true, username: true } },
           lines: { orderBy: { sortOrder: 'asc' } }
         }
       });
       const out = limitRows(rows, a.limit);
+      const costLineOut = (l: { kind: string; label: string; quantity: number; unit: string; unitPrice: unknown }) => {
+        const up = l.unitPrice === null || l.unitPrice === undefined ? null : Number(l.unitPrice);
+        return {
+          kind: l.kind, name: l.label, quantity: round2(l.quantity), unit: l.unit,
+          ...(finance ? { unitPrice: round2(up), cost: up === null ? null : round2(up * l.quantity) } : {})
+        };
+      };
       return {
         total: out.total, shown: out.shown,
         rows: out.rows.map((e) => {
           const costed = e.lines.filter((l) => l.unitPrice !== null);
           return {
-            date: fmtDate(e.date), dateTo: fmtDate(e.dateTo), field: fieldLabel(e.fieldWork.fieldSeason.field), work: workTypeDisplayName(e.fieldWork.workType),
+            date: fmtDate(e.date), dateTo: fmtDate(e.dateTo), startTime: e.startTime, endTime: e.endTime, occurrenceNo: e.occurrenceNo,
+            field: fieldLabel({ num: e.fieldWork.fieldSeason.num ?? e.fieldWork.fieldSeason.field.num, name: e.fieldWork.fieldSeason.field.name }),
+            work: workTypeDisplayName(e.fieldWork.workType), source: e.source,
             worker: e.worker?.name ?? null, vehicle: e.vehicle?.name ?? null, implement: e.implement?.name ?? null,
-            areaHa: round2(e.areaHa), equipmentHours: round2(e.equipmentHours), laborHours: round2(e.laborHours), fuelLiters: round2(e.fuelLiters),
+            areaHa: round2(e.areaHa), telemetryAreaHa: round2(e.telemetryAreaHa),
+            equipmentHours: round2(e.equipmentHours), laborHours: round2(e.laborHours), fuelLiters: round2(e.fuelLiters),
+            harvestBunkers: round2(e.harvestBunkers), harvestLot: e.harvestLot?.name ?? null, warehouse: e.warehouse?.name ?? null, tripId: e.tripId,
             method: e.method, notes: e.notes,
             articles: e.lines.filter((l) => l.kind === 'MATERIAL').map((l) => articleLineOut(l, ctx)),
+            services: e.lines.filter((l) => l.kind === 'LABOR' || l.kind === 'MACHINE' || l.kind === 'IMPLEMENT').map(costLineOut),
+            fuelLines: e.lines.filter((l) => l.kind === 'FUEL').map(costLineOut),
             harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit })),
-            ...(finance ? { financeStatus: e.financeStatus, totalCost: round2(costed.reduce((s, l) => s + Number(l.unitPrice) * l.quantity, 0)), unpricedLines: e.lines.filter((l) => l.unitPrice === null && l.kind !== 'HARVEST' && l.kind !== 'OBSERVATION').length } : {})
+            observations: e.lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ name: l.label, kind: l.priaRegister ?? undefined })),
+            ...(finance ? {
+              financeStatus: e.financeStatus,
+              financeConfirmedAt: fmtDateTime(e.financeConfirmedAt),
+              financeConfirmedBy: e.financeConfirmedBy ? (e.financeConfirmedBy.displayName || e.financeConfirmedBy.username) : null,
+              financeNotes: e.financeNotes,
+              totalCost: round2(costed.reduce((s, l) => s + Number(l.unitPrice) * l.quantity, 0)),
+              unpricedLines: e.lines.filter((l) => l.unitPrice === null && l.kind !== 'HARVEST' && l.kind !== 'OBSERVATION').length
+            } : {})
           };
         })
       };

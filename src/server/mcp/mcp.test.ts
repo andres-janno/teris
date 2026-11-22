@@ -361,4 +361,52 @@ describe('sõitude vahed (MCP)', () => {
     expect(r.total).toBe(2);
     expect(r.gaps[1]).toMatchObject({ reviewed: true, reviewNote: 'aku vahetus', reviewedBy: 'mari' });
   });
+
+  it('list_trips ja list_telemetry_devices ainult TELEMETRY mooduliga', async () => {
+    const client = await connect(B.plainKey);
+    const { tools } = await client.listTools();
+    await client.close();
+    expect(tools.map((t) => t.name)).not.toContain('list_trips');
+    expect(tools.map((t) => t.name)).not.toContain('list_telemetry_devices');
+
+    const trips = (await call(A.plainKey, 'list_trips', { vehicle: 'Valtra', from: '01.10.2026', to: '31.10.2026' })).data;
+    expect(trips.total).toBe(3);
+    expect(trips.rows[0]).toMatchObject({ vehicle: 'Valtra T1', distanceKm: 1 });
+
+    const devs = (await call(A.plainKey, 'list_telemetry_devices')).data;
+    expect(devs.total).toBeGreaterThanOrEqual(1);
+    expect(devs.rows[0]).toMatchObject({ model: 'FMC650' });
+    expect(devs.rows[0].assignments[0]).toMatchObject({ vehicle: 'Valtra T1' });
+  });
+});
+
+describe('registrid ja saagipartiid (MCP)', () => {
+  it('list_warehouses, list_articles, list_work_types, list_crops, list_related_parties, list_points_of_interest, list_soil_samples, harvest_lots', async () => {
+    const wh = (await call(A.plainKey, 'list_warehouses')).data;
+    expect(wh.rows[0]).toMatchObject({ name: 'Põhiladu', isDefault: true });
+
+    const arts = (await call(A.plainKey, 'list_articles', { search: 'Ammoonium' })).data;
+    expect(arts.rows[0]).toMatchObject({ name: 'Ammooniumnitraat', group: 'CONSUMABLE', nPct: 34 });
+    expect(arts.rows[0].price).toBeUndefined();
+    const artsFin = (await call(A.financeKey, 'list_articles', { search: 'Ammoonium' })).data;
+    expect('price' in artsFin.rows[0]).toBe(true);
+
+    const wts = (await call(A.plainKey, 'list_work_types')).data;
+    expect(wts.workTypes[0]).toMatchObject({ name: 'Väetamine', phase: 'CARE' });
+
+    const crops = (await call(A.plainKey, 'list_crops')).data;
+    expect(Array.isArray(crops.rows)).toBe(true);
+
+    const parties = (await call(A.plainKey, 'list_related_parties')).data;
+    expect(Array.isArray(parties.rows)).toBe(true);
+
+    const pois = (await call(A.plainKey, 'list_points_of_interest')).data;
+    expect(Array.isArray(pois.rows)).toBe(true);
+
+    const samples = (await call(A.plainKey, 'list_soil_samples')).data;
+    expect(Array.isArray(samples.rows)).toBe(true);
+
+    const lots = (await call(A.plainKey, 'list_harvest_lots')).data;
+    expect(Array.isArray(lots.rows)).toBe(true);
+  });
 });
