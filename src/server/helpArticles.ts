@@ -8,10 +8,11 @@ import { authDb } from './db.ts';
 import { json } from './http.ts';
 import { helpMaxLength, isHelpKey } from '../help/helpRegistry.ts';
 import { isGuideChapterKey } from '../help/guideChapters.ts';
-import { isValidGuideLink } from '../help/guideLink.ts';
+import { GUIDE_LINK_MAX, isValidGuideLink } from '../help/guideLink.ts';
 
 export const HELP_KEY_ERROR = 'Tundmatu juhendi koht';
 export const HELP_LINK_ERROR = 'Seotud peatüki viide on vigane';
+export const HELP_LINK_LENGTH_ERROR = `Seotud peatüki viide on liiga pikk (kuni ${GUIDE_LINK_MAX} märki)`;
 export const HELP_VERSION_ERROR = 'Juhendi versiooni ei leitud';
 export const HELP_VERSION_LIMIT = 50;
 
@@ -89,9 +90,10 @@ async function persist(tx: Tx, key: string, html: string, link: string | null, p
 }
 
 /** `guideLink` sisendist: puudub/tühi → null; muidu peab olema kehtiv ja ainult kohtjuhendil. */
-function parseLinkInput(key: string, raw: unknown): { ok: true; link: string | null } | { ok: false } {
+function parseLinkInput(key: string, raw: unknown): { ok: true; link: string | null } | { ok: false; error: string } {
   if (raw === undefined || raw === null || raw === '') return { ok: true, link: null };
-  if (typeof raw !== 'string' || isGuideChapterKey(key) || !isValidGuideLink(raw)) return { ok: false };
+  if (typeof raw === 'string' && raw.length > GUIDE_LINK_MAX) return { ok: false, error: HELP_LINK_LENGTH_ERROR };
+  if (typeof raw !== 'string' || isGuideChapterKey(key) || !isValidGuideLink(raw)) return { ok: false, error: HELP_LINK_ERROR };
   return { ok: true, link: raw };
 }
 
@@ -103,7 +105,7 @@ export async function saveHelpArticle(key: string, input: { html: unknown; guide
   const blank = isBlankHelp(html);
   if (!blank && !isKnownKey(key)) return { ok: false, status: 404, error: HELP_KEY_ERROR };
   const link = parseLinkInput(key, input.guideLink);
-  if (!link.ok) return { ok: false, status: 400, error: HELP_LINK_ERROR };
+  if (!link.ok) return { ok: false, status: 400, error: link.error };
   const deleted = await authDb().$transaction((tx) => persist(tx, key, html, link.link, pu, 'save'));
   return { ok: true, deleted };
 }

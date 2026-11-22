@@ -1,6 +1,6 @@
 // Peatükiviide: parsimine (sügavlink ja HTML-link), vormindamine, kohtjuhendi guide_link kontroll.
 import { describe, it, expect } from 'vitest';
-import { formatGuideRef, isValidGuideLink, parseGuideRef } from './guideLink';
+import { GUIDE_ANCHOR_MAX, GUIDE_LINK_MAX, formatGuideRef, isValidGuideLink, parseGuideRef } from './guideLink';
 
 describe('parseGuideRef', () => {
   it('peatükk ankruga, hash-iga ja ilma', () => {
@@ -35,5 +35,13 @@ describe('formatGuideRef ja isValidGuideLink', () => {
     expect(isValidGuideLink('guide')).toBe(false);
     expect(isValidGuideLink('guide.nope')).toBe(false);
     expect(isValidGuideLink('')).toBe(false);
+  });
+
+  it('liiga pikk ankur või link lükatakse tagasi', () => {
+    const ok = 'a'.repeat(GUIDE_ANCHOR_MAX);
+    expect(parseGuideRef(`#guide.fields#${ok}`)?.anchor).toBe(ok);
+    expect(parseGuideRef(`#guide.fields#${ok}a`)).toBeNull();
+    expect(isValidGuideLink(`guide.fields#${ok}a`)).toBe(false);
+    expect(isValidGuideLink(`guide.fields#${'a'.repeat(GUIDE_LINK_MAX)}`)).toBe(false);
   });
 });

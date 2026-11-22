@@ -9,6 +9,10 @@ export interface GuideRef {
   anchor: string | null;
 }
 
+/** Ankru ja kogu `guide_link` väärtuse suurim pikkus (märkides); sügavlingi ja HTML-lingi ankur on samuti piiratud */
+export const GUIDE_ANCHOR_MAX = 80;
+export const GUIDE_LINK_MAX = 120;
+
 const REF = /^#?guide(?:\.([a-z][a-z-]*))?(?:#([a-z0-9][a-z0-9-]*))?$/;
 
 export function parseGuideRef(raw: string): GuideRef | null {
@@ -17,6 +21,7 @@ export function parseGuideRef(raw: string): GuideRef | null {
   const key = m[1] ? `guide.${m[1]}` : null;
   if (key !== null && !isGuideChapterKey(key)) return null;
   if (key === null && m[2]) return null; // ankur ilma peatükita pole mõttekas
+  if (m[2] && m[2].length > GUIDE_ANCHOR_MAX) return null;
   return { chapter: key as GuideChapterKey | null, anchor: m[2] ?? null };
 }
 
@@ -25,7 +30,7 @@ export const formatGuideRef = (chapter: GuideChapterKey, anchor?: string | null)
 
 /** Kohtjuhendi `guide_link`: peab osutama peatükile ega alga `#`-ga */
 export function isValidGuideLink(s: string): boolean {
-  if (s.startsWith('#')) return false;
+  if (s.startsWith('#') || s.length > GUIDE_LINK_MAX) return false;
   const ref = parseGuideRef(s);
   return ref !== null && ref.chapter !== null;
 }

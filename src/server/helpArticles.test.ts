@@ -6,6 +6,7 @@ import { authDb } from './db';
 import { hashPassword, generateSessionToken, hashToken } from './auth';
 import { encryptTotpSecret } from './totp';
 import { handlePlatformRequest } from './platformApi';
+import { handleApiRequest } from './apiHandler';
 import { HELP_VERSION_LIMIT, buildHelpPayload, handleHelpRead, isBlankHelp, setGuideLinkIfEmpty, writeHelpIfEmpty, writeHelpVersion } from './helpArticles';
 import { HELP_MAX_LENGTH } from '../help/helpRegistry';
 
@@ -174,6 +175,12 @@ describe('peatükid, guide_link ja ettevõtte vaade', () => {
     expect(mid.status).toBe(400);
   });
 
+  it('liiga pikk ankur lükatakse tagasi pikkuseveaga', async () => {
+    const r = await call('PUT', `/api/platform/help/${SPOT}`, { html: '<p>x</p>', guideLink: `guide.fields#${'a'.repeat(200)}` });
+    expect(r.status).toBe(400);
+    expect(r.data.error).toContain('liiga pikk');
+  });
+
   it('peatükile linki panna ei saa', async () => {
     const r = await call('PUT', '/api/platform/help/guide.settings', { html: '<p>x</p>', guideLink: 'guide.fields' });
     expect(r.status).toBe(400);
@@ -191,6 +198,19 @@ describe('versioonid', () => {
     expect(rows).toHaveLength(HELP_VERSION_LIMIT);
     expect(rows[0].html).toBe('<p>v6</p>');
     expect(rows[rows.length - 1].html).toBe(`<p>v${HELP_VERSION_LIMIT + 5}</p>`);
+  });
+
+  it('kärpimine ei puuduta teise võtme ridu', async () => {
+    const db = authDb();
+    const otherKey = `${LOADER_KEY}-trim`;
+    try {
+      await db.$transaction((tx) => writeHelpVersion(tx, otherKey, '<p>teine</p>', null, 'zz'));
+      await db.$transaction((tx) => writeHelpVersion(tx, VERSION_KEY, '<p>veel</p>', null, 'zz'));
+      expect(await db.helpArticleVersion.count({ where: { key: VERSION_KEY } })).toBe(HELP_VERSION_LIMIT);
+      expect(await db.helpArticleVersion.count({ where: { key: otherKey } })).toBe(1);
+    } finally {
+      await db.helpArticleVersion.deleteMany({ where: { key: otherKey } });
+    }
   });
 
   it('iga salvestus lisab rea, taastamine teeb uue versiooni vana sisuga', async () => {
@@ -305,5 +325,47 @@ describe('setGuideLinkIfEmpty (olemasoleva kohtjuhendi link)', () => {
   it('tühja tekstiga real linki ei panda', async () => {
     await authDb().helpArticle.update({ where: { key }, data: { html: '<p><br></p>', guideLink: null } });
     expect(await setGuideLinkIfEmpty(key, 'guide.fields', LOADER_AUTHOR)).toBe(false);
+  });
+});
+
+describe('ligipääs: versiooniteed ja ettevõtte API', () => {
+  const NO_AUTH = [
+    ['GET', `/api/platform/help/${SPOT}/versions`],
+    ['GET', `/api/platform/help/${SPOT}/versions/1`],
+    ['POST', `/api/platform/help/${SPOT}/versions/1/restore`],
+    ['PUT', `/api/platform/help/${SPOT}`]
+  ] as const;
+
+  it('versiooniteed ja salvestus ilma platvormi sessioonita → 401', async () => {
+    const saved = cookie;
+    cookie = '';
+    try {
+      for (const [m, p] of NO_AUTH) expect((await call(m, p, m === 'GET' ? undefined : { html: '<p>x</p>' })).status, `${m} ${p}`).toBe(401);
+    } finally {
+      cookie = saved;
+    }
+  });
+
+  it('ettevõtte host ei näe platvormi teid ega saa juhendeid kirjutada', async () => {
+    const before = await authDb().helpArticle.findUnique({ where: { key: SPOT } });
+    const versionsBefore = await authDb().helpArticleVersion.count({ where: { key: SPOT } });
+    const tenantCall = async (method: string, path: string, body: unknown) => {
+      const raw = JSON.stringify(body);
+      const req = Readable.from([Buffer.from(raw)]) as any;
+      req.method = method;
+      req.url = path;
+      req.headers = { host: 'app.teris.ee', origin: 'https://app.teris.ee', 'content-type': 'application/json', 'content-length': String(Buffer.byteLength(raw)), cookie };
+      req.socket = { remoteAddress: '127.0.0.9' };
+      const { res, out } = fakeRes();
+      await handleApiRequest(req as IncomingMessage, res, { ...OPTS, requireAuth: true, allowedOrigins: ['https://app.teris.ee'] });
+      return out.status;
+    };
+    for (const p of [`/api/platform/help/${SPOT}`, `/api/platform/help/${SPOT}/versions/1/restore`]) {
+      expect(await tenantCall(p.endsWith('restore') ? 'POST' : 'PUT', p, { html: '<p>tenant</p>' }), p).toBe(404);
+    }
+    expect(await tenantCall('PUT', '/api/help', { html: '<p>tenant</p>' })).toBeGreaterThanOrEqual(400);
+    const after = await authDb().helpArticle.findUnique({ where: { key: SPOT } });
+    expect(after?.html).toBe(before?.html);
+    expect(await authDb().helpArticleVersion.count({ where: { key: SPOT } })).toBe(versionsBefore);
   });
 });
