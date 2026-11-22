@@ -52,6 +52,7 @@
     "@types/react-dom": "^19.2.3",
     "@types/shpjs": "^3.4.7",
     "@vitejs/plugin-react": "^6.0.4",
+    "jsdom": "^31.0.1",
     "oxlint": "^1.75.0",
     "prisma": "^6.19.3",
     "typescript": "~6.0.2",
