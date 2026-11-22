@@ -885,7 +885,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
     return (
       <div className={boardViewClass}>
         <main className={boardMainClass}>
-          <PageHeader icon={<Sprout />} title="Kultuurid" subtitle="Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused" />
+          <PageHeader icon={<Sprout />} title="Kultuurid" helpKey="view.crops" subtitle="Kultuuride ja sortide register, värvikoodid, külvinormid ja saagiootused" />
           <div className={boardBodyClass}>
             <div className={boardContentClass}>
               {bodyContent}

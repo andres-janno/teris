@@ -72,6 +72,7 @@ export const WeatherView: React.FC = () => {
         <PageHeader
           icon={<CloudSun />}
           title="Ilm"
+          helpKey="view.weather"
           subtitle={(
             <>
               <p>Aastate võrdlus ERA5-Landi ilmaandmete põhjal (2015-st)</p>

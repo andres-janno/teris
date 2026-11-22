@@ -795,7 +795,7 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
   return (
     <div className={boardViewClass}>
       <main className={boardMainClass}>
-        <PageHeader icon={<SquareKanban />} title="Põllutööd" subtitle="Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine" />
+        <PageHeader icon={<SquareKanban />} title="Põllutööd" helpKey="view.works" subtitle="Põldude tööd hooaja kaupa: külv, hooldus ja koristus, kanded ning edenemine" />
 
         <div className="flex flex-wrap items-center gap-2.5">
           {/* Hooaja valik ja tegevused samas reas nagu Põldude registris */}

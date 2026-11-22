@@ -157,6 +157,8 @@ export const helpHintInlineClass = 'size-5 -my-0.5 -mr-1 ml-0.5';
 /** Abivihje hüpik: 320px, kõrguse piir ja kerimine. */
 export const helpHintContentClass = 'w-80 max-h-[min(24rem,var(--radix-popover-content-available-height))]';
 export const helpHintTitleClass = 'mb-1.5 text-2xs font-semibold uppercase tracking-wide text-muted-foreground';
+/** „Loe juhendist →“ link hüpiku all */
+export const helpHintLinkClass = 'mt-2 inline-block text-sm font-medium text-info-text no-underline hover:underline';
 export const tooltipContentClass = 'z-2100 max-w-72 rounded-sm bg-foreground px-2 py-1 text-xs text-background';
 
 // --- Kaart (etapp 2.7) ---
@@ -386,6 +388,8 @@ export const pageHeaderClass = 'flex flex-wrap items-center gap-x-4 gap-y-2.5';
 export const pageHeaderTitleWrapClass = 'flex min-w-0 items-center gap-2.5';
 export const pageHeaderIconClass = 'flex shrink-0 items-center [&>svg]:size-5';
 export const pageHeaderTitleClass = 'm-0 text-xl font-semibold leading-6 text-foreground';
+/** Pealkiri + „?“-ikoon kõrvuti */
+export const pageHeaderTitleRowClass = 'flex items-center gap-1.5';
 export const pageHeaderSubtitleClass = 'mt-0.5 text-sm text-muted-foreground';
 export const pageHeaderActionsClass = 'ml-auto flex flex-wrap items-center gap-2.5';
 

@@ -243,7 +243,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   return (
     <div className={boardViewClass}>
       <main className={boardMainClass}>
-        <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator" />
+        <PageHeader icon={<Layers />} title="Põllud" helpKey="view.fields" subtitle="Põldude üldandmed valitud hooajal: pindalad, omandisuhe, katastriüksused, mullastik ja operaator" />
 
         <div className={boardBodyClass}>
           <div className={boardContentClass}>

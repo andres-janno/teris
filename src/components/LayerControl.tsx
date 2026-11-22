@@ -16,7 +16,7 @@ import type { SoilSampleMetricKey } from '../types/soilSample';
 import type { EnrichedVehicle } from '../types/fleet';
 import { SOIL_METRIC_CONFIG, SOIL_LEVEL_COLOR, getSoilMetricColor, AGE_MAX_YEARS } from '../types/soilSample';
 import { BASE_MAPS } from '../services/maaAmetLayers';
-import { Button, Card, CardButton, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, cn } from './ui';
+import { Button, Card, CardButton, CheckboxField, RadioGroup, RadioField, clickOnActivationKey, SectionTitle, LegendItem, HelpHint, cn } from './ui';
 import { collapsedPanelButtonClass, loadingSpinnerInlineClass, mapPanelTitleClass } from './ui/variants';
 import { usePanelOpen } from '../lib/mapPrefs';
 
@@ -158,6 +158,7 @@ export const LayerControl: React.FC<LayerControlProps> = ({
         <div className={mapPanelTitleClass}>
           <Layers size={18} />
           <span>Kaardikihid</span>
+          <HelpHint helpKey="view.map" inline />
         </div>
         <Button variant="ghost" size="icon-sm" title="Ahenda kaardikihid" type="button" tabIndex={-1}>
           <ChevronUp size={16} />

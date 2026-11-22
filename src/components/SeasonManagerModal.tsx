@@ -308,6 +308,7 @@ export const SeasonManagerModal: React.FC<SeasonManagerModalProps> = ({
         <PageHeader
           icon={<CalendarDays />}
           title="Hooajad"
+          helpKey="view.seasons"
           subtitle="Hooaegade register: aasta, nimi ja märkmed. Importimisel luuakse puuduv hooaeg automaatselt."
           actions={!isAdding ? (
             <Button variant="primary" onClick={handleStartAdd}>

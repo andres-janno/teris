@@ -2065,7 +2065,7 @@ export const VehicleTracker: React.FC<VehicleTrackerProps> = ({
   return (
     <div className={boardViewClass}>
       <main className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-3 px-4 py-3">
-        <PageHeader icon={<Tractor />} title="Masinapark, haakeriistad ja muu tehnika" subtitle="Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus" />
+        <PageHeader icon={<Tractor />} title="Masinapark, haakeriistad ja muu tehnika" helpKey="view.fleet" subtitle="Sõidukite, haakeriistade, GPS seadmete ja haakimise registri haldus" />
         <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-auto">
           {bodyContent}
         </div>

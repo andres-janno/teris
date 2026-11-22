@@ -462,7 +462,7 @@ export const PoiManagerModal: React.FC<PoiManagerModalProps> = ({
   return (
     <div className={boardViewClass}>
       <main className={boardMainClass}>
-        <PageHeader icon={<MapPin />} title="Taristu" subtitle="Kuivatid, veevõtukohad, töökojad, tanklad ja laod" />
+        <PageHeader icon={<MapPin />} title="Taristu" helpKey="view.infrastructure" subtitle="Kuivatid, veevõtukohad, töökojad, tanklad ja laod" />
         <div className={boardBodyClass}>
           {bodyContent}
         </div>

@@ -609,6 +609,7 @@ export const RelatedPartiesModal: React.FC<RelatedPartiesModalProps> = ({
           <PageHeader
             icon={<Users />}
             title="Isikud"
+            helpKey="view.parties"
             subtitle="Maaomanikud, rendileandjad, masinajuhid, kontaktisikud ja koostööpartnerid"
             actions={!isEditing ? (
               <Button

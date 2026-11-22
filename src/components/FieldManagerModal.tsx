@@ -658,7 +658,7 @@ function cropSummaryKey(cropText: string): string {
   return (
     <div className={boardViewClass}>
       <main className={boardMainClass}>
-        <PageHeader icon={<Repeat />} title="Külvikord" subtitle="Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed" />
+        <PageHeader icon={<Repeat />} title="Külvikord" helpKey="view.rotation" subtitle="Aastatepõhine külvikord, PRIA pindalade muutused ja katastriandmed" />
         <div className={boardBodyClass}>
           {bodyContent}
         </div>

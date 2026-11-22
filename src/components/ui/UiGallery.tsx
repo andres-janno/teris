@@ -412,6 +412,7 @@ export const UiGallery: React.FC = () => {
 
         <Section title="Abi-ikoon (HelpHint)">
           <HelpHintPopover label="Põllu kood" html="<p>Põllu kood on <strong>PRIA põllu number</strong>. Hõlju või klõpsa ikoonil.</p>" />
+          <HelpHintPopover label="Import" html="<p>Impordi põlluraamat CSV-failist.</p>" guideHref="#guide.fields#import" />
           <Button variant="secondary">
             Nupp koos ikooniga
             <HelpHintPopover inline label="Nupu sees" html="<p>Ikoon nupu sees (<code>inline</code>): klõps ei käivita nuppu.</p>" />

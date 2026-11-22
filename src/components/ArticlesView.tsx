@@ -144,7 +144,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
   return (
     <div className={boardViewClass}>
       <main className={boardMainClass}>
-        <PageHeader icon={<Package />} title="Laoarvestus" subtitle="Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod" />
+        <PageHeader icon={<Package />} title="Laoarvestus" helpKey="view.stock" subtitle="Artiklid (kulumaterjalid, teenused, toodang), laokanded ja laod" />
 
         <div className={boardBodyClass}>
           <div className={boardContentClass}>
