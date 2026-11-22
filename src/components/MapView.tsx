@@ -20,7 +20,7 @@ import { api } from '../services/api';
 import { RADAR_RATE_SCALE } from '../services/radarScale';
 import { createSatelliteLayer, type ClipField, type SatelliteProductId } from '../services/satelliteLayer';
 import { SatellitePanel } from './SatellitePanel';
-import { Button, Card, ProgressBar } from './ui';
+import { Button, Card, ProgressBar, cn } from './ui';
 
 const NO_VEHICLE_TRACKS: CultivationPass[] = [];
 
@@ -1046,7 +1046,7 @@ export const MapView: React.FC<MapViewProps> = ({
   }, [selectedFieldKey, !!selectedFieldCard, mapInstance]);
 
   return (
-    <div className="map-wrapper">
+    <div className="relative h-full w-full">
       {selectedField && selectedFieldCard && (
         <div
           ref={fieldCardRef}
@@ -1058,7 +1058,7 @@ export const MapView: React.FC<MapViewProps> = ({
       )}
       <div
         ref={mapContainerRef}
-        className={`leaflet-map-container ${isAddPoiMode ? 'cursor-crosshair' : ''}`}
+        className={cn('leaflet-map-container h-full w-full', isAddPoiMode && 'cursor-crosshair')}
       />
 
       {/* Floating coordinates bar */}

@@ -1,5 +1,5 @@
 /* src/styles/login.css — sisselogimise ja parooli seadmise lehe oma palett (püsiv erand, kasutaja otsus 2026-11-13).
-   Kihis `legacy`: `!important` ülekirjutused võidavad ui komponentide utiliite (`!important` puhul võidab varasem kiht).
+   Kihis `exceptions`: `!important` ülekirjutused võidavad ui komponentide utiliite (`!important` puhul võidab varasem kiht).
    `.login-brand-word` (800, Outfit) on kaubamärk ja kasutusel ka adminis. */
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
@@ -89,7 +89,7 @@
   color: var(--login-ink);
 }
 
-/* Field-i silt (ui utiliit) võidab legacy-kihi värvi: !important hoiab lehe oma tooni */
+/* Field-i silt (ui utiliit) võidab erandite kihi värvi: !important hoiab lehe oma tooni */
 .login-page .login-card label {
   color: var(--login-ink-soft) !important;
 }

@@ -441,13 +441,16 @@ describe('audit katab vaated (etapp 4.0)', () => {
 });
 
 describe('vanad ülevaateklassid (etapp 4.1)', () => {
-  it('loeb vanad päise-, pealkirja-, plaadi-, legendi- ja finance-klassid; ui kaust ja admin-login välja', () => {
+  it('loeb vanad päise-, pealkirja-, plaadi-, legendi- ja finance-klassid ja admin-login; ui kaust välja', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="fullpage-board-header form-sub-header trip-tile finance-kpi-card finance-entry-card section-title" />' },
       { path: 'src/components/ui/X.tsx', content: '<div data-slot="section-title" className="fullpage-board-header" />' },
       { path: 'src/admin/B.tsx', content: '<div className="admin-login" />' },
     ]);
-    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 6 }]);
+    expect(r.legacyOverviewFiles).toEqual([
+      { path: 'src/components/A.tsx', count: 6 },
+      { path: 'src/admin/B.tsx', count: 1 },
+    ]);
   });
 });
 
@@ -554,7 +557,7 @@ describe('vanad päise, menüü ja väikeste vaadete klassid (etapp 4f)', () => 
   it('loeb kustutatud klassid tsx-is, mitte id-sid, jäävaid erandeid ega kommentaare', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="app-header header-brand fullpage-board-view" /> {/* weather-chart kommentaar */}' },
-      { path: 'src/components/B.tsx', content: '<Field htmlFor="login-name" /><div id="header-actions" className="login-page login-card year-col v-name has-crop sr-only help-content admin-login" />' },
+      { path: 'src/components/B.tsx', content: '<Field htmlFor="login-name" /><div id="header-actions" className="login-page login-card year-col v-name has-crop sr-only help-content" />' },
     ]);
     expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 3 }]);
   });

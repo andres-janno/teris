@@ -37,7 +37,7 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
   või vaate CSS-klassist. `npm run ui-audit` rida „Defineerimata CSS-muutujaid“ peab olema 0.
 - `npm run ui-audit` rida „Kasutuseta klasse (CSS)“ peab olema 0 — klassi eemaldamisel vaatest kustuta ka CSS-reegel.
 - Klassid liida `cn()`-ga (mitte template-stringiga) — see lahendab Tailwindi konfliktid.
-- `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `legacy` on
+- `!`-utiliit (nt `!p-0`) ei võida vana CSS-i `!important` reeglit (`!important` puhul võidab varasem kiht, `exceptions` on
   `utilities`-ist ees) — eemalda vana reegel.
 
 ## Dialoog
@@ -195,7 +195,7 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 
 Kustutatud klasside valvur: `RETIRED_4F` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
 
-CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admini `body` kerimine, `.admin-login` (admin kasutab brändisõnale `.login-brand-word`), teemamuutujad ja põhireeglid (4g).
+CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admin kasutab brändisõnale `.login-brand-word`, teemamuutujad ja põhireeglid (4g).
 
 ## Vana muutuja -> Tailwindi nimi
 
@@ -302,8 +302,8 @@ Reeglid:
   `Panel` = kaart + päis äärisega + sisu.
 - Vaate klass kaardil annab **asetuse, kirjasuuruse ja tekstivärvi** (position, z-index, flex, gap, margin, font-size, color); polstri ainult
   `padding="none"` korral. Välimuse (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
-  ääris, toonitud taust, erandnurk), vajab `!important` (`src/styles/*.css` on `legacy` kihis). `admin.css` on kihistamata
-  ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
+  ääris, toonitud taust, erandnurk), vajab `!important` (`login.css`, `rotation.css`, `help-content.css` ja `map.css` on kihis `exceptions`; `themes.css` on kihis `theme`, `base.css` kihis `base`).
+  Kihita (unlayered) CSS-i enam pole: `admin.css` kustus 4g-s.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.
 - Erandid (jäävad oma CSS-iga): `login-card`. Märgid/valikud (`cc-stat`; `reg-stat-pill` ja `register-crop-stat` kiibid saavad `ChipButton`, Task 3) ja Leafleti hüpikud ei ole kaardid; `detailSectionClass` ja admini `adminSubpanelClass`/`adminToolbarClass`/`adminCardFootClass` kannavad ainult asetust.
@@ -325,4 +325,4 @@ Reeglid:
 
 ## Admin
 
-Teenusepakkuja admin (`src/admin`) kasutab samu ui komponente. `admin.css` on kihistamata ja võidab utiliite — sinna ainult admini paigutus (päis, nav, vormi read), mitte nupu/tabeli/välja välimus. ui-audit mõõdab admini koos rakendusega; landing on eraldi read.
+Teenusepakkuja admin (`src/admin`) kasutab samu ui komponente. `admin.css` kustus 4g-s: admini paigutus on Tailwindi klassides (`adminUi.ts` ja vaated), kihita CSS-i pole. ui-audit mõõdab admini koos rakendusega; landing on eraldi read.

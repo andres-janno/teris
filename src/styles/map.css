@@ -1,20 +1,9 @@
 /* src/styles/map.css — Kaardivaate, Leafleti ja telemeetria spetsiifilised stiilid.
-   Imporditakse failis src/styles/app.css kihis `legacy`. */
+   Imporditakse failis src/styles/app.css kihis `exceptions`. */
 
-.map-wrapper {
-  width: 100%;
-  height: 100%;
-  position: relative;
-}
-
+/* Leafleti kaardi taust enne tiilide laadimist (hex pole token) */
 .leaflet-map-container {
-  width: 100%;
-  height: 100%;
   background: #0d131f;
-}
-
-.cursor-crosshair {
-  cursor: crosshair !important;
 }
 
 /* Asukoha lisamise režiimi banner (MapView): roosa tekst ja ääris peavad Card-i äärise üle võitma */

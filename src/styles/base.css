@@ -1,5 +1,5 @@
 /* src/styles/base.css — põhireeglid (kiht `base`, nõrgeim): lähtestus, body, nupu ja vormiväljade kirjatüüp.
-   Vanad reeglid (kiht `legacy`) ja Tailwindi utiliidid võidavad need. Preflight'i (Tailwindi vaikestiilid) jäetakse
+   Erandite reeglid (kiht `exceptions`) ja Tailwindi utiliidid võidavad need. Preflight'i (Tailwindi vaikestiilid) jäetakse
    teadlikult välja — see fail on selle asendaja. */
 
 * {

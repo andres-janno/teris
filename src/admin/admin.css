@@ -1,8 +1,0 @@
-/* NB: see fail on kihistamata ja võidab ui utiliite. Siin on ainult erandid; admini paigutus on Tailwindi klassides
-   (adminUi.ts ja vaated), nupu, tabeli ja välja välimus tuleb ui komponentidest (src/components/ui). */
-
-/* Põhirakendus keelab lehe kerimise (body overflow: hidden); admin on tavaline kerivate lehtedega leht */
-body { overflow: auto; }
-
-/* Sisselogimiskaardi ülaveeris on vaateakna kõrgusest (Tailwindi skaalas pole vh-vahet); laius ja külgveeris on LoginView klassides. */
-.admin-login { margin-top: 12vh; }

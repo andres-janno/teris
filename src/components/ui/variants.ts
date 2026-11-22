@@ -183,7 +183,7 @@ export const cardVariants = cva('border border-border', {
     // none: klassi ei anta — vaate CSS-i oma polster (nt väike kaardinäit) jääb kehtima.
     padding: { none: '', sm: 'p-3', md: 'p-4' },
     interactive: {
-      // Nupu lähtestus (font, text-align, color) on src/styles/base.css-is (button[data-slot="card"]), et vaate klass (legacy) kirjasuuruse kaotamata võidaks.
+      // Nupu lähtestus (font, text-align, color) on src/styles/base.css-is (button[data-slot="card"]), et vaate klass (kiht `exceptions`) kirjasuuruse kaotamata võidaks.
       true: 'cursor-pointer transition-colors hover:bg-card-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50',
       false: '',
     },

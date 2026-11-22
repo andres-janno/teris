@@ -1,19 +1,20 @@
 /* src/styles/app.css — rakenduse stiilide sisenemispunkt.
-   Kihid: kihistamata CSS võidaks alati kihis olevat, seega erandite CSS (login.css, rotation.css, help-content.css,
-   map.css) on kihis `legacy` (enne `utilities`-t), muidu ei mõjuks ükski Tailwindi vahe.
-   Leaflet on `legacy` JÄREL: kihtide vahel võidab hilisem kiht olenemata spetsiifilisusest.
-   map.css-i enda Leafleti ülekirjutused on `!important`, ja `!important` puhul võidab VARASEM kiht — need
-   kehtivad endiselt, kuigi `legacy` on `vendor`-ist ees.
-   Preflight (Tailwindi vaikestiilid) jäetakse teadlikult välja. */
-@layer theme, base, legacy, vendor, components, utilities;
+   Failid (src/styles/): themes.css (teemamuutujad, kiht theme), base.css (põhireeglid, kiht base), login.css, rotation.css,
+   help-content.css, map.css (püsivad erandid, kiht exceptions). Muu kujundus on Tailwindi klassides (ui/ + vaated).
+   Kihid: kihistamata CSS võidaks alati kihis olevat, seega erandid on kihis `exceptions` (enne `utilities`-t) ja kihita CSS-i
+   ei ole. Leaflet on `exceptions` JÄREL: kihtide vahel võidab hilisem kiht olenemata spetsiifilisusest, seega kui Leaflet
+   oleks ees, tühistaks `*`-reegel Leafleti veeriste/polsterduste reeglid. Erandite endi Leafleti ülekirjutused on
+   `!important`, ja `!important` puhul võidab VARASEM kiht — need kehtivad endiselt, kuigi `exceptions` on `vendor`-ist ees.
+   Preflight (Tailwindi vaikestiilid) jäetakse teadlikult välja; base.css asendab selle. */
+@layer theme, base, exceptions, vendor, components, utilities;
 
 @import 'tailwindcss/theme.css' layer(theme);
 @import './themes.css' layer(theme);
 @import './base.css' layer(base);
-@import './login.css' layer(legacy);
-@import './rotation.css' layer(legacy);
-@import './help-content.css' layer(legacy);
-@import './map.css' layer(legacy);
+@import './login.css' layer(exceptions);
+@import './rotation.css' layer(exceptions);
+@import './help-content.css' layer(exceptions);
+@import './map.css' layer(exceptions);
 @import 'leaflet/dist/leaflet.css' layer(vendor);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
 
@@ -242,4 +243,8 @@
   &[data-selected] {
     box-shadow: 0 0 0 2px var(--chip-accent, var(--border-card));
   }
+}
+/* Admini sisselogimiskaardi ülaveeris on vaateakna kõrgusest (Tailwindi skaalas pole vh-vahet); laius ja külgveeris on LoginView klassides. */
+@utility login-offset-top {
+  margin-top: 12vh;
 }

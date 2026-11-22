@@ -113,7 +113,7 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   // KPI ja statistika plaadid
   'trip-tile',
   // sektsioonikastid
-  // teenusepakkuja admin (admin-login jääb CSS-i)
+  // teenusepakkuja admin (admin-login kustus 4g-s: admin.css kustutatud)
   'admin-login', 'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
@@ -193,6 +193,8 @@ export const RETIRED_4E: readonly string[] = [
   'work-entry-presets-label', 'work-entry-progress', 'work-entry-progress-head', 'work-entry-section', 'work-entry-top-grid',
   'work-entry-unit', 'work-entry-warning', 'work-full-name', 'year-crop', 'year-crop-edit-icon', 'year-crop-name', 'year-shape-btn',
 ];
+// 4g: kustutatud klassid (T8 täidab loendi lõpuni).
+export const RETIRED_4G: readonly string[] = ['admin-login', 'map-wrapper'];
 // 4f: päise, menüüde, ribade, tugipaneeli ja rakenduse kesta kustutatud klassid (etapp 4f). Täpsed nimed; `teris-logo` puudub teadlikult (logofailide nimi `teris-logo.svg`).
 export const RETIRED_4F: readonly string[] = [
   'admin-brand-word', 'app-container', 'app-header', 'db-error-banner', 'header-actions', 'header-account', 'header-account-chevron', 'header-account-content',
@@ -219,7 +221,7 @@ export const RETIRED_4F: readonly string[] = [
   'stock-doc-amount', 'stock-doc-unit', 'stock-doc-unit-price', 'stock-doc-footer-row', 'stock-doc-modal', 'article-categories-group',
   'article-categories-add', 'article-categories-modal', 'article-form-modal', 'article-form-body', 'article-npk-inputs', 'article-merge-info',
   'harvest-lot-body', 'harvest-lot-head', 'harvest-lot-tiles', 'harvest-lot-section', 'harvest-lot-add', 'harvest-lot-add-weighing', 'harvest-lot-add-cost',
-  // 4f järelkorjatud: Dropzone, vihjed, üleslaadimise eelvaade, AI võtmed, kasutajate admin ja teenusepakkuja admin (admin-login jääb CSS-i, seda ei loe).
+  // 4f järelkorjatud: Dropzone, vihjed, üleslaadimise eelvaade, AI võtmed, kasutajate admin ja teenusepakkuja admin (admin-login kustus 4g-s koos admin.css-iga, RETIRED_4G).
   'ai-instructions-footer', 'ai-instructions-input', 'ai-key-created', 'ai-key-help', 'ai-key-new', 'ai-key-table', 'ai-key-table-wrap', 'ai-key-url',
   'detail-section', 'dropzone', 'dropzone-icon', 'dropzone-state', 'file-reupload-hint', 'hint-text', 'is-block', 'notes-text', 'operator-field', 'p-crop',
   'p-ha', 'parsed-preview-box', 'preview-field-row', 'preview-fields-scroll', 'preview-header', 'upload-format-list', 'users-admin-mode',
@@ -234,7 +236,7 @@ export const RETIRED_4F: readonly string[] = [
   'visits-axis', 'visits-bar', 'visits-chart', 'visits-grid', 'visits-tip',
 ];
 const LEGACY_OVERVIEW = new RegExp(
-  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F].join('|')})(?![\\w-])`,
+  `(?<![\\w-])(?<!\\b(?:id|htmlFor)=["'{])(${[String.raw`section-title|section-subtitle|form-sub-header|form-section-title|fullpage-board-header|fullpage-title-wrap|fullpage-subtitle|fleet-board-header|fleet-title-wrap|fleet-subtitle|trip-tile(?:-label|-value|-unit)?|admin-stat|finance-[a-z][a-z-]*|soil-legend-item|soil-legend-swatch|trip-timesplit-item|trip-timesplit-swatch|fmc-row|fmc-crop|fw-[a-z][a-z0-9-]*`, ...RETIRED_4C, ...RETIRED_4D, ...RETIRED_4E, ...RETIRED_4F, ...RETIRED_4G].join('|')})(?![\\w-])`,
   'g',
 );
 const CSS_RULE = /([^{}]+)\{([^{}]*)\}/g;
