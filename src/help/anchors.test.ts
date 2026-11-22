@@ -22,6 +22,21 @@ describe('nextSlug ja extractAnchors', () => {
     expect([nextSlug(seen, 'Import'), nextSlug(seen, 'Import'), nextSlug(seen, 'Import'), nextSlug(seen, 'Muu')]).toEqual(['import', 'import-2', 'import-3', 'muu']);
   });
 
+  it('slugid on kordumatud ka juhul Import, Import, Import 2', () => {
+    const seen = new Map<string, number>();
+    const out = ['Import', 'Import', 'Import 2', 'Import'].map((t) => nextSlug(seen, t));
+    expect(out).toEqual(['import', 'import-2', 'import-2-2', 'import-3']);
+    expect(new Set(out).size).toBe(out.length);
+  });
+
+  it('ankur on kuni 80 märki ka järelliitega', () => {
+    const seen = new Map<string, number>();
+    const long = 'a'.repeat(200);
+    const out = [nextSlug(seen, long), nextSlug(seen, long)];
+    expect(out.every((s) => s.length <= 80)).toBe(true);
+    expect(out[0]).not.toBe(out[1]);
+  });
+
   it('extractAnchors võtab ainult h3, tekst ilma siltide ja olemitega', () => {
     const html = '<p>x</p><h3>Kuidas <strong>importida</strong>?</h3><h4>Alam</h4><h3 class="a">Hea&nbsp;teada &amp; nipid</h3><h3>Kuidas importida?</h3>';
     expect(extractAnchors(html)).toEqual([

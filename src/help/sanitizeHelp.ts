@@ -2,6 +2,7 @@
 // h3 saab ankru (id `g-<pealkirjast tuletatud lühinimi>`, vt anchors.ts); `#guide.<peatükk>[#ankur]` lingid jäävad rakenduse sisesteks.
 import DOMPurify from 'dompurify';
 import { anchorDomId, nextSlug } from './anchors.ts';
+import { isValidGuideLink } from './guideLink.ts';
 
 const ALLOWED_TAGS = ['p', 'br', 'strong', 'b', 'em', 'i', 'u', 'h3', 'h4', 'ul', 'ol', 'li', 'a'];
 const ALLOWED_ATTR = ['href', 'target', 'rel', 'id'];
@@ -17,9 +18,15 @@ function ensureHook() {
     if (node.tagName === 'A') {
       const href = node.getAttribute('href') ?? '';
       if (href.startsWith('#')) {
-        // rakenduse sisene link (peatükk/ankur): jääb samasse aknasse
-        node.removeAttribute('target');
-        node.removeAttribute('rel');
+        // ainult `#guide.<olemasolev peatükk>[#ankur]`; muu `#`-link kaotab href-i (tekst jääb)
+        if (isValidGuideLink(href.slice(1))) {
+          node.removeAttribute('target');
+          node.removeAttribute('rel');
+        } else {
+          node.removeAttribute('href');
+          node.removeAttribute('target');
+          node.removeAttribute('rel');
+        }
       } else {
         // välislingid avanevad alati uues aknas ega anna avajale ligipääsu
         node.setAttribute('target', '_blank');
@@ -38,6 +45,6 @@ export function sanitizeHelp(html: string): string {
   return DOMPurify.sanitize(html, {
     ALLOWED_TAGS,
     ALLOWED_ATTR,
-    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|#|\/)/i
+    ALLOWED_URI_REGEXP: /^(?:https?:|mailto:|tel:|#|\/(?!\/))/i
   });
 }

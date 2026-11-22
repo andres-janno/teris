@@ -49,6 +49,22 @@ describe('sanitizeHelp lingid', () => {
     expect(ext.getAttribute('rel')).toBe('noopener noreferrer');
   });
 
+  it('muu #-link kaotab href-i, tekst jääb', () => {
+    const long = '#guide.fields#' + 'a'.repeat(81);
+    for (const href of ['#foo', '#guide.olematu', '#guide.fields#a#b', '#guide', long]) {
+      const box = parse(sanitizeHelp(`<a href="${href}">tekst</a>`));
+      const a = box.querySelector('a')!;
+      expect(a.hasAttribute('href')).toBe(false);
+      expect(a.textContent).toBe('tekst');
+    }
+  });
+
+  it('data:, //host ja onclick', () => {
+    expect(parse(sanitizeHelp('<a href="data:text/html,x">x</a>')).querySelector('a')!.hasAttribute('href')).toBe(false);
+    expect(parse(sanitizeHelp('<a href="//evil.example">x</a>')).querySelector('a')!.hasAttribute('href')).toBe(false);
+    expect(parse(sanitizeHelp('<a href="/abc" onclick="alert(1)">x</a>')).querySelector('a')!.hasAttribute('onclick')).toBe(false);
+  });
+
   it('ohtlikud lingid ja sildid eemaldatakse', () => {
     const box = parse(sanitizeHelp('<a href="javascript:alert(1)">x</a><script>alert(1)</script><img src="x" onerror="alert(1)">'));
     expect(box.querySelector('a')!.hasAttribute('href')).toBe(false);
