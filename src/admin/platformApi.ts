@@ -177,7 +177,9 @@ async function errorMessage(res: Response, fallback: string): Promise<string> {
   return typeof data?.error === 'string' ? data.error : fallback;
 }
 
-export type HelpArticleRow = { key: string; html: string; updatedAt: string; updatedBy: string | null };
+export type HelpArticleRow = { key: string; html: string; guideLink: string | null; updatedAt: string; updatedBy: string | null };
+export type HelpVersionRow = { id: number; createdAt: string; createdBy: string | null; guideLink: string | null };
+export type HelpVersionDetail = HelpVersionRow & { html: string };
 export type McpInstructions = { value: string; isDefault: boolean; defaultValue: string; updatedBy: string | null; updatedAt: string | null; maxLength: number };
 
 export interface LandingStats {
@@ -264,7 +266,12 @@ export const platformApi = {
   listDeviceRegistrations: (limit = 50) => request<DeviceRegistration[]>('GET', `/devices/registrations?limit=${limit}`),
   releaseDevice: (id: string) => request<unknown>('POST', `/devices/${enc(id)}/release`, {}),
   listHelp: () => request<HelpArticleRow[]>('GET', '/help'),
-  saveHelp: (key: string, html: string) => request<{ success: true; deleted: boolean }>('PUT', `/help/${enc(key)}`, { html }, 'Juhendi salvestamine ebaõnnestus'),
+  saveHelp: (key: string, html: string, guideLink: string | null = null) =>
+    request<{ success: true; deleted: boolean }>('PUT', `/help/${enc(key)}`, { html, guideLink }, 'Juhendi salvestamine ebaõnnestus'),
+  listHelpVersions: (key: string) => request<HelpVersionRow[]>('GET', `/help/${enc(key)}/versions`, undefined, 'Ajaloo laadimine ebaõnnestus'),
+  getHelpVersion: (key: string, id: number) => request<HelpVersionDetail>('GET', `/help/${enc(key)}/versions/${id}`, undefined, 'Versiooni laadimine ebaõnnestus'),
+  restoreHelpVersion: (key: string, id: number) =>
+    request<{ success: true; deleted: boolean }>('POST', `/help/${enc(key)}/versions/${id}/restore`, {}, 'Versiooni taastamine ebaõnnestus'),
   getMcpInstructions: () => request<McpInstructions>('GET', '/mcp-instructions'),
   saveMcpInstructions: (value: string) => request<McpInstructions>('PUT', '/mcp-instructions', { value }, 'Juhise salvestamine ebaõnnestus'),
   resetMcpInstructions: () => request<McpInstructions>('DELETE', '/mcp-instructions', undefined, 'Vaikejuhise taastamine ebaõnnestus'),

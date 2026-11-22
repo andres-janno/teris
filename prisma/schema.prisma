@@ -1560,15 +1560,30 @@ model SupportSession {
   @@map("support_sessions")
 }
 
-// Platvormi tabel (authDb): kasutajajuhendid; võtmed on koodis (src/help/helpRegistry.ts)
+// Platvormi tabel (authDb): kasutajajuhendid ja peatükid; võtmed on koodis (src/help/helpRegistry.ts, guideChapters.ts)
 model HelpArticle {
   key       String   @id
   html      String
+  guideLink String?  @map("guide_link") // kohtjuhendi seotud peatükk: guide.<peatükk>[#ankur]
   updatedBy String? // platvormi kasutajanimi
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
 
   @@map("help_articles")
+}
+
+// Platvormi tabel (authDb): juhendi versioonid; iga salvestus (ka taastamine ja eemaldamine) lisab rea,
+// alles jääb 50 viimast võtme kohta. Võtmega ei seota FK-d: versioonid jäävad alles ka eemaldatud juhendil.
+model HelpArticleVersion {
+  id        Int      @id @default(autoincrement())
+  key       String
+  html      String
+  guideLink String?  @map("guide_link")
+  createdBy String?  @map("created_by") // platvormi kasutajanimi või „mustand“
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@index([key, id])
+  @@map("help_article_versions")
 }
 
 // Platvormi tekstiseaded, mida teenusepakkuja muudab admin.teris.ee-s (nt AI juhis)

@@ -2,6 +2,8 @@
 // Uus koht: lisa siia kirje ja pane komponenti <HelpHint helpKey="…" />. Admin.teris.ee „Juhendid“
 // vaade näitab kõiki siinseid kohti; tekst ise on andmebaasis (help_articles) ja seda muudab teenusepakkuja.
 
+import { GUIDE_MAX_LENGTH, isGuideChapterKey } from './guideChapters.ts';
+
 export interface HelpSpot {
   /** Rakenduse ala, mille järgi admin-vaade kohad rühmitab */
   area: string;
@@ -24,3 +26,6 @@ export const isHelpKey = (key: string): key is HelpKey => Object.prototype.hasOw
 
 /** Juhendi HTML-i suurim pikkus (märkides) */
 export const HELP_MAX_LENGTH = 20000;
+
+/** Teksti suurim pikkus võtme kohta: peatükk kuni 100 000, kohtjuhend 20 000 märki */
+export const helpMaxLength = (key: string): number => (isGuideChapterKey(key) ? GUIDE_MAX_LENGTH : HELP_MAX_LENGTH);

@@ -20,9 +20,12 @@ import { getMcpInstructionsAdmin, saveMcpInstructions, resetMcpInstructions } fr
 import { loadPoint, isWeatherLoadRunning, FAIL_WARN } from './weather/loader.ts';
 import { credentialsByPoint } from './weather/credentials.ts';
 import { deleteTenantData } from './tenantDelete.ts';
-import { listHelpArticles, saveHelpArticle, sendHelpResult, HELP_PLATFORM_ROUTE, HELP_KEY_ERROR } from './helpArticles.ts';
+import { listHelpArticles, saveHelpArticle, sendHelpResult, listHelpVersions, getHelpVersion, restoreHelpVersion, HELP_PLATFORM_ROUTE, HELP_VERSIONS_ROUTE, HELP_KEY_ERROR, HELP_VERSION_ERROR } from './helpArticles.ts';
 
 type PlatformUser = { id: string; username: string };
+
+/** Juhendi PUT: peatükk kuni 100 000 märki (UTF-8 + JSON-i põgenused), seega suurem kui üldine 64 KB */
+const HELP_BODY_MAX_BYTES = 512 * 1024;
 
 class HttpError extends Error {
   status: number;
@@ -357,10 +360,10 @@ async function releaseDevice(id: string, pu: PlatformUser) {
   });
 }
 
-async function readBody(req: IncomingMessage): Promise<any> {
+async function readBody(req: IncomingMessage, maxBytes = 64 * 1024): Promise<any> {
   if (!hasRequestBody(req)) return {};
   try {
-    return await parseBody(req, 64 * 1024);
+    return await parseBody(req, maxBytes);
   } catch {
     throw new HttpError(400, 'Vigane päring');
   }
@@ -679,7 +682,17 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
   const hr = HELP_PLATFORM_ROUTE.exec(pathname);
   if (hr && method === 'PUT') {
     const key = decodeId(hr[1], HELP_KEY_ERROR);
-    return sendHelpResult(res, await saveHelpArticle(key, (await readBody(req))?.html, pu));
+    return sendHelpResult(res, await saveHelpArticle(key, (await readBody(req, HELP_BODY_MAX_BYTES)) ?? {}, pu));
+  }
+  const hv = HELP_VERSIONS_ROUTE.exec(pathname);
+  if (hv) {
+    const key = decodeId(hv[1], HELP_KEY_ERROR);
+    if (!hv[2] && method === 'GET') return json(res, await listHelpVersions(key));
+    if (hv[2] && !hv[3] && method === 'GET') {
+      const v = await getHelpVersion(key, Number(hv[2]));
+      return v ? json(res, v) : json(res, { error: HELP_VERSION_ERROR }, 404);
+    }
+    if (hv[2] && hv[3] && method === 'POST') return sendHelpResult(res, await restoreHelpVersion(key, Number(hv[2]), pu));
   }
   if (pathname === '/api/platform/mcp-instructions') {
     if (method === 'GET') return json(res, await getMcpInstructionsAdmin());
