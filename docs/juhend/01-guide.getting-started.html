@@ -1,0 +1,143 @@
+<p>See peatükk näitab, kuidas Terises sisse logida ja kuidas ekraan on üles ehitatud: menüü, hooaja valik, otsing ja filtrid, teema ning juhendi enda avamine. Pärast seda leiad iga vaate üles ja tead, mida päise nupud teevad.</p>
+
+<h3>Mis on Teris</h3>
+<p>Teris on põllumajandusettevõtte töövahend. Ühes kohas on põllud kaardil, külvikord, põllutööd, laoarvestus, masinad ja PRIA andmed. Sa ei pea enam pidama eraldi tabeleid ja vihikuid. Ettevõtte juht näeb tervikpilti, agronoom planeerib ja kannab tööd sisse samast andmestikust.</p>
+
+<h3>Kuidas sisse logida</h3>
+<ol>
+<li>Ava Terise aadress ja sisesta <strong>Kasutajanimi</strong> ja <strong>Parool</strong>.</li>
+<li>Vajuta <strong>Logi sisse</strong>.</li>
+<li>Kui sisselogimine ebaõnnestub, näed lehel punast teadet. Parooliväli tühjendatakse, kirjuta see uuesti.</li>
+</ol>
+<p><strong>Esimene kord, kutse e-postiga:</strong> uus kasutaja saab kirja pealkirjaga „Kutse TERIS rakendusse“. Kirjas on link, millega määrad ise parooli. Link kehtib 7 päeva ja töötab ainult ühe korra. Avanenud lehel sisesta <strong>Uus parool (vähemalt 10 märki)</strong>, korda seda väljal <strong>Korda parooli</strong> ja vajuta <strong>Määra parool</strong>. Seejärel jõuad sisselogimise lehele ja saad sisse logida. Kui link on aegunud või juba kasutatud, näed sellest teadet. Küsi siis uus link sisselogimise lehelt või adminilt.</p>
+
+<h3>Kuidas parooli uuendada, kui see ununes</h3>
+<ol>
+<li>Vajuta sisselogimise lehel <strong>Unustasid parooli?</strong></li>
+<li>Kirjuta väljale <strong>Kasutajanimi või e-post</strong> oma kasutajanimi või e-posti aadress.</li>
+<li>Vajuta <strong>Saada link</strong>. Teris vastab: „Kui konto on olemas, saatsime e-posti aadressile parooli määramise lingi.“ Vastus on sama ka siis, kui kontot pole. Nii ei saa võõras teada, kes on kasutaja.</li>
+<li>Ava kiri „TERIS parooli määramine“ ja määra lingi kaudu uus parool nagu kutse puhul.</li>
+</ol>
+<p><strong>Hea teada:</strong> parooli lähtestamise link kehtib ainult 1 tund ja töötab ühe korra. Kui kiri ei tule, vaata rämpsposti kausta või palu admin saata link uuesti (Kasutajad vaates).</p>
+
+<h3>Kuidas parooli muuta</h3>
+<ol>
+<li>Vajuta paremal ülal oma nimele.</li>
+<li>Vali <strong>Muuda parooli</strong>.</li>
+<li>Sisesta <strong>Praegune parool</strong>, <strong>Uus parool (vähemalt 10 märki)</strong> ja <strong>Korda uut parooli</strong>. Uus parool peab erinema praegusest.</li>
+<li>Vajuta <strong>Salvesta</strong>.</li>
+</ol>
+<p><strong>Hea teada:</strong> pärast muutmist tuleb teistes seadmetes uuesti sisse logida. Kui admin on sulle andnud ajutise parooli, avab Teris pärast sisselogimist akna <strong>Määra uus parool</strong>. Sellest ei pääse mööda, enne kui oled uue parooli pannud (või vajutanud <strong>Logi välja</strong>).</p>
+
+<h3>Kuidas ekraan on üles ehitatud</h3>
+<p>Päis on ekraani ülaservas, ja see on igas vaates sama. Vasakul on logo, keskel peamenüü, paremal operaatori valik, kasutajamenüü ja väljalogimise nupp. Logole klõpsates jõuad tagasi kaardile.</p>
+<!-- KONTROLLI: Juhend-nuppu päises praegu ei ole (src/components/Header.tsx). Kirjeldatud nii, nagu spec seda plaanib. -->
+<p>Peamenüü kirjed ja see, milleks need on:</p>
+<ul>
+<li><a href="#guide.map"><strong>Kaart</strong></a>: põllud kaardil, kihid, satelliit ja sõidud.</li>
+<li><a href="#guide.fields"><strong>Põllud</strong></a>: põldude register, PRIA ja põlluraamatu import, omand ja rent.</li>
+<li><a href="#guide.crops"><strong>Kultuurid</strong></a>: kultuuride ja sortide register.</li>
+<li><a href="#guide.rotation"><strong>Külvikord</strong></a>: mis kultuur millisel põllul igal aastal kasvab või kasvas.</li>
+<li><a href="#guide.works"><strong>Põllutööd</strong></a>: tööde planeerimine ja tehtud tööde kanded.</li>
+<li><a href="#guide.stock"><strong>Laoarvestus</strong></a>: artiklid, laod, laokanded ja saagipartiid.</li>
+<li><a href="#guide.fleet"><strong>Tehnika</strong></a>: masinad ja haakeriistad. GPS-seadmete moodulil ka seadmed ja sõidud (<a href="#guide.telemetry">GPS-seadmed ja sõidud</a>).</li>
+<li><a href="#guide.infrastructure"><strong>Taristu</strong></a>: kuivatid, hoidlad ja muud objektid kaardil.</li>
+<li><a href="#guide.parties"><strong>Isikud</strong></a>: töötajad, maaomanikud ja partnerid.</li>
+<li><a href="#guide.weather"><strong>Ilm</strong></a>: ilmaandmed põllu kaupa. Kirje on menüüs ainult siis, kui ettevõttel on ilmamoodul.</li>
+<li><a href="#guide.seasons"><strong>Hooajad</strong></a>: hooaja loomine ja sulgemine.</li>
+</ul>
+<p>PRIA andmetest ja kasutajate haldusest on eraldi peatükid: <a href="#guide.pria">PRIA</a> ja <a href="#guide.settings">Kasutajad ja seaded</a>. Need ei ole peamenüüs.</p>
+
+<h3>Kuidas valida operaatorit</h3>
+<p>Päises paremal on nupp <strong>Operaator</strong>. Vaikimisi on valitud <strong>Kõik operaatorid</strong>. Operaator on ettevõte, mille nimel põlde PRIA-s peetakse. Kui sul on neid mitu, saad vaadata ühe või mitme põllud.</p>
+<ol>
+<li>Vajuta nuppu <strong>Operaator</strong>.</li>
+<li>Märgi soovitud operaatorid. Menüü jääb lahti, nii et mitu valikut käib järjest.</li>
+<li>Algseisu tagasi saad valikuga <strong>Kõik operaatorid</strong>.</li>
+</ol>
+<p><strong>Hea teada:</strong> valik mõjutab kaarti, statistikat ja registreid. Kui operaatoreid pole, ütleb menüü: „Operaatoreid pole (seotud isikute registris roll „Operaator“)“. Operaatori lisad vaates <strong>Isikud</strong>.</p>
+<!-- KONTROLLI: Operaatori valik on päises alati, kui App.tsx annab onOperatorFilterChange. Kas nupp peidetakse kunagi, kui operaatoreid on ainult üks? Koodis sellist tingimust ei näe. -->
+
+<h3>Kasutajamenüü</h3>
+<p>Päises paremal on sinu nimi. Sellele klõpsates avaneb menüü. Üleval näed oma nime, kasutajanime ja ettevõtet. Menüüs on:</p>
+<ul>
+<li><strong>Muuda parooli</strong>.</li>
+<li><strong>AI ühendus</strong>: Terise andmete ühendamine AI-abilisega (<a href="#guide.settings">Kasutajad ja seaded</a>).</li>
+<li><strong>Kasutajad</strong>: kasutajate lisamine ja kutsumine. Näeb ainult admin.</li>
+<li><strong>Ilmaandmete ühendus</strong>: ainult admin ja ainult ilmamooduliga ettevõttel.</li>
+<li><strong>Tume režiim</strong> või <strong>Hele režiim</strong>: vahetab teemat (vaata allpool).</li>
+</ul>
+<p>Menüü all on rakenduse versioon, autoriõigus ja andmebaasiühenduse märk. Menüü kõrval on eraldi nupp <strong>Logi välja</strong>.</p>
+
+<h3>Hooaja ehk aasta valik</h3>
+<p>Terise andmed on aasta kaupa: iga aasta põllud, kultuurid, tööd ja laoseis on omaette. Seetõttu näitab iga vaade ühte valitud aastat. Valik on ühine, st kui vahetad aastat ühes vaates, jääb see samaks ka teistes.</p>
+<ol>
+<li>Kaardil on vasakul üleval paneel <strong>Hooaeg:</strong> aastanuppudega. Samuti saad sealt kultuuri järgi filtreerida.</li>
+<li>Vaadetes <strong>Põllud</strong>, <strong>Külvikord</strong>, <strong>Kultuurid</strong>, <strong>Põllutööd</strong> ja <strong>Laoarvestus</strong> on aastanupud lehe ülaosas, <strong>Hooaeg:</strong> sildi kõrval.</li>
+<li>Vajuta soovitud aastat.</li>
+</ol>
+<p><strong>Hea teada:</strong></p>
+<ul>
+<li>Teris avab alguses jooksva aasta. Kui jooksva aasta hooaega pole loodud, avab ta lähima olemasoleva.</li>
+<li>Nuppudes on aastad, mis on hooajana loodud: vaikehooaeg −4 kuni +3 aastat. Uue aasta lisamiseks vaata <a href="#guide.seasons">Hooajad</a>.</li>
+<li>Lukuga märgitud aasta on suletud muudatusteks. Seda saad vaadata, aga mitte muuta.</li>
+<li>Vaated <strong>Isikud</strong> ja <strong>Taristu</strong> ei vaheta aastat. <strong>Isikud</strong> arvestab valitud aastat (näiteks põllu omandit), kuid aastanuppe seal pole. Vaates <strong>Ilm</strong> on aastate võrdlus omaette tabelis.</li>
+</ul>
+<!-- KONTROLLI: Tehnika ja Taristu vaates aastanuppe koodis ei leidnud; kas Tehnika vaade (sõidud) kasutab valitud aastat, kontrolli. Samuti kas Ilm vaates on aasta valik, mitte ainult võrdlus. -->
+
+<h3>Otsing ja filtrid</h3>
+<p>Otsinguväli on registrites, kus on palju ridu. Kirjuta sõna ja tabel kitseneb jooksvalt. Otsing on vaadetes:</p>
+<ul>
+<li><strong>Põllud</strong>: nime, numbri, katastri, omaniku või operaatori järgi.</li>
+<li><strong>Külvikord</strong>: põllu nime, koodi, katastri või omaniku järgi.</li>
+<li><strong>Kultuurid</strong>: kultuuri, sordi, aretaja või PRIA koodi järgi.</li>
+<li><strong>Põllutööd</strong>: põllu või töö järgi.</li>
+<li><strong>Laoarvestus</strong>, leht <strong>Artiklid</strong>: materjali nime, tootja või märkuse järgi.</li>
+<li><strong>Isikud</strong>: nime, isikukoodi, telefoni, katastri või märkuse järgi.</li>
+</ul>
+<p>Lisaks on mitmel vaatel valikunupud (näiteks <strong>Põllud</strong> vaates omandivorm) ja rippmenüüd.</p>
+<p><strong>X-nupp:</strong> kui filter või otsing on aktiivne, ilmub välja lõppu väike X. Üks klõps tühjendab selle ühe filtri. Nii ei pea sa tabelit uuesti avama, et näha kõiki ridu.</p>
+<!-- KONTROLLI: Finantsvaates (FinanceModal) on samuti otsing, kuid seda ei ole menüüst otse; ei kirjeldanud. Kontrolli, kus see avatakse. Samuti Tehnika, Sõidud ja Seadmete seoste lehtedel kasutatakse FilterClear'i; täpsed filtrid kirjelda vastavas peatükis. -->
+
+<h3>Hele ja tume teema</h3>
+<p>Terisel on kaks välimust. Vaheta neid kasutajamenüüst: <strong>Tume režiim</strong> lülitab tumeda sisse, <strong>Hele režiim</strong> tagasi heledale. Teris jätab valiku sinu brauserisse meelde. Teises arvutis või brauseris tuleb valik uuesti teha.</p>
+
+<h3>Kitsas ekraan ja telefon</h3>
+<p>Kui ekraani laius on alla 1280 piksli, muutub Terise logo väikeseks ikooniks. Täislogo koos nimega on näha laiemal ekraanil.</p>
+<p>Kui laius on alla 1656 piksli, peidab Teris päises operaatori nupu ja kasutajamenüü nupu teksti ning näitab ainult ikooni. Nupud töötavad sama moodi: vajuta ikooni ja menüü avaneb. Vahepeal näed operaatori ikoonil väikest täppi, kui mõni operaator on valitud.</p>
+<p>Peamenüü jääb alles. Kui kõik kirjed ei mahu ära, saad menüüd külgsuunas kerida. Kirjete tekst ei kao.</p>
+<!-- KONTROLLI: Päise murdepunktid koodis: logo xl (Tailwind xl = 1280px), nupud max-[1656px]. Telefonile eraldi menüüd (hamburger) ei leidnud; kas vaated ise on telefonis kasutatavad (tabelid, kaart), vaata ekraanipiltidelt. -->
+
+<h3>Juhend ja „?“-ikoonid</h3>
+<p>Selles juhendis ei pea sa otsima. Terises on kaks lühiteed.</p>
+<ul>
+<li><strong>Juhend</strong>: päises, kasutajamenüü kõrval on nupp <strong>Juhend</strong> raamatu ikooniga. See avab täisekraani vaate, kus vasakul on peatükkide loend ja paremal tekst. Ülal saab otsida kõigi peatükkide seast. Kitsal ekraanil on loend rippmenüüna.</li>
+<li><strong>„?“-ikoon</strong>: vaate pealkirja kõrval on väike „?“. Vajuta sellele ja avaneb lühike selgitus. Seal on link <strong>Loe juhendist →</strong>, mis viib vastavasse peatükki.</li>
+</ul>
+<p><strong>Hea teada:</strong> peatükid „GPS-seadmed ja sõidud“ ja „Ilm“ on loendis ainult siis, kui ettevõttel on vastav moodul. Peatükk, mille tekst pole veel valmis, ütleb „Juhend on koostamisel“.</p>
+<!-- KONTROLLI: Juhendi nupp ja „Loe juhendist →“ link on plaanis, aga koodis veel puuduvad (Header.tsx ei sisalda Juhend-nuppu, HelpHint on praegu ainult 4 kohas Põllud ja Külvikord vaates import- ja eksportnuppude juures). Enne avaldamist kontrolli, et nupu ja lingi sõnastus ühtib rakendusega. -->
+
+<h3>Rollid: mida kes näeb</h3>
+<ul>
+<li><strong>Admin</strong> haldab kasutajaid ja saab importida PRIA failid, põlluraamatu ja mullaproovid. Ta näeb kasutajamenüüs punkti <strong>Kasutajad</strong> ja näeb ning muudab kõike, mida finantsjuht.</li>
+<li><strong>Finantsjuht</strong> näeb kulusid ja hindu: laoarvestuses on tal lisaks artiklitele ka <strong>Laokanded</strong>, <strong>Saagipartiid</strong> ja <strong>Laod</strong>. Ta näeb ka põllutööde kandel finantsandmeid, töötajate tunnihindu ja põldude tulemust.</li>
+<li><strong>Tavakasutaja</strong> töötab põldude, tööde ja külvikorraga. Laoarvestuses näeb ta ainult artikleid ega näe laoväärtusi ega hindu. Importida ja kasutajaid hallata ta ei saa.</li>
+</ul>
+<p>Rolle määrab admin vaates <strong>Kasutajad</strong> (<a href="#guide.settings">Kasutajad ja seaded</a>). Admini ja finantsjuhi roll võivad olla ühel inimesel korraga.</p>
+<!-- KONTROLLI: Täpne loend, mida tavakasutaja ei näe, on vaatepõhine (canManageFinance = admin või finantsjuht). Siin on nimetatud ainult need kohad, mida kood selgelt piirab: Laoarvestuse lehed, laoväärtus, tunnihinnad. -->
+
+<h3>Andmete omand</h3>
+<p>Iga ettevõte näeb ainult enda andmeid. Teiste Terise kasutajate põllud, tööd, laod ja kasutajad on sinu eest täiesti peidus ning sinu omad on peidus teiste eest. Kasutajamenüü ülaosas on näha, millise ettevõtte konto sul on.</p>
+<p>Teenusepakkuja tugi saab vajadusel vaadata sinu andmeid ainult lugemiseks ja ainult sinu loal. Loa annad ise: admin avab menüüst <strong>Kasutajad</strong> tugipaneeli ja valib kestuse (<strong>1 tund</strong>, <strong>24 tundi</strong> või <strong>7 päeva</strong>). Iga sisenemine logitakse. Tugi ei saa andmeid muuta.</p>
+<!-- KONTROLLI: Tugipaneeli täpne asukoht Kasutajad aknas (UsersAdminModal sisaldab SupportAccessPanel'i), pealkiri jäi täpsustamata. -->
+
+<h3>Ribad lehe ülaosas</h3>
+<p>Päise kohal võib ilmuda värviline riba.</p>
+<ul>
+<li><strong>Litsents aegub …</strong> (kollane): näeb ainult admin, kui ettevõtte litsents on aegumas. Pikendamiseks võta ühendust teenusepakkujaga.</li>
+<li><strong>Litsents aegus …</strong> (punane): näevad kõik. Andmed on siis ainult lugemiseks, kuni litsents on pikendatud.</li>
+<li><strong>Tugivaade</strong> (sinine): näeb ainult teenusepakkuja töötaja, kui ta vaatab sinu andmeid. Sina seda riba oma kontol ei näe.</li>
+</ul>
+
+<h3>Järgmised sammud</h3>
+<p>Kui hakkad Terist nullist kasutusele võtma, mine peatükki <a href="#guide.onboarding">Juurutamine</a>. Seal on sammud järjekorras: kasutajad, põllud, kultuurid, külvikord, laod ja masinad.</p>

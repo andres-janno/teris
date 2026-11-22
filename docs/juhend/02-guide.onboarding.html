@@ -1,0 +1,203 @@
+<p>See peatükk viib sind nullist Terise kasutuseni. Suurema osa andmetest tood sisse PRIA ja e-PRIA failidest, seejärel vaatad need üle ja täiendad. Mine sammud läbi ülalt alla. Valikulised sammud võid vahele jätta või hiljem teha.</p>
+
+<p>Kõige tähtsam reegel: <strong>kõigepealt impordid, siis korrastad, alles lõpuks kutsud teised kasutajad</strong>. Nii näevad kolleegid juba korras andmeid.</p>
+
+<h3>1. Logi sisse</h3>
+<p><strong>Enne sind:</strong> ettevõtte konto loob Terise teenusepakkuja. Tema paneb paika ettevõtte nime ja registrikoodi, litsentsi kehtivuse ja moodulid (näiteks telemeetria, satelliit ja ilm) ning saadab sulle kui esimesele adminile kutse. Konto loomisel lisatakse ka kultuuride nimekiri ja sinu ettevõte isikute registrisse operaatorina. Kui mõni moodul või ettevõtte andmed on vaja muuta, pöördu teenusepakkuja poole. Rakenduses endas neid seadeid ei ole.</p>
+<ol>
+<li>Ava e-postis saadud kutse, määra parool ja logi sisse.</li>
+<li>Ava menüüst <strong>Isikud</strong>. Sinu ettevõte on loendis rolliga <strong>Operaator</strong>. Ava see ja kontrolli, et nimi ja registrikood on samad nagu PRIA-s. Töötajaid pole vaja ette lisada, põlluraamatu import lisab nad ise (samm 3).</li>
+<li>Kui põlde peetakse PRIA-s ka mõne teise ettevõtte nimel (näiteks seotud ettevõte), lisa see nupuga <strong>Lisa uus isik</strong> ja märgi roll <strong>Operaator</strong>.</li>
+</ol>
+<p><strong>Hea teada:</strong> importida saab ainult admin. Sina oled admin.</p>
+
+<h3>2. Impordi põllud PRIA-st, kõik aastad</h3>
+<p><strong>Miks esimesena:</strong> põllud on kõige muu alus. PRIA fail toob põldude kujud, massiivi- ja põllunumbrid, pindala ja deklareeritud kultuuri. Import loob puuduva hooaja ise ja täidab selle aasta külvikorra. Hooaegu ega kultuure ei pea enne looma.</p>
+<p><strong>Valmista ette:</strong> laadi e-PRIA-st alla põldude fail iga aasta kohta, mida tahad Terisesse. Üks fail on ühe aasta kohta. Ära pakki ZIP-i lahti.</p>
+<ol>
+<li>Logi sisse aadressil https://epria.pria.ee/login.</li>
+<li>Vali üleval paremal esindatav ettevõte.</li>
+<li>Vali ülamenüüst <strong>Registrid → E-põlluraamat</strong>.</li>
+<li>Vali kõik põllud.</li>
+<li>Vajuta <strong>Ekspordi → Põldude andmed → shp</strong>.</li>
+<li>Korda iga aasta kohta.</li>
+</ol>
+<p>Terises:</p>
+<ol>
+<li>Ava menüüst <strong>Põllud</strong>.</li>
+<li>Vajuta tööriistaribal <strong>Impordi PRIA ZIP</strong>.</li>
+<li>Lohista ZIP aknasse või klõpsa ja vali fail.</li>
+<li>Kontrolli eelvaadet: põldude arv ja kogupindala peavad sobima PRIA andmetega.</li>
+<li>Vali <strong>Hooaeg (aasta), millesse põllud imporditakse</strong>. Teris pakub aasta PRIA muutmiskuupäevade järgi, kuid kontrolli see üle.</li>
+<li>Vali <strong>Operaator (seotakse kõigi imporditud põldudega)</strong>. Tavaliselt on see sinu ettevõte.</li>
+<li>Jäta <strong>Asenda olemasolevad põllud</strong> märkimata. Seda on vaja ainult siis, kui laed sama aasta uuendatud faili.</li>
+<li>Vajuta <strong>Lisa N põldu hooaega YYYY</strong>.</li>
+<li>Korda iga aasta failiga. Tee kõik aastad ära enne järgmist sammu.</li>
+</ol>
+<p><strong>Hea teada:</strong> Teris tunneb sama põllu ära massiivi numbri ja kuju kattuvuse järgi. Põllu number ja operaator võivad aastati muutuda, põld jääb ikkagi samaks, ja sama põllu kohta ei teki mitut kirjet.</p>
+<p><strong>Katastrid:</strong> PRIA failist tuleb põllule kaasa üks katastritunnus, kui see failis on. Teris paneb selle kirja põllu põhiandmetesse, aga katastriüksusi koos omaniku ja pindalaga ei loo. Need lisad sammus 8.</p>
+<p><strong>Kontrolli:</strong> Põllud vaates on iga aasta kohta õige arv põlde ja kogupindala. Ava üks põld kaardil ja kontrolli kuju. Rohkem: <a href="#guide.fields#import">Põllud: PRIA import</a>.</p>
+
+<h3>3. Impordi põlluraamatud, kõik aastad</h3>
+<p><strong>Miks nüüd:</strong> põlluraamat toob põldudele tehtud tööd, kasutatud materjalid, külvi- ja koristuskuupäevad ning saagi. Import sobitab read sama aasta põldudega, seega peavad selle aasta põllud olemas olema (samm 2). Koristusjärgsed sügistööd viib import järgmise aasta põllu alla. Selleks peab järgmise aasta põld juba olemas olema, ja just seepärast tuleb enne importida kõigi aastate PRIA failid.</p>
+<p><strong>Valmista ette:</strong> laadi e-PRIA-st alla põlluraamatu väljavõte iga aasta kohta. Fail on ühe hooaja kohta, igal lehel üks põld.</p>
+<ol>
+<li>Logi sisse aadressil https://epria.pria.ee/login ja vali üleval paremal esindatav ettevõte.</li>
+<li>Vali ülamenüüst <strong>Registrid → E-põlluraamat</strong> ja vali kõik põllud.</li>
+<li>Vajuta <strong>Ekspordi → Põlluraamatu väljavõte → xls</strong>.</li>
+<li>Fail koostatakse PRIA poolel mõne aja jooksul. Jälgi seda aknas <strong>Ekspordi → Laadi eksporditud failid</strong> ja laadi fail alla, kui see on valmis.</li>
+</ol>
+<p>Terises:</p>
+<ol>
+<li>Ava menüüst <strong>Põllud</strong>.</li>
+<li>Vajuta <strong>Impordi põlluraamat</strong>.</li>
+<li>Lohista fail aknasse või vali see arvutist.</li>
+<li>Vali <strong>Operaator (kelle põldudega sobitatakse)</strong>.</li>
+<li>Vaata eelvaade. Rida ✓ tähendab, et põld leiti. Rida ✗ tähendab, et sellise numbri, massiivi, operaatori ja hooajaga põldu pole ning see jäetakse vahele.</li>
+<li>Kui failis on teostajaid, keda isikute registris veel pole, näitab eelvaade nende nimesid ja märkeruutu <strong>Lisa puuduvad teostajad isikute registrisse töötajana</strong>. Jäta see märgituks. Teris lisab need inimesed rolliga <strong>Töötaja</strong> ja seob tööd nendega. Järgmise aasta failis leitakse samad inimesed juba registrist.</li>
+<li>Vajuta <strong>Impordi N põllu tööd hooajale YYYY</strong>.</li>
+<li>Loe lõpus tulemus: mitu tööd loodi, mitu täiendati ja mis jäeti vahele.</li>
+<li>Korda iga aasta failiga.</li>
+</ol>
+<p><strong>Hea teada:</strong> teostajad sobitatakse nime järgi (ees- ja perekonnanime järjekord ei loe) ja lisatakse täpselt sellise nimega nagu e-PRIA failis. Ära muuda nende nimesid enne, kui kõigi aastate põlluraamatud on imporditud. Muidu ei leia järgmise aasta import inimest üles ja lisab ta uuesti. Import kirjutab kasutatud materjalid laost maha. Artiklid, mida veel pole, loob ta ise PRIA nimedega. Laoseis on pärast importi miinuses ja hinnad puuduvad. See on ootuspärane ja saab korda järgmises sammus. Olemasolevaid töid import ei kustuta. Sama tegevus samal põllul ±2 päeva sees seotakse olemasoleva tööga, nii et kordusimport ei tekita topelttöid.</p>
+<p><strong>Tööde register:</strong> import lisab tööde registrisse kõik PRIA põlluraamatu tegevused, näiteks „Taimekaitsevahendi kasutamine“. Mõni PRIA nimi on pikk ja lohisev. Anna sellistele töödele lühinimi, siis näed tööde ja põllu vaates PRIA nime asemel seda. Ametlik PRIA nimi jääb töö juurde alles.</p>
+<ol>
+<li>Ava menüüst <strong>Põllutööd</strong> ja vajuta <strong>Tööde register</strong>.</li>
+<li>Vajuta töö real <strong>Muuda</strong>.</li>
+<li>Kirjuta väljale <strong>Lühinimi</strong> oma ettevõttes kasutatav nimi, näiteks „Umbrohutõrje“.</li>
+<li>Salvesta. Korda töödega, mille nime tahad lühemaks.</li>
+</ol>
+<p><strong>Kontrolli:</strong> menüüs <strong>Põllutööd</strong> on põldudel tehtud tööd ja need on lühinimedega. Põllu hooajal on külvi- ja koristuskuupäev ning saak, kui fail need sisaldas. Vaata üle ka sügistööde asukoht. Rohkem: <a href="#guide.works">Põllutööd</a>.</p>
+
+<h3>4. Lisa varude algsaldod</h3>
+<p><strong>Miks nüüd:</strong> põlluraamatu import kirjutas materjalid maha ja lõi artiklid. Nüüd lisad laoseisu hooaja alguse seisuga. Teris arvutab seejärel tagantjärele ümber ka maha kirjutatud materjalide hinnad, ja miinused kaovad. Kuna artiklid on juba olemas, võtad arvele samad artiklid ega tekita topeltnimesid. Laod ja laokanded on nähtavad ainult adminile ja finantsjuhile.</p>
+<p><strong>Valmista ette:</strong> kõigi materjalide (seeme, väetis, taimekaitse, kütus) kogused ja ostuväärtused hooaja alguse seisuga, lao kaupa.</p>
+<ol>
+<li>Ava menüüst <strong>Laoarvestus</strong>, leht <strong>Laod</strong>. Loendis on <strong>Põhiladu</strong>, mille Teris lõi ise. See on kannete vaikimisi ladu. Nimeta see vajadusel ümber ja lisa teised laod nupuga <strong>Lisa ladu</strong>.</li>
+<li>Vaata lehel <strong>Artiklid</strong> üle importi loodud artiklid. Määra neile kategooria ja vajadusel ühik. Lisa nupuga <strong>Lisa artikkel</strong> materjalid, mis on laos, aga mida põlluraamatus polnud.</li>
+<li>Lehel <strong>Laokanded</strong> vajuta <strong>Arvele võtmine</strong>.</li>
+<li>Väljale <strong>Kuupäev</strong> pane hooaja alguse kuupäev. Nii on algseis laos olemas enne kõiki selle hooaja töid.</li>
+<li>Vali <strong>Sihtladu</strong>. Väljale <strong>Märkus</strong> võid kirjutada „Algsaldo“.</li>
+<li>Igale materjalile lisa rida: vali <strong>Materjal</strong>, sisesta <strong>Kogus</strong> ja <strong>Summa km-ta (€)</strong>, ehk selle koguse ostuväärtus. Ühikuhinna arvutab Teris ise. Järgmise rea saad nupuga <strong>Lisa rida</strong>.</li>
+<li>Vajuta <strong>Salvesta</strong>. Kui materjale on mitmes laos, tee iga lao jaoks eraldi arvele võtmine.</li>
+</ol>
+<p><strong>Kontrolli:</strong> lehel <strong>Artiklid</strong> on veerus „Laoseis“ õiged kogused ja miinuseid pole. Kui mõni artikkel on ikka miinuses, kasutati seda põlluraamatu järgi rohkem, kui algsaldos oli. Kontrolli kogust või lisa puuduv ost. Rohkem: <a href="#guide.stock">Laoarvestus</a>.</p>
+
+<h3>5. Impordi mullaproovid (valikuline)</h3>
+<p><strong>Miks nüüd:</strong> mullaproovid on lisainfo ja teised sammud neist ei sõltu. Proove näeb põldude juures, nii et põllud peavad olemas olema (samm 2).</p>
+<p><strong>Valmista ette:</strong> laadi Mullaportaalist alla mullaproovide fail.</p>
+<ol>
+<li>Logi sisse aadressil https://portaal.agri.ee/ ja vali esindatav ettevõte.</li>
+<li>Vali vasakult <strong>Maaelu Teadmuskeskus → Mullaportaal</strong>.</li>
+<li>Vali teenus <strong>Mullaseire tulemuste kaardirakendus → Ava kaardirakendus</strong>.</li>
+<li>Vali paremalt sobivad aastad.</li>
+<li>Vali <strong>Andmete eksport → Shapefile (.shp)</strong> ja vajuta <strong>Lae alla</strong>.</li>
+</ol>
+<p>Terises:</p>
+<ol>
+<li>Ava menüüst <strong>Põllud</strong>.</li>
+<li>Vajuta <strong>Impordi mullaproovid</strong>.</li>
+<li>Lohista ZIP aknasse või vali fail.</li>
+<li>Vaata eelvaadet: proovide arv ja mitu erinevat massiivi.</li>
+<li>Vajuta <strong>Lisa N mullaproovi</strong>.</li>
+</ol>
+<p><strong>Hea teada:</strong> proovi number on kordumatu. Sama numbriga proovi uuesti importides see uuendatakse, mitte ei lisata topelt. Teris näitab proove kahel viisil:</p>
+<ul>
+<li><strong>Kaardil</strong> värvitakse põllud massiivi järgi: iga massiivi viimase proovivõtu aasta keskmine. Kui ühes massiivis on mitu põldu, saavad need sama värvi.</li>
+<li><strong>Põllu aknas</strong> näidatakse ainult neid proove, mille punkt jääb selle põllu piiresse. Arvesse lähevad valitud aasta ja sellele eelnenud 6 aasta proovid.</li>
+</ul>
+<p><strong>Kontrolli:</strong> lülita kaardil sisse mullaproovide kiht ja vali näitaja (pH, fosfor, kaalium jne). Ava mõni põld ja vaata mullaproovide jaotist. Rohkem: <a href="#guide.fields">Põllud</a>.</p>
+
+<h3>6. Vaata üle kultuurid ja sordid</h3>
+<p><strong>Miks nüüd:</strong> PRIA import tõi kultuuride nimed. Teris sidus need nime järgi kultuuride registriga, mis lisati konto loomisel. Kultuurid, mida registris polnud, jäid PRIA nimena alles. Kui lisad registrisse sama nimega kultuuri, seob Teris selle kõigi aastatega ise. Sorte PRIA fail ei sisalda.</p>
+<p><strong>Valmista ette:</strong> loetelu kultuuridest ja sortidest, mida kasvatad.</p>
+<ol>
+<li>Ava menüüst <strong>Kultuurid</strong> ja vaata nimekiri üle.</li>
+<li>Kui mõni sinu kultuur on puudu, vajuta <strong>Lisa uus kultuur</strong>. Täida <strong>Kultuuri nimetus</strong> ja <strong>Kultuurigrupp</strong>. Talivilja puhul märgi <strong>Talivili (külvatakse sügisel)</strong>.</li>
+<li>Soovi korral sisesta <strong>Vaikimisi külvinorm (kg/ha)</strong> ja <strong>Baas-saagiootus (t/ha)</strong>.</li>
+<li>Väljal <strong>PRIA nimetus</strong> jäta tühi, kui PRIA nimetus on sama. Kui PRIA eristab allakülvi, märgi <strong>PRIA eristab allakülvi</strong>.</li>
+<li>Salvesta. Sordi lisamiseks vajuta kultuuri real sordi lisamise nuppu ja täida <strong>Sordinimi</strong>. Väli <strong>PRIA nimetus</strong> on sordil vaja ainult siis, kui PRIA loetelus on sort eraldi (näiteks rukkisort „Sangaste“).</li>
+</ol>
+<p><strong>Kontrolli:</strong> kultuuride all on külvipind kokku õige. Rohkem: <a href="#guide.crops">Kultuurid</a>.</p>
+
+<h3>7. Vaata üle külvikord</h3>
+<p><strong>Miks nüüd:</strong> PRIA import täitis külvikorra iga imporditud aasta kohta. Nüüd, kui kultuurid on registris korras, kontrollid seoseid, lisad sordid ja täidad aastad, mille PRIA faili sul pole.</p>
+<p><strong>Valmista ette:</strong> teadmine, mis kultuur ja sort millisel põllul igal aastal kasvas.</p>
+<ol>
+<li>Ava menüüst <strong>Külvikord</strong>. Tabelis on põllud ridades ja aastad veergudes.</li>
+<li>Vaata läbi imporditud aastad. Kui lahtris on PRIA pikk nimi, mitte registri kultuur, lisa see kultuur registrisse (samm 6) või vali lahtris õige kultuur.</li>
+<li>Lahtri muutmiseks klõpsa seda. Tühi lahter näitab vihjet „Klõpsa, et lisada selle aasta kultuur“.</li>
+<li>Vali <strong>Kultuur</strong>. Vajadusel vali ka <strong>Sort</strong> ja <strong>Allakülv</strong>.</li>
+<li>Vajuta linnukest (Salvesta). Eemalda kultuur, valides „– Kultuur määramata –“.</li>
+<li>Aastad, mille kohta PRIA faili pole, täida käsitsi samamoodi.</li>
+</ol>
+<p><strong>Hea teada:</strong> aasta lahtri saab muuta, kui sellel aastal on hooaeg olemas ja see pole lukus. Lukusta vanemad aastad alles siis, kui nende andmed on korras (vaata <a href="#guide.seasons">Hooajad</a>). Kui põllul pole selles aastas kirjet, loob Teris selle põllu viimase varasema aasta põhjal.</p>
+<p><strong>Kontrolli:</strong> iga põllu rida näitab kultuuri kõigis aastates, mille kohta sul on andmeid. Märkeruut „Näita ka N. aastal puuduvaid põlde“ aitab leida põlde, millel selles aastas kirjet pole. Rohkem: <a href="#guide.rotation">Külvikord</a>.</p>
+
+<h3>8. Lisa maaomanikud, katastrid, omand ja rent</h3>
+<p><strong>Miks nüüd:</strong> omand ja rent kuuluvad põllu juurde. Teris arvutab omandi, võrreldes maaomanikku põllu operaatoriga: kui need on samad, on maa „oma“, muidu „renditud“.</p>
+<p><strong>Valmista ette:</strong> maaomanike nimed, katastritunnused, iga katastriüksuse pindala põllul ja renditasud (€/ha või €/aastas).</p>
+<ol>
+<li>Ava menüüst <strong>Isikud</strong>, vajuta <strong>Lisa uus isik</strong> ja lisa iga maaomanik rolliga <strong>Maaomanik</strong>.</li>
+<li>Ava menüüst <strong>Põllud</strong> ja vali käesolev aasta.</li>
+<li>Ava põld muutmiseks (põllu real olev muutmise nupp).</li>
+<li>Jaotises <strong>Hooaja koosseisu kuuluvad katastriüksused</strong> vajuta <strong>Lisa katastriüksus</strong>.</li>
+<li>Täida <strong>Katastritunnus</strong> ja <strong>Põllu osa (ha)</strong>. Kui põld ulatub üle mitme katastriüksuse, lisa iga katastriüksus eraldi oma pindalaga.</li>
+<li>Väljal <strong>Maaomanik</strong> vali isik.</li>
+<li>Renditud maa korral sisesta <strong>Renditasu (€/ha)</strong> või <strong>Renditasu kokku (€/a)</strong>. Oma maa korral on sama väli <strong>Maamaks</strong>.</li>
+<li>Salvesta.</li>
+</ol>
+<p><strong>Hea teada:</strong> omand ja rent kanduvad uude aastasse ise üle. Sisesta need üks kord ja muuda hiljem ainult siis, kui leping muutub.</p>
+<p><strong>Kontrolli:</strong> Põllud vaates töötavad omandivormi nupud (oma maa ja rendimaa kohta näidatakse arvud) ning iga põld on õiges rühmas. Rohkem: <a href="#guide.fields">Põllud</a>, <a href="#guide.parties">Isikud</a>.</p>
+
+<h3>9. Lisa masinad ja haakeriistad</h3>
+<p><strong>Miks nüüd:</strong> tööde kandele saab märkida masina ja haakeriista, ning masina järgi arvestatakse kütust ja masinatöö kulu. Masina vaikimisi kütus ja teenus valitakse laoartiklitest, mis on nüüd korras (samm 4).</p>
+<p><strong>Valmista ette:</strong> masinate andmed (nimi, mudel, registrinumber, paagi maht) ja haakeriistade loetelu.</p>
+<ol>
+<li>Ava menüüst <strong>Tehnika</strong>, leht <strong>Masinad</strong>.</li>
+<li>Vajuta <strong>Lisa uus masin</strong>. Sisesta <strong>Masina nimi</strong>, <strong>Liik</strong> ja soovi korral registrinumber, paagi maht ja muu. Salvesta.</li>
+<li>Lehel <strong>Haakeriistad</strong> vajuta <strong>Lisa uus haakeriist</strong> ja lisa vajalikud.</li>
+<li>Haakeriista masinaga sidumiseks vajuta masina kaardil <strong>Haagi</strong>.</li>
+</ol>
+<p><strong>Hea teada:</strong> masina vormil saad valida <strong>Vaikimisi kütus</strong> ning teenuse ja tunnihinna. Kui masinale on märgitud kütus, pakub Teris seda töö kandel ise ja kütusekulu läheb laost maha. Samamoodi on töötaja vormil (<strong>Isikud</strong>) <strong>teenus</strong> ja <strong>tunnihind</strong>. Kui kandele märgitakse töötaja tunnid, arvutab Teris tööjõu kulu: kõigepealt töötaja enda tunnihinna järgi, selle puudumisel teenuse hinna järgi. Neid välju näeb ja muudab ainult admin või finantsjuht.</p>
+<p><strong>Kontrolli:</strong> masinad ja haakeriistad on Tehnika vaates loendis. Rohkem: <a href="#guide.fleet">Tehnika</a>.</p>
+
+<h3>10. Ühenda GPS-seadmed (valikuline)</h3>
+<p><strong>Kas sul on seda vaja:</strong> see samm on ainult siis, kui sinu litsentsis on telemeetria moodul. Ilma selleta Tehnika vaates seadmete lehti ei ole ja seda sammu teha ei saa. Mooduli lisab teenusepakkuja. GPS-seadmetega tekivad masinate sõidud ise, Teris sobitab need põldudega ja pakub sõitude põhjal põllutööde kandeid.</p>
+<p><strong>Valmista ette:</strong> masinad peavad olema lisatud (samm 9). Vaja on GPS-seadmete IMEI-koode (15 numbrit) või andurite MAC-aadresse.</p>
+<ol>
+<li>Ava menüüst <strong>Tehnika</strong>, leht <strong>Telemeetria seadmed</strong>.</li>
+<li>Vajuta <strong>Registreeri telemeetriaseade</strong>. Vali <strong>Seadme tüüp</strong>, sisesta <strong>IMEI kood (15 numbrit)</strong> (või <strong>MAC aadress</strong>) ja salvesta.</li>
+<li>Vii seade masinale. Masina kaardil vajuta seadme real <strong>Vaheta</strong> ja vali avanenud aknas sobiv seade. Teine tee: leht <strong>Seadmete seosed</strong> ja nupp <strong>Lisa seadme seose kanne</strong> (väljad <strong>Seade</strong>, <strong>Masin / haakeriist</strong>, <strong>Paigaldatud (algusaeg)</strong>).</li>
+</ol>
+<p><strong>Kontrolli:</strong> masina kaardil on seadme mudel ja SIM- või MAC-number, mitte „GPS puudub“. Mõne minuti pärast peaks masin ilmuma kaardile ja lehel <strong>Sõidud</strong> hakkavad tekkima sõidud. Rohkem: <a href="#guide.telemetry">GPS-seadmed ja sõidud</a>.</p>
+
+<h3>11. Kutsu kasutajad</h3>
+<p><strong>Miks viimasena:</strong> nüüd on andmed korras. Kui kutsud kolleegid varem, näevad nad poolikuid ja miinuses andmeid ning võivad hakata neid parandama samal ajal kui sina.</p>
+<p><strong>Valmista ette:</strong> kasutajate nimed ja e-posti aadressid ning teadmine, kes mida tegema hakkab.</p>
+<ol>
+<li>Vajuta paremal ülal oma nimele ja vali <strong>Kasutajad</strong>.</li>
+<li>Vajuta <strong>Lisa kasutaja</strong>.</li>
+<li>Täida <strong>Kasutajanimi</strong>, <strong>Nimi</strong> ja <strong>E-post</strong>. Jäta valituks <strong>Saada kutse e-postiga (kasutaja määrab parooli ise)</strong>.</li>
+<li>Vali roll. <strong>Admin (saab kasutajaid hallata)</strong> saab ka importida. <strong>Finantsjuht</strong> näeb laokandeid, ladusid, saagipartiisid ja kulusid. Tavakasutajal on need peidetud.</li>
+<li>Vajuta <strong>Salvesta</strong>.</li>
+</ol>
+<p><strong>Kontrolli:</strong> kasutaja ilmub loendisse olekuga „Kutse saadetud“. Kui ta on parooli määranud, muutub olek „Aktiivne“. Kui kiri ei jõua kohale, vajuta kasutaja real kirja ikooni (<em>Saada parooli link e-postile</em>). Rohkem: <a href="#guide.settings">Kasutajad ja seaded</a>.</p>
+
+<h3>Valmis igapäevatööks</h3>
+<p>Kui kõik allolev on tehtud, saad hakata igapäevaselt tööd planeerima ja kandeid tegema.</p>
+<ul>
+<li>Sinu ettevõte on isikute registris operaatorina ja andmed klapivad PRIA-ga (<strong>Isikud</strong>).</li>
+<li>Kõigi vajalike aastate põllud on imporditud ja nende arv ning kogupindala klapivad PRIA-ga (<strong>Põllud</strong>).</li>
+<li>Kõigi vajalike aastate põlluraamatud on imporditud ja tööd on teostajatega seotud (<strong>Põllutööd</strong>).</li>
+<li>Varude algsaldod on arvele võetud hooaja alguse kuupäevaga ja laos pole ootamatuid miinuseid (<strong>Laoarvestus</strong>).</li>
+<li>Valikuline: mullaproovid on imporditud (<strong>Põllud</strong>).</li>
+<li>Kultuurid ja sordid on registris (<strong>Kultuurid</strong>).</li>
+<li>Külvikord on kõigis vajalikes aastates üle vaadatud (<strong>Külvikord</strong>).</li>
+<li>Maaomanikud, katastriüksused, omand ja rent on määratud (<strong>Isikud</strong>, <strong>Põllud</strong>).</li>
+<li>Masinad ja haakeriistad on sisestatud (<strong>Tehnika</strong>).</li>
+<li>Valikuline, telemeetria mooduliga: GPS-seadmed on masinatega seotud ja sõidud tekivad (<strong>Tehnika</strong>).</li>
+<li>Kasutajad on kutsutud ja keegi on <strong>Finantsjuht</strong>, kui kulusid vaadatakse (<strong>Kasutajad</strong>).</li>
+<li>Valikuline: lukusta vanad hooajad (<strong>Hooajad</strong>), kui nende andmed on lõplikud.</li>
+</ul>
+<p>Järgmised peatükid: <a href="#guide.map">Kaart</a>, <a href="#guide.works">Põllutööd</a>, <a href="#guide.pria">PRIA</a>.</p>
