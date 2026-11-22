@@ -531,11 +531,11 @@ export const statChipSubClass = 'ml-1 text-2xs';
 /** Registrikaardi ikooniruut (Isikud, POI-d): ääris ja 16px emoji ilma joonekõrguseta. */
 export const registerIconBoxClass = 'border-border text-base leading-none';
 
-/** Faili lohistamise kast (Põldude, põlluraamatu ja mullaproovide import): 2px katkendjoon, nõrk valge ääris ja taust; hõljumisel, lohistamisel ja valitud failiga roheline. Vana `.dropzone`. */
+/** Faili lohistamise kast (Põldude, põlluraamatu ja mullaproovide import): 2px katkendjoon; heledas teemas ääris `subtle/80` (≥ 3:1), tumedas nõrk valge ääris ja taust; hõljumisel, lohistamisel ja valitud failiga roheline. Vana `.dropzone`. */
 export const dropzoneClass = ({ dragging = false, hasFile = false }: { dragging?: boolean; hasFile?: boolean } = {}): string =>
   cn(
     'cursor-pointer rounded-lg border-2 border-dashed px-4 py-8 text-center transition-all duration-200',
-    hasFile ? 'border-primary bg-primary/8' : dragging ? 'border-primary bg-primary/5' : 'border-white/15 bg-white/2 hover:border-primary hover:bg-primary/5'
+    hasFile ? 'border-primary bg-primary/8' : dragging ? 'border-primary bg-primary/5' : 'border-subtle/80 bg-muted hover:border-primary hover:bg-primary/5 dark:border-white/15 dark:bg-white/2'
   );
 /** Kasti sisu: ikoon, pealkiri ja tekst veerus keskel. Vana `.dropzone-state`. */
 export const dropzoneStateClass = 'flex flex-col items-center gap-2';

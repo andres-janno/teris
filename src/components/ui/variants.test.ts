@@ -802,6 +802,13 @@ describe('dropzoneClass', () => {
   it('ääris on kõigil külgedel 2px nagu vanas reeglis', () => {
     expect(v.dropzoneClass({})).toContain('border-2');
   });
+  it('heledas teemas nähtav raam (≥ 3:1), tumedas teemas endine nõrk valge', () => {
+    expect(v.dropzoneClass({})).toContain('border-subtle/80');
+    expect(v.dropzoneClass({})).toContain('dark:border-white/15');
+    expect(v.dropzoneClass({})).toContain('dark:bg-white/2');
+    expect(v.dropzoneClass({})).toContain('hover:border-primary');
+    expect(v.dropzoneClass({ hasFile: true })).toContain('border-primary');
+  });
 });
 describe('hintText', () => {
   it('vihje on 13px hall, blokk-variant lisab ülaveerise', () => {
