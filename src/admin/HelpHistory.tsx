@@ -4,12 +4,21 @@ import { platformApi, type HelpVersionDetail, type HelpVersionRow } from './plat
 import { formatTallinn } from './format.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { Alert, Button, CardButton } from '../components/ui';
+import { chapterByKey } from '../help/guideChapters.ts';
+import { parseGuideRef } from '../help/guideLink.ts';
 import { cn } from '../components/ui/cn';
 import { adminCardFootClass, adminFieldLabelClass, adminHintClass, adminMutedClass, adminSubpanelClass } from './adminUi.ts';
 
-type Props = { helpKey: string; onRestored: () => Promise<void> };
+// Versiooni seotud peatükk loetava pealkirjana (toore `guide.fields#import` asemel)
+function guideLinkLabel(link: string | null): string {
+  const ref = link ? parseGuideRef(link) : null;
+  if (!ref?.chapter) return link ?? '';
+  return ref.anchor ? `${chapterByKey(ref.chapter).title} (${ref.anchor})` : chapterByKey(ref.chapter).title;
+}
 
-export function HelpHistory({ helpKey, onRestored }: Props) {
+type Props = { helpKey: string; dirty: boolean; onRestored: () => Promise<void> };
+
+export function HelpHistory({ helpKey, dirty, onRestored }: Props) {
   const [versions, setVersions] = useState<HelpVersionRow[] | null>(null);
   const [selected, setSelected] = useState<HelpVersionDetail | null>(null);
   const [error, setError] = useState('');
@@ -39,7 +48,7 @@ export function HelpHistory({ helpKey, onRestored }: Props) {
   };
 
   const restore = async () => {
-    if (!selected || !window.confirm('Taasta see versioon? Praegune tekst jääb ajalukku.')) return;
+    if (!selected || !window.confirm(dirty ? 'Salvestamata muudatused lähevad kaotsi. Taasta see versioon? Salvestatud tekst jääb ajalukku.' : 'Taasta see versioon? Praegune tekst jääb ajalukku.')) return;
     setBusy(true);
     try {
       await platformApi.restoreHelpVersion(helpKey, selected.id);
@@ -61,14 +70,14 @@ export function HelpHistory({ helpKey, onRestored }: Props) {
       <div className={adminHintClass}>Iga salvestus, eemaldamine ja taastamine jätab versiooni; alles on 50 viimast.</div>
       {error && <Alert tone="error">{error}</Alert>}
       {!versions && !error && <div className={adminMutedClass}>Laadin…</div>}
-      {versions && versions.length === 0 && <div className={adminMutedClass}>Selle koha kohta pole veel versioone.</div>}
+      {versions && versions.length === 0 && <div className={adminHintClass}>Selle koha kohta pole veel versioone.</div>}
       {versions && versions.length > 0 && (
         <div className="flex max-h-64 flex-col gap-0.5 overflow-y-auto">
           {versions.map((v) => (
-            <CardButton key={v.id} variant="tile" padding="none" selected={selected?.id === v.id} className="flex w-full items-baseline gap-2.5 px-2.5 py-1.5 text-left" onClick={() => void preview(v.id)}>
+            <CardButton key={v.id} variant="tile" padding="none" selected={selected?.id === v.id} disabled={busy} className="flex w-full items-baseline gap-2.5 px-2.5 py-1.5 text-left" onClick={() => void preview(v.id)}>
               <span className="text-base font-medium leading-natural">{formatTallinn(v.createdAt)}</span>
               <span className="text-xs leading-natural text-subtle">{v.createdBy ?? '–'}</span>
-              {v.guideLink && <span className="text-xs leading-natural text-subtle">→ {v.guideLink}</span>}
+              {guideLinkLabel(v.guideLink) && <span className="text-xs leading-natural text-subtle">→ {guideLinkLabel(v.guideLink)}</span>}
             </CardButton>
           ))}
         </div>

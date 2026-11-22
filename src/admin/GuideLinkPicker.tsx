@@ -22,7 +22,7 @@ export function GuideLinkPicker({ value, onChange, anchorsOf }: Props) {
   if (ref?.anchor && !anchors.some((a) => a.slug === ref.anchor)) anchorOptions.push({ value: ref.anchor, label: `${ref.anchor} (puudub peatükis)` });
 
   return (
-    <div className="flex flex-col gap-1.5">
+    <div className="mb-2.5 flex flex-col gap-1.5">
       <div className={adminFieldLabelClass}>Seotud peatükk</div>
       <div className="flex flex-wrap gap-2.5">
         <Select

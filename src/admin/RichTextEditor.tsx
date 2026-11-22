@@ -6,6 +6,7 @@ import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import type { Anchor } from '../help/anchors.ts';
 import type { GuideChapterKey } from '../help/guideChapters.ts';
 import { Button } from '../components/ui';
+import { buildChapterLinkHtml } from '../help/chapterLinkHtml.ts';
 import { ChapterLinkDialog } from './ChapterLinkDialog.tsx';
 
 type Props = {
@@ -15,8 +16,6 @@ type Props = {
   /** Kui antud, on tööriistaribal „Link peatükki“ (peatüki h3 ankrud antud peatüki salvestatud tekstist) */
   anchorsOf?: (key: GuideChapterKey) => Anchor[];
 };
-
-const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Tööriistariba on tavaline rida (nagu live'is); eraldaja on 8px vahe (vana laius/kõrgus ei rakendunud, sest <span> on rea-element).
 const SEPARATOR = 'mx-1';
@@ -61,17 +60,25 @@ export function RichTextEditor({ initialHtml, onChange, placeholder, anchorsOf }
 
   const insertChapterLink = (href: string, title: string) => {
     setChapterLinkOpen(false);
-    const box = ref.current;
-    if (!box) return;
-    box.focus();
-    const sel = window.getSelection();
-    if (sel && savedRange.current) {
-      sel.removeAllRanges();
-      sel.addRange(savedRange.current);
-    }
-    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) exec('insertHTML', `<a href="${escapeHtml(href)}">${escapeHtml(title)}</a>`);
-    else exec('createLink', href);
-    emit();
+    // Sisesta alles pärast dialoogi sulgumist: Radix võtab sulgumisel fookuse ja tagastab selle enda äranäitajale
+    setTimeout(() => {
+      const box = ref.current;
+      if (!box) return;
+      box.focus();
+      const sel = window.getSelection();
+      if (!sel) return;
+      if (savedRange.current) {
+        sel.removeAllRanges();
+        sel.addRange(savedRange.current);
+      } else {
+        // valik puudus: link lõppu
+        sel.selectAllChildren(box);
+        sel.collapseToEnd();
+      }
+      if (sel.isCollapsed) exec('insertHTML', buildChapterLinkHtml(href, title));
+      else exec('createLink', href);
+      emit();
+    }, 0);
   };
 
   const tool = (label: string, icon: ReactNode, fn: () => void) => (

@@ -250,7 +250,7 @@ export function HelpView() {
                     Salvesta
                   </Button>
                 </div>
-                {historyOpen && <HelpHistory helpKey={current.key} onRestored={afterRestore} />}
+                {historyOpen && <HelpHistory key={`${current.key}:${current.row?.updatedAt ?? ''}`} helpKey={current.key} dirty={dirty} onRestored={afterRestore} />}
               </>
             )}
           </>
