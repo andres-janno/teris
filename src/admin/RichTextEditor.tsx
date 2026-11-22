@@ -72,8 +72,11 @@ export function RichTextEditor({ initialHtml, onChange, placeholder, anchorsOf }
         sel.addRange(savedRange.current);
       } else {
         // valik puudus: link lõppu
-        sel.selectAllChildren(box);
-        sel.collapseToEnd();
+        const range = document.createRange();
+        range.selectNodeContents(box.lastChild ?? box);
+        range.collapse(false);
+        sel.removeAllRanges();
+        sel.addRange(range);
       }
       if (sel.isCollapsed) exec('insertHTML', buildChapterLinkHtml(href, title));
       else exec('createLink', href);
