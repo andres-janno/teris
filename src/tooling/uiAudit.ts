@@ -400,15 +400,20 @@ const SPACING_SCALE_ABS = new Set(['2px', '4px', '6px', '8px', '10px', '12px', '
 const DISALLOWED_FONT_WEIGHT_CSS = /(?:^|[;\s{])font-weight\s*:\s*(800|900|bolder)/g;
 const DISALLOWED_FONT_WEIGHT_TSX = /(?<![\w-])font-(?:extrabold|black)(?![\w-])/g;
 
-/** Keelatud kirjapaksused: 800+ (ExtraBold, Black) teeb teksti liiga raskeks.
-    Lubatud erand: üks 800 failis src/styles/login.css (`.login-brand-word`, kasutab ka admin). */
+/** Lubatud 800+ kirjapaksused failide kaupa (kaubamärk: Outfit brändisõna; landing on eraldi avalik leht oma tüpograafiaga). */
+export const FONT_WEIGHT_ALLOWED: Readonly<Record<string, number>> = {
+  'src/styles/login.css': 1, // .login-brand-word (kasutab ka admin)
+  'src/landing/landing.css': 3, // h1, .lp-brand-word, sammu number
+};
+
+/** Keelatud kirjapaksused: 800+ (ExtraBold, Black) teeb teksti liiga raskeks; erandid FONT_WEIGHT_ALLOWED. */
 export function disallowedFontWeights(files: { path: string; content: string }[]): { path: string; count: number }[] {
   return files.flatMap(({ path, content }) => {
     const clean = stripComments(content);
     const isCss = path.endsWith('.css');
     const matches = isCss ? clean.match(DISALLOWED_FONT_WEIGHT_CSS) ?? [] : clean.match(DISALLOWED_FONT_WEIGHT_TSX) ?? [];
     const count = matches.length;
-    const allowed = path.endsWith('src/styles/login.css') ? 1 : 0;
+    const allowed = Object.entries(FONT_WEIGHT_ALLOWED).find(([k]) => path.endsWith(k))?.[1] ?? 0;
     const excess = Math.max(0, count - allowed);
     return excess > 0 ? [{ path, count: excess }] : [];
   });

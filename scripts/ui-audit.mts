@@ -106,7 +106,10 @@ const unusedRows = CLASS_CSS.flatMap((p) => {
 row('Kasutuseta klasse (CSS)', unusedRows.filter((r) => !r.endsWith('(dünaamiline?)')).length, unusedRows);
 
 // Landing (avalik leht, oma stiil — ülemineku ulatusest väljas): ainult vanad komponendid ja inline-stiilid.
-const landing = summarize(walk('src/landing', []).map((path) => ({ path, content: readFileSync(path, 'utf8') })));
+const landingFiles = walk('src/landing', []).map((path) => ({ path, content: readFileSync(path, 'utf8') }));
+const landing = summarize(landingFiles);
+const landingWeights = disallowedFontWeights(landingFiles);
+row('Landing: keelatud paksusi (800+)', landingWeights.reduce((s, f) => s + f.count, 0), landingWeights.map((f) => `${f.path}: ${f.count}`));
 const total = (l: { count: number }[]) => l.reduce((s, f) => s + f.count, 0);
 row('Landing: style={{…}} kohti', landing.inlineStyles);
 row('Landing: vanu nupuklasse', total(landing.legacyButtonFiles), landing.legacyButtonFiles.map((f) => `${f.path}: ${f.count}`));

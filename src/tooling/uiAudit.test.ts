@@ -412,6 +412,13 @@ describe('disallowedFontWeights', () => {
     ];
     expect(disallowedFontWeights(files)).toEqual([]);
   });
+  it('landing: kuni 3 × font-weight: 800 failis src/landing/landing.css (pealkiri, brändisõna, sammu number), neljas on viga', () => {
+    const three = '.a{font-weight:800}.b{font-weight:800}.c{font-weight:800}';
+    expect(disallowedFontWeights([{ path: 'src/landing/landing.css', content: three }])).toEqual([]);
+    expect(disallowedFontWeights([{ path: 'src/landing/landing.css', content: `${three}.d{font-weight:800}` }])).toEqual([
+      { path: 'src/landing/landing.css', count: 1 },
+    ]);
+  });
 });
 
 describe('audit katab vaated (etapp 4.0)', () => {

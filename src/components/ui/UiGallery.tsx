@@ -1,6 +1,5 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
-import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
 import React, { useEffect, useState } from 'react';
 import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
@@ -13,6 +12,7 @@ import {
 } from './index';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
+import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
 import type { AuthUser } from '../../types/auth';
 
 // Kiibi arvu klass (nagu Külvikorras)

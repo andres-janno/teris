@@ -162,7 +162,7 @@ export const AiConnectionModal: React.FC<AiConnectionModalProps> = ({ isOpen, on
 
           <div className="text-sm leading-natural">
             <strong>Kuidas ühendada</strong>
-            <ol className="mr-0 mb-0 mt-1.5 ml-4 p-0">
+            <ol className="mt-1.5 ml-4">
               <li>Loo võti ja kopeeri link.</li>
               <li>Ava AI-kliendis connectorite seaded ja lisa uus MCP connector (nt Claude Desktop → Settings → Connectors → Add custom connector).</li>
               <li>Kleebi link URL-i väljale ja salvesta. Seejärel küsi AI-lt näiteks „Mis põllud mul tänavu on?“</li>

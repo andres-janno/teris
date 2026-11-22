@@ -44,3 +44,15 @@ describe('Dropzone', () => {
     expect(file).toContain('mt-3');
   });
 });
+
+describe('Dropzone pesastatud laps', () => {
+  it('lapse (nt sees olev nupp või väli) Enter/tühik ei käivita kasti klõpsu', () => {
+    const own = { click: vi.fn() };
+    const child = { click: vi.fn() };
+    const e = { key: 'Enter', target: child, currentTarget: own, defaultPrevented: false, preventDefault: vi.fn() };
+    propsOf({}).onKeyDown(e);
+    expect(own.click).not.toHaveBeenCalled();
+    expect(child.click).not.toHaveBeenCalled();
+    expect(e.preventDefault).not.toHaveBeenCalled();
+  });
+});
