@@ -49,4 +49,5 @@ console.log(
   `\n${dryRun ? 'Kuiv jooks (midagi ei kirjutatud)' : 'Valmis'}: tekste ${count('written', 'would-write')}, linke ${count('link-set', 'would-link')}, ` +
     `olemas/jäetud ${count('skipped-existing', 'link-kept')}, tühje ${count('skipped-blank')}, vigaseid ${count('invalid-name', 'number-mismatch', 'too-long', 'unknown-spot')}`
 );
+if (count('invalid-name', 'number-mismatch', 'too-long', 'unknown-spot') > 0) process.exitCode = 1;
 await authDb().$disconnect();

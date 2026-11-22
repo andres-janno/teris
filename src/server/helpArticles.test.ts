@@ -274,6 +274,23 @@ describe('writeHelpIfEmpty (mustandite laadimise alus)', () => {
     expect(await authDb().helpArticleVersion.count({ where: { key: LOADER_KEY } })).toBe(1);
   });
 
+  it('samaaegsed kirjutised: täpselt üks võidab, üks versioonirida, olemasolevale ei kirjutata', async () => {
+    const key = `${LOADER_KEY}-race`;
+    try {
+      const res = await Promise.all([1, 2, 3, 4].map((i) => writeHelpIfEmpty(key, `<p>mustand ${i}</p>`, LOADER_AUTHOR)));
+      expect(res.filter(Boolean)).toHaveLength(1);
+      expect(await authDb().helpArticleVersion.count({ where: { key } })).toBe(1);
+      // kasutaja tekst enne laadijat: laadija ei puuduta seda ega tee versioonirida
+      await authDb().helpArticle.update({ where: { key }, data: { html: '<p>kasutaja</p>', updatedBy: 'kasutaja' } });
+      expect(await writeHelpIfEmpty(key, '<p>mustand</p>', LOADER_AUTHOR)).toBe(false);
+      expect((await authDb().helpArticle.findUnique({ where: { key } }))?.html).toBe('<p>kasutaja</p>');
+      expect(await authDb().helpArticleVersion.count({ where: { key } })).toBe(1);
+    } finally {
+      await authDb().helpArticle.deleteMany({ where: { key } });
+      await authDb().helpArticleVersion.deleteMany({ where: { key } });
+    }
+  });
+
   it('nähtava tekstita rida (ainult <p><br></p>) loetakse tühjaks', async () => {
     await authDb().helpArticle.update({ where: { key: LOADER_KEY }, data: { html: '<p><br></p>' } });
     expect(await writeHelpIfEmpty(LOADER_KEY, '<p>uus</p>', LOADER_AUTHOR)).toBe(true);

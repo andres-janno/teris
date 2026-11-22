@@ -145,17 +145,26 @@ function assertDraftLink(key: string, link: string): void {
 export async function writeHelpIfEmpty(key: string, html: string, author: string, guideLink: string | null = null): Promise<boolean> {
   if (guideLink) assertDraftLink(key, guideLink);
   return authDb().$transaction(async (tx) => {
-    const row = await tx.helpArticle.findUnique({ where: { key }, select: { html: true, guideLink: true } });
+    const row = await lockRow(tx, key);
     if (row && !isBlankHelp(row.html)) return false;
-    const link = row?.guideLink ?? guideLink;
-    await tx.helpArticle.upsert({
-      where: { key },
-      create: { key, html, guideLink: link, updatedBy: author },
-      update: { html, guideLink: link, updatedBy: author }
-    });
+    const link = row?.guide_link ?? guideLink;
+    if (row) {
+      // rida on lukus: samaaegne salvestus ootab ja näeb meie tulemust, meie ei kirjuta kellegi teksti peale
+      await tx.helpArticle.update({ where: { key }, data: { html, guideLink: link, updatedBy: author } });
+    } else {
+      // puuduva rea loomine: kui keegi jõudis enne, on count 0 ja me ei kirjuta midagi
+      const { count } = await tx.helpArticle.createMany({ data: [{ key, html, guideLink: link, updatedBy: author }], skipDuplicates: true });
+      if (count === 0) return false;
+    }
     await writeHelpVersion(tx, key, html, link, author);
     return true;
   });
+}
+
+/** Loeb rea ja lukustab selle tehingu lõpuni (SELECT … FOR UPDATE); puuduva rea korral null. */
+async function lockRow(tx: Tx, key: string): Promise<{ html: string; guide_link: string | null } | null> {
+  const rows = await tx.$queryRaw<{ html: string; guide_link: string | null }[]>`SELECT html, guide_link FROM help_articles WHERE key = ${key} FOR UPDATE`;
+  return rows[0] ?? null;
 }
 
 /** Kas kohtjuhendil on tekst, aga seotud peatükk puudub (siis võib laadija lingi panna). */
@@ -171,8 +180,8 @@ export async function canSetGuideLink(key: string): Promise<boolean> {
 export async function setGuideLinkIfEmpty(key: string, link: string, author: string): Promise<boolean> {
   assertDraftLink(key, link);
   return authDb().$transaction(async (tx) => {
-    const row = await tx.helpArticle.findUnique({ where: { key }, select: { html: true, guideLink: true } });
-    if (!row || isBlankHelp(row.html) || row.guideLink) return false;
+    const row = await lockRow(tx, key);
+    if (!row || isBlankHelp(row.html) || row.guide_link) return false;
     await tx.helpArticle.update({ where: { key }, data: { guideLink: link } });
     await writeHelpVersion(tx, key, row.html, link, author);
     return true;
