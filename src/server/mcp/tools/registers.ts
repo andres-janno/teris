@@ -8,7 +8,7 @@ import { pickOne, fieldLabel, round2, limitRows } from '../format.ts';
 const ci = (s: string) => ({ contains: s, mode: 'insensitive' as const });
 const limit = z.number().int().min(1).max(1000).optional().describe('Ridade arv (vaikimisi 200)');
 
-export const registerTools = [
+export const registryTools = [
   defineTool({
     name: 'list_soil_samples',
     title: 'Mullaproovid',
