@@ -502,8 +502,9 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   };
   // Juhend avaneb URL-i hash'iga (#guide.fields#import); `guide` ei salvestu localStorage'isse, sulgemisel tagasi eelmisesse vaatesse
   const guideRoute = useGuideRoute();
-  const viewBeforeGuideRef = useRef<MainView>(readSavedView());
-  const [mainView, setMainView] = useState<MainView>(() => (parseGuideRef(window.location.hash) ? 'guide' : readSavedView()));
+  const [initialView] = useState<MainView>(readSavedView);
+  const viewBeforeGuideRef = useRef<MainView>(initialView);
+  const [mainView, setMainView] = useState<MainView>(() => (parseGuideRef(window.location.hash) ? 'guide' : initialView));
   useEffect(() => {
     if (guideRoute) {
       setMainView((v) => {

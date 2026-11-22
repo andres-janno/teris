@@ -14,7 +14,7 @@ import {
   BookOpen
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button, NavSwitch, NavSwitchItem, cn } from './ui';
+import { Button, NavSwitch, NavSwitchItem } from './ui';
 import { headerNarrowHiddenClass, headerTriggerClass } from './ui/variants';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
@@ -124,7 +124,7 @@ export const Header: React.FC<HeaderProps> = ({
         )}
 
         {onOpenGuide && (
-          <Button variant="ghost" className={cn(headerTriggerClass)} aria-pressed={guideOpen} aria-label="Juhend" title="Juhend" onClick={onOpenGuide}>
+          <Button variant="ghost" className={headerTriggerClass} aria-current={guideOpen ? 'page' : undefined} aria-label="Juhend" title="Juhend" onClick={onOpenGuide}>
             <BookOpen size={14} />
             <span className={headerNarrowHiddenClass}>Juhend</span>
           </Button>

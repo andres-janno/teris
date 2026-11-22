@@ -3,7 +3,7 @@
 // Moodulist sõltuvat peatükki ettevõttele, kellel moodulit pole, ei näidata; viited neile saavad märke „vajab moodulit …“.
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { BookOpen } from 'lucide-react';
-import { Alert, Card, CardButton, EmptyState, PageHeader, SearchInput, Select, type SelectOption } from './ui';
+import { Alert, cn, Card, CardButton, EmptyState, PageHeader, SearchInput, Select, type SelectOption } from './ui';
 import { boardBodyClass, boardMainClass, boardViewClass } from './ui/variants';
 import { MODULE_LABELS, chapterByKey, visibleChapters, type GuideChapterKey } from '../help/guideChapters';
 import { markModuleLinks, parseGuideRef, type GuideRef } from '../help/guideLink';
@@ -17,7 +17,8 @@ import type { LicenseModule } from '../types/auth';
 export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule) => boolean }> = ({ route, hasModule }) => {
   const { chapters, loaded } = useGuideChapters();
   const [query, setQuery] = useState('');
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null); // tegelik kerija (boardBodyClass)
+  const [scrollTick, setScrollTick] = useState(0); // sama hash'i link ei muuda marsruuti, aga peab ikkagi kerima
 
   const visible = useMemo(() => visibleChapters(hasModule), [hasModule]);
   const requested = route.chapter;
@@ -51,21 +52,23 @@ export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule
     const target = route.anchor ? box.querySelector<HTMLElement>(`#${CSS.escape(anchorDomId(route.anchor))}`) : null;
     if (target) target.scrollIntoView({ block: 'start' });
     else box.scrollTo({ top: 0 });
-  }, [current.key, route.anchor, safe, hits]);
+  }, [current.key, route.anchor, safe, hits, scrollTick]);
 
   const go = (key: GuideChapterKey, anchor: string | null = null) => {
     setQuery('');
     openGuide({ chapter: key, anchor });
+    setScrollTick((t) => t + 1);
   };
 
   // Peatükkide vahelised lingid (`#guide.fields#import`) avanevad selles vaates
   const onContentClick = (e: React.MouseEvent<HTMLDivElement>) => {
     const href = (e.target as HTMLElement).closest('a')?.getAttribute('href');
     const ref = href?.startsWith('#guide') ? parseGuideRef(href) : null;
-    if (!ref) return;
+    if (!ref || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return; // uues sakis avamine jääb brauserile
     e.preventDefault();
     setQuery('');
     openGuide(ref);
+    setScrollTick((t) => t + 1);
   };
 
   const chapterOptions: SelectOption[] = visible.map((c) => ({ value: c.key, label: c.title }));
@@ -77,9 +80,9 @@ export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule
           icon={<BookOpen />}
           title="Juhend"
           subtitle="Kuidas Terisega töötada: peatükid vaadete kaupa ja ülesanded samm-sammult"
-          actions={<SearchInput value={query} onChange={setQuery} placeholder="Otsi juhendist…" aria-label="Otsi juhendist" className="w-72 max-[861px]:w-full" />}
+          actions={<SearchInput value={query} onChange={setQuery} placeholder="Otsi juhendist…" aria-label="Otsi juhendist" className="w-72 max-[861px]:w-[calc(100vw-2rem)]" />}
         />
-        <div className={`${boardBodyClass} grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] content-start items-start gap-4 max-[861px]:grid-cols-1`}>
+        <div ref={scrollRef} className={cn(boardBodyClass, 'grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] content-start items-start gap-4 max-[861px]:grid-cols-1')}>
           <Card className="flex flex-col gap-0.5 max-[861px]:hidden">
             {visible.map((c, i) => (
               <CardButton key={c.key} variant="tile" padding="none" selected={!hits && c.key === current.key} className="flex w-full items-baseline gap-2 px-2.5 py-2 text-left" onClick={() => go(c.key)}>
@@ -93,7 +96,7 @@ export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule
             <Select aria-label="Peatükk" value={current.key} onValueChange={(v) => go(v as GuideChapterKey)} options={chapterOptions} />
           </div>
 
-          <div ref={scrollRef} className="min-h-0 min-w-0">
+          <div className="min-h-0 min-w-0">
             {hits ? (
               <Card className="flex flex-col gap-2">
                 <div className="text-sm text-muted-foreground">{hits.length === 0 ? 'Midagi ei leitud.' : `${hits.length} tabamust`}</div>

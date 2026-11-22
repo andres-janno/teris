@@ -17,7 +17,10 @@ const listeners = new Set<() => void>();
 
 function fetchHelp(): Promise<void> {
   return fetch('/api/help', { credentials: 'same-origin' })
-    .then((r) => (r.ok ? r.json() : {}))
+    .then((r) => {
+      if (!r.ok) throw new Error(`GET /api/help ${r.status}`); // eelmine seis jääb alles
+      return r.json();
+    })
     .then((d: Partial<Omit<HelpState, 'loaded'>>) => {
       state = { articles: d.articles ?? {}, guideLinks: d.guideLinks ?? {}, chapters: d.chapters ?? {}, loaded: true };
       listeners.forEach((l) => l());
@@ -32,9 +35,12 @@ function load() {
 }
 
 /** Juhendi vaade värskendab teksti iga avamisel (teenusepakkuja võib seda vahepeal muuta). */
-export function reloadHelp(): void {
-  void fetchHelp().catch(() => {});
+export function reloadHelp(): Promise<void> {
+  return fetchHelp().catch(() => {});
 }
+
+/** Praegune seis (testid) */
+export const peekHelp = (): HelpState => state;
 
 const subscribe = (l: () => void) => {
   listeners.add(l);
