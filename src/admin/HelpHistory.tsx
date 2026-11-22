@@ -4,17 +4,9 @@ import { platformApi, type HelpVersionDetail, type HelpVersionRow } from './plat
 import { formatTallinn } from './format.ts';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
 import { Alert, Button, CardButton } from '../components/ui';
-import { chapterByKey } from '../help/guideChapters.ts';
-import { parseGuideRef } from '../help/guideLink.ts';
+import { guideLinkLabel } from '../help/guideLinkLabel.ts';
 import { cn } from '../components/ui/cn';
 import { adminCardFootClass, adminFieldLabelClass, adminHintClass, adminMutedClass, adminSubpanelClass } from './adminUi.ts';
-
-// Versiooni seotud peatükk loetava pealkirjana (toore `guide.fields#import` asemel)
-function guideLinkLabel(link: string | null): string {
-  const ref = link ? parseGuideRef(link) : null;
-  if (!ref?.chapter) return link ?? '';
-  return ref.anchor ? `${chapterByKey(ref.chapter).title} (${ref.anchor})` : chapterByKey(ref.chapter).title;
-}
 
 type Props = { helpKey: string; dirty: boolean; onRestored: () => Promise<void> };
 
