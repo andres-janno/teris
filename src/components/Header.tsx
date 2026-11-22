@@ -110,7 +110,7 @@ export const Header: React.FC<HeaderProps> = ({
           <NavSwitch className="mx-auto" aria-label="Põhivaade">
             {NAV_ITEMS.filter((item) => item.view !== 'weather' || showWeather).map(({ view, label, Icon }) => (
               <NavSwitchItem key={view} current={mainView === view} onClick={() => onChangeMainView(view)}>
-                <Icon size={15} className="max-[1400px]:hidden" />
+                <Icon size={15} className="max-[1401px]:hidden" />
                 <span>{label}</span>
               </NavSwitchItem>
             ))}
