@@ -3,11 +3,11 @@ import { describe, expect, it } from 'vitest';
 import { contrastRatio, over, parseColor, resolveColor, themeColors, themeVars, tint, type Rgba } from './contrast';
 
 const themesCss = readFileSync(new URL('../styles/themes.css', import.meta.url), 'utf8');
-// CSS-erandite valvurid: kõik src/styles/*.css (v.a app.css ja themes.css) + index.css
+// CSS-erandite valvurid: kõik src/styles/*.css (v.a app.css ja themes.css)
 const styleCss = readdirSync(new URL('../styles/', import.meta.url))
   .filter((f) => f.endsWith('.css') && f !== 'app.css' && f !== 'themes.css')
   .map((f) => readFileSync(new URL(`../styles/${f}`, import.meta.url), 'utf8'))
-  .join('\n') + readFileSync(new URL('../index.css', import.meta.url), 'utf8'); // T5: index.css kustub
+  .join('\n');
 const appCss = readFileSync(new URL('../styles/app.css', import.meta.url), 'utf8');
 const names = themeColors(appCss);
 const AA = 4.5;

@@ -291,11 +291,11 @@ describe('vanad kaardid', () => {
     const r = summarize([
       { path: 'src/components/A.tsx', content: '<div className="glass-card" />' },
       { path: 'src/components/ui/Gallery.tsx', content: '<div className="glass-card" />' },
-      { path: 'src/index.css', content: '.glass-card { background: red; }' },
+      { path: 'src/styles/map.css', content: '.glass-card { background: red; }' },
     ]);
     expect(r.legacyCardFiles).toEqual([
       { path: 'src/components/A.tsx', count: 1 },
-      { path: 'src/index.css', count: 1 },
+      { path: 'src/styles/map.css', count: 1 },
     ]);
   });
 });
@@ -396,18 +396,18 @@ describe('disallowedFontWeights', () => {
     const files = [
       { path: 'src/components/A.tsx', content: '<div className="font-extrabold text-sm" />' },
       { path: 'src/styles/map.css', content: '.v { font-weight: 800; }' },
-      { path: 'src/index.css', content: '.login-brand-word { font-weight: 800; }\n.other { font-weight: 800; }' },
+      { path: 'src/styles/login.css', content: '.login-brand-word { font-weight: 800; }\n.other { font-weight: 800; }' },
     ];
     const r = disallowedFontWeights(files);
     expect(r).toEqual([
       { path: 'src/components/A.tsx', count: 1 },
       { path: 'src/styles/map.css', count: 1 },
-      { path: 'src/index.css', count: 1 },
+      { path: 'src/styles/login.css', count: 1 },
     ]);
   });
-  it('lubab täpselt 1 font-weight: 800 failis src/index.css (logo brändisõna)', () => {
+  it('lubab täpselt 1 font-weight: 800 failis src/styles/login.css (logo brändisõna)', () => {
     const files = [
-      { path: 'src/index.css', content: '.login-brand-word { font-weight: 800; }' },
+      { path: 'src/styles/login.css', content: '.login-brand-word { font-weight: 800; }' },
       { path: 'src/components/B.tsx', content: '<div className="font-semibold" />' },
     ];
     expect(disallowedFontWeights(files)).toEqual([]);

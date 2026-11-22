@@ -1,5 +1,5 @@
 /* src/landing/landing.css — avaliku landing'u ja privaatsuslehe stiil (ilma Reactita). */
-/* Sama soe visuaalne keel mis sisselogimislehel (src/index.css .login-*): viljapõllu foto,
+/* Sama soe visuaalne keel mis sisselogimislehel (src/styles/login.css .login-*): viljapõllu foto,
    kreemjas klaas, pruun tekst, roheline gradientnupp. Tumedat teemat pole, nagu sisselogimisel. */
 /* Fondid serveeritakse oma serverist (@fontsource), mitte Google Fontsist. */
 @import '@fontsource/outfit/500.css';

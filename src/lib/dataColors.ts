@@ -1,6 +1,6 @@
 // src/lib/dataColors.ts — andmevärvid ühes kohas (kasutaja otsus 2026-11-16). Need on andmed (kultuur, kaardikiht,
 // mulla tase, graafiku seeria), mitte teema tokenid: kaardil ja andmebaasis on sama värv mõlemas teemas.
-// UI värvid (tekst, nupp, ääris) on tokenid index.css / app.css-is. Server impordib selle faili `.ts` laiendiga.
+// UI värvid (tekst, nupp, ääris) on tokenid themes.css / app.css-is. Server impordib selle faili `.ts` laiendiga.
 
 /** Kultuur, millel registris värvi pole (ka andmebaasi vaikeväärtus). */
 export const DEFAULT_CROP_COLOR = '#eab308';

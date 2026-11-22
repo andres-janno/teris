@@ -1,81 +1,6 @@
-/* src/index.css — erandid (kaardimärgised, Külvikorra aastaveerud, login, rikasteksti .help-content); põhireeglid on src/styles/base.css-is, teemamuutujad themes.css-is */
-
-/* Masina nimi kaardi markeris (MapMarkers HTML) */
-.v-name {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-primary);
-}
-
-.status-working {
-  background: rgba(34, 197, 94, 0.15);
-  color: var(--tone-success-text);
-  border: 1px solid rgba(34, 197, 94, 0.3);
-}
-
-.status-moving {
-  background: rgba(56, 189, 248, 0.15);
-  color: #0284c7;
-  border: 1px solid rgba(56, 189, 248, 0.3);
-}
-
-.status-stopped {
-  background: rgba(148, 163, 184, 0.15);
-  color: var(--text-secondary);
-  border: 1px solid rgba(148, 163, 184, 0.3);
-}
-
-.status-offline {
-  background: rgba(100, 116, 139, 0.15);
-  color: var(--text-muted);
-  border: 1px solid rgba(100, 116, 139, 0.3);
-}
-
-/* Külvikorra aastaveerud (erand). Valitud aasta: roheline silt.
-   Roheline on sisemisel sildil, et ümarate nurkade taga jääks läbipaistmatu päise taust. */
-[data-slot="table"] th.year-col .year-col-label {
-  display: block;
-  margin: -8px -10px;
-  padding: 8px 10px;
-}
-
-[data-slot="table"] th.year-col.selected .year-col-label {
-  color: #ffffff;
-  background: var(--selection-bg);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  box-shadow: inset 1px 0 0 #15803d, inset -1px 0 0 #15803d, inset 0 1px 0 #15803d;
-}
-
-[data-slot="table"] th.year-col.selected:hover .year-col-label {
-  background: var(--selection-bg-hover);
-}
-
-/* Kultuuri värv: hele toon + vasakul täisvärvis riba */
-[data-slot="table"] td.year-cell.has-crop {
-  background: color-mix(in srgb, var(--crop-color) var(--crop-tint), transparent);
-  box-shadow: inset 3px 0 0 var(--crop-color);
-}
-
-[data-slot="table"] tbody tr:hover td.year-cell.has-crop {
-  background: color-mix(in srgb, var(--crop-color) var(--crop-tint-hover), transparent);
-}
-
-/* Valitud aasta veerg raamitud (roheline taust segaks kultuuride toone) */
-[data-slot="table"] td.year-cell.selected {
-  border-left: 1px solid #16a34a;
-  border-right: 1px solid #16a34a;
-  /* ui lahtri border-border seab värvi kõigile külgedele utiliidikihis; roheline peab !important-iga võitma */
-  border-left-color: #16a34a !important;
-  border-right-color: #16a34a !important;
-}
-
-/* Valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
-.crop-legend-item[data-selected] {
-  /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
-  border-color: #16a34a !important;
-  box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), inset 0 0 0 1px #16a34a !important;
-  background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
-}
+/* src/styles/login.css — sisselogimise ja parooli seadmise lehe oma palett (püsiv erand, kasutaja otsus 2026-11-13).
+   Kihis `legacy`: `!important` ülekirjutused võidavad ui komponentide utiliite (`!important` puhul võidab varasem kiht).
+   `.login-brand-word` (800, Outfit) on kaubamärk ja kasutusel ka adminis. */
 
 /* Sisselogimine — viljapõllu taustapilt, kaart vasakul kolmandikul */
 .login-page {
@@ -143,7 +68,9 @@
   text-shadow: 0 1px 6px rgba(40, 25, 5, 0.6);
   transition: background 0.15s ease;
 }
+
 .login-home-link:hover { background: rgba(40, 26, 10, 0.45); }
+
 .login-brand-word { font-family: 'Outfit', sans-serif; font-style: italic; font-weight: 800; padding-right: 4px; }
 
 .login-copyright {
@@ -214,20 +141,3 @@
   .login-backdrop-sun,
   .login-column { animation: none; }
 }
-
-/* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */
-.help-content {
-  font-size: 14px;
-  line-height: 1.5;
-  overflow-wrap: anywhere;
-}
-
-.help-content > :first-child { margin-top: 0; }
-.help-content > :last-child { margin-bottom: 0; }
-.help-content p { margin: 0 0 8px; }
-.help-content h3 { font-size: 14px; margin: 12px 0 6px; }
-.help-content h4 { font-size: 14px; margin: 10px 0 4px; }
-.help-content ul,
-.help-content ol { margin: 0 0 8px; padding-left: 16px; }
-.help-content li { margin: 2px 0; }
-.help-content a { color: var(--emerald-500); text-decoration: underline; }

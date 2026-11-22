@@ -1,5 +1,5 @@
 // src/components/ui/variants.ts — kõigi ühiste komponentide variandiklassid ühes kohas (testitud: ainult skaala
-// väärtused, mitte suvalisi). Väärtused järgivad praegust identiteeti (.btn, .form-input, .modal-content index.css-is).
+// väärtused, mitte suvalisi). Väärtused järgivad praegust identiteeti (.btn, .form-input, .modal-content vanas CSS-is).
 import { cva } from 'class-variance-authority';
 import { cn } from './cn';
 import type { BadgeTone, BadgeVariant } from '../../types/badgeTone';
@@ -580,7 +580,7 @@ export const stockDocQtyClass = 'w-32.5 min-w-32.5 max-w-32.5';
 export const stockDocAmountClass = 'w-27.5 min-w-27.5 max-w-27.5';
 export const stockDocFooterRowClass = 'mt-2.5 flex items-center justify-between';
 
-/** Sisselogimise ja parooli määramise lehed (LoginPage, SetPasswordPage). Kaardi palett on index.css `.login-*` reeglites. */
+/** Sisselogimise ja parooli määramise lehed (LoginPage, SetPasswordPage). Kaardi palett on `styles/login.css` `.login-*` reeglites. */
 export const loginPageClass = 'login-page relative isolate flex min-h-dvh items-center overflow-hidden px-4 py-6 max-[761px]:justify-center';
 export const loginColumnClass = 'login-column flex w-[min(380px,100%)] flex-col items-center';
 export const loginCardClass = 'login-card flex w-full flex-col gap-3 px-6 py-8';

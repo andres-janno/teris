@@ -1,9 +1,8 @@
 /* src/styles/app.css — rakenduse stiilide sisenemispunkt.
-   Kihid: kihistamata CSS võidaks alati kihis olevat, seega vana index.css on kihis `legacy`
-   (enne `utilities`-t), muidu ei mõjuks ükski Tailwindi vahe (index.css: `* { margin: 0; padding: 0 }`).
-   Leaflet on `legacy` JÄREL: kihtide vahel võidab hilisem kiht olenemata spetsiifilisusest, seega kui
-   Leaflet oleks ees, tühistaks index.css-i `*`-reegel Leafleti veeriste/polsterduste reeglid.
-   index.css-i enda Leafleti ülekirjutused on `!important`, ja `!important` puhul võidab VARASEM kiht — need
+   Kihid: kihistamata CSS võidaks alati kihis olevat, seega erandite CSS (login.css, rotation.css, help-content.css,
+   map.css) on kihis `legacy` (enne `utilities`-t), muidu ei mõjuks ükski Tailwindi vahe.
+   Leaflet on `legacy` JÄREL: kihtide vahel võidab hilisem kiht olenemata spetsiifilisusest.
+   map.css-i enda Leafleti ülekirjutused on `!important`, ja `!important` puhul võidab VARASEM kiht — need
    kehtivad endiselt, kuigi `legacy` on `vendor`-ist ees.
    Preflight (Tailwindi vaikestiilid) jäetakse teadlikult välja. */
 @layer theme, base, legacy, vendor, components, utilities;
@@ -11,7 +10,9 @@
 @import 'tailwindcss/theme.css' layer(theme);
 @import './themes.css' layer(theme);
 @import './base.css' layer(base);
-@import '../index.css' layer(legacy);
+@import './login.css' layer(legacy);
+@import './rotation.css' layer(legacy);
+@import './help-content.css' layer(legacy);
 @import './map.css' layer(legacy);
 @import 'leaflet/dist/leaflet.css' layer(vendor);
 @import 'tailwindcss/utilities.css' layer(utilities) source(none);
@@ -139,9 +140,9 @@
   --shadow-glow: 0 0 6px currentColor;
 }
 
-/* Tähenduspõhised värvid — viitavad index.css-i muutujatele, seega järgivad heledat/tumedat teemat.
+/* Tähenduspõhised värvid — viitavad themes.css-i muutujatele, seega järgivad heledat/tumedat teemat.
    `inline`: utiliit kasutab otse var(--…) väärtust (teema vahetus töötab). Nimed ei tohi kattuda
-   index.css-i muutujatega (nt --shadow-glass), muidu tekiks tsükkel. */
+   themes.css-i muutujatega (nt --shadow-glass), muidu tekiks tsükkel. */
 @theme inline {
   --color-*: initial;
   --color-white: #ffffff;
@@ -198,7 +199,7 @@
   --color-info-solid: var(--tone-info-solid);
   --color-accent-solid: var(--tone-accent-solid);
   --color-on-warning: var(--on-warning);
-  /* Tehnika: seadme andmete värskus ja sõidu ajajaotus. Väärtused on teemapõhised (index.css :root), seega viited. */
+  /* Tehnika: seadme andmete värskus ja sõidu ajajaotus. Väärtused on teemapõhised (themes.css :root), seega viited. */
   --color-fresh-live: var(--fresh-live);
   --color-fresh-day: var(--fresh-day);
   --color-fresh-week: var(--fresh-week);
@@ -213,7 +214,7 @@
 }
 
 /* Kiip (ui/ChipButton): värv tuleb CSS-muutujast --chip-accent. Utiliidid, sest audit keelab suvalised bg-/border-[…] väärtused.
-   --crop-tint(-hover) on index.css-i :root-is. Valitud = [data-selected]. */
+   --crop-tint(-hover) on themes.css-i :root-is. Valitud = [data-selected]. */
 @utility chip-tint {
   background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint), transparent);
   box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8);

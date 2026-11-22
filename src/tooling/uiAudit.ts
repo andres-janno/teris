@@ -399,14 +399,14 @@ const DISALLOWED_FONT_WEIGHT_CSS = /(?:^|[;\s{])font-weight\s*:\s*(800|900|bolde
 const DISALLOWED_FONT_WEIGHT_TSX = /(?<![\w-])font-(?:extrabold|black)(?![\w-])/g;
 
 /** Keelatud kirjapaksused: 800+ (ExtraBold, Black) teeb teksti liiga raskeks.
-    Lubatud erand: üks 800 failis src/index.css (`.login-brand-word`, kasutab ka admin). */
+    Lubatud erand: üks 800 failis src/styles/login.css (`.login-brand-word`, kasutab ka admin). */
 export function disallowedFontWeights(files: { path: string; content: string }[]): { path: string; count: number }[] {
   return files.flatMap(({ path, content }) => {
     const clean = stripComments(content);
     const isCss = path.endsWith('.css');
     const matches = isCss ? clean.match(DISALLOWED_FONT_WEIGHT_CSS) ?? [] : clean.match(DISALLOWED_FONT_WEIGHT_TSX) ?? [];
     const count = matches.length;
-    const allowed = path.endsWith('src/index.css') ? 1 : 0;
+    const allowed = path.endsWith('src/styles/login.css') ? 1 : 0;
     const excess = Math.max(0, count - allowed);
     return excess > 0 ? [{ path, count: excess }] : [];
   });

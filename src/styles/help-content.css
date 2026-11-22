@@ -1,0 +1,26 @@
+/* src/styles/help-content.css — juhendi rikastekst (püsiv erand): sama klass on admin-redaktoris, HelpHintis ja HelpView'is;
+   sisu on HTML, järglasvalijad (p, h3, ul …) ei ole utiliitidega väljendatavad. */
+
+/* Juhendi sisu tüpograafia — sama klass on admin-redaktoris, et eelvaade klapiks */
+.help-content {
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+.help-content > :first-child { margin-top: 0; }
+
+.help-content > :last-child { margin-bottom: 0; }
+
+.help-content p { margin: 0 0 8px; }
+
+.help-content h3 { font-size: 14px; margin: 12px 0 6px; }
+
+.help-content h4 { font-size: 14px; margin: 10px 0 4px; }
+
+.help-content ul,
+.help-content ol { margin: 0 0 8px; padding-left: 16px; }
+
+.help-content li { margin: 2px 0; }
+
+.help-content a { color: var(--emerald-500); text-decoration: underline; }

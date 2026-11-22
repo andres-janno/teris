@@ -4,13 +4,13 @@ Spec: `docs/superpowers/specs/2026-11-12-ui-uhtlustamine-design.md`. Näidised: 
 
 ## Reeglid
 
-- Staatiline `style={{…}}` → klass `index.css`-is või ui komponent; `style` ainult andmest tulev väärtus (värv, %, px). Peidetud failisisend: atribuut `hidden`. Vea olek väljal: `aria-invalid`.
+- Staatiline `style={{…}}` → klass `src/styles/*.css`-is või ui komponent; `style` ainult andmest tulev väärtus (värv, %, px). Peidetud failisisend: atribuut `hidden`. Vea olek väljal: `aria-invalid`.
 - Nupud, dialoogid, tabelid, märgid, sakid, väljad, menüüd, hüpikud — ainult siit (`ui/`). Vaates ei looda neile uusi CSS-klasse.
 - Andmevärvid (kultuuri vaikevärv, määramata, sõiduk, mulla tase, graafiku seeriad, sõidu kaart) on `src/lib/dataColors.ts`-is; vaates ja serveris ei kirjutata hex-koodi uuesti. Erand: Leafleti kihtide stiilid `MapView.tsx`/`FieldShapeModal.tsx`, satelliidi legend (WMS-iga sama), sisselogimise taust.
 - Kui vajalikku pole: lisa variant `variants.ts`-i (ja test) või uus komponent siia — mitte vaate-klass.
 - Skaalad: kirjasuurus `text-2xs|xs|sm|base|lg|xl` (11/12/13/14/16/20 px); vahed 0.5, 1, 1.5, 2, 2.5, 3, 4, 6, 8;
   nurgad `rounded-sm|md|lg|full`.
-- Ka `index.css`-is ainult skaala: kirjasuurus 11/12/13/14/16/20px, nurk `var(--radius-sm|md|lg)` või `9999px`, vahe 2/4/6/8/10/12/16/24/32px (negatiivne samast skaalast). Paigutuse mõõt (> 32px) reegli-sisese muutujana (`--controls-bottom` jms). `npx tsx scripts/css-scale.mts <fail>` viib faili skaalale; `npm run ui-audit` read „Skaalaväliseid …“ peavad olema 0.
+- Ka `src/styles/*.css`-is ainult skaala: kirjasuurus 11/12/13/14/16/20px, nurk `var(--radius-sm|md|lg)` või `9999px`, vahe 2/4/6/8/10/12/16/24/32px (negatiivne samast skaalast). Paigutuse mõõt (> 32px) reegli-sisese muutujana (`--controls-bottom` jms). `npx tsx scripts/css-scale.mts <fail>` viib faili skaalale; `npm run ui-audit` read „Skaalaväliseid …“ peavad olema 0.
 - Suvalised väärtused `text-[…]`, `p-[…]`, `m-[…]`, `gap-[…]`, `rounded-[…]`, `bg-[…]`, `border-[…]` on keelatud
   (`npm run ui-audit` näitab). Suurused (`w-[…]`, `max-h-[…]`) on lubatud.
 - Toores klõpsatav `div`/`span` (`role="button"`) on keelatud väljaspool `ui/` (ui-audit „role=button väljaspool ui-d“ = 0): kasuta `Button` (`variant="plain"` kogu rea nupule), `CardButton`, `ChipButton`, `Card interactive` või `TableRow`. Erand ainult pesastatud interaktiivsusel (elemendi sees on teine nupp või ta asub nupu sees): `ROLE_BUTTON_ALLOWED` failis `src/tooling/uiAudit.ts` (failitee → arv, põhjus kommentaaris); siis `role="button" tabIndex={0} onKeyDown={clickOnActivationKey}`.
@@ -302,7 +302,7 @@ Reeglid:
   `Panel` = kaart + päis äärisega + sisu.
 - Vaate klass kaardil annab **asetuse, kirjasuuruse ja tekstivärvi** (position, z-index, flex, gap, margin, font-size, color); polstri ainult
   `padding="none"` korral. Välimuse (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
-  ääris, toonitud taust, erandnurk), vajab `!important` (`index.css` on `legacy` kihis). `admin.css` on kihistamata
+  ääris, toonitud taust, erandnurk), vajab `!important` (`src/styles/*.css` on `legacy` kihis). `admin.css` on kihistamata
   ja võidab ise — sealt kustuta kaardiga dubleeruvad polstrid ja äärised.
 - Vana `.glass-card` on kustutatud (etapp 2.7); uut klaasikaarti ei tehta.
 - `npm run ui-audit` rida „Vanu kaarte“ peab olema 0.

@@ -1,5 +1,5 @@
 // scripts/css-scale.mts — viib CSS-faili kirjasuurused, nurgad ja vahed skaalale (src/tooling/cssScale.ts).
-// Kasutus: npx tsx scripts/css-scale.mts src/index.css [--dry]
+// Kasutus: npx tsx scripts/css-scale.mts <fail.css> [--dry]
 import { readFileSync, writeFileSync } from 'node:fs';
 import { rescaleCss } from '../src/tooling/cssScale.ts';
 

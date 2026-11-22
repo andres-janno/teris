@@ -23,6 +23,14 @@
   border-color: rgba(219, 39, 119, 0.4) !important;
 }
 
+/* Kaardi paneeli valitud kultuuri rida (MapYearSelector, ChipButton tint): 2px roheline piir (1px ääris + 1px sisemine vari) ja värviriba; !important võidab chip-tint utiliidi */
+.crop-legend-item[data-selected] {
+  /* 2 px roheline piir: 1 px border + 1 px sisemine vari (suurus ei muutu) */
+  border-color: #16a34a !important;
+  box-shadow: inset 3px 0 0 var(--chip-accent, #94a3b8), inset 0 0 0 1px #16a34a !important;
+  background: color-mix(in srgb, var(--chip-accent, #94a3b8) var(--crop-tint-hover), transparent) !important;
+}
+
 /* Kaardi ülemiste paneelide veergude polster (App.tsx, muu paigutus on Tailwindi klassid): ruum ujuvate paneelide varjule (veerg kerib, seega kärbiks vari)
    ja Leafleti nuppudele; 44/56/40px ei ole vahede skaalas, seega CSS-is. */
 .map-top-left-stack {
@@ -77,6 +85,37 @@
   background: #ffffff;
   border: 3px solid var(--emerald-600);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
+}
+
+/* Masina nimi kaardi markeris ja märgi olekud (MapMarkers HTML) */
+.v-name {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.status-working {
+  background: rgba(34, 197, 94, 0.15);
+  color: var(--tone-success-text);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.status-moving {
+  background: rgba(56, 189, 248, 0.15);
+  color: #0284c7;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.status-stopped {
+  background: rgba(148, 163, 184, 0.15);
+  color: var(--text-secondary);
+  border: 1px solid rgba(148, 163, 184, 0.3);
+}
+
+.status-offline {
+  background: rgba(100, 116, 139, 0.15);
+  color: var(--text-muted);
+  border: 1px solid rgba(100, 116, 139, 0.3);
 }
 
 /* Custom Leaflet Markers & Tooltips */

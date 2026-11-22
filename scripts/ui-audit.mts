@@ -98,7 +98,7 @@ row('Defineerimata CSS-muutujaid', undefinedVars.length, undefinedVars);
 const sourceFiles = [...walkSources('src'), ...['index.html', 'admin.html'].filter((p) => existsSync(p))].map((p) =>
   readFileSync(p, 'utf8')
 );
-const CLASS_CSS = ['src/index.css', 'src/styles/base.css', 'src/styles/map.css', 'src/styles/login.css', 'src/styles/rotation.css', 'src/styles/help-content.css', 'src/admin/admin.css'].filter((p) => existsSync(p));
+const CLASS_CSS = ['src/styles/base.css', 'src/styles/map.css', 'src/styles/login.css', 'src/styles/rotation.css', 'src/styles/help-content.css', 'src/admin/admin.css'].filter((p) => existsSync(p));
 const unusedRows = CLASS_CSS.flatMap((p) => {
   const r = unusedCssClasses(readFileSync(p, 'utf8'), sourceFiles);
   return [...r.unused.map((c) => `${p}: .${c}`), ...r.dynamic.map((c) => `${p}: .${c} (dünaamiline?)`)];
