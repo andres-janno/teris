@@ -1,19 +1,32 @@
 // Lihtne HTML-redaktor juhendite jaoks (contentEditable + tööriistariba), ilma lisasõltuvuseta.
 // Kleebitud ja salvestatav HTML puhastatakse sanitizeHelp'iga; lubatud on ainult juhendi sildid.
-import { useEffect, useRef, type ReactNode } from 'react';
-import { Bold, Italic, Underline, Heading3, Pilcrow, List, ListOrdered, Link, Unlink, RemoveFormatting } from 'lucide-react';
+import { useEffect, useRef, useState, type ReactNode } from 'react';
+import { Bold, Italic, Underline, Heading3, Pilcrow, List, ListOrdered, Link, Unlink, BookOpen, RemoveFormatting } from 'lucide-react';
 import { sanitizeHelp } from '../help/sanitizeHelp.ts';
+import type { Anchor } from '../help/anchors.ts';
+import type { GuideChapterKey } from '../help/guideChapters.ts';
 import { Button } from '../components/ui';
+import { ChapterLinkDialog } from './ChapterLinkDialog.tsx';
 
-type Props = { initialHtml: string; onChange: (html: string) => void; placeholder?: string };
+type Props = {
+  initialHtml: string;
+  onChange: (html: string) => void;
+  placeholder?: string;
+  /** Kui antud, on tööriistaribal „Link peatükki“ (peatüki h3 ankrud antud peatüki salvestatud tekstist) */
+  anchorsOf?: (key: GuideChapterKey) => Anchor[];
+};
+
+const escapeHtml = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 // Tööriistariba on tavaline rida (nagu live'is); eraldaja on 8px vahe (vana laius/kõrgus ei rakendunud, sest <span> on rea-element).
 const SEPARATOR = 'mx-1';
 
 const exec = (cmd: string, value?: string) => document.execCommand(cmd, false, value);
 
-export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
+export function RichTextEditor({ initialHtml, onChange, placeholder, anchorsOf }: Props) {
   const ref = useRef<HTMLDivElement>(null);
+  const savedRange = useRef<Range | null>(null);
+  const [chapterLinkOpen, setChapterLinkOpen] = useState(false);
 
   // Sisu pannakse üks kord; vanem vahetab redaktori võtmega (key), kui avatakse teine juhend.
   useEffect(() => {
@@ -37,6 +50,28 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
       return;
     }
     exec('createLink', url.trim());
+  };
+
+  // Dialoog võtab fookuse: jäta valik meelde ja pane enne lingi lisamist tagasi
+  const openChapterLink = () => {
+    const sel = window.getSelection();
+    savedRange.current = sel && sel.rangeCount > 0 && ref.current?.contains(sel.anchorNode) ? sel.getRangeAt(0).cloneRange() : null;
+    setChapterLinkOpen(true);
+  };
+
+  const insertChapterLink = (href: string, title: string) => {
+    setChapterLinkOpen(false);
+    const box = ref.current;
+    if (!box) return;
+    box.focus();
+    const sel = window.getSelection();
+    if (sel && savedRange.current) {
+      sel.removeAllRanges();
+      sel.addRange(savedRange.current);
+    }
+    if (!sel || sel.rangeCount === 0 || sel.isCollapsed) exec('insertHTML', `<a href="${escapeHtml(href)}">${escapeHtml(title)}</a>`);
+    else exec('createLink', href);
+    emit();
   };
 
   const tool = (label: string, icon: ReactNode, fn: () => void) => (
@@ -66,6 +101,7 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
         {tool('Numberloend', <ListOrdered size={15} />, () => exec('insertOrderedList'))}
         <span className={SEPARATOR} />
         {tool('Lisa link', <Link size={15} />, addLink)}
+        {anchorsOf && tool('Link peatükki', <BookOpen size={15} />, openChapterLink)}
         {tool('Eemalda link', <Unlink size={15} />, () => exec('unlink'))}
         {tool('Eemalda vormindus', <RemoveFormatting size={15} />, () => {
           exec('removeFormat');
@@ -89,6 +125,7 @@ export function RichTextEditor({ initialHtml, onChange, placeholder }: Props) {
           emit();
         }}
       />
+      {anchorsOf && <ChapterLinkDialog open={chapterLinkOpen} onClose={() => setChapterLinkOpen(false)} onPick={insertChapterLink} anchorsOf={anchorsOf} />}
     </div>
   );
 }
