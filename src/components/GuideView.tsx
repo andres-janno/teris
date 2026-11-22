@@ -79,7 +79,7 @@ export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule
           subtitle="Kuidas Terisega töötada: peatükid vaadete kaupa ja ülesanded samm-sammult"
           actions={<SearchInput value={query} onChange={setQuery} placeholder="Otsi juhendist…" aria-label="Otsi juhendist" className="w-72 max-[861px]:w-full" />}
         />
-        <div className={`${boardBodyClass} grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] items-start gap-4 max-[861px]:grid-cols-1`}>
+        <div className={`${boardBodyClass} grid grid-cols-[minmax(220px,280px)_minmax(0,1fr)] content-start items-start gap-4 max-[861px]:grid-cols-1`}>
           <Card className="flex flex-col gap-0.5 max-[861px]:hidden">
             {visible.map((c, i) => (
               <CardButton key={c.key} variant="tile" padding="none" selected={!hits && c.key === current.key} className="flex w-full items-baseline gap-2 px-2.5 py-2 text-left" onClick={() => go(c.key)}>
