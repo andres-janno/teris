@@ -10,10 +10,12 @@ import {
   Users,
   Package,
   Repeat,
-  CloudSun
+  CloudSun,
+  BookOpen
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { NavSwitch, NavSwitchItem } from './ui';
+import { Button, NavSwitch, NavSwitchItem, cn } from './ui';
+import { headerNarrowHiddenClass, headerTriggerClass } from './ui/variants';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
 import { OperatorSelector } from './OperatorSelector';
@@ -22,7 +24,8 @@ import type { RelatedParty } from '../types/party';
 import type { AuthUser } from '../types/auth';
 
 export const MAIN_VIEWS = ['map', 'seasons', 'fields', 'crops', 'rotation', 'works', 'fleet', 'infrastructure', 'parties', 'stock', 'weather'] as const;
-export type MainView = typeof MAIN_VIEWS[number];
+// `guide` (Juhend) pole peamenüü kirje ega salvestu localStorage'isse: avaneb URL-i hash'iga (src/help/guideRoute.ts)
+export type MainView = typeof MAIN_VIEWS[number] | 'guide';
 
 // Peamenüü kirjed järjekorras; Ilm näidatakse ainult siis, kui `showWeather`.
 const NAV_ITEMS: { view: MainView; label: string; Icon: LucideIcon }[] = [
@@ -71,6 +74,8 @@ interface HeaderProps {
   onOpenWeatherCredential?: () => void;
   onLogout?: () => void;
   showWeather?: boolean;
+  onOpenGuide?: () => void;
+  guideOpen?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -88,7 +93,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenUsers,
   onOpenWeatherCredential,
   onLogout,
-  showWeather = false
+  showWeather = false,
+  onOpenGuide,
+  guideOpen = false
 }) => {
   return (
     <header className="z-1000 flex h-16 items-center justify-between border-b border-border bg-white/95 px-4 backdrop-blur-md transition-colors duration-250 dark:bg-background/90">
@@ -114,6 +121,13 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5">
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
+        )}
+
+        {onOpenGuide && (
+          <Button variant="ghost" className={cn(headerTriggerClass)} aria-pressed={guideOpen} aria-label="Juhend" title="Juhend" onClick={onOpenGuide}>
+            <BookOpen size={14} />
+            <span className={headerNarrowHiddenClass}>Juhend</span>
+          </Button>
         )}
 
         {currentUser && (

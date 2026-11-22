@@ -1,24 +1,39 @@
-// src/help/helpStore.ts — juhendid laaditakse rakenduses üks kord (GET /api/help) ja jagatakse kõigile HelpHint'idele.
+// src/help/helpStore.ts — juhendid laaditakse rakenduses üks kord (GET /api/help) ja jagatakse kõigile HelpHint'idele ja
+// juhendi vaatele: kohtjuhendite tekstid, seotud peatükid (guideLinks) ja peatükkide tekstid.
 import { useSyncExternalStore } from 'react';
 import type { HelpKey } from './helpRegistry';
+import type { GuideChapterKey } from './guideChapters';
 
-type Articles = Partial<Record<HelpKey, string>>;
+interface HelpState {
+  articles: Partial<Record<HelpKey, string>>;
+  guideLinks: Partial<Record<HelpKey, string>>;
+  chapters: Partial<Record<GuideChapterKey, string>>;
+  loaded: boolean;
+}
 
-let articles: Articles = {};
+let state: HelpState = { articles: {}, guideLinks: {}, chapters: {}, loaded: false };
 let loading: Promise<void> | null = null;
 const listeners = new Set<() => void>();
 
+function fetchHelp(): Promise<void> {
+  return fetch('/api/help', { credentials: 'same-origin' })
+    .then((r) => (r.ok ? r.json() : {}))
+    .then((d: Partial<Omit<HelpState, 'loaded'>>) => {
+      state = { articles: d.articles ?? {}, guideLinks: d.guideLinks ?? {}, chapters: d.chapters ?? {}, loaded: true };
+      listeners.forEach((l) => l());
+    });
+}
+
 function load() {
   if (loading) return;
-  loading = fetch('/api/help', { credentials: 'same-origin' })
-    .then((r) => (r.ok ? r.json() : { articles: {} }))
-    .then((d: { articles?: Articles }) => {
-      articles = d.articles ?? {};
-      listeners.forEach((l) => l());
-    })
-    .catch(() => {
-      loading = null; // proovi järgmisel kuvamisel uuesti
-    });
+  loading = fetchHelp().catch(() => {
+    loading = null; // proovi järgmisel kuvamisel uuesti
+  });
+}
+
+/** Juhendi vaade värskendab teksti iga avamisel (teenusepakkuja võib seda vahepeal muuta). */
+export function reloadHelp(): void {
+  void fetchHelp().catch(() => {});
 }
 
 const subscribe = (l: () => void) => {
@@ -27,5 +42,11 @@ const subscribe = (l: () => void) => {
   return () => listeners.delete(l);
 };
 
-export const useHelpArticle = (key: HelpKey): string | undefined =>
-  useSyncExternalStore(subscribe, () => articles[key]);
+const getState = () => state;
+
+export const useHelpArticle = (key: HelpKey): string | undefined => useSyncExternalStore(subscribe, getState).articles[key];
+
+/** Kohtjuhendi seotud peatükk kujul `guide.fields#import` (puudub, kui seost pole) */
+export const useGuideLink = (key: HelpKey): string | undefined => useSyncExternalStore(subscribe, getState).guideLinks[key];
+
+export const useGuideChapters = (): { chapters: HelpState['chapters']; loaded: boolean } => useSyncExternalStore(subscribe, getState);

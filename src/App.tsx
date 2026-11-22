@@ -30,6 +30,8 @@ import { SOIL_METRIC_CONFIG, type SoilSample, type SoilSampleMetricKey } from '.
 
 import { enrichVehicles } from './services/fleet';
 import { hasModule } from './services/license';
+import { useGuideRoute, openGuide, closeGuide } from './help/guideRoute';
+import { parseGuideRef } from './help/guideLink';
 import { TelemetrySimulator, buildCompletedPass } from './services/telemetrySimulator';
 import { getBoundingBox } from './services/geometryEngine';
 import { cleanTrack } from './services/trackCleaning';
@@ -83,6 +85,7 @@ const RelatedPartiesModal = lazy(() => import('./components/RelatedPartiesModal'
 const WorkRegisterModal = lazy(() => import('./components/WorkRegisterModal').then((m) => ({ default: m.WorkRegisterModal })));
 const WeatherView = lazy(() => import('./components/WeatherView').then((m) => ({ default: m.WeatherView })));
 const ArticlesView = lazy(() => import('./components/ArticlesView').then((m) => ({ default: m.ArticlesView })));
+const GuideView = lazy(() => import('./components/GuideView').then((m) => ({ default: m.GuideView })));
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
@@ -488,7 +491,7 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [articlesWarehouseId, setArticlesWarehouseId] = useState<string | null>(null);
   const clearArticlesWarehouse = React.useCallback(() => setArticlesWarehouseId(null), []);
   const mainViewKey = `agrimap_main_view_${user.id}`;
-  const [mainView, setMainView] = useState<MainView>(() => {
+  const readSavedView = (): MainView => {
     try {
       const saved = localStorage.getItem(mainViewKey);
       if (saved === 'weather' && !hasModule(user, 'WEATHER')) return 'map'; // moodulita vaade jätaks lehe tühjaks
@@ -496,8 +499,24 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
     } catch {
       return 'map';
     }
-  });
+  };
+  // Juhend avaneb URL-i hash'iga (#guide.fields#import); `guide` ei salvestu localStorage'isse, sulgemisel tagasi eelmisesse vaatesse
+  const guideRoute = useGuideRoute();
+  const viewBeforeGuideRef = useRef<MainView>(readSavedView());
+  const [mainView, setMainView] = useState<MainView>(() => (parseGuideRef(window.location.hash) ? 'guide' : readSavedView()));
+  useEffect(() => {
+    if (guideRoute) {
+      setMainView((v) => {
+        if (v !== 'guide') viewBeforeGuideRef.current = v;
+        return 'guide';
+      });
+    } else {
+      setMainView((v) => (v === 'guide' ? viewBeforeGuideRef.current : v));
+    }
+  }, [guideRoute]);
+  const guideHasModule = React.useCallback((m: Parameters<typeof hasModule>[1]) => hasModule(user, m), [user]);
   const changeMainView = (view: MainView) => {
+    if (guideRoute) closeGuide(); // peamenüü valik sulgeb juhendi
     setMainView(view);
     if (view !== 'works') { setWorksFocusId(null); setWorksSearch(null); } // ootel töö/otsing ei kehti pärast vaate vahetust
     try {
@@ -1634,6 +1653,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         onOpenWeatherCredential={user.isAdmin && hasModule(user, 'WEATHER') ? () => setIsWeatherCredentialOpen(true) : undefined}
         onLogout={onLogout}
         showWeather={hasModule(user, 'WEATHER')}
+        onOpenGuide={() => openGuide()}
+        guideOpen={mainView === 'guide'}
       />
 
       {mainView === 'seasons' && (
@@ -1808,6 +1829,12 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
             initialWarehouseId={articlesWarehouseId}
             onInitialWarehouseConsumed={clearArticlesWarehouse}
           />
+        </Suspense>
+      )}
+
+      {mainView === 'guide' && guideRoute && (
+        <Suspense fallback={null}>
+          <GuideView route={guideRoute} hasModule={guideHasModule} />
         </Suspense>
       )}
 

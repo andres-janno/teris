@@ -34,3 +34,20 @@ export function isValidGuideLink(s: string): boolean {
   const ref = parseGuideRef(s);
   return ref !== null && ref.chapter !== null;
 }
+
+/** Sügavlingi hash: `#guide`, `#guide.fields`, `#guide.fields#import` */
+export const guideHash = (ref: GuideRef): string => (ref.chapter ? `#${formatGuideRef(ref.chapter, ref.anchor)}` : '#guide');
+
+const PEER_LINK = /<a\s[^>]*?href="#(guide\.[a-z-]+)(?:#[a-z0-9-]+)?"[^>]*>([\s\S]*?)<\/a>/gi;
+
+/**
+ * Viited peatükkidele, mille moodulit ettevõttel pole: link asendub tekstiga + märkega „(vajab moodulit …)“.
+ * `missingModule(key)` annab mooduli nime (või null, kui peatükk on kasutatav). Töötab puhastatud HTML-iga.
+ */
+export function markModuleLinks(html: string, missingModule: (key: GuideChapterKey) => string | null): string {
+  return html.replace(PEER_LINK, (whole, key: string, text: string) => {
+    if (!isGuideChapterKey(key)) return whole;
+    const label = missingModule(key);
+    return label ? `<span>${text} (vajab moodulit „${label}“)</span>` : whole;
+  });
+}
