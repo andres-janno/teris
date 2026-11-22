@@ -69,6 +69,7 @@ teemamuutujad); praegused erandid.
 - `index.css` + `map.css` kokku ≤ ~2000 rida (praegu 6858).
 - ui-audit: vaadetes 0 suvalist väärtust ja 0 skaalavälist klassi; kõik senised read 0 nagu praegu.
 - Kasutajale nähtav muutus ainult ühtlustamisest (paar pikslit); paigutus ja värvid samad.
+- Tulemus 2026-11-21: `src/styles/*.css` (ilma `app.css`-ita) 6858 → 891 rida; ui-audit kõik 0 (v.a „Skaalaväliseid vahesid (CSS)“ 3: kaardi virna padding 40/44/56, kasutaja otsusel jäetud).
 
 ## Kontroll
 `tsc`, täis `vitest`, `oxlint`, `npm run ui-audit -- --details`; pildid `scripts/shot.mts` (Inter kirjatüüp, mõlemad

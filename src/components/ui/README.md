@@ -166,7 +166,7 @@ Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolut
 | `dialogStackBodyClass`, `workFormGridClass`, `workFormSectionClass`, `workFormHintClass` | töö kande ja plaani vormi kere, ruudustik, jaotis, vihje | `work-entry-*`, `add-work-body` |
 | `soilValueClass`, `soilFootnoteClass`, `soilYearCellClass` | mulla väärtus (`data-level`), joonealune märkus, aasta lahter | `soil-value`, `soil-footnote`, `soil-year-cell` |
 
-Kustutatud klasside valvur: `RETIRED_4E` ja `RETIRED_4F` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
+Kustutatud klasside valvur: `RETIRED_4E`, `RETIRED_4F` ja `RETIRED_4G` failis `src/tooling/uiAudit.ts` (ui-audit rida „Vanu ülevaateklasse (tsx)“ peab olema 0).
 
 CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label`, `.year-cell.has-crop/.selected` (Külvikorra aastaveerud), `.login-notice` (login-kaardi palett).
 
@@ -193,9 +193,32 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 
 `xl:` (1280px) on ainus murdepunkt, mis ei ole tuletatud vanast `max-width` päringust (`max-[N+1px]`).
 
-Kustutatud klasside valvur: `RETIRED_4F` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
+Kustutatud klasside valvur: `RETIRED_4F` ja `RETIRED_4G` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
 
 CSS-i jäävad (põhjused kommentaarides): login-kaardi palett ja `@keyframes login-*`, `.year-col`/`.year-cell` (Külvikord), `.help-content`, Leaflet ja HTML-string klassid (`MapMarkers.ts`, `MapView`), admin kasutab brändisõnale `.login-brand-word`, teemamuutujad ja põhireeglid (4g).
+
+## CSS-failid ja kihid (etapp 4g)
+
+Kujundus on Tailwindi klassides (`ui/` + vaated). CSS-i jääb ainult see, mis peab seal olema (spec „Mis jääb CSS-i“).
+Uut CSS-reeglit ei lisata, kui utiliit või `ui/variants.ts` konstant seda annab; kui lisad, vali fail alt.
+
+| Fail (`src/styles/`) | Kiht | Sisu | Miks CSS-is |
+| --- | --- | --- | --- |
+| `themes.css` | `theme` | hele/tume teema muutujad (`:root`, `[data-theme="dark"]`) — ÜKS allikas | teemamuutujad |
+| `base.css` | `base` | `*` lähtestus, `button`, `body`, vormielementide font | põhireeglid (preflight asendaja) |
+| `login.css` | `exceptions` | login palett, `@keyframes login-*`, `!important` ülekirjutused | erand: fotol taustal oma värvid |
+| `rotation.css` | `exceptions` | Külvikorra aastaveerud (`th.year-col`, `td.year-cell`) | keerulised kaudsed valijad |
+| `help-content.css` | `exceptions` | `.help-content` rikastekst | HTML sisu, järglasvalijad |
+| `map.css` | `exceptions` | Leaflet, hüpikud, märgised, sildid, `@keyframes`, `.v-name`, `.status-*` | HTML-string väljaspool Reacti |
+| `app.css` | — | `@layer`, `@import`id, `@source`id, `@theme`, `@utility`id | sisenemispunkt |
+
+Kihid: `theme < base < exceptions < vendor < components < utilities`. `!important` puhul võidab VARASEM kiht (seepärast
+login/rotation/map `!important` reeglid võidavad utiliite). Admin ega landing ei kasuta kihita CSS-i (landing on eraldi
+leht oma `landing.css`-iga). Valvur: `src/tooling/stylesLayout.test.ts` (failide ja kihtide jaotus, `index.css`/`admin.css`
+ei tule tagasi, ≤ 1000 rida kokku, `:root` ainult `themes.css`-is, `*`/`body` ainult `base.css`-is).
+
+Murdepunktid: vana `@media (max-width: N)` = `max-[N+1px]`, konteineripäring `@max-[N+1px]`; ainus uus murdepunkt on `xl:`
+(1280px, ainult `TerisLogo`). Valvur: `offByOneBreakpoints` (ui-audit „Murdepunkte ilma +1-ta“).
 
 ## Vana muutuja -> Tailwindi nimi
 

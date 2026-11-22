@@ -19,7 +19,7 @@ export interface WorkEntryHarvest { tonnes: number | null; ratePerHa: number | n
 
 export const WORK_PHASES: WorkPhase[] = ['PREPARATION', 'SOWING', 'CARE', 'HARVEST'];
 
-// tone = märgi toon (Badge) ja faasi sildi tekstitoon (.phase-label[data-tone], kontrast mõlemas teemas).
+// tone = märgi toon (Badge) ja faasi sildi tekstitoon (`phaseLabelClass` failis ui/variants.ts, kontrast mõlemas teemas).
 export const WORK_PHASE_META: Record<WorkPhase, { label: string; tone: BadgeTone }> = {
   PREPARATION: { label: 'Ettevalmistus', tone: 'info' },
   SOWING: { label: 'Külv', tone: 'success' },

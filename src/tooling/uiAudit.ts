@@ -114,10 +114,10 @@ export const LEGACY_CARD_CLASSES: ReadonlySet<string> = new Set([
   'trip-tile',
   // sektsioonikastid
   // teenusepakkuja admin (admin-login kustus 4g-s: admin.css kustutatud)
-  'admin-login', 'admin-stat',
+  'admin-stat',
 ]);
 // Vanad ülevaateklassid (etapp 4.1): päis, jaotise pealkiri, näitaja plaat, legendi kirje, rida „silt: väärtus“ ja
-// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E) ja 4f päise ja kesta klassid (RETIRED_4F). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
+// FinanceModal'i finance-* klassid ja tahvli fw-* klassid (etapp 4b) ja 4c Tehnika/sõitude klassid (RETIRED_4C) ja 4d kaardi paneelide klassid (RETIRED_4D) ja 4e dialoogide klassid (RETIRED_4E) ja 4f päise ja kesta klassid (RETIRED_4F) ja 4g klassid (RETIRED_4G). ui/ kausta ei loeta. Jääb alles valvurina: peab olema 0.
 // 4c: Tehnika ja sõitude kustutatud klassid (etapp 4c). Eesliidete asemel täpsed nimed: id-d (`dev-assign-…`, `trip-notes`) ei loe.
 // `dev-imei`, `dev-model`, `imp-name` on ka vormiväljade id-d: id="…" ja htmlFor="…" väärtusi regex ei loe (lookbehind).
 // Jagatud klass auth-error-banner puudub teadlikult (jääb ühiste etapini). vehicle-card, v-* ja telemetry-suggestion-* viidi 4e-s ära (RETIRED_4E).
@@ -193,8 +193,8 @@ export const RETIRED_4E: readonly string[] = [
   'work-entry-presets-label', 'work-entry-progress', 'work-entry-progress-head', 'work-entry-section', 'work-entry-top-grid',
   'work-entry-unit', 'work-entry-warning', 'work-full-name', 'year-crop', 'year-crop-edit-icon', 'year-crop-name', 'year-shape-btn',
 ];
-// 4g: kustutatud klassid (T8 täidab loendi lõpuni).
-export const RETIRED_4G: readonly string[] = ['admin-login', 'map-wrapper'];
+// 4g: kustutatud abiklassid ja -hookid. `crop-legend-item` jääb (reegel on map.css-is), `sr-only`/`animate-scale-up` on Tailwindi utiliidid.
+export const RETIRED_4G: readonly string[] = ['admin-login', 'map-wrapper', 'phase-label'];
 // 4f: päise, menüüde, ribade, tugipaneeli ja rakenduse kesta kustutatud klassid (etapp 4f). Täpsed nimed; `teris-logo` puudub teadlikult (logofailide nimi `teris-logo.svg`).
 export const RETIRED_4F: readonly string[] = [
   'admin-brand-word', 'app-container', 'app-header', 'db-error-banner', 'header-actions', 'header-account', 'header-account-chevron', 'header-account-content',

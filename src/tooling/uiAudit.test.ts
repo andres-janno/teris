@@ -277,7 +277,7 @@ describe('vanad kaardid', () => {
   it('loeb CSS-is kaardiklassi reegli, mis seab välimuse; ei loe olekuid, !important-i, asetust ega teisi klasse', () => {
     const css = `/* .glass-card kommentaaris */
 .empty-register-state { padding: 14px; display: flex; }
-.admin-login,
+.empty-register-state,
 .history-filter-bar { background: var(--bg-card); border: 1px solid var(--border-card); }
 .empty-register-state.selected { border-color: green; box-shadow: 0 0 1px red; }
 .admin-stat { position: absolute; border-radius: var(--radius-md) !important; }
@@ -285,7 +285,7 @@ describe('vanad kaardid', () => {
 .glass-card { -webkit-backdrop-filter: blur(16px); }
 .other-card { background: red; }
 @media (max-width: 600px) { .trip-tile { border-radius: 10px; } }`;
-    expect(legacyCardRules(css)).toEqual(['.admin-login', '.history-filter-bar', '.glass-card', '.trip-tile']);
+    expect(legacyCardRules(css)).toEqual(['.empty-register-state', '.history-filter-bar', '.glass-card', '.trip-tile']);
   });
   it('summarize annab tsx ja css failid, ui kaust välja', () => {
     const r = summarize([
@@ -458,6 +458,12 @@ describe('vanad ülevaateklassid (etapp 4.1)', () => {
       { path: 'src/components/A.tsx', count: 6 },
       { path: 'src/admin/B.tsx', count: 1 },
     ]);
+  });
+  it('RETIRED_4G: phase-label ja map-wrapper loetakse, sr-only ja animate-scale-up (Tailwindi utiliidid) mitte', () => {
+    const r = summarize([{ path: 'src/components/A.tsx', content: '<div className="phase-label map-wrapper" />' }]);
+    expect(r.legacyOverviewFiles).toEqual([{ path: 'src/components/A.tsx', count: 2 }]);
+    const ok = summarize([{ path: 'src/components/A.tsx', content: '<div className="sr-only animate-scale-up" />' }]);
+    expect(ok.legacyOverviewFiles).toEqual([]);
   });
 });
 

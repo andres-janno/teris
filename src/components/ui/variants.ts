@@ -592,6 +592,6 @@ export const loginNoticeClass = 'login-notice flex items-center gap-2.5 rounded-
 /** Kaardi ujuva paneeli ahendatud olek (LayerControl, MapYearSelector): 40px ikoonnupp; asukoha annab pakk (items-start/items-end). */
 export const collapsedPanelButtonClass = 'flex size-10 shrink-0 items-center justify-center text-foreground transition-all duration-150 hover:text-primary';
 
-/** Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina (`data-tone`), kontrast mõlemas teemas. Vana `.phase-label[data-tone]`. */
+/** Töö faasi silt (tahvli paneel, lisamisdialoog): märgi toon tekstina (`data-tone`), kontrast mõlemas teemas. */
 export const phaseLabelClass =
   'text-2xs font-medium leading-natural tracking-wider data-[tone=info]:text-info-text data-[tone=success]:text-success-text data-[tone=accent]:text-accent-text data-[tone=warning]:text-warning-text';
