@@ -278,7 +278,7 @@ describe('vanad kaardid', () => {
     const css = `/* .glass-card kommentaaris */
 .empty-register-state { padding: 14px; display: flex; }
 .empty-register-state,
-.history-filter-bar { background: var(--bg-card); border: 1px solid var(--border-card); }
+.history-filter-bar { background: var(--bg-surface); border: 1px solid var(--border-card); }
 .empty-register-state.selected { border-color: green; box-shadow: 0 0 1px red; }
 .admin-stat { position: absolute; border-radius: var(--radius-md) !important; }
 .add-poi-banner { border-color: pink !important; }

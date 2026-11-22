@@ -1,11 +1,6 @@
 /* src/styles/map.css — Kaardivaate, Leafleti ja telemeetria spetsiifilised stiilid.
    Imporditakse failis src/styles/app.css kihis `exceptions`. */
 
-/* Leafleti kaardi taust enne tiilide laadimist (hex pole token) */
-.leaflet-map-container {
-  background: #0d131f;
-}
-
 /* Asukoha lisamise režiimi banner (MapView): roosa tekst ja ääris peavad Card-i äärise üle võitma */
 .add-poi-banner {
   color: #db2777;

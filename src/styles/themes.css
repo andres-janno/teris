@@ -1,8 +1,9 @@
 /* src/styles/themes.css — teemamuutujate ÜKS allikas: hele (`:root`, vaikimisi) ja tume (`[data-theme="dark"]`) teema.
    Imporditakse app.css-is kihis `theme`. Tailwindi värvinimed (`bg-card`, `text-muted-foreground` …) on app.css
    `@theme inline`-is ja viitavad siia, seega teema vahetub ainult siin. Otse (`var(--…)`) loevad muutujaid veel:
-   Leafleti hüpikud ja vihjed ning kaardi märgised (map.css: --bg-modal, --border-card, --text-*, --tone-*, --emerald-*,
-   --amber-400, --shadow-modal, --btn-sec-*); sisselogimise palett (login.css kasutab ainult --text-* ja nurgaraadiuste muutujaid);
+   Leafleti hüpikud ja vihjed ning kaardi märgised (map.css: --popup-* (mis viitavad --bg-modal, --border-card, --text-primary), --border-card, --text-*, --tone-success-text,
+   --emerald-500/600, --amber-400, --shadow-modal, --btn-sec-*, --crop-tint-hover); sisselogimise palett (login.css kasutab ainult
+   oma --login-* muutujaid, nurgaraadiuse muutujat ja --brand-offset; base.css loeb --text-primary ja --bg-dark);
    andmevärvid (src/lib/dataColors.ts: --amber-400, --emerald-400); ChipButton accent-stringid (--emerald-500, --blue-500);
    FieldWorksBoard style-string (--bg-surface); tehnika värvid (--fresh-*, --trip-*; tsx style); Külvikord ja kiip
    (--crop-tint*, --selection-bg*). Ära nimeta ümber ega kustuta ilma `grep -rn` kontrollita.

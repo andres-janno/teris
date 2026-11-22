@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 # Ehitatud CSS-i klasside võrdlus ja kokkupõrked vana CSS-iga.
 # Kasutus: python3 scripts/css-utils.py list <dist>            — klasside arv ja faili suurus
-#          python3 scripts/css-utils.py diff <dist_a> <dist_b> — uued klassid B-s ja need, mis kattuvad src/styles/*.css ja admin.css klassidega
+#          python3 scripts/css-utils.py diff <dist_a> <dist_b> — uued klassid B-s ja need, mis kattuvad src/styles/*.css klassidega
 import glob, os, re, sys
 
 def app_css(dist):
@@ -17,7 +17,7 @@ def classes(text):
 
 def legacy():
     out = set()
-    for p in ['src/admin/admin.css'] + glob.glob('src/styles/*.css'):
+    for p in glob.glob('src/styles/*.css'):
         if os.path.exists(p):
             out |= classes(open(p).read())
     return out

@@ -191,7 +191,7 @@ CSS-i jäävad (põhjused kommentaarides): `.year-col(.selected) .year-col-label
 | `stockQtyClass({ sign })` | laokoguse märk ja värv | `stock-qty(-in/-out)` |
 | `adminUi.ts` (ainult admin) | admin kaardid, vormid, vihjed | `admin-*` |
 
-`xl:` (1280px) on ainus murdepunkt, mis ei ole tuletatud vanast `max-width` päringust (`max-[N+1px]`).
+Uued murdepunktid (mitte tuletatud vanast `max-width` päringust `max-[N+1px]`): `xl:` (1280px, `TerisLogo`), `sm:` (`ui/Field.tsx` `FormGrid`) ja `md:` (ainult `ui/UiGallery.tsx`).
 
 Kustutatud klasside valvur: `RETIRED_4F` ja `RETIRED_4G` (`src/tooling/uiAudit.ts`). Nimi lisatakse sinna ainult siis, kui ükski CSS-reegel seda enam ei kasuta.
 
@@ -205,7 +205,7 @@ Uut CSS-reeglit ei lisata, kui utiliit või `ui/variants.ts` konstant seda annab
 | Fail (`src/styles/`) | Kiht | Sisu | Miks CSS-is |
 | --- | --- | --- | --- |
 | `themes.css` | `theme` | hele/tume teema muutujad (`:root`, `[data-theme="dark"]`) — ÜKS allikas | teemamuutujad |
-| `base.css` | `base` | `*` lähtestus, `button`, `body`, vormielementide font | põhireeglid (preflight asendaja) |
+| `base.css` | `base` | `*` lähtestus, `button`, `button[data-slot="card"]`, `body`, vormielementide font | põhireeglid (preflight asendaja) |
 | `login.css` | `exceptions` | login palett, `@keyframes login-*`, `!important` ülekirjutused | erand: fotol taustal oma värvid |
 | `rotation.css` | `exceptions` | Külvikorra aastaveerud (`th.year-col`, `td.year-cell`) | keerulised kaudsed valijad |
 | `help-content.css` | `exceptions` | `.help-content` rikastekst | HTML sisu, järglasvalijad |
@@ -215,10 +215,10 @@ Uut CSS-reeglit ei lisata, kui utiliit või `ui/variants.ts` konstant seda annab
 Kihid: `theme < base < exceptions < vendor < components < utilities`. `!important` puhul võidab VARASEM kiht (seepärast
 login/rotation/map `!important` reeglid võidavad utiliite). Admin ega landing ei kasuta kihita CSS-i (landing on eraldi
 leht oma `landing.css`-iga). Valvur: `src/tooling/stylesLayout.test.ts` (failide ja kihtide jaotus, `index.css`/`admin.css`
-ei tule tagasi, ≤ 1000 rida kokku, `:root` ainult `themes.css`-is, `*`/`body` ainult `base.css`-is).
+ei tule tagasi, ≤ 1000 rida kokku, `:root` ainult `themes.css`-is, `*`/`body`/`html` ainult `base.css`-is).
 
-Murdepunktid: vana `@media (max-width: N)` = `max-[N+1px]`, konteineripäring `@max-[N+1px]`; ainus uus murdepunkt on `xl:`
-(1280px, ainult `TerisLogo`). Valvur: `offByOneBreakpoints` (ui-audit „Murdepunkte ilma +1-ta“).
+Murdepunktid: vana `@media (max-width: N)` = `max-[N+1px]`, konteineripäring `@max-[N+1px]`; uued murdepunktid on `xl:`
+(1280px, `TerisLogo`), `sm:` (`ui/Field.tsx`) ja `md:` (`ui/UiGallery.tsx`). Valvur: `offByOneBreakpoints` (ui-audit „Murdepunkte ilma +1-ta“).
 
 ## Vana muutuja -> Tailwindi nimi
 
@@ -244,7 +244,8 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 | `--btn-sec-hover` | `bg-secondary-hover` | teisene nupp hover |
 | `--btn-sec-border` | `border-secondary-border` | teisene nupp ääris |
 | `--emerald-500` | `text-primary` / `bg-primary` | põhivärv |
-| `--emerald-600` | `bg-primary-strong` | põhivärv tugevam |
+| `--selection-bg` | `bg-primary-strong` / `bg-selection` | tahke roheline (Kaart-nupp, valitud olek) |
+| `--selection-bg-hover` | `bg-selection-hover` | valitud oleku hover |
 | `--blue-500` | `text-info` | info |
 | `--amber-500` | `text-warning` | hoiatus |
 | `--rose-500` | `text-destructive` | viga |
@@ -257,7 +258,7 @@ HOIATUS: vanad klassi- ja muutujanimed `text-muted` / `text-secondary` EI tähen
 
 Muutujaid, mida loevad Leaflet, login, `dataColors.ts` ja tsx style-stringid, ei nimetata ümber; nimekiri on `themes.css` päises.
 
-Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` = `#166534` / `#15803d` (põhinupu gradient),
+Kindlad värvid: `white`, `black`, `danger-solid` (#dc2626), `primary-from` / `primary-to` = `#16a34a` / `#22c55e` (põhinupu gradient, mõlemas teemas sama; `app.css`),
 `overlay` (dialoogi taust).
 
 ## Kontrast

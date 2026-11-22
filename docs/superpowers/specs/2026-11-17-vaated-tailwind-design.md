@@ -32,7 +32,7 @@ Iga etapp (ja iga vaade etapis 4.2–4.8) = commit + release + pildid mõlemas t
 - ui-audit laieneb vaadetele: suvalised väärtused (`p-[7px]`, `text-[13px]`) keelatud, vahed/kirjasuurused ainult
   skaalast (olemasolevad read „Keelatud suvalisi klasse“, „Skaalaväliseid vahe-klasse“ katavad nüüd ka vaated). Lubatud
   Tailwindi variandid (`hover:`, `aria-…:`, `data-…:`, `[&>td]:`) nagu `ui/`-s.
-- Kihid jäävad: `legacy` (index.css, map.css) < `utilities`. Kui vaate klass asendatakse utiliitidega, kustutatakse vana
+- Kihid jäävad: `exceptions` (index.css, map.css; 4g nimetas `legacy` ümber) < `utilities`. Kui vaate klass asendatakse utiliitidega, kustutatakse vana
   reegel samas commitis (mitte kaks võistlevat reeglit). Nähtav muutus: puudub.
 
 ### 4.1 Uued ühised komponendid
@@ -77,7 +77,7 @@ teemad, 1440 ja 1366). Tööviis: plaan → SDD (implementeerijad ja ülevaatuse
 ülesande ülevaatus, lõpuülevaatus, raport eesti keeles.
 
 ## Riskid
-- Utiliit vs vana reegel samal elemendil: `legacy` kiht kaotab `utilities`-ile, aga `!important` vanad reeglid võidavad —
+- Utiliit vs vana reegel samal elemendil: `exceptions` kiht (varem `legacy`, 4g nimetas ümber) kaotab `utilities`-ile, aga `!important` vanad reeglid võidavad —
   need kustutatakse samas sammus.
 - Suured vaated (FieldWorksBoard, VehicleTracker) — pikad klassiread; korduv osa → alamkomponent vaate failis või ui
   komponent.
