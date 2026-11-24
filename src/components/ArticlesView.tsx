@@ -19,7 +19,7 @@ import { HarvestLotsPanel } from './HarvestLotsPanel';
 import { WarehousesPanel } from './WarehousesPanel';
 
 import { formatQty } from '../services/units';
-import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, PageHeader } from './ui';
+import { Badge, Button, Table, TableBody, TableCell, TableEmpty, TableFooter, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, ToggleGroup, ToggleGroupItem, FilterClear, FilterSelect, SearchInput, PageHeader } from './ui';
 import { boardViewClass, boardMainClass, boardBodyClass, boardContentClass, boardFooterClass, registerHeaderControlsClass, registerActionsBarClass, registerIoButtonsClass, searchFieldClass, yearSelectorGroupClass, yearLabelClass, cellBadgeClass, overuseClass, stockQtyClass } from './ui/variants';
 const errorText = (err: unknown) => (err instanceof Error ? err.message : 'Toiming ebaõnnestus');
 
@@ -102,6 +102,11 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
       .filter((m) => !q || m.name.toLowerCase().includes(q) || (m.manufacturer ?? '').toLowerCase().includes(q) || (m.composition ?? '').toLowerCase().includes(q) || (m.notes ?? '').toLowerCase().includes(q) || (m.priaKind ?? '').toLowerCase().includes(q))
       .sort((a, b) => a.name.localeCompare(b.name, 'et'));
   }, [articles, group, categoryId, search]);
+
+  const totalStockValue = useMemo(() => {
+    const sum = filtered.reduce((acc, m) => acc + (isGoods(m.category.group) ? (m.stockValue ?? 0) : 0), 0);
+    return Math.round(sum * 100) / 100 || 0;
+  }, [filtered]);
 
 
   const remove = async (m: Article) => {
@@ -227,7 +232,7 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
               </FilterClear>
             </div>
 
-            <Table scroll="fill" bordered>
+            <Table scroll="fill" bordered className="[&>tfoot>tr>td]:border-t">
               <TableHeader>
                 <TableRow>
                   <TableHead>Kategooria</TableHead>
@@ -297,6 +302,16 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
                   </TableRow>
                 ))}
               </TableBody>
+              {canManageFinance && filtered.length > 0 && (
+                <TableFooter sticky>
+                  <TableRow>
+                    <TableCell colSpan={7}><strong>Kokku</strong></TableCell>
+                    <TableCell numeric><strong>{fmtEur(totalStockValue)}</strong></TableCell>
+                    <TableCell colSpan={5} />
+                    <TableCell actions className="z-3!" />
+                  </TableRow>
+                </TableFooter>
+              )}
             </Table>
             </>)}
           </div>
@@ -306,6 +321,11 @@ export const ArticlesView: React.FC<ArticlesViewProps> = ({ selectedYear, onSele
           <span>
             Kuvatakse <strong>{filtered.length}</strong> materjali <strong>{articles.length}</strong>-st
           </span>
+          {canManageFinance && (
+            <span>
+              {' '}&bull; Laoväärtus kokku: <strong className="tabular-nums text-foreground">{fmtEur(totalStockValue)}</strong>
+            </span>
+          )}
         </div>
         )}
       </main>

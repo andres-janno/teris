@@ -194,6 +194,7 @@ describe('ladu', () => {
     expect(plain.rows[0]).toMatchObject({ article: expect.any(String), group: 'CONSUMABLE', category: expect.any(String) });
     expect(plain.rows[0].value).toBeUndefined();
     const fin = (await call(A.financeKey, 'list_stock_levels')).data;
+    expect(fin).toHaveProperty('totalValue');
     expect(fin.rows[0]).toHaveProperty('value');
   });
   it('list_stock_movements puudub tavakasutajal, finantsjuht näeb liikumisi', async () => {
@@ -418,8 +419,12 @@ describe('registrid ja saagipartiid (MCP)', () => {
     const arts = (await call(A.plainKey, 'list_articles', { search: 'Ammoonium' })).data;
     expect(arts.rows[0]).toMatchObject({ name: 'Ammooniumnitraat', group: 'CONSUMABLE', nPct: 34 });
     expect(arts.rows[0].price).toBeUndefined();
+    expect(arts.totalStockValue).toBeUndefined();
+    expect(arts.rows[0].stockValue).toBeUndefined();
     const artsFin = (await call(A.financeKey, 'list_articles', { search: 'Ammoonium' })).data;
     expect('price' in artsFin.rows[0]).toBe(true);
+    expect(typeof artsFin.totalStockValue).toBe('number');
+    expect(typeof artsFin.rows[0].stockValue).toBe('number');
 
     const createdArt = (await call(A.plainKey, 'create_article', {
       name: 'NPK 15-15-15',

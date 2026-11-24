@@ -38,6 +38,7 @@ export const stockTools = [
       rows.sort((p, q) => p.warehouse.name.localeCompare(q.warehouse.name, 'et') || p.article.name.localeCompare(q.article.name, 'et'));
       return {
         total: rows.length, shown: rows.length,
+        ...(finance ? { totalValue: round2(rows.reduce((s, r) => s + Number(r.value), 0)) } : {}),
         rows: rows.map((r) => ({
           warehouse: r.warehouse.name, article: r.article.name, group: r.article.category.group, category: r.article.category.name, quantity: round2(r.qty), unit: r.article.unit, negative: r.qty < 0,
           ...(finance ? { value: round2(Number(r.value)), avgPrice: r.pricedQty > 0 ? round2(Number(r.value) / r.pricedQty) : null, unpricedQty: round2(r.unpricedQty) } : {})

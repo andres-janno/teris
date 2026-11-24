@@ -183,7 +183,7 @@ export const registryTools = [
   defineTool({
     name: 'list_articles',
     title: 'Artiklite register',
-    description: 'Kõik artiklid (kaubad ja teenused, sh 0-laoseisuga): rühm (SERVICE/CONSUMABLE/PRODUCE/OTHER_GOODS), liik, ühik, tootja, koostis, toimeaine, NPK, PRIA väljad. Finantsõigusega ka teenuste ühikuhind.',
+    description: 'Kõik artiklid (kaubad ja teenused, sh 0-laoseisuga): rühm, liik, ühik, laokogus, tootja, koostis, toimeaine, NPK, PRIA väljad. Finantsõigusega ka teenuste ühikuhind, artikli laoväärtus (stockValue) ja kõigi leitud artiklite laoväärtus kokku (totalStockValue).',
     input: {
       group: z.enum(['SERVICE', 'CONSUMABLE', 'PRODUCE', 'OTHER_GOODS']).optional().describe('Artikli rühm'),
       category: z.string().optional().describe('Liigi nimi (osaline)'),
@@ -204,38 +204,54 @@ export const registryTools = [
           category: { select: { name: true, group: true, systemKind: true } },
           crop: { select: { name: true } },
           cropVariety: { select: { name: true } },
-          defaultWarehouse: { select: { name: true } }
+          defaultWarehouse: { select: { name: true } },
+          stock: { select: { qty: true, value: true, pricedQty: true, unpricedQty: true } }
         }
       });
+      const totalStockValue = rows.reduce((sum, r) => sum + r.stock.reduce((s, st) => s + Number(st.value), 0), 0);
       const out = limitRows(rows, a.limit);
       return {
         total: out.total,
         shown: out.shown,
-        rows: out.rows.map((r) => ({
-          name: r.name,
-          group: r.category.group,
-          category: r.category.name,
-          systemKind: r.category.systemKind,
-          unit: r.unit,
-          manufacturer: r.manufacturer,
-          composition: r.composition,
-          crop: r.crop?.name ?? null,
-          variety: r.cropVariety?.name ?? null,
-          defaultWarehouse: r.defaultWarehouse?.name ?? null,
-          isDefaultService: r.isDefaultService,
-          priaRegister: r.priaRegister,
-          priaKind: r.priaKind,
-          priaSpec: r.priaSpec,
-          activeIngredient: r.activeIngredient,
-          nPct: round2(r.nPct),
-          pPct: round2(r.pPct),
-          kPct: round2(r.kPct),
-          aliases: r.aliases,
-          stockIssueCount: r.stockIssueCount,
-          isActive: r.isActive,
-          notes: r.notes,
-          ...(finance ? { price: r.price === null ? null : round2(Number(r.price)) } : {})
-        }))
+        ...(finance ? { totalStockValue: round2(totalStockValue) } : {}),
+        rows: out.rows.map((r) => {
+          const isGoods = r.category.group !== 'SERVICE';
+          const qtySum = r.stock.reduce((s, st) => s + st.qty, 0);
+          const valSum = r.stock.reduce((s, st) => s + Number(st.value), 0);
+          const pricedSum = r.stock.reduce((s, st) => s + st.pricedQty, 0);
+          const unpricedSum = r.stock.reduce((s, st) => s + st.unpricedQty, 0);
+          return {
+            name: r.name,
+            group: r.category.group,
+            category: r.category.name,
+            systemKind: r.category.systemKind,
+            unit: r.unit,
+            stockQty: isGoods ? round2(qtySum) : null,
+            manufacturer: r.manufacturer,
+            composition: r.composition,
+            crop: r.crop?.name ?? null,
+            variety: r.cropVariety?.name ?? null,
+            defaultWarehouse: r.defaultWarehouse?.name ?? null,
+            isDefaultService: r.isDefaultService,
+            priaRegister: r.priaRegister,
+            priaKind: r.priaKind,
+            priaSpec: r.priaSpec,
+            activeIngredient: r.activeIngredient,
+            nPct: round2(r.nPct),
+            pPct: round2(r.pPct),
+            kPct: round2(r.kPct),
+            aliases: r.aliases,
+            stockIssueCount: r.stockIssueCount,
+            isActive: r.isActive,
+            notes: r.notes,
+            ...(finance ? {
+              price: r.price === null ? null : round2(Number(r.price)),
+              stockValue: isGoods ? round2(valSum) : null,
+              avgPrice: isGoods && pricedSum > 0 ? round2(valSum / pricedSum) : null,
+              unpricedQty: isGoods ? round2(unpricedSum) : null
+            } : {})
+          };
+        })
       };
     }
   }),
