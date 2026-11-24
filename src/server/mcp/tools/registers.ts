@@ -2,8 +2,11 @@
 import { z } from 'zod';
 import { prisma } from '../../db.ts';
 import { workTypeDisplayName } from '../../../services/workTypeName.ts';
-import { defineTool, canSeeFinance } from '../context.ts';
-import { pickOne, fieldLabel, round2, limitRows } from '../format.ts';
+import { articleFieldRules, sanitizeArticleFields } from '../../../services/articleRules.ts';
+import { defineTool, canSeeFinance, type McpContext } from '../context.ts';
+import { pickOne, fieldLabel, round2, limitRows, ToolInputError } from '../format.ts';
+
+const canWrite = (ctx: McpContext): boolean => !ctx.license.readOnly;
 
 const ci = (s: string) => ({ contains: s, mode: 'insensitive' as const });
 const limit = z.number().int().min(1).max(1000).optional().describe('Ridade arv (vaikimisi 200)');
@@ -234,6 +237,116 @@ export const registryTools = [
           ...(finance ? { price: r.price === null ? null : round2(Number(r.price)) } : {})
         }))
       };
+    }
+  }),
+  defineTool({
+    name: 'create_article',
+    title: 'Lisa artikkel',
+    description: 'Lisab uue artikli (kaup või teenus) artiklite registrisse. Liigiga sobimatud väljad jäetakse tühjaks. Teenuse hinna määramine nõuab finantsõigust. Nõuab kehtivat (mitte-read-only) litsentsi.',
+    readOnly: false,
+    when: canWrite,
+    input: {
+      name: z.string().min(1).max(160).describe('Artikli nimi'),
+      category: z.string().min(1).describe('Artikli liik (nt Väetis, Seeme, Taimekaitsevahend, Kütus, Muu kulumaterjal, Terad, Töötaja tööaeg)'),
+      unit: z.string().min(1).max(16).describe('Ühik (nt kg, l, t, tk, h)'),
+      manufacturer: z.string().max(160).optional().describe('Tootja'),
+      composition: z.string().max(4000).optional().describe('Koostis / toimeained'),
+      notes: z.string().max(4000).optional().describe('Märkused'),
+      defaultWarehouse: z.string().optional().describe('Vaikimisi lao nimi (kaubale)'),
+      crop: z.string().optional().describe('Kultuuri nimi (terade/punkrite liigile)'),
+      cropVariety: z.string().optional().describe('Sordi nimi (seemne liigile)'),
+      priaRegister: z.string().max(120).optional().describe('PRIA register'),
+      priaKind: z.string().max(120).optional().describe('PRIA liik'),
+      priaSpec: z.string().max(20).optional().describe('Seemne kategooria (nt C2)'),
+      activeIngredient: z.string().max(500).optional().describe('Toimeaine (taimekaitsevahendil)'),
+      nPct: z.number().min(0).max(100).optional().describe('Lämmastik N % (väetisel)'),
+      pPct: z.number().min(0).max(100).optional().describe('Fosfor P % (väetisel)'),
+      kPct: z.number().min(0).max(100).optional().describe('Kaalium K % (väetisel)'),
+      price: z.number().min(0).max(99999999).optional().describe('Ühiku hind € (ainult teenusel ja finantsõigusega)')
+    },
+    run: async (a, ctx) => {
+      const finance = canSeeFinance(ctx);
+      if (a.price !== undefined && !finance) throw new ToolInputError('Teenuse hinna määramine nõuab finantsõigust');
+      const cats = await prisma.articleCategory.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } });
+      const catHit = pickOne('Artikli liik', a.category, cats.map((c) => ({
+        id: c.id,
+        label: c.name,
+        keys: [c.name, ...(c.systemKind ? [c.systemKind] : [])]
+      })));
+      const cat = cats.find((c) => c.id === catHit.id)!;
+
+      let defaultWarehouseId: string | null = null;
+      if (a.defaultWarehouse) {
+        const whs = await prisma.warehouse.findMany({ select: { id: true, name: true } });
+        defaultWarehouseId = pickOne('Ladu', a.defaultWarehouse, whs.map((w) => ({ id: w.id, label: w.name, keys: [w.name] }))).id;
+      }
+      let cropId: string | null = null;
+      if (a.crop) {
+        const crops = await prisma.crop.findMany({ select: { id: true, name: true } });
+        cropId = pickOne('Kultuur', a.crop, crops.map((c) => ({ id: c.id, label: c.name, keys: [c.name] }))).id;
+      }
+      let cropVarietyId: string | null = null;
+      if (a.cropVariety) {
+        const vars = await prisma.cropVariety.findMany({ select: { id: true, name: true } });
+        cropVarietyId = pickOne('Sort', a.cropVariety, vars.map((v) => ({ id: v.id, label: v.name, keys: [v.name] }))).id;
+      }
+
+      const rules = articleFieldRules(cat.group, cat.systemKind);
+      const optional = sanitizeArticleFields({
+        price: finance && a.price !== undefined ? a.price : null,
+        cropId,
+        defaultWarehouseId,
+        cropVarietyId,
+        priaRegister: a.priaRegister?.trim() || null,
+        priaKind: a.priaKind?.trim() || null,
+        priaSpec: a.priaSpec?.trim() || null,
+        activeIngredient: a.activeIngredient?.trim() || null,
+        nPct: a.nPct ?? null,
+        pPct: a.pPct ?? null,
+        kPct: a.kPct ?? null
+      }, rules);
+
+      try {
+        const created = await prisma.article.create({
+          data: {
+            name: a.name.trim(),
+            categoryId: cat.id,
+            unit: a.unit.trim(),
+            manufacturer: a.manufacturer?.trim() || null,
+            composition: a.composition?.trim() || null,
+            notes: a.notes?.trim() || null,
+            isActive: true,
+            isDefaultService: false,
+            ...optional
+          },
+          include: {
+            category: { select: { name: true, group: true, systemKind: true } },
+            defaultWarehouse: { select: { name: true } },
+            crop: { select: { name: true } },
+            cropVariety: { select: { name: true } }
+          }
+        });
+        return {
+          name: created.name,
+          group: created.category.group,
+          category: created.category.name,
+          unit: created.unit,
+          manufacturer: created.manufacturer,
+          composition: created.composition,
+          defaultWarehouse: created.defaultWarehouse?.name ?? null,
+          crop: created.crop?.name ?? null,
+          variety: created.cropVariety?.name ?? null,
+          activeIngredient: created.activeIngredient,
+          nPct: round2(created.nPct),
+          pPct: round2(created.pPct),
+          kPct: round2(created.kPct),
+          notes: created.notes,
+          ...(finance ? { price: created.price === null ? null : round2(Number(created.price)) } : {})
+        };
+      } catch (err: any) {
+        if (err?.code === 'P2002') throw new ToolInputError('Selles kategoorias on sellise nimega artikkel juba olemas');
+        throw err;
+      }
     }
   }),
   defineTool({

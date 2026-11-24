@@ -80,12 +80,14 @@ describe('autentimine', () => {
 });
 
 describe('server', () => {
-  it('juhis ja ainult lugevad tööriistad', async () => {
+  it('juhis ja tööriistade readOnlyHint märge', async () => {
     const client = await connect(A.plainKey);
     expect(client.getInstructions()).toContain('Teris');
     const { tools } = await client.listTools();
     expect(tools.length).toBeGreaterThan(0);
-    for (const t of tools) expect(t.annotations?.readOnlyHint, t.name).toBe(true);
+    for (const t of tools) {
+      expect(t.annotations?.readOnlyHint, t.name).toBe(t.name !== 'create_article');
+    }
     await client.close();
   });
   it('whoami: tavakasutaja vs finantsjuht', async () => {
@@ -418,6 +420,18 @@ describe('registrid ja saagipartiid (MCP)', () => {
     expect(arts.rows[0].price).toBeUndefined();
     const artsFin = (await call(A.financeKey, 'list_articles', { search: 'Ammoonium' })).data;
     expect('price' in artsFin.rows[0]).toBe(true);
+
+    const createdArt = (await call(A.plainKey, 'create_article', {
+      name: 'NPK 15-15-15',
+      category: 'Väetis',
+      unit: 'kg',
+      nPct: 15,
+      pPct: 15,
+      kPct: 15
+    })).data;
+    expect(createdArt).toMatchObject({ name: 'NPK 15-15-15', group: 'CONSUMABLE', category: 'Väetis', unit: 'kg', nPct: 15, pPct: 15, kPct: 15 });
+    const dupArt = await call(A.plainKey, 'create_article', { name: 'NPK 15-15-15', category: 'Väetis', unit: 'kg' });
+    expect(dupArt.isError).toBe(true);
 
     const wts = (await call(A.plainKey, 'list_work_types')).data;
     expect(wts.workTypes[0]).toMatchObject({ name: 'Väetamine', phase: 'CARE' });

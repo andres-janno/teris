@@ -5,13 +5,13 @@ import { authDb } from '../db.ts';
 export const MCP_INSTRUCTIONS_KEY = 'mcp_instructions';
 export const MCP_INSTRUCTIONS_MAX = 20000;
 
-export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja valdavalt ainult lugemiseks (v.a laoseisu korrigeerimine inventuurikandega).
+export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja valdavalt ainult lugemiseks (v.a artiklite lisamine ja laoseisu korrigeerimine inventuurikandega).
 
 Mõisted:
 - Hooaeg = kalendriaasta. Põllul on igal hooajal oma pindala, kultuur ja sort.
 - Töö (list_field_works) on plaan: mida põllul teha kavatsetakse.
 - Kanne (list_work_entries) on tegelikult tehtud tegevus (põlluraamat): kuupäev, tegija, masin, materjalid ja kogused.
-- Kulumaterjalide kulu kokku: summarize_article_usage. Artiklid (list_articles) on teenused (tööaeg) ja kaubad (kulumaterjal, toodang, muu kaup); laoseis on ainult kaupadel.
+- Kulumaterjalide kulu kokku: summarize_article_usage. Artiklid (list_articles) on teenused (tööaeg) ja kaubad (kulumaterjal, toodang, muu kaup); laoseis on ainult kaupadel. Uue artikli saab lisada tööriistaga create_article (nõuab kehtivat litsentsi; teenuse hind finantsõigusega).
 - Laoseis: list_stock_levels, laod: list_warehouses. Laokanded (list_stock_movements) ja kõik rahasummad (hinnad, kulud, väärtused, tunnihinnad, pangakontod) on nähtavad ainult finantsõigusega kasutajale — vaata whoami (financeAccess).
 - Laoseisu korrigeerimine: create_stock_inventory loob etteantud tegelike koguste järgi inventuurikande (INVENTORY), mis viib laoseisu vastavusse (nõuab finantsõigust ja kehtivat litsentsi). Enne loomist kontrolli vajadusel praegust seisu (list_stock_levels) ja täpsusta ladu/kuupäev.
 - Saagipartiid: list_harvest_lots ja get_harvest_lot annavad koristatud partiid, punkrid, kaalumised ja kuivatuskulud.
