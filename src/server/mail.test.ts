@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { normalizeEmail, buildPasswordLinkMail } from './mail';
+import { normalizeEmail, buildPasswordLinkMail, buildReleaseNoteMail } from './mail';
 
 describe('normalizeEmail', () => {
   it('trimmib ja teeb väiketähtedeks', () => {
@@ -41,5 +41,44 @@ describe('buildPasswordLinkMail', () => {
   });
   it('ei luba päisesse reavahetust', () => {
     expect(() => buildPasswordLinkMail({ ...base, to: 'a@x.ee\r\nBcc: b@y.ee', purpose: 'RESET' })).toThrow();
+  });
+});
+
+describe('buildReleaseNoteMail', () => {
+  const base = {
+    to: 'mari@x.ee',
+    from: 'noreply@teris.ee',
+    displayName: 'Mari Maasikas',
+    version: '2026.11.24',
+    title: 'Novembri uuendused',
+    summary: 'Lao koguväärtus & kiirem sisestus',
+    items: [
+      { id: '1', category: 'FEATURE' as const, area: 'Ladu', text: 'Artiklite vaates on näha koguväärtus <EUR>.' },
+      { id: '2', category: 'FIX' as const, text: 'Parandatud filtri lähtestamine.' }
+    ],
+    appLink: 'https://teris.ee/#releases',
+    unsubscribeLink: 'https://teris.ee/api/release-notes/unsubscribe?token=tok123'
+  };
+
+  it('ehitab multipart/alternative kirja koos List-Unsubscribe päiste ja HTML escape-imisega', () => {
+    const msg = buildReleaseNoteMail(base);
+    expect(msg).toContain('Content-Type: multipart/alternative; boundary="teris_');
+    expect(msg).toContain('List-Unsubscribe: <https://teris.ee/api/release-notes/unsubscribe?token=tok123>');
+    expect(msg).toContain('List-Unsubscribe-Post: List-Unsubscribe=One-Click');
+    expect(msg).toContain('Content-Type: text/plain; charset=UTF-8');
+    expect(msg).toContain('Content-Type: text/html; charset=UTF-8');
+    // Plain-text osa
+    expect(msg).toContain('- [Ladu] Artiklite vaates on näha koguväärtus <EUR>.');
+    // HTML osa escape'itud
+    expect(msg).toContain('Artiklite vaates on näha koguväärtus &lt;EUR&gt;.');
+    expect(msg).toContain('Lao koguväärtus &amp; kiirem sisestus');
+    expect(msg).toContain('https://teris.ee/#releases');
+  });
+
+  it('lisab testkirjale [TEST] eesliite', () => {
+    const msg = buildReleaseNoteMail({ ...base, isTest: true });
+    expect(msg).toContain(
+      `Subject: =?UTF-8?B?${Buffer.from('[TEST] TERIS uuendused (2026.11.24): Novembri uuendused').toString('base64')}?=`
+    );
   });
 });

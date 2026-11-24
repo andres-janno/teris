@@ -12,6 +12,7 @@ import { decideLandingRoute, needsSessionCheck, PUBLIC_ONLY_FILES } from './land
 import { recordHit, startLandingRetention } from './landing/landingEvents';
 import { startTripImportScheduler } from './tripImport';
 import { startWeatherScheduler } from './weather/loader';
+import { startReleaseNoteMailScheduler } from './releaseNoteMailer';
 
 const PORT = Number(process.env.PORT ?? 8820);
 const HOST = '127.0.0.1';
@@ -69,4 +70,5 @@ server.listen(PORT, HOST, () => {
   startLandingRetention();
   startTripImportScheduler();
   startWeatherScheduler();
+  startReleaseNoteMailScheduler();
 });

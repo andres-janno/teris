@@ -1359,9 +1359,11 @@ model User {
   isActive           Boolean   @default(true)
   isAdmin            Boolean   @default(false)
   mustChangePassword Boolean   @default(false)
-  isFinanceManager   Boolean   @default(false) // finantsjuht: kannete ühiku kulud, kinnitamine, põldude tulemus
-  lastLoginAt        DateTime?
-  createdAt          DateTime  @default(now())
+  isFinanceManager    Boolean   @default(false) // finantsjuht: kannete ühiku kulud, kinnitamine, põldude tulemus
+  lastLoginAt         DateTime?
+  lastSeenReleaseAt   DateTime? @map("last_seen_release_at") // viimati nähtud uuenduste teavitus
+  receiveReleaseNotes Boolean   @default(true) @map("receive_release_notes") // kas saata uuenduste e-kirju
+  createdAt           DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
   createdBy          String? // looja kasutajatunnus (täidetakse automaatselt)
   updatedBy          String? // viimase muutja kasutajatunnus (täidetakse automaatselt)
@@ -1595,6 +1597,70 @@ model PlatformSetting {
   createdAt DateTime @default(now())
 
   @@map("platform_settings")
+}
+
+enum ReleaseNoteStatus {
+  DRAFT
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ReleaseNoteAudience {
+  ALL_ACTIVE_USERS
+  TENANT_ADMINS
+}
+
+enum ReleaseNoteDeliveryStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+// Platvormi tabel (authDb): väljalaske märkmed (release notes) klientidele
+model ReleaseNote {
+  id                String               @id @default(cuid())
+  version           String               @unique // kuupäevapõhine: nt "2026.11.24" või "2026.11.24-2"
+  title             String
+  summary           String? // lühike sissejuhatus
+  itemsJson         Json                 @map("items_json") // ReleaseNoteItem[]
+  sourceCommitsJson Json?                @map("source_commits_json") // { hash, subject, date }[] taustaks adminis
+  fromCommit        String?              @map("from_commit")
+  toCommit          String?              @map("to_commit")
+  status            ReleaseNoteStatus    @default(DRAFT)
+  publishedAt       DateTime?            @map("published_at")
+  publishedBy       String?              @map("published_by")
+  emailAudience     ReleaseNoteAudience? @map("email_audience")
+  emailQueuedAt     DateTime?            @map("email_queued_at")
+  createdBy         String?              @map("created_by")
+  updatedBy         String?              @map("updated_by")
+  createdAt         DateTime             @default(now()) @map("created_at")
+  updatedAt         DateTime             @updatedAt @map("updated_at")
+
+  deliveries ReleaseNoteDelivery[]
+
+  @@index([status, publishedAt])
+  @@map("release_notes")
+}
+
+// Platvormi tabel (authDb): väljalaske e-kirjade saatmisjärjekord ja logi
+model ReleaseNoteDelivery {
+  id                   String                    @id @default(cuid())
+  releaseNoteId        String                    @map("release_note_id")
+  userId               String                    @map("user_id")
+  email                String
+  displayName          String?                   @map("display_name")
+  status               ReleaseNoteDeliveryStatus @default(PENDING)
+  unsubscribeTokenHash String                    @unique @map("unsubscribe_token_hash")
+  attempts             Int                       @default(0)
+  lastError            String?                   @map("last_error")
+  sentAt               DateTime?                 @map("sent_at")
+  createdAt            DateTime                  @default(now()) @map("created_at")
+
+  releaseNote ReleaseNote @relation(fields: [releaseNoteId], references: [id], onDelete: Cascade)
+
+  @@unique([releaseNoteId, userId])
+  @@index([status, createdAt])
+  @@map("release_note_deliveries")
 }
 
 // ============================================================================

@@ -21,6 +21,19 @@ import { loadPoint, isWeatherLoadRunning, FAIL_WARN } from './weather/loader.ts'
 import { credentialsByPoint } from './weather/credentials.ts';
 import { deleteTenantData } from './tenantDelete.ts';
 import { listHelpArticles, saveHelpArticle, sendHelpResult, listHelpVersions, getHelpVersion, restoreHelpVersion, HELP_PLATFORM_ROUTE, HELP_VERSIONS_ROUTE, HELP_KEY_ERROR, HELP_VERSION_ERROR } from './helpArticles.ts';
+import {
+  ReleaseNoteError,
+  listPlatformReleaseNotes,
+  getPlatformReleaseNote,
+  createReleaseNote,
+  updateReleaseNote,
+  deleteReleaseNote,
+  publishReleaseNote,
+  queueReleaseNoteEmails,
+  retryFailedDeliveries,
+  sendTestReleaseNoteEmail
+} from './releaseNotes.ts';
+import { triggerReleaseNoteMailFlush } from './releaseNoteMailer.ts';
 
 type PlatformUser = { id: string; username: string };
 
@@ -41,6 +54,8 @@ const WEATHER_RELOAD_ROUTE = /^\/api\/platform\/weather\/(\d{1,9})\/reload$/;
 const DEVICE_RELEASE_ROUTE = /^\/api\/platform\/devices\/([^/]+)\/release$/;
 const INTEREST_ROUTE = /^\/api\/platform\/interest\/([^/]+)$/;
 const INTEREST_NOT_FOUND = 'Huvilist ei leitud';
+const RELEASE_NOTES_ROUTE = /^\/api\/platform\/release-notes\/([^/]+)(?:\/(publish|send-email|retry-failed|test-email))?$/;
+const RELEASE_NOT_FOUND = 'Väljalaset ei leitud';
 const TENANT_ROUTE = /^\/api\/platform\/tenants\/([^/]+)(?:\/(license|suspend|activate|resend-invite|support-session))?$/;
 
 function str(v: unknown, max: number): string {
@@ -729,6 +744,36 @@ async function route(req: IncomingMessage, res: ServerResponse, pathname: string
     }
   }
 
+  if (pathname === '/api/platform/release-notes') {
+    if (method === 'GET') return json(res, await listPlatformReleaseNotes());
+    if (method === 'POST') return json(res, await createReleaseNote((await readBody(req)) ?? {}, pu), 201);
+  }
+  const rn = RELEASE_NOTES_ROUTE.exec(pathname);
+  if (rn) {
+    const id = decodeId(rn[1], RELEASE_NOT_FOUND);
+    const action = rn[2];
+    if (!action && method === 'GET') return json(res, await getPlatformReleaseNote(id));
+    if (!action && method === 'PUT') return json(res, await updateReleaseNote(id, (await readBody(req)) ?? {}, pu));
+    if (!action && method === 'DELETE') {
+      await deleteReleaseNote(id, pu);
+      return json(res, { success: true });
+    }
+    if (action === 'publish' && method === 'POST') {
+      return json(res, await publishReleaseNote(id, (await readBody(req)) ?? {}, pu, triggerReleaseNoteMailFlush));
+    }
+    if (action === 'send-email' && method === 'POST') {
+      const body = (await readBody(req)) ?? {};
+      return json(res, await queueReleaseNoteEmails(id, body.audience, pu, triggerReleaseNoteMailFlush));
+    }
+    if (action === 'retry-failed' && method === 'POST') {
+      return json(res, await retryFailedDeliveries(id, pu, triggerReleaseNoteMailFlush));
+    }
+    if (action === 'test-email' && method === 'POST') {
+      const body = (await readBody(req)) ?? {};
+      return json(res, await sendTestReleaseNoteEmail(id, body.email, pu));
+    }
+  }
+
   const m = TENANT_ROUTE.exec(pathname);
   if (m) {
     let id: string;
@@ -792,7 +837,7 @@ export async function handlePlatformRequest(
   try {
     await route(req, res, pathname, method, url);
   } catch (err) {
-    if (err instanceof HttpError) return json(res, { error: err.message }, err.status);
+    if (err instanceof HttpError || err instanceof ReleaseNoteError) return json(res, { error: err.message }, err.status);
     console.error('[platformApi] viga', err);
     json(res, { error: 'Serveri viga' }, 500);
   }

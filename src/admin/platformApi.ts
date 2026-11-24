@@ -1,4 +1,11 @@
 // src/admin/platformApi.ts — teenusepakkuja API klient (/api/platform/*).
+import type {
+  PlatformReleaseNoteRow,
+  ReleaseNoteAudience,
+  ReleaseNoteItem
+} from '../types/releaseNotes.ts';
+export type { PlatformReleaseNoteRow, ReleaseNoteAudience, ReleaseNoteItem };
+
 export type LicenseModule = 'TELEMETRY' | 'SATELLITE' | 'WEATHER';
 export const MODULES: { id: LicenseModule; label: string }[] = [
   { id: 'TELEMETRY', label: 'Telemeetria' },
@@ -280,5 +287,19 @@ export const platformApi = {
   landingStats: (from: string, to: string) => request<LandingStats>('GET', `/landing/stats?from=${enc(from)}&to=${enc(to)}`),
   listInterest: (status?: InterestStatus) => request<InterestRow[]>('GET', `/interest${status ? `?status=${status}` : ''}`),
   updateInterest: (id: string, patch: { status?: InterestStatus; notes?: string | null }) => request<InterestRow>('PATCH', `/interest/${enc(id)}`, patch),
-  deleteInterest: (id: string) => request<unknown>('DELETE', `/interest/${enc(id)}`)
+  deleteInterest: (id: string) => request<unknown>('DELETE', `/interest/${enc(id)}`),
+  listReleaseNotes: () => request<PlatformReleaseNoteRow[]>('GET', '/release-notes'),
+  createReleaseNote: (input: { version: string; title: string; summary?: string | null; items: ReleaseNoteItem[] }) =>
+    request<PlatformReleaseNoteRow>('POST', '/release-notes', input, 'Mustandi loomine ebaõnnestus'),
+  updateReleaseNote: (id: string, input: { version?: string; title?: string; summary?: string | null; items?: ReleaseNoteItem[] }) =>
+    request<PlatformReleaseNoteRow>('PUT', `/release-notes/${enc(id)}`, input, 'Salvestamine ebaõnnestus'),
+  deleteReleaseNote: (id: string) => request<unknown>('DELETE', `/release-notes/${enc(id)}`, undefined, 'Kustutamine ebaõnnestus'),
+  publishReleaseNote: (id: string, input: { sendEmail: boolean; audience: ReleaseNoteAudience }) =>
+    request<{ row: PlatformReleaseNoteRow; queued: number }>('POST', `/release-notes/${enc(id)}/publish`, input, 'Avaldamine ebaõnnestus'),
+  sendReleaseNoteEmail: (id: string, audience: ReleaseNoteAudience) =>
+    request<{ row: PlatformReleaseNoteRow; queued: number }>('POST', `/release-notes/${enc(id)}/send-email`, { audience }, 'E-kirjade saatmine ebaõnnestus'),
+  retryFailedReleaseNoteEmails: (id: string) =>
+    request<{ row: PlatformReleaseNoteRow; retried: number }>('POST', `/release-notes/${enc(id)}/retry-failed`, {}, 'Uuesti saatmine ebaõnnestus'),
+  sendTestReleaseNoteEmail: (id: string, email: string) =>
+    request<{ sent: boolean; to: string }>('POST', `/release-notes/${enc(id)}/test-email`, { email }, 'Testkirja saatmine ebaõnnestus')
 };

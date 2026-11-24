@@ -1,5 +1,5 @@
 import { DEFAULT_CROP_COLOR } from './lib/dataColors';
-import React, { useState, useEffect, useRef, useMemo, lazy, Suspense, startTransition } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback, lazy, Suspense, startTransition } from 'react';
 import confetti from 'canvas-confetti';
 import { Header, MAIN_VIEWS, type MainView } from './components/Header';
 import { MapView } from './components/MapView';
@@ -89,6 +89,7 @@ const GuideView = lazy(() => import('./components/GuideView').then((m) => ({ def
 const FieldWorksBoard = lazy(() => import('./components/FieldWorksBoard').then((m) => ({ default: m.FieldWorksBoard })));
 const CropRegisterModal = lazy(() => import('./components/CropRegisterModal').then((m) => ({ default: m.CropRegisterModal })));
 const UsersAdminModal = lazy(() => import('./components/UsersAdminModal').then((m) => ({ default: m.UsersAdminModal })));
+const ReleaseNotesModal = lazy(() => import('./components/ReleaseNotesModal').then((m) => ({ default: m.ReleaseNotesModal })));
 
 // Kiirusvahemik, mille põhjal loeme haakeriista "tööasendis" olevaks
 // (telemetry_tsdb-s puudub otsene hüdraulika/rippriist signaal).
@@ -454,6 +455,75 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
   const [isAiConnectionOpen, setIsAiConnectionOpen] = useState(false);
   const [isWeatherCredentialOpen, setIsWeatherCredentialOpen] = useState(false);
   const [isUsersAdminOpen, setIsUsersAdminOpen] = useState(false);
+  const [isReleaseNotesOpen, setIsReleaseNotesOpen] = useState(false);
+  const [releaseNotesData, setReleaseNotesData] = useState<{
+    releases: import('./types/releaseNotes').ClientReleaseNote[];
+    hasUnread: boolean;
+    receiveReleaseNotes: boolean;
+    loading: boolean;
+  }>({ releases: [], hasUnread: false, receiveReleaseNotes: true, loading: false });
+
+  const loadReleaseNotes = useCallback(async () => {
+    setReleaseNotesData((prev) => ({ ...prev, loading: true }));
+    try {
+      const res = await fetch('/api/release-notes', { credentials: 'same-origin' });
+      if (!res.ok) return;
+      const data = (await res.json()) as import('./types/releaseNotes').ClientReleaseNotesPayload;
+      setReleaseNotesData({
+        releases: data.releases ?? [],
+        hasUnread: !!data.hasUnread,
+        receiveReleaseNotes: data.receiveReleaseNotes ?? true,
+        loading: false
+      });
+    } catch {
+      setReleaseNotesData((prev) => ({ ...prev, loading: false }));
+    }
+  }, []);
+
+  const handleOpenReleaseNotes = useCallback(() => {
+    setIsReleaseNotesOpen(true);
+    void loadReleaseNotes();
+    if (releaseNotesData.hasUnread && !user.supportView) {
+      setReleaseNotesData((prev) => ({ ...prev, hasUnread: false }));
+      fetch('/api/release-notes/seen', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: '{}'
+      }).catch(() => undefined);
+    }
+  }, [loadReleaseNotes, releaseNotesData.hasUnread, user.supportView]);
+
+  const handleToggleReleaseNotesEmail = useCallback(async (next: boolean) => {
+    const res = await fetch('/api/release-notes/preferences', {
+      method: 'PATCH',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ receiveReleaseNotes: next })
+    });
+    if (!res.ok) {
+      const err = (await res.json().catch(() => ({}))) as { error?: string };
+      throw new Error(err.error || 'Eelistuse salvestamine ebaõnnestus');
+    }
+    setReleaseNotesData((prev) => ({ ...prev, receiveReleaseNotes: next }));
+  }, []);
+
+  useEffect(() => {
+    void loadReleaseNotes();
+    if (window.location.hash === '#releases') {
+      setIsReleaseNotesOpen(true);
+      window.history.replaceState(null, '', window.location.pathname + window.location.search);
+    }
+    const onHash = () => {
+      if (window.location.hash === '#releases') {
+        handleOpenReleaseNotes();
+        window.history.replaceState(null, '', window.location.pathname + window.location.search);
+      }
+    };
+    window.addEventListener('hashchange', onHash);
+    return () => window.removeEventListener('hashchange', onHash);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSaveParty = (partyToSave: RelatedParty) => {
     setParties((prev) => {
@@ -1656,6 +1726,8 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
         showWeather={hasModule(user, 'WEATHER')}
         onOpenGuide={() => openGuide()}
         guideOpen={mainView === 'guide'}
+        onOpenReleaseNotes={handleOpenReleaseNotes}
+        hasUnreadReleaseNotes={releaseNotesData.hasUnread}
       />
 
       {mainView === 'seasons' && (
@@ -2096,6 +2168,17 @@ export const App: React.FC<AppProps> = ({ user, onLogout }) => {
       <WeatherCredentialModal isOpen={isWeatherCredentialOpen} onClose={() => setIsWeatherCredentialOpen(false)} readOnly={!!user.supportView} />
       <DeferredMount when={isUsersAdminOpen}>
         <UsersAdminModal isOpen={isUsersAdminOpen} onClose={() => setIsUsersAdminOpen(false)} currentUserId={user.id} readOnly={!!user.supportView} />
+      </DeferredMount>
+      <DeferredMount when={isReleaseNotesOpen}>
+        <ReleaseNotesModal
+          isOpen={isReleaseNotesOpen}
+          onClose={() => setIsReleaseNotesOpen(false)}
+          releases={releaseNotesData.releases}
+          loading={releaseNotesData.loading}
+          receiveReleaseNotes={releaseNotesData.receiveReleaseNotes}
+          readOnly={!!user.supportView}
+          onToggleEmailPreference={handleToggleReleaseNotesEmail}
+        />
       </DeferredMount>
     </div>
   );

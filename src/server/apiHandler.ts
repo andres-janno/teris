@@ -9,6 +9,7 @@ import { handleAdminUsers } from './adminUsers.ts';
 import { handleSupportGrants } from './supportGrants.ts';
 import { handleApiKeys } from './apiKeys.ts';
 import { handleHelpRead } from './helpArticles.ts';
+import { handleReleaseNotesApi, handleReleaseNoteUnsubscribe } from './releaseNotes.ts';
 import { handleFieldWorks } from './fieldWorks.ts';
 import { handleArticleCategories } from './articleCategories.ts';
 import { handleStock } from './stockApi.ts';
@@ -455,6 +456,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     }
     if (pathname.startsWith('/api/platform/')) return json(res, { error: 'Not found' }, 404);
     if (await handleLandingApi(req, res, pathname, method, options.allowedOrigins)) return;
+    if (await handleReleaseNoteUnsubscribe(res, pathname, method, url)) return;
     if (await authGate(req, res, pathname, method, options)) return;
     const sessionUser = sessionUserOf(req);
     setRequestUser(sessionUser ? { username: sessionUser.username, tenantId: sessionUser.tenantId } : null);
@@ -463,6 +465,7 @@ async function routeApiRequest(req: IncomingMessage, res: ServerResponse, option
     if (await handleSupportGrants(req, res, pathname, method)) return;
     if (await handleApiKeys(req, res, pathname, method)) return;
     if (await handleHelpRead(res, pathname, method)) return;
+    if (await handleReleaseNotesApi(req, res, pathname, method, sessionUser)) return;
     if (await handleArticleCategories(req, res, pathname, method)) return;
     if (await handleFieldWorks(req, res, pathname, method, url)) return;
     if (await handleStock(req, res, pathname, method, url)) return;

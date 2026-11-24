@@ -11,7 +11,8 @@ import {
   Package,
   Repeat,
   CloudSun,
-  BookOpen
+  BookOpen,
+  Sparkles
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Button, NavSwitch, NavSwitchItem } from './ui';
@@ -76,6 +77,8 @@ interface HeaderProps {
   showWeather?: boolean;
   onOpenGuide?: () => void;
   guideOpen?: boolean;
+  onOpenReleaseNotes?: () => void;
+  hasUnreadReleaseNotes?: boolean;
 }
 
 export const Header: React.FC<HeaderProps> = ({
@@ -95,7 +98,9 @@ export const Header: React.FC<HeaderProps> = ({
   onLogout,
   showWeather = false,
   onOpenGuide,
-  guideOpen = false
+  guideOpen = false,
+  onOpenReleaseNotes,
+  hasUnreadReleaseNotes = false
 }) => {
   return (
     <header className="z-1000 flex h-16 items-center justify-between border-b border-border bg-white/95 px-4 backdrop-blur-md transition-colors duration-250 dark:bg-background/90">
@@ -121,6 +126,24 @@ export const Header: React.FC<HeaderProps> = ({
       <div className="flex items-center gap-2.5">
         {onOperatorFilterChange && (
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
+        )}
+
+        {onOpenReleaseNotes && (
+          <Button
+            variant="ghost"
+            className={headerTriggerClass}
+            aria-label={hasUnreadReleaseNotes ? 'Uuendused (lugemata)' : 'Uuendused'}
+            title={hasUnreadReleaseNotes ? 'Uuendused — uus versioon!' : 'Uuendused'}
+            onClick={onOpenReleaseNotes}
+          >
+            <span className="relative inline-flex">
+              <Sparkles size={14} />
+              {hasUnreadReleaseNotes && (
+                <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
+            </span>
+            <span className={headerNarrowHiddenClass}>Uuendused</span>
+          </Button>
         )}
 
         {onOpenGuide && (

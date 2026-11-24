@@ -16,6 +16,8 @@
     "tenant": "node dist-server/tenantCli.js",
     "platform": "node dist-server/platformCli.js",
     "start": "node dist-server/prod.js",
+    "note": "npx tsx scripts/changelog-note.mts",
+    "release:draft": "npx tsx scripts/release-draft.mts",
     "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris"
   },
   "dependencies": {

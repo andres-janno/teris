@@ -13,9 +13,10 @@ import { HelpView } from './HelpView.tsx';
 import { AiInstructionsView } from './AiInstructionsView.tsx';
 import { LandingStatsView } from './LandingStatsView.tsx';
 import { InterestView } from './InterestView.tsx';
+import { ReleaseNotesView } from './ReleaseNotesView.tsx';
 import { adminCardClass, adminH2Class, adminNavClass, adminShellClass, adminTitleClass } from './adminUi.ts';
 
-type View = { kind: 'tenants'; notice?: string } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'weather' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' };
+type View = { kind: 'tenants'; notice?: string } | { kind: 'new' } | { kind: 'detail'; id: string; notice?: string } | { kind: 'audit' } | { kind: 'catalog' } | { kind: 'devices' } | { kind: 'weather' } | { kind: 'help' } | { kind: 'landing' } | { kind: 'interest' } | { kind: 'ai' } | { kind: 'releases' };
 
 export function AdminApp() {
   const [user, setUser] = useState<string | null>(null);
@@ -53,7 +54,7 @@ export function AdminApp() {
         </div>
       </header>
       <nav className={adminNavClass}>
-        <Button size="sm" aria-pressed={!['audit', 'catalog', 'devices', 'weather', 'help', 'landing', 'interest', 'ai'].includes(view.kind)} onClick={() => setView({ kind: 'tenants' })}>
+        <Button size="sm" aria-pressed={!['audit', 'catalog', 'devices', 'weather', 'help', 'landing', 'interest', 'ai', 'releases'].includes(view.kind)} onClick={() => setView({ kind: 'tenants' })}>
           Ettevõtted
         </Button>
         <Button size="sm" aria-pressed={view.kind === 'catalog'} onClick={() => setView({ kind: 'catalog' })}>
@@ -67,6 +68,9 @@ export function AdminApp() {
         </Button>
         <Button size="sm" aria-pressed={view.kind === 'help'} onClick={() => setView({ kind: 'help' })}>
           Juhendid
+        </Button>
+        <Button size="sm" aria-pressed={view.kind === 'releases'} onClick={() => setView({ kind: 'releases' })}>
+          Uuendused
         </Button>
         <Button size="sm" aria-pressed={view.kind === 'ai'} onClick={() => setView({ kind: 'ai' })}>
           AI ühendus
@@ -90,6 +94,7 @@ export function AdminApp() {
       {view.kind === 'devices' && <DevicesView />}
       {view.kind === 'weather' && <WeatherAdminView />}
       {view.kind === 'help' && <HelpView />}
+      {view.kind === 'releases' && <ReleaseNotesView />}
       {view.kind === 'ai' && <AiInstructionsView />}
       {view.kind === 'landing' && <LandingStatsView />}
       {view.kind === 'interest' && <InterestView />}
