@@ -82,7 +82,7 @@ export function ReleaseNotesView() {
         setVersion(found.version);
         setTitle(found.title);
         setSummary(found.summary ?? '');
-        setItems(found.items.map((i) => ({ ...i })));
+        setItems(found.items.length > 0 ? found.items.map((i) => ({ ...i })) : found.status === 'DRAFT' ? [newItem('FEATURE')] : []);
         setAudience(found.emailAudience ?? 'ALL_ACTIVE_USERS');
       } else {
         setSelectedId(null);
@@ -104,7 +104,7 @@ export function ReleaseNotesView() {
     setVersion(row.version);
     setTitle(row.title);
     setSummary(row.summary ?? '');
-    setItems(row.items.map((i) => ({ ...i })));
+    setItems(row.items.length > 0 ? row.items.map((i) => ({ ...i })) : row.status === 'DRAFT' ? [newItem('FEATURE')] : []);
     setAudience(row.emailAudience ?? 'ALL_ACTIVE_USERS');
     setPreviewMode(false);
     setShowCommits(false);
@@ -114,11 +114,12 @@ export function ReleaseNotesView() {
 
   const dirty = useMemo(() => {
     if (!current) return false;
+    const cleanedItems = items.filter((i) => i.text.trim() !== '');
     return (
       version.trim() !== current.version ||
       title.trim() !== current.title ||
       summary.trim() !== (current.summary ?? '') ||
-      JSON.stringify(items) !== JSON.stringify(current.items)
+      JSON.stringify(cleanedItems) !== JSON.stringify(current.items)
     );
   }, [current, version, title, summary, items]);
 
@@ -135,7 +136,7 @@ export function ReleaseNotesView() {
         version: nextVer,
         title: `TERIS uuendused ${nextVer}`,
         summary: '',
-        items: [newItem('FEATURE')]
+        items: []
       });
       await load(created.id);
       setNotice(`Mustand ${created.version} loodud.`);
@@ -311,7 +312,9 @@ export function ReleaseNotesView() {
         {!rows ? (
           <p className={adminMutedClass}>Laadin…</p>
         ) : rows.length === 0 ? (
-          <p className={adminMutedClass}>Ühtegi väljalaset veel pole. Loo mustand siit või käivita `npm run release:draft`.</p>
+          <p className={adminMutedClass}>
+            Ühtegi väljalaset veel pole. Loo mustand siit või käivita <code>npm run release:draft</code>.
+          </p>
         ) : (
           <div className="flex flex-col gap-2">
             {rows.map((r) => (
