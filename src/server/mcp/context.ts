@@ -17,6 +17,7 @@ export type ToolDef = {
   title: string;
   description: string;
   input: z.ZodRawShape;
+  readOnly?: boolean;
   when?: (ctx: McpContext) => boolean;
   run: (args: any, ctx: McpContext) => Promise<unknown>;
 };
@@ -26,6 +27,7 @@ export function defineTool<S extends z.ZodRawShape>(def: {
   title: string;
   description: string;
   input: S;
+  readOnly?: boolean;
   when?: (ctx: McpContext) => boolean;
   run: (args: z.infer<z.ZodObject<S>>, ctx: McpContext) => Promise<unknown>;
 }): ToolDef {
@@ -39,7 +41,7 @@ export function registerTools(server: McpServer, ctx: McpContext, defs: ToolDef[
     if (def.when && !def.when(ctx)) continue;
     server.registerTool(
       def.name,
-      { title: def.title, description: def.description, inputSchema: def.input, annotations: { readOnlyHint: true, openWorldHint: false } },
+      { title: def.title, description: def.description, inputSchema: def.input, annotations: { readOnlyHint: def.readOnly !== false, openWorldHint: false } },
       async (args: unknown) => {
         try {
           const data = await runAsTenant(ctx.user.tenantId, () => def.run(args, ctx), ctx.user.username);

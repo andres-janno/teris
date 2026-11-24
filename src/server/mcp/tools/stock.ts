@@ -1,10 +1,17 @@
 // src/server/mcp/tools/stock.ts — laoseis (kogus kõigile, raha finantsõigusega) ja laoliikumised (ainult finantsõigusega).
 import { z } from 'zod';
-import { prisma } from '../../db.ts';
+import { prisma, tenantTransaction } from '../../db.ts';
 import { convertQty } from '../../../services/units.ts';
 import { workTypeDisplayName } from '../../../services/workTypeName.ts';
-import { defineTool, canSeeFinance } from '../context.ts';
+import { saveStockDocument, StockValidationError } from '../../stock.ts';
+import { defineTool, canSeeFinance, type McpContext } from '../context.ts';
 import { pickOne, parseDateInput, dayAfter, fieldLabel, fmtDate, round2, limitRows, ToolInputError } from '../format.ts';
+
+const canWriteStock = (ctx: McpContext): boolean => canSeeFinance(ctx) && !ctx.license.readOnly;
+const tallinnTodayUtc = (): Date => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Tallinn' }).format(new Date()).split('-');
+  return new Date(Date.UTC(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2])));
+};
 
 async function resolveWarehouseId(query: string | undefined): Promise<string | undefined> {
   if (!query) return undefined;
@@ -159,6 +166,91 @@ export const stockTools = [
           name: w.name, isDefault: w.isDefault, isActive: w.isActive,
           poi: w.poi?.name ?? null, field: w.field ? fieldLabel(w.field) : null, notes: w.notes
         }))
+      };
+    }
+  }),
+  defineTool({
+    name: 'create_stock_inventory',
+    title: 'Loo inventuurikanne (laoseisu korrigeerimine)',
+    description: 'Korrigeerib artiklite laoseisu, luues inventuurikande (INVENTORY) etteantud tegelike koguste järgi. Arvutab vahe (diffQty) ja uuendab laoseisu. Nõuab finantsõigust ja aktiivset litsentsi.',
+    readOnly: false,
+    when: canWriteStock,
+    input: {
+      warehouse: z.string().optional().describe('Lao nimi (tühi = põhiladu)'),
+      date: z.string().optional().describe('Inventuuri kuupäev (pp.kk.aaaa või aaaa-kk-pp; vaikimisi täna)'),
+      documentNo: z.string().max(80).optional().describe('Dokumendi number'),
+      notes: z.string().max(2000).optional().describe('Märkus'),
+      items: z.array(z.object({
+        article: z.string().min(1).describe('Artikli nimi'),
+        actualQty: z.number().min(0).describe('Tegelik praegune laoseis laoühikus (0 = kogu seis maha)')
+      })).min(1).max(200).describe('Artiklid ja nende tegelikud laoseisud')
+    },
+    run: async (a) => {
+      const warehouseId = a.warehouse
+        ? (await resolveWarehouseId(a.warehouse))!
+        : (await prisma.warehouse.findFirst({ where: { isDefault: true }, select: { id: true } }))?.id;
+      if (!warehouseId) throw new ToolInputError('Põhiladu ei leitud');
+
+      const date = parseDateInput(a.date, 'date') ?? tallinnTodayUtc();
+      const allArticles = await prisma.article.findMany({
+        select: { id: true, name: true, unit: true, category: { select: { group: true } } }
+      });
+      const candidates = allArticles.map((r) => ({ id: r.id, label: r.name, keys: [r.name] }));
+      const byId = new Map(allArticles.map((r) => [r.id, r]));
+
+      const lines: { articleId: string; quantity: number; amount: number | null; countedQty: number }[] = [];
+      const seen = new Set<string>();
+      for (const item of a.items) {
+        const hit = pickOne('Artikkel', item.article, candidates);
+        const art = byId.get(hit.id)!;
+        if (art.category.group === 'SERVICE') throw new ToolInputError(`Teenusel "${art.name}" ei ole laoseisu`);
+        if (seen.has(art.id)) throw new ToolInputError(`Artikkel "${art.name}" on inventuuris mitu korda`);
+        seen.add(art.id);
+        lines.push({ articleId: art.id, quantity: 0, amount: null, countedQty: item.actualQty });
+      }
+
+      let savedId: string;
+      try {
+        savedId = await tenantTransaction((tx) => saveStockDocument(tx, null, {
+          kind: 'INVENTORY',
+          date,
+          warehouseId,
+          toWarehouseId: null,
+          supplierId: null,
+          documentNo: a.documentNo?.trim() || null,
+          writeOffReason: null,
+          notes: a.notes?.trim() || null,
+          lines
+        }), { timeout: 60000 });
+      } catch (err) {
+        if (err instanceof StockValidationError) throw new ToolInputError(err.message);
+        throw err;
+      }
+
+      const saved = await prisma.stockDocument.findUniqueOrThrow({
+        where: { id: savedId },
+        include: {
+          warehouse: { select: { name: true } },
+          lines: { orderBy: { sortOrder: 'asc' }, include: { article: { select: { name: true, unit: true } } } }
+        }
+      });
+      return {
+        documentId: saved.id,
+        kind: saved.kind,
+        date: fmtDate(saved.date),
+        warehouse: saved.warehouse.name,
+        documentNo: saved.documentNo,
+        notes: saved.notes,
+        lines: saved.lines.map((l) => {
+          const diff = l.diffQty ?? 0;
+          return {
+            article: l.article.name,
+            unit: l.article.unit,
+            countedQty: round2(l.countedQty),
+            diffQty: round2(diff),
+            cost: money(diff > 0 ? l.amount : diff === 0 ? 0 : l.fifoCost)
+          };
+        })
       };
     }
   })

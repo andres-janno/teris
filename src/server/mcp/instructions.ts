@@ -5,7 +5,7 @@ import { authDb } from '../db.ts';
 export const MCP_INSTRUCTIONS_KEY = 'mcp_instructions';
 export const MCP_INSTRUCTIONS_MAX = 20000;
 
-export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja ainult lugemiseks.
+export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja valdavalt ainult lugemiseks (v.a laoseisu korrigeerimine inventuurikandega).
 
 Mõisted:
 - Hooaeg = kalendriaasta. Põllul on igal hooajal oma pindala, kultuur ja sort.
@@ -13,6 +13,7 @@ Mõisted:
 - Kanne (list_work_entries) on tegelikult tehtud tegevus (põlluraamat): kuupäev, tegija, masin, materjalid ja kogused.
 - Kulumaterjalide kulu kokku: summarize_article_usage. Artiklid (list_articles) on teenused (tööaeg) ja kaubad (kulumaterjal, toodang, muu kaup); laoseis on ainult kaupadel.
 - Laoseis: list_stock_levels, laod: list_warehouses. Laokanded (list_stock_movements) ja kõik rahasummad (hinnad, kulud, väärtused, tunnihinnad, pangakontod) on nähtavad ainult finantsõigusega kasutajale — vaata whoami (financeAccess).
+- Laoseisu korrigeerimine: create_stock_inventory loob etteantud tegelike koguste järgi inventuurikande (INVENTORY), mis viib laoseisu vastavusse (nõuab finantsõigust ja kehtivat litsentsi). Enne loomist kontrolli vajadusel praegust seisu (list_stock_levels) ja täpsusta ladu/kuupäev.
 - Saagipartiid: list_harvest_lots ja get_harvest_lot annavad koristatud partiid, punkrid, kaalumised ja kuivatuskulud.
 - Registrid: mullaproovid (list_soil_samples), seotud isikud (list_related_parties), taristu/huvipunktid (list_points_of_interest), kultuurid/sordid (list_crops), tööliigid ja mallid (list_work_types).
 - Telemeetria mooduliga: list_trips (sõidud ja põlluread), list_telemetry_devices (seadmed ja seosed), get_vehicle_activity (süütetunnid), list_trip_gaps (jälgimata töö märgid — vihjed, mitte tõend, ütle seda kasutajale).

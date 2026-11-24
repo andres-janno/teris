@@ -203,6 +203,34 @@ describe('ladu', () => {
     expect(r.rows.map((x: { type: string }) => x.type).sort()).toEqual(['FIELD_WORK', 'RECEIPT']);
     expect(r.rows.find((x: { type: string }) => x.type === 'RECEIPT')).toMatchObject({ quantity: 1000, documentNo: 'ARV-1', cost: 450 });
   });
+  it('create_stock_inventory: puudub tavakasutajal; finantsjuht saab korrigeerida laoseisu inventuurikandega', async () => {
+    const plainClient = await connect(A.plainKey);
+    const plainTools = await plainClient.listTools();
+    await plainClient.close();
+    expect(plainTools.tools.some((t) => t.name === 'create_stock_inventory')).toBe(false);
+
+    const finClient = await connect(A.financeKey);
+    const finTools = await finClient.listTools();
+    await finClient.close();
+    const invTool = finTools.tools.find((t) => t.name === 'create_stock_inventory');
+    expect(invTool?.annotations?.readOnlyHint).toBe(false);
+
+    const bad = await call(A.financeKey, 'create_stock_inventory', { items: [{ article: 'Ammooniumnitraat', actualQty: -5 }] });
+    expect(bad.isError).toBe(true);
+
+    const created = (await call(A.financeKey, 'create_stock_inventory', {
+      warehouse: 'Põhiladu',
+      date: '20.05.2026',
+      documentNo: 'INV-MCP-1',
+      notes: 'MCP kontroll',
+      items: [{ article: 'Ammooniumnitraat', actualQty: 500 }]
+    })).data;
+    expect(created).toMatchObject({ kind: 'INVENTORY', date: '20.05.2026', warehouse: 'Põhiladu', documentNo: 'INV-MCP-1' });
+    expect(created.lines[0]).toMatchObject({ article: 'Ammooniumnitraat', countedQty: 500, diffQty: -350 });
+
+    const levels = (await call(A.plainKey, 'list_stock_levels')).data;
+    expect(levels.rows[0]).toMatchObject({ article: 'Ammooniumnitraat', quantity: 500, negative: false });
+  });
 });
 
 describe('ilm', () => {
