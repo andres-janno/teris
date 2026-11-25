@@ -86,7 +86,7 @@ describe('server', () => {
     const { tools } = await client.listTools();
     expect(tools.length).toBeGreaterThan(0);
     for (const t of tools) {
-      expect(t.annotations?.readOnlyHint, t.name).toBe(!['create_article', 'create_field_work', 'create_work_entry'].includes(t.name));
+      expect(t.annotations?.readOnlyHint, t.name).toBe(!['create_article', 'create_field_work', 'create_work_entry', 'update_field_target_yields'].includes(t.name));
     }
     await client.close();
   });
@@ -138,6 +138,68 @@ describe('põllud', () => {
     // B andmestik on samanimeline, aga eraldi: A kanne ei tohi B vastuses olla
     const g = (await call(B.plainKey, 'get_field', { field: '4', year: 2026 })).data;
     expect(g.works.flatMap((w: any) => w.entries)).toHaveLength(1);
+  });
+  it('update_field_target_yields: seab ja eemaldab planeeritud saagiootuse, kontrollib duplikaate ja lukus hooaega', async () => {
+    const setRes = (await call(A.plainKey, 'update_field_target_yields', {
+      year: 2026,
+      items: [{ field: 'Toosi', targetYieldTHa: 6.5 }]
+    })).data;
+    expect(setRes).toEqual({
+      year: 2026,
+      updated: 1,
+      rows: [{
+        field: 'Nr 4 Toosi',
+        crop: 'Talinisu',
+        areaHa: 12.4,
+        previousTargetYieldTHa: null,
+        targetYieldTHa: 6.5,
+        expectedTotalTonnes: 80.6
+      }]
+    });
+    expect((await call(A.plainKey, 'get_field', { field: 'Toosi', year: 2026 })).data.targetYieldTHa).toBe(6.5);
+    // Ettevõte B jääb puutumata
+    expect((await call(B.plainKey, 'get_field', { field: 'Toosi', year: 2026 })).data.targetYieldTHa).toBeNull();
+
+    // Duplikaat samas päringus lükatakse tagasi
+    const dup = await call(A.plainKey, 'update_field_target_yields', {
+      year: 2026,
+      items: [
+        { field: 'Toosi', targetYieldTHa: 7 },
+        { field: '4', targetYieldTHa: 7.5 }
+      ]
+    });
+    expect(dup.isError).toBe(true);
+    expect(dup.text).toContain('mitu korda');
+
+    // Eemaldamine null-väärtusega
+    const cleared = (await call(A.plainKey, 'update_field_target_yields', {
+      year: 2026,
+      items: [{ field: '4', targetYieldTHa: null }]
+    })).data;
+    expect(cleared.rows[0]).toMatchObject({
+      field: 'Nr 4 Toosi',
+      previousTargetYieldTHa: 6.5,
+      targetYieldTHa: null,
+      expectedTotalTonnes: null
+    });
+    expect((await call(A.plainKey, 'get_field', { field: 'Toosi', year: 2026 })).data.targetYieldTHa).toBeNull();
+
+    // Lukus hooaeg ei luba muutmist
+    await runAsTenant(A.tenantId, async () => {
+      await prisma.season.updateMany({ where: { year: 2026 }, data: { isLocked: true } });
+    });
+    try {
+      const locked = await call(A.plainKey, 'update_field_target_yields', {
+        year: 2026,
+        items: [{ field: 'Toosi', targetYieldTHa: 5 }]
+      });
+      expect(locked.isError).toBe(true);
+      expect(locked.text).toContain('lukus');
+    } finally {
+      await runAsTenant(A.tenantId, async () => {
+        await prisma.season.updateMany({ where: { year: 2026 }, data: { isLocked: false } });
+      });
+    }
   });
 });
 

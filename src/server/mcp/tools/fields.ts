@@ -1,10 +1,11 @@
 // src/server/mcp/tools/fields.ts — põllud hooaja kaupa ja ühe põllu hooaja täisvaade.
 import { z } from 'zod';
-import { prisma } from '../../db.ts';
+import { prisma, tenantTransaction } from '../../db.ts';
 import { workTypeDisplayName } from '../../../services/workTypeName.ts';
 import { defineTool, canSeeFinance, type McpContext } from '../context.ts';
-import { pickOne, fieldLabel, fmtDate, round2, limitRows, tallinnYear } from '../format.ts';
+import { pickOne, fieldLabel, fmtDate, round2, limitRows, tallinnYear, ToolInputError } from '../format.ts';
 
+const canWrite = (ctx: McpContext): boolean => !ctx.license.readOnly;
 const year = z.number().int().min(1990).max(2100).optional().describe('Hooaja aasta; vaikimisi jooksev aasta');
 const limit = z.number().int().min(1).max(1000).optional().describe('Ridade arv (vaikimisi 200)');
 
@@ -151,6 +152,72 @@ export const fieldTools = [
             harvest: e.lines.filter((l) => l.kind === 'HARVEST').map((l) => ({ quantity: round2(l.quantity), unit: l.unit })),
             observations: e.lines.filter((l) => l.kind === 'OBSERVATION').map((l) => ({ name: l.label, kind: l.priaRegister ?? undefined }))
           }))
+        }))
+      };
+    }
+  }),
+  defineTool({
+    name: 'update_field_target_yields',
+    title: 'Muuda põldude planeeritud saagiootusi',
+    description: 'Uuendab ühe või mitme põllu hooaja planeeritud saagiootust (targetYieldTHa, t/ha). Väärtus null eemaldab planeeritud saagiootuse. Nõuab kehtivat (mitte-read-only) litsentsi ja avatud hooaega.',
+    readOnly: false,
+    when: canWrite,
+    input: {
+      year,
+      items: z.array(z.object({
+        field: z.string().min(1).describe('Põllu nimi või number'),
+        targetYieldTHa: z.number().positive().nullable().describe('Planeeritud saagiootus t/ha (null eemaldab väärtuse)')
+      })).min(1).max(200).describe('Põllud ja nende uued planeeritud saagiootused')
+    },
+    run: async (a) => {
+      const y = a.year ?? tallinnYear();
+      const lockedSeason = await prisma.season.findFirst({ where: { year: y, isLocked: true }, select: { id: true } });
+      if (lockedSeason) throw new ToolInputError(`Hooaeg ${y} on lukus — saagiootusi ei saa muuta`);
+
+      const fieldSeasons = await prisma.fieldSeason.findMany({
+        where: { year: y },
+        select: {
+          id: true, num: true, areaHa: true, crop: true, targetYieldTonsHa: true,
+          season: { select: { isLocked: true } },
+          field: { select: { num: true, name: true } }
+        }
+      });
+      const candidates = fieldSeasons.map((r) => {
+        const num = r.num ?? r.field.num;
+        return { id: String(r.id), label: fieldLabel({ num, name: r.field.name }), keys: [num, r.field.num, r.field.name] };
+      });
+      const byId = new Map(fieldSeasons.map((r) => [r.id, r]));
+
+      const updates: { fs: (typeof fieldSeasons)[number]; label: string; nextYield: number | null }[] = [];
+      const seen = new Set<number>();
+      for (const item of a.items) {
+        const hit = pickOne('Põld', item.field, candidates);
+        const fs = byId.get(Number(hit.id))!;
+        if (seen.has(fs.id)) throw new ToolInputError(`Põld "${hit.label}" on nimekirjas mitu korda`);
+        if (fs.season?.isLocked) throw new ToolInputError(`Hooaeg ${y} on lukus — saagiootusi ei saa muuta`);
+        seen.add(fs.id);
+        updates.push({ fs, label: hit.label, nextYield: item.targetYieldTHa });
+      }
+
+      await tenantTransaction(async (tx) => {
+        for (const u of updates) {
+          await tx.fieldSeason.update({
+            where: { id: u.fs.id },
+            data: { targetYieldTonsHa: u.nextYield }
+          });
+        }
+      });
+
+      return {
+        year: y,
+        updated: updates.length,
+        rows: updates.map((u) => ({
+          field: u.label,
+          crop: u.fs.crop,
+          areaHa: round2(u.fs.areaHa),
+          previousTargetYieldTHa: round2(u.fs.targetYieldTonsHa),
+          targetYieldTHa: round2(u.nextYield),
+          expectedTotalTonnes: u.nextYield === null ? null : round2(u.nextYield * u.fs.areaHa)
         }))
       };
     }

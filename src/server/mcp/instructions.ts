@@ -5,10 +5,10 @@ import { authDb } from '../db.ts';
 export const MCP_INSTRUCTIONS_KEY = 'mcp_instructions';
 export const MCP_INSTRUCTIONS_MAX = 20000;
 
-export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja valdavalt ainult lugemiseks (v.a artiklite lisamine, põllutööde plaanide ja kannete loomine ning laoseisu korrigeerimine inventuurikandega).
+export const DEFAULT_MCP_INSTRUCTIONS = `Teris on põllumajandusettevõtte haldustarkvara. Andmed on ühe ettevõtte omad ja valdavalt ainult lugemiseks (v.a artiklite lisamine, põldude planeeritud saagiootuste muutmine, põllutööde plaanide ja kannete loomine ning laoseisu korrigeerimine inventuurikandega).
 
 Mõisted:
-- Hooaeg = kalendriaasta. Põllul on igal hooajal oma pindala, kultuur ja sort.
+- Hooaeg = kalendriaasta. Põllul on igal hooajal oma pindala, kultuur, sort ja planeeritud saagiootus (t/ha), mida saab muuta tööriistaga update_field_target_yields (nõuab kehtivat litsentsi ja avatud hooaega).
 - Töö (list_field_works) on plaan: mida põllul teha kavatsetakse. Uue põllutöö plaani saab luua tööriistaga create_field_work (nõuab kehtivat litsentsi ja avatud hooaega).
 - Kanne (list_work_entries) on tegelikult tehtud tegevus (põlluraamat): kuupäev, tegija, masin, materjalid ja kogused. Planeeritud tööle saab kande lisada tööriistaga create_work_entry (nõuab kehtivat litsentsi ja avatud hooaega; uuendab laoseisu ja töö staatust).
 - Kulumaterjalide kulu kokku: summarize_article_usage. Artiklid (list_articles) on teenused (tööaeg) ja kaubad (kulumaterjal, toodang, muu kaup); laoseis on ainult kaupadel. Uue artikli saab lisada tööriistaga create_article (nõuab kehtivat litsentsi; teenuse hind finantsõigusega).
