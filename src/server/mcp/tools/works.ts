@@ -158,7 +158,7 @@ export const workTools = [
         where: { id: fsRef.id },
         select: { id: true, areaHa: true, season: { select: { isLocked: true } } }
       });
-      if (fs.season.isLocked) throw new ToolInputError('Lukus hooaja töid ei saa lisada');
+      if (fs.season?.isLocked) throw new ToolInputError('Lukus hooaja töid ei saa lisada');
 
       const plannedDateFrom = parseDateInput(a.plannedDateFrom, 'plannedDateFrom') ?? null;
       const plannedDateTo = parseDateInput(a.plannedDateTo, 'plannedDateTo') ?? null;
@@ -180,7 +180,6 @@ export const workTools = [
       let plannedWorkerId: string | null = null;
       if (a.plannedWorker) {
         const parties = await prisma.relatedParty.findMany({
-          where: { isActive: true },
           select: { id: true, name: true }
         });
         plannedWorkerId = pickOne('Teostaja', a.plannedWorker, parties.map((p) => ({
@@ -342,13 +341,13 @@ export const workTools = [
     },
     run: async (a, ctx) => {
       const date = parseDateInput(a.date, 'date')!;
-      let work: { id: string; status: string; fieldSeasonId: number; fieldSeason: { areaHa: number; season: { isLocked: boolean } } } | null = null;
+      let resolvedWork: { id: string; status: string; fieldSeasonId: number; fieldSeason: { areaHa: number; season: { isLocked: boolean } | null } } | null = null;
       if (a.fieldWorkId) {
-        work = await prisma.fieldWork.findUnique({
+        resolvedWork = await prisma.fieldWork.findUnique({
           where: { id: a.fieldWorkId },
           select: { id: true, status: true, fieldSeasonId: true, fieldSeason: { select: { areaHa: true, season: { select: { isLocked: true } } } } }
         });
-        if (!work) throw new ToolInputError(`Plaanitud tööd "${a.fieldWorkId}" ei leitud`);
+        if (!resolvedWork) throw new ToolInputError(`Plaanitud tööd "${a.fieldWorkId}" ei leitud`);
       } else {
         if (!a.field || !a.workType) throw new ToolInputError('Määra kas fieldWorkId või nii field kui ka workType');
         const y = a.year ?? tallinnYear();
@@ -371,15 +370,16 @@ export const workTools = [
             keys: [w.workType.name, w.workType.shortName ?? '', wtName].filter(Boolean)
           };
         }));
-        work = candidates.find((w) => w.id === hit.id)!;
+        resolvedWork = candidates.find((w) => w.id === hit.id)!;
       }
+      const work = resolvedWork;
 
-      if (work.fieldSeason.season.isLocked) throw new ToolInputError('Lukus hooaja tööle ei saa kannet lisada');
+      if (work.fieldSeason.season?.isLocked) throw new ToolInputError('Lukus hooaja tööle ei saa kannet lisada');
       if (work.status === 'DONE') throw new ToolInputError('Lõpetatud tööle ei saa kannet lisada');
 
       let worker: { id: string; name: string } | null = null;
       if (a.worker) {
-        const parties = await prisma.relatedParty.findMany({ where: { isActive: true }, select: { id: true, name: true } });
+        const parties = await prisma.relatedParty.findMany({ select: { id: true, name: true } });
         const hit = pickOne('Tegija', a.worker, parties.map((p) => ({ id: p.id, label: p.name, keys: [p.name] })));
         worker = parties.find((p) => p.id === hit.id)!;
       }
