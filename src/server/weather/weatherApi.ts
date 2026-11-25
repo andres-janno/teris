@@ -123,6 +123,20 @@ export async function cumulativeReport(years: number[], point: 'all' | number, b
   return { series, normal };
 }
 
+// Kui fieldSeason.seedingDate on tühi, võetakse külvikuupäev sama hooaja esimese SOWING-töö kande järgi
+// (nt talikultuurid, mille sügiskülv imporditi eelmise hooaja põlluraamatust).
+async function sowingEntryDate(fieldSeasonId: number, harvestDate?: Date | null): Promise<Date | null> {
+  const e = await prisma.workEntry.findFirst({
+    where: {
+      fieldWork: { fieldSeasonId, phase: 'SOWING' },
+      ...(harvestDate ? { date: { lte: harvestDate } } : {})
+    },
+    orderBy: { date: 'asc' },
+    select: { date: true }
+  });
+  return e?.date ?? null;
+}
+
 export async function seasonReport(fieldSeasonId: number) {
   const s = await prisma.fieldSeason.findUniqueOrThrow({
     where: { id: fieldSeasonId },
@@ -130,11 +144,12 @@ export async function seasonReport(fieldSeasonId: number) {
   });
   const gddBaseC = s.cropEntity?.gddBaseC ?? 5;
   const today = tallinnDate(new Date());
-  if (!s.seedingDate) return { summary: null, reason: 'NO_SEEDING' as const, gddBaseC, harvested: false };
+  const seedingDate = s.seedingDate ?? await sowingEntryDate(fieldSeasonId, s.harvestDate);
+  if (!seedingDate) return { summary: null, reason: 'NO_SEEDING' as const, gddBaseC, harvested: false };
   const harvested = !!s.harvestDate;
-  if (s.harvestDate && tallinnDate(s.harvestDate) < tallinnDate(s.seedingDate)) return { summary: null, reason: 'INVALID_DATES' as const, gddBaseC, harvested };
-  if (tallinnDate(s.seedingDate) > today) return { summary: null, reason: 'NOT_STARTED' as const, gddBaseC, harvested };
-  const period = seasonPeriod(s, today)!; // külv olemas ja koristus pole külvist varasem
+  if (s.harvestDate && tallinnDate(s.harvestDate) < tallinnDate(seedingDate)) return { summary: null, reason: 'INVALID_DATES' as const, gddBaseC, harvested };
+  if (tallinnDate(seedingDate) > today) return { summary: null, reason: 'NOT_STARTED' as const, gddBaseC, harvested };
+  const period = seasonPeriod({ seedingDate, harvestDate: s.harvestDate }, today)!; // külv olemas ja koristus pole külvist varasem
   if (!s.weatherPointId) return { summary: null, reason: 'NO_POINT' as const, gddBaseC, harvested };
   if (!s.weatherPoint?.loadedUntil) return { summary: null, reason: 'LOADING' as const, gddBaseC, harvested };
   // Külv on hilisem kui viimane laetud päev (andmeviide) — päevi veel pole
@@ -159,16 +174,18 @@ export async function seasonHistoryReport(fieldSeasonId: number) {
     select: { fieldId: true, year: true, seedingDate: true, harvestDate: true, weatherPointId: true }
   });
   const today = tallinnDate(new Date());
-  const curPeriod = cur.seedingDate && tallinnDate(cur.seedingDate) <= today ? seasonPeriod(cur, today) : null;
+  const curSeeding = cur.seedingDate ?? await sowingEntryDate(fieldSeasonId, cur.harvestDate);
+  const curPeriod = curSeeding && tallinnDate(curSeeding) <= today ? seasonPeriod({ seedingDate: curSeeding, harvestDate: cur.harvestDate }, today) : null;
   const past = await prisma.fieldSeason.findMany({
     where: { fieldId: cur.fieldId, year: { gte: cur.year - HISTORY_YEARS, lt: cur.year } },
-    select: { year: true, crop: true, actualYieldTonsHa: true, seedingDate: true, harvestDate: true, weatherPointId: true, cropEntity: { select: { gddBaseC: true } } }
+    select: { id: true, year: true, crop: true, actualYieldTonsHa: true, seedingDate: true, harvestDate: true, weatherPointId: true, cropEntity: { select: { gddBaseC: true } } }
   });
   const byYear = new Map(past.map((p) => [p.year, p]));
   const rows = [];
   for (let year = cur.year - 1; year >= cur.year - HISTORY_YEARS; year--) {
     const s = byYear.get(year);
-    const own = s?.seedingDate && tallinnDate(s.seedingDate) <= today ? seasonPeriod(s, today) : null;
+    const sSeeding = s ? (s.seedingDate ?? await sowingEntryDate(s.id, s.harvestDate)) : null;
+    const own = s && sSeeding && tallinnDate(sSeeding) <= today ? seasonPeriod({ seedingDate: sSeeding, harvestDate: s.harvestDate }, today) : null;
     let period = own;
     if (!period && curPeriod) {
       // Valitud hooaja periood selles aastas; avatud hooaja „tänaseni“ nihutatakse samuti
@@ -193,7 +210,16 @@ export async function seasonHistoryReport(fieldSeasonId: number) {
 }
 
 export async function seasonsReport(year: number) {
-  const rows = await prisma.fieldSeason.findMany({ where: { year, seedingDate: { not: null } }, select: { id: true } });
+  const rows = await prisma.fieldSeason.findMany({
+    where: {
+      year,
+      OR: [
+        { seedingDate: { not: null } },
+        { fieldWorks: { some: { phase: 'SOWING', entries: { some: {} } } } }
+      ]
+    },
+    select: { id: true }
+  });
   const out = [];
   for (const r of rows) {
     const rep = await seasonReport(r.id);

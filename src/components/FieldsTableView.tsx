@@ -75,6 +75,7 @@ interface FieldRow {
 }
 
 const fmtHa = (v: number) => v.toLocaleString('et-EE', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+const fmtYield = (v: number) => `${v.toLocaleString('et-EE', { minimumFractionDigits: 1, maximumFractionDigits: 2 })} t/ha`;
 const fmtEur = (v: number) => `${Math.round(v).toLocaleString('et-EE')} €`;
 
 function buildRow(field: MasterField, rec: FieldYearlyRecord): FieldRow {
@@ -162,6 +163,7 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
         (f.operatorName ?? '').toLowerCase().includes(q) ||
         (f.soilType ?? '').toLowerCase().includes(q) ||
         r.rec.crop.toLowerCase().includes(q) ||
+        (r.rec.cropVariety ?? '').toLowerCase().includes(q) ||
         r.parcels.some((p) => p.cadastralCode.toLowerCase().includes(q) || (p.parcelName ?? '').toLowerCase().includes(q)) ||
         r.owners.some((o) => o.toLowerCase().includes(q))
       );
@@ -177,25 +179,24 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
   const totals = useMemo(() => filteredRows.reduce(
     (acc, r) => ({
       areaHa: acc.areaHa + (r.rec.areaHa || 0),
-      eligibleHa: acc.eligibleHa + (r.rec.eligibleAreaHa || 0),
       ownedHa: acc.ownedHa + r.ownedHa,
       rentedHa: acc.rentedHa + r.rentedHa,
       landTaxEur: acc.landTaxEur + r.landTaxEur,
       rentFeeEur: acc.rentFeeEur + r.rentFeeEur
     }),
-    { areaHa: 0, eligibleHa: 0, ownedHa: 0, rentedHa: 0, landTaxEur: 0, rentFeeEur: 0 }
+    { areaHa: 0, ownedHa: 0, rentedHa: 0, landTaxEur: 0, rentFeeEur: 0 }
   ), [filteredRows]);
 
   const handleExportCsv = () => {
     const esc = (v: string | number | undefined | null) => `"${String(v ?? '').replace(/"/g, '""')}"`;
-    const headers = ['Nr', 'Põld', 'PRIA massiiv', `Pindala ${selectedYear} (ha)`, 'PRIA pindala (ha)', 'Kultuur', 'Omandisuhe',
-      'Oma maa (ha)', 'Rendimaa (ha)', 'Omanik / rendileandja', 'Katastriüksused', 'Maamaks (€/a)', 'Rent (€/a)', 'Mullastik', 'Drenaaž', 'Operaator'];
+    const headers = ['Nr', 'Põld', 'PRIA massiiv', `Pindala ${selectedYear} (ha)`, 'Kultuur', 'Sort', 'Planeeritud saak (t/ha)', 'Tegelik saak (t/ha)', 'Omandisuhe',
+      'Oma maa (ha)', 'Rendimaa (ha)', 'Omanik / rendileandja', 'Katastriüksused', 'Maamaks (€/a)', 'Rent (€/a)', 'Operaator'];
     const lines = filteredRows.map((r) => [
-      esc(r.field.num), esc(r.field.name), esc(r.field.fieldCode), r.rec.areaHa ?? '', r.rec.eligibleAreaHa ?? '',
-      esc(isCropUndetermined(r.rec.crop) ? '' : r.rec.crop), esc(TENURE_LABEL[r.tenure]),
+      esc(r.field.num), esc(r.field.name), esc(r.field.fieldCode), r.rec.areaHa ?? '',
+      esc(isCropUndetermined(r.rec.crop) ? '' : r.rec.crop), esc(r.rec.cropVariety), r.rec.targetYieldTonsHa ?? '', r.rec.actualYieldTonsHa ?? '', esc(TENURE_LABEL[r.tenure]),
       Math.round(r.ownedHa * 100) / 100, Math.round(r.rentedHa * 100) / 100, esc(r.owners.join('; ')),
       esc(r.parcels.map((p) => p.cadastralCode).join('; ')), Math.round(r.landTaxEur), Math.round(r.rentFeeEur),
-      esc(r.field.soilType), esc(r.field.drainageSystem === undefined ? '' : r.field.drainageSystem ? 'Jah' : 'Ei'), esc(r.field.operatorName)
+      esc(r.field.operatorName)
     ].join(','));
     const blob = new Blob(['﻿' + [headers.map(esc).join(','), ...lines].join('\n')], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -327,8 +328,10 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                 <TableRow>
                   <TableHead pin="start" className={PIN_NAME_CELL}>Põld</TableHead>
                   <TableHead numeric>Pindala</TableHead>
-                  <TableHead numeric>PRIA pind</TableHead>
                   <TableHead>Kultuur {selectedYear}</TableHead>
+                  <TableHead>Sort</TableHead>
+                  <TableHead numeric title="Planeeritud saagiootus (t/ha)">Planeeritud saak</TableHead>
+                  <TableHead numeric title="Tegelik koristatud saak (t/ha)">Tegelik saak</TableHead>
                   {weatherEnabled && <TableHead numeric title="Temperatuurisumma külvist koristuseni (kultuuri baastemperatuuriga)">GDD</TableHead>}
                   {weatherEnabled && <TableHead numeric title="Sademed külvist koristuseni">Sademed, mm</TableHead>}
                   <TableHead>Omandisuhe</TableHead>
@@ -336,8 +339,6 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   <TableHead>Katastriüksused</TableHead>
                   <TableHead numeric>Maamaks</TableHead>
                   <TableHead numeric>Rent</TableHead>
-                  <TableHead>Mullastik</TableHead>
-                  <TableHead>Drenaaž</TableHead>
                   <TableHead>Operaator</TableHead>
                   <TableHead actions><span className="sr-only">Tegevused</span></TableHead>
                 </TableRow>
@@ -376,7 +377,6 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       <TableCell numeric title={rec.areaChangeReason || undefined}>
                         {fmtHa(rec.areaHa || 0)} ha
                       </TableCell>
-                      <TableCell numeric>{rec.eligibleAreaHa ? `${fmtHa(rec.eligibleAreaHa)} ha` : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell>
                         {hasCrop ? (
                           <span className="inline-flex items-center gap-1.5">
@@ -384,8 +384,10 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                             {rec.crop}
                           </span>
                         ) : <span className={tableMutedClass}>–</span>}
-                        {rec.cropVariety && <div className={cellSubStackedClass}>{rec.cropVariety}</div>}
                       </TableCell>
+                      <TableCell>{rec.cropVariety || <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell numeric>{rec.targetYieldTonsHa != null ? fmtYield(rec.targetYieldTonsHa) : <span className={tableMutedClass}>–</span>}</TableCell>
+                      <TableCell numeric>{rec.actualYieldTonsHa != null ? fmtYield(rec.actualYieldTonsHa) : <span className={tableMutedClass}>–</span>}</TableCell>
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.gdd)}</TableCell>}
                       {weatherEnabled && <TableCell numeric>{fmt0(weatherBySeason.get(rec.fieldSeasonId ?? -1)?.precipMm)}</TableCell>}
                       <TableCell>
@@ -405,8 +407,6 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                       </TableCell>
                       <TableCell numeric>{r.landTaxEur > 0 ? fmtEur(r.landTaxEur) : <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell numeric>{r.rentFeeEur > 0 ? fmtEur(r.rentFeeEur) : <span className={tableMutedClass}>–</span>}</TableCell>
-                      <TableCell wrap className={WRAP_CELL}>{field.soilType || <span className={tableMutedClass}>–</span>}</TableCell>
-                      <TableCell>{field.drainageSystem === undefined ? <span className={tableMutedClass}>–</span> : field.drainageSystem ? 'Jah' : 'Ei'}</TableCell>
                       <TableCell wrap>{field.operatorName || <span className={tableMutedClass}>–</span>}</TableCell>
                       <TableCell actions>
                         <Button variant="ghost" size="icon-sm" onClick={() => setEditingFieldId(field.id)} title="Muuda">
@@ -425,7 +425,9 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                   <TableRow>
                     <TableCell pin="start" className={cn(PIN_NAME_CELL, FOOT_PIN_Z)}><strong>Kokku: {filteredRows.length} põldu</strong></TableCell>
                     <TableCell numeric><strong>{fmtHa(totals.areaHa)} ha</strong></TableCell>
-                    <TableCell numeric>{totals.eligibleHa > 0 ? `${fmtHa(totals.eligibleHa)} ha` : ''}</TableCell>
+                    <TableCell />
+                    <TableCell />
+                    <TableCell />
                     <TableCell />
                     {weatherEnabled && <TableCell />}
                     {weatherEnabled && <TableCell />}
@@ -437,8 +439,6 @@ export const FieldsTableView: React.FC<FieldsTableViewProps> = ({
                     <TableCell />
                     <TableCell numeric><strong>{fmtEur(totals.landTaxEur)}</strong></TableCell>
                     <TableCell numeric><strong>{fmtEur(totals.rentFeeEur)}</strong></TableCell>
-                    <TableCell />
-                    <TableCell />
                     <TableCell />
                     <TableCell actions className={FOOT_PIN_Z} />
                   </TableRow>

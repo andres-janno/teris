@@ -546,7 +546,6 @@ function cropSummaryKey(cropText: string): string {
                     >
                       <div className="flex flex-col">
                         <strong className={cn('text-base font-normal leading-natural text-foreground', !selectedRec && 'text-subtle')}>{sizeRec ? `${sizeRec.areaHa.toFixed(2)} ha` : '–'}</strong>
-                        {selectedRec?.eligibleAreaHa ? <span className="block text-2xs font-medium leading-natural text-subtle">PRIA: {selectedRec.eligibleAreaHa} ha</span> : null}
                       </div>
                     </TableCell>
                     {tableYears.map((yr) => {

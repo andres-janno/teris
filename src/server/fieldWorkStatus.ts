@@ -7,6 +7,7 @@ import type { Prisma } from '@prisma/client';
 export interface PrismaClientLike {
   fieldWork: { findUnique(args: any): Promise<unknown>; update(args: any): Promise<unknown> };
   workEntry: { aggregate(args: any): Promise<unknown>; findFirst(args: any): Promise<unknown>; count(args: any): Promise<unknown> };
+  fieldSeason?: { update(args: any): Promise<unknown> };
 }
 
 // Töö olek kannete järgi (lõpetatud töö jääb lõpetatuks, kuni see avatakse).
@@ -22,7 +23,14 @@ export async function syncFieldWorkStatus(
   const db = client as Prisma.TransactionClient;
   const work = await db.fieldWork.findUnique({
     where: { id: fieldWorkId },
-    select: { status: true, plannedAreaHa: true, fieldSeason: { select: { areaHa: true } }, _count: { select: { entries: true } } }
+    select: {
+      status: true,
+      phase: true,
+      fieldSeasonId: true,
+      plannedAreaHa: true,
+      fieldSeason: { select: { areaHa: true, seedingDate: true } },
+      _count: { select: { entries: true } }
+    }
   });
   if (!work) return;
 
@@ -59,5 +67,21 @@ export async function syncFieldWorkStatus(
         finishedById: null
       }
     });
+  }
+
+  // Kui hooajal puudub külvikuupäev, täidetakse see esimese külvikande kuupäevast
+  // (nt eelmise aasta põlluraamatust üle toodud talikultuuri külv või käsitsi lisatud külvikanne).
+  if (work.phase === 'SOWING' && work.fieldSeason && !work.fieldSeason.seedingDate && db.fieldSeason) {
+    const earliestSowing = await db.workEntry.findFirst({
+      where: { fieldWork: { fieldSeasonId: work.fieldSeasonId, phase: 'SOWING' } },
+      orderBy: { date: 'asc' },
+      select: { date: true }
+    });
+    if (earliestSowing?.date) {
+      await db.fieldSeason.update({
+        where: { id: work.fieldSeasonId },
+        data: { seedingDate: earliestSowing.date }
+      });
+    }
   }
 }

@@ -1,7 +1,8 @@
 // src/server/weather/weatherApi.test.ts — live-andmebaas: ajutine ettevõte, punkt lat 10.9 sünteetiliste päevadega.
 import { describe, it, expect, beforeAll, afterAll } from 'vitest';
 import { prisma, authDb, runAsTenant } from '../db';
-import { yearsReport, monthsReport, cumulativeReport, mapReport, seasonReport, seasonHistoryReport, loadDays } from './weatherApi';
+import { yearsReport, monthsReport, cumulativeReport, mapReport, seasonReport, seasonHistoryReport, seasonsReport, loadDays } from './weatherApi';
+import { syncFieldWorkStatus } from '../fieldWorkStatus';
 import { addDays } from './summary';
 
 const T = `test-tenant-weatherapi-${process.pid}`;
@@ -36,6 +37,7 @@ beforeAll(async () => {
 afterAll(async () => {
   await run(async () => {
     await prisma.fieldSeason.deleteMany({});
+    await prisma.workType.deleteMany({});
     await prisma.field.deleteMany({});
     await prisma.crop.deleteMany({});
   }).catch(() => {});
@@ -136,5 +138,33 @@ describe('weather API', () => {
     expect(r.rows.map((x) => [x.year, x.summary.from, x.summary.to])).toEqual([[2016, '2015-10-08', '2016-08-17']]);
     expect(r.rows[0].ownDates).toBe(false);
     expect(r.rows[0].crop).toBeNull();
+  });
+  it('külvikuupäevata hooaeg kasutab SOWING-töö kannet (talikultuuri sügiskülv)', async () => {
+    const { fsId, fwId } = await run(async () => {
+      const f = await prisma.field.create({ data: { num: '3', name: 'C', fieldCode: 'WC' } });
+      const wt = await prisma.workType.create({ data: { name: 'Külvamine', phase: 'SOWING' } });
+      const g = { type: 'Polygon', coordinates: [[[20.9, 10.9], [20.91, 10.9], [20.91, 10.91], [20.9, 10.9]]] };
+      const fs = await prisma.fieldSeason.create({
+        data: { fieldId: f.id, year: 2016, areaHa: 1, crop: 'Taliraps', geometry: g, weatherPointId: pointId, harvestDate: new Date('2016-05-10T00:00:00Z') }
+      });
+      const fw = await prisma.fieldWork.create({
+        data: {
+          fieldSeasonId: fs.id, workTypeId: wt.id, phase: 'SOWING',
+          entries: { create: { date: new Date('2016-05-01T00:00:00Z'), areaHa: 1 } }
+        }
+      });
+      return { fsId: fs.id, fwId: fw.id };
+    });
+    const r = await run(() => seasonReport(fsId));
+    expect(r.reason).toBeNull();
+    expect(r.summary!.from).toBe('2016-05-01');
+    expect(r.summary!.to).toBe('2016-05-10');
+    expect(r.summary!.precipMm).toBe(40);
+    const list = await run(() => seasonsReport(2016));
+    expect(list.rows.find((x) => x.fieldSeasonId === fsId)).toMatchObject({ gdd: 50, precipMm: 40 });
+    // syncFieldWorkStatus täidab tühja seedingDate välja esimese külvikande kuupäevaga
+    await run(() => syncFieldWorkStatus(fwId, true, null, prisma));
+    const updated = await run(() => prisma.fieldSeason.findUniqueOrThrow({ where: { id: fsId }, select: { seedingDate: true } }));
+    expect(updated.seedingDate?.toISOString().slice(0, 10)).toBe('2016-05-01');
   });
 });
