@@ -1,3 +1,1 @@
-{"commit":"e4ced14","date":"2026-11-25","type":"FEATURE","area":"Põllud","text":"Põldude tabelis kuvatakse uuendatud veerud ja külvikuupäev arvutatakse automaatselt külvikannetest."}
-{"commit":"238b36a","date":"2026-11-25","type":"FEATURE","area":"AI ühendus","text":"AI-abilise (MCP) kaudu saab nüüd luua põllutöid ja lisada töökandeid."}
-{"commit":"96e2769","date":"2026-11-25","type":"FIX","area":"AI ühendus","text":"Parandatud AI-abilise päringute viga hooaja ja seotud isikute filtreerimisel."}
+{"commit":"6b76ff0","date":"2026-11-25","type":"IMPROVEMENT","area":"Kasutajaliides","text":"Uuendused ja Juhend on nüüd koondatud kasutajamenüü alla; lugemata uuenduste märgutäpp kuvatakse kasutajamenüü ikoonil."}

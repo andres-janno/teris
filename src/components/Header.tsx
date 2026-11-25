@@ -10,13 +10,10 @@ import {
   Users,
   Package,
   Repeat,
-  CloudSun,
-  BookOpen,
-  Sparkles
+  CloudSun
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { Button, NavSwitch, NavSwitchItem } from './ui';
-import { headerNarrowHiddenClass, headerTriggerClass } from './ui/variants';
+import { NavSwitch, NavSwitchItem } from './ui';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
 import { OperatorSelector } from './OperatorSelector';
@@ -128,31 +125,6 @@ export const Header: React.FC<HeaderProps> = ({
           <OperatorSelector parties={parties} selected={operatorFilter} onChange={onOperatorFilterChange} />
         )}
 
-        {onOpenReleaseNotes && (
-          <Button
-            variant="ghost"
-            className={headerTriggerClass}
-            aria-label={hasUnreadReleaseNotes ? 'Uuendused (lugemata)' : 'Uuendused'}
-            title={hasUnreadReleaseNotes ? 'Uuendused — uus versioon!' : 'Uuendused'}
-            onClick={onOpenReleaseNotes}
-          >
-            <span className="relative inline-flex">
-              <Sparkles size={14} />
-              {hasUnreadReleaseNotes && (
-                <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-background" />
-              )}
-            </span>
-            <span className={headerNarrowHiddenClass}>Uuendused</span>
-          </Button>
-        )}
-
-        {onOpenGuide && (
-          <Button variant="ghost" className={headerTriggerClass} aria-current={guideOpen ? 'page' : undefined} aria-label="Juhend" title="Juhend" onClick={onOpenGuide}>
-            <BookOpen size={14} />
-            <span className={headerNarrowHiddenClass}>Juhend</span>
-          </Button>
-        )}
-
         {currentUser && (
           <UserMenu
             user={currentUser}
@@ -162,6 +134,10 @@ export const Header: React.FC<HeaderProps> = ({
             onOpenAiConnection={onOpenAiConnection}
             onOpenUsers={onOpenUsers}
             onOpenWeatherCredential={onOpenWeatherCredential}
+            onOpenGuide={onOpenGuide}
+            guideOpen={guideOpen}
+            onOpenReleaseNotes={onOpenReleaseNotes}
+            hasUnreadReleaseNotes={hasUnreadReleaseNotes}
             onLogout={onLogout}
             dbConnected={dbConnected}
           />

@@ -1,8 +1,8 @@
 import React from 'react';
-import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot, CloudSun } from 'lucide-react';
+import { User as UserIcon, ChevronDown, KeyRound, Moon, Sun, LogOut, Database, Users, Bot, CloudSun, BookOpen, Sparkles } from 'lucide-react';
 import type { AuthUser } from '../types/auth';
 import { COPYRIGHT_TEXT } from '../copyright';
-import { Button, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, cn } from './ui';
+import { Button, DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, cn } from './ui';
 import { headerChevronClass, headerNarrowHiddenClass, headerTriggerClass } from './ui/variants';
 
 interface UserMenuProps {
@@ -13,6 +13,10 @@ interface UserMenuProps {
   onOpenAiConnection?: () => void;
   onOpenUsers?: () => void;
   onOpenWeatherCredential?: () => void;
+  onOpenGuide?: () => void;
+  guideOpen?: boolean;
+  onOpenReleaseNotes?: () => void;
+  hasUnreadReleaseNotes?: boolean;
   onLogout?: () => void;
   dbConnected: boolean;
 }
@@ -32,6 +36,10 @@ export const UserMenu: React.FC<UserMenuProps> = ({
   onOpenAiConnection,
   onOpenUsers,
   onOpenWeatherCredential,
+  onOpenGuide,
+  guideOpen = false,
+  onOpenReleaseNotes,
+  hasUnreadReleaseNotes = false,
   onLogout,
   dbConnected
 }) => {
@@ -40,7 +48,12 @@ export const UserMenu: React.FC<UserMenuProps> = ({
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button variant="ghost" className={cn(headerTriggerClass, TRIGGER_OPEN_CLASS)} title={user.displayName || user.username} aria-label={user.displayName || user.username}>
-            <UserIcon size={14} />
+            <span className="relative inline-flex">
+              <UserIcon size={14} />
+              {hasUnreadReleaseNotes && (
+                <span className="absolute -top-1 -right-1 size-2 rounded-full bg-primary ring-2 ring-background" />
+              )}
+            </span>
             <span className={headerNarrowHiddenClass}>{user.displayName || user.username}</span>
             <ChevronDown size={14} className={headerChevronClass} />
           </Button>
@@ -81,6 +94,23 @@ export const UserMenu: React.FC<UserMenuProps> = ({
             {theme === 'light' ? <Moon /> : <Sun className="text-warning" />}
             <span>{theme === 'light' ? 'Tume režiim' : 'Hele režiim'}</span>
           </DropdownMenuItem>
+
+          {(onOpenReleaseNotes || onOpenGuide) && <DropdownMenuSeparator />}
+          {onOpenReleaseNotes && (
+            <DropdownMenuItem onSelect={() => onOpenReleaseNotes()}>
+              <Sparkles />
+              <span>Uuendused</span>
+              {hasUnreadReleaseNotes && (
+                <span className="ml-auto size-2 rounded-full bg-primary" aria-label="Lugemata uuendused" />
+              )}
+            </DropdownMenuItem>
+          )}
+          {onOpenGuide && (
+            <DropdownMenuItem onSelect={() => onOpenGuide()} aria-current={guideOpen ? 'page' : undefined}>
+              <BookOpen />
+              <span>Juhend</span>
+            </DropdownMenuItem>
+          )}
 
           <div className={cn('mt-1 flex flex-col gap-1 border-t border-border px-2.5 pt-2 pb-1', INFO_LINE_CLASS)}>
             <div>Versioon {VERSION_LABEL}</div>
