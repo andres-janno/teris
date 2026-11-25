@@ -86,7 +86,7 @@ describe('server', () => {
     const { tools } = await client.listTools();
     expect(tools.length).toBeGreaterThan(0);
     for (const t of tools) {
-      expect(t.annotations?.readOnlyHint, t.name).toBe(t.name !== 'create_article');
+      expect(t.annotations?.readOnlyHint, t.name).toBe(!['create_article', 'create_field_work', 'create_work_entry'].includes(t.name));
     }
     await client.close();
   });
@@ -455,5 +455,103 @@ describe('registrid ja saagipartiid (MCP)', () => {
 
     const lots = (await call(A.plainKey, 'list_harvest_lots')).data;
     expect(Array.isArray(lots.rows)).toBe(true);
+  });
+});
+
+describe('põllutööde plaanide ja kannete loomine (MCP)', () => {
+  it('create_field_work: loob plaani materjalide ja NPK-ga ning vigased sisendid lükatakse tagasi', async () => {
+    const badDates = await call(A.plainKey, 'create_field_work', {
+      field: 'Toosi', workType: 'Väetamine', year: 2026,
+      plannedDateFrom: '20.06.2026', plannedDateTo: '10.06.2026'
+    });
+    expect(badDates.isError).toBe(true);
+
+    const created = (await call(A.plainKey, 'create_field_work', {
+      field: 'Toosi',
+      workType: 'Väetamine',
+      year: 2026,
+      plannedDateFrom: '01.06.2026',
+      plannedDateTo: '05.06.2026',
+      plannedAreaHa: 12.4,
+      method: 'Paisklaotamine',
+      notes: 'Teine pealtväetamine',
+      plannedArticles: [{ article: 'Ammooniumnitraat', ratePerHa: 200 }]
+    })).data;
+    expect(created).toMatchObject({
+      year: 2026,
+      field: 'Nr 4 Toosi',
+      work: 'Väetamine',
+      phase: 'CARE',
+      status: 'PLANNED',
+      planned: '01.06.2026 – 05.06.2026',
+      plannedAreaHa: 12.4,
+      method: 'Paisklaotamine',
+      notes: 'Teine pealtväetamine'
+    });
+    expect(created.id).toBeTruthy();
+    expect(created.plannedArticles[0]).toMatchObject({
+      name: 'Ammooniumnitraat',
+      ratePerHa: 200,
+      unit: 'kg',
+      nKgHa: 68
+    });
+
+    const works = (await call(A.plainKey, 'list_field_works', { year: 2026, field: 'Toosi', status: 'PLANNED' })).data;
+    expect(works.rows.some((w: { id: string }) => w.id === created.id)).toBe(true);
+  });
+
+  it('create_work_entry: lisab kande planeeritud tööle, uuendab laoseisu ja staatust ning keelab DONE tööle lisamise', async () => {
+    const plan = (await call(A.plainKey, 'create_field_work', {
+      field: 'Toosi',
+      workType: 'Väetamine',
+      year: 2026,
+      plannedDateFrom: '15.06.2026',
+      plannedAreaHa: 12.4
+    })).data;
+
+    const beforeStock = (await call(A.plainKey, 'list_stock_levels', { article: 'Ammooniumnitraat' })).data.rows[0].quantity;
+
+    const entry = (await call(A.plainKey, 'create_work_entry', {
+      fieldWorkId: plan.id,
+      date: '16.06.2026',
+      areaHa: 6.2,
+      vehicle: 'Valtra',
+      implement: 'Amazone',
+      equipmentHours: 2,
+      method: 'Paisklaotamine',
+      notes: 'Esimene pool',
+      articles: [{ article: 'Ammooniumnitraat', quantity: 100 }]
+    })).data;
+    expect(entry).toMatchObject({
+      fieldWorkId: plan.id,
+      workStatus: 'IN_PROGRESS',
+      date: '16.06.2026',
+      field: 'Nr 4 Toosi',
+      work: 'Väetamine',
+      vehicle: 'Valtra T1',
+      implement: 'Amazone ZA',
+      areaHa: 6.2,
+      equipmentHours: 2
+    });
+    expect(entry.articles[0]).toMatchObject({ name: 'Ammooniumnitraat', quantity: 100, unit: 'kg' });
+    expect(entry.articles[0].unitPrice).toBeUndefined();
+
+    const afterStock = (await call(A.plainKey, 'list_stock_levels', { article: 'Ammooniumnitraat' })).data.rows[0].quantity;
+    expect(afterStock).toBe(beforeStock - 100);
+
+    const finishEntry = (await call(A.plainKey, 'create_work_entry', {
+      fieldWorkId: plan.id,
+      date: '17.06.2026',
+      areaHa: 6.2,
+      finish: true
+    })).data;
+    expect(finishEntry.workStatus).toBe('DONE');
+
+    const onDone = await call(A.plainKey, 'create_work_entry', {
+      fieldWorkId: plan.id,
+      date: '18.06.2026',
+      areaHa: 1
+    });
+    expect(onDone.isError).toBe(true);
   });
 });
