@@ -2,6 +2,9 @@
 
 - Iga **kliendile nähtava** muudatuse või paranduse (`feat`, `fix`, nähtav parendus kasutajaliideses, aruannetes, laos, kaartidel või AI/MCP tööriistades) juures lisa **üks lühike eestikeelne inimkeelne rida** faili `changelog/unreleased.jsonl`.
 - Sisemisi muudatusi (`chore`, `test`, `refactor`, `.gemini/rules`, sisemine `docs`) **ära lisa**.
+- **Valdkond (`--area`) vali alati Terise kasutajaliidese ühtsete nimede seast:**
+  `Kaart`, `Põllud`, `Kultuurid`, `Külvikord`, `Põllutööd`, `Laoarvestus`, `Tehnika`, `Sõidud`, `Taristu`, `Isikud`, `Ilm`, `Hooajad`, `AI ühendus`, `Kasutajaliides`, `Juhend`.
+  *(Kasuta alati **`AI ühendus`** — ära kasuta `MCP` ega `AI / MCP`, ning väldi tekstis tehnilist lühendit „MCP“, räägi kliendile „AI-abilisest“ või „AI ühendusest“.)*
 - Rea lisamine serveris (või otse JSONL-reana enne/koos commitiga):
   ```bash
   npm run note -- --type <feature|improvement|fix> --area "<Valdkond>" "<Inimkeelne eestikeelne kirjeldus>"
