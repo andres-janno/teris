@@ -2,7 +2,7 @@
 import { TRIP_MAP_COLOR } from '../lib/dataColors';
 import React, { useEffect, useMemo, useState } from 'react';
 import L from 'leaflet';
-import { Route } from 'lucide-react';
+import { ChevronDown, ChevronRight, Route } from 'lucide-react';
 import type { Implement, Trip, TripStopInfo } from '../types/fleet';
 import { api } from '../services/api';
 import { BASE_MAPS } from '../services/maaAmetLayers';
@@ -11,7 +11,7 @@ import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { cellSubClass, cellSubStackedClass, tableMutedClass } from './ui/variants';
-import { Alert, Button, StatTile, LegendItem, Field, FormGrid, NumberInput, Select, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
+import { Alert, Button, StatTile, LegendItem, Field, NumberInput, Select, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
 
 // Aja jaotuse riba osad; värvid on tokenid (teemapõhised muutujad --trip-*). Täielikud nimed, et Tailwind need näeks.
 const TIME_PART_CLASS = { moving: 'bg-trip-moving', idle: 'bg-trip-idle', pause: 'bg-trip-pause' } as const;
@@ -46,6 +46,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
   const [implementId, setImplementId] = useState(trip.implementId ?? '');
   const [widthM, setWidthM] = useState<number | null>(trip.widthM ?? null);
   const [notes, setNotes] = useState(trip.notes ?? '');
+  const [visitsOpen, setVisitsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trackError, setTrackError] = useState<string | null>(null);
@@ -215,10 +216,10 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
         <DialogBody>
           {trip.deletedAt && <Alert tone="error">Kustutatud {formatDateTime(trip.deletedAt)}</Alert>}
           {/* shrink-0: dialoogi sisu on flex-veerg, ilma selleta kahaneb kaart 0 kõrguseks */}
-          <div ref={setMapEl} className="mb-3 h-80 shrink-0 rounded-md" />
+          <div ref={setMapEl} className="mb-3 h-64 shrink-0 rounded-md" />
           {trackError && <Alert tone="error">{trackError}</Alert>}
           {/* Algus ja lõpp: täppide värv sama mis kaardi markeritel */}
-          <div className="relative mb-4 flex flex-col gap-2.5 pl-0.5 before:absolute before:top-3 before:bottom-3 before:left-1.5 before:w-0.5 before:bg-border before:content-['']">
+          <div className="relative mb-3 flex flex-col gap-2 pl-0.5 before:absolute before:top-3 before:bottom-3 before:left-1.5 before:w-0.5 before:bg-border before:content-['']">
             <div className={STOP_ROW}>
               <span className={STOP_DOT} style={{ backgroundColor: STOP_DOT_COLOR.start }} aria-hidden="true" />
               <span className={STOP_TIME}>{formatDateTime(trip.startedAt)}</span>
@@ -231,41 +232,54 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
             </div>
           </div>
 
+          <div className="mb-4 rounded-md border border-border bg-muted p-3">
+            <div className="flex flex-wrap items-end gap-3">
+              <div className="min-w-48 flex-1">
+                <Field label="Haakeriist" htmlFor="trip-implement">
+                  <Select
+                    id="trip-implement"
+                    value={implementId}
+                    onValueChange={handleImplementChange}
+                    options={implementOptions}
+                    disabled={saving}
+                  />
+                </Field>
+              </div>
+              <div className="w-32 shrink-0">
+                <Field label="Töölaius" htmlFor="trip-width">
+                  <NumberInput
+                    id="trip-width"
+                    value={widthM}
+                    onChange={setWidthM}
+                    min={0.1}
+                    decimals={2}
+                    end="m"
+                    placeholder="nt 6"
+                    disabled={saving}
+                  />
+                </Field>
+              </div>
+            </div>
+            {trip.manualImplement && (
+              <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs leading-natural text-muted-foreground">
+                <span>Haakeriist/laius on määratud sellel sõidul.</span>
+                <Button type="button" variant="text" size="inline" onClick={resetImplement} disabled={saving}>
+                  Taasta registri järgi
+                </Button>
+              </div>
+            )}
+          </div>
+
           <div className="mb-4 grid grid-cols-4 gap-2.5 max-[641px]:grid-cols-2">
             {tiles.map((t) => (
               <StatTile key={t.label} label={t.label} value={t.value} unit={t.unit} empty={t.empty} />
             ))}
           </div>
 
-          {timeTotal > 0 && (
-            <div className="mb-4">
-              <div className="mb-1.5 text-xs leading-natural text-muted-foreground">Aja jaotus</div>
-              <div className="flex h-2 gap-0.5 overflow-hidden rounded-sm" role="img"
-                aria-label={timeParts.map((p) => `${p.label} ${minutesText(p.minutes)}`).join(', ')}>
-                {timeParts.filter((p) => p.minutes > 0).map((p) => (
-                  <span key={p.key} className={cn('min-w-0.5 basis-0', TIME_PART_CLASS[p.key])}
-                    style={{ flexGrow: p.minutes }} title={`${p.label}: ${minutesText(p.minutes)}`} />
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-                {timeParts.map((p) => (
-                  <LegendItem key={p.key} color={`var(--trip-${p.key})`} label={p.label} value={minutesText(p.minutes)} />
-                ))}
-              </div>
-            </div>
-          )}
-
-          {details.length > 0 && (
-            <dl className="mb-4 grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm leading-natural">
-              {details.map(([k, v]) => (
-                <React.Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd className="text-foreground">{v}</dd></React.Fragment>
-              ))}
-            </dl>
-          )}
           {trip.fields.length > 0 && (
-            <>
+            <div className="mb-4">
               <h4>Põllud</h4>
-              <Table scroll="none" containerClassName="mb-3">
+              <Table scroll="none">
                 <TableHeader>
                   <TableRow>
                     <TableHead>Põld</TableHead>
@@ -320,52 +334,64 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
                   ))}
                 </TableBody>
               </Table>
-            </>
+            </div>
           )}
+
+          {(timeTotal > 0 || details.length > 0) && (
+            <div className="mb-3 rounded-md border border-border bg-card p-3">
+              {timeTotal > 0 && (
+                <div className={details.length > 0 ? 'mb-3' : undefined}>
+                  <div className="mb-1.5 text-xs leading-natural text-muted-foreground">Aja jaotus</div>
+                  <div className="flex h-2 gap-0.5 overflow-hidden rounded-sm" role="img"
+                    aria-label={timeParts.map((p) => `${p.label} ${minutesText(p.minutes)}`).join(', ')}>
+                    {timeParts.filter((p) => p.minutes > 0).map((p) => (
+                      <span key={p.key} className={cn('min-w-0.5 basis-0', TIME_PART_CLASS[p.key])}
+                        style={{ flexGrow: p.minutes }} title={`${p.label}: ${minutesText(p.minutes)}`} />
+                    ))}
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+                    {timeParts.map((p) => (
+                      <LegendItem key={p.key} color={`var(--trip-${p.key})`} label={p.label} value={minutesText(p.minutes)} />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {details.length > 0 && (
+                <dl className={cn(
+                  'grid grid-cols-[max-content_1fr] gap-x-4 gap-y-1 text-sm leading-natural',
+                  timeTotal > 0 && 'border-t border-border pt-2.5'
+                )}>
+                  {details.map(([k, v]) => (
+                    <React.Fragment key={k}><dt className="text-muted-foreground">{k}</dt><dd className="text-foreground">{v}</dd></React.Fragment>
+                  ))}
+                </dl>
+              )}
+            </div>
+          )}
+
           {trip.visits.length > 0 && (
-            <>
-              <h4>Läbitud kohad</h4>
-              <ul className="mt-1 mb-3 ml-4 text-sm leading-natural">
-                {trip.visits.map((v, i) => (
-                  <li key={i}>{timeOnly(v.arrive)}–{timeOnly(v.leave)} · {v.place.label}</li>
-                ))}
-              </ul>
-            </>
+            <div className="mb-3">
+              <Button
+                type="button"
+                variant="text"
+                size="inline"
+                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"
+                aria-expanded={visitsOpen}
+                onClick={() => setVisitsOpen((v) => !v)}
+              >
+                {visitsOpen ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                Läbitud kohad ({trip.visits.length})
+              </Button>
+              {visitsOpen && (
+                <ul className="mt-1.5 ml-4 text-sm leading-natural">
+                  {trip.visits.map((v, i) => (
+                    <li key={i}>{timeOnly(v.arrive)}–{timeOnly(v.leave)} · {v.place.label}</li>
+                  ))}
+                </ul>
+              )}
+            </div>
           )}
-          <FormGrid className="mb-3">
-            <Field
-              label="Haakeriist"
-              htmlFor="trip-implement"
-              hint={trip.manualImplement ? (
-                <span>
-                  Määratud sellel sõidul.{' '}
-                  <Button type="button" variant="text" size="inline" onClick={resetImplement} disabled={saving}>
-                    Taasta registri järgi
-                  </Button>
-                </span>
-              ) : undefined}
-            >
-              <Select
-                id="trip-implement"
-                value={implementId}
-                onValueChange={handleImplementChange}
-                options={implementOptions}
-                disabled={saving}
-              />
-            </Field>
-            <Field label="Töölaius" htmlFor="trip-width">
-              <NumberInput
-                id="trip-width"
-                value={widthM}
-                onChange={setWidthM}
-                min={0.1}
-                decimals={2}
-                end="m"
-                placeholder="nt 6"
-                disabled={saving}
-              />
-            </Field>
-          </FormGrid>
+
           <Field label="Märkus" htmlFor="trip-notes" span="full">
             <Textarea id="trip-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
