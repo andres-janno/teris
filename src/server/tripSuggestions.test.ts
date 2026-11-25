@@ -216,6 +216,24 @@ describe('sõidu ja kande seos põllu järgi (sügistööd järgmise aasta hooaj
 });
 
 describe('kustutatud sõit', () => {
+  it('käsitsi määratud haakeriist sõidul kajastub kande soovituses', async () => {
+    const manualImpl = await run(() => prisma.implement.create({ data: { name: 'Käsitsi ader', type: 'PLOW', workingWidthM: 3 } }));
+    await run(() => prisma.vehicleTrip.update({
+      where: { id: s.trip2 },
+      data: { manualImplement: true, implementId: manualImpl.id, widthM: 3 }
+    }));
+    try {
+      const r = await call('GET', SUG(s.fsB));
+      const sug = r.json.find((x: any) => x.tripId === s.trip2);
+      expect(sug).toMatchObject({ implementId: manualImpl.id, implementName: 'Käsitsi ader' });
+    } finally {
+      await run(() => prisma.vehicleTrip.update({
+        where: { id: s.trip2 },
+        data: { manualImplement: false, implementId: null, widthM: null }
+      }));
+    }
+  });
+
   it('kustutatud sõitu ei pakuta ja see ei ole põllul', async () => {
     expect((await call('GET', SUG(s.fsB))).json.some((x: any) => x.tripId === s.trip2)).toBe(true);
     expect(await run(() => entryTripError(s.trip2, s.fsB, null))).toBeNull();

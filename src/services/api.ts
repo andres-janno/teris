@@ -588,14 +588,21 @@ export const api = {
     return { points: body.points, swaths: body.swaths ?? [] };
   },
 
-  async updateTripNotes(id: string, notes: string | null): Promise<Trip> {
+  async updateTrip(
+    id: string,
+    patch: { notes?: string | null; manualImplement?: boolean; implementId?: string | null; widthM?: number | null }
+  ): Promise<Trip> {
     const res = await apiFetch(`/api/fleet/trips/${id}`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ notes })
+      body: JSON.stringify(patch)
     });
-    if (!res.ok) throw new Error(await errorMessage(res, 'Märkuse salvestamine ebaõnnestus'));
+    if (!res.ok) throw new Error(await errorMessage(res, 'Sõidu salvestamine ebaõnnestus'));
     return res.json();
+  },
+
+  async updateTripNotes(id: string, notes: string | null): Promise<Trip> {
+    return this.updateTrip(id, { notes });
   },
 
   async deleteTrip(id: string): Promise<Trip> {

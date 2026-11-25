@@ -70,7 +70,12 @@ export async function getTelemetrySuggestionsForField(
     orderBy: { arriveAt: 'asc' }
   });
   if (rows.length === 0) return [];
-  const resolve = await loadAssignmentResolver(rows.map((r) => r.trip.deviceId));
+  const manualImplIds = [...new Set(rows.map((r) => (r.trip.manualImplement ? r.trip.implementId : null)).filter((x): x is string => !!x))];
+  const [resolve, manualImpls] = await Promise.all([
+    loadAssignmentResolver(rows.map((r) => r.trip.deviceId)),
+    manualImplIds.length ? prisma.implement.findMany({ where: { id: { in: manualImplIds } }, select: { id: true, name: true } }) : Promise.resolve([])
+  ]);
+  const implNameById = new Map(manualImpls.map((i) => [i.id, i.name]));
   const out: TelemetrySuggestion[] = [];
   for (const r of rows) {
     const t = r.trip;
@@ -78,6 +83,8 @@ export async function getTelemetrySuggestionsForField(
     // Sama põllu teise kandega seotud sõitu ei pakuta (teise põllu kanne ei sega)
     if (own.some((e) => e.id !== excludeEntryId)) continue;
     const target = resolve(t.deviceId, r.arriveAt);
+    const implementId = t.manualImplement ? t.implementId : target.implementId;
+    const implementName = t.manualImplement ? (t.implementId ? implNameById.get(t.implementId) ?? null : null) : target.implementName;
     // Kui sõit käis enne/pärast teistel põldudel, jagatakse aeg põllu piiril
     const others = t.fields.filter((f) => f.fieldSeason.fieldId !== fieldId);
     const fieldBefore = others.some((f) => f.arriveAt < r.arriveAt);
@@ -87,8 +94,8 @@ export async function getTelemetrySuggestionsForField(
       tripId: t.id,
       vehicleId: target.vehicleId,
       vehicleName: target.vehicleName,
-      implementId: target.implementId,
-      implementName: target.implementName,
+      implementId,
+      implementName,
       workerId: null, // töötaja valitakse kandel
       workerName: null,
       startTime: hhmm(fieldBefore ? r.arriveAt : t.startedAt),

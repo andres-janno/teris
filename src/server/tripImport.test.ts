@@ -444,6 +444,36 @@ describe('refreshTripAssignments', () => {
     expect(await run(() => refreshTripAssignments(device(), deps))).toBe(0);
   });
 
+  it('käsitsi määratud haakeriist/laius jääb püsima nii impordil kui registri muutumisel', async () => {
+    places = [fieldPlace()];
+    samples = range(0, 30);
+    nowMin = 120; // viimase 24 h sees
+    await run(() => importDeviceTrips(device(), deps));
+    const [t0] = await trips();
+    // Kasutaja määrab käsitsi 12 m haakeriista 9 m laiusega
+    await run(() => prisma.vehicleTrip.update({
+      where: { id: t0.id },
+      data: { manualImplement: true, implementId: impl12, widthM: 9 }
+    }));
+    // Järgmine 24 h import kasutab käsitsi määratud haakeriista/laiust
+    await run(() => importDeviceTrips(device(), deps));
+    const [fAfterImport] = await fieldRows();
+    expect(fAfterImport).toMatchObject({ implementId: impl12, widthM: 9 });
+    // Lõplik sõit: registri muutus ei kirjuta käsitsi määratud sõitu üle
+    nowMin = 30 * 60;
+    await run(() => importDeviceTrips(device(), deps));
+    await run(() => refreshTripAssignments(device(), deps));
+    await run(() => prisma.tripImportState.update({ where: { deviceId }, data: { assignmentsCheckedAt: new Date() } }));
+    await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { implementId: impl12 } }));
+    try {
+      expect(await run(() => refreshTripAssignments(device(), deps))).toBe(0);
+      const [fAfterRefresh] = await fieldRows();
+      expect(fAfterRefresh).toMatchObject({ implementId: impl12, widthM: 9 });
+    } finally {
+      await run(() => prisma.implementAssignment.update({ where: { id: implAsgId }, data: { implementId: impl6 } }));
+    }
+  });
+
   it('kohtade ümberarvutus kirjutab ka põllud', async () => {
     samples = range(0, 30);
     nowMin = 30 * 60;

@@ -230,7 +230,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
                       <TableCell wrap>
                         {t.vehicleName ?? <span className={tableMutedClass}>{t.deviceLabel} — seos puudub</span>}
                       </TableCell>
-                      <TableCell wrap>{t.implementName ?? <span className={tableMutedClass}>—</span>}</TableCell>
+                      <TableCell wrap>{t.implementName ?? (t.widthM != null ? `${formatQty(t.widthM)} m` : <span className={tableMutedClass}>—</span>)}</TableCell>
                       <TableCell>{formatDateTime(t.startedAt).slice(11)}–{active ? 'käimas' : endText(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell numeric>{formatDuration(t.startedAt, t.endedAt)}</TableCell>
                       <TableCell wrap>{placeText(t.start)} → {active ? '…' : placeText(t.end)}</TableCell>
@@ -270,6 +270,7 @@ export const TripRegister: React.FC<TripRegisterProps> = ({ vehicles, implements
       {open && (
         <TripDialog
           trip={open}
+          implementsList={implementsList}
           canDelete={canDelete}
           onOpenFieldWork={onOpenFieldWork}
           onClose={closeTrip}

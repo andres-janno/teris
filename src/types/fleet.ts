@@ -207,6 +207,8 @@ export interface Trip {
   vehicleName: string | null;
   implementId: string | null;
   implementName: string | null;
+  widthM: number | null; // töölaius (m): käsitsi määratud või haakeriista vaikimisi laius
+  manualImplement: boolean; // true = haakeriist/laius on sellel sõidul käsitsi määratud
   startedAt: string;
   endedAt: string;
   status: 'ACTIVE' | 'CLOSED';

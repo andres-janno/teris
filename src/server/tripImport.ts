@@ -121,7 +121,7 @@ async function writeChunk(
     const existing = await tx.vehicleTrip.findMany({
       where: { deviceId, startedAt: { gt: from, lte: to } },
       orderBy: { startedAt: 'asc' },
-      select: { id: true, startedAt: true, endedAt: true, deletedAt: true, _count: { select: { workEntries: true } } }
+      select: { id: true, startedAt: true, endedAt: true, deletedAt: true, manualImplement: true, _count: { select: { workEntries: true } } }
     });
     // Kustutatud (müra) sõitu import ei muuda ega eemalda; sellega kattuvat uut sõitu ei kirjutata
     const deleted = existing.filter((e) => e.deletedAt);
@@ -135,8 +135,8 @@ async function writeChunk(
     const matchIds = trips.map((t, i) => {
       if (skip[i]) return null;
       const overlapping = live.filter((e) => !used.has(e.id) && e.startedAt <= t.endedAt && e.endedAt >= t.startedAt);
-      // Kandega seotud vana sõit on eelistatud: liitumisel kande seos ei kao
-      const m = overlapping.find((e) => e._count.workEntries > 0) ?? overlapping[0];
+      // Kandega seotud (või käsitsi määratud haakeriistaga) vana sõit on eelistatud
+      const m = overlapping.find((e) => e._count.workEntries > 0) ?? overlapping.find((e) => e.manualImplement) ?? overlapping[0];
       if (m) used.add(m.id);
       return m?.id ?? null;
     });
@@ -188,12 +188,22 @@ export async function importDeviceTrips(device: Device, deps: ImportDeps = defau
       span *= 2;
       continue;
     }
+    const manualTrips = trips.length
+      ? await prisma.vehicleTrip.findMany({
+          where: { deviceId: device.id, deletedAt: null, manualImplement: true, startedAt: { gt: from, lte: to } },
+          select: { startedAt: true, endedAt: true, implementId: true, widthM: true }
+        })
+      : [];
     const routes: (TripRoute | null)[] = [];
     const fields: TripFieldCalc[][] = [];
     for (const t of trips) {
       const places = await placesFor(t.startedAt.getUTCFullYear());
       routes.push(routeOf(t, places));
-      fields.push(fieldsOf(samplesOf(samples, t), places, t.fuelLiters, implementAt));
+      const manual = manualTrips.find((m) => m.startedAt <= t.endedAt && m.endedAt >= t.startedAt);
+      const tripImplAt: ImplementAt = manual
+        ? () => ({ implementId: manual.implementId, widthM: normWidth(manual.widthM) })
+        : implementAt;
+      fields.push(fieldsOf(samplesOf(samples, t), places, t.fuelLiters, tripImplAt));
     }
     await writeChunk(device.id, from, to, trips, routes, fields, now, new Date(next));
     await recomputeGaps(device, from, to, deps.fetchGapSamples, now);
@@ -287,7 +297,10 @@ export async function refreshTripPlaces(device: Device, deps: ImportDeps = defau
       const known = new Set(places.map((p) => p.id));
       const hit = boxes.some((b) => overlaps(t, b)) || referencedIds(t).some((id) => !known.has(id));
       if (!hit) continue;
-      if (await recomputeTrip(device, t, places, implementAt, deps, now)) count++;
+      const tripImplAt: ImplementAt = t.manualImplement
+        ? () => ({ implementId: t.implementId, widthM: normWidth(t.widthM) })
+        : implementAt;
+      if (await recomputeTrip(device, t, places, tripImplAt, deps, now)) count++;
     }
   }
   await prisma.tripImportState.update({ where: { deviceId: device.id }, data: { placesFingerprint: fp, placesCheckedAt: now } });
@@ -317,7 +330,7 @@ export async function refreshTripAssignments(device: Device, deps: ImportDeps = 
   if (state.assignmentsCheckedAt && state.finalizedUntil) {
     const implementAt = implementAtOf(await loadAssignmentResolver([device.id]), device.id);
     const trips = await prisma.vehicleTrip.findMany({
-      where: { deviceId: device.id, deletedAt: null, startedAt: { lte: state.finalizedUntil } },
+      where: { deviceId: device.id, deletedAt: null, manualImplement: false, startedAt: { lte: state.finalizedUntil } },
       include: { fields: { select: { arriveAt: true, implementId: true, widthM: true } } }
     });
     const placesFor = placesCache(deps);

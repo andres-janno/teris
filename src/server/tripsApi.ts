@@ -2,12 +2,13 @@
 // Sõidud tulevad taustaimpordist (tripImport.ts); masin/haakeriist liidetakse lugemisel seoste registrist sõidu alguse ajal.
 // Sõidu põllud (ha, kütus) ja nendega seotud kanded: vehicle_trip_fields + work_entries.tripId.
 import type { IncomingMessage, ServerResponse } from 'http';
-import { prisma, tsdb } from './db.ts';
+import { prisma, tenantTransaction, tsdb } from './db.ts';
 import { json, parseBody } from './http.ts';
 import { sessionUserOf } from './authGate.ts';
 import { fetchTripSamples, fetchGapSamples } from './telemetryAccess.ts';
-import { recomputeGaps } from './tripGapStore.ts';
-import { fieldRuns } from './tripFields.ts';
+import { lockDevice, recomputeGaps } from './tripGapStore.ts';
+import { computeTripFields, fieldRuns, tripAreaHa, type ImplementAt } from './tripFields.ts';
+import { loadPlaces } from './tripPlaces.ts';
 import type { Place } from './tripRoute.ts';
 import { loadAssignmentResolver } from './tripAssignments.ts';
 import { workTypeDisplayName } from '../services/workTypeName.ts';
@@ -17,6 +18,8 @@ const MAX_NOTES = 1000;
 const DELETE_FORBIDDEN = 'Sõitu saab kustutada ja taastada ainult admin';
 const GAP_NOTE_REQUIRED = 'Lisa selgitus, miks hoiatus on kontrollitud';
 const ENTRY_LINKED = 'Sõiduga on seotud kanne — eemalda enne kande seos';
+const IMPLEMENT_NOT_FOUND = 'Haakeriista ei leitud';
+const WIDTH_INVALID = 'Töölaius peab olema suurem kui 0';
 
 type TripRow = Awaited<ReturnType<typeof prisma.vehicleTrip.findMany>>[number];
 
@@ -97,21 +100,31 @@ const parseIso = (v: string | null): Date | null => {
 
 const deviceLabelOf = (d: { model: string; imei: string | null }) => (d.imei ? `${d.model} (${d.imei.slice(-4)})` : d.model);
 
+const normWidth = (w: number | null) => (w != null && w > 0 ? w : null);
+
 async function resolveTargets(trips: TripRow[]) {
   const deviceIds = [...new Set(trips.map((t) => t.deviceId))];
-  const [devices, resolve] = await Promise.all([
+  const manualImplIds = [...new Set(trips.filter((t) => t.manualImplement && t.implementId).map((t) => t.implementId!))];
+  const [devices, resolve, manualImpls] = await Promise.all([
     prisma.telemetryDevice.findMany({ where: { id: { in: deviceIds } }, select: { id: true, model: true, imei: true } }),
-    loadAssignmentResolver(deviceIds)
+    loadAssignmentResolver(deviceIds),
+    manualImplIds.length ? prisma.implement.findMany({ where: { id: { in: manualImplIds } }, select: { id: true, name: true } }) : Promise.resolve([])
   ]);
+  const implNameById = new Map(manualImpls.map((i) => [i.id, i.name]));
   return (t: TripRow) => {
     const dev = devices.find((d) => d.id === t.deviceId);
     const r = resolve(t.deviceId, t.startedAt);
+    const implementId = t.manualImplement ? t.implementId : r.implementId;
+    const implementName = t.manualImplement ? (t.implementId ? implNameById.get(t.implementId) ?? null : null) : r.implementName;
+    const widthM = t.manualImplement ? normWidth(t.widthM) : r.widthM;
     return {
       deviceLabel: dev ? deviceLabelOf(dev) : t.deviceId,
       vehicleId: r.vehicleId,
       vehicleName: r.vehicleName,
-      implementId: r.implementId,
-      implementName: r.implementName
+      implementId,
+      implementName,
+      widthM,
+      manualImplement: t.manualImplement
     };
   };
 }
@@ -207,7 +220,10 @@ function toDto(t: TripRow, target: ReturnType<Awaited<ReturnType<typeof resolveT
   };
 }
 
-export async function handleTrips(req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL): Promise<boolean> {
+export async function handleTrips(
+  req: IncomingMessage, res: ServerResponse, pathname: string, method: string, url: URL,
+  deps: { fetchSamples?: typeof fetchTripSamples } = {}
+): Promise<boolean> {
   if (pathname !== '/api/fleet/trips' && !pathname.startsWith('/api/fleet/trips/')) return false;
 
   if (pathname === '/api/fleet/trips' && method === 'GET') {
@@ -307,11 +323,101 @@ export async function handleTrips(req: IncomingMessage, res: ServerResponse, pat
   const idMatch = /^\/api\/fleet\/trips\/([^/]+)$/.exec(pathname);
   if (idMatch && (method === 'PATCH' || method === 'PUT')) {
     const id = idMatch[1];
-    const existing = await prisma.vehicleTrip.findUnique({ where: { id }, select: { id: true } });
+    const existing = await prisma.vehicleTrip.findUnique({
+      where: { id },
+      include: { device: { select: { imei: true } }, fields: { select: { id: true, arriveAt: true, widthM: true, areaHa: true } } }
+    });
     if (!existing) { json(res, { error: 'Sõitu ei leitud' }, 404); return true; }
-    const body = await parseBody(req);
-    const notes = String(body?.notes ?? '').trim().slice(0, MAX_NOTES) || null;
-    const saved = await prisma.vehicleTrip.update({ where: { id }, data: { notes } });
+    const body = (await parseBody(req)) ?? {};
+    const data: { notes?: string | null; manualImplement?: boolean; implementId?: string | null; widthM?: number | null; areaHa?: number | null; computedAt?: Date } = {};
+    if ('notes' in body) {
+      data.notes = String(body.notes ?? '').trim().slice(0, MAX_NOTES) || null;
+    }
+    const updatingImpl = 'manualImplement' in body || 'implementId' in body || 'widthM' in body;
+    let nextManual = existing.manualImplement;
+    let nextImplId = existing.implementId;
+    let nextWidthM = existing.widthM;
+    if (updatingImpl) {
+      if (body.manualImplement === false) {
+        nextManual = false;
+        nextImplId = null;
+        nextWidthM = null;
+      } else {
+        nextManual = true;
+        if ('implementId' in body) {
+          const rawImpl = body.implementId;
+          if (rawImpl == null || rawImpl === '') {
+            nextImplId = null;
+          } else {
+            const impl = await prisma.implement.findUnique({ where: { id: String(rawImpl) }, select: { id: true } });
+            if (!impl) { json(res, { error: IMPLEMENT_NOT_FOUND }, 400); return true; }
+            nextImplId = impl.id;
+          }
+        }
+        if ('widthM' in body) {
+          const rawW = body.widthM;
+          if (rawW == null || rawW === '') {
+            nextWidthM = null;
+          } else {
+            const w = Number(rawW);
+            if (!Number.isFinite(w) || w <= 0) { json(res, { error: WIDTH_INVALID }, 400); return true; }
+            nextWidthM = Math.round(w * 100) / 100;
+          }
+        }
+      }
+      data.manualImplement = nextManual;
+      data.implementId = nextImplId;
+      data.widthM = nextWidthM;
+    }
+
+    let saved: TripRow;
+    if (updatingImpl) {
+      const resolve = nextManual ? null : await loadAssignmentResolver([existing.deviceId]);
+      const implementAt: ImplementAt = nextManual
+        ? () => ({ implementId: nextImplId, widthM: normWidth(nextWidthM) })
+        : (at) => {
+            const r = resolve!(existing.deviceId, at);
+            return { implementId: r.implementId, widthM: r.widthM };
+          };
+      const fetchFn = deps.fetchSamples ?? (tsdb ? fetchTripSamples : null);
+      const samples = fetchFn && existing.device.imei
+        ? await fetchFn(existing.device.imei, new Date(existing.startedAt.getTime() - 1), existing.endedAt)
+        : [];
+      const now = new Date();
+      if (samples.length > 0) {
+        const places = await loadPlaces(existing.startedAt.getUTCFullYear());
+        const fields = computeTripFields(samples, places, existing.fuelLiters, implementAt);
+        data.areaHa = tripAreaHa(fields);
+        data.computedAt = now;
+        saved = await tenantTransaction(async (tx) => {
+          await lockDevice(tx, existing.deviceId);
+          const u = await tx.vehicleTrip.update({ where: { id }, data });
+          await tx.vehicleTripField.deleteMany({ where: { tripId: id } });
+          if (fields.length) await tx.vehicleTripField.createMany({ data: fields.map((f) => ({ ...f, tripId: id, computedAt: now })) });
+          return u;
+        }, { timeout: 60_000 });
+      } else {
+        // Telemeetria punkte pole (nt test või puhastatud tsdb): uuenda olemasolevate põlluridade haakeriist ja laius
+        const updates = existing.fields.map((f) => {
+          const cur = implementAt(f.arriveAt);
+          const w = normWidth(cur.widthM);
+          const areaHa = w == null ? null : w === f.widthM ? f.areaHa : null;
+          return { id: f.id, implementId: cur.implementId, widthM: w, areaHa };
+        });
+        const nonNullAreas = updates.map((u) => u.areaHa).filter((a): a is number => a != null);
+        data.areaHa = nonNullAreas.length ? Math.round(nonNullAreas.reduce((s, a) => s + a, 0) * 100) / 100 : null;
+        saved = await tenantTransaction(async (tx) => {
+          await lockDevice(tx, existing.deviceId);
+          const u = await tx.vehicleTrip.update({ where: { id }, data });
+          for (const f of updates) {
+            await tx.vehicleTripField.update({ where: { id: f.id }, data: { implementId: f.implementId, widthM: f.widthM, areaHa: f.areaHa, computedAt: now } });
+          }
+          return u;
+        }, { timeout: 60_000 });
+      }
+    } else {
+      saved = await prisma.vehicleTrip.update({ where: { id }, data });
+    }
     json(res, (await toDtos([saved]))[0]);
     return true;
   }

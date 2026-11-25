@@ -532,6 +532,9 @@ model VehicleTrip {
   maxLng            Float
   pointCount        Int
   areaHa            Float? // põldude kaetud pindala summa; tühi = ühelgi põllul pole haakeriista laiust
+  manualImplement   Boolean            @default(false) // käsitsi määratud haakeriist/laius (import ei kirjuta üle)
+  implementId       String? // käsitsi määratud haakeriist (teave, mitte FK, et kustutamisel ajalugu jääks)
+  widthM            Float? // käsitsi määratud töölaius (m); tühi = pindala ei arvutata
   notes             String?
   deletedAt         DateTime? // kustutatud kui müra; import ei loo samale ajale uut sõitu
   deletedBy         String? // kustutaja kasutajatunnus

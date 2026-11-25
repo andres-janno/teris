@@ -1,9 +1,9 @@
-// src/components/TripDialog.tsx — ühe sõidu aken: rada kaardil, läbitud kohad, mõõdikud ja märkus (ainus muudetav väli).
+// src/components/TripDialog.tsx — ühe sõidu aken: rada kaardil, läbitud kohad, mõõdikud, haakeriist/laius ja märkus.
 import { TRIP_MAP_COLOR } from '../lib/dataColors';
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import L from 'leaflet';
 import { Route } from 'lucide-react';
-import type { Trip, TripStopInfo } from '../types/fleet';
+import type { Implement, Trip, TripStopInfo } from '../types/fleet';
 import { api } from '../services/api';
 import { BASE_MAPS } from '../services/maaAmetLayers';
 import { formatDateTime, formatDuration } from './fleetDateTime';
@@ -11,7 +11,7 @@ import { formatQty } from '../services/units';
 import { formatDate } from '../services/dateFormat';
 import { confirmDialog, alertDialog } from './ConfirmDialog';
 import { cellSubClass, cellSubStackedClass, tableMutedClass } from './ui/variants';
-import { Alert, Button, StatTile, LegendItem, Field, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
+import { Alert, Button, StatTile, LegendItem, Field, FormGrid, NumberInput, Select, Textarea, Dialog, DialogContent, DialogHeader, DialogBody, DialogFooter, Table, TableBody, TableCell, TableHead, TableHeader, TableRow, cn } from './ui';
 
 // Aja jaotuse riba osad; värvid on tokenid (teemapõhised muutujad --trip-*). Täielikud nimed, et Tailwind need näeks.
 const TIME_PART_CLASS = { moving: 'bg-trip-moving', idle: 'bg-trip-idle', pause: 'bg-trip-pause' } as const;
@@ -23,6 +23,7 @@ const STOP_TIME = 'whitespace-nowrap tabular-nums text-foreground';
 
 interface TripDialogProps {
   trip: Trip;
+  implementsList?: Implement[];
   onClose: () => void;
   onSaved: (trip: Trip) => void;
   canDelete?: boolean; // admin: kustutamine ja taastamine
@@ -39,13 +40,34 @@ export const placeText = (s: TripStopInfo): string => {
 const timeOnly = (iso: string) => formatDateTime(iso).slice(11);
 const minutesText = (m: number) => formatDuration(new Date(0).toISOString(), new Date(m * 60_000).toISOString());
 
-export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, onOpenFieldWork, canDelete = false, onChanged }) => {
+export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [], onClose, onSaved, onOpenFieldWork, canDelete = false, onChanged }) => {
   // Kaardi element olekus: dialoogi sisu portaalitakse alles pärast esimest renderdust, siis pole ref veel olemas.
   const [mapEl, setMapEl] = useState<HTMLDivElement | null>(null);
+  const [implementId, setImplementId] = useState(trip.implementId ?? '');
+  const [widthM, setWidthM] = useState<number | null>(trip.widthM ?? null);
   const [notes, setNotes] = useState(trip.notes ?? '');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [trackError, setTrackError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setImplementId(trip.implementId ?? '');
+    setWidthM(trip.widthM ?? null);
+    setNotes(trip.notes ?? '');
+  }, [trip.id, trip.implementId, trip.widthM, trip.notes, trip.manualImplement]);
+
+  const implementOptions = useMemo(() => {
+    const opts = [{ value: '', label: 'Puudub' }, ...implementsList.map((i) => ({
+      value: i.id,
+      label: i.workingWidthM != null ? `${i.name} (${formatQty(i.workingWidthM)} m)` : i.name
+    }))];
+    if (implementId && !implementsList.some((i) => i.id === implementId)) {
+      opts.push({ value: implementId, label: trip.implementName ?? 'Kustutatud haakeriist' });
+    }
+    return opts;
+  }, [implementsList, implementId, trip.implementName]);
+
+  const swathKey = trip.fields.map((f) => `${f.fieldSeasonId}:${f.widthM ?? ''}`).join(',');
 
   useEffect(() => {
     if (!mapEl) return;
@@ -80,13 +102,50 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
     }).catch((e) => { if (!cancelled) setTrackError(e.message); });
     const t = window.setTimeout(() => map.invalidateSize(), 250);
     return () => { cancelled = true; window.clearTimeout(t); if (onZoom) map.off('zoomend', onZoom); map.remove(); };
-  }, [mapEl, trip.id, trip.start.lat, trip.start.lng, trip.end.lat, trip.end.lng]);
+  }, [mapEl, trip.id, trip.start.lat, trip.start.lng, trip.end.lat, trip.end.lng, swathKey]);
+
+  const implDirty = implementId !== (trip.implementId ?? '') || widthM !== (trip.widthM ?? null);
+  const notesDirty = notes !== (trip.notes ?? '');
+  const dirty = implDirty || notesDirty;
+
+  const handleImplementChange = (nextId: string) => {
+    setImplementId(nextId);
+    if (nextId) {
+      const impl = implementsList.find((i) => i.id === nextId);
+      setWidthM(impl?.workingWidthM ?? null);
+    } else if (implementId) {
+      setWidthM(null);
+    }
+  };
 
   const save = async () => {
+    if (implDirty && widthM != null && !(widthM > 0)) {
+      setError('Töölaius peab olema suurem kui 0');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
-      onSaved(await api.updateTripNotes(trip.id, notes.trim() || null));
+      const patch: Parameters<typeof api.updateTrip>[1] = {};
+      if (notesDirty) patch.notes = notes.trim() || null;
+      if (implDirty) {
+        patch.manualImplement = true;
+        patch.implementId = implementId || null;
+        patch.widthM = widthM;
+      }
+      onSaved(await api.updateTrip(trip.id, patch));
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resetImplement = async () => {
+    setSaving(true);
+    setError(null);
+    try {
+      onSaved(await api.updateTrip(trip.id, { manualImplement: false }));
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -224,7 +283,11 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
                       <TableCell numeric wrap>
                         {f.areaHa == null ? '—' : formatQty(f.areaHa)}
                         <div className={cellSubStackedClass}>
-                          {f.implementName ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}` : 'haakeriist puudub'}
+                          {f.implementName
+                            ? `${f.implementName}${f.widthM != null ? `, ${formatQty(f.widthM)} m` : ''}`
+                            : f.widthM != null
+                              ? `${formatQty(f.widthM)} m`
+                              : 'haakeriist puudub'}
                         </div>
                       </TableCell>
                       <TableCell numeric>
@@ -269,6 +332,40 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
               </ul>
             </>
           )}
+          <FormGrid className="mb-3">
+            <Field
+              label="Haakeriist"
+              htmlFor="trip-implement"
+              hint={trip.manualImplement ? (
+                <span>
+                  Määratud sellel sõidul.{' '}
+                  <Button type="button" variant="text" size="inline" onClick={resetImplement} disabled={saving}>
+                    Taasta registri järgi
+                  </Button>
+                </span>
+              ) : undefined}
+            >
+              <Select
+                id="trip-implement"
+                value={implementId}
+                onValueChange={handleImplementChange}
+                options={implementOptions}
+                disabled={saving}
+              />
+            </Field>
+            <Field label="Töölaius" htmlFor="trip-width">
+              <NumberInput
+                id="trip-width"
+                value={widthM}
+                onChange={setWidthM}
+                min={0.1}
+                decimals={2}
+                end="m"
+                placeholder="nt 6"
+                disabled={saving}
+              />
+            </Field>
+          </FormGrid>
           <Field label="Märkus" htmlFor="trip-notes" span="full">
             <Textarea id="trip-notes" rows={2} value={notes} onChange={(e) => setNotes(e.target.value)} />
           </Field>
@@ -282,8 +379,8 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, onClose, onSaved, 
             <Button type="button" className="mr-auto" onClick={restore} disabled={saving}>Taasta</Button>
           )}
           <Button type="button" variant="ghost" onClick={onClose} disabled={saving}>Sulge</Button>
-          <Button type="button" variant="primary" onClick={save} disabled={saving || notes === (trip.notes ?? '')}>
-            {saving ? 'Salvestan...' : 'Salvesta märkus'}
+          <Button type="button" variant="primary" onClick={save} disabled={saving || !dirty}>
+            {saving ? 'Salvestan...' : 'Salvesta'}
           </Button>
         </DialogFooter>
       </DialogContent>

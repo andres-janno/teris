@@ -16,7 +16,10 @@ const USER = (tenantId: string) => ({
   isAdmin: false, isFinanceManager: false, mustChangePassword: false, tenantId
 });
 
-async function call(method: string, path: string, body?: unknown, tenant = T, admin = false) {
+async function call(
+  method: string, path: string, body?: unknown, tenant = T, admin = false,
+  deps?: Parameters<typeof handleTrips>[5]
+) {
   const raw = body === undefined ? '' : JSON.stringify(body);
   const req = Object.assign(Readable.from(raw ? [Buffer.from(raw)] : []), {
     method, url: path, headers: { host: 'localhost', 'content-type': 'application/json' }, socket: {}
@@ -29,7 +32,7 @@ async function call(method: string, path: string, body?: unknown, tenant = T, ad
     end(chunk?: string) { out.body += chunk ?? ''; out.status = (res as any).statusCode; }
   } as unknown as ServerResponse;
   const url = new URL(path, 'http://localhost');
-  const handled = await run(() => handleTrips(req, res, url.pathname, method, url), tenant);
+  const handled = await run(() => handleTrips(req, res, url.pathname, method, url, deps), tenant);
   return { handled, status: out.status, json: out.body ? JSON.parse(out.body) : null };
 }
 
@@ -258,6 +261,51 @@ describe('tripsApi', () => {
     expect((await run(() => prisma.vehicleTrip.findUnique({ where: { id: tripId } })))?.deletedAt).toBeNull();
     expect((await call('DELETE', '/api/fleet/trips/olematu', undefined, T, true)).status).toBe(404);
     expect((await call('DELETE', `/api/fleet/trips/${id}`, undefined, T2, true)).status).toBe(404);
+  });
+
+  it('PATCH: haakeriista ja laiuse muutmine arvutab põllu ha uuesti, ainult laius töötab, taastamine registri järgi', async () => {
+    const sq: number[][] = [[26.5, 58.5], [26.52, 58.5], [26.52, 58.52], [26.5, 58.52], [26.5, 58.5]];
+    const samples: TripSample[] = Array.from({ length: 15 }, (_, i) => ({
+      time: new Date(Date.UTC(2026, 7, 1, 6, i)), lat: 58.51, lng: 26.505 + i * 0.0005, ignition: true, speedKmh: 8,
+      fuelUsedL: null, fuelRateLph: null, fuelLevelPct: null, engineHours: null
+    }));
+    const fetchSamples = async () => samples;
+    const { manualTripId, implId } = await run(async () => {
+      const f = await prisma.field.create({ data: { num: '91', name: 'Laiuspõld', fieldCode: 'TA-91' } });
+      await prisma.fieldSeason.create({ data: { fieldId: f.id, year: 2026, areaHa: 10, crop: 'test', geometry: { type: 'Polygon', coordinates: [sq] } } });
+      const impl = await prisma.implement.create({ data: { name: 'Külvik 6m', type: 'SEEDER', workingWidthM: 6 } });
+      const t = await prisma.vehicleTrip.create({ data: tripRow(d('2026-08-01T06:00:00Z'), d('2026-08-01T06:15:00Z')) });
+      return { manualTripId: t.id, implId: impl.id };
+    });
+
+    // Valideerimine
+    expect((await call('PATCH', `/api/fleet/trips/${manualTripId}`, { implementId: 'olematu', widthM: 6 }, T, false, { fetchSamples })).status).toBe(400);
+    expect((await call('PATCH', `/api/fleet/trips/${manualTripId}`, { implementId: implId, widthM: 0 }, T, false, { fetchSamples })).status).toBe(400);
+
+    // Määra haakeriist + laius 4 m
+    const r1 = await call('PATCH', `/api/fleet/trips/${manualTripId}`, { implementId: implId, widthM: 4 }, T, false, { fetchSamples });
+    expect(r1.status).toBe(200);
+    expect(r1.json).toMatchObject({ manualImplement: true, implementId: implId, implementName: 'Külvik 6m', widthM: 4 });
+    expect(r1.json.areaHa).toBeGreaterThan(0);
+    expect(r1.json.fields).toHaveLength(1);
+    expect(r1.json.fields[0]).toMatchObject({ implementName: 'Külvik 6m', widthM: 4, areaHa: r1.json.areaHa });
+
+    // Haakeriista filter leiab käsitsi määratud sõidu
+    const filtered = await call('GET', `/api/fleet/trips?from=2026-08-01T00:00:00Z&to=2026-08-02T00:00:00Z&implementId=${implId}`);
+    expect(filtered.json.map((t: any) => t.id)).toEqual([manualTripId]);
+
+    // Ainult laius (nt rendiriist, ilma haakeriistata) — 8 m annab suurema pindala
+    const r2 = await call('PATCH', `/api/fleet/trips/${manualTripId}`, { implementId: null, widthM: 8 }, T, false, { fetchSamples });
+    expect(r2.status).toBe(200);
+    expect(r2.json).toMatchObject({ manualImplement: true, implementId: null, implementName: null, widthM: 8 });
+    expect(r2.json.areaHa).toBeGreaterThan(r1.json.areaHa * 1.5);
+    expect(r2.json.fields[0]).toMatchObject({ implementName: null, widthM: 8 });
+
+    // Taasta registri järgi (registris haakeriista pole → ha tühjaks)
+    const r3 = await call('PATCH', `/api/fleet/trips/${manualTripId}`, { manualImplement: false }, T, false, { fetchSamples });
+    expect(r3.status).toBe(200);
+    expect(r3.json).toMatchObject({ manualImplement: false, implementId: null, implementName: null, widthM: null, areaHa: null });
+    expect(r3.json.fields[0]).toMatchObject({ implementName: null, widthM: null, areaHa: null });
   });
 
   it('muud teed ei kuulu siia', async () => {
