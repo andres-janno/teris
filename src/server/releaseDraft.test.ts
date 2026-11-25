@@ -70,8 +70,13 @@ describe('parseConventionalCommit & buildDraftItems', () => {
     expect(withoutFallback.uncoveredCommits).toHaveLength(1);
     expect(withoutFallback.uncoveredCommits[0].hash).toBe('ccc3333');
 
-    const withFallback = buildDraftItems(entries, commits, true);
-    expect(withFallback.items).toHaveLength(3);
+    // Kui entries on olemas, ei lisa git-fallback tooreid commit-pealkirju kõrvale
+    const withFallbackAndEntries = buildDraftItems(entries, commits, true);
+    expect(withFallbackAndEntries.items).toHaveLength(2);
+
+    // Kui entries on tühi, kasutab git-fallback katmata feat/fix committe
+    const withFallbackEmpty = buildDraftItems([], commits, true);
+    expect(withFallbackEmpty.items).toHaveLength(2);
   });
 });
 

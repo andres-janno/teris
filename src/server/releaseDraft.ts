@@ -107,7 +107,9 @@ export function buildDraftItems(
     return parseConventionalCommit(c) !== null;
   });
 
-  if (includeGitFallback) {
+  // Kasuta git-fallbacki ainult siis, kui unreleased.jsonl-is pole veel ühtegi kureeritud kirjet
+  // (muidu satuvad enne committi lisatud eestikeelsete ridade kõrvale toored ingliskeelsed commit-pealkirjad).
+  if (includeGitFallback && entries.length === 0) {
     for (const c of uncoveredCommits) {
       const parsed = parseConventionalCommit(c);
       if (parsed) items.push(parsed);

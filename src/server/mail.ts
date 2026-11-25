@@ -28,6 +28,14 @@ export function normalizeEmail(raw: unknown): string | null {
 
 const encodeHeader = (text: string) => `=?UTF-8?B?${Buffer.from(text, 'utf8').toString('base64')}?=`;
 
+/** Kodeerib MIME-osa base64-ks 76-märgiliste ridadena (väldib SMTP 998-märgi rea murdmist keset HTML-silti). */
+function encodeBase64Mime(text: string): string {
+  const b64 = Buffer.from(text, 'utf8').toString('base64');
+  const lines: string[] = [];
+  for (let i = 0; i < b64.length; i += 76) lines.push(b64.slice(i, i + 76));
+  return lines.join('\n');
+}
+
 function assertHeaderSafe(value: string): string {
   if (/[\r\n]/.test(value)) throw new Error('Päise väärtus sisaldab reavahetust');
   return value;
@@ -147,10 +155,10 @@ export function buildReleaseNoteMail(o: {
     htmlGroups,
     `<div style="margin:24px 0 0;"><a href="${escapeHtml(o.appLink)}" style="display:inline-block;background:#15803d;color:#ffffff;text-decoration:none;font-weight:600;font-size:14px;padding:10px 18px;border-radius:8px;">Ava uuendused TERISes</a></div>`,
     '<hr style="margin:24px 0 12px;border:none;border-top:1px solid #e2e8f0;">',
-    '<p style="margin:0;font-size:12px;color:#64748b;">TERIS — põlluraamat ja farmihaldus</p>',
+    '<p style="margin:0;font-size:12px;color:#64748b;">TERIS - põllumajanduse infosüsteem</p>',
     unsubHtml,
     '</div></body></html>'
-  ].join('');
+  ].join('\n');
 
   const headers = [
     `From: TERIS <${assertHeaderSafe(o.from)}>`,
@@ -170,15 +178,15 @@ export function buildReleaseNoteMail(o: {
     '',
     `--${boundary}`,
     'Content-Type: text/plain; charset=UTF-8',
-    'Content-Transfer-Encoding: 8bit',
+    'Content-Transfer-Encoding: base64',
     '',
-    textLines.join('\n'),
+    encodeBase64Mime(textLines.join('\n')),
     '',
     `--${boundary}`,
     'Content-Type: text/html; charset=UTF-8',
-    'Content-Transfer-Encoding: 8bit',
+    'Content-Transfer-Encoding: base64',
     '',
-    html,
+    encodeBase64Mime(html),
     '',
     `--${boundary}--`,
     ''

@@ -60,19 +60,33 @@ describe('buildReleaseNoteMail', () => {
     unsubscribeLink: 'https://teris.ee/api/release-notes/unsubscribe?token=tok123'
   };
 
-  it('ehitab multipart/alternative kirja koos List-Unsubscribe päiste ja HTML escape-imisega', () => {
+  it('ehitab multipart/alternative kirja base64-osadega, List-Unsubscribe päiste ja HTML escape-imisega', () => {
     const msg = buildReleaseNoteMail(base);
     expect(msg).toContain('Content-Type: multipart/alternative; boundary="teris_');
     expect(msg).toContain('List-Unsubscribe: <https://teris.ee/api/release-notes/unsubscribe?token=tok123>');
     expect(msg).toContain('List-Unsubscribe-Post: List-Unsubscribe=One-Click');
     expect(msg).toContain('Content-Type: text/plain; charset=UTF-8');
     expect(msg).toContain('Content-Type: text/html; charset=UTF-8');
-    // Plain-text osa
-    expect(msg).toContain('- [Ladu] Artiklite vaates on näha koguväärtus <EUR>.');
-    // HTML osa escape'itud
-    expect(msg).toContain('Artiklite vaates on näha koguväärtus &lt;EUR&gt;.');
-    expect(msg).toContain('Lao koguväärtus &amp; kiirem sisestus');
-    expect(msg).toContain('https://teris.ee/#releases');
+    expect(msg).toContain('Content-Transfer-Encoding: base64');
+
+    // Ükski rida ei tohi ületada SMTP 998 märgi piiri
+    for (const line of msg.split('\n')) {
+      expect(line.length).toBeLessThanOrEqual(998);
+    }
+
+    // Dekodeeri plain-text ja HTML osad
+    const boundary = /boundary="(teris_[^"]+)"/.exec(msg)?.[1];
+    expect(boundary).toBeTruthy();
+    const parts = msg.split(`--${boundary}`);
+    const decodePart = (p: string) => Buffer.from(p.split('\n\n').slice(1).join('\n\n').replace(/\s+/g, ''), 'base64').toString('utf8');
+    const textPart = decodePart(parts[1]);
+    const htmlPart = decodePart(parts[2]);
+
+    expect(textPart).toContain('- [Ladu] Artiklite vaates on näha koguväärtus <EUR>.');
+    expect(textPart).toContain('https://teris.ee/#releases');
+    expect(htmlPart).toContain('Artiklite vaates on näha koguväärtus &lt;EUR&gt;.');
+    expect(htmlPart).toContain('Lao koguväärtus &amp; kiirem sisestus');
+    expect(htmlPart).toContain('TERIS - põllumajanduse infosüsteem');
   });
 
   it('lisab testkirjale [TEST] eesliite', () => {
