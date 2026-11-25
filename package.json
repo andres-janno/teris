@@ -18,7 +18,7 @@
     "start": "node dist-server/prod.js",
     "note": "npx tsx scripts/changelog-note.mts",
     "release:draft": "npx tsx scripts/release-draft.mts",
-    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris"
+    "release": "npx tsc --noEmit -p tsconfig.app.json && npm test && npm run build && sudo systemctl restart teris && npm run release:draft -- --include-git-fallback --tag"
   },
   "dependencies": {
     "@fontsource/outfit": "^5.3.0",

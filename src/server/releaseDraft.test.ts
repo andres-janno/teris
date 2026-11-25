@@ -1,6 +1,8 @@
 import { describe, it, expect } from 'vitest';
 import {
   buildDraftItems,
+  mergeDraftItems,
+  mergeSourceCommits,
   nextDateVersion,
   normalizeChangelogType,
   parseChangelogJsonl,
@@ -70,5 +72,28 @@ describe('parseConventionalCommit & buildDraftItems', () => {
 
     const withFallback = buildDraftItems(entries, commits, true);
     expect(withFallback.items).toHaveLength(3);
+  });
+});
+
+describe('mergeDraftItems & mergeSourceCommits', () => {
+  it('ühendab punktid ilma duplikaatideta ja sorteerib kategooriad', () => {
+    const existing = [
+      { id: '1', category: 'FIX' as const, text: 'Parandus A' }
+    ];
+    const incoming = [
+      { id: '2', category: 'FIX' as const, text: 'parandus a' },
+      { id: '3', category: 'FEATURE' as const, area: 'Põllud', text: 'Uus veerg' }
+    ];
+    const merged = mergeDraftItems(existing, incoming);
+    expect(merged).toHaveLength(2);
+    expect(merged.map((m) => m.category)).toEqual(['FEATURE', 'FIX']);
+  });
+
+  it('ühendab commitid unikaalse hashi järgi (uusimad ees)', () => {
+    const merged = mergeSourceCommits(
+      [{ hash: 'aaa1111', subject: 'vana' }],
+      [{ hash: 'bbb2222', subject: 'uus' }, { hash: 'aaa1111', subject: 'vana' }]
+    );
+    expect(merged.map((c) => c.hash)).toEqual(['bbb2222', 'aaa1111']);
   });
 });

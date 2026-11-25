@@ -119,3 +119,34 @@ export function buildDraftItems(
   items.sort((a, b) => order[a.category] - order[b.category]);
   return { items, uncoveredCommits };
 }
+
+/** Ühendab olemasoleva mustandi punktid uutega, vältides sama teksti duplikaate. */
+export function mergeDraftItems(existing: ReleaseNoteItem[], incoming: ReleaseNoteItem[]): ReleaseNoteItem[] {
+  const seen = new Set(existing.map((i) => `${i.category}:${i.text.trim().toLowerCase()}`));
+  const merged = [...existing];
+  for (const item of incoming) {
+    const key = `${item.category}:${item.text.trim().toLowerCase()}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    merged.push(item);
+  }
+  const order: Record<ReleaseNoteCategory, number> = { FEATURE: 0, IMPROVEMENT: 1, FIX: 2 };
+  merged.sort((a, b) => order[a.category] - order[b.category]);
+  return merged;
+}
+
+/** Ühendab olemasoleva mustandi git commitid uutega (uusimad ees, unikaalne hash). */
+export function mergeSourceCommits(
+  existing: ReleaseNoteSourceCommit[],
+  incoming: ReleaseNoteSourceCommit[]
+): ReleaseNoteSourceCommit[] {
+  const seen = new Set<string>();
+  const out: ReleaseNoteSourceCommit[] = [];
+  for (const c of [...incoming, ...existing]) {
+    const h = c.hash.slice(0, 7);
+    if (seen.has(h)) continue;
+    seen.add(h);
+    out.push(c);
+  }
+  return out;
+}
