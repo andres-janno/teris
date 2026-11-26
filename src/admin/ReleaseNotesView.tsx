@@ -328,7 +328,7 @@ export function ReleaseNotesView() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-semibold text-foreground">{r.version}</span>
-                  <Badge tone={r.status === 'PUBLISHED' ? 'success' : 'warning'} variant="soft">
+                  <Badge tone={r.status === 'PUBLISHED' ? 'success' : 'warning'}>
                     {RELEASE_NOTE_STATUS_LABELS[r.status]}
                   </Badge>
                 </div>
@@ -360,12 +360,12 @@ export function ReleaseNotesView() {
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-3">
               <div className="flex items-center gap-2">
                 <h2 className={adminH2FlushClass}>Versioon {current.version}</h2>
-                <Badge tone={current.status === 'PUBLISHED' ? 'success' : 'warning'} variant="soft">
+                <Badge tone={current.status === 'PUBLISHED' ? 'success' : 'warning'}>
                   {RELEASE_NOTE_STATUS_LABELS[current.status]}
                 </Badge>
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <Button size="sm" variant="secondary" onClick={() => setPreviewMode((p) => !p)}>
+                <Button size="sm" onClick={() => setPreviewMode((p) => !p)}>
                   <Eye size={14} /> {previewMode ? 'Tagasi redaktorisse' : 'Eelvaade'}
                 </Button>
                 <Button size="sm" variant="primary" disabled={busy || !dirty} onClick={() => void handleSave()}>
@@ -393,7 +393,7 @@ export function ReleaseNotesView() {
                     {groupedPreview.map((g) => (
                       <div key={g.category}>
                         <div className="mb-2 flex items-center gap-2">
-                          <Badge tone={CATEGORY_TONE[g.category]} variant="soft">{g.label}</Badge>
+                          <Badge tone={CATEGORY_TONE[g.category]}>{g.label}</Badge>
                         </div>
                         <ul className="list-disc space-y-1.5 pl-4 text-sm text-foreground">
                           {g.items.map((it) => (
@@ -434,7 +434,7 @@ export function ReleaseNotesView() {
                 <div>
                   <div className="mb-2 flex items-center justify-between">
                     <label className={adminFieldLabelClass}>Muudatused ({items.length})</label>
-                    <Button size="sm" variant="secondary" onClick={() => setItems((prev) => [...prev, newItem('FEATURE')])}>
+                    <Button size="sm" onClick={() => setItems((prev) => [...prev, newItem('FEATURE')])}>
                       <Plus size={14} /> Lisa punkt
                     </Button>
                   </div>
@@ -514,7 +514,7 @@ export function ReleaseNotesView() {
                   placeholder="sinu@email.ee"
                 />
               </div>
-              <Button size="sm" variant="secondary" disabled={busy || dirty} onClick={() => void handleSendTest()}>
+              <Button size="sm" disabled={busy || dirty} onClick={() => void handleSendTest()}>
                 <Mail size={14} /> Saada testkiri
               </Button>
             </div>
@@ -574,7 +574,7 @@ export function ReleaseNotesView() {
                       <Send size={14} /> {current.deliveryCounts.total > 0 ? 'Saada uutele saajatele' : 'Saada e-kiri'}
                     </Button>
                     {current.deliveryCounts.failed > 0 && (
-                      <Button size="sm" variant="secondary" disabled={busy} onClick={() => void handleRetryFailed()}>
+                      <Button size="sm" disabled={busy} onClick={() => void handleRetryFailed()}>
                         <RefreshCw size={14} /> Proovi vigu uuesti ({current.deliveryCounts.failed})
                       </Button>
                     )}

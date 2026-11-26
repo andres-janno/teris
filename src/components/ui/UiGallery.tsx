@@ -89,9 +89,7 @@ export const UiGallery: React.FC = () => {
           <UsageExample as={Button} name="Button" props={{ variant: 'primary', size: 'sm' }}>Väike</UsageExample>
           <UsageExample as={Button} name="Button" props={{ size: 'sm' }}>Väike</UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'sm' }}><Plus size={14} />Lisa rida</UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'secondary', size: 'sm' }}>Saada test</UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'danger', size: 'sm' }}>Kustuta</UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'link', size: 'sm' }}>Vaata viimast sõitu</UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-sm', 'aria-label': 'Muuda', title: 'Muuda' }}><Pencil size={14} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ size: 'icon-sm', 'aria-label': 'Logi välja', title: 'Logi välja' }}><LogOut size={14} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'danger-ghost', size: 'icon-sm', 'aria-label': 'Kustuta' }}><Trash2 size={14} /></UsageExample>
@@ -102,13 +100,10 @@ export const UiGallery: React.FC = () => {
           <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-xs', 'aria-pressed': true, title: 'Rada nähtav' }}><Eye size={12} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'primary', disabled: true }}>Keelatud</UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'link', size: 'inline' }}>Lõigu sees: ava register</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'plain', size: 'inline' }}>Kogu rea nupp (plain)</UsageExample>
         </Section>
 
-        <Section title="Nupud: erivariandid ja kiibid" components={['ChipButton']}>
-          <UsageExample as={Button} name="Button" props={{ variant: 'dashed', size: 'add-slot', 'aria-label': 'Lisa töö', title: 'Lisa töö' }}><Plus size={13} /></UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'bare', size: 'inline', title: 'Ava finants' }}><Badge tone="success" variant="solid">Kinnitatud</Badge></UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'text', size: 'inline' }}>Tekstina nupp (text)</UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'plain', size: 'inline' }}>Kogu rea nupp (plain)</UsageExample>
+        <Section title="Kiibid" components={['ChipButton']}>
           <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'tint', accent: 'var(--amber-500)', selected: chip === 'a', dimmed: chip !== 'none' && chip !== 'a', onClick: () => setChip(chip === 'a' ? 'none' : 'a') }}><span>Talinisu</span><strong className={CHIP_NUM}>120,50 ha</strong></UsageExample>
           <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'tint', accent: 'var(--blue-500)', selected: chip === 'b', dimmed: chip !== 'none' && chip !== 'b', onClick: () => setChip(chip === 'b' ? 'none' : 'b') }}><span>Suvioder</span><strong className={CHIP_NUM}>40,00 ha</strong></UsageExample>
           <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'outline', accent: 'var(--emerald-500)', selected: tenure, onClick: () => setTenure(!tenure) }}><span className="text-muted-foreground">Oma maa:</span><strong className={CHIP_NUM}>312 ha</strong></UsageExample>
@@ -128,23 +123,12 @@ export const UiGallery: React.FC = () => {
             <UsageExample as={Badge} name="Badge" props={{ tone: 'success', variant: 'outline', size: 'md', className: 'tabular-nums' }}>Nr 12</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ size: 'md' }}>Planeerimata</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ tone: 'success', size: 'md' }}>Suurus md</UsageExample>
-            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', variant: 'soft' }}>Soft</UsageExample>
-            <UsageExample as={Badge} name="Badge" props={{ tone: 'danger', variant: 'outline' }}>Puudus</UsageExample>
           </div>
           <div className="flex w-full flex-wrap items-center gap-3">
             <UsageExample as={Badge} name="Badge" props={{ tone: 'success', dot: true }}>Punktiga</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ dot: '#e11d48' }}>Andmevärv</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ tone: 'info' }}><Clock size={12} />Ikooniga</UsageExample>
           </div>
-          <UnusedVariants>
-            {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
-              ([undefined, 'soft', 'solid', 'outline'] as const)
-                .filter((variant) => exampleCount('Badge', { tone, variant }) === 0)
-                .map((variant) => (
-                  <UsageExample key={`${tone}-${variant}`} as={Badge} name="Badge" props={{ tone, variant }}>{tone}</UsageExample>
-                ))
-            )}
-          </UnusedVariants>
         </Section>
 
         <Section title="Sakid" components={['Tabs', 'TabsList', 'TabsTrigger']}>
@@ -362,7 +346,6 @@ export const UiGallery: React.FC = () => {
               {Array.from({ length: 30 }, (_, i) => <DropdownMenuItem key={i}>Kirje {i + 1}</DropdownMenuItem>)}
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button variant="filter" size="auto">Operaator: Mari</Button>
           <Button id="gallery-icon-tip" variant="ghost" size="icon-sm" title="Muuda"><Pencil size={16} /></Button>
           <Button id="gallery-icon-tip-disabled" variant="ghost" size="icon-sm" title="Kustutamine pole võimalik" disabled><Trash2 size={16} /></Button>
           <DropdownMenu>

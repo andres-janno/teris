@@ -555,7 +555,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                       </div>
 
                       {selectedEntry.financeConfirmedAt && (
-                        <Badge tone="success" variant="soft" size="md">
+                        <Badge tone="success" size="md">
                           <CheckCircle2 size={14} />
                           Kinnitatud {formatDate(selectedEntry.financeConfirmedAt)}
                         </Badge>

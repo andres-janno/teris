@@ -291,10 +291,7 @@ Tekst ≥ 4.5:1 mõlemas teemas; `src/tooling/contrast.test.ts` arvutab tokenite
 | valitud olek (`.active`) | `aria-pressed={…}` (mitte `.active`), ghost/secondary näitab rohelist tooni |
 | `` `btn btn-sm ${c ? 'btn-primary' : 'btn-secondary'}` `` | `variant={c ? 'primary' : 'secondary'} size="sm"` |
 | `` `btn btn-secondary ${c ? 'active' : ''}` `` | `<Button>`; `active` jäetakse ära, üldnupul pole `.active` reeglit |
-| `link-button`, `assign-hint-link` | `<Button variant="link" size="inline">` |
-| `fw-add` (tühja lahtri „+“) | `<Button variant="dashed" size="add-slot">` |
-| klõpsatav märk nupuna (`fw-finance-chip-btn`) | `<Button variant="bare" size="inline">` |
-| tekstilink kahe reaga (`trip-dialog-entry`) | `<Button variant="text" size="inline">` |
+| `link-button`, `assign-hint-link`, tekstilink (`trip-dialog-entry`) | `<Button variant="link" size="inline">` (ilma allajoonimiseta: `no-underline`) |
 | kogu rea klõpsatav `div` (grupipäis, valikurida, märkus; välimus vaate CSS-ist) | `<Button variant="plain" size="inline" className="vaate-klass">`; nupp annab ainult lähtestuse (laius 100%, ei ääri, tausta, kirja ja värvi pärib). Vaate reegel, mis seab polstri, tausta, äärise, nurga, gapi, `display`, `justify-content`, `font-size`, `color`, vajab `!important` |
 | kultuuri-/omandivormikiip (`register-crop-stat`, `reg-stat-pill.is-filter`) | `<ChipButton variant="tint" \| "outline" accent selected dimmed>` (värv andmest, valitud = `selected`) |
 | `btn-full` | `className="w-full"` |
@@ -341,7 +338,6 @@ Reeglid:
 - Vihje: ainult tekstita ikoonnuppudele. `<Button size="icon-sm" title="…">` saab rakenduse vihje automaatselt ja on alati `<span>`-ga ümbritsetud (keelatud nupp ei kaota fookust ega vihjet). Kärbitud tekst ja muu `title=` jäävad brauseri omaks.
 - `TooltipProvider` peab olema igas React juures (`main.tsx`, `admin/main.tsx` ja kinnitusakna oma juur `ConfirmDialog`); uus juur ilma selleta kukub vihjel.
 - Kaardi (Leaflet) hüpikud ja vihjed (`.leaflet-popup-*`, `.leaflet-tooltip`, `.custom-field-tooltip`) loevad värvi `--popup-*` muutujatest, mis viitavad menüüde omadele (`--bg-modal`, `--border-card`, `--text-primary`). Muuda värvi seal, mitte reeglites.
-- `<Button variant="filter" size="auto">` — päise rohelise pillina nupp (operaatorivalija).
 - Portaalis sisu tunneb ära `closest('[data-radix-popper-content-wrapper], [role="listbox"]')`.
 
 ## Admin

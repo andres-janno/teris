@@ -102,7 +102,14 @@ const FINANCE_LABEL = { PENDING: 'Ootab finantsi', CONFIRMED: 'Finants kinnitatu
 
 /** Tahvli tühja lahtri „Lisa töö“ ruut (katkendjoon, hõljudes roheline). */
 const AddWorkButton: React.FC<{ onAdd: () => void }> = ({ onAdd }) => (
-  <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö" onClick={onAdd}>
+  <Button
+    variant="ghost"
+    size="inline"
+    className="min-h-10 w-7.5 rounded-sm border border-dashed border-border font-normal text-subtle enabled:hover:border-solid enabled:hover:border-primary enabled:hover:bg-primary enabled:hover:text-white"
+    aria-label="Lisa töö"
+    title="Lisa töö"
+    onClick={onAdd}
+  >
     <Plus size={13} />
   </Button>
 );
@@ -1145,240 +1152,241 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
       </main>
 
       {selected && selectedRow && (() => {
-          const isSelectedNext = selected.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === selected.fieldSeasonId);
-          const activeLabel = isSelectedNext
-            ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1}) · ${fmtHa(selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa)} ha`
-            : fieldLabel(selectedRow);
-          const activeArea = isSelectedNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
-          const selectedSeedCheck = { seasonCrop: isSelectedNext ? selectedRow.nextCrop : selectedRow.crop, crops };
-          // Lõpetatud tööd ei saa muuta enne uuesti avamist
-          const workLocked = locked || selected.status === 'DONE';
+        const isSelectedNext = selected.isNextSeasonWinterSowing || (selectedRow.nextRec?.fieldSeasonId === selected.fieldSeasonId);
+        const activeLabel = isSelectedNext
+          ? `Nr ${selectedRow.field.num ?? '–'} ${selectedRow.field.name} · ${selectedRow.nextCropName ?? 'Talivili'} (Sügiskülv ${year}, saak ${year + 1}) · ${fmtHa(selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa)} ha`
+          : fieldLabel(selectedRow);
+        const activeArea = isSelectedNext ? (selectedRow.nextRec?.areaHa ?? selectedRow.rec.areaHa) : selectedRow.rec.areaHa;
+        const selectedSeedCheck = { seasonCrop: isSelectedNext ? selectedRow.nextCrop : selectedRow.crop, crops };
+        // Lõpetatud tööd ei saa muuta enne uuesti avamist
+        const workLocked = locked || selected.status === 'DONE';
 
-          return (
-            <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
-              <DialogContent size="lg" dismissible={!busy}>
-                <DialogHeader
-                  icon={<span className={phaseLabelClass} data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
-                  title={<span title={selected.priaName}>{selected.workTypeName}</span>}
-                  description={activeLabel}
-                />
+        return (
+          <Dialog open onOpenChange={(open) => { if (!open) setSelectedId(null); }}>
+            <DialogContent size="lg" dismissible={!busy}>
+              <DialogHeader
+                icon={<span className={phaseLabelClass} data-tone={WORK_PHASE_META[selected.phase].tone}>{WORK_PHASE_META[selected.phase].label.toUpperCase()}</span>}
+                title={<span title={selected.priaName}>{selected.workTypeName}</span>}
+                description={activeLabel}
+              />
 
-                <DialogBody className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
-                  <div className="flex items-center gap-2.5">
-                    {isUnplanned(selected) ? (
-                      <Badge tone="warning" size="md">Planeerimata</Badge>
-                    ) : (
-                      <Badge tone={WORK_STATUS_TONE[selected.status].tone} variant={WORK_STATUS_TONE[selected.status].variant} size="md">{STATUS_LABEL[selected.status]}</Badge>
+              <DialogBody className="flex flex-1 flex-col gap-3 overflow-y-auto px-6 py-4">
+                <div className="flex items-center gap-2.5">
+                  {isUnplanned(selected) ? (
+                    <Badge tone="warning" size="md">Planeerimata</Badge>
+                  ) : (
+                    <Badge tone={WORK_STATUS_TONE[selected.status].tone} variant={WORK_STATUS_TONE[selected.status].variant} size="md">{STATUS_LABEL[selected.status]}</Badge>
+                  )}
+                  <span className={MUTED}>
+                    {selected.status === 'PLANNED' && (isUnplanned(selected) ? 'Lisa plaan: aeg, materjalid või töötaja.' : 'Esimene kanne muudab töö olekuks „Töös“.')}
+                    {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
+                    {selected.status === 'DONE' && `Lõpetatud${selected.finishedAt ? ` ${formatDate(selected.finishedAt)}` : ''}${locked ? '' : ' · muutmiseks ava töö uuesti'}`}
+                  </span>
+                </div>
+
+                {selected.isNextSeasonWinterSowing && (
+                  <Alert size="sm">
+                    <Info size={14} />
+                    <span>See on {year}. a sügisene ettevalmistus/külv järgmise hooaja ({year + 1}) taliviljale {selectedRow.nextCropName ?? ''}.</span>
+                  </Alert>
+                )}
+                {selected.carriedOverFromYear && (
+                  <Alert size="sm">
+                    <Info size={14} />
+                    <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
+                  </Alert>
+                )}
+                {selected.carriedOverToYear && !selected.isNextSeasonWinterSowing && (
+                  <Alert size="sm">
+                    <Info size={14} />
+                    <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
+                  </Alert>
+                )}
+
+                <Card asChild variant="tile" padding="sm" className="flex flex-col gap-2"><section>
+                  <div className={cn(subheadingClass, 'flex min-h-6.5 items-center justify-between')}>
+                    <span>Plaan</span>
+                    {!workLocked && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPlan(true)}>
+                        <Pencil size={13} />
+                        <span>Muuda</span>
+                      </Button>
                     )}
-                    <span className={MUTED}>
-                      {selected.status === 'PLANNED' && (isUnplanned(selected) ? 'Lisa plaan: aeg, materjalid või töötaja.' : 'Esimene kanne muudab töö olekuks „Töös“.')}
-                      {selected.status === 'IN_PROGRESS' && 'Töö on pooleli, kuni see märgitakse lõpetatuks.'}
-                      {selected.status === 'DONE' && `Lõpetatud${selected.finishedAt ? ` ${formatDate(selected.finishedAt)}` : ''}${locked ? '' : ' · muutmiseks ava töö uuesti'}`}
-                    </span>
                   </div>
+                  <FieldWorkPlanForm
+                    key={selected.id}
+                    fieldSeasonId={selected.fieldSeasonId}
+                    fieldAreaHa={activeArea}
+                    work={selected}
+                    workTypes={workTypes}
+                    articles={articles}
+                    workers={workers}
+                    seedCheck={selectedSeedCheck}
+                    mode="view"
+                    onSaved={() => undefined}
+                    onCancel={() => undefined}
+                  />
+                </section></Card>
 
-                  {selected.isNextSeasonWinterSowing && (
-                    <Alert size="sm">
-                      <Info size={14} />
-                      <span>See on {year}. a sügisene ettevalmistus/külv järgmise hooaja ({year + 1}) taliviljale {selectedRow.nextCropName ?? ''}.</span>
-                    </Alert>
-                  )}
-                  {selected.carriedOverFromYear && (
-                    <Alert size="sm">
-                      <Info size={14} />
-                      <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
-                    </Alert>
-                  )}
-                  {selected.carriedOverToYear && !selected.isNextSeasonWinterSowing && (
-                    <Alert size="sm">
-                      <Info size={14} />
-                      <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
-                    </Alert>
-                  )}
+                {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
+                {editingPlan && !workLocked && (
+                  <Dialog open onOpenChange={(open) => { if (!open) setEditingPlan(false); }}>
+                    <DialogContent size="xl" dismissible={!planBusy}>
+                      <DialogHeader
+                        title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
+                        description={activeLabel}
+                      />
+                      <FieldWorkPlanForm
+                        key={`edit-${selected.id}`}
+                        fieldSeasonId={selected.fieldSeasonId}
+                        fieldAreaHa={activeArea}
+                        work={selected}
+                        workTypes={workTypes}
+                        articles={articles}
+                        workers={workers}
+                        seedCheck={selectedSeedCheck}
+                        mode="edit"
+                        layout="dialog"
+                        onBusyChange={setPlanBusy}
+                        onSaved={() => {
+                          setEditingPlan(false);
+                          void reload();
+                        }}
+                        onCancel={() => setEditingPlan(false)}
+                      />
+                    </DialogContent>
+                  </Dialog>
+                )}
 
-                  <Card asChild variant="tile" padding="sm" className="flex flex-col gap-2"><section>
-                    <div className={cn(subheadingClass, 'flex min-h-6.5 items-center justify-between')}>
-                      <span>Plaan</span>
-                      {!workLocked && (
-                        <Button type="button" variant="ghost" size="sm" onClick={() => setEditingPlan(true)}>
-                          <Pencil size={13} />
-                          <span>Muuda</span>
+                {activeArea > 0 && (() => {
+                  const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
+                  const pct = Math.min(100, Math.round((done / activeArea) * 100));
+                  return (
+                    <div className="flex flex-col gap-1">
+                      <div className="flex justify-between text-xs leading-natural text-muted-foreground"><span>Tehtud pindala</span><strong className="text-foreground">{fmtHa(done)} / {fmtHa(activeArea)} ha ({pct}%)</strong></div>
+                      <ProgressBar value={pct} aria-label="Tehtud pindala" />
+                    </div>
+                  );
+                })()}
+
+                <div className={cn(subheadingClass, 'flex justify-between')}>
+                  <span>Kanded</span>
+                  <span className={MUTED}>{selected.entries.length || ''}</span>
+                </div>
+                {selected.entries.length === 0 && (
+                  <div className={emptyBoxClass}>Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
+                )}
+                {selected.entries.map((e) => (
+                  <EntryRow key={e.id}>
+                    <div className={ENTRY_WHEN}>
+                      <strong className="text-sm leading-natural text-foreground">{formatDate(e.date)}</strong>
+                      {e.startTime && e.endTime && <span className="text-xs leading-natural text-muted-foreground">{e.startTime}–{e.endTime}</span>}
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-0.5 @max-[561px]:col-span-full @max-[561px]:row-start-2">
+                      <div className="text-xs leading-natural text-foreground">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
+                      <div className="text-xs leading-natural text-muted-foreground">
+                        {[
+                          fmtNum(e.laborHours, 'h tööaeg'),
+                          fmtNum(e.equipmentHours, 'h masin'),
+                          fmtNum(e.fuelLiters, 'l kütust'),
+                          ...e.articles.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
+                          fmtQtyUnit(e.harvestTonnes, 't saaki')
+                        ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
+                      </div>
+                    </div>
+                    <div className={cn(ENTRY_WHEN, 'num tabular-nums items-end @max-[561px]:col-start-2 @max-[561px]:-col-end-1 @max-[561px]:row-start-1')}>
+                      <strong className="text-sm leading-natural tabular-nums text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
+                      {e.telemetryAreaHa ? <span className="text-xs leading-natural tabular-nums text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
+                    </div>
+                    <div className="@max-[561px]:col-span-2 @max-[561px]:col-start-1 @max-[561px]:row-start-3">
+                      {canManageFinance ? (
+                        <Button
+                          variant="plain"
+                          size="inline"
+                          className="w-auto rounded-full enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm"
+                          title="Ava kande finants ja määra ühikuhinnad"
+                          onClick={() => {
+                            setFinanceEntryId(e.id);
+                            setIsFinanceOpen(true);
+                          }}
+                        >
+                          <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>
+                            <Euro size={10} />
+                            {FINANCE_LABEL[e.financeStatus]}
+                          </Badge>
                         </Button>
+                      ) : (
+                        <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
                       )}
                     </div>
-                    <FieldWorkPlanForm
-                      key={selected.id}
-                      fieldSeasonId={selected.fieldSeasonId}
-                      fieldAreaHa={activeArea}
-                      work={selected}
-                      workTypes={workTypes}
-                      articles={articles}
-                      workers={workers}
-                      seedCheck={selectedSeedCheck}
-                      mode="view"
-                      onSaved={() => undefined}
-                      onCancel={() => undefined}
-                    />
-                  </section></Card>
+                    <span className="flex gap-0.5 empty:hidden @max-[561px]:col-start-3 @max-[561px]:row-start-3 @max-[561px]:justify-self-end">
+                      {!workLocked && (
+                        <>
+                          <Button type="button" variant="ghost" size="icon-sm" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
+                            <Edit2 size={14} />
+                          </Button>
+                          <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
+                            <Trash2 size={14} />
+                          </Button>
+                        </>
+                      )}
+                    </span>
+                  </EntryRow>
+                ))}
+                {!workLocked && (
+                  <Button type="button" onClick={() => openNewEntry(selected)}>
+                    <Plus size={13} />
+                    <span>Lisa kanne…</span>
+                  </Button>
+                )}
+              </DialogBody>
 
-                  {/* Plaani muutmine eraldi aknas (nagu kande lisamine); Esc sulgeb ainult selle akna */}
-                  {editingPlan && !workLocked && (
-                    <Dialog open onOpenChange={(open) => { if (!open) setEditingPlan(false); }}>
-                      <DialogContent size="xl" dismissible={!planBusy}>
-                        <DialogHeader
-                          title={`${isUnplanned(selected) ? 'Lisa plaan' : 'Muuda plaani'}: ${selected.workTypeName}`}
-                          description={activeLabel}
-                        />
-                        <FieldWorkPlanForm
-                          key={`edit-${selected.id}`}
-                          fieldSeasonId={selected.fieldSeasonId}
-                          fieldAreaHa={activeArea}
-                          work={selected}
-                          workTypes={workTypes}
-                          articles={articles}
-                          workers={workers}
-                          seedCheck={selectedSeedCheck}
-                          mode="edit"
-                          layout="dialog"
-                          onBusyChange={setPlanBusy}
-                          onSaved={() => {
-                            setEditingPlan(false);
-                            void reload();
-                          }}
-                          onCancel={() => setEditingPlan(false)}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                  )}
-
-                  {activeArea > 0 && (() => {
-                    const done = selected.entries.reduce((s, e) => s + (e.areaHa ?? 0), 0);
-                    const pct = Math.min(100, Math.round((done / activeArea) * 100));
-                    return (
-                      <div className="flex flex-col gap-1">
-                        <div className="flex justify-between text-xs leading-natural text-muted-foreground"><span>Tehtud pindala</span><strong className="text-foreground">{fmtHa(done)} / {fmtHa(activeArea)} ha ({pct}%)</strong></div>
-                        <ProgressBar value={pct} aria-label="Tehtud pindala" />
-                      </div>
-                    );
-                  })()}
-
-                  <div className={cn(subheadingClass, 'flex justify-between')}>
-                    <span>Kanded</span>
-                    <span className={MUTED}>{selected.entries.length || ''}</span>
-                  </div>
-                  {selected.entries.length === 0 && (
-                    <div className={emptyBoxClass}>Kandeid pole. Lisa iga tööpäeva kohta kanne koos kulunud aja ja materjalidega.</div>
-                  )}
-                  {selected.entries.map((e) => (
-                    <EntryRow key={e.id}>
-                        <div className={ENTRY_WHEN}>
-                          <strong className="text-sm leading-natural text-foreground">{formatDate(e.date)}</strong>
-                          {e.startTime && e.endTime && <span className="text-xs leading-natural text-muted-foreground">{e.startTime}–{e.endTime}</span>}
-                        </div>
-                        <div className="flex min-w-0 flex-col gap-0.5 @max-[561px]:col-span-full @max-[561px]:row-start-2">
-                          <div className="text-xs leading-natural text-foreground">{[e.workerName, [e.vehicleName, e.implementName].filter(Boolean).join(' + ')].filter(Boolean).join(' · ') || '–'}</div>
-                          <div className="text-xs leading-natural text-muted-foreground">
-                            {[
-                              fmtNum(e.laborHours, 'h tööaeg'),
-                              fmtNum(e.equipmentHours, 'h masin'),
-                              fmtNum(e.fuelLiters, 'l kütust'),
-                              ...e.articles.map((m) => `${m.name} ${formatQty(m.quantity)} ${m.unit}`),
-                              fmtQtyUnit(e.harvestTonnes, 't saaki')
-                            ].filter(Boolean).join(' · ') || 'kogused sisestamata'}
-                          </div>
-                        </div>
-                        <div className={cn(ENTRY_WHEN, 'num tabular-nums items-end @max-[561px]:col-start-2 @max-[561px]:-col-end-1 @max-[561px]:row-start-1')}>
-                          <strong className="text-sm leading-natural tabular-nums text-foreground">{e.areaHa ? `${fmtHa(e.areaHa)} ha` : '–'}</strong>
-                          {e.telemetryAreaHa ? <span className="text-xs leading-natural tabular-nums text-muted-foreground">{fmtHa(e.telemetryAreaHa)} ha GPS</span> : null}
-                        </div>
-                        <div className="@max-[561px]:col-span-2 @max-[561px]:col-start-1 @max-[561px]:row-start-3">
-                          {canManageFinance ? (
-                            <Button
-                              variant="bare"
-                              size="inline"
-                              title="Ava kande finants ja määra ühikuhinnad"
-                              onClick={() => {
-                                setFinanceEntryId(e.id);
-                                setIsFinanceOpen(true);
-                              }}
-                            >
-                              <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>
-                                <Euro size={10} />
-                                {FINANCE_LABEL[e.financeStatus]}
-                              </Badge>
-                            </Button>
-                          ) : (
-                            <Badge tone={FINANCE_STATUS_BADGE[e.financeStatus].tone} variant={FINANCE_STATUS_BADGE[e.financeStatus].variant}>{FINANCE_LABEL[e.financeStatus]}</Badge>
-                          )}
-                        </div>
-                        <span className="flex gap-0.5 empty:hidden @max-[561px]:col-start-3 @max-[561px]:row-start-3 @max-[561px]:justify-self-end">
-                          {!workLocked && (
-                            <>
-                              <Button type="button" variant="ghost" size="icon-sm" title="Muuda kannet" aria-label="Muuda kannet" onClick={() => setEntryDialog({ work: selected, entry: e })}>
-                                <Edit2 size={14} />
-                              </Button>
-                              <Button type="button" variant="danger-ghost" size="icon-sm" title="Kustuta kanne" aria-label="Kustuta kanne" onClick={() => deleteEntry(e)}>
-                                <Trash2 size={14} />
-                              </Button>
-                            </>
-                          )}
-                        </span>
-                    </EntryRow>
-                  ))}
-                  {!workLocked && (
-                    <Button type="button" onClick={() => openNewEntry(selected)}>
-                      <Plus size={13} />
-                      <span>Lisa kanne…</span>
+              {!locked && (
+                <div className="flex items-center gap-2.5 border-t border-border px-6 py-3">
+                  {selected.status === 'DONE' ? (
+                    <Button type="button" className="flex-1 justify-center" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
+                      <RotateCcw size={14} />
+                      <span>Ava uuesti</span>
+                    </Button>
+                  ) : (
+                    <Button type="button" variant="primary" className="flex-1 justify-center" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
+                      <Check size={14} />
+                      <span>Märgi lõpetatuks</span>
                     </Button>
                   )}
-                </DialogBody>
+                  {selected.status !== 'DONE' && <Button
+                    type="button"
+                    variant="danger-ghost"
+                    size="icon-sm"
+                    title={selected.entries.length ? 'Kannetega tööd ei saa eemaldada' : 'Eemalda töö põllult'}
+                    aria-label="Eemalda töö põllult"
+                    disabled={busy || selected.entries.length > 0}
+                    onClick={() => removeWork(selected)}
+                  >
+                    <Trash2 size={16} />
+                  </Button>}
+                </div>
+              )}
 
-                {!locked && (
-                  <div className="flex items-center gap-2.5 border-t border-border px-6 py-3">
-                    {selected.status === 'DONE' ? (
-                      <Button type="button" className="flex-1 justify-center" disabled={busy} onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'REOPEN' }))}>
-                        <RotateCcw size={14} />
-                        <span>Ava uuesti</span>
-                      </Button>
-                    ) : (
-                      <Button type="button" variant="primary" className="flex-1 justify-center" disabled={busy} title="Töö on tehtud – rohkem kandeid ei oodata" onClick={() => void run(() => api.updateFieldWork(selected.id, { status: 'DONE' }))}>
-                        <Check size={14} />
-                        <span>Märgi lõpetatuks</span>
-                      </Button>
-                    )}
-                    {selected.status !== 'DONE' && <Button
-                      type="button"
-                      variant="danger-ghost"
-                      size="icon-sm"
-                      title={selected.entries.length ? 'Kannetega tööd ei saa eemaldada' : 'Eemalda töö põllult'}
-                      aria-label="Eemalda töö põllult"
-                      disabled={busy || selected.entries.length > 0}
-                      onClick={() => removeWork(selected)}
-                    >
-                      <Trash2 size={16} />
-                    </Button>}
-                  </div>
-                )}
-
-                {!locked && !hasAnyEntries(selectedRow) && getRowVisibleWorks(selectedRow).length > 1 && (
-                  <div className="flex justify-center px-6 pb-3">
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className={cn('w-full justify-center text-xs text-subtle', DELETE_HOVER)}
-                      disabled={busy}
-                      onClick={() => clearFieldWorks(selectedRow)}
-                    >
-                      <Trash2 size={12} />
-                      <span>Eemalda kõik selle põllu tööd ({getRowVisibleWorks(selectedRow).length})</span>
-                    </Button>
-                  </div>
-                )}
-              </DialogContent>
-            </Dialog>
-          );
-        })()}
+              {!locked && !hasAnyEntries(selectedRow) && getRowVisibleWorks(selectedRow).length > 1 && (
+                <div className="flex justify-center px-6 pb-3">
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className={cn('w-full justify-center text-xs text-subtle', DELETE_HOVER)}
+                    disabled={busy}
+                    onClick={() => clearFieldWorks(selectedRow)}
+                  >
+                    <Trash2 size={12} />
+                    <span>Eemalda kõik selle põllu tööd ({getRowVisibleWorks(selectedRow).length})</span>
+                  </Button>
+                </div>
+              )}
+            </DialogContent>
+          </Dialog>
+        );
+      })()}
 
       {entryDialog && entryRow && (() => {
         const selectedRow = entryRow;

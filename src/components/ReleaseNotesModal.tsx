@@ -95,7 +95,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                 <article key={rel.id} className="rounded-lg border border-border bg-card p-4">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div className="flex items-center gap-2">
-                      <Badge tone="success" variant="soft">{rel.version}</Badge>
+                      <Badge tone="success">{rel.version}</Badge>
                       <h3 className="text-base font-semibold text-foreground">{rel.title}</h3>
                     </div>
                     <time className="text-xs text-muted-foreground">{formatDateEt(rel.publishedAt)}</time>
@@ -111,7 +111,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                     <div className="mt-3 space-y-3">
                       {groups.map((g) => (
                         <div key={g.category}>
-                          <Badge tone={CATEGORY_TONE[g.category]} variant="soft" className="mb-1.5">
+                          <Badge tone={CATEGORY_TONE[g.category]} className="mb-1.5">
                             {g.label}
                           </Badge>
                           <ul className="list-disc space-y-1 pl-4 text-sm leading-relaxed text-foreground">

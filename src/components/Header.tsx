@@ -141,7 +141,6 @@ export const Header: React.FC<HeaderProps> = ({
               <DropdownMenu open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
                 <DropdownMenuTrigger asChild>
                   <Button
-                    variant="secondary"
                     size="sm"
                     className="max-w-full gap-2 px-2.5"
                     aria-label="Ava peamenüü"

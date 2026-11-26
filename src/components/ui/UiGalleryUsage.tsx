@@ -193,7 +193,14 @@ const UsageBadge: React.FC<{ name: string }> = ({ name }) => {
   const { selected, select } = useContext(SelectionContext);
   if (!usage) return <Badge tone="danger">{name} · puudub registrist</Badge>;
   return (
-    <Button variant="bare" size="inline" aria-label={`${name}: kasutuse üksikasjad`} aria-pressed={selected === name} onClick={() => select(name)}>
+    <Button
+      variant="plain"
+      size="inline"
+      className="w-auto rounded-full enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm"
+      aria-label={`${name}: kasutuse üksikasjad`}
+      aria-pressed={selected === name}
+      onClick={() => select(name)}
+    >
       <Badge tone={isUnused(usage) ? 'warning' : 'neutral'} className={selected === name ? 'ring-2 ring-primary' : undefined}>
         <span>{name} ·</span> <span className="tabular-nums">{usage.count === 0 ? '0 kohta' : summaryText(usage)}{usage.count === 0 && usage.insideUi > 0 ? ` (+${usage.insideUi} sees)` : ''}</span>
       </Badge>

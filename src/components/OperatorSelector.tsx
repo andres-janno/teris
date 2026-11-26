@@ -30,9 +30,9 @@ export const OperatorSelector: React.FC<OperatorSelectorProps> = ({ parties, sel
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
-            variant="filter"
-            size="auto"
-            className={headerTriggerClass}
+            variant="primary"
+            size="inline"
+            className={cn('rounded-full bg-primary-strong bg-none px-3 py-1.5 text-sm enabled:hover:bg-primary-hover', headerTriggerClass)}
             aria-label={`Operaator: ${label}`}
             title={selected.length ? selectedNames.join(', ') : 'Filtreeri kaarti ja statistikat operaatori (harija) järgi'}
           >

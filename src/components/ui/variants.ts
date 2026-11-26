@@ -18,10 +18,6 @@ export const buttonVariantSizes = {
   'icon-xs': 'size-5 rounded-sm',
   'icon-sm': 'size-7 rounded-sm',
   'icon-lg': 'size-10 rounded-full',
-  // Kõrgus sisu järgi (kahe reaga nupp, nt filter-pill): vana .operator-selector-trigger 6px 12px.
-  auto: 'px-3 py-1.5 text-sm',
-  // Tahvli tühja lahtri „lisa töö“-ruut (vana .fw-add): 30×40px, 6px nurk.
-  'add-slot': 'min-h-10 w-7.5 rounded-sm p-0',
 } as const;
 
 export const buttonVariants = cva(
@@ -38,19 +34,8 @@ export const buttonVariants = cva(
         danger: 'border-transparent bg-danger-solid text-white enabled:hover:bg-danger-solid/90',
         // Läbipaistev ohunupp (vana .icon-btn-danger): punane ikoon, hõljudes kerge punane taust.
         'danger-ghost': 'border-transparent bg-transparent text-destructive enabled:hover:bg-destructive/15',
-        // Päise operaatorivalija (vana .operator-selector-trigger): roheline pill, hõljudes heledam. Kasuta size="auto".
-        filter:
-          'rounded-full border-transparent bg-primary-strong text-white shadow-primary enabled:hover:bg-primary-hover enabled:hover:shadow-primary-hover',
-        // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): tavakaalus roheline tekst, alati allajoonitud, murdub reaga.
+        // Tekstilink nupuna (vana .link-button, .assign-hint-link, .cc-link-btn): tavakaalus roheline tekst, allajoonitud, murdub reaga.
         link: 'border-transparent bg-transparent font-normal whitespace-normal text-primary underline underline-offset-2',
-        // Katkendjoonega „lisa“-ruut: hõljudes täisroheline valge ikooniga (vana .fw-add). Kasuta size="add-slot".
-        dashed:
-          'border-dashed border-border bg-transparent font-normal text-subtle enabled:hover:border-solid enabled:hover:border-primary enabled:hover:bg-primary enabled:hover:text-white',
-        // Nupp, mis ümbritseb muud ui elementi (klõpsatav märk): ise nähtamatu, hõljudes tõuseb ja tumeneb. Kasuta size="inline".
-        bare:
-          'rounded-full border-0 border-transparent bg-transparent font-normal enabled:hover:-translate-y-px enabled:hover:brightness-92 enabled:hover:shadow-sm',
-        // Tekst nupuna: tavakaalus roheline tekst, ilma allajoonimiseta (hõljumise vihje on vaate asi). Kasuta size="inline".
-        text: 'border-0 border-transparent bg-transparent font-normal whitespace-normal text-primary',
         // Kogu rea laiune nupp, mille välimuse (taust, polster, ääris, paigutus) annab vaate CSS: ainult nupu lähtestus
         // (kiri ja värv päritakse). Vana div role="button" asendus; kasuta size="inline". Vaate reegel, mis peab utiliidi üle võitma, vajab !important.
         plain: 'w-full rounded-none border-0 border-transparent bg-transparent text-left font-normal whitespace-normal text-inherit [line-height:inherit]',

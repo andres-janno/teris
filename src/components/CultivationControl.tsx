@@ -50,7 +50,7 @@ const CC_VALUE = 'whitespace-nowrap text-base font-medium leading-natural tabula
 const CC_VALUE_SUB = 'ml-1.5 text-xs font-medium';
 const CC_BOX = 'flex h-8 items-center rounded-sm border border-input bg-field'; // tund:minut ja algusaja kast
 const CC_TOGGLE_ITEM = 'self-stretch'; // vana `.cc-toggle > button { align-self: stretch }`
-const CC_LINK = 'ml-auto max-[761px]:ml-0';
+const CC_LINK = 'ml-auto px-2 py-1 text-xs max-[761px]:ml-0';
 const CC_NOTICE = 'flex min-h-8 flex-1 items-center gap-2 rounded-sm border border-warning-solid/40 bg-warning-solid/10 py-1 pr-1 pl-3 font-medium text-foreground [&>svg]:shrink-0 [&>svg]:text-warning';
 const CC_NOTICE_LOADING = 'border-border bg-muted text-muted-foreground [&>svg]:text-primary';
 const CC_CLOCK_SELECT = 'h-full w-auto min-w-11 border-0 bg-transparent px-1 text-muted-foreground'; // tund ja minut algusaja kastis
@@ -259,7 +259,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
         )}
 
         {lastActiveAt && onJumpToLastActive && (
-          <Button variant="link" size="sm" className={CC_LINK}
+          <Button variant="link" size="inline" className={CC_LINK}
             onClick={onJumpToLastActive}
             title="Ava masina viimase teadaoleva sõidu aeg"
           >
@@ -304,7 +304,7 @@ export const CultivationControl: React.FC<CultivationControlProps> = ({
                 : `Viimase ${telemetryHours} h jooksul sõiduandmeid ei leitud.`}
             </span>
             {lastActiveAt && onJumpToLastActive && (
-              <Button variant="link" size="sm" className={CC_LINK} onClick={onJumpToLastActive}>
+              <Button variant="link" size="inline" className={CC_LINK} onClick={onJumpToLastActive}>
                 Vaata viimast sõitu
               </Button>
             )}

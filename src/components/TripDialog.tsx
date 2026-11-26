@@ -263,7 +263,7 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
             {trip.manualImplement && (
               <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs leading-natural text-muted-foreground">
                 <span>Haakeriist/laius on määratud sellel sõidul.</span>
-                <Button type="button" variant="text" size="inline" onClick={resetImplement} disabled={saving}>
+                <Button type="button" variant="link" size="inline" onClick={resetImplement} disabled={saving}>
                   Taasta registri järgi
                 </Button>
               </div>
@@ -316,9 +316,9 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
                             f.entries.map((e) => (
                               <Button
                                 key={e.id}
-                                variant="text"
+                                variant="link"
                                 size="inline"
-                                className="flex flex-col items-start justify-start gap-0 text-left enabled:hover:[&>span:first-child]:underline disabled:cursor-default disabled:text-inherit disabled:opacity-100"
+                                className="flex flex-col items-start justify-start gap-0 text-left no-underline enabled:hover:[&>span:first-child]:underline disabled:cursor-default disabled:text-inherit disabled:opacity-100"
                                 title="Ava põllu töö"
                                 disabled={!onOpenFieldWork}
                                 onClick={() => onOpenFieldWork?.(e.fieldWorkId, f.year)}
@@ -373,9 +373,9 @@ export const TripDialog: React.FC<TripDialogProps> = ({ trip, implementsList = [
             <div className="mb-3">
               <Button
                 type="button"
-                variant="text"
+                variant="link"
                 size="inline"
-                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground"
+                className="inline-flex items-center gap-1 text-sm font-medium text-muted-foreground no-underline"
                 aria-expanded={visitsOpen}
                 onClick={() => setVisitsOpen((v) => !v)}
               >

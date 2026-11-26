@@ -111,7 +111,7 @@ export const StockDocumentsPanel: React.FC<Props> = ({ warehouses, articles, onC
               <TableCell>{d.documentNo ?? ''}</TableCell>
               <TableCell numeric>{d.lines.length}</TableCell>
               <TableCell numeric>
-                {d.hasShortage && <Badge tone="danger" variant="outline" className={cellBadgeLeadClass} title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</Badge>}
+                {d.hasShortage && <Badge tone="danger" className={cellBadgeLeadClass} title="Ülekandel on puudujääk: osa kogusest polnud lähtelaos hinnaga olemas, maksumus jääb tühjaks">puudujääk</Badge>}
                 {fmtEur(d.total)}{d.hasUnpriced && <span className={tableMutedClass} title="Osa ridu on hindamata"> *</span>}
               </TableCell>
               <TableCell actions>

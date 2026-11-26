@@ -16,8 +16,8 @@ const allClassStrings = (): string[] => [
   v.tableNameClass, v.tableTitleLineClass, v.tableSubTagsClass, v.tableMutedClass,
   v.boardViewClass, v.boardMainClass, v.boardBodyClass, v.boardContentClass, v.boardFooterClass,
   v.registerActionsBarClass, v.registerHeaderControlsClass, v.registerIoButtonsClass, v.searchFieldClass, v.yearSelectorGroupClass, v.yearLabelClass, v.dialogHeaderControlsClass, v.dialogActionsBarClass,
-  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'filter', 'link', 'dashed', 'bare', 'text', 'plain'] as const).flatMap((variant) =>
-    (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const).map((size) => v.buttonVariants({ variant, size }))
+  ...(['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'plain'] as const).flatMap((variant) =>
+    (['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg'] as const).map((size) => v.buttonVariants({ variant, size }))
   ),
   ...(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
     (['soft', 'solid', 'outline'] as const).flatMap((variant) =>
@@ -129,21 +129,20 @@ describe('variants', () => {
     }
   });
   it('nupu äärevärv on täpselt üks variandis, baasis ei ole ühtegi', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text', 'plain'] as const)
-      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const) {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'plain'] as const)
+      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg'] as const) {
         const tokens = v.buttonVariants({ variant, size }).split(/\s+/);
         const colors = tokens.filter((t) => t === 'border-transparent' || t === 'border-secondary-border' || t === 'border-border');
         expect(colors, `${variant}/${size}`).toHaveLength(1);
       }
     expect(v.buttonVariants({ variant: 'secondary' })).toContain('border-secondary-border');
     expect(v.buttonVariants({ variant: 'secondary' })).not.toContain('border-transparent');
-    for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost', 'bare', 'text', 'plain'] as const)
+    for (const variant of ['primary', 'ghost', 'danger', 'danger-ghost', 'link', 'plain'] as const)
       expect(v.buttonVariants({ variant })).toContain('border-transparent');
-    expect(v.buttonVariants({ variant: 'dashed' })).toContain('border-border');
   });
   it('keelatud nupp jääb hõljutatavaks ja hõljumisefekt ainult lubatud nupul', () => {
-    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'dashed', 'bare', 'text', 'plain'] as const)
-      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg', 'auto', 'add-slot'] as const) {
+    for (const variant of ['primary', 'secondary', 'ghost', 'danger', 'danger-ghost', 'link', 'plain'] as const)
+      for (const size of ['xs', 'sm', 'md', 'inline', 'icon-xs', 'icon-sm', 'icon-lg'] as const) {
         const c = v.buttonVariants({ variant, size });
         const tokens = c.split(/\s+/);
         expect(c, `${variant}/${size}`).not.toContain('pointer-events-none');
@@ -296,12 +295,6 @@ describe('vormiväli', () => {
     expect(v.menuItemClass).toContain('[&_svg]:shrink-0');
     // esiletõst peab olema nähtav (4% bg-muted oli ~1.08:1 — klaviatuuriga kasutaja ei näinud valikut)
     expect(v.menuItemClass).toContain('data-[highlighted]:bg-secondary-hover');
-  });
-  it('filter-nupp: roheline pill', () => {
-    const c = v.buttonVariants({ variant: 'filter' });
-    expect(c).toContain('bg-primary-strong');
-    expect(c).toContain('rounded-full');
-    expect(c).toContain('enabled:hover:bg-primary-hover');
   });
 });
 
@@ -474,39 +467,6 @@ describe('abi-ikoon', () => {
   it('hüpik on 320px laiune ja kõrguse piiriga', () => {
     expect(v.helpHintContentClass).toContain('w-80');
     expect(v.helpHintContentClass).toContain('max-h-');
-  });
-});
-
-describe('nupuvariandid etapp 3b', () => {
-  it('dashed: katkendjoon, hõljudes täisroheline valge ikooniga (vana .fw-add)', () => {
-    const t = v.buttonVariants({ variant: 'dashed', size: 'add-slot' }).split(/\s+/);
-    expect(t).toContain('border-dashed');
-    expect(t).toContain('enabled:hover:border-solid');
-    expect(t).toContain('enabled:hover:bg-primary');
-    expect(t).toContain('enabled:hover:text-white');
-    expect(t).toContain('text-subtle');
-  });
-  it('add-slot: 30×40px, 6px nurk, polstrita', () => {
-    const t = v.buttonVariants({ variant: 'dashed', size: 'add-slot' }).split(/\s+/);
-    expect(t).toContain('w-7.5');
-    expect(t).toContain('min-h-10');
-    expect(t).toContain('rounded-sm');
-    expect(t).not.toContain('h-8');
-  });
-  it('bare: nähtamatu nupp märgi ümber, hõljudes tõuseb ja tumeneb', () => {
-    const t = v.buttonVariants({ variant: 'bare', size: 'inline' }).split(/\s+/);
-    expect(t).toContain('bg-transparent');
-    expect(t).toContain('rounded-full');
-    expect(t).toContain('border-0');
-    expect(t).toContain('enabled:hover:-translate-y-px');
-    expect(t).toContain('enabled:hover:brightness-92');
-  });
-  it('text: roheline tavakaalus tekst ilma allajoonimiseta', () => {
-    const t = v.buttonVariants({ variant: 'text', size: 'inline' }).split(/\s+/);
-    expect(t).toContain('text-primary');
-    expect(t).toContain('border-0');
-    expect(t).toContain('font-normal');
-    expect(t).not.toContain('underline');
   });
 });
 
