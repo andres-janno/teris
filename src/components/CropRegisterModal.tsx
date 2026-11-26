@@ -46,8 +46,8 @@ const cropBlocks: { key: string; label: string; icon: string; groups: CropGroup[
   { key: 'other', label: 'Muud', icon: '🪴', groups: ['OTHER', 'FORAGE_GRASS', 'FALLOW'] }
 ];
 
-// Neli veergu täidavad akna ülejäänud kõrguse (iga veeru tabel kerib eraldi); kitsamal kui 1400px kaks veergu, tabel max 62vh
-const CROP_GROUPS = 'grid min-h-0 flex-1 grid-cols-4 grid-rows-[minmax(0,1fr)] gap-3 max-[1401px]:grid-cols-2 max-[1401px]:grid-rows-none max-[1401px]:items-start max-[761px]:grid-cols-1';
+// Neli veergu täidavad akna ülejäänud kõrguse (iga veeru tabel kerib eraldi); kitsamal kui 1400px 2/1 veergu ja leht kerib tervikuna
+const CROP_GROUPS = 'grid min-h-0 flex-1 grid-cols-4 grid-rows-[minmax(0,1fr)] gap-3 max-[1401px]:flex-none max-[1401px]:grid-cols-2 max-[1401px]:grid-rows-none max-[1401px]:items-start max-[761px]:grid-cols-1';
 // Kultuuri/sordi andmeridade nimelahtri alamosa: kultuuri värvitriip tuleb lahtri --crop-color-ist (crop-bar), polster vasakul
 const CROP_ROW_CELLS = '[&>td]:py-0.5 [&>td]:text-xs';
 // Kultuuri ja sortide vahel joont pole (kultuuri rida, kui sorte on, ja iga sordi rida peale viimase)
@@ -748,7 +748,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                   </div>
 
                   {blockCrops.length > 0 ? (
-                    <Table scroll="fill" bordered containerClassName="max-[1401px]:max-h-[62vh]">
+                    <Table scroll="fill" bordered containerClassName="max-[1401px]:min-h-0 max-[1401px]:flex-none">
                         <TableHeader>
                           <TableRow>
                             <TableHead>Kultuur</TableHead>
@@ -870,7 +870,7 @@ export const CropRegisterModal: React.FC<CropRegisterModalProps> = ({
                         </TableBody>
                       </Table>
                   ) : (
-                    <div className="min-h-0 flex-1 rounded-md border border-dashed border-border bg-popover px-3 py-4 text-center text-sm text-subtle">
+                    <div className="min-h-0 flex-1 rounded-md border border-dashed border-border bg-popover px-3 py-4 text-center text-sm text-subtle max-[1401px]:flex-none">
                       {searchQuery ? 'Otsingule vastavaid kultuure pole' : 'Kultuure pole lisatud'}
                     </div>
                   )}
