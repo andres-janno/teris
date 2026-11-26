@@ -9,8 +9,6 @@ import { Button } from './Button';
 import { dialogContentClass, dialogHeaderIconClass, dialogLayerClass, type DialogLayer, type DialogSize } from './variants';
 
 export const Dialog = DialogPrimitive.Root;
-export const DialogTrigger = DialogPrimitive.Trigger;
-export const DialogClose = DialogPrimitive.Close;
 export const DialogTitle = DialogPrimitive.Title;
 export const DialogDescription = DialogPrimitive.Description;
 

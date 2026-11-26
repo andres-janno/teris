@@ -83,8 +83,7 @@ Märkused:
   `dot` = olekupunkt (`dot="#e11d48"` = punkti värv andmetest). Andmevärv (nt kultuur) ainult punktina, mitte märgi taustana.
   Toonid: success = tehtud/aktiivne/oma, info = plaanis/renditud, warning = ootel/kontrolli, danger = viga/puudus, neutral = muu.
   Meta-objekti tüüp: `BadgeTone`.
-- **`Tabs`** (`variant="line"`): ainult paneeli vahetavad sakid. `TabsContent` on valikuline — kui paneeli paigutus sõltub
-  otsesest flex-lapsest, jäta tingimuslik renderdus ja kasuta ainult `TabsList` + `TabsTrigger`. Loendur = `<Badge>` lapsena.
+- **`Tabs`** (`variant="line"`): ainult paneeli vahetavad sakid (`TabsList` + `TabsTrigger`, sisu renderdatakse tingimuslikult). Loendur = `<Badge>` lapsena.
 - **`ToggleGroup`** + `ToggleGroupItem`: aasta valik, filtrid, vormi valik (paneel ei vahetu). `value` on string,
   `onValueChange` ei anna kunagi tühja väärtust. `aria-label` on kohustuslik. Rida murdub, üks hall raam.
 - **Peamenüü/navigatsioonirida:** `NavSwitch` + `NavSwitchItem current` (`aria-current="page"`, aktiivne heledam roheline `--selection-bg`); sakid ja valikurida (Tabs/ToggleGroup) on sisu sees vahetamiseks, mitte vaadete vahetamiseks.
@@ -322,8 +321,7 @@ Reeglid:
   `item` (tahvlikaart, 6px, `bg-popover`; hõljudes täisroheline ääris), `option` (valikurida, 10px, `bg-popover`; hõljudes õrn roheline ääris);
   `padding="none"` korral tuleb polster vaate CSS-ist. `selected` = roheline ääris + rõngas. Vaate olekuäärised (staatus, valitud toon) `!important`-iga.
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
-- Päis: `CardHeader` (`align="center|start"`), `CardTitle` (`as="h2|h3|h4"`, vaikimisi h3), `CardActions` (paremale).
-  `Panel` = kaart + päis äärisega + sisu.
+- Päis: `CardHeader` (`align="center|start"`), `CardActions` (paremale).
 - Vaate klass kaardil annab **asetuse, kirjasuuruse ja tekstivärvi** (position, z-index, flex, gap, margin, font-size, color); polstri ainult
   `padding="none"` korral. Välimuse (taust, ääris, nurk, vari, polster) annab `Card`. Vaate olekureegel, mis peab `Card`-i üle võitma (staatuse
   ääris, toonitud taust, erandnurk), vajab `!important` (`login.css`, `rotation.css`, `help-content.css` ja `map.css` on kihis `exceptions`; `themes.css` on kihis `theme`, `base.css` kihis `base`).
@@ -334,10 +332,9 @@ Reeglid:
 
 ## Menüüd, hüpikud, vihjed
 
-- `DropdownMenuContent`, `ContextMenuContent`, `PopoverContent` ja `Tooltip` portaalivad avatud dialoogi sisse (`usePopupContainer`) ja Esc sulgeb ainult nemad (ei levi taha). Menüü ja `PopoverContent` kõrgus piirdub vaba ruuminga ja kerib (Tooltipil piirangut pole — hoia tekst lühike).
+- `DropdownMenuContent`, `PopoverContent` ja `Tooltip` portaalivad avatud dialoogi sisse (`usePopupContainer`) ja Esc sulgeb ainult nemad (ei levi taha). Menüü ja `PopoverContent` kõrgus piirdub vaba ruuminga ja kerib (Tooltipil piirangut pole — hoia tekst lühike).
 - Kirjel ikoon: pane `<Icon />` ilma suuruseta (16px tuleb menüüst). Kahe rea kirje: `<DropdownMenuItem className="items-start"><MenuItemText title description /></DropdownMenuItem>`.
 - Märkeruudu kirje `DropdownMenuCheckboxItem`: menüü jääb avatuks, kui annad `onSelect={(e) => e.preventDefault()}`.
-- `PopoverAnchor` seab hüpiku asukoha muu elemendi külge.
 - Abi-ikoon: `<HelpHint helpKey="…" />` (`ui/HelpHint.tsx`); `inline` kui ikoon on teise nupu sees. Tühja juhendi korral ikooni ei ole. `HelpHintPopover` on sama ilma teenuseta (galerii).
 - Päästik: `Trigger` alati `asChild` + `Button` (toores `<button>` jääks preflight'i puudumisel halliks brauserinupuks).
 - `collisionPadding` on menüüdel, `PopoverContent`-il ja `Tooltip`-il 8 (Select, DateInput ja FilterSelect kasutavad Radixi vaikimisi väärtust) (ekraani serva ei puudutata); ära kirjuta üle.

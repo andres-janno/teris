@@ -3,14 +3,14 @@
 import React, { useEffect, useState } from 'react';
 import { Clock, Inbox, Lock, LogOut, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
-  Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
-  Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
-  DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Panel, Popover,
-  PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Switch, Table, TableBody, TableCell, TableFooter,
-  TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
+  Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, Checkbox, CheckboxField,
+  Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DropdownMenu, DropdownMenuContent,
+  DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Popover,
+  PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Table, TableBody, TableCell, TableFooter,
+  TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
-import { exampleCount, UnusedVariants, UsageBadges, UsageExample, UsageLayout, UsageSummary } from './UiGalleryUsage';
+import { exampleCount, GalleryPanel, UnusedVariants, UsageBadges, UsageExample, UsageLayout, UsageSummary } from './UiGalleryUsage';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
 import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
@@ -27,12 +27,12 @@ const BANNER_USER: AuthUser = {
 
 // components = ühised komponendid, mille kasutussagedus märgitakse pealkirja kõrvale (nimed index.ts-ist).
 const Section: React.FC<{ title: string; components?: string[]; children: React.ReactNode }> = ({ title, components, children }) => (
-  <Panel
+  <GalleryPanel
     title={components?.length ? <span className="flex flex-wrap items-center gap-x-3 gap-y-2">{title}<UsageBadges names={components} /></span> : title}
     bodyClassName="flex flex-wrap items-start gap-3"
   >
     {children}
-  </Panel>
+  </GalleryPanel>
 );
 
 export const UiGallery: React.FC = () => {
@@ -52,7 +52,8 @@ export const UiGallery: React.FC = () => {
   const [checked, setChecked] = useState(true);
   const [emptyChoice, setEmptyChoice] = useState('');
   const [groupChoice, setGroupChoice] = useState('');
-  const [on, setOn] = useState(false);
+  const [tab, setTab] = useState('a');
+  const [openDialog, setOpenDialog] = useState<'form' | 'xl' | 'menu' | null>(null);
   const [date, setDate] = useState('');
   const [filterValue, setFilterValue] = useState('');
   const [num, setNum] = useState<number | null>(12.5);
@@ -146,17 +147,17 @@ export const UiGallery: React.FC = () => {
           </UnusedVariants>
         </Section>
 
-        <Section title="Sakid" components={['Tabs', 'TabsList', 'TabsTrigger', 'TabsContent']}>
-          <Tabs defaultValue="a">
-            <TabsList>
-              <TabsTrigger value="a">Ülevaade</TabsTrigger>
-              <TabsTrigger value="b">Tööd <Badge tone="warning" variant="solid">3</Badge></TabsTrigger>
-              <TabsTrigger value="c" disabled>Kulud</TabsTrigger>
-            </TabsList>
-            <TabsContent value="a" className="pt-3 text-sm">Ülevaate sisu</TabsContent>
-            <TabsContent value="b" className="pt-3 text-sm">Tööde sisu</TabsContent>
-            <TabsContent value="c" className="pt-3 text-sm">Kulude sisu</TabsContent>
-          </Tabs>
+        <Section title="Sakid" components={['Tabs', 'TabsList', 'TabsTrigger']}>
+          <div>
+            <Tabs value={tab} onValueChange={setTab}>
+              <TabsList>
+                <TabsTrigger value="a">Ülevaade</TabsTrigger>
+                <TabsTrigger value="b">Tööd <Badge tone="warning" variant="solid">3</Badge></TabsTrigger>
+                <TabsTrigger value="c" disabled>Kulud</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            <div className="pt-3 text-sm">{tab === 'a' ? 'Ülevaate sisu' : tab === 'b' ? 'Tööde sisu' : 'Kulude sisu'}</div>
+          </div>
           <Tabs defaultValue="ha" variant="segmented">
             <TabsList><TabsTrigger value="ha">ha</TabsTrigger><TabsTrigger value="t">t</TabsTrigger><TabsTrigger value="eur">€</TabsTrigger></TabsList>
           </Tabs>
@@ -182,7 +183,7 @@ export const UiGallery: React.FC = () => {
           </NavSwitch>
         </Section>
 
-        <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'Checkbox', 'CheckboxField', 'RadioGroup', 'RadioGroupItem', 'RadioField', 'Switch']}>
+        <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'Checkbox', 'CheckboxField', 'RadioGroup', 'RadioGroupItem', 'RadioField']}>
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
             <Field label="Nimi" htmlFor="g-name" hint="Põllu nimi registris"><UsageExample as={Input} name="Input" className="w-full" props={{ id: 'g-name', placeholder: 'Nt Kaasiku' }} /></Field>
             <Field label="Kultuur" htmlFor="g-crop">
@@ -191,7 +192,6 @@ export const UiGallery: React.FC = () => {
             <Field label="Pindala" htmlFor="g-area" error="Pindala peab olema positiivne"><Input id="g-area" aria-invalid defaultValue="-2" className="text-right" /></Field>
             <Field label="Märkus" htmlFor="g-note" className="md:col-span-3"><Textarea id="g-note" /></Field>
             <label className="flex items-center gap-2 text-sm"><Checkbox checked={checked} onCheckedChange={setChecked} />Arvesta PRIA-sse</label>
-            <label className="flex items-center gap-2 text-sm"><Switch checked={on} onCheckedChange={setOn} />Saadab ka seisu ajal</label>
             <RadioGroup defaultValue="plan">
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="plan" />Plaan</label>
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="actual" />Tegelik</label>
@@ -309,9 +309,9 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Dialoog, menüüd, hüpikud" components={['Dialog', 'DialogContent', 'DropdownMenu', 'ContextMenu', 'Popover', 'Tooltip']}>
-          <Dialog>
-            <DialogTrigger asChild><Button variant="primary">Ava dialoog</Button></DialogTrigger>
+        <Section title="Dialoog, menüüd, hüpikud" components={['Dialog', 'DialogContent', 'DropdownMenu', 'Popover', 'Tooltip']}>
+          <Button variant="primary" onClick={() => setOpenDialog('form')}>Ava dialoog</Button>
+          <Dialog open={openDialog === 'form'} onOpenChange={(o) => !o && setOpenDialog(null)}>
             <DialogContent>
               <DialogHeader title="Muuda põldu" description="Kaasiku · 12,40 ha" />
               <DialogBody>
@@ -320,15 +320,15 @@ export const UiGallery: React.FC = () => {
                 <Field label="Kuupäev" htmlFor="d-date"><DateInput id="d-date" value={date} onChange={setDate} /></Field>
                 <Field label="Otsingvalik" htmlFor="d-filter"><FilterSelect id="d-filter" fill value={filterValue} onChange={setFilterValue} options={[{ value: '', label: 'Kõik' }, { value: 'a', label: 'Kaasiku' }, { value: 'b', label: 'Männiku' }, { value: 'c', label: 'Põllu 12' }]} /></Field>
               </DialogBody>
-              <DialogFooter><Button>Tühista</Button><Button variant="primary">Salvesta</Button></DialogFooter>
+              <DialogFooter><Button onClick={() => setOpenDialog(null)}>Tühista</Button><Button variant="primary" onClick={() => setOpenDialog(null)}>Salvesta</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-          <Dialog>
-            <DialogTrigger asChild><Button>Ava suur dialoog</Button></DialogTrigger>
+          <Button onClick={() => setOpenDialog('xl')}>Ava suur dialoog</Button>
+          <Dialog open={openDialog === 'xl'} onOpenChange={(o) => !o && setOpenDialog(null)}>
             <DialogContent size="xl" fillHeight>
               <DialogHeader title="Suur dialoog" description="size=xl, fillHeight" />
               <DialogBody>Sisu täidab akna.</DialogBody>
-              <DialogFooter><Button>Sulge</Button></DialogFooter>
+              <DialogFooter><Button onClick={() => setOpenDialog(null)}>Sulge</Button></DialogFooter>
             </DialogContent>
           </Dialog>
           <Button onClick={() => void confirmDialog('Kas soovid kindlasti kustutada?')}>Kinnitus</Button>
@@ -372,8 +372,8 @@ export const UiGallery: React.FC = () => {
               <DropdownMenuItem danger><Trash2 />Kustuta</DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Dialog>
-            <DialogTrigger asChild><Button id="gallery-dialog-menu">Menüü dialoogis</Button></DialogTrigger>
+          <Button id="gallery-dialog-menu" onClick={() => setOpenDialog('menu')}>Menüü dialoogis</Button>
+          <Dialog open={openDialog === 'menu'} onOpenChange={(o) => !o && setOpenDialog(null)}>
             <DialogContent size="sm">
               <DialogHeader title="Menüü dialoogis" description="Esc sulgeb esmalt menüü, teine Esc akna" />
               <DialogBody>
@@ -387,19 +387,9 @@ export const UiGallery: React.FC = () => {
                   </DropdownMenu>
                 </div>
               </DialogBody>
-              <DialogFooter><Button>Sulge</Button></DialogFooter>
+              <DialogFooter><Button onClick={() => setOpenDialog(null)}>Sulge</Button></DialogFooter>
             </DialogContent>
           </Dialog>
-          <ContextMenu>
-            <ContextMenuTrigger asChild>
-              <Card padding="sm" className="text-sm">Paremklõps siin</Card>
-            </ContextMenuTrigger>
-            <ContextMenuContent>
-              <ContextMenuItem>Ava põld</ContextMenuItem>
-              <ContextMenuSeparator />
-              <ContextMenuItem danger>Eemalda</ContextMenuItem>
-            </ContextMenuContent>
-          </ContextMenu>
           <Popover>
             <PopoverTrigger asChild><Button>Hüpik</Button></PopoverTrigger>
             <PopoverContent>Hüpiku sisu: filtrid, lisainfo või väike vorm.</PopoverContent>
@@ -451,10 +441,10 @@ export const UiGallery: React.FC = () => {
           </Button>
         </Section>
 
-        <Section title="Kaardid" components={['Card', 'CardButton', 'CardHeader', 'CardTitle', 'CardActions', 'Panel']}>
+        <Section title="Kaardid" components={['Card', 'CardButton', 'CardHeader', 'CardActions']}>
           <Card className="w-72">
             <CardHeader align="start">
-              <CardTitle>Kaart (surface)</CardTitle>
+              <h3 className="m-0 text-base font-semibold">Kaart (surface)</h3>
               <CardActions>
                 <Button variant="ghost" size="icon-sm" title="Muuda"><Pencil size={16} /></Button>
                 <Button variant="danger-ghost" size="icon-sm" title="Kustuta"><Trash2 size={16} /></Button>
@@ -468,7 +458,7 @@ export const UiGallery: React.FC = () => {
             </Card>
           </div>
           <Card className="w-96">
-            <CardTitle>Plaadid kaardi sees (tile)</CardTitle>
+            <h3 className="m-0 text-base font-semibold">Plaadid kaardi sees (tile)</h3>
             <div className="mt-3 grid grid-cols-3 gap-2">
               {[['Põlde', '42'], ['Pindala', '312,40 ha'], ['Kulud', '18 240 €']].map(([label, value]) => (
                 <Card key={label} variant="tile" padding="sm">
@@ -494,7 +484,6 @@ export const UiGallery: React.FC = () => {
               Valikurida (option, 10px nurk)
             </CardButton>
           </div>
-          <Panel title="Paneel" actions={<Button size="sm">Tegevus</Button>} className="w-72">Päisega paneel (Panel).</Panel>
         </Section>
         <Section title="Jaotise pealkiri" components={['SectionTitle']}>
           <div className="w-72">

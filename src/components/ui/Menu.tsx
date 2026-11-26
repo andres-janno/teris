@@ -1,7 +1,7 @@
-// src/components/ui/Menu.tsx — rippmenüü (nupu all) ja kontekstimenüü (paremklõps), sama välimusega.
+// src/components/ui/Menu.tsx — rippmenüü (nupu all).
 import React from 'react';
 import { Check } from 'lucide-react';
-import { ContextMenu as ContextMenuPrimitive, DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
+import { DropdownMenu as DropdownMenuPrimitive } from 'radix-ui';
 import { cn } from './cn';
 import { stopEscape, usePopupContainer } from './Dialog';
 import { menuContentClass, menuItemClass, menuLabelClass, menuSeparatorClass } from './variants';
@@ -44,28 +44,6 @@ export const DropdownMenuSeparator: React.FC<{ className?: string }> = ({ classN
 );
 export const DropdownMenuLabel: React.FC<React.ComponentProps<typeof DropdownMenuPrimitive.Label>> = ({ className, ...props }) => (
   <DropdownMenuPrimitive.Label className={cn(menuLabelClass, className)} {...props} />
-);
-
-export const ContextMenu = ContextMenuPrimitive.Root;
-export const ContextMenuTrigger = ContextMenuPrimitive.Trigger;
-export const ContextMenuContent: React.FC<React.ComponentProps<typeof ContextMenuPrimitive.Content>> = ({ className, collisionPadding = 8, onEscapeKeyDown, ...props }) => (
-  <ContextMenuPrimitive.Portal container={usePopupContainer()}>
-    <ContextMenuPrimitive.Content
-      collisionPadding={collisionPadding}
-      className={cn(menuContentClass, 'max-h-(--radix-context-menu-content-available-height)', className)}
-      onEscapeKeyDown={stopEscape(onEscapeKeyDown)}
-      {...props}
-    />
-  </ContextMenuPrimitive.Portal>
-);
-export const ContextMenuItem: React.FC<React.ComponentProps<typeof ContextMenuPrimitive.Item> & ItemExtra> = ({ className, danger, ...props }) => (
-  <ContextMenuPrimitive.Item className={itemClass(danger, className)} {...props} />
-);
-export const ContextMenuSeparator: React.FC<{ className?: string }> = ({ className }) => (
-  <ContextMenuPrimitive.Separator className={cn(menuSeparatorClass, className)} />
-);
-export const ContextMenuLabel: React.FC<React.ComponentProps<typeof ContextMenuPrimitive.Label>> = ({ className, ...props }) => (
-  <ContextMenuPrimitive.Label className={cn(menuLabelClass, className)} {...props} />
 );
 
 /** Kahe rea kirje sisu (pealkiri + alamtekst); kirjele lisa className="items-start". */

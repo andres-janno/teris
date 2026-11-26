@@ -6,7 +6,26 @@ import { X } from 'lucide-react';
 import usageData from 'virtual:ui-usage';
 import { comboCount, comboKey, exampleId, isUnused, nextSelection, propLabel, type ComponentUsage } from '../../tooling/uiUsage';
 import { formatDateTimeTallinn } from '../../services/dateFormat';
-import { Badge, Button, Panel, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './index';
+import { Badge, Button, Card, CardActions, CardHeader, cn, Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './index';
+
+/** Galerii enda sektsiooni- ja külgpaneeli raam (rakenduse vaated Panel-it ei kasuta). */
+export const GalleryPanel: React.FC<{
+  title: React.ReactNode;
+  actions?: React.ReactNode;
+  className?: string;
+  bodyClassName?: string;
+  children: React.ReactNode;
+}> = ({ title, actions, className, bodyClassName, children }) => (
+  <Card asChild padding="none" className={cn('flex flex-col', className)}>
+    <section>
+      <CardHeader className="border-b border-border px-4 py-3">
+        <h2 className="m-0 text-lg font-semibold">{title}</h2>
+        {actions && <CardActions className="gap-2">{actions}</CardActions>}
+      </CardHeader>
+      <div className={cn('p-4', bodyClassName)}>{children}</div>
+    </section>
+  </Card>
+);
 
 const byName = new Map(usageData.components.map((c) => [c.name, c]));
 
@@ -191,14 +210,14 @@ const UsagePanel: React.FC = () => {
       className={`${usage ? 'flex' : 'hidden lg:flex'} fixed inset-x-0 bottom-0 z-30 max-h-[45vh] flex-col lg:sticky lg:inset-x-auto lg:bottom-auto lg:top-6 lg:z-auto lg:max-h-[calc(100vh-3rem)]`}
       aria-label="Komponendi kasutus"
     >
-      <Panel
+      <GalleryPanel
         className="min-h-0 flex-1 shadow-lg lg:shadow-none"
         bodyClassName="min-h-0 flex-1 overflow-y-auto"
         title={<span className="text-base">Kasutus</span>}
         actions={usage && <Button variant="ghost" size="icon-sm" aria-label="Sulge paneel" onClick={close}><X size={14} /></Button>}
       >
         {usage ? <UsageDetails usage={usage} /> : <p className="text-sm text-muted-foreground">Vali komponendi märk, et näha kasutust</p>}
-      </Panel>
+      </GalleryPanel>
     </aside>
   );
 };

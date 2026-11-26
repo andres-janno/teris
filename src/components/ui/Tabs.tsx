@@ -22,7 +22,3 @@ export const TabsList: React.FC<React.ComponentProps<typeof TabsPrimitive.List>>
 export const TabsTrigger: React.FC<React.ComponentProps<typeof TabsPrimitive.Trigger>> = ({ className, ...props }) => (
   <TabsPrimitive.Trigger className={cn(tabsTriggerVariants({ variant: useContext(VariantContext) }), className)} {...props} />
 );
-
-export const TabsContent: React.FC<React.ComponentProps<typeof TabsPrimitive.Content>> = ({ className, ...props }) => (
-  <TabsPrimitive.Content className={cn('focus-visible:outline-none', className)} {...props} />
-);

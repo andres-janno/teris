@@ -7,7 +7,6 @@ import { popoverContentClass, tooltipContentClass } from './variants';
 
 export const Popover = PopoverPrimitive.Root;
 export const PopoverTrigger = PopoverPrimitive.Trigger;
-export const PopoverAnchor = PopoverPrimitive.Anchor;
 export const PopoverContent: React.FC<React.ComponentProps<typeof PopoverPrimitive.Content>> = ({
   className, sideOffset = 6, align = 'start', collisionPadding = 8, onEscapeKeyDown, ...props
 }) => (

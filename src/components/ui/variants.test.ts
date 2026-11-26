@@ -41,7 +41,7 @@ const allClassStrings = (): string[] => [
       [true, false].map((interactive) => v.cardVariants({ variant, padding, interactive, selected: interactive }))
     )
   ),
-  v.cardHeaderClass({ align: 'center' }), v.cardHeaderClass({ align: 'start' }), v.cardTitleClass, v.cardActionsClass,
+  v.cardHeaderClass({ align: 'center' }), v.cardHeaderClass({ align: 'start' }), v.cardActionsClass,
   v.filterBarClass, v.filterBarLabelClass, v.filterBarActionsClass, v.filterBarItemClass('sm'), v.filterBarItemClass('md'), v.filterBarItemClass('lg'),
   v.emptyStateClass, v.emptyStateIconClass, v.emptyStateTitleClass, v.emptyStateDescriptionClass,
   v.dialogHeaderIconClass,

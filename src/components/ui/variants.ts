@@ -204,7 +204,6 @@ export const cardVariants = cva('border border-border', {
 /** Kaardi päis: pealkiri vasakul, tegevused paremal. */
 export const cardHeaderClass = ({ align = 'center' }: { align?: 'center' | 'start' } = {}): string =>
   cn('flex justify-between gap-3', align === 'start' ? 'items-start' : 'items-center');
-export const cardTitleClass = 'm-0 text-base font-semibold';
 export const cardActionsClass = 'ml-auto flex shrink-0 items-center gap-1';
 
 /** Dialoogi päise ikoon: alati põhivärv (kasutaja otsus 2026-11-16) — vaade annab ainult ikooni, mitte värvi. */
