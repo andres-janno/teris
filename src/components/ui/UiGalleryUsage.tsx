@@ -33,7 +33,7 @@ const UsageDetails: React.FC<{ usage: ComponentUsage }> = ({ usage }) => (
     {usage.files.length > 0 && (
       <div className="flex flex-col gap-1">
         <div className="text-xs font-semibold text-muted-foreground">Failid</div>
-        <div className="flex max-h-64 flex-col gap-1 overflow-y-auto">
+        <div className="flex flex-col gap-1">
           {usage.files.map((f) => (
             <div key={f.file} className="flex justify-between gap-3">
               <span className="min-w-0 break-all">{f.file.replace(/^src\//, '')}</span>
@@ -59,7 +59,7 @@ const UsageBadge: React.FC<{ name: string }> = ({ name }) => {
           </Badge>
         </Button>
       </PopoverTrigger>
-      <PopoverContent><UsageDetails usage={usage} /></PopoverContent>
+      <PopoverContent className="overflow-y-auto"><UsageDetails usage={usage} /></PopoverContent>
     </Popover>
   );
 };
