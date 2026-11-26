@@ -91,6 +91,7 @@
 @source '../components/HarvestLotDialog.tsx';
 @source '../components/HarvestLotsPanel.tsx';
 @source '../components/GuideView.tsx';
+@source '../components/ReleaseNotesModal.tsx';
 @source '../App.tsx';
 @source '../admin';
 @source not '../components/ui/**/*.{md,test.ts,test.tsx}';
