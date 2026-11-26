@@ -380,7 +380,7 @@ export function ReleaseNotesView() {
             </div>
 
             {previewMode ? (
-              <div className="rounded-lg border border-border bg-muted/30 p-5">
+              <div className="rounded-lg border border-border bg-muted/30 p-4">
                 <div className="text-xs font-semibold uppercase tracking-wide text-primary">
                   Versioon {version}
                 </div>
@@ -395,7 +395,7 @@ export function ReleaseNotesView() {
                         <div className="mb-2 flex items-center gap-2">
                           <Badge tone={CATEGORY_TONE[g.category]} variant="soft">{g.label}</Badge>
                         </div>
-                        <ul className="list-disc space-y-1.5 pl-5 text-sm text-foreground">
+                        <ul className="list-disc space-y-1.5 pl-4 text-sm text-foreground">
                           {g.items.map((it) => (
                             <li key={it.id}>
                               {it.area?.trim() && <strong className="font-semibold">{it.area.trim()}: </strong>}
@@ -479,15 +479,18 @@ export function ReleaseNotesView() {
 
             {/* Seotud commitid (kui mustand loodi skriptiga) */}
             {current.sourceCommits.length > 0 && (
-              <div className="rounded-lg border border-border p-3">
-                <button
+              <div className="rounded-lg border border-border p-3 text-sm">
+                <Button
                   type="button"
-                  className="text-sm font-medium text-muted-foreground hover:text-foreground"
+                  variant="plain"
+                  size="inline"
+                  className="w-auto font-medium text-muted-foreground enabled:hover:text-foreground"
+                  aria-expanded={showCommits}
                   onClick={() => setShowCommits((s) => !s)}
                 >
                   {showCommits ? '▼' : '▶'} Seotud git commitid ({current.sourceCommits.length}
                   {current.fromCommit || current.toCommit ? ` • ${current.fromCommit ?? '…'} → ${current.toCommit ?? 'HEAD'}` : ''})
-                </button>
+                </Button>
                 {showCommits && (
                   <ul className="mt-2 max-h-48 space-y-1 overflow-y-auto font-mono text-xs text-muted-foreground">
                     {current.sourceCommits.map((c) => (

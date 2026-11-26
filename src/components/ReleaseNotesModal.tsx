@@ -114,7 +114,7 @@ export const ReleaseNotesModal: React.FC<ReleaseNotesModalProps> = ({
                           <Badge tone={CATEGORY_TONE[g.category]} variant="soft" className="mb-1.5">
                             {g.label}
                           </Badge>
-                          <ul className="list-disc space-y-1 pl-5 text-sm leading-relaxed text-foreground">
+                          <ul className="list-disc space-y-1 pl-4 text-sm leading-relaxed text-foreground">
                             {g.items.map((it) => (
                               <li key={it.id}>
                                 {it.area && <strong className="font-medium">{it.area}: </strong>}
