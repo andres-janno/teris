@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Layers,
   Tractor,
@@ -10,10 +10,12 @@ import {
   Users,
   Package,
   Repeat,
-  CloudSun
+  CloudSun,
+  Menu,
+  X
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import { NavSwitch, NavSwitchItem } from './ui';
+import { Button, DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, NavSwitch, NavSwitchItem, cn } from './ui';
 import { TerisLogo } from './TerisLogo';
 import { UserMenu } from './UserMenu';
 import { OperatorSelector } from './OperatorSelector';
@@ -99,6 +101,20 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenReleaseNotes,
   hasUnreadReleaseNotes = false
 }) => {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const visibleNavItems = NAV_ITEMS.filter((item) => item.view !== 'weather' || showWeather);
+  const activeNavItem = visibleNavItems.find((item) => item.view === mainView);
+
+  useEffect(() => {
+    if (!mobileMenuOpen || typeof window === 'undefined' || typeof window.matchMedia !== 'function') return;
+    const mq = window.matchMedia('(min-width: 1101px)');
+    const handleChange = (e: MediaQueryListEvent) => {
+      if (e.matches) setMobileMenuOpen(false);
+    };
+    mq.addEventListener('change', handleChange);
+    return () => mq.removeEventListener('change', handleChange);
+  }, [mobileMenuOpen]);
+
   return (
     <header className="z-1000 flex h-16 items-center justify-between border-b border-border bg-white/95 px-4 backdrop-blur-md transition-colors duration-250 dark:bg-background/90">
       {/* Logo klõps laeb lehe uuesti algolekusse (kaardivaade, nagu uues brauseris avamine) */}
@@ -106,17 +122,57 @@ export const Header: React.FC<HeaderProps> = ({
         <TerisLogo variant="responsive" />
       </a>
 
-      {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel */}
-      <div className="flex min-w-0 flex-1 overflow-x-auto px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+      {/* Menüü on logo ja paremal olevate nuppude vahelise ruumi keskel; kitsal ekraanil (≤ 1100px) hamburgeri rippmenüü */}
+      <div className="flex min-w-0 flex-1 items-center px-4">
         {onChangeMainView && (
-          <NavSwitch className="mx-auto" aria-label="Põhivaade">
-            {NAV_ITEMS.filter((item) => item.view !== 'weather' || showWeather).map(({ view, label, Icon }) => (
-              <NavSwitchItem key={view} current={mainView === view} onClick={() => onChangeMainView(view)}>
-                <Icon size={15} className="max-[1401px]:hidden" />
-                <span>{label}</span>
-              </NavSwitchItem>
-            ))}
-          </NavSwitch>
+          <>
+            <div className="hidden min-w-0 flex-1 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden min-[1101px]:flex">
+              <NavSwitch className="mx-auto" aria-label="Põhivaade">
+                {visibleNavItems.map(({ view, label, Icon }) => (
+                  <NavSwitchItem key={view} current={mainView === view} onClick={() => onChangeMainView(view)}>
+                    <Icon size={15} className="max-[1401px]:hidden" />
+                    <span>{label}</span>
+                  </NavSwitchItem>
+                ))}
+              </NavSwitch>
+            </div>
+
+            <div className="flex min-w-0 items-center min-[1101px]:hidden">
+              <DropdownMenu open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="max-w-full gap-2 px-2.5"
+                    aria-label="Ava peamenüü"
+                    title="Peamenüü"
+                  >
+                    {mobileMenuOpen ? <X size={16} className="shrink-0" /> : <Menu size={16} className="shrink-0" />}
+                    <span className="truncate">{activeNavItem?.label ?? (mainView === 'guide' ? 'Juhend' : 'Menüü')}</span>
+                  </Button>
+                </DropdownMenuTrigger>
+
+                <DropdownMenuContent align="start" className="min-w-52">
+                  {visibleNavItems.map(({ view, label, Icon }) => {
+                    const isCurrent = mainView === view;
+                    return (
+                      <DropdownMenuItem
+                        key={view}
+                        aria-current={isCurrent ? 'page' : undefined}
+                        className={cn(
+                          isCurrent && 'bg-selection font-medium text-white data-[highlighted]:bg-selection data-[highlighted]:text-white'
+                        )}
+                        onSelect={() => onChangeMainView(view)}
+                      >
+                        <Icon />
+                        <span>{label}</span>
+                      </DropdownMenuItem>
+                    );
+                  })}
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+          </>
         )}
       </div>
 
