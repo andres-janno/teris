@@ -10,7 +10,7 @@ import {
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
-import { UsageBadges, UsageSummary } from './UiGalleryUsage';
+import { UsageBadges, UsageExample, UsageSummary } from './UiGalleryUsage';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
 import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
@@ -81,54 +81,48 @@ export const UiGallery: React.FC = () => {
         <UsageSummary />
 
         <Section title="Nupud" components={['Button']}>
-          <Button variant="primary"><Plus size={14} />Lisa töö</Button>
-          <Button>Tühista</Button>
-          <Button variant="ghost">Rohkem</Button>
-          <Button variant="danger"><Trash2 size={14} />Kustuta</Button>
-          <Button variant="primary" size="sm">Väike</Button>
-          <Button size="sm">Väike</Button>
-          <Button size="icon-sm" aria-label="Muuda"><Pencil size={16} /></Button>
-          <Button variant="ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
-          <Button variant="danger-ghost" size="icon-sm" aria-label="Kustuta"><Trash2 size={14} /></Button>
-          <Button variant="ghost" size="icon-xs" aria-label="Muuda"><Pencil size={12} /></Button>
-          <Button variant="primary" size="icon-lg" title="Mängi"><Play size={18} /></Button>
-          <Button size="xs"><RotateCcw size={11} /><span>Vaheta</span></Button>
-          <Button size="xs" aria-pressed>Sim</Button>
-          <Button variant="ghost" size="icon-xs" aria-pressed title="Rada nähtav"><Eye size={12} /></Button>
-          <Button variant="primary" disabled>Keelatud</Button>
-          <p className="text-sm">Lõigu sees: <Button variant="link" size="inline">ava register</Button></p>
+          <UsageExample as={Button} name="Button" props={{ variant: 'primary' }}><Plus size={14} />Lisa töö</UsageExample>
+          <UsageExample as={Button} name="Button" props={{}}>Tühista</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost' }}>Rohkem</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'danger' }}><Trash2 size={14} />Kustuta</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'primary', size: 'sm' }}>Väike</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ size: 'sm' }}>Väike</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ size: 'icon-sm', 'aria-label': 'Muuda' }}><Pencil size={16} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-sm', 'aria-label': 'Kustuta' }}><Trash2 size={14} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'danger-ghost', size: 'icon-sm', 'aria-label': 'Kustuta' }}><Trash2 size={14} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-xs', 'aria-label': 'Muuda' }}><Pencil size={12} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'primary', size: 'icon-lg', title: 'Mängi' }}><Play size={18} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ size: 'xs' }}><RotateCcw size={11} /><span>Vaheta</span></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ size: 'xs', 'aria-pressed': true }}>Sim</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-xs', 'aria-pressed': true, title: 'Rada nähtav' }}><Eye size={12} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'primary', disabled: true }}>Keelatud</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'link', size: 'inline' }}>Lõigu sees: ava register</UsageExample>
         </Section>
 
         <Section title="Nupud: erivariandid ja kiibid" components={['ChipButton']}>
-          <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö"><Plus size={13} /></Button>
-          <Button variant="bare" size="inline" title="Ava finants"><Badge tone="success" variant="solid">Kinnitatud</Badge></Button>
-          <Button variant="text" size="inline">Tekstina nupp (text)</Button>
-          <Button variant="plain" size="inline">Kogu rea nupp (plain)</Button>
-          <ChipButton variant="tint" accent="var(--amber-500)" selected={chip === 'a'} dimmed={chip !== 'none' && chip !== 'a'} onClick={() => setChip(chip === 'a' ? 'none' : 'a')}>
-            <span>Talinisu</span><strong className={CHIP_NUM}>120,50 ha</strong>
-          </ChipButton>
-          <ChipButton variant="tint" accent="var(--blue-500)" selected={chip === 'b'} dimmed={chip !== 'none' && chip !== 'b'} onClick={() => setChip(chip === 'b' ? 'none' : 'b')}>
-            <span>Suvioder</span><strong className={CHIP_NUM}>40,00 ha</strong>
-          </ChipButton>
-          <ChipButton variant="outline" accent="var(--emerald-500)" selected={tenure} onClick={() => setTenure(!tenure)}>
-            <span className="text-muted-foreground">Oma maa:</span><strong className={CHIP_NUM}>312 ha</strong>
-          </ChipButton>
+          <UsageExample as={Button} name="Button" props={{ variant: 'dashed', size: 'add-slot', 'aria-label': 'Lisa töö', title: 'Lisa töö' }}><Plus size={13} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'bare', size: 'inline', title: 'Ava finants' }}><Badge tone="success" variant="solid">Kinnitatud</Badge></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'text', size: 'inline' }}>Tekstina nupp (text)</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'plain', size: 'inline' }}>Kogu rea nupp (plain)</UsageExample>
+          <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'tint', accent: 'var(--amber-500)', selected: chip === 'a', dimmed: chip !== 'none' && chip !== 'a', onClick: () => setChip(chip === 'a' ? 'none' : 'a') }}><span>Talinisu</span><strong className={CHIP_NUM}>120,50 ha</strong></UsageExample>
+          <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'tint', accent: 'var(--blue-500)', selected: chip === 'b', dimmed: chip !== 'none' && chip !== 'b', onClick: () => setChip(chip === 'b' ? 'none' : 'b') }}><span>Suvioder</span><strong className={CHIP_NUM}>40,00 ha</strong></UsageExample>
+          <UsageExample as={ChipButton} name="ChipButton" props={{ variant: 'outline', accent: 'var(--emerald-500)', selected: tenure, onClick: () => setTenure(!tenure) }}><span className="text-muted-foreground">Oma maa:</span><strong className={CHIP_NUM}>312 ha</strong></UsageExample>
         </Section>
 
         <Section title="Märgid" components={['Badge']}>
           {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => (
             <div key={tone} className="flex w-full flex-wrap items-center gap-3">
-              <Badge tone={tone}>{tone}</Badge>
-              <Badge tone={tone} variant="solid">{tone}</Badge>
-              <Badge tone={tone} variant="outline">{tone}</Badge>
+              <UsageExample as={Badge} name="Badge" props={{ tone }}>{tone}</UsageExample>
+              <UsageExample as={Badge} name="Badge" props={{ tone, variant: 'solid' }}>{tone}</UsageExample>
+              <UsageExample as={Badge} name="Badge" props={{ tone, variant: 'outline' }}>{tone}</UsageExample>
             </div>
           ))}
           <div className="flex w-full flex-wrap items-center gap-3">
-            <Badge tone="success" size="md">Suurus md</Badge>
-            <Badge tone="success" dot>Punktiga</Badge>
-            <Badge dot="#e11d48">Andmevärv</Badge>
-            <Badge tone="info"><Clock size={12} />Ikooniga</Badge>
-            <Badge tone="danger" variant="outline">Puudus</Badge>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', size: 'md' }}>Suurus md</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', dot: true }}>Punktiga</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ dot: '#e11d48' }}>Andmevärv</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'info' }}><Clock size={12} />Ikooniga</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'danger', variant: 'outline' }}>Puudus</UsageExample>
           </div>
         </Section>
 
@@ -182,7 +176,7 @@ export const UiGallery: React.FC = () => {
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="plan" />Plaan</label>
               <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="actual" />Tegelik</label>
             </RadioGroup>
-            <Field label="Väike (sm, tabeli ridades)"><Input size="sm" defaultValue="Kaasiku" /></Field>
+            <Field label="Väike (sm, tabeli ridades)"><UsageExample as={Input} name="Input" className="w-full" props={{ size: 'sm', defaultValue: 'Kaasiku' }} /></Field>
             <Field label="Arv ühikuga"><Input numeric end="ha" defaultValue="12,50" /></Field>
             <Field label="Otsing ikooniga"><Input start={<Search size={14} />} placeholder="Otsi…" /></Field>
             <Field label="Kirjutuskaitstud"><Input readOnly value="12,50" /></Field>
@@ -203,7 +197,7 @@ export const UiGallery: React.FC = () => {
               />
             </Field>
             <Field label="Select sm">
-              <Select size="sm" value={crop} onValueChange={setCrop} options={[{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }]} />
+              <UsageExample as={Select} name="Select" className="w-full" props={{ size: 'sm', value: crop, onValueChange: setCrop, options: [{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }] }} />
             </Field>
             <CheckboxField label="Mitteaktiivne" hint="Ei näidata valikutes" checked={checked} onCheckedChange={setChecked} />
             <RadioGroup orientation="vertical" defaultValue="plan">
@@ -251,7 +245,7 @@ export const UiGallery: React.FC = () => {
             <Field label="Kuupäev (sm)" htmlFor="g-date-sm"><DateInput id="g-date-sm" size="sm" value={date} onChange={setDate} /></Field>
             <Field label="Kuupäev, vigane (sisesta „x“)" htmlFor="g-date-bad"><DateInput id="g-date-bad" value="" onChange={() => {}} /></Field>
             <Field label="Arv ühikuga (NumberInput end)" htmlFor="g-num"><NumberInput id="g-num" end="ha" value={num} onChange={setNum} /></Field>
-            <Field label="Arv (sm)" htmlFor="g-num-sm"><NumberInput id="g-num-sm" size="sm" value={num} onChange={setNum} /></Field>
+            <Field label="Arv (sm)" htmlFor="g-num-sm"><UsageExample as={NumberInput} name="NumberInput" className="w-full" props={{ id: 'g-num-sm', size: 'sm', value: num, onChange: setNum }} /></Field>
             <Field label="Otsing (SearchInput, X tühjendab)" htmlFor="g-search"><SearchInput aria-label="Otsing" placeholder="Otsi…" value={search} onChange={setSearch} /></Field>
             <Field label="Otsinguga valik rühmadega (FilterClear sees)">
               <FilterClear fill active={fsel !== ''} onClear={() => setFsel('')}>
@@ -395,11 +389,11 @@ export const UiGallery: React.FC = () => {
 
         <Section title="Teated" components={['Alert']}>
           <div className="flex flex-col gap-2">
-            <Alert tone="error">Salvestamine ebaõnnestus: serveri viga.</Alert>
-            <Alert tone="success">Salvestatud.</Alert>
-            <Alert tone="info">See töö kuulub järgmise hooaja tsüklisse.</Alert>
-            <Alert tone="warning" size="sm">Hooaeg on lukus.</Alert>
-            <Alert>Tavaline teade ilma toonita.</Alert>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'error' }}>Salvestamine ebaõnnestus: serveri viga.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'success' }}>Salvestatud.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'info' }}>See töö kuulub järgmise hooaja tsüklisse.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'warning', size: 'sm' }}>Hooaeg on lukus.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{}}>Tavaline teade ilma toonita.</UsageExample>
           </div>
         </Section>
 
@@ -481,11 +475,11 @@ export const UiGallery: React.FC = () => {
         </Section>
         <Section title="Näitaja plaat" components={['StatTile']}>
           <div className="grid w-full grid-cols-4 gap-3">
-            <StatTile label="Põllud kokku" value={<>12 <small>põldu</small></>} sub={<>Pindala: <strong>340,50 ha</strong></>} />
-            <StatTile label="Kulud kokku" tone="cost" value="48 200 €" sub="Keskmiselt: 140 € / ha" />
-            <StatTile label="Saagitulu kokku" tone="revenue" value="61 900 €" note="Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast." />
-            <StatTile label="Tegevustulemus" tone="profit" value="+13 700 €" sub="Tulemus: 40 € / ha" />
-            <StatTile label="Läbisõit" value="—" empty />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Põllud kokku', value: <>12 <small>põldu</small></>, sub: <>Pindala: <strong>340,50 ha</strong></> }} />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Kulud kokku', tone: 'cost', value: '48 200 €', sub: 'Keskmiselt: 140 € / ha' }} />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Saagitulu kokku', tone: 'revenue', value: '61 900 €', note: 'Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast.' }} />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Tegevustulemus', tone: 'profit', value: '+13 700 €', sub: 'Tulemus: 40 € / ha' }} />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Läbisõit', value: '—', empty: true }} />
           </div>
         </Section>
         <Section title="Rida silt: väärtus" components={['KeyValueRow']}>
@@ -503,11 +497,11 @@ export const UiGallery: React.FC = () => {
         </Section>
         <Section title="Ikoonikast" components={['IconBox']}>
           <div className="flex items-center gap-3">
-            <IconBox tone="info"><Radio size={15} /></IconBox>
-            <IconBox tone="success"><Tractor size={15} /></IconBox>
-            <IconBox tone="warning"><Wrench size={15} /></IconBox>
-            <IconBox size="md" style={{ borderColor: DEFAULT_VEHICLE_COLOR }}><Tractor size={20} /></IconBox>
-            <IconBox size="lg">🔧</IconBox>
+            <UsageExample as={IconBox} name="IconBox" props={{ tone: 'info' }}><Radio size={15} /></UsageExample>
+            <UsageExample as={IconBox} name="IconBox" props={{ tone: 'success' }}><Tractor size={15} /></UsageExample>
+            <UsageExample as={IconBox} name="IconBox" props={{ tone: 'warning' }}><Wrench size={15} /></UsageExample>
+            <UsageExample as={IconBox} name="IconBox" props={{ size: 'md', style: { borderColor: DEFAULT_VEHICLE_COLOR } }}><Tractor size={20} /></UsageExample>
+            <UsageExample as={IconBox} name="IconBox" props={{ size: 'lg' }}>🔧</UsageExample>
           </div>
         </Section>
         <Section title="Edenemisriba" components={['ProgressBar']}>

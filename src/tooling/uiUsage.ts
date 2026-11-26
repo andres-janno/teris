@@ -21,12 +21,25 @@ export interface FileCount {
   count: number;
 }
 
+/** Ühe propikombinatsiooni kasutuste arv; values on silt iga `comboProps` propi kohta (samas järjekorras). */
+export interface PropCombo {
+  values: string[];
+  count: number;
+}
+
 export interface ComponentUsage {
   name: string;
+  /** Kasutuskordi rakenduse vaadetes (esiletõstetud arv). */
   count: number;
   fileCount: number;
   files: FileCount[];
   props: PropBreakdown[];
+  /** Propid, mille kombinatsioone loetakse (BREAKDOWN_PROPS-ist need, mida on vähemalt kord kirjutatud). */
+  comboProps: string[];
+  /** Kombinatsioonid kasutuse järgi kahanevalt (ainult rakenduse vaated). */
+  combos: PropCombo[];
+  /** Kasutuskordi teiste ühiste komponentide sees (src/components/ui/**, v.a. galerii ja testid). */
+  insideUi: number;
 }
 
 export interface UiUsage {
@@ -42,6 +55,29 @@ export const BREAKDOWN_PROPS = ['variant', 'tone', 'size'] as const;
 const KIND_ORDER: Record<PropValueKind, number> = { static: 0, dynamic: 1, default: 2 };
 
 const UI_DIR = 'src/components/ui/';
+
+export const DEFAULT_LABEL = 'vaikimisi';
+export const DYNAMIC_LABEL = 'dünaamiline';
+
+/** Propi väärtuse silt: puuduv → „vaikimisi“, muidu väärtus ise. Galerii ja loendus kasutavad sama silti. */
+export function propLabel(value: unknown): string {
+  return value === undefined || value === null ? DEFAULT_LABEL : String(value);
+}
+
+/** Kombinatsiooni võti („vaikimisi · icon-sm“); sama vorming on galerii näidiste all ja hüpiku tabelis. */
+export function comboKey(labels: string[]): string {
+  return labels.join(' · ');
+}
+
+/** Mitu korda täpselt see kombinatsioon rakenduses esineb (0, kui ei esine). */
+export function comboCount(usage: ComponentUsage, key: string): number {
+  return usage.combos.find((c) => comboKey(c.values) === key)?.count ?? 0;
+}
+
+/** Kasutamata = ei rakenduse vaadetes ega teiste ühiste komponentide sees. */
+export function isUnused(c: Pick<ComponentUsage, 'count' | 'insideUi'>): boolean {
+  return c.count === 0 && c.insideUi === 0;
+}
 
 // Eemaldab rea- ja plokkkommentaarid, jättes sõne- ja mallsõnede sisu puutumata.
 // Reavahetused säilivad. `//` kohe pärast `:` ei loe kommentaariks (URL JSX-tekstis).
@@ -99,6 +135,13 @@ export function parseUiComponents(indexSource: string): string[] {
     }
   }
   return names;
+}
+
+/** Ühiste komponentide enda failid, mille kasutus loetakse eraldi (galerii, testid ja `._` failid jäävad välja). */
+export function isInsideUiFile(path: string): boolean {
+  const p = path.replace(/\\/g, '/');
+  const base = p.slice(p.lastIndexOf('/') + 1);
+  return p.startsWith(UI_DIR) && p.endsWith('.tsx') && !base.startsWith('UiGallery') && !/\.test\./.test(base) && !base.startsWith('._');
 }
 
 /** Kas fail loetakse: kõik src all olevad .tsx, v.a. ui/ kaust (galerii ja komponendid ise), testid ja macOS-i `._` failid. */
@@ -187,7 +230,10 @@ function staticValue(raw: string): string | null {
 interface Acc {
   files: Map<string, number>;
   props: Map<string, Map<string, PropValueCount>>;
+  /** Kõigi BREAKDOWN_PROPS siltide kombinatsioon (võti = siltide ühendus) → kordi. */
+  tuples: Map<string, { labels: string[]; count: number }>;
   count: number;
+  insideUi: number;
 }
 
 function bump(map: Map<string, PropValueCount>, key: string, v: Omit<PropValueCount, 'count'>): void {
@@ -208,30 +254,46 @@ export function countUiUsage(input: {
   generatedAt?: string;
 }): UiUsage {
   const names = parseUiComponents(input.indexSource);
-  const acc = new Map<string, Acc>(names.map((nm) => [nm, { files: new Map(), props: new Map(), count: 0 }]));
+  const acc = new Map<string, Acc>(names.map((nm) => [nm, { files: new Map(), props: new Map(), tuples: new Map(), count: 0, insideUi: 0 }]));
   const tagRe = /(?<![\w$)\]])<([A-Z][\w$]*)(?![\w$])/g;
 
-  const paths = Object.keys(input.files).filter(isCountedFile).sort();
+  const paths = Object.keys(input.files).filter((p) => isCountedFile(p) || isInsideUiFile(p)).sort();
   for (const path of paths) {
     const src = stripComments(input.files[path]);
+    const inside = isInsideUiFile(path);
     for (const m of src.matchAll(tagRe)) {
       const a = acc.get(m[1]);
       if (!a) continue;
+      if (inside) {
+        a.insideUi++;
+        continue;
+      }
       a.count++;
       a.files.set(path, (a.files.get(path) ?? 0) + 1);
       const attrs = readAttrs(src, m.index + m[0].length);
+      const labels: string[] = [];
       for (const prop of BREAKDOWN_PROPS) {
         const attr = attrs.find((x) => x.name === prop);
         const values = a.props.get(prop) ?? new Map<string, PropValueCount>();
         if (!attr || attr.raw === null) {
           bump(values, 'default', { kind: 'default' });
+          labels.push(DEFAULT_LABEL);
         } else {
           const v = staticValue(attr.raw);
-          if (v === null) bump(values, 'dynamic', { kind: 'dynamic' });
-          else bump(values, `static:${v}`, { kind: 'static', value: v });
+          if (v === null) {
+            bump(values, 'dynamic', { kind: 'dynamic' });
+            labels.push(DYNAMIC_LABEL);
+          } else {
+            bump(values, `static:${v}`, { kind: 'static', value: v });
+            labels.push(v);
+          }
         }
         a.props.set(prop, values);
       }
+      const tk = labels.join('\u0000');
+      const t = a.tuples.get(tk);
+      if (t) t.count++;
+      else a.tuples.set(tk, { labels, count: 1 });
     }
   }
 
@@ -249,7 +311,18 @@ export function countUiUsage(input: {
       );
       props.push({ prop, values: sorted });
     }
-    return { name, count: a.count, fileCount: files.length, files, props };
+    const comboProps = props.map((p) => p.prop);
+    const idx = comboProps.map((p) => BREAKDOWN_PROPS.indexOf(p as (typeof BREAKDOWN_PROPS)[number]));
+    const merged = new Map<string, PropCombo>();
+    for (const t of comboProps.length ? a.tuples.values() : []) {
+      const values = idx.map((i) => t.labels[i]);
+      const k = comboKey(values);
+      const cur = merged.get(k);
+      if (cur) cur.count += t.count;
+      else merged.set(k, { values, count: t.count });
+    }
+    const combos = [...merged.values()].sort((x, y) => y.count - x.count || comboKey(x.values).localeCompare(comboKey(y.values)));
+    return { name, count: a.count, fileCount: files.length, files, props, comboProps, combos, insideUi: a.insideUi };
   });
 
   return { generatedAt: input.generatedAt ?? new Date().toISOString(), components };

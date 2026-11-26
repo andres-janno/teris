@@ -4,7 +4,7 @@
 import { readdirSync, readFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import type { Plugin } from 'vite';
-import { countUiUsage, isCountedFile, type UiUsage } from './uiUsage.ts';
+import { countUiUsage, isCountedFile, isInsideUiFile, type UiUsage } from './uiUsage.ts';
 
 const VIRTUAL_ID = 'virtual:ui-usage';
 const RESOLVED_ID = `\0${VIRTUAL_ID}`;
@@ -25,7 +25,7 @@ export function computeUiUsage(root: string): UiUsage {
   const files: Record<string, string> = {};
   for (const abs of paths) {
     const rel = relative(root, abs).split('\\').join('/');
-    if (isCountedFile(rel)) files[rel] = readFileSync(abs, 'utf8');
+    if (isCountedFile(rel) || isInsideUiFile(rel)) files[rel] = readFileSync(abs, 'utf8');
   }
   const indexSource = readFileSync(join(root, 'src/components/ui/index.ts'), 'utf8');
   return countUiUsage({ indexSource, files });
