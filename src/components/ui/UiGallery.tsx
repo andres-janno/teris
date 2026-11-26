@@ -1,7 +1,7 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Inbox, Lock, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
+import { Clock, Inbox, Lock, LogOut, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
   Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, CardTitle, Checkbox, CheckboxField, ContextMenu, ContextMenuContent, ContextMenuItem, ContextMenuSeparator, ContextMenuTrigger,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DialogTrigger, DropdownMenu, DropdownMenuContent,
@@ -10,7 +10,7 @@ import {
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
-import { UsageBadges, UsageExample, UsageSummary } from './UiGalleryUsage';
+import { exampleCount, UnusedVariants, UsageBadges, UsageExample, UsageLayout, UsageSummary } from './UiGalleryUsage';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
 import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
@@ -69,7 +69,7 @@ export const UiGallery: React.FC = () => {
 
   return (
     <div className="h-screen overflow-y-auto bg-background text-foreground">
-      <div className="mx-auto flex max-w-5xl flex-col gap-4 p-6">
+      <UsageLayout>
         <div className="flex items-center justify-between">
           <h1 className="text-xl font-semibold">Ühised komponendid</h1>
           <Button size="sm" onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}>
@@ -87,8 +87,12 @@ export const UiGallery: React.FC = () => {
           <UsageExample as={Button} name="Button" props={{ variant: 'danger' }}><Trash2 size={14} />Kustuta</UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'primary', size: 'sm' }}>Väike</UsageExample>
           <UsageExample as={Button} name="Button" props={{ size: 'sm' }}>Väike</UsageExample>
-          <UsageExample as={Button} name="Button" props={{ size: 'icon-sm', 'aria-label': 'Muuda' }}><Pencil size={16} /></UsageExample>
-          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-sm', 'aria-label': 'Kustuta' }}><Trash2 size={14} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'sm' }}><Plus size={14} />Lisa rida</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'secondary', size: 'sm' }}>Saada test</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'danger', size: 'sm' }}>Kustuta</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'link', size: 'sm' }}>Vaata viimast sõitu</UsageExample>
+          <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-sm', 'aria-label': 'Muuda', title: 'Muuda' }}><Pencil size={14} /></UsageExample>
+          <UsageExample as={Button} name="Button" props={{ size: 'icon-sm', 'aria-label': 'Logi välja', title: 'Logi välja' }}><LogOut size={14} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'danger-ghost', size: 'icon-sm', 'aria-label': 'Kustuta' }}><Trash2 size={14} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'ghost', size: 'icon-xs', 'aria-label': 'Muuda' }}><Pencil size={12} /></UsageExample>
           <UsageExample as={Button} name="Button" props={{ variant: 'primary', size: 'icon-lg', title: 'Mängi' }}><Play size={18} /></UsageExample>
@@ -110,20 +114,36 @@ export const UiGallery: React.FC = () => {
         </Section>
 
         <Section title="Märgid" components={['Badge']}>
-          {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => (
-            <div key={tone} className="flex w-full flex-wrap items-center gap-3">
-              <UsageExample as={Badge} name="Badge" props={{ tone }}>{tone}</UsageExample>
-              <UsageExample as={Badge} name="Badge" props={{ tone, variant: 'solid' }}>{tone}</UsageExample>
-              <UsageExample as={Badge} name="Badge" props={{ tone, variant: 'outline' }}>{tone}</UsageExample>
-            </div>
-          ))}
           <div className="flex w-full flex-wrap items-center gap-3">
+            <UsageExample as={Badge} name="Badge" props={{}}>Tavaline</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success' }}>Aktiivne</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'info' }}>Info</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'warning' }}>Hoiatus</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'danger' }}>Viga</UsageExample>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-3">
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', variant: 'solid' }}>Aktiivne</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'warning', variant: 'solid' }}>3</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', variant: 'outline', size: 'md', className: 'tabular-nums' }}>Nr 12</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ size: 'md' }}>Planeerimata</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ tone: 'success', size: 'md' }}>Suurus md</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'success', variant: 'soft' }}>Soft</UsageExample>
+            <UsageExample as={Badge} name="Badge" props={{ tone: 'danger', variant: 'outline' }}>Puudus</UsageExample>
+          </div>
+          <div className="flex w-full flex-wrap items-center gap-3">
             <UsageExample as={Badge} name="Badge" props={{ tone: 'success', dot: true }}>Punktiga</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ dot: '#e11d48' }}>Andmevärv</UsageExample>
             <UsageExample as={Badge} name="Badge" props={{ tone: 'info' }}><Clock size={12} />Ikooniga</UsageExample>
-            <UsageExample as={Badge} name="Badge" props={{ tone: 'danger', variant: 'outline' }}>Puudus</UsageExample>
           </div>
+          <UnusedVariants>
+            {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).flatMap((tone) =>
+              ([undefined, 'soft', 'solid', 'outline'] as const)
+                .filter((variant) => exampleCount('Badge', { tone, variant }) === 0)
+                .map((variant) => (
+                  <UsageExample key={`${tone}-${variant}`} as={Badge} name="Badge" props={{ tone, variant }}>{tone}</UsageExample>
+                ))
+            )}
+          </UnusedVariants>
         </Section>
 
         <Section title="Sakid" components={['Tabs', 'TabsList', 'TabsTrigger', 'TabsContent']}>
@@ -164,9 +184,9 @@ export const UiGallery: React.FC = () => {
 
         <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'Checkbox', 'CheckboxField', 'RadioGroup', 'RadioGroupItem', 'RadioField', 'Switch']}>
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
-            <Field label="Nimi" htmlFor="g-name" hint="Põllu nimi registris"><Input id="g-name" placeholder="Nt Kaasiku" /></Field>
+            <Field label="Nimi" htmlFor="g-name" hint="Põllu nimi registris"><UsageExample as={Input} name="Input" className="w-full" props={{ id: 'g-name', placeholder: 'Nt Kaasiku' }} /></Field>
             <Field label="Kultuur" htmlFor="g-crop">
-              <Select id="g-crop" value={crop} onValueChange={setCrop} options={[{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }, { value: 'barley', label: 'Suvioder' }]} />
+              <UsageExample as={Select} name="Select" className="w-full" props={{ id: 'g-crop', value: crop, onValueChange: setCrop, options: [{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }, { value: 'barley', label: 'Suvioder' }] }} />
             </Field>
             <Field label="Pindala" htmlFor="g-area" error="Pindala peab olema positiivne"><Input id="g-area" aria-invalid defaultValue="-2" className="text-right" /></Field>
             <Field label="Märkus" htmlFor="g-note" className="md:col-span-3"><Textarea id="g-note" /></Field>
@@ -244,7 +264,7 @@ export const UiGallery: React.FC = () => {
             <Field label="Kuupäev (md)" htmlFor="g-date"><DateInput id="g-date" value={date} onChange={setDate} /></Field>
             <Field label="Kuupäev (sm)" htmlFor="g-date-sm"><DateInput id="g-date-sm" size="sm" value={date} onChange={setDate} /></Field>
             <Field label="Kuupäev, vigane (sisesta „x“)" htmlFor="g-date-bad"><DateInput id="g-date-bad" value="" onChange={() => {}} /></Field>
-            <Field label="Arv ühikuga (NumberInput end)" htmlFor="g-num"><NumberInput id="g-num" end="ha" value={num} onChange={setNum} /></Field>
+            <Field label="Arv ühikuga (NumberInput end)" htmlFor="g-num"><UsageExample as={NumberInput} name="NumberInput" className="w-full" props={{ id: 'g-num', end: 'ha', value: num, onChange: setNum }} /></Field>
             <Field label="Arv (sm)" htmlFor="g-num-sm"><UsageExample as={NumberInput} name="NumberInput" className="w-full" props={{ id: 'g-num-sm', size: 'sm', value: num, onChange: setNum }} /></Field>
             <Field label="Otsing (SearchInput, X tühjendab)" htmlFor="g-search"><SearchInput aria-label="Otsing" placeholder="Otsi…" value={search} onChange={setSearch} /></Field>
             <Field label="Otsinguga valik rühmadega (FilterClear sees)">
@@ -392,8 +412,17 @@ export const UiGallery: React.FC = () => {
             <UsageExample as={Alert} name="Alert" props={{ tone: 'error' }}>Salvestamine ebaõnnestus: serveri viga.</UsageExample>
             <UsageExample as={Alert} name="Alert" props={{ tone: 'success' }}>Salvestatud.</UsageExample>
             <UsageExample as={Alert} name="Alert" props={{ tone: 'info' }}>See töö kuulub järgmise hooaja tsüklisse.</UsageExample>
-            <UsageExample as={Alert} name="Alert" props={{ tone: 'warning', size: 'sm' }}>Hooaeg on lukus.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'warning' }}>Hooaeg on lukus.</UsageExample>
             <UsageExample as={Alert} name="Alert" props={{}}>Tavaline teade ilma toonita.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ tone: 'error', size: 'sm' }}>Kannet ei õnnestunud salvestada.</UsageExample>
+            <UsageExample as={Alert} name="Alert" props={{ size: 'sm' }}>Väike teade ilma toonita.</UsageExample>
+            <UnusedVariants>
+              {(['success', 'info', 'warning', 'neutral'] as const)
+                .filter((tone) => exampleCount('Alert', { tone, size: 'sm' }) === 0)
+                .map((tone) => (
+                  <UsageExample key={tone} as={Alert} name="Alert" props={{ tone, size: 'sm' }}>Väike teade ({tone})</UsageExample>
+                ))}
+            </UnusedVariants>
           </div>
         </Section>
 
@@ -478,9 +507,12 @@ export const UiGallery: React.FC = () => {
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Põllud kokku', value: <>12 <small>põldu</small></>, sub: <>Pindala: <strong>340,50 ha</strong></> }} />
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Kulud kokku', tone: 'cost', value: '48 200 €', sub: 'Keskmiselt: 140 € / ha' }} />
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Saagitulu kokku', tone: 'revenue', value: '61 900 €', note: 'Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast.' }} />
-            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Tegevustulemus', tone: 'profit', value: '+13 700 €', sub: 'Tulemus: 40 € / ha' }} />
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Läbisõit', value: '—', empty: true }} />
           </div>
+          <UnusedVariants>
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Tegevustulemus', tone: 'profit', value: '+13 700 €', sub: 'Tulemus: 40 € / ha' }} />
+            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Kahjum', tone: 'loss', value: '−2 100 €' }} />
+          </UnusedVariants>
         </Section>
         <Section title="Rida silt: väärtus" components={['KeyValueRow']}>
           <div className="w-72">
@@ -516,7 +548,7 @@ export const UiGallery: React.FC = () => {
             <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal" actions={<Button variant="primary">Lisa</Button>} />
           </div>
         </Section>
-      </div>
+      </UsageLayout>
     </div>
   );
 };

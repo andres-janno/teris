@@ -1,7 +1,7 @@
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { comboCount, comboKey, countUiUsage, isCountedFile, isInsideUiFile, isUnused, parseUiComponents, propLabel, stripComments } from './uiUsage.ts';
+import { comboCount, comboKey, exampleId, isStaticCombo, nextSelection, countUiUsage, isCountedFile, isInsideUiFile, isUnused, parseUiComponents, propLabel, stripComments } from './uiUsage.ts';
 import { computeUiUsage } from './uiUsagePlugin.ts';
 
 const INDEX = `
@@ -206,5 +206,19 @@ describe('päris repo', () => {
     const u = computeUiUsage('.');
     expect(u.components.map((c) => c.name)).toEqual(parseUiComponents(readFileSync('src/components/ui/index.ts', 'utf8')));
     expect(u.components.flatMap((c) => c.files).some((f) => f.file.startsWith('src/components/ui/'))).toBe(false);
+  });
+});
+
+describe('külgpaneeli valik', () => {
+  it('klõps vahetab komponenti, sama märk sulgeb', () => {
+    expect(nextSelection(null, 'Button')).toBe('Button');
+    expect(nextSelection('Button', 'Badge')).toBe('Badge');
+    expect(nextSelection('Badge', 'Badge')).toBeNull();
+  });
+
+  it('näidise tunnus ja staatilised kombinatsioonid', () => {
+    expect(exampleId('Button', 'ghost · sm')).toBe('Button|ghost · sm');
+    expect(isStaticCombo(['ghost', 'sm'])).toBe(true);
+    expect(isStaticCombo(['dünaamiline', 'sm'])).toBe(false);
   });
 });

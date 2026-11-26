@@ -74,6 +74,21 @@ export function comboCount(usage: ComponentUsage, key: string): number {
   return usage.combos.find((c) => comboKey(c.values) === key)?.count ?? 0;
 }
 
+/** Külgpaneeli valik: klõps teisel märgil vahetab komponenti, klõps valitul sulgeb paneeli. */
+export function nextSelection(current: string | null, clicked: string): string | null {
+  return current === clicked ? null : clicked;
+}
+
+/** Galerii näidise ja paneeli tabelirea ühine tunnus (komponent + kombinatsioonivõti). */
+export function exampleId(name: string, key: string): string {
+  return `${name}|${key}`;
+}
+
+/** Kombinatsioon, mille näidist pole mõtet otsida: dünaamilise propiga ridu ei saa üheks näidiseks kujutada. */
+export function isStaticCombo(values: string[]): boolean {
+  return !values.includes('dünaamiline');
+}
+
 /** Kasutamata = ei rakenduse vaadetes ega teiste ühiste komponentide sees. */
 export function isUnused(c: Pick<ComponentUsage, 'count' | 'insideUi'>): boolean {
   return c.count === 0 && c.insideUi === 0;
