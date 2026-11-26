@@ -99,17 +99,17 @@
 /* Tume teema: <html data-theme="dark"> (App.tsx). Tavaliselt pole vaja — värvinimed vahetuvad ise. */
 @custom-variant dark (&:where([data-theme=dark], [data-theme=dark] *));
 
-/* Skaalad (spec 1. osa). Vaikeskaalad nullitakse, et suvalist suurust/värvi ei saaks kasutada. */
+/* Skaalad: 4 kompaktset kirjasuurust (12 / 13 / 16 / 20 px). Vaikeskaalad nullitakse, et suvalist suurust/värvi ei saaks kasutada. */
 @theme {
   --text-*: initial;
-  --text-2xs: 11px;
+  --text-2xs: 12px;
   --text-2xs--line-height: 16px;
   --text-xs: 12px;
   --text-xs--line-height: 16px;
   --text-sm: 13px;
   --text-sm--line-height: 18px;
-  --text-base: 14px;
-  --text-base--line-height: 20px;
+  --text-base: 13px;
+  --text-base--line-height: 18px;
   --text-lg: 16px;
   --text-lg--line-height: 22px;
   --text-xl: 20px;

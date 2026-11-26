@@ -101,7 +101,7 @@
   color: var(--login-ink) !important;
   height: auto !important;
   padding: 8px 12px !important;
-  font-size: 14px !important;
+  font-size: 13px !important;
 }
 
 .login-page .login-card [data-slot="input"]:focus {
