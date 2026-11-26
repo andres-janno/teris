@@ -12,7 +12,7 @@ import type { SeedCheck } from '../services/seedCropCheck';
 
 const timeOptions = (empty: string, times: string[]): FilterSelectOption[] => [{ value: '', label: empty }, ...times.map((t) => ({ value: t, label: t }))];
 import { PriaLinesEditor, HarvestEditor, ObservationsEditor, planLineToRow, rowPria, recomputeTotals, recomputeHarvestTotal, type PriaRow, type HarvestRow } from './PriaLinesEditor';
-import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass, infoNoticeClass } from './ui';
+import { Alert, Badge, Button, CardButton, Dialog, DialogContent, DialogHeader, DialogForm, DialogBody, DialogFooter, ToggleGroup, ToggleGroupItem, DateInput, FilterSelect, type FilterSelectOption, FilterClear, Field, Input, NumberInput, Textarea, CheckboxField, ProgressBar, cn, dialogStackBodyClass, workFormGridClass, workFormSectionClass, workFormHintClass } from './ui';
 
 // Kande vormi ruudustike veerud (ruudustiku enda kest: workFormGridClass); kitsal ekraanil kaks veergu
 const GRID_TOP = 'grid-cols-none grid-flow-col auto-cols-[minmax(0,1fr)] max-[681px]:grid-cols-2 max-[681px]:grid-flow-row';
@@ -434,14 +434,14 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
             )}
 
             {entry?.financeStatus === 'CONFIRMED' && (
-              <Alert size="sm" className={infoNoticeClass}>
+              <Alert tone="info">
                 <Info size={14} />
                 <span>Kande finants on kinnitatud. Koguste muutmisel tuleb finantsjuhil kanne uuesti kinnitada.</span>
               </Alert>
             )}
 
             {loadingSuggestions && (
-              <Alert size="sm" className="gap-2 bg-primary/8 py-1.5 text-success-text">
+              <Alert tone="success">
                 <Radio size={14} />
                 <span>Kontrollin telemeetriat...</span>
               </Alert>

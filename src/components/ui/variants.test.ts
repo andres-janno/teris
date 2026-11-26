@@ -7,7 +7,7 @@ const allClassStrings = (): string[] => [
   ...(['default', 'cost', 'revenue', 'profit', 'loss'] as const).flatMap((tone) => [v.statTileClass({ tone }), v.statTileValueClass({ tone }), v.statTileValueClass({ tone, empty: true })]),
   v.statTileLabelClass, v.statTileUnitClass, v.statTileSubClass, v.statTileNoteClass,
   v.legendItemClass, v.legendMarkerClass, v.legendValueClass, v.legendNoteClass,
-  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass, v.soilValueClass, v.soilFootnoteClass, v.soilYearCellClass, v.infoNoticeClass, v.statChipLabelClass, v.statChipNumClass, v.statChipSubClass, v.registerIconBoxClass,
+  v.dialogStackBodyClass, v.workFormGridClass, v.workFormSectionClass, v.workFormHintClass, v.soilValueClass, v.soilFootnoteClass, v.soilYearCellClass, v.statChipLabelClass, v.statChipNumClass, v.statChipSubClass, v.registerIconBoxClass,
   v.keyValueRowClass, v.keyValueLabelClass, v.keyValueValueClass, v.cornerActionClass,
   v.progressTrackClass, v.progressFillClass, v.emptyBoxClass, v.subheadingClass,
   v.pageHeaderClass, v.pageHeaderTitleWrapClass, v.pageHeaderIconClass, v.pageHeaderTitleClass, v.pageHeaderSubtitleClass, v.pageHeaderActionsClass,
@@ -51,7 +51,7 @@ const allClassStrings = (): string[] => [
   ...(['sm', 'md', 'lg'] as const).flatMap((size) => (['neutral', 'info', 'success', 'warning'] as const).map((tone) => v.iconBoxVariants({ size, tone }))),
   v.cardGridClass, v.registerSectionClass, v.fleetCellMainClass, v.fleetCellTitleClass, v.cellSubClass, v.cellSubStackedClass, v.fleetCellDateClass, v.fleetCellDateEndClass,
   v.fleetDurationClass({ active: true }), v.fleetDurationClass({}), v.fleetNotesClass({ empty: true }), v.fleetNotesClass({}), v.dateTimeRowClass, v.dateTimeHintClass,
-  ...(['error', 'success', 'info', 'warning', 'neutral'] as const).flatMap((tone) => (['md', 'sm'] as const).map((size) => v.alertVariants({ tone, size }))),
+  ...(['error', 'success', 'info', 'warning', 'neutral'] as const).map((tone) => v.alertVariants({ tone })),
   v.dropzoneClass({}), v.dropzoneClass({ dragging: true }), v.dropzoneClass({ hasFile: true }), v.dropzoneStateClass, v.dropzoneIconClass,
   v.hintTextClass, v.hintTextBlockClass, v.fileReuploadHintClass, v.uploadFormatListClass,
   v.previewBoxClass, v.previewHeaderClass, v.previewFieldsScrollClass, v.previewFieldRowClass, v.previewFieldClass, v.previewCropClass, v.previewValueClass,
@@ -450,18 +450,18 @@ describe('abi-ikoon', () => {
 });
 
 describe('kiip (ChipButton)', () => {
-  it('tint: andmevärviga toon, 6px nurk, 14px kiri', () => {
-    const t = v.chipVariants({ variant: 'tint' }).split(/\s+/);
-    expect(t).toContain('chip-tint');
-    expect(t).toContain('rounded-sm');
-    expect(t).toContain('text-base');
-  });
-  it('outline: ääris ja vasak riba, 10px nurk, 13px kiri', () => {
-    const t = v.chipVariants({ variant: 'outline' }).split(/\s+/);
-    expect(t).toContain('chip-outline');
-    expect(t).toContain('border-l-3');
-    expect(t).toContain('rounded-md');
-    expect(t).toContain('text-sm');
+  it('tint ja outline: ühtne 6px nurk, 13px kiri, sama polster', () => {
+    const tint = v.chipVariants({ variant: 'tint' }).split(/\s+/);
+    const outline = v.chipVariants({ variant: 'outline' }).split(/\s+/);
+    expect(tint).toContain('chip-tint');
+    expect(outline).toContain('chip-outline');
+    expect(outline).toContain('border-l-3');
+    for (const t of [tint, outline]) {
+      expect(t).toContain('rounded-sm');
+      expect(t).toContain('text-sm');
+      expect(t).toContain('px-3');
+      expect(t).toContain('py-1');
+    }
   });
   it('dimmed: poolläbipaistev, hõljudes heledam', () => {
     expect(v.chipVariants({ variant: 'tint', dimmed: true })).toContain('opacity-50');
@@ -657,16 +657,16 @@ describe('kaardi paneelide ühised klassid (etapp 4d)', () => {
 });
 
 describe('Alert ja alamrida (etapp 4e)', () => {
-  it('alertVariants: veateade on punane ääris + taust + roosa tekst; neutral ilma toonita; sm on väiksema polstriga', () => {
+  it('alertVariants: kõigil toonidel ühtne ääris, taust ja polster', () => {
     const err = v.alertVariants({ tone: 'error' });
     for (const t of ['border', 'border-destructive/35', 'bg-destructive/12', 'text-danger-text', 'px-3', 'py-2.5', 'text-sm', 'leading-natural', 'rounded-sm']) expect(err).toContain(t);
     expect(v.alertVariants({ tone: 'success' })).toContain('text-success-text');
     expect(v.alertVariants({ tone: 'info' })).toContain('text-info-text');
     expect(v.alertVariants({ tone: 'warning' })).toContain('text-warning-text');
     const neutral = v.alertVariants({});
+    expect(neutral).toContain('bg-muted');
+    expect(neutral).toContain('border-border');
     expect(neutral).not.toMatch(/bg-(destructive|primary|info|warning)/);
-    expect(v.alertVariants({ size: 'sm' })).toContain('py-2');
-    expect(v.alertVariants({ size: 'sm' })).not.toContain('py-2.5');
   });
   it('alamrida: üks kirjasuurus ja toon kõigis registrites; virnastatud variant lisab ainult ülaveeru', () => {
     expect(v.cellSubClass).toBe('text-2xs text-subtle');
@@ -711,12 +711,6 @@ describe('mulla/ilma lõigu konstandid (etapp 4e)', () => {
     expect(v.soilFootnoteClass).toContain('text-2xs');
     expect(v.soilFootnoteClass).toContain('leading-natural');
     expect(v.soilYearCellClass).toContain('font-medium');
-  });
-});
-
-describe('infoNoticeClass (etapp 4e)', () => {
-  it('sinine teatetaust ilma äärisetoonita, tavaline tekst, ümardus md (kande dialoog, PRIA read)', () => {
-    for (const t of ['gap-2', 'rounded-md', 'bg-info/10', 'text-foreground']) expect(v.infoNoticeClass).toContain(t);
   });
 });
 

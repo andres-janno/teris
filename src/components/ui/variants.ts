@@ -304,14 +304,14 @@ export const emptyStateDescriptionClass = 'm-0 text-sm';
 // CSS-muutujast --chip-accent; leading-natural hoiab kõrguse vana nupu (UA line-height: normal) sama, mida ChipButton seab). ---
 export type ChipVariant = 'tint' | 'outline';
 export const chipVariants = cva(
-  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 transition-colors disabled:cursor-default ${focusRing}`,
+  `inline-flex shrink-0 cursor-pointer items-center gap-1.5 rounded-sm px-3 py-1 text-sm leading-natural text-foreground transition-colors disabled:cursor-default ${focusRing}`,
   {
     variants: {
       variant: {
         // Andmevärviga toonitud kiip (kultuur): taust ja vasak riba värvist, valituna ümber 2px rõngas.
-        tint: 'chip-tint rounded-sm border-0 px-3 py-1 text-base leading-natural text-foreground',
+        tint: 'chip-tint border-0',
         // Äärisega kiip (omandivorm): vasak serv 3px värvitud, valituna ümber 2px rõngas.
-        outline: 'chip-outline rounded-md border border-l-3 border-border bg-field px-3 py-1.5 text-sm leading-natural text-foreground enabled:hover:border-subtle',
+        outline: 'chip-outline border border-l-3 border-border bg-field enabled:hover:border-subtle',
       },
       dimmed: { true: 'opacity-50 enabled:hover:opacity-85', false: '' },
     },
@@ -430,24 +430,19 @@ export const loadingSpinnerClass = 'shrink-0 animate-spin text-primary motion-re
 export const loadingSpinnerInlineClass = cn(loadingSpinnerClass, 'ml-1.5');
 
 // --- Dialoogid ja registrid (etapp 4e) ---
-/** Teatekast. error: punane ääris + taust (vana .alert-box.error); success/info/warning: ainult taust ja toonitekst, ääris puudub (vana admin.css: border-width oli 0);
-    neutral: ilma toonita (vana .alert-box ilma modifikaatorita). sm: kitsam polster (vana .is-compact). Veeris ja paigutus (`m-2`, `justify-between`, `flex-col`) tuleb kutsujalt. */
-export const alertVariants = cva('flex items-center gap-2.5 rounded-sm text-sm leading-natural', {
+/** Teatekast: ühtne ääris ja kerge toonitaust kõigil toonidel. Veeris ja paigutus (`m-2`, `justify-between`, `flex-col`) tuleb kutsujalt. */
+export const alertVariants = cva('flex items-center gap-2.5 rounded-sm border px-3 py-2.5 text-sm leading-natural', {
   variants: {
     tone: {
-      error: 'border border-destructive/35 bg-destructive/12 text-danger-text',
-      success: 'bg-primary/15 text-success-text',
-      info: 'bg-info/12 text-info-text',
-      warning: 'bg-warning/15 text-warning-text',
-      neutral: '',
+      error: 'border-destructive/35 bg-destructive/12 text-danger-text',
+      success: 'border-primary/35 bg-primary/15 text-success-text',
+      info: 'border-info/35 bg-info/12 text-info-text',
+      warning: 'border-warning/35 bg-warning/15 text-warning-text',
+      neutral: 'border-border bg-muted text-foreground',
     },
-    size: { md: 'px-3 py-2.5', sm: 'px-3 py-2' },
   },
-  defaultVariants: { tone: 'neutral', size: 'md' },
+  defaultVariants: { tone: 'neutral' },
 });
-
-/** Info-teade `Alert size="sm"` peal (kande dialoog, PRIA read): hele sinine taust, tavaline tekst, ümardus 10px. Vana `.work-entry-warning`. */
-export const infoNoticeClass = 'gap-2 rounded-md bg-info/10 text-foreground';
 
 /** Tabelilahtri/kaardi alamrida (11px, hallim): sama ilme Tehnikas, Külvikorras, Kultuurides, sõidu dialoogis. */
 export const cellSubClass = 'text-2xs text-subtle';

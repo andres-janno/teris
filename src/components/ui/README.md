@@ -157,8 +157,7 @@ Kaardi `Card variant="floating"` paneelidele annab vaade ainult asendi (`absolut
 
 | Nimi | Kasuta | Vana klass |
 | --- | --- | --- |
-| `<Alert tone size>` | teatekast (error/success/info/warning/neutral; `size="sm"`) | `alert-box` (+ `.error`, `.is-compact`) |
-| `infoNoticeClass` | `Alert size="sm"` peal: hele sinine info-teade (kande dialoog, PRIA read) | `work-entry-warning` |
+| `<Alert tone>` | teatekast (`error` / `success` / `info` / `warning` / `neutral`), ühtne ääris ja taust | `alert-box` (+ `.error`, `.is-compact`, `work-entry-warning`) |
 | `cellSubClass`, `cellSubStackedClass` | tabelilahtri/kaardi alamrida (11px, hallim) | `cell-sub`, `fleetCellSubClass` |
 | `infoCardClass`, `infoCardTitleWrapClass`, `infoCardNameClass`, `infoCardSubClass`, `infoRowsClass`, `infoRowClass` | registrikaart avatariga (Isikud, Taristu) | `vehicle-card`, `v-*` |
 | `tableNameClass`, `tableTitleLineClass`, `tableSubTagsClass`, `tableMutedClass` | tabeli nimelahter ja summutatud tekst | `field-name`, `field-title-line`, `field-sub-tags`, `muted` |

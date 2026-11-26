@@ -1185,19 +1185,19 @@ export const FieldWorksBoard: React.FC<FieldWorksBoardProps> = ({
                 </div>
 
                 {selected.isNextSeasonWinterSowing && (
-                  <Alert size="sm">
+                  <Alert>
                     <Info size={14} />
                     <span>See on {year}. a sügisene ettevalmistus/külv järgmise hooaja ({year + 1}) taliviljale {selectedRow.nextCropName ?? ''}.</span>
                   </Alert>
                 )}
                 {selected.carriedOverFromYear && (
-                  <Alert size="sm">
+                  <Alert>
                     <Info size={14} />
                     <span>See külvitöö teostati eelmise aasta ({selected.carriedOverFromYear}) sügisel ja see on üle kantud käesolevasse hooaega.</span>
                   </Alert>
                 )}
                 {selected.carriedOverToYear && !selected.isNextSeasonWinterSowing && (
-                  <Alert size="sm">
+                  <Alert>
                     <Info size={14} />
                     <span>See töö kuulub talivilja {selected.carriedOverToYear}. a saagiaasta tsüklisse ning teostatakse {selected.carriedOverToYear}. a hooajal.</span>
                   </Alert>

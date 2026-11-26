@@ -189,7 +189,7 @@
   /* Taevasinine #0284c7 (tahvli „järgmine aasta“, talivili); info on #2563eb, info-solid on Badge solid. */
   --color-sky: #0284c7;
   --color-destructive: var(--rose-500);
-  --color-danger-solid: #dc2626;
+  --color-danger-solid: #e11d48;
   --color-accent: var(--purple-500);
   /* Toonitekstid ja täisvärvid märkidele (kontrast mõlemas teemas) */
   --color-success-text: var(--tone-success-text);

@@ -62,15 +62,15 @@
   --input-bg: #f8fafc;
   --input-border: rgba(15, 23, 42, 0.18);
 
-  /* Seadmete värskuse värv (viimaste andmete vanus) ja sõidu ajaosade värvid */
-  --fresh-live: #1baf7a;
-  --fresh-day: #2a78d6;
-  --fresh-week: #e0a100;
-  --fresh-old: #d64545;
-  --fresh-none: #94a3b8;
-  --trip-moving: #2a78d6;
-  --trip-idle: #eb6834;
-  --trip-pause: #1baf7a;
+  /* Seadmete värskuse värv (viimaste andmete vanus) ja sõidu ajaosade värvid — viitavad põhipaletile */
+  --fresh-live: var(--emerald-500);
+  --fresh-day: var(--blue-500);
+  --fresh-week: var(--amber-400);
+  --fresh-old: var(--rose-500);
+  --fresh-none: var(--text-muted);
+  --trip-moving: var(--blue-500);
+  --trip-idle: var(--amber-400);
+  --trip-pause: var(--emerald-500);
 
   /* Kultuuri värvi toon põldude registri lahtrites, jaluses ja kiibis */
   --crop-tint: 18%;
@@ -119,15 +119,6 @@
 
   --input-bg: rgba(255, 255, 255, 0.06);
   --input-border: rgba(255, 255, 255, 0.12);
-
-  --fresh-live: #199e70;
-  --fresh-day: #3987e5;
-  --fresh-week: #d9a21c;
-  --fresh-old: #e05a5a;
-  --fresh-none: #64748b;
-  --trip-moving: #3987e5;
-  --trip-idle: #d95926;
-  --trip-pause: #199e70;
 
   --crop-tint: 28%;
   --crop-tint-hover: 36%;

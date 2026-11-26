@@ -117,7 +117,7 @@ export const GuideView: React.FC<{ route: GuideRef; hasModule: (m: LicenseModule
             ) : (
               <Card className="mx-auto max-w-3xl">
                 {hiddenRequested?.module && (
-                  <Alert tone="neutral">Peatükk „{hiddenRequested.title}“ vajab moodulit „{MODULE_LABELS[hiddenRequested.module]}“, mida teie ettevõttel pole.</Alert>
+                  <Alert>Peatükk „{hiddenRequested.title}“ vajab moodulit „{MODULE_LABELS[hiddenRequested.module]}“, mida teie ettevõttel pole.</Alert>
                 )}
                 <h2 className="mb-3 text-xl font-semibold leading-natural">{current.title}</h2>
                 {safe ? (

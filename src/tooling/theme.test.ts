@@ -29,18 +29,19 @@ describe('Tehnika tokenid (etapp 4c)', () => {
   it.each(['live', 'day', 'week', 'old', 'none'])('fresh-%s on värvinimi app.css-is', (k) => {
     expect(css).toMatch(new RegExp(`--color-fresh-${k}:\\s*var\\(--fresh-${k}\\);`));
   });
-  it('--fresh-* väärtused on mõlemas teemas', () => {
+  it('--fresh-* ja --trip-* viitavad põhipaleti teemamuutujatele mõlemas teemas', () => {
     const light = themeVars(themesCss, 'light'), dark = themeVars(themesCss, 'dark');
-    expect([light['--fresh-live'], light['--fresh-day'], light['--fresh-week'], light['--fresh-old'], light['--fresh-none']]).toEqual(['#1baf7a', '#2a78d6', '#e0a100', '#d64545', '#94a3b8']);
-    expect([dark['--fresh-live'], dark['--fresh-day'], dark['--fresh-week'], dark['--fresh-old'], dark['--fresh-none']]).toEqual(['#199e70', '#3987e5', '#d9a21c', '#e05a5a', '#64748b']);
+    for (const vars of [light, dark]) {
+      expect([vars['--fresh-live'], vars['--fresh-day'], vars['--fresh-week'], vars['--fresh-old'], vars['--fresh-none']]).toEqual([
+        'var(--emerald-500)', 'var(--blue-500)', 'var(--amber-400)', 'var(--rose-500)', 'var(--text-muted)',
+      ]);
+      expect([vars['--trip-moving'], vars['--trip-idle'], vars['--trip-pause']]).toEqual([
+        'var(--blue-500)', 'var(--amber-400)', 'var(--emerald-500)',
+      ]);
+    }
   });
   it.each(['moving', 'idle', 'pause'])('trip-%s on värvinimi', (k) => {
     expect(css).toMatch(new RegExp(`--color-trip-${k}:\\s*var\\(--trip-${k}\\);`));
-  });
-  it('--trip-* muutujad on :root-is mõlemas teemas (mitte .trip-dialog-i all)', () => {
-    const light = themeVars(themesCss, 'light'), dark = themeVars(themesCss, 'dark');
-    expect([light['--trip-moving'], light['--trip-idle'], light['--trip-pause']]).toEqual(['#2a78d6', '#eb6834', '#1baf7a']);
-    expect([dark['--trip-moving'], dark['--trip-idle'], dark['--trip-pause']]).toEqual(['#3987e5', '#d95926', '#199e70']);
   });
 });
 

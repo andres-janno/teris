@@ -465,7 +465,7 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                 </div>
 
                 {entriesError && (
-                  <Alert tone="error" size="sm">
+                  <Alert tone="error">
                     <AlertCircle size={14} />
                     <span>{entriesError}</span>
                   </Alert>
@@ -573,14 +573,14 @@ export const FinanceModal: React.FC<FinanceModalProps> = ({
                     )}
 
                     {saveError && (
-                      <Alert tone="error" size="sm">
+                      <Alert tone="error">
                         <AlertCircle size={14} />
                         <span>{saveError}</span>
                       </Alert>
                     )}
 
                     {saveSuccess && (
-                      <Alert size="sm">
+                      <Alert>
                         <Check size={14} />
                         <span>{saveSuccess}</span>
                       </Alert>

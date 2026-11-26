@@ -1,16 +1,16 @@
 // src/components/ui/UiGallery.tsx — kõigi ühiste komponentide näidised (aadress /ui, ainult admin).
 // Uue vaate tegemisel vali siit; kui vajalikku pole, lisa ui/ komponent või variant, mitte vaate-klass.
 import React, { useEffect, useState } from 'react';
-import { Clock, Inbox, Lock, LogOut, Moon, Pencil, Play, Plus, RotateCcw, Radio, Search, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
+import { Clock, Inbox, Lock, LogOut, Moon, Pencil, Play, Plus, RotateCcw, Radio, Sun, Trash2, Copy, Eye, Layers, Tractor, Wrench } from 'lucide-react';
 import {
-  Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, Checkbox, CheckboxField,
+  Alert, Badge, Button, Card, Dropzone, CardActions, CardButton, CardHeader, CheckboxField,
   Dialog, DialogBody, DialogContent, DialogFooter, DialogHeader, DropdownMenu, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuCheckboxItem, MenuItemText, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, Field, FieldRow, FormGrid, Input, Popover,
-  PopoverContent, PopoverTrigger, RadioField, RadioGroup, RadioGroupItem, Select, Table, TableBody, TableCell, TableFooter,
+  PopoverContent, PopoverTrigger, RadioField, RadioGroup, Select, Table, TableBody, TableCell, TableFooter,
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
-import { exampleCount, GalleryPanel, UnusedVariants, UsageBadges, UsageExample, UsageLayout, UsageSummary } from './UiGalleryUsage';
+import { GalleryPanel, UsageBadges, UsageExample, UsageLayout, UsageSummary } from './UiGalleryUsage';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
 import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
@@ -142,9 +142,6 @@ export const UiGallery: React.FC = () => {
             </Tabs>
             <div className="pt-3 text-sm">{tab === 'a' ? 'Ülevaate sisu' : tab === 'b' ? 'Tööde sisu' : 'Kulude sisu'}</div>
           </div>
-          <Tabs defaultValue="ha" variant="segmented">
-            <TabsList><TabsTrigger value="ha">ha</TabsTrigger><TabsTrigger value="t">t</TabsTrigger><TabsTrigger value="eur">€</TabsTrigger></TabsList>
-          </Tabs>
         </Section>
 
         <Section title="Valikurida" components={['ToggleGroup', 'ToggleGroupItem']}>
@@ -167,24 +164,18 @@ export const UiGallery: React.FC = () => {
           </NavSwitch>
         </Section>
 
-        <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'Checkbox', 'CheckboxField', 'RadioGroup', 'RadioGroupItem', 'RadioField']}>
+        <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'CheckboxField', 'RadioGroup', 'RadioField']}>
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
             <Field label="Nimi" htmlFor="g-name" hint="Põllu nimi registris"><UsageExample as={Input} name="Input" className="w-full" props={{ id: 'g-name', placeholder: 'Nt Kaasiku' }} /></Field>
             <Field label="Kultuur" htmlFor="g-crop">
               <UsageExample as={Select} name="Select" className="w-full" props={{ id: 'g-crop', value: crop, onValueChange: setCrop, options: [{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }, { value: 'barley', label: 'Suvioder' }] }} />
             </Field>
             <Field label="Pindala" htmlFor="g-area" error="Pindala peab olema positiivne"><Input id="g-area" aria-invalid defaultValue="-2" className="text-right" /></Field>
-            <Field label="Märkus" htmlFor="g-note" className="md:col-span-3"><Textarea id="g-note" /></Field>
-            <label className="flex items-center gap-2 text-sm"><Checkbox checked={checked} onCheckedChange={setChecked} />Arvesta PRIA-sse</label>
-            <RadioGroup defaultValue="plan">
-              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="plan" />Plaan</label>
-              <label className="flex items-center gap-2 text-sm"><RadioGroupItem value="actual" />Tegelik</label>
-            </RadioGroup>
             <Field label="Väike (sm, tabeli ridades)"><UsageExample as={Input} name="Input" className="w-full" props={{ size: 'sm', defaultValue: 'Kaasiku' }} /></Field>
-            <Field label="Arv ühikuga"><Input numeric end="ha" defaultValue="12,50" /></Field>
-            <Field label="Otsing ikooniga"><Input start={<Search size={14} />} placeholder="Otsi…" /></Field>
+            <Field label="Select sm">
+              <UsageExample as={Select} name="Select" className="w-full" props={{ size: 'sm', value: crop, onValueChange: setCrop, options: [{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }] }} />
+            </Field>
             <Field label="Kirjutuskaitstud"><Input readOnly value="12,50" /></Field>
-            <Field label="Automaatselt kasvav" className="md:col-span-2"><Textarea autosize defaultValue="Kasvab sisu järgi" /></Field>
             <Field label="Select tühja valikuga">
               <Select value={emptyChoice} onValueChange={setEmptyChoice} options={[{ value: '', label: '— vali —' }, { value: 'a', label: 'Esimene' }, { value: 'b', label: 'Teine' }]} />
             </Field>
@@ -200,10 +191,8 @@ export const UiGallery: React.FC = () => {
                 ]}
               />
             </Field>
-            <Field label="Select sm">
-              <UsageExample as={Select} name="Select" className="w-full" props={{ size: 'sm', value: crop, onValueChange: setCrop, options: [{ value: 'wheat', label: 'Talinisu' }, { value: 'rapeseed', label: 'Taliraps' }] }} />
-            </Field>
-            <CheckboxField label="Mitteaktiivne" hint="Ei näidata valikutes" checked={checked} onCheckedChange={setChecked} />
+            <Field label="Automaatselt kasvav"><Textarea autosize defaultValue="Kasvab sisu järgi" /></Field>
+            <CheckboxField label="Arvesta PRIA-sse" hint="Näidatakse aruannetes" checked={checked} onCheckedChange={setChecked} />
             <RadioGroup orientation="vertical" defaultValue="plan">
               <RadioField value="plan" label="Plaan" />
               <RadioField value="actual" label="Tegelik" />
@@ -387,15 +376,6 @@ export const UiGallery: React.FC = () => {
             <UsageExample as={Alert} name="Alert" props={{ tone: 'info' }}>See töö kuulub järgmise hooaja tsüklisse.</UsageExample>
             <UsageExample as={Alert} name="Alert" props={{ tone: 'warning' }}>Hooaeg on lukus.</UsageExample>
             <UsageExample as={Alert} name="Alert" props={{}}>Tavaline teade ilma toonita.</UsageExample>
-            <UsageExample as={Alert} name="Alert" props={{ tone: 'error', size: 'sm' }}>Kannet ei õnnestunud salvestada.</UsageExample>
-            <UsageExample as={Alert} name="Alert" props={{ size: 'sm' }}>Väike teade ilma toonita.</UsageExample>
-            <UnusedVariants>
-              {(['success', 'info', 'warning', 'neutral'] as const)
-                .filter((tone) => exampleCount('Alert', { tone, size: 'sm' }) === 0)
-                .map((tone) => (
-                  <UsageExample key={tone} as={Alert} name="Alert" props={{ tone, size: 'sm' }}>Väike teade ({tone})</UsageExample>
-                ))}
-            </UnusedVariants>
           </div>
         </Section>
 
@@ -475,10 +455,6 @@ export const UiGallery: React.FC = () => {
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Saagitulu kokku', tone: 'revenue', value: '61 900 €', note: 'Selgitus: tulu arvutatakse saagipartiide kaalust ja hinnast.' }} />
             <UsageExample as={StatTile} name="StatTile" props={{ label: 'Läbisõit', value: '—', empty: true }} />
           </div>
-          <UnusedVariants>
-            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Tegevustulemus', tone: 'profit', value: '+13 700 €', sub: 'Tulemus: 40 € / ha' }} />
-            <UsageExample as={StatTile} name="StatTile" props={{ label: 'Kahjum', tone: 'loss', value: '−2 100 €' }} />
-          </UnusedVariants>
         </Section>
         <Section title="Rida silt: väärtus" components={['KeyValueRow']}>
           <div className="w-72">

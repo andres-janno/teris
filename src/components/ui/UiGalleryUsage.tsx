@@ -48,7 +48,7 @@ type SelectionState = {
   highlight: string | null;
   setHighlight: (id: string | null) => void;
 };
-const SelectionContext = createContext<SelectionState>({ selected: null, select: () => {}, close: () => {}, highlight: null, setHighlight: () => {} });
+const SelectionContext = createContext<SelectionState>({ selected: null, select: () => { }, close: () => { }, highlight: null, setHighlight: () => { } });
 // „Kasutamata variandid“ rea sees olevad näidised märgitakse (test kontrollib, et seal on ainult 0 kasutusega näidised).
 const UnusedContext = createContext(false);
 
@@ -124,66 +124,66 @@ const BreakablePath: React.FC<{ path: string }> = ({ path }) => (
 const UsageDetails: React.FC<{ usage: ComponentUsage }> = ({ usage }) => {
   const { setHighlight } = useContext(SelectionContext);
   return (
-  <div className="flex min-w-0 flex-col gap-3 text-sm">
-    <div>
-      <div className="font-semibold">{usage.name}</div>
-      <div className="text-muted-foreground">{usage.count === 0 ? 'Rakenduses ei kasutata' : summaryText(usage)}</div>
-      {usage.insideUi > 0 && (
-        <div className="text-muted-foreground">
-          + <span className="tabular-nums">{usage.insideUi}</span> kohta ühiste komponentide sees
+    <div className="flex min-w-0 flex-col gap-3 text-sm">
+      <div>
+        <div className="font-semibold">{usage.name}</div>
+        <div className="text-muted-foreground">{usage.count === 0 ? 'Rakenduses ei kasutata' : summaryText(usage)}</div>
+        {usage.insideUi > 0 && (
+          <div className="text-muted-foreground">
+            + <span className="tabular-nums">{usage.insideUi}</span> kohta ühiste komponentide sees
+          </div>
+        )}
+      </div>
+      {usage.combos.length > 0 && usage.comboProps.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-semibold text-muted-foreground">Kombinatsioonid</div>
+          <Table dense scroll="none" className="text-xs">
+            <TableHeader>
+              <TableRow>
+                {usage.comboProps.map((p) => <TableHead key={p}>{p}</TableHead>)}
+                <TableHead numeric>Kordi</TableHead>
+                <TableHead>Näidis</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {usage.combos.map((c) => {
+                const id = exampleId(usage.name, comboKey(c.values));
+                const has = shownCombos.has(id);
+                return (
+                  <TableRow
+                    key={id}
+                    tabIndex={0}
+                    onMouseEnter={() => setHighlight(has ? id : null)}
+                    onMouseLeave={() => setHighlight(null)}
+                    onFocus={() => setHighlight(has ? id : null)}
+                    onBlur={() => setHighlight(null)}
+                  >
+                    {c.values.map((v, i) => (
+                      <TableCell key={usage.comboProps[i]} wrap className={v === 'vaikimisi' || v === 'dünaamiline' ? 'text-muted-foreground' : undefined}>{v}</TableCell>
+                    ))}
+                    <TableCell numeric>{c.count}</TableCell>
+                    <TableCell>{has ? <Badge tone="success">galeriis</Badge> : <Badge tone="warning">puudub</Badge>}</TableCell>
+                  </TableRow>
+                );
+              })}
+            </TableBody>
+          </Table>
+        </div>
+      )}
+      {usage.files.length > 0 && (
+        <div className="flex flex-col gap-1">
+          <div className="text-xs font-semibold text-muted-foreground">Failid</div>
+          <div className="flex flex-col gap-1">
+            {usage.files.map((f) => (
+              <div key={f.file} className="flex justify-between gap-3">
+                <BreakablePath path={f.file.replace(/^src\//, '')} />
+                <span className="tabular-nums">{f.count}</span>
+              </div>
+            ))}
+          </div>
         </div>
       )}
     </div>
-    {usage.combos.length > 0 && usage.comboProps.length > 0 && (
-      <div className="flex flex-col gap-1">
-        <div className="text-xs font-semibold text-muted-foreground">Kombinatsioonid</div>
-        <Table dense scroll="none" className="text-xs">
-          <TableHeader>
-            <TableRow>
-              {usage.comboProps.map((p) => <TableHead key={p}>{p}</TableHead>)}
-              <TableHead numeric>Kordi</TableHead>
-              <TableHead>Näidis</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {usage.combos.map((c) => {
-              const id = exampleId(usage.name, comboKey(c.values));
-              const has = shownCombos.has(id);
-              return (
-                <TableRow
-                  key={id}
-                  tabIndex={0}
-                  onMouseEnter={() => setHighlight(has ? id : null)}
-                  onMouseLeave={() => setHighlight(null)}
-                  onFocus={() => setHighlight(has ? id : null)}
-                  onBlur={() => setHighlight(null)}
-                >
-                  {c.values.map((v, i) => (
-                    <TableCell key={usage.comboProps[i]} wrap className={v === 'vaikimisi' || v === 'dünaamiline' ? 'text-muted-foreground' : undefined}>{v}</TableCell>
-                  ))}
-                  <TableCell numeric>{c.count}</TableCell>
-                  <TableCell>{has ? <Badge tone="success">galeriis</Badge> : <Badge tone="warning">puudub</Badge>}</TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
-    )}
-    {usage.files.length > 0 && (
-      <div className="flex flex-col gap-1">
-        <div className="text-xs font-semibold text-muted-foreground">Failid</div>
-        <div className="flex flex-col gap-1">
-          {usage.files.map((f) => (
-            <div key={f.file} className="flex justify-between gap-3">
-              <BreakablePath path={f.file.replace(/^src\//, '')} />
-              <span className="tabular-nums">{f.count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-  </div>
   );
 };
 
