@@ -463,10 +463,10 @@ export const FieldWorkEntryDialog: React.FC<FieldWorkEntryDialogProps> = ({
                     return (
                       <div key={s.id} className="flex flex-col items-stretch gap-1">
                       <CardButton
-                        variant="option"
+                        variant="tile"
                         padding="none"
                         aria-pressed={isSelected}
-                        className={cn(PILL, isSelected && PILL_ON)}
+                        className={cn('bg-popover hover:bg-popover', PILL, isSelected && PILL_ON)}
                         onClick={() => applySuggestion(s)}
                       >
                         <div className="flex flex-wrap items-center gap-2">

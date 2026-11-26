@@ -460,12 +460,6 @@ export const UiGallery: React.FC = () => {
             <CardButton variant="tile" padding="sm" selected={pickedCard === 'c'} onClick={() => setPickedCard('c')}>
               Plaat nupuna (CardButton tile)
             </CardButton>
-            <CardButton variant="item" padding="none" selected={pickedCard === 'd'} onClick={() => setPickedCard('d')} className="px-2 py-1.5 text-sm">
-              Tahvlikaart (item, 6px nurk)
-            </CardButton>
-            <CardButton variant="option" padding="none" selected={pickedCard === 'e'} onClick={() => setPickedCard('e')} className="px-3 py-2 text-sm">
-              Valikurida (option, 10px nurk)
-            </CardButton>
           </div>
         </Section>
         <Section title="Jaotise pealkiri" components={['SectionTitle']}>

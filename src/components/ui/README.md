@@ -314,8 +314,7 @@ Reeglid:
   - `interactive` (kursor, tahke hover) ja `selected` (roheline ääris + rõngas; hover seda ei nõrgenda). `<button>`-kaardi font/text-align/värv tuleb `src/styles/base.css`-ist (`button[data-slot="card"]`), nii et vaate klassi kirjasuurus kehtib.
   - `interactive` + `onClick` div-kaardil annab `role="button"`, Tab-fookuse ja Enter/tühiku.
   - `asChild`: `<Card asChild><form>…</form></Card>`, samuti `<section>`. Klõpsatavat nuppu `Card asChild` + `<button>` abil ei tehta, selleks on `CardButton`.
-- `<CardButton>` — valitav kaart nupuna (kogu kaart on klõpsatav; `type="button"`, `interactive` alati sees). `variant`: `tile` (loendikirje),
-  `item` (tahvlikaart, 6px, `bg-popover`; hõljudes täisroheline ääris), `option` (valikurida, 10px, `bg-popover`; hõljudes õrn roheline ääris);
+- `<CardButton>` — valitav kaart nupuna (kogu kaart on klõpsatav; `type="button"`, `interactive` alati sees). `variant`: `surface`, `floating` või `tile` (loendikirje/valikurida);
   `padding="none"` korral tuleb polster vaate CSS-ist. `selected` = roheline ääris + rõngas. Vaate olekuäärised (staatus, valitud toon) `!important`-iga.
 - Kaart ei sea teksti värvi (pärib), v.a `interactive`.
 - Päis: `CardHeader` (`align="center|start"`), `CardActions` (paremale).

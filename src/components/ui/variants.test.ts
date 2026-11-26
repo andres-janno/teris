@@ -36,7 +36,7 @@ const allClassStrings = (): string[] => [
   ]),
   ...(['success', 'warning', 'muted', 'group', 'total'] as const).map((tone) => v.tableRowClass({ tone, clickable: true })),
   v.tableFooterClass({ sticky: true }),
-  ...(['surface', 'floating', 'tile', 'item', 'option'] as const).flatMap((variant) =>
+  ...(['surface', 'floating', 'tile'] as const).flatMap((variant) =>
     (['none', 'sm', 'md'] as const).flatMap((padding) =>
       [true, false].map((interactive) => v.cardVariants({ variant, padding, interactive, selected: interactive }))
     )
@@ -347,27 +347,6 @@ describe('kaart', () => {
     expect(c).toContain('border-primary');
     expect(c).not.toMatch(/(^|\s)border-border(\s|$)/);
     expect(c).toContain('ring-primary');
-  });
-  it('item: 6px nurk (vana fw-card), option: 10px; mõlemad bg-popover, ei muuda hõljudes tausta', () => {
-    const item = cn(v.cardVariants({ variant: 'item', padding: 'none', interactive: true }));
-    const option = cn(v.cardVariants({ variant: 'option', padding: 'none', interactive: true }));
-    expect(item.split(/\s+/)).toContain('rounded-sm');
-    expect(option.split(/\s+/)).toContain('rounded-md');
-    for (const c of [item, option]) {
-      expect(c.split(/\s+/)).toContain('bg-popover');
-      expect(c.split(/\s+/)).toContain('hover:bg-popover');
-      expect(c).not.toContain('hover:bg-card-hover');
-    }
-  });
-  it('item hõljudes täisroheline ääris (vana .fw-card:hover), option õrn', () => {
-    const item = cn(v.cardVariants({ variant: 'item', interactive: true }));
-    const option = cn(v.cardVariants({ variant: 'option', interactive: true }));
-    expect(item).toContain('hover:border-primary');
-    expect(item).not.toContain('hover:border-primary/50');
-    expect(option).toContain('hover:border-primary/50');
-  });
-  it('item/option padding none ei anna polstriklassi (vaate CSS-i polster kehtib)', () => {
-    expect(v.cardVariants({ variant: 'item', padding: 'none' })).not.toMatch(/(^|\s)p-\d/);
   });
   it('päis: joondus keskele või üles', () => {
     expect(v.cardHeaderClass({ align: 'center' })).toContain('items-center');

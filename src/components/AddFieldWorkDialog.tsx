@@ -117,10 +117,10 @@ export const AddFieldWorkDialog: React.FC<AddFieldWorkDialogProps> = ({
                   return (
                     <CardButton
                       key={w.id}
-                      variant="option"
+                      variant="tile"
                       padding="none"
                       className={cn(
-                        'flex items-center gap-2.5 px-3 py-2 text-base leading-natural',
+                        'flex items-center gap-2.5 bg-popover px-3 py-2 text-base leading-natural hover:bg-popover',
                         isAdding && 'border-primary-strong bg-primary-strong/8 hover:border-primary-strong hover:bg-primary-strong/8',
                         onField && 'border-primary-strong/35 bg-primary-strong/4 hover:border-primary-strong/35 hover:bg-primary-strong/4'
                       )}

@@ -257,10 +257,10 @@ const WorkCard: React.FC<{ work: FieldWork; fieldAreaHa: number; selected: boole
   return (
     <span className="group/card relative flex max-w-45 flex-col">
       <CardButton
-        variant="item"
+        variant="tile"
         padding="none"
         selected={selected}
-        className={cn('flex min-w-30 max-w-none flex-col gap-0.5 px-2 py-1.5', CARD_STATUS[work.status.toLowerCase()], unplanned && CARD_UNPLANNED)}
+        className={cn('flex min-w-30 max-w-none flex-col gap-0.5 rounded-sm bg-popover px-2 py-1.5 hover:bg-popover', !selected && 'hover:border-primary', CARD_STATUS[work.status.toLowerCase()], unplanned && CARD_UNPLANNED)}
         onClick={onSelect}
         aria-label={`${work.workTypeName}, ${STATUS_LABEL[work.status].toLowerCase()}`}
       >
