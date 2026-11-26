@@ -323,6 +323,12 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
     loadForm(field);
   }, [field.id, selectedYear]);
 
+  // Päises näidatavad omandivormid (unikaalsed hooaja katastriüksuste põhjal)
+  const headerOwnershipTypes = useMemo<LandTenureType[]>(() => {
+    const types = new Set(editCadastralParcels.map((c) => c.ownershipType));
+    return (['OWNED', 'RENTED', 'UNKNOWN'] as const).filter((t) => types.has(t));
+  }, [editCadastralParcels]);
+
   return (
     <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
     <DialogContent size="lg">
@@ -330,7 +336,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       <DialogHeader
         icon={isEditSeasonLocked ? <Lock size={20} /> : <Edit2 size={20} />}
         title={`${isEditSeasonLocked ? 'Lukus' : 'Muuda'}: ${editNum ? `Nr ${editNum} ` : ''}${editName || `Põld ${field.id}`} · ${selectedYear}`}
-      />
+      >
+        {headerOwnershipTypes.map((t) => (
+          <Badge
+            key={t}
+            tone={OWNERSHIP_TONE[t]}
+            title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata"
+          >
+            {OWNERSHIP_LABELS[t]}
+          </Badge>
+        ))}
+      </DialogHeader>
 
       <DialogBody>
 
@@ -633,7 +649,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
       <div className="mb-2.5 flex flex-col gap-2">
         {editCadastralParcels.map((parcel, pIdx) => (
           <Card key={pIdx} variant="tile" padding="sm">
-            <div className="grid grid-cols-[minmax(120px,1.1fr)_76px_minmax(180px,2fr)_76px_86px_34px] items-end gap-2 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0 [&_label]:truncate">
+            <div className="grid grid-cols-[minmax(130px,1.1fr)_104px_minmax(160px,1.6fr)_112px_96px_28px] items-end gap-2 max-[761px]:grid-cols-2 [&_[data-slot=input]]:w-full [&_[data-slot=input]]:min-w-0">
               <Field label="Katastritunnus *" htmlFor={`field-edit-cad-code-${pIdx}`}>
                 <Input
                   id={`field-edit-cad-code-${pIdx}`}
@@ -646,7 +662,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
                 />
               </Field>
 
-              <Field label="Põllu osa (ha) *" htmlFor={`field-edit-cad-area-${pIdx}`}>
+              <Field label="Põllu osa, ha *" htmlFor={`field-edit-cad-area-${pIdx}`}>
                 <NumberInput
                   id={`field-edit-cad-area-${pIdx}`}
                   required
@@ -659,21 +675,17 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
 
               <Field>
                 <div className={LABEL_ROW_CLASS}>
-                  <label htmlFor={`field-edit-cad-owner-${pIdx}`}>
-                    Maaomanik
-                    <Badge tone={OWNERSHIP_TONE[parcel.ownershipType]} title="Tuletatakse: omanik = põllu operaator → oma maa, muu omanik → renditud, omanik või operaator sisestamata → teadmata">
-                      {OWNERSHIP_LABELS[parcel.ownershipType]}
-                    </Badge>
-                  </label>
+                  <label htmlFor={`field-edit-cad-owner-${pIdx}`}>Maaomanik</label>
                   {onOpenParties && (
                     <Button
                       type="button"
                       onClick={onOpenParties}
                       title="Ava seotud isikute register"
                       variant="ghost"
-                      size="icon-sm"
+                      size="icon-xs"
+                      className="-my-0.5"
                     >
-                      <ExternalLink size={14} />
+                      <ExternalLink size={12} />
                     </Button>
                   )}
                 </div>
@@ -702,7 +714,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               ) : (
               <>
               {/* €/ha väli ENNE kogusummat */}
-              <Field label={parcel.ownershipType === 'OWNED' ? `Maamaks (€/ha)` : `Renditasu (€/ha)`} htmlFor={`field-edit-cad-ha-${pIdx}`}>
+              <Field label={parcel.ownershipType === 'OWNED' ? 'Maamaks, €/ha' : 'Renditasu, €/ha'} htmlFor={`field-edit-cad-ha-${pIdx}`}>
                 <NumberInput
                   id={`field-edit-cad-ha-${pIdx}`}
                   disabled={isEditSeasonLocked}
@@ -721,7 +733,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </Field>
 
               {/* Kogu summa aastas */}
-              <Field label={parcel.ownershipType === 'OWNED' ? `Maamaks kokku (€/a)` : `Renditasu kokku (€/a)`} htmlFor={`field-edit-cad-year-${pIdx}`}>
+              <Field label="Kokku, €/a" htmlFor={`field-edit-cad-year-${pIdx}`}>
                 <NumberInput
                   id={`field-edit-cad-year-${pIdx}`}
                   disabled={isEditSeasonLocked}
@@ -742,7 +754,7 @@ export const FieldEditDialog: React.FC<FieldEditDialogProps> = ({
               </>
               )}
 
-              <div className="flex items-end justify-center pb-0.5">
+              <div className="flex h-8 items-center justify-center">
                 {isEditSeasonLocked ? (
                   <span className="inline-flex p-1.5 text-subtle" title="Hooaeg on muudatusteks suletud">
                     <Lock size={14} />
