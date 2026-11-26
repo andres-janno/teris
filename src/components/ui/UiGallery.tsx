@@ -10,6 +10,7 @@ import {
   TableEmpty, TableHead, TableHeader, TableRow, Tabs, TabsContent, TabsList, TabsTrigger, Textarea, ToggleGroup,
   ToggleGroupItem, Tooltip, FilterBar, FilterBarItem, EmptyState, DateInput, FilterSelect, FilterClear, NumberInput, SearchInput, HelpHintPopover, ChipButton, NavSwitch, NavSwitchItem, SectionTitle, StatTile, LegendItem, KeyValueRow, PageHeader, ProgressBar, IconBox,
 } from './index';
+import { UsageBadges, UsageSummary } from './UiGalleryUsage';
 import { confirmDialog } from '../ConfirmDialog';
 import { LicenseBanner, SupportBanner } from '../LicenseBanner';
 import { DEFAULT_VEHICLE_COLOR, FINANCE_COST_COLOR } from '../../lib/dataColors';
@@ -24,8 +25,14 @@ const BANNER_USER: AuthUser = {
   tenantName: 'Näidisettevõte OÜ', license: { readOnly: false, validUntil: '2026-12-31', expiresSoon: true, modules: [] },
 };
 
-const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <Panel title={title} bodyClassName="flex flex-wrap items-start gap-3">{children}</Panel>
+// components = ühised komponendid, mille kasutussagedus märgitakse pealkirja kõrvale (nimed index.ts-ist).
+const Section: React.FC<{ title: string; components?: string[]; children: React.ReactNode }> = ({ title, components, children }) => (
+  <Panel
+    title={components?.length ? <span className="flex flex-wrap items-center gap-x-3 gap-y-2">{title}<UsageBadges names={components} /></span> : title}
+    bodyClassName="flex flex-wrap items-start gap-3"
+  >
+    {children}
+  </Panel>
 );
 
 export const UiGallery: React.FC = () => {
@@ -71,7 +78,9 @@ export const UiGallery: React.FC = () => {
           </Button>
         </div>
 
-        <Section title="Nupud">
+        <UsageSummary />
+
+        <Section title="Nupud" components={['Button']}>
           <Button variant="primary"><Plus size={14} />Lisa töö</Button>
           <Button>Tühista</Button>
           <Button variant="ghost">Rohkem</Button>
@@ -90,7 +99,7 @@ export const UiGallery: React.FC = () => {
           <p className="text-sm">Lõigu sees: <Button variant="link" size="inline">ava register</Button></p>
         </Section>
 
-        <Section title="Nupud: erivariandid ja kiibid">
+        <Section title="Nupud: erivariandid ja kiibid" components={['ChipButton']}>
           <Button variant="dashed" size="add-slot" aria-label="Lisa töö" title="Lisa töö"><Plus size={13} /></Button>
           <Button variant="bare" size="inline" title="Ava finants"><Badge tone="success" variant="solid">Kinnitatud</Badge></Button>
           <Button variant="text" size="inline">Tekstina nupp (text)</Button>
@@ -106,7 +115,7 @@ export const UiGallery: React.FC = () => {
           </ChipButton>
         </Section>
 
-        <Section title="Märgid">
+        <Section title="Märgid" components={['Badge']}>
           {(['success', 'info', 'warning', 'danger', 'accent', 'neutral'] as const).map((tone) => (
             <div key={tone} className="flex w-full flex-wrap items-center gap-3">
               <Badge tone={tone}>{tone}</Badge>
@@ -123,7 +132,7 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Sakid">
+        <Section title="Sakid" components={['Tabs', 'TabsList', 'TabsTrigger', 'TabsContent']}>
           <Tabs defaultValue="a">
             <TabsList>
               <TabsTrigger value="a">Ülevaade</TabsTrigger>
@@ -139,7 +148,7 @@ export const UiGallery: React.FC = () => {
           </Tabs>
         </Section>
 
-        <Section title="Valikurida">
+        <Section title="Valikurida" components={['ToggleGroup', 'ToggleGroupItem']}>
           <ToggleGroup aria-label="Hooaasta" value={year} onValueChange={setYear}>
             <ToggleGroupItem value="2024" title="Hooaeg on lukus">2024<Lock size={10} /></ToggleGroupItem>
             <ToggleGroupItem value="2025">2025</ToggleGroupItem>
@@ -148,7 +157,7 @@ export const UiGallery: React.FC = () => {
           </ToggleGroup>
         </Section>
 
-        <Section title="Peamenüü (NavSwitch)">
+        <Section title="Peamenüü (NavSwitch)" components={['NavSwitch', 'NavSwitchItem']}>
           <NavSwitch aria-label="Näidisvaated">
             {[['map', 'Kaart'], ['fields', 'Põllud'], ['works', 'Põllutööd']].map(([id, label]) => (
               <NavSwitchItem key={id} current={nav === id} onClick={() => setNav(id)}>
@@ -159,7 +168,7 @@ export const UiGallery: React.FC = () => {
           </NavSwitch>
         </Section>
 
-        <Section title="Vormiväljad">
+        <Section title="Vormiväljad" components={['Field', 'FormGrid', 'FieldRow', 'Input', 'Textarea', 'Select', 'Checkbox', 'CheckboxField', 'RadioGroup', 'RadioGroupItem', 'RadioField', 'Switch']}>
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
             <Field label="Nimi" htmlFor="g-name" hint="Põllu nimi registris"><Input id="g-name" placeholder="Nt Kaasiku" /></Field>
             <Field label="Kultuur" htmlFor="g-crop">
@@ -209,7 +218,7 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Tabel">
+        <Section title="Tabel" components={['Table', 'TableHeader', 'TableBody', 'TableFooter', 'TableRow', 'TableHead', 'TableCell', 'TableEmpty']}>
           <Table>
             <TableHeader><TableRow><TableHead>Põld</TableHead><TableHead>Kultuur</TableHead><TableHead numeric>Pindala, ha</TableHead><TableHead>Olek</TableHead></TableRow></TableHeader>
             <TableBody>
@@ -236,7 +245,7 @@ export const UiGallery: React.FC = () => {
           <Table bordered><TableBody><TableEmpty colSpan={3}>Kirjeid pole</TableEmpty></TableBody></Table>
         </Section>
 
-        <Section title="Kuupäev, arv, otsing ja filtrid">
+        <Section title="Kuupäev, arv, otsing ja filtrid" components={['DateInput', 'NumberInput', 'SearchInput', 'FilterSelect', 'FilterClear']}>
           <div className="grid w-full grid-cols-1 gap-3 md:grid-cols-3">
             <Field label="Kuupäev (md)" htmlFor="g-date"><DateInput id="g-date" value={date} onChange={setDate} /></Field>
             <Field label="Kuupäev (sm)" htmlFor="g-date-sm"><DateInput id="g-date-sm" size="sm" value={date} onChange={setDate} /></Field>
@@ -268,7 +277,7 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Filtririba ja tühi olek">
+        <Section title="Filtririba ja tühi olek" components={['FilterBar', 'FilterBarItem', 'EmptyState']}>
           <div className="grid w-full grid-cols-1 gap-3">
             <FilterBar actions={<Button size="sm">Värskenda</Button>}>
               <FilterBarItem>
@@ -286,7 +295,7 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Dialoog, menüüd, hüpikud">
+        <Section title="Dialoog, menüüd, hüpikud" components={['Dialog', 'DialogContent', 'DropdownMenu', 'ContextMenu', 'Popover', 'Tooltip']}>
           <Dialog>
             <DialogTrigger asChild><Button variant="primary">Ava dialoog</Button></DialogTrigger>
             <DialogContent>
@@ -384,7 +393,7 @@ export const UiGallery: React.FC = () => {
           <Tooltip content="Vihje tekst"><Button variant="ghost">Hõlju siin</Button></Tooltip>
         </Section>
 
-        <Section title="Teated">
+        <Section title="Teated" components={['Alert']}>
           <div className="flex flex-col gap-2">
             <Alert tone="error">Salvestamine ebaõnnestus: serveri viga.</Alert>
             <Alert tone="success">Salvestatud.</Alert>
@@ -403,14 +412,14 @@ export const UiGallery: React.FC = () => {
           </div>
         </Section>
 
-        <Section title="Failikast (Dropzone)">
+        <Section title="Failikast (Dropzone)" components={['Dropzone']}>
           <div className="flex w-full max-w-120 flex-col gap-2">
             <Dropzone>Lohista fail siia</Dropzone>
             <Dropzone hasFile>Fail valitud</Dropzone>
           </div>
         </Section>
 
-        <Section title="Abi-ikoon (HelpHint)">
+        <Section title="Abi-ikoon (HelpHint)" components={['HelpHint', 'HelpHintPopover']}>
           <HelpHintPopover label="Põllu kood" html="<p>Põllu kood on <strong>PRIA põllu number</strong>. Hõlju või klõpsa ikoonil.</p>" />
           <HelpHintPopover label="Import" html="<p>Impordi põlluraamat CSV-failist.</p>" guideHref="#guide.fields#import" />
           <Button variant="secondary">
@@ -419,7 +428,7 @@ export const UiGallery: React.FC = () => {
           </Button>
         </Section>
 
-        <Section title="Kaardid">
+        <Section title="Kaardid" components={['Card', 'CardButton', 'CardHeader', 'CardTitle', 'CardActions', 'Panel']}>
           <Card className="w-72">
             <CardHeader align="start">
               <CardTitle>Kaart (surface)</CardTitle>
@@ -464,13 +473,13 @@ export const UiGallery: React.FC = () => {
           </div>
           <Panel title="Paneel" actions={<Button size="sm">Tegevus</Button>} className="w-72">Päisega paneel (Panel).</Panel>
         </Section>
-        <Section title="Jaotise pealkiri">
+        <Section title="Jaotise pealkiri" components={['SectionTitle']}>
           <div className="w-72">
             <SectionTitle>Seadistused</SectionTitle>
             <SectionTitle ruled spaced>Vormi alajaotis (joonega)</SectionTitle>
           </div>
         </Section>
-        <Section title="Näitaja plaat">
+        <Section title="Näitaja plaat" components={['StatTile']}>
           <div className="grid w-full grid-cols-4 gap-3">
             <StatTile label="Põllud kokku" value={<>12 <small>põldu</small></>} sub={<>Pindala: <strong>340,50 ha</strong></>} />
             <StatTile label="Kulud kokku" tone="cost" value="48 200 €" sub="Keskmiselt: 140 € / ha" />
@@ -479,20 +488,20 @@ export const UiGallery: React.FC = () => {
             <StatTile label="Läbisõit" value="—" empty />
           </div>
         </Section>
-        <Section title="Rida silt: väärtus">
+        <Section title="Rida silt: väärtus" components={['KeyValueRow']}>
           <div className="w-72">
             <KeyValueRow label="Kulud kokku:"><strong>48 200 €</strong></KeyValueRow>
             <KeyValueRow label="Puhastulemus:" className="font-semibold">+13 700 €</KeyValueRow>
           </div>
         </Section>
-        <Section title="Legendi kirje">
+        <Section title="Legendi kirje" components={['LegendItem']}>
           <div className="flex flex-wrap gap-x-4 gap-y-1.5">
             <LegendItem color={FINANCE_COST_COLOR.equipment} label="Liikumine" />
             <LegendItem color={FINANCE_COST_COLOR.fuel} label="Seisuaeg süütega" value="3 min" />
             <LegendItem color={FINANCE_COST_COLOR.labor} label="Tööjõud:" value="48 200 €" note="(35%)" />
           </div>
         </Section>
-        <Section title="Ikoonikast">
+        <Section title="Ikoonikast" components={['IconBox']}>
           <div className="flex items-center gap-3">
             <IconBox tone="info"><Radio size={15} /></IconBox>
             <IconBox tone="success"><Tractor size={15} /></IconBox>
@@ -501,14 +510,14 @@ export const UiGallery: React.FC = () => {
             <IconBox size="lg">🔧</IconBox>
           </div>
         </Section>
-        <Section title="Edenemisriba">
+        <Section title="Edenemisriba" components={['ProgressBar']}>
           <div className="flex w-72 flex-col gap-2">
             <ProgressBar value={0} aria-label="Tehtud 0%" />
             <ProgressBar value={45} aria-label="Tehtud 45%" />
             <ProgressBar value={100} aria-label="Tehtud 100%" />
           </div>
         </Section>
-        <Section title="Vaate päis">
+        <Section title="Vaate päis" components={['PageHeader']}>
           <div className="w-full">
             <PageHeader icon={<Layers />} title="Põllud" subtitle="Põldude üldandmed valitud hooajal" actions={<Button variant="primary">Lisa</Button>} />
           </div>

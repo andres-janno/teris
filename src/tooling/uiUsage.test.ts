@@ -1,0 +1,141 @@
+import { execSync } from 'node:child_process';
+import { readFileSync } from 'node:fs';
+import { describe, expect, it } from 'vitest';
+import { countUiUsage, isCountedFile, parseUiComponents, stripComments } from './uiUsage.ts';
+import { computeUiUsage } from './uiUsagePlugin.ts';
+
+const INDEX = `
+export { cn } from './cn';
+export { Button, type ButtonProps } from './Button';
+export { Card, CardTitle, type CardProps } from './Card';
+export { Dialog, usePopupContainer } from './Dialog';
+export { parseNumberText, NumberInput } from './NumberInput';
+export { cornerActionClass, type FieldSize, MAX_ITEMS } from './variants';
+// export { Hidden } from './Hidden';
+`;
+
+const usage = (files: Record<string, string>) => countUiUsage({ indexSource: INDEX, files, generatedAt: '2026-11-26T10:00:00.000Z' });
+const get = (files: Record<string, string>, name: string) => usage(files).components.find((c) => c.name === name)!;
+
+describe('parseUiComponents', () => {
+  it('võtab suurtähega ekspordid; tüübid, funktsioonid, hookid ja konstandid jäävad välja', () => {
+    expect(parseUiComponents(INDEX)).toEqual(['Button', 'Card', 'CardTitle', 'Dialog', 'NumberInput']);
+  });
+  it('kommenteeritud eksport ei loe ja `X as Y` annab eksporditud nime', () => {
+    expect(parseUiComponents("export { A as Aliased } from './A';\n/* export { B } from './B'; */")).toEqual(['Aliased']);
+  });
+});
+
+describe('stripComments', () => {
+  it('eemaldab rea- ja plokkkommentaarid, sõne sisu ja URL jäävad', () => {
+    const out = stripComments(`a // <Button\n/* <Button */ b {/* <Button */} "//x" 'a/*b*/' http://x`);
+    expect(out).not.toContain('<Button');
+    expect(out).toContain('"//x"');
+    expect(out).toContain("'a/*b*/'");
+    expect(out).toContain('http://x');
+  });
+});
+
+describe('isCountedFile', () => {
+  it('loeb src .tsx faile, välja jäävad ui/ (galerii ja komponendid), testid ja ._ failid', () => {
+    expect(isCountedFile('src/components/Fields.tsx')).toBe(true);
+    expect(isCountedFile('src/admin/AdminApp.tsx')).toBe(true);
+    expect(isCountedFile('src/components/ui/UiGallery.tsx')).toBe(false);
+    expect(isCountedFile('src/components/ui/Button.tsx')).toBe(false);
+    expect(isCountedFile('src/components/Fields.test.tsx')).toBe(false);
+    expect(isCountedFile('src/components/._Fields.tsx')).toBe(false);
+    expect(isCountedFile('src/lib/x.ts')).toBe(false);
+    expect(isCountedFile('scripts/x.tsx')).toBe(false);
+  });
+});
+
+describe('countUiUsage', () => {
+  it('kommentaarid ei loe, galerii ja testid jäävad välja', () => {
+    const files = {
+      'src/a.tsx': `// <Button>\n/* <Button> */\nexport const A = () => <div>{/* <Button/> */}<Button>x</Button><Button /></div>;`,
+      'src/components/ui/UiGallery.tsx': '<Button/><Button/>',
+      'src/a.test.tsx': '<Button/>'
+    };
+    const b = get(files, 'Button');
+    expect(b.count).toBe(2);
+    expect(b.fileCount).toBe(1);
+    expect(b.files).toEqual([{ file: 'src/a.tsx', count: 2 }]);
+  });
+
+  it('failid on kordade järgi kahanevas järjekorras, võrdsete puhul nime järgi', () => {
+    const b = get({ 'src/z.tsx': '<Card/>', 'src/b.tsx': '<Card/><Card/>', 'src/a.tsx': '<Card/>' }, 'Card');
+    expect(b.files.map((f) => f.file)).toEqual(['src/b.tsx', 'src/a.tsx', 'src/z.tsx']);
+    expect(b.count).toBe(4);
+    expect(b.fileCount).toBe(3);
+  });
+
+  it('kasutamata komponent on 0 kohta; eesliitega nimi (CardTitle vs Card) ei lähe segi', () => {
+    const files = { 'src/a.tsx': '<CardTitle>x</CardTitle>' };
+    expect(get(files, 'Card').count).toBe(0);
+    expect(get(files, 'CardTitle').count).toBe(1);
+    expect(get(files, 'Dialog').files).toEqual([]);
+  });
+
+  it('alamkomponent `<Dialog.Foo` loeb Dialog kasutuseks; tüübiargument `Foo<Button` ei loe', () => {
+    const files = { 'src/a.tsx': 'const x = useRef<Button>(null); <Dialog.Root><Dialog open /></Dialog.Root>' };
+    expect(get(files, 'Dialog').count).toBe(2);
+    expect(get(files, 'Button').count).toBe(0);
+  });
+
+  it('variantide jaotus: staatiline, dünaamiline ja vaikimisi', () => {
+    const files = {
+      'src/a.tsx': `<Button variant="ghost" size="sm">a</Button>
+<Button variant='ghost'>b</Button>
+<Button variant={'danger'}>c</Button>
+<Button variant={on ? 'primary' : 'ghost'} onClick={() => f({ variant: 'x' })}>d</Button>
+<Button>e</Button>
+<Button {...rest} title="a > b" />`
+    };
+    const b = get(files, 'Button');
+    expect(b.count).toBe(6);
+    const variant = b.props.find((p) => p.prop === 'variant')!;
+    expect(variant.values).toEqual([
+      { kind: 'static', value: 'ghost', count: 2 },
+      { kind: 'default', count: 2 },
+      { kind: 'static', value: 'danger', count: 1 },
+      { kind: 'dynamic', count: 1 }
+    ]);
+    const size = b.props.find((p) => p.prop === 'size')!;
+    expect(size.values).toEqual([{ kind: 'default', count: 5 }, { kind: 'static', value: 'sm', count: 1 }]);
+    expect(b.props.some((p) => p.prop === 'tone')).toBe(false);
+  });
+
+  it('prop, mida kunagi ei kirjutata, ei ilmu aruandes', () => {
+    expect(get({ 'src/a.tsx': '<Card>x</Card>' }, 'Card').props).toEqual([]);
+  });
+
+  it('aeg tuleb sisendist', () => {
+    expect(usage({}).generatedAt).toBe('2026-11-26T10:00:00.000Z');
+  });
+});
+
+describe('päris repo', () => {
+  it('Dropzone ja Button kordade ning failide arv klapivad grep-iga', () => {
+    const u = computeUiUsage('.');
+    const grep = (name: string) => {
+      const out = execSync(
+        `grep -rEo --include='*.tsx' --exclude='*.test.*' --exclude='._*' --exclude-dir=ui '<${name}([^A-Za-z0-9_$]|$)' src | cut -d: -f1 | sort | uniq -c`,
+        { encoding: 'utf8' }
+      );
+      const rows = out.trim().split('\n').filter(Boolean);
+      return { files: rows.length, count: rows.reduce((s, r) => s + Number(r.trim().split(/\s+/)[0]), 0) };
+    };
+    for (const name of ['Dropzone', 'Button']) {
+      const c = u.components.find((x) => x.name === name)!;
+      const g = grep(name);
+      expect(c.count, name).toBeGreaterThan(0);
+      expect({ count: c.count, files: c.fileCount }, name).toEqual(g);
+    }
+  });
+
+  it('kõik index.ts-i komponendid on loendis ja galerii ei lähe arvesse', () => {
+    const u = computeUiUsage('.');
+    expect(u.components.map((c) => c.name)).toEqual(parseUiComponents(readFileSync('src/components/ui/index.ts', 'utf8')));
+    expect(u.components.flatMap((c) => c.files).some((f) => f.file.startsWith('src/components/ui/'))).toBe(false);
+  });
+});

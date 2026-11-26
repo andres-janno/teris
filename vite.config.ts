@@ -5,6 +5,7 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import { dbApiPlugin } from './src/server/dbApiPlugin.ts';
 import { landingHtmlPlugin } from './src/landing/landingHtmlPlugin.ts';
+import { uiUsagePlugin } from './src/tooling/uiUsagePlugin.ts';
 
 const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf8')) as { version: string };
 
@@ -19,7 +20,7 @@ function gitCommit(): string {
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react(), tailwindcss(), dbApiPlugin(), landingHtmlPlugin()],
+  plugins: [react(), tailwindcss(), dbApiPlugin(), landingHtmlPlugin(), uiUsagePlugin()],
   define: {
     __APP_VERSION__: JSON.stringify(pkg.version),
     __APP_COMMIT__: JSON.stringify(gitCommit())
